@@ -719,10 +719,11 @@ html, body {
     Digital Hering
   </div>
   <div class="tb-center">
+    <div id="brtClock" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.08em;min-width:44px;text-align:center;"></div>
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progressFill"></div>
     </div>
-    <span class="slide-counter" id="slideCounter">1 / 12</span>
+    <span class="slide-counter" id="slideCounter">1 / 14</span>
   </div>
   <div class="tb-nav">
     <button class="tb-btn" id="btnPrev" onclick="go(-1)">← Anterior</button>
@@ -1364,6 +1365,19 @@ html, body {
 </div>
 
 <script>
+// ── RELÓGIO BRASÍLIA ──
+function updateClock() {
+  const el = document.getElementById('brtClock');
+  if (!el) return;
+  const now = new Date();
+  const brt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const h = String(brt.getHours()).padStart(2, '0');
+  const m = String(brt.getMinutes()).padStart(2, '0');
+  el.textContent = `${h}:${m}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
 // ── OCEAN BG ──
 (function(){
   const bg = document.getElementById('oceanBg');
