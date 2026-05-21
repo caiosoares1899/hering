@@ -1,0 +1,3063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Hering · Onboarding Ágil</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-deep: #0a1628;
+    --blue-navy: #0d2244;
+    --blue-mid: #1a4480;
+    --blue-bright: #2563c9;
+    --blue-light: #4a9fd4;
+    --blue-sky: #7ec8e3;
+    --blue-pale: #b8ddf0;
+    --white: #ffffff;
+    --white-80: rgba(255,255,255,0.8);
+    --white-60: rgba(255,255,255,0.6);
+    --white-30: rgba(255,255,255,0.3);
+    --white-10: rgba(255,255,255,0.1);
+    --white-05: rgba(255,255,255,0.05);
+    --glass-bg: rgba(255,255,255,0.08);
+    --glass-border: rgba(255,255,255,0.18);
+    --glass-hover: rgba(255,255,255,0.14);
+    --accent: #7ec8e3;
+    --accent-bright: #a8e0f5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--blue-deep);
+    color: var(--white);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ─── FISH / OCEAN BACKGROUND ─── */
+  .ocean-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .ocean-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(26,68,128,0.6) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(37,99,201,0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, rgba(10,22,40,0.8) 0%, transparent 50%),
+      linear-gradient(180deg, #0a1628 0%, #0d2244 40%, #0a1628 100%);
+  }
+
+  /* Animated bubbles */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--white-05);
+    border: 1px solid var(--white-10);
+    animation: bubbleRise linear infinite;
+  }
+
+  @keyframes bubbleRise {
+    0% { transform: translateY(110vh) scale(0.8); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.2; }
+    100% { transform: translateY(-10vh) scale(1.1); opacity: 0; }
+  }
+
+  /* Fish SVG floating */
+  .fish-float {
+    position: absolute;
+    opacity: 0.08;
+    animation: fishSwim linear infinite;
+  }
+
+  @keyframes fishSwim {
+    0% { transform: translateX(-150px) translateY(0px); }
+    25% { transform: translateX(25vw) translateY(-30px); }
+    50% { transform: translateX(55vw) translateY(10px); }
+    75% { transform: translateX(80vw) translateY(-20px); }
+    100% { transform: translateX(calc(100vw + 150px)) translateY(5px); }
+  }
+
+  /* Wave layers */
+  .waves {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.15;
+  }
+
+  /* ─── NAVIGATION ─── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(10,22,40,0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--blue-bright);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--white-60);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--white);
+    background: var(--glass-bg);
+  }
+
+  .nav-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  .nav-burger span {
+    width: 24px;
+    height: 2px;
+    background: var(--white);
+    border-radius: 2px;
+    transition: all 0.3s;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .nav-links.open {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 65px;
+      left: 0; right: 0;
+      background: rgba(10,22,40,0.97);
+      backdrop-filter: blur(20px);
+      padding: 16px;
+      border-bottom: 1px solid var(--glass-border);
+      gap: 4px;
+    }
+    .nav-burger { display: flex; }
+  }
+
+  /* ─── SECTIONS ─── */
+  section {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 24px 60px;
+  }
+
+  .section-inner {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ─── HERO ─── */
+  #hero {
+    text-align: center;
+    min-height: 100vh;
+    padding-top: 80px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #hero .section-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    animation: fadeInUp 0.8s ease both;
+  }
+
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 10vw, 7rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    animation: fadeInUp 0.8s 0.1s ease both;
+  }
+
+  .hero-title .line1 { display: block; color: var(--white); }
+  .hero-title .line2 { display: block; color: var(--accent); }
+
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--white-60);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+    animation: fadeInUp 0.8s 0.2s ease both;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--blue-bright);
+    color: var(--white);
+    padding: 16px 36px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.3s;
+    animation: fadeInUp 0.8s 0.3s ease both;
+    cursor: pointer;
+    border: none;
+  }
+
+  .hero-cta:hover {
+    background: var(--blue-light);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(37,99,201,0.4);
+  }
+
+  .hero-scroll {
+    position: static;
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--white-30);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    animation: fadeIn 1s 1s ease both;
+  }
+
+  .scroll-bubble-svg { display: block; }
+
+  .scroll-dot {
+    animation: scrollDrop 1.8s ease-in-out infinite;
+  }
+
+  @keyframes scrollDrop {
+    0%   { transform: translateY(0px); opacity: 1; }
+    60%  { transform: translateY(20px); opacity: 0.6; }
+    61%  { transform: translateY(0px); opacity: 0; }
+    62%  { opacity: 0; transform: translateY(0px); }
+    100% { transform: translateY(0px); opacity: 1; }
+  }
+
+  /* ─── STAKEHOLDERS — FISH ORBIT ─── */
+  .stake-ocean {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    background: radial-gradient(ellipse at 50% 60%, rgba(15,45,110,0.5) 0%, rgba(8,20,50,0.3) 60%, transparent 100%),
+                var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+  }
+
+  @media (max-width: 600px) { .stake-ocean { height: 380px; } }
+
+  /* Bubbles */
+  .stake-bubble {
+    position: absolute;
+    bottom: -10px;
+    border-radius: 50%;
+    background: rgba(126,200,227,0.15);
+    border: 1px solid rgba(126,200,227,0.2);
+    animation: stakeBubbleRise linear infinite;
+  }
+
+  @keyframes stakeBubbleRise {
+    0%   { transform: translateY(0) scale(1);   opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-540px) scale(1.1); opacity: 0; }
+  }
+
+  /* Center */
+  .stake-center-wrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+  }
+
+  .stake-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    border: 1px solid rgba(126,200,227,0.15);
+    transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+
+  .stake-ring-1 {
+    width: 140px; height: 140px;
+    animation: ringPulse 4s ease-in-out infinite;
+  }
+
+  .stake-ring-2 {
+    width: 200px; height: 200px;
+    animation: ringPulse 4s 1.5s ease-in-out infinite;
+    border-color: rgba(126,200,227,0.07);
+  }
+
+  @keyframes ringPulse {
+    0%,100% { opacity: 0.4; transform: translate(-50%,-50%) scale(1); }
+    50%      { opacity: 0.1; transform: translate(-50%,-50%) scale(1.06); }
+  }
+
+  .stake-core {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 36%, rgba(80,150,240,0.95), rgba(15,50,140,0.98) 70%);
+    border: 2px solid rgba(126,200,227,0.7);
+    box-shadow: 0 0 32px rgba(60,130,220,0.5), inset 0 0 20px rgba(100,180,255,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+    z-index: 5;
+  }
+
+  .stake-core-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #fff;
+  }
+
+  /* Fish orbits */
+  .fish-orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    /* orbit animation rotates the arm */
+    animation: fishOrbit var(--orbit-dur) linear infinite;
+    animation-delay: calc(var(--orbit-start) / 360deg * -1 * var(--orbit-dur));
+    z-index: 3;
+  }
+
+  @keyframes fishOrbit {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .fish-node {
+    position: absolute;
+    left: var(--orbit-r);
+    top: 0;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    /* counter-rotate so fish stays upright */
+    animation: fishCounterRotate var(--orbit-dur) linear infinite;
+    animation-delay: calc(var(--orbit-start) / 360deg * -1 * var(--orbit-dur));
+    cursor: default;
+  }
+
+  @keyframes fishCounterRotate {
+    from { transform: translate(-50%,-50%) rotate(0deg); }
+    to   { transform: translate(-50%,-50%) rotate(-360deg); }
+  }
+
+  .fish-svg {
+    filter: drop-shadow(0 0 6px rgba(126,200,227,0.4));
+    transition: filter 0.3s;
+  }
+
+  .fish-node:hover .fish-svg {
+    filter: drop-shadow(0 0 12px rgba(126,200,227,0.9));
+  }
+
+  .fish-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    background: rgba(10,25,60,0.75);
+    border: 1px solid rgba(126,200,227,0.25);
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s;
+  }
+
+  .fish-node:hover .fish-label {
+    background: rgba(37,99,201,0.5);
+    border-color: rgba(126,200,227,0.6);
+    color: #fff;
+  }
+
+  #stakeCanvas { display: none; }
+
+
+  /* ─── OCEAN FLIGHT LEVELS ─── */
+  .ocean-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+  }
+
+  .ocean-level {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 0;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  @media (max-width: 600px) {
+    .ocean-level { grid-template-columns: 1fr; }
+    .ocean-level-left { border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  }
+
+  .surface-level {
+    background: linear-gradient(135deg, rgba(30,80,160,0.45) 0%, rgba(15,40,100,0.4) 100%);
+  }
+  .mid-level {
+    background: linear-gradient(135deg, rgba(10,40,100,0.55) 0%, rgba(8,28,70,0.5) 100%);
+  }
+  .deep-level {
+    background: linear-gradient(135deg, rgba(5,18,50,0.75) 0%, rgba(3,12,35,0.8) 100%);
+  }
+
+  .ocean-level:hover { filter: brightness(1.1); }
+
+  .ocean-level-left {
+    padding: 24px 20px;
+    border-right: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .ocean-depth-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--white-30);
+    margin-bottom: 2px;
+  }
+
+  .ocean-level-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+  }
+
+  .ocean-level-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .ocean-depth-species {
+    font-size: 11px;
+    color: var(--white-30);
+    font-style: italic;
+    margin-top: 6px;
+  }
+
+  .ocean-level-right {
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ocean-level-right p {
+    font-size: 14px;
+    color: var(--white-80);
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  .ocean-descent {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 24px;
+    background: rgba(0,0,0,0.25);
+    border-top: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .ocean-descent span {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--white-30);
+  }
+
+  .deep-level::after {
+    content: '· · ·';
+    position: absolute;
+    right: 20px;
+    bottom: 12px;
+    font-size: 18px;
+    color: rgba(126,200,227,0.2);
+    letter-spacing: 4px;
+    animation: bioGlow 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes bioGlow {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.6; }
+  }
+
+  .hero-cards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 60px;
+    animation: fadeInUp 0.8s 0.4s ease both;
+  }
+
+  .hero-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    text-align: center;
+    min-width: 120px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+  }
+
+  .hero-card:hover {
+    background: var(--glass-hover);
+    transform: translateY(-4px);
+    border-color: rgba(126,200,227,0.4);
+  }
+
+  .hero-card .num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .hero-card .label {
+    font-size: 12px;
+    color: var(--white-60);
+    margin-top: 4px;
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-desc {
+    font-size: 16px;
+    color: var(--white-60);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  /* ─── GLASS CARDS ─── */
+  .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 28px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s;
+  }
+
+  .glass-card:hover {
+    background: var(--glass-hover);
+    border-color: rgba(126,200,227,0.35);
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  /* ─── MINDSET ÁGIL ─── */
+  #mindset .section-inner { text-align: center; }
+
+  .mindset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  .mindset-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mindset-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(126,200,227,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .mindset-item:hover::before { opacity: 1; }
+  .mindset-item:hover {
+    border-color: rgba(126,200,227,0.4);
+    transform: translateY(-4px);
+  }
+
+  .mindset-icon { font-size: 2rem; margin-bottom: 12px; }
+
+  .mindset-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    color: var(--accent);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .mindset-desc {
+    font-size: 13px;
+    color: var(--white-60);
+    line-height: 1.5;
+  }
+
+  /* ─── VUCA + PDCA ─── */
+  #contexto .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 640px) {
+    #contexto .two-col { grid-template-columns: 1fr; }
+  }
+
+  .vuca-list, .pdca-list { list-style: none; }
+
+  .vuca-list li, .pdca-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--white-10);
+  }
+
+  .vuca-list li:last-child, .pdca-list li:last-child { border-bottom: none; }
+
+  .letter-badge {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: var(--blue-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--white);
+  }
+
+  .letter-badge.pdca { background: linear-gradient(135deg, var(--blue-light), var(--blue-bright)); }
+
+  /* ─── SQUADS / SPOTIFY MODEL ─── */
+  .squad-visual {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 40px;
+    margin-top: 40px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+  }
+
+  .tribo-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .squads-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .squad-box {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 20px;
+    min-width: 130px;
+    flex: 1;
+    max-width: 160px;
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .squad-box:hover {
+    background: var(--glass-hover);
+    border-color: rgba(126,200,227,0.5);
+    transform: translateY(-4px);
+  }
+
+  .squad-box .role {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .squad-box .name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  /* ─── TRÍADE (OKR/Scrum/Squads) ─── */
+  .triade-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 600px) {
+    .triade-grid { grid-template-columns: 1fr; }
+  }
+
+  .triade-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    transition: all 0.35s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .triade-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue-bright), var(--accent));
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+
+  .triade-card:hover::after { transform: scaleX(1); }
+  .triade-card:hover {
+    background: var(--glass-hover);
+    transform: translateY(-6px);
+    box-shadow: 0 24px 48px rgba(0,0,0,0.4);
+  }
+
+  .triade-icon { font-size: 2.5rem; margin-bottom: 16px; }
+
+  .triade-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--accent);
+  }
+
+  .triade-card p {
+    font-size: 14px;
+    color: var(--white-60);
+    line-height: 1.6;
+  }
+
+  /* ─── OKRs ─── */
+  .okr-flow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 640px) { .okr-flow { grid-template-columns: 1fr; } }
+
+  .okr-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 28px 22px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s;
+  }
+
+  .okr-card:hover {
+    background: var(--glass-hover);
+    transform: translateY(-4px);
+  }
+
+  .okr-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .okr-card h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+
+  .okr-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .okr-card ul li {
+    font-size: 13px;
+    color: var(--white-60);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .okr-card ul li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    min-width: 6px;
+    border-radius: 50%;
+    background: var(--blue-light);
+  }
+
+  .okr-example {
+    margin-top: 16px;
+    background: rgba(37,99,201,0.2);
+    border: 1px solid rgba(37,99,201,0.4);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--blue-pale);
+    font-style: italic;
+  }
+
+  /* ─── SCRUM ─── */
+  .scrum-cycle {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0;
+    margin-top: 40px;
+    position: relative;
+  }
+
+  .scrum-step {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    width: calc(50% - 30px);
+    min-width: 160px;
+    margin: 12px;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .scrum-step:hover {
+    background: var(--glass-hover);
+    border-color: rgba(126,200,227,0.4);
+    transform: scale(1.04);
+  }
+
+  .scrum-step .step-num {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--blue-bright);
+    color: var(--white);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .scrum-step .step-icon { font-size: 2rem; margin-bottom: 10px; }
+
+  .scrum-step h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .scrum-step p { font-size: 13px; color: var(--white-60); line-height: 1.5; }
+
+  .sprint-badge {
+    background: linear-gradient(135deg, var(--blue-bright), var(--blue-light));
+    border-radius: 100px;
+    padding: 14px 32px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 32px auto 0;
+  }
+
+  /* ─── RITUAIS ─── */
+  .rituais-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  .ritual-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 28px 22px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .ritual-card:hover {
+    background: var(--glass-hover);
+    border-color: rgba(126,200,227,0.4);
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .ritual-card .ri-icon { font-size: 2rem; margin-bottom: 14px; }
+
+  .ritual-card h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+
+  .ritual-card p { font-size: 13px; color: var(--white-60); line-height: 1.5; }
+
+  .ritual-badge {
+    display: inline-block;
+    background: rgba(37,99,201,0.3);
+    border: 1px solid rgba(37,99,201,0.5);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--blue-pale);
+    margin-top: 12px;
+    font-weight: 500;
+  }
+
+  /* ─── CULTURA + CONEXÃO ─── */
+  .cultura-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 640px) { .cultura-grid { grid-template-columns: 1fr; } }
+
+  .cultura-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+  }
+
+  .cultura-item:hover {
+    background: var(--glass-hover);
+    border-color: rgba(126,200,227,0.35);
+    transform: translateX(4px);
+  }
+
+  .cultura-item .ci-icon {
+    font-size: 1.8rem;
+    min-width: 48px;
+    text-align: center;
+  }
+
+  .cultura-item strong {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .cultura-item span { font-size: 13px; color: var(--white-60); line-height: 1.4; }
+
+  /* ─── QUIZ INTERATIVO ─── */
+  #quiz {
+    background: transparent;
+  }
+
+  .quiz-box {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 40px;
+    backdrop-filter: blur(16px);
+    max-width: 680px;
+    margin: 40px auto 0;
+  }
+
+  .quiz-question {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    line-height: 1.4;
+  }
+
+  .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+
+  .quiz-opt {
+    background: var(--white-05);
+    border: 1px solid var(--white-10);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 14px;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .quiz-opt::before {
+    content: attr(data-letter);
+    min-width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  .quiz-opt:hover:not(:disabled) {
+    background: var(--glass-hover);
+    border-color: rgba(126,200,227,0.4);
+  }
+
+  .quiz-opt.correct { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.5); }
+  .quiz-opt.wrong { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.5); }
+
+  .quiz-feedback {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+  .quiz-feedback.fail { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+
+  .quiz-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .quiz-score {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    color: var(--white-60);
+  }
+
+  .btn {
+    background: var(--blue-bright);
+    color: var(--white);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn:hover { background: var(--blue-light); transform: translateY(-1px); }
+  .btn.secondary {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--white);
+  }
+  .btn.secondary:hover { background: var(--glass-hover); }
+
+  .quiz-progress {
+    height: 4px;
+    background: var(--white-10);
+    border-radius: 4px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+
+  .quiz-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-bright), var(--accent));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  /* ─── CONTATO / AGILISTA ─── */
+  #contato {
+    text-align: center;
+    padding-bottom: 100px;
+  }
+
+  .contact-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 48px;
+    backdrop-filter: blur(16px);
+    max-width: 480px;
+    margin: 40px auto 0;
+  }
+
+  .avatar-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-bright), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 0 4px var(--glass-border), 0 0 0 8px rgba(126,200,227,0.1);
+  }
+
+  .contact-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .contact-role {
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white-05);
+    border: 1px solid var(--white-10);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: var(--white-80);
+    font-size: 14px;
+    transition: all 0.25s;
+  }
+
+  .contact-link:hover {
+    background: var(--glass-hover);
+    border-color: var(--glass-border);
+    transform: translateX(4px);
+  }
+
+  .contact-link .cl-icon { font-size: 1.2rem; }
+
+  /* ─── FLIGHT LEVELS ─── */
+  .flight-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  .fl-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+
+  @media (max-width: 500px) {
+    .fl-row { grid-template-columns: 80px 1fr; }
+  }
+
+  .fl-badge {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .fl-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--white-80);
+    line-height: 1.5;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── PROGRESS BAR TOP ─── */
+  #read-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue-bright), var(--accent));
+    z-index: 9999;
+    transition: width 0.1s;
+  }
+
+  /* ─── MOBILE TWEAKS ─── */
+  @media (max-width: 480px) {
+    section { padding: 90px 16px 50px; }
+    .glass-card { padding: 20px; }
+    .quiz-box { padding: 24px; }
+    .contact-card { padding: 32px 24px; }
+    nav { padding: 14px 16px; }
+  }
+
+  /* ─── DIVIDERS ─── */
+  .wave-divider {
+    width: 100%;
+    line-height: 0;
+    overflow: hidden;
+    margin: -1px 0;
+    opacity: 0.15;
+  }
+
+  /* ─── TOOLTIP ─── */
+  [data-tip] {
+    position: relative;
+    cursor: help;
+  }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,22,40,0.95);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--white-80);
+    white-space: nowrap;
+    max-width: 200px;
+    white-space: normal;
+    z-index: 50;
+    pointer-events: none;
+  }
+  /* ─── ORG CHART ─── */
+  .org-chart {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 32px 24px;
+    backdrop-filter: blur(12px);
+    margin-top: 40px;
+  }
+
+  .org-level {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .org-gerencias { gap: 12px; }
+
+  .org-node {
+    border-radius: 12px;
+    padding: 14px 20px;
+    text-align: center;
+    min-width: 140px;
+    border: 1px solid var(--glass-border);
+    transition: all 0.3s;
+  }
+
+  .org-node:hover { transform: translateY(-3px); }
+
+  .white-node { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+  .agilista-node {
+    background: rgba(126,200,227,0.12);
+    border-color: rgba(126,200,227,0.35);
+    border-style: dashed;
+    position: relative;
+  }
+  .blue-node { background: rgba(37,99,201,0.2); border-color: rgba(37,99,201,0.4); }
+  .green-node { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+  .red-node { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); }
+
+  .org-role {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--white-60);
+    margin-bottom: 4px;
+  }
+
+  .org-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .org-float-badge {
+    font-size: 10px;
+    color: var(--accent);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .org-connector-main {
+    width: 2px;
+    height: 28px;
+    background: var(--glass-border);
+    margin: 8px auto;
+  }
+
+  /* Squad columns */
+  .squads-full-grid {
+    display: grid;
+    grid-template-columns: 4fr 2fr 2fr 2fr;
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 700px) {
+    .squads-full-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .squads-full-grid { grid-template-columns: 1fr; }
+  }
+
+  .squad-col { display: flex; flex-direction: column; gap: 10px; }
+
+  .squad-col-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .blue-label { background: rgba(37,99,201,0.25); color: var(--blue-pale); border: 1px solid rgba(37,99,201,0.4); }
+  .green-label { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+  .red-label { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .white-label { background: rgba(255,255,255,0.1); color: var(--white-80); border: 1px solid rgba(255,255,255,0.25); }
+
+  .squad-full-card {
+    border-radius: 12px;
+    padding: 14px 14px;
+    border: 1px solid;
+    transition: all 0.25s;
+    cursor: default;
+  }
+
+  .squad-full-card:hover { transform: translateX(3px); }
+
+  .blue-card { background: rgba(37,99,201,0.12); border-color: rgba(37,99,201,0.3); }
+  .green-card { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); }
+  .red-card { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.22); }
+  .white-data-card { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); }
+  .agilista-card {
+    background: rgba(126,200,227,0.08);
+    border-color: rgba(126,200,227,0.3);
+    border-style: dashed;
+  }
+
+  .sq-icon { font-size: 1.2rem; margin-bottom: 6px; }
+
+  .sq-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .sq-po { font-size: 11px; color: var(--white-60); }
+
+  .sq-note {
+    font-size: 10px;
+    color: var(--white-30);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* ─── STAKEHOLDERS MAP ─── */
+  .stakeholders-map {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+
+  .stake-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .stake-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37,99,201,0.7) 0%, rgba(10,22,40,0.9) 70%);
+    border: 2px solid rgba(126,200,227,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    color: var(--white);
+    z-index: 2;
+    box-shadow: 0 0 50px rgba(37,99,201,0.5);
+  }
+
+  .stake-pulse {
+    position: absolute;
+    inset: -16px;
+    border-radius: 50%;
+    border: 1px solid rgba(126,200,227,0.15);
+    animation: stakePulse 3s ease-in-out infinite;
+  }
+
+  @keyframes stakePulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 0.05; }
+  }
+
+  .stake-node {
+    position: absolute;
+    background: rgba(13,34,68,0.85);
+    border: 1px solid rgba(126,200,227,0.25);
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white-80);
+    backdrop-filter: blur(8px);
+    cursor: default;
+    transition: all 0.3s;
+    white-space: nowrap;
+    z-index: 3;
+    hyphens: auto;
+  }
+
+  .stake-node:hover {
+    background: rgba(37,99,201,0.3);
+    border-color: rgba(126,200,227,0.6);
+    color: var(--white);
+    transform: scale(1.08);
+    box-shadow: 0 4px 20px rgba(37,99,201,0.3);
+  }
+
+  /* ─── FLIGHT LEVELS ─── */
+  .flight-levels { display: flex; flex-direction: column; gap: 6px; }
+
+  .fl-row {
+    display: flex;
+    align-items: stretch;
+    min-height: 64px;
+  }
+
+  .fl-badge {
+    background: rgba(37,99,201,0.3);
+    border: 1px solid rgba(37,99,201,0.5);
+    border-right: none;
+    border-radius: 12px 0 0 12px;
+    padding: 16px 14px;
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.4;
+    flex-shrink: 0;
+    width: 110px;
+  }
+
+  @media (max-width: 500px) { .fl-badge { width: 80px; font-size: 9px; padding: 12px 8px; } }
+
+  .fl-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--white-80);
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (max-width: 500px) { .fl-content { font-size: 13px; padding: 14px 14px; } }
+
+  .fl-connector {
+    text-align: center;
+    color: var(--white-30);
+    font-size: 16px;
+    padding: 2px 0;
+    margin-left: 55px;
+  }
+
+  @media (max-width: 500px) { .fl-connector { margin-left: 40px; } }
+
+</style>
+</head>
+<body>
+
+<!-- READ PROGRESS -->
+<div id="read-progress"></div>
+
+<!-- OCEAN BACKGROUND -->
+<div class="ocean-bg" id="oceanBg"></div>
+
+<!-- WAVES FOOTER -->
+<svg class="waves" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" preserveAspectRatio="none">
+  <path fill="rgba(126,200,227,0.8)" d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32V120H0Z"/>
+</svg>
+
+<!-- NAVIGATION -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <div class="nav-logo-icon">🐟</div>
+    Digital Hering
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#mindset" onclick="closeMenu()">Mindset</a></li>
+    <li><a href="#contexto" onclick="closeMenu()">VUCA</a></li>
+    <li><a href="#squads" onclick="closeMenu()">Squads</a></li>
+    <li><a href="#okrs" onclick="closeMenu()">OKRs</a></li>
+    <li><a href="#scrum" onclick="closeMenu()">Scrum</a></li>
+    <li><a href="#rituais" onclick="closeMenu()">Rituais</a></li>
+    <li><a href="#quiz" onclick="closeMenu()">Quiz</a></li>
+    <li><a href="#contato" onclick="closeMenu()">Contato</a></li>
+  </ul>
+  <div class="nav-burger" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <div class="section-inner">
+    <div class="hero-tag">🐟 Bem-vindo ao cardume</div>
+    <h1 class="hero-title">
+      <span class="line1">Onboarding</span>
+      <span class="line2">Ágil</span>
+    </h1>
+    <p class="hero-sub">O despertar do ágil no Digital Hering. Você acaba de entrar num cardume de talentos icônicos.</p>
+    <a href="#mindset" class="hero-cta">Mergulhar ↓</a>
+
+    <div class="hero-cards">
+      <div class="hero-card" data-tip="Times multidisciplinares e autônomos">
+        <div class="num">
+          <svg viewBox="0 0 44 22" width="44" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="2" y1="11" x2="42" y2="11" stroke="#7ec8e3" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="10" y1="11" x2="4" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="10" y1="11" x2="4" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="18" y1="11" x2="12" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="18" y1="11" x2="12" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="26" y1="11" x2="20" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="26" y1="11" x2="20" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="34" y1="11" x2="28" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="34" y1="11" x2="28" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <polygon points="38,6 44,11 38,16" fill="#7ec8e3"/>
+          </svg>
+        </div>
+        <div class="label">Squads</div>
+      </div>
+      <div class="hero-card" data-tip="Ciclos curtos de entrega e aprendizado">
+        <div class="num">
+          <!-- Runner SVG: clean stick figure in motion -->
+          <svg viewBox="0 0 38 42" width="38" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- head -->
+            <circle cx="26" cy="5" r="4" stroke="#7ec8e3" stroke-width="2"/>
+            <!-- body leaning forward -->
+            <line x1="26" y1="9" x2="20" y2="22" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <!-- back arm up -->
+            <line x1="24" y1="14" x2="32" y2="9" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <!-- front arm forward -->
+            <line x1="22" y1="16" x2="13" y2="20" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <!-- front leg forward -->
+            <line x1="20" y1="22" x2="12" y2="32" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="32" x2="6" y2="40" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <!-- back leg pushing -->
+            <line x1="20" y1="22" x2="26" y2="34" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="26" y1="34" x2="34" y2="38" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <!-- motion lines -->
+            <line x1="2" y1="20" x2="10" y2="20" stroke="#7ec8e3" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+            <line x1="1" y1="25" x2="7" y2="25" stroke="#7ec8e3" stroke-width="1" stroke-linecap="round" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="label">Sprints</div>
+      </div>
+      <div class="hero-card" data-tip="Objetivos e Resultados-Chave">
+        <div class="num" style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent)">OKR</div>
+        <div class="label">Estratégia</div>
+      </div>
+      <div class="hero-card" data-tip="Modelo de organização em tribos e squads">
+        <div class="num">
+          <svg viewBox="0 0 40 36" width="40" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="20" cy="8" r="4" stroke="#7ec8e3" stroke-width="2"/>
+            <circle cx="8" cy="28" r="3.5" stroke="#7ec8e3" stroke-width="2"/>
+            <circle cx="20" cy="28" r="3.5" stroke="#7ec8e3" stroke-width="2"/>
+            <circle cx="32" cy="28" r="3.5" stroke="#7ec8e3" stroke-width="2"/>
+            <line x1="20" y1="12" x2="8" y2="24.5" stroke="#7ec8e3" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="20" y1="12" x2="20" y2="24.5" stroke="#7ec8e3" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="20" y1="12" x2="32" y2="24.5" stroke="#7ec8e3" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="label">Spotify Model</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-scroll">
+    <svg class="scroll-bubble-svg" viewBox="0 0 28 48" width="28" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="26" height="40" rx="13" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+      <circle class="scroll-dot" cx="14" cy="10" r="4" fill="rgba(126,200,227,0.8)"/>
+      <path d="M9 44 L14 48 L19 44" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <span>scroll</span>
+  </div>
+</section>
+
+<!-- ─── MINDSET ÁGIL ─── -->
+<section id="mindset">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">🧠 Cultura</span>
+      <h2 class="section-title">Mindset Ágil</h2>
+      <p class="section-desc">Não é sobre ferramentas. É sobre uma forma de pensar, colaborar e entregar valor continuamente.</p>
+    </div>
+
+    <div class="mindset-grid reveal">
+      <div class="mindset-item" data-tip="Times com diferentes especialidades trabalhando juntos">
+        <div class="mindset-icon">🤝</div>
+        <div class="mindset-title">Time Multidisciplinar</div>
+        <div class="mindset-desc">Colaboração entre diferentes especialidades para criar soluções completas</div>
+      </div>
+      <div class="mindset-item" data-tip="Entregas que funcionam de verdade para o cliente">
+        <div class="mindset-icon">📦</div>
+        <div class="mindset-title">Entregas Funcionais</div>
+        <div class="mindset-desc">Soluções prontas para uso, não apenas entregues no papel</div>
+      </div>
+      <div class="mindset-item" data-tip="Ambiente de segurança psicológica e confiança">
+        <div class="mindset-icon">🌱</div>
+        <div class="mindset-title">Motivação</div>
+        <div class="mindset-desc">Ambiente propício com confiança para o melhor trabalho surgir</div>
+      </div>
+      <div class="mindset-item" data-tip="Times que se organizam de forma autônoma">
+        <div class="mindset-icon">⚡</div>
+        <div class="mindset-title">Autonomia</div>
+        <div class="mindset-desc">Times autogerenciáveis com liberdade e responsabilidade nas decisões</div>
+      </div>
+      <div class="mindset-item" data-tip="Inovação como transformação criativa e evolução diária">
+        <div class="mindset-icon">💡</div>
+        <div class="mindset-title">Inovação</div>
+        <div class="mindset-desc">Transformação criativa e evolução diária no que entregamos</div>
+      </div>
+      <div class="mindset-item" data-tip="Busca constante por otimização">
+        <div class="mindset-icon">🔄</div>
+        <div class="mindset-title">Melhoria Contínua</div>
+        <div class="mindset-desc">Reflexão e otimização constantes em cada ciclo de trabalho</div>
+      </div>
+      <div class="mindset-item" data-tip="Qualidade técnica em tudo que entregamos">
+        <div class="mindset-icon">💎</div>
+        <div class="mindset-title">Excelência</div>
+        <div class="mindset-desc">Qualidade técnica e bom design em cada entrega</div>
+      </div>
+      <div class="mindset-item" data-tip="Fazer somente o que gera valor real">
+        <div class="mindset-icon">✂️</div>
+        <div class="mindset-title">Simplicidade</div>
+        <div class="mindset-desc">Fazer somente o essencial — eliminar desperdícios</div>
+      </div>
+      <div class="mindset-item" data-tip="Resposta rápida às mudanças de mercado e negócio">
+        <div class="mindset-icon">🌊</div>
+        <div class="mindset-title">Resposta à Mudança</div>
+        <div class="mindset-desc">Adaptabilidade e prontidão para pivotarmos quando necessário</div>
+      </div>
+      <div class="mindset-item" data-tip="Cliente como centro de toda decisão">
+        <div class="mindset-icon">❤️</div>
+        <div class="mindset-title">Cliente em Primeiro Lugar</div>
+        <div class="mindset-desc">Foco no produto e na jornada 360° do cliente</div>
+      </div>
+      <div class="mindset-item" data-tip="Decisões baseadas em dados e métricas">
+        <div class="mindset-icon">📊</div>
+        <div class="mindset-title">Foco em Dados</div>
+        <div class="mindset-desc">Decisões conscientes e embasadas, não achismos</div>
+      </div>
+      <div class="mindset-item" data-tip="Conexões inteligentes entre times e áreas">
+        <div class="mindset-icon">🕸️</div>
+        <div class="mindset-title">Visão em Rede</div>
+        <div class="mindset-desc">Conexões inteligentes que potencializam o resultado coletivo</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── VUCA + PDCA ─── -->
+<section id="contexto">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">🌊 Contexto</span>
+      <h2 class="section-title">Mundo VUCA<br>e Ciclo PDCA</h2>
+      <p class="section-desc">O mundo mudou. Vivemos em constante incerteza — e o ágil nasceu exatamente para navegar nesse mar agitado.</p>
+    </div>
+
+    <div class="two-col reveal">
+      <div class="glass-card">
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:20px;color:var(--accent)">🌀 VUCA</h3>
+        <ul class="vuca-list">
+          <li>
+            <div class="letter-badge">V</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Volatilidade</strong>
+              <span style="font-size:13px;color:var(--white-60)">Mudanças rápidas e imprevisíveis em todas as direções</span>
+            </div>
+          </li>
+          <li>
+            <div class="letter-badge">U</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Uncertainty</strong>
+              <span style="font-size:13px;color:var(--white-60)">Falta de clareza sobre o presente e o futuro</span>
+            </div>
+          </li>
+          <li>
+            <div class="letter-badge">C</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Complexidade</strong>
+              <span style="font-size:13px;color:var(--white-60)">Múltiplos fatores interconectados e difíceis de compreender</span>
+            </div>
+          </li>
+          <li>
+            <div class="letter-badge">A</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Ambiguidade</strong>
+              <span style="font-size:13px;color:var(--white-60)">Falta de precedentes e respostas claras</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="glass-card">
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:20px;color:var(--accent)">🔁 PDCA — Testar e Adaptar</h3>
+        <ul class="pdca-list">
+          <li>
+            <div class="letter-badge pdca">P</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Plan — Planejar</strong>
+              <span style="font-size:13px;color:var(--white-60)">Definir objetivos e como alcançá-los</span>
+            </div>
+          </li>
+          <li>
+            <div class="letter-badge pdca">D</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Do — Fazer</strong>
+              <span style="font-size:13px;color:var(--white-60)">Executar o plano, testar hipóteses</span>
+            </div>
+          </li>
+          <li>
+            <div class="letter-badge pdca">C</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Check — Checar</strong>
+              <span style="font-size:13px;color:var(--white-60)">Medir resultados e analisar os dados</span>
+            </div>
+          </li>
+          <li>
+            <div class="letter-badge pdca">A</div>
+            <div>
+              <strong style="display:block;margin-bottom:4px;font-weight:600">Act — Adaptar</strong>
+              <span style="font-size:13px;color:var(--white-60)">Corrigir, melhorar e recomeçar o ciclo</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SQUADS / SPOTIFY MODEL ─── -->
+<section id="squads">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">🎵 Spotify Model</span>
+      <h2 class="section-title">Squads &<br>Tribos</h2>
+      <p class="section-desc">O Digital Hering se organiza como um cardume: times autônomos que nadam juntos em direção ao mesmo objetivo.</p>
+    </div>
+
+    <!-- Org Chart -->
+    <div class="org-chart reveal">
+
+      <!-- Gerente Digital only at top -->
+      <div class="org-level">
+        <div class="org-node white-node">
+          <div class="org-role">Gerente Digital</div>
+          <div class="org-name">Rafael Passos</div>
+        </div>
+      </div>
+
+      <div class="org-connector-main"></div>
+
+      <!-- Gerências -->
+      <div class="org-level org-gerencias">
+        <div class="org-node blue-node">
+          <div class="org-role">Gerência E-commerce</div>
+          <div class="org-name">Paula Nobrega</div>
+        </div>
+        <div class="org-node green-node">
+          <div class="org-role">Gerência Mkt Performance</div>
+          <div class="org-name">Thais Matoso</div>
+        </div>
+        <div class="org-node red-node">
+          <div class="org-role">Gerência CX</div>
+          <div class="org-name">Rafaela Vieira</div>
+        </div>
+      </div>
+
+      <div class="org-connector-main"></div>
+
+      <!-- Squads: 4 columns -->
+      <div class="squads-full-grid">
+
+        <div class="squad-col">
+          <div class="squad-col-label blue-label">E-commerce</div>
+          <div class="squad-full-card blue-card">
+            <div class="sq-icon">🛒</div>
+            <div class="sq-name">Hering Comercial Site</div>
+            <div class="sq-po">PO · Gabriela Antoniassi</div>
+          </div>
+          <div class="squad-full-card blue-card">
+            <div class="sq-icon">📱</div>
+            <div class="sq-name">Hering APP</div>
+            <div class="sq-po">PO · Lucas Bezerra</div>
+          </div>
+          <div class="squad-full-card blue-card">
+            <div class="sq-icon">🏪</div>
+            <div class="sq-name">Hering Marketplace</div>
+            <div class="sq-po">PO · Mariana Cavalcante</div>
+          </div>
+          <div class="squad-full-card blue-card">
+            <div class="sq-icon">🏷️</div>
+            <div class="sq-name">Outlet Comercial</div>
+            <div class="sq-po">PO · Rafael Vilela</div>
+          </div>
+        </div>
+
+        <div class="squad-col">
+          <div class="squad-col-label green-label">Mkt Performance</div>
+          <div class="squad-full-card green-card">
+            <div class="sq-icon">📣</div>
+            <div class="sq-name">Marketing de Performance</div>
+            <div class="sq-po">PO · Beatriz Rogério</div>
+            <div class="sq-note">Mídia paga — atende Hering e Outlet</div>
+          </div>
+          <div class="squad-full-card green-card">
+            <div class="sq-icon">🎨</div>
+            <div class="sq-name">Hering Criação</div>
+            <div class="sq-po">PO · Rodrigo Siconha</div>
+          </div>
+        </div>
+
+        <div class="squad-col">
+          <div class="squad-col-label red-label">CX</div>
+          <div class="squad-full-card red-card">
+            <div class="sq-icon">💬</div>
+            <div class="sq-name">Atendimento</div>
+            <div class="sq-po">Greice Alves</div>
+          </div>
+          <div class="squad-full-card red-card">
+            <div class="sq-icon">⚙️</div>
+            <div class="sq-name">Backoffice</div>
+            <div class="sq-po">Allan Dickmann</div>
+          </div>
+          <div class="squad-full-card red-card">
+            <div class="sq-icon">🔗</div>
+            <div class="sq-name">Omnichannel</div>
+            <div class="sq-po">Karla Santos</div>
+          </div>
+        </div>
+
+        <div class="squad-col">
+          <div class="squad-col-label white-label">Digital</div>
+          <div class="squad-full-card white-data-card">
+            <div class="sq-icon">📊</div>
+            <div class="sq-name">Dados</div>
+            <div class="sq-po">PO · André Andreeta</div>
+          </div>
+          <div class="squad-full-card agilista-card">
+            <div class="sq-icon">🐟</div>
+            <div class="sq-name">Agilista</div>
+            <div class="sq-po">Caio Soares</div>
+            <div class="sq-note">Navega entre todos os times</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Stakeholders Map -->
+    <div class="reveal" style="margin-top:64px">
+      <h3 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:8px">🌐 Stakeholders</h3>
+      <p style="font-size:14px;color:var(--white-60);margin-bottom:24px">O Digital não nada sozinho — veja quem orbita ao nosso redor.</p>
+
+      <div class="stake-ocean">
+        <!-- Ambient particles -->
+        <div class="stake-bubble" style="left:10%;animation-delay:0s;animation-duration:7s;width:5px;height:5px"></div>
+        <div class="stake-bubble" style="left:30%;animation-delay:2s;animation-duration:9s;width:3px;height:3px"></div>
+        <div class="stake-bubble" style="left:55%;animation-delay:4s;animation-duration:6s;width:4px;height:4px"></div>
+        <div class="stake-bubble" style="left:75%;animation-delay:1s;animation-duration:8s;width:6px;height:6px"></div>
+        <div class="stake-bubble" style="left:88%;animation-delay:3s;animation-duration:10s;width:3px;height:3px"></div>
+
+        <!-- CENTER CARDUME -->
+        <div class="stake-center-wrap">
+          <div class="stake-ring stake-ring-1"></div>
+          <div class="stake-ring stake-ring-2"></div>
+          <div class="stake-core">
+            <svg viewBox="0 0 80 40" width="60" height="30">
+              <!-- mini fish school -->
+              <g fill="rgba(180,220,255,0.9)">
+                <ellipse cx="20" cy="20" rx="9" ry="5"/><polygon points="29,15 36,20 29,25"/>
+                <ellipse cx="42" cy="14" rx="7" ry="4"/><polygon points="49,10 55,14 49,18"/>
+                <ellipse cx="44" cy="27" rx="7" ry="4"/><polygon points="51,23 57,27 51,31"/>
+                <ellipse cx="62" cy="20" rx="6" ry="3.5"/><polygon points="68,17 73,20 68,23"/>
+              </g>
+            </svg>
+            <div class="stake-core-label">DIGITAL</div>
+          </div>
+        </div>
+
+        <!-- FISH NODES — each a named fish swimming around -->
+        <!-- CRM -->
+        <div class="fish-orbit" style="--orbit-r:220px;--orbit-dur:18s;--orbit-start:0deg;--fish-color:#4a9fd4">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">CRM</span>
+          </div>
+        </div>
+
+        <!-- Merchan -->
+        <div class="fish-orbit" style="--orbit-r:200px;--orbit-dur:22s;--orbit-start:45deg;--fish-color:#7ec8e3">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">Merchan</span>
+          </div>
+        </div>
+
+        <!-- Marca -->
+        <div class="fish-orbit" style="--orbit-r:235px;--orbit-dur:26s;--orbit-start:90deg;--fish-color:#5ba8d0">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">Marca</span>
+          </div>
+        </div>
+
+        <!-- G&G -->
+        <div class="fish-orbit" style="--orbit-r:210px;--orbit-dur:20s;--orbit-start:135deg;--fish-color:#a8d8ea">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">G&amp;G</span>
+          </div>
+        </div>
+
+        <!-- Planejamento -->
+        <div class="fish-orbit" style="--orbit-r:245px;--orbit-dur:30s;--orbit-start:180deg;--fish-color:#3d8fb5">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="36" height="18">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">Planejamento</span>
+          </div>
+        </div>
+
+        <!-- CD -->
+        <div class="fish-orbit" style="--orbit-r:205px;--orbit-dur:16s;--orbit-start:225deg;--fish-color:#6ab4d0">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="28" height="14">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">CD</span>
+          </div>
+        </div>
+
+        <!-- TI -->
+        <div class="fish-orbit" style="--orbit-r:225px;--orbit-dur:24s;--orbit-start:270deg;--fish-color:#88c8e0">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="28" height="14">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">TI</span>
+          </div>
+        </div>
+
+        <!-- Canais -->
+        <div class="fish-orbit" style="--orbit-r:215px;--orbit-dur:28s;--orbit-start:315deg;--fish-color:#5fb8d8">
+          <div class="fish-node">
+            <svg class="fish-svg" viewBox="0 0 52 26" width="30" height="15">
+              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
+              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
+              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+            </svg>
+            <span class="fish-label">Canais</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Squad culture -->
+    <div class="reveal" style="margin-top:48px">
+      <h3 style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:16px;color:var(--white-60);text-transform:uppercase;letter-spacing:0.08em;font-size:12px">O que squads trazem para o Digital</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        <div style="background:rgba(37,99,201,0.12);border:1px solid rgba(37,99,201,0.25);border-radius:12px;padding:18px 16px;display:flex;align-items:flex-start;gap:12px">
+          <span style="font-size:1.3rem">🤝</span>
+          <div>
+            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-pale);margin-bottom:4px;font-weight:700">Senso de comunidade</div>
+            <div style="font-size:12px;color:var(--white-60);line-height:1.5">Pertencimento e identidade coletiva dentro do time</div>
+          </div>
+        </div>
+        <div style="background:rgba(37,99,201,0.12);border:1px solid rgba(37,99,201,0.25);border-radius:12px;padding:18px 16px;display:flex;align-items:flex-start;gap:12px">
+          <span style="font-size:1.3rem">🔄</span>
+          <div>
+            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-pale);margin-bottom:4px;font-weight:700">Alinhamento constante</div>
+            <div style="font-size:12px;color:var(--white-60);line-height:1.5">Rituais que mantêm todos na mesma direção</div>
+          </div>
+        </div>
+        <div style="background:rgba(37,99,201,0.12);border:1px solid rgba(37,99,201,0.25);border-radius:12px;padding:18px 16px;display:flex;align-items:flex-start;gap:12px">
+          <span style="font-size:1.3rem">🚀</span>
+          <div>
+            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-pale);margin-bottom:4px;font-weight:700">Autonomia real</div>
+            <div style="font-size:12px;color:var(--white-60);line-height:1.5">Decisões mais rápidas, sem filas de aprovação</div>
+          </div>
+        </div>
+        <div style="background:rgba(126,200,227,0.08);border:1px solid rgba(126,200,227,0.2);border-radius:12px;padding:18px 16px;display:flex;align-items:flex-start;gap:12px">
+          <span style="font-size:1.3rem">🐟</span>
+          <div>
+            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;font-weight:700">Pensamento em rede</div>
+            <div style="font-size:12px;color:var(--white-60);line-height:1.5">Cada squad conectado ao propósito maior do Digital</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TRÍADE ÁGIL ─── -->
+<section id="triade">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">🔱 Estrutura</span>
+      <h2 class="section-title">A Tríade Ágil</h2>
+      <p class="section-desc">Três pilares que sustentam tudo que fazemos no Digital Hering.</p>
+    </div>
+
+    <div class="triade-grid reveal">
+      <div class="triade-card">
+        <div class="triade-icon">🎯</div>
+        <h3>OKRs</h3>
+        <p>O que faremos? Define a direção estratégica e os resultados que queremos alcançar como time.</p>
+      </div>
+      <div class="triade-card">
+        <div class="triade-icon">⚙️</div>
+        <h3>Scrum</h3>
+        <p>Como faremos? O framework que organiza o trabalho em ciclos curtos de entrega e aprendizado.</p>
+      </div>
+      <div class="triade-card">
+        <div class="triade-icon">🐟</div>
+        <h3>Squads</h3>
+        <p>Com quem faremos? Times multidisciplinares, autônomos e focados em entregar valor real.</p>
+      </div>
+    </div>
+
+      <div class="reveal" style="margin-top:60px">
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:8px">Flight Levels</h3>
+        <p style="font-size:14px;color:var(--white-60);margin-bottom:28px">Como os diferentes níveis se conectam e se alinham — como camadas do oceano.</p>
+
+        <div class="ocean-levels">
+
+          <!-- Nível 1: Superfície — luz intensa -->
+          <div class="ocean-level surface-level">
+            <div class="ocean-level-left">
+              <div class="ocean-depth-label">☀️ Superfície</div>
+              <div class="ocean-level-name">Estratégico</div>
+              <div class="ocean-level-sub">Diretoria</div>
+              <div class="ocean-depth-species">🦅 Águia — visão ampla</div>
+            </div>
+            <div class="ocean-level-right">
+              <p>Alinhamento estratégico e feedbacks de resultados. Onde as grandes apostas são definidas e a direção do cardume é traçada.</p>
+            </div>
+          </div>
+
+          <!-- Arrow + depth change -->
+          <div class="ocean-descent">
+            <svg viewBox="0 0 40 28" width="40" height="28" fill="none">
+              <line x1="20" y1="0" x2="20" y2="20" stroke="rgba(126,200,227,0.3)" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <path d="M13 16 L20 24 L27 16" stroke="rgba(126,200,227,0.35)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>mergulhando mais fundo</span>
+          </div>
+
+          <!-- Nível 2: Meio — luz filtrada, turva -->
+          <div class="ocean-level mid-level">
+            <div class="ocean-level-left">
+              <div class="ocean-depth-label">🌊 Meio-fundo</div>
+              <div class="ocean-level-name">Tático</div>
+              <div class="ocean-level-sub">Gerência</div>
+              <div class="ocean-depth-species">🐬 Golfinho — ágil e coordenado</div>
+            </div>
+            <div class="ocean-level-right">
+              <p><strong style="color:var(--accent)">OKRs</strong> — Direcionais técnicos e alinhamento dos times. Traduz estratégia em objetivos mensuráveis e alcançáveis.</p>
+            </div>
+          </div>
+
+          <div class="ocean-descent">
+            <svg viewBox="0 0 40 28" width="40" height="28" fill="none">
+              <line x1="20" y1="0" x2="20" y2="20" stroke="rgba(126,200,227,0.2)" stroke-width="1.5" stroke-dasharray="3 3"/>
+              <path d="M13 16 L20 24 L27 16" stroke="rgba(126,200,227,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>mergulhando mais fundo</span>
+          </div>
+
+          <!-- Nível 3: Fundo — escuro, luminescente -->
+          <div class="ocean-level deep-level">
+            <div class="ocean-level-left">
+              <div class="ocean-depth-label">🌑 Fundo</div>
+              <div class="ocean-level-name">Operacional</div>
+              <div class="ocean-level-sub">Squads</div>
+              <div class="ocean-depth-species">🐡 Cardume — onde acontece</div>
+            </div>
+            <div class="ocean-level-right">
+              <p>Execução, entregas e melhoria contínua. Onde o produto acontece de fato — aqui é onde o valor real é criado e entregue.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+  </div>
+</section>
+
+<!-- ─── OKRs ─── -->
+<section id="okrs">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">🎯 Estratégia</span>
+      <h2 class="section-title">OKRs</h2>
+      <p class="section-desc">Objectives & Key Results. A forma como traduzimos a visão em metas claras, mensuráveis e inspiradoras.</p>
+    </div>
+
+    <div class="okr-flow reveal">
+      <div class="okr-card">
+        <div class="okr-label">O · Objective</div>
+        <h4>O que queremos alcançar?</h4>
+        <ul>
+          <li>Qualitativo e inspirador</li>
+          <li>Ligado às metas do negócio</li>
+          <li>Gera desejo e direção</li>
+        </ul>
+        <div class="okr-example">Ex: "Gerar desejo através do Digital"</div>
+      </div>
+
+      <div class="okr-card">
+        <div class="okr-label">KR · Key Results</div>
+        <h4>Como medimos o progresso?</h4>
+        <ul>
+          <li>Quantitativo e SMART</li>
+          <li>2 a 5 KRs por objetivo</li>
+          <li>Específico + com prazo</li>
+        </ul>
+        <div class="okr-example">Ex: "Adquirir 400 mil clientes na rede"</div>
+      </div>
+
+      <div class="okr-card">
+        <div class="okr-label">I · Iniciativas</div>
+        <h4>O que vamos fazer?</h4>
+        <ul>
+          <li>Ações para atingir os KRs</li>
+          <li>Priorizadas pelo impacto</li>
+          <li>Tangíveis e executáveis</li>
+        </ul>
+        <div class="okr-example">Ex: "Trocar todos os banners do site Hering"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SCRUM ─── -->
+<section id="scrum">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">⚙️ Framework</span>
+      <h2 class="section-title">Scrum &<br>Sprint</h2>
+      <p class="section-desc">O ciclo que transforma backlog em produto. Curto, iterativo e com aprendizado embutido.</p>
+    </div>
+
+    <div class="reveal" style="margin-top:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+        <div class="glass-card">
+          <h4 style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:12px">📋 Backlog</h4>
+          <p style="font-size:14px;color:var(--white-60);line-height:1.6">Repositório de tudo que pode ser feito. Priorizado constantemente pelo PO com base em valor para o negócio e cliente.</p>
+        </div>
+        <div class="glass-card">
+          <h4 style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:12px">🎯 Sprint Backlog</h4>
+          <p style="font-size:14px;color:var(--white-60);line-height:1.6">O que o time se comprometeu a entregar nessa sprint. Definido na Planning, executado e revisado ao longo de 2 semanas.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="scrum-cycle reveal">
+      <div class="scrum-step">
+        <div class="step-num">1</div>
+        <div class="step-icon">📋</div>
+        <h4>Planning</h4>
+        <p>Prioriza e planeja o que será feito na sprint. Time define o compromisso e o Sprint Goal.</p>
+      </div>
+      <div class="scrum-step">
+        <div class="step-num">2</div>
+        <div class="step-icon">☀️</div>
+        <h4>Daily</h4>
+        <p>15 min diários. O que fiz? O que vou fazer? Tem impedimento? Levanta bloqueios cedo.</p>
+      </div>
+      <div class="scrum-step">
+        <div class="step-num">3</div>
+        <div class="step-icon">🔍</div>
+        <h4>Review</h4>
+        <p>Revisa o QUÊ foi entregue. Demonstra o produto para stakeholders e coleta feedback.</p>
+      </div>
+      <div class="scrum-step">
+        <div class="step-num">4</div>
+        <div class="step-icon">🔄</div>
+        <h4>Retrospective</h4>
+        <p>Revisa COMO foi o processo. Time reflete sobre o que melhorar para a próxima sprint.</p>
+      </div>
+
+      <div style="width:100%;text-align:center">
+        <div class="sprint-badge">
+          🌊 Sprint = 1 ou 2 semanas de ciclo completo
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── RITUAIS ─── -->
+<section id="rituais">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">📅 Agenda</span>
+      <h2 class="section-title">Rituais do<br>Digital</h2>
+      <p class="section-desc">Momentos coletivos que constroem cultura, alinhamento e pertencimento no nosso cardume.</p>
+    </div>
+
+    <div class="rituais-grid reveal">
+      <div class="ritual-card">
+        <div class="ri-icon">📆</div>
+        <h4>Weeklyzona</h4>
+        <p>Alinhamento semanal da zona do Digital. Visibilidade do que está acontecendo em cada squad.</p>
+        <div class="ritual-badge">Semanal</div>
+      </div>
+      <div class="ritual-card">
+        <div class="ri-icon">⚔️</div>
+        <h4>War Room BF</h4>
+        <p>Sala de guerra para Black Friday e grandes datas. Foco total em performance e resolução rápida.</p>
+        <div class="ritual-badge">Sazonais</div>
+      </div>
+      <div class="ritual-card">
+        <div class="ri-icon">🎯</div>
+        <h4>Big Review Digital</h4>
+        <p>Review ampliada do Digital. Apresentação de resultados e entregas para todo o time e liderança.</p>
+        <div class="ritual-badge">Quinzenal</div>
+      </div>
+      <div class="ritual-card">
+        <div class="ri-icon">🐟</div>
+        <h4>Cardume Digital</h4>
+        <p>Nosso all hands trimestral. Highlights do tri, aprendizados e próximos passos para todo o cardume.</p>
+        <div class="ritual-badge">Trimestral</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CULTURA / BU ─── -->
+<section id="cultura">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">🌐 Valores</span>
+      <h2 class="section-title">Conexão<br>com a BU</h2>
+      <p class="section-desc">O Digital não nada sozinho. Nossa cultura reflete os valores da Hering e do cardume como um todo.</p>
+    </div>
+
+    <div class="cultura-grid reveal">
+      <div class="cultura-item">
+        <div class="ci-icon">🌐</div>
+        <div>
+          <strong>Pensamento e Ação em Rede</strong>
+          <span>Colaboração entre times, áreas e unidades</span>
+        </div>
+      </div>
+      <div class="cultura-item">
+        <div class="ci-icon">🤝</div>
+        <div>
+          <strong>Colaboração</strong>
+          <span>Juntos chegamos mais longe e mais rápido</span>
+        </div>
+      </div>
+      <div class="cultura-item">
+        <div class="ci-icon">🎯</div>
+        <div>
+          <strong>Escolhas Conscientes</strong>
+          <span>Simplicidade como princípio de decisão</span>
+        </div>
+      </div>
+      <div class="cultura-item">
+        <div class="ci-icon">🐟</div>
+        <div>
+          <strong>Conexão com quem somos</strong>
+          <span>Motivação autêntica e propósito compartilhado</span>
+        </div>
+      </div>
+      <div class="cultura-item">
+        <div class="ci-icon">🚀</div>
+        <div>
+          <strong>Entrega com Alta Performance</strong>
+          <span>Excelência técnica e foco no resultado</span>
+        </div>
+      </div>
+      <div class="cultura-item">
+        <div class="ci-icon">⭐</div>
+        <div>
+          <strong>Protagonistas na Evolução</strong>
+          <span>Autonomia para transformar e inovar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── QUIZ ─── -->
+<section id="quiz">
+  <div class="section-inner">
+    <div style="text-align:center" class="reveal">
+      <span class="section-tag">🧩 Interativo</span>
+      <h2 class="section-title">Quiz Ágil</h2>
+      <p class="section-desc">Testa o que você aprendeu! Sem pressão — é só para fixar o conteúdo.</p>
+    </div>
+
+    <div class="quiz-box reveal" id="quizBox">
+      <div class="quiz-progress">
+        <div class="quiz-progress-bar" id="quizBar" style="width:0%"></div>
+      </div>
+      <div class="quiz-score" id="quizScore">Pergunta 1 de 6</div>
+      <div class="quiz-question" id="quizQuestion"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <div class="quiz-nav">
+        <span id="quizPoints" style="font-family:'Syne',sans-serif;font-size:13px;color:var(--accent)">✦ 0 pts</span>
+        <button class="btn" id="quizNext" onclick="nextQuestion()" style="display:none">Próxima →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CONTATO ─── -->
+<section id="contato">
+  <div class="section-inner">
+    <div style="text-align:center" class="reveal">
+      <span class="section-tag">👋 Agilista</span>
+      <h2 class="section-title">Fala comigo!</h2>
+      <p class="section-desc">Dúvidas, ideias ou só um oi — o Agilista está aqui para facilitar sua jornada no cardume.</p>
+    </div>
+
+    <div class="contact-card reveal">
+      <div class="avatar-ring">🐟</div>
+      <div class="contact-name">Caio Soares</div>
+      <div class="contact-role">Agilista · Digital Hering · Soteropolitano</div>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px">
+        <span style="background:rgba(126,200,227,0.1);border:1px solid rgba(126,200,227,0.2);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--accent)">Esportes ❤️</span>
+        <span style="background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--white-60)">Salvador BA</span>
+      </div>
+
+      <div class="contact-links">
+        <a class="contact-link" href="mailto:caio.soares@ciahering.com.br">
+          <span class="cl-icon">✉️</span>
+          caio.soares@ciahering.com.br
+        </a>
+        <a class="contact-link" href="tel:+5571984760129">
+          <span class="cl-icon">📱</span>
+          71 98476-0129
+        </a>
+      </div>
+
+      <div style="margin-top:28px;padding-top:24px;border-top:1px solid var(--white-10);text-align:center">
+        <p style="font-size:13px;color:var(--white-60);font-style:italic">"Somos um cardume de talentos icônicos."</p>
+        <p style="font-size:11px;color:var(--white-30);margin-top:8px">— Digital Hering</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ─── OCEAN BACKGROUND ───
+(function() {
+  const bg = document.getElementById('oceanBg');
+
+  // Bubbles
+  for (let i = 0; i < 20; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = Math.random() * 30 + 8;
+    b.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      animation-duration:${Math.random()*20+15}s;
+      animation-delay:${Math.random()*-20}s;
+    `;
+    bg.appendChild(b);
+  }
+
+  // Fish SVGs
+  const fishSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white">
+    <ellipse cx="25" cy="15" rx="18" ry="10"/>
+    <polygon points="43,5 60,15 43,25"/>
+    <circle cx="12" cy="12" r="2.5" fill="#0a1628"/>
+  </svg>`;
+
+  for (let i = 0; i < 8; i++) {
+    const f = document.createElement('div');
+    f.className = 'fish-float';
+    const scale = Math.random() * 0.6 + 0.4;
+    f.style.cssText = `
+      top:${Math.random()*90}%;
+      width:${60*scale}px;
+      animation-duration:${Math.random()*30+25}s;
+      animation-delay:${Math.random()*-30}s;
+    `;
+    f.innerHTML = fishSvg;
+    bg.appendChild(f);
+  }
+})();
+
+// ─── SCROLL PROGRESS ───
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (window.scrollY / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('read-progress').style.width = pct + '%';
+});
+
+// ─── REVEAL ON SCROLL ───
+const reveals = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), 80);
+      obs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+reveals.forEach(r => obs.observe(r));
+
+// ─── ACTIVE NAV ───
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+const navObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-40% 0px -40% 0px' });
+sections.forEach(s => navObs.observe(s));
+
+// ─── MOBILE MENU ───
+function toggleMenu() {
+  document.getElementById('navLinks').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('navLinks').classList.remove('open');
+}
+
+// ─── QUIZ ───
+const questions = [
+  {
+    q: "O que significa a sigla VUCA?",
+    opts: [
+      "Velocidade, Urgência, Controle, Agilidade",
+      "Volatilidade, Incerteza, Complexidade e Ambiguidade",
+      "Visão, Unificação, Criação e Ação",
+      "Volume, Urgência, Clareza, Alcance"
+    ],
+    correct: 1,
+    exp: "VUCA descreve o mundo atual: Volátil (mudanças rápidas), Incerto (falta de clareza), Complexo (múltiplos fatores) e Ambíguo (sem precedentes claros)."
+  },
+  {
+    q: "No Scrum, qual cerimônia revisa O QUÊ foi entregue na sprint?",
+    opts: ["Retrospective", "Daily", "Planning", "Review"],
+    correct: 3,
+    exp: "A Review foca no produto entregue. A Retrospective foca no processo — como o time trabalhou."
+  },
+  {
+    q: "No modelo OKR, para cada Objetivo é recomendado ter quantos Key Results?",
+    opts: ["1 a 2", "2 a 5", "5 a 10", "Sem limite definido"],
+    correct: 1,
+    exp: "A boa prática é ter entre 2 e 5 KRs por objetivo. Poucos perdem foco; muitos diluem energia."
+  },
+  {
+    q: "O que é um Squad no modelo Spotify?",
+    opts: [
+      "Um grupo de gerentes que tomam decisões estratégicas",
+      "Uma comunidade de prática entre especialistas de mesma área",
+      "Um time multidisciplinar, autônomo e focado em um produto ou área",
+      "Um comitê de aprovação de projetos"
+    ],
+    correct: 2,
+    exp: "Squads são pequenos times autônomos com todas as competências para entregar valor de ponta a ponta."
+  },
+  {
+    q: "No PDCA, qual é o papel da etapa 'Act'?",
+    opts: [
+      "Definir metas e objetivos",
+      "Executar o plano definido",
+      "Medir e analisar os resultados",
+      "Corrigir, ajustar e recomeçar o ciclo"
+    ],
+    correct: 3,
+    exp: "Act é sobre agir com base no que foi aprendido — ajustar o processo e reiniciar o ciclo de melhoria."
+  },
+  {
+    q: "O que é a Daily no Scrum?",
+    opts: [
+      "Reunião de planejamento da sprint, dura o dia todo",
+      "Reunião diária de ~15 min para alinhar impedimentos e progresso",
+      "Revisão mensal dos OKRs do time",
+      "Apresentação de resultados para stakeholders"
+    ],
+    correct: 1,
+    exp: "Daily = 15 minutos todo dia. Três perguntas: O que fiz? O que farei? Tenho impedimento?"
+  }
+];
+
+let qIdx = 0;
+let score = 0;
+let answered = false;
+
+function renderQuestion() {
+  const q = questions[qIdx];
+  document.getElementById('quizScore').textContent = `Pergunta ${qIdx+1} de ${questions.length}`;
+  document.getElementById('quizBar').style.width = `${(qIdx/questions.length)*100}%`;
+  document.getElementById('quizQuestion').textContent = q.q;
+  document.getElementById('quizFeedback').className = 'quiz-feedback';
+  document.getElementById('quizFeedback').textContent = '';
+  document.getElementById('quizNext').style.display = 'none';
+  answered = false;
+
+  const optsEl = document.getElementById('quizOptions');
+  optsEl.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt';
+    btn.setAttribute('data-letter', letters[i]);
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    optsEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[qIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.disabled = true);
+
+  const fb = document.getElementById('quizFeedback');
+  if (idx === q.correct) {
+    opts[idx].classList.add('correct');
+    fb.textContent = '✓ Correto! ' + q.exp;
+    fb.className = 'quiz-feedback show ok';
+    score++;
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.correct].classList.add('correct');
+    fb.textContent = '✗ Quase! ' + q.exp;
+    fb.className = 'quiz-feedback show fail';
+  }
+
+  document.getElementById('quizPoints').textContent = `✦ ${score} pts`;
+  document.getElementById('quizNext').style.display = 'block';
+  document.getElementById('quizNext').textContent = qIdx < questions.length - 1 ? 'Próxima →' : 'Ver resultado →';
+}
+
+function nextQuestion() {
+  qIdx++;
+  if (qIdx < questions.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  const pct = Math.round((score / questions.length) * 100);
+  const medal = pct >= 80 ? '🏆' : pct >= 60 ? '🥈' : '🎓';
+  const msg = pct >= 80 ? 'Você está nadando bem nesse cardume!' : pct >= 60 ? 'Bom começo! Continua mergulhando no conteúdo.' : 'Sem pressão — o onboarding é o começo da jornada.';
+
+  document.getElementById('quizBox').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:4rem;margin-bottom:16px">${medal}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:var(--accent);margin-bottom:8px">${pct}%</div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:12px">${score} de ${questions.length} corretas</div>
+      <p style="font-size:14px;color:var(--white-60);margin-bottom:32px;line-height:1.6">${msg}</p>
+      <button class="btn" onclick="restartQuiz()">Refazer quiz ↺</button>
+    </div>
+  `;
+}
+
+function restartQuiz() {
+  qIdx = 0; score = 0; answered = false;
+  document.getElementById('quizBox').innerHTML = `
+    <div class="quiz-progress"><div class="quiz-progress-bar" id="quizBar" style="width:0%"></div></div>
+    <div class="quiz-score" id="quizScore"></div>
+    <div class="quiz-question" id="quizQuestion"></div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+    <div class="quiz-nav">
+      <span id="quizPoints" style="font-family:'Syne',sans-serif;font-size:13px;color:var(--accent)">✦ 0 pts</span>
+      <button class="btn" id="quizNext" onclick="nextQuestion()" style="display:none">Próxima →</button>
+    </div>
+  `;
+  renderQuestion();
+}
+
+renderQuestion();
+
+// ─── STAKEHOLDERS CANVAS ───
+(function() {
+  const canvas = document.getElementById('stakeCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let hovered = -1;
+  let animId;
+
+  const nodes = [
+    { label: 'CRM',          angle: -110, dist: 0.78 },
+    { label: 'Merchan',      angle: -70,  dist: 0.78 },
+    { label: 'Marca',        angle: -155, dist: 0.7  },
+    { label: 'G&G',          angle: -25,  dist: 0.7  },
+    { label: 'Planejamento', angle: 155,  dist: 0.72 },
+    { label: 'CD',           angle: 25,   dist: 0.72 },
+    { label: 'TI',           angle: 110,  dist: 0.78 },
+    { label: 'Canais',       angle: 70,   dist: 0.78 },
+  ];
+
+  function resize() {
+    const el = canvas.parentElement;
+    canvas.width  = el.offsetWidth  * devicePixelRatio;
+    canvas.height = el.offsetHeight * devicePixelRatio;
+    canvas.style.width  = el.offsetWidth  + 'px';
+    canvas.style.height = el.offsetHeight + 'px';
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+
+  function getLayout() {
+    const W = canvas.parentElement.offsetWidth;
+    const H = canvas.parentElement.offsetHeight;
+    return { W, H, cx: W / 2, cy: H / 2, r: Math.min(W * 0.46, H * 0.88) };
+  }
+
+  function nodePos(n, cx, cy, r) {
+    const rad = (n.angle * Math.PI) / 180;
+    return { x: cx + Math.cos(rad) * r * n.dist, y: cy + Math.sin(rad) * r * n.dist };
+  }
+
+  function roundRect(x, y, w, h, rad) {
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rad);
+    ctx.arcTo(x + w, y + h, x, y + h, rad);
+    ctx.arcTo(x, y + h, x, y, rad);
+    ctx.arcTo(x, y, x + w, y, rad);
+    ctx.closePath();
+  }
+
+  function draw(ts) {
+    const pulse = ts / 1000;
+    const { W, H, cx, cy, r } = getLayout();
+    ctx.clearRect(0, 0, W, H);
+    ctx.font = '600 13px "DM Sans", sans-serif';
+
+    const nodeData = nodes.map(n => ({ ...n, ...nodePos(n, cx, cy, r) }));
+
+    // Connection lines
+    nodeData.forEach((n, i) => {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(n.x, n.y);
+      ctx.strokeStyle = i === hovered ? 'rgba(126,200,227,0.55)' : 'rgba(126,200,227,0.16)';
+      ctx.lineWidth = i === hovered ? 1.5 : 1;
+      ctx.stroke();
+    });
+
+    // Animated pulse rings
+    for (let i = 0; i < 3; i++) {
+      const rr = r * 0.21 + Math.sin(pulse * 1.3 - i * 1.1) * r * 0.025 + i * r * 0.04;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(126,200,227,${0.1 - i * 0.028})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Center bubble
+    const cR = r * 0.2;
+    const grd = ctx.createRadialGradient(cx - cR * 0.3, cy - cR * 0.35, cR * 0.05, cx, cy, cR);
+    grd.addColorStop(0, 'rgba(70,140,230,0.97)');
+    grd.addColorStop(0.55, 'rgba(22,65,155,0.95)');
+    grd.addColorStop(1, 'rgba(5,18,55,0.98)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, cR, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+    // glow ring
+    ctx.shadowColor = 'rgba(100,180,255,0.4)';
+    ctx.shadowBlur = 18;
+    ctx.strokeStyle = 'rgba(126,200,227,0.8)';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // label
+    ctx.fillStyle = '#fff';
+    ctx.font = `800 ${Math.max(12, cR * 0.3)}px Syne, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('DIGITAL', cx, cy);
+
+    // Satellite nodes
+    ctx.font = '600 13px "DM Sans", sans-serif';
+    nodeData.forEach((n, i) => {
+      const isHov = i === hovered;
+      const tw = ctx.measureText(n.label).width;
+      const pw = tw + 30, ph = 34, pr = 17;
+      const px = n.x - pw / 2, py = n.y - ph / 2;
+
+      roundRect(px, py, pw, ph, pr);
+      ctx.fillStyle = isHov ? 'rgba(37,99,201,0.5)' : 'rgba(9,25,58,0.9)';
+      ctx.fill();
+
+      if (isHov) {
+        ctx.shadowColor = 'rgba(126,200,227,0.35)';
+        ctx.shadowBlur = 12;
+      }
+      ctx.strokeStyle = isHov ? 'rgba(126,200,227,0.85)' : 'rgba(126,200,227,0.3)';
+      ctx.lineWidth = isHov ? 1.6 : 1;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.84)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, n.x, n.y);
+
+      n._px = px; n._py = py; n._pw = pw; n._ph = ph;
+    });
+
+    animId = requestAnimationFrame(draw);
+  }
+
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left);
+    const my = (e.clientY - rect.top);
+    const { cx, cy, r } = getLayout();
+    const nd = nodes.map(n => ({ ...n, ...nodePos(n, cx, cy, r) }));
+    hovered = -1;
+    ctx.font = '600 13px "DM Sans", sans-serif';
+    nd.forEach((n, i) => {
+      const tw = ctx.measureText(n.label).width + 30;
+      if (mx >= n.x - tw/2 && mx <= n.x + tw/2 && my >= n.y - 17 && my <= n.y + 17) hovered = i;
+    });
+    canvas.style.cursor = hovered >= 0 ? 'pointer' : 'default';
+  });
+  canvas.addEventListener('mouseleave', () => { hovered = -1; });
+  window.addEventListener('resize', resize);
+
+  resize();
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
