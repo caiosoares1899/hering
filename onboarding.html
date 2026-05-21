@@ -1560,7 +1560,117 @@
     z-index: 50;
     pointer-events: none;
   }
-  /* ─── ORG CHART ─── */
+  /* ─── O QUE É O DIGITAL ─── */
+  .digital-frentes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 720px) { .digital-frentes { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 420px) { .digital-frentes { grid-template-columns: 1fr; } }
+
+  .df-card {
+    border-radius: 18px;
+    padding: 24px 20px;
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .df-card:hover { transform: translateY(-5px); }
+
+  .df-bg-icon {
+    position: absolute;
+    top: -14px; right: -10px;
+    font-size: 72px;
+    opacity: 0.06;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  .df-blue   { background: rgba(37,99,201,0.14);  border-color: rgba(37,99,201,0.35); }
+  .df-red    { background: rgba(239,68,68,0.09);  border-color: rgba(239,68,68,0.28); }
+  .df-green  { background: rgba(34,197,94,0.09);  border-color: rgba(34,197,94,0.28); }
+  .df-purple { background: rgba(168,139,250,0.09); border-color: rgba(168,139,250,0.26); }
+
+  .df-icon { font-size: 1.8rem; line-height: 1; }
+
+  .df-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    margin-bottom: 0;
+  }
+
+  .df-blue   .df-title { color: var(--accent2); }
+  .df-red    .df-title { color: #fca5a5; }
+  .df-green  .df-title { color: #86efac; }
+  .df-purple .df-title { color: #c4b5fd; }
+
+  .df-meta {
+    font-size: 11px;
+    font-style: italic;
+    color: var(--white-30);
+    margin-bottom: 4px;
+  }
+
+  .df-desc {
+    font-size: 13px;
+    color: var(--white-60);
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .df-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: auto;
+    padding-top: 10px;
+  }
+
+  .df-chips span {
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    border: 1px solid;
+  }
+
+  .df-blue   .df-chips span { background: rgba(37,99,201,0.2);   border-color: rgba(37,99,201,0.38);   color: var(--accent2); }
+  .df-red    .df-chips span { background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.25);   color: #fca5a5; }
+  .df-green  .df-chips span { background: rgba(34,197,94,0.09);  border-color: rgba(34,197,94,0.25);   color: #86efac; }
+  .df-purple .df-chips span { background: rgba(168,139,250,0.09);border-color: rgba(168,139,250,0.22); color: #c4b5fd; }
+  .df-agil   .df-chips span { background: rgba(126,200,227,0.09);border-color: rgba(126,200,227,0.2);  color: var(--accent); }
+  .df-eco    .df-chips span { background: rgba(255,255,255,0.07);border-color: rgba(255,255,255,0.14); color: var(--white-60); }
+
+  .df-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 560px) { .df-bottom { grid-template-columns: 1fr; } }
+
+  .df-bottom-card {
+    border-radius: 18px;
+    padding: 24px 22px;
+    border: 1px solid;
+    transition: all 0.3s;
+  }
+
+  .df-bottom-card:hover { transform: translateY(-3px); }
+
+  .df-agil { background: rgba(126,200,227,0.08); border-color: rgba(126,200,227,0.24); }
+  .df-eco  { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.14); }
+
+
   .org-chart {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -1862,6 +1972,7 @@
   </a>
   <ul class="nav-links" id="navLinks">
     <li><a href="#mindset" onclick="closeMenu()">Mindset</a></li>
+    <li><a href="#digital" onclick="closeMenu()">Digital</a></li>
     <li><a href="#contexto" onclick="closeMenu()">VUCA</a></li>
     <li><a href="#squads" onclick="closeMenu()">Squads</a></li>
     <li><a href="#okrs" onclick="closeMenu()">OKRs</a></li>
@@ -1957,6 +2068,93 @@
       <path d="M9 44 L14 48 L19 44" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>
     <span>scroll</span>
+  </div>
+</section>
+
+<!-- ─── O QUE É O DIGITAL ─── -->
+<section id="digital">
+  <div class="section-inner">
+    <div class="reveal">
+      <span class="section-tag">⚓ O navio</span>
+      <h2 class="section-title">O que é o<br>Digital?</h2>
+      <p class="section-desc">A frota que navega o mar do e-commerce — guiada pelo ágil e parte do ecossistema Hering.</p>
+    </div>
+
+    <div class="digital-frentes reveal">
+
+      <div class="df-card df-blue">
+        <div class="df-bg-icon">🛒</div>
+        <div class="df-icon">🛒</div>
+        <h3 class="df-title">E-commerce</h3>
+        <p class="df-meta">O casco do navio</p>
+        <p class="df-desc">Site, app e marketplace — onde o cliente chega, navega e compra. A espinha dorsal da operação digital.</p>
+        <div class="df-chips">
+          <span>Site Hering</span><span>App</span><span>Marketplace</span><span>Outlet</span>
+        </div>
+      </div>
+
+      <div class="df-card df-red">
+        <div class="df-bg-icon">🔗</div>
+        <div class="df-icon">🔗</div>
+        <h3 class="df-title">Omnichannel</h3>
+        <p class="df-meta">As correntes</p>
+        <p class="df-desc">Conectam o mar digital às praias físicas — para que o cliente viva uma experiência fluida, online e offline em harmonia.</p>
+        <div class="df-chips">
+          <span>Atendimento</span><span>Backoffice</span><span>Lojas + Digital</span>
+        </div>
+      </div>
+
+      <div class="df-card df-green">
+        <div class="df-bg-icon">📣</div>
+        <div class="df-icon">📣</div>
+        <h3 class="df-title">Mkt Performance</h3>
+        <p class="df-meta">O vento nas velas</p>
+        <p class="df-desc">Atrai, converte e retém — mídia paga, CRM, criação e dados orientando cada decisão de marketing.</p>
+        <div class="df-chips">
+          <span>Mídia Paga</span><span>CRM</span><span>Criação</span><span>Dados</span>
+        </div>
+      </div>
+
+      <div class="df-card df-purple">
+        <div class="df-bg-icon">⭐</div>
+        <div class="df-icon">⭐</div>
+        <h3 class="df-title">Customer Success</h3>
+        <p class="df-meta">O farol</p>
+        <p class="df-desc">Guia o cliente de volta. Foco na satisfação, fidelização e na jornada completa — do primeiro clique ao pós-venda.</p>
+        <div class="df-chips">
+          <span>NPS</span><span>Retenção</span><span>Pós-venda</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bússola + Ecossistema -->
+    <div class="df-bottom reveal">
+      <div class="df-bottom-card df-agil">
+        <div style="font-size:1.8rem;margin-bottom:10px;">🧭</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--accent);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Orientados pelo Ágil</div>
+        <p style="font-size:13px;color:var(--white-60);line-height:1.6;">A bússola da tripulação. Squads autônomos, sprints curtos, entrega contínua de valor e melhoria constante a cada ciclo.</p>
+        <div class="df-chips" style="margin-top:12px;">
+          <span>OKRs</span><span>Scrum</span><span>Squads</span>
+        </div>
+      </div>
+
+      <div class="df-bottom-card df-eco">
+        <div style="font-size:1.8rem;margin-bottom:10px;">⚓</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--white-80);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Ecossistema Hering</div>
+        <p style="font-size:13px;color:var(--white-60);line-height:1.6;">O Digital é uma frota dentro da Cia. Hering — que navega sob a bandeira do Grupo Azzas 2154, um dos maiores grupos de moda do Brasil.</p>
+        <div class="df-chips" style="margin-top:12px;">
+          <span>Cia. Hering</span><span>Azzas 2154</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wave decoration -->
+    <div class="reveal" style="margin-top:32px;display:flex;align-items:center;gap:12px;opacity:0.25;">
+      <svg viewBox="0 0 400 14" style="flex:1" height="14" preserveAspectRatio="none"><path d="M0,7 C40,2 80,12 120,7 C160,2 200,12 240,7 C280,2 320,12 360,7 C380,4 395,10 400,7" fill="none" stroke="#7ec8e3" stroke-width="1.2"/></svg>
+      <span style="white-space:nowrap;font-size:10px;color:var(--white-30);letter-spacing:0.14em;text-transform:uppercase;">todos navegando juntos</span>
+      <svg viewBox="0 0 400 14" style="flex:1;transform:scaleX(-1)" height="14" preserveAspectRatio="none"><path d="M0,7 C40,2 80,12 120,7 C160,2 200,12 240,7 C280,2 320,12 360,7 C380,4 395,10 400,7" fill="none" stroke="#7ec8e3" stroke-width="1.2"/></svg>
+    </div>
   </div>
 </section>
 
@@ -2645,7 +2843,7 @@
         <div class="ci-icon">🐟</div>
         <div>
           <strong>Conexão com quem somos</strong>
-          <span>Motivação autêntica e propósito compartilhado</span>
+          <span>Parte da Cia. Hering e do Grupo Azzas 2154 — navegamos num ecossistema maior</span>
         </div>
       </div>
       <div class="cultura-item">
