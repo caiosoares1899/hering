@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Hering · Onboarding Ágil · Slides</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue-deep:   #0a1628;
+  --blue-navy:   #0d2244;
+  --blue-mid:    #1a4480;
+  --blue-bright: #2563c9;
+  --blue-light:  #4a9fd4;
+  --accent:      #7ec8e3;
+  --accent2:     #b8ddf0;
+  --white:       #ffffff;
+  --w80: rgba(255,255,255,0.80);
+  --w60: rgba(255,255,255,0.60);
+  --w30: rgba(255,255,255,0.30);
+  --w10: rgba(255,255,255,0.10);
+  --glass:  rgba(255,255,255,0.08);
+  --glassh: rgba(255,255,255,0.14);
+  --border: rgba(255,255,255,0.16);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  font-family:'DM Sans',sans-serif;
+  background:var(--blue-deep);
+  color:var(--white);
+  overflow:hidden;
+  user-select:none;
+}
+
+/* ── OCEAN BG ── */
+#oceanBg {
+  position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+}
+#oceanBg::before {
+  content:'';
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(26,68,128,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(37,99,201,0.25) 0%, transparent 50%),
+    linear-gradient(180deg,#0a1628 0%,#0d2244 50%,#0a1628 100%);
+}
+.bg-fish {
+  position:absolute; opacity:0.07;
+  animation:bgFishSwim linear infinite;
+}
+@keyframes bgFishSwim {
+  0%   { transform:translateX(-120px) translateY(0); }
+  50%  { transform:translateX(50vw)   translateY(-20px); }
+  100% { transform:translateX(calc(100vw + 120px)) translateY(5px); }
+}
+.bg-bubble {
+  position:absolute; border-radius:50%;
+  background:rgba(126,200,227,0.08);
+  border:1px solid rgba(126,200,227,0.1);
+  animation:bgBubble linear infinite;
+}
+@keyframes bgBubble {
+  0%   { transform:translateY(110vh); opacity:0; }
+  10%  { opacity:0.5; }
+  90%  { opacity:0.1; }
+  100% { transform:translateY(-10vh); opacity:0; }
+}
+
+/* ── DECK WRAPPER ── */
+#deck {
+  position:relative; z-index:1;
+  width:100%; height:100%;
+  display:flex; flex-direction:column;
+}
+
+/* ── TOP BAR ── */
+#topbar {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 28px;
+  background:rgba(10,22,40,0.75);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  height:56px;
+}
+.tb-logo {
+  display:flex; align-items:center; gap:10px;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:14px; letter-spacing:0.04em;
+}
+.tb-logo-icon {
+  width:32px; height:32px; background:var(--blue-bright); border-radius:7px;
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+}
+.tb-center {
+  display:flex; align-items:center; gap:10px;
+}
+.slide-counter {
+  font-family:'Syne',sans-serif; font-size:12px; color:var(--w60);
+  letter-spacing:0.08em;
+}
+.progress-bar-wrap {
+  width:120px; height:3px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;
+}
+.progress-bar-fill {
+  height:100%;
+  background:linear-gradient(90deg, var(--blue-bright), var(--accent));
+  border-radius:3px;
+  transition:width 0.4s ease;
+}
+.tb-nav { display:flex; gap:8px; }
+.tb-btn {
+  background:var(--glass); border:1px solid var(--border); border-radius:8px;
+  color:var(--white); padding:6px 14px; font-size:12px; font-weight:600;
+  cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+}
+.tb-btn:hover { background:var(--glassh); }
+.tb-btn:disabled { opacity:0.3; cursor:default; }
+
+/* ── SLIDE CONTAINER ── */
+#slides-wrap {
+  position:fixed; inset:0; top:56px; bottom:52px;
+  overflow:hidden;
+}
+
+.slide {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  padding:40px 60px;
+  opacity:0; pointer-events:none;
+  transform:translateX(60px);
+  transition:opacity 0.4s ease, transform 0.4s ease;
+}
+.slide.active {
+  opacity:1; pointer-events:all;
+  transform:translateX(0);
+}
+.slide.prev {
+  opacity:0;
+  transform:translateX(-60px);
+}
+
+/* slides that need to fill height vertically */
+.slide-fill {
+  align-items:stretch;
+  padding:20px 40px;
+}
+
+.slide-inner {
+  width:100%; max-width:960px;
+  margin:0 auto;
+}
+
+/* ── BOTTOM BAR ── */
+#bottombar {
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 20px; height:52px;
+  background:rgba(10,22,40,0.7);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  flex-wrap:wrap; overflow:hidden;
+}
+
+.dot {
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(255,255,255,0.2);
+  cursor:pointer; transition:all 0.25s; flex-shrink:0;
+}
+.dot.active { background:var(--accent); transform:scale(1.3); }
+.dot:hover { background:var(--w60); }
+
+/* ── KEYBOARD HINT ── */
+#kbhint {
+  position:fixed; bottom:60px; right:24px; z-index:200;
+  font-size:11px; color:var(--w30); letter-spacing:0.08em;
+  display:flex; align-items:center; gap:6px;
+  animation:fadeInHint 1s 2s ease both;
+}
+@keyframes fadeInHint { from{opacity:0} to{opacity:1} }
+.kb { background:var(--glass); border:1px solid var(--border); border-radius:5px; padding:3px 7px; font-size:11px; }
+
+/* ─────────────────────────────────────
+   SHARED SLIDE TYPOGRAPHY
+───────────────────────────────────── */
+.s-tag {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--glass); border:1px solid var(--border); border-radius:30px;
+  padding:5px 14px; font-size:11px; font-weight:500;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--accent);
+  margin-bottom:18px;
+}
+.s-title {
+  font-family:'Syne',sans-serif;
+  font-weight:800; letter-spacing:-0.02em; line-height:1.05;
+  margin-bottom:12px;
+}
+.s-sub {
+  font-size:16px; color:var(--w60); line-height:1.65; max-width:620px;
+  margin-bottom:32px;
+}
+
+/* glass card */
+.gc {
+  background:var(--glass); border:1px solid var(--border); border-radius:18px;
+  padding:24px; backdrop-filter:blur(10px);
+  transition:all 0.3s;
+}
+.gc:hover { background:var(--glassh); border-color:rgba(126,200,227,0.3); }
+
+/* grid helpers */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+
+/* accent chip */
+.chip {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(37,99,201,0.25); border:1px solid rgba(37,99,201,0.4);
+  border-radius:20px; padding:4px 14px;
+  font-size:12px; font-weight:600; color:var(--accent2);
+}
+
+/* ─────────────────────────────────────
+   SLIDE 1 — HERO
+───────────────────────────────────── */
+#s1 { text-align:center; }
+#s1 .hero-title {
+  font-family:'Syne',sans-serif;
+  font-size:clamp(3.5rem,9vw,7.5rem);
+  font-weight:800; line-height:0.88; letter-spacing:-0.03em;
+  margin-bottom:28px;
+}
+#s1 .hero-title span { display:block; color:var(--accent); }
+#s1 .hero-sub {
+  font-size:clamp(16px,2vw,20px); color:var(--w60); max-width:500px;
+  margin:0 auto 40px; line-height:1.6;
+}
+.hero-pills { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.hero-pill {
+  background:var(--glass); border:1px solid var(--border); border-radius:50px;
+  padding:12px 24px; text-align:center; font-family:'Syne',sans-serif;
+  font-weight:800; font-size:14px; color:var(--accent);
+}
+.hero-pill small { display:block; font-size:11px; font-weight:400; color:var(--w60); margin-top:2px; font-family:'DM Sans',sans-serif; }
+
+/* ─────────────────────────────────────
+   SLIDE 2 — CONTEXTO VUCA
+───────────────────────────────────── */
+.vuca-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.vuca-item {
+  background:var(--glass); border:1px solid var(--border); border-radius:14px;
+  padding:22px 20px; display:flex; align-items:flex-start; gap:14px;
+}
+.v-badge {
+  min-width:44px; height:44px; border-radius:10px;
+  background:var(--blue-bright);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:18px;
+}
+.v-title { font-weight:700; font-size:15px; margin-bottom:5px; }
+.v-desc { font-size:13px; color:var(--w60); line-height:1.5; }
+
+/* ─────────────────────────────────────
+   SLIDE 3 — MINDSET
+───────────────────────────────────── */
+.mindset-grid-s {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+.mi {
+  background:var(--glass); border:1px solid var(--border); border-radius:14px;
+  padding:18px 14px; text-align:center; transition:all 0.3s;
+}
+.mi:hover { background:var(--glassh); border-color:rgba(126,200,227,0.35); }
+.mi-icon { font-size:1.6rem; margin-bottom:8px; }
+.mi-title { font-family:'Syne',sans-serif; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); margin-bottom:4px; }
+.mi-desc { font-size:11px; color:var(--w60); line-height:1.4; }
+
+/* ─────────────────────────────────────
+   SLIDE 4 — SQUADS ESTRUTURA
+───────────────────────────────────── */
+.squad-slide-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:12px;
+  margin-top:8px;
+}
+.sq-col-s { display:flex; flex-direction:column; gap:8px; }
+.sq-col-label-s {
+  font-family:'Syne',sans-serif; font-size:10px; font-weight:800;
+  letter-spacing:0.12em; text-transform:uppercase;
+  padding:6px 10px; border-radius:6px; text-align:center;
+}
+.sql-blue  { background:rgba(37,99,201,0.2); color:var(--accent2); border:1px solid rgba(37,99,201,0.35); }
+.sql-green { background:rgba(34,197,94,0.12); color:#86efac; border:1px solid rgba(34,197,94,0.3); }
+.sql-red   { background:rgba(239,68,68,0.12); color:#fca5a5; border:1px solid rgba(239,68,68,0.28); }
+.sql-white { background:rgba(255,255,255,0.08); color:var(--w80); border:1px solid rgba(255,255,255,0.2); }
+
+.sq-card-s {
+  border-radius:10px; padding:10px 12px; border:1px solid; font-size:12px;
+  transition:all 0.2s;
+}
+.sq-card-s:hover { transform:translateX(2px); }
+.sqc-blue  { background:rgba(37,99,201,0.1); border-color:rgba(37,99,201,0.28); }
+.sqc-green { background:rgba(34,197,94,0.07); border-color:rgba(34,197,94,0.22); }
+.sqc-red   { background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.2); }
+.sqc-white { background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.18); }
+.sqc-agil  { background:rgba(126,200,227,0.07); border-color:rgba(126,200,227,0.25); border-style:dashed; }
+
+.sq-card-s .sn { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; margin-bottom:2px; }
+.sq-card-s .sp { font-size:10px; color:var(--w60); }
+
+/* top level gerencias */
+.squad-top {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin-bottom:12px; flex-wrap:wrap;
+}
+.gn {
+  border-radius:10px; padding:8px 16px; text-align:center;
+  font-family:'Syne',sans-serif; font-size:11px; border:1px solid;
+}
+.gn-white { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.25); }
+.gn-blue  { background:rgba(37,99,201,0.2); border-color:rgba(37,99,201,0.4); }
+.gn-green { background:rgba(34,197,94,0.12); border-color:rgba(34,197,94,0.3); }
+.gn-red   { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.28); }
+.gn .gr { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--w60); }
+.gn .gname { font-weight:700; font-size:12px; }
+.top-connector { width:1px; height:20px; background:var(--border); margin:0 auto; }
+
+/* ─────────────────────────────────────
+   SLIDE 5 — SPOTIFY MODEL
+───────────────────────────────────── */
+.spotify-cards { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.sp-card {
+  background:var(--glass); border:1px solid var(--border); border-radius:18px;
+  padding:28px 24px; text-align:center;
+  transition:all 0.3s; position:relative; overflow:hidden;
+}
+.sp-card::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--blue-bright),var(--accent));
+  transform:scaleX(0); transition:transform 0.3s;
+}
+.sp-card:hover::after { transform:scaleX(1); }
+.sp-card:hover { background:var(--glassh); transform:translateY(-4px); }
+.sp-icon { font-size:2.2rem; margin-bottom:12px; }
+.sp-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; color:var(--accent); margin-bottom:8px; }
+.sp-desc { font-size:14px; color:var(--w60); line-height:1.6; }
+
+/* ─────────────────────────────────────
+   SLIDE 6 — OKRs
+───────────────────────────────────── */
+.okr-cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.okr-card {
+  background:var(--glass); border:1px solid var(--border); border-radius:16px;
+  padding:24px 20px; position:relative; overflow:hidden;
+}
+.okr-lbl { font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); font-weight:600; margin-bottom:8px; }
+.okr-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin-bottom:12px; }
+.okr-points { list-style:none; display:flex; flex-direction:column; gap:7px; }
+.okr-points li { font-size:13px; color:var(--w60); display:flex; align-items:center; gap:8px; }
+.okr-points li::before { content:''; width:5px; height:5px; min-width:5px; border-radius:50%; background:var(--blue-light); }
+.okr-ex { margin-top:14px; background:rgba(37,99,201,0.18); border:1px solid rgba(37,99,201,0.35); border-radius:8px; padding:10px 12px; font-size:12px; color:var(--accent2); font-style:italic; }
+
+/* ─────────────────────────────────────
+   SLIDE 7 — SCRUM
+───────────────────────────────────── */
+.scrum-steps {
+  display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px;
+  margin-bottom:20px;
+}
+.sc-step {
+  background:var(--glass); border:1px solid var(--border); border-radius:14px;
+  padding:20px 16px; text-align:center; position:relative;
+  transition:all 0.3s;
+}
+.sc-step:hover { background:var(--glassh); border-color:rgba(126,200,227,0.35); }
+.sc-num {
+  position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+  background:var(--blue-bright); color:#fff; width:24px; height:24px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-size:11px; font-weight:800;
+}
+.sc-icon { font-size:1.6rem; margin-bottom:8px; }
+.sc-name { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+.sc-desc { font-size:12px; color:var(--w60); line-height:1.45; }
+
+.sprint-pill {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  background:linear-gradient(135deg,var(--blue-bright),var(--blue-light));
+  border-radius:50px; padding:14px 32px;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:15px;
+}
+.backlog-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+.bl-card { background:var(--glass); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+.bl-title { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; margin-bottom:6px; }
+.bl-desc { font-size:12px; color:var(--w60); line-height:1.5; }
+
+/* ─────────────────────────────────────
+   SLIDE 8 — RITUAIS
+───────────────────────────────────── */
+.rituais-slide { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.rit-card {
+  background:var(--glass); border:1px solid var(--border); border-radius:18px;
+  padding:28px 24px; text-align:center; transition:all 0.3s;
+}
+.rit-card:hover { background:var(--glassh); transform:translateY(-4px); }
+.rit-icon { font-size:2.2rem; margin-bottom:12px; }
+.rit-title { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; margin-bottom:8px; }
+.rit-desc { font-size:13px; color:var(--w60); line-height:1.55; margin-bottom:12px; }
+.rit-badge {
+  display:inline-block; background:rgba(37,99,201,0.25); border:1px solid rgba(37,99,201,0.4);
+  border-radius:20px; padding:4px 14px; font-size:11px; color:var(--accent2); font-weight:600;
+}
+
+/* ─────────────────────────────────────
+   SLIDE 9 — FLIGHT LEVELS
+───────────────────────────────────── */
+.ocean-levels-s { display:flex; flex-direction:column; gap:0; border-radius:18px; overflow:hidden; border:1px solid var(--border); }
+.ol-row {
+  display:flex; align-items:stretch;
+  transition:all 0.3s;
+}
+.ol-row:hover { filter:brightness(1.12); }
+.surf-bg { background:linear-gradient(135deg, rgba(35,90,175,0.45), rgba(18,50,115,0.4)); }
+.mid-bg  { background:linear-gradient(135deg, rgba(12,45,108,0.55), rgba(8,30,75,0.5)); }
+.deep-bg { background:linear-gradient(135deg, rgba(5,20,58,0.78), rgba(3,12,38,0.85)); }
+.ol-left {
+  width:180px; min-width:180px; padding:20px 18px;
+  border-right:1px solid rgba(255,255,255,0.07);
+  display:flex; flex-direction:column; gap:3px; justify-content:center;
+}
+.ol-depth { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--w30); margin-bottom:2px; }
+.ol-name { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:var(--accent); }
+.ol-sub { font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:rgba(255,255,255,0.4); }
+.ol-creature { font-size:11px; color:var(--w30); font-style:italic; margin-top:5px; }
+.ol-right { padding:20px 24px; display:flex; align-items:center; flex:1; }
+.ol-right p { font-size:14px; color:var(--w80); line-height:1.65; }
+.ol-descent {
+  display:flex; align-items:center; gap:8px; padding:5px 20px;
+  background:rgba(0,0,0,0.2); border-top:1px solid rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.ol-descent span { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--w30); }
+
+/* ─────────────────────────────────────
+   SLIDE 10 — STAKEHOLDERS
+───────────────────────────────────── */
+.stake-slide {
+  position:relative; width:100%; height:400px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(15,45,120,0.55) 0%, rgba(8,20,55,0.3) 55%, transparent 100%), var(--glass);
+  border:1px solid var(--border); border-radius:20px; overflow:hidden;
+  --fr: 168px;
+}
+
+.ss-bubble { position:absolute; bottom:-8px; border-radius:50%; background:rgba(126,200,227,0.13); border:1px solid rgba(126,200,227,0.15); animation:stakeBubbleRise linear infinite; }
+@keyframes stakeBubbleRise { 0%{transform:translateY(0);opacity:0} 10%{opacity:0.5} 90%{opacity:0.1} 100%{transform:translateY(-420px);opacity:0} }
+
+.ss-center-wrap { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:4; }
+.ss-ring { position:absolute; top:50%; left:50%; border-radius:50%; border:1px solid rgba(126,200,227,0.12); transform:translate(-50%,-50%); pointer-events:none; }
+.ss-ring-1 { width:110px; height:110px; animation:ringPulse 4s ease-in-out infinite; }
+.ss-ring-2 { width:162px; height:162px; animation:ringPulse 4s 1.4s ease-in-out infinite; border-color:rgba(126,200,227,0.06); }
+@keyframes ringPulse { 0%,100%{opacity:0.5;transform:translate(-50%,-50%) scale(1)} 50%{opacity:0.08;transform:translate(-50%,-50%) scale(1.05)} }
+
+.ss-core {
+  width:96px; height:96px; border-radius:50%;
+  background:radial-gradient(circle at 36% 33%, rgba(90,160,250,0.96), rgba(15,52,145,0.99) 68%);
+  border:2px solid rgba(126,200,227,0.7);
+  box-shadow:0 0 40px rgba(60,130,220,0.55), inset 0 0 20px rgba(120,190,255,0.15);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; position:relative; z-index:5;
+}
+.ss-core-label { font-family:'Syne',sans-serif; font-weight:800; font-size:10px; letter-spacing:0.14em; color:#fff; }
+
+.ss-fish {
+  position:absolute; top:50%; left:50%; width:0; height:0;
+  animation:fishOrbit var(--orbit-dur) linear infinite;
+  animation-delay:calc(var(--orbit-start) / 360deg * -1 * var(--orbit-dur));
+  z-index:3; cursor:pointer;
+}
+@keyframes fishOrbit { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.ss-fish-node {
+  position:absolute; left:var(--fr); top:0;
+  transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  animation:fishCounterRotate var(--orbit-dur) linear infinite;
+  animation-delay:calc(var(--orbit-start) / 360deg * -1 * var(--orbit-dur));
+}
+@keyframes fishCounterRotate { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(-360deg)} }
+.ss-fish-svg { filter:drop-shadow(0 0 6px rgba(126,200,227,0.4)); transition:filter 0.25s; display:block; }
+.ss-fish:hover .ss-fish-svg { filter:drop-shadow(0 0 14px rgba(126,200,227,0.95)); }
+.ss-fish-lbl {
+  font-family:'Syne',sans-serif; font-weight:700; font-size:10px;
+  color:rgba(255,255,255,0.85); background:rgba(8,22,58,0.85);
+  border:1px solid rgba(126,200,227,0.28); border-radius:20px;
+  padding:3px 9px; white-space:nowrap; backdrop-filter:blur(4px); transition:all 0.25s;
+}
+.ss-fish:hover .ss-fish-lbl { background:rgba(37,99,201,0.5); border-color:rgba(126,200,227,0.65); color:#fff; }
+
+/* MODAL */
+.fish-modal { display:none; position:fixed; inset:0; background:rgba(5,15,40,0.8); backdrop-filter:blur(8px); z-index:9000; align-items:center; justify-content:center; padding:20px; }
+.fish-modal.open { display:flex; }
+.fish-modal-box {
+  background:linear-gradient(135deg,rgba(15,40,100,0.97),rgba(8,22,58,0.99));
+  border:1px solid rgba(126,200,227,0.35); border-radius:24px;
+  padding:40px 36px; max-width:400px; width:100%; text-align:center; position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,0.6); animation:modalPop 0.25s ease;
+}
+@keyframes modalPop { from{transform:scale(0.88);opacity:0} to{transform:scale(1);opacity:1} }
+.fm-close { position:absolute; top:14px; right:18px; background:none; border:none; color:var(--w60); font-size:18px; cursor:pointer; transition:color 0.2s; }
+.fm-close:hover { color:#fff; }
+.fm-icon { font-size:2.6rem; margin-bottom:10px; }
+.fm-title { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; color:var(--accent); margin-bottom:3px; }
+.fm-full { font-size:12px; color:var(--w60); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:16px; }
+.fm-desc { font-size:14px; color:var(--w80); line-height:1.7; }
+
+/* ─────────────────────────────────────
+   SLIDE 11 — CULTURA / CONEXÃO BU
+───────────────────────────────────── */
+.cultura-slide { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.cu-item {
+  display:flex; align-items:center; gap:14px;
+  background:var(--glass); border:1px solid var(--border); border-radius:13px;
+  padding:16px 18px; transition:all 0.3s;
+}
+.cu-item:hover { background:var(--glassh); border-color:rgba(126,200,227,0.3); transform:translateX(3px); }
+.cu-icon { font-size:1.5rem; min-width:36px; text-align:center; }
+.cu-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:3px; }
+.cu-desc { font-size:12px; color:var(--w60); line-height:1.4; }
+
+/* ─────────────────────────────────────
+   SLIDE 12 — ENCERRAMENTO
+───────────────────────────────────── */
+#s12 { text-align:center; }
+#s12 .fin-title { font-family:'Syne',sans-serif; font-size:clamp(3rem,8vw,6rem); font-weight:800; line-height:0.9; letter-spacing:-0.03em; margin-bottom:20px; }
+#s12 .fin-title span { display:block; color:var(--accent); }
+#s12 .fin-sub { font-size:17px; color:var(--w60); max-width:480px; margin:0 auto 36px; line-height:1.6; }
+.contact-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+.contact-pill {
+  display:flex; align-items:center; gap:10px;
+  background:var(--glass); border:1px solid var(--border); border-radius:50px;
+  padding:12px 22px; font-size:14px; color:var(--w80);
+  text-decoration:none; transition:all 0.25s;
+}
+.contact-pill:hover { background:var(--glassh); border-color:rgba(126,200,227,0.4); }
+
+/* ─────────────────────────────────────
+   RESPONSIVE (quick)
+───────────────────────────────────── */
+@media (max-width:860px) {
+  .slide { padding:32px 32px; }
+  .g4, .mindset-grid-s, .squad-slide-grid, .scrum-steps { grid-template-columns:1fr 1fr; }
+  .okr-cards, .spotify-cards { grid-template-columns:1fr 1fr; }
+}
+@media (max-width:560px) {
+  .slide { padding:24px 16px; }
+  .g2,.g3,.g4,.mindset-grid-s,.squad-slide-grid,.scrum-steps,.okr-cards,.spotify-cards,.rituais-slide,.cultura-slide,.vuca-grid,.backlog-row { grid-template-columns:1fr; }
+  .ol-left { width:110px; min-width:110px; }
+  .s-title { font-size:1.8rem !important; }
+  #topbar { padding:10px 14px; }
+  .tb-center { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- OCEAN BG -->
+<div id="oceanBg"></div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="tb-logo">
+    <div class="tb-logo-icon">🐟</div>
+    Digital Hering
+  </div>
+  <div class="tb-center">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <span class="slide-counter" id="slideCounter">1 / 12</span>
+  </div>
+  <div class="tb-nav">
+    <button class="tb-btn" id="btnPrev" onclick="go(-1)">← Anterior</button>
+    <button class="tb-btn" id="btnNext" onclick="go(1)">Próximo →</button>
+  </div>
+</div>
+
+<!-- SLIDES -->
+<div id="slides-wrap">
+
+  <!-- ── S1: ABERTURA ── -->
+  <div class="slide" id="s1">
+    <div class="slide-inner" style="display:flex;flex-direction:column;align-items:center">
+      <div class="s-tag">🐟 Bem-vindo ao cardume</div>
+      <h1 class="hero-title">Onboarding<span>Ágil</span></h1>
+      <p class="hero-sub">Você acaba de entrar num cardume de talentos icônicos. Esse é o seu ponto de partida no Digital Hering.</p>
+      <div class="hero-pills">
+        <div class="hero-pill">
+          <svg viewBox="0 0 44 22" width="36" height="18" fill="none">
+            <line x1="2" y1="11" x2="42" y2="11" stroke="#7ec8e3" stroke-width="2.2" stroke-linecap="round"/>
+            <line x1="10" y1="11" x2="4" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="10" y1="11" x2="4" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="18" y1="11" x2="12" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="18" y1="11" x2="12" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="26" y1="11" x2="20" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="26" y1="11" x2="20" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="34" y1="11" x2="28" y2="5" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="34" y1="11" x2="28" y2="17" stroke="#7ec8e3" stroke-width="1.6" stroke-linecap="round"/>
+            <polygon points="38,6 44,11 38,16" fill="#7ec8e3"/>
+          </svg>
+          <small>Squads</small>
+        </div>
+        <div class="hero-pill">
+          <svg viewBox="0 0 38 42" width="28" height="32" fill="none">
+            <circle cx="26" cy="5" r="4" stroke="#7ec8e3" stroke-width="2"/>
+            <line x1="26" y1="9" x2="20" y2="22" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="24" y1="14" x2="32" y2="9" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="22" y1="16" x2="13" y2="20" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="20" y1="22" x2="12" y2="32" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="32" x2="6" y2="40" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="20" y1="22" x2="26" y2="34" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="26" y1="34" x2="34" y2="38" stroke="#7ec8e3" stroke-width="2" stroke-linecap="round"/>
+            <line x1="2" y1="20" x2="10" y2="20" stroke="#7ec8e3" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+          <small>Sprints</small>
+        </div>
+        <div class="hero-pill" style="font-size:1.4rem;font-weight:800;color:var(--accent)">OKR<small>Estratégia</small></div>
+        <div class="hero-pill">
+          <svg viewBox="0 0 40 36" width="32" height="28" fill="none">
+            <circle cx="20" cy="8" r="4" stroke="#7ec8e3" stroke-width="2"/>
+            <circle cx="8" cy="28" r="3.5" stroke="#7ec8e3" stroke-width="2"/>
+            <circle cx="20" cy="28" r="3.5" stroke="#7ec8e3" stroke-width="2"/>
+            <circle cx="32" cy="28" r="3.5" stroke="#7ec8e3" stroke-width="2"/>
+            <line x1="20" y1="12" x2="8" y2="24.5" stroke="#7ec8e3" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="20" y1="12" x2="20" y2="24.5" stroke="#7ec8e3" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="20" y1="12" x2="32" y2="24.5" stroke="#7ec8e3" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <small>Spotify Model</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S2: VUCA + PDCA ── -->
+  <div class="slide" id="s2">
+    <div class="slide-inner">
+      <div class="s-tag">🌊 Contexto</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Mundo VUCA & PDCA</h2>
+      <div class="g2">
+        <div class="gc">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--accent);margin-bottom:16px">🌀 O mundo é VUCA</div>
+          <div class="vuca-grid">
+            <div class="vuca-item"><div class="v-badge">V</div><div><div class="v-title">Volátil</div><div class="v-desc">Mudanças rápidas e imprevisíveis</div></div></div>
+            <div class="vuca-item"><div class="v-badge">U</div><div><div class="v-title">Incerto</div><div class="v-desc">Falta de clareza sobre o futuro</div></div></div>
+            <div class="vuca-item"><div class="v-badge">C</div><div><div class="v-title">Complexo</div><div class="v-desc">Múltiplos fatores interligados</div></div></div>
+            <div class="vuca-item"><div class="v-badge">A</div><div><div class="v-title">Ambíguo</div><div class="v-desc">Sem precedentes claros</div></div></div>
+          </div>
+        </div>
+        <div class="gc">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--accent);margin-bottom:16px">🔁 Resposta: PDCA</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="vuca-item"><div class="v-badge" style="background:linear-gradient(135deg,var(--blue-light),var(--blue-bright))">P</div><div><div class="v-title">Plan — Planejar</div><div class="v-desc">Definir objetivos e como alcançá-los</div></div></div>
+            <div class="vuca-item"><div class="v-badge" style="background:linear-gradient(135deg,var(--blue-light),var(--blue-bright))">D</div><div><div class="v-title">Do — Fazer</div><div class="v-desc">Executar e testar hipóteses</div></div></div>
+            <div class="vuca-item"><div class="v-badge" style="background:linear-gradient(135deg,var(--blue-light),var(--blue-bright))">C</div><div><div class="v-title">Check — Checar</div><div class="v-desc">Medir resultados e analisar dados</div></div></div>
+            <div class="vuca-item"><div class="v-badge" style="background:linear-gradient(135deg,var(--blue-light),var(--blue-bright))">A</div><div><div class="v-title">Act — Adaptar</div><div class="v-desc">Corrigir e reiniciar o ciclo</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S3: MINDSET ÁGIL ── -->
+  <div class="slide" id="s3">
+    <div class="slide-inner">
+      <div class="s-tag">🧠 Cultura</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Mindset Ágil</h2>
+      <p class="s-sub" style="margin-bottom:20px">Não é sobre ferramentas. É sobre uma forma de pensar, colaborar e entregar valor continuamente.</p>
+      <div class="mindset-grid-s">
+        <div class="mi"><div class="mi-icon">🤝</div><div class="mi-title">Time Multidisciplinar</div><div class="mi-desc">Colaboração entre especialidades para soluções completas</div></div>
+        <div class="mi"><div class="mi-icon">📦</div><div class="mi-title">Entregas Funcionais</div><div class="mi-desc">Soluções prontas para uso, não só no papel</div></div>
+        <div class="mi"><div class="mi-icon">🌱</div><div class="mi-title">Motivação</div><div class="mi-desc">Ambiente com confiança para o melhor trabalho surgir</div></div>
+        <div class="mi"><div class="mi-icon">⚡</div><div class="mi-title">Autonomia</div><div class="mi-desc">Times autogerenciáveis com liberdade e responsabilidade</div></div>
+        <div class="mi"><div class="mi-icon">💡</div><div class="mi-title">Inovação</div><div class="mi-desc">Transformação criativa e evolução diária</div></div>
+        <div class="mi"><div class="mi-icon">🔄</div><div class="mi-title">Melhoria Contínua</div><div class="mi-desc">Reflexão e otimização em cada ciclo</div></div>
+        <div class="mi"><div class="mi-icon">💎</div><div class="mi-title">Excelência</div><div class="mi-desc">Qualidade técnica e bom design em cada entrega</div></div>
+        <div class="mi"><div class="mi-icon">✂️</div><div class="mi-title">Simplicidade</div><div class="mi-desc">Fazer somente o essencial — eliminar desperdícios</div></div>
+        <div class="mi"><div class="mi-icon">🌊</div><div class="mi-title">Resposta à Mudança</div><div class="mi-desc">Adaptabilidade para pivotar quando necessário</div></div>
+        <div class="mi"><div class="mi-icon">❤️</div><div class="mi-title">Cliente em Primeiro</div><div class="mi-desc">Foco na jornada 360° do cliente</div></div>
+        <div class="mi"><div class="mi-icon">📊</div><div class="mi-title">Foco em Dados</div><div class="mi-desc">Decisões conscientes e embasadas</div></div>
+        <div class="mi"><div class="mi-icon">🕸️</div><div class="mi-title">Visão em Rede</div><div class="mi-desc">Conexões que potencializam o resultado coletivo</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S4: SQUADS ── -->
+  <div class="slide slide-fill" id="s4" style="padding:20px 40px;align-items:stretch;">
+    <div style="width:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:0;">
+
+      <!-- Header row -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-shrink:0;">
+        <div class="s-tag" style="margin-bottom:0">🐟 Cardume Digital</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:800;letter-spacing:-0.02em;">Nossos Squads</h2>
+      </div>
+
+      <!-- Gerente Digital -->
+      <div style="display:flex;justify-content:center;flex-shrink:0;margin-bottom:8px;">
+        <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.28);border-radius:12px;padding:10px 28px;text-align:center;font-family:'Syne',sans-serif;">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--w60);margin-bottom:3px;">Gerente Digital</div>
+          <div style="font-weight:800;font-size:15px;">Rafael Passos</div>
+        </div>
+      </div>
+
+      <!-- Connector -->
+      <div style="width:1px;height:16px;background:var(--border);margin:0 auto;flex-shrink:0;"></div>
+
+      <!-- Gerências -->
+      <div style="display:grid;grid-template-columns:4fr 2fr 2fr;gap:10px;flex-shrink:0;margin-bottom:8px;">
+        <div class="gn gn-blue" style="padding:10px 18px;"><div class="gr">E-commerce</div><div class="gname" style="font-size:14px;">Paula Nobrega</div></div>
+        <div class="gn gn-green" style="padding:10px 18px;"><div class="gr">Mkt Performance</div><div class="gname" style="font-size:14px;">Thais Matoso</div></div>
+        <div class="gn gn-red" style="padding:10px 18px;"><div class="gr">CX</div><div class="gname" style="font-size:14px;">Rafaela Vieira</div></div>
+      </div>
+
+      <!-- Connector -->
+      <div style="width:1px;height:16px;background:var(--border);margin:0 auto;flex-shrink:0;"></div>
+
+      <!-- Squads grid — fills remaining space -->
+      <div style="display:grid;grid-template-columns:4fr 2fr 2fr 2fr;gap:10px;flex:1;min-height:0;">
+
+        <!-- E-commerce -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="sq-col-label-s sql-blue" style="font-size:11px;padding:8px 12px;">E-commerce</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;">
+            <div class="sq-card-s sqc-blue" style="display:flex;flex-direction:column;justify-content:center;padding:14px 14px;">
+              <div class="sn" style="font-size:13px;margin-bottom:4px;">🛒 Hering Comercial Site</div>
+              <div class="sp" style="font-size:11px;">PO · Gabriela Antoniassi</div>
+            </div>
+            <div class="sq-card-s sqc-blue" style="display:flex;flex-direction:column;justify-content:center;padding:14px 14px;">
+              <div class="sn" style="font-size:13px;margin-bottom:4px;">📱 Hering APP</div>
+              <div class="sp" style="font-size:11px;">PO · Lucas Bezerra</div>
+            </div>
+            <div class="sq-card-s sqc-blue" style="display:flex;flex-direction:column;justify-content:center;padding:14px 14px;">
+              <div class="sn" style="font-size:13px;margin-bottom:4px;">🏪 Hering Marketplace</div>
+              <div class="sp" style="font-size:11px;">PO · Mariana Cavalcante</div>
+            </div>
+            <div class="sq-card-s sqc-blue" style="display:flex;flex-direction:column;justify-content:center;padding:14px 14px;">
+              <div class="sn" style="font-size:13px;margin-bottom:4px;">🏷️ Outlet Comercial</div>
+              <div class="sp" style="font-size:11px;">PO · Rafael Vilela</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mkt Performance -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="sq-col-label-s sql-green" style="font-size:11px;padding:8px 12px;">Mkt Performance</div>
+          <div class="sq-card-s sqc-green" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;gap:6px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">📣 Marketing de Performance</div>
+            <div class="sp" style="font-size:11px;">PO · Beatriz Rogério</div>
+            <div style="font-size:10px;color:var(--w30);font-style:italic;margin-top:4px;">Mídia paga — Hering + Outlet</div>
+          </div>
+          <div class="sq-card-s sqc-green" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">🎨 Hering Criação</div>
+            <div class="sp" style="font-size:11px;">PO · Rodrigo Siconha</div>
+          </div>
+        </div>
+
+        <!-- CX -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="sq-col-label-s sql-red" style="font-size:11px;padding:8px 12px;">CX</div>
+          <div class="sq-card-s sqc-red" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">💬 Atendimento</div>
+            <div class="sp" style="font-size:11px;">Greice Alves</div>
+          </div>
+          <div class="sq-card-s sqc-red" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">⚙️ Backoffice</div>
+            <div class="sp" style="font-size:11px;">Allan Dickmann</div>
+          </div>
+          <div class="sq-card-s sqc-red" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">🔗 Omnichannel</div>
+            <div class="sp" style="font-size:11px;">Karla Santos</div>
+          </div>
+        </div>
+
+        <!-- Digital -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="sq-col-label-s sql-white" style="font-size:11px;padding:8px 12px;">Digital</div>
+          <div class="sq-card-s sqc-white" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">📊 Dados</div>
+            <div class="sp" style="font-size:11px;">PO · André Andreeta</div>
+          </div>
+          <div class="sq-card-s sqc-agil" style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 16px;">
+            <div class="sn" style="font-size:13px;margin-bottom:4px;">🐟 Agilista</div>
+            <div class="sp" style="font-size:11px;">Caio Soares</div>
+            <div style="font-size:10px;color:rgba(126,200,227,0.5);font-style:italic;margin-top:4px;">navega entre todos</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S5: SPOTIFY MODEL ── -->
+  <div class="slide" id="s5">
+    <div class="slide-inner">
+      <div class="s-tag">🎵 Spotify Model</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Como nos organizamos</h2>
+      <p class="s-sub">Times autônomos e multidisciplinares, conectados por propósito.</p>
+      <div class="spotify-cards">
+        <div class="sp-card"><div class="sp-icon">🐟</div><div class="sp-title">Squad</div><div class="sp-desc">Time multidisciplinar e autônomo, com missão clara e capacidade de entregar valor de ponta a ponta.</div></div>
+        <div class="sp-card"><div class="sp-icon">🌊</div><div class="sp-title">Tribo</div><div class="sp-desc">Conjunto de squads com afinidade de missão. No Digital Hering, somos o grande cardume.</div></div>
+        <div class="sp-card"><div class="sp-icon">🤝</div><div class="sp-title">Senso de Comunidade</div><div class="sp-desc">Pertencimento e identidade coletiva. Cada squad conectado ao propósito maior do Digital.</div></div>
+        <div class="sp-card"><div class="sp-icon">🔄</div><div class="sp-title">Alinhamento Constante</div><div class="sp-desc">Rituais que mantêm todos na mesma direção — sem perder autonomia individual de cada time.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S6: OKRs ── -->
+  <div class="slide" id="s6">
+    <div class="slide-inner">
+      <div class="s-tag">🎯 Estratégia</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">OKRs</h2>
+      <p class="s-sub">Objectives & Key Results — traduzimos visão em metas claras e mensuráveis.</p>
+      <div class="okr-cards">
+        <div class="okr-card">
+          <div class="okr-lbl">O · Objective</div>
+          <div class="okr-title">O que queremos alcançar?</div>
+          <ul class="okr-points">
+            <li>Qualitativo e inspirador</li>
+            <li>Ligado às metas do negócio</li>
+            <li>Gera desejo e direção</li>
+          </ul>
+          <div class="okr-ex">"Gerar desejo através do Digital"</div>
+        </div>
+        <div class="okr-card">
+          <div class="okr-lbl">KR · Key Results</div>
+          <div class="okr-title">Como medimos o progresso?</div>
+          <ul class="okr-points">
+            <li>Quantitativo e SMART</li>
+            <li>2 a 5 KRs por objetivo</li>
+            <li>Com prazo definido</li>
+          </ul>
+          <div class="okr-ex">"Adquirir 400 mil clientes na rede"</div>
+        </div>
+        <div class="okr-card">
+          <div class="okr-lbl">I · Iniciativas</div>
+          <div class="okr-title">O que vamos fazer?</div>
+          <ul class="okr-points">
+            <li>Ações para atingir os KRs</li>
+            <li>Priorizadas por impacto</li>
+            <li>Tangíveis e executáveis</li>
+          </ul>
+          <div class="okr-ex">"Trocar todos os banners do site Hering"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S7: SCRUM ── -->
+  <div class="slide" id="s7">
+    <div class="slide-inner">
+      <div class="s-tag">⚙️ Framework</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Scrum & Sprint</h2>
+      <div class="backlog-row">
+        <div class="bl-card"><div class="bl-title">📋 Backlog</div><div class="bl-desc">Repositório de tudo que pode ser feito. Priorizado pelo PO com base em valor para o negócio e cliente.</div></div>
+        <div class="bl-card"><div class="bl-title">🎯 Sprint Backlog</div><div class="bl-desc">O que o time se comprometeu a entregar nessa sprint. Executado ao longo de 1 a 2 semanas.</div></div>
+      </div>
+      <div class="scrum-steps">
+        <div class="sc-step"><div class="sc-num">1</div><div class="sc-icon">📋</div><div class="sc-name">Planning</div><div class="sc-desc">Prioriza e planeja. Time define o Sprint Goal e o compromisso.</div></div>
+        <div class="sc-step"><div class="sc-num">2</div><div class="sc-icon">☀️</div><div class="sc-name">Daily</div><div class="sc-desc">15 min diários. O que fiz? O que farei? Tenho impedimento?</div></div>
+        <div class="sc-step"><div class="sc-num">3</div><div class="sc-icon">🔍</div><div class="sc-name">Review</div><div class="sc-desc">Revisa O QUÊ foi entregue. Feedback de stakeholders.</div></div>
+        <div class="sc-step"><div class="sc-num">4</div><div class="sc-icon">🔄</div><div class="sc-name">Retrospective</div><div class="sc-desc">Revisa COMO foi o processo. O que melhorar?</div></div>
+      </div>
+      <div style="text-align:center;margin-top:14px">
+        <div class="sprint-pill">🌊 Sprint = 1 ou 2 semanas de ciclo completo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S8: RITUAIS ── -->
+  <div class="slide" id="s8">
+    <div class="slide-inner">
+      <div class="s-tag">📅 Agenda</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Rituais do Digital</h2>
+      <p class="s-sub">Momentos coletivos que constroem cultura, alinhamento e pertencimento.</p>
+      <div class="rituais-slide">
+        <div class="rit-card"><div class="rit-icon">📆</div><div class="rit-title">Weeklyzona</div><div class="rit-desc">Alinhamento semanal da zona do Digital. Visibilidade do que está acontecendo em cada squad.</div><span class="rit-badge">Semanal</span></div>
+        <div class="rit-card"><div class="rit-icon">⚔️</div><div class="rit-title">War Room BF</div><div class="rit-desc">Sala de guerra para Black Friday e grandes datas. Foco total em performance e resolução rápida.</div><span class="rit-badge">Sazonais</span></div>
+        <div class="rit-card"><div class="rit-icon">🎯</div><div class="rit-title">Big Review Digital</div><div class="rit-desc">Review ampliada do Digital. Apresentação de resultados e entregas para todo o time e liderança.</div><span class="rit-badge">Quinzenal</span></div>
+        <div class="rit-card"><div class="rit-icon">🐟</div><div class="rit-title">Cardume Digital</div><div class="rit-desc">Nosso all hands trimestral. Highlights, aprendizados e próximos passos para todo o cardume.</div><span class="rit-badge">Trimestral</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S9: FLIGHT LEVELS ── -->
+  <div class="slide" id="s9">
+    <div class="slide-inner">
+      <div class="s-tag">🌊 Profundidades</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Flight Levels</h2>
+      <p class="s-sub">Como os diferentes níveis se conectam — como camadas do oceano.</p>
+      <div class="ocean-levels-s">
+        <div class="ol-row surf-bg">
+          <div class="ol-left">
+            <div class="ol-depth">☀️ Superfície</div>
+            <div class="ol-name">Estratégico</div>
+            <div class="ol-sub">Diretoria</div>
+            <div class="ol-creature">🦅 Águia — visão ampla</div>
+          </div>
+          <div class="ol-right"><p>Alinhamento estratégico e feedbacks de resultados. Onde as grandes apostas são definidas e a direção do cardume é traçada.</p></div>
+        </div>
+        <div class="ol-descent">
+          <svg viewBox="0 0 32 22" width="32" height="22" fill="none"><line x1="16" y1="0" x2="16" y2="15" stroke="rgba(126,200,227,0.25)" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M10 12 L16 19 L22 12" stroke="rgba(126,200,227,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>mergulhando mais fundo</span>
+        </div>
+        <div class="ol-row mid-bg">
+          <div class="ol-left">
+            <div class="ol-depth">🌊 Meio-fundo</div>
+            <div class="ol-name">Tático</div>
+            <div class="ol-sub">Gerência</div>
+            <div class="ol-creature">🐬 Golfinho — ágil</div>
+          </div>
+          <div class="ol-right"><p><strong style="color:var(--accent)">OKRs</strong> — Direcionais técnicos e alinhamento dos times. Traduz estratégia em objetivos mensuráveis e alcançáveis.</p></div>
+        </div>
+        <div class="ol-descent">
+          <svg viewBox="0 0 32 22" width="32" height="22" fill="none"><line x1="16" y1="0" x2="16" y2="15" stroke="rgba(126,200,227,0.18)" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M10 12 L16 19 L22 12" stroke="rgba(126,200,227,0.22)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>mergulhando mais fundo</span>
+        </div>
+        <div class="ol-row deep-bg" style="position:relative">
+          <div class="ol-left">
+            <div class="ol-depth">🌑 Fundo</div>
+            <div class="ol-name">Operacional</div>
+            <div class="ol-sub">Squads</div>
+            <div class="ol-creature">🐡 Cardume — onde acontece</div>
+          </div>
+          <div class="ol-right"><p>Execução, entregas e melhoria contínua. Onde o produto acontece de fato — aqui é onde o valor real é criado e entregue.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S10: STAKEHOLDERS ── -->
+  <div class="slide" id="s10">
+    <div class="slide-inner">
+      <div class="s-tag">🌐 Ecossistema</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Stakeholders</h2>
+      <p class="s-sub" style="margin-bottom:16px">O Digital não nada sozinho. Clique em cada peixe para saber mais.</p>
+
+      <div class="stake-slide">
+        <div class="ss-bubble" style="left:8%;animation-delay:0s;animation-duration:8s;width:5px;height:5px"></div>
+        <div class="ss-bubble" style="left:30%;animation-delay:3s;animation-duration:10s;width:4px;height:4px"></div>
+        <div class="ss-bubble" style="left:65%;animation-delay:1.5s;animation-duration:7s;width:6px;height:6px"></div>
+        <div class="ss-bubble" style="left:85%;animation-delay:4s;animation-duration:9s;width:3px;height:3px"></div>
+
+        <div class="ss-center-wrap">
+          <div class="ss-ring ss-ring-1"></div>
+          <div class="ss-ring ss-ring-2"></div>
+          <div class="ss-core">
+            <svg viewBox="0 0 80 40" width="58" height="29">
+              <g fill="rgba(180,220,255,0.92)">
+                <ellipse cx="18" cy="20" rx="9" ry="5.5"/><polygon points="27,14.5 35,20 27,25.5"/>
+                <ellipse cx="44" cy="13" rx="7" ry="4"/><polygon points="51,9 58,13 51,17"/>
+                <ellipse cx="46" cy="28" rx="7" ry="4"/><polygon points="53,24 60,28 53,32"/>
+                <ellipse cx="64" cy="20" rx="6" ry="3.5"/><polygon points="70,17 76,20 70,23"/>
+              </g>
+            </svg>
+            <div class="ss-core-label">DIGITAL</div>
+          </div>
+        </div>
+
+        <!-- Fish nodes -->
+        <div class="ss-fish" style="--orbit-dur:18s;--orbit-start:0deg;--fish-color:#4a9fd4" onclick="openModal('crm')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="40" height="20"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">CRM</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:25s;--orbit-start:45deg;--fish-color:#7ec8e3" onclick="openModal('merchan')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="40" height="20"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">Merchan</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:30s;--orbit-start:90deg;--fish-color:#5ba8d0" onclick="openModal('marca')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="40" height="20"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">Marca</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:21s;--orbit-start:135deg;--fish-color:#a8d8ea" onclick="openModal('gg')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="40" height="20"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">G&amp;G</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:34s;--orbit-start:180deg;--fish-color:#3d8fb5" onclick="openModal('plan')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="44" height="22"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">Planejamento</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:19s;--orbit-start:225deg;--fish-color:#6ab4d0" onclick="openModal('cd')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="38" height="19"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">CD</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:27s;--orbit-start:270deg;--fish-color:#88c8e0" onclick="openModal('ti')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="38" height="19"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">TI</span></div></div>
+        <div class="ss-fish" style="--orbit-dur:23s;--orbit-start:315deg;--fish-color:#5fb8d8" onclick="openModal('canais')"><div class="ss-fish-node"><svg class="ss-fish-svg" viewBox="0 0 52 26" width="40" height="20"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg><span class="ss-fish-lbl">Canais</span></div></div>
+
+        <p style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap">🐟 clique em cada peixe</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S11: CULTURA ── -->
+  <div class="slide" id="s11">
+    <div class="slide-inner">
+      <div class="s-tag">🌐 Valores</div>
+      <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Conexão com a BU</h2>
+      <p class="s-sub">O Digital não nada sozinho. Nossa cultura reflete os valores do cardume como um todo.</p>
+      <div class="cultura-slide">
+        <div class="cu-item"><div class="cu-icon">🌐</div><div><strong class="cu-title">Pensamento e Ação em Rede</strong><span class="cu-desc">Colaboração entre times, áreas e unidades</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🤝</div><div><strong class="cu-title">Colaboração</strong><span class="cu-desc">Juntos chegamos mais longe e mais rápido</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🎯</div><div><strong class="cu-title">Escolhas Conscientes</strong><span class="cu-desc">Simplicidade como princípio de decisão</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🐟</div><div><strong class="cu-title">Conexão com quem somos</strong><span class="cu-desc">Motivação autêntica e propósito compartilhado</span></div></div>
+        <div class="cu-item"><div class="cu-icon">🚀</div><div><strong class="cu-title">Entrega com Alta Performance</strong><span class="cu-desc">Excelência técnica e foco no resultado</span></div></div>
+        <div class="cu-item"><div class="cu-icon">⭐</div><div><strong class="cu-title">Protagonistas na Evolução</strong><span class="cu-desc">Autonomia para transformar e inovar</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── S12: ENCERRAMENTO ── -->
+  <div class="slide" id="s12">
+    <div class="slide-inner" style="display:flex;flex-direction:column;align-items:center">
+      <div class="s-tag">🐟 Bem-vindo ao cardume</div>
+      <h1 class="fin-title">Bem-vindo<span>ao Digital.</span></h1>
+      <p class="fin-sub">Agora você faz parte do cardume. Dúvidas, ideias ou só um oi — o Agilista está por aqui.</p>
+      <div style="margin-bottom:28px">
+        <div style="font-size:3rem;margin-bottom:8px">🐟</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800">Caio Soares</div>
+        <div style="font-size:14px;color:var(--accent);margin-top:2px">Agilista · Digital Hering</div>
+      </div>
+      <div class="contact-row">
+        <a class="contact-pill" href="mailto:caio.soares@ciahering.com.br">✉️ caio.soares@ciahering.com.br</a>
+        <a class="contact-pill" href="tel:+5571984760129">📱 71 98476-0129</a>
+      </div>
+      <p style="margin-top:32px;font-size:13px;color:var(--w30);font-style:italic">"Somos um cardume de talentos icônicos."</p>
+    </div>
+  </div>
+
+</div><!-- /slides-wrap -->
+
+<!-- BOTTOM DOTS -->
+<div id="bottombar" id="dots"></div>
+
+<!-- KEYBOARD HINT -->
+<div id="kbhint">
+  <span class="kb">←</span><span class="kb">→</span> navegar &nbsp;|&nbsp; <span class="kb">F</span> tela cheia
+</div>
+
+<!-- FISH MODAL (shared) -->
+<div class="fish-modal" id="fishModal" onclick="closeModal()">
+  <div class="fish-modal-box" onclick="event.stopPropagation()">
+    <button class="fm-close" onclick="closeModal()">✕</button>
+    <div class="fm-icon" id="fmIcon"></div>
+    <div class="fm-title" id="fmTitle"></div>
+    <div class="fm-full" id="fmFull"></div>
+    <div class="fm-desc" id="fmDesc"></div>
+  </div>
+</div>
+
+<script>
+// ── OCEAN BG ──
+(function(){
+  const bg = document.getElementById('oceanBg');
+  for(let i=0;i<12;i++){
+    const b=document.createElement('div'); b.className='bg-bubble';
+    const s=Math.random()*24+6;
+    b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*18+12}s;animation-delay:${Math.random()*-20}s;`;
+    bg.appendChild(b);
+  }
+  const fishSvg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white"><ellipse cx="25" cy="15" rx="18" ry="10"/><polygon points="43,5 60,15 43,25"/><circle cx="12" cy="12" r="2.5" fill="#0a1628"/></svg>`;
+  for(let i=0;i<6;i++){
+    const f=document.createElement('div'); f.className='bg-fish';
+    const sc=Math.random()*0.5+0.3;
+    f.style.cssText=`top:${Math.random()*85}%;width:${60*sc}px;animation-duration:${Math.random()*28+22}s;animation-delay:${Math.random()*-30}s;`;
+    f.innerHTML=fishSvg; bg.appendChild(f);
+  }
+})();
+
+// ── SLIDE ENGINE ──
+const total = 12;
+let cur = 0;
+let prev = -1;
+
+const slides = Array.from(document.querySelectorAll('.slide'));
+const dotsWrap = document.getElementById('bottombar');
+const counter = document.getElementById('slideCounter');
+const fill = document.getElementById('progressFill');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+
+// Build dots
+slides.forEach((_,i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i===0?' active':'');
+  d.onclick = () => goTo(i);
+  dotsWrap.appendChild(d);
+});
+
+function goTo(n) {
+  if (n < 0 || n >= total) return;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('prev');
+  setTimeout(() => { if(slides[prev]) slides[prev].classList.remove('prev'); }, 420);
+  prev = cur; cur = n;
+  slides[cur].classList.add('active');
+  // dots
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===cur));
+  // counter
+  counter.textContent = `${cur+1} / ${total}`;
+  // progress
+  fill.style.width = ((cur/(total-1))*100) + '%';
+  // buttons
+  btnPrev.disabled = cur === 0;
+  btnNext.disabled = cur === total-1;
+}
+
+function go(dir) { goTo(cur + dir); }
+
+// Init
+slides[0].classList.add('active');
+fill.style.width = '0%';
+btnPrev.disabled = true;
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                   { e.preventDefault(); go(-1); }
+  if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  if (e.key === 'Escape') closeModal();
+});
+
+// Touch swipe
+let touchX = 0;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+document.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+});
+
+// Fullscreen
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+
+// ── FISH MODAL ──
+const fishData = {
+  crm:     { icon:'📧', title:'CRM',           full:'Customer Relationship Management', desc:'Gestão do relacionamento com o cliente. Cuida da régua de comunicação, e-mail marketing, push, SMS e estratégias de retenção e fidelização.' },
+  merchan: { icon:'🏷️', title:'Merchan',        full:'Merchandising',                   desc:'Exposição e curadoria de produtos no digital. Define quais produtos aparecem, em que ordem e como são apresentados nas vitrines do site e app.' },
+  marca:   { icon:'✨', title:'Marca',           full:'Marketing de Marca',              desc:'Guarda e evolui a identidade da Hering. Cuida do posicionamento, campanhas institucionais, branding e percepção da marca.' },
+  gg:      { icon:'👥', title:'G&G',             full:'Gente & Gestão',                  desc:'A área de Pessoas da Cia. Hering. Cuida de contratações, desenvolvimento, cultura organizacional, benefícios e bem-estar dos colaboradores.' },
+  plan:    { icon:'📐', title:'Planejamento',    full:'Planejamento Estratégico',        desc:'Define o norte estratégico e financeiro. Monitora indicadores, alinha OKRs com a diretoria e garante o Digital alinhado ao plano maior.' },
+  cd:      { icon:'🏬', title:'CD',              full:'Centro de Distribuição',          desc:'O coração logístico da operação. Responsável por separar, empacotar e despachar os pedidos do e-commerce para todo o Brasil.' },
+  ti:      { icon:'💻', title:'TI',              full:'Tecnologia da Informação',        desc:'Infraestrutura tecnológica da empresa. Garante que sistemas, integrações, segurança e redes funcionem para suportar toda a operação digital.' },
+  canais:  { icon:'🏪', title:'Canais',          full:'Canais Físicos & Franquias',      desc:'Lojas físicas, franquias e canais presenciais. O digital se conecta com canais para garantir experiências omnichannel consistentes.' },
+};
+
+function openModal(id) {
+  const d = fishData[id]; if(!d) return;
+  document.getElementById('fmIcon').textContent  = d.icon;
+  document.getElementById('fmTitle').textContent = d.title;
+  document.getElementById('fmFull').textContent  = d.full;
+  document.getElementById('fmDesc').textContent  = d.desc;
+  document.getElementById('fishModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('fishModal').classList.remove('open');
+}
+</script>
+</body>
+</html>
