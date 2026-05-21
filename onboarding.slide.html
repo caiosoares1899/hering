@@ -192,6 +192,8 @@ html, body {
   font-size:11px; color:var(--w30); letter-spacing:0.08em;
   display:flex; align-items:center; gap:6px;
   animation:fadeInHint 1s 2s ease both;
+  transition: opacity 0.4s ease;
+  pointer-events:none;
 }
 @keyframes fadeInHint { from{opacity:0} to{opacity:1} }
 .kb { background:var(--glass); border:1px solid var(--border); border-radius:5px; padding:3px 7px; font-size:11px; }
@@ -1294,9 +1296,63 @@ html, body {
     <div class="slide-inner" style="display:flex;flex-direction:column;align-items:center">
       <div class="s-tag">🐟 Bem-vindo ao cardume</div>
       <h1 class="fin-title">Bem-vindo<span>ao Digital.</span></h1>
-      <p class="fin-sub">Agora você faz parte do cardume. Dúvidas, ideias ou só um oi — o Agilista está por aqui.</p>
-      <div style="margin-bottom:28px">
-        <div style="font-size:3rem;margin-bottom:8px">🐟</div>
+
+      <!-- Sailor SVG -->
+      <div style="margin-bottom:16px;">
+        <svg viewBox="0 0 160 180" width="120" height="135" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Hat -->
+          <rect x="52" y="22" width="56" height="10" rx="3" fill="#1a4480"/>
+          <rect x="44" y="29" width="72" height="6" rx="2" fill="#2563c9"/>
+          <line x1="60" y1="22" x2="100" y2="22" stroke="#7ec8e3" stroke-width="2"/>
+          <!-- Head -->
+          <ellipse cx="80" cy="50" rx="22" ry="24" fill="#f5d0a9"/>
+          <!-- Eyes -->
+          <circle cx="73" cy="46" r="3" fill="#1a2a4a"/>
+          <circle cx="87" cy="46" r="3" fill="#1a2a4a"/>
+          <circle cx="74" cy="45" r="1" fill="white"/>
+          <circle cx="88" cy="45" r="1" fill="white"/>
+          <!-- Smile -->
+          <path d="M73 57 Q80 63 87 57" stroke="#c8845a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <!-- Moustache -->
+          <path d="M72 53 Q77 56 80 53 Q83 56 88 53" stroke="#6b3a1f" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <!-- Neck -->
+          <rect x="72" y="72" width="16" height="10" rx="2" fill="#f5d0a9"/>
+          <!-- Body — sailor uniform -->
+          <rect x="50" y="80" width="60" height="60" rx="8" fill="#1a4480"/>
+          <!-- Collar -->
+          <polygon points="80,80 62,95 98,95" fill="#2563c9"/>
+          <polygon points="80,80 65,100 95,100" fill="white" opacity="0.15"/>
+          <!-- Stripe on collar -->
+          <line x1="64" y1="93" x2="96" y2="93" stroke="#7ec8e3" stroke-width="1.5"/>
+          <!-- Buttons -->
+          <circle cx="80" cy="105" r="2" fill="#7ec8e3"/>
+          <circle cx="80" cy="115" r="2" fill="#7ec8e3"/>
+          <circle cx="80" cy="125" r="2" fill="#7ec8e3"/>
+          <!-- Left arm (normal) -->
+          <rect x="30" y="80" width="22" height="12" rx="6" fill="#1a4480" transform="rotate(20 41 86)"/>
+          <ellipse cx="28" cy="98" rx="10" ry="7" fill="#f5d0a9" transform="rotate(20 28 98)"/>
+          <!-- Right arm (holding spyglass UP) -->
+          <rect x="108" y="68" width="22" height="12" rx="6" fill="#1a4480" transform="rotate(-50 119 74)"/>
+          <ellipse cx="124" cy="62" rx="10" ry="7" fill="#f5d0a9" transform="rotate(-50 124 62)"/>
+          <!-- Spyglass -->
+          <rect x="118" y="30" width="10" height="36" rx="4" fill="#b8860b" transform="rotate(-15 123 48)"/>
+          <rect x="116" y="25" width="14" height="8" rx="3" fill="#daa520" transform="rotate(-15 123 29)"/>
+          <rect x="120" y="60" width="8" height="6" rx="2" fill="#8b6914" transform="rotate(-15 124 63)"/>
+          <!-- Legs -->
+          <rect x="56" y="136" width="22" height="36" rx="6" fill="#1a4480"/>
+          <rect x="82" y="136" width="22" height="36" rx="6" fill="#1a4480"/>
+          <!-- Shoes -->
+          <ellipse cx="67" cy="172" rx="14" ry="6" fill="#1a1a2e"/>
+          <ellipse cx="93" cy="172" rx="14" ry="6" fill="#1a1a2e"/>
+          <!-- Wave decoration below -->
+          <path d="M10,178 C30,172 50,184 70,178 C90,172 110,184 130,178 C145,174 155,180 160,178" stroke="rgba(126,200,227,0.4)" stroke-width="1.5" fill="none"/>
+        </svg>
+      </div>
+
+      <p class="fin-sub" style="font-size:clamp(15px,2vw,18px);font-style:italic;color:var(--w80);">⚓ Atenção! Homem ao mar!<br><span style="color:var(--w60);font-style:normal;font-size:0.85em;">Se precisar, não hesite em me procurar!</span></p>
+
+      <div style="margin-bottom:20px">
+        <div style="font-size:2.4rem;margin-bottom:8px">🐟</div>
         <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800">Caio Soares</div>
         <div style="font-size:14px;color:var(--accent);margin-top:2px">Agilista · Digital Hering</div>
       </div>
@@ -1361,7 +1417,6 @@ const fill = document.getElementById('progressFill');
 const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 
-// Build dots
 slides.forEach((_,i) => {
   const d = document.createElement('div');
   d.className = 'dot' + (i===0?' active':'');
@@ -1381,21 +1436,29 @@ function goTo(n) {
   fill.style.width = ((cur/(total-1))*100) + '%';
   btnPrev.disabled = cur === 0;
   btnNext.disabled = cur === total-1;
+  // kbhint só no slide 1
+  const kbhint = document.getElementById('kbhint');
+  if (kbhint) kbhint.style.opacity = cur === 0 ? '1' : '0';
   if (typeof showBar === 'function') showBar();
 }
 
 function go(dir) { goTo(cur + dir); }
 
-// Init
 slides[0].classList.add('active');
 fill.style.width = '0%';
 btnPrev.disabled = true;
 
-// Keyboard
+// Keyboard — ignora quando foco está em input/textarea
+function isTyping() {
+  const el = document.activeElement;
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+}
+
 document.addEventListener('keydown', e => {
-  if (document.getElementById('addModal') && document.getElementById('addModal').classList.contains('open')) return;
+  if (isTyping()) return; // ← não captura teclas quando digitando
+  if (document.getElementById('addModal') && document.getElementById('addModal').style.display === 'flex') return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
-  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                   { e.preventDefault(); go(-1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
   if (e.key === 'f' || e.key === 'F') toggleFullscreen();
   if (e.key === 'Escape') { closeModal(); closeAdd(); }
 });
@@ -1510,17 +1573,17 @@ function closeAdd() {
 // ⚠️  SUBSTITUA os valores abaixo pelos do seu projeto Firebase
 // Instruções: veja o comentário no final do arquivo
 const FIREBASE_CONFIG = {
-  apiKey:            "COLE_AQUI",
-  authDomain:        "COLE_AQUI",
-  databaseURL:       "COLE_AQUI",   // ex: https://SEU-PROJETO-default-rtdb.firebaseio.com
-  projectId:         "COLE_AQUI",
-  storageBucket:     "COLE_AQUI",
-  messagingSenderId: "COLE_AQUI",
-  appId:             "COLE_AQUI",
+  apiKey:            "AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU",
+  authDomain:        "hering-onboarding.firebaseapp.com",
+  databaseURL:       "https://hering-onboarding-default-rtdb.firebaseio.com",
+  projectId:         "hering-onboarding",
+  storageBucket:     "hering-onboarding.firebasestorage.app",
+  messagingSenderId: "122502391131",
+  appId:             "1:122502391131:web:0a31bed5ed2494e16ba67e",
 };
 
 // Detecta se Firebase foi configurado
-const FIREBASE_READY = FIREBASE_CONFIG.apiKey !== "COLE_AQUI";
+const FIREBASE_READY = FIREBASE_CONFIG.databaseURL.startsWith('https://');
 
 let dbRef = null;
 let localCards = {}; // fallback local
