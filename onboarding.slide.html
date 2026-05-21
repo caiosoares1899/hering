@@ -793,9 +793,12 @@ html, body {
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-shrink:0;">
         <div class="s-tag" style="margin-bottom:0">👋 Boas-vindas</div>
         <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;letter-spacing:-0.02em;">Quem está aqui hoje?</h2>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button onclick="addCard()" style="background:rgba(37,99,201,0.35);border:1px solid rgba(37,99,201,0.5);border-radius:8px;color:#fff;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(37,99,201,0.55)'" onmouseout="this.style.background='rgba(37,99,201,0.35)'">+ Adicionar pessoa</button>
-          <button onclick="clearCards()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:8px;color:rgba(255,255,255,0.5);padding:7px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">↺ Limpar</button>
+        <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+          <div style="display:flex;gap:8px;">
+            <button onclick="addCard()" style="background:rgba(37,99,201,0.35);border:1px solid rgba(37,99,201,0.5);border-radius:8px;color:#fff;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(37,99,201,0.55)'" onmouseout="this.style.background='rgba(37,99,201,0.35)'">+ Adicionar pessoa</button>
+            <button onclick="clearCards()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:8px;color:rgba(255,255,255,0.5);padding:7px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">↺ Limpar</button>
+          </div>
+          <div id="syncStatus" style="font-size:10px;letter-spacing:0.05em;color:rgba(255,255,255,0.35);"></div>
         </div>
       </div>
 
@@ -1503,7 +1506,107 @@ function closeAdd() {
   if (m) m.style.display = 'none';
 }
 
-let cardCount = 0;
+// ── FIREBASE CONFIG ──
+// ⚠️  SUBSTITUA os valores abaixo pelos do seu projeto Firebase
+// Instruções: veja o comentário no final do arquivo
+const FIREBASE_CONFIG = {
+  apiKey:            "COLE_AQUI",
+  authDomain:        "COLE_AQUI",
+  databaseURL:       "COLE_AQUI",   // ex: https://SEU-PROJETO-default-rtdb.firebaseio.com
+  projectId:         "COLE_AQUI",
+  storageBucket:     "COLE_AQUI",
+  messagingSenderId: "COLE_AQUI",
+  appId:             "COLE_AQUI",
+};
+
+// Detecta se Firebase foi configurado
+const FIREBASE_READY = FIREBASE_CONFIG.apiKey !== "COLE_AQUI";
+
+let dbRef = null;
+let localCards = {}; // fallback local
+
+if (FIREBASE_READY) {
+  // Carrega Firebase SDK dinamicamente
+  const loadScript = src => new Promise(res => {
+    const s = document.createElement('script'); s.src = src; s.onload = res; document.head.appendChild(s);
+  });
+
+  Promise.all([
+    loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'),
+    loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js'),
+  ]).then(() => {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db = firebase.database();
+
+    // Referência à sessão de hoje (reseta diariamente)
+    const today = new Date().toISOString().slice(0,10); // "2026-05-21"
+    dbRef = db.ref(`onboarding/${today}/cards`);
+
+    // Escuta em tempo real — sincroniza para TODOS os conectados
+    dbRef.on('value', snapshot => {
+      const data = snapshot.val() || {};
+      renderAllCards(data);
+    });
+
+    updateSyncStatus('online');
+  }).catch(() => updateSyncStatus('erro'));
+} else {
+  updateSyncStatus('local');
+}
+
+function updateSyncStatus(state) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const states = {
+    online: { icon:'🟢', text:'sincronizado em tempo real', color:'rgba(34,197,94,0.8)' },
+    local:  { icon:'🟡', text:'modo local — configure Firebase para sincronizar', color:'rgba(250,204,21,0.8)' },
+    erro:   { icon:'🔴', text:'erro de conexão — modo local', color:'rgba(239,68,68,0.8)' },
+  };
+  const s = states[state] || states.local;
+  el.innerHTML = `<span style="color:${s.color}">${s.icon} ${s.text}</span>`;
+}
+
+// Renderiza todos os cards a partir do snapshot
+function renderAllCards(data) {
+  const grid = document.getElementById('presCards');
+  // Remove cards dinâmicos (mantém o do Caio)
+  Array.from(grid.children).forEach(c => { if (c.id !== 'pcard-caio') c.remove(); });
+
+  Object.entries(data).forEach(([key, card]) => {
+    if (!card || !card.name) return;
+    const fish = fishOptions.find(f => f.id === card.fish) || fishOptions[0];
+    const el = document.createElement('div');
+    el.className = 'pres-card';
+    el.id = 'fb-' + key;
+    el.innerHTML = buildCardHTML(card, fish, key);
+    grid.appendChild(el);
+  });
+}
+
+function buildCardHTML(card, fish, key) {
+  const delBtn = FIREBASE_READY
+    ? `<button class="pcard-delete" onclick="deleteCard('${key}')" title="Remover">✕</button>`
+    : `<button class="pcard-delete" onclick="this.closest('.pres-card').remove()" title="Remover">✕</button>`;
+  return `
+    ${delBtn}
+    <div class="pcard-fish">${fishSVG(fish.color)}</div>
+    <div class="pcard-body">
+      <div class="pcard-name">${card.name}</div>
+      ${card.role ? `<div class="pcard-role">${card.role}</div>` : ''}
+      ${card.team ? `<div class="pcard-info"><span class="pcard-tag">Time</span>${card.team}</div>` : ''}
+      ${card.city ? `<div class="pcard-info"><span class="pcard-tag">De</span>${card.city}</div>` : ''}
+      <div class="pcard-curiosity">${card.curiosity ? `"${card.curiosity}"` : `Como um ${fish.label}: ${fish.desc}.`}</div>
+    </div>`;
+}
+
+function deleteCard(key) {
+  if (FIREBASE_READY && dbRef) {
+    dbRef.child(key).remove();
+  } else {
+    const el = document.getElementById('fb-' + key);
+    if (el) el.remove();
+  }
+}
 
 function submitCard() {
   const name      = (document.getElementById('af-name').value || '').trim();
@@ -1515,31 +1618,30 @@ function submitCard() {
   if (!name) { document.getElementById('af-name').focus(); return; }
 
   const fish = fishOptions.find(f => f.id === selectedFish) || fishOptions[0];
-  cardCount++;
-  const id = 'pcard-' + cardCount;
+  const cardData = { name, role, team, city, curiosity, fish: fish.id, ts: Date.now() };
 
-  const card = document.createElement('div');
-  card.className = 'pres-card';
-  card.id = id;
-  card.innerHTML = `
-    <button class="pcard-delete" onclick="document.getElementById('${id}').remove()" title="Remover">✕</button>
-    <div class="pcard-fish">${fishSVG(fish.color)}</div>
-    <div class="pcard-body">
-      <div class="pcard-name">${name}</div>
-      ${role ? `<div class="pcard-role">${role}</div>` : ''}
-      ${team ? `<div class="pcard-info"><span class="pcard-tag">Time</span>${team}</div>` : ''}
-      ${city ? `<div class="pcard-info"><span class="pcard-tag">De</span>${city}</div>` : ''}
-      <div class="pcard-curiosity">${curiosity ? `"${curiosity}"` : `Como um ${fish.label}: ${fish.desc}.`}</div>
-    </div>`;
-
-  document.getElementById('presCards').appendChild(card);
+  if (FIREBASE_READY && dbRef) {
+    dbRef.push(cardData); // salva no Firebase → dispara 'value' em todos
+  } else {
+    // fallback local
+    const key = 'local-' + Date.now();
+    const el = document.createElement('div');
+    el.className = 'pres-card'; el.id = 'fb-' + key;
+    el.innerHTML = buildCardHTML(cardData, fish, key);
+    document.getElementById('presCards').appendChild(el);
+  }
   closeAdd();
 }
 
 function clearCards() {
-  Array.from(document.getElementById('presCards').children)
-    .forEach(c => { if (c.id !== 'pcard-caio') c.remove(); });
+  if (FIREBASE_READY && dbRef) {
+    dbRef.remove(); // remove tudo do Firebase → todos veem limpar
+  } else {
+    Array.from(document.getElementById('presCards').children)
+      .forEach(c => { if (c.id !== 'pcard-caio') c.remove(); });
+  }
 }
+
 
 // ── FISH MODAL (stakeholders) ──
 const fishData = {
@@ -1632,5 +1734,36 @@ function closeModal() {
   document.getElementById('fishModal').classList.remove('open');
 }
 </script>
+
+<!--
+════════════════════════════════════════════════════════
+  🐟  COMO CONFIGURAR O FIREBASE (5 minutos)
+════════════════════════════════════════════════════════
+
+1. Acesse: https://console.firebase.google.com
+2. "Adicionar projeto" → nome: hering-onboarding
+   (pode desativar Google Analytics)
+3. Menu lateral → "Realtime Database" → "Criar banco de dados"
+   → Região: us-central1 → Modo de TESTE (regras abertas)
+4. Menu lateral → ⚙️ Configurações do projeto → Aba "Seus apps"
+   → Clique em "</>" (Web) → Registre o app → copie o firebaseConfig
+5. No topo deste arquivo, substitua cada "COLE_AQUI" pelos valores:
+
+   const FIREBASE_CONFIG = {
+     apiKey:            "AIzaSy...",
+     authDomain:        "hering-onboarding.firebaseapp.com",
+     databaseURL:       "https://hering-onboarding-default-rtdb.firebaseio.com",
+     projectId:         "hering-onboarding",
+     storageBucket:     "hering-onboarding.appspot.com",
+     messagingSenderId: "1234567890",
+     appId:             "1:1234567890:web:abc123def456",
+   };
+
+6. Salve e abra em dois navegadores — cards sincronizam em tempo real! 🎉
+
+SEGURANÇA: as regras de teste expiram em 30 dias. Para renovar:
+  Realtime Database → Regras → atualize o timestamp de expiração.
+════════════════════════════════════════════════════════
+-->
 </body>
 </html>
