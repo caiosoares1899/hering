@@ -247,8 +247,136 @@ html, body {
 .hero-pill small { display:block; font-size:11px; font-weight:400; color:var(--w60); margin-top:2px; font-family:'DM Sans',sans-serif; }
 
 /* ─────────────────────────────────────
-   SLIDE 2 — CONTEXTO VUCA
+   SLIDE 2 — APRESENTAÇÕES
 ───────────────────────────────────── */
+.pres-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  animation: cardPop 0.35s ease both;
+}
+@keyframes cardPop {
+  from { opacity:0; transform:translateY(16px) scale(0.96); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.pres-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:3px;
+  background: linear-gradient(90deg, var(--blue-bright), var(--accent));
+}
+.pres-card:hover {
+  background: var(--glassh);
+  border-color: rgba(126,200,227,0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+}
+.pcard-delete {
+  position:absolute; top:12px; right:12px;
+  background:none; border:none; color:rgba(255,255,255,0.2);
+  font-size:15px; cursor:pointer; line-height:1;
+  transition: color 0.2s;
+}
+.pcard-delete:hover { color: rgba(239,68,68,0.7); }
+.pcard-fish { display:flex; justify-content:center; }
+.pcard-name {
+  font-family:'Syne',sans-serif; font-weight:800; font-size:17px;
+  color: var(--white); letter-spacing:-0.01em;
+}
+.pcard-role {
+  font-size:13px; font-weight:600; color:var(--accent); margin-bottom:4px;
+}
+.pcard-body { display:flex; flex-direction:column; gap:6px; }
+.pcard-info {
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; color:var(--w80);
+}
+.pcard-tag {
+  font-size:9px; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--w30);
+  min-width:32px;
+}
+.pcard-curiosity {
+  font-size:11px; color:var(--w60); line-height:1.5;
+  font-style:italic; margin-top:4px;
+  padding-top:8px; border-top:1px solid rgba(255,255,255,0.07);
+}
+
+/* Scrollbar for cards area */
+#presCards::-webkit-scrollbar { width:4px; }
+#presCards::-webkit-scrollbar-track { background:transparent; }
+#presCards::-webkit-scrollbar-thumb { background:rgba(126,200,227,0.2); border-radius:4px; }
+
+/* Add Person Modal */
+#addModal {
+  display:none; position:fixed; inset:0;
+  background:rgba(5,15,40,0.8); backdrop-filter:blur(8px);
+  z-index:9100; align-items:center; justify-content:center; padding:20px;
+}
+#addModal.open { display:flex; }
+.add-modal-box {
+  background:linear-gradient(135deg,rgba(15,40,100,0.98),rgba(8,22,58,0.99));
+  border:1px solid rgba(126,200,227,0.3); border-radius:24px;
+  padding:36px 32px; width:100%; max-width:480px;
+  position:relative; animation:modalPop 0.25s ease;
+}
+.add-modal-box h3 {
+  font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem;
+  color:var(--accent); margin-bottom:24px;
+}
+.add-close {
+  position:absolute; top:14px; right:18px;
+  background:none; border:none; color:var(--w60);
+  font-size:18px; cursor:pointer; transition:color 0.2s;
+}
+.add-close:hover { color:#fff; }
+.add-fields { display:flex; flex-direction:column; gap:14px; }
+.add-field label {
+  display:block; font-size:11px; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--w60); margin-bottom:5px;
+}
+.add-field input, .add-field select {
+  width:100%; background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.14); border-radius:10px;
+  padding:11px 14px; color:#fff; font-size:14px;
+  font-family:'DM Sans',sans-serif; outline:none; transition:border 0.2s;
+}
+.add-field input:focus, .add-field select:focus {
+  border-color:rgba(126,200,227,0.5);
+}
+.add-field input::placeholder { color:rgba(255,255,255,0.25); }
+.add-field select option { background:#0d2244; color:#fff; }
+.add-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fish-selector {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:8px;
+}
+.fish-opt {
+  background:var(--glass); border:1px solid var(--border); border-radius:10px;
+  padding:8px 4px; text-align:center; cursor:pointer;
+  transition:all 0.2s; font-size:10px; color:var(--w60);
+}
+.fish-opt:hover, .fish-opt.selected {
+  background:rgba(37,99,201,0.3); border-color:rgba(126,200,227,0.5);
+  color:#fff;
+}
+.fish-opt svg { display:block; margin:0 auto 4px; }
+.add-submit {
+  width:100%; margin-top:8px;
+  background:var(--blue-bright); border:none; border-radius:50px;
+  color:#fff; padding:14px; font-size:14px; font-weight:700;
+  font-family:'DM Sans',sans-serif; cursor:pointer; transition:all 0.25s;
+}
+.add-submit:hover { background:var(--blue-light); transform:translateY(-1px); }
+
+
 .vuca-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .vuca-item {
   background:var(--glass); border:1px solid var(--border); border-radius:14px;
@@ -643,8 +771,153 @@ html, body {
     </div>
   </div>
 
-  <!-- ── S2: VUCA + PDCA ── -->
-  <div class="slide" id="s2">
+  <!-- ── S2: APRESENTAÇÕES ── -->
+  <div class="slide slide-fill" id="s2" style="padding:24px 40px; align-items:stretch;">
+    <div style="width:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:0;">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-shrink:0;">
+        <div class="s-tag" style="margin-bottom:0">👋 Boas-vindas</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;letter-spacing:-0.02em;">Quem está aqui hoje?</h2>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button onclick="addCard()" style="background:rgba(37,99,201,0.35);border:1px solid rgba(37,99,201,0.5);border-radius:8px;color:#fff;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.background='rgba(37,99,201,0.55)'" onmouseout="this.style.background='rgba(37,99,201,0.35)'">+ Adicionar pessoa</button>
+          <button onclick="clearCards()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:8px;color:rgba(255,255,255,0.5);padding:7px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">↺ Limpar</button>
+        </div>
+      </div>
+
+      <!-- Cards grid -->
+      <div id="presCards" style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;align-content:start;overflow-y:auto;padding-right:4px;">
+        <!-- Caio's card pre-filled -->
+        <div class="pres-card" id="pcard-caio">
+          <div class="pcard-fish">
+            <svg viewBox="0 0 80 40" width="56" height="28"><g fill="rgba(126,200,227,0.9)"><ellipse cx="28" cy="20" rx="18" ry="11"/><polygon points="46,10 62,20 46,30"/><circle cx="16" cy="15" r="3" fill="#0a1628"/></g></svg>
+          </div>
+          <div class="pcard-body">
+            <div class="pcard-name">Caio Soares</div>
+            <div class="pcard-role">🐟 Agilista</div>
+            <div class="pcard-info"><span class="pcard-tag">Time</span>Digital Hering</div>
+            <div class="pcard-info"><span class="pcard-tag">De</span>Salvador, BA</div>
+            <div class="pcard-curiosity">"Se fosse um peixe, seria um peixe-palhaço — vivo em simbiose com vários times, sempre colorido e fácil de achar no cardume."</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tip -->
+      <div style="margin-top:10px;flex-shrink:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.22);letter-spacing:0.08em;">🐟 cada peixe é único no cardume — clique em + Adicionar pessoa para incluir quem chegou hoje</div>
+    </div>
+  </div>
+
+  <!-- ── S3: O QUE É O DIGITAL ── -->
+  <div class="slide slide-fill" id="s3digital" style="padding:16px 40px 12px;align-items:stretch;">
+    <div style="width:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:0;">
+
+      <!-- Header — compacto, tudo numa linha -->
+      <div style="flex-shrink:0;display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+        <div class="s-tag" style="margin-bottom:0;flex-shrink:0;">⚓ O navio</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.4rem,3vw,2.2rem);font-weight:800;letter-spacing:-0.02em;line-height:1;">O que é o <span style="color:var(--accent)">Digital?</span></h2>
+        <p style="font-size:12px;color:var(--w60);line-height:1.45;margin-left:auto;text-align:right;max-width:360px;">A frota que navega o mar do e-commerce — guiada pelo ágil e parte do ecossistema Hering.</p>
+      </div>
+
+      <!-- 5 colunas que preenchem o espaço -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;flex:1;min-height:0;">
+
+        <!-- E-COMMERCE -->
+        <div style="background:rgba(37,99,201,0.16);border:1px solid rgba(37,99,201,0.38);border-radius:14px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-10px;right:-8px;font-size:52px;opacity:0.06;pointer-events:none;line-height:1;">🛒</div>
+          <div style="font-size:1.5rem;line-height:1;">🛒</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:var(--accent2);line-height:1.2;">E-commerce</div>
+          <div style="font-size:11px;color:var(--w60);line-height:1.5;flex:1;">O casco do navio. Site, app e marketplace — onde o cliente chega, navega e compra.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;">
+            <span style="background:rgba(37,99,201,0.22);border:1px solid rgba(37,99,201,0.38);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent2);">Site Hering</span>
+            <span style="background:rgba(37,99,201,0.22);border:1px solid rgba(37,99,201,0.38);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent2);">App</span>
+            <span style="background:rgba(37,99,201,0.22);border:1px solid rgba(37,99,201,0.38);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent2);">Marketplace</span>
+            <span style="background:rgba(37,99,201,0.22);border:1px solid rgba(37,99,201,0.38);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent2);">Outlet</span>
+          </div>
+        </div>
+
+        <!-- OMNICHANNEL -->
+        <div style="background:rgba(239,68,68,0.09);border:1px solid rgba(239,68,68,0.28);border-radius:14px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-10px;right:-8px;font-size:52px;opacity:0.06;pointer-events:none;line-height:1;">🔗</div>
+          <div style="font-size:1.5rem;line-height:1;">🔗</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#fca5a5;line-height:1.2;">Omnichannel</div>
+          <div style="font-size:11px;color:var(--w60);line-height:1.5;flex:1;">As correntes que unem o mar digital às praias físicas — experiência fluida online e offline.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;">
+            <span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#fca5a5;">Atendimento</span>
+            <span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#fca5a5;">Backoffice</span>
+            <span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#fca5a5;">Lojas + Digital</span>
+          </div>
+        </div>
+
+        <!-- MKT PERFORMANCE -->
+        <div style="background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.28);border-radius:14px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-10px;right:-8px;font-size:52px;opacity:0.06;pointer-events:none;line-height:1;">📣</div>
+          <div style="font-size:1.5rem;line-height:1;">📣</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#86efac;line-height:1.2;">Mkt Performance</div>
+          <div style="font-size:11px;color:var(--w60);line-height:1.5;flex:1;">O vento nas velas. Atrai, converte e retém — mídia paga e dados orientando cada decisão.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;">
+            <span style="background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#86efac;">Mídia Paga</span>
+            <span style="background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#86efac;">CRM</span>
+            <span style="background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#86efac;">Criação</span>
+            <span style="background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:2px 8px;font-size:10px;color:#86efac;">Dados</span>
+          </div>
+        </div>
+
+        <!-- CUSTOMER SUCCESS -->
+        <div style="background:rgba(168,139,250,0.09);border:1px solid rgba(168,139,250,0.26);border-radius:14px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-10px;right:-8px;font-size:52px;opacity:0.06;pointer-events:none;line-height:1;">⭐</div>
+          <div style="font-size:1.5rem;line-height:1;">⭐</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#c4b5fd;line-height:1.2;">Customer Success</div>
+          <div style="font-size:11px;color:var(--w60);line-height:1.5;flex:1;">O farol que guia o cliente de volta. Satisfação, fidelização e jornada completa — do clique ao pós-venda.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;">
+            <span style="background:rgba(168,139,250,0.09);border:1px solid rgba(168,139,250,0.22);border-radius:20px;padding:2px 8px;font-size:10px;color:#c4b5fd;">NPS</span>
+            <span style="background:rgba(168,139,250,0.09);border:1px solid rgba(168,139,250,0.22);border-radius:20px;padding:2px 8px;font-size:10px;color:#c4b5fd;">Retenção</span>
+            <span style="background:rgba(168,139,250,0.09);border:1px solid rgba(168,139,250,0.22);border-radius:20px;padding:2px 8px;font-size:10px;color:#c4b5fd;">Pós-venda</span>
+          </div>
+        </div>
+
+        <!-- COLUNA DIREITA: Ágil + Ecossistema empilhados -->
+        <div style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- Ágil -->
+          <div style="background:rgba(126,200,227,0.09);border:1px solid rgba(126,200,227,0.26);border-radius:14px;padding:16px 14px;flex:1;display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-10px;right:-8px;font-size:46px;opacity:0.06;pointer-events:none;line-height:1;">🧭</div>
+            <div style="font-size:1.4rem;line-height:1;">🧭</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--accent);line-height:1.2;">Orientados pelo Ágil</div>
+            <div style="font-size:11px;color:var(--w60);line-height:1.45;flex:1;">Squads autônomos, sprints curtos, entrega contínua e melhoria constante.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;">
+              <span style="background:rgba(126,200,227,0.09);border:1px solid rgba(126,200,227,0.2);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent);">OKRs</span>
+              <span style="background:rgba(126,200,227,0.09);border:1px solid rgba(126,200,227,0.2);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent);">Scrum</span>
+              <span style="background:rgba(126,200,227,0.09);border:1px solid rgba(126,200,227,0.2);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent);">Squads</span>
+            </div>
+          </div>
+
+          <!-- Ecossistema -->
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:16px 14px;flex:1;display:flex;flex-direction:column;gap:7px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-10px;right:-8px;font-size:46px;opacity:0.05;pointer-events:none;line-height:1;">🌊</div>
+            <div style="font-size:1.4rem;line-height:1;">⚓</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:var(--w80);line-height:1.2;">Ecossistema Hering</div>
+            <div style="font-size:11px;color:var(--w60);line-height:1.45;flex:1;">O Digital é uma frota dentro da Cia. Hering — que por sua vez navega sob a bandeira do Grupo Azzas 2154, um dos maiores grupos de moda do Brasil.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;">
+              <span style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--w60);">Cia. Hering</span>
+              <span style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--w60);">Azzas 2154</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Onda decorativa bottom -->
+      <div style="flex-shrink:0;margin-top:10px;display:flex;align-items:center;gap:8px;opacity:0.22;">
+        <svg viewBox="0 0 500 12" width="100%" height="12" preserveAspectRatio="none"><path d="M0,6 C50,1 100,11 150,6 C200,1 250,11 300,6 C350,1 400,11 450,6 C475,3 490,9 500,6" fill="none" stroke="#7ec8e3" stroke-width="1.2"/></svg>
+        <span style="white-space:nowrap;font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:0.12em;text-transform:uppercase;">todos navegando juntos</span>
+        <svg viewBox="0 0 500 12" width="100%" height="12" preserveAspectRatio="none" style="transform:scaleX(-1)"><path d="M0,6 C50,1 100,11 150,6 C200,1 250,11 300,6 C350,1 400,11 450,6 C475,3 490,9 500,6" fill="none" stroke="#7ec8e3" stroke-width="1.2"/></svg>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── S4 (era S3b): VUCA + PDCA ── -->
+  <div class="slide" id="s3b">
     <div class="slide-inner">
       <div class="s-tag">🌊 Contexto</div>
       <h2 class="s-title" style="font-size:clamp(2rem,4vw,3rem)">Mundo VUCA & PDCA</h2>
@@ -1059,7 +1332,7 @@ html, body {
 })();
 
 // ── SLIDE ENGINE ──
-const total = 12;
+const total = 14;
 let cur = 0;
 let prev = -1;
 
@@ -1105,11 +1378,178 @@ btnPrev.disabled = true;
 
 // Keyboard
 document.addEventListener('keydown', e => {
+  if (document.getElementById('addModal') && document.getElementById('addModal').classList.contains('open')) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                   { e.preventDefault(); go(-1); }
   if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { closeModal(); closeAdd(); }
 });
+
+// Touch swipe
+let touchX = 0;
+document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
+document.addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+});
+
+// Fullscreen
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+
+// ── FISH OPTIONS ──
+const fishOptions = [
+  { id:'sardinha',  label:'Sardinha',      color:'#7ec8e3', desc:'sociável e sempre conectada ao cardume' },
+  { id:'palhaço',   label:'Peixe-palhaço', color:'#f97316', desc:'vive em simbiose com o ambiente ao redor' },
+  { id:'tubarão',   label:'Tubarão',       color:'#94a3b8', desc:'focado, determinado e vai fundo nos problemas' },
+  { id:'cavalo',    label:'Cavalo-marinho', color:'#a78bfa', desc:'paciente, único e sempre olhando para o detalhe' },
+  { id:'baiacu',    label:'Baiacu',        color:'#facc15', desc:'cheio de surpresas — não subestime!' },
+  { id:'linguado',  label:'Linguado',      color:'#6ee7b7', desc:'mestre da adaptação em qualquer contexto' },
+  { id:'manta',     label:'Manta',         color:'#818cf8', desc:'elegante, silencioso e de grande impacto' },
+  { id:'polvo',     label:'Polvo',         color:'#f472b6', desc:'criativo, multitarefa e cheio de ideias' },
+  { id:'atum',      label:'Atum',          color:'#38bdf8', desc:'rápido, eficiente e focado na entrega' },
+  { id:'peixe-lua', label:'Peixe-lua',     color:'#e2e8f0', desc:'calmo, contemplativo e pensa antes de agir' },
+];
+
+let selectedFish = 'sardinha';
+
+function buildFishSelector() {
+  const el = document.getElementById('fishSelector');
+  if (!el) return;
+  el.innerHTML = '';
+  fishOptions.forEach(f => {
+    const btn = document.createElement('div');
+    btn.className = 'fish-opt' + (f.id === selectedFish ? ' selected' : '');
+    btn.title = f.desc;
+    btn.onclick = () => { selectedFish = f.id; buildFishSelector(); };
+    btn.innerHTML = `
+      <svg viewBox="0 0 52 26" width="36" height="18" fill="none">
+        <ellipse cx="22" cy="13" rx="16" ry="8" fill="${f.color}" opacity="0.85"/>
+        <polygon points="38,5 52,13 38,21" fill="${f.color}" opacity="0.85"/>
+        <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
+      </svg>
+      <div style="font-size:9px;margin-top:2px;">${f.label}</div>`;
+    el.appendChild(btn);
+  });
+}
+
+function fishSVG(color, w=56, h=28) {
+  return `<svg viewBox="0 0 80 40" width="${w}" height="${h}">
+    <g fill="${color}" opacity="0.9">
+      <ellipse cx="30" cy="20" rx="20" ry="12"/>
+      <polygon points="50,9 68,20 50,31"/>
+      <circle cx="17" cy="15" r="3.5" fill="#0a1628"/>
+    </g>
+  </svg>`;
+}
+
+function addCard() {
+  selectedFish = 'sardinha';
+  buildFishSelector();
+  ['af-name','af-role','af-team','af-city','af-curiosity'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const m = document.getElementById('addModal');
+  m.style.display = 'flex';
+  setTimeout(() => { const n = document.getElementById('af-name'); if(n) n.focus(); }, 120);
+}
+
+function closeAdd() {
+  const m = document.getElementById('addModal');
+  if (m) m.style.display = 'none';
+}
+
+let cardCount = 0;
+
+function submitCard() {
+  const name      = (document.getElementById('af-name').value || '').trim();
+  const role      = (document.getElementById('af-role').value || '').trim();
+  const team      = (document.getElementById('af-team').value || '').trim();
+  const city      = (document.getElementById('af-city').value || '').trim();
+  const curiosity = (document.getElementById('af-curiosity').value || '').trim();
+
+  if (!name) { document.getElementById('af-name').focus(); return; }
+
+  const fish = fishOptions.find(f => f.id === selectedFish) || fishOptions[0];
+  cardCount++;
+  const id = 'pcard-' + cardCount;
+
+  const card = document.createElement('div');
+  card.className = 'pres-card';
+  card.id = id;
+  card.innerHTML = `
+    <button class="pcard-delete" onclick="document.getElementById('${id}').remove()" title="Remover">✕</button>
+    <div class="pcard-fish">${fishSVG(fish.color)}</div>
+    <div class="pcard-body">
+      <div class="pcard-name">${name}</div>
+      ${role ? `<div class="pcard-role">${role}</div>` : ''}
+      ${team ? `<div class="pcard-info"><span class="pcard-tag">Time</span>${team}</div>` : ''}
+      ${city ? `<div class="pcard-info"><span class="pcard-tag">De</span>${city}</div>` : ''}
+      <div class="pcard-curiosity">${curiosity ? `"${curiosity}"` : `Como um ${fish.label}: ${fish.desc}.`}</div>
+    </div>`;
+
+  document.getElementById('presCards').appendChild(card);
+  closeAdd();
+}
+
+function clearCards() {
+  Array.from(document.getElementById('presCards').children)
+    .forEach(c => { if (c.id !== 'pcard-caio') c.remove(); });
+}
+
+// ── FISH MODAL (stakeholders) ──
+const fishData = {
+  crm:     { icon:'📧', title:'CRM',          full:'Customer Relationship Management', desc:'Gestão do relacionamento com o cliente. Cuida da régua de comunicação, e-mail marketing, push, SMS e estratégias de retenção e fidelização.' },
+  merchan: { icon:'🏷️', title:'Merchan',       full:'Merchandising',                   desc:'Exposição e curadoria de produtos no digital. Define quais produtos aparecem, em que ordem e como são apresentados nas vitrines do site e app.' },
+  marca:   { icon:'✨', title:'Marca',          full:'Marketing de Marca',              desc:'Guarda e evolui a identidade da Hering. Cuida do posicionamento, campanhas institucionais, branding e percepção da marca.' },
+  gg:      { icon:'👥', title:'G&G',            full:'Gente & Gestão',                  desc:'A área de Pessoas da Cia. Hering. Cuida de contratações, desenvolvimento, cultura organizacional, benefícios e bem-estar dos colaboradores.' },
+  plan:    { icon:'📐', title:'Planejamento',   full:'Planejamento Estratégico',        desc:'Define o norte estratégico e financeiro. Monitora indicadores, alinha OKRs com a diretoria e garante o Digital alinhado ao plano maior.' },
+  cd:      { icon:'🏬', title:'CD',             full:'Centro de Distribuição',          desc:'O coração logístico da operação. Responsável por separar, empacotar e despachar os pedidos do e-commerce para todo o Brasil.' },
+  ti:      { icon:'💻', title:'TI',             full:'Tecnologia da Informação',        desc:'Infraestrutura tecnológica da empresa. Garante que sistemas, integrações, segurança e redes funcionem para suportar toda a operação digital.' },
+  canais:  { icon:'🏪', title:'Canais',         full:'Canais Físicos & Franquias',      desc:'Lojas físicas, franquias e canais presenciais. O digital se conecta com canais para garantir experiências omnichannel consistentes.' },
+};
+
+function openModal(id) {
+  const d = fishData[id]; if(!d) return;
+  document.getElementById('fmIcon').textContent  = d.icon;
+  document.getElementById('fmTitle').textContent = d.title;
+  document.getElementById('fmFull').textContent  = d.full;
+  document.getElementById('fmDesc').textContent  = d.desc;
+  document.getElementById('fishModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('fishModal').classList.remove('open');
+}
+</script>
+
+<!-- ADD PERSON MODAL -->
+<div id="addModal" onclick="if(event.target===this)closeAdd()" style="display:none;position:fixed;inset:0;background:rgba(5,15,40,0.82);backdrop-filter:blur(8px);z-index:9100;align-items:center;justify-content:center;padding:20px;">
+  <div class="add-modal-box">
+    <button class="add-close" onclick="closeAdd()">✕</button>
+    <h3>🐟 Novo integrante do cardume</h3>
+    <div class="add-fields">
+      <div class="add-row">
+        <div class="add-field"><label>Nome</label><input id="af-name" type="text" placeholder="Seu nome"></div>
+        <div class="add-field"><label>Profissão / Cargo</label><input id="af-role" type="text" placeholder="Ex: Dev Front-end"></div>
+      </div>
+      <div class="add-row">
+        <div class="add-field"><label>Time / Squad</label><input id="af-team" type="text" placeholder="Ex: Hering APP"></div>
+        <div class="add-field"><label>De onde fala?</label><input id="af-city" type="text" placeholder="Ex: Blumenau, SC"></div>
+      </div>
+      <div class="add-field"><label>Uma curiosidade sua</label><input id="af-curiosity" type="text" placeholder="Algo que poucos sabem de você…"></div>
+      <div class="add-field">
+        <label>Se fosse um peixe, seria…</label>
+        <div class="fish-selector" id="fishSelector"></div>
+      </div>
+      <button class="add-submit" onclick="submitCard()">Entrar no cardume 🐟</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
 
 // Touch swipe
 let touchX = 0;
