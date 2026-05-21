@@ -121,7 +121,7 @@ html, body {
 
 /* ── SLIDE CONTAINER ── */
 #slides-wrap {
-  position:fixed; inset:0; top:56px; bottom:52px;
+  position:fixed; inset:0; top:56px; bottom:0;
   overflow:hidden;
 }
 
@@ -158,10 +158,24 @@ html, body {
   position:fixed; bottom:0; left:0; right:0; z-index:100;
   display:flex; align-items:center; justify-content:center; gap:6px;
   padding:10px 20px; height:52px;
-  background:rgba(10,22,40,0.7);
+  background:rgba(10,22,40,0.85);
   backdrop-filter:blur(12px);
   border-top:1px solid var(--border);
   flex-wrap:wrap; overflow:hidden;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+#bottombar.visible {
+  transform: translateY(0);
+}
+
+/* invisible hover trigger at bottom edge */
+#bottombar-trigger {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 20px;
+  z-index: 99;
 }
 
 .dot {
@@ -1295,6 +1309,7 @@ html, body {
 
 <!-- BOTTOM DOTS -->
 <div id="bottombar" id="dots"></div>
+<div id="bottombar-trigger"></div>
 
 <!-- KEYBOARD HINT -->
 <div id="kbhint">
@@ -1399,7 +1414,45 @@ function toggleFullscreen() {
   else document.exitFullscreen();
 }
 
-// ── FISH OPTIONS ──
+// ── BOTTOMBAR AUTO-HIDE ──
+const bar = document.getElementById('bottombar');
+const trigger = document.getElementById('bottombar-trigger');
+let barTimer;
+
+function showBar() {
+  bar.classList.add('visible');
+  clearTimeout(barTimer);
+  barTimer = setTimeout(() => bar.classList.remove('visible'), 2200);
+}
+
+// Show on hover near bottom edge
+trigger.addEventListener('mouseenter', showBar);
+bar.addEventListener('mouseenter', () => {
+  bar.classList.add('visible');
+  clearTimeout(barTimer);
+});
+bar.addEventListener('mouseleave', () => {
+  barTimer = setTimeout(() => bar.classList.remove('visible'), 1000);
+});
+
+// Show briefly on slide change
+const _goTo = goTo;
+// patch goTo to also flash bar
+function goTo(n) {
+  _goTo(n);
+  showBar();
+}
+
+// Show on touch bottom area
+document.addEventListener('touchstart', e => {
+  const y = e.touches[0].clientY;
+  if (y > window.innerHeight - 60) showBar();
+});
+
+// Show briefly on load
+setTimeout(showBar, 600);
+
+
 const fishOptions = [
   { id:'sardinha',  label:'Sardinha',      color:'#7ec8e3', desc:'sociável e sempre conectada ao cardume' },
   { id:'palhaço',   label:'Peixe-palhaço', color:'#f97316', desc:'vive em simbiose com o ambiente ao redor' },
