@@ -1759,41 +1759,10 @@ function toggleFullscreen() {
 function openQR() {
   const modal = document.getElementById('qrModal');
   modal.style.display = 'flex';
-  setTimeout(drawQR, 50);
 }
 
 function closeQR() {
   document.getElementById('qrModal').style.display = 'none';
-}
-
-function drawQR() {
-  const url = 'https://caiosoares1899.github.io/hering/onboarding.slide.html';
-  const canvas = document.getElementById('qrCanvas');
-  const size = 200;
-  canvas.width = size; canvas.height = size;
-  const ctx = canvas.getContext('2d');
-
-  // Use QR API from Google Charts (simple, no SDK needed)
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    ctx.clearRect(0, 0, size, size);
-    ctx.drawImage(img, 0, 0, size, size);
-  };
-  img.onerror = () => {
-    // Fallback: draw placeholder with URL text
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#0a1628';
-    ctx.font = 'bold 11px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('QR indisponível offline', size/2, size/2 - 10);
-    ctx.font = '9px monospace';
-    ctx.fillText('Acesse diretamente:', size/2, size/2 + 10);
-    ctx.fillText('caiosoares1899.github.io', size/2, size/2 + 24);
-    ctx.fillText('/hering/onboarding.slide.html', size/2, size/2 + 38);
-  };
-  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}&color=0a1628&bgcolor=ffffff&qzone=1`;
 }
 
 
@@ -1827,16 +1796,25 @@ function closeModal() {
     <button onclick="closeQR()" style="position:absolute;top:14px;right:18px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;line-height:1;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">✕</button>
 
     <div style="font-size:1.4rem;margin-bottom:6px;">📱</div>
-    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--accent);margin-bottom:4px;">Abrir nos slides</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Aponte a câmera para acessar a apresentação</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--accent);margin-bottom:4px;">Abrir no celular</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:20px;">Aponte a câmera para acessar o conteúdo</div>
 
-    <!-- QR code container — white background para legibilidade -->
-    <div style="background:#fff;border-radius:16px;padding:16px;display:inline-block;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,0.3);">
-      <canvas id="qrCanvas" width="200" height="200"></canvas>
+    <!-- QR image -->
+    <div style="background:#fff;border-radius:16px;padding:16px;display:inline-block;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,0,0,0.3);">
+      <img src="qr-onboarding.png" alt="QR Code" width="200" height="200" style="display:block;">
     </div>
 
-    <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;word-break:break-all;padding:0 8px;">
-      caiosoares1899.github.io/hering/onboarding.slide.html
+    <!-- Message -->
+    <div style="background:rgba(37,99,201,0.2);border:1px solid rgba(37,99,201,0.35);border-radius:12px;padding:14px 16px;margin-bottom:0;">
+      <p style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.6;margin:0;">
+        💻 Este conteúdo é melhor acessado pelo desktop!<br>
+        <a href="https://bit.ly/onboardinghering" target="_blank"
+           style="color:var(--accent);font-weight:700;text-decoration:none;font-size:13px;"
+           onmouseover="this.style.textDecoration='underline'"
+           onmouseout="this.style.textDecoration='none'">
+          bit.ly/onboardinghering
+        </a>
+      </p>
     </div>
   </div>
 </div>
