@@ -323,39 +323,44 @@
   .stake-ocean {
     position: relative;
     width: 100%;
-    height: 520px;
-    background: radial-gradient(ellipse at 50% 60%, rgba(15,45,110,0.5) 0%, rgba(8,20,50,0.3) 60%, transparent 100%),
+    height: 560px;
+    background: radial-gradient(ellipse at 50% 50%, rgba(15,45,120,0.55) 0%, rgba(8,20,55,0.35) 55%, transparent 100%),
                 var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 24px;
     overflow: hidden;
     backdrop-filter: blur(12px);
+    /* default orbit radius */
+    --fr: 230px;
   }
 
-  @media (max-width: 600px) { .stake-ocean { height: 380px; } }
+  @media (max-width: 700px) {
+    .stake-ocean { height: 420px; --fr: 155px; }
+  }
+  @media (max-width: 440px) {
+    .stake-ocean { height: 340px; --fr: 118px; }
+  }
 
-  /* Bubbles */
   .stake-bubble {
     position: absolute;
     bottom: -10px;
     border-radius: 50%;
     background: rgba(126,200,227,0.15);
-    border: 1px solid rgba(126,200,227,0.2);
+    border: 1px solid rgba(126,200,227,0.18);
     animation: stakeBubbleRise linear infinite;
   }
 
   @keyframes stakeBubbleRise {
-    0%   { transform: translateY(0) scale(1);   opacity: 0; }
-    10%  { opacity: 0.6; }
-    90%  { opacity: 0.2; }
-    100% { transform: translateY(-540px) scale(1.1); opacity: 0; }
+    0%   { transform: translateY(0);      opacity: 0; }
+    10%  { opacity: 0.55; }
+    90%  { opacity: 0.15; }
+    100% { transform: translateY(-600px); opacity: 0; }
   }
 
   /* Center */
   .stake-center-wrap {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     z-index: 4;
   }
@@ -364,62 +369,67 @@
     position: absolute;
     top: 50%; left: 50%;
     border-radius: 50%;
-    border: 1px solid rgba(126,200,227,0.15);
+    border: 1px solid rgba(126,200,227,0.13);
     transform: translate(-50%,-50%);
     pointer-events: none;
   }
+  .stake-ring-1 { width: 180px; height: 180px; animation: ringPulse 4s ease-in-out infinite; }
+  .stake-ring-2 { width: 260px; height: 260px; animation: ringPulse 4s 1.4s ease-in-out infinite; border-color: rgba(126,200,227,0.07); }
+  .stake-ring-3 { width: 340px; height: 340px; animation: ringPulse 4s 2.8s ease-in-out infinite; border-color: rgba(126,200,227,0.04); }
 
-  .stake-ring-1 {
-    width: 140px; height: 140px;
-    animation: ringPulse 4s ease-in-out infinite;
+  @media (max-width: 700px) {
+    .stake-ring-1 { width: 130px; height: 130px; }
+    .stake-ring-2 { width: 185px; height: 185px; }
+    .stake-ring-3 { width: 240px; height: 240px; }
   }
-
-  .stake-ring-2 {
-    width: 200px; height: 200px;
-    animation: ringPulse 4s 1.5s ease-in-out infinite;
-    border-color: rgba(126,200,227,0.07);
+  @media (max-width: 440px) {
+    .stake-ring-1 { width: 100px; height: 100px; }
+    .stake-ring-2 { width: 148px; height: 148px; }
+    .stake-ring-3 { width: 196px; height: 196px; }
   }
 
   @keyframes ringPulse {
-    0%,100% { opacity: 0.4; transform: translate(-50%,-50%) scale(1); }
-    50%      { opacity: 0.1; transform: translate(-50%,-50%) scale(1.06); }
+    0%,100% { opacity: 0.5; transform: translate(-50%,-50%) scale(1); }
+    50%      { opacity: 0.08; transform: translate(-50%,-50%) scale(1.05); }
   }
 
   .stake-core {
-    width: 110px;
-    height: 110px;
+    width: 140px; height: 140px;
     border-radius: 50%;
-    background: radial-gradient(circle at 38% 36%, rgba(80,150,240,0.95), rgba(15,50,140,0.98) 70%);
-    border: 2px solid rgba(126,200,227,0.7);
-    box-shadow: 0 0 32px rgba(60,130,220,0.5), inset 0 0 20px rgba(100,180,255,0.15);
+    background: radial-gradient(circle at 36% 33%, rgba(90,160,250,0.96), rgba(15,52,145,0.99) 68%);
+    border: 2.5px solid rgba(126,200,227,0.75);
+    box-shadow: 0 0 48px rgba(60,130,220,0.6), 0 0 80px rgba(30,100,200,0.2), inset 0 0 28px rgba(120,190,255,0.18);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     position: relative;
     z-index: 5;
   }
 
+  @media (max-width: 700px) { .stake-core { width: 100px; height: 100px; } .stake-core svg { width: 54px; height: 28px; } }
+  @media (max-width: 440px) { .stake-core { width: 78px;  height: 78px;  } .stake-core svg { width: 42px; height: 22px; } }
+
   .stake-core-label {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
-    font-size: 11px;
-    letter-spacing: 0.12em;
+    font-size: 12px;
+    letter-spacing: 0.14em;
     color: #fff;
   }
+
+  @media (max-width: 440px) { .stake-core-label { font-size: 9px; } }
 
   /* Fish orbits */
   .fish-orbit {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    /* orbit animation rotates the arm */
+    top: 50%; left: 50%;
+    width: 0; height: 0;
     animation: fishOrbit var(--orbit-dur) linear infinite;
     animation-delay: calc(var(--orbit-start) / 360deg * -1 * var(--orbit-dur));
     z-index: 3;
+    cursor: pointer;
   }
 
   @keyframes fishOrbit {
@@ -435,11 +445,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    /* counter-rotate so fish stays upright */
+    gap: 5px;
     animation: fishCounterRotate var(--orbit-dur) linear infinite;
     animation-delay: calc(var(--orbit-start) / 360deg * -1 * var(--orbit-dur));
-    cursor: default;
   }
 
   @keyframes fishCounterRotate {
@@ -447,34 +455,114 @@
     to   { transform: translate(-50%,-50%) rotate(-360deg); }
   }
 
-  .fish-svg {
-    filter: drop-shadow(0 0 6px rgba(126,200,227,0.4));
-    transition: filter 0.3s;
+  @media (max-width: 700px) {
+    .fish-node svg { transform: scale(0.7); transform-origin: center; }
+  }
+  @media (max-width: 440px) {
+    .fish-node svg { transform: scale(0.52); transform-origin: center; }
+    .fish-label { font-size: 9px !important; padding: 2px 7px !important; }
   }
 
-  .fish-node:hover .fish-svg {
-    filter: drop-shadow(0 0 12px rgba(126,200,227,0.9));
+  .fish-svg {
+    filter: drop-shadow(0 0 7px rgba(126,200,227,0.45));
+    transition: filter 0.25s;
+    display: block;
+  }
+
+  .fish-orbit:hover .fish-svg {
+    filter: drop-shadow(0 0 16px rgba(126,200,227,1));
   }
 
   .fish-label {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
-    font-size: 11px;
-    color: rgba(255,255,255,0.85);
-    background: rgba(10,25,60,0.75);
-    border: 1px solid rgba(126,200,227,0.25);
+    font-size: 12px;
+    color: rgba(255,255,255,0.88);
+    background: rgba(8,22,58,0.82);
+    border: 1px solid rgba(126,200,227,0.3);
     border-radius: 20px;
-    padding: 3px 10px;
+    padding: 4px 12px;
     white-space: nowrap;
-    backdrop-filter: blur(4px);
-    transition: all 0.3s;
+    backdrop-filter: blur(6px);
+    transition: all 0.25s;
   }
 
-  .fish-node:hover .fish-label {
-    background: rgba(37,99,201,0.5);
-    border-color: rgba(126,200,227,0.6);
+  .fish-orbit:hover .fish-label {
+    background: rgba(37,99,201,0.55);
+    border-color: rgba(126,200,227,0.7);
     color: #fff;
   }
+
+  /* Fish Modal */
+  .fish-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5,15,40,0.75);
+    backdrop-filter: blur(8px);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .fish-modal.open { display: flex; }
+
+  .fish-modal-box {
+    background: linear-gradient(135deg, rgba(15,40,100,0.97), rgba(8,22,58,0.99));
+    border: 1px solid rgba(126,200,227,0.35);
+    border-radius: 24px;
+    padding: 40px 36px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(37,99,201,0.2);
+    animation: modalPop 0.25s ease;
+  }
+
+  @keyframes modalPop {
+    from { transform: scale(0.88); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  .fish-modal-close {
+    position: absolute;
+    top: 14px; right: 18px;
+    background: none;
+    border: none;
+    color: var(--white-40, rgba(255,255,255,0.4));
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+  .fish-modal-close:hover { color: var(--white); }
+
+  .fish-modal-icon { font-size: 3rem; margin-bottom: 12px; }
+
+  .fish-modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .fish-modal-full {
+    font-size: 13px;
+    color: var(--white-60);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .fish-modal-desc {
+    font-size: 15px;
+    color: var(--white-80);
+    line-height: 1.7;
+  }
+
 
   #stakeCanvas { display: none; }
 
@@ -2149,131 +2237,104 @@
     <!-- Stakeholders Map -->
     <div class="reveal" style="margin-top:64px">
       <h3 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:8px">🌐 Stakeholders</h3>
-      <p style="font-size:14px;color:var(--white-60);margin-bottom:24px">O Digital não nada sozinho — veja quem orbita ao nosso redor.</p>
+      <p style="font-size:14px;color:var(--white-60);margin-bottom:24px">O Digital não nada sozinho — clique em cada peixe para saber mais.</p>
 
-      <div class="stake-ocean">
-        <!-- Ambient particles -->
-        <div class="stake-bubble" style="left:10%;animation-delay:0s;animation-duration:7s;width:5px;height:5px"></div>
-        <div class="stake-bubble" style="left:30%;animation-delay:2s;animation-duration:9s;width:3px;height:3px"></div>
-        <div class="stake-bubble" style="left:55%;animation-delay:4s;animation-duration:6s;width:4px;height:4px"></div>
-        <div class="stake-bubble" style="left:75%;animation-delay:1s;animation-duration:8s;width:6px;height:6px"></div>
-        <div class="stake-bubble" style="left:88%;animation-delay:3s;animation-duration:10s;width:3px;height:3px"></div>
+      <div class="stake-ocean" id="stakeOcean">
+        <!-- Bubbles -->
+        <div class="stake-bubble" style="left:8%;animation-delay:0s;animation-duration:8s;width:6px;height:6px"></div>
+        <div class="stake-bubble" style="left:22%;animation-delay:2.5s;animation-duration:10s;width:4px;height:4px"></div>
+        <div class="stake-bubble" style="left:45%;animation-delay:1s;animation-duration:7s;width:5px;height:5px"></div>
+        <div class="stake-bubble" style="left:68%;animation-delay:4s;animation-duration:9s;width:7px;height:7px"></div>
+        <div class="stake-bubble" style="left:85%;animation-delay:3s;animation-duration:11s;width:4px;height:4px"></div>
+        <div class="stake-bubble" style="left:92%;animation-delay:6s;animation-duration:8s;width:3px;height:3px"></div>
 
-        <!-- CENTER CARDUME -->
+        <!-- CENTER -->
         <div class="stake-center-wrap">
           <div class="stake-ring stake-ring-1"></div>
           <div class="stake-ring stake-ring-2"></div>
+          <div class="stake-ring stake-ring-3"></div>
           <div class="stake-core">
-            <svg viewBox="0 0 80 40" width="60" height="30">
-              <!-- mini fish school -->
-              <g fill="rgba(180,220,255,0.9)">
-                <ellipse cx="20" cy="20" rx="9" ry="5"/><polygon points="29,15 36,20 29,25"/>
-                <ellipse cx="42" cy="14" rx="7" ry="4"/><polygon points="49,10 55,14 49,18"/>
-                <ellipse cx="44" cy="27" rx="7" ry="4"/><polygon points="51,23 57,27 51,31"/>
-                <ellipse cx="62" cy="20" rx="6" ry="3.5"/><polygon points="68,17 73,20 68,23"/>
+            <svg viewBox="0 0 90 48" width="72" height="38">
+              <g fill="rgba(180,220,255,0.92)">
+                <ellipse cx="18" cy="24" rx="10" ry="6"/><polygon points="28,18 37,24 28,30"/>
+                <ellipse cx="46" cy="15" rx="8" ry="5"/><polygon points="54,11 62,15 54,19"/>
+                <ellipse cx="48" cy="33" rx="8" ry="5"/><polygon points="56,29 64,33 56,37"/>
+                <ellipse cx="70" cy="24" rx="7" ry="4.5"/><polygon points="77,20 85,24 77,28"/>
               </g>
             </svg>
             <div class="stake-core-label">DIGITAL</div>
           </div>
         </div>
 
-        <!-- FISH NODES — each a named fish swimming around -->
-        <!-- CRM -->
-        <div class="fish-orbit" style="--orbit-r:220px;--orbit-dur:18s;--orbit-start:0deg;--fish-color:#4a9fd4">
+        <!-- FISH — data-id matches modal -->
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:18s;--orbit-start:0deg;--fish-color:#4a9fd4" data-fish="crm" onclick="openFishModal('crm')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="46" height="23"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">CRM</span>
           </div>
         </div>
 
-        <!-- Merchan -->
-        <div class="fish-orbit" style="--orbit-r:200px;--orbit-dur:22s;--orbit-start:45deg;--fish-color:#7ec8e3">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:25s;--orbit-start:45deg;--fish-color:#7ec8e3" data-fish="merchan" onclick="openFishModal('merchan')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="50" height="25"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">Merchan</span>
           </div>
         </div>
 
-        <!-- Marca -->
-        <div class="fish-orbit" style="--orbit-r:235px;--orbit-dur:26s;--orbit-start:90deg;--fish-color:#5ba8d0">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:30s;--orbit-start:90deg;--fish-color:#5ba8d0" data-fish="marca" onclick="openFishModal('marca')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="48" height="24"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">Marca</span>
           </div>
         </div>
 
-        <!-- G&G -->
-        <div class="fish-orbit" style="--orbit-r:210px;--orbit-dur:20s;--orbit-start:135deg;--fish-color:#a8d8ea">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:21s;--orbit-start:135deg;--fish-color:#a8d8ea" data-fish="gg" onclick="openFishModal('gg')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="32" height="16">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="44" height="22"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">G&amp;G</span>
           </div>
         </div>
 
-        <!-- Planejamento -->
-        <div class="fish-orbit" style="--orbit-r:245px;--orbit-dur:30s;--orbit-start:180deg;--fish-color:#3d8fb5">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:35s;--orbit-start:180deg;--fish-color:#3d8fb5" data-fish="plan" onclick="openFishModal('plan')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="36" height="18">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="52" height="26"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">Planejamento</span>
           </div>
         </div>
 
-        <!-- CD -->
-        <div class="fish-orbit" style="--orbit-r:205px;--orbit-dur:16s;--orbit-start:225deg;--fish-color:#6ab4d0">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:19s;--orbit-start:225deg;--fish-color:#6ab4d0" data-fish="cd" onclick="openFishModal('cd')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="28" height="14">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="42" height="21"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">CD</span>
           </div>
         </div>
 
-        <!-- TI -->
-        <div class="fish-orbit" style="--orbit-r:225px;--orbit-dur:24s;--orbit-start:270deg;--fish-color:#88c8e0">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:27s;--orbit-start:270deg;--fish-color:#88c8e0" data-fish="ti" onclick="openFishModal('ti')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="28" height="14">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="44" height="22"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">TI</span>
           </div>
         </div>
 
-        <!-- Canais -->
-        <div class="fish-orbit" style="--orbit-r:215px;--orbit-dur:28s;--orbit-start:315deg;--fish-color:#5fb8d8">
+        <div class="fish-orbit" style="--orbit-r:var(--fr);--orbit-dur:23s;--orbit-start:315deg;--fish-color:#5fb8d8" data-fish="canais" onclick="openFishModal('canais')">
           <div class="fish-node">
-            <svg class="fish-svg" viewBox="0 0 52 26" width="30" height="15">
-              <ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/>
-              <polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/>
-              <circle cx="12" cy="10" r="2.5" fill="#0a1628"/>
-            </svg>
+            <svg class="fish-svg" viewBox="0 0 52 26" width="46" height="23"><ellipse cx="22" cy="13" rx="16" ry="8" fill="var(--fish-color)"/><polygon points="38,5 52,13 38,21" fill="var(--fish-color)"/><circle cx="12" cy="10" r="2.5" fill="#0a1628"/></svg>
             <span class="fish-label">Canais</span>
           </div>
         </div>
 
+        <p style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap">🐟 clique em cada peixe para saber mais</p>
+      </div>
+
+      <!-- Fish Info Modal -->
+      <div class="fish-modal" id="fishModal" onclick="closeFishModal()">
+        <div class="fish-modal-box" onclick="event.stopPropagation()">
+          <button class="fish-modal-close" onclick="closeFishModal()">✕</button>
+          <div class="fish-modal-icon" id="fishModalIcon"></div>
+          <div class="fish-modal-title" id="fishModalTitle"></div>
+          <div class="fish-modal-full" id="fishModalFull"></div>
+          <div class="fish-modal-desc" id="fishModalDesc"></div>
+        </div>
       </div>
     </div>
 
@@ -2905,7 +2966,77 @@ function restartQuiz() {
 
 renderQuestion();
 
-// ─── STAKEHOLDERS CANVAS ───
+// ─── FISH MODAL ───
+const fishData = {
+  crm: {
+    icon: '📧',
+    title: 'CRM',
+    full: 'Customer Relationship Management',
+    desc: 'Gestão do relacionamento com o cliente. Cuida da régua de comunicação, e-mail marketing, push, SMS e estratégias de retenção e fidelização dos clientes Hering.'
+  },
+  merchan: {
+    icon: '🏷️',
+    title: 'Merchan',
+    full: 'Merchandising',
+    desc: 'Responsável pela exposição e curadoria de produtos no digital. Define quais produtos aparecem, em que ordem e como são apresentados nas vitrines do site e app.'
+  },
+  marca: {
+    icon: '✨',
+    title: 'Marca',
+    full: 'Marketing de Marca',
+    desc: 'Guarda e evolui a identidade da Hering. Cuida do posicionamento, campanhas institucionais, branding e da percepção da marca pelo consumidor.'
+  },
+  gg: {
+    icon: '👥',
+    title: 'G&G',
+    full: 'Gente & Gestão',
+    desc: 'A área de Pessoas da Cia. Hering. Cuida de contratações, desenvolvimento, cultura organizacional, benefícios e bem-estar de todos os colaboradores.'
+  },
+  plan: {
+    icon: '📐',
+    title: 'Planejamento',
+    full: 'Planejamento Estratégico',
+    desc: 'Define o norte estratégico e financeiro da empresa. Monitora indicadores, alinha OKRs com a diretoria e garante que o Digital esteja alinhado ao plano maior.'
+  },
+  cd: {
+    icon: '🏬',
+    title: 'CD',
+    full: 'Centro de Distribuição',
+    desc: 'O coração logístico da operação. Responsável por separar, empacotar e despachar os pedidos do e-commerce para todo o Brasil com agilidade e qualidade.'
+  },
+  ti: {
+    icon: '💻',
+    title: 'TI',
+    full: 'Tecnologia da Informação',
+    desc: 'Infraestrutura tecnológica da empresa. Garante que sistemas, integrações, segurança e redes funcionem bem para suportar toda a operação digital.'
+  },
+  canais: {
+    icon: '🏪',
+    title: 'Canais',
+    full: 'Canais Físicos & Franquias',
+    desc: 'Lojas físicas, franquias e canais de venda presencial. O digital se conecta com canais para garantir experiências omnichannel consistentes para o cliente.'
+  }
+};
+
+function openFishModal(id) {
+  const d = fishData[id];
+  if (!d) return;
+  document.getElementById('fishModalIcon').textContent  = d.icon;
+  document.getElementById('fishModalTitle').textContent = d.title;
+  document.getElementById('fishModalFull').textContent  = d.full;
+  document.getElementById('fishModalDesc').textContent  = d.desc;
+  document.getElementById('fishModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFishModal() {
+  document.getElementById('fishModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFishModal(); });
+
+
 (function() {
   const canvas = document.getElementById('stakeCanvas');
   if (!canvas) return;
