@@ -1373,15 +1373,12 @@ function goTo(n) {
   setTimeout(() => { if(slides[prev]) slides[prev].classList.remove('prev'); }, 420);
   prev = cur; cur = n;
   slides[cur].classList.add('active');
-  // dots
   document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===cur));
-  // counter
   counter.textContent = `${cur+1} / ${total}`;
-  // progress
   fill.style.width = ((cur/(total-1))*100) + '%';
-  // buttons
   btnPrev.disabled = cur === 0;
   btnNext.disabled = cur === total-1;
+  if (typeof showBar === 'function') showBar();
 }
 
 function go(dir) { goTo(cur + dir); }
@@ -1434,14 +1431,6 @@ bar.addEventListener('mouseenter', () => {
 bar.addEventListener('mouseleave', () => {
   barTimer = setTimeout(() => bar.classList.remove('visible'), 1000);
 });
-
-// Show briefly on slide change
-const _goTo = goTo;
-// patch goTo to also flash bar
-function goTo(n) {
-  _goTo(n);
-  showBar();
-}
 
 // Show on touch bottom area
 document.addEventListener('touchstart', e => {
