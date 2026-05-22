@@ -1725,6 +1725,14 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('fishModal').classList.remove('open');
 }
+
+// ── QR CODE ──
+function openQR() {
+  document.getElementById('qrModal').style.display = 'flex';
+}
+function closeQR() {
+  document.getElementById('qrModal').style.display = 'none';
+}
 </script>
 
 <!-- ADD PERSON MODAL -->
@@ -1751,56 +1759,6 @@ function closeModal() {
     </div>
   </div>
 </div>
-
-// Touch swipe
-let touchX = 0;
-document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
-document.addEventListener('touchend',   e => {
-  const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
-});
-
-// Fullscreen
-function toggleFullscreen() {
-  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
-  else document.exitFullscreen();
-}
-
-// ── QR CODE ──
-function openQR() {
-  const modal = document.getElementById('qrModal');
-  modal.style.display = 'flex';
-}
-
-function closeQR() {
-  const modal = document.getElementById('qrModal');
-  modal.style.display = 'none';
-}
-
-
-const fishData = {
-  crm:     { icon:'📧', title:'CRM',           full:'Customer Relationship Management', desc:'Gestão do relacionamento com o cliente. Cuida da régua de comunicação, e-mail marketing, push, SMS e estratégias de retenção e fidelização.' },
-  merchan: { icon:'🏷️', title:'Merchan',        full:'Merchandising',                   desc:'Exposição e curadoria de produtos no digital. Define quais produtos aparecem, em que ordem e como são apresentados nas vitrines do site e app.' },
-  marca:   { icon:'✨', title:'Marca',           full:'Marketing de Marca',              desc:'Guarda e evolui a identidade da Hering. Cuida do posicionamento, campanhas institucionais, branding e percepção da marca.' },
-  gg:      { icon:'👥', title:'G&G',             full:'Gente & Gestão',                  desc:'A área de Pessoas da Cia. Hering. Cuida de contratações, desenvolvimento, cultura organizacional, benefícios e bem-estar dos colaboradores.' },
-  plan:    { icon:'📐', title:'Planejamento',    full:'Planejamento Estratégico',        desc:'Define o norte estratégico e financeiro. Monitora indicadores, alinha OKRs com a diretoria e garante o Digital alinhado ao plano maior.' },
-  cd:      { icon:'🏬', title:'CD',              full:'Centro de Distribuição',          desc:'O coração logístico da operação. Responsável por separar, empacotar e despachar os pedidos do e-commerce para todo o Brasil.' },
-  ti:      { icon:'💻', title:'TI',              full:'Tecnologia da Informação',        desc:'Infraestrutura tecnológica da empresa. Garante que sistemas, integrações, segurança e redes funcionem para suportar toda a operação digital.' },
-  canais:  { icon:'🏪', title:'Canais',          full:'Canais Físicos & Franquias',      desc:'Lojas físicas, franquias e canais presenciais. O digital se conecta com canais para garantir experiências omnichannel consistentes.' },
-};
-
-function openModal(id) {
-  const d = fishData[id]; if(!d) return;
-  document.getElementById('fmIcon').textContent  = d.icon;
-  document.getElementById('fmTitle').textContent = d.title;
-  document.getElementById('fmFull').textContent  = d.full;
-  document.getElementById('fmDesc').textContent  = d.desc;
-  document.getElementById('fishModal').classList.add('open');
-}
-function closeModal() {
-  document.getElementById('fishModal').classList.remove('open');
-}
-</script>
 
 <!-- QR CODE MODAL -->
 <div id="qrModal" onclick="if(event.target===this)closeQR()" style="display:none;position:fixed;inset:0;background:rgba(5,15,40,0.85);backdrop-filter:blur(10px);z-index:9200;align-items:center;justify-content:center;padding:20px;">
