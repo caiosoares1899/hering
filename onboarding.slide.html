@@ -1007,9 +1007,9 @@ html, body {
     <div style="width:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:0;">
 
       <!-- Header row -->
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-shrink:0;justify-content:center;">
         <div class="s-tag" style="margin-bottom:0">🐟 Cardume Digital</div>
-        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:800;letter-spacing:-0.02em;">Nossos Squads</h2>
+        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.6rem);font-weight:800;letter-spacing:-0.02em;">Nossas Squads</h2>
       </div>
 
       <!-- Gerente Digital -->
@@ -1752,9 +1752,6 @@ function closeModal() {
   </div>
 </div>
 
-</body>
-</html>
-
 // Touch swipe
 let touchX = 0;
 document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; });
@@ -1776,7 +1773,8 @@ function openQR() {
 }
 
 function closeQR() {
-  document.getElementById('qrModal').style.display = 'none';
+  const modal = document.getElementById('qrModal');
+  modal.style.display = 'none';
 }
 
 
@@ -1833,34 +1831,19 @@ function closeModal() {
   </div>
 </div>
 
-</body>
-</html>
+<!--
+════════════════════════════════════════════════════════
   🐟  COMO CONFIGURAR O FIREBASE (5 minutos)
 ════════════════════════════════════════════════════════
 
 1. Acesse: https://console.firebase.google.com
 2. "Adicionar projeto" → nome: hering-onboarding
-   (pode desativar Google Analytics)
 3. Menu lateral → "Realtime Database" → "Criar banco de dados"
    → Região: us-central1 → Modo de TESTE (regras abertas)
 4. Menu lateral → ⚙️ Configurações do projeto → Aba "Seus apps"
    → Clique em "</>" (Web) → Registre o app → copie o firebaseConfig
-5. No topo deste arquivo, substitua cada "COLE_AQUI" pelos valores:
-
-   const FIREBASE_CONFIG = {
-     apiKey:            "AIzaSy...",
-     authDomain:        "hering-onboarding.firebaseapp.com",
-     databaseURL:       "https://hering-onboarding-default-rtdb.firebaseio.com",
-     projectId:         "hering-onboarding",
-     storageBucket:     "hering-onboarding.appspot.com",
-     messagingSenderId: "1234567890",
-     appId:             "1:1234567890:web:abc123def456",
-   };
-
+5. No topo deste arquivo, substitua cada "COLE_AQUI" pelos valores copiados.
 6. Salve e abra em dois navegadores — cards sincronizam em tempo real! 🎉
-
-SEGURANÇA: as regras de teste expiram em 30 dias. Para renovar:
-  Realtime Database → Regras → atualize o timestamp de expiração.
 ════════════════════════════════════════════════════════
 -->
 </body>
