@@ -11,43 +11,21 @@ html, body {
   height: 100vh;
   overflow: hidden;
   background: #000;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-}
-
-#slides-frame {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-}
-
-#no-url {
-  position: absolute;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 12px;
-  background: #0a0a0a;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
-#no-url p { color: #2a2a2a; font-size: 14px; text-align: center; line-height: 1.7; }
-#no-url a { color: #1d9e75; font-size: 13px; text-decoration: none; }
 
 #timer {
-  position: absolute;
-  bottom: 24px;
-  right: 28px;
-  font-size: 48px;
+  font-size: 64px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.03em;
   color: #1d9e75;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.6);
-  pointer-events: none;
-  user-select: none;
   transition: color 0.4s;
-  z-index: 10;
+  user-select: none;
+  line-height: 1;
 }
 
 #timer.warning { color: #EF9F27; }
@@ -58,36 +36,16 @@ html, body {
 </style>
 </head>
 <body>
-
-<div id="no-url">
-  <p>Nenhuma apresentação configurada.<br>Acesse o painel de controle para configurar.</p>
-  <a href="controle.html" target="_blank">↗ Abrir painel de controle</a>
-</div>
-
-<iframe id="slides-frame" src="about:blank" allowfullscreen></iframe>
-
 <div id="timer">6:00</div>
-
 <script>
 const channel = new BroadcastChannel('cd_timer');
 
 function applyState(s) {
   if (!s) return;
-
-  if (s.url) {
-    const frame = document.getElementById('slides-frame');
-    if (frame.getAttribute('data-loaded') !== s.url) {
-      frame.src = s.url;
-      frame.setAttribute('data-loaded', s.url);
-      document.getElementById('no-url').style.display = 'none';
-    }
-  }
-
   const m = Math.floor(s.remaining / 60);
   const sec = s.remaining % 60;
   const timer = document.getElementById('timer');
   timer.textContent = m + ':' + String(sec).padStart(2, '0');
-
   timer.className = '';
   if (s.remaining <= 0)        timer.className = 'done';
   else if (s.remaining <= 60)  timer.className = 'danger';
