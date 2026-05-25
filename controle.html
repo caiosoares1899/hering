@@ -2,48 +2,60 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CD Timer">
+<meta name="theme-color" content="#0f0f0f">
 <title>Conexão Digital — Controle</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html {
+  background: #0f0f0f;
+  height: 100%;
+}
 
 body {
   background: #0f0f0f;
   color: #ccc;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  min-height: 100vh;
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-  gap: 20px;
+  padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px);
+  padding-top: max(env(safe-area-inset-top), 24px);
+  gap: 16px;
 }
 
 .titulo {
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #444;
+  color: #333;
+  padding-top: 4px;
 }
 
 .card {
   background: #161616;
   border: 1px solid #222;
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 18px;
+  padding: 20px;
   width: 100%;
   max-width: 420px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .field { display: flex; flex-direction: column; gap: 8px; }
 
 label {
   font-size: 11px;
-  color: #555;
-  letter-spacing: 0.06em;
+  color: #444;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
@@ -51,36 +63,49 @@ input[type="text"], input[type="url"], select {
   background: #1e1e1e;
   border: 1px solid #2a2a2a;
   color: #ddd;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 14px;
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 16px;
   font-family: inherit;
   outline: none;
-  transition: border 0.15s;
   width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
 }
 input:focus, select:focus { border-color: #1d9e75; }
-select option { background: #1e1e1e; }
+
+.select-wrap { position: relative; }
+.select-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #555;
+  pointer-events: none;
+  font-size: 14px;
+}
 
 .timer-grande {
-  font-size: 64px;
+  font-size: 80px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-align: center;
   color: #1d9e75;
   transition: color 0.4s;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 .timer-grande.warning { color: #EF9F27; }
 .timer-grande.danger  { color: #E24B4A; }
 .timer-grande.done    { color: #E24B4A; animation: pulse 0.8s infinite alternate; }
 
-@keyframes pulse { from { opacity:1 } to { opacity:0.25 } }
+@keyframes pulse { from { opacity:1 } to { opacity:0.2 } }
 
 .squad-label {
   text-align: center;
   font-size: 13px;
-  color: #444;
+  color: #333;
   min-height: 18px;
 }
 
@@ -99,25 +124,27 @@ select option { background: #1e1e1e; }
 .progress-fill.warning { background: #EF9F27; }
 .progress-fill.danger  { background: #E24B4A; }
 
-.botoes { display: flex; gap: 10px; }
-
-button {
-  flex: 1;
-  border: none;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
+.botoes {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
 }
 
+button {
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.12s;
+  -webkit-appearance: none;
+}
+button:active { transform: scale(0.96); }
+
 #btn-start { background: #1d9e75; color: #fff; }
-#btn-start:hover { background: #17845f; }
-#btn-start:active { transform: scale(0.97); }
-#btn-reset { background: #1e1e1e; color: #666; }
-#btn-reset:hover { background: #252525; color: #aaa; }
+#btn-reset { background: #1e1e1e; color: #555; }
 
 .link-apresentacao {
   display: block;
@@ -125,49 +152,62 @@ button {
   max-width: 420px;
   background: #1a1a1a;
   border: 1px dashed #2a2a2a;
-  color: #555;
-  border-radius: 10px;
-  padding: 14px;
+  color: #444;
+  border-radius: 12px;
+  padding: 16px;
   text-align: center;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
+  font-size: 14px;
   text-decoration: none;
+  transition: all 0.15s;
 }
-.link-apresentacao:hover { border-color: #1d9e75; color: #1d9e75; }
+.link-apresentacao:active { border-color: #1d9e75; color: #1d9e75; }
 
 .hint {
+  font-size: 12px;
+  color: #252525;
+  text-align: center;
+  max-width: 420px;
+  line-height: 1.7;
+  padding-bottom: 8px;
+}
+
+.hint-install {
   font-size: 12px;
   color: #2a2a2a;
   text-align: center;
   max-width: 420px;
-  line-height: 1.7;
+  line-height: 1.8;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 16px;
+  padding-bottom: 8px;
 }
+.hint-install span { color: #333; }
 </style>
 </head>
 <body>
 
-<p class="titulo">Conexão Digital — Painel de Controle</p>
+<p class="titulo">Conexão Digital</p>
 
 <div class="card">
   <div class="field">
     <label>URL embed da apresentação</label>
-    <input type="url" id="slide-url" placeholder="https://docs.google.com/presentation/d/e/.../pubembed?start=true&loop=false&delayms=3000" />
+    <input type="url" id="slide-url" placeholder="https://docs.google.com/..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
   </div>
   <div class="field">
     <label>Squad atual</label>
-    <input type="text" id="squad-name" placeholder="Ex: Squad Checkout" maxlength="40" />
+    <input type="text" id="squad-name" placeholder="Ex: Squad Checkout" maxlength="40" autocorrect="off" />
   </div>
   <div class="field">
     <label>Duração</label>
-    <select id="duration">
-      <option value="360">6 minutos</option>
-      <option value="300">5 minutos</option>
-      <option value="420">7 minutos</option>
-      <option value="480">8 minutos</option>
-      <option value="600">10 minutos</option>
-    </select>
+    <div class="select-wrap">
+      <select id="duration">
+        <option value="360">6 minutos</option>
+        <option value="300">5 minutos</option>
+        <option value="420">7 minutos</option>
+        <option value="480">8 minutos</option>
+        <option value="600">10 minutos</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -187,9 +227,9 @@ button {
   ↗ Abrir tela de apresentação
 </a>
 
-<p class="hint">
-  Cole a URL embed da apresentação (com <code style="color:#333">start=true</code>) e abra a tela de apresentação.<br>
-  Compartilhe a aba da apresentação no Meet.
+<p class="hint-install">
+  No iPhone: Safari → <span>Compartilhar</span> → <span>Adicionar à Tela de Início</span><br>
+  Vira um app sem barra do navegador.
 </p>
 
 <script>
@@ -201,7 +241,7 @@ let running = false;
 let interval = null;
 
 function getSquad() { return document.getElementById('squad-name').value; }
-function getUrl() { return document.getElementById('slide-url').value.trim(); }
+function getUrl()   { return document.getElementById('slide-url').value.trim(); }
 
 function broadcast() {
   const state = { remaining, totalSeconds, squad: getSquad(), url: getUrl() };
@@ -228,7 +268,8 @@ function startTimer() {
   if (remaining <= 0) return;
   running = true;
   document.getElementById('btn-start').textContent = 'Pausar';
-  document.getElementById('btn-start').style.background = '#333';
+  document.getElementById('btn-start').style.background = '#2a2a2a';
+  document.getElementById('btn-start').style.color = '#888';
   interval = setInterval(tick, 1000);
   broadcast();
 }
@@ -238,6 +279,7 @@ function pauseTimer() {
   clearInterval(interval);
   document.getElementById('btn-start').textContent = 'Continuar';
   document.getElementById('btn-start').style.background = '#1d9e75';
+  document.getElementById('btn-start').style.color = '#fff';
   broadcast();
 }
 
@@ -248,6 +290,7 @@ function resetTimer() {
   remaining = totalSeconds;
   document.getElementById('btn-start').textContent = 'Iniciar';
   document.getElementById('btn-start').style.background = '#1d9e75';
+  document.getElementById('btn-start').style.color = '#fff';
   updateControle();
   broadcast();
 }
@@ -260,6 +303,7 @@ function tick() {
     clearInterval(interval);
     document.getElementById('btn-start').textContent = 'Iniciar';
     document.getElementById('btn-start').style.background = '#1d9e75';
+    document.getElementById('btn-start').style.color = '#fff';
   }
   updateControle();
   broadcast();
@@ -274,9 +318,9 @@ function updateControle() {
   const pct = (remaining / totalSeconds) * 100;
   document.getElementById('ctrl-progress').style.width = pct + '%';
 
-  const display = document.getElementById('ctrl-display');
+  const display  = document.getElementById('ctrl-display');
   const progress = document.getElementById('ctrl-progress');
-  display.className = 'timer-grande';
+  display.className  = 'timer-grande';
   progress.className = 'progress-fill';
 
   if (remaining <= 0)        { display.classList.add('done');    progress.classList.add('danger'); }
@@ -288,10 +332,12 @@ try {
   const saved = localStorage.getItem('cd_timer');
   if (saved) {
     const s = JSON.parse(saved);
-    remaining = s.remaining;
+    remaining    = s.remaining;
     totalSeconds = s.totalSeconds;
-    if (s.url) document.getElementById('slide-url').value = s.url;
+    if (s.url)   document.getElementById('slide-url').value  = s.url;
     if (s.squad) document.getElementById('squad-name').value = s.squad;
+    const dur = document.getElementById('duration');
+    for (let o of dur.options) if (parseInt(o.value) === s.totalSeconds) o.selected = true;
     updateControle();
   }
 } catch(e) {}
