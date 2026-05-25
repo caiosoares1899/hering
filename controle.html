@@ -32,7 +32,7 @@ body {
   border-radius: 14px;
   padding: 24px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -47,7 +47,7 @@ label {
   text-transform: uppercase;
 }
 
-input[type="text"], select {
+input[type="text"], input[type="url"], select {
   background: #1e1e1e;
   border: 1px solid #2a2a2a;
   color: #ddd;
@@ -122,7 +122,7 @@ button {
 .link-apresentacao {
   display: block;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: #1a1a1a;
   border: 1px dashed #2a2a2a;
   color: #555;
@@ -139,9 +139,9 @@ button {
 
 .hint {
   font-size: 12px;
-  color: #2e2e2e;
+  color: #2a2a2a;
   text-align: center;
-  max-width: 400px;
+  max-width: 420px;
   line-height: 1.7;
 }
 </style>
@@ -151,6 +151,10 @@ button {
 <p class="titulo">Conexão Digital — Painel de Controle</p>
 
 <div class="card">
+  <div class="field">
+    <label>URL embed da apresentação</label>
+    <input type="url" id="slide-url" placeholder="https://docs.google.com/presentation/d/e/.../pubembed?start=true&loop=false&delayms=3000" />
+  </div>
   <div class="field">
     <label>Squad atual</label>
     <input type="text" id="squad-name" placeholder="Ex: Squad Checkout" maxlength="40" />
@@ -180,33 +184,33 @@ button {
 </div>
 
 <a class="link-apresentacao" href="apresentacao.html" target="_blank">
-  ↗ Abrir cronômetro de apresentação
+  ↗ Abrir tela de apresentação
 </a>
 
 <p class="hint">
-  Abra o cronômetro em outra janela e redimensione pequeno.<br>
-  Apresente o Google Slides por baixo e compartilhe a tela inteira no Meet.
+  Cole a URL embed da apresentação (com <code style="color:#333">start=true</code>) e abra a tela de apresentação.<br>
+  Compartilhe a aba da apresentação no Meet.
 </p>
 
 <script>
+const channel = new BroadcastChannel('cd_timer');
+
 let totalSeconds = 360;
 let remaining = 360;
 let running = false;
 let interval = null;
 
-const channel = new BroadcastChannel('cd_timer');
-
-function getSquad() {
-  return document.getElementById('squad-name').value;
-}
+function getSquad() { return document.getElementById('squad-name').value; }
+function getUrl() { return document.getElementById('slide-url').value.trim(); }
 
 function broadcast() {
-  const state = { remaining, totalSeconds, squad: getSquad() };
+  const state = { remaining, totalSeconds, squad: getSquad(), url: getUrl() };
   channel.postMessage(state);
   localStorage.setItem('cd_timer', JSON.stringify(state));
 }
 
 document.getElementById('squad-name').addEventListener('input', broadcast);
+document.getElementById('slide-url').addEventListener('input', broadcast);
 
 document.getElementById('duration').addEventListener('change', function() {
   if (running) return;
@@ -275,10 +279,22 @@ function updateControle() {
   display.className = 'timer-grande';
   progress.className = 'progress-fill';
 
-  if (remaining <= 0)       { display.classList.add('done');    progress.classList.add('danger'); }
-  else if (remaining <= 60) { display.classList.add('danger');  progress.classList.add('danger'); }
-  else if (remaining <= 120){ display.classList.add('warning'); progress.classList.add('warning'); }
+  if (remaining <= 0)        { display.classList.add('done');    progress.classList.add('danger'); }
+  else if (remaining <= 60)  { display.classList.add('danger');  progress.classList.add('danger'); }
+  else if (remaining <= 120) { display.classList.add('warning'); progress.classList.add('warning'); }
 }
+
+try {
+  const saved = localStorage.getItem('cd_timer');
+  if (saved) {
+    const s = JSON.parse(saved);
+    remaining = s.remaining;
+    totalSeconds = s.totalSeconds;
+    if (s.url) document.getElementById('slide-url').value = s.url;
+    if (s.squad) document.getElementById('squad-name').value = s.squad;
+    updateControle();
+  }
+} catch(e) {}
 
 updateControle();
 </script>
