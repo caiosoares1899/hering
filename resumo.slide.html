@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Hering · Reunião Gerencial</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+
+:root {
+  --blue-deep:#0a1628;--blue-navy:#0d2244;--blue-mid:#1a4480;
+  --blue-bright:#2563c9;--blue-light:#4a9fd4;--accent:#7ec8e3;--accent2:#b8ddf0;
+  --white:#fff;--w80:rgba(255,255,255,.8);--w60:rgba(255,255,255,.6);
+  --w30:rgba(255,255,255,.3);--w10:rgba(255,255,255,.1);
+  --glass:rgba(255,255,255,.08);--glassh:rgba(255,255,255,.14);--border:rgba(255,255,255,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var(--blue-deep);color:#fff;overflow:hidden;user-select:none;}
+
+/* OCEAN */
+#oceanBg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+#oceanBg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(26,68,128,.5) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(37,99,201,.25) 0%,transparent 50%),linear-gradient(180deg,#0a1628 0%,#0d2244 50%,#0a1628 100%);}
+.bg-fish{position:absolute;opacity:.07;animation:bgFishSwim linear infinite;}
+@keyframes bgFishSwim{0%{transform:translateX(-120px) translateY(0);}50%{transform:translateX(50vw) translateY(-20px);}100%{transform:translateX(calc(100vw + 120px)) translateY(5px);}}
+.bg-bubble{position:absolute;border-radius:50%;background:rgba(126,200,227,.08);border:1px solid rgba(126,200,227,.1);animation:bgBubble linear infinite;}
+@keyframes bgBubble{0%{transform:translateY(110vh);opacity:0;}10%{opacity:.5;}90%{opacity:.1;}100%{transform:translateY(-10vh);opacity:0;}}
+
+/* TOPBAR */
+#topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(10,22,40,.8);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);height:58px;gap:16px;}
+.tb-logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:.04em;flex-shrink:0;}
+.tb-logo-icon{width:34px;height:34px;background:var(--blue-bright);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.tb-center{display:flex;align-items:center;gap:14px;flex:1;justify-content:center;}
+.tb-clock{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--w60);letter-spacing:.08em;min-width:52px;text-align:center;}
+.slide-counter{font-family:'Syne',sans-serif;font-size:13px;color:var(--w60);letter-spacing:.08em;}
+.progress-bar-wrap{width:120px;height:3px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue-bright),var(--accent));border-radius:3px;transition:width .4s ease;}
+.tb-nav{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.tb-btn{background:var(--glass);border:1px solid var(--border);border-radius:8px;color:#fff;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.tb-btn:hover{background:var(--glassh);}
+.tb-btn:disabled{opacity:.3;cursor:default;}
+.tb-btn.fs-btn{background:rgba(126,200,227,.08);border-color:rgba(126,200,227,.2);color:var(--accent);font-size:16px;padding:6px 10px;}
+.tb-btn.fs-btn:hover{background:rgba(126,200,227,.18);}
+.ai-tag-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(29,233,182,.1);border:1px solid rgba(29,233,182,.28);border-radius:20px;padding:6px 14px;font-size:12px;color:#1de9b6;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;font-weight:600;flex-shrink:0;}
+.ai-tag-pill:hover{background:rgba(29,233,182,.2);}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:#1de9b6;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* SLIDES */
+#slides-wrap{position:fixed;inset:0;top:58px;bottom:52px;overflow:hidden;}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px 48px;opacity:0;pointer-events:none;transform:translateX(60px);transition:opacity .4s ease,transform .4s ease;}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.slide.prev{opacity:0;transform:translateX(-60px);}
+.slide-fill{align-items:stretch;padding:18px 40px;}
+.slide-inner{width:100%;max-width:1100px;margin:0 auto;}
+
+/* DOTS */
+#bottombar{position:fixed;bottom:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 20px;height:52px;background:rgba(10,22,40,.85);backdrop-filter:blur(12px);border-top:1px solid var(--border);}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .25s;}
+.dot.active{background:var(--accent);transform:scale(1.35);}
+.dot:hover{background:var(--w60);}
+
+/* SHARED */
+.s-tag{display:inline-flex;align-items:center;gap:6px;background:var(--glass);border:1px solid var(--border);border-radius:30px;padding:6px 16px;font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);flex-shrink:0;}
+.slide-header{display:flex;align-items:center;gap:18px;margin-bottom:22px;flex-wrap:wrap;}
+.slide-h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:-.02em;line-height:1;}
+
+/* IMPEDIMENTOS */
+.squads-grid{display:flex;flex-direction:column;gap:14px;}
+.squad-card{background:rgba(13,34,68,.75);border:1px solid var(--border);border-radius:16px;padding:20px 24px;position:relative;overflow:hidden;}
+.squad-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue-bright),var(--accent));}
+.squad-name{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.squad-name::before{content:'';display:block;width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.imp-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px;line-height:1.6;color:var(--w80);}
+.imp-item:last-child{border-bottom:none;}
+.imp-dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fca5a5;margin-top:2px;}
+
+/* INSIGHTS */
+.insight-card{background:rgba(13,34,68,.75);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;transition:all .2s;}
+.insight-card:hover{background:var(--glassh);}
+.insight-card.alert{border-left-color:#fbbf24;}
+.insight-card.event{border-left-color:var(--blue-light);}
+.insight-tag{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.insight-tag.alert{color:#fbbf24;}
+.insight-tag.event{color:var(--blue-light);}
+.insight-text{font-size:15px;line-height:1.65;color:var(--w80);}
+
+/* =====================
+   CALENDÁRIO REDESIGN
+   ===================== */
+.cal-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:20px;height:100%;}
+.cal-section{background:var(--glass);border:1px solid var(--border);border-radius:18px;overflow:hidden;backdrop-filter:blur(10px);display:flex;flex-direction:column;}
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.cal-head-title{font-family:'Syne',sans-serif;font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);}
+.cal-head-sub{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--w30);letter-spacing:.08em;text-transform:uppercase;}
+.cal-body{flex:1;overflow-y:auto;padding:8px 0;}
+
+/* Digital — day-badge style */
+.day-event{display:flex;align-items:center;gap:16px;padding:10px 20px;transition:background .2s;cursor:default;}
+.day-event:hover{background:var(--glassh);}
+.day-badge{width:56px;height:56px;border-radius:12px;flex-shrink:0;background:rgba(37,99,201,.2);border:1px solid rgba(37,99,201,.38);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;}
+.day-num{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--accent);line-height:1;}
+.day-mon{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--w60);}
+.day-info .day-name{font-size:15px;font-weight:500;color:var(--w80);}
+.day-info .day-type{font-size:11px;color:var(--w30);margin-top:3px;letter-spacing:.04em;}
+
+/* CIA — Gantt/timeline style */
+.gantt-header{display:grid;padding:6px 20px 4px;border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;}
+.gantt-months{display:flex;gap:0;}
+.gantt-month-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--w30);text-align:center;}
+
+.gantt-row{display:grid;grid-template-columns:152px 1fr;align-items:center;padding:9px 20px;gap:14px;transition:background .2s;cursor:default;}
+.gantt-row:hover{background:var(--glassh);}
+.gantt-info .g-name{font-size:13px;font-weight:500;color:var(--w80);line-height:1.3;}
+.gantt-info .g-dates{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--accent);margin-top:3px;letter-spacing:.04em;}
+
+.bar-wrap{position:relative;height:30px;display:flex;align-items:center;}
+.bar-track{position:absolute;left:0;right:0;height:2px;background:rgba(255,255,255,.06);border-radius:2px;}
+.bar-fill{position:absolute;height:8px;border-radius:5px;top:50%;transform:translateY(-50%);box-shadow:0 0 10px rgba(126,200,227,.3);}
+.bar-dot{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid var(--blue-deep);top:50%;transform:translateY(-50%);z-index:2;}
+
+.cal-divider{height:1px;background:rgba(255,255,255,.05);margin:2px 20px;}
+
+/* MARCA */
+.marca-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;border:2px dashed rgba(255,255,255,.12);border-radius:16px;gap:14px;text-align:center;}
+.marca-placeholder p{color:var(--w60);font-size:15px;}
+.upload-btn{padding:10px 22px;background:rgba(37,99,201,.2);border:1px solid rgba(37,99,201,.4);border-radius:8px;color:var(--accent2);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.upload-btn:hover{background:rgba(37,99,201,.35);}
+#marcaFileInput{display:none;}
+.marca-img-wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.marca-img-wrap img{max-width:100%;max-height:100%;display:block;border-radius:10px;object-fit:contain;}
+.tri-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:6px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.28);color:#fbbf24;margin-left:12px;vertical-align:middle;}
+
+/* AI PANEL */
+.ai-panel{position:fixed;right:0;top:0;bottom:0;width:380px;background:rgba(8,18,38,.97);border-left:1px solid var(--border);backdrop-filter:blur(24px);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.ai-panel.open{transform:translateX(0);}
+.ai-panel-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.ai-panel-title{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--accent);}
+.ai-panel-close{width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--w60);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.ai-panel-close:hover{background:var(--glassh);color:#fff;}
+.ai-history{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.ai-msg{padding:11px 14px;border-radius:10px;font-size:13px;line-height:1.6;max-width:95%;}
+.ai-msg.user{background:rgba(37,99,201,.18);border:1px solid rgba(37,99,201,.3);color:#fff;align-self:flex-end;}
+.ai-msg.assistant{background:rgba(126,200,227,.08);border:1px solid rgba(126,200,227,.18);color:var(--w80);align-self:flex-start;}
+.ai-msg.system{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:var(--w60);font-size:12px;text-align:center;align-self:center;}
+.ai-input-area{padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+.ai-input-row{display:flex;gap:8px;align-items:flex-end;}
+.ai-textarea{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:10px;padding:10px 13px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;resize:none;min-height:44px;max-height:120px;outline:none;transition:border .2s;}
+.ai-textarea:focus{border-color:var(--accent);}
+.ai-textarea::placeholder{color:var(--w30);}
+.ai-send-btn{width:44px;height:44px;border-radius:10px;background:rgba(37,99,201,.25);border:1px solid rgba(37,99,201,.45);color:var(--accent);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.ai-send-btn:hover{background:rgba(37,99,201,.45);}
+.ai-send-btn:disabled{opacity:.35;cursor:not-allowed;}
+.ai-hint{font-size:11px;color:var(--w30);margin-top:8px;line-height:1.5;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(126,200,227,.2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="oceanBg"></div>
+
+<div id="topbar">
+  <div class="tb-logo">
+    <div class="tb-logo-icon">🐟</div>
+    Digital Hering
+  </div>
+  <div class="tb-center">
+    <div class="tb-clock" id="brtClock">--:--</div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <span class="slide-counter" id="slideCounter">1 / 5</span>
+  </div>
+  <div class="tb-nav">
+    <div class="ai-tag-pill" onclick="togglePanel()"><span class="ai-dot"></span>Atualizar com IA</div>
+    <button class="tb-btn" id="btnPrev" onclick="go(-1)">← Ant.</button>
+    <button class="tb-btn" id="btnNext" onclick="go(1)">Próx. →</button>
+    <button class="tb-btn fs-btn" onclick="toggleFS()" title="Tela cheia (F)">⛶</button>
+  </div>
+</div>
+
+<div id="slides-wrap">
+
+  <!-- S0: CAPA -->
+  <div class="slide active" id="slide-0">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:0;width:100%;max-width:800px;margin:0 auto;">
+
+      <!-- Logo pill -->
+      <div class="s-tag" style="margin-bottom:28px;">🐟 Reunião Gerencial Digital</div>
+
+      <!-- Título principal -->
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,6vw,5.2rem);letter-spacing:-.03em;line-height:.95;margin-bottom:20px;">
+        Resumo dos<br><span style="color:var(--accent);">Impedimentos</span><br>& Insights
+      </h1>
+
+      <!-- Data -->
+      <div id="cover-date" style="font-size:16px;color:var(--w60);margin-bottom:40px;letter-spacing:.04em;"></div>
+
+      <!-- Separador onda -->
+      <div style="width:320px;opacity:.25;margin-bottom:40px;">
+        <svg viewBox="0 0 320 12" width="320" height="12" preserveAspectRatio="none">
+          <path d="M0,6 C40,1 80,11 120,6 C160,1 200,11 240,6 C280,1 310,10 320,6" fill="none" stroke="#7ec8e3" stroke-width="1.5"/>
+        </svg>
+      </div>
+
+      <!-- Pills de slides -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <div onclick="goTo(1)" style="display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28);border-radius:50px;padding:10px 20px;font-size:13px;font-weight:600;color:#fca5a5;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(239,68,68,.22)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">⚠ Impedimentos</div>
+        <div onclick="goTo(2)" style="display:flex;align-items:center;gap:8px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);border-radius:50px;padding:10px 20px;font-size:13px;font-weight:600;color:#fbbf24;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(251,191,36,.2)'" onmouseout="this.style.background='rgba(251,191,36,.1)'">💡 Insights</div>
+        <div onclick="goTo(3)" style="display:flex;align-items:center;gap:8px;background:rgba(126,200,227,.1);border:1px solid rgba(126,200,227,.22);border-radius:50px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(126,200,227,.2)'" onmouseout="this.style.background='rgba(126,200,227,.1)'">📅 Calendários</div>
+        <div onclick="goTo(4)" style="display:flex;align-items:center;gap:8px;background:rgba(37,99,201,.15);border:1px solid rgba(37,99,201,.3);border-radius:50px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--accent2);cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(37,99,201,.28)'" onmouseout="this.style.background='rgba(37,99,201,.15)'">🖼 Cal. Marca</div>
+      </div>
+
+      <!-- Press to start -->
+      <div style="margin-top:44px;font-size:12px;color:var(--w30);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px;">
+        <span style="display:inline-block;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:3px 9px;font-size:11px;">→</span>
+        pressione para começar
+      </div>
+
+    </div>
+  </div>
+
+  <!-- S1: IMPEDIMENTOS -->
+  <div class="slide" id="slide-1">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="s-tag">⚠ Impedimentos</div>
+        <h2 class="slide-h2">Resumo dos Times</h2>
+        <span style="font-size:13px;color:var(--w30);margin-left:auto;" id="imp-date"></span>
+      </div>
+      <div class="squads-grid" id="squads-container"></div>
+    </div>
+  </div>
+
+  <!-- S2: INSIGHTS -->
+  <div class="slide" id="slide-2">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="s-tag">💡 Insights</div>
+        <h2 class="slide-h2">Alertas & Contexto</h2>
+      </div>
+      <div id="insights-container" style="display:flex;flex-direction:column;gap:14px;"></div>
+    </div>
+  </div>
+
+  <!-- S3: CALENDÁRIOS -->
+  <div class="slide slide-fill" id="slide-3" style="align-items:stretch;">
+    <div style="width:100%;max-width:1140px;margin:0 auto;display:flex;flex-direction:column;height:100%;">
+      <div class="slide-header" style="flex-shrink:0;">
+        <div class="s-tag">📅 Planejamento</div>
+        <h2 class="slide-h2">Calendários <span class="tri-badge">II TRI</span></h2>
+      </div>
+      <div class="cal-wrapper">
+
+        <!-- DIGITAL -->
+        <div class="cal-section">
+          <div class="cal-head">
+            <div class="cal-head-title">⚡ Digital</div>
+            <div class="cal-head-sub" id="cal-digital-head">MAIO 2025</div>
+          </div>
+          <div class="cal-body" id="cal-digital"></div>
+        </div>
+
+        <!-- CIA HERING -->
+        <div class="cal-section">
+          <div class="cal-head">
+            <div class="cal-head-title">🏢 CIA Hering</div>
+            <div class="cal-head-sub">ABR – JUL 2025</div>
+          </div>
+          <!-- Gantt month scale -->
+          <div class="gantt-header" id="gantt-header"></div>
+          <div class="cal-body" id="cal-cia"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- S4: MARCA -->
+  <div class="slide slide-fill" id="slide-4" style="align-items:stretch;">
+    <div style="width:100%;max-width:1300px;margin:0 auto;display:flex;flex-direction:column;height:100%;">
+      <div class="slide-header" style="flex-shrink:0;">
+        <div class="s-tag">🖼 Marketing</div>
+        <h2 class="slide-h2">Calendário de Marca</h2>
+        <label class="upload-btn" for="marcaFileInput" style="margin-left:auto;font-size:12px;padding:7px 16px;">↑ Trocar imagem</label>
+        <span style="font-size:12px;color:var(--w30);" id="marca-filename"></span>
+      </div>
+      <div id="marca-content" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;">
+        <div class="marca-placeholder" style="width:100%;height:100%;">
+          <div style="font-size:40px;opacity:.22;">🖼</div>
+          <p>Faça upload do print do calendário de marca</p>
+          <label class="upload-btn" for="marcaFileInput">Selecionar imagem</label>
+        </div>
+      </div>
+      <input type="file" id="marcaFileInput" accept="image/*" onchange="handleMarcaUpload(event)">
+    </div>
+  </div>
+
+</div>
+
+<div id="bottombar"></div>
+
+<!-- AI PANEL -->
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-header">
+    <div class="ai-panel-title">🐟 Atualizar apresentação</div>
+    <button class="ai-panel-close" onclick="togglePanel()">✕</button>
+  </div>
+  <div class="ai-history" id="ai-history">
+    <div class="ai-msg system">Descreva o que quer alterar em português.<br><br>Exemplos:<br>• "Adiciona impedimento no squad de CRM: aguardando budget"<br>• "Remove o insight de ciclo de gente"<br>• "Adiciona no digital: 03/06 – Sprint Review"</div>
+  </div>
+  <div class="ai-input-area">
+    <div class="ai-input-row">
+      <textarea class="ai-textarea" id="ai-input" placeholder="Descreva a alteração..." rows="2"></textarea>
+      <button class="ai-send-btn" id="ai-send" onclick="sendToAI()">↑</button>
+    </div>
+    <div class="ai-hint">Ctrl+Enter para enviar · A IA atualiza automaticamente</div>
+  </div>
+</div>
+
+<script>
+/* ====== DATA ====== */
+let DATA = {
+  squads:[
+    {name:"APP + SITE",impedimentos:[
+      "Conteúdos de Puffer ainda em processo de recebimento e aprovação — vai atrasar próximas entregas",
+      "3 entradas no mesmo dia: São João, Dia dos Namorados e Teen"
+    ]},
+    {name:"CRIAÇÃO",impedimentos:[
+      "Sem KV de namorados para Sports e Intimates",
+      "KVs continuando chegando atrasados ou em cima da hora (ex: Thiaguinho)"
+    ]}
+  ],
+  insights:[
+    {tipo:"alert",tag:"ALERTA",texto:"OKRs de CX, Tech e CRM em acompanhamento — monitorar evolução nesta semana."},
+    {tipo:"event",tag:"EVENTO",texto:"Big Review acontece terça, 27/05 — preparar alinhamentos pendentes."},
+    {tipo:"",tag:"CICLO DE GENTE",texto:"Ciclo de gente em andamento — atenção ao calendário de feedbacks e avaliações."}
+  ],
+  calDigital:[
+    {day:"26",mon:"MAI",name:"Alinhamento Fritos",type:"Reunião interna"},
+    {day:"27",mon:"MAI",name:"Big Review",type:"Review mensal"}
+  ],
+  calCIA:[
+    {name:"Entrega Inverno",         start:"2025-04-09",end:"2025-06-15"},
+    {name:"Cápsulas Copa",           start:"2025-05-05",end:"2025-05-29"},
+    {name:"Teen",                    start:"2025-05-21",end:"2025-06-01"},
+    {name:"Dia dos Nam. / São João", start:"2025-05-21",end:"2025-06-11"},
+    {name:"Aquece",                  start:"2025-05-22",end:"2025-06-01"},
+    {name:"Saldos",                  start:"2025-06-24",end:"2025-07-15"},
+    {name:"Copa do Mundo",           start:"2025-06-11",end:"2025-07-19"}
+  ]
+};
+
+/* ====== CLOCK ====== */
+function updateClock(){
+  const el=document.getElementById('brtClock');
+  if(!el)return;
+  const brt=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  el.textContent=String(brt.getHours()).padStart(2,'0')+':'+String(brt.getMinutes()).padStart(2,'0');
+}
+updateClock();setInterval(updateClock,1000);
+
+/* ====== GANTT HELPERS ====== */
+const WIN_START=new Date('2025-04-09');
+const WIN_END  =new Date('2025-07-19');
+const WIN_DAYS =(WIN_END-WIN_START)/(864e5);
+
+const GANTT_COLORS=[
+  ['#2563c9','#7ec8e3'],['#0f6e56','#1de9b6'],['#7c3aed','#c4b5fd'],
+  ['#b45309','#fbbf24'],['#b91c1c','#fca5a5'],['#0e7490','#67e8f9'],['#1d4ed8','#93c5fd']
+];
+
+function pct(d){return Math.max(0,Math.min(100,(new Date(d)-WIN_START)/864e5/WIN_DAYS*100));}
+
+function buildGanttHeader(){
+  const months=[
+    {label:'ABR',left:pct('2025-04-01'),right:pct('2025-05-01')},
+    {label:'MAI',left:pct('2025-05-01'),right:pct('2025-06-01')},
+    {label:'JUN',left:pct('2025-06-01'),right:pct('2025-07-01')},
+    {label:'JUL',left:pct('2025-07-01'),right:100},
+  ];
+  const h=document.getElementById('gantt-header');
+  if(!h)return;
+  h.style.cssText='position:relative;height:24px;margin:4px 20px 0;flex-shrink:0;';
+  h.innerHTML=months.map(m=>`
+    <div style="position:absolute;left:${m.left}%;width:${m.right-m.left}%;text-align:center;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.28);border-left:1px solid rgba(255,255,255,.07);padding-top:2px;">
+      ${m.label}
+    </div>
+  `).join('');
+}
+
+/* ====== RENDER ====== */
+function render(){
+  // date label (impedimentos + capa)
+  const now=new Date();
+  const d=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const el=document.getElementById('imp-date');
+  if(el)el.textContent=d;
+  const cd2=document.getElementById('cover-date');
+  if(cd2)cd2.textContent=d.charAt(0).toUpperCase()+d.slice(1);
+
+  // SQUADS
+  const sc=document.getElementById('squads-container');
+  if(sc)sc.innerHTML=DATA.squads.map(s=>`
+    <div class="squad-card">
+      <div class="squad-name">${s.name}</div>
+      ${s.impedimentos.map(i=>`
+        <div class="imp-item"><div class="imp-dot">!</div><span>${i}</span></div>
+      `).join('')}
+    </div>`).join('');
+
+  // INSIGHTS
+  const ic=document.getElementById('insights-container');
+  if(ic)ic.innerHTML=DATA.insights.map(ins=>`
+    <div class="insight-card ${ins.tipo}">
+      <div class="insight-tag ${ins.tipo}">${ins.tag}</div>
+      <div class="insight-text">${ins.texto}</div>
+    </div>`).join('');
+
+  // DIGITAL — day badge
+  const cd=document.getElementById('cal-digital');
+  if(cd){
+    cd.innerHTML='';
+    DATA.calDigital.forEach((e,i)=>{
+      if(i>0){const dv=document.createElement('div');dv.style.cssText='height:1px;background:rgba(255,255,255,.05);margin:2px 20px;';cd.appendChild(dv);}
+      const row=document.createElement('div');
+      row.className='day-event';
+      row.innerHTML=`
+        <div class="day-badge">
+          <div class="day-num">${e.day}</div>
+          <div class="day-mon">${e.mon}</div>
+        </div>
+        <div class="day-info">
+          <div class="day-name">${e.name}</div>
+          <div class="day-type">${e.type||''}</div>
+        </div>`;
+      cd.appendChild(row);
+    });
+  }
+
+  // CIA — gantt bars
+  buildGanttHeader();
+  const cc=document.getElementById('cal-cia');
+  if(cc){
+    cc.innerHTML='';
+    DATA.calCIA.forEach((e,i)=>{
+      if(i>0){const dv=document.createElement('div');dv.style.cssText='height:1px;background:rgba(255,255,255,.05);margin:2px 20px;';cc.appendChild(dv);}
+      const L=pct(e.start);
+      const R=pct(e.end);
+      const W=Math.max(2,R-L);
+      const [c1,c2]=GANTT_COLORS[i%GANTT_COLORS.length];
+      const ds=new Date(e.start),de=new Date(e.end);
+      const fmt=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+      const row=document.createElement('div');
+      row.className='gantt-row';
+      row.innerHTML=`
+        <div class="gantt-info">
+          <div class="g-name">${e.name}</div>
+          <div class="g-dates">${fmt(ds)} → ${fmt(de)}</div>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar-track"></div>
+          <div class="bar-fill" style="left:${L}%;width:${W}%;background:linear-gradient(90deg,${c1},${c2});"></div>
+          <div class="bar-dot" style="left:calc(${L}% - 5px);background:${c2};"></div>
+          <div class="bar-dot" style="left:calc(${L+W}% - 5px);background:${c1};"></div>
+        </div>`;
+      cc.appendChild(row);
+    });
+  }
+}
+
+/* ====== NAV ====== */
+const TOTAL=5;let cur=0;
+const slides=Array.from(document.querySelectorAll('.slide'));
+const dotsWrap=document.getElementById('bottombar');
+const counter=document.getElementById('slideCounter');
+const fill=document.getElementById('progressFill');
+const btnPrev=document.getElementById('btnPrev');
+const btnNext=document.getElementById('btnNext');
+slides.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' active':'');
+  d.onclick=()=>goTo(i);dotsWrap.appendChild(d);
+});
+function goTo(n){
+  if(n<0||n>=TOTAL)return;
+  slides[cur].classList.remove('active');slides[cur].classList.add('prev');
+  const old=cur;setTimeout(()=>slides[old].classList.remove('prev'),420);
+  cur=n;slides[cur].classList.add('active');
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===cur));
+  counter.textContent=`${cur+1} / ${TOTAL}`;
+  fill.style.width=((cur/(TOTAL-1))*100)+'%';
+  btnPrev.disabled=cur===0;btnNext.disabled=cur===TOTAL-1;
+}
+function go(dir){goTo(cur+dir);}
+btnPrev.disabled=true;
+
+document.addEventListener('keydown',e=>{
+  const el=document.activeElement;
+  if(el&&(el.tagName==='TEXTAREA'||el.tagName==='INPUT'))return;
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(-1);}
+  if(e.key==='f'||e.key==='F')toggleFS();
+  if(e.key==='Escape')document.getElementById('ai-panel').classList.remove('open');
+});
+let touchX=0;
+document.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-touchX;if(Math.abs(dx)>50)go(dx<0?1:-1);});
+
+/* ====== FULLSCREEN ====== */
+function toggleFS(){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+}
+
+/* ====== AI ====== */
+function togglePanel(){document.getElementById('ai-panel').classList.toggle('open');}
+document.getElementById('ai-input').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')sendToAI();});
+function addMsg(role,text){
+  const h=document.getElementById('ai-history');
+  const d=document.createElement('div');d.className=`ai-msg ${role}`;d.textContent=text;
+  h.appendChild(d);h.scrollTop=h.scrollHeight;return d;
+}
+async function sendToAI(){
+  const input=document.getElementById('ai-input');
+  const btn=document.getElementById('ai-send');
+  const msg=input.value.trim();if(!msg)return;
+  addMsg('user',msg);input.value='';btn.disabled=true;
+  const loadMsg=addMsg('assistant','⋯ Processando...');
+  const sp=`Você atualiza dados de uma apresentação semanal da equipe digital da Cia. Hering.
+Retorne APENAS JSON válido sem texto, preamble ou markdown.
+
+Dados atuais:
+${JSON.stringify(DATA,null,2)}
+
+Regras:
+- insights: tipo é "alert","event" ou ""; tag é rótulo exibido
+- squads: name em maiúsculas, impedimentos é array de strings
+- calDigital: cada item tem day (string dd), mon (string "MAI" etc), name, type
+- calCIA: cada item tem name, start e end no formato "YYYY-MM-DD"
+- Preserve dados não mencionados
+- Retorne JSON completo`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
+    });
+    const data=await res.json();
+    if(data.content&&data.content[0]){
+      const raw=data.content[0].text.replace(/```json|```/g,'').trim();
+      try{DATA=JSON.parse(raw);render();loadMsg.textContent='✓ Atualizado!';}
+      catch{loadMsg.textContent='⚠ Não consegui interpretar. Tente de outra forma.';}
+    }else{loadMsg.textContent='⚠ Erro na IA.';}
+  }catch{loadMsg.textContent='⚠ Erro de rede.';}
+  btn.disabled=false;
+}
+
+/* ====== MARCA ====== */
+function handleMarcaUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const url=URL.createObjectURL(file);
+  document.getElementById('marca-content').innerHTML=`<div class="marca-img-wrap" style="width:100%;height:100%;"><img src="${url}" alt="Calendário de marca" style="max-width:100%;max-height:100%;border-radius:10px;object-fit:contain;"></div>`;
+  document.getElementById('marca-filename').textContent=file.name;
+}
+
+/* ====== OCEAN ====== */
+(function(){
+  const bg=document.getElementById('oceanBg');
+  for(let i=0;i<14;i++){
+    const b=document.createElement('div');b.className='bg-bubble';
+    const s=Math.random()*22+6;
+    b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*18+12}s;animation-delay:${Math.random()*-20}s;`;
+    bg.appendChild(b);
+  }
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white"><ellipse cx="25" cy="15" rx="18" ry="10"/><polygon points="43,5 60,15 43,25"/><circle cx="12" cy="12" r="2.5" fill="#0a1628"/></svg>`;
+  for(let i=0;i<7;i++){
+    const f=document.createElement('div');f.className='bg-fish';
+    const sc=Math.random()*.5+.35;
+    f.style.cssText=`top:${Math.random()*88}%;width:${60*sc}px;animation-duration:${Math.random()*28+22}s;animation-delay:${Math.random()*-30}s;`;
+    f.innerHTML=svg;bg.appendChild(f);
+  }
+})();
+
+render();
+</script>
+</body>
+</html>
