@@ -304,6 +304,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
     <div class="ai-panel-title">🐟 Atualizar apresentação</div>
     <button class="ai-panel-close" onclick="togglePanel()">✕</button>
   </div>
+  <div style="padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--w30);margin-bottom:5px;">🔑 API Key Anthropic</div><input type="password" id="api-key-input" placeholder="sk-ant-..." style="width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:#fff;font-family:DM Sans,sans-serif;font-size:12px;outline:none;" autocomplete="off"><div style="font-size:10px;color:var(--w30);margin-top:4px;">Colada uma vez por sessão — não é salva</div></div>
   <div class="ai-history" id="ai-history">
     <div class="ai-msg system">Descreva o que quer alterar em português.<br><br>Exemplos:<br>• "Adiciona impedimento no squad de CRM: aguardando budget"<br>• "Remove o insight de ciclo de gente"<br>• "Adiciona no digital: 03/06 – Sprint Review"</div>
   </div>
@@ -330,9 +331,9 @@ let DATA = {
     ]}
   ],
   insights:[
-    {tipo:"alert",tag:"ALERTA",texto:"OKRs de CX, Tech e CRM em acompanhamento — monitorar evolução nesta semana."},
-    {tipo:"event",tag:"EVENTO",texto:"Big Review acontece terça, 27/05 — preparar alinhamentos pendentes."},
-    {tipo:"",tag:"CICLO DE GENTE",texto:"Ciclo de gente em andamento — atenção ao calendário de feedbacks e avaliações."}
+    {tipo:"alert",tag:"ALERTA",texto:"OKRs de Comercial, Marketing de Performance e Dados em acompanhamento essa semana."},
+    {tipo:"event",tag:"EVENTO",texto:"Big Review nesta quarta-feira — slots preenchidos pelo time Comercial."},
+    {tipo:"event",tag:"EVENTO",texto:"Alinhamento Fritos amanhã, 26/05."}
   ],
   calDigital:[
     {day:"26",mon:"MAI",name:"Alinhamento Fritos",type:"Reunião interna"},
@@ -512,6 +513,7 @@ function toggleFS(){
 }
 
 /* ====== AI ====== */
+function getApiKey(){return(document.getElementById('api-key-input')||{}).value||'';}
 function togglePanel(){document.getElementById('ai-panel').classList.toggle('open');}
 document.getElementById('ai-input').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')sendToAI();});
 function addMsg(role,text){
@@ -523,6 +525,7 @@ async function sendToAI(){
   const input=document.getElementById('ai-input');
   const btn=document.getElementById('ai-send');
   const msg=input.value.trim();if(!msg)return;
+  if(!getApiKey()){addMsg('system','⚠ Cola sua API Key no campo acima antes de enviar.');return;}
   addMsg('user',msg);input.value='';btn.disabled=true;
   const loadMsg=addMsg('assistant','⋯ Processando...');
   const sp=`Você atualiza dados de uma apresentação semanal da equipe digital da Cia. Hering.
@@ -540,7 +543,7 @@ Regras:
 - Retorne JSON completo`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey(),'anthropic-version':'2023-06-01'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
     });
     const data=await res.json();
