@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conexão Digital</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #000;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+#timer {
+  position: fixed;
+  bottom: 28px;
+  right: 32px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: rgba(0,0,0,0.55);
+  padding: 10px 20px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: color 0.4s, border-color 0.4s;
+  z-index: 9999;
+  pointer-events: none;
+  user-select: none;
+}
+
+#timer.warning {
+  color: #EF9F27;
+  border-color: rgba(239,159,39,0.3);
+}
+
+#timer.danger {
+  color: #E24B4A;
+  border-color: rgba(226,75,74,0.3);
+}
+
+#timer.done {
+  color: #E24B4A;
+  border-color: rgba(226,75,74,0.5);
+  animation: pulse 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
+#no-slides {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: #0a0a0a;
+}
+
+#no-slides p {
+  color: #333;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<div id="no-slides">
+  <p>Aguardando configuração...<br>Abra o painel de controle e configure a apresentação.</p>
+</div>
+
+<iframe id="slides-frame" src="about:blank"></iframe>
+
+<div id="timer">6:00</div>
+
+<script>
+let lastUrl = '';
+let lastRemaining = -1;
+
+function readState() {
+  try {
+    const raw = localStorage.getItem('cd_timer');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function applyState(s) {
+  if (!s) return;
+
+  if (s.url && s.url !== lastUrl) {
+    document.getElementById('slides-frame').src = s.url;
+    document.getElementById('no-slides').style.display = 'none';
+    lastUrl = s.url;
+  }
+
+  if (s.remaining !== lastRemaining) {
+    const m = Math.floor(s.remaining / 60);
+    const sec = s.remaining % 60;
+    document.getElementById('timer').textContent = m + ':' + String(sec).padStart(2, '0');
+    lastRemaining = s.remaining;
+  }
+
+  const t = document.getElementById('timer');
+  t.className = '';
+  if (s.remaining <= 0) t.className = 'done';
+  else if (s.remaining <= 60) t.className = 'danger';
+  else if (s.remaining <= 120) t.className = 'warning';
+}
+
+const initial = readState();
+applyState(initial);
+
+window.addEventListener('storage', function(e) {
+  if (e.key === 'cd_timer') {
+    applyState(readState());
+  }
+});
+
+setInterval(function() {
+  applyState(readState());
+}, 500);
+</script>
+</body>
+</html>
