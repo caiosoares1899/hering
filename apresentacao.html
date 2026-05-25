@@ -11,85 +11,50 @@ html, body {
   height: 100vh;
   overflow: hidden;
   background: #000;
-  display: flex;
-  flex-direction: column;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 #slides-frame {
-  flex: 1;
   width: 100%;
+  height: 100%;
   border: none;
   display: block;
 }
 
-#timer-bar {
-  height: 56px;
-  flex-shrink: 0;
-  background: #0d0d0d;
-  border-top: 1px solid #1a1a1a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  position: relative;
-}
-
-#progress-fill {
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  width: 100%;
-  background: #1d9e75;
-  opacity: 0.12;
-  transition: width 1s linear, background 0.4s;
-  pointer-events: none;
-}
-
-#timer-display {
-  font-size: 28px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: #1d9e75;
-  transition: color 0.4s;
-  z-index: 1;
-}
-
-#squad-display {
-  font-size: 13px;
-  color: #333;
-  z-index: 1;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-#timer-display.warning { color: #EF9F27; }
-#timer-display.danger  { color: #E24B4A; }
-#timer-display.done    { color: #E24B4A; animation: pulse 0.8s infinite alternate; }
-#progress-fill.warning { background: #EF9F27; }
-#progress-fill.danger  { background: #E24B4A; }
-
-@keyframes pulse { from { opacity:1 } to { opacity:0.2 } }
-
 #no-url {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 12px;
+  background: #0a0a0a;
 }
-#no-url p {
-  color: #2a2a2a;
-  font-size: 14px;
-  text-align: center;
-  line-height: 1.7;
-}
-#no-url a {
+#no-url p { color: #2a2a2a; font-size: 14px; text-align: center; line-height: 1.7; }
+#no-url a { color: #1d9e75; font-size: 13px; text-decoration: none; }
+
+#timer {
+  position: absolute;
+  bottom: 24px;
+  right: 28px;
+  font-size: 48px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
   color: #1d9e75;
-  font-size: 13px;
-  text-decoration: none;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.6);
+  pointer-events: none;
+  user-select: none;
+  transition: color 0.4s;
+  z-index: 10;
 }
+
+#timer.warning { color: #EF9F27; }
+#timer.danger  { color: #E24B4A; }
+#timer.done    { color: #E24B4A; animation: pulse 0.8s infinite alternate; }
+
+@keyframes pulse { from { opacity:1 } to { opacity:0.2 } }
 </style>
 </head>
 <body>
@@ -99,13 +64,9 @@ html, body {
   <a href="controle.html" target="_blank">↗ Abrir painel de controle</a>
 </div>
 
-<iframe id="slides-frame" src="about:blank" allowfullscreen style="display:none"></iframe>
+<iframe id="slides-frame" src="about:blank" allowfullscreen></iframe>
 
-<div id="timer-bar">
-  <div id="progress-fill"></div>
-  <span id="squad-display"></span>
-  <div id="timer-display">6:00</div>
-</div>
+<div id="timer">6:00</div>
 
 <script>
 const channel = new BroadcastChannel('cd_timer');
@@ -115,37 +76,22 @@ function applyState(s) {
 
   if (s.url) {
     const frame = document.getElementById('slides-frame');
-    if (frame.src !== s.url) {
+    if (frame.getAttribute('data-loaded') !== s.url) {
       frame.src = s.url;
-      frame.style.display = 'block';
+      frame.setAttribute('data-loaded', s.url);
       document.getElementById('no-url').style.display = 'none';
     }
   }
 
   const m = Math.floor(s.remaining / 60);
   const sec = s.remaining % 60;
-  const display = document.getElementById('timer-display');
-  const fill = document.getElementById('progress-fill');
+  const timer = document.getElementById('timer');
+  timer.textContent = m + ':' + String(sec).padStart(2, '0');
 
-  display.textContent = m + ':' + String(sec).padStart(2, '0');
-  document.getElementById('squad-display').textContent = s.squad || '';
-
-  display.className = '';
-  fill.className = '';
-
-  if (s.remaining <= 0) {
-    display.className = 'done';
-    fill.className = 'danger';
-  } else if (s.remaining <= 60) {
-    display.className = 'danger';
-    fill.className = 'danger';
-  } else if (s.remaining <= 120) {
-    display.className = 'warning';
-    fill.className = 'warning';
-  }
-
-  const pct = s.totalSeconds > 0 ? (s.remaining / s.totalSeconds) * 100 : 0;
-  fill.style.width = pct + '%';
+  timer.className = '';
+  if (s.remaining <= 0)        timer.className = 'done';
+  else if (s.remaining <= 60)  timer.className = 'danger';
+  else if (s.remaining <= 120) timer.className = 'warning';
 }
 
 channel.onmessage = function(e) { applyState(e.data); };
