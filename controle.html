@@ -16,12 +16,11 @@ body {
   align-items: center;
   justify-content: center;
   padding: 32px 16px;
-  gap: 24px;
+  gap: 20px;
 }
 
-h1 {
-  font-size: 13px;
-  font-weight: 500;
+.titulo {
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #444;
@@ -33,26 +32,22 @@ h1 {
   border-radius: 14px;
   padding: 24px;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.field { display: flex; flex-direction: column; gap: 8px; }
 
 label {
-  font-size: 12px;
+  font-size: 11px;
   color: #555;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-input[type="text"], input[type="url"], select {
+input[type="text"], select {
   background: #1e1e1e;
   border: 1px solid #2a2a2a;
   color: #ddd;
@@ -62,26 +57,27 @@ input[type="text"], input[type="url"], select {
   font-family: inherit;
   outline: none;
   transition: border 0.15s;
+  width: 100%;
 }
-
-input[type="text"]:focus, input[type="url"]:focus, select:focus {
-  border-color: #1d9e75;
-}
-
+input:focus, select:focus { border-color: #1d9e75; }
 select option { background: #1e1e1e; }
 
-.timer-big {
-  font-size: 72px;
+.timer-grande {
+  font-size: 64px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
   text-align: center;
-  transition: color 0.4s;
   color: #1d9e75;
+  transition: color 0.4s;
   line-height: 1;
 }
+.timer-grande.warning { color: #EF9F27; }
+.timer-grande.danger  { color: #E24B4A; }
+.timer-grande.done    { color: #E24B4A; animation: pulse 0.8s infinite alternate; }
 
-.squad-info {
+@keyframes pulse { from { opacity:1 } to { opacity:0.25 } }
+
+.squad-label {
   text-align: center;
   font-size: 13px;
   color: #444;
@@ -94,18 +90,16 @@ select option { background: #1e1e1e; }
   height: 4px;
   overflow: hidden;
 }
-
 .progress-fill {
   height: 100%;
   background: #1d9e75;
   transition: width 1s linear, background 0.4s;
   width: 100%;
 }
+.progress-fill.warning { background: #EF9F27; }
+.progress-fill.danger  { background: #E24B4A; }
 
-.buttons {
-  display: flex;
-  gap: 10px;
-}
+.botoes { display: flex; gap: 10px; }
 
 button {
   flex: 1;
@@ -119,28 +113,16 @@ button {
   transition: all 0.15s;
 }
 
-#btn-start {
-  background: #1d9e75;
-  color: #fff;
-}
+#btn-start { background: #1d9e75; color: #fff; }
 #btn-start:hover { background: #17845f; }
 #btn-start:active { transform: scale(0.97); }
-
-#btn-reset {
-  background: #1e1e1e;
-  color: #666;
-}
+#btn-reset { background: #1e1e1e; color: #666; }
 #btn-reset:hover { background: #252525; color: #aaa; }
 
-.divider {
-  border: none;
-  border-top: 1px solid #1e1e1e;
-}
-
-.open-btn {
+.link-apresentacao {
   display: block;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   background: #1a1a1a;
   border: 1px dashed #2a2a2a;
   color: #555;
@@ -151,29 +133,26 @@ button {
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s;
+  text-decoration: none;
 }
-.open-btn:hover { border-color: #1d9e75; color: #1d9e75; }
+.link-apresentacao:hover { border-color: #1d9e75; color: #1d9e75; }
 
 .hint {
   font-size: 12px;
-  color: #333;
+  color: #2e2e2e;
   text-align: center;
-  max-width: 420px;
-  line-height: 1.6;
+  max-width: 400px;
+  line-height: 1.7;
 }
 </style>
 </head>
 <body>
 
-<h1>Conexão Digital — Painel de Controle</h1>
+<p class="titulo">Conexão Digital — Painel de Controle</p>
 
 <div class="card">
   <div class="field">
-    <label>URL embed da apresentação</label>
-    <input type="url" id="slide-url" placeholder="https://docs.google.com/presentation/d/e/..." />
-  </div>
-  <div class="field">
-    <label>Nome do squad atual</label>
+    <label>Squad atual</label>
     <input type="text" id="squad-name" placeholder="Ex: Squad Checkout" maxlength="40" />
   </div>
   <div class="field">
@@ -189,60 +168,52 @@ button {
 </div>
 
 <div class="card">
-  <div class="timer-big" id="timer-display">6:00</div>
-  <div class="squad-info" id="squad-info">—</div>
+  <div class="timer-grande" id="ctrl-display">6:00</div>
+  <div class="squad-label" id="ctrl-squad">—</div>
   <div class="progress-track">
-    <div class="progress-fill" id="progress-fill"></div>
+    <div class="progress-fill" id="ctrl-progress"></div>
   </div>
-  <div class="buttons">
+  <div class="botoes">
     <button id="btn-reset" onclick="resetTimer()">Resetar</button>
     <button id="btn-start" onclick="toggleTimer()">Iniciar</button>
   </div>
 </div>
 
-<button class="open-btn" onclick="openPresentation()">
-  ↗ Abrir cronômetro flutuante
-</button>
+<a class="link-apresentacao" href="apresentacao.html" target="_blank">
+  ↗ Abrir cronômetro de apresentação
+</a>
 
-<p class="hint">Configure tudo aqui e abra a página de apresentação em outra aba.<br>O cronômetro sincroniza automaticamente via localStorage.</p>
+<p class="hint">
+  Abra o cronômetro em outra janela e redimensione pequeno.<br>
+  Apresente o Google Slides por baixo e compartilhe a tela inteira no Meet.
+</p>
 
 <script>
 let totalSeconds = 360;
 let remaining = 360;
 let running = false;
 let interval = null;
-let presWindow = null;
 
-function getState() {
-  return {
-    remaining,
-    totalSeconds,
-    running,
-    squad: document.getElementById('squad-name').value,
-    url: document.getElementById('slide-url').value,
-    ts: Date.now()
-  };
+const channel = new BroadcastChannel('cd_timer');
+
+function getSquad() {
+  return document.getElementById('squad-name').value;
 }
 
-function pushState() {
-  localStorage.setItem('cd_timer', JSON.stringify(getState()));
+function broadcast() {
+  const state = { remaining, totalSeconds, squad: getSquad() };
+  channel.postMessage(state);
+  localStorage.setItem('cd_timer', JSON.stringify(state));
 }
 
-function openPresentation() {
-  pushState();
-  presWindow = window.open('apresentacao.html', 'apresentacao');
-}
-
-document.getElementById('squad-name').addEventListener('input', pushState);
-document.getElementById('slide-url').addEventListener('input', pushState);
+document.getElementById('squad-name').addEventListener('input', broadcast);
 
 document.getElementById('duration').addEventListener('change', function() {
   if (running) return;
   totalSeconds = parseInt(this.value);
   remaining = totalSeconds;
-  updateDisplay();
-  updateProgress();
-  pushState();
+  updateControle();
+  broadcast();
 });
 
 function toggleTimer() {
@@ -255,7 +226,7 @@ function startTimer() {
   document.getElementById('btn-start').textContent = 'Pausar';
   document.getElementById('btn-start').style.background = '#333';
   interval = setInterval(tick, 1000);
-  pushState();
+  broadcast();
 }
 
 function pauseTimer() {
@@ -263,7 +234,7 @@ function pauseTimer() {
   clearInterval(interval);
   document.getElementById('btn-start').textContent = 'Continuar';
   document.getElementById('btn-start').style.background = '#1d9e75';
-  pushState();
+  broadcast();
 }
 
 function resetTimer() {
@@ -273,10 +244,8 @@ function resetTimer() {
   remaining = totalSeconds;
   document.getElementById('btn-start').textContent = 'Iniciar';
   document.getElementById('btn-start').style.background = '#1d9e75';
-  updateDisplay();
-  updateProgress();
-  setColor('normal');
-  pushState();
+  updateControle();
+  broadcast();
 }
 
 function tick() {
@@ -287,42 +256,31 @@ function tick() {
     clearInterval(interval);
     document.getElementById('btn-start').textContent = 'Iniciar';
     document.getElementById('btn-start').style.background = '#1d9e75';
-    setColor('done');
-  } else if (remaining <= 60) {
-    setColor('danger');
-  } else if (remaining <= 120) {
-    setColor('warning');
-  } else {
-    setColor('normal');
   }
-  updateDisplay();
-  updateProgress();
-  pushState();
+  updateControle();
+  broadcast();
 }
 
-function updateDisplay() {
+function updateControle() {
   const m = Math.floor(remaining / 60);
   const s = remaining % 60;
-  document.getElementById('timer-display').textContent = m + ':' + String(s).padStart(2, '0');
-  const sq = document.getElementById('squad-name').value;
-  document.getElementById('squad-info').textContent = sq || '—';
-}
+  document.getElementById('ctrl-display').textContent = m + ':' + String(s).padStart(2, '0');
+  document.getElementById('ctrl-squad').textContent = getSquad() || '—';
 
-function updateProgress() {
   const pct = (remaining / totalSeconds) * 100;
-  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('ctrl-progress').style.width = pct + '%';
+
+  const display = document.getElementById('ctrl-display');
+  const progress = document.getElementById('ctrl-progress');
+  display.className = 'timer-grande';
+  progress.className = 'progress-fill';
+
+  if (remaining <= 0)       { display.classList.add('done');    progress.classList.add('danger'); }
+  else if (remaining <= 60) { display.classList.add('danger');  progress.classList.add('danger'); }
+  else if (remaining <= 120){ display.classList.add('warning'); progress.classList.add('warning'); }
 }
 
-function setColor(state) {
-  const display = document.getElementById('timer-display');
-  const fill = document.getElementById('progress-fill');
-  const colors = { normal: '#1d9e75', warning: '#EF9F27', danger: '#E24B4A', done: '#E24B4A' };
-  const c = colors[state] || colors.normal;
-  display.style.color = c;
-  fill.style.background = c;
-}
-
-resetTimer();
+updateControle();
 </script>
 </body>
 </html>
