@@ -163,12 +163,14 @@
   .w1 .week-intro::before { background: linear-gradient(90deg, transparent, var(--w1), transparent); }
   .w2 .week-intro::before { background: linear-gradient(90deg, transparent, var(--w2), transparent); }
   .w3 .week-intro::before { background: linear-gradient(90deg, transparent, var(--w3), transparent); }
+  .w5 .week-intro::before { background: linear-gradient(90deg, transparent, var(--w5), transparent); }
   .w4 .week-intro::before { background: linear-gradient(90deg, transparent, var(--w4), transparent); }
 
   .week-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
   .w1 .week-title { color: var(--w1); }
   .w2 .week-title { color: var(--w2); }
   .w3 .week-title { color: var(--w3); }
+  .w5 .week-title { color: var(--w5); }
   .w4 .week-title { color: var(--w4); }
 
   .week-desc { color: #b0b0c8; font-size: 15px; margin-bottom: 16px; }
@@ -192,6 +194,7 @@
   .w1 .day-card::before { background: linear-gradient(90deg, transparent, var(--w1), transparent); }
   .w2 .day-card::before { background: linear-gradient(90deg, transparent, var(--w2), transparent); }
   .w3 .day-card::before { background: linear-gradient(90deg, transparent, var(--w3), transparent); }
+  .w5 .day-card::before { background: linear-gradient(90deg, transparent, var(--w5), transparent); }
   .w4 .day-card::before { background: linear-gradient(90deg, transparent, var(--w4), transparent); }
   .day-card:hover { border-color: rgba(106,240,200,0.25); transform: translateY(-2px); }
   .day-card:hover::before { opacity: 1; }
@@ -201,6 +204,7 @@
   .w1 .day-name { color: var(--w1); }
   .w2 .day-name { color: var(--w2); }
   .w3 .day-name { color: var(--w3); }
+  .w5 .day-name { color: var(--w5); }
   .w4 .day-name { color: var(--w4); }
 
   .day-meta { display: flex; align-items: center; gap: 12px; }
@@ -246,6 +250,7 @@
   .w1 .entrega { background: rgba(106,240,200,0.06); border: 1px solid rgba(106,240,200,0.2); color: var(--w1); }
   .w2 .entrega { background: rgba(240,200,106,0.06); border: 1px solid rgba(240,200,106,0.2); color: var(--w2); }
   .w3 .entrega { background: rgba(200,106,240,0.06); border: 1px solid rgba(200,106,240,0.2); color: var(--w3); }
+  .w5 .entrega { background: rgba(106,180,240,0.06); border: 1px solid rgba(106,180,240,0.2); color: var(--w5); }
   .w4 .entrega { background: rgba(240,106,106,0.06); border: 1px solid rgba(240,106,106,0.2); color: var(--w4); }
 
   /* WEEK SUMMARY */
@@ -347,7 +352,8 @@
     <button class="nav-btn" data-w="2" onclick="switchTab('w2',this)">02 · Orquestração n8n</button>
     <button class="nav-btn" data-w="3" onclick="switchTab('w3',this)">03 · Prompt Engineering</button>
     <button class="nav-btn" data-w="4" onclick="switchTab('w4',this)">04 · Agente real</button>
-    <button class="nav-btn" data-w="5" onclick="switchTab('pago',this)">💳 Cursos pagos</button>
+    <button class="nav-btn" data-w="5" onclick="switchTab('w5',this)">05 · Código & HTML</button>
+    <button class="nav-btn" data-w="6" onclick="switchTab('pago',this)">💳 Cursos pagos</button>
   </div>
 
   <!-- ===== SEMANA 1 ===== -->
@@ -1041,6 +1047,159 @@
       <div class="warning">
         <strong>Dica:</strong> o Coursera tem bolsas de auxílio financeiro gratuitas para qualquer curso — solicite antes de comprar. O processo leva ~15 dias de aprovação mas cobre 100% do valor. Vale tentar antes de pagar os ~R$270.
       </div>
+    </div>
+  </div>
+
+  <!-- ===== SEMANA 5 ===== -->
+  <div class="section w5" id="w5">
+    <div class="week-intro">
+      <div class="week-title">Programação básica e HTML para relatórios</div>
+      <p class="week-desc">Você já tem base — essa semana é revisão com foco prático. JavaScript para entender o que acontece no n8n e nos agentes; HTML e CSS para construir os relatórios e dashboards que você já usa no CACD e vai usar no Digital.</p>
+      <div class="badges">
+        <span class="badge pt">🇧🇷 Prioritariamente em português</span>
+        <span class="badge">20h total</span>
+        <span class="badge">100% gratuito</span>
+      </div>
+    </div>
+
+    <div class="section-label">Dias da semana</div>
+
+    <div class="day-card w5 open">
+      <div class="day-header" onclick="toggleDay(this)">
+        <span class="day-name">Segunda</span>
+        <div class="day-meta"><span class="day-hours">4h · Revisão de lógica de programação</span><span class="day-toggle">▾</span></div>
+      </div>
+      <div class="day-body">
+        <div class="block">
+          <span class="block-time">9h – 11h</span>
+          <div>
+            <div class="block-title">Variáveis, condicionais e loops — revisão rápida</div>
+            <div class="block-detail">Curso "JavaScript para Iniciantes" do canal Traversy Media PT ou "Curso de JavaScript" do canal Hora de Codar no YouTube. Foco nos conceitos que aparecem no n8n: variáveis, if/else, loops e funções. Não precisa dominar tudo — precisa reconhecer quando vir.</div>
+            <div class="links">
+              <a class="block-link pt" href="https://www.youtube.com/@HoraDeCodar" target="_blank"><span class="lang-tag">PT</span> YouTube · Hora de Codar</a>
+              <a class="block-link pt" href="https://www.cursoemvideo.com/curso/javascript/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · JS Gratuito</a>
+            </div>
+          </div>
+        </div>
+        <div class="block">
+          <span class="block-time">11h – 13h</span>
+          <div>
+            <div class="block-title">JavaScript no contexto do n8n</div>
+            <div class="block-detail">O n8n tem um node "Code" onde você escreve JavaScript para transformar dados. Revisão prática: como manipular arrays de objetos (que é o formato que o Jira e o Sheets retornam), como formatar datas e como filtrar resultados. Esses são os 3 casos que aparecem 90% das vezes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-card w5">
+      <div class="day-header" onclick="toggleDay(this)">
+        <span class="day-name">Terça</span>
+        <div class="day-meta"><span class="day-hours">4h · HTML estrutural</span><span class="day-toggle">▾</span></div>
+      </div>
+      <div class="day-body">
+        <div class="block">
+          <span class="block-time">9h – 11h</span>
+          <div>
+            <div class="block-title">Revisão de HTML — estrutura e semântica</div>
+            <div class="block-detail">Você já tem a base pelo CACD — aqui é uma revisão focada no que importa para relatórios: divs, tabelas, listas, links, imagens e como estruturar uma página que seja fácil de manter. Curso em Vídeo de HTML do Gustavo Guanabara, módulos 1 e 2.</div>
+            <div class="links">
+              <a class="block-link pt" href="https://www.cursoemvideo.com/curso/html5/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · HTML5 Gratuito</a>
+            </div>
+          </div>
+        </div>
+        <div class="block">
+          <span class="block-time">11h – 13h</span>
+          <div>
+            <div class="block-title">CSS — layout, cores e tipografia para relatórios</div>
+            <div class="block-detail">Foco em flexbox (para alinhar cards e colunas), variáveis CSS (para manter consistência visual entre relatórios) e como criar um sistema de cores simples. Esses são os três pilares de qualquer relatório bonito e fácil de reutilizar.</div>
+            <div class="links">
+              <a class="block-link pt" href="https://www.cursoemvideo.com/curso/css3/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · CSS3 Gratuito</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-card w5">
+      <div class="day-header" onclick="toggleDay(this)">
+        <span class="day-name">Quarta</span>
+        <div class="day-meta"><span class="day-hours">4h · Gráficos e dados no browser</span><span class="day-toggle">▾</span></div>
+      </div>
+      <div class="day-body">
+        <div class="block">
+          <span class="block-time">9h – 11h</span>
+          <div>
+            <div class="block-title">Chart.js — gráficos simples sem biblioteca complexa</div>
+            <div class="block-detail">Chart.js é a biblioteca mais simples para colocar gráficos em HTML — linha, barra, pizza. Você já usa ela nos seus arquivos CACD. Revisão focada em: como passar dados dinamicamente, como customizar cores e como deixar responsivo para funcionar bem no celular também.</div>
+            <div class="links">
+              <a class="block-link pt" href="https://www.youtube.com/results?search_query=chart.js+tutorial+portugu%C3%AAs" target="_blank"><span class="lang-tag">PT</span> YouTube · Chart.js em português</a>
+              <a class="block-link en" href="https://www.chartjs.org/docs/latest/" target="_blank"><span class="lang-tag">EN</span> chartjs.org · Docs</a>
+            </div>
+          </div>
+        </div>
+        <div class="block">
+          <span class="block-time">11h – 13h</span>
+          <div>
+            <div class="block-title">Tabelas HTML interativas com ordenação</div>
+            <div class="block-detail">Relatórios de performance precisam de tabelas que o time consiga ordenar e filtrar. Aprenda a criar uma tabela que ordena ao clicar no cabeçalho — funcionalidade simples de JavaScript que transforma um relatório estático em ferramenta de análise.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-card w5">
+      <div class="day-header" onclick="toggleDay(this)">
+        <span class="day-name">Quinta</span>
+        <div class="day-meta"><span class="day-hours">4h · Template de relatório reutilizável</span><span class="day-toggle">▾</span></div>
+      </div>
+      <div class="day-body">
+        <div class="block">
+          <span class="block-time">9h – 11h</span>
+          <div>
+            <div class="block-title">Construindo um template base para relatórios do Digital</div>
+            <div class="block-detail">Monte um template HTML reutilizável com: header com logo e data, seção de KPIs em cards, área de gráfico e tabela de detalhe. Esse template vai ser o output padrão dos agentes de relatório — o n8n gera os dados, o HTML apresenta.</div>
+          </div>
+        </div>
+        <div class="block">
+          <span class="block-time">11h – 13h</span>
+          <div>
+            <div class="block-title">Como o n8n injeta dados no template HTML</div>
+            <div class="block-detail">Técnica de template string do JavaScript: o n8n passa os dados para o HTML via variáveis no node Code. Aprenda a estruturar o template para receber dados dinamicamente — isso conecta tudo o que você aprendeu nas semanas 2, 3 e 5 em um único fluxo.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-card w5">
+      <div class="day-header" onclick="toggleDay(this)">
+        <span class="day-name">Sexta</span>
+        <div class="day-meta"><span class="day-hours">4h · Entrega prática</span><span class="day-toggle">▾</span></div>
+      </div>
+      <div class="day-body">
+        <div class="block">
+          <span class="block-time">9h – 13h</span>
+          <div>
+            <div class="block-title">Relatório HTML completo com dados fictícios do Digital</div>
+            <div class="block-detail">Construa um relatório semanal completo simulando dados de uma das squads — conversão de e-commerce, performance de campanha ou volume de tickets de CX. Com KPIs em destaque, gráfico de evolução e tabela de detalhe. Esse arquivo vira o template dos agentes reais.</div>
+            <div class="entrega">🖥️ Entrega da semana: template de relatório HTML reutilizável para o Digital</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="week-summary">
+      <div class="summary-title">O que você domina ao final</div>
+      <ul class="summary-list">
+        <li>Reconhecer e editar JavaScript no node Code do n8n sem travar</li>
+        <li>Manipular arrays e objetos de dados (formato padrão de Jira e Sheets)</li>
+        <li>Construir páginas HTML bem estruturadas com CSS limpo e flexbox</li>
+        <li>Criar gráficos dinâmicos com Chart.js e tabelas interativas</li>
+        <li>Um template de relatório HTML pronto para ser alimentado pelos agentes</li>
+      </ul>
+    </div>
+
+    <div class="highlight">
+      <strong>Por que JavaScript e não Python?</strong> Python é mais usado em ciência de dados, mas no seu contexto o que aparece é JavaScript — no node Code do n8n, nos templates HTML dos relatórios e em qualquer ajuste rápido de fluxo. Revisar JS é mais direto para o que você vai fazer no dia a dia.
     </div>
   </div>
 
