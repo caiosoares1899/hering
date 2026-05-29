@@ -49,7 +49,7 @@
 
   .container { max-width: 860px; margin: 0 auto; padding: 60px 24px 100px; position: relative; z-index: 1; }
 
-  .header { margin-bottom: 48px; animation: fadeUp 0.6s ease both; }
+  .header { margin-bottom: 32px; animation: fadeUp 0.6s ease both; }
 
   .tag {
     font-family: 'DM Mono', monospace;
@@ -79,10 +79,64 @@
 
   .subtitle { color: var(--muted); font-size: 15px; font-family: 'DM Mono', monospace; font-weight: 300; }
 
+  /* PROGRESS BAR */
+  .progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 24px 0 32px;
+    animation: fadeUp 0.6s 0.03s ease both;
+  }
+
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .progress-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .progress-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
   /* STATS */
   .stats-row {
     display: flex;
-    margin: 32px 0 48px;
+    margin: 0 0 48px;
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
@@ -121,6 +175,7 @@
     transition: all 0.2s;
     text-align: center;
     line-height: 1.4;
+    position: relative;
   }
 
   .nav-btn.active { background: var(--surface2); border: 1px solid var(--border); }
@@ -128,9 +183,23 @@
   .nav-btn[data-w="2"].active { color: var(--w2); }
   .nav-btn[data-w="3"].active { color: var(--w3); }
   .nav-btn[data-w="4"].active { color: var(--w4); }
-  .nav-btn[data-w="5"].active { color: var(--accent2); }
-  .nav-btn[data-w="6"].active { color: var(--accent3); }
+  .nav-btn[data-w="5"].active { color: var(--w5); }
+  .nav-btn[data-w="6"].active { color: var(--accent2); }
   .nav-btn:hover:not(.active) { color: var(--text); }
+
+  /* Sprint progress pill on nav button */
+  .nav-pill {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 99px;
+    margin-left: 4px;
+    vertical-align: middle;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
 
   /* SECTIONS */
   .section { display: none; animation: fadeUp 0.4s ease both; }
@@ -199,6 +268,16 @@
   .day-card:hover { border-color: rgba(106,240,200,0.25); transform: translateY(-2px); }
   .day-card:hover::before { opacity: 1; }
 
+  /* Day card done state */
+  .day-card.all-done {
+    border-color: rgba(106,240,200,0.3);
+  }
+  .day-card.all-done .day-name::after {
+    content: ' ✓';
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
   .day-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
   .day-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
   .w1 .day-name { color: var(--w1); }
@@ -216,12 +295,22 @@
   .day-card.open .day-body { display: block; }
 
   /* BLOCKS */
-  .block { display: grid; grid-template-columns: 90px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: start; }
+  .block {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+    transition: opacity 0.2s;
+  }
   .block:last-child { border-bottom: none; padding-bottom: 0; }
   .block:first-child { padding-top: 0; }
+  .block.done { opacity: 0.45; }
+  .block.done .block-title { text-decoration: line-through; text-decoration-color: var(--muted); }
 
-  .block-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.5; padding-top: 2px; }
-  .block-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .block-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.5; padding-top: 4px; }
+  .block-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; transition: color 0.2s; }
   .block-detail { font-size: 14px; color: #b0b0c8; line-height: 1.65; margin-bottom: 8px; }
 
   .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
@@ -244,6 +333,50 @@
   .block-link .lang-tag { font-size: 9px; padding: 1px 4px; border-radius: 2px; }
   .block-link.pt .lang-tag { background: rgba(106,240,200,0.1); color: var(--accent); }
   .block-link.en .lang-tag { background: rgba(120,120,160,0.15); color: var(--muted); }
+
+  /* CHECKBOX */
+  .block-check-wrap {
+    padding-top: 3px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .block-check {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    background: var(--surface2);
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .block-check:hover {
+    border-color: var(--accent);
+  }
+
+  .block-check:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .block-check:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 8px;
+    height: 12px;
+    border: 2px solid #0a0a0f;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
 
   /* ENTREGA */
   .entrega { margin-top: 16px; padding: 14px 18px; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.5; }
@@ -323,7 +456,7 @@
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
   @media (max-width: 580px) {
-    .block { grid-template-columns: 70px 1fr; }
+    .block { grid-template-columns: 70px 1fr auto; }
     .course-card { grid-template-columns: 1fr; }
     .stats-row { flex-wrap: wrap; }
     .stat { flex: 1 1 40%; border-right: none; border-bottom: 1px solid var(--border); }
@@ -340,6 +473,18 @@
     <p class="subtitle">Responsável por IA no Digital · 4h/dia · 5 sprints · foco em conteúdo em português</p>
   </div>
 
+  <!-- PROGRESS BAR -->
+  <div class="progress-wrap">
+    <div class="progress-top">
+      <span class="progress-label">Progresso geral</span>
+      <span class="progress-pct" id="pct-label">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="progress-sub" id="progress-sub">0 de 0 blocos concluídos</div>
+  </div>
+
   <div class="stats-row">
     <div class="stat"><span class="stat-val">5</span><span class="stat-label">Sprints</span></div>
     <div class="stat"><span class="stat-val">4h</span><span class="stat-label">Por dia</span></div>
@@ -348,15 +493,15 @@
   </div>
 
   <div class="nav">
-    <button class="nav-btn active" data-w="1" onclick="switchTab('w1',this)">Sprint 1 · Como IA funciona</button>
-    <button class="nav-btn" data-w="2" onclick="switchTab('w2',this)">Sprint 2 · n8n</button>
-    <button class="nav-btn" data-w="3" onclick="switchTab('w3',this)">Sprint 3 · Prompts</button>
-    <button class="nav-btn" data-w="4" onclick="switchTab('w4',this)">Sprint 4 · Agente real</button>
-    <button class="nav-btn" data-w="5" onclick="switchTab('w5',this)">Sprint 5 · Código & HTML</button>
+    <button class="nav-btn active" data-w="1" onclick="switchTab('w1',this)">Sprint 1 · Como IA funciona <span class="nav-pill" id="pill-w1"></span></button>
+    <button class="nav-btn" data-w="2" onclick="switchTab('w2',this)">Sprint 2 · n8n <span class="nav-pill" id="pill-w2"></span></button>
+    <button class="nav-btn" data-w="3" onclick="switchTab('w3',this)">Sprint 3 · Prompts <span class="nav-pill" id="pill-w3"></span></button>
+    <button class="nav-btn" data-w="4" onclick="switchTab('w4',this)">Sprint 4 · Agente real <span class="nav-pill" id="pill-w4"></span></button>
+    <button class="nav-btn" data-w="5" onclick="switchTab('w5',this)">Sprint 5 · Código &amp; HTML <span class="nav-pill" id="pill-w5"></span></button>
     <button class="nav-btn" data-w="6" onclick="switchTab('pago',this)">💳 Cursos pagos</button>
   </div>
 
-  <!-- ===== SEMANA 1 ===== -->
+  <!-- ===== SPRINT 1 ===== -->
   <div class="section w1 active" id="w1">
     <div class="week-intro">
       <div class="week-title">Como modelos de IA funcionam — sem código</div>
@@ -367,7 +512,6 @@
         <span class="badge">100% gratuito</span>
       </div>
     </div>
-
     <div class="section-label">Dias do sprint</div>
 
     <div class="day-card w1 open">
@@ -376,25 +520,23 @@
         <div class="day-meta"><span class="day-hours">4h · Fundamentos de LLMs</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w1-s1-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">IA Generativa e LLMs — o que são e como funcionam</div>
             <div class="block-detail">Curso gratuito "Inteligência Artificial, Gen AI e Engenharia de Prompt" na Udemy — módulos 1 e 2. Em português, feito para não-técnicos. Cobre o que é um LLM, como ele processa texto e por que não memoriza nada entre conversas.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.udemy.com/course/inteligencia-artificial-engenharia-de-prompt-gen-ai-gratuito/" target="_blank"><span class="lang-tag">PT</span> udemy.com · Gratuito</a>
-            </div>
+            <div class="links"><a class="block-link pt" href="https://www.udemy.com/course/inteligencia-artificial-engenharia-de-prompt-gen-ai-gratuito/" target="_blank"><span class="lang-tag">PT</span> udemy.com · Gratuito</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w1-s1-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Como funciona uma API de IA na prática</div>
             <div class="block-detail">Leitura da documentação da Anthropic — seção "Getting Started". O objetivo não é programar: é entender o que é um system prompt, uma mensagem de usuário e uma resposta do modelo. A interface está disponível em inglês, mas o conteúdo é direto e visual.</div>
-            <div class="links">
-              <a class="block-link en" href="https://docs.anthropic.com/en/docs/intro-to-claude" target="_blank"><span class="lang-tag">EN</span> docs.anthropic.com</a>
-            </div>
+            <div class="links"><a class="block-link en" href="https://docs.anthropic.com/en/docs/intro-to-claude" target="_blank"><span class="lang-tag">EN</span> docs.anthropic.com</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -405,25 +547,23 @@
         <div class="day-meta"><span class="day-hours">4h · O que é um agente de IA</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w1-s2-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Agentes de IA — princípios e fundamentos</div>
             <div class="block-detail">Curso gratuito na Udemy "Agentes de IA: Princípios e Fundamentos". Em português, pensado para profissionais de negócios. Cobre o ciclo perceber → raciocinar → agir, tipos de agentes e onde já estão sendo usados.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.udemy.com/course/agentes-de-ia/" target="_blank"><span class="lang-tag">PT</span> udemy.com · Gratuito</a>
-            </div>
+            <div class="links"><a class="block-link pt" href="https://www.udemy.com/course/agentes-de-ia/" target="_blank"><span class="lang-tag">PT</span> udemy.com · Gratuito</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w1-s2-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Cases reais: como empresas brasileiras estão usando IA</div>
             <div class="block-detail">Pesquise 3–4 casos de automação com IA em empresas de varejo ou e-commerce no Brasil (Mercado Livre, Magalu, VTEX). O objetivo é ter exemplos locais para usar nas conversas internas com o time e com o Rafael.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.anthropic.com/customers" target="_blank"><span class="lang-tag">EN</span> anthropic.com · Customer Stories</a>
-            </div>
+            <div class="links"><a class="block-link pt" href="https://www.anthropic.com/customers" target="_blank"><span class="lang-tag">EN</span> anthropic.com · Customer Stories</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -434,7 +574,7 @@
         <div class="day-meta"><span class="day-hours">4h · Vocabulário técnico essencial</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w1-s3-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">RAG, memória e context window — em português</div>
@@ -444,13 +584,15 @@
               <a class="block-link pt" href="https://www.youtube.com/@iaexpertacademy" target="_blank"><span class="lang-tag">PT</span> YouTube · IA Expert Academy</a>
             </div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w1-s3-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Limitações reais dos modelos: o que IA não faz bem</div>
             <div class="block-detail">Saber o que IA não faz é tão importante quanto saber o que faz — especialmente para não prometer o que não vai entregar. Leitura de artigos em português sobre alucinação de IA (Tecnoblog, Olhar Digital têm boas coberturas).</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -461,22 +603,22 @@
         <div class="day-meta"><span class="day-hours">4h · IA aplicada a negócios</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w1-s4-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">IA para líderes e negócios — Udemy PT</div>
             <div class="block-detail">Curso "Inteligência Artificial para Negócios e Líderes na Prática" (Udemy, português). Feito especificamente para quem vai liderar adoção de IA, não para quem vai implementar tecnicamente. Cobre avaliação de casos de uso, gestão de mudança e ROI.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.udemy.com/course/inteligencia-artificial-para-negocios-e-lideres/" target="_blank"><span class="lang-tag">PT</span> udemy.com · IA para Líderes</a>
-            </div>
+            <div class="links"><a class="block-link pt" href="https://www.udemy.com/course/inteligencia-artificial-para-negocios-e-lideres/" target="_blank"><span class="lang-tag">PT</span> udemy.com · IA para Líderes</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w1-s4-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Continuação + anotações aplicadas ao Digital Hering</div>
             <div class="block-detail">Para cada conceito do curso, escreva um exemplo concreto de como se aplica ao contexto do Digital — E-commerce, Performance, CX. Esse exercício transforma estudo abstrato em vocabulário operacional para as conversas com o time.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -487,20 +629,22 @@
         <div class="day-meta"><span class="day-hours">4h · Consolidação</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w1-s5-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Glossário pessoal dos 20 termos essenciais</div>
             <div class="block-detail">Monte um glossário com token, context window, RAG, alucinação, system prompt, agente, tool use, temperatura e outros. Definição em suas palavras + exemplo do contexto Hering. Esse vai ser o cheatsheet para conversas técnicas.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w1-s5-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Mapa inicial de oportunidades nas squads</div>
             <div class="block-detail">Com base no que aprendeu, esboce quais tarefas de E-commerce (Paula), Performance (Thais) e CX (Rafaela) seriam candidatas a automação. Esse rascunho vai guiar o discovery real na sprint 4.</div>
             <div class="entrega">📄 Entrega do sprint: glossário técnico + mapa de oportunidades das squads</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -517,7 +661,7 @@
     </div>
   </div>
 
-  <!-- ===== SEMANA 2 ===== -->
+  <!-- ===== SPRINT 2 ===== -->
   <div class="section w2" id="w2">
     <div class="week-intro">
       <div class="week-title">Orquestração no-code com n8n</div>
@@ -528,7 +672,6 @@
         <span class="badge">100% gratuito</span>
       </div>
     </div>
-
     <div class="section-label">Dias do sprint</div>
 
     <div class="day-card w2 open">
@@ -537,7 +680,7 @@
         <div class="day-meta"><span class="day-hours">4h · Instalação e primeiros fluxos</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w2-s1-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Setup do n8n — curso gratuito em português</div>
@@ -547,13 +690,15 @@
               <a class="block-link pt" href="https://www.youtube.com/watch?v=vuQtzVrpveg" target="_blank"><span class="lang-tag">PT</span> YouTube · n8n do Zero (+1h)</a>
             </div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w2-s1-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Primeiro workflow: agendamento + notificação no Slack</div>
             <div class="block-detail">Construa o fluxo mais simples: todo dia às 9h, manda uma mensagem fixa no Slack com a data. Parece trivial, mas cobre trigger de tempo, execução e output — a base de qualquer agente de relatório.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -564,22 +709,22 @@
         <div class="day-meta"><span class="day-hours">4h · Integração com Google Sheets</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w2-s2-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Ler e escrever dados em planilhas</div>
             <div class="block-detail">Continue a playlist do NoCode StartUp — episódio sobre Google Sheets no n8n. Construa um fluxo que lê KPIs fictícios de uma planilha e formata em texto. Esse é o esqueleto de qualquer agente de relatório.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.youtube.com/playlist?list=PL6WacTcxV8LMKihaX7PaDi5Ve37iXZviW" target="_blank"><span class="lang-tag">PT</span> YouTube · NoCode StartUp</a>
-            </div>
+            <div class="links"><a class="block-link pt" href="https://www.youtube.com/playlist?list=PL6WacTcxV8LMKihaX7PaDi5Ve37iXZviW" target="_blank"><span class="lang-tag">PT</span> YouTube · NoCode StartUp</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w2-s2-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Adicionar condições e filtros (node IF)</div>
             <div class="block-detail">Expanda o fluxo: só notifica se algum KPI estiver abaixo do limite definido. O node IF do n8n é a base de todos os agentes de alerta — aprenda bem aqui que vai usar o tempo todo.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -590,7 +735,7 @@
         <div class="day-meta"><span class="day-hours">4h · Conectando IA ao fluxo</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w2-s3-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Integrar Claude API no n8n</div>
@@ -600,13 +745,15 @@
               <a class="block-link en" href="https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.anthropic/" target="_blank"><span class="lang-tag">EN</span> docs.n8n.io · Anthropic node</a>
             </div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w2-s3-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Refinando o output do modelo</div>
             <div class="block-detail">Teste diferentes formas de passar dados para o Claude — tabela, lista, JSON. Observe como o formato do input muda a qualidade do output. Essa é a primeira lição prática de prompt engineering aplicado.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -617,22 +764,22 @@
         <div class="day-meta"><span class="day-hours">4h · Jira + Slack</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w2-s4-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Ler issues do Jira via n8n</div>
             <div class="block-detail">Configure o node do Jira. Crie um fluxo que busca todos os tickets "In Progress" de um projeto e agrupa por assignee. Use uma conta de teste — não precisa conectar em produção ainda.</div>
-            <div class="links">
-              <a class="block-link en" href="https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.jira/" target="_blank"><span class="lang-tag">EN</span> docs.n8n.io · Jira node</a>
-            </div>
+            <div class="links"><a class="block-link en" href="https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.jira/" target="_blank"><span class="lang-tag">EN</span> docs.n8n.io · Jira node</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w2-s4-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Enviar para Slack com formatação profissional</div>
             <div class="block-detail">Conecte o output do Jira + resumo do Claude em mensagem formatada no Slack (Block Kit). Mensagens bem formatadas geram adoção — o time precisa querer usar, não só poder usar.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -643,13 +790,14 @@
         <div class="day-meta"><span class="day-hours">4h · Integração completa</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w2-s5-b1">
           <span class="block-time">9h – 13h</span>
           <div>
             <div class="block-title">Agente de Relatório v1: Sheets + Claude + Slack</div>
             <div class="block-detail">Toda segunda às 8h30, o agente lê os KPIs do sprint anterior no Sheets, pede ao Claude um resumo executivo de 3 parágrafos e envia no canal correto do Slack. Esse é seu primeiro agente completo.</div>
             <div class="entrega">📦 Entrega do sprint: Agente de Relatório funcionando do início ao fim</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -666,7 +814,7 @@
     </div>
   </div>
 
-  <!-- ===== SEMANA 3 ===== -->
+  <!-- ===== SPRINT 3 ===== -->
   <div class="section w3" id="w3">
     <div class="week-intro">
       <div class="week-title">Prompt engineering para contexto corporativo</div>
@@ -677,7 +825,6 @@
         <span class="badge">100% gratuito</span>
       </div>
     </div>
-
     <div class="section-label">Dias do sprint</div>
 
     <div class="day-card w3 open">
@@ -686,25 +833,23 @@
         <div class="day-meta"><span class="day-hours">4h · Fundamentos em português</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w3-s1-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Engenharia de Prompt — curso gratuito PT</div>
             <div class="block-detail">Curso "Engenharia de Prompt na Prática" na Udemy (gratuito, português). Cobre zero-shot, few-shot, chain of thought e como estruturar prompts para resultados consistentes. Melhor ponto de partida em português disponível.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.udemy.com/course/engenharia-de-prompt-na-pratica/" target="_blank"><span class="lang-tag">PT</span> udemy.com · Gratuito</a>
-            </div>
+            <div class="links"><a class="block-link pt" href="https://www.udemy.com/course/engenharia-de-prompt-na-pratica/" target="_blank"><span class="lang-tag">PT</span> udemy.com · Gratuito</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w3-s1-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Guia oficial da Anthropic — referência técnica</div>
             <div class="block-detail">Após o fundamento em português, leia o Prompt Engineering Guide da Anthropic para aprofundar em system prompts e XML tags — os recursos específicos que o Claude usa melhor. Inglês, mas direto e bem ilustrado.</div>
-            <div class="links">
-              <a class="block-link en" href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank"><span class="lang-tag">EN</span> docs.anthropic.com · Prompt Engineering</a>
-            </div>
+            <div class="links"><a class="block-link en" href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank"><span class="lang-tag">EN</span> docs.anthropic.com · Prompt Engineering</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -715,19 +860,21 @@
         <div class="day-meta"><span class="day-hours">4h · Outputs estruturados e consistentes</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w3-s2-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Prática: reescreva os prompts da sprint 2</div>
             <div class="block-detail">Pegue o system prompt do agente de relatório e reescreva com o que aprendeu: persona clara, formato de saída definido, exemplo few-shot. Compare a qualidade antes e depois. Essa prática vale mais que qualquer aula.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w3-s2-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Prompts que lidam com dados ruins</div>
             <div class="block-detail">O que acontece quando falta dado na planilha? Campo vazio? Escreva prompts que tratam graciosamente dados incompletos — isso vai acontecer toda semana em produção e o agente não pode travar.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -738,7 +885,7 @@
         <div class="day-meta"><span class="day-hours">4h · Técnicas avançadas</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w3-s3-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Chain of thought: o modelo pensa antes de responder</div>
@@ -748,13 +895,15 @@
               <a class="block-link en" href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/extended-thinking" target="_blank"><span class="lang-tag">EN</span> docs.anthropic.com · Extended Thinking</a>
             </div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w3-s3-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Prompt injection: o risco que você precisa conhecer</div>
             <div class="block-detail">Quando um agente processa e-mails ou feedbacks externos, alguém pode tentar manipulá-lo. Entenda o risco e as defesas básicas — isso vai aparecer na conversa com TI na hora de aprovar o agente em produção.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -765,19 +914,21 @@
         <div class="day-meta"><span class="day-hours">4h · Simulação + system prompt piloto</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w3-s4-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Simule uma entrevista de discovery com o Claude</div>
             <div class="block-detail">Use o Claude para simular: você faz o papel do PO de uma das squads e o Claude faz perguntas para mapear dores. Depois inverta. Isso treina sua capacidade de fazer as perguntas certas nas entrevistas reais da sprint 4.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w3-s4-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Escreva o system prompt do agente piloto</div>
             <div class="block-detail">Com base no mapa de oportunidades da sprint 1, escreva o system prompt completo do agente que vai construir na sprint 4. Refine com o Claude até ficar consistente e cobrir edge cases.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -788,13 +939,14 @@
         <div class="day-meta"><span class="day-hours">4h · Red teaming dos prompts</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w3-s5-b1">
           <span class="block-time">9h – 13h</span>
           <div>
             <div class="block-title">Tente quebrar seus próprios agentes</div>
             <div class="block-detail">Mande dados malformados, campos em branco, idioma errado, volumes muito fora do normal. Para cada falha, ajuste o prompt. Um agente robusto é aquele que foi testado até falhar e corrigido antes de ir para produção.</div>
             <div class="entrega">📝 Entrega do sprint: system prompt do agente piloto validado e documentado</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -811,7 +963,7 @@
     </div>
   </div>
 
-  <!-- ===== SEMANA 4 ===== -->
+  <!-- ===== SPRINT 4 ===== -->
   <div class="section w4" id="w4">
     <div class="week-intro">
       <div class="week-title">Primeiro agente real em produção</div>
@@ -822,7 +974,6 @@
         <span class="badge">Com a squad piloto</span>
       </div>
     </div>
-
     <div class="section-label">Dias do sprint</div>
 
     <div class="day-card w4 open">
@@ -831,19 +982,21 @@
         <div class="day-meta"><span class="day-hours">4h · Discovery real com a squad</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w4-s1-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Entrevistas com PO e 2 membros do time</div>
             <div class="block-detail">Use o roteiro preparado na sprint 3. Pergunta central: "qual tarefa repetitiva você mais odeia fazer toda semana?". Documente tudo. Valide se o caso de uso escolhido ainda faz sentido depois das entrevistas reais.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w4-s1-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Escopo + critérios de aceite em uma página</div>
             <div class="block-detail">Escreva: o que o agente faz, o que não faz, como o time vai saber se funcionou. Compartilhe com o PO antes de construir. Esse documento previne retrabalho e alinha expectativas — você já sabe fazer isso como Agilista.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -854,19 +1007,21 @@
         <div class="day-meta"><span class="day-hours">8h · Build do agente</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w4-s2-b1">
           <span class="block-time">Dia 1</span>
           <div>
             <div class="block-title">Construção do workflow completo no n8n</div>
             <div class="block-detail">Monte o agente usando o system prompt da sprint 3 e as integrações da sprint 2. Comece pela versão mais simples que atende o critério de aceite. Use o Claude como copiloto técnico se travar em qualquer etapa.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w4-s2-b2">
           <span class="block-time">Dia 2</span>
           <div>
             <div class="block-title">Teste interno + ajustes</div>
             <div class="block-detail">Rode o agente com dados reais e documente os problemas. Ajuste prompts e fluxo. Prepare uma versão estável para o time testar na quinta. Foque em estabilidade, não em features extras.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -877,19 +1032,21 @@
         <div class="day-meta"><span class="day-hours">4h · Validação com o time</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w4-s3-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Demo ao vivo para o PO e o time</div>
             <div class="block-detail">Apresente o agente funcionando. Não esconda limitações — mostre o que ele faz bem e o que ainda precisa de ajuste. Times confiam mais em quem é transparente sobre limitações do que em quem promete magia.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w4-s3-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Feedback estruturado</div>
             <div class="block-detail">Google Forms simples: o output foi útil? O formato estava certo? O que faltou? O que estava sobrando? Essas respostas guiam os ajustes finais e vão compor as métricas do seu case.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -900,20 +1057,22 @@
         <div class="day-meta"><span class="day-hours">4h · Entrega + case</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w4-s4-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Ajustes finais + documentação de operação</div>
             <div class="block-detail">Como usar, como ajustar o prompt, o que fazer se parar de funcionar. O time precisa operar sem depender de você — isso é o que libera você para a próxima squad.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w4-s4-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Case de 5 slides para o Big Review</div>
             <div class="block-detail">Problema → solução → como funciona → resultado medido → próximos passos. Esse material vai para o Rafael e para o Big Review Digital. É também a prova de conceito que abre as portas para a próxima squad.</div>
             <div class="entrega">🚀 Entrega final: agente em produção + time autônomo + case documentado</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -928,129 +1087,12 @@
         <li>Um case real de IA no Digital Hering para o seu portfólio</li>
       </ul>
     </div>
-
     <div class="warning">
       <strong>Atalho permanente:</strong> use o Claude como copiloto técnico em tempo real em todas as sprints, especialmente nas sprints 2 e 4. Descreve o que quer construir e ele mostra como fazer no n8n ou como estruturar o prompt. Você aprende fazendo, não estudando em abstrato.
     </div>
   </div>
 
-  <!-- ===== CURSOS PAGOS ===== -->
-  <div class="section" id="pago">
-    <div class="highlight">
-      O plano gratuito cobre o essencial. Esses cursos são para aprofundar em áreas específicas — priorizamos <strong>cursos em português</strong> onde existem com qualidade equivalente. Os em inglês entram apenas onde não há alternativa boa em PT.
-    </div>
-
-    <div class="paid-nav">
-      <button class="paid-tab active" data-pt onclick="switchPaid('pt-group', this)">🇧🇷 Em português</button>
-      <button class="paid-tab" data-en onclick="switchPaid('en-group', this)">🌐 Em inglês</button>
-    </div>
-
-    <!-- GRUPO PT -->
-    <div class="paid-group active" id="pt-group">
-      <div class="section-label">Cursos em português — prioridade</div>
-
-      <div class="course-card pt-card">
-        <div>
-          <span class="course-lang pt">🇧🇷 Português</span>
-          <div class="course-name">Engenharia de Agentes de IA do Zero ao Avançado</div>
-          <div class="course-by">Udemy · 2025–2026</div>
-          <div class="course-why">"Cobre n8n + agentes de IA do zero ao avançado em português, com foco em automação para negócios. É exatamente o que você precisa para a sprint 4 em diante — aprofunda tudo que o plano gratuito cobre de forma mais superficial."</div>
-          <div class="course-covers">Cobre: n8n avançado, agentes com IA, automação de processos, casos reais. Duração: ~10h. Nível: iniciante ao avançado.</div>
-          <span class="priority-chip p-alta">Prioridade alta · Faça após a sprint 4</span>
-        </div>
-        <div class="course-price-block">
-          <span class="price-val">R$27</span>
-          <span class="price-note">Udemy<br>em promoção</span>
-        </div>
-      </div>
-
-      <div class="course-card pt-card">
-        <div>
-          <span class="course-lang pt">🇧🇷 Português</span>
-          <div class="course-name">LLMs e Agentes de IA para Empresas e Negócios</div>
-          <div class="course-by">IA Expert Academy · 2025</div>
-          <div class="course-why">"O curso mais completo em português sobre LLMs aplicados a casos reais de negócio. Cobre RAG, chatbot com documentos da empresa, agentes com ferramentas. Nível de profundidade que o conteúdo gratuito em PT não alcança."</div>
-          <div class="course-covers">Cobre: RAG, chatbot com base de conhecimento interna, agentes com ferramentas, deploy. Duração: ~12h. Nível: intermediário.</div>
-          <span class="priority-chip p-alta">Prioridade alta · Faça no mês 2</span>
-        </div>
-        <div class="course-price-block">
-          <span class="price-val">R$97</span>
-          <span class="price-note">IA Expert<br>Academy</span>
-        </div>
-      </div>
-
-      <div class="course-card pt-card">
-        <div>
-          <span class="course-lang pt">🇧🇷 Português</span>
-          <div class="course-name">IA para Negócios e Líderes — nível avançado</div>
-          <div class="course-by">Udemy · Fernando Amaral</div>
-          <div class="course-why">"Complementa o curso gratuito de IA para líderes com mais profundidade em avaliação de ROI, gestão de projetos de IA e como comunicar resultados para stakeholders executivos — exatamente o que você vai precisar na proposta ao Rafael."</div>
-          <div class="course-covers">Cobre: ROI de IA, gestão de mudança, roadmap de IA, comunicação executiva. Duração: ~8h. Nível: não-técnico.</div>
-          <span class="priority-chip p-media">Prioridade média · Faça no mês 2</span>
-        </div>
-        <div class="course-price-block">
-          <span class="price-val">R$27</span>
-          <span class="price-note">Udemy<br>em promoção</span>
-        </div>
-      </div>
-
-      <div class="course-card pt-card">
-        <div>
-          <span class="course-lang pt">🇧🇷 Português</span>
-          <div class="course-name">Engenharia de Prompt — frameworks avançados</div>
-          <div class="course-by">Paulo Andrade, PhD · Udemy · 2025</div>
-          <div class="course-why">"Depois de dominar o básico, esse curso em português cobre frameworks de prompting estruturados que geram consistência em agentes corporativos. Avaliado 4.8/5 e atualizado em dezembro de 2025."</div>
-          <div class="course-covers">Cobre: prompt frameworks estruturados, avaliação de prompts, técnicas avançadas. Duração: ~4h. Nível: intermediário.</div>
-          <span class="priority-chip p-media">Prioridade média · Faça durante ou após sprint 3</span>
-        </div>
-        <div class="course-price-block">
-          <span class="price-val">R$27</span>
-          <span class="price-note">Udemy<br>em promoção</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- GRUPO EN -->
-    <div class="paid-group" id="en-group">
-      <div class="section-label">Cursos em inglês — onde não há equivalente em PT</div>
-
-      <div class="course-card en-card">
-        <div>
-          <span class="course-lang en">🌐 Inglês</span>
-          <div class="course-name">AI Agents in LangGraph</div>
-          <div class="course-by">DeepLearning.AI + LangChain</div>
-          <div class="course-why">"Quando o n8n não for suficiente, você vai precisar de agentes com memória persistente e decisões dinâmicas. Não existe equivalente de qualidade em português — esse é o melhor curso disponível para essa transição específica."</div>
-          <div class="course-covers">Cobre: agentes com estado, memória entre sessões, agentes multi-step. Duração: ~4h. Nível: intermediário.</div>
-          <span class="priority-chip p-alta">Prioridade alta · Faça após a sprint 4</span>
-        </div>
-        <div class="course-price-block">
-          <span class="price-val">$49</span>
-          <span class="price-note">Coursera<br>~R$ 270</span>
-        </div>
-      </div>
-
-      <div class="course-card en-card">
-        <div>
-          <span class="course-lang en">🌐 Inglês</span>
-          <div class="course-name">Prompt Engineering for Developers</div>
-          <div class="course-by">DeepLearning.AI + Anthropic</div>
-          <div class="course-why">"Feito em parceria com a Anthropic. Cobre casos de uso avançados que aparecem quando agentes começam a falhar em produção de formas inesperadas. Não há equivalente em português com essa profundidade técnica."</div>
-          <div class="course-covers">Cobre: prompting avançado, avaliação sistemática, testes. Duração: ~3h. Nível: intermediário.</div>
-          <span class="priority-chip p-media">Prioridade média · Faça após sprint 3</span>
-        </div>
-        <div class="course-price-block">
-          <span class="price-val">$49</span>
-          <span class="price-note">Coursera<br>~R$ 270</span>
-        </div>
-      </div>
-
-      <div class="warning">
-        <strong>Dica:</strong> o Coursera tem bolsas de auxílio financeiro gratuitas para qualquer curso — solicite antes de comprar. O processo leva ~15 dias de aprovação mas cobre 100% do valor. Vale tentar antes de pagar os ~R$270.
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== SEMANA 5 ===== -->
+  <!-- ===== SPRINT 5 ===== -->
   <div class="section w5" id="w5">
     <div class="week-intro">
       <div class="week-title">Programação básica e HTML para relatórios</div>
@@ -1061,7 +1103,6 @@
         <span class="badge">100% gratuito</span>
       </div>
     </div>
-
     <div class="section-label">Dias do sprint</div>
 
     <div class="day-card w5 open">
@@ -1070,23 +1111,25 @@
         <div class="day-meta"><span class="day-hours">4h · Revisão de lógica de programação</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w5-s1-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Variáveis, condicionais e loops — revisão rápida</div>
-            <div class="block-detail">Curso "JavaScript para Iniciantes" do canal Traversy Media PT ou "Curso de JavaScript" do canal Hora de Codar no YouTube. Foco nos conceitos que aparecem no n8n: variáveis, if/else, loops e funções. Não precisa dominar tudo — precisa reconhecer quando vir.</div>
+            <div class="block-detail">Curso "JavaScript para Iniciantes" do canal Hora de Codar no YouTube. Foco nos conceitos que aparecem no n8n: variáveis, if/else, loops e funções. Não precisa dominar tudo — precisa reconhecer quando vir.</div>
             <div class="links">
               <a class="block-link pt" href="https://www.youtube.com/@HoraDeCodar" target="_blank"><span class="lang-tag">PT</span> YouTube · Hora de Codar</a>
               <a class="block-link pt" href="https://www.cursoemvideo.com/curso/javascript/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · JS Gratuito</a>
             </div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w5-s1-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">JavaScript no contexto do n8n</div>
-            <div class="block-detail">O n8n tem um node "Code" onde você escreve JavaScript para transformar dados. Revisão prática: como manipular arrays de objetos (que é o formato que o Jira e o Sheets retornam), como formatar datas e como filtrar resultados. Esses são os 3 casos que aparecem 90% das vezes.</div>
+            <div class="block-detail">O n8n tem um node "Code" onde você escreve JavaScript para transformar dados. Revisão prática: como manipular arrays de objetos (formato do Jira e Sheets), como formatar datas e filtrar resultados. Esses são os 3 casos que aparecem 90% das vezes.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -1097,25 +1140,23 @@
         <div class="day-meta"><span class="day-hours">4h · HTML estrutural</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w5-s2-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Revisão de HTML — estrutura e semântica</div>
-            <div class="block-detail">Você já tem a base pelo CACD — aqui é uma revisão focada no que importa para relatórios: divs, tabelas, listas, links, imagens e como estruturar uma página que seja fácil de manter. Curso em Vídeo de HTML do Gustavo Guanabara, módulos 1 e 2.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.cursoemvideo.com/curso/html5/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · HTML5 Gratuito</a>
-            </div>
+            <div class="block-detail">Você já tem a base pelo CACD — aqui é revisão focada no que importa para relatórios: divs, tabelas, listas e como estruturar uma página fácil de manter. Curso em Vídeo de HTML do Gustavo Guanabara, módulos 1 e 2.</div>
+            <div class="links"><a class="block-link pt" href="https://www.cursoemvideo.com/curso/html5/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · HTML5 Gratuito</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w5-s2-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">CSS — layout, cores e tipografia para relatórios</div>
-            <div class="block-detail">Foco em flexbox (para alinhar cards e colunas), variáveis CSS (para manter consistência visual entre relatórios) e como criar um sistema de cores simples. Esses são os três pilares de qualquer relatório bonito e fácil de reutilizar.</div>
-            <div class="links">
-              <a class="block-link pt" href="https://www.cursoemvideo.com/curso/css3/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · CSS3 Gratuito</a>
-            </div>
+            <div class="block-detail">Foco em flexbox, variáveis CSS e como criar um sistema de cores simples. Os três pilares de qualquer relatório bonito e fácil de reutilizar.</div>
+            <div class="links"><a class="block-link pt" href="https://www.cursoemvideo.com/curso/css3/" target="_blank"><span class="lang-tag">PT</span> Curso em Vídeo · CSS3 Gratuito</a></div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -1126,23 +1167,25 @@
         <div class="day-meta"><span class="day-hours">4h · Gráficos e dados no browser</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w5-s3-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Chart.js — gráficos simples sem biblioteca complexa</div>
-            <div class="block-detail">Chart.js é a biblioteca mais simples para colocar gráficos em HTML — linha, barra, pizza. Você já usa ela nos seus arquivos CACD. Revisão focada em: como passar dados dinamicamente, como customizar cores e como deixar responsivo para funcionar bem no celular também.</div>
+            <div class="block-detail">Chart.js é a biblioteca mais simples para colocar gráficos em HTML — linha, barra, pizza. Você já usa ela nos seus arquivos CACD. Revisão focada em: como passar dados dinamicamente, customizar cores e deixar responsivo.</div>
             <div class="links">
               <a class="block-link pt" href="https://www.youtube.com/results?search_query=chart.js+tutorial+portugu%C3%AAs" target="_blank"><span class="lang-tag">PT</span> YouTube · Chart.js em português</a>
               <a class="block-link en" href="https://www.chartjs.org/docs/latest/" target="_blank"><span class="lang-tag">EN</span> chartjs.org · Docs</a>
             </div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w5-s3-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Tabelas HTML interativas com ordenação</div>
-            <div class="block-detail">Relatórios de performance precisam de tabelas que o time consiga ordenar e filtrar. Aprenda a criar uma tabela que ordena ao clicar no cabeçalho — funcionalidade simples de JavaScript que transforma um relatório estático em ferramenta de análise.</div>
+            <div class="block-detail">Aprenda a criar uma tabela que ordena ao clicar no cabeçalho — funcionalidade simples de JavaScript que transforma um relatório estático em ferramenta de análise.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -1153,19 +1196,21 @@
         <div class="day-meta"><span class="day-hours">4h · Template de relatório reutilizável</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w5-s4-b1">
           <span class="block-time">9h – 11h</span>
           <div>
             <div class="block-title">Construindo um template base para relatórios do Digital</div>
-            <div class="block-detail">Monte um template HTML reutilizável com: header com logo e data, seção de KPIs em cards, área de gráfico e tabela de detalhe. Esse template vai ser o output padrão dos agentes de relatório — o n8n gera os dados, o HTML apresenta.</div>
+            <div class="block-detail">Monte um template HTML reutilizável com: header com logo e data, seção de KPIs em cards, área de gráfico e tabela de detalhe. Esse template vai ser o output padrão dos agentes de relatório.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
-        <div class="block">
+        <div class="block" data-id="w5-s4-b2">
           <span class="block-time">11h – 13h</span>
           <div>
             <div class="block-title">Como o n8n injeta dados no template HTML</div>
-            <div class="block-detail">Técnica de template string do JavaScript: o n8n passa os dados para o HTML via variáveis no node Code. Aprenda a estruturar o template para receber dados dinamicamente — isso conecta tudo o que você aprendeu nas sprints 2, 3 e 5 em um único fluxo.</div>
+            <div class="block-detail">Técnica de template string do JavaScript: o n8n passa os dados para o HTML via variáveis no node Code. Aprenda a estruturar o template para receber dados dinamicamente — isso conecta sprints 2, 3 e 5 em um único fluxo.</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -1176,13 +1221,14 @@
         <div class="day-meta"><span class="day-hours">4h · Entrega prática</span><span class="day-toggle">▾</span></div>
       </div>
       <div class="day-body">
-        <div class="block">
+        <div class="block" data-id="w5-s5-b1">
           <span class="block-time">9h – 13h</span>
           <div>
             <div class="block-title">Relatório HTML completo com dados fictícios do Digital</div>
-            <div class="block-detail">Construa um relatório semanal completo simulando dados de uma das squads — conversão de e-commerce, performance de campanha ou volume de tickets de CX. Com KPIs em destaque, gráfico de evolução e tabela de detalhe. Esse arquivo vira o template dos agentes reais.</div>
+            <div class="block-detail">Construa um relatório completo simulando dados de uma das squads — conversão de e-commerce, performance de campanha ou volume de tickets de CX. Com KPIs em destaque, gráfico de evolução e tabela de detalhe. Esse arquivo vira o template dos agentes reais.</div>
             <div class="entrega">🖥️ Entrega do sprint: template de relatório HTML reutilizável para o Digital</div>
           </div>
+          <div class="block-check-wrap"><input type="checkbox" class="block-check" onchange="saveCheck(this)"></div>
         </div>
       </div>
     </div>
@@ -1197,15 +1243,169 @@
         <li>Um template de relatório HTML pronto para ser alimentado pelos agentes</li>
       </ul>
     </div>
-
     <div class="highlight">
       <strong>Por que JavaScript e não Python?</strong> Python é mais usado em ciência de dados, mas no seu contexto o que aparece é JavaScript — no node Code do n8n, nos templates HTML dos relatórios e em qualquer ajuste rápido de fluxo. Revisar JS é mais direto para o que você vai fazer no dia a dia.
+    </div>
+  </div>
+
+  <!-- ===== CURSOS PAGOS ===== -->
+  <div class="section" id="pago">
+    <div class="highlight">
+      O plano gratuito cobre o essencial. Esses cursos são para aprofundar em áreas específicas — priorizamos <strong>cursos em português</strong> onde existem com qualidade equivalente. Os em inglês entram apenas onde não há alternativa boa em PT.
+    </div>
+    <div class="paid-nav">
+      <button class="paid-tab active" data-pt onclick="switchPaid('pt-group', this)">🇧🇷 Em português</button>
+      <button class="paid-tab" data-en onclick="switchPaid('en-group', this)">🌐 Em inglês</button>
+    </div>
+    <div class="paid-group active" id="pt-group">
+      <div class="section-label">Cursos em português — prioridade</div>
+      <div class="course-card pt-card">
+        <div>
+          <span class="course-lang pt">🇧🇷 Português</span>
+          <div class="course-name">Engenharia de Agentes de IA do Zero ao Avançado</div>
+          <div class="course-by">Udemy · 2025–2026</div>
+          <div class="course-why">"Cobre n8n + agentes de IA do zero ao avançado em português, com foco em automação para negócios. É exatamente o que você precisa para a sprint 4 em diante — aprofunda tudo que o plano gratuito cobre de forma mais superficial."</div>
+          <div class="course-covers">Cobre: n8n avançado, agentes com IA, automação de processos, casos reais. Duração: ~10h. Nível: iniciante ao avançado.</div>
+          <span class="priority-chip p-alta">Prioridade alta · Faça após a sprint 4</span>
+        </div>
+        <div class="course-price-block"><span class="price-val">R$27</span><span class="price-note">Udemy<br>em promoção</span></div>
+      </div>
+      <div class="course-card pt-card">
+        <div>
+          <span class="course-lang pt">🇧🇷 Português</span>
+          <div class="course-name">LLMs e Agentes de IA para Empresas e Negócios</div>
+          <div class="course-by">IA Expert Academy · 2025</div>
+          <div class="course-why">"O curso mais completo em português sobre LLMs aplicados a casos reais de negócio. Cobre RAG, chatbot com documentos da empresa, agentes com ferramentas. Nível de profundidade que o conteúdo gratuito em PT não alcança."</div>
+          <div class="course-covers">Cobre: RAG, chatbot com base de conhecimento interna, agentes com ferramentas, deploy. Duração: ~12h. Nível: intermediário.</div>
+          <span class="priority-chip p-alta">Prioridade alta · Faça no mês 2</span>
+        </div>
+        <div class="course-price-block"><span class="price-val">R$97</span><span class="price-note">IA Expert<br>Academy</span></div>
+      </div>
+      <div class="course-card pt-card">
+        <div>
+          <span class="course-lang pt">🇧🇷 Português</span>
+          <div class="course-name">IA para Negócios e Líderes — nível avançado</div>
+          <div class="course-by">Udemy · Fernando Amaral</div>
+          <div class="course-why">"Complementa o curso gratuito de IA para líderes com mais profundidade em avaliação de ROI, gestão de projetos de IA e como comunicar resultados para stakeholders executivos."</div>
+          <div class="course-covers">Cobre: ROI de IA, gestão de mudança, roadmap de IA, comunicação executiva. Duração: ~8h. Nível: não-técnico.</div>
+          <span class="priority-chip p-media">Prioridade média · Faça no mês 2</span>
+        </div>
+        <div class="course-price-block"><span class="price-val">R$27</span><span class="price-note">Udemy<br>em promoção</span></div>
+      </div>
+      <div class="course-card pt-card">
+        <div>
+          <span class="course-lang pt">🇧🇷 Português</span>
+          <div class="course-name">Engenharia de Prompt — frameworks avançados</div>
+          <div class="course-by">Paulo Andrade, PhD · Udemy · 2025</div>
+          <div class="course-why">"Depois de dominar o básico, esse curso em português cobre frameworks de prompting estruturados que geram consistência em agentes corporativos. Avaliado 4.8/5 e atualizado em dezembro de 2025."</div>
+          <div class="course-covers">Cobre: prompt frameworks estruturados, avaliação de prompts, técnicas avançadas. Duração: ~4h. Nível: intermediário.</div>
+          <span class="priority-chip p-media">Prioridade média · Faça durante ou após sprint 3</span>
+        </div>
+        <div class="course-price-block"><span class="price-val">R$27</span><span class="price-note">Udemy<br>em promoção</span></div>
+      </div>
+    </div>
+    <div class="paid-group" id="en-group">
+      <div class="section-label">Cursos em inglês — onde não há equivalente em PT</div>
+      <div class="course-card en-card">
+        <div>
+          <span class="course-lang en">🌐 Inglês</span>
+          <div class="course-name">AI Agents in LangGraph</div>
+          <div class="course-by">DeepLearning.AI + LangChain</div>
+          <div class="course-why">"Quando o n8n não for suficiente, você vai precisar de agentes com memória persistente e decisões dinâmicas. Não existe equivalente de qualidade em português — esse é o melhor curso disponível para essa transição específica."</div>
+          <div class="course-covers">Cobre: agentes com estado, memória entre sessões, agentes multi-step. Duração: ~4h. Nível: intermediário.</div>
+          <span class="priority-chip p-alta">Prioridade alta · Faça após a sprint 4</span>
+        </div>
+        <div class="course-price-block"><span class="price-val">$49</span><span class="price-note">Coursera<br>~R$ 270</span></div>
+      </div>
+      <div class="course-card en-card">
+        <div>
+          <span class="course-lang en">🌐 Inglês</span>
+          <div class="course-name">Prompt Engineering for Developers</div>
+          <div class="course-by">DeepLearning.AI + Anthropic</div>
+          <div class="course-why">"Feito em parceria com a Anthropic. Cobre casos de uso avançados que aparecem quando agentes começam a falhar em produção de formas inesperadas. Não há equivalente em português com essa profundidade técnica."</div>
+          <div class="course-covers">Cobre: prompting avançado, avaliação sistemática, testes. Duração: ~3h. Nível: intermediário.</div>
+          <span class="priority-chip p-media">Prioridade média · Faça após sprint 3</span>
+        </div>
+        <div class="course-price-block"><span class="price-val">$49</span><span class="price-note">Coursera<br>~R$ 270</span></div>
+      </div>
+      <div class="warning">
+        <strong>Dica:</strong> o Coursera tem bolsas de auxílio financeiro gratuitas para qualquer curso — solicite antes de comprar. O processo leva ~15 dias de aprovação mas cobre 100% do valor. Vale tentar antes de pagar os ~R$270.
+      </div>
     </div>
   </div>
 
 </div>
 
 <script>
+  const STORAGE_KEY = 'hering-capacitacao-progress';
+
+  // --- Load saved state on page load ---
+  function loadProgress() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      document.querySelectorAll('.block-check').forEach(cb => {
+        const id = cb.closest('.block')?.dataset?.id;
+        if (id && saved[id]) {
+          cb.checked = true;
+          cb.closest('.block').classList.add('done');
+        }
+      });
+    } catch(e) {}
+    updateAll();
+  }
+
+  // --- Save a checkbox state ---
+  function saveCheck(cb) {
+    const block = cb.closest('.block');
+    const id = block?.dataset?.id;
+    if (!id) return;
+
+    // Toggle done class
+    block.classList.toggle('done', cb.checked);
+
+    // Persist
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (cb.checked) saved[id] = true;
+      else delete saved[id];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    } catch(e) {}
+
+    updateAll();
+  }
+
+  // --- Update progress bar + nav pills ---
+  function updateAll() {
+    const allBlocks = document.querySelectorAll('.block[data-id]');
+    const total = allBlocks.length;
+    const done = document.querySelectorAll('.block[data-id] .block-check:checked').length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('pct-label').textContent = pct + '%';
+    document.getElementById('progress-sub').textContent = done + ' de ' + total + ' blocos concluídos';
+
+    // Update per-sprint pills
+    ['w1','w2','w3','w4','w5'].forEach(sp => {
+      const sec = document.getElementById(sp);
+      if (!sec) return;
+      const spTotal = sec.querySelectorAll('.block[data-id]').length;
+      const spDone  = sec.querySelectorAll('.block[data-id] .block-check:checked').length;
+      const pill = document.getElementById('pill-' + sp);
+      if (pill) {
+        pill.textContent = spDone + '/' + spTotal;
+        pill.style.color = spDone === spTotal && spTotal > 0 ? 'var(--accent)' : '';
+        pill.style.borderColor = spDone === spTotal && spTotal > 0 ? 'rgba(106,240,200,0.4)' : '';
+      }
+      // Mark day cards fully done
+      sec.querySelectorAll('.day-card').forEach(card => {
+        const cardBlocks = card.querySelectorAll('.block[data-id]');
+        const cardDone   = card.querySelectorAll('.block[data-id] .block-check:checked');
+        card.classList.toggle('all-done', cardBlocks.length > 0 && cardDone.length === cardBlocks.length);
+      });
+    });
+  }
+
   function switchTab(id, btn) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1223,6 +1423,9 @@
     document.getElementById(id).classList.add('active');
     btn.classList.add('active');
   }
+
+  // Init
+  loadProgress();
 </script>
 </body>
 </html>
