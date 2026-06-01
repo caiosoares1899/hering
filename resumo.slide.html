@@ -297,7 +297,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v1.4</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v1.5</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -544,8 +544,8 @@ Regras:
 - Preserve dados não mencionados
 - Retorne JSON completo`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey(),'anthropic-version':'2023-06-01'},
+    const res=await fetch('https://ancient-mountain-c96a.kicaio97.workers.dev/',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01'},
       body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
     });
     const data=await res.json();
