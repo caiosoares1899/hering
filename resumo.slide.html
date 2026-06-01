@@ -297,7 +297,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v1.8</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v1.9</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -508,8 +508,21 @@ function toggleFS(){
 }
 
 /* ====== AI ====== */
-function getApiKey(){return(document.getElementById('api-key-input')||{}).value||'';}
-function togglePanel(){document.getElementById('ai-panel').classList.toggle('open');}
+function getApiKey(){
+  const input=document.getElementById('api-key-input');
+  if(input&&input.value.trim()) {
+    sessionStorage.setItem('hering_api_key', input.value.trim());
+    return input.value.trim();
+  }
+  return sessionStorage.getItem('hering_api_key')||'';
+}
+function togglePanel(){
+  document.getElementById('ai-panel').classList.toggle('open');
+  // restaura chave salva no campo
+  const saved=sessionStorage.getItem('hering_api_key');
+  const input=document.getElementById('api-key-input');
+  if(saved&&input&&!input.value) input.value=saved;
+}
 document.getElementById('ai-input').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')sendToAI();});
 function addMsg(role,text){
   const h=document.getElementById('ai-history');
@@ -543,7 +556,7 @@ Regras:
       method:'POST',
       signal:controller.signal,
       headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
+      body:JSON.stringify({model:'claude-3-haiku-20240307',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
     });
     clearTimeout(timeout);
     if(!res.ok){loadMsg.textContent=`⚠ Erro ${res.status}. Verifique a API Key.`;btn.disabled=false;return;}
