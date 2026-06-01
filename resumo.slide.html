@@ -70,7 +70,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 .squad-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue-bright),var(--accent));}
 .squad-name{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .squad-name::before{content:'';display:block;width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
-.imp-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px;line-height:1.6;color:var(--w80);}
+.imp-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:var(--fonte-imp,17px);line-height:1.6;color:var(--w80);}
 .imp-item:last-child{border-bottom:none;}
 .imp-dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fca5a5;margin-top:2px;}
 
@@ -82,7 +82,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 .insight-tag{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
 .insight-tag.alert{color:#fbbf24;}
 .insight-tag.event{color:var(--blue-light);}
-.insight-text{font-size:18px;line-height:1.7;color:var(--w80);}
+.insight-text{font-size:var(--fonte-insight,18px);line-height:1.7;color:var(--w80);}
 
 /* =====================
    CALENDÁRIO REDESIGN
@@ -110,7 +110,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 
 .gantt-row{display:grid;grid-template-columns:152px 1fr;align-items:center;padding:9px 20px;gap:14px;transition:background .2s;cursor:default;}
 .gantt-row:hover{background:var(--glassh);}
-.gantt-info .g-name{font-size:13px;font-weight:500;color:var(--w80);line-height:1.3;}
+.gantt-info .g-name{font-size:var(--fonte-cal,15px);font-weight:500;color:var(--w80);line-height:1.3;}
 .gantt-info .g-dates{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--accent);margin-top:3px;letter-spacing:.04em;}
 
 .bar-wrap{position:relative;height:30px;display:flex;align-items:center;}
@@ -297,7 +297,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v2.1</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v2.3</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -321,6 +321,11 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 <script>
 /* ====== DATA ====== */
 let DATA = {
+  config:{
+    fonteImpedimento: 17,
+    fonteInsight: 18,
+    fonteCal: 15
+  },
   squads:[
     {name:"SITE & APP",impedimentos:[
       "Transferência de estoque de saldos solicitada pelo time de Planejamento (29/05) gerou bloqueio no sistema — estoque caiu 77k peças e ainda não foi 100% liberado. Estoque já era lido pelo digital antes da transferência para o CD 604."
@@ -385,6 +390,11 @@ function buildGanttHeader(){
 
 /* ====== RENDER ====== */
 function render(){
+  // aplica config visual
+  const cfg=DATA.config||{};
+  document.documentElement.style.setProperty('--fonte-imp',  (cfg.fonteImpedimento||17)+'px');
+  document.documentElement.style.setProperty('--fonte-insight',(cfg.fonteInsight||18)+'px');
+  document.documentElement.style.setProperty('--fonte-cal',  (cfg.fonteCal||15)+'px');
   // date label (impedimentos + capa)
   const now=new Date();
   const d=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
@@ -547,8 +557,12 @@ Regras:
 - squads: name em maiúsculas, impedimentos é array de strings
 - calDigital: cada item tem day (string dd), mon (string "MAI" etc), name, type
 - calCIA: cada item tem name, start e end no formato "YYYY-MM-DD"
+- config.fonteImpedimento: tamanho em px do texto dos impedimentos (padrão 17)
+- config.fonteInsight: tamanho em px do texto dos insights (padrão 18)
+- config.fonteCal: tamanho em px do texto do calendário (padrão 15)
+- Para pedidos como "aumenta a fonte dos impedimentos", altere config.fonteImpedimento
 - Preserve dados não mencionados
-- Retorne JSON completo`;
+- Retorne JSON completo incluindo o campo config`;
   try{
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),30000);
