@@ -16,540 +16,155 @@
     --dark4: #242424;
     --dark5: #2E2E2E;
     --text: #F0EDE6;
-    --text-muted: #8A8680;
-    --text-dim: #5A5750;
+    --text-muted: #9A9690;
+    --text-dim: #6A6762;
     --border: rgba(201,168,76,0.15);
     --border-strong: rgba(201,168,76,0.35);
     --accent-teal: #2ABFA0;
-    --accent-teal-dim: rgba(42,191,160,0.12);
   }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--dark);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    line-height: 1.6;
-    overflow-x: hidden;
-  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--dark); color:var(--text); font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.6; overflow-x:hidden; }
 
   /* NAV */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    background: rgba(13,13,13,0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 0.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2.5rem;
-    height: 56px;
-  }
-
-  .nav-logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--gold);
-  }
-
-  .nav-pills {
-    display: flex;
-    gap: 4px;
-  }
-
-  .nav-pill {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.04em;
-  }
-
-  .nav-pill:hover { color: var(--text); background: var(--dark4); }
-  .nav-pill.active { color: var(--gold); background: rgba(201,168,76,0.1); }
-
-  .nav-badge {
-    font-size: 11px;
-    color: var(--text-muted);
-    letter-spacing: 0.06em;
-  }
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(13,13,13,0.92); backdrop-filter:blur(12px); border-bottom:0.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 2.5rem; height:56px; }
+  .nav-logo { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); }
+  .nav-pills { display:flex; gap:4px; }
+  .nav-pill { background:none; border:none; color:var(--text-muted); font-family:'DM Sans',sans-serif; font-size:12px; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all 0.2s; letter-spacing:0.04em; }
+  .nav-pill:hover { color:var(--text); background:var(--dark4); }
+  .nav-pill.active { color:var(--gold); background:rgba(201,168,76,0.1); }
+  .nav-badge { font-size:11px; color:var(--text-muted); letter-spacing:0.06em; }
 
   /* SLIDES */
-  .slide {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 80px 2.5rem 60px;
-    max-width: 960px;
-    margin: 0 auto;
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
+  .slide { min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:80px 2.5rem 60px; max-width:960px; margin:0 auto; opacity:0; transform:translateY(24px); transition:opacity 0.6s ease,transform 0.6s ease; }
+  .slide.visible { opacity:1; transform:translateY(0); }
+  .slide-number { font-family:'Syne',sans-serif; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:1.5rem; }
 
-  .slide.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .slide-number {
-    font-family: 'Syne', sans-serif;
-    font-size: 11px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--gold-dim);
-    margin-bottom: 1.5rem;
-  }
-
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(2.2rem, 5vw, 3.6rem);
-    font-weight: 800;
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  h1 .gold { color: var(--gold); }
-
-  h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    margin-bottom: 0.75rem;
-  }
-
-  h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 1rem;
-  }
-
-  .lead {
-    font-size: 1.15rem;
-    color: var(--text-muted);
-    font-weight: 300;
-    max-width: 600px;
-    margin-top: 1.25rem;
-    line-height: 1.75;
-  }
-
-  .divider {
-    width: 48px;
-    height: 2px;
-    background: var(--gold);
-    margin: 1.5rem 0;
-  }
+  h1 { font-family:'Syne',sans-serif; font-size:clamp(2.2rem,5vw,3.6rem); font-weight:800; line-height:1.08; letter-spacing:-0.02em; color:var(--text); }
+  h1 .gold { color:var(--gold); }
+  h2 { font-family:'Syne',sans-serif; font-size:clamp(1.5rem,3vw,2.2rem); font-weight:700; line-height:1.2; letter-spacing:-0.01em; color:var(--text); margin-bottom:0.75rem; }
+  h3 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold); margin-bottom:1rem; }
+  .lead { font-size:1.15rem; color:var(--text-muted); font-weight:300; max-width:600px; margin-top:1.25rem; line-height:1.75; }
+  .divider { width:48px; height:2px; background:var(--gold); margin:1.5rem 0; }
 
   /* CARDS */
-  .card {
-    background: var(--dark3);
-    border: 0.5px solid var(--border);
-    border-radius: 12px;
-    padding: 1.25rem 1.5rem;
-  }
+  .card { background:var(--dark3); border:0.5px solid var(--border); border-radius:12px; padding:1.25rem 1.5rem; }
+  .card.gold-accent { border-left:2px solid var(--gold); border-radius:0 12px 12px 0; padding-left:1.25rem; }
+  .card.teal-accent { border-left:2px solid var(--accent-teal); border-radius:0 12px 12px 0; }
 
-  .card.gold-accent {
-    border-left: 2px solid var(--gold);
-    border-radius: 0 12px 12px 0;
-    padding-left: 1.25rem;
-  }
+  /* GRIDS */
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
 
-  .card.teal-accent {
-    border-left: 2px solid var(--accent-teal);
-    border-radius: 0 12px 12px 0;
-  }
-
-  /* GRID */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
-
-  /* FRAMEWORK CARDS */
-  .fw-card {
-    background: var(--dark3);
-    border: 0.5px solid var(--border);
-    border-radius: 12px;
-    padding: 1.25rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .fw-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-
-  .fw-card.c1::before { background: #4A90D9; }
-  .fw-card.c2::before { background: var(--gold); }
-  .fw-card.c3::before { background: var(--accent-teal); }
-  .fw-card.c4::before { background: #C96B4A; }
-
-  .fw-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    margin-bottom: 0.5rem;
-  }
-
-  .fw-card.c1 .fw-label { color: #4A90D9; }
-  .fw-card.c2 .fw-label { color: var(--gold); }
-  .fw-card.c3 .fw-label { color: var(--accent-teal); }
-  .fw-card.c4 .fw-label { color: #C96B4A; }
-
-  .fw-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 0.5rem;
-  }
-
-  .fw-desc {
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.6;
-  }
+  /* FW CARDS */
+  .fw-card { background:var(--dark3); border:0.5px solid var(--border); border-radius:12px; padding:1.25rem; position:relative; overflow:hidden; }
+  .fw-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .fw-card.c1::before { background:#4A90D9; }
+  .fw-card.c2::before { background:var(--gold); }
+  .fw-card.c3::before { background:var(--accent-teal); }
+  .fw-label { font-family:'Syne',sans-serif; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:0.5rem; }
+  .fw-card.c1 .fw-label { color:#4A90D9; }
+  .fw-card.c2 .fw-label { color:var(--gold); }
+  .fw-card.c3 .fw-label { color:var(--accent-teal); }
+  .fw-title { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
+  .fw-desc { font-size:13px; color:var(--text-muted); line-height:1.65; }
 
   /* ROADMAP */
-  .roadmap {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-  }
+  .roadmap { display:flex; flex-direction:column; gap:0; position:relative; }
+  .roadmap::before { content:''; position:absolute; left:28px; top:20px; bottom:20px; width:1px; background:linear-gradient(to bottom,var(--gold),var(--border) 80%); }
+  .rm-item { display:grid; grid-template-columns:56px 1fr; gap:1.25rem; align-items:flex-start; padding:0.85rem 0; }
+  .rm-dot { width:56px; height:56px; border-radius:50%; background:var(--dark3); border:1.5px solid var(--border-strong); display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; z-index:1; font-family:'Syne',sans-serif; font-weight:700; font-size:16px; color:var(--gold); transition:all 0.3s; }
+  .rm-item.active .rm-dot { background:var(--gold); color:var(--dark); border-color:var(--gold); box-shadow:0 0 0 6px rgba(201,168,76,0.12); }
+  .rm-body { background:var(--dark3); border:0.5px solid var(--border); border-radius:10px; padding:1rem 1.25rem; margin-top:8px; transition:border-color 0.3s; }
+  .rm-item.active .rm-body { border-color:var(--border-strong); }
+  .rm-phase { font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:4px; }
+  .rm-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--text); margin-bottom:6px; }
+  .rm-desc { font-size:13px; color:var(--text-muted); line-height:1.65; }
 
-  .roadmap::before {
-    content: '';
-    position: absolute;
-    left: 28px;
-    top: 20px;
-    bottom: 20px;
-    width: 1px;
-    background: linear-gradient(to bottom, var(--gold), var(--border) 80%);
-  }
+  /* TAGS */
+  .tag { display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; margin-top:8px; margin-right:4px; font-weight:500; }
+  .tag-gold { background:rgba(201,168,76,0.12); color:var(--gold); }
+  .tag-teal { background:rgba(42,191,160,0.1); color:var(--accent-teal); }
+  .tag-blue { background:rgba(74,144,217,0.1); color:#4A90D9; }
+  .tag-orange { background:rgba(201,107,74,0.1); color:#C96B4A; }
 
-  .rm-item {
-    display: grid;
-    grid-template-columns: 56px 1fr;
-    gap: 1.25rem;
-    align-items: flex-start;
-    padding: 0.85rem 0;
-  }
+  /* AGENTE VM */
+  .agent-diagram { background:var(--dark2); border:0.5px solid var(--border); border-radius:16px; padding:2rem; }
+  .agent-flow { display:flex; align-items:stretch; gap:0; justify-content:space-between; }
+  .agent-node { background:var(--dark4); border:0.5px solid var(--border); border-radius:10px; padding:1.1rem; flex:1; display:flex; flex-direction:column; gap:6px; }
+  .agent-node.highlight { border-color:var(--gold); background:rgba(201,168,76,0.06); }
+  .agent-node .icon { font-size:22px; display:block; }
+  .agent-node .node-label { font-family:'Syne',sans-serif; font-size:12px; font-weight:600; color:var(--text); }
+  .agent-node .node-sub { font-size:11px; color:var(--text-muted); line-height:1.4; }
+  .agent-arrow { color:var(--gold-dim); font-size:20px; padding:0 8px; flex-shrink:0; display:flex; align-items:center; }
 
-  .rm-dot {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--dark3);
-    border: 1.5px solid var(--border-strong);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--gold);
-    transition: all 0.3s;
-  }
+  /* HUMAN ON/IN/OFF */
+  .hum-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1rem; }
+  .hum-card { border-radius:14px; padding:1.5rem; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; }
+  .hc1 { background:rgba(74,143,212,0.08); border:1px solid rgba(74,143,212,0.25); }
+  .hc2 { background:rgba(201,168,76,0.07); border:1px solid rgba(201,168,76,0.28); }
+  .hc3 { background:rgba(42,191,160,0.07); border:1px solid rgba(42,191,160,0.25); }
+  .hum-card::before { content:attr(data-n); position:absolute; right:-8px; top:-14px; font-family:'Syne',sans-serif; font-size:8rem; line-height:1; opacity:0.05; pointer-events:none; color:#fff; font-weight:800; }
+  .hum-tag { font-size:10px; letter-spacing:0.16em; text-transform:uppercase; font-family:'Syne',sans-serif; font-weight:600; margin-bottom:0.75rem; }
+  .hc1 .hum-tag { color:#4A90D9; }
+  .hc2 .hum-tag { color:var(--gold); }
+  .hc3 .hum-tag { color:var(--accent-teal); }
+  .hum-icons { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem; font-size:1.4rem; }
+  .hum-icon-arr { font-size:0.9rem; opacity:0.4; }
+  .hum-name { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; line-height:1; margin-bottom:0.6rem; }
+  .hc1 .hum-name { color:#4A90D9; }
+  .hc2 .hum-name { color:var(--gold); }
+  .hc3 .hum-name { color:var(--accent-teal); }
+  .hum-desc { font-size:13px; color:var(--text-muted); line-height:1.65; margin-bottom:0.75rem; flex:1; }
+  .hum-ex { font-size:12px; color:var(--text-dim); font-style:italic; line-height:1.5; padding-top:0.75rem; border-top:0.5px solid rgba(255,255,255,0.07); }
+  .hum-ctrl { display:flex; align-items:center; gap:0.4rem; margin-top:0.85rem; }
+  .hum-ctrl-dot { width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); }
+  .hc1 .hum-ctrl-dot:nth-child(1) { background:#4A90D9; border-color:#4A90D9; }
+  .hc2 .hum-ctrl-dot:nth-child(1), .hc2 .hum-ctrl-dot:nth-child(2) { background:var(--gold); border-color:var(--gold); }
+  .hc3 .hum-ctrl-dot:nth-child(1), .hc3 .hum-ctrl-dot:nth-child(2), .hc3 .hum-ctrl-dot:nth-child(3) { background:var(--accent-teal); border-color:var(--accent-teal); }
+  .hum-ctrl-label { font-size:10px; color:var(--text-dim); letter-spacing:0.06em; margin-left:0.3rem; }
 
-  .rm-item.active .rm-dot {
-    background: var(--gold);
-    color: var(--dark);
-    border-color: var(--gold);
-    box-shadow: 0 0 0 6px rgba(201,168,76,0.12);
-  }
+  /* SCALE BAR */
+  .scale-row { display:flex; gap:0; border-radius:8px; overflow:hidden; margin:1rem 0 1.5rem; }
+  .scale-item { flex:1; padding:0.75rem 1rem; text-align:center; font-size:13px; font-weight:500; font-family:'Syne',sans-serif; letter-spacing:0.04em; position:relative; }
+  .scale-item::after { content:'→'; position:absolute; right:-6px; top:50%; transform:translateY(-50%); font-size:14px; z-index:2; color:var(--dark); }
+  .scale-item:last-child::after { display:none; }
 
-  .rm-body {
-    background: var(--dark3);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    margin-top: 8px;
-    transition: border-color 0.3s;
-  }
-
-  .rm-item.active .rm-body {
-    border-color: var(--border-strong);
-  }
-
-  .rm-phase {
-    font-size: 10px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--gold-dim);
-    margin-bottom: 4px;
-  }
-
-  .rm-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-
-  .rm-desc {
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.6;
-  }
-
-  .tag {
-    display: inline-block;
-    font-size: 11px;
-    padding: 3px 9px;
-    border-radius: 20px;
-    margin-top: 8px;
-    margin-right: 4px;
-    font-weight: 500;
-  }
-
-  .tag-gold { background: rgba(201,168,76,0.12); color: var(--gold); }
-  .tag-teal { background: rgba(42,191,160,0.1); color: var(--accent-teal); }
-  .tag-blue { background: rgba(74,144,217,0.1); color: #4A90D9; }
-  .tag-orange { background: rgba(201,107,74,0.1); color: #C96B4A; }
-
-  /* AGENTE VM DIAGRAM */
-  .agent-diagram {
-    background: var(--dark2);
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    position: relative;
-  }
-
-  .agent-flow {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    justify-content: space-between;
-  }
-
-  .agent-node {
-    background: var(--dark4);
-    border: 0.5px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    text-align: center;
-    flex: 1;
-    max-width: 160px;
-  }
-
-  .agent-node.highlight {
-    border-color: var(--gold);
-    background: rgba(201,168,76,0.06);
-  }
-
-  .agent-node .icon {
-    font-size: 22px;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .agent-node .node-label {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-
-  .agent-node .node-sub {
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1.4;
-  }
-
-  .agent-arrow {
-    color: var(--gold-dim);
-    font-size: 20px;
-    padding: 0 4px;
-    flex-shrink: 0;
-  }
-
-  .agent-output {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
-  }
-
-  .agent-output-card {
-    background: var(--dark4);
-    border: 0.5px solid var(--border);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .aoc-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-top: 5px;
-    flex-shrink: 0;
-  }
-
-  .aoc-text { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-  .aoc-text strong { color: var(--text); font-weight: 500; display: block; margin-bottom: 2px; }
+  /* BA BOXES */
+  .ba-box { border-radius:10px; padding:1.1rem 1.3rem; }
+  .ba-b { background:var(--dark3); border:0.5px solid var(--border); }
+  .ba-a { background:rgba(42,191,160,0.05); border:0.5px solid rgba(42,191,160,0.2); }
+  .ba-lbl { font-size:9px; letter-spacing:0.16em; text-transform:uppercase; font-family:'Syne',sans-serif; margin-bottom:0.5rem; }
+  .ba-b .ba-lbl { color:var(--text-dim); }
+  .ba-a .ba-lbl { color:var(--accent-teal); }
+  .ba-title { font-family:'Syne',sans-serif; font-weight:700; font-size:14px; margin-bottom:0.5rem; }
+  .ba-list { list-style:none; font-size:12px; color:var(--text-muted); line-height:1.9; }
 
   /* QUOTE */
-  .quote-block {
-    border-left: 2px solid var(--gold);
-    padding: 0.75rem 1.25rem;
-    background: rgba(201,168,76,0.04);
-    border-radius: 0 8px 8px 0;
-  }
+  .quote-block { border-left:2px solid var(--gold); padding:0.75rem 1.25rem; background:rgba(201,168,76,0.04); border-radius:0 8px 8px 0; }
+  .quote-text { font-size:1rem; font-style:italic; font-weight:300; color:var(--text); line-height:1.7; }
+  .quote-author { font-size:12px; color:var(--gold-dim); margin-top:8px; letter-spacing:0.06em; }
 
-  .quote-text {
-    font-size: 1.1rem;
-    font-style: italic;
-    font-weight: 300;
-    color: var(--text);
-    line-height: 1.7;
-  }
+  /* FUTURO */
+  .fut-list { list-style:none; font-size:13px; color:var(--text-muted); line-height:2; }
 
-  .quote-author {
-    font-size: 12px;
-    color: var(--gold-dim);
-    margin-top: 8px;
-    letter-spacing: 0.06em;
-  }
+  /* FOOTER */
+  .footer-slide { border-top:0.5px solid var(--border); padding-top:1.5rem; display:flex; justify-content:space-between; align-items:center; margin-top:2rem; }
+  .footer-slide .left { font-size:12px; color:var(--text-dim); }
+  .footer-slide .right { font-size:12px; color:var(--gold-dim); font-family:'Syne',sans-serif; letter-spacing:0.1em; }
 
-  /* HORIZONTAL SCALE */
-  .scale-row {
-    display: flex;
-    gap: 0;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 1rem 0;
-  }
+  /* NAV INDICATORS */
+  .progress-bar { position:fixed; top:56px; left:0; height:2px; background:var(--gold); transition:width 0.4s ease; z-index:99; }
+  .slide-indicator { position:fixed; right:20px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:6px; z-index:99; }
+  .si-dot { width:5px; height:5px; border-radius:50%; background:var(--dark5); border:1px solid var(--text-dim); cursor:pointer; transition:all 0.2s; }
+  .si-dot.active { background:var(--gold); border-color:var(--gold); transform:scale(1.4); }
 
-  .scale-item {
-    flex: 1;
-    padding: 0.85rem 1rem;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: 'Syne', sans-serif;
-    letter-spacing: 0.04em;
-    position: relative;
-  }
+  .version { position:fixed; bottom:12px; right:16px; font-size:10px; color:var(--text-dim); z-index:200; letter-spacing:0.06em; }
 
-  .scale-item::after {
-    content: '→';
-    position: absolute;
-    right: -6px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--dark);
-    font-size: 14px;
-    z-index: 2;
-  }
-
-  .scale-item:last-child::after { display: none; }
-
-  /* VISUAL SEPARATOR */
-  .vs { height: 1px; background: var(--border); margin: 3rem 0; }
-
-  /* FOOTER SLIDE */
-  .footer-slide {
-    border-top: 0.5px solid var(--border);
-    padding-top: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer-slide .left { font-size: 12px; color: var(--text-dim); }
-  .footer-slide .right { font-size: 12px; color: var(--gold-dim); font-family: 'Syne', sans-serif; letter-spacing: 0.1em; }
-
-  /* VERSION */
-  .version {
-    position: fixed;
-    bottom: 12px;
-    right: 16px;
-    font-size: 10px;
-    color: var(--text-dim);
-    z-index: 200;
-    letter-spacing: 0.06em;
-  }
-
-  /* PROGRESS BAR */
-  .progress-bar {
-    position: fixed;
-    top: 56px;
-    left: 0;
-    height: 2px;
-    background: var(--gold);
-    transition: width 0.4s ease;
-    z-index: 99;
-  }
-
-  /* PILL INDICATOR */
-  .slide-indicator {
-    position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 99;
-  }
-
-  .si-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--dark5);
-    border: 1px solid var(--text-dim);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .si-dot.active {
-    background: var(--gold);
-    border-color: var(--gold);
-    transform: scale(1.4);
-  }
-
-  @media (max-width: 700px) {
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    .agent-flow { flex-direction: column; }
-    .agent-arrow { transform: rotate(90deg); }
-    nav { padding: 0 1rem; }
-    .slide { padding: 80px 1.25rem 60px; }
-    .nav-pills { display: none; }
+  @media (max-width:700px) {
+    .grid-2,.grid-3,.hum-grid { grid-template-columns:1fr; }
+    nav { padding:0 1rem; }
+    .slide { padding:80px 1.25rem 60px; }
+    .nav-pills { display:none; }
   }
 </style>
 </head>
@@ -560,42 +175,164 @@
   <div class="nav-pills">
     <button class="nav-pill active" onclick="goTo(0)">Contexto</button>
     <button class="nav-pill" onclick="goTo(2)">Frameworks</button>
-    <button class="nav-pill" onclick="goTo(4)">Modelo</button>
-    <button class="nav-pill" onclick="goTo(5)">Roadmap</button>
-    <button class="nav-pill" onclick="goTo(7)">Próximos passos</button>
+    <button class="nav-pill" onclick="goTo(5)">Modelo VM</button>
+    <button class="nav-pill" onclick="goTo(6)">Roadmap</button>
+    <button class="nav-pill" onclick="goTo(8)">Próximos passos</button>
   </div>
   <span class="nav-badge">Plano de Implementação · 2026</span>
 </nav>
 
 <div class="progress-bar" id="progressBar"></div>
-
 <div class="slide-indicator" id="slideIndicator"></div>
 
-<!-- SLIDE 0: CAPA -->
+<!-- ── 0: CAPA ── -->
 <section class="slide" id="slide-0">
   <div class="slide-number">01 — Introdução</div>
   <h1>Adoção de <span class="gold">Inteligência<br>Artificial</span> no Digital</h1>
   <div class="divider"></div>
   <p class="lead">Um plano estruturado para internalizar IA na camada de gestão das squads, com controle, progressividade e impacto real nas operações do Digital Hering.</p>
-  <div style="margin-top: 2.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+  <div style="margin-top:2.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
     <span class="tag tag-gold">Grupo Azzas 2154</span>
     <span class="tag tag-teal">Digital Hering</span>
     <span class="tag tag-blue">Squads · 2026</span>
   </div>
-  <div class="footer-slide" style="margin-top: 3rem;">
+  <div class="footer-slide">
     <span class="left">Apresentado por: Caio Soares · Referência técnica em IA</span>
     <span class="right">Digital · Hering</span>
   </div>
 </section>
 
-<!-- SLIDE 1: PAPEL DO FACILITADOR -->
+<!-- ── 1: POR QUE AGORA ── -->
 <section class="slide" id="slide-1">
-  <div class="slide-number">02 — Quem conduz este processo</div>
+  <div class="slide-number">02 — Contexto estratégico</div>
+  <h2>Por que agir agora?</h2>
+  <div class="divider"></div>
+  <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem;">
+    <div class="card gold-accent">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px;">A mudança já está acontecendo</div>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">Ferramentas de IA estão sendo adotadas de forma descentralizada. Sem um processo estruturado interno, perdemos a capacidade de moldar como isso acontece dentro do time.</p>
+    </div>
+    <div class="card gold-accent">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px;">Vantagem de primeiro movimento na holding</div>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">O Digital é referência dentro do Grupo Azzas 2154. O modelo que construirmos aqui tende a ser replicado nas demais marcas — quem estrutura primeiro define o padrão.</p>
+    </div>
+    <div class="card gold-accent">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px;">Eficiência com protagonismo das pessoas</div>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">O objetivo não é substituir especialistas, mas amplificar sua capacidade. Agentes de IA assumem o operacional repetitivo; pessoas cuidam do estratégico e do relacional.</p>
+    </div>
+  </div>
+  <div class="quote-block" style="margin-top:1.5rem;">
+    <p class="quote-text">"Queremos ser protagonistas dessa transição — internalizar a adoção com método e controle, antes que ela aconteça de forma desordenada."</p>
+    <p class="quote-author">Diretriz estratégica — Digital Hering, 2026</p>
+  </div>
+</section>
+
+<!-- ── 2: HUMAN ON/IN/OFF ── -->
+<section class="slide" id="slide-2">
+  <div class="slide-number">03 — Framework 1</div>
+  <h2>Como posicionar o humano no processo?</h2>
+  <div class="divider"></div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.25rem;">O nível de autonomia da IA varia conforme o risco, a maturidade do processo e a confiança no modelo.</p>
+  <div class="hum-grid">
+    <div class="hum-card hc1" data-n="1">
+      <div>
+        <div class="hum-tag">Nível 1</div>
+        <div class="hum-icons"><span>🤖</span><span class="hum-icon-arr">→</span><span>👤</span></div>
+        <div class="hum-name">HUMAN ON</div>
+        <div class="hum-desc">IA gera, humano revisa e decide antes de qualquer uso. Controle total em cada etapa.</div>
+        <div class="hum-ex">Relatório gerado pela IA — gerente aprova antes de publicar</div>
+      </div>
+      <div class="hum-ctrl">
+        <div class="hum-ctrl-dot"></div><div class="hum-ctrl-dot" style="background:rgba(255,255,255,.08)"></div><div class="hum-ctrl-dot" style="background:rgba(255,255,255,.08)"></div>
+        <span class="hum-ctrl-label">controle máximo · velocidade menor</span>
+      </div>
+    </div>
+    <div class="hum-card hc2" data-n="2">
+      <div>
+        <div class="hum-tag">Nível 2</div>
+        <div class="hum-icons"><span>🤖</span><span class="hum-icon-arr">⇄</span><span>👤</span></div>
+        <div class="hum-name">HUMAN IN</div>
+        <div class="hum-desc">IA executa etapas; humano presente nos pontos-chave de decisão e exceção.</div>
+        <div class="hum-ex">IA coleta e cruza dados, analista interpreta e age</div>
+      </div>
+      <div class="hum-ctrl">
+        <div class="hum-ctrl-dot"></div><div class="hum-ctrl-dot"></div><div class="hum-ctrl-dot" style="background:rgba(255,255,255,.08)"></div>
+        <span class="hum-ctrl-label">equilíbrio controle · velocidade</span>
+      </div>
+    </div>
+    <div class="hum-card hc3" data-n="3">
+      <div>
+        <div class="hum-tag">Nível 3</div>
+        <div class="hum-icons" style="flex-direction:column;align-items:flex-start;gap:.3rem;">
+          <div style="display:flex;align-items:center;gap:.5rem;"><span>🤖</span><span style="font-size:11px;color:var(--accent-teal);font-weight:600;letter-spacing:.06em;">AUTÔNOMO</span></div>
+          <div style="display:flex;align-items:center;gap:.5rem;opacity:.4;"><span style="font-size:1rem;">👤</span><span style="font-size:11px;color:var(--text-dim);">audita · melhora · evolui</span></div>
+        </div>
+        <div class="hum-name">HUMAN OFF</div>
+        <div class="hum-desc">IA executa de ponta a ponta sem intervenção diária. O humano não está no fluxo — controla o nível de sucesso, monitora métricas e evolui o agente.</div>
+        <div class="hum-ex">Coleta, análise e consolidação automáticas. Humano revisa resultados e refina o agente periodicamente</div>
+      </div>
+      <div class="hum-ctrl">
+        <div class="hum-ctrl-dot"></div><div class="hum-ctrl-dot"></div><div class="hum-ctrl-dot"></div>
+        <span class="hum-ctrl-label">máxima velocidade · processos maduros</span>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="background:rgba(201,168,76,0.04);border-color:var(--border-strong);">
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.65;"><strong style="color:var(--gold);">Nossa estratégia:</strong> começar sempre no nível 1. Avançar para 2 após validação. Reservar nível 3 para processos estáveis e de baixo risco decisório.</p>
+  </div>
+</section>
+
+<!-- ── 3: IA NA TAREFA/PROCESSO/NOVO ── -->
+<section class="slide" id="slide-3">
+  <div class="slide-number">03 — Framework 2</div>
+  <h2>Onde a IA entra no trabalho?</h2>
+  <div class="divider"></div>
+  <div class="scale-row">
+    <div class="scale-item" style="background:rgba(74,144,217,0.15);color:#4A90D9;">IA na tarefa</div>
+    <div class="scale-item" style="background:rgba(201,168,76,0.15);color:var(--gold);">IA no processo</div>
+    <div class="scale-item" style="background:rgba(42,191,160,0.15);color:var(--accent-teal);border-radius:0 8px 8px 0;">IA gerando novos processos</div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <h3 style="color:#4A90D9;font-size:11px;">Nível 1 · Tarefa</h3>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">A IA auxilia em atividades pontuais dentro de um fluxo já existente. O processo em si não muda.</p>
+      <div style="margin-top:1rem;font-size:11px;color:var(--text-dim);">Exemplos no Digital:</div>
+      <ul style="list-style:none;margin-top:6px;font-size:13px;color:var(--text-muted);line-height:1.9;">
+        <li>→ Resumo de reunião no Notion</li>
+        <li>→ Rascunho de e-mail de sprint</li>
+        <li>→ Geração de pauta de cerimônias</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--gold);font-size:11px;">Nível 2 · Processo</h3>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">A IA transforma como um processo inteiro funciona — etapas se automatizam, o fluxo é redesenhado.</p>
+      <div style="margin-top:1rem;font-size:11px;color:var(--text-dim);">Exemplos no Digital:</div>
+      <ul style="list-style:none;margin-top:6px;font-size:13px;color:var(--text-muted);line-height:1.9;">
+        <li>→ Relatório semanal automático</li>
+        <li>→ Diagnóstico de health check</li>
+        <li>→ Consolidação VTEX sem planilha</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent-teal);font-size:11px;">Nível 3 · Novo processo</h3>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">A IA viabiliza processos que antes não existiam ou que seriam inviáveis sem ela.</p>
+      <div style="margin-top:1rem;font-size:11px;color:var(--text-dim);">Exemplos no Digital:</div>
+      <ul style="list-style:none;margin-top:6px;font-size:13px;color:var(--text-muted);line-height:1.9;">
+        <li>→ Agente VM com decisão autônoma</li>
+        <li>→ Briefing de coleção via IA</li>
+        <li>→ Análise preditiva de performance</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── 4: PAPEL DO FACILITADOR ── -->
+<section class="slide" id="slide-4">
+  <div class="slide-number">04 — Quem conduz este processo</div>
   <h2>O papel do facilitador</h2>
   <div class="divider"></div>
-  <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 1.75rem; max-width: 580px;">Este projeto não tem um executor técnico isolado. Tem alguém que entende de estrutura, de pessoas e de IA ao mesmo tempo — e usa isso para conectar os dois mundos dentro das squads.</p>
-
-  <div class="grid-3" style="margin-bottom: 1.25rem;">
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;max-width:580px;">Este projeto não tem um executor técnico isolado. Tem alguém que entende de estrutura, de pessoas e de IA ao mesmo tempo — e usa isso para conectar os dois mundos dentro das squads.</p>
+  <div class="grid-3" style="margin-bottom:1.25rem;">
     <div class="fw-card c2">
       <div class="fw-label">Papel 1</div>
       <div class="fw-title">Referência técnica</div>
@@ -612,15 +349,14 @@
       <div class="fw-desc">Transforma o conhecimento dos especialistas em instruções que os agentes de IA conseguem executar. Liga o saber humano ao sistema.</div>
     </div>
   </div>
-
-  <div class="card" style="background: rgba(201,168,76,0.04); border-color: var(--border-strong);">
-    <div style="display: flex; gap: 1.25rem; align-items: flex-start;">
-      <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(201,168,76,0.12); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: var(--gold); flex-shrink: 0;">CS</div>
+  <div class="card" style="background:rgba(201,168,76,0.04);border-color:var(--border-strong);">
+    <div style="display:flex;gap:1.25rem;align-items:flex-start;">
+      <div style="width:44px;height:44px;border-radius:50%;background:rgba(201,168,76,0.12);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--gold);flex-shrink:0;">CS</div>
       <div>
-        <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 4px;">Caio Soares</div>
-        <div style="font-size: 12px; color: var(--gold-dim); margin-bottom: 8px; letter-spacing: 0.04em;">Agilista · Digital Hering · Cabeça do projeto de adoção de IA</div>
-        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">Agilista com visão de estrutura e pessoas, em formação contínua em IA aplicada. A combinação entre entender como as squads funcionam e como os agentes de IA são construídos é o que torna este projeto viável — e diferente de uma iniciativa puramente técnica.</p>
-        <div style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;">Caio Soares</div>
+        <div style="font-size:12px;color:var(--gold-dim);margin-bottom:8px;letter-spacing:0.04em;">Agilista · Digital Hering · Cabeça do projeto de adoção de IA</div>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.65;">Agilista com visão de estrutura e pessoas, em formação contínua em IA aplicada. A combinação entre entender como as squads funcionam e como os agentes de IA são construídos é o que torna este projeto viável.</p>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
           <span class="tag tag-gold">Agile · Squads</span>
           <span class="tag tag-blue">Prompting · Agentes</span>
           <span class="tag tag-teal">Facilitação · Diagnóstico</span>
@@ -630,115 +366,14 @@
   </div>
 </section>
 
-
-<section class="slide" id="slide-1">
-  <div class="slide-number">03 — Contexto estratégico</div>
-  <h2>Por que agir agora?</h2>
-  <div class="divider"></div>
-  <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
-    <div class="card gold-accent">
-      <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 6px;">A mudança já está acontecendo</div>
-      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">Ferramentas de IA estão sendo adotadas de forma descentralizada. Sem um processo estruturado interno, perdemos a capacidade de moldar como isso acontece dentro do time.</p>
-    </div>
-    <div class="card gold-accent">
-      <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 6px;">Vantagem de primeiro movimento na holding</div>
-      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">O Digital é referência dentro do Grupo Azzas 2154. O modelo que construirmos aqui tende a ser replicado nas demais marcas. Liderar esse processo significa ter controle sobre o padrão.</p>
-    </div>
-    <div class="card gold-accent">
-      <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 6px;">Eficiência com protagonismo das pessoas</div>
-      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">O objetivo não é substituir especialistas, mas amplificar sua capacidade. Agentes de IA assumem o operacional repetitivo; pessoas cuidam do estratégico e do relacional.</p>
-    </div>
-  </div>
-  <div class="quote-block" style="margin-top: 1.75rem;">
-    <p class="quote-text">"Antes que estoure e gere demissões, queremos internalizar a adoção com controle, de forma que o time seja protagonista dessa transição."</p>
-    <p class="quote-author">Diretriz estratégica — Digital Hering, 2026</p>
-  </div>
-</section>
-
-<!-- SLIDE 2: FRAMEWORK 1 — HUMAN ON/IN/OFF -->
-<section class="slide" id="slide-2">
-  <div class="slide-number">04 — Frameworks de referência</div>
-  <h2>Como posicionar o humano no processo?</h2>
-  <div class="divider"></div>
-  <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 1.5rem;">O nível de autonomia da IA varia conforme o risco, a maturidade do processo e a confiança no modelo. A escolha do posicionamento define responsabilidade e velocidade.</p>
-  <div class="grid-3">
-    <div class="fw-card c1">
-      <div class="fw-label">Nível 1</div>
-      <div class="fw-title">Human on process</div>
-      <div class="fw-desc">O humano revisa e aprova cada saída antes de ela ser usada. A IA gera, o humano decide. Maior controle, menor velocidade.</div>
-      <span class="tag tag-blue" style="margin-top: 10px;">Ex: relatório gerado, gerente aprova</span>
-    </div>
-    <div class="fw-card c2">
-      <div class="fw-label">Nível 2</div>
-      <div class="fw-title">Human in process</div>
-      <div class="fw-desc">A IA executa partes do fluxo de forma autônoma, mas o humano está presente em pontos-chave de decisão ou exceção.</div>
-      <span class="tag tag-gold" style="margin-top: 10px;">Ex: IA coleta e cruza dados, analista interpreta</span>
-    </div>
-    <div class="fw-card c3">
-      <div class="fw-label">Nível 3</div>
-      <div class="fw-title">Human off process</div>
-      <div class="fw-desc">A IA executa o processo de ponta a ponta. O humano atua apenas em auditorias periódicas ou quando há alertas de anomalia.</div>
-      <span class="tag tag-teal" style="margin-top: 10px;">Ex: coleta VTEX automática e consolidação</span>
-    </div>
-  </div>
-  <div class="card" style="margin-top: 1.25rem; background: rgba(201,168,76,0.04); border-color: var(--border-strong);">
-    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;"><strong style="color: var(--gold);">Nossa estratégia:</strong> começar sempre no nível 1 para novos processos. Avançar para 2 após validação. Reservar o nível 3 para processos estáveis e de baixo risco decisório.</p>
-  </div>
-</section>
-
-<!-- SLIDE 3: FRAMEWORK 2 — TAREFA/PROCESSO/NOVO -->
-<section class="slide" id="slide-3">
-  <div class="slide-number">04 — Frameworks de referência</div>
-  <h2>Onde a IA entra no trabalho?</h2>
-  <div class="divider"></div>
-  <div class="scale-row" style="margin-bottom: 1.5rem;">
-    <div class="scale-item" style="background: rgba(74,144,217,0.15); color: #4A90D9;">IA na tarefa</div>
-    <div class="scale-item" style="background: rgba(201,168,76,0.15); color: var(--gold);">IA no processo</div>
-    <div class="scale-item" style="background: rgba(42,191,160,0.15); color: var(--accent-teal); border-radius: 0 8px 8px 0;">IA gerando novos processos</div>
-  </div>
-  <div class="grid-3">
-    <div class="card">
-      <h3 style="color: #4A90D9; font-size: 11px;">Nível 1 · Tarefa</h3>
-      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">A IA auxilia em atividades pontuais dentro de um fluxo já existente. O processo em si não muda.</p>
-      <div style="margin-top: 1rem; font-size: 12px; color: var(--text-dim);">Exemplos no Digital:</div>
-      <ul style="list-style: none; margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.8;">
-        <li>→ Resumo de reunião no Notion</li>
-        <li>→ Rascunho de e-mail de sprint</li>
-        <li>→ Geração de pauta de cerimônias</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3 style="color: var(--gold); font-size: 11px;">Nível 2 · Processo</h3>
-      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">A IA transforma como um processo inteiro funciona — etapas se automatizam, o fluxo é redesenhado.</p>
-      <div style="margin-top: 1rem; font-size: 12px; color: var(--text-dim);">Exemplos no Digital:</div>
-      <ul style="list-style: none; margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.8;">
-        <li>→ Relatório semanal automático</li>
-        <li>→ Diagnóstico de health check</li>
-        <li>→ Consolidação VTEX sem planilha</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3 style="color: var(--accent-teal); font-size: 11px;">Nível 3 · Novo processo</h3>
-      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;">A IA viabiliza processos que antes não existiam ou que seriam inviáveis sem ela.</p>
-      <div style="margin-top: 1rem; font-size: 12px; color: var(--text-dim);">Exemplos no Digital:</div>
-      <ul style="list-style: none; margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.8;">
-        <li>→ Agente VM com decisão autônoma</li>
-        <li>→ Briefing de coleção via IA</li>
-        <li>→ Análise preditiva de performance</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- SLIDE 4: MODELO AGENTE VM -->
-<section class="slide" id="slide-4">
+<!-- ── 5: AGENTE VM ── -->
+<section class="slide" id="slide-5">
   <div class="slide-number">05 — Modelo de referência</div>
   <h2>Caso concreto: Agente de VM</h2>
   <div class="divider"></div>
-  <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 1.5rem; max-width: 600px;">O agente de Visual Merchandising é o modelo-piloto que ilustra como a estrutura de agentes funciona na prática dentro do Digital. Três camadas em sequência.</p>
-
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.25rem;max-width:600px;">O agente de Visual Merchandising ilustra como a estrutura funciona na prática. Três camadas em sequência — cada uma eliminando trabalho manual e acumulando contexto.</p>
   <div class="agent-diagram">
-    <div style="font-family: 'Syne', sans-serif; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 1.25rem;">Fluxo do agente VM</div>
+    <div style="font-family:'Syne',sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:1.25rem;">Fluxo do agente VM</div>
     <div class="agent-flow">
       <div class="agent-node">
         <span class="icon">🔄</span>
@@ -755,145 +390,143 @@
       <div class="agent-node highlight">
         <span class="icon">🧠</span>
         <div class="node-label">Agente VM</div>
-        <div class="node-sub">System prompt baseado no conhecimento do analista de VM</div>
+        <div class="node-sub">Treinado com o conhecimento do analista — gera recomendações com contexto completo</div>
       </div>
     </div>
-
-    <div style="display: flex; gap: 12px; margin-top: 1.25rem; align-items: flex-start;">
-      <div style="flex: 1; background: var(--dark5); border-radius: 8px; padding: 0.85rem 1rem;">
-        <div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;">Infraestrutura</div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <span class="tag tag-blue">Servidor na nuvem (execução dos agentes)</span>
-          <span class="tag tag-gold">API de IA (o "cérebro" dos agentes)</span>
-        </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-top:1.25rem;">
+      <div class="ba-box ba-b">
+        <div class="ba-lbl">Antes · manual</div>
+        <div class="ba-title">Fluxo fragmentado</div>
+        <ul class="ba-list">
+          <li>→ Coleta manual em planilha</li>
+          <li>→ Análise separada por ferramenta</li>
+          <li>→ Decisão sem cruzamento de dados</li>
+        </ul>
       </div>
-      <div style="flex: 1; background: var(--dark5); border-radius: 8px; padding: 0.85rem 1rem;">
-        <div style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px;">Próximo passo</div>
-        <div style="font-size: 13px; color: var(--text-muted);">Sessão com analista de VM para mapear regras de decisão e construir o system prompt</div>
+      <div class="ba-box ba-a">
+        <div class="ba-lbl">Depois · com agente</div>
+        <div class="ba-title" style="color:var(--accent-teal);">Fluxo contínuo</div>
+        <ul class="ba-list">
+          <li>→ Dado → análise → recomendação automáticos</li>
+          <li>→ Decisão com contexto completo</li>
+          <li>→ Analista foca no estratégico</li>
+        </ul>
+      </div>
+      <div class="ba-box" style="background:rgba(201,168,76,0.04);border:0.5px solid var(--border-strong);border-radius:10px;padding:1.1rem 1.3rem;">
+        <div class="ba-lbl" style="color:var(--gold);">Papel do analista humano</div>
+        <div class="ba-title" style="color:var(--gold);">Curador do agente</div>
+        <ul class="ba-list">
+          <li>→ Alimenta o agente com regras e critérios</li>
+          <li>→ Valida e refina as recomendações</li>
+          <li>→ Evolui o agente com novos aprendizados</li>
+        </ul>
       </div>
     </div>
-
-    <div class="agent-output">
-      <div class="agent-output-card">
-        <div class="aoc-dot" style="background: var(--gold);"></div>
-        <div class="aoc-text"><strong>Antes (manual)</strong>Coleta em planilha, análise fragmentada, decisão sem cruzamento de dados</div>
-      </div>
-      <div class="agent-output-card">
-        <div class="aoc-dot" style="background: var(--accent-teal);"></div>
-        <div class="aoc-text"><strong>Depois (com agente)</strong>Fluxo contínuo do dado à recomendação, liberando o analista para o estratégico</div>
-      </div>
+    <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap;align-items:center;">
+      <span class="tag tag-blue">Servidor na nuvem (execução dos agentes)</span>
+      <span class="tag tag-gold">API de IA (o "cérebro" dos agentes)</span>
+      <span style="font-size:11px;color:var(--text-dim);">· modelo replicável para qualquer área</span>
     </div>
   </div>
-
-  <p style="font-size: 13px; color: var(--text-dim); margin-top: 1rem;">Este modelo é replicável para outras squads: substitua "VM" pelo contexto de cada área e o fluxo se adapta.</p>
 </section>
 
-<!-- SLIDE 5: ROADMAP -->
-<section class="slide" id="slide-5">
+<!-- ── 6: ROADMAP ── -->
+<section class="slide" id="slide-6">
   <div class="slide-number">06 — Plano de implementação</div>
   <h2>Roadmap de adoção</h2>
   <div class="divider"></div>
-  <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 1.75rem;">Sete fases sequenciais, progressivas e replicáveis. O ciclo se repete para cada nova squad incorporada ao modelo.</p>
-
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;">Fases sequenciais, progressivas e replicáveis. O ciclo se repete para cada nova squad incorporada ao modelo.</p>
   <div class="roadmap">
-
     <div class="rm-item active">
       <div class="rm-dot">1</div>
       <div class="rm-body">
         <div class="rm-phase">Fase atual · Em andamento</div>
-        <div class="rm-title">Capacitação do AI Lead</div>
+        <div class="rm-title">Capacitação técnica em IA</div>
         <div class="rm-desc">Estudo estruturado de IA aplicada: fundamentos, agentes, prompting e ferramentas. Base para conduzir o processo com credibilidade técnica.</div>
         <span class="tag tag-gold">capacitacao.html · GitHub Pages</span>
       </div>
     </div>
-
     <div class="rm-item">
-      <div class="rm-dot" style="font-size: 11px; color: var(--text-dim); border-style: dashed;">★</div>
-      <div class="rm-body" style="background: rgba(201,168,76,0.03); border-color: rgba(201,168,76,0.12);">
-        <div class="rm-phase">Contexto · Divisão de responsabilidades</div>
-        <div class="rm-title" style="color: var(--text-muted);">Time de dados: relatórios gerais no Databricks</div>
-        <div class="rm-desc">O time de dados já está construindo automações e análises de dados gerais. Este plano foca em uma camada complementar e específica: automações das squads, processos ágeis e tomadas de decisão operacionais — terreno onde a visão de pessoas e estrutura faz diferença.</div>
+      <div class="rm-dot" style="font-size:11px;color:var(--text-dim);border-style:dashed;">★</div>
+      <div class="rm-body" style="background:rgba(201,168,76,0.03);border-color:rgba(201,168,76,0.12);">
+        <div class="rm-phase">Contexto · Em paralelo</div>
+        <div class="rm-title" style="color:var(--text-muted);">Time de dados: relatórios gerais no Databricks</div>
+        <div class="rm-desc">O time de dados já está construindo automações de dados gerais. Este plano foca em uma camada complementar: automações das squads, processos ágeis e tomadas de decisão operacionais.</div>
         <span class="tag tag-blue">Databricks · Dados gerais</span>
         <span class="tag tag-gold">Este plano · Squads + operação</span>
       </div>
     </div>
-
     <div class="rm-item">
-      <div class="rm-dot">3</div>
+      <div class="rm-dot">2</div>
       <div class="rm-body">
-        <div class="rm-phase">Fase 3</div>
+        <div class="rm-phase">Fase 2</div>
         <div class="rm-title">Escolha da squad piloto</div>
         <div class="rm-desc">Selecionar a squad com maior potencial de impacto e abertura para experimentação. Critérios: volume de processos manuais, maturidade do time, visibilidade dos resultados.</div>
         <span class="tag tag-gold">Critérios de seleção definidos com gerentes</span>
       </div>
     </div>
-
     <div class="rm-item">
-      <div class="rm-dot">4</div>
+      <div class="rm-dot">3</div>
       <div class="rm-body">
-        <div class="rm-phase">Fase 4</div>
+        <div class="rm-phase">Fase 3</div>
         <div class="rm-title">Diagnóstico de processos</div>
         <div class="rm-desc">Mapeamento dos fluxos da squad piloto. Identificar onde a IA pode atuar: na tarefa, no processo ou gerando novos processos. Priorizar por impacto e viabilidade.</div>
         <span class="tag tag-gold">Entrevistas · Mapeamento de fluxos</span>
         <span class="tag tag-orange">Quick wins identificados</span>
       </div>
     </div>
-
+    <div class="rm-item">
+      <div class="rm-dot">4</div>
+      <div class="rm-body">
+        <div class="rm-phase">Fase 4</div>
+        <div class="rm-title">Sprints de implementação</div>
+        <div class="rm-desc">Desenvolvimento e implantação dos agentes e automações priorizados. Começar sempre no nível "Human on process" — a IA propõe, o humano valida e aprova.</div>
+        <span class="tag tag-blue">Agentes · Automações · Prompts</span>
+        <span class="tag tag-teal">Servidor na nuvem + API de IA</span>
+      </div>
+    </div>
     <div class="rm-item">
       <div class="rm-dot">5</div>
       <div class="rm-body">
         <div class="rm-phase">Fase 5</div>
-        <div class="rm-title">Sprints de implementação</div>
-        <div class="rm-desc">Desenvolvimento e implantação dos agentes e automações priorizados. Começar sempre no nível "Human on process" — a IA propõe, o humano valida e aprova.</div>
-        <span class="tag tag-blue">Agentes · Automações · Prompts</span>
-        <span class="tag tag-teal">Cloudflare Workers + Anthropic API</span>
-      </div>
-    </div>
-
-    <div class="rm-item">
-      <div class="rm-dot">6</div>
-      <div class="rm-body">
-        <div class="rm-phase">Fase 6</div>
         <div class="rm-title">Validação do modelo</div>
         <div class="rm-desc">Mensuração de resultados: tempo economizado, qualidade das entregas, adoção pelo time. Ajustes finos. Documentação do que funcionou como base para replicação.</div>
         <span class="tag tag-gold">Métricas de impacto · Documentação</span>
       </div>
     </div>
-
     <div class="rm-item">
-      <div class="rm-dot">7</div>
+      <div class="rm-dot">6</div>
       <div class="rm-body">
-        <div class="rm-phase">Fase 7 · Ciclo contínuo</div>
+        <div class="rm-phase">Fase 6 · Ciclo contínuo</div>
         <div class="rm-title">Replicação para a próxima squad</div>
-        <div class="rm-desc">O modelo validado é adaptado e aplicado na squad seguinte. A cada ciclo, o processo fica mais rápido e o repertório de agentes mais rico. Visão de longo prazo: estrutura híbrida agentes + especialistas em todas as squads.</div>
+        <div class="rm-desc">O modelo validado é adaptado e aplicado na squad seguinte. A cada ciclo, o processo fica mais rápido e o repertório de agentes mais rico. Visão: estrutura híbrida agentes + especialistas em todas as squads.</div>
         <span class="tag tag-teal">Modelo escalável · Holding Azzas</span>
       </div>
     </div>
-
   </div>
 </section>
 
-<!-- SLIDE 6: TIME FUTURO -->
-<section class="slide" id="slide-6">
+<!-- ── 7: VISÃO FUTURA ── -->
+<section class="slide" id="slide-7">
   <div class="slide-number">07 — Visão de futuro</div>
   <h2>Como será o time?</h2>
   <div class="divider"></div>
-  <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 1.75rem; max-width: 580px;">A estrutura de time evolui à medida que os agentes amadurecem. O especialista humano migra do operacional para o estratégico e para a curadoria dos modelos.</p>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;max-width:580px;">A estrutura de time evolui à medida que os agentes amadurecem. O especialista humano migra do operacional para o estratégico e para a curadoria dos modelos.</p>
   <div class="grid-2">
     <div class="card">
-      <h3 style="font-size: 10px; color: var(--text-dim);">Hoje</h3>
-      <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 0.75rem;">Especialista como executor</div>
-      <ul style="list-style: none; font-size: 13px; color: var(--text-muted); line-height: 2;">
+      <h3 style="font-size:10px;color:var(--text-dim);">Hoje</h3>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:0.75rem;">Especialista como executor</div>
+      <ul class="fut-list">
         <li>→ Coleta dados manualmente</li>
         <li>→ Monta relatórios em planilha</li>
         <li>→ Toma decisões com info fragmentada</li>
         <li>→ Alto tempo operacional, baixo estratégico</li>
       </ul>
     </div>
-    <div class="card" style="border-color: var(--border-strong);">
-      <h3 style="font-size: 10px;">Visão futura</h3>
-      <div style="font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); margin-bottom: 0.75rem;">Especialista como curador</div>
-      <ul style="list-style: none; font-size: 13px; color: var(--text-muted); line-height: 2;">
+    <div class="card" style="border-color:var(--border-strong);">
+      <h3 style="font-size:10px;">Visão futura</h3>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:0.75rem;">Especialista como curador</div>
+      <ul class="fut-list">
         <li>→ Define regras e critérios para os agentes</li>
         <li>→ Valida e interpreta saídas da IA</li>
         <li>→ Toma decisões com dados consolidados</li>
@@ -901,66 +534,62 @@
       </ul>
     </div>
   </div>
-  <div class="card" style="margin-top: 1rem; background: rgba(42,191,160,0.04); border-color: rgba(42,191,160,0.25);">
-    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.65;"><strong style="color: var(--accent-teal);">Estrutura-alvo:</strong> agentes de IA cuidam do operacional contínuo; especialistas humanos concentram energia no estratégico, no relacional e na evolução dos próprios agentes. Nenhum especialista é substituído — todos são amplificados.</p>
+  <div class="card" style="margin-top:1rem;background:rgba(42,191,160,0.04);border-color:rgba(42,191,160,0.25);">
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.65;"><strong style="color:var(--accent-teal);">Estrutura-alvo:</strong> agentes cuidam do operacional contínuo; especialistas concentram energia no estratégico, no relacional e na evolução dos próprios agentes. Ninguém substituído — todos amplificados.</p>
   </div>
 </section>
 
-<!-- SLIDE 7: PRÓXIMOS PASSOS -->
-<section class="slide" id="slide-7">
+<!-- ── 8: PRÓXIMOS PASSOS ── -->
+<section class="slide" id="slide-8">
   <div class="slide-number">08 — Ação imediata</div>
   <h2>Próximos passos</h2>
   <div class="divider"></div>
-  <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-    <div class="card teal-accent" style="display: grid; grid-template-columns: 32px 1fr; gap: 1rem; align-items: center;">
-      <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(42,191,160,0.1); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--accent-teal);">A</div>
+  <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;">
+    <div class="card teal-accent" style="display:grid;grid-template-columns:36px 1fr;gap:1rem;align-items:center;">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,191,160,0.1);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent-teal);">A</div>
       <div>
-        <div style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px;">Continuar capacitação técnica em IA</div>
-        <div style="font-size: 12px; color: var(--text-muted);">Módulos em andamento: agentes, RAG, prompting avançado. Base técnica para conduzir as próximas fases.</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px;">Continuar capacitação técnica em IA</div>
+        <div style="font-size:13px;color:var(--text-muted);">Módulos em andamento: agentes, RAG, prompting avançado. Base para conduzir as próximas fases com credibilidade.</div>
       </div>
     </div>
-    <div class="card teal-accent" style="display: grid; grid-template-columns: 32px 1fr; gap: 1rem; align-items: center;">
-      <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(42,191,160,0.1); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--accent-teal);">B</div>
+    <div class="card teal-accent" style="display:grid;grid-template-columns:36px 1fr;gap:1rem;align-items:center;">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,191,160,0.1);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent-teal);">B</div>
       <div>
-        <div style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px;">Sessão com analista de VM</div>
-        <div style="font-size: 12px; color: var(--text-muted);">Mapear regras de decisão e construir o system prompt do Agente VM. Primeiro agente concreto do Digital.</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px;">Definir squad piloto com as gerentes</div>
+        <div style="font-size:13px;color:var(--text-muted);">Alinhar critérios de seleção: volume operacional, abertura da squad, visibilidade dos resultados para a holding.</div>
       </div>
     </div>
-    <div class="card teal-accent" style="display: grid; grid-template-columns: 32px 1fr; gap: 1rem; align-items: center;">
-      <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(42,191,160,0.1); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--accent-teal);">C</div>
+    <div class="card teal-accent" style="display:grid;grid-template-columns:36px 1fr;gap:1rem;align-items:center;">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,191,160,0.1);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent-teal);">C</div>
       <div>
-        <div style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px;">Definir squad piloto com as gerentes</div>
-        <div style="font-size: 12px; color: var(--text-muted);">Alinhar critérios de seleção: volume operacional, abertura da squad, visibilidade dos resultados para a holding.</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px;">Alinhamento com time de dados</div>
+        <div style="font-size:13px;color:var(--text-muted);">Entender o escopo da IA no Databricks e definir onde começa o trabalho da camada de squads e estrutura ágil.</div>
       </div>
     </div>
-    <div class="card teal-accent" style="display: grid; grid-template-columns: 32px 1fr; gap: 1rem; align-items: center;">
-      <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(42,191,160,0.1); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--accent-teal);">D</div>
+    <div class="card teal-accent" style="display:grid;grid-template-columns:36px 1fr;gap:1rem;align-items:center;">
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(42,191,160,0.1);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent-teal);">D</div>
       <div>
-        <div style="font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px;">Alinhamento com time de dados</div>
-        <div style="font-size: 12px; color: var(--text-muted);">Entender o escopo da IA no Databricks e definir onde começa o trabalho da camada de squads/estrutura ágil.</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px;">Sessão com analista da squad escolhida</div>
+        <div style="font-size:13px;color:var(--text-muted);">Mapear regras de decisão e construir o system prompt do primeiro agente. O modelo VM é o exemplo — o processo se repete para cada área.</div>
       </div>
     </div>
   </div>
-
-  <div class="footer-slide" style="margin-top: 2.5rem;">
+  <div class="footer-slide">
     <span class="left">Digital Hering · Plano de Implementação IA · 2026</span>
     <span class="right">Caio Soares · Referência técnica em IA</span>
   </div>
 </section>
 
-<div class="version">v1.1</div>
+<div class="version">v1.2</div>
 
 <script>
   const slides = document.querySelectorAll('.slide');
-  const totalSlides = slides.length;
   const progressBar = document.getElementById('progressBar');
   const indicator = document.getElementById('slideIndicator');
-  const navPills = document.querySelectorAll('.nav-pill');
 
-  // Build indicator dots
-  slides.forEach((_, i) => {
+  slides.forEach((_,i) => {
     const dot = document.createElement('div');
-    dot.className = 'si-dot' + (i === 0 ? ' active' : '');
+    dot.className = 'si-dot' + (i===0?' active':'');
     dot.onclick = () => goTo(i);
     indicator.appendChild(dot);
   });
@@ -968,34 +597,23 @@
   function updateProgress() {
     const scrollY = window.scrollY;
     const docH = document.documentElement.scrollHeight - window.innerHeight;
-    const pct = docH > 0 ? (scrollY / docH) * 100 : 0;
-    progressBar.style.width = pct + '%';
-
-    // active slide
+    const pct = docH > 0 ? (scrollY/docH)*100 : 0;
+    progressBar.style.width = pct+'%';
     let current = 0;
-    slides.forEach((slide, i) => {
+    slides.forEach((slide,i) => {
       const rect = slide.getBoundingClientRect();
-      if (rect.top <= window.innerHeight * 0.5) current = i;
+      if (rect.top <= window.innerHeight*0.5) current = i;
     });
-
-    document.querySelectorAll('.si-dot').forEach((d, i) => {
-      d.classList.toggle('active', i === current);
-    });
+    document.querySelectorAll('.si-dot').forEach((d,i) => d.classList.toggle('active',i===current));
   }
 
-  function goTo(index) {
-    slides[index].scrollIntoView({ behavior: 'smooth' });
-  }
+  function goTo(index) { slides[index].scrollIntoView({behavior:'smooth'}); }
 
-  // Intersection observer for slide animations
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) e.target.classList.add('visible');
-    });
-  }, { threshold: 0.15 });
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, {threshold:0.15});
 
   slides.forEach(s => observer.observe(s));
-
   window.addEventListener('scroll', updateProgress);
   updateProgress();
 </script>
