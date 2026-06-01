@@ -75,14 +75,14 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 .imp-dot{width:22px;height:22px;min-width:22px;border-radius:50%;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fca5a5;margin-top:2px;}
 
 /* INSIGHTS */
-.insight-card{background:rgba(13,34,68,.75);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:18px 22px;transition:all .2s;}
+.insight-card{background:rgba(13,34,68,.75);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:22px 28px;transition:all .2s;}
 .insight-card:hover{background:var(--glassh);}
 .insight-card.alert{border-left-color:#fbbf24;}
 .insight-card.event{border-left-color:var(--blue-light);}
-.insight-tag{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.insight-tag{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
 .insight-tag.alert{color:#fbbf24;}
 .insight-tag.event{color:var(--blue-light);}
-.insight-text{font-size:15px;line-height:1.65;color:var(--w80);}
+.insight-text{font-size:18px;line-height:1.7;color:var(--w80);}
 
 /* =====================
    CALENDÁRIO REDESIGN
@@ -297,6 +297,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v1.4</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -545,7 +546,7 @@ Regras:
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey(),'anthropic-version':'2023-06-01'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
+      body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:1800,system:sp,messages:[{role:'user',content:msg}]})
     });
     const data=await res.json();
     if(data.content&&data.content[0]){
