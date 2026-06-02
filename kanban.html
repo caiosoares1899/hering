@@ -177,7 +177,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 /* version */
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 </style>
-  <!-- LOGIN OVERLAY -->
+  <!-- INSCRIÇÃO OVERLAY -->
+<div id="insc-ov" style="position:fixed;inset:0;z-index:190;background:rgba(1,8,16,.92);backdrop-filter:blur(14px);display:none;align-items:center;justify-content:center;padding:1rem;">
+<div class="panel" style="max-width:380px;">
+  <div class="panel-hd">
+    <div class="panel-title">🙋 Inscrever-se no quadro</div>
+  </div>
+  <div style="padding:18px 16px;display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img id="insc-foto" width="44" height="44" style="border-radius:50%;display:none;">
+      <div>
+        <div id="insc-nome" style="font-size:14px;font-weight:500;color:var(--txt);"></div>
+        <div id="insc-email" style="font-size:11px;color:var(--txt2);"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="fl">Suas iniciais no board</label>
+      <input class="fi" id="insc-init" maxlength="3" placeholder="Ex: CS" style="text-transform:uppercase;max-width:100px;">
+      <span style="font-size:10px;color:var(--txt3);margin-top:3px;">Aparece nos cards que você criar ou editar</span>
+    </div>
+    <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">
+      Você entrará como <strong>Membro</strong>. O PO pode alterar sua função nas Configurações.
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="document.getElementById('insc-ov').style.display='none'">Agora não</button>
+      <button class="btn btn-p" onclick="confirmarInscricao()">Confirmar inscrição</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- LOGIN OVERLAY -->
 <div id="login-ov" style="position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.97);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
   <div style="text-align:center;margin-bottom:8px;">
     <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--txt);margin-bottom:6px;">🐟 Kanban Hering</div>
@@ -191,6 +221,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
     </button>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
+  <div style="font-size:11px;color:var(--txt3);text-align:center;">Primeira vez? <button onclick="doSignIn(true)" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Inscrever-se no quadro</button></div>
   <div style="font-size:10px;color:var(--txt3);">Acesso restrito ao time Digital Hering</div>
 </div>
 
@@ -395,6 +426,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   <div class="ag-tabs" id="cfg-tabs">
     <div class="ag-tab on" onclick="swCfgTab('agil')">Ágil</div>
+    <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
     <div class="ag-tab" onclick="swCfgTab('membros')">Membros</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
@@ -448,6 +480,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
       <div style="display:flex;justify-content:flex-end;padding-top:8px;">
         <button class="btn btn-p" onclick="saveAgilCfg()">Salvar</button>
       </div>
+    </div>
+
+    <div class="tab-c" id="cfgtab-usuarios">
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Usuários inscritos</div>
+        <div id="usuarios-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+      </div>
+      <p style="font-size:11px;color:var(--txt3);margin-top:4px;">Apenas usuários que se inscreveram via Google aparecem aqui.</p>
     </div>
 
     <div class="tab-c" id="cfgtab-tags">
@@ -517,7 +557,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v2.1</div>
+<div class="version">v2.2</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -567,12 +607,99 @@ let cards = [
 let editingId = null;
 
 
+
+// ── AUTO-REGISTRO ─────────────────────────────────────────────────
+function autoRegistrarMembro(user){
+  if(!fbReady()) return;
+  const uid = user.uid;
+  const dbRef = window._fbRef(window._db, 'kanban/usuarios/'+uid);
+  window._fbGet(dbRef).then(snap=>{
+    const existe = snap.val();
+    if(!existe){
+      // Usuário novo — verifica se veio pelo botão Inscrever-se
+      if(window._pendingInscricao){
+        window._pendingInscricao=false;
+        mostrarModalInscricao(user);
+      }
+      // Cria registro básico no Firebase mesmo sem inscrição no board
+      const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      window._fbSet(dbRef,{
+        uid, nome:user.displayName||'', email:user.email,
+        init, foto:user.photoURL||'', role:'membro',
+        inscrito:false, criadoEm:new Date().toISOString()
+      });
+    } else {
+      window._currentUserRole = existe.role||'membro';
+      if(window._pendingInscricao && !existe.inscrito){
+        window._pendingInscricao=false;
+        mostrarModalInscricao(user, existe);
+      } else {
+        window._pendingInscricao=false;
+      }
+      // Sincroniza foto atualizada
+      if(user.photoURL && existe.foto!==user.photoURL){
+        window._fbUpdate(window._fbRef(window._db,'kanban/usuarios/'+uid),{foto:user.photoURL});
+      }
+    }
+    // Atualiza lista de membros do board com usuários inscritos
+    carregarMembrosFirebase();
+  });
+}
+
+function mostrarModalInscricao(user, dados){
+  const init=dados?.init||((user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase());
+  document.getElementById('insc-nome').textContent=user.displayName||user.email;
+  document.getElementById('insc-email').textContent=user.email;
+  document.getElementById('insc-init').value=init;
+  document.getElementById('insc-foto').src=user.photoURL||'';
+  document.getElementById('insc-foto').style.display=user.photoURL?'block':'none';
+  document.getElementById('insc-ov').style.display='flex';
+}
+
+function confirmarInscricao(){
+  const user=window._currentUser;
+  if(!user||!fbReady()) return;
+  const init=document.getElementById('insc-init').value.trim().toUpperCase().substring(0,3);
+  if(!init){ alert('Defina suas iniciais.'); return; }
+  const uid=user.uid;
+  // Salva usuário como inscrito
+  window._fbUpdate(window._fbRef(window._db,'kanban/usuarios/'+uid),{
+    init, inscrito:true, role:'membro', inscritoEm:new Date().toISOString()
+  });
+  // Adiciona aos membros do board se ainda não existir
+  const jaExiste=members.find(m=>m.init===init||m.email===user.email);
+  if(!jaExiste){
+    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||''});
+    fbSaveAll();
+  }
+  window._currentUserInit=init;
+  window._currentUserRole='membro';
+  document.getElementById('insc-ov').style.display='none';
+  renderBoard();
+}
+
+function carregarMembrosFirebase(){
+  if(!fbReady()) return;
+  window._fbGet(window._fbRef(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val();
+    if(!val) return;
+    Object.values(val).forEach(u=>{
+      if(!u.inscrito) return;
+      const jaExiste=members.find(m=>m.init===u.init||m.email===u.email);
+      if(!jaExiste) members.push({init:u.init,name:u.nome||u.email,email:u.email,foto:u.foto||''});
+    });
+  });
+}
+// ── FIM AUTO-REGISTRO ──────────────────────────────────────────────
+
 // ── AUTH ──────────────────────────────────────────────────────────
-function doSignIn(){
+function doSignIn(inscricao=false){
   const err=document.getElementById('login-err');
   err.style.display='none';
   if(!window._signIn){ err.textContent='Firebase ainda carregando...'; err.style.display='block'; return; }
-  window._signIn().catch(e=>{
+  window._signIn().then(result=>{
+    if(inscricao) window._pendingInscricao=true;
+  }).catch(e=>{
     err.textContent='Erro ao entrar: '+e.message;
     err.style.display='block';
   });
@@ -596,9 +723,10 @@ function handleAuthChange(user){
     document.getElementById('user-name').textContent=user.displayName||user.email;
     const av=document.getElementById('user-avatar');
     if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
-    // atualiza membro no board com o usuário logado
     const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     window._currentUserInit=init;
+    // Auto-registro: verifica se usuário já existe no Firebase
+    autoRegistrarMembro(user);
   } else {
     ov.style.display='flex';
     badge.style.display='none';
@@ -880,12 +1008,13 @@ function applyAgilCfg(cfg){
 }
 function swCfgTab(tab){
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>{
-    t.classList.toggle('on',['agil','tags','membros','worker','firebase'][i]===tab);
+    t.classList.toggle('on',['agil','usuarios','tags','membros','worker','firebase'][i]===tab);
   });
-  ['agil','tags','membros','worker','firebase'].forEach(t=>{
+  ['agil','usuarios','tags','membros','worker','firebase'].forEach(t=>{
     document.getElementById('cfgtab-'+t).classList.toggle('on',t===tab);
   });
   // preenche inputs ao abrir aba
+  if(tab==='usuarios'){ renderUsuariosTab(); }
   if(tab==='agil'){
     if(fbReady()){
       window._fbGet(window._fbRef(window._db, FB_PATH+'/agil_cfg')).then(snap=>{
@@ -1135,6 +1264,31 @@ function saveWorkerUrl(){
 // CONFIG
 function openCfg(tab){ renderCfgEditor(); document.getElementById('cfg-ov').classList.add('open'); swCfgTab(tab||'agil'); }
 function closeCfg(){ document.getElementById('cfg-ov').classList.remove('open'); }
+
+function renderUsuariosTab(){
+  if(!fbReady()) return;
+  const list=document.getElementById('usuarios-list');
+  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  window._fbGet(window._fbRef(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val();
+    if(!val){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário inscrito ainda.</div>'; return; }
+    list.innerHTML='';
+    Object.entries(val).forEach(([uid,u])=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);';
+      const foto=u.foto?`<img src="${u.foto}" width="28" height="28" style="border-radius:50%;">`:`<div style="width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);">${u.init||'?'}</div>`;
+      const inscBadge=u.inscrito?`<span style="font-size:9px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);padding:1px 6px;border-radius:999px;">inscrito</span>`:`<span style="font-size:9px;background:rgba(255,209,102,.1);color:var(--warn);border:1px solid rgba(255,209,102,.2);padding:1px 6px;border-radius:999px;">pendente</span>`;
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;color:var(--txt);">${u.nome||u.email} <span style="font-size:10px;color:var(--txt3);">(${u.init||'?'})</span></div><div style="font-size:10px;color:var(--txt2);">${u.email}</div></div>${inscBadge}<select onchange="alterarRole('${uid}',this.value)" style="padding:4px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;"><option value="membro"${(u.role||'membro')==='membro'?' selected':''}>Membro</option><option value="po"${u.role==='po'?' selected':''}>PO</option></select>`;
+      list.appendChild(row);
+    });
+  });
+}
+function alterarRole(uid, novoRole){
+  if(!fbReady()) return;
+  window._fbUpdate(window._fbRef(window._db,'kanban/usuarios/'+uid),{role:novoRole});
+  if(window._currentUser?.uid===uid) window._currentUserRole=novoRole;
+}
+
 function renderCfgEditor(){
   document.getElementById('tag-editor').innerHTML=tags.map((t,i)=>{
     const p=getPalette(t.pi);
