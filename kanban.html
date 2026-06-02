@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban · Time de Dados · Digital Hering</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --deep:#030d1a;--mid:#061a2e;--surface:#0a2540;
+  --glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);--glass-h:rgba(56,182,255,0.1);
+  --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
+  --ok:#1de9b6;--warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
+}
+html,body{min-height:100vh;overflow-x:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
+
+.ocean{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
+.bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
+.fish-wrap{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
+.fish-ltr{position:absolute;animation:swimLTR linear infinite;}
+@keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
+.fish-rtl{position:absolute;animation:swimRTL linear infinite;}
+@keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
+
+.app{position:relative;z-index:2;padding:.9rem 1.2rem 5rem;}
+
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;}
+.hd-l{display:flex;align-items:center;gap:8px;}
+.hd-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt);}
+.hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+.hd-btns{display:flex;gap:7px;}
+.btn{display:flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
+.btn:hover{background:var(--glass-h);border-color:var(--accent);}
+.btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+.btn-p:hover{background:rgba(37,99,201,.88);}
+.btn-teal{background:rgba(29,233,182,.15);border-color:rgba(29,233,182,.35);color:var(--teal);}
+.btn-teal:hover{background:rgba(29,233,182,.28);}
+
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:start;}
+@media(max-width:1100px){.board{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.board{grid-template-columns:repeat(2,1fr);}}
+
+.col{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);}
+.col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);}
+.col-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
+.col-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:60px;}
+
+.card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;}
+.card:hover{border-color:var(--accent);transform:translateY(-1px);background:rgba(10,37,64,.92);}
+.card-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:4px;font-weight:700;border:1px solid transparent;}
+.card-title{font-size:11px;font-weight:500;color:var(--txt);margin-bottom:3px;line-height:1.4;}
+.card-desc{font-size:10px;color:var(--txt2);margin-bottom:6px;line-height:1.3;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.avatar{width:18px;height:18px;border-radius:50%;background:rgba(37,99,201,.5);border:1px solid rgba(56,182,255,.3);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.due-badge{font-size:9px;padding:1px 6px;border-radius:999px;font-weight:600;white-space:nowrap;}
+.due-ok{background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);}
+.due-warn{background:rgba(255,209,102,.15);color:var(--warn);border:1px solid rgba(255,209,102,.3);}
+.due-late{background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.3);}
+.due-none{font-size:9px;color:var(--txt3);}
+.cl-bar{margin-top:5px;}
+.cl-track{height:2px;background:rgba(56,182,255,.12);border-radius:999px;overflow:hidden;}
+.cl-fill{height:100%;background:var(--teal);border-radius:999px;}
+.cl-lbl{font-size:8px;color:var(--txt3);margin-top:2px;}
+
+.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.add-btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid;}
+
+/* FAB */
+.fab{position:fixed;bottom:22px;right:22px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.fab-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;font-size:13px;font-family:'Syne',sans-serif;font-weight:700;background:rgba(37,99,201,.88);border:1px solid rgba(56,182,255,.45);border-radius:999px;color:#fff;cursor:pointer;box-shadow:0 4px 28px rgba(37,99,201,.45);transition:all .2s;backdrop-filter:blur(14px);}
+.fab-btn:hover{background:rgba(37,99,201,1);transform:scale(1.04);}
+.fab-config{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:11px;font-family:'DM Sans',sans-serif;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;backdrop-filter:blur(12px);transition:all .2s;}
+.fab-config:hover{border-color:var(--accent);color:var(--txt);}
+
+/* overlays */
+.ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.ov.open{display:flex;}
+.panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
+.panel-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(6,26,46,.97);border-radius:var(--r2) var(--r2) 0 0;}
+.panel-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:7px;}
+.x-btn{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
+.x-btn:hover{color:var(--danger);}
+
+/* agent panel */
+.ag-panel{max-width:500px;max-height:88vh;display:flex;flex-direction:column;}
+.ag-tabs{display:flex;border-bottom:1px solid var(--glass-b);}
+.ag-tab{padding:8px 14px;font-size:11px;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.ag-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.ag-body{padding:12px 14px;overflow-y:auto;flex:1;}
+.tab-c{display:none;}.tab-c.on{display:block;}
+.msgs{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;max-height:240px;overflow-y:auto;}
+.msg{padding:9px 12px;border-radius:var(--r);font-size:12px;line-height:1.65;}
+.msg-ai{background:rgba(3,13,26,.8);border:1px solid var(--glass-b);color:var(--txt);}
+.msg-u{background:rgba(37,99,201,.28);border:1px solid rgba(37,99,201,.4);color:#b8d4ff;}
+.msg-lbl{font-size:9px;font-weight:700;opacity:.6;margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;color:var(--cyan);}
+.q-btns{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.q-btn{font-size:10px;padding:4px 9px;border:1px solid var(--glass-b);border-radius:999px;background:var(--glass);color:var(--txt2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.q-btn:hover{border-color:var(--accent);color:var(--accent);}
+.ag-row{display:flex;gap:6px;}
+.ag-inp{flex:1;padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.ag-inp:focus{outline:none;border-color:var(--accent);}
+.ag-send{padding:7px 14px;font-size:12px;background:rgba(37,99,201,.7);color:#fff;border:1px solid var(--blue);border-radius:var(--r);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.ag-send:hover{background:rgba(37,99,201,.9);}
+.ag-send:disabled{opacity:.4;cursor:not-allowed;}
+.met-g{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;}
+.met{background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px;}
+.met-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px;}
+.met-val{font-size:20px;font-weight:700;font-family:'Syne',sans-serif;}
+.met-sub{font-size:9px;color:var(--txt3);}
+.retro-s{background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px;margin-bottom:7px;}
+.retro-t{font-size:10px;font-weight:700;color:var(--txt2);margin-bottom:5px;}
+.retro-i{font-size:11px;color:var(--txt);padding:3px 0;border-bottom:1px solid rgba(56,182,255,.07);line-height:1.5;}
+.retro-i:last-child{border:none;}
+.dots span{animation:blink 1.2s infinite;}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* card modal */
+.card-panel{max-width:530px;max-height:90vh;overflow-y:auto;}
+.modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:11px;}
+.field{display:flex;flex-direction:column;gap:3px;}
+.fl{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.fi{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.fi:focus{outline:none;border-color:var(--accent);}
+.fi-ta{resize:vertical;min-height:56px;line-height:1.5;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.po-box{background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:10px;}
+.po-lbl{font-size:9px;color:#7eb3ff;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.po-ta{width:100%;background:transparent;border:none;color:var(--txt);font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.6;resize:none;min-height:56px;}
+.po-ta:focus{outline:none;}
+.cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
+.cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
+.cl-items{display:flex;flex-direction:column;gap:5px;margin-bottom:7px;}
+.cl-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);}
+.cl-item input[type=checkbox]{accent-color:var(--teal);}
+.cl-it{flex:1;}
+.cl-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;}
+.cl-del:hover{color:var(--danger);}
+.cl-add-r{display:flex;gap:5px;}
+.cl-ai{flex:1;padding:5px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.cl-ai:focus{outline:none;border-color:var(--teal);}
+.cl-ab{padding:5px 9px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:var(--r);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.cl-ab:hover{background:rgba(29,233,182,.28);}
+.meta-r{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:9px;color:var(--txt3);border-top:1px solid var(--glass-b);padding-top:7px;}
+.panel-ft{padding:9px 16px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:7px;background:rgba(6,26,46,.97);}
+
+/* config panel */
+.cfg-panel{max-width:460px;max-height:88vh;overflow-y:auto;}
+.cfg-body{padding:14px 16px;display:flex;flex-direction:column;gap:16px;}
+.cfg-sec{display:flex;flex-direction:column;gap:8px;}
+.cfg-sec-title{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;}
+.tag-editor{display:flex;flex-direction:column;gap:7px;}
+.tag-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.tag-preview{display:inline-block;font-size:10px;padding:2px 9px;border-radius:999px;font-weight:700;border:1px solid transparent;min-width:60px;text-align:center;white-space:nowrap;}
+.tag-name-inp{width:100px;padding:5px 8px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.tag-name-inp:focus{outline:none;border-color:var(--accent);}
+.color-row{display:flex;gap:5px;flex-wrap:wrap;}
+.color-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;}
+.color-swatch.sel{border-color:#fff;transform:scale(1.2);}
+.tag-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;}
+.tag-del:hover{color:var(--danger);}
+.add-tag-row{display:flex;gap:6px;flex-wrap:wrap;}
+.add-tag-inp{flex:1;min-width:100px;padding:6px 9px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.add-tag-inp:focus{outline:none;border-color:var(--teal);}
+.member-list{display:flex;flex-direction:column;gap:6px;}
+.member-row{display:flex;align-items:center;gap:7px;}
+.member-av{width:26px;height:26px;border-radius:50%;background:rgba(37,99,201,.5);border:1px solid rgba(56,182,255,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.member-inp{flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.member-inp:focus{outline:none;border-color:var(--accent);}
+
+/* version */
+.version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div class="ocean"></div>
+<div id="bwrap" style="position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;"></div>
+<div class="fish-wrap" id="fwrap"></div>
+
+<div class="app">
+  <div class="hd">
+    <div class="hd-l">
+      <div class="hd-title">🐟 Time de Dados</div>
+      <span class="hd-badge">Digital Hering · Sprint 12</span>
+    </div>
+    <div class="hd-btns">
+      <button class="btn btn-p" onclick="openNewCard()">+ Card</button>
+    </div>
+  </div>
+
+  <div class="board" id="board">
+    <div class="col"><div class="col-hd"><div class="col-title"><span class="dot" style="background:#888"></span>Backlog</div><span class="col-cnt" id="cnt-backlog">0</span></div><div class="col-body" id="body-backlog"></div><button class="add-btn" onclick="openNewCard('backlog')">+ Card</button></div>
+    <div class="col"><div class="col-hd"><div class="col-title"><span class="dot" style="background:var(--accent)"></span>A Fazer</div><span class="col-cnt" id="cnt-todo">0</span></div><div class="col-body" id="body-todo"></div><button class="add-btn" onclick="openNewCard('todo')">+ Card</button></div>
+    <div class="col"><div class="col-hd"><div class="col-title"><span class="dot" style="background:var(--teal)"></span>Em Progresso</div><span class="col-cnt" id="cnt-progress">0</span></div><div class="col-body" id="body-progress"></div><button class="add-btn" onclick="openNewCard('progress')">+ Card</button></div>
+    <div class="col"><div class="col-hd"><div class="col-title"><span class="dot" style="background:var(--danger)"></span>Impedimentos</div><span class="col-cnt" id="cnt-blocker">0</span></div><div class="col-body" id="body-blocker"></div><button class="add-btn" onclick="openNewCard('blocker')">+ Card</button></div>
+    <div class="col"><div class="col-hd"><div class="col-title"><span class="dot" style="background:#639922"></span>Concluído</div><span class="col-cnt" id="cnt-done">0</span></div><div class="col-body" id="body-done"></div><button class="add-btn" onclick="openNewCard('done')">+ Card</button></div>
+  </div>
+</div>
+
+<!-- FAB -->
+<div class="fab">
+  <button class="fab-config" onclick="openCfg()">⚙ Configurações</button>
+  <button class="fab-config" onclick="openWorkerConfig()" style="color:var(--accent);">🔧 Worker URL</button>
+  <button class="fab-btn" onclick="openAgent()">🤖 Agente Ágil</button>
+</div>
+
+<!-- AGENT OVERLAY -->
+<div class="ov" id="ag-ov">
+<div class="panel ag-panel">
+  <div class="panel-hd">
+    <div class="panel-title">🤖 Agente Ágil</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--teal);"><span class="dot" style="background:var(--teal);animation:pulse 2s infinite;"></span>online</span>
+      <button class="x-btn" onclick="closeAg()">✕</button>
+    </div>
+  </div>
+  <div class="ag-tabs">
+    <div class="ag-tab on" onclick="swTab('daily')">Daily</div>
+    <div class="ag-tab" onclick="swTab('metricas')">Métricas</div>
+    <div class="ag-tab" onclick="swTab('retro')">Retrospectiva</div>
+  </div>
+  <div class="ag-body">
+    <div class="tab-c on" id="tab-daily">
+      <div class="msgs" id="msgs-daily">
+        <div class="msg msg-ai"><div class="msg-lbl">Agente Ágil</div>Olá! Analiso o board em tempo real. Use os atalhos ou pergunte livremente.</div>
+      </div>
+      <div class="q-btns">
+        <button class="q-btn" onclick="qa('daily','Levanta os pontos da daily de hoje com base no board')">📋 Daily</button>
+        <button class="q-btn" onclick="qa('daily','Quais os maiores riscos para fechar essa sprint?')">⚠️ Riscos</button>
+        <button class="q-btn" onclick="qa('daily','Tem algum impedimento crítico agora?')">🚧 Bloqueios</button>
+      </div>
+      <div class="ag-row">
+        <input class="ag-inp" id="inp-daily" placeholder="Pergunte sobre o board..." onkeydown="if(event.key==='Enter')qa('daily',this.value)">
+        <button class="ag-send" id="snd-daily" onclick="qa('daily',document.getElementById('inp-daily').value)">Enviar</button>
+      </div>
+    </div>
+    <div class="tab-c" id="tab-metricas">
+      <div class="met-g" id="met-grid"></div>
+      <div class="msgs" id="msgs-metricas">
+        <div class="msg msg-ai"><div class="msg-lbl">Agente Ágil</div>Pergunte sobre WIP, capacidade ou throughput.</div>
+      </div>
+      <div class="q-btns">
+        <button class="q-btn" onclick="qa('metricas','Analise o WIP e a capacidade do time')">📊 WIP</button>
+        <button class="q-btn" onclick="qa('metricas','O throughput está saudável?')">🎯 Throughput</button>
+      </div>
+      <div class="ag-row">
+        <input class="ag-inp" id="inp-metricas" placeholder="Métricas..." onkeydown="if(event.key==='Enter')qa('metricas',this.value)">
+        <button class="ag-send" id="snd-metricas" onclick="qa('metricas',document.getElementById('inp-metricas').value)">Enviar</button>
+      </div>
+    </div>
+    <div class="tab-c" id="tab-retro">
+      <div class="retro-s"><div class="retro-t">✅ O que foi bem</div><div class="retro-i">Arquitetura de agentes definida e validada</div><div class="retro-i">3 cards entregues, infraestrutura pronta</div></div>
+      <div class="retro-s"><div class="retro-t">⚠️ Pontos de melhoria</div><div class="retro-i">Bloqueio do ERP não escalado a tempo</div><div class="retro-i">Pipeline VTEX ainda manual</div></div>
+      <div class="msgs" id="msgs-retro">
+        <div class="msg msg-ai"><div class="msg-lbl">Agente Ágil</div>Posso gerar ações ou aprofundar qualquer ponto.</div>
+      </div>
+      <div class="q-btns">
+        <button class="q-btn" onclick="qa('retro','Gere ações de melhoria para o próximo sprint')">🔧 Ações</button>
+        <button class="q-btn" onclick="qa('retro','Como escalar o bloqueio do ERP?')">📢 Escalar</button>
+      </div>
+      <div class="ag-row">
+        <input class="ag-inp" id="inp-retro" placeholder="Retrospectiva..." onkeydown="if(event.key==='Enter')qa('retro',this.value)">
+        <button class="ag-send" id="snd-retro" onclick="qa('retro',document.getElementById('inp-retro').value)">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- CARD MODAL -->
+<div class="ov" id="card-ov">
+<div class="panel card-panel">
+  <div class="panel-hd">
+    <div class="panel-title" id="m-title-disp">Card</div>
+    <button class="x-btn" onclick="closeCard()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="field"><label class="fl">Título</label><input class="fi" id="m-title" type="text" placeholder="Título do card"></div>
+    <div class="frow">
+      <div class="field"><label class="fl">Tag</label><select class="fi" id="m-tag"></select></div>
+      <div class="field"><label class="fl">Coluna</label>
+        <select class="fi" id="m-col">
+          <option value="backlog">Backlog</option><option value="todo">A Fazer</option>
+          <option value="progress">Em Progresso</option><option value="blocker">Impedimentos</option><option value="done">Concluído</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="field"><label class="fl">Responsável</label><select class="fi" id="m-owner"></select></div>
+      <div class="field"><label class="fl">Prazo</label><input class="fi" id="m-due" type="date"></div>
+    </div>
+    <div class="field"><label class="fl">Descrição</label><textarea class="fi fi-ta" id="m-desc" rows="2" placeholder="Descrição breve do card..."></textarea></div>
+    <div class="po-box">
+      <div class="po-lbl">🎯 Insights do PO</div>
+      <textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (regra SMART)..."></textarea>
+    </div>
+    <div class="cl-sec">
+      <div class="cl-hd">☑ Checklist</div>
+      <div class="cl-items" id="m-checklist"></div>
+      <div class="cl-add-r">
+        <input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()">
+        <button class="cl-ab" onclick="addCI()">+ Add</button>
+      </div>
+    </div>
+    <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
+  </div>
+  <div class="panel-ft">
+    <button class="btn btn-teal" onclick="insightsCard()">🤖 Insights ↗</button>
+    <button class="btn" onclick="closeCard()">Cancelar</button>
+    <button class="btn btn-p" onclick="saveCard()">Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- CONFIG OVERLAY -->
+<div class="ov" id="cfg-ov">
+<div class="panel cfg-panel">
+  <div class="panel-hd">
+    <div class="panel-title">⚙ Configurações</div>
+    <button class="x-btn" onclick="closeCfg()">✕</button>
+  </div>
+  <div class="cfg-body">
+    <div class="cfg-sec">
+      <div class="cfg-sec-title">Tags do board</div>
+      <div class="tag-editor" id="tag-editor"></div>
+      <div class="add-tag-row" style="margin-top:4px;">
+        <input class="add-tag-inp" id="new-tag-name" placeholder="Nome da nova tag...">
+        <button class="btn btn-teal" onclick="addTag()">+ Tag</button>
+      </div>
+    </div>
+    <div class="cfg-sec">
+      <div class="cfg-sec-title">Membros do time</div>
+      <div class="member-list" id="member-list"></div>
+      <div class="add-tag-row" style="margin-top:4px;">
+        <input class="add-tag-inp" id="new-member-init" placeholder="Iniciais" style="max-width:80px;">
+        <input class="add-tag-inp" id="new-member-name" placeholder="Nome completo">
+        <button class="btn btn-teal" onclick="addMember()">+ Membro</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;padding-top:4px;">
+      <button class="btn btn-p" onclick="saveCfg()">Salvar configurações</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- WORKER CONFIG OVERLAY -->
+<div class="ov" id="worker-ov">
+<div class="panel" style="max-width:420px;">
+  <div class="panel-hd">
+    <div class="panel-title">🔧 Configurar Worker</div>
+    <button class="x-btn" onclick="document.getElementById('worker-ov').classList.remove('open')">✕</button>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <p style="font-size:12px;color:var(--txt2);line-height:1.6;">Cole abaixo a URL do seu Cloudflare Worker. Ela será salva no navegador e usada por todas as chamadas do Agente Ágil.</p>
+    <div class="field">
+      <label class="fl">URL do Worker</label>
+      <input class="fi" id="worker-url-inp" type="url" placeholder="https://kanban-hering-proxy.SEU-USUARIO.workers.dev/api/chat">
+    </div>
+    <div style="background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:10px;font-size:11px;color:#7eb3ff;line-height:1.6;">
+      <strong>Como obter a URL:</strong><br>
+      1. Faça o deploy do <code>worker.js</code> no Cloudflare<br>
+      2. Configure <code>ANTHROPIC_API_KEY</code> como Secret<br>
+      3. Copie a URL gerada (formato acima) e cole aqui
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn" onclick="document.getElementById('worker-ov').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-p" onclick="saveWorkerUrl()">Salvar e recarregar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="version">v1.1</div>
+
+<script>
+// 🔧 Coloque aqui a URL do seu Cloudflare Worker após o deploy
+// Ex: https://kanban-hering-proxy.SEU-USUARIO.workers.dev/api/chat
+const ANTHROPIC_API = (localStorage.getItem('kanban_worker_url') || '').trim() || null;
+const today = new Date(); today.setHours(0,0,0,0);
+
+const PALETTE = [
+  {bg:'rgba(56,182,255,.15)',border:'rgba(56,182,255,.35)',color:'#38b6ff',hex:'#38b6ff'},
+  {bg:'rgba(29,233,182,.12)',border:'rgba(29,233,182,.3)',color:'#1de9b6',hex:'#1de9b6'},
+  {bg:'rgba(255,209,102,.12)',border:'rgba(255,209,102,.3)',color:'#ffd166',hex:'#ffd166'},
+  {bg:'rgba(255,107,107,.12)',border:'rgba(255,107,107,.3)',color:'#ff6b6b',hex:'#ff6b6b'},
+  {bg:'rgba(37,99,201,.2)',border:'rgba(37,99,201,.4)',color:'#7eb3ff',hex:'#7eb3ff'},
+  {bg:'rgba(200,100,255,.12)',border:'rgba(200,100,255,.3)',color:'#d67fff',hex:'#d67fff'},
+];
+
+let tags = [
+  {id:'data',label:'Data',pi:0},
+  {id:'ml',label:'ML',pi:4},
+  {id:'feat',label:'Feature',pi:1},
+  {id:'infra',label:'Infra',pi:2},
+  {id:'bug',label:'Bloqueio',pi:3},
+];
+
+let members = [
+  {init:'CS',name:'Caio Soares'},
+  {init:'AA',name:'André Andreeta'},
+  {init:'TF',name:'TF'},
+  {init:'LM',name:'LM'},
+  {init:'RS',name:'RS'},
+  {init:'AM',name:'AM'},
+];
+
+let cards = [
+  {id:'c1',col:'backlog',tag:'ml',title:'Modelo de previsão de demanda v2',desc:'Retraining com novos dados de sell-out 2025',owner:'RS',due:'',po:'',checklist:[],created:'Caio Soares',edited:'Caio Soares',createdAt:'2026-05-28',editedAt:'2026-05-28'},
+  {id:'c2',col:'backlog',tag:'infra',title:'Migração Databricks → Unity Catalog',desc:'Catalogar datasets existentes',owner:'TF',due:'',po:'Precisamos garantir que todos os datasets estejam catalogados antes de escalar os agentes. Critério: 100% dos datasets com owner e descrição.',checklist:[{t:'Inventariar datasets',done:false},{t:'Mapear owners e metadados',done:true},{t:'Validar com governança',done:false}],created:'Caio Soares',edited:'TF',createdAt:'2026-05-28',editedAt:'2026-05-30'},
+  {id:'c3',col:'backlog',tag:'data',title:'Dashboard de churn por canal',desc:'Integrar dados e-commerce e lojas físicas',owner:'AM',due:'',po:'',checklist:[],created:'Caio Soares',edited:'Caio Soares',createdAt:'2026-05-29',editedAt:'2026-05-29'},
+  {id:'c4',col:'todo',tag:'feat',title:'Pipeline de coleta VTEX automático',desc:'Substituir planilha manual de performance',owner:'CS',due:'2026-06-10',po:'Hoje processo é 100% manual. Pipeline deve coletar GMV, pedidos e conversão diariamente. Meta: reduzir coleta de 2h para 0h até 10/06.',checklist:[{t:'Mapear endpoints VTEX',done:true},{t:'Criar job agendado',done:false},{t:'Testar em staging',done:false},{t:'Documentar',done:false}],created:'CS',edited:'CS',createdAt:'2026-05-30',editedAt:'2026-06-01'},
+  {id:'c5',col:'todo',tag:'data',title:'Validação de dados de merchandising',desc:'Cruzar fonte Analytics × planilha VM',owner:'LM',due:'2026-06-12',po:'',checklist:[],created:'CS',edited:'CS',createdAt:'2026-05-31',editedAt:'2026-05-31'},
+  {id:'c6',col:'progress',tag:'ml',title:'Agente VM — system prompt inicial',desc:'Mapeamento de regras com analista',owner:'CS',due:'2026-06-05',po:'Mapear junto ao analista de VM todas as regras de decisão manuais. Output: system prompt validado pelo analista.',checklist:[{t:'Sessão com analista de VM',done:true},{t:'Escrever system prompt v1',done:true},{t:'Validação analista',done:false},{t:'Ajustes finais',done:false}],created:'CS',edited:'CS',createdAt:'2026-05-30',editedAt:'2026-06-02'},
+  {id:'c7',col:'progress',tag:'infra',title:'Cloudflare Workers — setup inicial',desc:'Configurar rotas e variáveis de ambiente',owner:'TF',due:'2026-06-06',po:'',checklist:[],created:'TF',edited:'TF',createdAt:'2026-05-31',editedAt:'2026-06-01'},
+  {id:'c8',col:'blocker',tag:'bug',title:'Acesso à API do ERP interno',desc:'Aguardando credencial do time de TI',owner:'RS',due:'2026-06-02',po:'BLOQUEIO CRÍTICO: sem esse acesso o Agente Coletor não integra dados de estoque. Escalar para Rafael Passos se não resolver hoje.',checklist:[{t:'Abrir chamado no TI',done:true},{t:'Follow-up diário',done:true},{t:'Escalar para diretoria',done:false}],created:'RS',edited:'CS',createdAt:'2026-05-30',editedAt:'2026-06-02'},
+  {id:'c9',col:'done',tag:'data',title:'Mapeamento fontes de dados VTEX',desc:'',owner:'LM',due:'2026-05-28',po:'',checklist:[],created:'LM',edited:'LM',createdAt:'2026-05-25',editedAt:'2026-05-28'},
+  {id:'c10',col:'done',tag:'feat',title:'Definição de arquitetura de agentes',desc:'',owner:'CS',due:'2026-05-30',po:'',checklist:[],created:'CS',edited:'CS',createdAt:'2026-05-28',editedAt:'2026-05-30'},
+  {id:'c11',col:'done',tag:'infra',title:'Setup repositório GitHub',desc:'',owner:'TF',due:'2026-05-25',po:'',checklist:[],created:'TF',edited:'TF',createdAt:'2026-05-22',editedAt:'2026-05-25'},
+];
+
+let editingId = null;
+
+function getTag(id){ return tags.find(t=>t.id===id)||tags[0]; }
+function getPalette(pi){ return PALETTE[pi]||PALETTE[0]; }
+function tagHtml(tagId){
+  const t=getTag(tagId); const p=getPalette(t.pi);
+  return `<span class="card-tag" style="background:${p.bg};border-color:${p.border};color:${p.color}">${t.label}</span>`;
+}
+function getDue(due){
+  if(!due) return {cls:'',lbl:''};
+  const d=new Date(due+'T00:00:00'); d.setHours(0,0,0,0);
+  const diff=Math.round((d-today)/86400000);
+  const mo=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  if(diff<0) return {cls:'due-late',lbl:`⚠ ${Math.abs(diff)}d atrasado`};
+  if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
+  return {cls:'due-ok',lbl:mo};
+}
+function clProg(cl){
+  if(!cl||!cl.length) return null;
+  const done=cl.filter(i=>i.done).length;
+  return {done,total:cl.length,pct:Math.round(done/cl.length*100)};
+}
+
+function renderBoard(){
+  ['backlog','todo','progress','blocker','done'].forEach(col=>{
+    const body=document.getElementById('body-'+col);
+    body.innerHTML='';
+    const cc=cards.filter(c=>c.col===col);
+    cc.forEach(card=>{
+      const{cls:dc,lbl:dl}=getDue(card.due);
+      const cp=clProg(card.checklist);
+      const op=col==='done'?'opacity:.6;':'';
+      const bex=col==='blocker'?'border-color:rgba(255,107,107,.4);':'';
+      const dueHtml=dl?`<span class="due-badge ${dc}">${dl}</span>`:'<span class="due-none">sem prazo</span>';
+      const avHtml=card.owner?`<div class="avatar">${card.owner}</div>`:'<div class="avatar" style="opacity:.25">?</div>';
+      const clHtml=cp?`<div class="cl-bar"><div class="cl-track"><div class="cl-fill" style="width:${cp.pct}%"></div></div><div class="cl-lbl">${cp.done}/${cp.total}</div></div>`:'';
+      const div=document.createElement('div');
+      div.className='card'; div.style.cssText=op+bex;
+      div.onclick=()=>openCard(card.id);
+      div.innerHTML=`${tagHtml(card.tag)}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
+      body.appendChild(div);
+    });
+    document.getElementById('cnt-'+col).textContent=cc.length;
+  });
+  updateMetrics();
+}
+
+function updateMetrics(){
+  const g=document.getElementById('met-grid'); if(!g) return;
+  const wip=cards.filter(c=>c.col==='progress').length;
+  const bl=cards.filter(c=>c.col==='blocker').length;
+  const done=cards.filter(c=>c.col==='done').length;
+  g.innerHTML=`
+    <div class="met"><div class="met-lbl">WIP atual</div><div class="met-val">${wip}</div><div class="met-sub">limite rec. 3</div></div>
+    <div class="met"><div class="met-lbl">Throughput</div><div class="met-val">${done}</div><div class="met-sub">cards concluídos</div></div>
+    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':'var(--teal)'}">${bl}</div><div class="met-sub">${bl?'atenção necessária':'sem bloqueios'}</div></div>
+    <div class="met"><div class="met-lbl">Total cards</div><div class="met-val">${cards.length}</div><div class="met-sub">no board</div></div>`;
+}
+
+function populateTagSelect(){
+  const sel=document.getElementById('m-tag');
+  sel.innerHTML=tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+}
+function populateOwnerSelect(){
+  const sel=document.getElementById('m-owner');
+  sel.innerHTML='<option value="">— sem atribuição —</option>'+members.map(m=>`<option value="${m.init}">${m.init} · ${m.name}</option>`).join('');
+}
+
+function openCard(id){
+  editingId=id;
+  const c=cards.find(x=>x.id===id);
+  populateTagSelect(); populateOwnerSelect();
+  document.getElementById('m-title').value=c.title;
+  document.getElementById('m-title-disp').textContent=c.title;
+  document.getElementById('m-tag').value=c.tag;
+  document.getElementById('m-col').value=c.col;
+  document.getElementById('m-owner').value=c.owner||'';
+  document.getElementById('m-due').value=c.due||'';
+  document.getElementById('m-desc').value=c.desc||'';
+  document.getElementById('m-po').value=c.po||'';
+  document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
+  document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
+  renderCL(c.checklist||[]);
+  document.getElementById('card-ov').classList.add('open');
+}
+function openNewCard(col){
+  editingId=null;
+  populateTagSelect(); populateOwnerSelect();
+  document.getElementById('m-title').value='';
+  document.getElementById('m-title-disp').textContent='Novo card';
+  document.getElementById('m-tag').value=tags[0]?.id||'';
+  document.getElementById('m-col').value=col||'backlog';
+  document.getElementById('m-owner').value='';
+  document.getElementById('m-due').value='';
+  document.getElementById('m-desc').value='';
+  document.getElementById('m-po').value='';
+  document.getElementById('m-meta-c').textContent='';
+  document.getElementById('m-meta-e').textContent='';
+  renderCL([]);
+  document.getElementById('card-ov').classList.add('open');
+}
+function closeCard(){ document.getElementById('card-ov').classList.remove('open'); }
+function saveCard(){
+  const title=document.getElementById('m-title').value.trim();
+  if(!title) return;
+  const td2=new Date().toISOString().split('T')[0];
+  const cl=getCL();
+  if(editingId){
+    const c=cards.find(x=>x.id===editingId);
+    Object.assign(c,{title,tag:document.getElementById('m-tag').value,col:document.getElementById('m-col').value,
+      owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
+      desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
+      checklist:cl,edited:'Usuário',editedAt:td2});
+  } else {
+    cards.push({id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
+      title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
+      due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
+      checklist:cl,created:'Usuário',edited:'Usuário',createdAt:td2,editedAt:td2});
+  }
+  renderBoard(); closeCard();
+}
+
+function renderCL(cl){
+  const w=document.getElementById('m-checklist'); w.innerHTML='';
+  cl.forEach((item,i)=>{
+    const d=document.createElement('div'); d.className='cl-item';
+    d.innerHTML=`<input type="checkbox" ${item.done?'checked':''}><span class="cl-it">${item.t}</span><button class="cl-del" onclick="delCI(${i})">✕</button>`;
+    w.appendChild(d);
+  });
+}
+function getCL(){ return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({t:r.querySelector('.cl-it').textContent,done:r.querySelector('input').checked})); }
+function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
+function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
+
+function insightsCard(){
+  const title=document.getElementById('m-title').value;
+  const po=document.getElementById('m-po').value;
+  closeCard(); openAgent(); swTab('daily');
+  const q=`Dá insights ágeis sobre o card "${title}"${po?' — contexto PO: '+po.substring(0,120):''}`;
+  document.getElementById('inp-daily').value=q;
+  qa('daily',q);
+}
+
+// AGENT
+function openAgent(){ document.getElementById('ag-ov').classList.add('open'); updateMetrics(); }
+function closeAg(){ document.getElementById('ag-ov').classList.remove('open'); }
+function swTab(tab){
+  document.querySelectorAll('.ag-tab').forEach((t,i)=>t.classList.toggle('on',['daily','metricas','retro'][i]===tab));
+  ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
+}
+function agCtx(){
+  const snap=cards.map(c=>`[${c.col.toUpperCase()}] "${c.title}" resp:${c.owner||'?'} prazo:${c.due||'s/prazo'}${c.po?' PO:'+c.po.substring(0,60):''}`)
+    .join('\n');
+  return `Você é o Agente Ágil do time de dados da Digital Hering (Grupo Azzas 2154). Analisa o Kanban e responde em português, diretamente e de forma acionável (máx 4 parágrafos).
+
+BOARD ATUAL:
+${snap}
+
+WIP: ${cards.filter(c=>c.col==='progress').length} | Bloqueios: ${cards.filter(c=>c.col==='blocker').length} | Concluídos: ${cards.filter(c=>c.col==='done').length}
+Contexto: time constrói agentes IA (Coletor VTEX, Agente VM, Agente Ágil) em Cloudflare Workers + Anthropic API.`;
+}
+function appMsg(tab,role,txt){
+  const w=document.getElementById('msgs-'+tab);
+  const d=document.createElement('div');
+  d.className='msg '+(role==='ai'?'msg-ai':'msg-u');
+  if(role==='ai') d.innerHTML='<div class="msg-lbl">Agente Ágil</div>'+txt.replace(/\n/g,'<br>');
+  else d.textContent=txt;
+  w.appendChild(d); w.scrollTop=w.scrollHeight;
+}
+function setLoad(tab,on){
+  const id='ld-'+tab;
+  if(on){ const d=document.createElement('div'); d.id=id; d.className='msg msg-ai'; d.innerHTML='<span class="dots"><span>●</span><span>●</span><span>●</span></span> Analisando...'; document.getElementById('msgs-'+tab).appendChild(d); }
+  else { const el=document.getElementById(id); if(el) el.remove(); }
+}
+async function qa(tab,q){
+  if(!q||!q.trim()) return;
+  if(!ANTHROPIC_API){
+    openWorkerConfig();
+    return;
+  }
+  appMsg(tab,'user',q);
+  document.getElementById('inp-'+tab).value='';
+  document.getElementById('snd-'+tab).disabled=true;
+  setLoad(tab,true);
+  try {
+    const r=await fetch(ANTHROPIC_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1000,system:agCtx(),messages:[{role:'user',content:q}]})});
+    const data=await r.json();
+    setLoad(tab,false);
+    appMsg(tab,'ai',data.content?.map(b=>b.text||'').join('')||'Sem resposta.');
+  } catch(e){ setLoad(tab,false); appMsg(tab,'ai','Erro de conexão. Verifique se o Worker está no ar.'); }
+  document.getElementById('snd-'+tab).disabled=false;
+}
+function openWorkerConfig(){
+  document.getElementById('worker-ov').classList.add('open');
+  const saved=localStorage.getItem('kanban_worker_url')||'';
+  document.getElementById('worker-url-inp').value=saved;
+}
+function saveWorkerUrl(){
+  const url=document.getElementById('worker-url-inp').value.trim();
+  if(!url){ alert('Cole a URL do Worker.'); return; }
+  localStorage.setItem('kanban_worker_url',url);
+  document.getElementById('worker-ov').classList.remove('open');
+  location.reload();
+}
+
+// CONFIG
+function openCfg(){ renderCfgEditor(); document.getElementById('cfg-ov').classList.add('open'); }
+function closeCfg(){ document.getElementById('cfg-ov').classList.remove('open'); }
+function renderCfgEditor(){
+  document.getElementById('tag-editor').innerHTML=tags.map((t,i)=>{
+    const p=getPalette(t.pi);
+    const swatches=PALETTE.map((pp,pi)=>`<div class="color-swatch${t.pi===pi?' sel':''}" style="background:${pp.hex}" onclick="setTagColor(${i},${pi})" title="${pp.hex}"></div>`).join('');
+    return `<div class="tag-row">
+      <span class="tag-preview" style="background:${p.bg};border-color:${p.border};color:${p.color}">${t.label}</span>
+      <input class="tag-name-inp" value="${t.label}" oninput="updateTagName(${i},this.value)">
+      <div class="color-row">${swatches}</div>
+      <button class="tag-del" onclick="delTag(${i})" title="Remover tag">✕</button>
+    </div>`;
+  }).join('');
+  document.getElementById('member-list').innerHTML=members.map((m,i)=>`
+    <div class="member-row">
+      <div class="member-av">${m.init}</div>
+      <input class="member-inp" value="${m.name}" oninput="members[${i}].name=this.value" placeholder="Nome">
+      <button class="tag-del" onclick="delMember(${i})">✕</button>
+    </div>`).join('');
+}
+function setTagColor(ti,pi){ tags[ti].pi=pi; renderCfgEditor(); }
+function updateTagName(ti,val){ tags[ti].label=val; renderCfgEditor(); }
+function delTag(i){ if(tags.length<=1){ alert('O board precisa de pelo menos uma tag.'); return; } tags.splice(i,1); renderCfgEditor(); }
+function addTag(){
+  const inp=document.getElementById('new-tag-name'); const name=inp.value.trim(); if(!name) return;
+  const id=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  tags.push({id,label:name,pi:0}); inp.value=''; renderCfgEditor();
+}
+function delMember(i){ members.splice(i,1); renderCfgEditor(); }
+function addMember(){
+  const ii=document.getElementById('new-member-init').value.trim().toUpperCase().substring(0,3);
+  const nm=document.getElementById('new-member-name').value.trim();
+  if(!ii||!nm) return;
+  members.push({init:ii,name:nm});
+  document.getElementById('new-member-init').value='';
+  document.getElementById('new-member-name').value='';
+  renderCfgEditor();
+}
+function saveCfg(){ renderBoard(); closeCfg(); }
+
+// FISH & BUBBLES
+(function(){
+  const fw=document.getElementById('fwrap');
+  const bw=document.getElementById('bwrap');
+
+  // Fish SVGs: cauda à esquerda, boca à direita (nadam para a direita naturalmente)
+  const svgs=[
+    `<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="0,14 14,4 14,24" fill="rgba(56,182,255,.22)"/>
+      <ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/>
+      <circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/>
+      <line x1="14" y1="10" x2="48" y2="10" stroke="rgba(56,182,255,.12)" stroke-width="0.7"/>
+      <line x1="14" y1="14" x2="50" y2="14" stroke="rgba(56,182,255,.1)" stroke-width="0.7"/>
+    </svg>`,
+    `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="0,11 12,3 12,19" fill="rgba(29,233,182,.2)"/>
+      <ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/>
+      <circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/>
+    </svg>`,
+    `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="0,17 16,5 16,29" fill="rgba(126,200,227,.2)"/>
+      <ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/>
+      <circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/>
+      <line x1="16" y1="12" x2="58" y2="12" stroke="rgba(126,200,227,.1)" stroke-width="0.8"/>
+    </svg>`,
+    `<svg viewBox="0 0 50 24" width="50" height="24" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="0,12 13,4 13,20" fill="rgba(255,209,102,.18)"/>
+      <ellipse cx="30" cy="12" rx="18" ry="9" fill="rgba(255,209,102,.1)" stroke="rgba(255,209,102,.25)" stroke-width="1"/>
+      <circle cx="41" cy="9" r="2.2" fill="rgba(255,209,102,.45)"/>
+    </svg>`,
+  ];
+
+  for(let i=0;i<8;i++){
+    const f=document.createElement('div');
+    const goRight=Math.random()>.5;
+    // goRight → fish-ltr: aparece da esquerda, vai pra direita, sem flip (boca já aponta pra direita)
+    // !goRight → fish-rtl: aparece da direita, vai pra esquerda, scaleX(-1) vira a boca pra esquerda
+    f.className=goRight?'fish-ltr':'fish-rtl';
+    f.style.top=(5+Math.random()*80)+'%';
+    f.style.animationDuration=(14+Math.random()*24)+'s';
+    f.style.animationDelay=(-Math.random()*24)+'s';
+    f.innerHTML=svgs[i%svgs.length];
+    fw.appendChild(f);
+  }
+
+  for(let i=0;i<16;i++){
+    const b=document.createElement('div'); b.className='bubble';
+    const sz=3+Math.random()*14;
+    b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`;
+    bw.appendChild(b);
+  }
+})();
+
+// Fechar overlays clicando fora do painel
+document.querySelectorAll('.ov').forEach(ov=>{
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('open'); });
+});
+
+renderBoard();
+</script>
+</body>
+</html>
