@@ -177,6 +177,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 /* version */
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+    // 🔧 Cole aqui as credenciais do seu projeto hering-onboarding
+    const firebaseConfig = {
+      apiKey: localStorage.getItem('fb_apiKey') || '',
+      authDomain: localStorage.getItem('fb_authDomain') || '',
+      databaseURL: localStorage.getItem('fb_databaseURL') || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+      projectId: localStorage.getItem('fb_projectId') || '',
+      storageBucket: localStorage.getItem('fb_storageBucket') || '',
+      messagingSenderId: localStorage.getItem('fb_messagingSenderId') || '',
+      appId: localStorage.getItem('fb_appId') || '',
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    window._db = db;
+    window._fbRef = ref;
+    window._fbSet = set;
+    window._fbGet = get;
+    window._fbOnValue = onValue;
+    window._fbUpdate = update;
+    window._fbRemove = remove;
+    window._fbReady = true;
+    window.dispatchEvent(new Event('fb-ready'));
+    console.log('[Firebase] conectado:', firebaseConfig.databaseURL);
+  </script>
 </head>
 <body>
 
@@ -207,7 +236,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 <!-- FAB -->
 <div class="fab">
   <button class="fab-config" onclick="openCfg()">⚙ Configurações</button>
-  <button class="fab-config" onclick="openWorkerConfig()" style="color:var(--accent);">🔧 Worker URL</button>
   <button class="fab-btn" onclick="openAgent()">🤖 Agente Ágil</button>
 </div>
 
@@ -326,59 +354,82 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
     <div class="panel-title">⚙ Configurações</div>
     <button class="x-btn" onclick="closeCfg()">✕</button>
   </div>
+  <div class="ag-tabs" id="cfg-tabs">
+    <div class="ag-tab on" onclick="swCfgTab('tags')">Tags</div>
+    <div class="ag-tab" onclick="swCfgTab('membros')">Membros</div>
+    <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
+    <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
+  </div>
   <div class="cfg-body">
-    <div class="cfg-sec">
-      <div class="cfg-sec-title">Tags do board</div>
-      <div class="tag-editor" id="tag-editor"></div>
-      <div class="add-tag-row" style="margin-top:4px;">
-        <input class="add-tag-inp" id="new-tag-name" placeholder="Nome da nova tag...">
-        <button class="btn btn-teal" onclick="addTag()">+ Tag</button>
+
+    <div class="tab-c on" id="cfgtab-tags">
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Tags do board</div>
+        <div class="tag-editor" id="tag-editor"></div>
+        <div class="add-tag-row" style="margin-top:4px;">
+          <input class="add-tag-inp" id="new-tag-name" placeholder="Nome da nova tag...">
+          <button class="btn btn-teal" onclick="addTag()">+ Tag</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding-top:8px;">
+        <button class="btn btn-p" onclick="saveCfg()">Salvar</button>
       </div>
     </div>
-    <div class="cfg-sec">
-      <div class="cfg-sec-title">Membros do time</div>
-      <div class="member-list" id="member-list"></div>
-      <div class="add-tag-row" style="margin-top:4px;">
-        <input class="add-tag-inp" id="new-member-init" placeholder="Iniciais" style="max-width:80px;">
-        <input class="add-tag-inp" id="new-member-name" placeholder="Nome completo">
-        <button class="btn btn-teal" onclick="addMember()">+ Membro</button>
+
+    <div class="tab-c" id="cfgtab-membros">
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Membros do time</div>
+        <div class="member-list" id="member-list"></div>
+        <div class="add-tag-row" style="margin-top:4px;">
+          <input class="add-tag-inp" id="new-member-init" placeholder="Iniciais" style="max-width:80px;">
+          <input class="add-tag-inp" id="new-member-name" placeholder="Nome completo">
+          <button class="btn btn-teal" onclick="addMember()">+ Membro</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding-top:8px;">
+        <button class="btn btn-p" onclick="saveCfg()">Salvar</button>
       </div>
     </div>
-    <div style="display:flex;justify-content:flex-end;padding-top:4px;">
-      <button class="btn btn-p" onclick="saveCfg()">Salvar configurações</button>
+
+    <div class="tab-c" id="cfgtab-worker">
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Cloudflare Worker · Agente Ágil</div>
+        <p style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">URL do Worker que faz proxy para a API da Anthropic. Salva no navegador.</p>
+        <div class="field">
+          <label class="fl">URL do Worker</label>
+          <input class="fi" id="worker-url-inp" type="url" placeholder="https://seu-worker.workers.dev/api/chat">
+        </div>
+        <div style="background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:10px;font-size:11px;color:#7eb3ff;line-height:1.6;margin-top:8px;">
+          Cloudflare Dashboard → Workers → seu worker → URL de produção
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding-top:8px;">
+        <button class="btn btn-p" onclick="saveWorkerUrl()">Salvar e recarregar</button>
+      </div>
     </div>
+
+    <div class="tab-c" id="cfgtab-firebase">
+      <div class="cfg-sec">
+        <div class="cfg-sec-title">Firebase · hering-onboarding</div>
+        <p style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">Credenciais do projeto Firebase para persistência em tempo real.</p>
+        <div class="field"><label class="fl">Database URL</label><input class="fi" id="fb-url" placeholder="https://hering-onboarding-default-rtdb.firebaseio.com"></div>
+        <div class="field" style="margin-top:6px;"><label class="fl">API Key</label><input class="fi" id="fb-key" placeholder="AIza..."></div>
+        <div class="field" style="margin-top:6px;"><label class="fl">Project ID</label><input class="fi" id="fb-pid" placeholder="hering-onboarding"></div>
+        <div class="field" style="margin-top:6px;"><label class="fl">App ID</label><input class="fi" id="fb-aid" placeholder="1:xxx:web:xxx"></div>
+        <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;margin-top:8px;">
+          Firebase Console → hering-onboarding → ⚙ Configurações → Seus apps → SDK snippet → Config
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding-top:8px;">
+        <button class="btn btn-p" onclick="saveFbConfig()">Salvar e recarregar</button>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
 
-<!-- WORKER CONFIG OVERLAY -->
-<div class="ov" id="worker-ov">
-<div class="panel" style="max-width:420px;">
-  <div class="panel-hd">
-    <div class="panel-title">🔧 Configurar Worker</div>
-    <button class="x-btn" onclick="document.getElementById('worker-ov').classList.remove('open')">✕</button>
-  </div>
-  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-    <p style="font-size:12px;color:var(--txt2);line-height:1.6;">Cole abaixo a URL do seu Cloudflare Worker. Ela será salva no navegador e usada por todas as chamadas do Agente Ágil.</p>
-    <div class="field">
-      <label class="fl">URL do Worker</label>
-      <input class="fi" id="worker-url-inp" type="url" placeholder="https://kanban-hering-proxy.SEU-USUARIO.workers.dev/api/chat">
-    </div>
-    <div style="background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:10px;font-size:11px;color:#7eb3ff;line-height:1.6;">
-      <strong>Como obter a URL:</strong><br>
-      1. Faça o deploy do <code>worker.js</code> no Cloudflare<br>
-      2. Configure <code>ANTHROPIC_API_KEY</code> como Secret<br>
-      3. Copie a URL gerada (formato acima) e cole aqui
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;">
-      <button class="btn" onclick="document.getElementById('worker-ov').classList.remove('open')">Cancelar</button>
-      <button class="btn btn-p" onclick="saveWorkerUrl()">Salvar e recarregar</button>
-    </div>
-  </div>
-</div>
-</div>
-
-<div class="version">v1.2</div>
+<div class="version">v1.4</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -426,6 +477,72 @@ let cards = [
 ];
 
 let editingId = null;
+
+// ── FIREBASE ──────────────────────────────────────────────────────
+const FB_PATH = 'kanban/dados'; // nó no Realtime Database
+
+function fbReady(){ return window._fbReady === true; }
+
+function fbSaveAll(){
+  if(!fbReady()) return;
+  const db=window._db, r=window._fbRef, s=window._fbSet;
+  s(r(db, FB_PATH+'/cards'), JSON.parse(JSON.stringify(cards)));
+  s(r(db, FB_PATH+'/tags'), JSON.parse(JSON.stringify(tags)));
+  s(r(db, FB_PATH+'/members'), JSON.parse(JSON.stringify(members)));
+}
+
+function fbSaveMsgs(tab){
+  if(!fbReady()) return;
+  const db=window._db, r=window._fbRef, s=window._fbSet;
+  const msgs=Array.from(document.querySelectorAll('#msgs-'+tab+' .msg')).map(m=>({
+    role: m.classList.contains('msg-ai')?'ai':'user',
+    txt: m.querySelector('.msg-lbl') ? m.innerHTML.replace(/<div class="msg-lbl">.*?<\/div>/,'').trim() : m.textContent
+  }));
+  s(r(db, FB_PATH+'/agent_msgs/'+tab), msgs);
+}
+
+function fbLoadAll(){
+  if(!fbReady()){ window.addEventListener('fb-ready',fbLoadAll,{once:true}); return; }
+  const db=window._db, r=window._fbRef, ov=window._fbOnValue;
+  // Cards — listener em tempo real (sync multi-usuário)
+  ov(r(db, FB_PATH+'/cards'), snap=>{
+    const val=snap.val();
+    if(val && Array.isArray(val) && val.length){ cards=val; renderBoard(); }
+    else if(val && typeof val==='object'){ cards=Object.values(val); renderBoard(); }
+  });
+  // Tags
+  ov(r(db, FB_PATH+'/tags'), snap=>{
+    const val=snap.val();
+    if(val && Array.isArray(val) && val.length) tags=val;
+  });
+  // Members
+  ov(r(db, FB_PATH+'/members'), snap=>{
+    const val=snap.val();
+    if(val && Array.isArray(val) && val.length) members=val;
+  });
+  // Histórico do Agente
+  ['daily','metricas','retro'].forEach(tab=>{
+    ov(r(db, FB_PATH+'/agent_msgs/'+tab), snap=>{
+      const val=snap.val();
+      if(!val||!Array.isArray(val)) return;
+      const w=document.getElementById('msgs-'+tab);
+      if(!w) return;
+      // só restaura se estiver vazio (evita duplicar)
+      if(w.querySelectorAll('.msg').length<=1){
+        val.forEach(m=>{
+          const d=document.createElement('div');
+          d.className='msg '+(m.role==='ai'?'msg-ai':'msg-u');
+          if(m.role==='ai') d.innerHTML='<div class="msg-lbl">Agente Ágil</div>'+m.txt;
+          else d.textContent=m.txt;
+          w.appendChild(d);
+        });
+        w.scrollTop=w.scrollHeight;
+      }
+    });
+  });
+}
+// ── FIM FIREBASE ───────────────────────────────────────────────────
+
 
 function getTag(id){ return tags.find(t=>t.id===id)||tags[0]; }
 function getPalette(pi){ return PALETTE[pi]||PALETTE[0]; }
@@ -544,7 +661,7 @@ function saveCard(){
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
       checklist:cl,created:'Usuário',edited:'Usuário',createdAt:td2,editedAt:td2});
   }
-  renderBoard(); closeCard();
+  renderBoard(); closeCard(); fbSaveAll();
 }
 
 function renderCL(cl){
@@ -571,6 +688,26 @@ function insightsCard(){
 // AGENT
 function openAgent(){ document.getElementById('ag-ov').classList.add('open'); updateMetrics(); }
 function closeAg(){ document.getElementById('ag-ov').classList.remove('open'); }
+
+function swCfgTab(tab){
+  document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>{
+    t.classList.toggle('on',['tags','membros','worker','firebase'][i]===tab);
+  });
+  ['tags','membros','worker','firebase'].forEach(t=>{
+    document.getElementById('cfgtab-'+t).classList.toggle('on',t===tab);
+  });
+  // preenche inputs ao abrir aba
+  if(tab==='worker'){
+    document.getElementById('worker-url-inp').value=localStorage.getItem('kanban_worker_url')||'';
+  }
+  if(tab==='firebase'){
+    document.getElementById('fb-url').value=localStorage.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com';
+    document.getElementById('fb-key').value=localStorage.getItem('fb_apiKey')||'';
+    document.getElementById('fb-pid').value=localStorage.getItem('fb_projectId')||'hering-onboarding';
+    document.getElementById('fb-aid').value=localStorage.getItem('fb_appId')||'';
+  }
+}
+
 function swTab(tab){
   document.querySelectorAll('.ag-tab').forEach((t,i)=>t.classList.toggle('on',['daily','metricas','retro'][i]===tab));
   ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
@@ -622,7 +759,7 @@ async function qa(tab,q){
       appMsg(tab,'ai','⚠️ Erro do Worker/API: '+JSON.stringify(data.error));
     } else {
       const txt=data.content?.map(b=>b.text||'').join('')||'';
-      appMsg(tab,'ai',txt||'(resposta vazia)');
+      appMsg(tab,'ai',txt||'(resposta vazia)'); fbSaveMsgs(tab);
     }
   } catch(e){
     console.error('[Agente Ágil] erro:', e);
@@ -631,11 +768,18 @@ async function qa(tab,q){
   }
   document.getElementById('snd-'+tab).disabled=false;
 }
-function openWorkerConfig(){
-  document.getElementById('worker-ov').classList.add('open');
-  const saved=localStorage.getItem('kanban_worker_url')||'';
-  document.getElementById('worker-url-inp').value=saved;
+
+function openFbConfig(){ openCfg('firebase'); }
+function saveFbConfig(){
+  localStorage.setItem('fb_databaseURL', document.getElementById('fb-url').value.trim());
+  localStorage.setItem('fb_apiKey',      document.getElementById('fb-key').value.trim());
+  localStorage.setItem('fb_projectId',   document.getElementById('fb-pid').value.trim());
+  localStorage.setItem('fb_appId',       document.getElementById('fb-aid').value.trim());
+  localStorage.setItem('fb_authDomain',  document.getElementById('fb-pid').value.trim()+'.firebaseapp.com');
+  location.reload();
 }
+
+function openWorkerConfig(){ openCfg('worker'); }
 function saveWorkerUrl(){
   const url=document.getElementById('worker-url-inp').value.trim();
   if(!url){ alert('Cole a URL do Worker.'); return; }
@@ -645,7 +789,7 @@ function saveWorkerUrl(){
 }
 
 // CONFIG
-function openCfg(){ renderCfgEditor(); document.getElementById('cfg-ov').classList.add('open'); }
+function openCfg(tab){ renderCfgEditor(); document.getElementById('cfg-ov').classList.add('open'); swCfgTab(tab||'tags'); }
 function closeCfg(){ document.getElementById('cfg-ov').classList.remove('open'); }
 function renderCfgEditor(){
   document.getElementById('tag-editor').innerHTML=tags.map((t,i)=>{
@@ -683,7 +827,7 @@ function addMember(){
   document.getElementById('new-member-name').value='';
   renderCfgEditor();
 }
-function saveCfg(){ renderBoard(); closeCfg(); }
+function saveCfg(){ renderBoard(); closeCfg(); fbSaveAll(); }
 
 // FISH & BUBBLES
 (function(){
@@ -743,6 +887,7 @@ document.querySelectorAll('.ov').forEach(ov=>{
   ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('open'); });
 });
 
+fbLoadAll();
 renderBoard();
 </script>
 </body>
