@@ -478,7 +478,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v1.6</div>
+<div class="version">v1.7</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -568,6 +568,11 @@ function fbLoadAll(){
   ov(r(db, FB_PATH+'/members'), snap=>{
     const val=snap.val();
     if(val && Array.isArray(val) && val.length) members=val;
+  });
+  // Config ágil — listener em tempo real
+  ov(r(db, FB_PATH+'/agil_cfg'), snap=>{
+    const val=snap.val();
+    if(val) applyAgilCfg(val);
   });
   // Histórico do Agente
   ['daily','metricas','retro'].forEach(tab=>{
@@ -757,12 +762,14 @@ function saveAgilCfg(){
     capacity: document.getElementById('cfg-capacity').value,
     goal: document.getElementById('cfg-sprint-goal').value,
   };
-  localStorage.setItem('kanban_agil_cfg', JSON.stringify(cfg));
+  if(fbReady()){
+    window._fbSet(window._fbRef(window._db, FB_PATH+'/agil_cfg'), cfg);
+  }
   applyAgilCfg(cfg);
   closeCfg();
 }
 function applyAgilCfg(cfg){
-  if(!cfg) cfg=JSON.parse(localStorage.getItem('kanban_agil_cfg')||'{}');
+  if(!cfg) cfg={};
   if(cfg.sprintNum) document.querySelector('.hd-badge').textContent='Digital Hering · Sprint '+cfg.sprintNum;
   if(cfg.goal){
     let el=document.getElementById('sprint-goal-bar');
@@ -785,14 +792,18 @@ function swCfgTab(tab){
   });
   // preenche inputs ao abrir aba
   if(tab==='agil'){
-    const s=JSON.parse(localStorage.getItem('kanban_agil_cfg')||'{}');
-    document.getElementById('cfg-sprint-num').value=s.sprintNum||'12';
-    document.getElementById('cfg-sprint-days').value=s.sprintDays||'14';
-    document.getElementById('cfg-sprint-start').value=s.sprintStart||'';
-    document.getElementById('cfg-sprint-end').value=s.sprintEnd||'';
-    document.getElementById('cfg-wip').value=s.wip||'3';
-    document.getElementById('cfg-capacity').value=s.capacity||'80';
-    document.getElementById('cfg-sprint-goal').value=s.goal||'';
+    if(fbReady()){
+      window._fbGet(window._fbRef(window._db, FB_PATH+'/agil_cfg')).then(snap=>{
+        const s=snap.val()||{};
+        document.getElementById('cfg-sprint-num').value=s.sprintNum||'12';
+        document.getElementById('cfg-sprint-days').value=s.sprintDays||'14';
+        document.getElementById('cfg-sprint-start').value=s.sprintStart||'';
+        document.getElementById('cfg-sprint-end').value=s.sprintEnd||'';
+        document.getElementById('cfg-wip').value=s.wip||'3';
+        document.getElementById('cfg-capacity').value=s.capacity||'80';
+        document.getElementById('cfg-sprint-goal').value=s.goal||'';
+      });
+    }
   }
   if(tab==='worker'){
     document.getElementById('worker-url-inp').value=localStorage.getItem('kanban_worker_url')||'';
@@ -985,7 +996,6 @@ document.querySelectorAll('.ov').forEach(ov=>{
 });
 
 fbLoadAll();
-applyAgilCfg();
 renderBoard();
 </script>
 </body>
