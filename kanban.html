@@ -378,12 +378,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v1.1</div>
+<div class="version">v1.2</div>
 
 <script>
-// 🔧 Coloque aqui a URL do seu Cloudflare Worker após o deploy
-// Ex: https://kanban-hering-proxy.SEU-USUARIO.workers.dev/api/chat
-const ANTHROPIC_API = (localStorage.getItem('kanban_worker_url') || '').trim() || null;
+const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
+const ANTHROPIC_API = (localStorage.getItem('kanban_worker_url') || '').trim() || WORKER_FALLBACK;
 const today = new Date(); today.setHours(0,0,0,0);
 
 const PALETTE = [
@@ -602,20 +601,34 @@ function setLoad(tab,on){
 }
 async function qa(tab,q){
   if(!q||!q.trim()) return;
-  if(!ANTHROPIC_API){
-    openWorkerConfig();
-    return;
-  }
   appMsg(tab,'user',q);
   document.getElementById('inp-'+tab).value='';
   document.getElementById('snd-'+tab).disabled=true;
   setLoad(tab,true);
   try {
-    const r=await fetch(ANTHROPIC_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({max_tokens:1000,system:agCtx(),messages:[{role:'user',content:q}]})});
-    const data=await r.json();
+    console.log('[Agente Ágil] chamando Worker:', ANTHROPIC_API);
+    const r=await fetch(ANTHROPIC_API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({max_tokens:1000,system:agCtx(),messages:[{role:'user',content:q}]})
+    });
+    console.log('[Agente Ágil] status HTTP:', r.status);
+    const raw=await r.text();
+    console.log('[Agente Ágil] resposta raw:', raw.substring(0,300));
+    let data;
+    try{ data=JSON.parse(raw); } catch(pe){ throw new Error('JSON inválido: '+raw.substring(0,120)); }
     setLoad(tab,false);
-    appMsg(tab,'ai',data.content?.map(b=>b.text||'').join('')||'Sem resposta.');
-  } catch(e){ setLoad(tab,false); appMsg(tab,'ai','Erro de conexão. Verifique se o Worker está no ar.'); }
+    if(data.error){
+      appMsg(tab,'ai','⚠️ Erro do Worker/API: '+JSON.stringify(data.error));
+    } else {
+      const txt=data.content?.map(b=>b.text||'').join('')||'';
+      appMsg(tab,'ai',txt||'(resposta vazia)');
+    }
+  } catch(e){
+    console.error('[Agente Ágil] erro:', e);
+    setLoad(tab,false);
+    appMsg(tab,'ai','❌ Erro: '+e.message);
+  }
   document.getElementById('snd-'+tab).disabled=false;
 }
 function openWorkerConfig(){
