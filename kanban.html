@@ -197,6 +197,104 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
+/* ── MOBILE ──────────────────────────────────────────── */
+@media(max-width:768px){
+  .app{padding:.6rem .7rem 5rem;}
+  .hd{gap:6px;}
+  .hd-title{font-size:14px;}
+  .hd-badge{display:none;}
+  #user-badge span#user-name{display:none;}
+  
+  /* Board: scroll horizontal em mobile, colunas largas */
+  .board-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -.7rem;padding:0 .7rem;}
+  .board{display:flex!important;gap:8px;min-width:max-content;}
+  .col{width:82vw;max-width:300px;}
+  
+  /* Toolbar: scroll horizontal */
+  .toolbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;padding-bottom:4px;margin:0 -.7rem;padding-left:.7rem;padding-right:.7rem;}
+  .toolbar::-webkit-scrollbar{display:none;}
+  .btn-sm{white-space:nowrap;flex-shrink:0;}
+  .tb-sep{flex-shrink:0;}
+  
+  /* Filter bar */
+  #filter-bar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -.7rem;padding:0 .7rem 4px;}
+  #filter-bar::-webkit-scrollbar{display:none;}
+  #filter-bar select,#filter-bar label{flex-shrink:0;white-space:nowrap;}
+  
+  /* FAB: agrupa botões na horizontal */
+  .fab{bottom:16px;right:12px;flex-direction:row;align-items:center;gap:8px;}
+  .fab-btn{padding:9px 14px;font-size:12px;}
+  .fab-cfg{padding:6px 11px;font-size:11px;}
+  
+  /* Overlays: tela cheia em mobile */
+  .ov{padding:.4rem;}
+  .panel{max-width:100%!important;max-height:94vh;}
+  .ag-panel{max-height:94vh;}
+  .cfg-panel{max-height:94vh;}
+  
+  /* Modais de card: tela cheia */
+  .card-panel{max-width:100%!important;max-height:96vh;}
+  .modal-body{padding:10px 12px;}
+  .frow{grid-template-columns:1fr 1fr;gap:6px;}
+  
+  /* Msgs do agente: altura reduzida */
+  .msgs{max-height:180px;}
+  
+  /* Cards: sem hover transform em touch */
+  .card:hover{transform:none;}
+  
+  /* Online bar: esconde em mobile pequeno */
+  #online-bar{display:none;}
+  
+  /* Config tabs: scroll */
+  .ag-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .ag-tabs::-webkit-scrollbar{display:none;}
+  .ag-tab{white-space:nowrap;flex-shrink:0;padding:8px 10px;font-size:10px;}
+  
+  /* Goal bar */
+  .goal-bar{font-size:10px;padding:5px 10px;}
+}
+
+@media(max-width:400px){
+  .col{width:88vw;}
+  .hd-title{font-size:13px;}
+  .fab{bottom:12px;right:8px;}
+  .fab-btn{padding:8px 12px;font-size:11px;}
+}
+
+/* Bottom nav bar para mobile */
+.mobile-nav{display:none;}
+@media(max-width:768px){
+  .mobile-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;z-index:40;
+    background:rgba(6,26,46,.97);
+    border-top:1px solid var(--glass-b);
+    backdrop-filter:blur(16px);
+    padding:8px 0 max(8px,env(safe-area-inset-bottom));
+    justify-content:space-around;
+  }
+  .mobile-nav-btn{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    background:none;border:none;color:var(--txt2);cursor:pointer;
+    font-size:9px;font-family:'DM Sans',sans-serif;padding:4px 8px;
+    min-width:52px;transition:color .15s;
+  }
+  .mobile-nav-btn:active,.mobile-nav-btn.active{color:var(--accent);}
+  .mobile-nav-icon{font-size:18px;line-height:1;}
+  /* Esconde FAB original em mobile — substituído pela nav bar */
+  .fab{display:none!important;}
+  /* App tem padding bottom para não ficar atrás da nav */
+  .app{padding-bottom:72px;}
+}
+
+/* Safe area para notch */
+@supports(padding-top:env(safe-area-inset-top)){
+  .login-ov,.app{padding-top:max(.9rem,env(safe-area-inset-top));}
+}
+/* ── FIM MOBILE ───────────────────────────────────────── */
+
+
 /* Drag and Drop */
 .card[draggable=true]{cursor:grab;}
 .card[draggable=true]:active{cursor:grabbing;}
@@ -666,7 +764,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v4.9</div>
+<!-- MOBILE NAV BAR -->
+<nav class="mobile-nav" role="navigation" aria-label="Navegação mobile">
+  <button class="mobile-nav-btn active" id="mnav-board" onclick="mnavGo('board')">
+    <span class="mobile-nav-icon">📋</span>Board
+  </button>
+  <button class="mobile-nav-btn" id="mnav-add" onclick="openNewCard()">
+    <span class="mobile-nav-icon">➕</span>Card
+  </button>
+  <button class="mobile-nav-btn" id="mnav-agent" onclick="mnavGo('agent')">
+    <span class="mobile-nav-icon">🤖</span>Agente
+  </button>
+  <button class="mobile-nav-btn" id="mnav-links" onclick="mnavGo('links')">
+    <span class="mobile-nav-icon">🔗</span>Links
+  </button>
+  <button class="mobile-nav-btn" id="mnav-cfg" onclick="mnavGo('cfg')">
+    <span class="mobile-nav-icon">⚙</span>Config
+  </button>
+</nav>
+
+<div class="version">v5.1</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -945,7 +1062,8 @@ function makeCardEl(card){
   div.setAttribute('draggable','true');
   div.onclick=()=>openCard(card.id);
   div.ondragstart=e=>handleDragStart(e,card.id);
-  div.ondragend=e=>handleDragEnd(e); div.ondblclick=e=>{e.stopPropagation();};
+  div.ondragend=e=>handleDragEnd(e);
+  addTouchDnD(div,card.id); div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${card.sp}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
   return div;
 }
@@ -1892,6 +2010,99 @@ function swHelpTab(tab){
 
 
 
+
+// ═══════════════════════════════════════════════════════
+// PWA
+// ═══════════════════════════════════════════════════════
+function initPWA(){
+  // Injeta manifest dinamicamente
+  const manifestEl=document.getElementById('pwa-manifest');
+  if(!manifestEl){ console.warn('PWA: manifest element not found'); return; }
+  const manifest={
+    name:'Kanban Hering',
+    short_name:'Kanban',
+    description:'Board Ágil — Digital Hering · Time de Dados',
+    start_url:window.location.href.split('?')[0],
+    display:'standalone',
+    orientation:'any',
+    background_color:'#030d1a',
+    theme_color:'#030d1a',
+    icons:[
+      {src:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23030d1a%22/><text y=%22.9em%22 font-size=%2280%22>🐟</text></svg>',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  manifestEl.href=url;
+
+  // Service Worker para cache offline
+  if('serviceWorker' in navigator){
+    const swCode=`
+const CACHE='kanban-hering-v1';
+const ASSETS=[self.location.pathname];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET') return;
+  if(e.request.url.includes('firebaseio.com')||e.request.url.includes('googleapis.com')||e.request.url.includes('workers.dev')) return;
+  e.respondWith(caches.match(e.request).then(cached=>{
+    const fresh=fetch(e.request).then(res=>{
+      if(res.ok){const clone=res.clone();caches.open(CACHE).then(c=>c.put(e.request,clone));}
+      return res;
+    }).catch(()=>cached);
+    return cached||fresh;
+  }));
+});
+    `;
+    const swBlob=new Blob([swCode],{type:'application/javascript'});
+    const swUrl=URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(()=>{});
+  }
+
+  // Banner "Adicionar à tela inicial" (Android)
+  let deferredPrompt=null;
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault(); deferredPrompt=e;
+    showInstallBanner();
+  });
+
+  function showInstallBanner(){
+    if(localStorage.getItem('pwa_dismissed')) return;
+    const banner=document.createElement('div');
+    banner.id='install-banner';
+    banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(37,99,201,.95);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-family:DM Sans,sans-serif;backdrop-filter:blur(12px);';
+    banner.innerHTML='<span>🐟 Adicionar Kanban Hering à tela inicial?</span><div style="display:flex;gap:8px;"><button onclick="installPWA()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;">Instalar</button><button onclick="dismissInstall()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px;padding:2px 6px;">✕</button></div>';
+    document.body.prepend(banner);
+  }
+  window.installPWA=function(){
+    if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{ dismissInstall(); deferredPrompt=null; }); }
+  };
+  window.dismissInstall=function(){
+    const b=document.getElementById('install-banner'); if(b) b.remove();
+    localStorage.setItem('pwa_dismissed','1');
+  };
+}
+
+// Mobile nav
+function mnavGo(dest){
+  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mnav-'+dest)?.classList.add('active');
+  if(dest==='board') { closeAllOvs(); }
+  if(dest==='agent') { openAgent(); }
+  if(dest==='links') { openLinks(); }
+  if(dest==='cfg')   { openCfg(); }
+}
+function closeAllOvs(){
+  document.querySelectorAll('.ov.open').forEach(o=>o.classList.remove('open'));
+}
+// ═══════════════════════════════════════════════════════
+
 // ═══════════════════════════════════════════════════════
 // DRAG AND DROP
 // ═══════════════════════════════════════════════════════
@@ -1987,6 +2198,55 @@ function getDragAfterElement(container, y){
   },{offset:Number.NEGATIVE_INFINITY}).element;
 }
 // ═══════════════════════════════════════════════════════
+
+
+// Touch drag and drop (mobile)
+function addTouchDnD(el, cardId){
+  let startX,startY,clone,moved;
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length>1) return;
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY; moved=false;
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    const dx=e.touches[0].clientX-startX; const dy=e.touches[0].clientY-startY;
+    if(!moved&&Math.sqrt(dx*dx+dy*dy)>8){
+      moved=true;
+      clone=el.cloneNode(true);
+      clone.style.cssText=`position:fixed;width:${el.offsetWidth}px;opacity:.7;pointer-events:none;z-index:999;border:1px solid var(--accent);border-radius:var(--r);background:rgba(6,26,46,.97);transform:rotate(2deg);transition:none;`;
+      document.body.appendChild(clone);
+      el.style.opacity='.3';
+    }
+    if(clone){
+      e.preventDefault();
+      clone.style.left=(e.touches[0].clientX-el.offsetWidth/2)+'px';
+      clone.style.top=(e.touches[0].clientY-60)+'px';
+      // Destaca coluna sob o toque
+      document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over'));
+      const elUnder=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+      const colBody=elUnder?.closest('.col-body');
+      if(colBody) colBody.classList.add('drag-over');
+    }
+  },{passive:false});
+  el.addEventListener('touchend',e=>{
+    el.style.opacity='';
+    if(clone){ clone.remove(); clone=null; }
+    document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over'));
+    if(!moved) return; // foi um tap, não arrasto
+    const touch=e.changedTouches[0];
+    const elUnder=document.elementFromPoint(touch.clientX,touch.clientY);
+    const colBody=elUnder?.closest('.col-body');
+    if(!colBody) return;
+    const colId=colBody.id.replace('body-','');
+    if(!colId) return;
+    const card=cards.find(x=>x.id===cardId); if(!card) return;
+    if(card.col===colId) return;
+    const ant=card.col; card.col=colId;
+    card.edited=window._currentUser?.displayName||'Usuário';
+    card.editedAt=new Date().toISOString().split('T')[0];
+    renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+    showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
+  });
+}
 
 // ═══════════════════════════════════════════════════════
 // AUTOMAÇÕES (Butler-style)
@@ -2157,6 +2417,8 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
 })();
 
 // Init
+document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } });
+
 window.addEventListener('fb-ready',()=>{
   fbLoadAll();
   loadAutoRules();
