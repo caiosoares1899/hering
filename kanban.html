@@ -196,6 +196,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
+
+.rule-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);flex-wrap:wrap;}
+.rule-badge{font-size:9px;padding:2px 7px;border-radius:999px;font-weight:700;}
+.rule-on{background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);}
+.rule-off{background:rgba(255,107,107,.12);color:var(--danger);border:1px solid rgba(255,107,107,.25);}
+.rule-sel{flex:1;min-width:100px;padding:5px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:"DM Sans",sans-serif;}
+
+
+/* Card aging */
+.card.aged-1{opacity:.75;filter:saturate(.7);}
+.card.aged-2{opacity:.55;filter:saturate(.4) sepia(.2);}
+.card.aged-2::after{content:'💤';position:absolute;top:5px;right:6px;font-size:10px;opacity:.6;}
+
 </style>
 </head>
 <body>
@@ -289,7 +302,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔍 Filtros</button>
   <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
+  <button class="btn btn-sm" onclick="openTrelloImport()" style="color:var(--cyan);border-color:rgba(126,200,227,.3);">📥 Importar Trello</button>
+  <div class="tb-sep"></div>  <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
@@ -365,16 +379,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
   <div class="modal-body">
-    <div class="field"><label class="fl">Título</label><input class="fi" id="m-title" type="text"></div>
+    <div class="field"><label class="fl">Título</label><input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()" onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}"></div>
     <div class="frow">
-      <div class="field"><label class="fl">Tag</label><select class="fi" id="m-tag"></select></div>
+      <div class="field"><label class="fl">Tag</label><select class="fi" id="m-tag" onchange="scheduleAutoSave()"></select></div>
       <div class="field"><label class="fl">Coluna</label><select class="fi" id="m-col"></select></div>
     </div>
     <div class="frow">
-      <div class="field"><label class="fl">Responsável</label><select class="fi" id="m-owner"></select></div>
-      <div class="field"><label class="fl">Prazo</label><input class="fi" id="m-due" type="date"></div>
+      <div class="field"><label class="fl">Responsável</label><select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select></div>
+      <div class="field"><label class="fl">Prazo</label><input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()"></div>
     </div>
-    <div class="field"><label class="fl">Descrição</label><textarea class="fi fi-ta" id="m-desc" rows="2"></textarea></div>
+    <div class="field"><label class="fl">Descrição</label><textarea class="fi fi-ta" id="m-desc" rows="2" oninput="scheduleAutoSave()"></textarea></div>
     <div class="po-box"><div class="po-lbl">🎯 Insights do PO</div><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
     <div class="cl-sec">
       <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
@@ -391,11 +405,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="addRisco()">+ Add</button>
       </div>
     </div>
+    <div style="display:flex;gap:8px;">
+      <div class="field" style="flex:1;">
+        <label class="fl">Story Points</label>
+        <input class="fi" id="m-sp" type="number" min="0" max="100" placeholder="0" oninput="scheduleAutoSave()">
+      </div>
+      <div class="field" style="flex:1;">
+        <label class="fl">Prioridade</label>
+        <select class="fi" id="m-priority" onchange="scheduleAutoSave()">
+          <option value="">— sem prioridade —</option>
+          <option value="low">🟢 Baixa</option>
+          <option value="medium">🟡 Média</option>
+          <option value="high">🔴 Alta</option>
+          <option value="critical">🔥 Crítica</option>
+        </select>
+      </div>
+    </div>
     <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
   </div>
   <div class="panel-ft" style="justify-content:space-between;">
     <button class="btn btn-sm" id="btn-del-card" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
     <div style="display:flex;gap:7px;">
+      <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar este card como modelo">📋 Salvar modelo</button>
       <button class="btn btn-teal btn-sm" onclick="archiveCard()">📦 Arquivar</button>
       <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights ↗</button>
       <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
@@ -413,6 +444,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab on" onclick="swCfgTab('agil')">Ágil</div>
     <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
+    <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
   </div>
@@ -466,6 +498,46 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-teal btn-sm" onclick="addTag()">+ Tag</button>
       </div>
       <div style="display:flex;justify-content:flex-end;padding-top:8px;"><button class="btn btn-p btn-sm" onclick="saveTags()">Salvar tags</button></div>
+    </div>
+
+
+    <!-- ABA AUTOMAÇÕES -->
+    <div class="tab-c" id="cfgtab-auto">
+      <div class="cfg-sec-title">⚡ Automações do board</div>
+      <p style="font-size:11px;color:var(--txt2);margin-bottom:10px;line-height:1.6;">Regras que executam automaticamente quando algo acontece no board. Use o <strong>AutoLab</strong> no Agente Ágil para testar antes de ativar.</p>
+      <div id="auto-rules-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;"></div>
+      <div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-bottom:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:8px;">Nova regra</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--cyan);font-weight:700;min-width:60px;">Quando</span>
+            <select class="rule-sel" id="auto-trigger">
+              <option value="move_to">Card movido para coluna</option>
+              <option value="due_today">Card vence hoje</option>
+              <option value="due_overdue">Card atrasado</option>
+              <option value="wip_exceeded">WIP excede o limite</option>
+              <option value="card_created">Card criado</option>
+              <option value="priority_set">Prioridade definida como crítica</option>
+            </select>
+            <select class="rule-sel" id="auto-trigger-val" style="max-width:140px;"></select>
+          </div>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--teal);font-weight:700;min-width:60px;">Então</span>
+            <select class="rule-sel" id="auto-action">
+              <option value="move_card">Mover card para coluna</option>
+              <option value="set_priority">Definir prioridade</option>
+              <option value="notify_agent">Notificar Agente Ágil</option>
+              <option value="add_tag">Adicionar tag</option>
+              <option value="assign_owner">Atribuir responsável</option>
+            </select>
+            <select class="rule-sel" id="auto-action-val" style="max-width:140px;"></select>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:7px;">
+            <button class="btn btn-sm" onclick="testAutoRule()">🧪 Testar no AutoLab</button>
+            <button class="btn btn-p btn-sm" onclick="saveAutoRule()">+ Adicionar regra</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ABA WORKER -->
@@ -524,6 +596,39 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+<!-- IMPORTAR TRELLO -->
+<div class="ov" id="trello-ov">
+<div class="panel" style="max-width:460px;">
+  <div class="panel-hd">
+    <div class="panel-title">📥 Importar board do Trello</div>
+    <button class="x-btn" onclick="closeOv('trello-ov')">✕</button>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div style="background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:10px;font-size:11px;color:#7eb3ff;line-height:1.7;">
+      <strong>Como exportar do Trello:</strong><br>
+      1. Abra o board no Trello<br>
+      2. Clique em ··· (menu do board) → Mais → Imprimir e exportar<br>
+      3. Clique em <strong>Exportar como JSON</strong><br>
+      4. Cole o conteúdo do arquivo abaixo
+    </div>
+    <div class="field">
+      <label class="fl">JSON do Trello</label>
+      <textarea class="fi fi-ta" id="trello-json" rows="6" placeholder='Cole aqui o conteúdo do arquivo JSON exportado do Trello...'></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" id="trello-merge" style="accent-color:var(--teal);"> Mesclar com cards existentes
+      </label>
+    </div>
+    <div id="trello-preview" style="font-size:11px;color:var(--teal);display:none;"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
+      <button class="btn btn-p btn-sm" onclick="confirmTrelloImport()">Importar cards</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- AJUDA -->
 <div class="ov" id="help-ov">
 <div class="panel" style="max-width:640px;max-height:90vh;display:flex;flex-direction:column;">
@@ -551,7 +656,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v3.5</div>
+<div class="version">v4.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -639,7 +744,9 @@ function fbGet(path){ return window._get(fb(path)); }
 function fbUpdate(path,val){ if(window._fbReady) window._update(fb(path),val); }
 function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
 
+let _skipNextCardUpdate = false;
 function fbSaveAll(){
+  _skipNextCardUpdate = true;
   fbSet(FB+'/cards', cards);
   fbSet(FB+'/tags', tags);
   fbSet(FB+'/columns', columns);
@@ -653,8 +760,9 @@ function fbSaveMsgs(tab){
 }
 
 function fbLoadAll(){
-  // Cards — realtime
+  // Cards — realtime (skip se foi o próprio usuário que salvou)
   fbListen(FB+'/cards',val=>{
+    if(_skipNextCardUpdate){ _skipNextCardUpdate=false; renderBoard(); return; }
     if(val){ cards=Array.isArray(val)?val:Object.values(val); renderBoard(); }
   });
   // Tags
@@ -805,12 +913,19 @@ function makeCardEl(card){
     :`<div class="avatar" style="opacity:.25">?</div>`;
   const clHtml=cp?`<div class="cl-bar"><div class="cl-track"><div class="cl-fill" style="width:${cp.p}%"></div></div><div class="cl-lbl">${cp.d}/${cp.t}</div></div>`:'';
   const div=document.createElement('div');
-  div.className='card'+(card.archived?' archived':'');
+  // Card aging
+  let agingClass='';
+  if(card.col!=='done'&&card.editedAt){
+    const editedD=new Date(card.editedAt+'T00:00:00'); const ageDays=Math.round((today-editedD)/86400000);
+    if(ageDays>=14) agingClass=' aged-2';
+    else if(ageDays>=7) agingClass=' aged-1';
+  }
+  div.className='card'+(card.archived?' archived':'')+agingClass;
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
   div.onclick=()=>openCard(card.id); div.ondblclick=e=>{e.stopPropagation();};
-  const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${riscoBadge}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}<button class="btn-modelo" title="Salvar como modelo" onclick="event.stopPropagation();salvarComoModelo('${card.id}')">📋</button></div>${clHtml}`;
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${card.sp}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -941,6 +1056,31 @@ function updateMetrics(){
     <div class="met"><div class="met-lbl">Capacidade</div><div class="met-val">${agilCfg.capacity||'—'}%</div><div class="met-sub">configurado</div></div>`;
 }
 
+
+// ── AUTO-SAVE CARD ─────────────────────────────────────────────────
+let _autoSaveTimer = null;
+function scheduleAutoSave(){
+  if(!editingId) return; // só auto-salva cards existentes
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(()=>{
+    const title=document.getElementById('m-title').value.trim();
+    if(!title) return;
+    const td=new Date().toISOString().split('T')[0];
+    const cl=getCL(); const rl=getRiscos();
+    const user=window._currentUser?.displayName||'Usuário';
+    const c=cards.find(x=>x.id===editingId); if(!c) return;
+    Object.assign(c,{title,tag:document.getElementById('m-tag').value,
+      col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
+      due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,
+      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,edited:user,editedAt:td});
+    fbSaveAll(); renderBoard();
+    // feedback sutil
+    const btn=document.querySelector('#card-ov .btn-p');
+    if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
+  }, 800);
+}
+// ── FIM AUTO-SAVE ──────────────────────────────────────────────────
+
 // ═══════════════════════════════════════════════════════
 // CARD MODAL
 // ═══════════════════════════════════════════════════════
@@ -966,6 +1106,8 @@ function openCard(id){
   document.getElementById('m-desc').value=c.desc||'';
   document.getElementById('m-po').value=c.po||'';
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
+  document.getElementById('m-sp').value=c.sp||'';
+  document.getElementById('m-priority').value=c.priority||'';
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
   document.getElementById('btn-del-card').style.visibility='visible';
   renderCL(c.checklist||[]);
@@ -983,6 +1125,8 @@ function openNewCard(col){
   document.getElementById('m-due').value='';
   document.getElementById('m-meta-c').textContent='';
   document.getElementById('m-meta-e').textContent='';
+  document.getElementById('m-sp').value='';
+  document.getElementById('m-priority').value='';
   document.getElementById('btn-del-card').style.visibility='hidden';
   renderCL([]);
   renderRiscos([]);
@@ -997,14 +1141,14 @@ function saveCard(){
     Object.assign(c,{title,tag:document.getElementById('m-tag').value,col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,edited:user,editedAt:td});
+      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,edited:user,editedAt:td});
   } else {
     cards.push({id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
       title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,archived:false,created:user,edited:user,createdAt:td,editedAt:td});
+      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,archived:false,created:user,edited:user,createdAt:td,editedAt:td});
   }
-  fbSaveAll(); renderBoard(); closeOv('card-ov');
+  fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
 }
 function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -1135,9 +1279,10 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','tags','worker','firebase'];
+  const TABS=['agil','usuarios','tags','auto','worker','firebase'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
+  if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios') renderUsuarios();
   if(tab==='tags') renderTagEditor();
@@ -1387,6 +1532,85 @@ async function qa(tab,q){
 }
 
 
+
+// ═══════════════════════════════════════════════════════
+// IMPORTAR TRELLO
+// ═══════════════════════════════════════════════════════
+let _trelloParsed = null;
+function openTrelloImport(){ document.getElementById('trello-ov').classList.add('open'); }
+
+function parseTrelloJSON(raw){
+  const data=JSON.parse(raw);
+  // Mapeia listas do Trello para colunas do Kanban
+  const listMap={};
+  (data.lists||[]).forEach(l=>{
+    const name=l.name.toLowerCase();
+    if(name.includes('backlog')) listMap[l.id]='backlog';
+    else if(name.includes('fazer')||name.includes('do')||name.includes('todo')) listMap[l.id]='todo';
+    else if(name.includes('progresso')||name.includes('progress')||name.includes('doing')) listMap[l.id]='progress';
+    else if(name.includes('bloq')||name.includes('imped')||name.includes('block')) listMap[l.id]='blocker';
+    else if(name.includes('conclu')||name.includes('done')||name.includes('feito')) listMap[l.id]='done';
+    else listMap[l.id]='backlog'; // default
+  });
+  // Mapeia labels → tags
+  const labelMap={};
+  (data.labels||[]).forEach(lb=>{ if(lb.name) labelMap[lb.id]=lb.name.toLowerCase().replace(/\s+/g,'-'); });
+  // Mapeia checklists por card
+  const checkMap={};
+  (data.checklists||[]).forEach(cl=>{
+    if(!checkMap[cl.idCard]) checkMap[cl.idCard]=[];
+    (cl.checkItems||[]).forEach(item=>checkMap[cl.idCard].push({t:item.name,done:item.state==='complete'}));
+  });
+  // Converte cards
+  const imported=(data.cards||[]).filter(c=>!c.closed).map(c=>({
+    id:'trello_'+c.id.substring(0,8)+'_'+Date.now(),
+    col:listMap[c.idList]||'backlog',
+    tag:labelMap[c.labels?.[0]?.id]||tags[0]?.id,
+    title:c.name,
+    desc:c.desc||'',
+    owner:'',
+    due:c.due?c.due.split('T')[0]:'',
+    po:'',
+    checklist:checkMap[c.id]||[],
+    riscos:[],
+    archived:false,
+    sp:'',priority:'',
+    created:'Trello Import',edited:'Trello Import',
+    createdAt:new Date().toISOString().split('T')[0],
+    editedAt:new Date().toISOString().split('T')[0],
+  }));
+  return{boardName:data.name,cards:imported,total:imported.length};
+}
+
+function previewTrelloImport(){
+  const raw=document.getElementById('trello-json').value.trim();
+  const preview=document.getElementById('trello-preview');
+  if(!raw){ preview.style.display='none'; return; }
+  try{
+    _trelloParsed=parseTrelloJSON(raw);
+    preview.style.display='block';
+    preview.innerHTML=`✅ Board: <strong>${_trelloParsed.boardName}</strong> — ${_trelloParsed.total} cards encontrados.`;
+  }catch(e){
+    preview.style.display='block';
+    preview.style.color='var(--danger)';
+    preview.innerHTML='❌ JSON inválido ou formato não reconhecido. Verifique o arquivo exportado.';
+    _trelloParsed=null;
+  }
+}
+
+function confirmTrelloImport(){
+  if(!_trelloParsed){ alert('Faça a pré-visualização primeiro.'); return; }
+  const merge=document.getElementById('trello-merge').checked;
+  if(!merge) cards=[];
+  cards.push(..._trelloParsed.cards);
+  fbSaveAll(); renderBoard();
+  closeOv('trello-ov');
+  document.getElementById('trello-json').value='';
+  _trelloParsed=null;
+  alert(`✅ ${_trelloParsed?.total||'?'} cards importados do Trello!`);
+}
+// ═══════════════════════════════════════════════════════
+
 // ═══════════════════════════════════════════════════════
 // AJUDA
 // ═══════════════════════════════════════════════════════
@@ -1451,9 +1675,142 @@ function swHelpTab(tab){
 }
 // ═══════════════════════════════════════════════════════
 
+
+// ═══════════════════════════════════════════════════════
+// AUTOMAÇÕES (Butler-style)
+// ═══════════════════════════════════════════════════════
+let autoRules = [];
+
+function populateAutoSelects(){
+  const tv=document.getElementById('auto-trigger-val');
+  const av=document.getElementById('auto-action-val');
+  const trigger=document.getElementById('auto-trigger')?.value;
+  const action=document.getElementById('auto-action')?.value;
+  if(!tv||!av) return;
+  // trigger val
+  if(trigger==='move_to'||trigger==='card_created'){
+    tv.innerHTML=columns.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    tv.style.display='';
+  } else { tv.innerHTML='<option value="any">qualquer</option>'; tv.style.display=trigger==='wip_exceeded'?'none':''; }
+  // action val
+  if(action==='move_card'){
+    av.innerHTML=columns.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  } else if(action==='set_priority'){
+    av.innerHTML='<option value="high">🔴 Alta</option><option value="critical">🔥 Crítica</option><option value="medium">🟡 Média</option>';
+  } else if(action==='add_tag'){
+    av.innerHTML=tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+  } else if(action==='assign_owner'){
+    av.innerHTML='<option value="">— manter —</option>'+members.map(m=>`<option value="${m.init}">${m.init} · ${m.name.split(' ')[0]}</option>`).join('');
+  } else if(action==='notify_agent'){
+    av.innerHTML='<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option>';
+  }
+}
+
+function saveAutoRule(){
+  const trigger=document.getElementById('auto-trigger')?.value;
+  const triggerVal=document.getElementById('auto-trigger-val')?.value;
+  const action=document.getElementById('auto-action')?.value;
+  const actionVal=document.getElementById('auto-action-val')?.value;
+  if(!trigger||!action) return;
+  const triggerLabels={move_to:'Card movido para',due_today:'Card vence hoje',due_overdue:'Card atrasado',wip_exceeded:'WIP excede limite',card_created:'Card criado em',priority_set:'Prioridade crítica'};
+  const actionLabels={move_card:'Mover para',set_priority:'Definir prioridade',notify_agent:'Notificar agente',add_tag:'Adicionar tag',assign_owner:'Atribuir a'};
+  autoRules.push({id:'r'+Date.now(),trigger,triggerVal,action,actionVal,active:true,
+    label:`${triggerLabels[trigger]||trigger} ${triggerVal||''} → ${actionLabels[action]||action} ${actionVal||''}`});
+  fbSet(FB+'/auto_rules', autoRules);
+  renderAutoRules();
+}
+
+function renderAutoRules(){
+  const list=document.getElementById('auto-rules-list'); if(!list) return;
+  if(!autoRules.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhuma regra configurada ainda.</div>'; return; }
+  list.innerHTML='';
+  autoRules.forEach((rule,i)=>{
+    const row=document.createElement('div'); row.className='rule-row';
+    row.innerHTML=`<span style="font-size:11px;flex:1;color:var(--txt);">${rule.label}</span>
+      <span class="rule-badge ${rule.active?'rule-on':'rule-off'}">${rule.active?'ativa':'pausada'}</span>
+      <button class="btn btn-sm" onclick="toggleAutoRule(${i})">${rule.active?'⏸':'▶'}</button>
+      <button class="btn btn-sm" style="color:var(--danger);" onclick="delAutoRule(${i})">✕</button>`;
+    list.appendChild(row);
+  });
+}
+
+function toggleAutoRule(i){ autoRules[i].active=!autoRules[i].active; fbSet(FB+'/auto_rules',autoRules); renderAutoRules(); }
+function delAutoRule(i){ autoRules.splice(i,1); fbSet(FB+'/auto_rules',autoRules); renderAutoRules(); }
+
+function testAutoRule(){
+  // Abre o AutoLab no Agente Ágil
+  const trigger=document.getElementById('auto-trigger')?.value;
+  const triggerVal=document.getElementById('auto-trigger-val')?.value;
+  const action=document.getElementById('auto-action')?.value;
+  const actionVal=document.getElementById('auto-action-val')?.value;
+  closeOv('cfg-ov');
+  openAgent(); swAgTab('daily');
+  const q=`[AutoLab] Simule e explique o que aconteceria se eu ativasse esta automação no board atual: QUANDO "${trigger}" (coluna/valor: ${triggerVal||'qualquer'}) → ENTÃO "${action}" (valor: ${actionVal||'padrão'}). Liste os cards que seriam afetados agora e se faz sentido para o contexto da sprint.`;
+  document.getElementById('inp-daily').value=q;
+  qa('daily',q);
+}
+
+// Executa automações após mudanças no board
+function runAutoRules(eventType, cardId, extraVal){
+  const activeRules=autoRules.filter(r=>r.active);
+  activeRules.forEach(rule=>{
+    const card=cards.find(c=>c.id===cardId); if(!card) return;
+    let triggered=false;
+    if(rule.trigger==='move_to' && eventType==='move' && extraVal===rule.triggerVal) triggered=true;
+    if(rule.trigger==='card_created' && eventType==='create') triggered=true;
+    if(rule.trigger==='priority_set' && eventType==='priority' && card.priority==='critical') triggered=true;
+    if(!triggered) return;
+    const td=new Date().toISOString().split('T')[0];
+    const user='Automação';
+    if(rule.action==='move_card'){ card.col=rule.actionVal; card.edited=user; card.editedAt=td; }
+    if(rule.action==='set_priority'){ card.priority=rule.actionVal; card.edited=user; card.editedAt=td; }
+    if(rule.action==='add_tag'){ card.tag=rule.actionVal; card.edited=user; card.editedAt=td; }
+    if(rule.action==='assign_owner' && rule.actionVal){ card.owner=rule.actionVal; card.edited=user; card.editedAt=td; }
+    if(rule.action==='notify_agent'){
+      const tab=rule.actionVal||'daily';
+      openAgent(); swAgTab(tab);
+      qa(tab, `[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`);
+    }
+  });
+  // Checa WIP
+  const wipRule=activeRules.find(r=>r.trigger==='wip_exceeded');
+  if(wipRule){
+    const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
+    if(wip>parseInt(agilCfg.wip||3)){
+      if(wipRule.action==='notify_agent'){
+        const tab=wipRule.actionVal||'metricas';
+        setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
+      }
+    }
+  }
+}
+// Carrega regras do Firebase
+function loadAutoRules(){
+  fbListen(FB+'/auto_rules',val=>{ if(val) autoRules=Array.isArray(val)?val:Object.values(val); });
+}
+// ═══════════════════════════════════════════════════════
+
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
+function salvarComoModeloModal(){
+  const title=document.getElementById('m-title').value.trim(); if(!title) return;
+  if(!qlItems.modelos) qlItems.modelos=[];
+  const jaExiste=qlItems.modelos.find(m=>m.title===title);
+  if(jaExiste){ alert('"'+title+'" já está nos modelos.'); return; }
+  qlItems.modelos.push({
+    title,
+    tag:document.getElementById('m-tag').value,
+    desc:document.getElementById('m-desc').value,
+    po:document.getElementById('m-po').value,
+    checklist:getCL().map(i=>({t:i.t,done:false})),
+    riscos:getRiscos(),
+  });
+  fbSet(FB+'/ql_items',qlItems);
+  const btn=event.target; const orig=btn.textContent;
+  btn.textContent='✅ Salvo!'; btn.disabled=true;
+  setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },2000);
+}
 function salvarComoModelo(id){
   const card=cards.find(x=>x.id===id); if(!card) return;
   if(!qlItems.modelos) qlItems.modelos=[];
@@ -1479,9 +1836,9 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
 (function(){
   const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
   const svgs=[
-    `<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,14 14,4 14,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>`,
-    `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,11 12,3 12,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
-    `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,17 16,5 16,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
+    `<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>`,
+    `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
+    `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
   ];
   for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
   for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
@@ -1490,6 +1847,7 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
 // Init
 window.addEventListener('fb-ready',()=>{
   fbLoadAll();
+  loadAutoRules();
   // Presença online
   window.addEventListener('auth-change', e=>{
     const user=e.detail;
