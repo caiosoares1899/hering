@@ -45,10 +45,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar.show{display:flex;}
 /* board */
 .board-wrap{overflow-x:auto;padding-bottom:8px;}
-.board{display:flex;gap:10px;align-items:flex-start;min-width:max-content;}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
 .board.raia-mode{display:block;}
 /* column */
-.col{width:210px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
+.col{width:100%;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
 .col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
@@ -77,13 +77,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-track{height:2px;background:rgba(56,182,255,.12);border-radius:999px;overflow:hidden;}
 .cl-fill{height:100%;background:var(--teal);border-radius:999px;}
 .cl-lbl{font-size:8px;color:var(--txt3);margin-top:2px;}
+.btn-modelo{background:none;border:none;cursor:pointer;font-size:11px;opacity:.35;padding:0 1px;line-height:1;transition:opacity .15s;}
+.btn-modelo:hover{opacity:1;}
 .add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
 .add-btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid;}
 /* raia mode */
 .raia-row{margin-bottom:12px;}
 .raia-label{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--cyan);padding:6px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
 .raia-cols{display:flex;gap:10px;align-items:flex-start;}
-.raia-cols .col{min-height:60px;}
+.raia-cols .col{min-width:160px;min-height:60px;}
 /* FAB */
 .fab{position:fixed;bottom:22px;right:22px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .fab-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;font-size:13px;font-family:"Syne",sans-serif;font-weight:700;background:rgba(37,99,201,.88);border:1px solid rgba(56,182,255,.45);border-radius:999px;color:#fff;cursor:pointer;box-shadow:0 4px 28px rgba(37,99,201,.45);transition:all .2s;backdrop-filter:blur(14px);}
@@ -249,6 +251,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <span class="hd-badge" id="sprint-badge">Digital Hering · Sprint 1</span>
   </div>
   <div class="hd-btns">
+    <div id="online-bar" style="display:flex;align-items:center;gap:4px;" title="Usuários online"></div>
     <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
       <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
       <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
@@ -260,8 +263,31 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
 
+<div id="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
+  <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
+  <select id="f-owner" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Todos os usuários</option>
+  </select>
+  <select id="f-tag" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Todas as tags</option>
+  </select>
+  <select id="f-due" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Qualquer prazo</option>
+    <option value="late">Atrasados</option>
+    <option value="today">Vencem hoje</option>
+    <option value="week">Próximos 7 dias</option>
+  </select>
+  <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="f-blocker" onchange="applyFilters()" style="accent-color:var(--danger);"> Só impedidos
+  </label>
+  <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
+    <input type="checkbox" id="f-risco" onchange="applyFilters()" style="accent-color:var(--warn);"> Com riscos
+  </label>
+  <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()">✕ Limpar</button>
+</div>
 <div class="toolbar">
-  <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia por usuário</button>
+  <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
+  <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔍 Filtros</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
@@ -352,6 +378,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
       <div class="cl-items" id="m-checklist"></div>
       <div class="cl-add-r"><input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()"><button class="cl-ab" onclick="addCI()">+ Add</button></div>
+    </div>
+    <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
+      <div class="cl-hd-row">
+        <div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div>
+      </div>
+      <div class="cl-items" id="m-riscos"></div>
+      <div class="cl-add-r">
+        <input class="cl-ai" id="risco-inp" placeholder="Descreva um risco..." onkeydown="if(event.key==='Enter')addRisco()">
+        <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="addRisco()">+ Add</button>
+      </div>
     </div>
     <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
   </div>
@@ -494,7 +530,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v3.0</div>
+<div class="version">v3.2</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -627,6 +663,24 @@ function fbLoadAll(){
 // ═══════════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════════
+function renderOnline(users){
+  const bar=document.getElementById('online-bar'); if(!bar) return;
+  bar.innerHTML='';
+  if(!users.length) return;
+  users.slice(0,6).forEach(u=>{
+    const el=document.createElement('div');
+    el.title=u.nome+' (online)';
+    el.style.cssText='position:relative;width:24px;height:24px;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);';
+    if(u.foto) el.innerHTML=`<img src="${u.foto}" style="width:100%;height:100%;object-fit:cover;">`;
+    else el.textContent=u.init||'?';
+    // bolinha verde
+    const dot=document.createElement('div');
+    dot.style.cssText='position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:var(--teal);border:1px solid var(--deep);';
+    el.appendChild(dot);
+    bar.appendChild(el);
+  });
+  if(users.length>6){ const more=document.createElement('span'); more.style.cssText='font-size:10px;color:var(--teal);'; more.textContent='+'+( users.length-6); bar.appendChild(more); }
+}
 function doSignIn(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
   if(!window._signIn){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
@@ -734,15 +788,15 @@ function makeCardEl(card){
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
-  div.onclick=()=>openCard(card.id);
-  div.innerHTML=`${tagHtml(card.tag)}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
+  div.onclick=()=>openCard(card.id); div.ondblclick=e=>{e.stopPropagation();};
+  const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${riscoBadge}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}<button class="btn-modelo" title="Salvar como modelo" onclick="event.stopPropagation();salvarComoModelo('${card.id}')">📋</button></div>${clHtml}`;
   return div;
 }
 
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
   board.innerHTML='';
-  const activeCards=cards.filter(c=>!c.archived);
+  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c));
   if(raiaMode) renderRaia(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
@@ -777,7 +831,7 @@ function renderRaia(board,activeCards){
   owners.forEach(owner=>{
     const ownerCards=activeCards.filter(c=>(c.owner||'')===owner);
     const m=members.find(m=>m.init===owner);
-    const nome=m?.name||owner||'Sem responsável';
+    const nomeCompleto=m?.name||owner||'Sem responsável'; const nome=owner?nomeCompleto.split(' ')[0]:nomeCompleto;
     const row=document.createElement('div'); row.className='raia-row';
     const foto=m?.foto?`<img src="${m.foto}" width="20" height="20" style="border-radius:50%;object-fit:cover;">`:'';
     row.innerHTML=`<div class="raia-label">${foto} ${nome}</div><div class="raia-cols" id="raia-${owner||'none'}"></div>`;
@@ -794,6 +848,51 @@ function renderRaia(board,activeCards){
   });
 }
 
+let activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
+function toggleFilters(){
+  const bar=document.getElementById('filter-bar');
+  const show=bar.style.display==='none'||bar.style.display==='';
+  bar.style.display=show?'flex':'none';
+  // Popula selects
+  document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+members.map(m=>`<option value="${m.init}">${m.init} · ${m.name.split(' ')[0]}</option>`).join('');
+  document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+  document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
+  document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
+}
+function applyFilters(){
+  activeFilters={
+    owner:document.getElementById('f-owner').value,
+    tag:document.getElementById('f-tag').value,
+    due:document.getElementById('f-due').value,
+    blocker:document.getElementById('f-blocker').checked,
+    risco:document.getElementById('f-risco').checked,
+  };
+  renderBoard();
+}
+function clearFilters(){
+  document.getElementById('f-owner').value='';
+  document.getElementById('f-tag').value='';
+  document.getElementById('f-due').value='';
+  document.getElementById('f-blocker').checked=false;
+  document.getElementById('f-risco').checked=false;
+  activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
+  renderBoard();
+}
+function passesFilter(card){
+  if(activeFilters.owner&&card.owner!==activeFilters.owner) return false;
+  if(activeFilters.tag&&card.tag!==activeFilters.tag) return false;
+  if(activeFilters.blocker&&card.col!=='blocker') return false;
+  if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
+  if(activeFilters.due){
+    if(!card.due) return false;
+    const d=new Date(card.due+'T00:00:00'); d.setHours(0,0,0,0);
+    const diff=Math.round((d-today)/86400000);
+    if(activeFilters.due==='late'&&diff>=0) return false;
+    if(activeFilters.due==='today'&&diff!==0) return false;
+    if(activeFilters.due==='week'&&(diff<0||diff>7)) return false;
+  }
+  return true;
+}
 function toggleRaia(){
   raiaMode=!raiaMode;
   const btn=document.getElementById('btn-raia');
@@ -849,6 +948,7 @@ function openCard(id){
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
   document.getElementById('btn-del-card').style.visibility='visible';
   renderCL(c.checklist||[]);
+  renderRiscos(c.riscos||[]);
   document.getElementById('card-ov').classList.add('open');
 }
 function openNewCard(col){
@@ -864,23 +964,24 @@ function openNewCard(col){
   document.getElementById('m-meta-e').textContent='';
   document.getElementById('btn-del-card').style.visibility='hidden';
   renderCL([]);
+  renderRiscos([]);
   document.getElementById('card-ov').classList.add('open');
 }
 function saveCard(){
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
   const td=new Date().toISOString().split('T')[0];
-  const cl=getCL(); const user=window._currentUser?.displayName||'Usuário';
+  const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
     const c=cards.find(x=>x.id===editingId); if(!c) return;
     Object.assign(c,{title,tag:document.getElementById('m-tag').value,col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
-      checklist:cl,edited:user,editedAt:td});
+      checklist:cl,riscos:rl,edited:user,editedAt:td});
   } else {
     cards.push({id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
       title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,archived:false,created:user,edited:user,createdAt:td,editedAt:td});
+      checklist:cl,riscos:rl,archived:false,created:user,edited:user,createdAt:td,editedAt:td});
   }
   fbSaveAll(); renderBoard(); closeOv('card-ov');
 }
@@ -901,6 +1002,17 @@ function renderCL(cl){
     w.appendChild(d); });
 }
 function getCL(){ return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({t:r.querySelector('.cl-it').textContent,done:r.querySelector('input').checked})); }
+function renderRiscos(rl){
+  const w=document.getElementById('m-riscos'); if(!w) return; w.innerHTML='';
+  (rl||[]).forEach((item,i)=>{
+    const d=document.createElement('div'); d.className='cl-item';
+    d.innerHTML=`<span style="color:var(--warn);font-size:11px;">⚠</span><span class="cl-it" style="color:var(--txt2);">${item}</span><button class="cl-del" onclick="delRisco(${i})">✕</button>`;
+    w.appendChild(d);
+  });
+}
+function getRiscos(){ return Array.from(document.querySelectorAll('#m-riscos .cl-item')).map(r=>r.querySelector('.cl-it').textContent); }
+function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.value.trim(); if(!v) return; renderRiscos([...getRiscos(),v]); i.value=''; i.focus(); }
+function delRisco(i){ const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); }
 function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
 function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
 function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov'); openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }
@@ -959,10 +1071,14 @@ function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items',qlIt
 function usarQLItem(i){
   const item=qlItems[currentQL][i]; if(!item) return;
   closeOv('ql-ov');
-  openNewCard(); // abre modal de novo card
+  openNewCard();
   document.getElementById('m-title').value=item.title;
-  document.getElementById('m-tag').value=item.tag;
   document.getElementById('m-title-disp').textContent=item.title;
+  document.getElementById('m-tag').value=item.tag||tags[0]?.id;
+  document.getElementById('m-desc').value=item.desc||'';
+  document.getElementById('m-po').value=item.po||'';
+  if(item.checklist?.length) renderCL(item.checklist);
+  if(item.riscos?.length) renderRiscos(item.riscos);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1235,6 +1351,24 @@ async function qa(tab,q){
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
+function salvarComoModelo(id){
+  const card=cards.find(x=>x.id===id); if(!card) return;
+  if(!qlItems.modelos) qlItems.modelos=[];
+  const jaExiste=qlItems.modelos.find(m=>m.title===card.title);
+  if(jaExiste){ alert('"'+card.title+'" já está nos modelos.'); return; }
+  qlItems.modelos.push({
+    title: card.title,
+    tag: card.tag,
+    desc: card.desc||'',
+    po: card.po||'',
+    checklist: (card.checklist||[]).map(i=>({t:i.t,done:false})),
+    riscos: card.riscos||[],
+  });
+  fbSet(FB+'/ql_items',qlItems);
+  // feedback visual
+  const btn=event.target; const orig=btn.textContent;
+  btn.textContent='✅'; setTimeout(()=>btn.textContent=orig,1500);
+}
 function closeOv(id){ document.getElementById(id)?.classList.remove('open'); }
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov) ov.classList.remove('open');}));
 
@@ -1251,7 +1385,32 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
 })();
 
 // Init
-window.addEventListener('fb-ready',()=>{ fbLoadAll(); });
+window.addEventListener('fb-ready',()=>{
+  fbLoadAll();
+  // Presença online
+  window.addEventListener('auth-change', e=>{
+    const user=e.detail;
+    if(user&&window._fbReady){
+      const pRef=window._ref(window._db,'kanban/presence/'+user.uid);
+      window._set(pRef,{nome:user.displayName||user.email,foto:user.photoURL||'',init:window._currentUserInit||'?',ts:Date.now()});
+      // Remove ao fechar
+      window.addEventListener('beforeunload',()=>window._remove(pRef));
+    }
+  });
+  // Listener de presença
+  window._onValue(window._ref(window._db,'kanban/presence'),snap=>{
+    const val=snap.val()||{};
+    const now=Date.now();
+    const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
+    renderOnline(online);
+    // Heartbeat a cada 15s
+    clearInterval(window._heartbeat);
+    window._heartbeat=setInterval(()=>{
+      if(window._currentUser&&window._fbReady)
+        window._update(window._ref(window._db,'kanban/presence/'+window._currentUser.uid),{ts:Date.now()});
+    },15000);
+  });
+});
 renderBoard();
 </script>
 </body>
