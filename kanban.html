@@ -656,7 +656,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v4.0</div>
+<div class="version">v4.3</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -744,9 +744,9 @@ function fbGet(path){ return window._get(fb(path)); }
 function fbUpdate(path,val){ if(window._fbReady) window._update(fb(path),val); }
 function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
 
-let _skipNextCardUpdate = false;
+let _lastLocalSave = 0;
 function fbSaveAll(){
-  _skipNextCardUpdate = true;
+  _lastLocalSave = Date.now();
   fbSet(FB+'/cards', cards);
   fbSet(FB+'/tags', tags);
   fbSet(FB+'/columns', columns);
@@ -760,10 +760,17 @@ function fbSaveMsgs(tab){
 }
 
 function fbLoadAll(){
-  // Cards — realtime (skip se foi o próprio usuário que salvou)
+  // Cards — realtime (ignora echo do próprio save por 2s)
   fbListen(FB+'/cards',val=>{
-    if(_skipNextCardUpdate){ _skipNextCardUpdate=false; renderBoard(); return; }
-    if(val){ cards=Array.isArray(val)?val:Object.values(val); renderBoard(); }
+    if(Date.now() - _lastLocalSave < 2000){ return; } // ignora echo
+    if(val){ 
+      const incoming = Array.isArray(val)?val:Object.values(val);
+      // Só atualiza se o dado do Firebase for diferente do local
+      if(JSON.stringify(incoming) !== JSON.stringify(cards)){
+        cards = incoming; 
+        renderBoard(); 
+      }
+    }
   });
   // Tags
   fbListen(FB+'/tags',val=>{ if(val&&Array.isArray(val)&&val.length) tags=val; });
@@ -1396,12 +1403,15 @@ function executeTool(name,input){
   const user=window._currentUser?.displayName||'Agente Ágil';
   switch(name){
     case 'mover_card':{
-      // Busca por ID exato primeiro, depois por título parcial
+      // Busca por ID exato, depois título parcial
       let c=cards.find(x=>x.id===input.card_id);
-      if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||input.card_title||'').toLowerCase()));
-      if(!c) return{ok:false,msg:'Card não encontrado: '+input.card_id};
+      if(!c && input.card_id) c=cards.find(x=>x.title.toLowerCase().includes(input.card_id.toLowerCase()));
+      if(!c && input.card_title) c=cards.find(x=>x.title.toLowerCase().includes(input.card_title.toLowerCase()));
+      if(!c) return{ok:false,msg:'Card não encontrado. IDs: '+cards.slice(0,5).map(x=>x.id+'='+x.title.substring(0,15)).join(', ')};
+      const colExists=columns.find(col=>col.id===input.nova_coluna);
+      if(!colExists) return{ok:false,msg:'Coluna inválida: '+input.nova_coluna+'. Use: '+columns.map(col=>col.id).join(', ')};
       const ant=c.col; c.col=input.nova_coluna; c.edited=user; c.editedAt=td;
-      fbSaveAll(); renderBoard();
+      renderBoard(); fbSaveAll(); runAutoRules('move',c.id,input.nova_coluna);
       return{ok:true,msg:`"${c.title}" movido: ${ant} → ${input.nova_coluna}`};
     }
     case 'atualizar_prazo':{
@@ -1409,26 +1419,26 @@ function executeTool(name,input){
       if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
-      fbSaveAll(); renderBoard();
+      renderBoard(); fbSaveAll();
       return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo}`};
     }
     case 'marcar_checklist':{
       const c=cards.find(x=>x.id===input.card_id);
       if(!c||!c.checklist||c.checklist.length<=input.item_index) return{ok:false,msg:'Item não encontrado'};
       c.checklist[input.item_index].done=input.concluido; c.edited=user; c.editedAt=td;
-      fbSaveAll(); renderBoard();
+      renderBoard(); fbSaveAll();
       return{ok:true,msg:`"${c.checklist[input.item_index].t}" ${input.concluido?'marcado':'desmarcado'}`};
     }
     case 'criar_card':{
       const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||tags[0]?.id,title:input.titulo,desc:input.descricao||'',owner:input.owner||'',due:input.prazo||'',po:'',checklist:[],archived:false,created:user,edited:user,createdAt:td,editedAt:td};
-      cards.push(novo); fbSaveAll(); renderBoard();
+      cards.push(novo); renderBoard(); fbSaveAll();
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna}`,card_id:novo.id};
     }
     case 'atualizar_owner':{
       const c=cards.find(x=>x.id===input.card_id);
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.owner=input.novo_owner; c.edited=user; c.editedAt=td;
-      fbSaveAll(); renderBoard();
+      renderBoard(); fbSaveAll();
       return{ok:true,msg:`Responsável de "${c.title}" → ${input.novo_owner}`};
     }
     default: return{ok:false,msg:'Ferramenta desconhecida: '+name};
@@ -1438,11 +1448,11 @@ function executeTool(name,input){
 function agCtx(){
   const snap=cards.filter(c=>!c.archived).map(c=>{
     const cp=clProg(c.checklist);
-    return `[${c.id}][${c.col.toUpperCase()}] "${c.title}" owner:${c.owner||'?'} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
+    return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
   }).join('\n');
   return `Você é o Agente Ágil do time de dados da Digital Hering (Grupo Azzas 2154).
 Analisa o Kanban, age sobre ele e ajuda os usuários a entender o sistema. Responde em português, direto e acionável.
-IMPORTANTE: ao usar ferramentas, use o card_id exato (ex: c1, c2...) listado entre colchetes abaixo.
+CRÍTICO: ao usar ferramentas, use EXATAMENTE o card_id listado como [ID:xxx] abaixo. Exemplo: card_id="c2". Nunca invente IDs. As colunas válidas estão listadas como [COL:xxx].
 
 CAPACIDADES DO SISTEMA:
 - Board com colunas customizáveis, semáforo de prazo (verde/amarelo/vermelho), modo Raia por usuário
