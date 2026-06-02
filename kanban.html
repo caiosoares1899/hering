@@ -207,6 +207,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
+/* Raia sem responsável */
+.raia-unowned-label{
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+  color:var(--warn);padding:6px 10px;
+  background:rgba(255,209,102,.08);
+  border:1px solid rgba(255,209,102,.25);
+  border-radius:var(--r);margin-bottom:6px;
+  display:flex;align-items:center;gap:7px;
+}
+.raia-unowned-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--warn);
+  animation:warnPulse 1.4s infinite;
+  flex-shrink:0;
+}
+@keyframes warnPulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.3;transform:scale(.7);}
+}
+
+
 /* Context Menu */
 .ctx-menu{
   position:fixed;z-index:500;
@@ -944,7 +965,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v5.5</div>
+<div class="version">v5.6</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1267,21 +1288,40 @@ function renderNormal(board,activeCards){
 
 function renderRaia(board,activeCards){
   board.className='board raia-mode';
-  // Agrupa por owner
-  const owners=[...new Set(activeCards.map(c=>c.owner||''))];
-  owners.forEach(owner=>{
+
+  // Separa: com dono em cima, sem dono embaixo
+  const withOwner=[...new Set(activeCards.filter(c=>c.owner).map(c=>c.owner))];
+  const hasUnowned=activeCards.some(c=>!c.owner);
+  const orderedOwners=[...withOwner, ...(hasUnowned?['']:[] )];
+
+  orderedOwners.forEach(owner=>{
     const ownerCards=activeCards.filter(c=>(c.owner||'')===owner);
+    if(!ownerCards.length) return;
     const m=members.find(m=>m.init===owner);
-    const nomeCompleto=m?.name||owner||'Sem responsável'; const nome=owner?nomeCompleto.split(' ')[0]:nomeCompleto;
+    const nomeCompleto=m?.name||owner||'Sem responsável';
+    const nome=owner?nomeCompleto.split(' ')[0]:nomeCompleto;
     const row=document.createElement('div'); row.className='raia-row';
-    const foto=m?.foto?`<img src="${m.foto}" width="20" height="20" style="border-radius:50%;object-fit:cover;">`:'';
-    row.innerHTML=`<div class="raia-label">${foto} ${nome}</div><div class="raia-cols" id="raia-${owner||'none'}"></div>`;
+
+    if(!owner){
+      // Raia sem responsável — label com aviso piscando
+      const total=ownerCards.length;
+      row.innerHTML=`<div class="raia-unowned-label">
+        <span class="raia-unowned-dot"></span>
+        Sem responsável
+        <span style="margin-left:auto;font-size:10px;background:rgba(255,209,102,.15);padding:1px 8px;border-radius:999px;border:1px solid rgba(255,209,102,.3);">${total} card${total>1?'s':''}</span>
+      </div><div class="raia-cols" id="raia-none"></div>`;
+    } else {
+      const foto=m?.foto?`<img src="${m.foto}" width="20" height="20" style="border-radius:50%;object-fit:cover;">`:'';
+      row.innerHTML=`<div class="raia-label">${foto} ${nome}</div><div class="raia-cols" id="raia-${owner}"></div>`;
+    }
+
     board.appendChild(row);
     const raiaBoard=row.querySelector('.raia-cols');
     columns.forEach(col=>{
       const colCards=ownerCards.filter(c=>c.col===col.id);
+      const safeId=owner||'none';
       const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
-      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${col.name}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body" id="rbody-${owner||'none'}-${col.id}"></div>`;
+      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${col.name}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body" id="rbody-${safeId}-${col.id}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       colCards.forEach(c=>body.appendChild(makeCardEl(c)));
