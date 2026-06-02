@@ -177,9 +177,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 /* version */
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 </style>
-  <!-- Firebase SDK -->
+  <!-- LOGIN OVERLAY -->
+<div id="login-ov" style="position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.97);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <div style="text-align:center;margin-bottom:8px;">
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--txt);margin-bottom:6px;">🐟 Kanban Hering</div>
+    <div style="font-size:13px;color:var(--txt2);">Digital Hering · Time de Dados</div>
+  </div>
+  <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:340px;width:100%;backdrop-filter:blur(12px);">
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google da Hering para acessar o board.</div>
+    <button onclick="doSignIn()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:var(--txt);font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all .2s;">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Entrar com Google
+    </button>
+    <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
+  </div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito ao time Digital Hering</div>
+</div>
+
+<!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
     import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
     // 🔧 Cole aqui as credenciais do seu projeto hering-onboarding
@@ -195,6 +213,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ hd: 'ciahering.com.br' }); // restringe ao domínio da Hering
+    window._auth = auth;
+    window._provider = provider;
+    window._signIn = () => signInWithPopup(auth, provider);
+    window._signOut = () => signOut(auth);
+    window._onAuth = (cb) => onAuthStateChanged(auth, cb);
     window._db = db;
     window._fbRef = ref;
     window._fbSet = set;
@@ -204,6 +230,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
     window._fbRemove = remove;
     window._fbReady = true;
     window.dispatchEvent(new Event('fb-ready'));
+    // Monitora estado de autenticação
+    onAuthStateChanged(auth, user => {
+      window._currentUser = user;
+      window.dispatchEvent(new CustomEvent('auth-change', { detail: user }));
+    });
     console.log('[Firebase] conectado:', firebaseConfig.databaseURL);
   </script>
 </head>
@@ -220,6 +251,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
       <span class="hd-badge">Digital Hering · Sprint 12</span>
     </div>
     <div class="hd-btns">
+      <div id="user-badge" style="display:none;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
+        <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
+        <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
+        <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:0 2px;" title="Sair">✕</button>
+      </div>
       <button class="btn btn-p" onclick="openNewCard()">+ Card</button>
     </div>
   </div>
@@ -481,7 +517,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v1.8</div>
+<div class="version">v2.0</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -529,6 +565,48 @@ let cards = [
 ];
 
 let editingId = null;
+
+
+// ── AUTH ──────────────────────────────────────────────────────────
+function doSignIn(){
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!window._signIn){ err.textContent='Firebase ainda carregando...'; err.style.display='block'; return; }
+  window._signIn().catch(e=>{
+    err.textContent='Erro ao entrar: '+e.message;
+    err.style.display='block';
+  });
+}
+function doSignOut(){
+  if(window._signOut) window._signOut();
+}
+function handleAuthChange(user){
+  const ov=document.getElementById('login-ov');
+  const badge=document.getElementById('user-badge');
+  if(user){
+    // Rejeita contas fora do domínio ciahering.com.br
+    if(user.email && !user.email.endsWith('@ciahering.com.br')){
+      document.getElementById('login-err').textContent='Acesso restrito a contas @ciahering.com.br';
+      document.getElementById('login-err').style.display='block';
+      window._signOut();
+      return;
+    }
+    ov.style.display='none';
+    badge.style.display='flex';
+    document.getElementById('user-name').textContent=user.displayName||user.email;
+    const av=document.getElementById('user-avatar');
+    if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
+    // atualiza membro no board com o usuário logado
+    const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    window._currentUserInit=init;
+  } else {
+    ov.style.display='flex';
+    badge.style.display='none';
+    window._currentUserInit=null;
+  }
+}
+window.addEventListener('auth-change', e => handleAuthChange(e.detail));
+// ── FIM AUTH ───────────────────────────────────────────────────────
 
 // ── FIREBASE ──────────────────────────────────────────────────────
 const FB_PATH = 'kanban/dados'; // nó no Realtime Database
@@ -713,12 +791,12 @@ function saveCard(){
     Object.assign(c,{title,tag:document.getElementById('m-tag').value,col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
-      checklist:cl,edited:'Usuário',editedAt:td2});
+      checklist:cl,edited:window._currentUser?.displayName||'Usuário',editedAt:td2});
   } else {
     cards.push({id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
       title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,created:'Usuário',edited:'Usuário',createdAt:td2,editedAt:td2});
+      checklist:cl,created:window._currentUser?.displayName||'Usuário',edited:window._currentUser?.displayName||'Usuário',createdAt:td2,editedAt:td2});
   }
   renderBoard(); closeCard(); fbSaveAll();
 }
