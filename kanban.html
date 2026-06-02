@@ -339,10 +339,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
     </div>
     <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
   </div>
-  <div class="panel-ft">
-    <button class="btn btn-teal" onclick="insightsCard()">🤖 Insights ↗</button>
-    <button class="btn" onclick="closeCard()">Cancelar</button>
-    <button class="btn btn-p" onclick="saveCard()">Salvar</button>
+  <div class="panel-ft" style="justify-content:space-between;">
+    <button class="btn" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
+    <div style="display:flex;gap:7px;">
+      <button class="btn btn-teal" onclick="insightsCard()">🤖 Insights ↗</button>
+      <button class="btn" onclick="closeCard()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveCard()">Salvar</button>
+    </div>
   </div>
 </div>
 </div>
@@ -478,7 +481,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v1.7</div>
+<div class="version">v1.8</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -670,6 +673,7 @@ function openCard(id){
   populateTagSelect(); populateOwnerSelect();
   document.getElementById('m-title').value=c.title;
   document.getElementById('m-title-disp').textContent=c.title;
+  document.querySelector('.panel-ft [onclick="deleteCard()"]').style.visibility='visible';
   document.getElementById('m-tag').value=c.tag;
   document.getElementById('m-col').value=c.col;
   document.getElementById('m-owner').value=c.owner||'';
@@ -686,6 +690,7 @@ function openNewCard(col){
   populateTagSelect(); populateOwnerSelect();
   document.getElementById('m-title').value='';
   document.getElementById('m-title-disp').textContent='Novo card';
+  document.querySelector('.panel-ft [onclick="deleteCard()"]').style.visibility='hidden';
   document.getElementById('m-tag').value=tags[0]?.id||'';
   document.getElementById('m-col').value=col||'backlog';
   document.getElementById('m-owner').value='';
@@ -729,6 +734,18 @@ function renderCL(cl){
 function getCL(){ return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({t:r.querySelector('.cl-it').textContent,done:r.querySelector('input').checked})); }
 function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
 function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
+
+
+function deleteCard(){
+  if(!editingId) return;
+  const c=cards.find(x=>x.id===editingId);
+  if(!c) return;
+  if(!confirm('Excluir o card "'+c.title+'"? Essa ação não pode ser desfeita.')) return;
+  cards=cards.filter(x=>x.id!==editingId);
+  fbSaveAll();
+  renderBoard();
+  closeCard();
+}
 
 function insightsCard(){
   const title=document.getElementById('m-title').value;
