@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kanban · Time de Dados · Digital Hering</title>
+<title>🐟 Maré Digital</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>">
+  <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>">
   <!-- PWA -->
   <meta name="theme-color" content="#030d1a">
   <meta name="mobile-web-app-capable" content="yes">
@@ -442,7 +444,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- LOGIN -->
 <div class="login-ov" id="login-ov">
   <div style="text-align:center;margin-bottom:8px;">
-    <div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;">🐟 Kanban Hering</div>
+    <div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;">🐟 Maré Digital</div>
     <div style="font-size:13px;color:var(--txt2);">Digital Hering · Time de Dados</div>
   </div>
   <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:340px;width:100%;backdrop-filter:blur(12px);">
@@ -483,7 +485,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="app" id="app-root" style="display:none;">
 <div class="hd">
   <div class="hd-l">
-    <div class="hd-title">🐟 Time de Dados</div>
+    <div class="hd-title">🐟 Maré Digital</div>
     <span class="hd-badge" id="sprint-badge">Digital Hering · Sprint 1</span>
   </div>
   <div class="hd-btns">
@@ -899,7 +901,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v5.3</div>
+<div class="version">v5.4</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2135,9 +2137,9 @@ function initPWA(){
   const manifestEl=document.getElementById('pwa-manifest');
   if(!manifestEl){ console.warn('PWA: manifest element not found'); return; }
   const manifest={
-    name:'Kanban Hering',
-    short_name:'Kanban',
-    description:'Board Ágil — Digital Hering · Time de Dados',
+    name:'Maré Digital',
+    short_name:'Maré',
+    description:'Maré Digital — Board Ágil · Digital Hering',
     start_url:window.location.href.split('?')[0],
     display:'standalone',
     orientation:'any',
@@ -2193,7 +2195,7 @@ self.addEventListener('fetch',e=>{
     const banner=document.createElement('div');
     banner.id='install-banner';
     banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(37,99,201,.95);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-family:DM Sans,sans-serif;backdrop-filter:blur(12px);';
-    banner.innerHTML='<span>🐟 Adicionar Kanban Hering à tela inicial?</span><div style="display:flex;gap:8px;"><button onclick="installPWA()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;">Instalar</button><button onclick="dismissInstall()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px;padding:2px 6px;">✕</button></div>';
+    banner.innerHTML='<span>🐟 Adicionar Maré Digital à tela inicial?</span><div style="display:flex;gap:8px;"><button onclick="installPWA()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;">Instalar</button><button onclick="dismissInstall()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:16px;padding:2px 6px;">✕</button></div>';
     document.body.prepend(banner);
   }
   window.installPWA=function(){
