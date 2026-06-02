@@ -179,7 +179,7 @@
     <button class="nav-pill" onclick="goTo(6)">Roadmap</button>
     <button class="nav-pill" onclick="goTo(8)">Próximos passos</button>
   </div>
-  <span class="nav-badge">Plano de Implementação · 2026</span>
+  <span class="nav-badge">Plano de Implementação · 2026 &nbsp;·&nbsp; <span style="color:var(--text-dim);letter-spacing:.08em;">F tela cheia</span></span>
 </nav>
 
 <div class="progress-bar" id="progressBar"></div>
@@ -587,7 +587,7 @@
   </div>
 </section>
 
-<div class="version">v1.3</div>
+<div class="version">v1.4</div>
 
 <script>
   const slides = document.querySelectorAll('.slide');
@@ -623,6 +623,14 @@
   slides.forEach(s => observer.observe(s));
   window.addEventListener('scroll', updateProgress);
   updateProgress();
+
+  // F para fullscreen
+  document.addEventListener('keydown', e => {
+    if(e.key==='f'||e.key==='F'){
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    }
+  });
+
 </script>
 </body>
 </html>
