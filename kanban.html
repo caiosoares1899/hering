@@ -517,7 +517,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v2.0</div>
+<div class="version">v2.1</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -939,33 +939,174 @@ function setLoad(tab,on){
   if(on){ const d=document.createElement('div'); d.id=id; d.className='msg msg-ai'; d.innerHTML='<span class="dots"><span>●</span><span>●</span><span>●</span></span> Analisando...'; document.getElementById('msgs-'+tab).appendChild(d); }
   else { const el=document.getElementById(id); if(el) el.remove(); }
 }
-async function qa(tab,q){
+// Histórico de mensagens por aba (memória real da conversa)
+const agHistory = { daily:[], metricas:[], retro:[] };
+
+// Ferramentas que o agente pode usar para escrever no board
+const agTools = [
+  {
+    name: 'mover_card',
+    description: 'Move um card para outra coluna do board',
+    input_schema: {
+      type: 'object',
+      properties: {
+        card_id:    { type:'string', description:'ID do card (ex: c1, c4)' },
+        card_title: { type:'string', description:'Título do card para confirmar' },
+        nova_coluna:{ type:'string', enum:['backlog','todo','progress','blocker','done'], description:'Coluna de destino' },
+        motivo:     { type:'string', description:'Motivo da movimentação' }
+      },
+      required: ['card_id','nova_coluna','motivo']
+    }
+  },
+  {
+    name: 'atualizar_prazo',
+    description: 'Atualiza o prazo de um card',
+    input_schema: {
+      type: 'object',
+      properties: {
+        card_id:   { type:'string', description:'ID do card' },
+        novo_prazo:{ type:'string', description:'Novo prazo no formato YYYY-MM-DD' },
+        motivo:    { type:'string', description:'Motivo da mudança' }
+      },
+      required: ['card_id','novo_prazo','motivo']
+    }
+  },
+  {
+    name: 'marcar_checklist',
+    description: 'Marca ou desmarca um item do checklist de um card',
+    input_schema: {
+      type: 'object',
+      properties: {
+        card_id:    { type:'string', description:'ID do card' },
+        item_index: { type:'number', description:'Índice do item no checklist (começa em 0)' },
+        concluido:  { type:'boolean', description:'true para marcar, false para desmarcar' }
+      },
+      required: ['card_id','item_index','concluido']
+    }
+  },
+  {
+    name: 'criar_card',
+    description: 'Cria um novo card no board',
+    input_schema: {
+      type: 'object',
+      properties: {
+        titulo:    { type:'string', description:'Título do card' },
+        coluna:    { type:'string', enum:['backlog','todo','progress','blocker','done'] },
+        tag:       { type:'string', description:'ID da tag' },
+        owner:     { type:'string', description:'Iniciais do responsável' },
+        prazo:     { type:'string', description:'Prazo YYYY-MM-DD (opcional)' },
+        descricao: { type:'string', description:'Descrição breve (opcional)' }
+      },
+      required: ['titulo','coluna','tag']
+    }
+  },
+  {
+    name: 'atualizar_owner',
+    description: 'Atribui ou muda o responsável de um card',
+    input_schema: {
+      type: 'object',
+      properties: {
+        card_id:    { type:'string', description:'ID do card' },
+        novo_owner: { type:'string', description:'Iniciais do novo responsável' },
+        motivo:     { type:'string', description:'Motivo da mudança' }
+      },
+      required: ['card_id','novo_owner','motivo']
+    }
+  }
+];
+
+function executeTool(name, input){
+  const td = new Date().toISOString().split('T')[0];
+  const user = window._currentUser?.displayName || 'Agente Ágil';
+  switch(name){
+    case 'mover_card': {
+      const c = cards.find(x=>x.id===input.card_id)||cards.find(x=>x.title===input.card_title);
+      if(!c) return { ok:false, msg:'Card não encontrado: '+input.card_id };
+      const ant = c.col; c.col=input.nova_coluna; c.edited=user; c.editedAt=td;
+      fbSaveAll(); renderBoard();
+      return { ok:true, msg:'Card "'+c.title+'" movido: '+ant+' → '+input.nova_coluna };
+    }
+    case 'atualizar_prazo': {
+      const c = cards.find(x=>x.id===input.card_id);
+      if(!c) return { ok:false, msg:'Card não encontrado' };
+      c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
+      fbSaveAll(); renderBoard();
+      return { ok:true, msg:'Prazo de "'+c.title+'" → '+input.novo_prazo };
+    }
+    case 'marcar_checklist': {
+      const c = cards.find(x=>x.id===input.card_id);
+      if(!c||!c.checklist||c.checklist.length<=input.item_index) return { ok:false, msg:'Item não encontrado' };
+      c.checklist[input.item_index].done=input.concluido; c.edited=user; c.editedAt=td;
+      fbSaveAll(); renderBoard();
+      return { ok:true, msg:'"'+c.checklist[input.item_index].t+'" '+(input.concluido?'marcado':'desmarcado') };
+    }
+    case 'criar_card': {
+      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||tags[0]?.id,
+        title:input.titulo,desc:input.descricao||'',owner:input.owner||'',due:input.prazo||'',
+        po:'',checklist:[],created:user,edited:user,createdAt:td,editedAt:td};
+      cards.push(novo); fbSaveAll(); renderBoard();
+      return { ok:true, msg:'Card "'+input.titulo+'" criado em '+input.coluna, card_id:novo.id };
+    }
+    case 'atualizar_owner': {
+      const c = cards.find(x=>x.id===input.card_id);
+      if(!c) return { ok:false, msg:'Card não encontrado' };
+      c.owner=input.novo_owner; c.edited=user; c.editedAt=td;
+      fbSaveAll(); renderBoard();
+      return { ok:true, msg:'Responsável de "'+c.title+'" → '+input.novo_owner };
+    }
+    default: return { ok:false, msg:'Ferramenta desconhecida: '+name };
+  }
+}
+
+async function qa(tab, q){
   if(!q||!q.trim()) return;
   appMsg(tab,'user',q);
   document.getElementById('inp-'+tab).value='';
   document.getElementById('snd-'+tab).disabled=true;
   setLoad(tab,true);
+
+  agHistory[tab].push({ role:'user', content:q });
+  if(agHistory[tab].length > 20) agHistory[tab]=agHistory[tab].slice(-20);
+
   try {
-    console.log('[Agente Ágil] chamando Worker:', ANTHROPIC_API);
-    const r=await fetch(ANTHROPIC_API,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({max_tokens:1000,system:agCtx(),messages:[{role:'user',content:q}]})
-    });
-    console.log('[Agente Ágil] status HTTP:', r.status);
-    const raw=await r.text();
-    console.log('[Agente Ágil] resposta raw:', raw.substring(0,300));
-    let data;
-    try{ data=JSON.parse(raw); } catch(pe){ throw new Error('JSON inválido: '+raw.substring(0,120)); }
-    setLoad(tab,false);
-    if(data.error){
-      appMsg(tab,'ai','⚠️ Erro do Worker/API: '+JSON.stringify(data.error));
-    } else {
-      const txt=data.content?.map(b=>b.text||'').join('')||'';
-      appMsg(tab,'ai',txt||'(resposta vazia)'); fbSaveMsgs(tab);
+    let messages=[...agHistory[tab]];
+    let finalText='', toolsUsed=[], loop=true;
+
+    while(loop){
+      const r=await fetch(ANTHROPIC_API,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({max_tokens:1500,system:agCtx(),tools:agTools,messages})});
+      const raw=await r.text();
+      let data; try{ data=JSON.parse(raw); }catch(e){ throw new Error('JSON inválido: '+raw.substring(0,120)); }
+      if(data.error) throw new Error(JSON.stringify(data.error));
+
+      messages.push({ role:'assistant', content:data.content });
+
+      const toolCalls=data.content.filter(b=>b.type==='tool_use');
+      const texts=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+      if(texts) finalText+=texts;
+
+      if(toolCalls.length>0 && data.stop_reason==='tool_use'){
+        const results=toolCalls.map(tc=>{
+          const res=executeTool(tc.name,tc.input);
+          toolsUsed.push({name:tc.name,result:res});
+          return {type:'tool_result',tool_use_id:tc.id,content:JSON.stringify(res)};
+        });
+        messages.push({role:'user',content:results});
+      } else { loop=false; }
     }
+
+    setLoad(tab,false);
+    let display=finalText;
+    if(toolsUsed.length>0){
+      const acoes=toolsUsed.map(t=>(t.result.ok?'✅ ':'❌ ')+t.result.msg).join('\n');
+      display=(display?display+'\n\n':'')+acoes;
+    }
+    appMsg(tab,'ai',display||'(sem resposta)');
+    agHistory[tab].push({role:'assistant',content:finalText||'ok'});
+    fbSaveMsgs(tab);
+
   } catch(e){
-    console.error('[Agente Ágil] erro:', e);
+    console.error('[Agente Ágil]',e);
     setLoad(tab,false);
     appMsg(tab,'ai','❌ Erro: '+e.message);
   }
