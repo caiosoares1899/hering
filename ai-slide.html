@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA no Digital Hering</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#C9A84C;
+  --gl:rgba(201,168,76,0.18);
+  --gd:rgba(201,168,76,0.06);
+  --d:#080808;
+  --d2:#101010;
+  --d3:#181818;
+  --d4:#222;
+  --t:#F2EEE6;
+  --tm:#A09C94;
+  --td:#6A6762;
+  --tl:rgba(42,191,160,1);
+  --bl:#4A8FD4;
+  --or:#C97050;
+  --b:rgba(201,168,76,0.14);
+  --b2:rgba(201,168,76,0.32);
+}
+html,body{width:100%;height:100%;background:var(--d);color:var(--t);font-family:'Space Grotesk',sans-serif;overflow:hidden}
+
+/* ─── GRAIN OVERLAY ─── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:.55
+}
+
+/* ─── HEADER ─── */
+#hdr{
+  position:fixed;top:0;left:0;right:0;height:50px;
+  background:rgba(8,8,8,.9);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--b);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;z-index:500
+}
+.hbrand{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g)}
+.hcenter{display:flex;align-items:center;gap:1.5rem}
+.hcount{font-family:'Space Mono',monospace;font-size:11px;color:var(--tm);letter-spacing:.1em}
+.hcount b{color:var(--g)}
+.hdots{display:flex;gap:5px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--d4);border:1px solid var(--td);cursor:pointer;transition:all .25s}
+.dot.on{background:var(--g);border-color:var(--g);width:18px;border-radius:3px}
+.hright{display:flex;align-items:center;gap:1.5rem}
+#clk{font-family:'Space Mono',monospace;font-size:11px;color:var(--tm);letter-spacing:.1em}
+.hkey{font-size:9px;color:var(--td);letter-spacing:.08em}
+
+/* ─── DECK ─── */
+#deck{position:fixed;top:50px;left:0;right:0;bottom:0;overflow:hidden}
+
+/* ─── SLIDE BASE ─── */
+.s{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:2rem 5rem 2rem;
+  opacity:0;pointer-events:none;
+  transition:opacity .45s cubic-bezier(.4,0,.2,1),transform .45s cubic-bezier(.4,0,.2,1);
+  transform:translateX(80px)
+}
+.s.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.s.gone{opacity:0;transform:translateX(-80px)}
+/* slides que usam tela inteira */
+.s.fullh{justify-content:center;padding-top:1.75rem;padding-bottom:1.5rem}
+
+/* ─── EYEBROW ─── */
+.eye{
+  font-family:'Space Mono',monospace;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--g);opacity:.7;margin-bottom:1rem
+}
+
+/* ─── HEADINGS ─── */
+.title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3.8rem,8vw,7rem);
+  line-height:.95;letter-spacing:.02em;
+  color:var(--t)
+}
+.title .gold{color:var(--g)}
+.title .stroke{
+  -webkit-text-stroke:1.5px var(--g);
+  color:transparent
+}
+h2{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.8rem,5.5vw,5rem);
+  line-height:.98;letter-spacing:.02em;color:var(--t)
+}
+h2 em{color:var(--g);font-style:normal}
+.s.fullh h2{font-size:clamp(2rem,4vw,3.2rem)}
+.s.fullh .bar{margin:.65rem 0 .9rem}
+
+/* ─── BODY TEXT ─── */
+.lead{font-size:clamp(1rem,1.6vw,1.2rem);color:var(--tm);font-weight:300;line-height:1.75;max-width:620px;margin-top:.9rem}
+.bar{width:40px;height:2px;background:var(--g);margin:1rem 0 1.5rem}
+
+/* ─── ANIMATED NUMBER ─── */
+.big-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(5rem,12vw,10rem);
+  line-height:1;color:var(--g);
+  display:inline-block
+}
+
+/* ─── CARDS ─── */
+.card{
+  background:var(--d3);border:1px solid var(--b);
+  border-radius:12px;padding:1.4rem 1.6rem
+}
+.card.hi{border-color:var(--b2);background:rgba(201,168,76,.04)}
+.card.tl{border-left:2px solid var(--tl);border-radius:0 12px 12px 0}
+.card.gl{border-left:2px solid var(--g);border-radius:0 12px 12px 0}
+.clabel{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.5rem}
+.ctitle{font-size:1.15rem;font-weight:600;margin-bottom:.4rem;color:var(--t)}
+.cbody{font-size:.88rem;color:var(--tm);line-height:1.65}
+
+/* ─── GRIDS ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+
+/* ─── TAGS ─── */
+.tag{display:inline-block;font-size:.7rem;padding:3px 9px;border-radius:20px;margin:3px 3px 0 0;font-family:'Space Mono',monospace;letter-spacing:.05em}
+.tg{background:rgba(201,168,76,.12);color:var(--g)}
+.tt{background:rgba(42,191,160,.1);color:var(--tl)}
+.tb{background:rgba(74,143,212,.1);color:var(--bl)}
+.to{background:rgba(201,112,80,.1);color:var(--or)}
+
+/* ─── NAV ARROWS ─── */
+.nav{
+  position:fixed;top:50%;transform:translateY(-50%);
+  z-index:400;width:40px;height:72px;
+  background:rgba(16,16,16,.8);border:1px solid var(--b2);
+  color:var(--g);font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .3s;backdrop-filter:blur(8px)
+}
+#np{left:0;border-radius:0 10px 10px 0}
+#nn{right:0;border-radius:10px 0 0 10px}
+.nav:hover{background:var(--d3);border-color:var(--g)}
+.nav.off{opacity:0;pointer-events:none}
+.nav.faded{opacity:0;pointer-events:none}
+
+/* ─── PROGRESS ─── */
+#prog{position:fixed;bottom:0;left:0;height:2px;background:var(--g);transition:width .4s ease;z-index:500}
+
+/* ─── VER ─── */
+#ver{position:fixed;bottom:8px;right:14px;font-family:'Space Mono',monospace;font-size:8px;color:var(--td);z-index:500}
+
+/* ══════════════════════════════════════
+   SLIDE-SPECIFIC STYLES
+══════════════════════════════════════ */
+
+/* CAPA — animated grid lines */
+#s0{overflow:hidden}
+.grid-bg{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(201,168,76,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(201,168,76,.06) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:gridpan 20s linear infinite;
+  pointer-events:none
+}
+@keyframes gridpan{
+  0%{background-position:0 0}
+  100%{background-position:60px 60px}
+}
+.capa-content{position:relative;z-index:1}
+.capa-kicker{
+  font-family:'Space Mono',monospace;
+  font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--g);margin-bottom:1.2rem;
+  display:flex;align-items:center;gap:.75rem
+}
+.capa-kicker::before{content:'';width:32px;height:1px;background:var(--g)}
+.capa-sub{
+  font-size:clamp(1rem,1.5vw,1.15rem);color:var(--tm);font-weight:300;
+  line-height:1.7;max-width:540px;margin-top:1.25rem
+}
+.capa-meta{
+  margin-top:2rem;display:flex;align-items:center;gap:1.5rem;
+  padding-top:1.25rem;border-top:1px solid var(--b)
+}
+.capa-meta-item{font-size:.8rem;color:#7A7770}
+.capa-meta-item b{color:#9A9690;display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;font-weight:400}
+
+/* CAPA right side big text */
+.capa-right{
+  position:absolute;right:4rem;top:50%;transform:translateY(-50%);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(6rem,14vw,13rem);
+  line-height:.85;letter-spacing:.04em;
+  -webkit-text-stroke:1px rgba(201,168,76,.2);
+  color:transparent;
+  pointer-events:none;user-select:none;
+  animation:floatr 6s ease-in-out infinite
+}
+@keyframes floatr{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-52%) translateX(6px)}}
+
+/* SLIDE 1 — papel: animated reveal */
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-bottom:1rem}
+.role-card{
+  border:1px solid var(--b);border-radius:12px;
+  padding:1.5rem 1.4rem;
+  background:var(--d3);position:relative;overflow:hidden;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .5s ease,transform .5s ease
+}
+.s.active .role-card:nth-child(1){opacity:1;transform:none;transition-delay:.1s}
+.s.active .role-card:nth-child(2){opacity:1;transform:none;transition-delay:.25s}
+.s.active .role-card:nth-child(3){opacity:1;transform:none;transition-delay:.4s}
+.role-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.rc1::before{background:var(--g)}
+.rc2::before{background:var(--tl)}
+.rc3::before{background:var(--bl)}
+.role-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3.5rem;line-height:1;
+  margin-bottom:.4rem
+}
+.rc1 .role-num{color:var(--g)}
+.rc2 .role-num{color:var(--tl)}
+.rc3 .role-num{color:var(--bl)}
+.role-title{font-size:1.2rem;font-weight:600;margin-bottom:.45rem}
+.role-body{font-size:.9rem;color:var(--tm);line-height:1.65}
+
+/* SLIDE 2 — por que agora: counter animation */
+.reason-list{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1rem}
+.reason{
+  display:grid;grid-template-columns:3rem 1fr;gap:1rem;
+  align-items:start;
+  opacity:0;transform:translateX(-20px);
+  transition:opacity .4s ease,transform .4s ease
+}
+.s.active .reason:nth-child(1){opacity:1;transform:none;transition-delay:.08s}
+.s.active .reason:nth-child(2){opacity:1;transform:none;transition-delay:.2s}
+.s.active .reason:nth-child(3){opacity:1;transform:none;transition-delay:.32s}
+.r-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:4rem;line-height:1;
+  color:var(--g);opacity:.3
+}
+.r-body{}
+.r-title{font-size:1.2rem;font-weight:600;margin-bottom:.3rem}
+.r-text{font-size:.95rem;color:var(--tm);line-height:1.65}
+
+/* SLIDE 2 — human levels: tela cheia visual */
+.hum-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1.1rem;margin-top:.5rem;min-height:0;
+  flex:1;align-content:start
+}
+.hum-card{
+  border-radius:16px;padding:1.4rem 1.6rem;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;
+  opacity:0;transform:translateY(28px);
+  transition:opacity .5s ease,transform .5s ease;
+  max-height:calc(100vh - 260px)
+}
+.s.active .hum-card:nth-child(1){opacity:1;transform:none;transition-delay:.1s}
+.s.active .hum-card:nth-child(2){opacity:1;transform:none;transition-delay:.25s}
+.s.active .hum-card:nth-child(3){opacity:1;transform:none;transition-delay:.4s}
+.hc1{background:rgba(74,143,212,.08);border:1px solid rgba(74,143,212,.25)}
+.hc2{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.28)}
+.hc3{background:rgba(42,191,160,.07);border:1px solid rgba(42,191,160,.25)}
+/* big background number */
+.hum-card::before{
+  content:attr(data-n);
+  position:absolute;right:-10px;top:-18px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11rem;line-height:1;letter-spacing:-.02em;
+  opacity:.06;pointer-events:none;color:#fff
+}
+.hum-tag{
+  font-family:'Space Mono',monospace;font-size:9px;
+  letter-spacing:.2em;text-transform:uppercase;margin-bottom:1.1rem
+}
+.hc1 .hum-tag{color:var(--bl)}
+.hc2 .hum-tag{color:var(--g)}
+.hc3 .hum-tag{color:var(--tl)}
+/* icon row */
+.hum-icons{
+  display:flex;align-items:center;gap:.5rem;
+  margin-bottom:1.25rem;font-size:1.6rem
+}
+.hum-icon-ia{font-size:1.6rem}
+.hum-icon-arr{font-size:1rem;opacity:.4}
+.hum-icon-h{font-size:1.6rem;position:relative}
+/* human presence ring */
+.hc1 .hum-icon-h::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--bl);animation:ring 1.5s ease-in-out infinite}
+.hc2 .hum-icon-h::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--g);animation:ring 2s ease-in-out infinite}
+.hc3 .hum-icon-h::after{display:none}
+@keyframes ring{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.hum-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3.2rem;line-height:.95;margin-bottom:.9rem
+}
+.hc1 .hum-name{color:var(--bl)}
+.hc2 .hum-name{color:var(--g)}
+.hc3 .hum-name{color:var(--tl)}
+.hum-desc{font-size:.88rem;color:var(--tm);line-height:1.65;margin-bottom:1rem;flex:1}
+.hum-ex{
+  font-size:.75rem;color:var(--td);font-style:italic;line-height:1.5;
+  padding-top:.85rem;border-top:1px solid rgba(255,255,255,.07)
+}
+/* control bar */
+.hum-ctrl{
+  display:flex;align-items:center;gap:.4rem;margin-top:.85rem;
+}
+.hum-ctrl-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.hc1 .hum-ctrl-dot:nth-child(1){background:var(--bl);border-color:var(--bl)}
+.hc2 .hum-ctrl-dot:nth-child(1),.hc2 .hum-ctrl-dot:nth-child(2){background:var(--g);border-color:var(--g)}
+.hc3 .hum-ctrl-dot:nth-child(1),.hc3 .hum-ctrl-dot:nth-child(2),.hc3 .hum-ctrl-dot:nth-child(3){background:var(--tl);border-color:var(--tl)}
+.hum-ctrl-label{font-family:'Space Mono',monospace;font-size:8px;color:var(--td);letter-spacing:.1em;margin-left:.3rem}
+
+/* SLIDE 4 — frameworks: scale bar animated */
+.scalebar{display:flex;border-radius:8px;overflow:hidden;height:44px;margin-bottom:1.25rem;
+  opacity:0;transform:scaleX(.8);transform-origin:left;
+  transition:opacity .5s ease,transform .5s ease
+}
+.s.active .scalebar{opacity:1;transform:scaleX(1);transition-delay:.1s}
+.sbi{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:600;
+  position:relative;text-align:center;padding:0 .5rem
+}
+.sbi::after{content:'→';position:absolute;right:-8px;z-index:2;font-size:14px}
+.sbi:last-child::after{display:none}
+.fw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem}
+.fw-card{
+  border-radius:12px;padding:1.1rem 1.2rem;background:var(--d3);border:1px solid var(--b);
+  opacity:0;transform:translateY(16px);
+  transition:opacity .45s,transform .45s
+}
+.s.active .fw-card:nth-child(1){opacity:1;transform:none;transition-delay:.15s}
+.s.active .fw-card:nth-child(2){opacity:1;transform:none;transition-delay:.28s}
+.s.active .fw-card:nth-child(3){opacity:1;transform:none;transition-delay:.41s}
+.s.active .fw-card:nth-child(4){opacity:1;transform:none;transition-delay:.54s}
+.fw-lv{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.6rem}
+.fw-title{font-size:.95rem;font-weight:600;margin-bottom:.4rem}
+.fw-body{font-size:.8rem;color:var(--tm);line-height:1.6}
+.fw-list{list-style:none;margin-top:.6rem;font-size:.78rem;color:var(--tm);line-height:1.85}
+
+/* SLIDE 5 — agente VM */
+.agent-wrap{
+  display:flex;align-items:stretch;gap:0;
+  opacity:0;transform:translateY(16px);
+  transition:opacity .5s,transform .5s
+}
+.s.active .agent-wrap{opacity:1;transform:none;transition-delay:.1s}
+.anode{
+  flex:1;background:var(--d3);border:1px solid var(--b);
+  border-radius:12px;padding:1.5rem 1.6rem;
+  display:flex;flex-direction:column;gap:8px
+}
+.anode.hl{border-color:var(--g);background:rgba(201,168,76,.05)}
+.aicon{font-size:2rem}
+.albl{font-size:1.1rem;font-weight:600}
+.asub{font-size:.88rem;color:var(--tm);line-height:1.55}
+.aarr{display:flex;align-items:center;padding:0 10px;color:rgba(201,168,76,.4);font-size:1.4rem;flex-shrink:0}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-top:1rem}
+.ba-box{border-radius:10px;padding:1.2rem 1.4rem}
+.ba-b{background:var(--d3);border:1px solid var(--b)}
+.ba-a{background:rgba(42,191,160,.05);border:1px solid rgba(42,191,160,.2)}
+.ba-lbl{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.55rem}
+.ba-b .ba-lbl{color:var(--td)}
+.ba-a .ba-lbl{color:var(--tl)}
+.ba-title{font-size:1rem;font-weight:600;margin-bottom:.55rem}
+.ba-list{list-style:none;font-size:.85rem;color:var(--tm);line-height:1.9}
+
+/* SLIDE 6 — roadmap */
+.rm-track{
+  display:flex;align-items:flex-start;gap:0;
+  position:relative;margin-bottom:1.75rem;padding-top:.5rem
+}
+.rm-track::before{
+  content:'';position:absolute;
+  top:22px;left:22px;right:22px;height:1px;
+  background:linear-gradient(to right,var(--g) 20%,var(--b));
+}
+.rm-step{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:.55rem;
+  position:relative;z-index:1;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .35s,transform .35s
+}
+.s.active .rm-step:nth-child(1){opacity:1;transform:none;transition-delay:.05s}
+.s.active .rm-step:nth-child(2){opacity:1;transform:none;transition-delay:.15s}
+.s.active .rm-step:nth-child(3){opacity:1;transform:none;transition-delay:.25s}
+.s.active .rm-step:nth-child(4){opacity:1;transform:none;transition-delay:.35s}
+.s.active .rm-step:nth-child(5){opacity:1;transform:none;transition-delay:.45s}
+.s.active .rm-step:nth-child(6){opacity:1;transform:none;transition-delay:.55s}
+.rm-circ{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--d3);border:1.5px solid var(--b2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--g)
+}
+.rm-step.now .rm-circ{
+  background:var(--g);color:var(--d);
+  box-shadow:0 0 0 5px rgba(201,168,76,.18)
+}
+.rm-step.note .rm-circ{
+  background:transparent;border-style:dashed;border-color:var(--td);
+  font-size:.7rem;color:var(--td);letter-spacing:.05em
+}
+.rm-lbl{
+  font-size:.8rem;font-weight:600;text-align:center;
+  line-height:1.35;color:var(--tm);max-width:100px
+}
+.rm-step.now .rm-lbl{color:var(--g)}
+.rm-step.note .rm-lbl{color:#6A6864}
+.rm-sub{font-size:.7rem;color:#6A6864;text-align:center;max-width:96px;line-height:1.4}
+
+/* SLIDE 7 — visão de futuro: big visual */
+.fut-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center;margin-bottom:1.1rem}
+.fut-box{border-radius:12px;padding:1.75rem 1.8rem}
+.fut-before{background:var(--d3);border:1px solid var(--b)}
+.fut-after{background:rgba(42,191,160,.05);border:1px solid rgba(42,191,160,.25)}
+.fut-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.7rem}
+.fut-before .fut-label{color:var(--td)}
+.fut-after .fut-label{color:var(--tl)}
+.fut-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.2rem;line-height:1;margin-bottom:.85rem
+}
+.fut-list{list-style:none;font-size:.92rem;color:var(--tm);line-height:2}
+.fut-arrow{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3rem;color:var(--g);opacity:.4;
+  animation:pulse 2s ease-in-out infinite
+}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.7;transform:scale(1.1)}}
+
+/* SLIDE 8 — próximos passos: tela cheia */
+.ns-wrap{
+  display:grid;grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:1rem;margin-top:.5rem;min-height:0;
+  flex:1;align-content:start;
+  max-height:calc(100vh - 200px)
+}
+.ns-card{
+  border-radius:16px;padding:1.75rem 2rem;
+  display:flex;align-items:flex-start;gap:1.4rem;
+  position:relative;overflow:hidden;
+  background:var(--d3);border:1px solid var(--b);
+  border-left:3px solid var(--tl);border-radius:0 16px 16px 0;
+  opacity:0;transform:translateX(-20px);
+  transition:opacity .45s,transform .45s
+}
+.s.active .ns-card:nth-child(1){opacity:1;transform:none;transition-delay:.08s}
+.s.active .ns-card:nth-child(2){opacity:1;transform:none;transition-delay:.2s}
+.s.active .ns-card:nth-child(3){opacity:1;transform:none;transition-delay:.32s}
+.s.active .ns-card:nth-child(4){opacity:1;transform:none;transition-delay:.44s}
+.ns-card::before{
+  content:attr(data-letter);
+  position:absolute;right:1.25rem;bottom:-.5rem;
+  font-family:'Bebas Neue',sans-serif;font-size:7rem;
+  color:rgba(255,255,255,.04);pointer-events:none;line-height:1
+}
+.ns-letter{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  background:rgba(42,191,160,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--tl);
+  border:1px solid rgba(42,191,160,.25)
+}
+.ns-content{}
+.ns-title{font-size:1.15rem;font-weight:600;margin-bottom:.4rem;color:var(--t)}
+.ns-body{font-size:.85rem;color:var(--tm);line-height:1.6}
+.nav{
+  position:fixed;top:50%;transform:translateY(-50%);
+  z-index:400;width:40px;height:72px;
+  background:rgba(16,16,16,.8);border:1px solid var(--b2);
+  color:var(--g);font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .5s ease;backdrop-filter:blur(8px)
+}
+#np{left:0;border-radius:0 10px 10px 0}
+#nn{right:0;border-radius:10px 0 0 10px}
+.nav:hover{background:var(--d3);border-color:var(--g)}
+.nav.off{opacity:0!important;pointer-events:none}
+.nav.idle{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <span class="hbrand">Digital Hering · IA</span>
+  <div class="hcenter">
+    <span class="hcount"><b id="cur">1</b> / <b id="tot">9</b></span>
+    <div class="hdots" id="dots"></div>
+  </div>
+  <div class="hright">
+    <span class="hkey">← → · F</span>
+    <span id="clk">--:--</span>
+  </div>
+</header>
+
+<div id="deck">
+
+<!-- ══ 0: CAPA ══════════════════════════ -->
+<div class="s active" id="s0">
+  <div class="grid-bg"></div>
+  <div class="capa-right">IA</div>
+  <div class="capa-content">
+    <div class="capa-kicker">Plano de implementação · 2026</div>
+    <div class="title">
+      ADOÇÃO DE<br>
+      <span class="gold">INTELIGÊNCIA</span><br>
+      <span class="stroke">ARTIFICIAL</span>
+    </div>
+    <p class="capa-sub">Um plano estruturado para internalizar IA na camada de gestão das squads, com controle, progressividade e impacto real nas operações do Digital Hering.</p>
+    <div class="capa-meta">
+      <div class="capa-meta-item"><b>Empresa</b>Digital Hering · Azzas 2154</div>
+      <div class="capa-meta-item"><b>Escopo</b>Squads · Gestão</div>
+      <div class="capa-meta-item"><b>Ano</b>2026</div>
+      <div class="capa-meta-item"><b>Conduzido por</b>Caio Soares</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 1: POR QUE AGORA ══════════════════ -->
+<div class="s" id="s1">
+  <div class="eye">02 — Contexto estratégico</div>
+  <h2>POR QUE <em>AGIR AGORA?</em></h2>
+  <div class="bar"></div>
+  <div class="reason-list">
+    <div class="reason">
+      <div class="r-num">01</div>
+      <div class="r-body">
+        <div class="r-title">A mudança já está acontecendo</div>
+        <div class="r-text">Ferramentas de IA estão sendo adotadas de forma descentralizada. Sem processo interno estruturado, perdemos a capacidade de moldar como isso acontece.</div>
+      </div>
+    </div>
+    <div class="reason">
+      <div class="r-num">02</div>
+      <div class="r-body">
+        <div class="r-title">Vantagem de primeiro movimento na holding</div>
+        <div class="r-text">O Digital é referência no Grupo Azzas 2154. O modelo construído aqui tende a ser replicado nas demais marcas — quem estrutura primeiro define o padrão.</div>
+      </div>
+    </div>
+    <div class="reason">
+      <div class="r-num">03</div>
+      <div class="r-body">
+        <div class="r-title">Eficiência com protagonismo das pessoas</div>
+        <div class="r-text">O objetivo não é substituir especialistas, mas amplificar sua capacidade. Agentes assumem o operacional; pessoas cuidam do estratégico.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card gl" style="margin-top:.25rem">
+    <div class="cbody" style="font-style:italic;font-size:.9rem;line-height:1.7">"Queremos ser protagonistas dessa transição — internalizar a adoção com método e controle, antes que ela aconteça de forma desordenada."</div>
+  </div>
+</div>
+
+<!-- ══ 2: HUMAN IN/ON/OUT OF THE LOOP ════ -->
+<div class="s fullh" id="s2" style="padding-bottom:1.5rem">
+  <div class="eye">03 — Framework 1</div>
+  <h2>O HUMANO <em>NO LOOP</em></h2>
+  <div class="bar"></div>
+  <div class="hum-grid">
+
+    <div class="hum-card hc1" data-n="1">
+      <div>
+        <div class="hum-tag">Nível 1</div>
+        <div class="hum-icons">
+          <span class="hum-icon-ia">🤖</span>
+          <span class="hum-icon-arr">⇄</span>
+          <span class="hum-icon-h">👤</span>
+        </div>
+        <div class="hum-name">IN THE<br>LOOP</div>
+        <div class="hum-desc">Humano participa ativamente do ciclo da IA — aprova cada saída antes de ela ser usada. Maior controle, menor velocidade.</div>
+        <div class="hum-ex">Relatório gerado pela IA — gerente aprova antes de publicar</div>
+      </div>
+      <div class="hum-ctrl">
+        <div class="hum-ctrl-dot"></div>
+        <div class="hum-ctrl-dot" style="background:rgba(255,255,255,.08)"></div>
+        <div class="hum-ctrl-dot" style="background:rgba(255,255,255,.08)"></div>
+        <span class="hum-ctrl-label">controle máximo · velocidade menor</span>
+      </div>
+    </div>
+
+    <div class="hum-card hc2" data-n="2">
+      <div>
+        <div class="hum-tag">Nível 2</div>
+        <div class="hum-icons">
+          <span class="hum-icon-ia">🤖</span>
+          <span class="hum-icon-arr">→</span>
+          <span class="hum-icon-h">👁️</span>
+        </div>
+        <div class="hum-name">ON THE<br>LOOP</div>
+        <div class="hum-desc">IA executa o fluxo de forma autônoma; humano monitora e intervém apenas em exceções ou pontos críticos de decisão.</div>
+        <div class="hum-ex">IA coleta e cruza dados, analista valida e age quando necessário</div>
+      </div>
+      <div class="hum-ctrl">
+        <div class="hum-ctrl-dot"></div>
+        <div class="hum-ctrl-dot"></div>
+        <div class="hum-ctrl-dot" style="background:rgba(255,255,255,.08)"></div>
+        <span class="hum-ctrl-label">equilíbrio controle · velocidade</span>
+      </div>
+    </div>
+
+    <div class="hum-card hc3" data-n="3">
+      <div>
+        <div class="hum-tag">Nível 3</div>
+        <div class="hum-icons" style="flex-direction:column;align-items:flex-start;gap:.35rem">
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <span class="hum-icon-ia">🤖</span>
+            <span style="font-size:.75rem;color:var(--tl);font-family:'Space Mono',monospace;letter-spacing:.08em">AUTÔNOMO</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;opacity:.45">
+            <span style="font-size:1.1rem">👤</span>
+            <span style="font-size:.7rem;color:var(--td);font-family:'Space Mono',monospace;letter-spacing:.06em">analisa resultados · corrige desvios</span>
+          </div>
+        </div>
+        <div class="hum-name">OUT OF<br>THE LOOP</div>
+        <div class="hum-desc">IA acessa dados, analisa, decide e executa de forma totalmente autônoma. Humano entra depois para analisar desempenho e corrigir desvios.</div>
+        <div class="hum-ex">Consolidação e recomendação automáticas. Humano gerencia histórico e resultados</div>
+      </div>
+      <div class="hum-ctrl">
+        <div class="hum-ctrl-dot"></div>
+        <div class="hum-ctrl-dot"></div>
+        <div class="hum-ctrl-dot"></div>
+        <span class="hum-ctrl-label">máxima velocidade · processos maduros</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="card hi" style="margin-top:.85rem;flex-shrink:0">
+    <div class="cbody"><span style="color:var(--g);font-weight:600">Nossa estratégia:</span> começar sempre no nível 1 (In the loop). Avançar para On the loop após validação. Reservar Out of the loop para processos estáveis e de baixo risco decisório.</div>
+  </div>
+</div>
+
+<!-- ══ 3: MODOS DE USO DA IA ═════════════ -->
+<div class="s" id="s3">
+  <div class="eye">03 — Framework 2</div>
+  <h2>COMO A IA <em>ATUA?</em></h2>
+  <div class="bar"></div>
+  <div class="scalebar">
+    <div class="sbi" style="background:rgba(74,143,212,.18);color:var(--bl)">Consultivo</div>
+    <div class="sbi" style="background:rgba(201,168,76,.12);color:var(--g)">Executivo</div>
+    <div class="sbi" style="background:rgba(201,112,80,.15);color:var(--or)">Propositivo</div>
+    <div class="sbi" style="background:rgba(42,191,160,.15);color:var(--tl)">Autônomo</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem">
+    <div class="fw-card">
+      <div class="fw-lv" style="color:var(--bl)">Modo 1</div>
+      <div class="fw-title">Consultivo</div>
+      <div class="fw-body">Humano consulta a IA e é empoderado com informações para decidir melhor.</div>
+      <ul class="fw-list">
+        <li>→ "Qual o desempenho da loja X?"</li>
+        <li>→ "Resuma o resultado desta sprint"</li>
+        <li>→ Humano age com base na resposta</li>
+      </ul>
+    </div>
+    <div class="fw-card">
+      <div class="fw-lv" style="color:var(--g)">Modo 2</div>
+      <div class="fw-title">Executivo</div>
+      <div class="fw-body">Além de consultar, humano pede e a IA executa tarefas concretas.</div>
+      <ul class="fw-list">
+        <li>→ "Monte a apresentação de resultados"</li>
+        <li>→ "Gere o relatório semanal da squad"</li>
+        <li>→ IA entrega o artefato pronto</li>
+      </ul>
+    </div>
+    <div class="fw-card">
+      <div class="fw-lv" style="color:var(--or)">Modo 3</div>
+      <div class="fw-title">Propositivo</div>
+      <div class="fw-body">IA não espera o humano — acessa dados, analisa e propõe ações, pedindo autorização.</div>
+      <ul class="fw-list">
+        <li>→ "Identifiquei queda em VM — posso ajustar?"</li>
+        <li>→ "Sprint em risco, sugiro replanejamento"</li>
+        <li>→ Humano aprova ou recusa</li>
+      </ul>
+    </div>
+    <div class="fw-card">
+      <div class="fw-lv" style="color:var(--tl)">Modo 4</div>
+      <div class="fw-title">Autônomo</div>
+      <div class="fw-body">IA acessa dados, analisa, decide e executa. Humano gerencia resultados e corrige desvios.</div>
+      <ul class="fw-list">
+        <li>→ Agente VM rodando de ponta a ponta</li>
+        <li>→ Consolidação e envio automáticos</li>
+        <li>→ Humano audita e evolui o agente</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 4: PAPEL DO FACILITADOR ══════════ -->
+<div class="s" id="s4">
+  <div class="eye">04 — Quem conduz</div>
+  <h2>O PAPEL DO <em>FACILITADOR</em></h2>
+  <div class="bar"></div>
+  <div class="role-grid">
+    <div class="role-card rc1">
+      <div class="role-num">01</div>
+      <div class="role-title">Referência técnica</div>
+      <div class="role-body">Prompting avançado, arquitetura de agentes e ferramentas de IA aplicadas ao contexto do Digital.</div>
+    </div>
+    <div class="role-card rc2">
+      <div class="role-num">02</div>
+      <div class="role-title">Facilitador da adoção</div>
+      <div class="role-body">Conduz diagnóstico, implementação e validação nas squads com método e sem caos.</div>
+    </div>
+    <div class="role-card rc3">
+      <div class="role-num">03</div>
+      <div class="role-title">Treinador dos agentes</div>
+      <div class="role-body">Transforma o conhecimento dos especialistas em instruções que os agentes de IA executam.</div>
+    </div>
+  </div>
+  <div class="card hi" style="display:grid;grid-template-columns:52px 1fr;gap:1.1rem;align-items:center">
+    <div style="width:52px;height:52px;border-radius:50%;background:rgba(201,168,76,.15);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--g)">CS</div>
+    <div>
+      <div style="font-size:1.05rem;font-weight:600">Caio Soares</div>
+      <div style="font-size:.78rem;color:var(--g);letter-spacing:.05em;margin:.2rem 0 .5rem;font-family:'Space Mono',monospace">Agilista · Cabeça do projeto de adoção de IA</div>
+      <div style="font-size:.82rem;color:var(--tm);line-height:1.6">Formação em economia + agile + IA aplicada. A combinação entre entender como squads funcionam e como agentes são construídos é o que torna este projeto viável.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 5: AGENTE VM ══════════════════════ -->
+<div class="s" id="s5">
+  <div class="eye">05 — Modelo de referência</div>
+  <h2>CASO CONCRETO: <em>AGENTE VM</em></h2>
+  <div class="bar"></div>
+  <div class="agent-wrap">
+    <div class="anode">
+      <div class="aicon">🔄</div>
+      <div class="albl">Agente Coleta</div>
+      <div class="asub">Extração automática de dados da loja — elimina planilha manual</div>
+    </div>
+    <div class="aarr">→</div>
+    <div class="anode">
+      <div class="aicon">🔍</div>
+      <div class="albl">Agente Analista</div>
+      <div class="asub">Cruza performance + estratégia + guia de marca + merchan</div>
+    </div>
+    <div class="aarr">→</div>
+    <div class="anode hl">
+      <div class="aicon">🧠</div>
+      <div class="albl">Agente VM</div>
+      <div class="asub">Treinado com o conhecimento do analista — gera recomendações de VM com contexto completo</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;margin-top:.85rem">
+    <div class="ba-box ba-b">
+      <div class="ba-lbl">Antes · manual</div>
+      <div class="ba-title">Fluxo fragmentado</div>
+      <ul class="ba-list">
+        <li>→ Coleta manual em planilha</li>
+        <li>→ Análise separada por ferramenta</li>
+        <li>→ Decisão sem cruzamento de dados</li>
+      </ul>
+    </div>
+    <div class="ba-box ba-a">
+      <div class="ba-lbl">Depois · com agente</div>
+      <div class="ba-title" style="color:var(--tl)">Fluxo contínuo</div>
+      <ul class="ba-list">
+        <li>→ Dado → análise → recomendação automáticos</li>
+        <li>→ Decisão com contexto completo</li>
+        <li>→ Analista foca no que é estratégico</li>
+      </ul>
+    </div>
+    <div class="ba-box" style="background:rgba(201,168,76,.04);border:1px solid var(--b2);border-radius:10px;padding:1.1rem 1.3rem">
+      <div class="ba-lbl" style="color:var(--g)">Papel do analista humano</div>
+      <div class="ba-title" style="color:var(--g)">Curador do agente</div>
+      <ul class="ba-list">
+        <li>→ Alimenta o agente com regras e critérios</li>
+        <li>→ Valida e refina as recomendações</li>
+        <li>→ Evolui o agente com novos aprendizados</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:.7rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+    <span class="tag tb">Servidor na nuvem (execução)</span>
+    <span class="tag tg">API de IA (o "cérebro")</span>
+    <span style="font-size:.72rem;color:var(--td);font-family:'Space Mono',monospace">· modelo replicável para qualquer área</span>
+  </div>
+</div>
+
+<!-- ══ 6: ROADMAP ════════════════════════ -->
+<div class="s" id="s6">
+  <div class="eye">06 — Plano de implementação</div>
+  <h2>ROADMAP DE <em>ADOÇÃO</em></h2>
+  <div class="bar"></div>
+  <div class="rm-track">
+    <div class="rm-step now">
+      <div class="rm-circ">1</div>
+      <div class="rm-lbl">Capacitação técnica</div>
+      <div class="rm-sub">Em andamento</div>
+    </div>
+    <div class="rm-step note">
+      <div class="rm-circ">DB</div>
+      <div class="rm-lbl">Time de dados</div>
+      <div class="rm-sub">Databricks · em paralelo</div>
+    </div>
+    <div class="rm-step">
+      <div class="rm-circ">2</div>
+      <div class="rm-lbl">Squad piloto</div>
+      <div class="rm-sub">Seleção com gerentes</div>
+    </div>
+    <div class="rm-step">
+      <div class="rm-circ">3</div>
+      <div class="rm-lbl">Diagnóstico de processos</div>
+      <div class="rm-sub">Mapeamento de fluxos</div>
+    </div>
+    <div class="rm-step">
+      <div class="rm-circ">4</div>
+      <div class="rm-lbl">Sprints de implementação</div>
+      <div class="rm-sub">Agentes + automações</div>
+    </div>
+    <div class="rm-step">
+      <div class="rm-circ">5</div>
+      <div class="rm-lbl">Validação e replicação</div>
+      <div class="rm-sub">Próxima squad</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card gl">
+      <div class="clabel" style="color:var(--g)">Fase 1 — agora</div>
+      <div class="ctitle">Capacitação técnica</div>
+      <div class="cbody">Estudo estruturado em IA: fundamentos, agentes, prompting. Base para conduzir as próximas fases com credibilidade técnica.</div>
+      <div style="margin-top:.6rem"><span class="tag tg">capacitacao.html em andamento</span></div>
+    </div>
+    <div class="card">
+      <div class="clabel" style="color:var(--tm)">Ciclo contínuo</div>
+      <div class="ctitle">Replicação para a próxima squad</div>
+      <div class="cbody">A cada ciclo o modelo fica mais rápido e o repertório de agentes mais rico. Visão: estrutura híbrida em todas as squads.</div>
+      <div style="margin-top:.6rem"><span class="tag tt">Escalável · Holding Azzas</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 7: VISÃO FUTURA ═══════════════════ -->
+<div class="s" id="s7">
+  <div class="eye">07 — Visão de futuro</div>
+  <h2>COMO SERÁ <em>O TIME?</em></h2>
+  <div class="bar"></div>
+  <div class="fut-grid">
+    <div class="fut-box fut-before">
+      <div class="fut-label">Hoje</div>
+      <div class="fut-name">ESPECIALISTA<br>COMO EXECUTOR</div>
+      <ul class="fut-list">
+        <li>→ Coleta dados manualmente</li>
+        <li>→ Monta relatórios em planilha</li>
+        <li>→ Decisão com info fragmentada</li>
+        <li>→ Alto tempo operacional</li>
+      </ul>
+    </div>
+    <div class="fut-arrow">→</div>
+    <div class="fut-box fut-after">
+      <div class="fut-label">Visão futura</div>
+      <div class="fut-name" style="color:var(--tl)">ESPECIALISTA<br>COMO CURADOR</div>
+      <ul class="fut-list">
+        <li>→ Define regras para os agentes</li>
+        <li>→ Valida e interpreta saídas da IA</li>
+        <li>→ Decisão com dados consolidados</li>
+        <li>→ Alto tempo estratégico</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="background:rgba(42,191,160,.04);border-color:rgba(42,191,160,.2);margin-top:.75rem">
+    <div class="cbody"><span style="color:var(--tl);font-weight:600">Estrutura-alvo:</span> agentes cuidam do operacional contínuo; especialistas concentram energia no estratégico, no relacional e na evolução dos próprios agentes. Ninguém substituído — todos amplificados.</div>
+  </div>
+</div>
+
+<!-- ══ 8: PRÓXIMOS PASSOS ════════════════ -->
+<div class="s fullh" id="s8" style="padding-bottom:1.5rem">
+  <div class="eye">08 — Ação imediata</div>
+  <h2>PRÓXIMOS <em>PASSOS</em></h2>
+  <div class="bar"></div>
+  <div class="ns-wrap">
+    <div class="ns-card" data-letter="A">
+      <div class="ns-letter">A</div>
+      <div class="ns-content">
+        <div class="ns-title">Continuar capacitação técnica</div>
+        <div class="ns-body">Agentes, RAG, prompting avançado. Base para conduzir as próximas fases com credibilidade técnica e autonomia real.</div>
+      </div>
+    </div>
+    <div class="ns-card" data-letter="B">
+      <div class="ns-letter">B</div>
+      <div class="ns-content">
+        <div class="ns-title">Definir squad piloto com as gerentes</div>
+        <div class="ns-body">Critérios: volume operacional, abertura da squad, visibilidade dos resultados para a holding.</div>
+      </div>
+    </div>
+    <div class="ns-card" data-letter="C">
+      <div class="ns-letter">C</div>
+      <div class="ns-content">
+        <div class="ns-title">Alinhamento com time de dados</div>
+        <div class="ns-body">Definir onde começa a camada de squads e estrutura ágil versus o que o Databricks já cobre.</div>
+      </div>
+    </div>
+    <div class="ns-card" data-letter="D">
+      <div class="ns-letter">D</div>
+      <div class="ns-content">
+        <div class="ns-title">Sessão com analista da squad escolhida</div>
+        <div class="ns-body">Mapear regras de decisão e construir o system prompt do primeiro agente. O modelo VM é o exemplo — o processo se repete para cada área.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<button class="nav off" id="np" onclick="go(-1)">‹</button>
+<button class="nav" id="nn" onclick="go(+1)">›</button>
+<div id="prog"></div>
+<div id="ver">v1.7</div>
+
+<script>
+const N=9;let cur=0;
+const slides=Array.from({length:N},(_,i)=>document.getElementById('s'+i));
+const dotsEl=document.getElementById('dots');
+document.getElementById('tot').textContent=N;
+
+for(let i=0;i<N;i++){
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  d.onclick=()=>goTo(i);
+  dotsEl.appendChild(d);
+}
+
+function render(){
+  slides.forEach((s,i)=>{
+    s.classList.remove('active','gone');
+    if(i===cur)s.classList.add('active');
+    else if(i<cur)s.classList.add('gone');
+  });
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===cur));
+  document.getElementById('cur').textContent=cur+1;
+  document.getElementById('prog').style.width=((cur/(N-1))*100)+'%';
+  document.getElementById('np').classList.toggle('off',cur===0);
+  document.getElementById('nn').classList.toggle('off',cur===N-1);
+}
+function go(d){const n=cur+d;if(n>=0&&n<N){cur=n;render();}}
+function goTo(i){cur=i;render();}
+
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown',' '].includes(e.key)){e.preventDefault();go(1);}
+  if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();go(-1);}
+  if(e.key==='f'||e.key==='F'){
+    document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+  }
+});
+
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>40)go(dx<0?1:-1);},{passive:true});
+
+// Setas somem após 2.5s de inatividade
+let idleTimer;
+function showNavs(){
+  document.getElementById('np').classList.remove('idle');
+  document.getElementById('nn').classList.remove('idle');
+  clearTimeout(idleTimer);
+  idleTimer=setTimeout(()=>{
+    document.getElementById('np').classList.add('idle');
+    document.getElementById('nn').classList.add('idle');
+  },2500);
+}
+document.addEventListener('mousemove',showNavs);
+document.addEventListener('keydown',showNavs);
+document.addEventListener('touchstart',showNavs,{passive:true});
+showNavs();
+
+function tick(){
+  const d=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'}));
+  document.getElementById('clk').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+tick();setInterval(tick,15000);
+render();
+</script>
+</body>
+</html>
