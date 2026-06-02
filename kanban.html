@@ -428,7 +428,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab on" onclick="swCfgTab('agil')">Ágil</div>
     <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
-    <div class="ag-tab" onclick="swCfgTab('membros')">Membros</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
   </div>
@@ -503,22 +502,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-p" onclick="saveCfg()">Salvar</button>
       </div>
     </div>
-
-    <div class="tab-c" id="cfgtab-membros">
-      <div class="cfg-sec">
-        <div class="cfg-sec-title">Membros do time</div>
-        <div class="member-list" id="member-list"></div>
-        <div class="add-tag-row" style="margin-top:4px;">
-          <input class="add-tag-inp" id="new-member-init" placeholder="Iniciais" style="max-width:80px;">
-          <input class="add-tag-inp" id="new-member-name" placeholder="Nome completo">
-          <button class="btn btn-teal" onclick="addMember()">+ Membro</button>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:flex-end;padding-top:8px;">
-        <button class="btn btn-p" onclick="saveCfg()">Salvar</button>
-      </div>
-    </div>
-
     <div class="tab-c" id="cfgtab-worker">
       <div class="cfg-sec">
         <div class="cfg-sec-title">Cloudflare Worker · Agente Ágil</div>
@@ -557,7 +540,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v2.2</div>
+<div class="version">v2.3</div>
 
 <script>
 const WORKER_FALLBACK = 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
@@ -1008,9 +991,9 @@ function applyAgilCfg(cfg){
 }
 function swCfgTab(tab){
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>{
-    t.classList.toggle('on',['agil','usuarios','tags','membros','worker','firebase'][i]===tab);
+    t.classList.toggle('on',['agil','usuarios','tags','worker','firebase'][i]===tab);
   });
-  ['agil','usuarios','tags','membros','worker','firebase'].forEach(t=>{
+  ['agil','usuarios','tags','worker','firebase'].forEach(t=>{
     document.getElementById('cfgtab-'+t).classList.toggle('on',t===tab);
   });
   // preenche inputs ao abrir aba
@@ -1314,16 +1297,6 @@ function addTag(){
   const inp=document.getElementById('new-tag-name'); const name=inp.value.trim(); if(!name) return;
   const id=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
   tags.push({id,label:name,pi:0}); inp.value=''; renderCfgEditor();
-}
-function delMember(i){ members.splice(i,1); renderCfgEditor(); }
-function addMember(){
-  const ii=document.getElementById('new-member-init').value.trim().toUpperCase().substring(0,3);
-  const nm=document.getElementById('new-member-name').value.trim();
-  if(!ii||!nm) return;
-  members.push({init:ii,name:nm});
-  document.getElementById('new-member-init').value='';
-  document.getElementById('new-member-name').value='';
-  renderCfgEditor();
 }
 function saveCfg(){ renderBoard(); closeCfg(); fbSaveAll(); }
 
