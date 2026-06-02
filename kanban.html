@@ -656,7 +656,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v4.3</div>
+<div class="version">v4.4</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -707,13 +707,14 @@ const PALETTE=[
   {bg:'rgba(200,100,255,.12)',b:'rgba(200,100,255,.3)',c:'#d67fff',h:'#d67fff'},
 ];
 
-let columns=[
+const DEFAULT_COLUMNS=[
   {id:'backlog',name:'Backlog',color:'#888888',collapsible:true},
   {id:'todo',name:'A Fazer',color:'#38b6ff',collapsible:false},
   {id:'progress',name:'Em Progresso',color:'#1de9b6',collapsible:false},
   {id:'blocker',name:'Impedimentos',color:'#ff6b6b',collapsible:false},
   {id:'done',name:'Concluído',color:'#639922',collapsible:true},
 ];
+let columns=[...DEFAULT_COLUMNS];
 let tags=[
   {id:'data',label:'Data',pi:0},{id:'ml',label:'ML',pi:4},
   {id:'feat',label:'Feature',pi:1},{id:'infra',label:'Infra',pi:2},{id:'bug',label:'Bloqueio',pi:3},
@@ -1403,16 +1404,30 @@ function executeTool(name,input){
   const user=window._currentUser?.displayName||'Agente Ágil';
   switch(name){
     case 'mover_card':{
+      console.log('[AgenteTool] mover_card input:', JSON.stringify(input));
+      console.log('[AgenteTool] cards disponíveis:', cards.map(x=>x.id+':'+x.col+':'+x.title.substring(0,20)));
+      console.log('[AgenteTool] colunas disponíveis:', columns.map(x=>x.id));
       // Busca por ID exato, depois título parcial
-      let c=cards.find(x=>x.id===input.card_id);
-      if(!c && input.card_id) c=cards.find(x=>x.title.toLowerCase().includes(input.card_id.toLowerCase()));
-      if(!c && input.card_title) c=cards.find(x=>x.title.toLowerCase().includes(input.card_title.toLowerCase()));
-      if(!c) return{ok:false,msg:'Card não encontrado. IDs: '+cards.slice(0,5).map(x=>x.id+'='+x.title.substring(0,15)).join(', ')};
+      let found=cards.find(x=>x.id===input.card_id);
+      if(!found && input.card_id) found=cards.find(x=>x.title.toLowerCase().includes(input.card_id.toLowerCase()));
+      if(!found && input.card_title) found=cards.find(x=>x.title.toLowerCase().includes(input.card_title.toLowerCase()));
+      if(!found){ 
+        const msg='Card não encontrado. IDs disponíveis: '+cards.map(x=>x.id+'='+x.title.substring(0,15)).join(' | ');
+        console.error('[AgenteTool]', msg);
+        return{ok:false,msg};
+      }
       const colExists=columns.find(col=>col.id===input.nova_coluna);
-      if(!colExists) return{ok:false,msg:'Coluna inválida: '+input.nova_coluna+'. Use: '+columns.map(col=>col.id).join(', ')};
-      const ant=c.col; c.col=input.nova_coluna; c.edited=user; c.editedAt=td;
-      renderBoard(); fbSaveAll(); runAutoRules('move',c.id,input.nova_coluna);
-      return{ok:true,msg:`"${c.title}" movido: ${ant} → ${input.nova_coluna}`};
+      if(!colExists){ 
+        const msg='Coluna inválida: "'+input.nova_coluna+'". Colunas válidas: '+columns.map(col=>col.id).join(', ');
+        console.error('[AgenteTool]', msg);
+        return{ok:false,msg};
+      }
+      const ant=found.col; found.col=input.nova_coluna; found.edited=user; found.editedAt=td;
+      console.log('[AgenteTool] ✅ movendo "'+found.title+'" de',ant,'→',input.nova_coluna);
+      renderBoard(); 
+      fbSaveAll(); 
+      runAutoRules('move',found.id,input.nova_coluna);
+      return{ok:true,msg:`"${found.title}" movido: ${ant} → ${input.nova_coluna}`};
     }
     case 'atualizar_prazo':{
       let c=cards.find(x=>x.id===input.card_id);
@@ -1474,6 +1489,7 @@ AÇÕES QUE POSSO EXECUTAR:
 BOARD (${new Date().toLocaleDateString('pt-BR')}):
 ${snap}
 
+Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
 WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>c.col==='blocker'&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
 Sprint:${agilCfg.sprintNum||'?'} | Capacidade:${agilCfg.capacity||'??'}% | Objetivo:${agilCfg.goal||'não definido'}
 Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}`;
@@ -1515,11 +1531,13 @@ async function qa(tab,q){
       if(data.error) throw new Error(JSON.stringify(data.error));
       messages.push({role:'assistant',content:data.content});
       const toolCalls=data.content.filter(b=>b.type==='tool_use');
+      if(toolCalls.length>0) console.log('[Agente] tool_use calls:', toolCalls.map(t=>t.name+':'+JSON.stringify(t.input)));
       const texts=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
       if(texts) finalText+=texts;
       if(toolCalls.length>0&&data.stop_reason==='tool_use'){
         const results=toolCalls.map(tc=>{
           const res=executeTool(tc.name,tc.input); toolsUsed.push({name:tc.name,result:res});
+          console.log('[Agente] tool result:', tc.name, JSON.stringify(res));
           return{type:'tool_result',tool_use_id:tc.id,content:JSON.stringify(res)};
         });
         messages.push({role:'user',content:results});
