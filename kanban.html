@@ -197,6 +197,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
+/* Drag and Drop */
+.card[draggable=true]{cursor:grab;}
+.card[draggable=true]:active{cursor:grabbing;}
+.card.dragging{opacity:.35;transform:rotate(2deg);border-color:var(--accent)!important;box-shadow:0 8px 24px rgba(37,99,201,.4);}
+.col-body.drag-over{background:rgba(56,182,255,.08);border-radius:var(--r);outline:2px dashed rgba(56,182,255,.4);outline-offset:-4px;}
+.col-body.drag-over-blocked{outline:2px dashed rgba(255,107,107,.4);background:rgba(255,107,107,.05);}
+.card-ghost{height:4px;background:var(--accent);border-radius:999px;margin:3px 0;transition:all .15s;}
+
+
 .rule-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);flex-wrap:wrap;}
 .rule-badge{font-size:9px;padding:2px 7px;border-radius:999px;font-weight:700;}
 .rule-on{background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);}
@@ -656,7 +665,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v4.4</div>
+<div class="version">v4.5</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -932,7 +941,10 @@ function makeCardEl(card){
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
-  div.onclick=()=>openCard(card.id); div.ondblclick=e=>{e.stopPropagation();};
+  div.setAttribute('draggable','true');
+  div.onclick=()=>openCard(card.id);
+  div.ondragstart=e=>handleDragStart(e,card.id);
+  div.ondragend=e=>handleDragEnd(e); div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${card.sp}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
   return div;
 }
@@ -965,6 +977,10 @@ function renderNormal(board,activeCards){
     board.appendChild(div);
     const body=div.querySelector('.col-body');
     colCards.forEach(c=>body.appendChild(makeCardEl(c)));
+    // Drag events na coluna
+    body.ondragover=e=>handleDragOver(e,col.id);
+    body.ondragleave=e=>handleDragLeave(e);
+    body.ondrop=e=>handleDrop(e,col.id);
   });
 }
 
@@ -1703,6 +1719,103 @@ function swHelpTab(tab){
 }
 // ═══════════════════════════════════════════════════════
 
+
+
+// ═══════════════════════════════════════════════════════
+// DRAG AND DROP
+// ═══════════════════════════════════════════════════════
+let _dragCardId = null;
+let _dragSourceCol = null;
+let _ghostEl = null;
+
+function handleDragStart(e, cardId){
+  _dragCardId = cardId;
+  const card = cards.find(x=>x.id===cardId);
+  _dragSourceCol = card?.col;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', cardId);
+  // Aplica classe dragging com pequeno delay para a UI não piscar
+  requestAnimationFrame(()=> e.target.classList.add('dragging'));
+}
+
+function handleDragEnd(e){
+  e.target.classList.remove('dragging');
+  // Limpa todos os estados de drag-over
+  document.querySelectorAll('.col-body').forEach(b=>{
+    b.classList.remove('drag-over','drag-over-blocked');
+  });
+  if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  _dragCardId=null; _dragSourceCol=null;
+}
+
+function handleDragOver(e, colId){
+  e.preventDefault();
+  if(!_dragCardId) return;
+  const body = e.currentTarget;
+  // Limpa outros drag-over
+  document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
+  body.classList.add('drag-over');
+  e.dataTransfer.dropEffect='move';
+  // Ghost line — mostra onde o card vai ser inserido
+  if(_ghostEl) _ghostEl.remove();
+  _ghostEl = document.createElement('div');
+  _ghostEl.className='card-ghost';
+  // Encontra a posição correta entre os cards
+  const afterEl = getDragAfterElement(body, e.clientY);
+  if(afterEl){
+    body.insertBefore(_ghostEl, afterEl);
+  } else {
+    body.appendChild(_ghostEl);
+  }
+}
+
+function handleDragLeave(e){
+  // Só remove se saiu do body de verdade (não para um filho)
+  if(!e.currentTarget.contains(e.relatedTarget)){
+    e.currentTarget.classList.remove('drag-over','drag-over-blocked');
+    if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  }
+}
+
+function handleDrop(e, colId){
+  e.preventDefault();
+  const body = e.currentTarget;
+  body.classList.remove('drag-over','drag-over-blocked');
+  if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  if(!_dragCardId) return;
+  const card = cards.find(x=>x.id===_dragCardId);
+  if(!card) return;
+  const sourceCol = _dragSourceCol;
+  if(sourceCol === colId) return; // mesma coluna, nada a fazer
+  // Move o card
+  card.col = colId;
+  card.edited = window._currentUser?.displayName||'Usuário';
+  card.editedAt = new Date().toISOString().split('T')[0];
+  renderBoard();
+  fbSaveAll();
+  runAutoRules('move', card.id, colId);
+  // Feedback visual no header da coluna destino
+  const destCol = document.getElementById('col-'+colId);
+  if(destCol){
+    destCol.style.transition='box-shadow .3s';
+    destCol.style.boxShadow='0 0 0 2px var(--teal)';
+    setTimeout(()=>destCol.style.boxShadow='',600);
+  }
+}
+
+// Calcula onde inserir o ghost/card com base na posição Y do mouse
+function getDragAfterElement(container, y){
+  const draggableEls=[...container.querySelectorAll('.card:not(.dragging):not(.archived)')];
+  return draggableEls.reduce((closest, child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y-(box.top+box.height/2);
+    if(offset<0 && offset>closest.offset){
+      return{offset,element:child};
+    }
+    return closest;
+  },{offset:Number.NEGATIVE_INFINITY}).element;
+}
+// ═══════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════
 // AUTOMAÇÕES (Butler-style)
