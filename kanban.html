@@ -665,7 +665,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v4.5</div>
+<div class="version">v4.7</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1461,16 +1461,47 @@ function executeTool(name,input){
       return{ok:true,msg:`"${c.checklist[input.item_index].t}" ${input.concluido?'marcado':'desmarcado'}`};
     }
     case 'criar_card':{
-      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||tags[0]?.id,title:input.titulo,desc:input.descricao||'',owner:input.owner||'',due:input.prazo||'',po:'',checklist:[],archived:false,created:user,edited:user,createdAt:td,editedAt:td};
+      let ownerNovo=input.owner||'';
+      if(ownerNovo){
+        const ln=(window._currentUser?.displayName||'').toLowerCase();
+        const li=window._currentUserInit||'';
+        if(ownerNovo.toLowerCase()==='eu'||ownerNovo.toLowerCase()==='me'||
+           (ln&&ln.includes(ownerNovo.toLowerCase()))||
+           ownerNovo.toLowerCase().includes((ln.split(' ')[0])||'___')){
+          ownerNovo=li;
+        } else if(ownerNovo.length>3){
+          const mm=members.find(m=>m.name.toLowerCase().includes(ownerNovo.toLowerCase()));
+          if(mm) ownerNovo=mm.init;
+        }
+      }
+      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||tags[0]?.id,title:input.titulo,
+        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',po:'',
+        checklist:[],riscos:[],archived:false,sp:'',priority:'',
+        created:user,edited:user,createdAt:td,editedAt:td};
       cards.push(novo); renderBoard(); fbSaveAll();
-      return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna}`,card_id:novo.id};
+      return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
     }
-    case 'atualizar_owner':{
+        case 'atualizar_owner':{
       const c=cards.find(x=>x.id===input.card_id);
       if(!c) return{ok:false,msg:'Card não encontrado'};
-      c.owner=input.novo_owner; c.edited=user; c.editedAt=td;
+      // Resolve "eu", "me", nome próprio → iniciais reais
+      let owner=input.novo_owner;
+      const loggedName=(window._currentUser?.displayName||'').toLowerCase();
+      const loggedInit=window._currentUserInit||'';
+      if(!owner||owner.toLowerCase()==='eu'||owner.toLowerCase()==='me'||
+         (loggedName && loggedName.includes(owner.toLowerCase()))||
+         (owner.toLowerCase().includes(loggedName.split(' ')[0]||'___'))){
+        owner=loggedInit;
+      }
+      // Busca nas iniciais dos membros também
+      if(owner && owner.length>3){
+        const m=members.find(m=>m.name.toLowerCase().includes(owner.toLowerCase()));
+        if(m) owner=m.init;
+      }
+      c.owner=owner; c.edited=user; c.editedAt=td;
       renderBoard(); fbSaveAll();
-      return{ok:true,msg:`Responsável de "${c.title}" → ${input.novo_owner}`};
+      const memberName=members.find(m=>m.init===owner)?.name||owner;
+      return{ok:true,msg:`Responsável de "${c.title}" → ${memberName} (${owner})`};
     }
     default: return{ok:false,msg:'Ferramenta desconhecida: '+name};
   }
@@ -1508,7 +1539,8 @@ ${snap}
 Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
 WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>c.col==='blocker'&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
 Sprint:${agilCfg.sprintNum||'?'} | Capacidade:${agilCfg.capacity||'??'}% | Objetivo:${agilCfg.goal||'não definido'}
-Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}`;
+Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}
+Usuário logado agora: ${window._currentUser?.displayName||'desconhecido'} (iniciais: ${window._currentUserInit||'?'}) — quando alguém disser "eu", "mim", "me atribua" ou mencionar seu próprio nome, use estas iniciais.`;
 }
 
 function openAgent(){ updateMetrics(); document.getElementById('ag-ov').classList.add('open'); }
