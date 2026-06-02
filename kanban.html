@@ -311,8 +311,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔍 Filtros</button>
   <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="openTrelloImport()" style="color:var(--cyan);border-color:rgba(126,200,227,.3);">📥 Importar Trello</button>
-  <div class="tb-sep"></div>  <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
+  <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
@@ -454,6 +453,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
     <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
+    <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
   </div>
@@ -549,6 +549,40 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
     </div>
 
+
+    <!-- ABA IMPORTAR -->
+    <div class="tab-c" id="cfgtab-importar">
+      <div class="cfg-sec-title">📥 Importar do Trello</div>
+
+      <div style="background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:11px;margin-bottom:12px;font-size:11px;color:#7eb3ff;line-height:1.8;">
+        <strong>Como exportar do Trello:</strong><br>
+        1. Abra o board no Trello<br>
+        2. Clique em <strong>···</strong> (menu do board, canto superior direito)<br>
+        3. Vá em <strong>Imprimir e exportar</strong><br>
+        4. Clique em <strong>Exportar como JSON</strong><br>
+        5. Abra o arquivo baixado, selecione tudo (<kbd>Ctrl+A</kbd>), copie e cole abaixo
+      </div>
+
+      <div class="field" style="margin-bottom:8px;">
+        <label class="fl">JSON exportado do Trello</label>
+        <textarea class="fi fi-ta" id="trello-json" rows="7" placeholder='Cole aqui o conteúdo do arquivo JSON do Trello...' style="font-size:10px;font-family:monospace;"></textarea>
+      </div>
+
+      <div id="trello-preview" style="font-size:11px;padding:8px 10px;border-radius:var(--r);margin-bottom:8px;display:none;"></div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="checkbox" id="trello-merge" style="accent-color:var(--teal);"> Mesclar com cards existentes
+        </label>
+        <span style="font-size:10px;color:var(--txt3);">(desmarcado = substituir tudo)</span>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
+        <button class="btn btn-p btn-sm" id="btn-confirm-import" onclick="confirmTrelloImport()" disabled style="opacity:.4;cursor:not-allowed;">📥 Importar</button>
+      </div>
+    </div>
+
     <!-- ABA WORKER -->
     <div class="tab-c" id="cfgtab-worker">
       <div class="cfg-sec-title">Cloudflare Worker · Agente Ágil</div>
@@ -605,39 +639,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<!-- IMPORTAR TRELLO -->
-<div class="ov" id="trello-ov">
-<div class="panel" style="max-width:460px;">
-  <div class="panel-hd">
-    <div class="panel-title">📥 Importar board do Trello</div>
-    <button class="x-btn" onclick="closeOv('trello-ov')">✕</button>
-  </div>
-  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-    <div style="background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:10px;font-size:11px;color:#7eb3ff;line-height:1.7;">
-      <strong>Como exportar do Trello:</strong><br>
-      1. Abra o board no Trello<br>
-      2. Clique em ··· (menu do board) → Mais → Imprimir e exportar<br>
-      3. Clique em <strong>Exportar como JSON</strong><br>
-      4. Cole o conteúdo do arquivo abaixo
-    </div>
-    <div class="field">
-      <label class="fl">JSON do Trello</label>
-      <textarea class="fi fi-ta" id="trello-json" rows="6" placeholder='Cole aqui o conteúdo do arquivo JSON exportado do Trello...'></textarea>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <input type="checkbox" id="trello-merge" style="accent-color:var(--teal);"> Mesclar com cards existentes
-      </label>
-    </div>
-    <div id="trello-preview" style="font-size:11px;color:var(--teal);display:none;"></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;">
-      <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
-      <button class="btn btn-p btn-sm" onclick="confirmTrelloImport()">Importar cards</button>
-    </div>
-  </div>
-</div>
-</div>
-
 <!-- AJUDA -->
 <div class="ov" id="help-ov">
 <div class="panel" style="max-width:640px;max-height:90vh;display:flex;flex-direction:column;">
@@ -665,7 +666,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<div class="version">v4.7</div>
+<div class="version">v4.9</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1303,7 +1304,7 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','tags','auto','worker','firebase'];
+  const TABS=['agil','usuarios','tags','auto','importar','worker','firebase'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
@@ -1609,81 +1610,219 @@ async function qa(tab,q){
 
 
 
+
+function showToast(msg, duration=3500){
+  let t=document.getElementById('kb-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='kb-toast';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:999px;padding:9px 20px;font-size:12px;color:var(--txt);z-index:999;backdrop-filter:blur(12px);transition:opacity .3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.opacity='0', duration);
+}
+
 // ═══════════════════════════════════════════════════════
 // IMPORTAR TRELLO
 // ═══════════════════════════════════════════════════════
 let _trelloParsed = null;
-function openTrelloImport(){ document.getElementById('trello-ov').classList.add('open'); }
+function openTrelloImport(){ openCfg('importar'); }
 
 function parseTrelloJSON(raw){
   const data=JSON.parse(raw);
-  // Mapeia listas do Trello para colunas do Kanban
+  const today=new Date().toISOString().split('T')[0];
+
+  // ── 1. Mapeia listas do Trello → colunas do board ──────────────
+  // Primeiro tenta match semântico; listas sem match vão para uma
+  // coluna "pendente" criada dinamicamente se necessário.
+  const SEMANTIC=[
+    {keys:['backlog'],col:'backlog'},
+    {keys:['fazer','to do','todo','a fazer','next'],col:'todo'},
+    {keys:['progresso','progress','doing','em andamento','wip'],col:'progress'},
+    {keys:['bloq','imped','block','stuck','parado'],col:'blocker'},
+    {keys:['conclu','done','feito','finish','pronto','entregue'],col:'done'},
+  ];
+  const unmappedLists=[]; // listas que não tiveram match semântico
   const listMap={};
-  (data.lists||[]).forEach(l=>{
-    const name=l.name.toLowerCase();
-    if(name.includes('backlog')) listMap[l.id]='backlog';
-    else if(name.includes('fazer')||name.includes('do')||name.includes('todo')) listMap[l.id]='todo';
-    else if(name.includes('progresso')||name.includes('progress')||name.includes('doing')) listMap[l.id]='progress';
-    else if(name.includes('bloq')||name.includes('imped')||name.includes('block')) listMap[l.id]='blocker';
-    else if(name.includes('conclu')||name.includes('done')||name.includes('feito')) listMap[l.id]='done';
-    else listMap[l.id]='backlog'; // default
+  (data.lists||[]).filter(l=>!l.closed).forEach(l=>{
+    const name=l.name.toLowerCase().trim();
+    const match=SEMANTIC.find(s=>s.keys.some(k=>name.includes(k)));
+    if(match){
+      listMap[l.id]={col:match.col, listName:l.name, mapped:true};
+    } else {
+      // Tenta match direto com colunas existentes do board
+      const boardCol=columns.find(col=>col.name.toLowerCase().includes(name)||name.includes(col.name.toLowerCase()));
+      if(boardCol){
+        listMap[l.id]={col:boardCol.id, listName:l.name, mapped:true};
+      } else {
+        // Sem match — vai para backlog mas registra como não mapeado
+        listMap[l.id]={col:columns[0]?.id||'backlog', listName:l.name, mapped:false};
+        unmappedLists.push(l.name);
+      }
+    }
   });
-  // Mapeia labels → tags
-  const labelMap={};
-  (data.labels||[]).forEach(lb=>{ if(lb.name) labelMap[lb.id]=lb.name.toLowerCase().replace(/\s+/g,'-'); });
-  // Mapeia checklists por card
+
+  // ── 2. Mapeia labels do Trello → tags do board ─────────────────
+  // Tenta match por nome; se não achar, usa a primeira tag disponível
+  // e registra as tags novas para criar depois
+  const newTagsToCreate=[];
+  const labelToTag={};
+  (data.labels||[]).filter(lb=>lb.name).forEach(lb=>{
+    const lname=lb.name.toLowerCase().trim();
+    // Busca tag existente no board
+    const existing=tags.find(t=>t.label.toLowerCase().includes(lname)||lname.includes(t.label.toLowerCase()));
+    if(existing){
+      labelToTag[lb.id]=existing.id;
+    } else {
+      // Cria tag nova dinamicamente
+      const newId='tag_trello_'+lb.id.substring(0,6);
+      // Mapeia cor do Trello para nossa paleta
+      const colorMap={red:3,orange:2,yellow:2,green:1,blue:4,purple:5,pink:5,sky:0,lime:1,black:3};
+      const pi=colorMap[lb.color]||0;
+      newTagsToCreate.push({id:newId,label:lb.name,pi});
+      labelToTag[lb.id]=newId;
+    }
+  });
+
+  // ── 3. Mapeia checklists ───────────────────────────────────────
   const checkMap={};
   (data.checklists||[]).forEach(cl=>{
     if(!checkMap[cl.idCard]) checkMap[cl.idCard]=[];
-    (cl.checkItems||[]).forEach(item=>checkMap[cl.idCard].push({t:item.name,done:item.state==='complete'}));
+    (cl.checkItems||[]).forEach(item=>{
+      checkMap[cl.idCard].push({t:item.name,done:item.state==='complete'});
+    });
   });
-  // Converte cards
-  const imported=(data.cards||[]).filter(c=>!c.closed).map(c=>({
-    id:'trello_'+c.id.substring(0,8)+'_'+Date.now(),
-    col:listMap[c.idList]||'backlog',
-    tag:labelMap[c.labels?.[0]?.id]||tags[0]?.id,
-    title:c.name,
-    desc:c.desc||'',
-    owner:'',
-    due:c.due?c.due.split('T')[0]:'',
-    po:'',
-    checklist:checkMap[c.id]||[],
-    riscos:[],
-    archived:false,
-    sp:'',priority:'',
-    created:'Trello Import',edited:'Trello Import',
-    createdAt:new Date().toISOString().split('T')[0],
-    editedAt:new Date().toISOString().split('T')[0],
-  }));
-  return{boardName:data.name,cards:imported,total:imported.length};
+
+  // ── 4. Mapeia membros do Trello → membros do board ────────────
+  const memberTrelloMap={};
+  (data.members||[]).forEach(m=>{
+    // Tenta encontrar membro correspondente no board pelo nome
+    const tname=(m.fullName||m.username||'').toLowerCase();
+    const boardMember=members.find(bm=>bm.name.toLowerCase().includes(tname.split(' ')[0])||tname.includes(bm.name.toLowerCase().split(' ')[0]));
+    memberTrelloMap[m.id]=boardMember?.init||'';
+  });
+
+  // ── 5. Converte cards ──────────────────────────────────────────
+  const imported=(data.cards||[]).filter(card=>!card.closed).map(card=>{
+    const colInfo=listMap[card.idList]||{col:columns[0]?.id||'backlog',mapped:false};
+    // Tag: primeiro label que tiver nome, senão primeira tag do board
+    const firstLabel=card.labels?.find(lb=>lb.name);
+    const tagId=firstLabel?labelToTag[firstLabel.id]:null;
+    const finalTag=tagId||tags[0]?.id||'data';
+    // Responsável: tenta mapear membros atribuídos
+    const ownerInit=card.idMembers?.length?memberTrelloMap[card.idMembers[0]]||'':'';
+    // Story points: tenta pegar de campos customizados
+    let sp='';
+    if(data.customFieldItems){
+      const spField=data.customFieldItems.find(f=>f.idCard===card.id&&f.value?.number);
+      if(spField) sp=String(spField.value.number);
+    }
+    // Descrição: preserva markdown do Trello
+    const desc=(card.desc||'').substring(0,500); // limita a 500 chars
+    return{
+      id:'trello_'+card.id.substring(0,8),
+      col:colInfo.col,
+      tag:finalTag,
+      title:card.name,
+      desc,
+      owner:ownerInit,
+      due:card.due?card.due.split('T')[0]:'',
+      po:'',
+      checklist:checkMap[card.id]||[],
+      riscos:[],
+      archived:false,
+      sp, priority:'',
+      created:'Trello Import',
+      edited:'Trello Import',
+      createdAt:today,
+      editedAt:today,
+      _trelloListName:colInfo.listName, // metadado para rastreio
+      _mapped:colInfo.mapped,
+    };
+  });
+
+  return{
+    boardName:data.name,
+    cards:imported,
+    total:imported.length,
+    unmappedLists,       // listas que foram para backlog por falta de match
+    newTags:newTagsToCreate, // tags novas que serão criadas
+    stats:{
+      byCol:imported.reduce((acc,card)=>{acc[card.col]=(acc[card.col]||0)+1;return acc;},{}),
+      withChecklists:imported.filter(card=>card.checklist.length>0).length,
+      withDue:imported.filter(card=>card.due).length,
+      unmapped:imported.filter(card=>!card._mapped).length,
+    }
+  };
 }
 
 function previewTrelloImport(){
   const raw=document.getElementById('trello-json').value.trim();
   const preview=document.getElementById('trello-preview');
+  const btn=document.getElementById('btn-confirm-import');
   if(!raw){ preview.style.display='none'; return; }
   try{
     _trelloParsed=parseTrelloJSON(raw);
+    const s=_trelloParsed.stats;
+    const colNames={backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
+    const colSummary=Object.entries(s.byCol).map(([col,n])=>`${colNames[col]||col}: ${n}`).join(' · ');
+    let warnings='';
+    if(_trelloParsed.unmappedLists.length>0){
+      warnings+=`<div style="margin-top:6px;padding:5px 8px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);border-radius:6px;color:var(--warn);font-size:10px;">⚠ ${_trelloParsed.unmappedLists.length} lista(s) sem coluna correspondente foram para <strong>Backlog</strong>: ${_trelloParsed.unmappedLists.join(', ')}</div>`;
+    }
+    if(_trelloParsed.newTags.length>0){
+      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:6px;color:var(--accent);font-size:10px;">✦ ${_trelloParsed.newTags.length} tag(s) nova(s) serão criadas: ${_trelloParsed.newTags.map(t=>t.label).join(', ')}</div>`;
+    }
+    if(s.unmapped>0){
+      warnings+=`<div style="margin-top:5px;font-size:10px;color:var(--txt3);">${s.unmapped} card(s) mapeados para Backlog por padrão · ${s.withChecklists} com checklist · ${s.withDue} com prazo</div>`;
+    }
     preview.style.display='block';
-    preview.innerHTML=`✅ Board: <strong>${_trelloParsed.boardName}</strong> — ${_trelloParsed.total} cards encontrados.`;
+    preview.style.background='rgba(29,233,182,.08)';
+    preview.style.border='1px solid rgba(29,233,182,.2)';
+    preview.style.color='var(--teal)';
+    preview.innerHTML=`✅ <strong>${_trelloParsed.boardName}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span>${warnings}`;
+    btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
   }catch(e){
     preview.style.display='block';
+    preview.style.background='rgba(255,107,107,.08)';
+    preview.style.border='1px solid rgba(255,107,107,.25)';
     preview.style.color='var(--danger)';
-    preview.innerHTML='❌ JSON inválido ou formato não reconhecido. Verifique o arquivo exportado.';
+    preview.innerHTML='❌ JSON inválido. Verifique se copiou o arquivo completo.';
     _trelloParsed=null;
+    btn.disabled=true; btn.style.opacity='.4';
   }
 }
 
 function confirmTrelloImport(){
-  if(!_trelloParsed){ alert('Faça a pré-visualização primeiro.'); return; }
+  if(!_trelloParsed){ return; }
   const merge=document.getElementById('trello-merge').checked;
-  if(!merge) cards=[];
-  cards.push(..._trelloParsed.cards);
+  const total=_trelloParsed.total;
+  const boardName=_trelloParsed.boardName;
+  if(!merge){
+    if(!confirm(`Isso vai substituir todos os ${cards.length} cards existentes por ${total} cards do Trello. Confirma?`)) return;
+    cards=[];
+  }
+  // Cria tags novas que vieram do Trello
+  if(_trelloParsed.newTags?.length>0){
+    _trelloParsed.newTags.forEach(nt=>{
+      if(!tags.find(t=>t.id===nt.id)) tags.push(nt);
+    });
+  }
+  // Remove metadados internos antes de salvar
+  const cleanCards=_trelloParsed.cards.map(({_trelloListName,_mapped,...card})=>card);
+  cards.push(...cleanCards);
   fbSaveAll(); renderBoard();
-  closeOv('trello-ov');
+  // Limpa e fecha
   document.getElementById('trello-json').value='';
+  document.getElementById('trello-preview').style.display='none';
+  const btn=document.getElementById('btn-confirm-import');
+  btn.disabled=true; btn.style.opacity='.4';
   _trelloParsed=null;
-  alert(`✅ ${_trelloParsed?.total||'?'} cards importados do Trello!`);
+  closeOv('cfg-ov');
+  // Toast de sucesso
+  showToast(`✅ ${total} cards importados de "${boardName}"`);
 }
 // ═══════════════════════════════════════════════════════
 
