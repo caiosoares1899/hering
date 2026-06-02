@@ -207,6 +207,49 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
+/* Context Menu */
+.ctx-menu{
+  position:fixed;z-index:500;
+  background:rgba(6,26,46,.98);
+  border:1px solid var(--glass-b);
+  border-radius:var(--r2);
+  padding:5px;
+  min-width:200px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  backdrop-filter:blur(16px);
+  animation:ctxIn .12s ease;
+}
+@keyframes ctxIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.ctx-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 12px;
+  font-size:12px;color:var(--txt);
+  border-radius:var(--r);cursor:pointer;
+  transition:background .12s;
+  font-family:'DM Sans',sans-serif;
+}
+.ctx-item:hover{background:var(--glass-h);}
+.ctx-item.danger:hover{background:rgba(255,107,107,.12);color:var(--danger);}
+.ctx-item.warn:hover{background:rgba(255,209,102,.1);color:var(--warn);}
+.ctx-item-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.ctx-sep{height:1px;background:var(--glass-b);margin:4px 5px;}
+.ctx-label{font-size:9px;color:var(--txt3);padding:6px 12px 2px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.ctx-sub{position:relative;}
+.ctx-sub-arrow{margin-left:auto;font-size:10px;color:var(--txt3);}
+.ctx-submenu{
+  position:absolute;left:100%;top:0;
+  background:rgba(6,26,46,.98);
+  border:1px solid var(--glass-b);
+  border-radius:var(--r2);
+  padding:5px;
+  min-width:160px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  backdrop-filter:blur(16px);
+  display:none;
+}
+.ctx-sub:hover .ctx-submenu{display:block;}
+
+
 /* ── MOBILE ──────────────────────────────────────────── */
 @media(max-width:768px){
 
@@ -901,7 +944,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v5.4</div>
+<div class="version">v5.5</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1179,6 +1222,7 @@ function makeCardEl(card){
   div.setAttribute('data-owner',card.owner||'');
   div.setAttribute('draggable','true');
   div.onclick=()=>openCard(card.id);
+  div.oncontextmenu=e=>showCtxMenu(e,card.id);
   div.ondragstart=e=>handleDragStart(e,card.id);
   div.ondragend=e=>handleDragEnd(e);
   addTouchDnD(div,card.id); div.ondblclick=e=>{e.stopPropagation();};
@@ -2480,6 +2524,194 @@ function loadAutoRules(){
 }
 // ═══════════════════════════════════════════════════════
 
+
+// ═══════════════════════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════════════════════
+let _ctxCardId = null;
+
+function showCtxMenu(e, cardId){
+  e.preventDefault();
+  e.stopPropagation();
+  _ctxCardId = cardId;
+  const card = cards.find(x=>x.id===cardId);
+  if(!card) return;
+
+  const menu = document.getElementById('ctx-menu');
+
+  // Monta itens do menu
+  const colOptions = columns
+    .filter(col=>col.id!==card.col)
+    .map(col=>`<div class="ctx-item" onclick="ctxMove('${col.id}')">
+      <span class="ctx-item-icon"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:${col.color};"></span></span>
+      Mover para ${col.name}
+    </div>`).join('');
+
+  const isProg = card.col==='progress';
+  const isBlocker = card.col==='blocker';
+
+  menu.innerHTML = `
+    <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
+    <div class="ctx-sep"></div>
+
+    <div class="ctx-label">Mover para</div>
+    ${colOptions}
+    <div class="ctx-sep"></div>
+
+    ${!isProg ? `<div class="ctx-item" onclick="ctxProgress()">
+      <span class="ctx-item-icon">▶</span> Iniciar — mover para Em Progresso
+    </div>` : ''}
+
+    ${!isBlocker ? `<div class="ctx-item warn" onclick="ctxBlock()">
+      <span class="ctx-item-icon">🚧</span> Marcar como impedimento
+    </div>` : ''}
+
+    <div class="ctx-item" onclick="ctxDone()">
+      <span class="ctx-item-icon">✅</span> Concluir card
+    </div>
+
+    <div class="ctx-sep"></div>
+
+    <div class="ctx-item" onclick="ctxSetPriority('critical')">
+      <span class="ctx-item-icon">🔥</span> Prioridade crítica
+    </div>
+    <div class="ctx-item" onclick="ctxSetPriority('high')">
+      <span class="ctx-item-icon">🔴</span> Prioridade alta
+    </div>
+    <div class="ctx-item" onclick="ctxSetPriority('')">
+      <span class="ctx-item-icon">⬜</span> Remover prioridade
+    </div>
+
+    <div class="ctx-sep"></div>
+
+    <div class="ctx-item" onclick="ctxAssignMe()">
+      <span class="ctx-item-icon">👤</span> Atribuir a mim
+    </div>
+    <div class="ctx-item" onclick="openCard('${cardId}')">
+      <span class="ctx-item-icon">✏️</span> Editar card
+    </div>
+    <div class="ctx-item" onclick="ctxInsights()">
+      <span class="ctx-item-icon">🤖</span> Insights do Agente Ágil
+    </div>
+
+    <div class="ctx-sep"></div>
+
+    <div class="ctx-item" onclick="ctxModel()">
+      <span class="ctx-item-icon">📋</span> Salvar como modelo
+    </div>
+    <div class="ctx-item warn" onclick="ctxArchive()">
+      <span class="ctx-item-icon">📦</span> Arquivar card
+    </div>
+    <div class="ctx-item danger" onclick="ctxDelete()">
+      <span class="ctx-item-icon">🗑</span> Excluir card
+    </div>
+  `;
+
+  // Posiciona o menu (evita sair da tela)
+  menu.style.display = 'block';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let x = e.clientX, y = e.clientY;
+  if(x + mw > vw - 8) x = vw - mw - 8;
+  if(y + mh > vh - 8) y = vh - mh - 8;
+  if(x < 8) x = 8;
+  if(y < 8) y = 8;
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+}
+
+function hideCtxMenu(){
+  const m = document.getElementById('ctx-menu');
+  if(m) m.style.display = 'none';
+  _ctxCardId = null;
+}
+
+// Fecha ao clicar fora ou pressionar Esc
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideCtxMenu(); });
+document.addEventListener('contextmenu', e=>{
+  // Se não clicou num card, mostra o menu padrão do browser
+  if(!e.target.closest('.card')) hideCtxMenu();
+});
+
+// Ações do context menu
+function ctxMove(colId){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  const colName=columns.find(c=>c.id===colId)?.name||colId;
+  const ant=card.col; card.col=colId;
+  card.edited=window._currentUser?.displayName||'Usuário';
+  card.editedAt=new Date().toISOString().split('T')[0];
+  renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+  showToast(`"${card.title.substring(0,25)}" → ${colName}`);
+  hideCtxMenu();
+}
+function ctxProgress(){ ctxMove('progress'); }
+function ctxBlock(){ ctxMove('blocker'); }
+function ctxDone(){ ctxMove('done'); }
+
+function ctxSetPriority(p){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  card.priority=p;
+  card.edited=window._currentUser?.displayName||'Usuário';
+  card.editedAt=new Date().toISOString().split('T')[0];
+  renderBoard(); fbSaveAll();
+  showToast(p ? `Prioridade ${p} definida` : 'Prioridade removida');
+  hideCtxMenu();
+}
+
+function ctxAssignMe(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  const init=window._currentUserInit||'';
+  if(!init){ showToast('Faça login para se atribuir'); hideCtxMenu(); return; }
+  card.owner=init;
+  card.edited=window._currentUser?.displayName||'Usuário';
+  card.editedAt=new Date().toISOString().split('T')[0];
+  renderBoard(); fbSaveAll();
+  showToast(`Card atribuído a ${window._currentUser?.displayName||init}`);
+  hideCtxMenu();
+}
+
+function ctxInsights(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  hideCtxMenu();
+  openAgent(); swAgTab('daily');
+  const q=`Dá insights ágeis sobre o card "${card.title}"${card.po?' — PO: '+card.po.substring(0,100):''}`;
+  document.getElementById('inp-daily').value=q;
+  qa('daily',q);
+}
+
+function ctxModel(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  if(!qlItems.modelos) qlItems.modelos=[];
+  if(qlItems.modelos.find(m=>m.title===card.title)){
+    showToast('"'+card.title.substring(0,20)+'" já está nos modelos'); hideCtxMenu(); return;
+  }
+  qlItems.modelos.push({
+    title:card.title, tag:card.tag, desc:card.desc||'',
+    po:card.po||'', checklist:(card.checklist||[]).map(i=>({t:i.t,done:false})), riscos:card.riscos||[],
+  });
+  fbSet(FB+'/ql_items',qlItems);
+  showToast('✅ Salvo como modelo');
+  hideCtxMenu();
+}
+
+function ctxArchive(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  card.archived=true; renderBoard(); fbSaveAll();
+  showToast(`"${card.title.substring(0,25)}" arquivado`);
+  hideCtxMenu();
+}
+
+function ctxDelete(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  if(!confirm('Excluir "'+card.title+'"? Não pode ser desfeito.')) return;
+  cards=cards.filter(x=>x.id!==_ctxCardId);
+  fbSaveAll(); renderBoard();
+  showToast('Card excluído');
+  hideCtxMenu();
+}
+// ═══════════════════════════════════════════════════════
+
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
@@ -2566,5 +2798,6 @@ window.addEventListener('fb-ready',()=>{
 });
 renderBoard();
 </script>
+<div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
 </body>
 </html>
