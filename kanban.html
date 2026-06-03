@@ -271,10 +271,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border-radius:var(--r2);
   padding:5px;
   min-width:200px;
+  max-height:80vh;
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(56,182,255,.2) transparent;
   box-shadow:0 8px 32px rgba(0,0,0,.5);
   backdrop-filter:blur(16px);
   animation:ctxIn .12s ease;
 }
+.ctx-menu::-webkit-scrollbar{width:4px;}
+.ctx-menu::-webkit-scrollbar-track{background:transparent;}
+.ctx-menu::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:999px;}
 @keyframes ctxIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
 .ctx-item{
   display:flex;align-items:center;gap:9px;
@@ -1017,7 +1025,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v6.7</div>
+<div class="version">v6.8</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2962,10 +2970,6 @@ function showCtxMenu(e, cardId){
     <div class="ctx-label">Mover para</div>
     ${colOptions}
     <div class="ctx-sep"></div>
-
-    ${!isProg ? `<div class="ctx-item" onclick="ctxProgress()">
-      <span class="ctx-item-icon">▶</span> Iniciar — mover para Em Progresso
-    </div>` : ''}
 
     ${!isBlocker && blockerMode==='col' ? `<div class="ctx-item warn" onclick="ctxBlock()">
       <span class="ctx-item-icon">🚧</span> Mover para Impedimentos
