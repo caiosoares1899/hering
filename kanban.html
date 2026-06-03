@@ -207,6 +207,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .version{position:fixed;bottom:6px;left:10px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
+/* Participantes */
+.part-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.part-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;
+  background:rgba(37,99,201,.2);border:1px solid rgba(37,99,201,.35);font-size:10px;color:#7eb3ff;}
+.part-chip img{width:14px;height:14px;border-radius:50%;object-fit:cover;}
+.part-chip-del{background:none;border:none;color:rgba(126,200,227,.5);cursor:pointer;
+  font-size:11px;padding:0 0 0 2px;line-height:1;}
+.part-chip-del:hover{color:var(--danger);}
+.part-avatars{display:inline-flex;margin-left:2px;}
+.part-avatars .avatar{width:16px;height:16px;font-size:6px;margin-left:-4px;
+  border:1px solid var(--deep);}
+
+
 /* Tag impedimento */
 .tag-blocker{
   display:inline-flex;align-items:center;gap:4px;
@@ -688,6 +701,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="field"><label class="fl">Responsável</label><select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select></div>
       <div class="field"><label class="fl">Prazo</label><input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()"></div>
     </div>
+    <div class="field">
+      <label class="fl">Participantes</label>
+      <div class="part-list" id="m-participants"></div>
+      <div style="display:flex;gap:5px;">
+        <select class="fi" id="m-part-select" style="flex:1;font-size:11px;padding:5px 8px;">
+          <option value="">+ Adicionar participante...</option>
+        </select>
+        <button class="btn btn-sm btn-teal" onclick="addParticipant()">+ Add</button>
+      </div>
+    </div>
     <div class="field"><label class="fl">Descrição</label><textarea class="fi fi-ta" id="m-desc" rows="2" oninput="scheduleAutoSave()"></textarea></div>
     <div class="po-box"><div class="po-lbl">🎯 Insights do PO</div><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
     <div class="cl-sec">
@@ -994,7 +1017,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v6.4</div>
+<div class="version">v6.5</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1127,9 +1150,12 @@ function fbLoadAll(){
     if(!val) return;
     members = [];
     Object.values(val).forEach(u=>{
-      if(u.inscrito && u.init){
+      // Aceita inscrito=true, 'true', ou qualquer truthy; e init não vazio
+      const isInscrito = u.inscrito===true || u.inscrito==='true' || u.inscrito===1;
+      const hasInit = u.init && u.init.trim().length > 0;
+      if(hasInit){ // carrega TODOS que têm iniciais, inscrito ou não
         if(!members.find(m=>m.init===u.init))
-          members.push({init:u.init, name:u.nome||u.email, email:u.email||'', foto:u.foto||''});
+          members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||''});
       }
     });
     // Re-popula selects se modal estiver aberto
@@ -1278,6 +1304,12 @@ function makeCardEl(card){
   const avHtml=card.owner
     ?(m?.foto?`<div class="avatar"><img src="${m.foto}"></div>`:`<div class="avatar">${card.owner}</div>`)
     :`<div class="avatar" style="opacity:.25">?</div>`;
+  // Avatares de participantes (além do owner)
+  const partAvatars=(card.participants||[]).filter(p=>p!==card.owner).slice(0,3).map(init=>{
+    const pm=members.find(x=>x.init===init);
+    return pm?.foto?`<div class="avatar" title="${pm.name}"><img src="${pm.foto}"></div>`:`<div class="avatar" title="${init}">${init}</div>`;
+  }).join('');
+  const partHtml=partAvatars?`<div class="part-avatars">${partAvatars}</div>`:'';
   const clHtml=cp?`<div class="cl-bar"><div class="cl-track"><div class="cl-fill" style="width:${cp.p}%"></div></div><div class="cl-lbl">${cp.d}/${cp.t}</div></div>`:'';
   const div=document.createElement('div');
   // Card aging
@@ -1455,6 +1487,61 @@ function updateMetrics(){
 }
 
 
+
+// ── PARTICIPANTES ──────────────────────────────────────────────────
+function populatePartSelect(excludeInits=[]){
+  const sel=document.getElementById('m-part-select'); if(!sel) return;
+  sel.innerHTML='<option value="">+ Adicionar participante...</option>';
+  members.forEach(m=>{
+    if(!excludeInits.includes(m.init))
+      sel.innerHTML+=`<option value="${m.init}">${m.init} · ${m.name.split(' ')[0]}</option>`;
+  });
+  // Adiciona usuário logado se não estiver na lista
+  const init=window._currentUserInit; const u=window._currentUser;
+  if(init&&u&&!excludeInits.includes(init)&&!members.find(m=>m.init===init))
+    sel.innerHTML+=`<option value="${init}">${init} · ${u.displayName?.split(' ')[0]||''}</option>`;
+}
+
+function renderParticipants(parts){
+  const w=document.getElementById('m-participants'); if(!w) return;
+  const partArr=parts||[];
+  w.innerHTML=partArr.map((init,i)=>{
+    const m=members.find(x=>x.init===init);
+    const foto=m?.foto?`<img src="${m.foto}">`:'';
+    const nome=m?.name?.split(' ')[0]||init;
+    return `<span class="part-chip">${foto}${init} · ${nome}
+      <button class="part-chip-del" onclick="removeParticipant(${i})">✕</button>
+    </span>`;
+  }).join('');
+  populatePartSelect(partArr);
+}
+
+function getParticipants(){
+  return Array.from(document.querySelectorAll('#m-participants .part-chip'))
+    .map(el=>el.querySelector('.part-chip-del')?.getAttribute('onclick')?.match(/\d+/)?.[0])
+    .map((_,i)=>{ 
+      const chips=document.querySelectorAll('#m-participants .part-chip');
+      const txt=chips[i]?.textContent?.trim()?.split(' · ')[0]; 
+      return txt;
+    }).filter(Boolean);
+}
+
+function addParticipant(){
+  const sel=document.getElementById('m-part-select'); if(!sel||!sel.value) return;
+  const current=getParticipants();
+  if(current.includes(sel.value)) return;
+  renderParticipants([...current, sel.value]);
+  scheduleAutoSave();
+}
+
+function removeParticipant(i){
+  const current=getParticipants();
+  current.splice(i,1);
+  renderParticipants(current);
+  scheduleAutoSave();
+}
+// ── FIM PARTICIPANTES ──────────────────────────────────────────────
+
 // ── AUTO-SAVE CARD ─────────────────────────────────────────────────
 let _autoSaveTimer = null;
 function scheduleAutoSave(){
@@ -1470,7 +1557,7 @@ function scheduleAutoSave(){
     Object.assign(c,{title,tag:document.getElementById('m-tag').value,
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,
-      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,edited:user,editedAt:td});
+      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
     fbSaveAll(); renderBoard();
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
@@ -1506,6 +1593,7 @@ function openCard(id){
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
   document.getElementById('m-sp').value=c.sp||'';
   document.getElementById('m-priority').value=c.priority||'';
+  renderParticipants(c.participants||[]);
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
   document.getElementById('btn-del-card').style.visibility='visible';
   const blockerRow=document.getElementById('m-blocker-row');
@@ -1530,6 +1618,7 @@ function openNewCard(col){
   document.getElementById('m-meta-e').textContent='';
   document.getElementById('m-sp').value='';
   document.getElementById('m-priority').value='';
+  renderParticipants([]);
   document.getElementById('btn-del-card').style.visibility='hidden';
   const bRow=document.getElementById('m-blocker-row');
   if(bRow) bRow.style.display='none';
@@ -1547,6 +1636,7 @@ function saveCard(){
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
+      participants:getParticipants(),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td});
@@ -1554,7 +1644,7 @@ function saveCard(){
     cards.push({id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
       title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,archived:false,created:user,edited:user,createdAt:td,editedAt:td});
+      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td});
   }
   fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
 }
@@ -1915,7 +2005,7 @@ function executeTool(name,input){
 function agCtx(){
   const snap=cards.filter(c=>!c.archived).map(c=>{
     const cp=clProg(c.checklist);
-    return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
+    return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'}${c.participants?.length?' participantes:'+c.participants.join(','): ''} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
   }).join('\n');
   return `Você é o Agente Ágil do time de dados da Digital Hering (Grupo Azzas 2154).
 Analisa o Kanban, age sobre ele e ajuda os usuários a entender o sistema. Responde em português, direto e acionável.
