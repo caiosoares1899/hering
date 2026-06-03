@@ -1017,7 +1017,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v6.6</div>
+<div class="version">v6.7</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1214,6 +1214,7 @@ function doSignOut(){ if(window._signOut) window._signOut(); }
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   if(user){
+    // Mostra/esconde botão do agente conforme role (carregado do Firebase)
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
       document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br';
       document.getElementById('login-err').style.display='block';
@@ -1244,6 +1245,12 @@ function autoRegistrar(user){
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
       window._currentUserRole=existe.role||'membro';
+      // Atualiza visibilidade do FAB do agente
+      const fabBtn=document.querySelector('.fab-btn');
+      const mnavAgent=document.getElementById('mnav-agent');
+      const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador';
+      if(fabBtn) fabBtn.style.display=isPOorOrg?'':'none';
+      if(mnavAgent) mnavAgent.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
       if(user.photoURL&&existe.foto!==user.photoURL) fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL});
@@ -1277,9 +1284,9 @@ function confirmarInscricao(){
 // ═══════════════════════════════════════════════════════
 // RENDER BOARD
 // ═══════════════════════════════════════════════════════
-function getTag(id){ return tags.find(t=>t.id===id)||tags[0]; }
+function getTag(id){ if(!id) return null; return tags.find(t=>t.id===id)||null; }
 function getPal(pi){ return PALETTE[pi]||PALETTE[0]; }
-function tagHtml(tagId){ const t=getTag(tagId);const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${t.label}</span>`; }
+function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return ''; const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${t.label}</span>`; }
 
 function getDue(due, isDone){
   if(!due) return {cls:'',lbl:''};
@@ -1569,7 +1576,7 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 // CARD MODAL
 // ═══════════════════════════════════════════════════════
-function populateTagSelect(){ document.getElementById('m-tag').innerHTML=tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join(''); }
+function populateTagSelect(){ document.getElementById('m-tag').innerHTML='<option value="">— sem tag —</option>'+tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join(''); }
 function populateOwnerSelect(){
   document.getElementById('m-owner').innerHTML='<option value="">— sem atribuição —</option>'+members.map(m=>`<option value="${m.init}">${m.init} · ${m.name}</option>`).join('');
   // Adiciona o usuário logado se não estiver na lista
@@ -1892,11 +1899,16 @@ function saveFbConfig(){ localStorage.setItem('fb_databaseURL',document.getEleme
 // ═══════════════════════════════════════════════════════
 const agHistory={daily:[],metricas:[],retro:[]};
 const agTools=[
-  {name:'mover_card',description:'Move um card para outra coluna',input_schema:{type:'object',properties:{card_id:{type:'string'},nova_coluna:{type:'string',enum:columns.map(c=>c.id)},motivo:{type:'string'}},required:['card_id','nova_coluna','motivo']}},
-  {name:'atualizar_prazo',description:'Atualiza o prazo de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_prazo:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_prazo','motivo']}},
-  {name:'marcar_checklist',description:'Marca ou desmarca item do checklist',input_schema:{type:'object',properties:{card_id:{type:'string'},item_index:{type:'number'},concluido:{type:'boolean'}},required:['card_id','item_index','concluido']}},
-  {name:'criar_card',description:'Cria novo card no board',input_schema:{type:'object',properties:{titulo:{type:'string'},coluna:{type:'string'},tag:{type:'string'},owner:{type:'string'},prazo:{type:'string'},descricao:{type:'string'}},required:['titulo','coluna','tag']}},
+  {name:'mover_card',description:'Move um card para outra coluna',input_schema:{type:'object',properties:{card_id:{type:'string'},nova_coluna:{type:'string'},motivo:{type:'string'}},required:['card_id','nova_coluna','motivo']}},
+  {name:'atualizar_prazo',description:'Atualiza o prazo de um card (formato YYYY-MM-DD)',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_prazo:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_prazo','motivo']}},
+  {name:'marcar_checklist',description:'Marca ou desmarca item do checklist de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},item_index:{type:'number'},concluido:{type:'boolean'}},required:['card_id','item_index','concluido']}},
+  {name:'criar_card',description:'Cria novo card no board',input_schema:{type:'object',properties:{titulo:{type:'string'},coluna:{type:'string'},tag:{type:'string'},owner:{type:'string'},prazo:{type:'string'},descricao:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},po:{type:'string'}},required:['titulo','coluna']}},
   {name:'atualizar_owner',description:'Muda o responsável de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_owner:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_owner','motivo']}},
+  {name:'definir_prioridade',description:'Define ou remove a prioridade de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},motivo:{type:'string'}},required:['card_id','prioridade']}},
+  {name:'salvar_modelo',description:'Salva um card como modelo reutilizável',input_schema:{type:'object',properties:{card_id:{type:'string'},nome_modelo:{type:'string'}},required:['card_id']}},
+  {name:'salvar_recorrente',description:'Salva um card como item recorrente (aparece toda sprint)',input_schema:{type:'object',properties:{card_id:{type:'string'}},required:['card_id']}},
+  {name:'excluir_card',description:'Exclui permanentemente um card do board',input_schema:{type:'object',properties:{card_id:{type:'string'},confirmado:{type:'boolean'}},required:['card_id','confirmado']}},
+  {name:'atualizar_descricao',description:'Atualiza o título, descrição ou insights do PO de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},titulo:{type:'string'},descricao:{type:'string'},po:{type:'string'}},required:['card_id']}},
 ];
 
 function executeTool(name,input){
@@ -1958,9 +1970,9 @@ function executeTool(name,input){
           else ownerNovo=''; // não cria membro inexistente
         }
       }
-      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||tags[0]?.id,title:input.titulo,
-        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',po:'',
-        checklist:[],riscos:[],archived:false,sp:'',priority:'',
+      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||'',title:input.titulo,
+        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',po:input.po||'',
+        checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
       cards.push(novo); renderBoard(); fbSaveAll();
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
@@ -1998,7 +2010,56 @@ function executeTool(name,input){
       const memberName=members.find(m=>m.init===owner)?.name||owner;
       return{ok:true,msg:`Responsável de "${c.title}" → ${memberName} (${owner})`};
     }
-    default: return{ok:false,msg:'Ferramenta desconhecida: '+name};
+    case 'definir_prioridade':{
+      let c=cards.find(x=>x.id===input.card_id);
+      if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
+      if(!c) return{ok:false,msg:'Card não encontrado'};
+      c.priority=input.prioridade||''; c.edited=user; c.editedAt=td;
+      renderBoard(); fbSaveAll();
+      const labels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa','':'removida'};
+      return{ok:true,msg:`Prioridade de "${c.title}" → ${labels[input.prioridade||'']}`};
+    }
+    case 'salvar_modelo':{
+      const c=cards.find(x=>x.id===input.card_id);
+      if(!c) return{ok:false,msg:'Card não encontrado'};
+      if(!qlItems.modelos) qlItems.modelos=[];
+      const nome=input.nome_modelo||c.title;
+      if(qlItems.modelos.find(m=>m.title===nome)) return{ok:false,msg:`Modelo "${nome}" já existe`};
+      qlItems.modelos.push({title:nome,tag:c.tag,desc:c.desc||'',po:c.po||'',
+        checklist:(c.checklist||[]).map(i=>({t:i.t,done:false})),riscos:c.riscos||[]});
+      fbSet(FB+'/ql_items',qlItems);
+      return{ok:true,msg:`Card "${c.title}" salvo como modelo "${nome}"`};
+    }
+    case 'salvar_recorrente':{
+      const c=cards.find(x=>x.id===input.card_id);
+      if(!c) return{ok:false,msg:'Card não encontrado'};
+      if(!qlItems.recorrentes) qlItems.recorrentes=[];
+      if(qlItems.recorrentes.find(r=>r.title===c.title)) return{ok:false,msg:`"${c.title}" já está nos recorrentes`};
+      qlItems.recorrentes.push({title:c.title,tag:c.tag,desc:c.desc||''});
+      fbSet(FB+'/ql_items',qlItems);
+      return{ok:true,msg:`"${c.title}" adicionado aos recorrentes`};
+    }
+    case 'excluir_card':{
+      if(!input.confirmado) return{ok:false,msg:'Confirmação necessária: envie confirmado=true para excluir permanentemente'};
+      const c=cards.find(x=>x.id===input.card_id);
+      if(!c) return{ok:false,msg:'Card não encontrado'};
+      const titulo=c.title;
+      cards=cards.filter(x=>x.id!==input.card_id);
+      renderBoard(); fbSaveAll();
+      return{ok:true,msg:`Card "${titulo}" excluído permanentemente`};
+    }
+    case 'atualizar_descricao':{
+      let c=cards.find(x=>x.id===input.card_id);
+      if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
+      if(!c) return{ok:false,msg:'Card não encontrado'};
+      if(input.titulo) c.title=input.titulo;
+      if(input.descricao!==undefined) c.desc=input.descricao;
+      if(input.po!==undefined) c.po=input.po;
+      c.edited=user; c.editedAt=td;
+      renderBoard(); fbSaveAll();
+      return{ok:true,msg:`Card "${c.title}" atualizado`};
+    }
+        default: return{ok:false,msg:'Ferramenta desconhecida: '+name};
   }
 }
 
@@ -2023,10 +2084,16 @@ CAPACIDADES DO SISTEMA:
 
 AÇÕES QUE POSSO EXECUTAR:
 - mover_card: mover para outra coluna
-- atualizar_prazo: mudar data de entrega
-- marcar_checklist: marcar/desmarcar item
-- criar_card: criar novo card
+- atualizar_prazo: mudar data de entrega (formato YYYY-MM-DD)
+- marcar_checklist: marcar/desmarcar item do checklist
+- criar_card: criar novo card (com prioridade, PO, owner)
 - atualizar_owner: atribuir responsável
+- definir_prioridade: definir/remover prioridade (critical/high/medium/low)
+- salvar_modelo: salvar card como modelo reutilizável
+- salvar_recorrente: salvar card como item recorrente
+- excluir_card: excluir card permanentemente (requer confirmado=true)
+- atualizar_descricao: atualizar título, descrição ou insights do PO
+Você está conversando com um PO ou Organizador — pode usar todas as ferramentas sem restrição.
 
 BOARD (${new Date().toLocaleDateString('pt-BR')}):
 ${snap}
@@ -2039,7 +2106,15 @@ Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais)
 Usuário logado agora: ${window._currentUser?.displayName||'desconhecido'} (iniciais: ${window._currentUserInit||'?'}) — quando alguém disser "eu", "mim", "me atribua" ou mencionar seu próprio nome, use estas iniciais.`;
 }
 
-function openAgent(){ updateMetrics(); document.getElementById('ag-ov').classList.add('open'); }
+function openAgent(){
+  const role=window._currentUserRole||'membro';
+  if(role!=='po'&&role!=='organizador'){
+    showToast('🔒 Agente Ágil disponível apenas para PO e Organizadores');
+    return;
+  }
+  updateMetrics();
+  document.getElementById('ag-ov').classList.add('open');
+}
 function swAgTab(tab){
   document.querySelectorAll('.ag-tab').forEach((t,i)=>t.classList.toggle('on',['daily','metricas','retro'][i]===tab));
   ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
@@ -2902,20 +2977,23 @@ function showCtxMenu(e, cardId){
       <span class="ctx-item-icon">✅</span> Remover impedimento
     </div>` : ''}
 
-    <div class="ctx-item" onclick="ctxDone()">
-      <span class="ctx-item-icon">✅</span> Concluir card
-    </div>
-
     <div class="ctx-sep"></div>
 
+    <div class="ctx-label">Prioridade</div>
     <div class="ctx-item" onclick="ctxSetPriority('critical')">
-      <span class="ctx-item-icon">🔥</span> Prioridade crítica
+      <span class="ctx-item-icon">🔥</span> Crítica
     </div>
     <div class="ctx-item" onclick="ctxSetPriority('high')">
-      <span class="ctx-item-icon">🔴</span> Prioridade alta
+      <span class="ctx-item-icon">🔴</span> Alta
+    </div>
+    <div class="ctx-item" onclick="ctxSetPriority('medium')">
+      <span class="ctx-item-icon">🟡</span> Média
+    </div>
+    <div class="ctx-item" onclick="ctxSetPriority('low')">
+      <span class="ctx-item-icon">🟢</span> Baixa
     </div>
     <div class="ctx-item" onclick="ctxSetPriority('')">
-      <span class="ctx-item-icon">⬜</span> Remover prioridade
+      <span class="ctx-item-icon">⬜</span> Remover
     </div>
 
     <div class="ctx-sep"></div>
