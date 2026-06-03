@@ -994,7 +994,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v6.1</div>
+<div class="version">v6.2</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1076,8 +1076,10 @@ function fbUpdate(path,val){ if(window._fbReady) window._update(fb(path),val); }
 function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
 
 let _lastLocalSave = 0;
+let _hasLocalSession = false; // true só depois do primeiro save desta sessão
 function fbSaveAll(){
   _lastLocalSave = Date.now();
+  _hasLocalSession = true;
   fbSet(FB+'/cards', cards);
   fbSet(FB+'/tags', tags);
   fbSet(FB+'/columns', columns);
@@ -1091,12 +1093,12 @@ function fbSaveMsgs(tab){
 }
 
 function fbLoadAll(){
-  // Cards — realtime (ignora echo do próprio save por 2s)
+  // Cards — realtime
   fbListen(FB+'/cards',val=>{
-    if(Date.now() - _lastLocalSave < 2000){ return; } // ignora echo
+    // Ignora echo apenas se JÁ fizemos um save nessa sessão E foi há menos de 2s
+    if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
     if(val){ 
       const incoming = Array.isArray(val)?val:Object.values(val);
-      // Só atualiza se o dado do Firebase for diferente do local
       if(JSON.stringify(incoming) !== JSON.stringify(cards)){
         cards = incoming; 
         renderBoard(); 
@@ -1110,9 +1112,20 @@ function fbLoadAll(){
   // Agil cfg — realtime
   fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); }});
   // Quick lists
-  fbListen(FB+'/ql_items',val=>{ if(val) qlItems=val; });
+  fbListen(FB+'/ql_items',val=>{ 
+    if(val) qlItems=val;
+    // Atualiza painel se estiver aberto
+    if(document.getElementById('ql-ov')?.classList.contains('open')) renderQLBody();
+  });
   // Links
-  fbListen(FB+'/links',val=>{ if(val) links=Array.isArray(val)?val:Object.values(val); });
+  fbListen(FB+'/links',val=>{ 
+    if(val) links=Array.isArray(val)?val:Object.values(val);
+    if(document.getElementById('links-ov')?.classList.contains('open')) renderLinksBody();
+  });
+  // Config geral (blockerMode etc)
+  fbListen(FB+'/config/blockerMode',val=>{
+    if(val){ blockerMode=val; applyBlockerMode(); }
+  });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
     fbListen(FB+'/agent_msgs/'+tab,val=>{
@@ -2613,9 +2626,17 @@ function runAutoRules(eventType, cardId, extraVal){
     }
   }
 }
-// Carrega regras do Firebase
+// Carrega regras do Firebase com listener contínuo
 function loadAutoRules(){
-  fbListen(FB+'/auto_rules',val=>{ if(val) autoRules=Array.isArray(val)?val:Object.values(val); });
+  fbListen(FB+'/auto_rules',val=>{ 
+    if(val){ 
+      autoRules=Array.isArray(val)?val:Object.values(val);
+      // Re-renderiza lista se painel estiver aberto
+      if(document.getElementById('cfgtab-auto')?.classList.contains('on')) renderAutoRules();
+    } else {
+      autoRules=[];
+    }
+  });
 }
 // ═══════════════════════════════════════════════════════
 
@@ -2625,11 +2646,11 @@ function loadAutoRules(){
 // ═══════════════════════════════════════════════════════
 // MODO IMPEDIMENTO (coluna vs tag)
 // ═══════════════════════════════════════════════════════
-let blockerMode = localStorage.getItem('blocker_mode') || 'col'; // 'col' | 'tag'
+let blockerMode = 'col'; // carregado do Firebase
 
 function saveBlockerMode(mode){
   blockerMode = mode;
-  localStorage.setItem('blocker_mode', mode);
+  fbSet(FB+'/config/blockerMode', mode);
   applyBlockerMode();
   showToast(mode==='col' ? '🗂 Impedimentos como coluna' : '🚧 Impedimentos como tag no card');
 }
