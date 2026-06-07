@@ -1025,7 +1025,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v6.9</div>
+<div class="version">v7.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1065,6 +1065,9 @@ onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(n
 const WORKER_URL = localStorage.getItem('kanban_worker_url') || 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
 const FB = 'kanban/dados';
 const today = new Date(); today.setHours(0,0,0,0);
+// ── Seguranca: escape de HTML e validacao de URL ──
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
 const PALETTE=[
   {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.35)',c:'#38b6ff',h:'#38b6ff'},
@@ -1090,7 +1093,7 @@ let tags=[
 let members=[];
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
-let raiaMode=false;
+let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo)
 let editingId=null;
 let currentQL=null; // 'recorrentes' | 'modelos'
 let qlItems={ recorrentes:[], modelos:[] };
@@ -1201,7 +1204,8 @@ function renderOnline(users){
     const el=document.createElement('div');
     el.title=u.nome+' (online)';
     el.style.cssText='position:relative;width:24px;height:24px;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);';
-    if(u.foto) el.innerHTML=`<img src="${u.foto}" style="width:100%;height:100%;object-fit:cover;">`;
+    const _f=safeUrl(u.foto);
+    if(_f) el.innerHTML=`<img src="${_f}" style="width:100%;height:100%;object-fit:cover;">`;
     else el.textContent=u.init||'?';
     // bolinha verde
     const dot=document.createElement('div');
@@ -1294,7 +1298,7 @@ function confirmarInscricao(){
 // ═══════════════════════════════════════════════════════
 function getTag(id){ if(!id) return null; return tags.find(t=>t.id===id)||null; }
 function getPal(pi){ return PALETTE[pi]||PALETTE[0]; }
-function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return ''; const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${t.label}</span>`; }
+function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return ''; const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
 
 function getDue(due, isDone){
   if(!due) return {cls:'',lbl:''};
@@ -1317,12 +1321,12 @@ function makeCardEl(card){
   const dueHtml=dl?`<span class="due-badge ${dc}">${dl}</span>`:`<span class="due-none">sem prazo</span>`;
   const m=members.find(m=>m.init===card.owner);
   const avHtml=card.owner
-    ?(m?.foto?`<div class="avatar"><img src="${m.foto}"></div>`:`<div class="avatar">${card.owner}</div>`)
+    ?(safeUrl(m?.foto)?`<div class="avatar"><img src="${safeUrl(m.foto)}"></div>`:`<div class="avatar">${esc(card.owner)}</div>`)
     :`<div class="avatar" style="opacity:.25">?</div>`;
   // Avatares de participantes (além do owner)
   const partAvatars=(card.participants||[]).filter(p=>p!==card.owner).slice(0,3).map(init=>{
     const pm=members.find(x=>x.init===init);
-    return pm?.foto?`<div class="avatar" title="${pm.name}"><img src="${pm.foto}"></div>`:`<div class="avatar" title="${init}">${init}</div>`;
+    return safeUrl(pm?.foto)?`<div class="avatar" title="${esc(pm.name)}"><img src="${safeUrl(pm.foto)}"></div>`:`<div class="avatar" title="${esc(init)}">${esc(init)}</div>`;
   }).join('');
   const partHtml=partAvatars?`<div class="part-avatars">${partAvatars}</div>`:'';
   const clHtml=cp?`<div class="cl-bar"><div class="cl-track"><div class="cl-fill" style="width:${cp.p}%"></div></div><div class="cl-lbl">${cp.d}/${cp.t}</div></div>`:'';
@@ -1345,7 +1349,7 @@ function makeCardEl(card){
   div.ondragstart=e=>handleDragStart(e,card.id);
   div.ondragend=e=>handleDragEnd(e);
   addTouchDnD(div,card.id); div.ondblclick=e=>{e.stopPropagation();};
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${card.sp}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}<div class="card-title">${card.title}</div>${card.desc?`<div class="card-desc">${card.desc}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}<div class="card-title">${esc(card.title)}</div>${card.desc?`<div class="card-desc">${esc(card.desc)}</div>`:''}<div class="card-footer">${avHtml}${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -1353,7 +1357,8 @@ function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
   board.innerHTML='';
   const activeCards=cards.filter(c=>!c.archived&&passesFilter(c));
-  if(raiaMode) renderRaia(board,activeCards);
+  if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
+  else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
 }
@@ -1367,7 +1372,7 @@ function renderNormal(board,activeCards){
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
     const canCollapse=col.collapsible!==false;
     div.innerHTML=`<div class="col-hd">
-      <div class="col-title"><span class="dot" style="background:${col.color}"></span>${col.name}</div>
+      <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
         <span class="col-cnt" id="cnt-${col.id}">${colCards.length}</span>
         ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
@@ -1385,7 +1390,7 @@ function renderNormal(board,activeCards){
   });
 }
 
-function renderRaia(board,activeCards){
+function renderRaiaOwner(board,activeCards){
   board.className='board raia-mode';
 
   // Separa: com dono em cima, sem dono embaixo
@@ -1410,8 +1415,8 @@ function renderRaia(board,activeCards){
         <span style="margin-left:auto;font-size:10px;background:rgba(255,209,102,.15);padding:1px 8px;border-radius:999px;border:1px solid rgba(255,209,102,.3);">${total} card${total>1?'s':''}</span>
       </div><div class="raia-cols" id="raia-none"></div>`;
     } else {
-      const foto=m?.foto?`<img src="${m.foto}" width="20" height="20" style="border-radius:50%;object-fit:cover;">`:'';
-      row.innerHTML=`<div class="raia-label">${foto} ${nome}</div><div class="raia-cols" id="raia-${owner}"></div>`;
+      const foto=safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}" width="20" height="20" style="border-radius:50%;object-fit:cover;">`:'';
+      row.innerHTML=`<div class="raia-label">${foto} ${esc(nome)}</div><div class="raia-cols" id="raia-${esc(owner)}"></div>`;
     }
 
     board.appendChild(row);
@@ -1421,7 +1426,43 @@ function renderRaia(board,activeCards){
       const colCards=ownerCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO2[a.priority||'']||4)-(PRIO2[b.priority||'']||4));
       const safeId=owner||'none';
       const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
-      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${col.name}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body" id="rbody-${safeId}-${col.id}"></div>`;
+      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body" id="rbody-${safeId}-${col.id}"></div>`;
+      raiaBoard.appendChild(div);
+      const body=div.querySelector('.col-body');
+      colCards.forEach(c=>body.appendChild(makeCardEl(c)));
+    });
+  });
+}
+
+function renderRaiaTag(board,activeCards){
+  board.className='board raia-mode';
+  // Tipos (tags) com cards, na ordem do board de tags; "sem tipo" por ultimo
+  const tagsComCards=tags.filter(t=>activeCards.some(c=>c.tag===t.id));
+  const temSemTipo=activeCards.some(c=>!getTag(c.tag));
+  const ordered=[...tagsComCards.map(t=>t.id), ...(temSemTipo?['']:[])];
+  ordered.forEach(tagId=>{
+    const tagCards=activeCards.filter(c=>(getTag(c.tag)?c.tag:'')===tagId);
+    if(!tagCards.length) return;
+    const t=getTag(tagId);
+    const p=t?getPal(t.pi):null;
+    const total=tagCards.length;
+    const row=document.createElement('div'); row.className='raia-row';
+    if(!tagId){
+      row.innerHTML=`<div class="raia-unowned-label">
+        <span class="raia-unowned-dot"></span>
+        Sem tipo
+        <span style="margin-left:auto;font-size:10px;background:rgba(255,209,102,.15);padding:1px 8px;border-radius:999px;border:1px solid rgba(255,209,102,.3);">${total} card${total>1?'s':''}</span>
+      </div><div class="raia-cols"></div>`;
+    } else {
+      row.innerHTML=`<div class="raia-label" style="border-left:3px solid ${p.c};background:${p.bg};color:${p.c};"><span class="dot" style="background:${p.c}"></span> ${esc(t.label)}<span style="margin-left:auto;font-size:10px;opacity:.85;">${total} card${total>1?'s':''}</span></div><div class="raia-cols"></div>`;
+    }
+    board.appendChild(row);
+    const raiaBoard=row.querySelector('.raia-cols');
+    columns.forEach(col=>{
+      const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
+      const colCards=tagCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']||4)-(PRIO[b.priority||'']||4));
+      const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
+      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -1435,8 +1476,8 @@ function toggleFilters(){
   const show=bar.style.display==='none'||bar.style.display==='';
   bar.style.display=show?'flex':'none';
   // Popula selects
-  document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+members.map(m=>`<option value="${m.init}">${m.init} · ${m.name.split(' ')[0]}</option>`).join('');
-  document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+  document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`).join('');
+  document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
   document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
   document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
 }
@@ -1475,8 +1516,11 @@ function passesFilter(card){
   return true;
 }
 function toggleRaia(){
-  raiaMode=!raiaMode;
+  const order={'':'owner','owner':'tag','tag':''};
+  raiaMode=order[raiaMode];
   const btn=document.getElementById('btn-raia');
+  const labels={'':'⇔ Raia','owner':'⇔ Raia · pessoa','tag':'⇔ Raia · tipo'};
+  btn.textContent=labels[raiaMode];
   btn.style.borderColor=raiaMode?'var(--teal)':'';
   btn.style.color=raiaMode?'var(--teal)':'';
   renderBoard();
@@ -1509,7 +1553,7 @@ function populatePartSelect(excludeInits=[]){
   sel.innerHTML='<option value="">+ Adicionar participante...</option>';
   members.forEach(m=>{
     if(!excludeInits.includes(m.init))
-      sel.innerHTML+=`<option value="${m.init}">${m.init} · ${m.name.split(' ')[0]}</option>`;
+      sel.innerHTML+=`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`;
   });
   // Adiciona usuário logado se não estiver na lista
   const init=window._currentUserInit; const u=window._currentUser;
@@ -1522,9 +1566,9 @@ function renderParticipants(parts){
   const partArr=parts||[];
   w.innerHTML=partArr.map((init,i)=>{
     const m=members.find(x=>x.init===init);
-    const foto=m?.foto?`<img src="${m.foto}">`:'';
+    const foto=safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}">`:'';
     const nome=m?.name?.split(' ')[0]||init;
-    return `<span class="part-chip">${foto}${init} · ${nome}
+    return `<span class="part-chip">${foto}${esc(init)} · ${esc(nome)}
       <button class="part-chip-del" onclick="removeParticipant(${i})">✕</button>
     </span>`;
   }).join('');
@@ -1584,9 +1628,9 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 // CARD MODAL
 // ═══════════════════════════════════════════════════════
-function populateTagSelect(){ document.getElementById('m-tag').innerHTML='<option value="">— sem tag —</option>'+tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join(''); }
+function populateTagSelect(){ document.getElementById('m-tag').innerHTML='<option value="">— sem tag —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
 function populateOwnerSelect(){
-  document.getElementById('m-owner').innerHTML='<option value="">— sem atribuição —</option>'+members.map(m=>`<option value="${m.init}">${m.init} · ${m.name}</option>`).join('');
+  document.getElementById('m-owner').innerHTML='<option value="">— sem atribuição —</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
   // Adiciona o usuário logado se não estiver na lista
   const u=window._currentUser; const init=window._currentUserInit;
   if(u&&init&&!members.find(m=>m.init===init))
@@ -1677,7 +1721,7 @@ function archiveCard(){
 function renderCL(cl){
   const w=document.getElementById('m-checklist'); w.innerHTML='';
   cl.forEach((item,i)=>{ const d=document.createElement('div'); d.className='cl-item';
-    d.innerHTML=`<input type="checkbox" ${item.done?'checked':''} ><span class="cl-it">${item.t}</span><button class="cl-del" onclick="delCI(${i})">✕</button>`;
+    d.innerHTML=`<input type="checkbox" ${item.done?'checked':''} ><span class="cl-it">${esc(item.t)}</span><button class="cl-del" onclick="delCI(${i})">✕</button>`;
     w.appendChild(d); });
 }
 function getCL(){ return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({t:r.querySelector('.cl-it').textContent,done:r.querySelector('input').checked})); }
@@ -1685,7 +1729,7 @@ function renderRiscos(rl){
   const w=document.getElementById('m-riscos'); if(!w) return; w.innerHTML='';
   (rl||[]).forEach((item,i)=>{
     const d=document.createElement('div'); d.className='cl-item';
-    d.innerHTML=`<span style="color:var(--warn);font-size:11px;">⚠</span><span class="cl-it" style="color:var(--txt2);">${item}</span><button class="cl-del" onclick="delRisco(${i})">✕</button>`;
+    d.innerHTML=`<span style="color:var(--warn);font-size:11px;">⚠</span><span class="cl-it" style="color:var(--txt2);">${esc(item)}</span><button class="cl-del" onclick="delRisco(${i})">✕</button>`;
     w.appendChild(d);
   });
 }
@@ -1704,9 +1748,9 @@ function openArquivados(){
   const archived=cards.filter(c=>c.archived);
   if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado.</div>'; }
   archived.forEach(c=>{
-    const t=getTag(c.tag); const p=getPal(t.pi);
+    const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t.pi);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${t.label}</span><span class="ql-item-title">${c.title}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
   document.getElementById('arch-ov').classList.add('open');
@@ -1722,7 +1766,7 @@ function openQL(tipo){
   const titles={recorrentes:'🔁 Itens recorrentes',modelos:'📋 Cards modelo'};
   document.getElementById('ql-title').textContent=titles[tipo];
   // Popula tag select
-  document.getElementById('ql-new-tag').innerHTML=tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+  document.getElementById('ql-new-tag').innerHTML=tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
   renderQLBody();
   document.getElementById('ql-ov').classList.add('open');
 }
@@ -1731,9 +1775,9 @@ function renderQLBody(){
   const items=qlItems[currentQL]||[];
   if(!items.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item ainda. Adicione abaixo.</div>'; return; }
   items.forEach((item,i)=>{
-    const t=getTag(item.tag); const p=getPal(t.pi);
+    const t=getTag(item.tag)||{label:'',pi:0}; const p=getPal(t.pi);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${t.label}</span><span class="ql-item-title">${item.title}</span><button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
+    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span><button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
     body.appendChild(row);
   });
 }
@@ -1772,7 +1816,7 @@ function renderLinksBody(){
   if(!links.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum link ainda.</div>'; return; }
   links.forEach((lk,i)=>{
     const row=document.createElement('div'); row.className='link-item';
-    row.innerHTML=`<a href="${lk.url}" target="_blank" rel="noopener">🔗 ${lk.label||lk.url}</a><button class="icon-btn" onclick="delLink(${i})">✕</button>`;
+    row.innerHTML=`<a href="${safeUrl(lk.url)}" target="_blank" rel="noopener">🔗 ${esc(lk.label||lk.url)}</a><button class="icon-btn" onclick="delLink(${i})">✕</button>`;
     body.appendChild(row);
   });
 }
@@ -1844,7 +1888,7 @@ function renderColEditor(){
   columns.forEach((col,i)=>{
     const row=document.createElement('div'); row.className='col-edit-row';
     row.innerHTML=`<span style="font-size:12px;color:var(--txt3);">${i+1}</span>
-      <input class="col-edit-inp" value="${col.name}" oninput="columns[${i}].name=this.value">
+      <input class="col-edit-inp" value="${esc(col.name)}" oninput="columns[${i}].name=this.value">
       <input type="color" value="${col.color}" onchange="columns[${i}].color=this.value" style="width:30px;height:28px;border:none;background:none;cursor:pointer;">
       <label style="font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:3px;"><input type="checkbox" ${col.collapsible?'checked':''} onchange="columns[${i}].collapsible=this.checked"> Min.</label>
       ${columns.length>1?`<button class="icon-btn" onclick="delColumn(${i})">✕</button>`:''}
@@ -1867,14 +1911,14 @@ function renderUsuarios(){
     list.innerHTML='';
     Object.entries(val).forEach(([uid,u])=>{
       const row=document.createElement('div'); row.className='user-row';
-      const foto=u.foto?`<img src="${u.foto}" width="28" height="28" style="border-radius:50%;object-fit:cover;">`:`<div style="width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);">${u.init||'?'}</div>`;
+      const foto=safeUrl(u.foto)?`<img src="${safeUrl(u.foto)}" width="28" height="28" style="border-radius:50%;object-fit:cover;">`:`<div style="width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);">${esc(u.init||'?')}</div>`;
       const roleColors={membro:'rgba(56,182,255,.15)',organizador:'rgba(255,209,102,.15)',po:'rgba(29,233,182,.15)'};
       const roleTextColors={membro:'var(--accent)',organizador:'var(--warn)',po:'var(--teal)'};
       const roleBorderColors={membro:'rgba(56,182,255,.3)',organizador:'rgba(255,209,102,.3)',po:'rgba(29,233,182,.3)'};
       const roleLabels={membro:'Membro',organizador:'Organizador',po:'PO'};
       const role=u.role||'membro';
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
-      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${u.nome||u.email} <span style="font-size:10px;color:var(--txt3);">(${u.init||'?'})</span></div><div style="font-size:10px;color:var(--txt2);">${u.email}</div></div>${badge}<select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} <span style="font-size:10px;color:var(--txt3);">(${esc(u.init||'?')})</span></div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
         <option value="membro"${(u.role||'membro')==='membro'?' selected':''}>Membro</option>
         <option value="organizador"${u.role==='organizador'?' selected':''}>Organizador</option>
         <option value="po"${u.role==='po'?' selected':''}>PO</option>
@@ -1890,7 +1934,7 @@ function renderTagEditor(){
   document.getElementById('tag-editor').innerHTML=tags.map((t,i)=>{
     const p=getPal(t.pi);
     const swatches=PALETTE.map((pp,pi)=>`<div class="swatch${t.pi===pi?' sel':''}" style="background:${pp.h}" onclick="setTagColor(${i},${pi})"></div>`).join('');
-    return `<div class="tag-row"><span class="tag-preview" style="background:${p.bg};border-color:${p.b};color:${p.c}">${t.label}</span><input class="tag-name-inp" value="${t.label}" oninput="tags[${i}].label=this.value;renderTagEditor()"><div class="color-row">${swatches}</div><button class="icon-btn" onclick="delTag(${i})">✕</button></div>`;
+    return `<div class="tag-row"><span class="tag-preview" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><input class="tag-name-inp" value="${esc(t.label)}" oninput="tags[${i}].label=this.value;renderTagEditor()"><div class="color-row">${swatches}</div><button class="icon-btn" onclick="delTag(${i})">✕</button></div>`;
   }).join('');
 }
 function setTagColor(i,pi){ tags[i].pi=pi; renderTagEditor(); }
@@ -2371,10 +2415,10 @@ function previewTrelloImport(){
     const colSummary=Object.entries(s.byCol).map(([col,n])=>`${colNames[col]||col}: ${n}`).join(' · ');
     let warnings='';
     if(_trelloParsed.unmappedLists.length>0){
-      warnings+=`<div style="margin-top:6px;padding:5px 8px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);border-radius:6px;color:var(--warn);font-size:10px;">⚠ ${_trelloParsed.unmappedLists.length} lista(s) sem coluna correspondente foram para <strong>Backlog</strong>: ${_trelloParsed.unmappedLists.join(', ')}</div>`;
+      warnings+=`<div style="margin-top:6px;padding:5px 8px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);border-radius:6px;color:var(--warn);font-size:10px;">⚠ ${_trelloParsed.unmappedLists.length} lista(s) sem coluna correspondente foram para <strong>Backlog</strong>: ${esc(_trelloParsed.unmappedLists.join(', '))}</div>`;
     }
     if(_trelloParsed.newTags.length>0){
-      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:6px;color:var(--accent);font-size:10px;">✦ ${_trelloParsed.newTags.length} tag(s) nova(s) serão criadas: ${_trelloParsed.newTags.map(t=>t.label).join(', ')}</div>`;
+      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:6px;color:var(--accent);font-size:10px;">✦ ${_trelloParsed.newTags.length} tag(s) nova(s) serão criadas: ${esc(_trelloParsed.newTags.map(t=>t.label).join(', '))}</div>`;
     }
     if(s.unmapped>0){
       warnings+=`<div style="margin-top:5px;font-size:10px;color:var(--txt3);">${s.unmapped} card(s) mapeados para Backlog por padrão · ${s.withChecklists} com checklist · ${s.withDue} com prazo</div>`;
@@ -2383,7 +2427,7 @@ function previewTrelloImport(){
     preview.style.background='rgba(29,233,182,.08)';
     preview.style.border='1px solid rgba(29,233,182,.2)';
     preview.style.color='var(--teal)';
-    preview.innerHTML=`✅ <strong>${_trelloParsed.boardName}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span>${warnings}`;
+    preview.innerHTML=`✅ <strong>${esc(_trelloParsed.boardName)}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span>${warnings}`;
     btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
   }catch(e){
     preview.style.display='block';
@@ -2770,11 +2814,11 @@ function populateAutoSelects(){
       <option value="low">🟢 Baixa</option>`;
   } else if(action==='add_tag'){
     av.innerHTML=tags.length
-      ? tags.map(t=>`<option value="${t.id}">${t.label}</option>`).join('')
+      ? tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('')
       : '<option value="">— sem tags —</option>';
   } else if(action==='assign_owner'){
     av.innerHTML='<option value="">— manter atual —</option>'
-      +members.map(m=>`<option value="${m.init}">${m.init} · ${m.name.split(' ')[0]}</option>`).join('');
+      +members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`).join('');
   } else if(action==='notify_agent'){
     av.innerHTML=`
       <option value="daily">Aba Daily</option>
