@@ -88,6 +88,46 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .login-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.97);
   backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;
   flex-direction:column;gap:20px;}
+
+/* Filtro de squad */
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;}
+.filter-btn{padding:6px 16px;font-size:12px;font-family:'DM Sans',sans-serif;
+  border:1px solid var(--glass-b);border-radius:999px;
+  background:var(--glass);color:var(--txt2);cursor:pointer;transition:all .2s;}
+.filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+.filter-btn:hover:not(.active){border-color:var(--accent);color:var(--txt);}
+
+/* Config modal */
+.cfg-ov{position:fixed;inset:0;z-index:100;background:rgba(1,8,16,.88);
+  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.cfg-ov.open{display:flex;}
+.cfg-panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);
+  border-radius:14px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+.cfg-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:rgba(6,26,46,.97);border-radius:14px 14px 0 0;z-index:1;}
+.cfg-hd-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.cfg-body{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.cfg-sec{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:2px;}
+.cfg-field{display:flex;flex-direction:column;gap:3px;}
+.cfg-label{font-size:10px;color:var(--txt2);font-weight:500;}
+.cfg-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;
+  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.cfg-input:focus{outline:none;border-color:var(--accent);}
+.cfg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cfg-ft{padding:10px 16px;border-top:1px solid var(--glass-b);display:flex;gap:8px;justify-content:flex-end;}
+.x-btn{background:none;border:none;color:rgba(200,230,255,.5);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
+.x-btn:hover{color:var(--danger);}
+.save-btn{padding:7px 18px;font-size:12px;background:rgba(37,99,201,.7);color:#fff;
+  border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.save-btn:hover{background:rgba(37,99,201,.9);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:999px;
+  padding:9px 20px;font-size:12px;color:var(--txt);z-index:999;
+  backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+
 /* Version */
 .version{position:fixed;bottom:6px;right:12px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 /* Refresh */
@@ -146,6 +186,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <span class="last-update" id="last-update"></span>
   </div>
 
+  <!-- FILTRO DE SQUAD -->
+  <div class="filter-bar">
+    <button class="filter-btn active" id="fb-all" onclick="setFilter('all')">🏠 Todos os squads</button>
+    <button class="filter-btn" id="fb-dados" onclick="setFilter('dados')">📊 Squad Dados</button>
+    <button class="filter-btn" id="fb-midia" onclick="setFilter('midia')">📱 Squad Mídia</button>
+  </div>
+
   <!-- VISÃO COMPARATIVA DOS SQUADS -->
   <div class="sec-title">🏃 Squads em tempo real</div>
   <div class="grid-2" id="squad-cards" style="margin-bottom:20px;">
@@ -163,6 +210,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 
   <!-- TABELA COMPARATIVA -->
+  <div id="cmp-section">
   <div class="sec-title">⚖️ Comparação</div>
   <div class="card" style="margin-bottom:20px;">
     <table class="cmp-table" id="cmp-table">
@@ -176,6 +224,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </tbody>
     </table>
   </div>
+
+  </div><!-- /cmp-section -->
 
   <!-- BLOQUEIOS ATIVOS -->
   <div class="sec-title">🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></div>
@@ -202,12 +252,55 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 </div>
 
-<div class="version">v1.0 · painel</div>
+<!-- CONFIG MODAL -->
+<div class="cfg-ov" id="cfg-ov">
+  <div class="cfg-panel">
+    <div class="cfg-hd">
+      <div class="cfg-hd-title" id="cfg-modal-title">⚙ Configurações</div>
+      <button class="x-btn" onclick="closeCfg()">✕</button>
+    </div>
+    <div class="cfg-body">
+      <div class="cfg-sec">Sprint</div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Número da sprint</label><input class="cfg-input" id="cfg-sprint-num" type="number" min="1"></div>
+        <div class="cfg-field"><label class="cfg-label">Duração (dias)</label><input class="cfg-input" id="cfg-sprint-days" type="number" min="1" max="60" oninput="calcCfgEnd()"></div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Início</label><input class="cfg-input" id="cfg-sprint-start" type="date" oninput="calcCfgEnd()"></div>
+        <div class="cfg-field"><label class="cfg-label">Fim (calculado)</label><input class="cfg-input" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
+      </div>
+      <div class="cfg-field"><label class="cfg-label">Objetivo da sprint</label><textarea class="cfg-input" id="cfg-goal" rows="2" style="resize:vertical;min-height:50px;line-height:1.5;"></textarea></div>
+
+      <div class="cfg-sec">WIP & Capacidade</div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Limite de WIP</label><input class="cfg-input" id="cfg-wip" type="number" min="1"></div>
+        <div class="cfg-field"><label class="cfg-label">Capacidade (%)</label><input class="cfg-input" id="cfg-capacity" type="number" min="0" max="100"></div>
+      </div>
+
+      <div class="cfg-sec">Modo de impedimentos</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
+          <input type="radio" name="cfg-blocker" id="cfg-bmode-col" value="col" style="accent-color:var(--accent);"> 🗂 Coluna separada
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
+          <input type="radio" name="cfg-blocker" id="cfg-bmode-tag" value="tag" style="accent-color:var(--danger);"> 🚧 Tag no card
+        </label>
+      </div>
+    </div>
+    <div class="cfg-ft">
+      <button class="x-btn" onclick="closeCfg()" style="font-size:12px;color:var(--txt2);padding:7px 14px;border:1px solid var(--glass-b);border-radius:10px;">Cancelar</button>
+      <button class="save-btn" onclick="saveCfg()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="version">v1.1 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -225,7 +318,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 
-window._db=db; window._ref=ref; window._onValue=onValue;
+window._db=db; window._ref=ref; window._onValue=onValue; window._set=set;
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
@@ -235,6 +328,91 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 
 <script>
 // ── SQUADS CONFIGURADOS ────────────────────────────────────────────
+
+// ── FILTRO DE SQUAD ────────────────────────────────────────────────
+let activeFilter = 'all';
+
+function setFilter(id){
+  activeFilter = id;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('fb-'+id)?.classList.add('active');
+  renderAll();
+}
+
+function squadVisible(sqId){
+  return activeFilter === 'all' || activeFilter === sqId;
+}
+
+// ── CONFIG DO SQUAD ────────────────────────────────────────────────
+let cfgSquadId = null;
+
+function openCfg(squadId){
+  cfgSquadId = squadId;
+  const sq = SQUADS.find(s=>s.id===squadId);
+  const d = squadData[squadId];
+  const cfg = d?.agilCfg||{};
+
+  document.getElementById('cfg-modal-title').textContent = '⚙ Configurar — ' + sq.icon + ' ' + sq.label;
+  document.getElementById('cfg-sprint-num').value = cfg.sprintNum||'';
+  document.getElementById('cfg-sprint-days').value = cfg.sprintDays||'14';
+  document.getElementById('cfg-sprint-start').value = cfg.sprintStart||'';
+  document.getElementById('cfg-sprint-end').value = cfg.sprintEnd||'';
+  document.getElementById('cfg-goal').value = cfg.goal||'';
+  document.getElementById('cfg-wip').value = cfg.wip||'3';
+  document.getElementById('cfg-capacity').value = cfg.capacity||'80';
+  const bmode = cfg.blockerMode||'col';
+  document.getElementById('cfg-bmode-'+bmode).checked = true;
+
+  document.getElementById('cfg-ov').classList.add('open');
+}
+
+function closeCfg(){
+  document.getElementById('cfg-ov').classList.remove('open');
+  cfgSquadId = null;
+}
+
+function calcCfgEnd(){
+  const start = document.getElementById('cfg-sprint-start').value;
+  const days = parseInt(document.getElementById('cfg-sprint-days').value||'14');
+  if(!start) return;
+  const end = new Date(start+'T00:00:00'); end.setDate(end.getDate()+days-1);
+  document.getElementById('cfg-sprint-end').value = end.toISOString().split('T')[0];
+}
+
+function saveCfg(){
+  if(!cfgSquadId) return;
+  calcCfgEnd();
+  const cfg = {
+    sprintNum: document.getElementById('cfg-sprint-num').value,
+    sprintDays: document.getElementById('cfg-sprint-days').value,
+    sprintStart: document.getElementById('cfg-sprint-start').value,
+    sprintEnd: document.getElementById('cfg-sprint-end').value,
+    goal: document.getElementById('cfg-goal').value,
+    wip: document.getElementById('cfg-wip').value,
+    capacity: document.getElementById('cfg-capacity').value,
+    blockerMode: document.querySelector('input[name="cfg-blocker"]:checked')?.value||'col',
+  };
+
+  // Salva no Firebase
+  const ref = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados/agil_cfg');
+  window._set(ref, cfg).then(()=>{
+    showToast('✅ Configurações do '+(SQUADS.find(s=>s.id===cfgSquadId)?.label||cfgSquadId)+' salvas!');
+    closeCfg();
+  }).catch(e=>showToast('❌ Erro: '+e.message));
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// Fecha modal clicando fora
+document.addEventListener('click', e=>{
+  if(e.target.id==='cfg-ov') closeCfg();
+});
+// ── FIM CONFIG ─────────────────────────────────────────────────────
+
 const SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
@@ -317,6 +495,7 @@ function renderSquadCards(){
   container.innerHTML='';
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
+    if(!squadVisible(sq.id)) return;
     const cards=d.cards.filter(c=>!c.archived);
     const wip=cards.filter(c=>c.col==='progress').length;
     const done=cards.filter(c=>c.col==='done').length;
@@ -336,7 +515,10 @@ function renderSquadCards(){
           <div class="squad-name">${sq.icon} ${sq.label}</div>
           <div class="squad-sprint">${sprint} · Capacidade ${d.agilCfg?.capacity||'—'}%</div>
         </div>
-        <a href="kanban-" + sq.id + ".html" class="squad-link">Abrir Board ↗</a>
+        <div style="display:flex;gap:7px;align-items:center;">
+          <button onclick="openCfg('"+sq.id+"')" style="padding:4px 10px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;" title="Configurar squad">⚙ Config</button>
+          <a href="kanban-"+sq.id+".html" class="squad-link">Abrir Board ↗</a>
+        </div>
       </div>
       ${goal?`<div style="font-size:11px;color:var(--txt2);background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.2);border-radius:6px;padding:6px 10px;margin-bottom:10px;">🎯 ${goal}</div>`:''}
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
@@ -366,6 +548,7 @@ function renderConsolidated(){
   let total=0,wip=0,bl=0,done=0;
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
+    if(!squadVisible(sq.id)) return;
     const cards=d.cards.filter(c=>!c.archived);
     total+=cards.length;
     wip+=cards.filter(c=>c.col==='progress').length;
@@ -381,6 +564,9 @@ function renderConsolidated(){
 // ── COMPARAÇÃO ─────────────────────────────────────────────────────
 function renderComparison(){
   const tbody=document.getElementById('cmp-body');
+  // Esconde comparação se estiver filtrando um squad específico
+  const cmpSection = document.getElementById('cmp-section');
+  if(cmpSection) cmpSection.style.display = activeFilter==='all' ? '' : 'none';
   const metrics=[
     {label:'Cards ativos', fn:d=>d.cards.filter(c=>!c.archived).length, higher:'winner'},
     {label:'Em Progresso (WIP)', fn:d=>d.cards.filter(c=>c.col==='progress'&&!c.archived).length, lower:'winner'},
@@ -420,6 +606,7 @@ function renderBlockers(){
   let blockers=[];
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
+    if(!squadVisible(sq.id)) return;
     const bl=d.cards.filter(c=>(c.col==='blocker'||(c.blocker&&c.blockerReason))&&!c.archived);
     bl.forEach(c=>blockers.push({...c, _squad:sq}));
   });
@@ -442,6 +629,7 @@ function renderBlockers(){
 function renderTrend(){
   SQUADS.forEach(sq=>{
     const el=document.getElementById('trend-'+sq.id); if(!el) return;
+    const card=el.closest('.card'); if(card) card.style.display=squadVisible(sq.id)?'':'none';
     const snaps=snapshots[sq.id]||{};
     const keys=Object.keys(snaps).sort().slice(-7); // últimos 7 dias
     if(!keys.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Aguardando dados históricos (o board salva automaticamente 1x/dia).</div>'; return; }
@@ -466,6 +654,7 @@ function renderColDist(){
   container.innerHTML='';
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
+    if(!squadVisible(sq.id)) return;
     const cards=d.cards.filter(c=>!c.archived);
     const total=cards.length||1;
     const card=document.createElement('div');
