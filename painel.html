@@ -130,8 +130,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
-      <a href="kanban-hering-v2.html?squad=dados" class="btn">📊 Dados</a>
-      <a href="kanban-hering-v2.html?squad=midia" class="btn">📱 Mídia</a>
+      <a href="kanban-dados.html" class="btn" style="color:#38b6ff;border-color:rgba(56,182,255,.3);">📊 Dados</a>
+      <a href="kanban-midia.html" class="btn" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📱 Mídia</a>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
         <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
         <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
@@ -336,7 +336,7 @@ function renderSquadCards(){
           <div class="squad-name">${sq.icon} ${sq.label}</div>
           <div class="squad-sprint">${sprint} · Capacidade ${d.agilCfg?.capacity||'—'}%</div>
         </div>
-        <a href="kanban-hering-v2.html?squad=${sq.id}" class="squad-link">Abrir Board ↗</a>
+        <a href="kanban-${sq.id}.html" class="squad-link">Abrir Board ↗</a>
       </div>
       ${goal?`<div style="font-size:11px;color:var(--txt2);background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.2);border-radius:6px;padding:6px 10px;margin-bottom:10px;">🎯 ${goal}</div>`:''}
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
