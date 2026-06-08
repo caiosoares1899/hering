@@ -336,7 +336,7 @@ function renderSquadCards(){
           <div class="squad-name">${sq.icon} ${sq.label}</div>
           <div class="squad-sprint">${sprint} · Capacidade ${d.agilCfg?.capacity||'—'}%</div>
         </div>
-        <a href="kanban-${sq.id}.html" class="squad-link">Abrir Board ↗</a>
+        <a href="kanban-" + sq.id + ".html" class="squad-link">Abrir Board ↗</a>
       </div>
       ${goal?`<div style="font-size:11px;color:var(--txt2);background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.2);border-radius:6px;padding:6px 10px;margin-bottom:10px;">🎯 ${goal}</div>`:''}
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
