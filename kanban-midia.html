@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐟 Maré Digital · Painel Multi-Squad</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --deep:#030d1a;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
+  --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
+  --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
+}
+html,body{min-height:100vh;overflow-x:hidden;}
+body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
+.ocean{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
+.app{position:relative;z-index:2;padding:1rem 1.4rem 2rem;}
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;}
+.hd-title{font-family:"Syne",sans-serif;font-size:20px;font-weight:800;}
+.hd-sub{font-size:11px;color:var(--txt3);}
+.badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;font-size:12px;
+  font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);
+  background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
+.btn:hover{border-color:var(--accent);}
+.btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+/* Grid */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr;}.grid-4{grid-template-columns:1fr 1fr;}.grid-3{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.grid-4,.grid-3{grid-template-columns:1fr;}}
+/* Cards */
+.card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:16px;backdrop-filter:blur(12px);}
+.card-title{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+/* Squad card */
+.squad-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.squad-name{font-family:"Syne",sans-serif;font-size:16px;font-weight:800;}
+.squad-sprint{font-size:11px;color:var(--txt2);}
+.squad-link{font-size:11px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid rgba(56,182,255,.3);border-radius:999px;}
+.squad-link:hover{background:rgba(56,182,255,.1);}
+/* Metric */
+.met{padding:10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);}
+.met-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px;}
+.met-val{font-size:22px;font-weight:700;font-family:"Syne",sans-serif;}
+.met-sub{font-size:9px;color:var(--txt3);}
+.met-ok{color:var(--teal);}
+.met-warn{color:var(--warn);}
+.met-bad{color:var(--danger);}
+/* Col bar */
+.col-bar{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.col-row{display:flex;align-items:center;gap:8px;font-size:11px;}
+.col-row-name{width:90px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.col-track{flex:1;height:6px;background:rgba(56,182,255,.1);border-radius:999px;overflow:hidden;}
+.col-fill{height:100%;border-radius:999px;transition:width .6s ease;}
+.col-count{width:24px;text-align:right;color:var(--txt3);font-size:10px;}
+/* Blocker list */
+.blocker-item{padding:7px 10px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);margin-bottom:5px;font-size:11px;}
+.blocker-title{font-weight:600;color:var(--danger);}
+.blocker-meta{font-size:10px;color:var(--txt3);margin-top:2px;}
+/* Throughput trend */
+.trend-row{display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(56,182,255,.07);}
+.trend-row:last-child{border:none;}
+.trend-date{width:75px;color:var(--txt3);}
+.trend-bar-wrap{flex:1;}
+.trend-bar{height:8px;background:rgba(29,233,182,.6);border-radius:999px;}
+.trend-val{width:28px;text-align:right;color:var(--teal);font-weight:600;}
+/* Status dot */
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.status-ok{background:var(--teal);}
+.status-warn{background:var(--warn);}
+.status-bad{background:var(--danger);}
+/* Section title */
+.sec-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--txt);
+  border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;}
+.sec-title .badge{font-size:9px;}
+/* Loading */
+.loading{display:flex;align-items:center;gap:8px;color:var(--txt3);font-size:12px;padding:16px 0;}
+.dots span{animation:blink 1.2s infinite;}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+/* Login */
+.login-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.97);
+  backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;}
+/* Version */
+.version{position:fixed;bottom:6px;right:12px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
+/* Refresh */
+.refresh-bar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt3);margin-bottom:1rem;}
+.last-update{font-size:10px;}
+/* Comparison table */
+.cmp-table{width:100%;border-collapse:collapse;font-size:11px;}
+.cmp-table th{padding:6px 10px;text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--glass-b);}
+.cmp-table td{padding:7px 10px;border-bottom:1px solid rgba(56,182,255,.06);}
+.cmp-table tr:last-child td{border:none;}
+.cmp-table .winner{color:var(--teal);font-weight:700;}
+</style>
+</head>
+<body>
+<div class="ocean"></div>
+
+<!-- LOGIN -->
+<div class="login-ov" id="login-ov">
+  <div style="text-align:center;margin-bottom:8px;">
+    <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;">🐟 Maré Digital</div>
+    <div style="font-size:13px;color:var(--txt2);">Painel de Controle · Multi-Squad</div>
+  </div>
+  <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:320px;width:100%;backdrop-filter:blur(12px);">
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google da Hering para acessar o painel.</div>
+    <button onclick="doSignIn()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Entrar com Google
+    </button>
+    <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
+  </div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito ao time Digital Hering</div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app-root" style="display:none;">
+  <div class="hd">
+    <div>
+      <div class="hd-title">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span></div>
+      <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
+      <a href="kanban-dados.html" class="btn" style="color:#38b6ff;border-color:rgba(56,182,255,.3);">📊 Dados</a>
+      <a href="kanban-midia.html" class="btn" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📱 Mídia</a>
+      <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
+        <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
+        <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
+        <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;" title="Sair">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="refresh-bar">
+    <span class="status-dot status-ok" id="conn-dot"></span>
+    <span>Firebase conectado</span>
+    <span class="last-update" id="last-update"></span>
+  </div>
+
+  <!-- VISÃO COMPARATIVA DOS SQUADS -->
+  <div class="sec-title">🏃 Squads em tempo real</div>
+  <div class="grid-2" id="squad-cards" style="margin-bottom:20px;">
+    <div class="loading"><span class="dots"><span>●</span><span>●</span><span>●</span></span> Carregando Squad Dados...</div>
+    <div class="loading"><span class="dots"><span>●</span><span>●</span><span>●</span></span> Carregando Squad Mídia...</div>
+  </div>
+
+  <!-- MÉTRICAS CONSOLIDADAS -->
+  <div class="sec-title">📊 Consolidado</div>
+  <div class="grid-4" id="consolidated-metrics" style="margin-bottom:20px;">
+    <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos (sem arquivados)</div></div>
+    <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
+    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos ativos</div></div>
+    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput combinado</div></div>
+  </div>
+
+  <!-- TABELA COMPARATIVA -->
+  <div class="sec-title">⚖️ Comparação</div>
+  <div class="card" style="margin-bottom:20px;">
+    <table class="cmp-table" id="cmp-table">
+      <thead><tr>
+        <th>Métrica</th>
+        <th>📊 Squad Dados</th>
+        <th>📱 Squad Mídia</th>
+      </tr></thead>
+      <tbody id="cmp-body">
+        <tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BLOQUEIOS ATIVOS -->
+  <div class="sec-title">🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></div>
+  <div id="blockers-list" style="margin-bottom:20px;">
+    <div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio ativo.</div>
+  </div>
+
+  <!-- TENDÊNCIA (SNAPSHOTS) -->
+  <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
+  <div class="grid-2" id="trend-cards" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title">📊 Squad Dados — Throughput</div>
+      <div id="trend-dados" class="col-bar"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📱 Squad Mídia — Throughput</div>
+      <div id="trend-midia" class="col-bar"></div>
+    </div>
+  </div>
+
+  <!-- CARDS POR COLUNA (POR SQUAD) -->
+  <div class="sec-title">📋 Distribuição por coluna</div>
+  <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
+
+</div>
+
+<div class="version">v1.0 · painel</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURL')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectId')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucket')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderId')|| '122502391131',
+  appId:             localStorage.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+
+window._db=db; window._ref=ref; window._onValue=onValue;
+window._signIn=()=>signInWithPopup(auth,provider);
+window._signOut=()=>signOut(auth);
+window._fbReady=true;
+window.dispatchEvent(new Event('fb-ready'));
+onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
+</script>
+
+<script>
+// ── SQUADS CONFIGURADOS ────────────────────────────────────────────
+const SQUADS = [
+  {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
+  {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
+];
+const DEFAULT_COLUMNS = ['backlog','todo','progress','blocker','done'];
+const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
+const COL_COLORS = {backlog:'#888',todo:'#38b6ff',progress:'#1de9b6',blocker:'#ff6b6b',done:'#639922'};
+
+// Estado carregado
+let squadData = {}; // {dados:{cards,columns,agilCfg}, midia:{...}}
+let snapshots = {};  // {dados:{date:snap,...}, midia:{...}}
+
+function doSignIn(){
+  const err=document.getElementById('login-err'); err.style.display='none';
+  window._signIn().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; });
+}
+function doSignOut(){ window._signOut(); }
+
+window.addEventListener('auth-change',e=>{
+  const user=e.detail;
+  if(user){
+    if(user.email && !user.email.endsWith('@ciahering.com.br')){
+      document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br';
+      document.getElementById('login-err').style.display='block';
+      window._signOut(); return;
+    }
+    document.getElementById('login-ov').style.display='none';
+    document.getElementById('app-root').style.display='block';
+    document.getElementById('user-name').textContent=user.displayName||user.email;
+    const av=document.getElementById('user-avatar');
+    if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
+  } else {
+    document.getElementById('login-ov').style.display='flex';
+    document.getElementById('app-root').style.display='none';
+  }
+});
+
+window.addEventListener('fb-ready',()=>{
+  loadAll();
+});
+
+function loadAll(){
+  SQUADS.forEach(sq=>{
+    // Ouve dados do squad
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados'),snap=>{
+      const val=snap.val()||{};
+      squadData[sq.id]={
+        cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)):[],
+        columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+        agilCfg:val.agil_cfg||{},
+      };
+      renderAll();
+    });
+    // Ouve snapshots (tendência)
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/snapshots'),snap=>{
+      const val=snap.val()||{};
+      snapshots[sq.id]=val;
+      renderTrend();
+    });
+  });
+}
+
+function renderAll(){
+  updateTimestamp();
+  renderSquadCards();
+  renderConsolidated();
+  renderComparison();
+  renderBlockers();
+  renderColDist();
+}
+
+function updateTimestamp(){
+  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('last-update').textContent='Atualizado às '+now;
+}
+
+// ── SQUAD CARDS ────────────────────────────────────────────────────
+function renderSquadCards(){
+  const container=document.getElementById('squad-cards');
+  container.innerHTML='';
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d) return;
+    const cards=d.cards.filter(c=>!c.archived);
+    const wip=cards.filter(c=>c.col==='progress').length;
+    const done=cards.filter(c=>c.col==='done').length;
+    const bl=cards.filter(c=>c.col==='blocker').length;
+    const total=cards.length;
+    const wipLimit=parseInt(d.agilCfg?.wip||sq.wipLimit||3);
+    const wipColor=wip>wipLimit?'var(--danger)':wip===wipLimit?'var(--warn)':'var(--teal)';
+    const spDone=cards.filter(c=>c.col==='done').reduce((s,c)=>s+parseInt(c.sp||0),0);
+    const sprint=d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'Sprint —';
+    const goal=d.agilCfg?.goal||'';
+
+    const card=document.createElement('div');
+    card.className='card';
+    card.innerHTML=`
+      <div class="squad-header">
+        <div>
+          <div class="squad-name">${sq.icon} ${sq.label}</div>
+          <div class="squad-sprint">${sprint} · Capacidade ${d.agilCfg?.capacity||'—'}%</div>
+        </div>
+        <a href="kanban-${sq.id}.html" class="squad-link">Abrir Board ↗</a>
+      </div>
+      ${goal?`<div style="font-size:11px;color:var(--txt2);background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.2);border-radius:6px;padding:6px 10px;margin-bottom:10px;">🎯 ${goal}</div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+        <div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor};font-size:20px;">${wip}</div><div class="met-sub">lim. ${wipLimit}</div></div>
+        <div class="met"><div class="met-lbl">Total</div><div class="met-val" style="font-size:20px;">${total}</div><div class="met-sub">ativos</div></div>
+        <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" style="font-size:20px;">${done}</div><div class="met-sub">${spDone} pts</div></div>
+        <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="font-size:20px;color:${bl?'var(--danger)':'var(--txt)'};">${bl}</div><div class="met-sub">${bl?'⚠ atenção':'ok'}</div></div>
+      </div>
+      <div class="col-bar">
+        ${(d.columns||[]).map(col=>{
+          const n=cards.filter(c=>c.col===col.id).length;
+          const pct=total>0?Math.round(n/total*100):0;
+          return `<div class="col-row">
+            <span class="col-row-name" title="${col.name}">${col.name}</span>
+            <div class="col-track"><div class="col-fill" style="width:${pct}%;background:${col.color||'#38b6ff'};"></div></div>
+            <span class="col-count">${n}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ── CONSOLIDADO ────────────────────────────────────────────────────
+function renderConsolidated(){
+  let total=0,wip=0,bl=0,done=0;
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d) return;
+    const cards=d.cards.filter(c=>!c.archived);
+    total+=cards.length;
+    wip+=cards.filter(c=>c.col==='progress').length;
+    bl+=cards.filter(c=>c.col==='blocker').length;
+    done+=cards.filter(c=>c.col==='done').length;
+  });
+  document.getElementById('m-total').textContent=total||'—';
+  document.getElementById('m-wip').textContent=wip||'—';
+  document.getElementById('m-blockers').textContent=bl||'0';
+  document.getElementById('m-done').textContent=done||'—';
+}
+
+// ── COMPARAÇÃO ─────────────────────────────────────────────────────
+function renderComparison(){
+  const tbody=document.getElementById('cmp-body');
+  const metrics=[
+    {label:'Cards ativos', fn:d=>d.cards.filter(c=>!c.archived).length, higher:'winner'},
+    {label:'Em Progresso (WIP)', fn:d=>d.cards.filter(c=>c.col==='progress'&&!c.archived).length, lower:'winner'},
+    {label:'Concluídos', fn:d=>d.cards.filter(c=>c.col==='done'&&!c.archived).length, higher:'winner'},
+    {label:'Bloqueios ativos', fn:d=>d.cards.filter(c=>c.col==='blocker'&&!c.archived).length, lower:'winner'},
+    {label:'Story Points concluídos', fn:d=>d.cards.filter(c=>c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0), higher:'winner'},
+    {label:'Cards com prazo', fn:d=>d.cards.filter(c=>c.due&&!c.archived).length, higher:'neutral'},
+    {label:'Cards atrasados', fn:d=>{const today=new Date();today.setHours(0,0,0,0);return d.cards.filter(c=>c.due&&!c.archived&&c.col!=='done'&&new Date(c.due+'T00:00:00')<today).length;}, lower:'winner'},
+    {label:'Sprint atual', fn:d=>d.agilCfg?.sprintNum||'—', compare:false},
+  ];
+  const dataArr=SQUADS.map(sq=>squadData[sq.id]);
+  if(dataArr.some(d=>!d)){ tbody.innerHTML='<tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>'; return; }
+
+  tbody.innerHTML=metrics.map(m=>{
+    const vals=dataArr.map(d=>m.fn(d));
+    const [v0,v1]=vals;
+    let c0='',c1='';
+    if(m.compare!==false && typeof v0==='number' && typeof v1==='number'){
+      if(m.higher==='winner'){
+        if(v0>v1) c0='winner'; else if(v1>v0) c1='winner';
+      } else if(m.lower==='winner'){
+        if(v0<v1) c0='winner'; else if(v1<v0) c1='winner';
+      }
+    }
+    return `<tr>
+      <td style="color:var(--txt2);">${m.label}</td>
+      <td class="${c0}">${v0}</td>
+      <td class="${c1}">${v1}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── BLOQUEIOS ──────────────────────────────────────────────────────
+function renderBlockers(){
+  const list=document.getElementById('blockers-list');
+  const count=document.getElementById('blockers-count');
+  let blockers=[];
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d) return;
+    const bl=d.cards.filter(c=>(c.col==='blocker'||(c.blocker&&c.blockerReason))&&!c.archived);
+    bl.forEach(c=>blockers.push({...c, _squad:sq}));
+  });
+  count.textContent=blockers.length;
+  if(!blockers.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">✅ Nenhum bloqueio ativo em nenhum squad.</div>'; return; }
+  list.innerHTML=blockers.map(c=>`
+    <div class="blocker-item">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.3);padding:1px 7px;border-radius:999px;">${c._squad.icon} ${c._squad.label}</span>
+        <span class="blocker-title">${c.title}</span>
+        ${c.owner?`<span style="font-size:9px;color:var(--txt3);">👤 ${c.owner}</span>`:''}
+      </div>
+      ${c.blockerReason?`<div class="blocker-meta">🚧 ${c.blockerReason}</div>`:''}
+      ${c.due?`<div class="blocker-meta">📅 Prazo: ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</div>`:''}
+    </div>
+  `).join('');
+}
+
+// ── TENDÊNCIA (SNAPSHOTS) ──────────────────────────────────────────
+function renderTrend(){
+  SQUADS.forEach(sq=>{
+    const el=document.getElementById('trend-'+sq.id); if(!el) return;
+    const snaps=snapshots[sq.id]||{};
+    const keys=Object.keys(snaps).sort().slice(-7); // últimos 7 dias
+    if(!keys.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Aguardando dados históricos (o board salva automaticamente 1x/dia).</div>'; return; }
+    const maxDone=Math.max(...keys.map(k=>snaps[k].done||0),1);
+    el.innerHTML=keys.map(date=>{
+      const s=snaps[date];
+      const done=s.done||0;
+      const pct=Math.round(done/maxDone*100);
+      const d=new Date(date+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+      return `<div class="trend-row">
+        <span class="trend-date">${d}</span>
+        <div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%"></div></div>
+        <span class="trend-val">${done}</span>
+      </div>`;
+    }).join('');
+  });
+}
+
+// ── DISTRIBUIÇÃO POR COLUNA ────────────────────────────────────────
+function renderColDist(){
+  const container=document.getElementById('col-dist');
+  container.innerHTML='';
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d) return;
+    const cards=d.cards.filter(c=>!c.archived);
+    const total=cards.length||1;
+    const card=document.createElement('div');
+    card.className='card';
+    card.innerHTML=`
+      <div class="card-title">${sq.icon} ${sq.label}</div>
+      <div class="col-bar">
+        ${(d.columns||[]).map(col=>{
+          const n=cards.filter(c=>c.col===col.id).length;
+          const pct=Math.round(n/total*100);
+          return `<div class="col-row">
+            <span class="col-row-name" title="${col.name}">${col.name}</span>
+            <div class="col-track"><div class="col-fill" style="width:${pct}%;background:${col.color||'#38b6ff'};"></div></div>
+            <span class="col-count">${n}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+</script>
+</body>
+</html>
