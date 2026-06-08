@@ -1047,7 +1047,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.4</div>
+<div class="version">v7.5</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2365,130 +2365,215 @@ function parseTrelloJSON(raw){
   const data=JSON.parse(raw);
   const today=new Date().toISOString().split('T')[0];
 
-  // ── 1. Mapeia listas do Trello → colunas do board ──────────────
-  // Primeiro tenta match semântico; listas sem match vão para uma
-  // coluna "pendente" criada dinamicamente se necessário.
-  const SEMANTIC=[
-    {keys:['backlog'],col:'backlog'},
-    {keys:['fazer','to do','todo','a fazer','next'],col:'todo'},
-    {keys:['progresso','progress','doing','em andamento','wip'],col:'progress'},
-    {keys:['bloq','imped','block','stuck','parado'],col:'blocker'},
-    {keys:['conclu','done','feito','finish','pronto','entregue'],col:'done'},
-  ];
-  const unmappedLists=[]; // listas que não tiveram match semântico
-  const listMap={};
-  (data.lists||[]).filter(l=>!l.closed).forEach(l=>{
-    const name=l.name.toLowerCase().trim();
-    const match=SEMANTIC.find(s=>s.keys.some(k=>name.includes(k)));
-    if(match){
-      listMap[l.id]={col:match.col, listName:l.name, mapped:true};
-    } else {
-      // Tenta match direto com colunas existentes do board
-      const boardCol=columns.find(col=>col.name.toLowerCase().includes(name)||name.includes(col.name.toLowerCase()));
-      if(boardCol){
-        listMap[l.id]={col:boardCol.id, listName:l.name, mapped:true};
-      } else {
-        // Sem match — vai para backlog mas registra como não mapeado
-        listMap[l.id]={col:columns[0]?.id||'backlog', listName:l.name, mapped:false};
-        unmappedLists.push(l.name);
-      }
-    }
-  });
-
-  // ── 2. Mapeia labels do Trello → tags do board ─────────────────
-  // Tenta match por nome; se não achar, usa a primeira tag disponível
-  // e registra as tags novas para criar depois
-  const newTagsToCreate=[];
-  const labelToTag={};
-  (data.labels||[]).filter(lb=>lb.name).forEach(lb=>{
-    const lname=lb.name.toLowerCase().trim();
-    // Busca tag existente no board
-    const existing=tags.find(t=>t.label.toLowerCase().includes(lname)||lname.includes(t.label.toLowerCase()));
-    if(existing){
-      labelToTag[lb.id]=existing.id;
-    } else {
-      // Cria tag nova dinamicamente
-      const newId='tag_trello_'+lb.id.substring(0,6);
-      // Mapeia cor do Trello para nossa paleta
-      const colorMap={red:3,orange:2,yellow:2,green:1,blue:4,purple:5,pink:5,sky:0,lime:1,black:3};
-      const pi=colorMap[lb.color]||0;
-      newTagsToCreate.push({id:newId,label:lb.name,pi});
-      labelToTag[lb.id]=newId;
-    }
-  });
-
-  // ── 3. Mapeia checklists ───────────────────────────────────────
-  const checkMap={};
+  // ── MAPAS BASE ──────────────────────────────────────────────────
+  const listMap  = Object.fromEntries((data.lists||[]).map(l=>[l.id,l]));
+  const memberMap= Object.fromEntries((data.members||[]).map(m=>[m.id,m]));
+  const labelMap = Object.fromEntries((data.labels||[]).map(lb=>[lb.id,lb]));
+  const clMap    = {};
   (data.checklists||[]).forEach(cl=>{
-    if(!checkMap[cl.idCard]) checkMap[cl.idCard]=[];
+    if(!clMap[cl.idCard]) clMap[cl.idCard]=[];
     (cl.checkItems||[]).forEach(item=>{
-      checkMap[cl.idCard].push({t:item.name,done:item.state==='complete'});
+      clMap[cl.idCard].push({t:item.name, done:item.state==='complete'});
     });
   });
 
-  // ── 4. Mapeia membros do Trello → membros do board ────────────
-  const memberTrelloMap={};
-  (data.members||[]).forEach(m=>{
-    // Tenta encontrar membro correspondente no board pelo nome
-    const tname=(m.fullName||m.username||'').toLowerCase();
-    const boardMember=members.find(bm=>bm.name.toLowerCase().includes(tname.split(' ')[0])||tname.includes(bm.name.toLowerCase().split(' ')[0]));
-    memberTrelloMap[m.id]=boardMember?.init||'';
+  // ── 1. MAPEAMENTO DE LISTAS → COLUNAS ──────────────────────────
+  // Prioridade: match exato por palavras-chave semânticas
+  // Sem match = backlog (nunca coluna blocker!)
+  const LISTA_SEMANTICA=[
+    {keys:['backlog da semana','esta semana','sprint','a fazer','to do','todo','next'],   col:'todo'},
+    {keys:['backlog'],                                                                    col:'backlog'},
+    {keys:['em andamento','em progresso','in progress','doing','wip'],                   col:'progress'},
+    {keys:['bloqueado','bloqueada','impedido','travado','stuck','blocked'],               col:'blocker'},
+    {keys:['feito','done','conclu','finish','pronto','entregue','finalizado'],            col:'done'},
+  ];
+  const listColMap={};
+  const unmappedLists=[];
+  (data.lists||[]).forEach(l=>{
+    const n=l.name.toLowerCase().trim();
+    const hit=LISTA_SEMANTICA.find(s=>s.keys.some(k=>n.includes(k)));
+    if(hit){
+      listColMap[l.id]={col:hit.col, mapped:true};
+    } else {
+      // listas "Rotinas e perenes - X" → backlog (são recorrentes)
+      const colBoard=columns.find(col=>col.name.toLowerCase().includes(n)||n.includes(col.name.toLowerCase()));
+      listColMap[l.id]={col:colBoard?.id||columns[0]?.id||'backlog', mapped:!!colBoard};
+      if(!colBoard) unmappedLists.push(l.name);
+    }
   });
 
-  // ── 5. Converte cards ──────────────────────────────────────────
-  const imported=(data.cards||[]).filter(card=>!card.closed).map(card=>{
-    const colInfo=listMap[card.idList]||{col:columns[0]?.id||'backlog',mapped:false};
-    // Tag: primeiro label que tiver nome, senão primeira tag do board
-    const firstLabel=card.labels?.find(lb=>lb.name);
-    const tagId=firstLabel?labelToTag[firstLabel.id]:null;
-    const finalTag=tagId||tags[0]?.id||'data';
-    // Responsável: tenta mapear membros atribuídos
-    const ownerInit=card.idMembers?.length?memberTrelloMap[card.idMembers[0]]||'':'';
-    // Story points: tenta pegar de campos customizados
+  // ── 2. IDENTIFICAÇÃO DE LABELS ESPECIAIS ───────────────────────
+  // Labels que indicam ESTADO (não canal/tipo) → viram impedimento ou risco
+  const LABEL_BLOCKER_KEYS=['bloqueada','bloqueado','travada','travado','impedida','impedido','stuck','blocked'];
+  const LABEL_RISCO_KEYS=['risco','risk','atenção','atencao','alerta'];
+  const LABEL_REVISAO_KEYS=['revisão','revisao','review','aprovação','aprovacao'];
+
+  // Coleta labels especiais (não virão tags)
+  const blockerLabelIds = new Set((data.labels||[])
+    .filter(lb=>LABEL_BLOCKER_KEYS.some(k=>(lb.name||'').toLowerCase().includes(k)))
+    .map(lb=>lb.id));
+  const riscoLabelIds = new Set((data.labels||[])
+    .filter(lb=>LABEL_RISCO_KEYS.some(k=>(lb.name||'').toLowerCase().includes(k)))
+    .map(lb=>lb.id));
+
+  // ── 3. MAPEAMENTO DE LABELS → TAGS ─────────────────────────────
+  // Cria/reutiliza tags para labels que são canais/tipos
+  // NUNCA usa índice de paleta baseado na cor do Trello (isso causava o bug do APP/vermelho)
+  const PALETTE_CYCLE=[0,1,2,3,4,5,0,1,2,3,4,5]; // cicla pela paleta
+  let paletteIdx=0;
+  const labelTagMap={}; // labelId → tagId
+  const newTagsToCreate=[];
+  const processedLabels=new Set();
+
+  (data.labels||[]).filter(lb=>lb.name).forEach(lb=>{
+    if(processedLabels.has(lb.id)) return;
+    processedLabels.add(lb.id);
+
+    // Labels especiais → NÃO viram tag
+    if(blockerLabelIds.has(lb.id)||riscoLabelIds.has(lb.id)) return;
+
+    // Tenta match com tag existente no board (case-insensitive)
+    const lname=lb.name.toLowerCase().trim();
+    const existing=tags.find(t=>
+      t.label.toLowerCase()===lname ||
+      t.label.toLowerCase().includes(lname) ||
+      lname.includes(t.label.toLowerCase())
+    );
+    if(existing){
+      labelTagMap[lb.id]=existing.id;
+    } else {
+      // Cria tag nova com cor da paleta (não da cor do Trello!)
+      const newId='tag_'+lb.name.toLowerCase().replace(/[^a-z0-9]/g,'_').substring(0,12)+'_'+lb.id.substring(0,4);
+      const pi=PALETTE_CYCLE[paletteIdx++ % PALETTE_CYCLE.length];
+      newTagsToCreate.push({id:newId, label:lb.name, pi});
+      labelTagMap[lb.id]=newId;
+    }
+  });
+
+  // ── 4. MAPEAMENTO DE MEMBROS → INICIAIS DO BOARD ───────────────
+  // Estratégia: nome completo → busca por qualquer parte do nome
+  // Nunca cria membro fantasma
+  function resolveOwner(trelloMemberId){
+    const tm=memberMap[trelloMemberId]; if(!tm) return '';
+    const tName=(tm.fullName||tm.username||'').toLowerCase();
+    const tFirst=tName.split(' ')[0];
+    const tLast=tName.split(' ').slice(-1)[0];
+    // Busca nos membros do board
+    const match=members.find(bm=>{
+      const bName=bm.name.toLowerCase();
+      return bName.includes(tFirst)||bName.includes(tLast)||
+             tName.includes(bm.name.toLowerCase().split(' ')[0]);
+    });
+    return match?.init||''; // retorna vazio se não encontrar (não cria fantasma)
+  }
+
+  // ── 5. CONVERTE CARDS ──────────────────────────────────────────
+  const warnings=[];
+  const imported=(data.cards||[]).filter(card=>{
+    // Inclui cards ativos + listas não fechadas
+    // Exclui cards arquivados E cards em listas fechadas que não sejam "feito"
+    if(card.closed) return false;
+    const lista=listMap[card.idList];
+    if(lista?.closed){
+      // Lista fechada mas semântica de "done" → inclui
+      const n=(lista.name||'').toLowerCase();
+      return LISTA_SEMANTICA.find(s=>s.col==='done'&&s.keys.some(k=>n.includes(k)));
+    }
+    return true;
+  }).map(card=>{
+    const colInfo=listColMap[card.idList]||{col:columns[0]?.id||'backlog',mapped:false};
+
+    // Tag: primeiro label que NÃO seja especial
+    const firstTagLabel=card.idLabels?.find(lid=>labelTagMap[lid]);
+    const tagId=firstTagLabel?labelTagMap[firstTagLabel]:null;
+
+    // Responsável: primeiro membro resolvido
+    const ownerInit=card.idMembers?.length?resolveOwner(card.idMembers[0]):'';
+    if(card.idMembers?.length&&!ownerInit){
+      const tm=memberMap[card.idMembers[0]];
+      warnings.push(`Membro "${tm?.fullName||'?'}" não encontrado no board — card "${card.name.substring(0,30)}"`);
+    }
+
+    // Participantes: membros adicionais resolvidos
+    const participants=(card.idMembers||[]).slice(1)
+      .map(mid=>resolveOwner(mid))
+      .filter(Boolean);
+
+    // Bloqueio: lista Bloqueado OU label especial de bloqueio
+    const hasBlocList=colInfo.col==='blocker';
+    const hasBlocLabel=card.idLabels?.some(lid=>blockerLabelIds.has(lid));
+    const blocker=hasBlocList||hasBlocLabel;
+    const blockerReason=hasBlocLabel&&!hasBlocList
+      ? 'Marcado como bloqueado/travado no Trello' : '';
+
+    // Riscos: labels de risco → viram itens de risco
+    const riscos=card.idLabels
+      ?.filter(lid=>riscoLabelIds.has(lid))
+      .map(lid=>`Risco importado do Trello: ${labelMap[lid]?.name||'?'}`)
+      ||[];
+
+    // Story points: custom fields
     let sp='';
     if(data.customFieldItems){
       const spField=data.customFieldItems.find(f=>f.idCard===card.id&&f.value?.number);
       if(spField) sp=String(spField.value.number);
     }
-    // Descrição: preserva markdown do Trello
-    const desc=(card.desc||'').substring(0,500); // limita a 500 chars
+
+    // Descrição limitada (Trello usa Markdown)
+    const desc=(card.desc||'').substring(0,600);
+
+    // Prazo
+    const due=card.due?card.due.split('T')[0]:'';
+
     return{
-      id:'trello_'+card.id.substring(0,8),
+      id:'trello_'+card.id.substring(0,10),
       col:colInfo.col,
-      tag:finalTag,
+      tag:tagId||'',
       title:card.name,
       desc,
       owner:ownerInit,
-      due:card.due?card.due.split('T')[0]:'',
+      participants,
+      due,
       po:'',
-      checklist:checkMap[card.id]||[],
-      riscos:[],
+      checklist:clMap[card.id]||[],
+      riscos,
       archived:false,
-      sp, priority:'',
+      sp,
+      priority:'',
+      blocker,
+      blockerReason,
       created:'Trello Import',
       edited:'Trello Import',
       createdAt:today,
       editedAt:today,
-      _trelloListName:colInfo.listName, // metadado para rastreio
+      _trelloList:listMap[card.idList]?.name||'?',
       _mapped:colInfo.mapped,
     };
   });
+
+  // Estatísticas
+  const stats={
+    byCol:imported.reduce((acc,card)=>{acc[card.col]=(acc[card.col]||0)+1;return acc;},{}),
+    withChecklists:imported.filter(c=>c.checklist.length>0).length,
+    withDue:imported.filter(c=>c.due).length,
+    withOwner:imported.filter(c=>c.owner).length,
+    noOwner:imported.filter(c=>!c.owner&&memberMap).length,
+    withParticipants:imported.filter(c=>c.participants?.length>0).length,
+    unmapped:imported.filter(c=>!c._mapped).length,
+    blockers:imported.filter(c=>c.blocker).length,
+    withRiscos:imported.filter(c=>c.riscos?.length>0).length,
+  };
 
   return{
     boardName:data.name,
     cards:imported,
     total:imported.length,
-    unmappedLists,       // listas que foram para backlog por falta de match
-    newTags:newTagsToCreate, // tags novas que serão criadas
-    stats:{
-      byCol:imported.reduce((acc,card)=>{acc[card.col]=(acc[card.col]||0)+1;return acc;},{}),
-      withChecklists:imported.filter(card=>card.checklist.length>0).length,
-      withDue:imported.filter(card=>card.due).length,
-      unmapped:imported.filter(card=>!card._mapped).length,
-    }
+    unmappedLists,
+    newTags:newTagsToCreate,
+    warnings,
+    stats,
   };
 }
-
 function previewTrelloImport(){
   const raw=document.getElementById('trello-json').value.trim();
   const preview=document.getElementById('trello-preview');
@@ -2499,9 +2584,13 @@ function previewTrelloImport(){
     const s=_trelloParsed.stats;
     const colNames={backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
     const colSummary=Object.entries(s.byCol).map(([col,n])=>`${colNames[col]||col}: ${n}`).join(' · ');
+    const extraStats=`${s.withOwner||0} com responsável · ${s.withParticipants||0} com participantes · ${s.withChecklists||0} com checklist · ${s.blockers||0} bloqueados`;
     let warnings='';
     if(_trelloParsed.unmappedLists.length>0){
       warnings+=`<div style="margin-top:6px;padding:5px 8px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);border-radius:6px;color:var(--warn);font-size:10px;">⚠ ${_trelloParsed.unmappedLists.length} lista(s) sem coluna correspondente foram para <strong>Backlog</strong>: ${esc(_trelloParsed.unmappedLists.join(', '))}</div>`;
+    }
+    if(_trelloParsed.warnings?.length>0){
+      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:6px;color:var(--danger);font-size:10px;">👤 ${_trelloParsed.warnings.length} membro(s) não encontrado(s) no board — esses cards ficaram sem responsável:<br>${esc(_trelloParsed.warnings.slice(0,5).join('<br>'))}</div>`;
     }
     if(_trelloParsed.newTags.length>0){
       warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:6px;color:var(--accent);font-size:10px;">✦ ${_trelloParsed.newTags.length} tag(s) nova(s) serão criadas: ${esc(_trelloParsed.newTags.map(t=>t.label).join(', '))}</div>`;
@@ -2513,7 +2602,7 @@ function previewTrelloImport(){
     preview.style.background='rgba(29,233,182,.08)';
     preview.style.border='1px solid rgba(29,233,182,.2)';
     preview.style.color='var(--teal)';
-    preview.innerHTML=`✅ <strong>${esc(_trelloParsed.boardName)}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span>${warnings}`;
+    preview.innerHTML=`✅ <strong>${esc(_trelloParsed.boardName)}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span><br><span style="font-size:10px;opacity:.7;">${extraStats}</span>${warnings}`;
     btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
   }catch(e){
     preview.style.display='block';
@@ -2542,7 +2631,7 @@ function confirmTrelloImport(){
     });
   }
   // Remove metadados internos antes de salvar
-  const cleanCards=_trelloParsed.cards.map(({_trelloListName,_mapped,...card})=>card);
+  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListName,_mapped,...card})=>card);
   cards.push(...cleanCards);
   fbSaveAll(); renderBoard();
   // Limpa e fecha
