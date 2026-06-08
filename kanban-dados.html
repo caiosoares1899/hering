@@ -242,6 +242,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 }
 .tag-blocker:hover{background:rgba(255,107,107,.25);}
 .card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;}
+.card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+.card-has-desc{font-size:11px;color:var(--txt3);margin-right:3px;letter-spacing:1px;vertical-align:middle;}
 
 
 /* Undo */
@@ -607,8 +609,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
       <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;" title="Sair">✕</button>
     </div>
-    <a href="painel.html" class="btn btn-sm" style="color:var(--teal);border-color:rgba(29,233,182,.3);" title="Centro de controle">🏠 Painel</a>
-    <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
+<button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
   </div>
 </div>
 
@@ -802,6 +803,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   <div class="cfg-body">
 
+    <!-- ZERAR BOARD -->
+    <div style="margin:0 0 10px;padding:10px 12px;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);">
+      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">⚠ Zona de perigo</div>
+      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="zerarBoard()">🗑 Excluir todos os cards</button>
+      <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Remove todos os cards ativos e arquivados permanentemente.</p>
+    </div>
     <!-- ABA ÁGIL -->
     <div class="tab-c on" id="cfgtab-agil">
       <div class="cfg-sec-title">Sprint</div>
@@ -1040,7 +1047,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.2</div>
+<div class="version">v7.4</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1303,7 +1310,9 @@ function confirmarInscricao(){
   const user=window._currentUser; if(!user) return;
   const init=document.getElementById('insc-init').value.trim().toUpperCase().substring(0,3);
   if(!init){ alert('Defina suas iniciais.'); return; }
-  fbUpdate('kanban/usuarios/'+user.uid,{init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()});
+  const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
+  sqUpd['squads/'+ACTIVE_SQUAD]=true;
+  fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||''});
   window._currentUserInit=init;
@@ -1317,7 +1326,9 @@ function confirmarInscricao(){
 // ═══════════════════════════════════════════════════════
 function getTag(id){ if(!id) return null; return tags.find(t=>t.id===id)||null; }
 function getPal(pi){ return PALETTE[pi]||PALETTE[0]; }
-function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return ''; const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
+function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return '';
+  if(t.isOKR||t.id==='okr') return `<span class="card-tag" style="background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);color:#ffd700;font-weight:800;">${esc(t.label)}</span>`;
+  const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
 
 function getDue(due, isDone){
   if(!due) return {cls:'',lbl:''};
@@ -1358,7 +1369,8 @@ function makeCardEl(card){
     else if(ageDays>=7) agingClass=' aged-1';
   }
   const hasBlockerTag=card.blocker&&blockerMode==='tag';
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'');
+  const t_=tags.find(t=>t.id===card.tag); const isOKR_=t_?.isOKR||t_?.id==='okr';
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -1794,6 +1806,16 @@ function insightsCard(){ const title=document.getElementById('m-title').value; c
 // ═══════════════════════════════════════════════════════
 // ARQUIVADOS
 // ═══════════════════════════════════════════════════════
+function zerarBoard(){
+  const sq=SQUAD_LABELS[ACTIVE_SQUAD]||ACTIVE_SQUAD;
+  if(!confirm('⚠ Isso vai excluir TODOS os cards de '+sq+' permanentemente. Tem certeza?')) return;
+  if(!confirm('Segunda confirmação: excluir todos os '+cards.length+' cards?')) return;
+  cards=[];
+  fbSet(FB+'/cards',[]);
+  renderBoard();
+  closeOv('cfg-ov');
+  showToast('🗑 Board zerado com sucesso');
+}
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
   const archived=cards.filter(c=>c.archived);
@@ -1922,8 +1944,12 @@ function saveAgilCfg(){
   calcSprintEnd();
   agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value};
   fbSet(FB+'/agil_cfg',agilCfg);
+  fbSet(FB+'/columns',columns);
+  fbSet(FB+'/tags',tags);
   applyAgilCfg();
+  renderBoard();
   closeOv('cfg-ov');
+  showToast('✅ Configurações salvas!');
 }
 function applyAgilCfg(){
   const squadLabel=SQUAD_LABELS[ACTIVE_SQUAD]||ACTIVE_SQUAD;
@@ -1962,7 +1988,12 @@ function renderUsuarios(){
     const val=snap.val();
     if(!val){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário ainda.</div>'; return; }
     list.innerHTML='';
-    Object.entries(val).forEach(([uid,u])=>{
+    const entries=Object.entries(val).filter(([uid,u])=>{
+      if(u.squads) return u.squads[ACTIVE_SQUAD]===true;
+      return u.inscrito===true||u.inscrito==='true';
+    });
+    if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito neste squad ainda.</div>'; return; }
+    entries.forEach(([uid,u])=>{
       const row=document.createElement('div'); row.className='user-row';
       const foto=safeUrl(u.foto)?`<img src="${safeUrl(u.foto)}" width="28" height="28" style="border-radius:50%;object-fit:cover;">`:`<div style="width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);">${esc(u.init||'?')}</div>`;
       const roleColors={membro:'rgba(56,182,255,.15)',organizador:'rgba(255,209,102,.15)',po:'rgba(29,233,182,.15)'};
@@ -2269,6 +2300,8 @@ async function qa(tab,q){
   setLoad(tab,true);
   agHistory[tab].push({role:'user',content:q});
   if(agHistory[tab].length>20) agHistory[tab]=agHistory[tab].slice(-20);
+  fbSet('kanban/squads/'+ACTIVE_SQUAD+'/agent_usage/logs/'+Date.now(),{ts:new Date().toISOString(),user:window._currentUser?.displayName||'?',tab,q:q.substring(0,120)});
+  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/agent_usage/total').then(s=>{fbSet('kanban/squads/'+ACTIVE_SQUAD+'/agent_usage/total',(s.val()||0)+1);});
   try{
     let messages=[...agHistory[tab]];
     let finalText='', toolsUsed=[], loop=true;
@@ -3317,14 +3350,14 @@ window.addEventListener('fb-ready',()=>{
   window.addEventListener('auth-change', e=>{
     const user=e.detail;
     if(user&&window._fbReady){
-      const pRef=window._ref(window._db,'kanban/presence/'+user.uid);
+      const pRef=window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+user.uid);
       window._set(pRef,{nome:user.displayName||user.email,foto:user.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD,ts:Date.now()});
       // Remove ao fechar
       window.addEventListener('beforeunload',()=>window._remove(pRef));
     }
   });
   // Listener de presença
-  window._onValue(window._ref(window._db,'kanban/presence'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),snap=>{
     const val=snap.val()||{};
     const now=Date.now();
     const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
@@ -3333,7 +3366,7 @@ window.addEventListener('fb-ready',()=>{
     clearInterval(window._heartbeat);
     window._heartbeat=setInterval(()=>{
       if(window._currentUser&&window._fbReady)
-        window._update(window._ref(window._db,'kanban/presence/'+window._currentUser.uid),{ts:Date.now()});
+        window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),{ts:Date.now()});
     },15000);
   });
 });
