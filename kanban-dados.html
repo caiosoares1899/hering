@@ -424,6 +424,43 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .link-option-col{font-size:9px;padding:1px 6px;border-radius:999px;
   background:rgba(56,182,255,.1);color:var(--accent);flex-shrink:0;}
 
+
+/* ── NOTIFICAÇÕES ────────────────────────────────────────────── */
+.notif-btn{position:relative;background:none;border:none;cursor:pointer;
+  font-size:18px;padding:4px;line-height:1;color:var(--txt2);transition:color .2s;}
+.notif-btn:hover{color:var(--txt);}
+.notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);
+  color:#fff;font-size:9px;font-weight:800;border-radius:999px;
+  min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+  padding:0 4px;pointer-events:none;display:none;}
+.notif-badge.show{display:flex;}
+.notif-panel{position:fixed;top:56px;right:12px;z-index:90;width:320px;
+  background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;
+  max-height:480px;overflow:hidden;}
+.notif-panel.open{display:flex;}
+.notif-hd{padding:10px 14px;border-bottom:1px solid var(--glass-b);
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;}
+.notif-list{overflow-y:auto;flex:1;}
+.notif-item{padding:10px 14px;border-bottom:1px solid rgba(56,182,255,.06);
+  cursor:pointer;transition:background .15s;display:flex;gap:8px;align-items:flex-start;}
+.notif-item:hover{background:rgba(37,99,201,.1);}
+.notif-item.unread{background:rgba(37,99,201,.07);border-left:3px solid var(--accent);}
+.notif-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.notif-body{flex:1;min-width:0;}
+.notif-title{font-size:11px;font-weight:600;color:var(--txt);line-height:1.4;}
+.notif-sub{font-size:10px;color:var(--txt3);margin-top:2px;line-height:1.3;}
+.notif-time{font-size:9px;color:var(--txt3);margin-top:3px;}
+.notif-empty{padding:24px;text-align:center;font-size:12px;color:var(--txt3);}
+.notif-ft{padding:8px 14px;border-top:1px solid var(--glass-b);
+  display:flex;justify-content:flex-end;}
+.notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
+  cursor:pointer;padding:0;}
+.notif-mark-all:hover{text-decoration:underline;}
+/* @mention highlight */
+.mention{color:var(--accent);font-weight:600;}
+
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
@@ -795,7 +832,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
       <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;" title="Sair">✕</button>
     </div>
-<button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
+<button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
+    🔔<span class="notif-badge" id="notif-badge">0</span>
+  </button>
+  <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
   </div>
 </div>
 
@@ -844,6 +884,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="board-wrap">
   <div class="board" id="board"></div>
 </div>
+</div>
+
+<!-- NOTIFICAÇÕES -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-hd">
+    <span>🔔 Notificações</span>
+    <button class="notif-mark-all" onclick="markAllRead()">Marcar todas como lidas</button>
+  </div>
+  <div class="notif-list" id="notif-list">
+    <div class="notif-empty">Nenhuma notificação</div>
+  </div>
+  <div class="notif-ft">
+    <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
+  </div>
 </div>
 
 <!-- FAB -->
@@ -971,6 +1025,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div style="display:flex;gap:7px;">
       <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar este card como modelo">📋 Salvar modelo</button>
       <button class="btn btn-teal btn-sm" onclick="archiveCard()">📦 Arquivar</button>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 0;border-top:1px solid var(--glass-b);margin-top:2px;">
+        <input type="checkbox" id="m-is-okr" style="width:16px;height:16px;accent-color:var(--warn);">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt);">🎯 Card OKR</div>
+          <div style="font-size:10px;color:var(--txt3);">Aparece destacado no painel</div>
+        </div>
+      </label>
+      <div style="border-top:1px solid var(--glass-b);padding:8px 0 4px;">
+        <div style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🔗 Cards vinculados</div>
+        <div class="link-search" style="margin-bottom:6px;">
+          <input class="link-search-input" id="link-search-inp"
+            placeholder="Buscar card pelo título..."
+            oninput="searchLinkedCards(this.value)"
+            autocomplete="off">
+          <div class="link-dropdown" id="link-dropdown"></div>
+        </div>
+        <div class="linked-cards" id="linked-cards-list"></div>
+      </div>
       <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights ↗</button>
       <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
       <button class="btn btn-p btn-sm" onclick="saveCard()">Salvar</button>
@@ -1459,7 +1531,7 @@ function fbLoadAll(){
       const inThisSquad = u.squads ? u.squads[ACTIVE_SQUAD]===true : (u.inscrito===true||u.inscrito==='true');
       if(hasInit && inThisSquad){
         if(!members.find(m=>m.init===u.init))
-          members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||''});
+          members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||'', uid:uid, role:u.role||'membro'});
       }
     });
     // Re-popula selects se modal estiver aberto
@@ -1554,6 +1626,7 @@ function autoRegistrar(user){
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
       window._currentUserRole=getEffectiveRole(user, existe.role);
+      setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
       if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
       // Migração: se inscrito legado sem squads, adiciona squad atual
@@ -3246,6 +3319,287 @@ document.addEventListener('click', e=>{
 });
 // ── FIM CARDS VINCULADOS ─────────────────────────────────────────
 
+
+// ── NOTIFICAÇÕES ─────────────────────────────────────────────────
+const NOTIF_TTL_DAYS = 3; // notificações somem após 3 dias
+let notifOpen = false;
+let _notifListener = null;
+
+// Ícone por tipo
+const NOTIF_ICONS = {
+  mention:    '💬',
+  assigned:   '👤',
+  unblocked:  '✅',
+  due_today:  '📅',
+  due_soon:   '⏰',
+  done:       '🏁',
+  risk:       '⚠️',
+  checklist:  '☑️',
+};
+
+function toggleNotifPanel(){
+  notifOpen=!notifOpen;
+  document.getElementById('notif-panel')?.classList.toggle('open', notifOpen);
+}
+
+// Fecha ao clicar fora
+document.addEventListener('click', e=>{
+  if(notifOpen && !e.target.closest('#notif-panel') && !e.target.closest('#notif-btn')){
+    notifOpen=false;
+    document.getElementById('notif-panel')?.classList.remove('open');
+  }
+});
+
+// ── Cria uma notificação para um usuário ──────────────────────────
+function createNotif(targetUid, type, title, sub, cardId){
+  if(!window._fbReady || !targetUid) return;
+  const notif = {
+    id: 'n'+Date.now()+Math.random().toString(36).slice(2,6),
+    type, title, sub, cardId,
+    read: false,
+    ts: new Date().toISOString(),
+    squad: ACTIVE_SQUAD,
+  };
+  window._set(window._ref(window._db,'kanban/usuarios/'+targetUid+'/notificacoes/'+notif.id), notif)
+    .catch(()=>{});
+}
+
+// Resolve uid de um membro pelo init
+function getUidByInit(init){
+  if(!init) return null;
+  const m = members.find(m=>m.init===init);
+  return m?.uid||null;
+}
+
+// ── Escuta notificações do usuário atual ──────────────────────────
+function loadNotifs(){
+  const user = window._currentUser; if(!user) return;
+  if(_notifListener) return; // já registrado
+  const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  _notifListener = true;
+  window._onValue(ref, snap=>{
+    const val = snap.val()||{};
+    const now = Date.now();
+    const TTL = NOTIF_TTL_DAYS * 86400000;
+    // Remove expiradas
+    const active = Object.entries(val)
+      .filter(([id,n])=> now - new Date(n.ts).getTime() < TTL)
+      .map(([id,n])=>({...n,id}))
+      .sort((a,b)=>b.ts.localeCompare(a.ts));
+    // Limpa expiradas do Firebase
+    Object.entries(val).forEach(([id,n])=>{
+      if(now - new Date(n.ts).getTime() >= TTL)
+        window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+id),null).catch(()=>{});
+    });
+    renderNotifs(active);
+  });
+}
+
+function renderNotifs(notifs){
+  const list = document.getElementById('notif-list'); if(!list) return;
+  const badge = document.getElementById('notif-badge');
+  const unread = notifs.filter(n=>!n.read).length;
+  if(badge){ badge.textContent=unread; badge.classList.toggle('show', unread>0); }
+  if(!notifs.length){
+    list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
+  }
+  list.innerHTML = notifs.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}')">
+      <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
+      <div class="notif-body">
+        <div class="notif-title">${n.title}</div>
+        ${n.sub?`<div class="notif-sub">${n.sub}</div>`:''}
+        <div class="notif-time">${timeAgo(n.ts)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openNotif(notifId, cardId, squad){
+  // Marca como lida
+  const user=window._currentUser; if(!user) return;
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
+  // Fecha painel
+  notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
+  // Abre o card se for do board atual
+  if(cardId && squad===ACTIVE_SQUAD){
+    const card = cards.find(c=>c.id===cardId);
+    if(card) openCard(cardId);
+  }
+}
+
+function markAllRead(){
+  const user=window._currentUser; if(!user) return;
+  const list=document.querySelectorAll('.notif-item.unread');
+  list.forEach(el=>{
+    const onclick=el.getAttribute('onclick')||'';
+    const m=onclick.match(/'([^']+)'/);
+    if(m) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+m[1]+'/read'),true).catch(()=>{});
+  });
+}
+
+function clearOldNotifs(){
+  const user=window._currentUser; if(!user) return;
+  const cutoff=Date.now()-86400000; // mais de 1 dia
+  document.querySelectorAll('.notif-item').forEach(el=>{
+    const time=el.querySelector('.notif-time')?.dataset?.ts;
+    if(time && new Date(time).getTime()<cutoff){
+      const onclick=el.getAttribute('onclick')||'';
+      const m=onclick.match(/'([^']+)'/);
+      if(m) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+m[1]),null).catch(()=>{});
+    }
+  });
+}
+
+function timeAgo(ts){
+  const diff=Date.now()-new Date(ts).getTime();
+  if(diff<60000) return 'Agora mesmo';
+  if(diff<3600000) return Math.floor(diff/60000)+'min atrás';
+  if(diff<86400000) return Math.floor(diff/3600000)+'h atrás';
+  return Math.floor(diff/86400000)+'d atrás';
+}
+
+// ── Gatilhos de notificação ───────────────────────────────────────
+
+// 1. @menção nos campos de texto
+function parseMentions(text, cardId){
+  if(!text) return;
+  const re=/@([A-Z]{2,3})/g; let m;
+  while((m=re.exec(text))!==null){
+    const init=m[1];
+    const uid=getUidByInit(init); if(!uid) continue;
+    if(uid===window._currentUser?.uid) continue; // não notifica a si mesmo
+    createNotif(uid,'mention',
+      '@'+init+' — você foi mencionado',
+      text.substring(0,80)+(text.length>80?'…':''),
+      cardId);
+  }
+}
+
+// 2. Responsável atribuído
+function notifAssigned(newOwnerInit, cardId, cardTitle){
+  const uid=getUidByInit(newOwnerInit); if(!uid) return;
+  if(uid===window._currentUser?.uid) return;
+  createNotif(uid,'assigned',
+    'Você foi atribuído a um card',
+    cardTitle?.substring(0,60),
+    cardId);
+}
+
+// 3. Card desbloqueado
+function notifUnblocked(card){
+  // Notifica owner e participantes
+  const targets=[card.owner,...(card.participants||[])].filter(Boolean);
+  const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
+  uids.forEach(uid=>{
+    if(uid===window._currentUser?.uid) return;
+    createNotif(uid,'unblocked',
+      'Card desbloqueado!',
+      card.title?.substring(0,60),
+      card.id);
+  });
+}
+
+// 4. Card movido para Feito
+function notifDone(card){
+  const targets=[card.owner,...(card.participants||[])].filter(Boolean);
+  const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
+  uids.forEach(uid=>{
+    if(uid===window._currentUser?.uid) return;
+    createNotif(uid,'done',
+      'Card concluído 🎉',
+      card.title?.substring(0,60),
+      card.id);
+  });
+}
+
+// 5. Risco adicionado — notifica PO e Organizadores
+function notifRisk(card){
+  const privileged=members.filter(m=>m.role==='po'||m.role==='organizador'||m.role==='adm');
+  privileged.forEach(m=>{
+    if(m.uid===window._currentUser?.uid) return;
+    createNotif(m.uid,'risk',
+      '⚠ Risco mapeado em card',
+      card.title?.substring(0,60),
+      card.id);
+  });
+}
+
+// 6. Checklist 100% concluída
+function notifChecklistDone(card){
+  const uid=getUidByInit(card.owner); if(!uid) return;
+  if(uid===window._currentUser?.uid) return;
+  createNotif(uid,'checklist',
+    'Checklist concluída!',
+    card.title?.substring(0,60),
+    card.id);
+}
+
+// 7. Prazo vencendo — roda 1x/dia via localStorage
+function checkDueNotifs(){
+  const today=new Date().toISOString().split('T')[0];
+  const lastCheck=localStorage.getItem('lastDueCheck_'+ACTIVE_SQUAD);
+  if(lastCheck===today) return;
+  localStorage.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
+  const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowStr=tomorrow.toISOString().split('T')[0];
+  cards.filter(c=>c.due&&!c.archived&&c.col!=='done').forEach(card=>{
+    const uid=getUidByInit(card.owner); if(!uid) return;
+    if(card.due===today){
+      createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
+    } else if(card.due===tomorrowStr){
+      createNotif(uid,'due_soon','Prazo amanhã',card.title?.substring(0,60),card.id);
+    }
+  });
+}
+
+// ── Hook no saveCard para disparar notificações ───────────────────
+const _origSaveCardForNotif = saveCard;
+saveCard = function(){
+  // Captura estado anterior
+  const prevCard = editingId ? cards.find(c=>c.id===editingId) : null;
+  const prevOwner = prevCard?.owner||'';
+  const prevCol = prevCard?.col||'';
+  const prevBlocker = prevCard?.blocker||false;
+  const prevRiscos = prevCard?.riscos?.length||0;
+  const prevChecklist = prevCard?.checklist||[];
+
+  _origSaveCardForNotif.apply(this, arguments);
+
+  // Pega o card atualizado
+  const cardId = editingId || cards[cards.length-1]?.id;
+  const card = cards.find(c=>c.id===cardId); if(!card) return;
+
+  // Menções nos campos de texto
+  parseMentions(card.desc, cardId);
+  parseMentions(card.po, cardId);
+  parseMentions(card.blockerReason, cardId);
+
+  // Responsável novo
+  if(card.owner && card.owner!==prevOwner)
+    notifAssigned(card.owner, cardId, card.title);
+
+  // Desbloqueado
+  if(prevBlocker && !card.blocker)
+    notifUnblocked(card);
+
+  // Movido para feito
+  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
+  if(prevCol!==card.col && card.col===doneCol?.id)
+    notifDone(card);
+
+  // Risco novo
+  if((card.riscos?.length||0) > prevRiscos)
+    notifRisk(card);
+
+  // Checklist 100%
+  if(card.checklist?.length>0 && card.checklist.every(i=>i.done)){
+    const prevDone=prevChecklist.filter(i=>i.done).length;
+    if(prevDone < card.checklist.length)
+      notifChecklistDone(card);
+  }
+};
+// ── FIM NOTIFICAÇÕES ─────────────────────────────────────────────
+
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
 let viewMode = localStorage.getItem('boardViewMode')||'onepage';
 function setViewMode(mode){
@@ -4186,6 +4540,7 @@ window.addEventListener('fb-ready',()=>{
   loadAutoRules();
   loadCalEvents();
   applyViewMode();
+  setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
   // Carrega ADMs extras do Firebase
   fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; });
   // Presença online
