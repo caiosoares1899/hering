@@ -641,7 +641,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -663,6 +663,14 @@ window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
+// Captura resultado do redirect de autenticação
+getRedirectResult(auth).then(result=>{
+  if(result?.user && sessionStorage.getItem('pendingInsc')){
+    sessionStorage.removeItem('pendingInsc');
+    window._pendingInsc=true;
+  }
+}).catch(()=>{});
+
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 
