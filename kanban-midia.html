@@ -2463,16 +2463,25 @@ function parseTrelloJSON(raw){
   // Nunca cria membro fantasma
   function resolveOwner(trelloMemberId){
     const tm=memberMap[trelloMemberId]; if(!tm) return '';
-    const tName=(tm.fullName||tm.username||'').toLowerCase();
-    const tFirst=tName.split(' ')[0];
-    const tLast=tName.split(' ').slice(-1)[0];
-    // Busca nos membros do board
+    // Estratégia conservadora: exige que PRIMEIRO nome E ÚLTIMO nome batam
+    // Evita falso positivo tipo "Maria Luiza" → "Laisa Maria"
+    const tParts=(tm.fullName||tm.username||'').toLowerCase().split(' ').filter(Boolean);
+    const tFirst=tParts[0]||'';
+    const tLast=tParts[tParts.length-1]||'';
+    const tInitials=(tm.initials||'').toLowerCase();
     const match=members.find(bm=>{
-      const bName=bm.name.toLowerCase();
-      return bName.includes(tFirst)||bName.includes(tLast)||
-             tName.includes(bm.name.toLowerCase().split(' ')[0]);
+      const bParts=bm.name.toLowerCase().split(' ').filter(Boolean);
+      const bFirst=bParts[0]||'';
+      const bLast=bParts[bParts.length-1]||'';
+      // Match 1: iniciais do Trello == iniciais do board
+      if(tInitials && bm.init.toLowerCase()===tInitials) return true;
+      // Match 2: primeiro E último nome coincidem (evita match parcial)
+      if(tFirst&&tLast&&tFirst!==tLast && bFirst===tFirst&&bLast===tLast) return true;
+      // Match 3: primeiro nome E pelo menos mais um token coincidem
+      if(tFirst.length>3 && bFirst===tFirst && tParts.some(p=>p.length>3&&bParts.includes(p)&&p!==tFirst)) return true;
+      return false;
     });
-    return match?.init||''; // retorna vazio se não encontrar (não cria fantasma)
+    return match?.init||'';
   }
 
   // ── 5. CONVERTE CARDS ──────────────────────────────────────────
