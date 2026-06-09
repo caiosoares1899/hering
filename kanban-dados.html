@@ -3864,12 +3864,14 @@ function logError(msg, source='', line=0, col=0, err=null){
 }
 
 // Captura erros globais de JS
-let _errCount=0, _errReset=null;
+let _errCount=0, _errReset=null, _lastErrMsg='';
 window.onerror = function(msg, src, line, col, err){
   if(src&&(src.includes('extension')||src.includes('chrome-extension'))) return false;
-  // Rate limit: máx 10 erros por 5 segundos
-  _errCount++; clearTimeout(_errReset); _errReset=setTimeout(()=>_errCount=0,5000);
-  if(_errCount>10) return false;
+  // Deduplica: ignora mesmo erro repetido
+  const errKey=String(msg)+':'+line;
+  if(errKey===_lastErrMsg){ _errCount++; } else { _errCount=1; _lastErrMsg=errKey; }
+  clearTimeout(_errReset); _errReset=setTimeout(()=>{_errCount=0;_lastErrMsg='';},10000);
+  if(_errCount>3) return false; // máx 3 ocorrências do mesmo erro
   logError(msg, src, line, col, err);
   return false; // não suprime o erro
 };
