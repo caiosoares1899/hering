@@ -2028,8 +2028,8 @@ function openCard(id){
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
   document.getElementById('btn-del-card').style.visibility='visible';
   const blockerRow=document.getElementById('m-blocker-row');
-  const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
-  initLinkedCards(card);
+  const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
+  initLinkedCards(c);
   if(blockerRow){ 
     blockerRow.style.display=(c.blocker&&blockerMode==='tag')?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
@@ -3867,8 +3867,8 @@ function addBlockerTag(cardId){
   const card = cards.find(x=>x.id===cardId); if(!card) return;
   openCard(cardId);
   setTimeout(()=>{
-    const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
-  initLinkedCards(card);
+    const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
+  initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='block';
     document.getElementById('m-blocker-reason').value = card.blockerReason||'';
     document.getElementById('m-blocker-reason').focus();
@@ -3878,8 +3878,8 @@ function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.blocker=false; c.blockerReason='';
-  const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
-  initLinkedCards(card);
+  const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
+  initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
   fbSaveAll(); renderBoard();
   showToast('Impedimento removido');
