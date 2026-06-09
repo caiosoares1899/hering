@@ -139,6 +139,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cmp-table td{padding:7px 10px;border-bottom:1px solid rgba(56,182,255,.06);}
 .cmp-table tr:last-child td{border:none;}
 .cmp-table .winner{color:var(--teal);font-weight:700;}
+
+/* Modal evento do painel */
+.pev-modal-ov{position:fixed;inset:0;z-index:300;background:rgba(1,8,16,.88);
+  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.pev-modal-ov.open{display:flex;}
+.pev-modal{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:14px;
+  width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+.pev-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
+  display:flex;align-items:center;justify-content:space-between;}
+.pev-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.pev-field{display:flex;flex-direction:column;gap:3px;}
+.pev-label{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.pev-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;
+  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;box-sizing:border-box;}
+.pev-input:focus{outline:none;border-color:var(--accent);}
+.pev-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pev-colors{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
+.pev-color-btn{width:22px;height:22px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:all .15s;flex-shrink:0;}
+.pev-color-btn.sel{border-color:#fff;transform:scale(1.15);}
+.pev-ft{padding:10px 16px;border-top:1px solid var(--glass-b);
+  display:flex;gap:7px;justify-content:flex-end;align-items:center;}
+
 </style>
 </head>
 <body>
@@ -170,6 +193,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
+      <button class="btn" onclick="toggleMonitorSection()" id="btn-monitor" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🐛 Bugs</button>
       <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
       <a href="kanban-dados.html" target="_blank" class="btn" style="color:#38b6ff;border-color:rgba(56,182,255,.3);">📊 Dados</a>
       <a href="kanban-midia.html" target="_blank" class="btn" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📱 Mídia</a>
@@ -196,235 +220,112 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 
   <!-- CALENDÁRIO DO PAINEL -->
-  <div id="pcal-section" style="display:none;">
-    <!-- Abas -->
-    <div class="pcal-tabs">
-      <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
-      <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
-      <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Squad Mídia</div>
-      <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Calendário de Gestão</div>
-    </div>
+<div id="pcal-section" style="display:none;margin-bottom:20px;">
+  <div class="pcal-tabs" id="pcal-tabs-bar">
+    <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
+    <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
+    <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Squad Mídia</div>
+    <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Gestão Digital</div>
+  </div>
 
-    <!-- Conteúdo: Todos / Squad individual -->
-    <div class="pcal-content on" id="pcal-all">
-      <div class="pcal-nav">
-        <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
-        <div class="pcal-month-lbl" id="pcal-month-lbl"></div>
-        <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
-        <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
-        <div style="margin-left:auto;display:flex;gap:6px;" id="pcal-squad-filter" style="display:none;">
-          <select id="pcal-filter-sel" onchange="renderPcal()" class="save-btn" style="font-size:11px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);cursor:pointer;">
-            <option value="all">Todos os squads</option>
-            <option value="dados">📊 Squad Dados</option>
-            <option value="midia">📱 Squad Mídia</option>
-          </select>
-        </div>
-        <button class="save-btn" onclick="openPevModal()" style="font-size:11px;padding:5px 14px;">+ Evento</button>
+  <!-- Grade principal (all / dados / midia) -->
+  <div class="pcal-content on" id="pcal-all">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
+      <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
+      <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
+      <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+      <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
+        <option value="all">Todos os squads</option>
+        <option value="dados">📊 Squad Dados</option>
+        <option value="midia">📱 Squad Mídia</option>
+      </select>
+      <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
+      <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
+      <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
+    </div>
+    <div class="pcal-grid" id="pcal-grid"></div>
+    <div class="cal-legend" id="pcal-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
+  </div>
+
+  <!-- Gestão -->
+  <div class="pcal-content" id="pcal-gestao">
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:8px;line-height:1.6;">
+        Cole o link de incorporação do Google Calendar da empresa.
+        <span style="display:block;font-size:10px;color:var(--txt3);">Google Calendar → ⚙ Configurações → agenda → "Incorporar código" → copie o src do iframe</span>
       </div>
-      <div class="pcal-weekdays">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <input class="pev-input" id="gestao-embed-url" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;min-width:200px;font-size:11px;padding:6px 10px;">
+        <button onclick="saveGestaoEmbed()" style="padding:6px 14px;font-size:11px;background:rgba(37,99,201,.7);color:#fff;border:1px solid var(--blue);border-radius:8px;cursor:pointer;">Salvar</button>
+        <button onclick="toggleGestaoEmbed()" id="btn-toggle-gestao" style="padding:6px 12px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt2);cursor:pointer;">📆 Ver Google Cal</button>
+      </div>
+      <div id="gestao-embed-area" style="display:none;margin-top:8px;border-radius:8px;overflow:hidden;">
+        <iframe id="gestao-iframe" src="" style="width:100%;height:500px;border:none;" frameborder="0"></iframe>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--glass-b);padding-top:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:600;color:var(--txt2);">📌 Eventos de Gestão cadastrados</div>
+        <button onclick="openPevModal('','','painel')" style="padding:4px 12px;font-size:10px;background:rgba(150,80,220,.15);color:#d67fff;border:1px solid rgba(150,80,220,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento de Gestão</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
         <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
         <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
       </div>
-      <div class="pcal-grid" id="pcal-grid"></div>
-      <div class="cal-legend" id="pcal-legend"></div>
-    </div>
-
-    <!-- Aba Gestão -->
-    <div class="pcal-content" id="pcal-gestao">
-      <div style="margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--txt2);margin-bottom:8px;line-height:1.6;">
-          Cole o link de incorporação do Google Calendar do Digital Hering.<br>
-          <span style="font-size:10px;color:var(--txt3);">Google Calendar → ⚙ Configurações → sua agenda → "Incorporar código" → copie o src do iframe</span>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <input class="pev-input" id="gestao-embed-url" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;font-size:11px;padding:5px 8px;">
-          <button class="save-btn" onclick="saveGestaoEmbed()">Salvar</button>
-          <button class="save-btn" onclick="toggleGestaoEmbed()" id="btn-toggle-gestao" style="background:var(--glass);border-color:var(--glass-b);color:var(--txt2);">📆 Ver</button>
-        </div>
-        <div class="embed-area" id="gestao-embed-area">
-          <iframe id="gestao-iframe" src="" style="width:100%;height:500px;border:none;border-radius:8px;" frameborder="0"></iframe>
-        </div>
-      </div>
-      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--glass-b);">
-        <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:8px;">📌 Eventos de Gestão cadastrados</div>
-        <div class="pcal-weekdays">
-          <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
-          <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
-        </div>
-        <div class="pcal-grid" id="pcal-gestao-grid"></div>
-        <div class="cal-legend" id="pcal-gestao-legend"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal evento do painel -->
-  <div class="pev-modal-ov" id="pev-modal-ov">
-    <div class="pev-modal">
-      <div class="pev-hd">
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;" id="pev-modal-title">Novo Evento</div>
-        <button class="x-btn" onclick="closePevModal()">✕</button>
-      </div>
-      <div class="pev-body">
-        <div class="pev-field"><label class="pev-label">Título</label><input class="pev-input" id="pev-title" placeholder="Nome do evento..."></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div class="pev-field"><label class="pev-label">Data início</label><input class="pev-input" id="pev-start" type="date"></div>
-          <div class="pev-field"><label class="pev-label">Data fim</label><input class="pev-input" id="pev-end" type="date"></div>
-        </div>
-        <div class="pev-field"><label class="pev-label">Squad / Origem</label>
-          <select class="pev-input" id="pev-squad">
-            <option value="gestao">🏢 Gestão Digital Hering</option>
-            <option value="dados">📊 Squad Dados</option>
-            <option value="midia">📱 Squad Mídia</option>
-            <option value="geral">🌐 Geral (todos)</option>
-          </select>
-        </div>
-        <div class="pev-field"><label class="pev-label">Descrição</label><textarea class="pev-input" id="pev-desc" rows="2" style="resize:vertical;"></textarea></div>
-        <div class="pev-field"><label class="pev-label">Link</label><input class="pev-input" id="pev-link" placeholder="https://..."></div>
-        <div class="pev-field">
-          <label class="pev-label">Cor</label>
-          <div class="pev-colors" id="pev-colors"></div>
-        </div>
-      </div>
-      <div class="pev-ft">
-        <button id="pev-del-btn" class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-right:auto;display:none;" onclick="deletePevEvent()">🗑 Excluir</button>
-        <button onclick="closePevModal()" class="btn btn-sm">Cancelar</button>
-        <button onclick="savePevEvent()" class="save-btn">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- FILTRO DE SQUAD -->
-  <div class="filter-bar">
-    <button class="filter-btn active" id="fb-all" onclick="setFilter('all')">🏠 Todos os squads</button>
-    <button class="filter-btn" id="fb-dados" onclick="setFilter('dados')">📊 Squad Dados</button>
-    <button class="filter-btn" id="fb-midia" onclick="setFilter('midia')">📱 Squad Mídia</button>
-  </div>
-
-  <!-- VISÃO COMPARATIVA DOS SQUADS -->
-  <div class="sec-title">🏃 Squads em tempo real</div>
-  <div class="grid-2" id="squad-cards" style="margin-bottom:20px;">
-    <div class="loading"><span class="dots"><span>●</span><span>●</span><span>●</span></span> Carregando Squad Dados...</div>
-    <div class="loading"><span class="dots"><span>●</span><span>●</span><span>●</span></span> Carregando Squad Mídia...</div>
-  </div>
-
-  <!-- MÉTRICAS CONSOLIDADAS -->
-  <div class="sec-title">📊 Consolidado</div>
-  <div class="grid-4" id="consolidated-metrics" style="margin-bottom:20px;">
-    <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos (sem arquivados)</div></div>
-    <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
-    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos ativos</div></div>
-    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput combinado</div></div>
-  </div>
-
-  <!-- TABELA COMPARATIVA -->
-  <div id="cmp-section">
-  <div class="sec-title">⚖️ Comparação</div>
-  <div class="card" style="margin-bottom:20px;">
-    <table class="cmp-table" id="cmp-table">
-      <thead><tr>
-        <th>Métrica</th>
-        <th>📊 Squad Dados</th>
-        <th>📱 Squad Mídia</th>
-      </tr></thead>
-      <tbody id="cmp-body">
-        <tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  </div><!-- /cmp-section -->
-
-
-
-  <!-- AGENTE ÁGIL USAGE -->
-  <div class="sec-title">🤖 Uso do Agente Ágil</div>
-  <div class="grid-3" id="agent-usage-grid" style="margin-bottom:20px;">
-    <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">ambos os squads</div></div>
-    <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
-    <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
-  </div>
-  <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
-
-  <!-- OKR 🎯 -->
-  <div class="sec-title" id="okr-section-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
-  <div id="okr-list" style="margin-bottom:20px;">
-    <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
-  </div>
-
-  <!-- BLOQUEIOS ATIVOS -->
-  <div class="sec-title">🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></div>
-  <div id="blockers-list" style="margin-bottom:20px;">
-    <div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio ativo.</div>
-  </div>
-
-
-  <!-- RISCOS -->
-  <div class="sec-title" id="risco-section-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
-  <div id="risco-list" style="margin-bottom:20px;">
-    <div style="font-size:11px;color:var(--txt3);">Sem cards com riscos mapeados.</div>
-  </div>
-
-  <!-- TENDÊNCIA (SNAPSHOTS) -->
-  <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
-  <div class="grid-2" id="trend-cards" style="margin-bottom:20px;">
-    <div class="card">
-      <div class="card-title">📊 Squad Dados — Throughput</div>
-      <div id="trend-dados" class="col-bar"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">📱 Squad Mídia — Throughput</div>
-      <div id="trend-midia" class="col-bar"></div>
-    </div>
-  </div>
-
-  <!-- CARDS POR COLUNA (POR SQUAD) -->
-  <div class="sec-title">📋 Distribuição por coluna</div>
-  <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
-
-</div>
-
-<!-- CONFIG MODAL -->
-<div class="cfg-ov" id="cfg-ov">
-  <div class="cfg-panel">
-    <div class="cfg-hd">
-      <div class="cfg-hd-title" id="cfg-modal-title">⚙ Configurações</div>
-      <button class="x-btn" onclick="closeCfg()">✕</button>
-    </div>
-    <div class="cfg-body">
-      <div class="cfg-sec">Sprint</div>
-      <div class="cfg-row">
-        <div class="cfg-field"><label class="cfg-label">Número da sprint</label><input class="cfg-input" id="cfg-sprint-num" type="number" min="1"></div>
-        <div class="cfg-field"><label class="cfg-label">Duração (dias)</label><input class="cfg-input" id="cfg-sprint-days" type="number" min="1" max="60" oninput="calcCfgEnd()"></div>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-field"><label class="cfg-label">Início</label><input class="cfg-input" id="cfg-sprint-start" type="date" oninput="calcCfgEnd()"></div>
-        <div class="cfg-field"><label class="cfg-label">Fim (calculado)</label><input class="cfg-input" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
-      </div>
-      <div class="cfg-field"><label class="cfg-label">Objetivo da sprint</label><textarea class="cfg-input" id="cfg-goal" rows="2" style="resize:vertical;min-height:50px;line-height:1.5;"></textarea></div>
-
-      <div class="cfg-sec">WIP & Capacidade</div>
-      <div class="cfg-row">
-        <div class="cfg-field"><label class="cfg-label">Limite de WIP</label><input class="cfg-input" id="cfg-wip" type="number" min="1"></div>
-        <div class="cfg-field"><label class="cfg-label">Capacidade (%)</label><input class="cfg-input" id="cfg-capacity" type="number" min="0" max="100"></div>
-      </div>
-
-      <div class="cfg-sec">Modo de impedimentos</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
-          <input type="radio" name="cfg-blocker" id="cfg-bmode-col" value="col" style="accent-color:var(--accent);"> 🗂 Coluna separada
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
-          <input type="radio" name="cfg-blocker" id="cfg-bmode-tag" value="tag" style="accent-color:var(--danger);"> 🚧 Tag no card
-        </label>
-      </div>
-    </div>
-    <div class="cfg-ft">
-      <button class="x-btn" onclick="closeCfg()" style="font-size:12px;color:var(--txt2);padding:7px 14px;border:1px solid var(--glass-b);border-radius:10px;">Cancelar</button>
-      <button class="save-btn" onclick="saveCfg()">💾 Salvar</button>
+      <div class="pcal-grid" id="pcal-gestao-grid"></div>
+      <div class="cal-legend" id="pcal-gestao-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
   </div>
 </div>
 
+<!-- Modal evento do painel -->
+<div class="pev-modal-ov" id="pev-modal-ov">
+  <div class="pev-modal">
+    <div class="pev-hd">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;" id="pev-modal-title">Novo Evento</div>
+      <button class="x-btn" onclick="closePevModal()">✕</button>
+    </div>
+    <div class="pev-body">
+      <div class="pev-field">
+        <label class="pev-label">Título</label>
+        <input class="pev-input" id="pev-title" placeholder="Nome do evento...">
+      </div>
+      <div class="pev-row">
+        <div class="pev-field"><label class="pev-label">Data início</label><input class="pev-input" id="pev-start" type="date"></div>
+        <div class="pev-field"><label class="pev-label">Data fim</label><input class="pev-input" id="pev-end" type="date"></div>
+      </div>
+      <div class="pev-field">
+        <label class="pev-label">Squad / Origem</label>
+        <select class="pev-input" id="pev-squad">
+          <option value="gestao">🏢 Gestão Digital Hering</option>
+          <option value="dados">📊 Squad Dados</option>
+          <option value="midia">📱 Squad Mídia</option>
+          <option value="geral">🌐 Geral (todos)</option>
+        </select>
+      </div>
+      <div class="pev-field">
+        <label class="pev-label">Descrição</label>
+        <textarea class="pev-input" id="pev-desc" rows="2" style="resize:vertical;line-height:1.5;"></textarea>
+      </div>
+      <div class="pev-field">
+        <label class="pev-label">Link</label>
+        <input class="pev-input" id="pev-link" placeholder="https://meet.google.com/...">
+      </div>
+      <div class="pev-field">
+        <label class="pev-label">Cor</label>
+        <div class="pev-colors" id="pev-colors"></div>
+      </div>
+    </div>
+    <div class="pev-ft">
+      <button id="pev-del-btn" onclick="deletePevEvent()" style="color:var(--danger);border:1px solid rgba(255,107,107,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;margin-right:auto;display:none;">🗑 Excluir</button>
+      <button onclick="closePevModal()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+      <button onclick="savePevEvent()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Salvar</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- MODAL CARD NO PAINEL -->
@@ -442,7 +343,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.3 · painel</div>
+<div class="version">v1.4 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -988,6 +889,183 @@ function loadPcalEvents(){
 document.addEventListener('click',e=>{ if(e.target.id==='pev-modal-ov') closePevModal(); });
 // ── FIM CALENDÁRIO PAINEL ─────────────────────────────────────────
 
+
+// ── MONITORAMENTO DE ERROS ─────────────────────────────────────────
+let allErrors = [];   // {id, squad, entry}
+let errFilterSquad = 'all';
+let errFilterCat   = 'all';
+let errFilterStatus= 'all';
+let monitorVisible = false;
+let errStats = {}; // {squad: {date: count}}
+
+const CAT_LABELS = {firebase:'🔥 Firebase',agente:'🤖 Agente',importacao:'📥 Import',ui:'💻 UI',geral:'⚙ Geral'};
+const STATUS_CYCLE = {novo:'visto', visto:'resolvido', resolvido:'novo'};
+
+function toggleMonitorSection(){
+  monitorVisible=!monitorVisible;
+  document.getElementById('monitor-section').style.display=monitorVisible?'block':'none';
+  const btn=document.getElementById('btn-monitor');
+  btn.style.background=monitorVisible?'rgba(255,107,107,.15)':'';
+  btn.style.borderColor=monitorVisible?'rgba(255,107,107,.5)':'rgba(255,107,107,.3)';
+  if(monitorVisible) renderErrors();
+}
+
+function setErrFilter(type, val){
+  if(type==='squad') errFilterSquad=val;
+  if(type==='cat')   errFilterCat=val;
+  if(type==='status') errFilterStatus=val;
+  // Atualiza botões
+  if(type==='squad'){
+    ['all','dados','midia'].forEach(v=>document.getElementById('ef-squad-'+v)?.classList.toggle('active',v===val));
+  }
+  if(type==='cat'){
+    ['all','firebase','agente','ui','importacao'].forEach(v=>document.getElementById('ef-cat-'+v)?.classList.toggle('active',v===val));
+  }
+  if(type==='status'){
+    ['all','novo','visto'].forEach(v=>document.getElementById('ef-status-'+v)?.classList.toggle('active',v===val));
+  }
+  renderErrors();
+}
+
+function getFilteredErrors(){
+  return allErrors.filter(({squad,entry})=>{
+    if(errFilterSquad!=='all'&&squad!==errFilterSquad) return false;
+    if(errFilterCat!=='all'&&entry.category!==errFilterCat) return false;
+    if(errFilterStatus!=='all'&&entry.status!==errFilterStatus) return false;
+    return true;
+  }).sort((a,b)=>b.entry.ts.localeCompare(a.entry.ts));
+}
+
+function renderErrors(){
+  const filtered=getFilteredErrors();
+  const open=allErrors.filter(e=>e.entry.status==='novo').length;
+  const resolved=allErrors.filter(e=>e.entry.status==='resolvido').length;
+  const dados=allErrors.filter(e=>e.squad==='dados').length;
+  const midia=allErrors.filter(e=>e.squad==='midia').length;
+  const last24h=allErrors.filter(e=>{
+    const ts=new Date(e.entry.ts); const now=new Date();
+    return (now-ts)<86400000;
+  }).filter(e=>e.entry.status!=='resolvido').length;
+
+  // Stats
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('es-open',last24h);
+  set('es-dados',dados);
+  set('es-midia',midia);
+  set('es-resolved',resolved);
+  set('err-open-count',open+' abertos');
+  document.getElementById('err-open-count').style.background=open?'rgba(255,107,107,.2)':'rgba(29,233,182,.1)';
+  document.getElementById('err-open-count').style.color=open?'var(--danger)':'var(--teal)';
+  document.getElementById('err-open-count').style.borderColor=open?'rgba(255,107,107,.3)':'rgba(29,233,182,.2)';
+
+  // Gráfico 7 dias
+  renderErrChart();
+
+  // Lista
+  const el=document.getElementById('err-list'); if(!el) return;
+  if(!filtered.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:12px 0;">✅ Nenhum erro encontrado com os filtros atuais.</div>';
+    return;
+  }
+  el.innerHTML=filtered.slice(0,50).map(({id,squad,entry})=>{
+    const cat=entry.category||'geral';
+    const status=entry.status||'novo';
+    const ts=new Date(entry.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const sq=SQUADS.find(s=>s.id===squad);
+    return `<div class="err-log-item cat-${cat} status-${status}" id="erritem-${id}">
+      <div class="err-hd">
+        <span class="err-badge cat-${cat}">${CAT_LABELS[cat]||cat}</span>
+        <span class="err-msg" title="${(entry.msg||'').replace(/"/g,"'")}">
+          ${sq?sq.icon+' ':''}${(entry.msg||'Erro desconhecido').substring(0,120)}
+        </span>
+        <span class="err-status ${status}" onclick="cycleErrStatus('${id}','${squad}')" title="Clique para mudar status">
+          ${{novo:'🔴 Novo',visto:'🟡 Visto',resolvido:'✅ OK'}[status]||status}
+        </span>
+      </div>
+      <div class="err-meta">
+        <span>📅 ${ts}</span>
+        <span>👤 ${entry.user||'?'}</span>
+        ${entry.source?`<span>📄 ${entry.source.split('/').slice(-1)[0]||entry.source}</span>`:''}
+        ${entry.line?`<span>Linha ${entry.line}</span>`:''}
+      </div>
+      ${entry.stack?`<div class="err-stack" id="stack-${id}" onclick="this.classList.toggle('show')" title="Clique para expandir">
+        ${(entry.stack||'').substring(0,400)}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderErrChart(){
+  const chart=document.getElementById('err-chart'); if(!chart) return;
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+  // Conta por dia
+  const counts=days.map(day=>{
+    let n=0;
+    SQUADS.forEach(sq=>{
+      if(errFilterSquad!=='all'&&sq.id!==errFilterSquad) return;
+      n+=(errStats[sq.id]?.[day]||0);
+    });
+    return n;
+  });
+  const maxN=Math.max(...counts,1);
+  chart.innerHTML=days.map((day,i)=>{
+    const n=counts[i];
+    const pct=Math.round(n/maxN*100);
+    const lbl=day.split('-').slice(1).join('/');
+    const color=n===0?'rgba(56,182,255,.1)':n>5?'rgba(255,107,107,.7)':n>2?'rgba(255,209,102,.7)':'rgba(56,182,255,.5)';
+    return `<div class="err-bar-wrap" title="${day}: ${n} erros">
+      <div class="err-bar" style="height:${Math.max(pct,2)}%;background:${color};" onclick="setDateFilter('${day}')"></div>
+      <div class="err-bar-lbl">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function cycleErrStatus(errId, squad){
+  const item=allErrors.find(e=>e.id===errId&&e.squad===squad); if(!item) return;
+  const next=STATUS_CYCLE[item.entry.status||'novo']||'novo';
+  item.entry.status=next;
+  window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+errId+'/status'),next)
+    .then(()=>renderErrors()).catch(e=>showToast('❌ '+e.message));
+}
+
+function clearResolvedErrors(){
+  if(!confirm('Remover todos os erros resolvidos do log?')) return;
+  const toDelete=allErrors.filter(e=>e.entry.status==='resolvido');
+  Promise.all(toDelete.map(({id,squad})=>
+    window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+id),null)
+  )).then(()=>{ showToast('✅ Erros resolvidos removidos'); });
+}
+
+function loadErrorLogs(){
+  SQUADS.forEach(sq=>{
+    // Error logs
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/error_logs'),snap=>{
+      const val=snap.val()||{};
+      // Remove entradas deste squad e reinsere
+      allErrors=allErrors.filter(e=>e.squad!==sq.id);
+      Object.entries(val).forEach(([id,entry])=>{
+        if(entry&&entry.ts) allErrors.push({id,squad:sq.id,entry});
+      });
+      // Atualiza badge no botão
+      const open=allErrors.filter(e=>e.entry.status==='novo').length;
+      const btn=document.getElementById('btn-monitor');
+      if(btn) btn.textContent='🐛 Bugs'+(open?` (${open})`:'');
+      if(monitorVisible) renderErrors();
+    });
+    // Stats diários
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/error_stats'),snap=>{
+      const val=snap.val()||{};
+      errStats[sq.id]=val;
+      if(monitorVisible) renderErrChart();
+    });
+  });
+}
+// ── FIM MONITORAMENTO ─────────────────────────────────────────────
+
 const SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
@@ -1030,6 +1108,7 @@ window.addEventListener('fb-ready',()=>{
   loadPresence();
   loadAgentUsage();
   loadPcalEvents();
+  loadErrorLogs();
 });
 
 function loadAll(){
