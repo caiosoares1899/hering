@@ -3303,8 +3303,22 @@ function deleteEvent(){
 }
 
 function loadCalEvents(){
+  // ── Eventos do squad ──────────────────────────────────────────
   fbListen(FB+'/cal_events',val=>{
-    calEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
+    const squadEvs=val?(Array.isArray(val)?val:Object.values(val)):[];
+    const gestaoEvs=calEvents.filter(e=>e._gestao);
+    calEvents=[...squadEvs,...gestaoEvs];
+    if(document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+  });
+  // ── Eventos de Gestão Digital (painel) ───────────────────────
+  // Usa onValue direto (não fbListen que usa o path do squad)
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+    const val=snap.val();
+    const gestaoEvs=val?(Array.isArray(val)?val:Object.values(val)):[];
+    const filtered=gestaoEvs
+      .filter(e=>e.squad==='gestao'||e.squad==='geral'||!e.squad)
+      .map(e=>({...e,_gestao:true,color:'purple'}));
+    calEvents=[...calEvents.filter(e=>!e._gestao),...filtered];
     if(document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
   });
 }
