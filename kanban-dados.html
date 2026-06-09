@@ -1360,10 +1360,10 @@ function fbLoadAll(){
     if(!val) return;
     members = [];
     Object.values(val).forEach(u=>{
-      // Aceita inscrito=true, 'true', ou qualquer truthy; e init não vazio
-      const isInscrito = u.inscrito===true || u.inscrito==='true' || u.inscrito===1;
       const hasInit = u.init && u.init.trim().length > 0;
-      if(hasInit){ // carrega TODOS que têm iniciais, inscrito ou não
+      // Carrega se: tem iniciais E (está inscrito neste squad OU inscrito legado sem squads)
+      const inThisSquad = u.squads ? u.squads[ACTIVE_SQUAD]===true : (u.inscrito===true||u.inscrito==='true');
+      if(hasInit && inThisSquad){
         if(!members.find(m=>m.init===u.init))
           members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||''});
       }
@@ -1456,6 +1456,11 @@ function autoRegistrar(user){
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
       window._currentUserRole=existe.role||'membro';
+      // Migração: se inscrito legado sem squads, adiciona squad atual
+      if((existe.inscrito===true||existe.inscrito==='true')&&existe.init&&!existe.squads){
+        const migUpd={}; migUpd['squads/'+ACTIVE_SQUAD]=true;
+        fbUpdate('kanban/usuarios/'+user.uid, migUpd);
+      }
       // Atualiza visibilidade do FAB do agente
       const fabBtn=document.querySelector('.fab-btn');
       const mnavAgent=document.getElementById('mnav-agent');
@@ -2164,8 +2169,9 @@ function renderUsuarios(){
     if(!val){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário ainda.</div>'; return; }
     list.innerHTML='';
     const entries=Object.entries(val).filter(([uid,u])=>{
+      // Aceita: novo formato (squads.dados=true) OU legado (inscrito=true sem squads)
       if(u.squads) return u.squads[ACTIVE_SQUAD]===true;
-      return u.inscrito===true||u.inscrito==='true';
+      return (u.inscrito===true||u.inscrito==='true')&&u.init;
     });
     if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito neste squad ainda.</div>'; return; }
     entries.forEach(([uid,u])=>{
@@ -2632,7 +2638,11 @@ function parseTrelloJSON(raw){
     const tm=memberMap[trelloMemberId]; if(!tm) return '';
     // Estratégia conservadora: exige que PRIMEIRO nome E ÚLTIMO nome batam
     // Evita falso positivo tipo "Maria Luiza" → "Laisa Maria"
-    const tParts=(tm.fullName||tm.username||'').toLowerCase().split(' ').filter(Boolean);
+    // Usa fullName preferencial; fallback pro username sem pontos/underscores
+    const rawName=(tm.fullName&&tm.fullName.trim()&&tm.fullName.toLowerCase()!==tm.username?.toLowerCase())
+      ? tm.fullName
+      : (tm.username||'').replace(/[._]/g,' ');
+    const tParts=rawName.toLowerCase().split(' ').filter(Boolean);
     const tFirst=tParts[0]||'';
     const tLast=tParts[tParts.length-1]||'';
     const tInitials=(tm.initials||'').toLowerCase();
