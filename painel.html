@@ -1277,13 +1277,71 @@ function loadErrorLogs(){
 // ── FIM MONITORAMENTO ─────────────────────────────────────────────
 
 
+
+// ── GERENCIAMENTO DE ADMs ─────────────────────────────────────────
+function loadAdmList(){
+  // Carrega ADMs salvos no Firebase
+  window._get(window._ref(window._db,'kanban/config/adm_emails')).then(snap=>{
+    const saved=snap.val();
+    if(saved && Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
+    renderAdmList();
+  }).catch(()=>renderAdmList());
+}
+
+function renderAdmList(){
+  const list=document.getElementById('pcfg-adm-list'); if(!list) return;
+  list.innerHTML='';
+  ADM_EMAILS.forEach(email=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
+    const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=email;
+    const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(255,209,102,.15);color:var(--warn);border:1px solid rgba(255,209,102,.3);'; badge.textContent='ADM';
+    const rm=document.createElement('button');
+    rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
+    rm.textContent='✕'; rm.title='Remover ADM';
+    const emailCopy=email;
+    rm.onclick=()=>removeAdmEmail(emailCopy);
+    row.appendChild(lbl); row.appendChild(badge); row.appendChild(rm);
+    list.appendChild(row);
+  });
+}
+
+function addAdmEmail(){
+  const email=document.getElementById('pcfg-adm-email')?.value?.trim();
+  if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
+  if(ADM_EMAILS.includes(email)){ showToast('Já é ADM'); return; }
+  ADM_EMAILS.push(email);
+  saveAdmEmails();
+  // Atualiza role no Firebase do usuário se existir
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val()||{};
+    const entry=Object.entries(val).find(([uid,u])=>u.email===email);
+    if(entry) window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'adm');
+  });
+  document.getElementById('pcfg-adm-email').value='';
+}
+
+function removeAdmEmail(email){
+  if(!confirm('Remover '+email+' dos ADMs?')) return;
+  ADM_EMAILS=ADM_EMAILS.filter(e=>e!==email);
+  saveAdmEmails();
+}
+
+function saveAdmEmails(){
+  window._set(window._ref(window._db,'kanban/config/adm_emails'), ADM_EMAILS)
+    .then(()=>{ showToast('✅ ADMs atualizados'); renderAdmList(); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+// ── FIM GERENCIAMENTO ADMs ────────────────────────────────────────
+
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
-  document.getElementById('painel-cfg-sprint').style.display=tab==='sprint'?'block':'none';
-  document.getElementById('painel-cfg-users').style.display=tab==='users'?'block':'none';
-  document.getElementById('pcfg-tab-sprint').classList.toggle('active',tab==='sprint');
-  document.getElementById('pcfg-tab-users').classList.toggle('active',tab==='users');
+  ['sprint','users','adm'].forEach(t=>{
+    const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
+    const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
+  });
   if(tab==='users') loadPcfgUsers();
+  if(tab==='adm')  renderAdmList();
 }
 
 function loadPcfgUsers(){
@@ -1301,24 +1359,29 @@ function loadPcfgUsers(){
       return;
     }
     const ROLES=['adm','po','organizador','membro','convidado'];
-    const rows=membersArr.map(([uid,u])=>{
-      const foto=u.foto
-        ? '<img src="'+u.foto+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">'
-        : '<div style="width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">'+(u.init||'?')+'</div>';
-      const opts=ROLES.map(r=>'<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>').join('');
-      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;">'
-        +foto
-        +'<div style="flex:1;">'
-        +'<div style="font-size:11px;font-weight:600;">'+(u.nome||u.email||'?')+'</div>'
-        +'<div style="font-size:9px;color:var(--txt3);">'+(u.email||'')+'</div>'
-        +'</div>'
-        +'<select onchange="updateUserRole(\''+uid+'\',this.value)" style="padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;">'+opts+'</select>'
-        +'</div>';
+    list.innerHTML='';
+    membersArr.forEach(([uid,u])=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:4px;';
+      // Avatar
+      const av=document.createElement(u.foto?'img':'div');
+      if(u.foto){ av.src=u.foto; av.style.cssText='width:28px;height:28px;border-radius:50%;object-fit:cover;'; }
+      else{ av.style.cssText='width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;'; av.textContent=u.init||'?'; }
+      // Info
+      const info=document.createElement('div'); info.style.flex='1';
+      const nome=document.createElement('div'); nome.style.cssText='font-size:11px;font-weight:600;'; nome.textContent=u.nome||u.email||'?';
+      const email=document.createElement('div'); email.style.cssText='font-size:9px;color:var(--txt3);'; email.textContent=u.email||'';
+      info.appendChild(nome); info.appendChild(email);
+      // Select
+      const sel=document.createElement('select');
+      sel.style.cssText='padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;';
+      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(u.role===r) opt.selected=true; sel.appendChild(opt); });
+      sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
+      row.appendChild(av); row.appendChild(info); row.appendChild(sel);
+      list.appendChild(row);
     });
-    list.innerHTML=rows.join('');
   }).catch(e=>{ list.innerHTML='<div style="font-size:11px;color:var(--danger);">Erro: '+e.message+'</div>'; });
 }
-
 function updateUserRole(uid, role){
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'),role)
     .then(()=>showToast('✅ Role atualizado'))
@@ -1386,6 +1449,7 @@ window.addEventListener('fb-ready',()=>{
   loadAgentUsage();
   loadPcalEvents();
   loadErrorLogs();
+  loadAdmList();
 });
 
 function loadAll(){
