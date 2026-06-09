@@ -3195,18 +3195,19 @@ function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().get
 function renderBoardCalLegend(){
   const el=document.getElementById('board-cal-legend'); if(!el) return;
   const CAL_LEGEND_COLORS=[
-    {bg:'rgba(37,99,201,.8)',label:'Evento geral'},
-    {bg:'rgba(29,233,182,.8)',label:'Sprint/Time'},
-    {bg:'rgba(255,209,102,.8)',label:'Prazo'},
-    {bg:'rgba(255,107,107,.8)',label:'Urgente'},
-    {bg:'rgba(150,80,220,.8)',label:'Gestão Digital'},
-    {bg:'rgba(56,182,255,.8)',label:'Outros'},
+    {bg:'rgba(37,99,201,.8)',  id:'blue',   label:'Evento geral'},
+    {bg:'rgba(29,233,182,.8)', id:'teal',   label:'Sprint/Time'},
+    {bg:'rgba(255,209,102,.8)',id:'warn',   label:'Prazo'},
+    {bg:'rgba(255,107,107,.8)',id:'danger', label:'Urgente'},
+    {bg:'rgba(150,80,220,.8)', id:'purple', label:'Gestão Digital'},
+    {bg:'rgba(56,182,255,.8)', id:'cyan',   label:'Outros'},
   ];
-  const usedColors=new Set(calEvents.map(e=>e.color||'blue'));
-  el.innerHTML=CAL_LEGEND_COLORS.filter((_,i)=>usedColors.has(['blue','teal','warn','danger','purple','cyan'][i]))
-    .map(col=>`<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label}</div>`).join('');
-  // Sempre mostra legenda mínima se tiver eventos
-  if(calEvents.length&&!el.innerHTML) el.innerHTML=`<div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(37,99,201,.8);"></div>Eventos do squad</div>`;
+  // Sempre mostra gestão se tiver eventos de gestão
+  const hasGestao=calEvents.some(e=>e._gestao);
+  const usedColors=new Set(calEvents.map(e=>e._gestao?'purple':(e.color||'blue')));
+  el.innerHTML=CAL_LEGEND_COLORS.filter(col=>usedColors.has(col.id))
+    .map(col=>'<div class="cal-leg-item"><div class="cal-leg-dot" style="background:'+col.bg+';"></div>'+col.label+'</div>').join('');
+  if(calEvents.length&&!el.innerHTML) el.innerHTML='<div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(37,99,201,.8);"></div>Eventos do squad</div>';
 }
 function renderCal(){
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -3238,8 +3239,10 @@ function makeDayEl(date,otherMonth=false,isToday=false){
   div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
   div.innerHTML=`<div class="cal-day-num">${date.getDate()}</div>`
     +dayEvs.slice(0,3).map(ev=>{
-      const col=EV_COLORS.find(c=>c.id===ev.color)||EV_COLORS[0];
-      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${ev.title}">${esc(ev.title)}</div>`;
+      const evColor=ev._gestao?'purple':(ev.color||'blue');
+      const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
+      const gestaoLabel=ev._gestao?' [Gestão]':'';
+      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${ev.title}${gestaoLabel}">${esc(ev.title)}${gestaoLabel}</div>`;
     }).join('')
     +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-3} mais</div>`:'')
     +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
