@@ -1707,10 +1707,19 @@ function renderRaiaOwner(board,activeCards){
       const colCards=ownerCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO2[a.priority||'']||4)-(PRIO2[b.priority||'']||4));
       const safeId=owner||'none';
       const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
-      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body" id="rbody-${safeId}-${col.id}"></div>`;
+      const rColId='raia-'+safeId+'-'+col.id;
+      const rCollapsed=collapsedCols.has(rColId);
+      div.className='col'+(rCollapsed?' collapsed':'');
+      div.innerHTML=`<div class="col-hd">
+        <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="col-cnt">${colCards.length}</span>
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${rColId}')">${rCollapsed?'▶':'▼'}</button>`:''}
+        </div>
+      </div><div class="col-body" id="rbody-${safeId}-${col.id}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
-      colCards.forEach(c=>body.appendChild(makeCardEl(c)));
+      if(!rCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
     });
   });
 }
@@ -1742,11 +1751,21 @@ function renderRaiaTag(board,activeCards){
     columns.forEach(col=>{
       const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
       const colCards=tagCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']||4)-(PRIO[b.priority||'']||4));
-      const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
-      div.innerHTML=`<div class="col-hd"><div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div><span class="col-cnt">${colCards.length}</span></div><div class="col-body"></div>`;
+      const tColId='raia-tag-'+tagId+'-'+col.id;
+      const tCollapsed=collapsedCols.has(tColId);
+      const div=document.createElement('div');
+      div.className='col'+(tCollapsed?' collapsed':'');
+      div.style.minWidth='160px';
+      div.innerHTML=`<div class="col-hd">
+        <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="col-cnt">${colCards.length}</span>
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
+        </div>
+      </div><div class="col-body"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
-      colCards.forEach(c=>body.appendChild(makeCardEl(c)));
+      if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
     });
   });
 }
@@ -1807,6 +1826,11 @@ function toggleRaia(){
   renderBoard();
 }
 
+function toggleRaiaCol(id){
+  if(collapsedCols.has(id)) collapsedCols.delete(id);
+  else collapsedCols.add(id);
+  renderBoard(); // re-renderiza a raia com o estado atualizado
+}
 function toggleCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
