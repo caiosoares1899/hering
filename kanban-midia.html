@@ -1381,8 +1381,7 @@ let agilCfg={};
 function fb(path){ return window._ref(window._db, path); }
 function fbSet(path,val){
   if(!window._fbReady) return;
-  const p=window._set(fb(path),val);
-  if(p&&p.catch) p.catch(e=>logError('[Firebase write] '+e.message+' path:'+path,'firebase',0,0,e));
+  window._set(fb(path),val)?.catch(()=>{}); // silencioso — evita loop com logError
 }
 function fbGet(path){ return window._get(fb(path)); }
 function fbUpdate(path,val){ if(window._fbReady) window._update(fb(path),val); }
@@ -3338,40 +3337,55 @@ function categorizeError(msg){
   return 'geral';
 }
 function logError(msg, source='', line=0, col=0, err=null){
+  // Anti-loop: ignora se já estamos logando
+  if(window._loggingError) return;
   if(!window._fbReady) return;
+  // Ignora erros gerados pelo próprio logError (Firebase write errors)
+  const msgStr=String(msg||'');
+  if(msgStr.includes('[Firebase write]')||msgStr.includes('error_logs')||msgStr.includes('error_stats')) return;
+  window._loggingError=true;
   try{
     const entry={
-      ts:        new Date().toISOString(),
-      msg:       String(msg||'').substring(0,300),
-      source:    String(source||'').replace(window.location.origin,'').substring(0,120),
+      ts:       new Date().toISOString(),
+      msg:      msgStr.substring(0,300),
+      source:   String(source||'').replace(window.location.origin,'').substring(0,120),
       line, col,
-      stack:     (err?.stack||'').substring(0,500),
-      category:  categorizeError(String(msg||'')+(err?.stack||'')),
-      user:      window._currentUser?.displayName||window._currentUser?.email||'anônimo',
-      squad:     ACTIVE_SQUAD,
-      userAgent: navigator.userAgent.substring(0,80),
-      status:    'novo',
+      stack:    (err?.stack||'').substring(0,500),
+      category: categorizeError(msgStr+(err?.stack||'')),
+      user:     window._currentUser?.displayName||window._currentUser?.email||'anônimo',
+      squad:    ACTIVE_SQUAD,
+      status:   'novo',
     };
-    const key = 'err_'+Date.now();
-    fbSet('kanban/squads/'+ACTIVE_SQUAD+'/error_logs/'+key, entry);
-    // Incrementa contador diário
+    const key='err_'+Date.now();
+    // Usa window._set diretamente — sem passar por fbSet para evitar loop
+    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs/'+key), entry)
+      .catch(()=>{}); // silencioso — não chama logError
+    // Contador diário (fire and forget)
     const day=new Date().toISOString().split('T')[0];
-    fbGet('kanban/squads/'+ACTIVE_SQUAD+'/error_stats/'+day).then(s=>{
-      fbSet('kanban/squads/'+ACTIVE_SQUAD+'/error_stats/'+day, (s.val()||0)+1);
-    });
-  }catch(e){ /* silencioso para não criar loop */ }
+    const statRef=window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats/'+day);
+    window._get(statRef).then(s=>{
+      window._set(statRef,(s.val()||0)+1).catch(()=>{});
+    }).catch(()=>{});
+  }catch(e){ /* silencioso */ }
+  finally{ window._loggingError=false; }
 }
 
 // Captura erros globais de JS
+let _errCount=0, _errReset=null;
 window.onerror = function(msg, src, line, col, err){
-  // Ignora erros de extensões do browser
   if(src&&(src.includes('extension')||src.includes('chrome-extension'))) return false;
+  // Rate limit: máx 10 erros por 5 segundos
+  _errCount++; clearTimeout(_errReset); _errReset=setTimeout(()=>_errCount=0,5000);
+  if(_errCount>10) return false;
   logError(msg, src, line, col, err);
   return false; // não suprime o erro
 };
 // Captura Promises rejeitadas (Firebase, fetch, etc.)
 window.onunhandledrejection = function(e){
-  logError(e.reason?.message||String(e.reason)||'Promise rejeitada','promise',0,0,e.reason);
+  if(_errCount>10) return;
+  const msg=e.reason?.message||String(e.reason)||'Promise rejeitada';
+  if(msg.includes('error_logs')||msg.includes('error_stats')) return; // ignora erros de log
+  logError(msg,'promise',0,0,e.reason);
 };
 
 // Wrapper pra capturar erros específicos do sistema
@@ -4015,6 +4029,15 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });
 
 window.addEventListener('fb-ready',()=>{
+  // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop)
+  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
+    const val=s.val();
+    if(val&&Object.keys(val).length>500){
+      console.warn('Limpando error_logs acumulados:', Object.keys(val).length, 'entradas');
+      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs'),{});
+      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats'),{});
+    }
+  }).catch(()=>{});
   applyBlockerMode();
   fbLoadAll();
   loadAutoRules();
