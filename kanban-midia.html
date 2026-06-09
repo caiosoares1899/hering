@@ -3227,8 +3227,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
     +dayEvs.slice(0,3).map(ev=>{
       const evColor=ev._gestao?'purple':(ev.color||'blue');
       const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
-      const gestaoLabel=ev._gestao?' [Gestão]':'';
-      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${ev.title}${gestaoLabel}">${esc(ev.title)}${gestaoLabel}</div>`;
+      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${ev.title}">${esc(ev.title)}</div>`;
     }).join('')
     +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-3} mais</div>`:'')
     +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
