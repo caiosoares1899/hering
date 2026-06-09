@@ -1381,10 +1381,10 @@ function loadErrorLogs(){
 
 // ── GERENCIAMENTO DE ADMs ─────────────────────────────────────────
 function loadAdmList(){
-  // Carrega ADMs salvos no Firebase
+  // Carrega ADMs extras salvos no Firebase
   window._get(window._ref(window._db,'kanban/config/adm_emails')).then(snap=>{
     const saved=snap.val();
-    if(saved && Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
+    if(saved&&Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
     renderAdmList();
   }).catch(()=>renderAdmList());
 }
@@ -1417,7 +1417,10 @@ function addAdmEmail(){
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
     const val=snap.val()||{};
     const entry=Object.entries(val).find(([uid,u])=>u.email===email);
-    if(entry) window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'adm');
+    if(entry){
+        window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'adm')
+          .catch(e=>console.warn('Não foi possível setar role ADM (Firebase Rules):',e.message));
+      }
   });
   document.getElementById('pcfg-adm-email').value='';
 }
@@ -1485,8 +1488,16 @@ function loadPcfgUsers(){
 }
 function updateUserRole(uid, role){
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'),role)
-    .then(()=>showToast('✅ Role atualizado'))
-    .catch(e=>showToast('❌ '+e.message));
+    .then(()=>{ showToast('✅ Role atualizado'); loadPcfgUsers(); })
+    .catch(e=>{
+      if(e.code==='PERMISSION_DENIED'||e.message?.includes('permission')){
+        showToast('⚠ Firebase Rules bloqueou. Adicione a regra de ADM nas Database Rules.');
+        console.warn('Para permitir ADMs editarem roles, adicione nas Firebase Rules:\n'+
+          '".write": "auth != null && root.child(\'kanban/usuarios/\'+auth.uid+\'/role\').val() === \'adm\'"');
+      } else {
+        showToast('❌ '+e.message);
+      }
+    });
 }
 
 function addGuestByEmail(){
@@ -1516,7 +1527,9 @@ const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',bloc
 const COL_COLORS = {backlog:'#888',todo:'#38b6ff',progress:'#1de9b6',blocker:'#ff6b6b',done:'#639922'};
 
 // Estado carregado
-let squadData = {}; // {dados:{cards,columns,agilCfg}, midia:{...}}
+let squadData = {};
+let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
+function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); } // {dados:{cards,columns,agilCfg}, midia:{...}}
 let snapshots = {};  // {dados:{date:snap,...}, midia:{...}}
 
 function doSignIn(){
