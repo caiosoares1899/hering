@@ -556,7 +556,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.4 · painel</div>
+<div class="version">v1.5 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -609,9 +609,9 @@ let cfgSquadId = null;
 
 function openCfg(squadId){
   cfgSquadId = squadId;
-  const sq = SQUADS.find(s=>s.id===squadId);
-  const d = squadData[squadId];
-  const cfg = d?.agilCfg||{};
+  const sq = SQUADS.find(s=>s.id===squadId); if(!sq){ showToast("Squad não encontrado"); return; }
+  const d = squadData[squadId]||{};
+  const cfg = d.agilCfg||{};
 
   document.getElementById('cfg-modal-title').textContent = '⚙ Configurar — ' + sq.icon + ' ' + sq.label;
   document.getElementById('cfg-sprint-num').value = cfg.sprintNum||'';
@@ -656,10 +656,9 @@ function saveCfg(){
 
   // Salva no Firebase
   const ref = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados/agil_cfg');
-  window._set(ref, cfg).then(()=>{
-    showToast('✅ Configurações do '+(SQUADS.find(s=>s.id===cfgSquadId)?.label||cfgSquadId)+' salvas!');
-    closeCfg();
-  }).catch(e=>showToast('❌ Erro: '+e.message));
+  window._set(ref, cfg)
+    .then(()=>{ showToast('✅ Configurações salvas!'); closeCfg(); })
+    .catch(e=>{ console.error(e); showToast('❌ Erro ao salvar: '+e.message); });
 }
 
 function showToast(msg){
@@ -719,7 +718,7 @@ function renderOKR(){
   SQUADS.forEach(sq=>{
     if(!squadVisible(sq.id)) return;
     const d=squadData[sq.id]; if(!d) return;
-    d.cards.filter(c=>!c.archived&&(c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
+    d.cards.filter(c=>!c.archived&&(c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
       .forEach(c=>okrs.push({...c,_squad:sq}));
   });
   if(cnt) cnt.textContent=okrs.length;
@@ -1281,6 +1280,66 @@ function loadErrorLogs(){
   });
 }
 // ── FIM MONITORAMENTO ─────────────────────────────────────────────
+
+
+// ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
+function setPcfgTab(tab){
+  document.getElementById('painel-cfg-sprint').style.display=tab==='sprint'?'block':'none';
+  document.getElementById('painel-cfg-users').style.display=tab==='users'?'block':'none';
+  document.getElementById('pcfg-tab-sprint').classList.toggle('active',tab==='sprint');
+  document.getElementById('pcfg-tab-users').classList.toggle('active',tab==='users');
+  if(tab==='users') loadPcfgUsers();
+}
+
+function loadPcfgUsers(){
+  if(!cfgSquadId) return;
+  const list=document.getElementById('pcfg-users-list'); if(!list) return;
+  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val()||{};
+    const members=Object.entries(val).filter(([uid,u])=>{
+      if(u.squads) return u.squads[cfgSquadId]===true;
+      return u.inscrito===true||u.inscrito==='true';
+    });
+    if(!members.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito.</div>'; return; }
+    const ROLES=['adm','po','organizador','membro','convidado'];
+    list.innerHTML=members.map(([uid,u])=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;">
+        ${u.foto?`<img src="${u.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`:`<div style="width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">${u.init||'?'}</div>`}
+        <div style="flex:1;">
+          <div style="font-size:11px;font-weight:600;">${u.nome||u.email||'?'}</div>
+          <div style="font-size:9px;color:var(--txt3);">${u.email||''}</div>
+        </div>
+        <select onchange="updateUserRole('${uid}',this.value)" style="padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;">
+          ${ROLES.map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>`).join('');
+  });
+}
+
+function updateUserRole(uid, role){
+  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'),role)
+    .then(()=>showToast('✅ Role atualizado'))
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+function addGuestByEmail(){
+  const email=document.getElementById('pcfg-guest-email')?.value?.trim(); if(!email) return;
+  // Busca usuário pelo email no Firebase
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val()||{};
+    const entry=Object.entries(val).find(([uid,u])=>u.email===email);
+    if(entry){
+      const [uid,u]=entry;
+      const upd={role:u.role||'convidado'}; upd['squads/'+cfgSquadId]=true;
+      window._update(window._ref(window._db,'kanban/usuarios/'+uid),upd)
+        .then(()=>{ showToast('✅ '+email+' adicionado como convidado'); loadPcfgUsers(); document.getElementById('pcfg-guest-email').value=''; });
+    } else {
+      showToast('⚠ Usuário não encontrado — precisa ter feito login ao menos uma vez');
+    }
+  });
+}
+// ── FIM GERENCIAMENTO USUÁRIOS ─────────────────────────────────────
 
 const SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
