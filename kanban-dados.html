@@ -1225,7 +1225,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.7</div>
+<div class="version">v7.8</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1308,7 +1308,11 @@ let agilCfg={};
 // FIREBASE HELPERS
 // ═══════════════════════════════════════════════════════
 function fb(path){ return window._ref(window._db, path); }
-function fbSet(path,val){ if(window._fbReady) window._set(fb(path),val); }
+function fbSet(path,val){
+  if(!window._fbReady) return;
+  const p=window._set(fb(path),val);
+  if(p&&p.catch) p.catch(e=>logError('[Firebase write] '+e.message+' path:'+path,'firebase',0,0,e));
+}
 function fbGet(path){ return window._get(fb(path)); }
 function fbUpdate(path,val){ if(window._fbReady) window._update(fb(path),val); }
 function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
@@ -3191,6 +3195,72 @@ function loadCalEvents(){
   });
 }
 // ── FIM CALENDÁRIO ────────────────────────────────────────────────
+
+
+// ── MONITORAMENTO DE ERROS ────────────────────────────────────────
+const ERROR_CATEGORIES = {
+  firebase:   ['firebase','fbset','fbget','fbupdate','fblistern','permission','network'],
+  agente:     ['worker','anthropic','api','fetch','tool','agent','qa('],
+  importacao: ['trello','parsejson','import','json'],
+  ui:         ['referenceerror','typeerror','syntaxerror','cannot read'],
+};
+function categorizeError(msg){
+  const m=(msg||'').toLowerCase();
+  for(const [cat,keys] of Object.entries(ERROR_CATEGORIES)){
+    if(keys.some(k=>m.includes(k))) return cat;
+  }
+  return 'geral';
+}
+function logError(msg, source='', line=0, col=0, err=null){
+  if(!window._fbReady) return;
+  try{
+    const entry={
+      ts:        new Date().toISOString(),
+      msg:       String(msg||'').substring(0,300),
+      source:    String(source||'').replace(window.location.origin,'').substring(0,120),
+      line, col,
+      stack:     (err?.stack||'').substring(0,500),
+      category:  categorizeError(String(msg||'')+(err?.stack||'')),
+      user:      window._currentUser?.displayName||window._currentUser?.email||'anônimo',
+      squad:     ACTIVE_SQUAD,
+      userAgent: navigator.userAgent.substring(0,80),
+      status:    'novo',
+    };
+    const key = 'err_'+Date.now();
+    fbSet('kanban/squads/'+ACTIVE_SQUAD+'/error_logs/'+key, entry);
+    // Incrementa contador diário
+    const day=new Date().toISOString().split('T')[0];
+    fbGet('kanban/squads/'+ACTIVE_SQUAD+'/error_stats/'+day).then(s=>{
+      fbSet('kanban/squads/'+ACTIVE_SQUAD+'/error_stats/'+day, (s.val()||0)+1);
+    });
+  }catch(e){ /* silencioso para não criar loop */ }
+}
+
+// Captura erros globais de JS
+window.onerror = function(msg, src, line, col, err){
+  // Ignora erros de extensões do browser
+  if(src&&(src.includes('extension')||src.includes('chrome-extension'))) return false;
+  logError(msg, src, line, col, err);
+  return false; // não suprime o erro
+};
+// Captura Promises rejeitadas (Firebase, fetch, etc.)
+window.onunhandledrejection = function(e){
+  logError(e.reason?.message||String(e.reason)||'Promise rejeitada','promise',0,0,e.reason);
+};
+
+// Wrapper pra capturar erros específicos do sistema
+const _origQa = typeof qa !== 'undefined' ? qa : null;
+function wrapWithErrorLog(fn, context){
+  return async function(...args){
+    try{ return await fn.apply(this,args); }
+    catch(e){ logError('['+context+'] '+e.message,'system',0,0,e); throw e; }
+  };
+}
+// Aplica wrapper após init
+window.addEventListener('fb-ready',()=>{
+  if(typeof qa==='function') window.qa=wrapWithErrorLog(qa,'Agente Ágil');
+});
+// ── FIM MONITORAMENTO ─────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════
 // DRAG AND DROP
