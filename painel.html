@@ -259,6 +259,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .embed-area{margin-top:10px;border-radius:8px;overflow:hidden;display:none;}
 .embed-area.show{display:block;}
 
+
+.err-chart{display:flex;align-items:flex-end;gap:3px;height:50px;padding:4px 0;}
+.err-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.err-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .3s;}
+.err-bar-lbl{font-size:8px;color:var(--txt3);white-space:nowrap;}
+
 </style>
 </head>
 <body>
@@ -808,7 +814,7 @@ function openPcModal(squadId, cardId){
       ${tag?`<span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;background:${tag.isOKR?'rgba(255,215,0,.15)':'rgba(56,182,255,.15)'};border:1px solid ${tag.isOKR?'rgba(255,215,0,.4)':'rgba(56,182,255,.3)'};color:${tag.isOKR?'#ffd700':'var(--accent)'};">${tag.label}</span>`:''}
       <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(56,182,255,.1);color:var(--accent);border:1px solid rgba(56,182,255,.2);">${sq.icon} ${sq.label}</span>
       <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:var(--glass);color:var(--txt2);border:1px solid var(--glass-b);">${colName}</span>
-      ${card.priority?`<span style="font-size:12px;">{{{'critical':'🔥','high':'🔴','medium':'🟡','low':'🟢'}[card.priority]||''}}</span>`:''}
+      ${card.priority?`<span style="font-size:12px;">${{'critical':'🔥','high':'🔴','medium':'🟡','low':'🟢'}[card.priority]||''}</span>`:''}
     </div>
     ${card.desc?`<div class="pc-field"><div class="pc-field-label">Descrição</div><div class="pc-field-val" style="color:var(--txt2);">${card.desc}</div></div>`:''}
     ${card.po?`<div class="pc-field" style="background:rgba(37,99,201,.08);border:1px solid rgba(37,99,201,.2);border-radius:8px;padding:8px;"><div class="pc-field-label" style="color:#7eb3ff;">🎯 Insights do PO</div><div class="pc-field-val">${card.po}</div></div>`:''}
@@ -1468,7 +1474,7 @@ function renderBlockers(){
   count.textContent=blockers.length;
   if(!blockers.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">✅ Nenhum bloqueio ativo em nenhum squad.</div>'; return; }
   list.innerHTML=blockers.map(c=>`
-    <div class="blocker-item panel-card blocker" onclick="openPcModal('${c._squad.id}','${c.id}')" style="cursor:pointer;">+c._squad.id+"','"+c.id+"')" style="cursor:pointer;">
+    <div class="panel-card" onclick="openPcModal('${c._squad.id}','${c.id}')" style="cursor:pointer;padding:8px 10px;background:rgba(3,13,26,.7);border:1px solid rgba(255,107,107,.3);border-radius:10px;border-left:3px solid rgba(255,107,107,.6);margin-bottom:6px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:10px;background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.3);padding:1px 7px;border-radius:999px;">${c._squad.icon} ${c._squad.label}</span>
         <span class="blocker-title">${c.title}</span>
