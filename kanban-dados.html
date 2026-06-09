@@ -17,6 +17,57 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
+
+/* ── SCROLLBARS CUSTOMIZADAS (estilo Trello) ─────────────────────
+   Finas, arredondadas, cor do tema, aparecem só no hover */
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.25) transparent; }
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; border-radius: 999px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(56,182,255,.22);
+  border-radius: 999px;
+  transition: background .2s;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Board horizontal — barra mais visível no modo expandido */
+.board-wrap::-webkit-scrollbar { height: 5px; }
+.board-wrap::-webkit-scrollbar-track {
+  background: rgba(56,182,255,.04);
+  border-radius: 999px;
+  margin: 0 8px;
+}
+.board-wrap::-webkit-scrollbar-thumb {
+  background: rgba(56,182,255,.3);
+  border-radius: 999px;
+}
+.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.55); }
+
+/* Colunas do board */
+.col-body::-webkit-scrollbar { width: 3px; }
+.col-body::-webkit-scrollbar-thumb { background: rgba(56,182,255,.15); border-radius: 999px; }
+
+/* Modais e painéis com scroll */
+.card-panel::-webkit-scrollbar,
+.cfg-panel::-webkit-scrollbar,
+.ag-body::-webkit-scrollbar,
+.ql-panel::-webkit-scrollbar,
+.msgs::-webkit-scrollbar { width: 4px; }
+.card-panel::-webkit-scrollbar-thumb,
+.cfg-panel::-webkit-scrollbar-thumb,
+.ag-body::-webkit-scrollbar-thumb,
+.ql-panel::-webkit-scrollbar-thumb,
+.msgs::-webkit-scrollbar-thumb {
+  background: rgba(56,182,255,.18);
+  border-radius: 999px;
+}
+/* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
+
 :root{
   --deep:#030d1a;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);--glass-h:rgba(56,182,255,0.1);
   --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
