@@ -539,6 +539,85 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 </div>
+
+<!-- CONFIG MODAL DO PAINEL -->
+<div class="cfg-ov" id="cfg-ov">
+  <div class="cfg-panel">
+    <div class="cfg-hd">
+      <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+        <div class="cfg-hd-title" id="cfg-modal-title">⚙ Configurações</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="err-filter-btn active" id="pcfg-tab-sprint" onclick="setPcfgTab('sprint')">⚙ Config</button>
+          <button class="err-filter-btn" id="pcfg-tab-users"  onclick="setPcfgTab('users')">👥 Usuários</button>
+          <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
+        </div>
+      </div>
+      <button class="x-btn" onclick="closeCfg()">✕</button>
+    </div>
+    <div class="cfg-body">
+
+      <!-- Aba ADMs -->
+      <div id="painel-cfg-adm" style="display:none;">
+        <div class="cfg-sec">Administradores do sistema</div>
+        <div id="pcfg-adm-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
+        <div class="cfg-sec" style="margin-top:8px;">Adicionar ADM por email</div>
+        <div style="display:flex;gap:6px;">
+          <input class="cfg-input" id="pcfg-adm-email" placeholder="email@ciahering.com.br" style="flex:1;">
+          <button class="save-btn" onclick="addAdmEmail()">+ ADM</button>
+        </div>
+        <div style="font-size:10px;color:var(--txt3);margin-top:5px;">ADMs têm acesso total a todos os boards e ao painel.</div>
+      </div>
+
+      <!-- Aba Usuários -->
+      <div id="painel-cfg-users" style="display:none;">
+        <div class="cfg-sec">Membros do Squad</div>
+        <div id="pcfg-users-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <div class="cfg-sec" style="margin-top:10px;">Adicionar convidado por email</div>
+        <div style="display:flex;gap:6px;">
+          <input class="cfg-input" id="pcfg-guest-email" placeholder="email@ciahering.com.br" style="flex:1;">
+          <button class="save-btn" onclick="addGuestByEmail()">+ Convidado</button>
+        </div>
+        <div style="font-size:10px;color:var(--txt3);margin-top:5px;">Convidados têm acesso de leitura.</div>
+      </div>
+
+      <!-- Aba Sprint/Config -->
+      <div id="painel-cfg-sprint">
+        <div class="cfg-sec">Sprint</div>
+        <div class="cfg-row">
+          <div class="cfg-field"><label class="cfg-label">Número da sprint</label><input class="cfg-input" id="cfg-sprint-num" type="number" min="1"></div>
+          <div class="cfg-field"><label class="cfg-label">Duração (dias)</label><input class="cfg-input" id="cfg-sprint-days" type="number" min="1" max="60" oninput="calcCfgEnd()"></div>
+        </div>
+        <div class="cfg-row">
+          <div class="cfg-field"><label class="cfg-label">Início</label><input class="cfg-input" id="cfg-sprint-start" type="date" oninput="calcCfgEnd()"></div>
+          <div class="cfg-field"><label class="cfg-label">Fim (calculado)</label><input class="cfg-input" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
+        </div>
+        <div class="cfg-field"><label class="cfg-label">Objetivo da sprint</label><textarea class="cfg-input" id="cfg-goal" rows="2" style="resize:vertical;min-height:50px;line-height:1.5;"></textarea></div>
+
+        <div class="cfg-sec">WIP & Capacidade</div>
+        <div class="cfg-row">
+          <div class="cfg-field"><label class="cfg-label">Limite de WIP</label><input class="cfg-input" id="cfg-wip" type="number" min="1"></div>
+          <div class="cfg-field"><label class="cfg-label">Capacidade (%)</label><input class="cfg-input" id="cfg-capacity" type="number" min="0" max="100"></div>
+        </div>
+
+        <div class="cfg-sec">Modo de impedimentos</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
+            <input type="radio" name="cfg-blocker" id="cfg-bmode-col" value="col" style="accent-color:var(--accent);"> 🗂 Coluna separada
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
+            <input type="radio" name="cfg-blocker" id="cfg-bmode-tag" value="tag" style="accent-color:var(--danger);"> 🚧 Tag no card
+          </label>
+        </div>
+      </div>
+
+    </div><!-- /cfg-body -->
+    <div class="cfg-ft">
+      <button class="x-btn" onclick="closeCfg()" style="font-size:12px;color:var(--txt2);padding:7px 14px;border:1px solid var(--glass-b);border-radius:10px;">Cancelar</button>
+      <button class="save-btn" onclick="saveCfg()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- MODAL CARD NO PAINEL -->
