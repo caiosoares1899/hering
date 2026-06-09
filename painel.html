@@ -170,6 +170,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
+      <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
       <a href="kanban-dados.html" target="_blank" class="btn" style="color:#38b6ff;border-color:rgba(56,182,255,.3);">📊 Dados</a>
       <a href="kanban-midia.html" target="_blank" class="btn" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📱 Mídia</a>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
@@ -191,6 +192,105 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="sec-title" id="online-section-title">👥 Quem está online <span class="badge" id="online-count">0</span></div>
   <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
     <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+  </div>
+
+
+  <!-- CALENDÁRIO DO PAINEL -->
+  <div id="pcal-section" style="display:none;">
+    <!-- Abas -->
+    <div class="pcal-tabs">
+      <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
+      <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
+      <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Squad Mídia</div>
+      <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Calendário de Gestão</div>
+    </div>
+
+    <!-- Conteúdo: Todos / Squad individual -->
+    <div class="pcal-content on" id="pcal-all">
+      <div class="pcal-nav">
+        <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
+        <div class="pcal-month-lbl" id="pcal-month-lbl"></div>
+        <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
+        <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+        <div style="margin-left:auto;display:flex;gap:6px;" id="pcal-squad-filter" style="display:none;">
+          <select id="pcal-filter-sel" onchange="renderPcal()" class="save-btn" style="font-size:11px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);cursor:pointer;">
+            <option value="all">Todos os squads</option>
+            <option value="dados">📊 Squad Dados</option>
+            <option value="midia">📱 Squad Mídia</option>
+          </select>
+        </div>
+        <button class="save-btn" onclick="openPevModal()" style="font-size:11px;padding:5px 14px;">+ Evento</button>
+      </div>
+      <div class="pcal-weekdays">
+        <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
+        <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
+      </div>
+      <div class="pcal-grid" id="pcal-grid"></div>
+      <div class="cal-legend" id="pcal-legend"></div>
+    </div>
+
+    <!-- Aba Gestão -->
+    <div class="pcal-content" id="pcal-gestao">
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:8px;line-height:1.6;">
+          Cole o link de incorporação do Google Calendar do Digital Hering.<br>
+          <span style="font-size:10px;color:var(--txt3);">Google Calendar → ⚙ Configurações → sua agenda → "Incorporar código" → copie o src do iframe</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input class="pev-input" id="gestao-embed-url" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;font-size:11px;padding:5px 8px;">
+          <button class="save-btn" onclick="saveGestaoEmbed()">Salvar</button>
+          <button class="save-btn" onclick="toggleGestaoEmbed()" id="btn-toggle-gestao" style="background:var(--glass);border-color:var(--glass-b);color:var(--txt2);">📆 Ver</button>
+        </div>
+        <div class="embed-area" id="gestao-embed-area">
+          <iframe id="gestao-iframe" src="" style="width:100%;height:500px;border:none;border-radius:8px;" frameborder="0"></iframe>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--glass-b);">
+        <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:8px;">📌 Eventos de Gestão cadastrados</div>
+        <div class="pcal-weekdays">
+          <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
+          <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
+        </div>
+        <div class="pcal-grid" id="pcal-gestao-grid"></div>
+        <div class="cal-legend" id="pcal-gestao-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal evento do painel -->
+  <div class="pev-modal-ov" id="pev-modal-ov">
+    <div class="pev-modal">
+      <div class="pev-hd">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;" id="pev-modal-title">Novo Evento</div>
+        <button class="x-btn" onclick="closePevModal()">✕</button>
+      </div>
+      <div class="pev-body">
+        <div class="pev-field"><label class="pev-label">Título</label><input class="pev-input" id="pev-title" placeholder="Nome do evento..."></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="pev-field"><label class="pev-label">Data início</label><input class="pev-input" id="pev-start" type="date"></div>
+          <div class="pev-field"><label class="pev-label">Data fim</label><input class="pev-input" id="pev-end" type="date"></div>
+        </div>
+        <div class="pev-field"><label class="pev-label">Squad / Origem</label>
+          <select class="pev-input" id="pev-squad">
+            <option value="gestao">🏢 Gestão Digital Hering</option>
+            <option value="dados">📊 Squad Dados</option>
+            <option value="midia">📱 Squad Mídia</option>
+            <option value="geral">🌐 Geral (todos)</option>
+          </select>
+        </div>
+        <div class="pev-field"><label class="pev-label">Descrição</label><textarea class="pev-input" id="pev-desc" rows="2" style="resize:vertical;"></textarea></div>
+        <div class="pev-field"><label class="pev-label">Link</label><input class="pev-input" id="pev-link" placeholder="https://..."></div>
+        <div class="pev-field">
+          <label class="pev-label">Cor</label>
+          <div class="pev-colors" id="pev-colors"></div>
+        </div>
+      </div>
+      <div class="pev-ft">
+        <button id="pev-del-btn" class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-right:auto;display:none;" onclick="deletePevEvent()">🗑 Excluir</button>
+        <button onclick="closePevModal()" class="btn btn-sm">Cancelar</button>
+        <button onclick="savePevEvent()" class="save-btn">Salvar</button>
+      </div>
+    </div>
   </div>
 
   <!-- FILTRO DE SQUAD -->
@@ -342,7 +442,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.2 · painel</div>
+<div class="version">v1.3 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -645,6 +745,249 @@ function checklistPct(c){
 }
 // ── FIM PAINEL JS ────────────────────────────────────────────────
 
+
+// ── CALENDÁRIO DO PAINEL ─────────────────────────────────────────
+const PCAL_COLORS=[
+  {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
+  {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Squad Mídia'},
+  {id:'gestao',  bg:'rgba(150,80,220,.8)',  txt:'#fff', label:'Gestão Digital'},
+  {id:'geral',   bg:'rgba(255,209,102,.8)', txt:'#333', label:'Geral'},
+  {id:'blue',    bg:'rgba(37,99,201,.8)',   txt:'#fff', label:'Azul'},
+  {id:'danger',  bg:'rgba(255,107,107,.8)', txt:'#fff', label:'Urgente'},
+];
+// Cores dos boards individuais mapeadas pelo squad
+const SQUAD_COLOR_MAP={dados:'dados',midia:'midia'};
+
+let pcalYear=new Date().getFullYear();
+let pcalMonth=new Date().getMonth();
+let pcalTab='all';
+let pcalEvents=[]; // eventos gerais do painel (gestão + geral)
+let pcalEditId=null;
+let pcalShowSection=false;
+// Eventos dos boards individuais carregados em squadData já existem
+// Eventos de gestão: Firebase kanban/painel/cal_events
+
+function togglePcalSection(){
+  pcalShowSection=!pcalShowSection;
+  document.getElementById('pcal-section').style.display=pcalShowSection?'block':'none';
+  document.getElementById('btn-pcal').style.background=pcalShowSection?'rgba(29,233,182,.15)':'';
+  document.getElementById('btn-pcal').style.borderColor=pcalShowSection?'rgba(29,233,182,.5)':'rgba(29,233,182,.3)';
+  if(pcalShowSection){ renderPcal(); renderPcalGestao(); }
+}
+
+function setPcalTab(tab){
+  pcalTab=tab;
+  document.querySelectorAll('.pcal-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pcal-tab-'+tab)?.classList.add('on');
+  document.querySelectorAll('.pcal-content').forEach(c=>c.classList.remove('on'));
+  // Tabs all/dados/midia usam o mesmo grid
+  if(tab==='gestao'){
+    document.getElementById('pcal-gestao').classList.add('on');
+    renderPcalGestao();
+  } else {
+    document.getElementById('pcal-all').classList.add('on');
+    // Atualiza filtro de squad
+    const sel=document.getElementById('pcal-filter-sel');
+    if(sel&&tab!=='all') sel.value=tab; else if(sel) sel.value='all';
+    renderPcal();
+  }
+}
+
+function pcalNav(dir){
+  pcalMonth+=dir;
+  if(pcalMonth>11){pcalMonth=0;pcalYear++;}
+  if(pcalMonth<0){pcalMonth=11;pcalYear--;}
+  renderPcal(); renderPcalGestao();
+}
+function pcalGoToday(){ pcalYear=new Date().getFullYear(); pcalMonth=new Date().getMonth(); renderPcal(); renderPcalGestao(); }
+
+function getAllPcalEvents(){
+  // Junta eventos dos boards + eventos do painel
+  const boardEvs=[];
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d?.cal_events) return;
+    const evs=Array.isArray(d.cal_events)?d.cal_events:Object.values(d.cal_events);
+    evs.forEach(ev=>boardEvs.push({...ev, _squad:sq.id, _source:'board'}));
+  });
+  const panelEvs=pcalEvents.map(ev=>({...ev, _source:'painel'}));
+  return [...boardEvs,...panelEvs];
+}
+
+function renderPcal(){
+  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const lbl=document.getElementById('pcal-month-lbl');
+  if(lbl) lbl.textContent=MESES[pcalMonth]+' '+pcalYear;
+  const grid=document.getElementById('pcal-grid'); if(!grid) return;
+  grid.innerHTML='';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const first=new Date(pcalYear,pcalMonth,1);
+  const last=new Date(pcalYear,pcalMonth+1,0);
+  const startDay=first.getDay();
+  const prevLast=new Date(pcalYear,pcalMonth,0);
+  // Filtro de squad
+  const filterSq=document.getElementById('pcal-filter-sel')?.value||pcalTab;
+  const allEvs=getAllPcalEvents().filter(ev=>{
+    if(filterSq==='all'||filterSq==='geral') return true;
+    return ev._squad===filterSq||ev.squad===filterSq||ev._squad===undefined;
+  });
+  // Dias mês anterior
+  for(let i=startDay-1;i>=0;i--)
+    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth-1,prevLast.getDate()-i),true,allEvs));
+  // Dias do mês
+  for(let d=1;d<=last.getDate();d++){
+    const dt=new Date(pcalYear,pcalMonth,d);
+    grid.appendChild(makePcalDay(dt,false,allEvs,dt.getTime()===today.getTime()));
+  }
+  // Preenche
+  const rem=(7-grid.children.length%7)%7;
+  for(let d=1;d<=rem&&rem<7;d++)
+    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth+1,d),true,allEvs));
+  renderPcalLegend('pcal-legend',allEvs);
+}
+
+function renderPcalGestao(){
+  const grid=document.getElementById('pcal-gestao-grid'); if(!grid) return;
+  grid.innerHTML='';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const first=new Date(pcalYear,pcalMonth,1);
+  const last=new Date(pcalYear,pcalMonth+1,0);
+  const startDay=first.getDay();
+  const prevLast=new Date(pcalYear,pcalMonth,0);
+  const gestaoEvs=pcalEvents.filter(ev=>ev.squad==='gestao'||ev.squad==='geral');
+  for(let i=startDay-1;i>=0;i--)
+    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth-1,prevLast.getDate()-i),true,gestaoEvs));
+  for(let d=1;d<=last.getDate();d++){
+    const dt=new Date(pcalYear,pcalMonth,d);
+    grid.appendChild(makePcalDay(dt,false,gestaoEvs,dt.getTime()===today.getTime()));
+  }
+  const rem=(7-grid.children.length%7)%7;
+  for(let d=1;d<=rem&&rem<7;d++)
+    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth+1,d),true,gestaoEvs));
+  renderPcalLegend('pcal-gestao-legend',gestaoEvs);
+}
+
+function makePcalDay(date,otherMonth,evs,isToday=false){
+  const ds=date.toISOString().split('T')[0];
+  const dayEvs=evs.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
+  const div=document.createElement('div');
+  div.className='pcal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
+  div.innerHTML=`<div class="pcal-day-num">${date.getDate()}</div>`
+    +dayEvs.slice(0,2).map(ev=>{
+      const squad=ev._squad||ev.squad||'geral';
+      const col=PCAL_COLORS.find(c=>c.id===squad)||PCAL_COLORS.find(c=>c.id===ev.color)||PCAL_COLORS[3];
+      return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
+        onclick="event.stopPropagation();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')"
+        title="${ev.title}">${ev.title}</div>`;
+    }).join('')
+    +(dayEvs.length>2?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-2} mais</div>`:'');
+  div.onclick=()=>openPevModal(ds);
+  return div;
+}
+
+function renderPcalLegend(elId, evs){
+  const el=document.getElementById(elId); if(!el) return;
+  const squadsPresentes=new Set(evs.map(ev=>ev._squad||ev.squad||'geral'));
+  el.innerHTML=[...squadsPresentes].map(sq=>{
+    const col=PCAL_COLORS.find(c=>c.id===sq)||PCAL_COLORS[3];
+    return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label||sq}</div>`;
+  }).join('');
+}
+
+// ── MODAL EVENTO PAINEL ──────────────────────────────────────────
+function openPevModal(dateStr='', evId='', source='painel'){
+  pcalEditId=evId||null;
+  const ev=evId?pcalEvents.find(e=>e.id===evId):null;
+  document.getElementById('pev-modal-title').textContent=ev?'Editar Evento':'Novo Evento';
+  document.getElementById('pev-title').value=ev?.title||'';
+  document.getElementById('pev-start').value=ev?.start||dateStr||new Date().toISOString().split('T')[0];
+  document.getElementById('pev-end').value=ev?.end||dateStr||'';
+  document.getElementById('pev-desc').value=ev?.desc||'';
+  document.getElementById('pev-link').value=ev?.link||'';
+  document.getElementById('pev-squad').value=ev?.squad||'gestao';
+  document.getElementById('pev-del-btn').style.display=ev?'':'none';
+  renderPevColors(ev?.color||'gestao');
+  document.getElementById('pev-modal-ov').classList.add('open');
+}
+function closePevModal(){ document.getElementById('pev-modal-ov').classList.remove('open'); pcalEditId=null; }
+
+function renderPevColors(sel){
+  document.getElementById('pev-colors').innerHTML=PCAL_COLORS.map(col=>
+    `<button class="pev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};"
+      onclick="selectPevColor('${col.id}')" title="${col.label}"></button>`
+  ).join('');
+}
+function selectPevColor(id){ renderPevColors(id); }
+function getSelPevColor(){
+  const btns=[...document.querySelectorAll('#pev-colors .pev-color-btn')];
+  const idx=btns.findIndex(b=>b.classList.contains('sel'));
+  return PCAL_COLORS[idx]?.id||'gestao';
+}
+
+function savePevEvent(){
+  const title=document.getElementById('pev-title').value.trim(); if(!title) return;
+  const squad=document.getElementById('pev-squad').value;
+  const ev={
+    id:pcalEditId||'pev'+Date.now(), title,
+    start:document.getElementById('pev-start').value,
+    end:document.getElementById('pev-end').value||document.getElementById('pev-start').value,
+    desc:document.getElementById('pev-desc').value,
+    link:document.getElementById('pev-link').value,
+    squad, color:getSelPevColor(),
+    createdBy:window._currentUser?.displayName||'?',
+    updatedAt:new Date().toISOString(),
+  };
+  if(pcalEditId){ const idx=pcalEvents.findIndex(e=>e.id===pcalEditId); if(idx>-1) pcalEvents[idx]=ev; }
+  else pcalEvents.push(ev);
+  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
+    .then(()=>{ showToast('✅ Evento salvo!'); closePevModal(); renderPcal(); renderPcalGestao(); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+function deletePevEvent(){
+  if(!pcalEditId||!confirm('Excluir este evento?')) return;
+  pcalEvents=pcalEvents.filter(e=>e.id!==pcalEditId);
+  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
+    .then(()=>{ showToast('🗑 Evento excluído'); closePevModal(); renderPcal(); renderPcalGestao(); });
+}
+
+function saveGestaoEmbed(){
+  const url=document.getElementById('gestao-embed-url').value.trim(); if(!url) return;
+  document.getElementById('gestao-iframe').src=url;
+  window._set(window._ref(window._db,'kanban/painel/gestao_embed'),url)
+    .then(()=>showToast('✅ Calendário de Gestão vinculado!'));
+}
+function toggleGestaoEmbed(){
+  const area=document.getElementById('gestao-embed-area');
+  const show=!area.classList.contains('show');
+  area.classList.toggle('show',show);
+  document.getElementById('btn-toggle-gestao').textContent=show?'📆 Ocultar':'📆 Ver';
+}
+
+function loadPcalEvents(){
+  // Eventos do painel (gestão + geral)
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+    const val=snap.val();
+    pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
+    if(pcalShowSection){ renderPcal(); renderPcalGestao(); }
+  });
+  // Embed de gestão salvo
+  window._onValue(window._ref(window._db,'kanban/painel/gestao_embed'),snap=>{
+    const url=snap.val(); if(!url) return;
+    document.getElementById('gestao-embed-url').value=url;
+    document.getElementById('gestao-iframe').src=url;
+  });
+  // Eventos dos squads (cal_events de cada board)
+  SQUADS.forEach(sq=>{
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/cal_events'),snap=>{
+      const val=snap.val();
+      if(!squadData[sq.id]) squadData[sq.id]={};
+      squadData[sq.id].cal_events=val?(Array.isArray(val)?val:Object.values(val)):[];
+      if(pcalShowSection) renderPcal();
+    });
+  });
+}
+document.addEventListener('click',e=>{ if(e.target.id==='pev-modal-ov') closePevModal(); });
+// ── FIM CALENDÁRIO PAINEL ─────────────────────────────────────────
+
 const SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
@@ -686,6 +1029,7 @@ window.addEventListener('fb-ready',()=>{
   loadAll();
   loadPresence();
   loadAgentUsage();
+  loadPcalEvents();
 });
 
 function loadAll(){
