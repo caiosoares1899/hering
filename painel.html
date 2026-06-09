@@ -7,6 +7,57 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
+
+/* ── SCROLLBARS CUSTOMIZADAS (estilo Trello) ─────────────────────
+   Finas, arredondadas, cor do tema, aparecem só no hover */
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.25) transparent; }
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; border-radius: 999px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(56,182,255,.22);
+  border-radius: 999px;
+  transition: background .2s;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Board horizontal — barra mais visível no modo expandido */
+.board-wrap::-webkit-scrollbar { height: 5px; }
+.board-wrap::-webkit-scrollbar-track {
+  background: rgba(56,182,255,.04);
+  border-radius: 999px;
+  margin: 0 8px;
+}
+.board-wrap::-webkit-scrollbar-thumb {
+  background: rgba(56,182,255,.3);
+  border-radius: 999px;
+}
+.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.55); }
+
+/* Colunas do board */
+.col-body::-webkit-scrollbar { width: 3px; }
+.col-body::-webkit-scrollbar-thumb { background: rgba(56,182,255,.15); border-radius: 999px; }
+
+/* Modais e painéis com scroll */
+.card-panel::-webkit-scrollbar,
+.cfg-panel::-webkit-scrollbar,
+.ag-body::-webkit-scrollbar,
+.ql-panel::-webkit-scrollbar,
+.msgs::-webkit-scrollbar { width: 4px; }
+.card-panel::-webkit-scrollbar-thumb,
+.cfg-panel::-webkit-scrollbar-thumb,
+.ag-body::-webkit-scrollbar-thumb,
+.ql-panel::-webkit-scrollbar-thumb,
+.msgs::-webkit-scrollbar-thumb {
+  background: rgba(56,182,255,.18);
+  border-radius: 999px;
+}
+/* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
+
 :root{
   --deep:#030d1a;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
   --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
@@ -162,6 +213,52 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pev-ft{padding:10px 16px;border-top:1px solid var(--glass-b);
   display:flex;gap:7px;justify-content:flex-end;align-items:center;}
 
+
+/* Calendário do painel — baseado no board */
+.pcal-weekdays-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.pcal-tabs{display:flex;gap:0;border-bottom:1px solid var(--glass-b);
+  margin-bottom:14px;overflow-x:auto;scrollbar-width:none;}
+.pcal-tabs::-webkit-scrollbar{display:none;}
+.pcal-tab{padding:8px 16px;font-size:11px;color:var(--txt2);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;
+  white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.pcal-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.pcal-tab:hover:not(.on){color:var(--txt);}
+.pcal-content{display:none;}.pcal-content.on{display:block;}
+
+/* Grade — usa as mesmas classes do board */
+.pcal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
+  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
+.pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
+.pcal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:130px;}
+.pcal-wd{font-size:9px;color:var(--txt3);font-weight:700;text-align:center;
+  text-transform:uppercase;letter-spacing:.05em;padding:3px 0;}
+.pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.pcal-day{min-height:74px;padding:5px;border-radius:8px;
+  background:rgba(3,13,26,.5);border:1px solid rgba(56,182,255,.07);
+  cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.pcal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
+.pcal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
+.pcal-day.other-month{opacity:.3;pointer-events:none;}
+.pcal-day.has-events{border-color:rgba(29,233,182,.2);}
+.pcal-day-num{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px;}
+.pcal-day.today .pcal-day-num{color:var(--accent);font-weight:800;}
+.pcal-event{font-size:9px;padding:2px 5px;border-radius:3px;margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
+  font-weight:600;line-height:1.4;}
+.pcal-event:hover{opacity:.8;}
+.pcal-add-btn{position:absolute;bottom:3px;right:4px;background:none;border:none;
+  color:rgba(56,182,255,.25);cursor:pointer;font-size:13px;opacity:0;transition:opacity .15s;}
+.pcal-day:hover .pcal-add-btn{opacity:1;}
+/* Legenda */
+.cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;
+  padding-top:8px;border-top:1px solid var(--glass-b);}
+.cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
+.cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* Embed area */
+.embed-area{margin-top:10px;border-radius:8px;overflow:hidden;display:none;}
+.embed-area.show{display:block;}
+
 </style>
 </head>
 <body>
@@ -242,7 +339,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </select>
       <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
+    <div class="pcal-weekdays-row">
       <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
       <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
     </div>
@@ -271,7 +368,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div style="font-size:12px;font-weight:600;color:var(--txt2);">📌 Eventos de Gestão cadastrados</div>
         <button onclick="openPevModal('','','painel')" style="padding:4px 12px;font-size:10px;background:rgba(150,80,220,.15);color:#d67fff;border:1px solid rgba(150,80,220,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento de Gestão</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">
+      <div class="pcal-weekdays-row">
         <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
         <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
       </div>
