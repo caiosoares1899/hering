@@ -207,6 +207,93 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
+/* Modo de visualização */
+.board.mode-onepage{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(0,1fr));
+  gap:10px;
+}
+.board.mode-expanded{
+  display:flex!important;
+  flex-wrap:nowrap;
+  gap:10px;
+  min-width:max-content;
+}
+.board.mode-expanded .col{
+  width:272px;
+  min-width:272px;
+  flex-shrink:0;
+}
+.view-btn{padding:4px 10px;font-size:11px;font-family:'DM Sans',sans-serif;
+  border:1px solid var(--glass-b);border-radius:6px;background:var(--glass);
+  color:var(--txt3);cursor:pointer;transition:all .15s;}
+.view-btn.active{background:rgba(37,99,201,.5);border-color:var(--blue);color:#fff;}
+.view-btn:hover:not(.active){color:var(--txt);border-color:var(--accent);}
+
+/* Calendário */
+.cal-ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.92);
+  backdrop-filter:blur(10px);display:none;align-items:flex-start;
+  justify-content:center;padding:1rem;overflow-y:auto;}
+.cal-ov.open{display:flex;}
+.cal-panel{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);
+  border-radius:var(--r2);width:100%;max-width:900px;min-height:500px;
+  display:flex;flex-direction:column;}
+.cal-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:rgba(6,26,46,.98);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
+.cal-hd-l{display:flex;align-items:center;gap:10px;}
+.cal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.cal-nav{display:flex;align-items:center;gap:6px;}
+.cal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
+  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
+.cal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:140px;text-align:center;}
+.cal-body{padding:14px 16px;flex:1;}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.cal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
+  text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day{min-height:80px;padding:5px;border-radius:var(--r);
+  background:rgba(3,13,26,.5);border:1px solid rgba(56,182,255,.07);
+  cursor:pointer;transition:all .15s;position:relative;}
+.cal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
+.cal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
+.cal-day.other-month{opacity:.35;}
+.cal-day.has-events{border-color:rgba(29,233,182,.2);}
+.cal-day-num{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px;}
+.cal-day.today .cal-day-num{color:var(--accent);font-weight:800;}
+.cal-event{font-size:9px;padding:2px 5px;border-radius:4px;margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
+  font-weight:600;transition:opacity .15s;}
+.cal-event:hover{opacity:.8;}
+.cal-add-btn{position:absolute;bottom:4px;right:4px;background:none;border:none;
+  color:rgba(56,182,255,.3);cursor:pointer;font-size:14px;line-height:1;
+  opacity:0;transition:opacity .15s;}
+.cal-day:hover .cal-add-btn{opacity:1;}
+.cal-ft{padding:10px 16px;border-top:1px solid var(--glass-b);
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.cal-embed-area{margin-top:10px;padding:10px;background:rgba(3,13,26,.5);
+  border:1px solid var(--glass-b);border-radius:var(--r);}
+/* Modal evento */
+.ev-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.8);
+  backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.ev-modal-ov.open{display:flex;}
+.ev-modal{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);
+  border-radius:var(--r2);width:100%;max-width:400px;}
+.ev-modal-hd{padding:11px 14px;border-bottom:1px solid var(--glass-b);
+  display:flex;align-items:center;justify-content:space-between;}
+.ev-modal-body{padding:13px 14px;display:flex;flex-direction:column;gap:9px;}
+.ev-field{display:flex;flex-direction:column;gap:3px;}
+.ev-label{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.ev-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);
+  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.ev-input:focus{outline:none;border-color:var(--accent);}
+.ev-colors{display:flex;gap:6px;flex-wrap:wrap;}
+.ev-color-btn{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;}
+.ev-color-btn.sel{border-color:#fff;transform:scale(1.2);}
+.ev-modal-ft{padding:9px 14px;border-top:1px solid var(--glass-b);display:flex;gap:7px;justify-content:flex-end;}
+
+
 /* Squad selector */
 .squad-selector{display:flex;gap:5px;align-items:center;}
 .squad-btn{padding:4px 12px;font-size:11px;font-family:'DM Sans',sans-serif;
@@ -647,6 +734,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 <div class="toolbar">
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
+  <div style="display:flex;gap:2px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;padding:2px;">
+    <button class="view-btn active" id="view-onepage" onclick="setViewMode('onepage')" title="One Page">⊞</button>
+    <button class="view-btn" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
+  </div>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔍 Filtros</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
@@ -654,6 +745,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
+  <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
 </div>
@@ -1028,6 +1120,76 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+
+<!-- CALENDÁRIO -->
+<div class="cal-ov" id="cal-ov">
+  <div class="cal-panel">
+    <div class="cal-hd">
+      <div class="cal-hd-l">
+        <div class="cal-title">📅 Calendário do Squad</div>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
+          <div class="cal-month-lbl" id="cal-month-lbl"></div>
+          <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
+          <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-sm btn-teal" onclick="openEvModal()" id="btn-add-event" style="display:none;">+ Evento</button>
+        <button class="x-btn" onclick="closeOv('cal-ov')">✕</button>
+      </div>
+    </div>
+    <div class="cal-body">
+      <div class="cal-weekdays">
+        <div class="cal-wd">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
+        <div class="cal-wd">Qua</div><div class="cal-wd">Qui</div><div class="cal-wd">Sex</div><div class="cal-wd">Sáb</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="cal-ft">
+      <div style="flex:1;">
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">🔗 Google Calendar embed (cole o link de incorporação)</div>
+        <div style="display:flex;gap:6px;">
+          <input class="ev-input" id="cal-embed-url" placeholder="https://calendar.google.com/calendar/embed?src=..." style="flex:1;font-size:11px;padding:5px 8px;">
+          <button class="btn btn-sm btn-teal" onclick="saveCalEmbed()">Salvar</button>
+          <button class="btn btn-sm" onclick="toggleCalEmbed()" id="btn-show-embed">📆 Ver Google Cal</button>
+        </div>
+        <div class="cal-embed-area" id="cal-embed-area" style="display:none;">
+          <iframe id="cal-embed-iframe" src="" style="width:100%;height:400px;border:none;border-radius:8px;" frameborder="0"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div class="ev-modal-ov" id="ev-modal-ov">
+  <div class="ev-modal">
+    <div class="ev-modal-hd">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;" id="ev-modal-title">Novo Evento</div>
+      <button class="x-btn" onclick="closeEvModal()">✕</button>
+    </div>
+    <div class="ev-modal-body">
+      <div class="ev-field"><label class="ev-label">Título</label><input class="ev-input" id="ev-title" placeholder="Nome do evento..."></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="ev-field"><label class="ev-label">Data início</label><input class="ev-input" id="ev-start" type="date"></div>
+        <div class="ev-field"><label class="ev-label">Data fim</label><input class="ev-input" id="ev-end" type="date"></div>
+      </div>
+      <div class="ev-field"><label class="ev-label">Descrição</label><textarea class="ev-input" id="ev-desc" rows="2" style="resize:vertical;"></textarea></div>
+      <div class="ev-field">
+        <label class="ev-label">Cor</label>
+        <div class="ev-colors" id="ev-colors"></div>
+      </div>
+      <div class="ev-field"><label class="ev-label">Link (Google Meet, doc...)</label><input class="ev-input" id="ev-link" placeholder="https://..."></div>
+    </div>
+    <div class="ev-modal-ft">
+      <button id="ev-del-btn" class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-right:auto;display:none;" onclick="deleteEvent()">🗑 Excluir</button>
+      <button onclick="closeEvModal()" class="btn btn-sm">Cancelar</button>
+      <button onclick="saveEvent()" class="btn btn-p btn-sm">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ARQUIVADOS -->
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
@@ -1047,6 +1209,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="mobile-nav-btn" id="mnav-agent" onclick="mnavGo('agent')">
     <span class="mobile-nav-icon">🤖</span><span class="mobile-nav-label">Agente</span>
   </button>
+  <button class="mobile-nav-btn" id="mnav-cal" onclick="mnavGo('cal')">
+    <span class="mobile-nav-icon">📅</span><span class="mobile-nav-label">Agenda</span>
+  </button>
   <button class="mobile-nav-btn" id="mnav-links" onclick="mnavGo('links')">
     <span class="mobile-nav-icon">🔗</span><span class="mobile-nav-label">Links</span>
   </button>
@@ -1055,7 +1220,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.5</div>
+<div class="version">v7.6</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1394,8 +1559,10 @@ function makeCardEl(card){
 
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
-  // Tenta registrar snapshot após carregar cards do Firebase
   if(cards.length>0) setTimeout(maybeSnapshot,2000);
+  // Aplica modo de visualização
+  board.classList.remove('mode-onepage','mode-expanded');
+  board.classList.add('mode-'+(viewMode||'onepage'));
   board.innerHTML='';
   const activeCards=cards.filter(c=>!c.archived&&passesFilter(c));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
@@ -2814,6 +2981,7 @@ function mnavGo(dest){
   document.getElementById('mnav-'+dest)?.classList.add('active');
   if(dest==='board') { closeAllOvs(); }
   if(dest==='agent') { openAgent(); }
+  if(dest==='cal')   { openCal(); }
   if(dest==='links') { openLinks(); }
   if(dest==='cfg')   { openCfg(); }
 }
@@ -2821,6 +2989,173 @@ function closeAllOvs(){
   document.querySelectorAll('.ov.open').forEach(o=>o.classList.remove('open'));
 }
 // ═══════════════════════════════════════════════════════
+
+
+// ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
+let viewMode = localStorage.getItem('boardViewMode')||'onepage';
+function setViewMode(mode){
+  viewMode=mode;
+  localStorage.setItem('boardViewMode',mode);
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+mode)?.classList.add('active');
+  const board=document.getElementById('board');
+  if(board){ board.classList.remove('mode-onepage','mode-expanded'); board.classList.add('mode-'+mode); }
+}
+function applyViewMode(){ setViewMode(viewMode); }
+
+// ── CALENDÁRIO ───────────────────────────────────────────────────
+const EV_COLORS=[
+  {id:'blue',   bg:'rgba(37,99,201,.8)',  txt:'#fff'},
+  {id:'teal',   bg:'rgba(29,233,182,.8)', txt:'#003'},
+  {id:'warn',   bg:'rgba(255,209,102,.8)',txt:'#333'},
+  {id:'danger', bg:'rgba(255,107,107,.8)',txt:'#fff'},
+  {id:'purple', bg:'rgba(150,80,220,.8)', txt:'#fff'},
+  {id:'cyan',   bg:'rgba(56,182,255,.8)', txt:'#003'},
+];
+let calYear=new Date().getFullYear();
+let calMonth=new Date().getMonth();
+let calEvents=[];
+let editingEvId=null;
+
+function openCal(){
+  const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
+  document.getElementById('btn-add-event').style.display=isPO?'':'none';
+  renderCal();
+  document.getElementById('cal-ov').classList.add('open');
+  fbGet(FB+'/cal_embed').then(s=>{ if(s.val()) setCalEmbedUrl(s.val()); });
+}
+function calNav(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCal();
+}
+function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCal(); }
+
+function renderCal(){
+  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('cal-month-lbl').textContent=MESES[calMonth]+' '+calYear;
+  const grid=document.getElementById('cal-grid'); grid.innerHTML='';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const first=new Date(calYear,calMonth,1);
+  const last=new Date(calYear,calMonth+1,0);
+  const startDay=first.getDay();
+  const prevLast=new Date(calYear,calMonth,0);
+  for(let i=startDay-1;i>=0;i--){
+    grid.appendChild(makeDayEl(new Date(calYear,calMonth-1,prevLast.getDate()-i),true));
+  }
+  for(let d=1;d<=last.getDate();d++){
+    const dt=new Date(calYear,calMonth,d);
+    grid.appendChild(makeDayEl(dt,false,dt.getTime()===today.getTime()));
+  }
+  const remaining=(7-grid.children.length%7)%7;
+  for(let d=1;d<=remaining&&remaining<7;d++) grid.appendChild(makeDayEl(new Date(calYear,calMonth+1,d),true));
+}
+
+function makeDayEl(date,otherMonth=false,isToday=false){
+  const ds=date.toISOString().split('T')[0];
+  const dayEvs=calEvents.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
+  const div=document.createElement('div');
+  div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
+  div.innerHTML=`<div class="cal-day-num">${date.getDate()}</div>`
+    +dayEvs.slice(0,3).map(ev=>{
+      const col=EV_COLORS.find(c=>c.id===ev.color)||EV_COLORS[0];
+      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${ev.title}">${esc(ev.title)}</div>`;
+    }).join('')
+    +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-3} mais</div>`:'')
+    +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
+  div.onclick=()=>{ const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador'; if(isPO) openEvModal(ds); };
+  return div;
+}
+
+function openEvModal(dateStr=''){
+  editingEvId=null;
+  document.getElementById('ev-modal-title').textContent='Novo Evento';
+  document.getElementById('ev-title').value='';
+  document.getElementById('ev-start').value=dateStr||new Date().toISOString().split('T')[0];
+  document.getElementById('ev-end').value=dateStr||'';
+  document.getElementById('ev-desc').value='';
+  document.getElementById('ev-link').value='';
+  document.getElementById('ev-del-btn').style.display='none';
+  ['ev-title','ev-start','ev-end','ev-desc','ev-link'].forEach(id=>document.getElementById(id).readOnly=false);
+  renderEvColors('blue');
+  document.getElementById('ev-modal-ov').classList.add('open');
+}
+function editEvent(evId){
+  const ev=calEvents.find(e=>e.id===evId); if(!ev) return;
+  const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
+  editingEvId=evId;
+  document.getElementById('ev-modal-title').textContent=isPO?'Editar Evento':'Detalhes do Evento';
+  document.getElementById('ev-title').value=ev.title;
+  document.getElementById('ev-start').value=ev.start;
+  document.getElementById('ev-end').value=ev.end||ev.start;
+  document.getElementById('ev-desc').value=ev.desc||'';
+  document.getElementById('ev-link').value=ev.link||'';
+  document.getElementById('ev-del-btn').style.display=isPO?'':'none';
+  ['ev-title','ev-start','ev-end','ev-desc','ev-link'].forEach(id=>{ document.getElementById(id).readOnly=!isPO; });
+  renderEvColors(ev.color||'blue');
+  document.getElementById('ev-modal-ov').classList.add('open');
+}
+function closeEvModal(){ document.getElementById('ev-modal-ov').classList.remove('open'); editingEvId=null; }
+
+function renderEvColors(sel){
+  document.getElementById('ev-colors').innerHTML=EV_COLORS.map(col=>
+    `<button class="ev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};" onclick="selectEvColor('${col.id}')"></button>`
+  ).join('');
+}
+function selectEvColor(id){ renderEvColors(id); }
+function getSelColor(){
+  const btns=[...document.querySelectorAll('#ev-colors .ev-color-btn')];
+  const idx=btns.findIndex(b=>b.classList.contains('sel'));
+  return EV_COLORS[idx]?.id||'blue';
+}
+
+function saveEvent(){
+  const title=document.getElementById('ev-title').value.trim(); if(!title) return;
+  const ev={id:editingEvId||'ev'+Date.now(),title,
+    start:document.getElementById('ev-start').value,
+    end:document.getElementById('ev-end').value||document.getElementById('ev-start').value,
+    desc:document.getElementById('ev-desc').value,
+    link:document.getElementById('ev-link').value,
+    color:getSelColor(),
+    createdBy:window._currentUser?.displayName||'?',
+    updatedAt:new Date().toISOString()};
+  if(editingEvId){ const idx=calEvents.findIndex(e=>e.id===editingEvId); if(idx>-1) calEvents[idx]=ev; }
+  else calEvents.push(ev);
+  fbSet(FB+'/cal_events',calEvents);
+  closeEvModal(); renderCal();
+  showToast('✅ Evento salvo!');
+}
+function deleteEvent(){
+  if(!editingEvId||!confirm('Excluir este evento?')) return;
+  calEvents=calEvents.filter(e=>e.id!==editingEvId);
+  fbSet(FB+'/cal_events',calEvents);
+  closeEvModal(); renderCal();
+  showToast('🗑 Evento excluído');
+}
+
+function saveCalEmbed(){
+  const url=document.getElementById('cal-embed-url').value.trim(); if(!url) return;
+  setCalEmbedUrl(url); fbSet(FB+'/cal_embed',url);
+  showToast('✅ Google Calendar vinculado!');
+}
+function setCalEmbedUrl(url){
+  document.getElementById('cal-embed-url').value=url;
+  document.getElementById('cal-embed-iframe').src=url;
+}
+function toggleCalEmbed(){
+  const area=document.getElementById('cal-embed-area');
+  const show=area.style.display==='none';
+  area.style.display=show?'block':'none';
+  document.getElementById('btn-show-embed').textContent=show?'📆 Ocultar':'📆 Ver Google Cal';
+}
+function loadCalEvents(){
+  fbListen(FB+'/cal_events',val=>{
+    calEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
+    if(document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+  });
+}
+// ── FIM CALENDÁRIO ────────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════
 // DRAG AND DROP
@@ -3452,6 +3787,8 @@ window.addEventListener('fb-ready',()=>{
   applyBlockerMode();
   fbLoadAll();
   loadAutoRules();
+  loadCalEvents();
+  applyViewMode();
   // Presença online
   window.addEventListener('auth-change', e=>{
     const user=e.detail;
