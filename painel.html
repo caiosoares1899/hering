@@ -265,6 +265,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .err-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .3s;}
 .err-bar-lbl{font-size:8px;color:var(--txt3);white-space:nowrap;}
 
+
+.err-filters::-webkit-scrollbar{display:none;}
+
+.pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.88);
+  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.pc-modal-ov.open{display:flex;}
 </style>
 </head>
 <body>
@@ -463,22 +469,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
       <div class="err-chart" id="err-chart"></div>
     </div>
-    <div class="err-filters">
-      <span style="font-size:10px;color:var(--txt3);font-weight:700;">Filtrar:</span>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+      <!-- Grupo Squad -->
+      <span style="font-size:10px;color:var(--txt3);font-weight:700;white-space:nowrap;">Squad:</span>
       <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
       <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
       <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
-      <span style="width:1px;height:14px;background:var(--glass-b);margin:0 2px;"></span>
-      <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todas categorias</button>
+      <!-- Grupo Categoria -->
+      <span style="width:1px;height:14px;background:var(--glass-b);flex-shrink:0;"></span>
+      <span style="font-size:10px;color:var(--txt3);font-weight:700;white-space:nowrap;">Tipo:</span>
+      <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
       <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
       <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
       <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
       <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
-      <span style="width:1px;height:14px;background:var(--glass-b);margin:0 2px;"></span>
-      <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos status</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novos</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Vistos</button>
-    </div>
+      <!-- Grupo Status -->
+      <span style="width:1px;height:14px;background:var(--glass-b);flex-shrink:0;"></span>
+      <span style="font-size:10px;color:var(--txt3);font-weight:700;white-space:nowrap;">Status:</span>
+      <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
+    </div></div>
     <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
   </div>
 
