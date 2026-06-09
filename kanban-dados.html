@@ -1325,7 +1325,7 @@ onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(n
 const ADM_UIDS = {
   'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
 };
-const ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
+let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
 function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); }
 function getEffectiveRole(user, dbRole){
   if(isAdmUser(user)) return 'adm';
@@ -4020,6 +4020,8 @@ window.addEventListener('fb-ready',()=>{
   loadAutoRules();
   loadCalEvents();
   applyViewMode();
+  // Carrega ADMs extras do Firebase
+  fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; });
   // Presença online
   window.addEventListener('auth-change', e=>{
     const user=e.detail;
