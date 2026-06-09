@@ -281,6 +281,105 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
+  <!-- FILTRO DE SQUAD -->
+  <div class="filter-bar">
+    <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">🏠 Todos os squads</button>
+    <button class="filter-btn"        id="fb-dados"  onclick="setFilter('dados')">📊 Squad Dados</button>
+    <button class="filter-btn"        id="fb-midia"  onclick="setFilter('midia')">📱 Squad Mídia</button>
+  </div>
+
+  <!-- SQUADS EM TEMPO REAL -->
+  <div class="sec-title">🏃 Squads em tempo real</div>
+  <div class="grid-2" id="squad-cards" style="margin-bottom:20px;"></div>
+
+  <!-- MÉTRICAS CONSOLIDADAS -->
+  <div class="sec-title">📊 Consolidado</div>
+  <div class="grid-4" style="margin-bottom:20px;">
+    <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos</div></div>
+    <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
+    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos</div></div>
+    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput</div></div>
+  </div>
+
+  <!-- TABELA COMPARATIVA -->
+  <div id="cmp-section">
+  <div class="sec-title">⚖️ Comparação</div>
+  <div class="card" style="margin-bottom:20px;">
+    <table class="cmp-table">
+      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Squad Mídia</th></tr></thead>
+      <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- AGENTE ÁGIL USAGE -->
+  <div class="sec-title">🤖 Uso do Agente Ágil</div>
+  <div class="grid-3" style="margin-bottom:12px;">
+    <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">ambos os squads</div></div>
+    <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
+    <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
+  </div>
+  <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
+
+  <!-- OKR -->
+  <div class="sec-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
+  <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+
+  <!-- BLOQUEIOS -->
+  <div class="sec-title">🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></div>
+  <div id="blockers-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio.</div></div>
+
+  <!-- RISCOS -->
+  <div class="sec-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
+  <div id="risco-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Sem cards com riscos.</div></div>
+
+  <!-- TENDÊNCIA -->
+  <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
+    <div class="card"><div class="card-title">📱 Squad Mídia — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
+  </div>
+
+  <!-- DISTRIBUIÇÃO POR COLUNA -->
+  <div class="sec-title">📋 Distribuição por coluna</div>
+  <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
+
+  <!-- MONITORAMENTO DE ERROS -->
+  <div id="monitor-section" style="display:none;">
+    <div class="sec-title">🐛 Monitoramento de Erros
+      <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
+      <button onclick="clearResolvedErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
+    </div>
+    <div class="err-stats-grid">
+      <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
+      <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
+      <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
+      <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
+      <div class="err-chart" id="err-chart"></div>
+    </div>
+    <div class="err-filters">
+      <span style="font-size:10px;color:var(--txt3);font-weight:700;">Filtrar:</span>
+      <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
+      <span style="width:1px;height:14px;background:var(--glass-b);margin:0 2px;"></span>
+      <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todas categorias</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
+      <span style="width:1px;height:14px;background:var(--glass-b);margin:0 2px;"></span>
+      <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos status</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novos</button>
+      <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Vistos</button>
+    </div>
+    <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
+  </div>
+
+
 <!-- Modal evento do painel -->
 <div class="pev-modal-ov" id="pev-modal-ov">
   <div class="pev-modal">
@@ -1150,7 +1249,7 @@ function updateTimestamp(){
 
 // ── SQUAD CARDS ────────────────────────────────────────────────────
 function renderSquadCards(){
-  const container=document.getElementById('squad-cards');
+  const container=document.getElementById('squad-cards'); if(!container) return;
   container.innerHTML='';
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
