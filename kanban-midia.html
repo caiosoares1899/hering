@@ -3343,6 +3343,7 @@ function logError(msg, source='', line=0, col=0, err=null){
   // Ignora erros gerados pelo próprio logError (Firebase write errors)
   const msgStr=String(msg||'');
   if(msgStr.includes('[Firebase write]')||msgStr.includes('error_logs')||msgStr.includes('error_stats')) return;
+  if(window._errorLogDisabled) return;
   window._loggingError=true;
   try{
     const entry={
@@ -3359,7 +3360,13 @@ function logError(msg, source='', line=0, col=0, err=null){
     const key='err_'+Date.now();
     // Usa window._set diretamente — sem passar por fbSet para evitar loop
     window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs/'+key), entry)
-      .catch(()=>{}); // silencioso — não chama logError
+      .catch(e=>{
+        // Se Firebase Rules bloquear, desabilita o logger para não tentar de novo
+        if(e.code==='PERMISSION_DENIED'||String(e).includes('permission')){
+          window._errorLogDisabled=true;
+          console.warn('Error logging desabilitado: Firebase Rules bloqueando error_logs');
+        }
+      });
     // Contador diário (fire and forget)
     const day=new Date().toISOString().split('T')[0];
     const statRef=window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_stats/'+day);
