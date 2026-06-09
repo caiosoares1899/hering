@@ -435,6 +435,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="card"><div class="card-title">📱 Squad Mídia — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
   </div>
 
+
+  <!-- FILTRO DE COLUNAS -->
+  <div class="col-filter-wrap">
+    <div class="col-filter-toggle" onclick="toggleColFilter()">
+      <span class="col-filter-toggle-icon" id="col-filter-icon">▶</span>
+      <span>Colunas visíveis</span>
+      <span id="col-filter-count" style="font-size:10px;color:var(--txt3);margin-left:2px;"></span>
+    </div>
+    <div class="col-filter-body" id="col-filter-body">
+      <div class="col-filter-grid" id="col-filter-grid"></div>
+    </div>
+  </div>
+
   <!-- DISTRIBUIÇÃO POR COLUNA -->
   <div class="sec-title">📋 Distribuição por coluna</div>
   <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
@@ -455,26 +468,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
       <div class="err-chart" id="err-chart"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-      <!-- Grupo Squad -->
-      <span style="font-size:10px;color:var(--txt3);font-weight:700;white-space:nowrap;">Squad:</span>
-      <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
-      <!-- Grupo Categoria -->
-      <span style="width:1px;height:14px;background:var(--glass-b);flex-shrink:0;"></span>
-      <span style="font-size:10px;color:var(--txt3);font-weight:700;white-space:nowrap;">Tipo:</span>
-      <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
-      <!-- Grupo Status -->
-      <span style="width:1px;height:14px;background:var(--glass-b);flex-shrink:0;"></span>
-      <span style="font-size:10px;color:var(--txt3);font-weight:700;white-space:nowrap;">Status:</span>
-      <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
-      <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:44px;">Squad</span>
+        <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:44px;">Tipo</span>
+        <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('cat','geral')"      id="ef-cat-geral">⚙ Geral</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:44px;">Status</span>
+        <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
+      </div>
     </div></div>
     <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
   </div>
@@ -1487,6 +1502,71 @@ function addGuestByEmail(){
 }
 // ── FIM GERENCIAMENTO USUÁRIOS ─────────────────────────────────────
 
+
+// ── FILTRO DE COLUNAS DO PAINEL ──────────────────────────────────
+let hiddenCols = new Set(JSON.parse(localStorage.getItem('painel_hidden_cols')||'[]'));
+let colFilterOpen = false;
+let allColsKnown = new Map(); // id → {name, color}
+
+function toggleColFilter(){
+  colFilterOpen = !colFilterOpen;
+  document.getElementById('col-filter-body')?.classList.toggle('open', colFilterOpen);
+  const icon = document.getElementById('col-filter-icon');
+  if(icon) icon.classList.toggle('open', colFilterOpen);
+}
+
+function buildColList(){
+  // Coleta todas as colunas de todos os squads visíveis
+  const seen = new Map();
+  SQUADS.forEach(sq=>{
+    const d = squadData[sq.id]; if(!d) return;
+    (d.columns||[]).forEach(col=>{
+      if(!seen.has(col.id)) seen.set(col.id, {name:col.name, color:col.color||'#4a9eff'});
+    });
+  });
+  allColsKnown = seen;
+  renderColFilterGrid();
+}
+
+function renderColFilterGrid(){
+  const grid = document.getElementById('col-filter-grid'); if(!grid) return;
+  const hidden = hiddenCols.size;
+  const total = allColsKnown.size;
+  const countEl = document.getElementById('col-filter-count');
+  if(countEl) countEl.textContent = hidden ? `(${total-hidden} de ${total} visíveis)` : '';
+
+  grid.innerHTML = '';
+  allColsKnown.forEach((col, id)=>{
+    const checked = !hiddenCols.has(id);
+    const wrap = document.createElement('label');
+    wrap.className = 'col-cb-wrap' + (checked?' checked':'');
+    wrap.innerHTML =
+      '<div class="col-cb"><span class="col-cb-check">✓</span></div>'+
+      '<div class="col-cb-dot" style="background:'+col.color+'"></div>'+
+      '<span class="col-cb-label">'+col.name+'</span>';
+    wrap.onclick = ()=>toggleColVisibility(id, wrap);
+    grid.appendChild(wrap);
+  });
+}
+
+function toggleColVisibility(colId, wrap){
+  if(hiddenCols.has(colId)){
+    hiddenCols.delete(colId);
+    wrap.classList.add('checked');
+  } else {
+    hiddenCols.add(colId);
+    wrap.classList.remove('checked');
+  }
+  localStorage.setItem('painel_hidden_cols', JSON.stringify([...hiddenCols]));
+  renderColFilterGrid();
+  renderAll(); // re-renderiza tudo com o novo filtro
+}
+
+function isColVisible(colId){
+  return !hiddenCols.has(colId);
+}
+// ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
+
 const SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
@@ -1563,6 +1643,7 @@ function loadAll(){
 
 function renderAll(){
   updateTimestamp();
+  buildColList();
   renderSquadCards();
   renderConsolidated();
   renderComparison();
@@ -1750,7 +1831,7 @@ function renderColDist(){
     card.innerHTML=`
       <div class="card-title">${sq.icon} ${sq.label}</div>
       <div class="col-bar">
-        ${(d.columns||[]).map(col=>{
+        ${(d.columns||[]).filter(col=>isColVisible(col.id)).map(col=>{
           const n=cards.filter(c=>c.col===col.id).length;
           const pct=Math.round(n/total*100);
           return `<div class="col-row">
