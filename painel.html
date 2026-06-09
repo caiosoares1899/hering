@@ -810,7 +810,10 @@ function renderAgentLogs(){
 function openPcModal(squadId, cardId){
   const sq=SQUADS.find(s=>s.id===squadId); if(!sq) return;
   const d=squadData[squadId]; if(!d) return;
-  const card=d.cards.find(c=>c.id===cardId); if(!card) return;
+  // Busca por id exato, ou por id sem prefixo, ou por índice
+  const card=d.cards.find(c=>c.id===cardId||String(c.id)===String(cardId))
+    || d.cards.find(c=>c.title&&cardId.includes(c.id?.substring(0,8)));
+  if(!card){ console.warn('openPcModal: card não encontrado',cardId,'em',squadId); return; }
   const colName=d.columns?.find(col=>col.id===card.col)?.name||card.col;
   const tag=d.tags?.find(t=>t.id===card.tag);
   
@@ -1330,8 +1333,13 @@ function loadAll(){
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados'),snap=>{
       const val=snap.val()||{};
       squadData[sq.id]={
-        cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)):[],
+        cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({
+          ...card,
+          // Garante que todo card tem um id único e consistente
+          id: card.id || ('idx_'+i),
+        })):[],
         columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+        tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
         agilCfg:val.agil_cfg||{},
       };
       renderAll();
