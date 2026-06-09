@@ -338,6 +338,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ci-desc{letter-spacing:1px;}
 
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+.cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
+.cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
+.cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.card.cg-card{border-color:rgba(150,80,220,.4)!important;box-shadow:0 0 8px rgba(150,80,220,.08);}
 
 
 
@@ -1145,6 +1149,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="cal-wd">Qua</div><div class="cal-wd">Qui</div><div class="cal-wd">Sex</div><div class="cal-wd">Sáb</div>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
+      <div id="board-cal-legend" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--glass-b);"></div>
     </div>
     <div class="cal-ft">
       <div style="flex:1;">
@@ -1220,7 +1225,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.6</div>
+<div class="version">v7.7</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1506,6 +1511,7 @@ function getTag(id){ if(!id) return null; return tags.find(t=>t.id===id)||null; 
 function getPal(pi){ return PALETTE[pi]||PALETTE[0]; }
 function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return '';
   if(t.isOKR||t.id==='okr') return `<span class="card-tag" style="background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);color:#ffd700;font-weight:800;">${esc(t.label)}</span>`;
+  if(t.isCalGestao||t.id==='cal_gestao') return `<span class="card-tag" style="background:rgba(150,80,220,.15);border-color:rgba(150,80,220,.4);color:#d67fff;font-weight:700;">${esc(t.label)}</span>`;
   const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
 
 function getDue(due, isDone){
@@ -1547,8 +1553,8 @@ function makeCardEl(card){
     else if(ageDays>=7) agingClass=' aged-1';
   }
   const hasBlockerTag=card.blocker&&blockerMode==='tag';
-  const t_=tags.find(t=>t.id===card.tag); const isOKR_=t_?.isOKR||t_?.id==='okr';
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'');
+  const t_=tags.find(t=>t.id===card.tag); const isOKR_=t_?.isOKR||t_?.id==='okr'; const isCG_=t_?.isCalGestao||t_?.id==='cal_gestao';
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -3042,6 +3048,22 @@ function calNav(dir){
 }
 function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCal(); }
 
+function renderBoardCalLegend(){
+  const el=document.getElementById('board-cal-legend'); if(!el) return;
+  const CAL_LEGEND_COLORS=[
+    {bg:'rgba(37,99,201,.8)',label:'Evento geral'},
+    {bg:'rgba(29,233,182,.8)',label:'Sprint/Time'},
+    {bg:'rgba(255,209,102,.8)',label:'Prazo'},
+    {bg:'rgba(255,107,107,.8)',label:'Urgente'},
+    {bg:'rgba(150,80,220,.8)',label:'Gestão Digital'},
+    {bg:'rgba(56,182,255,.8)',label:'Outros'},
+  ];
+  const usedColors=new Set(calEvents.map(e=>e.color||'blue'));
+  el.innerHTML=CAL_LEGEND_COLORS.filter((_,i)=>usedColors.has(['blue','teal','warn','danger','purple','cyan'][i]))
+    .map(col=>`<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label}</div>`).join('');
+  // Sempre mostra legenda mínima se tiver eventos
+  if(calEvents.length&&!el.innerHTML) el.innerHTML=`<div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(37,99,201,.8);"></div>Eventos do squad</div>`;
+}
 function renderCal(){
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   document.getElementById('cal-month-lbl').textContent=MESES[calMonth]+' '+calYear;
@@ -3062,6 +3084,9 @@ function renderCal(){
   for(let d=1;d<=remaining&&remaining<7;d++) grid.appendChild(makeDayEl(new Date(calYear,calMonth+1,d),true));
 }
 
+// renderCal chama a legenda
+const _origRenderCal=renderCal;
+renderCal=function(){ _origRenderCal(); renderBoardCalLegend(); };
 function makeDayEl(date,otherMonth=false,isToday=false){
   const ds=date.toISOString().split('T')[0];
   const dayEvs=calEvents.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
