@@ -561,7 +561,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -579,7 +579,7 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 
-window._db=db; window._ref=ref; window._onValue=onValue; window._set=set;
+window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._get=get;
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
@@ -846,6 +846,13 @@ function openPcModal(squadId, cardId){
 function closePcModal(){
   document.getElementById('pc-modal-ov').classList.remove('open');
 }
+
+// Event delegation para botão ⚙ Config dos squad cards
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('[data-sqid]');
+  if(btn && btn.tagName === 'BUTTON') openCfg(btn.dataset.sqid);
+});
+
 document.addEventListener('click',e=>{if(e.target.id==='pc-modal-ov')closePcModal();});
 
 // ── HELPER ───────────────────────────────────────────────────────
@@ -1096,6 +1103,13 @@ function loadPcalEvents(){
     });
   });
 }
+
+// Event delegation para botão ⚙ Config dos squad cards
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('[data-sqid]');
+  if(btn && btn.tagName === 'BUTTON') openCfg(btn.dataset.sqid);
+});
+
 document.addEventListener('click',e=>{ if(e.target.id==='pev-modal-ov') closePevModal(); });
 // ── FIM CALENDÁRIO PAINEL ─────────────────────────────────────────
 
@@ -1521,7 +1535,7 @@ function renderSquadCards(){
           <div class="squad-sprint">${sprint} · Capacidade ${d.agilCfg?.capacity||'—'}%</div>
         </div>
         <div style="display:flex;gap:7px;align-items:center;">
-          <button onclick="openCfg(\'"+sq.id+"\')" style="padding:4px 10px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;" title="Configurar squad">⚙ Config</button>
+          "<button data-sqid='"+sq.id+"' style='padding:4px 10px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;'>⚙ Config</button>"+
           <a href="kanban-"+sq.id+".html" target="_blank" class="squad-link">Abrir Board ↗</a>
         </div>
       </div>
@@ -1681,6 +1695,7 @@ function renderColDist(){
     container.appendChild(card);
   });
 }
+
 </script>
 </body>
 </html>
