@@ -396,6 +396,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ci-desc{letter-spacing:1px;}
 
 .card-has-desc{font-size:11px;color:var(--txt3);margin-right:3px;letter-spacing:1px;vertical-align:middle;}
+
+/* Cards vinculados */
+.linked-cards{display:flex;flex-direction:column;gap:5px;margin-top:4px;}
+.linked-chip{display:flex;align-items:center;gap:6px;padding:5px 8px;
+  background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.2);
+  border-radius:8px;cursor:pointer;transition:all .15s;font-size:11px;}
+.linked-chip:hover{border-color:var(--accent);background:rgba(37,99,201,.15);}
+.linked-chip-col{font-size:9px;padding:1px 6px;border-radius:999px;
+  background:rgba(56,182,255,.1);color:var(--accent);flex-shrink:0;}
+.linked-chip-title{flex:1;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.linked-chip-rm{background:none;border:none;color:var(--txt3);cursor:pointer;
+  font-size:12px;padding:0 2px;flex-shrink:0;line-height:1;}
+.linked-chip-rm:hover{color:var(--danger);}
+.link-search{position:relative;}
+.link-search-input{width:100%;padding:6px 10px;font-size:11px;
+  border:1px solid var(--glass-b);border-radius:8px;
+  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.link-search-input:focus{outline:none;border-color:var(--accent);}
+.link-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;
+  background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:8px;
+  max-height:180px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.link-dropdown.show{display:block;}
+.link-option{padding:7px 10px;font-size:11px;cursor:pointer;
+  display:flex;align-items:center;gap:7px;transition:background .1s;}
+.link-option:hover{background:rgba(37,99,201,.2);}
+.link-option-col{font-size:9px;padding:1px 6px;border-radius:999px;
+  background:rgba(56,182,255,.1);color:var(--accent);flex-shrink:0;}
+
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
@@ -2001,6 +2029,7 @@ function openCard(id){
   document.getElementById('btn-del-card').style.visibility='visible';
   const blockerRow=document.getElementById('m-blocker-row');
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
+  initLinkedCards(card);
   if(blockerRow){ 
     blockerRow.style.display=(c.blocker&&blockerMode==='tag')?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
@@ -2021,6 +2050,8 @@ function checkEditPermission(){
 
 function openNewCard(col){
   if(!checkEditPermission()) return;
+  editingLinkedCards=[];
+  renderLinkedChips();
   editingId=null;
   populateTagSelect(); populateOwnerSelect(); populateColSelect();
   ['m-title','m-desc','m-po'].forEach(id=>document.getElementById(id).value='');
@@ -2054,6 +2085,7 @@ function saveCard(){
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       participants:getParticipants(),
       isOKR:document.getElementById('m-is-okr')?.checked||false,
+      linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td});
@@ -3116,6 +3148,104 @@ function closeAllOvs(){
 // ═══════════════════════════════════════════════════════
 
 
+
+// ── CARDS VINCULADOS ─────────────────────────────────────────────
+let editingLinkedCards = []; // [{id, title, col}]
+
+function initLinkedCards(card){
+  editingLinkedCards = (card.linkedCards||[]).map(id=>{
+    const found = cards.find(c=>c.id===id);
+    return found ? {id:found.id, title:found.title, col:found.col} : null;
+  }).filter(Boolean);
+  renderLinkedChips();
+  const ind = document.getElementById('cs-links-ind');
+  if(ind) ind.textContent = editingLinkedCards.length ? editingLinkedCards.length+' vínculo(s)' : '';
+  // Limpa busca
+  const inp = document.getElementById('link-search-inp');
+  if(inp) inp.value = '';
+  hideLinkedDropdown();
+}
+
+function renderLinkedChips(){
+  const list = document.getElementById('linked-cards-list'); if(!list) return;
+  if(!editingLinkedCards.length){
+    list.innerHTML = '<div style="font-size:10px;color:var(--txt3);padding:4px 0;">Nenhum card vinculado.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  editingLinkedCards.forEach(lc=>{
+    const col = columns.find(c=>c.id===lc.col);
+    const chip = document.createElement('div');
+    chip.className = 'linked-chip';
+    chip.innerHTML =
+      '<span class="linked-chip-col">'+(col?.name||lc.col)+'</span>'+
+      '<span class="linked-chip-title" title="'+esc(lc.title)+'">'+esc(lc.title)+'</span>'+
+      '<button class="linked-chip-rm" data-lcid="'+lc.id+'" title="Remover vínculo">✕</button>';
+    chip.querySelector('.linked-chip-title').onclick = ()=>{ closeOv('card-ov'); openCard(lc.id); };
+    list.appendChild(chip);
+  });
+  const ind = document.getElementById('cs-links-ind');
+  if(ind) ind.textContent = editingLinkedCards.length+' vínculo(s)';
+}
+
+function searchLinkedCards(q){
+  const dd = document.getElementById('link-dropdown'); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const lower = q.toLowerCase();
+  // Exclui o card sendo editado e os já vinculados
+  const excludeIds = new Set([editingId, ...editingLinkedCards.map(l=>l.id)]);
+  const results = cards.filter(c=>
+    !c.archived &&
+    !excludeIds.has(c.id) &&
+    c.title.toLowerCase().includes(lower)
+  ).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML = '';
+  results.forEach(card=>{
+    const col = columns.find(c=>c.id===card.col);
+    const opt = document.createElement('div');
+    opt.className = 'link-option';
+    opt.innerHTML =
+      '<span class="link-option-col">'+(col?.name||card.col)+'</span>'+
+      '<span style="flex:1;color:var(--txt);">'+esc(card.title)+'</span>';
+    opt.onclick = ()=>addLinkedCard(card);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+
+function addLinkedCard(card){
+  if(editingLinkedCards.find(l=>l.id===card.id)) return;
+  editingLinkedCards.push({id:card.id, title:card.title, col:card.col});
+  renderLinkedChips();
+  const inp = document.getElementById('link-search-inp');
+  if(inp) inp.value='';
+  hideLinkedDropdown();
+}
+
+function removeLinkedCard(id){
+  editingLinkedCards = editingLinkedCards.filter(l=>l.id!==id);
+  renderLinkedChips();
+}
+
+function hideLinkedDropdown(){
+  const dd = document.getElementById('link-dropdown');
+  if(dd) dd.classList.remove('show');
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.link-search')) hideLinkedDropdown();
+  // Remover card vinculado via data-lcid
+  if(e.target.classList.contains('linked-chip-rm') && e.target.dataset.lcid){
+    removeLinkedCard(e.target.dataset.lcid);
+  }
+});
+// ── FIM CARDS VINCULADOS ─────────────────────────────────────────
+
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
 let viewMode = localStorage.getItem('boardViewMode')||'onepage';
 function setViewMode(mode){
@@ -3738,6 +3868,7 @@ function addBlockerTag(cardId){
   openCard(cardId);
   setTimeout(()=>{
     const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
+  initLinkedCards(card);
   document.getElementById('m-blocker-row').style.display='block';
     document.getElementById('m-blocker-reason').value = card.blockerReason||'';
     document.getElementById('m-blocker-reason').focus();
@@ -3748,6 +3879,7 @@ function removeBlockerTag(){
   const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.blocker=false; c.blockerReason='';
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
+  initLinkedCards(card);
   document.getElementById('m-blocker-row').style.display='none';
   fbSaveAll(); renderBoard();
   showToast('Impedimento removido');
