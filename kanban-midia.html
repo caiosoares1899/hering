@@ -395,6 +395,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:inline-flex;align-items:center;gap:2px;line-height:1.4;}
 .ci-desc{letter-spacing:1px;}
 
+.card-has-desc{font-size:11px;color:var(--txt3);margin-right:3px;letter-spacing:1px;vertical-align:middle;}
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
@@ -1635,7 +1636,7 @@ function makeCardEl(card){
     else if(ageDays>=7) agingClass=' aged-1';
   }
   const hasBlockerTag=card.blocker&&blockerMode==='tag';
-  const t_=tags.find(t=>t.id===card.tag); const isOKR_=t_?.isOKR||t_?.id==='okr'; const isCG_=t_?.isCalGestao||t_?.id==='cal_gestao';
+  const t_=tags.find(t=>t.id===card.tag); const isOKR_=card.isOKR||t_?.isOKR||t_?.id==='okr'; const isCG_=t_?.isCalGestao||t_?.id==='cal_gestao';
   div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
@@ -1646,7 +1647,8 @@ function makeCardEl(card){
   div.ondragstart=e=>handleDragStart(e,card.id);
   div.ondragend=e=>handleDragEnd(e);
   addTouchDnD(div,card.id); div.ondblclick=e=>{e.stopPropagation();};
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -2012,6 +2014,7 @@ function openCard(id){
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
   document.getElementById('btn-del-card').style.visibility='visible';
   const blockerRow=document.getElementById('m-blocker-row');
+  const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
   if(blockerRow){ 
     blockerRow.style.display=(c.blocker&&blockerMode==='tag')?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
@@ -2020,7 +2023,18 @@ function openCard(id){
   renderRiscos(c.riscos||[]);
   document.getElementById('card-ov').classList.add('open');
 }
+
+function checkEditPermission(){
+  const role=window._currentUserRole||'convidado';
+  if(role==='convidado'||role===''){
+    showToast('⛔ Você é convidado. Peça ao PO para ser adicionado ao squad.');
+    return false;
+  }
+  return true;
+}
+
 function openNewCard(col){
+  if(!checkEditPermission()) return;
   editingId=null;
   populateTagSelect(); populateOwnerSelect(); populateColSelect();
   ['m-title','m-desc','m-po'].forEach(id=>document.getElementById(id).value='');
@@ -2053,6 +2067,7 @@ function saveCard(){
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       participants:getParticipants(),
+      isOKR:document.getElementById('m-is-okr')?.checked||false,
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td});
@@ -3735,7 +3750,8 @@ function addBlockerTag(cardId){
   const card = cards.find(x=>x.id===cardId); if(!card) return;
   openCard(cardId);
   setTimeout(()=>{
-    document.getElementById('m-blocker-row').style.display='block';
+    const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
+  document.getElementById('m-blocker-row').style.display='block';
     document.getElementById('m-blocker-reason').value = card.blockerReason||'';
     document.getElementById('m-blocker-reason').focus();
   },100);
@@ -3744,6 +3760,7 @@ function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.blocker=false; c.blockerReason='';
+  const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
   document.getElementById('m-blocker-row').style.display='none';
   fbSaveAll(); renderBoard();
   showToast('Impedimento removido');
