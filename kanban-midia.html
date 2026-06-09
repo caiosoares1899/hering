@@ -55,6 +55,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar.show{display:flex;}
 /* board */
 .board-wrap{overflow-x:auto;padding-bottom:8px;}
+.board-wrap.mode-expanded-wrap{
+  overflow-x:auto;
+  overflow-y:visible;
+  position:sticky;
+  /* Garante que a scrollbar horizontal fica visível na tela */
+  max-width:100%;
+}
 .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
 .board.raia-mode{display:block;}
 /* column */
@@ -3019,9 +3026,30 @@ function setViewMode(mode){
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+mode)?.classList.add('active');
   const board=document.getElementById('board');
-  if(board){ board.classList.remove('mode-onepage','mode-expanded'); board.classList.add('mode-'+mode); }
+  const wrap=document.querySelector('.board-wrap');
+  if(board){
+    board.classList.remove('mode-onepage','mode-expanded');
+    board.classList.add('mode-'+mode);
+  }
+  if(wrap){
+    if(mode==='expanded'){
+      // Calcula altura disponível: viewport - tudo acima do board
+      const wrapTop=wrap.getBoundingClientRect().top;
+      const available=window.innerHeight - wrapTop - 16;
+      wrap.style.maxHeight=available+'px';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='auto';
+      wrap.style.paddingBottom='0';
+    } else {
+      wrap.style.maxHeight='';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='visible';
+      wrap.style.paddingBottom='8px';
+    }
+  }
 }
 function applyViewMode(){ setViewMode(viewMode); }
+window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
 // ── CALENDÁRIO ───────────────────────────────────────────────────
 const EV_COLORS=[
