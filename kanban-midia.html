@@ -819,7 +819,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 <!-- FAB -->
 <div class="fab" id="fab" style="display:none;">
-  <button class="fab-cfg" onclick="openCfg()">⚙ Configurações</button>
+  <button class="fab-cfg" onclick="openCfg()" id="fab-cfg-btn">⚙ Configurações</button>
   <button class="fab-btn" onclick="openAgent()">🤖 Agente Ágil</button>
 </div>
 
@@ -1283,7 +1283,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.8</div>
+<div class="version">v7.9</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1320,6 +1320,19 @@ onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(n
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
+
+// ── ADMs HARDCODED ───────────────────────────────────────────────
+const ADM_UIDS = {
+  'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
+};
+const ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
+function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); }
+function getEffectiveRole(user, dbRole){
+  if(isAdmUser(user)) return 'adm';
+  return dbRole||'membro';
+}
+// ── FIM ADMs ─────────────────────────────────────────────────────
+
 const WORKER_URL = localStorage.getItem('kanban_worker_url') || 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
 // ── SQUAD FIXO ──────────────────────────────────────────────────
 const ACTIVE_SQUAD = 'midia';
@@ -1519,10 +1532,16 @@ function autoRegistrar(user){
     const existe=snap.val();
     const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     if(!existe){
-      fbSet('kanban/usuarios/'+user.uid,{uid:user.uid,nome:user.displayName||'',email:user.email,init,foto:user.photoURL||'',role:'membro',inscrito:false,criadoEm:new Date().toISOString()});
+      const newRole=isAdmUser(user)?'adm':'convidado';
+      fbSet('kanban/usuarios/'+user.uid,{uid:user.uid,nome:user.displayName||'',email:user.email,init,foto:user.photoURL||'',role:newRole,inscrito:isAdmUser(user),criadoEm:new Date().toISOString()});
+      window._currentUserRole=newRole;
+      if(isAdmUser(user)){const sq={}; sq['squads/'+ACTIVE_SQUAD]=true; fbUpdate('kanban/usuarios/'+user.uid,sq);}
+      if(newRole==='convidado') showToast('👁 Você está como convidado. Peça ao PO para ser adicionado ao squad.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
-      window._currentUserRole=existe.role||'membro';
+      window._currentUserRole=getEffectiveRole(user, existe.role);
+      // Se é ADM, garante role no Firebase
+      if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
       // Migração: se inscrito legado sem squads, adiciona squad atual
       if((existe.inscrito===true||existe.inscrito==='true')&&existe.init&&!existe.squads){
         const migUpd={}; migUpd['squads/'+ACTIVE_SQUAD]=true;
@@ -1531,9 +1550,11 @@ function autoRegistrar(user){
       // Atualiza visibilidade do FAB do agente
       const fabBtn=document.querySelector('.fab-btn');
       const mnavAgent=document.getElementById('mnav-agent');
-      const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador';
+      const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
       if(fabBtn) fabBtn.style.display=isPOorOrg?'':'none';
       if(mnavAgent) mnavAgent.style.display=isPOorOrg?'':'none';
+      const fabCfg=document.getElementById('fab-cfg-btn');
+      if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
       if(user.photoURL&&existe.foto!==user.photoURL) fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL});
@@ -1829,7 +1850,8 @@ function toggleRaia(){
 function toggleRaiaCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
-  renderBoard(); // re-renderiza a raia com o estado atualizado
+  renderBoard();
+  if(viewMode==='expanded') setTimeout(()=>setViewMode('expanded'),50);
 }
 function toggleCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
@@ -2021,6 +2043,7 @@ function openNewCard(col){
   document.getElementById('card-ov').classList.add('open');
 }
 function saveCard(){
+  if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
   const td=new Date().toISOString().split('T')[0];
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
