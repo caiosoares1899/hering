@@ -1605,7 +1605,7 @@ function fbLoadAll(){
   fbListen('kanban/usuarios', val=>{
     if(!val) return;
     members = [];
-    Object.values(val).forEach(u=>{
+    Object.entries(val).forEach(([uid,u])=>{
       const hasInit = u.init && u.init.trim().length > 0;
       // Carrega se: tem iniciais E (está inscrito neste squad OU inscrito legado sem squads)
       const inThisSquad = u.squads ? u.squads[ACTIVE_SQUAD]===true : (u.inscrito===true||u.inscrito==='true');
