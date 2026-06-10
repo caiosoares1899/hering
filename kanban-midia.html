@@ -473,6 +473,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* @mention highlight */
 .mention{color:var(--accent);font-weight:600;}
 
+/* Mention dropdown */
+.mention-dropdown{
+  position:absolute;z-index:200;
+  background:rgba(6,26,46,.98);border:1px solid var(--glass-b);
+  border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  min-width:200px;max-height:220px;overflow-y:auto;
+  display:none;
+}
+.mention-dropdown.open{display:block;}
+.mention-option{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px;cursor:pointer;transition:background .12s;
+}
+.mention-option:hover,.mention-option.active{background:rgba(37,99,201,.25);}
+.mention-option img{width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.mention-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(37,99,201,.5);display:flex;
+  align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;flex-shrink:0;
+}
+.mention-init{font-size:10px;font-weight:700;color:var(--accent);}
+.mention-name{font-size:11px;color:var(--txt);}
+.fi-mention-wrap{position:relative;}
+
+
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
@@ -1061,13 +1087,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <!-- Descrição full-width -->
     <div class="field">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar</span></label>
-      <textarea class="fi fi-ta" id="m-desc" rows="3" oninput="scheduleAutoSave()" style="resize:vertical;min-height:60px;"></textarea>
+      <div class="fi-mention-wrap"><textarea class="fi fi-ta" id="m-desc" rows="3" oninput="scheduleAutoSave()" style="resize:vertical;min-height:60px;"></textarea></div>
     </div>
 
     <!-- Insights do PO full-width -->
     <div class="po-box">
       <div class="po-lbl">🎯 Insights do PO</div>
-      <textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea>
+      <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
     </div>
 
     <!-- Impedimento (oculto por padrão) -->
@@ -2160,6 +2186,8 @@ function openCard(id){
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
   document.getElementById('card-ov').classList.add('open');
+  // Inicia mention dropdowns
+  setTimeout(()=>{ initMentionDropdown('m-desc'); initMentionDropdown('m-po'); }, 100);
 }
 
 function checkEditPermission(){
@@ -3656,6 +3684,106 @@ saveCard = function(){
   }
 };
 // ── FIM NOTIFICAÇÕES ─────────────────────────────────────────────
+
+
+// ── MENTION DROPDOWN ─────────────────────────────────────────────
+let _mentionActive = null; // { el, start }
+
+function initMentionDropdown(textareaId){
+  const ta = document.getElementById(textareaId);
+  if(!ta || ta._mentionInited) return;
+  ta._mentionInited = true;
+
+  // Cria dropdown
+  const dd = document.createElement('div');
+  dd.className = 'mention-dropdown';
+  dd.id = textareaId + '-mention-dd';
+  ta.parentElement.style.position = 'relative';
+  ta.parentElement.appendChild(dd);
+
+  ta.addEventListener('input', ()=>handleMentionInput(ta, dd));
+  ta.addEventListener('keydown', e=>handleMentionKey(e, ta, dd));
+  ta.addEventListener('blur', ()=>setTimeout(()=>dd.classList.remove('open'), 150));
+}
+
+function handleMentionInput(ta, dd){
+  const val = ta.value;
+  const pos = ta.selectionStart;
+  // Acha o @ mais próximo antes do cursor
+  let atPos = -1;
+  for(let i=pos-1; i>=0; i--){
+    if(val[i]==='@'){ atPos=i; break; }
+    if(/\s/.test(val[i])) break;
+  }
+  if(atPos < 0){ dd.classList.remove('open'); _mentionActive=null; return; }
+  const query = val.slice(atPos+1, pos).toLowerCase();
+  const matches = members.filter(m=>
+    m.init.toLowerCase().startsWith(query) ||
+    m.name.toLowerCase().includes(query)
+  ).slice(0,8);
+  if(!matches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
+  _mentionActive = { el:ta, dd, atPos };
+  renderMentionDropdown(dd, matches, ta, atPos, pos);
+}
+
+function renderMentionDropdown(dd, matches, ta, atPos, pos){
+  dd.innerHTML = '';
+  matches.forEach((m,i)=>{
+    const opt = document.createElement('div');
+    opt.className = 'mention-option' + (i===0?' active':'');
+    const av = m.foto
+      ? '<img src="'+m.foto+'" onerror="this.style.display=\'none\'">' 
+      : '<div class="mention-avatar">'+m.init+'</div>';
+    opt.innerHTML = av
+      + '<span class="mention-init">@'+m.init+'</span>'
+      + '<span class="mention-name">'+m.name+'</span>';
+    opt.onmousedown = e=>{ e.preventDefault(); insertMention(ta, atPos, pos, m.init); };
+    dd.appendChild(opt);
+  });
+  // Posiciona abaixo do textarea
+  dd.style.top = (ta.offsetHeight+2)+'px';
+  dd.style.left = '0';
+  dd.classList.add('open');
+}
+
+function handleMentionKey(e, ta, dd){
+  if(!dd.classList.contains('open')) return;
+  const opts = dd.querySelectorAll('.mention-option');
+  const activeIdx = [...opts].findIndex(o=>o.classList.contains('active'));
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    const next = (activeIdx+1)%opts.length;
+    opts.forEach(o=>o.classList.remove('active'));
+    opts[next].classList.add('active');
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    const prev = (activeIdx-1+opts.length)%opts.length;
+    opts.forEach(o=>o.classList.remove('active'));
+    opts[prev].classList.add('active');
+  } else if(e.key==='Enter'||e.key==='Tab'){
+    const activeOpt = dd.querySelector('.mention-option.active');
+    if(activeOpt){
+      e.preventDefault();
+      const init = activeOpt.querySelector('.mention-init').textContent.slice(1);
+      const pos = ta.selectionStart;
+      insertMention(ta, _mentionActive?.atPos??0, pos, init);
+    }
+  } else if(e.key==='Escape'){
+    dd.classList.remove('open');
+  }
+}
+
+function insertMention(ta, atPos, curPos, init){
+  const val = ta.value;
+  ta.value = val.slice(0,atPos) + '@'+init+' ' + val.slice(curPos);
+  ta.selectionStart = ta.selectionEnd = atPos + init.length + 2;
+  ta.dispatchEvent(new Event('input'));
+  const dd = document.getElementById(ta.id+'-mention-dd');
+  if(dd) dd.classList.remove('open');
+  _mentionActive = null;
+  scheduleAutoSave();
+}
+// ── FIM MENTION DROPDOWN ─────────────────────────────────────────
 
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
 let viewMode = localStorage.getItem('boardViewMode')||'onepage';
