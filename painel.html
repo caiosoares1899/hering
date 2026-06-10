@@ -271,6 +271,103 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.88);
   backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .pc-modal-ov.open{display:flex;}
+
+/* Monitor de erros — layout limpo */
+.err-log-item{
+  padding:10px 12px;
+  background:rgba(3,13,26,.6);
+  border:1px solid var(--glass-b);
+  border-radius:10px;
+  margin-bottom:6px;
+  transition:border-color .15s;
+}
+.err-log-item:hover{ border-color:rgba(56,182,255,.2); }
+.err-log-item.cat-firebase{ border-left:3px solid rgba(255,209,102,.6); }
+.err-log-item.cat-agente{   border-left:3px solid rgba(56,182,255,.6); }
+.err-log-item.cat-importacao{ border-left:3px solid rgba(150,80,220,.6); }
+.err-log-item.cat-ui{      border-left:3px solid rgba(255,107,107,.6); }
+.err-log-item.cat-geral{   border-left:3px solid rgba(150,200,240,.2); }
+.err-log-item.status-resolvido{ opacity:.4; }
+.err-hd{
+  display:flex;align-items:center;gap:8px;margin-bottom:4px;
+}
+.err-badge{
+  font-size:9px;padding:2px 7px;border-radius:999px;
+  font-weight:700;white-space:nowrap;flex-shrink:0;
+}
+.err-badge.cat-firebase{  background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
+.err-badge.cat-agente{    background:rgba(56,182,255,.1);color:var(--accent);border:1px solid rgba(56,182,255,.2);}
+.err-badge.cat-importacao{background:rgba(150,80,220,.1);color:#d67fff;border:1px solid rgba(150,80,220,.22);}
+.err-badge.cat-ui{        background:rgba(255,107,107,.1);color:var(--danger);border:1px solid rgba(255,107,107,.2);}
+.err-badge.cat-geral{     background:rgba(150,200,240,.06);color:var(--txt3);border:1px solid var(--glass-b);}
+.err-msg{
+  font-size:11px;color:var(--txt);font-weight:500;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.err-status{
+  font-size:9px;padding:2px 8px;border-radius:999px;
+  font-weight:700;cursor:pointer;flex-shrink:0;
+  transition:opacity .15s;
+}
+.err-status:hover{ opacity:.8; }
+.err-status.novo{      background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.3);}
+.err-status.visto{     background:rgba(255,209,102,.1);color:var(--warn);border:1px solid rgba(255,209,102,.2);}
+.err-status.resolvido{ background:rgba(29,233,182,.1);color:var(--teal);border:1px solid rgba(29,233,182,.2);}
+.err-meta{
+  font-size:10px;color:var(--txt3);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  margin-top:3px;
+}
+.err-meta span{ display:flex;align-items:center;gap:3px; }
+.err-stack{
+  font-size:9px;color:var(--txt3);font-family:monospace;
+  background:rgba(0,0,0,.3);border-radius:6px;
+  padding:6px 8px;margin-top:6px;
+  white-space:pre-wrap;word-break:break-all;line-height:1.5;
+  display:none;max-height:120px;overflow-y:auto;
+}
+.err-stack.open{ display:block; }
+.err-chart{
+  display:flex;align-items:flex-end;gap:3px;
+  height:52px;padding:4px 0;margin-top:6px;
+}
+.err-bar-wrap{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;gap:2px;
+}
+.err-bar{
+  width:100%;border-radius:3px 3px 0 0;
+  min-height:2px;transition:height .3s;
+}
+.err-bar-lbl{ font-size:8px;color:var(--txt3); }
+.err-stats-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:10px;margin-bottom:14px;
+}
+.err-filters{
+  display:flex;flex-direction:column;gap:5px;
+  margin-bottom:12px;
+}
+.err-filter-row{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+}
+.err-filter-label{
+  font-size:9px;color:var(--txt3);font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;
+  min-width:40px;
+}
+.err-filter-btn{
+  padding:3px 9px;font-size:10px;
+  border:1px solid var(--glass-b);border-radius:999px;
+  background:var(--glass);color:var(--txt3);
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+  transition:all .15s;
+}
+.err-filter-btn.active{
+  background:rgba(37,99,201,.4);border-color:var(--blue);color:#fff;
+}
+.err-filter-btn:hover:not(.active){ color:var(--txt);border-color:rgba(56,182,255,.3); }
+
 </style>
 </head>
 <body>
@@ -457,15 +554,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
       <div class="err-chart" id="err-chart"></div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:44px;">Squad</span>
+    <div class="err-filters">
+      <div class="err-filter-row">
+        <span class="err-filter-label">Squad</span>
         <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
         <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
         <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:44px;">Tipo</span>
+      <div class="err-filter-row">
+        <span class="err-filter-label">Tipo</span>
         <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
         <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
         <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
@@ -473,8 +570,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
         <button class="err-filter-btn"        onclick="setErrFilter('cat','geral')"      id="ef-cat-geral">⚙ Geral</button>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;min-width:44px;">Status</span>
+      <div class="err-filter-row">
+        <span class="err-filter-label">Status</span>
         <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
         <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
         <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
@@ -1280,7 +1377,7 @@ function renderErrors(){
         ? '<div class="err-stack" style="font-size:9px;color:var(--txt3);font-family:monospace;'
           +'background:rgba(0,0,0,.3);border-radius:5px;padding:5px 8px;margin-top:4px;'
           +'white-space:normal;word-break:break-all;line-height:1.5;display:none;" '
-          +'onclick="this.style.display=this.style.display===\'none\'?\'block\':\'none\'">'
+          +'onclick="this.classList.toggle(\'open\')">'
           +stackLines.map(l=>l.trim().substring(0,120)).join('<br>')
           +'</div>'
         : '')
