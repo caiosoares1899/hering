@@ -973,21 +973,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
-  <div class="modal-body" style="padding:14px 16px;">
+  <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
 
-    <!-- Título full-width -->
-    <div class="field"><label class="fl">Título</label>
+    <!-- Título -->
+    <div class="field">
+      <label class="fl">Título</label>
       <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()"
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
 
-    <!-- Grid 2 colunas -->
+    <!-- Grid 2 colunas: atributos | lado direito -->
     <div class="modal-grid">
 
-      <!-- COLUNA ESQUERDA -->
+      <!-- Coluna esquerda: atributos -->
       <div class="modal-col">
-
-        <!-- Tag + Coluna -->
         <div class="card-attr-row">
           <div class="field"><label class="fl">Tag</label>
             <select class="fi" id="m-tag" onchange="scheduleAutoSave()"></select>
@@ -996,8 +995,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <select class="fi" id="m-col"></select>
           </div>
         </div>
-
-        <!-- Responsável + Prazo -->
         <div class="card-attr-row">
           <div class="field"><label class="fl">Responsável</label>
             <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
@@ -1006,8 +1003,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()">
           </div>
         </div>
-
-        <!-- SP + Prioridade -->
         <div class="card-attr-row">
           <div class="field"><label class="fl">Story Points</label>
             <input class="fi" id="m-sp" type="number" min="0" max="100" placeholder="0" oninput="scheduleAutoSave()">
@@ -1022,8 +1017,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             </select>
           </div>
         </div>
-
-        <!-- Participantes -->
         <div class="field">
           <label class="fl">Participantes</label>
           <div class="part-list" id="m-participants"></div>
@@ -1034,37 +1027,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <button class="btn btn-sm btn-teal" onclick="addParticipant()">+ Add</button>
           </div>
         </div>
-
-        <!-- Descrição -->
-        <div class="field"><label class="fl">Descrição</label>
-          <textarea class="fi fi-ta" id="m-desc" rows="3" oninput="scheduleAutoSave()"
-            placeholder="Use @INICIAIS para mencionar membros..."></textarea>
-        </div>
-
-        <!-- Insights do PO -->
-        <div class="po-box">
-          <div class="po-lbl">🎯 Insights do PO</div>
-          <textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea>
-        </div>
-
-        <!-- Impedimento (oculto por padrão) -->
-        <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
-          <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🚧 Impedimento</div>
-          <textarea class="fi fi-ta" id="m-blocker-reason" rows="2"
-            placeholder="Descreva o impedimento e o que está bloqueando..."
-            style="border-color:rgba(255,107,107,.3);"></textarea>
-          <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-top:6px;"
-            onclick="removeBlockerTag()">✕ Remover impedimento</button>
-        </div>
-
-        <!-- Meta criação/edição -->
-        <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
       </div>
 
-      <!-- COLUNA DIREITA -->
+      <!-- Coluna direita: checklist + riscos + links -->
       <div class="modal-col">
-
-        <!-- Checklist -->
         <div class="cl-sec">
           <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
           <div class="cl-items" id="m-checklist"></div>
@@ -1073,52 +1039,54 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <button class="cl-ab" onclick="addCI()">+ Add</button>
           </div>
         </div>
-
-        <!-- Riscos -->
         <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
-          <div class="cl-hd-row">
-            <div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div>
-          </div>
+          <div class="cl-hd-row"><div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div></div>
           <div class="cl-items" id="m-riscos"></div>
           <div class="cl-add-r">
-            <input class="cl-ai" id="risco-inp" placeholder="Descreva um risco..."
-              onkeydown="if(event.key==='Enter')addRisco()">
-            <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);"
-              onclick="addRisco()">+ Add</button>
+            <input class="cl-ai" id="risco-inp" placeholder="Descreva um risco..." onkeydown="if(event.key==='Enter')addRisco()">
+            <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="addRisco()">+ Add</button>
           </div>
         </div>
-
-        <!-- OKR -->
-        <label class="okr-check-wrap">
-          <input type="checkbox" id="m-is-okr" style="width:16px;height:16px;accent-color:var(--warn);flex-shrink:0;">
-          <div>
-            <div style="font-size:12px;font-weight:600;color:var(--txt);">🎯 Card OKR</div>
-            <div style="font-size:10px;color:var(--txt3);">Aparece destacado no painel</div>
-          </div>
-        </label>
-
-        <!-- Cards vinculados -->
         <div class="linked-wrap">
           <div style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🔗 Cards vinculados</div>
           <div class="link-search" style="margin-bottom:5px;">
-            <input class="link-search-input" id="link-search-inp"
-              placeholder="Buscar card pelo título..."
-              oninput="searchLinkedCards(this.value)"
-              autocomplete="off">
+            <input class="link-search-input" id="link-search-inp" placeholder="Buscar card pelo título..." oninput="searchLinkedCards(this.value)" autocomplete="off">
             <div class="link-dropdown" id="link-dropdown"></div>
           </div>
           <div class="linked-cards" id="linked-cards-list"></div>
         </div>
-
-      </div><!-- /col direita -->
+      </div>
     </div><!-- /modal-grid -->
+
+    <!-- Descrição full-width -->
+    <div class="field">
+      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar</span></label>
+      <textarea class="fi fi-ta" id="m-desc" rows="3" oninput="scheduleAutoSave()" style="resize:vertical;min-height:60px;"></textarea>
+    </div>
+
+    <!-- Insights do PO full-width -->
+    <div class="po-box">
+      <div class="po-lbl">🎯 Insights do PO</div>
+      <textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea>
+    </div>
+
+    <!-- Impedimento (oculto por padrão) -->
+    <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
+      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🚧 Impedimento</div>
+      <textarea class="fi fi-ta" id="m-blocker-reason" rows="2" placeholder="Descreva o impedimento..." style="border-color:rgba(255,107,107,.3);"></textarea>
+      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-top:6px;" onclick="removeBlockerTag()">✕ Remover impedimento</button>
+    </div>
+
+    <!-- OKR hidden input (mantido para salvar) -->
+    <input type="checkbox" id="m-is-okr" style="display:none;">
+
+    <!-- Meta -->
+    <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
+
   </div><!-- /modal-body -->
 
-  <!-- Rodapé limpo -->
   <div class="modal-ft-row">
-    <button class="btn btn-sm" id="btn-del-card"
-      style="color:var(--danger);border-color:rgba(255,107,107,.3);"
-      onclick="deleteCard()">🗑 Excluir</button>
+    <button class="btn btn-sm" id="btn-del-card" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
     <button class="btn btn-sm btn-teal" onclick="archiveCard()">📦 Arquivar</button>
     <div style="flex:1;"></div>
@@ -1130,6 +1098,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+<!-- CONFIGURAÇÕES -->
 <!-- CONFIGURAÇÕES -->
 <!-- CONFIGURAÇÕES -->
 <div class="ov" id="cfg-ov">
@@ -2250,6 +2219,13 @@ function saveCard(){
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td});
   }
   fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
+}
+function toggleCardOKR(cardId){
+  const card = cards.find(c=>c.id===cardId); if(!card) return;
+  card.isOKR = !card.isOKR;
+  fbSaveAll();
+  renderBoard();
+  showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
 function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
