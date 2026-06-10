@@ -288,6 +288,87 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .po-ta:focus{border-color:var(--accent);background:rgba(3,13,26,.6);}
 .markdown-view { line-height: 1.5; font-size: 12px; }
 .markdown-view em { color: var(--txt3); font-style: italic; }
+
+/* Menções e Popovers */
+.mention-link {
+  color: var(--accent);
+  background: rgba(37,99,201,.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  transition: all .2s;
+}
+.mention-link:hover {
+  background: rgba(37,99,201,.25);
+  color: #fff;
+}
+.mention-popover {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  width: 180px;
+  background: rgba(6,26,46,.98);
+  border: 1px solid var(--glass-b);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.mention-link:hover .mention-popover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.mention-pop-av {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid rgba(56,182,255,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  object-fit: cover;
+}
+.mention-pop-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  text-align: center;
+}
+.mention-pop-role {
+  font-size: 10px;
+  color: var(--txt3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  text-align: center;
+}
+/* Triângulo do popover */
+.mention-popover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--glass-b) transparent transparent transparent;
+}
 .cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
 .cl-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
@@ -3140,20 +3221,15 @@ function renderMd(txt){
     .replace(/>/g,'&gt;');
 
   // 2. Depois processa as menções @usuario (inserindo HTML seguro)
-  const mentionRe = /@([A-Z0-9]{2,4})\b/gi;
+  // Regex melhorada para aceitar iniciais de 2 a 4 caracteres alfanuméricos
+  const mentionRe = /@([A-Z0-9]{2,4})/gi;
   safeTxt = safeTxt.replace(mentionRe, (match, init) => {
     const member = members.find(m => m.init.toUpperCase() === init.toUpperCase());
     if(!member) return match;
     const av = member.foto 
       ? `<img src="${member.foto}" class="mention-pop-av" onerror="this.style.display='none'">`
       : `<div class="mention-pop-av">${member.init.toUpperCase()}</div>`;
-    return `<span class="mention-link">@${member.init.toUpperCase()}
-      <div class="mention-popover">
-        ${av}
-        <div class="mention-pop-name">${member.name}</div>
-        <div class="mention-pop-role">${member.role || 'Membro'}</div>
-      </div>
-    </span>`;
+    return `<span class="mention-link">@${member.init.toUpperCase()}<div class="mention-popover">${av}<div class="mention-pop-name">${member.name}</div><div class="mention-pop-role">${member.role || 'Membro'}</div></div></span>`;
   });
 
   return safeTxt
