@@ -1623,7 +1623,7 @@ function renderSquadCards(){
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
     if(!squadVisible(sq.id)) return;
-    const cards=d.cards.filter(c=>!c.archived);
+    const cards=d.cards.filter(c=>!c.archived&&isColVisible(sq.id,c.col));
     const wip=cards.filter(c=>c.col==='progress').length;
     const done=cards.filter(c=>c.col==='done').length;
     const bl=cards.filter(c=>c.col==='blocker').length;
