@@ -48,6 +48,43 @@
 }
 .board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.55); }
 
+/* ── BUSCA GLOBAL (Ctrl+K) ──────────────────────────────── */
+#search-overlay{
+  display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(2,10,24,.85);backdrop-filter:blur(8px);
+  align-items:flex-start;justify-content:center;padding-top:10vh;
+}
+#search-overlay.open{display:flex;}
+.search-box{
+  width:min(600px,90vw);background:rgba(10,37,64,.97);
+  border:1px solid var(--glass-b);border-radius:var(--r2);
+  box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;
+}
+.search-inp-wrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--glass-b);}
+.search-icon{font-size:16px;color:var(--txt3);flex-shrink:0;}
+#search-inp{
+  flex:1;background:none;border:none;outline:none;
+  font-size:15px;color:var(--txt);font-family:"DM Sans",sans-serif;
+}
+#search-inp::placeholder{color:var(--txt3);}
+.search-kbd{font-size:10px;color:var(--txt3);background:rgba(56,182,255,.1);
+  border:1px solid var(--glass-b);border-radius:4px;padding:2px 6px;flex-shrink:0;}
+#search-results{max-height:400px;overflow-y:auto;}
+.search-result{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  cursor:pointer;border-bottom:1px solid rgba(56,182,255,.07);
+  transition:background .12s;
+}
+.search-result:hover,.search-result.active{background:rgba(56,182,255,.08);}
+.search-result:last-child{border-bottom:none;}
+.sr-col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sr-title{font-size:13px;color:var(--txt);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sr-meta{font-size:10px;color:var(--txt3);white-space:nowrap;}
+.sr-tag{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid;margin-left:6px;}
+.search-empty{padding:24px;text-align:center;color:var(--txt3);font-size:13px;}
+.search-hint{padding:8px 16px;font-size:10px;color:var(--txt3);border-top:1px solid var(--glass-b);display:flex;gap:16px;}
+.search-hint kbd{background:rgba(56,182,255,.1);border:1px solid var(--glass-b);border-radius:3px;padding:1px 5px;font-size:9px;}
+
 /* Colunas do board */
 .col-body::-webkit-scrollbar { width: 3px; }
 .col-body::-webkit-scrollbar-thumb { background: rgba(56,182,255,.15); border-radius: 999px; }
@@ -873,6 +910,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
   </button>
+  <button class="btn btn-sm" onclick="openSearch()" title="Buscar cards (Ctrl+K)" style="background:var(--glass);border:1px solid var(--glass-b);">🔍</button>
   <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
   </div>
 </div>
@@ -1445,7 +1483,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v7.9</div>
+<div class="version">v8.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1498,7 +1536,7 @@ function getEffectiveRole(user, dbRole){
 const WORKER_URL = localStorage.getItem('kanban_worker_url') || 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
 // ── SQUAD FIXO ──────────────────────────────────────────────────
 const ACTIVE_SQUAD = 'midia';
-const SQUAD_LABELS = {dados:'Squad Mídia 📱', midia:'Squad Mídia 📱'};
+const SQUAD_LABELS = {dados:'Squad Dados 📊', midia:'Squad Mídia 📱'};
 const FB = 'kanban/squads/' + ACTIVE_SQUAD + '/dados';
 // ── FIM SQUAD ────────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
@@ -1626,7 +1664,7 @@ function fbLoadAll(){
       w.querySelectorAll('.default-msg').forEach(m=>m.remove());
       if(w.querySelectorAll('.msg').length===0){
         val.forEach(m=>{ const d=document.createElement('div'); d.className='msg '+(m.role==='ai'?'msg-ai':'msg-u');
-          if(m.role==='ai') d.innerHTML='<div class="msg-lbl">Agente Ágil</div>'+m.txt;
+          if(m.role==='ai') d.innerHTML='<div class="msg-lbl">Agente Ágil</div>'+renderMd(m.txt||'');
           else d.textContent=m.txt; w.appendChild(d); }); w.scrollTop=w.scrollHeight;
       }
     });
@@ -1804,7 +1842,11 @@ function makeCardEl(card){
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
   div.setAttribute('draggable','true');
+  div.setAttribute('role','button');
+  div.setAttribute('tabindex','0');
+  div.setAttribute('aria-label','Card: '+card.title+(card.owner?' — '+card.owner:''));
   div.onclick=()=>openCard(card.id);
+  div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openCard(card.id); } };
   div.oncontextmenu=e=>showCtxMenu(e,card.id);
   div.ondragstart=e=>handleDragStart(e,card.id);
   div.ondragend=e=>handleDragEnd(e);
@@ -1839,7 +1881,9 @@ function renderNormal(board,activeCards){
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
-        <span class="col-cnt" id="cnt-${col.id}">${colCards.length}</span>
+        <span class="col-cnt" id="cnt-${col.id}" style="${col.id==='progress'&&agilCfg.wip&&colCards.length>parseInt(agilCfg.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
+          ${col.id==='progress'&&agilCfg.wip ? colCards.length+'/'+agilCfg.wip : colCards.length}
+        </span>
         ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
     </div>
@@ -2686,10 +2730,19 @@ function executeTool(name,input){
 }
 
 function agCtx(){
-  const snap=cards.filter(c=>!c.archived).map(c=>{
+  const cutoff = Date.now() - 7*24*60*60*1000; // 7 dias atrás
+  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))||{id:'done'};
+  const activeSnap = cards.filter(c=>!c.archived).filter(c=>{
+    // Exclui do snapshot cards em "done" sem timestamp de conclusão recente
+    if(c.col === doneCol.id && c.doneAt && new Date(c.doneAt).getTime() < cutoff) return false;
+    return true;
+  });
+  const oldDoneCount = cards.filter(c=>!c.archived && c.col===doneCol.id && c.doneAt && new Date(c.doneAt).getTime()<cutoff).length;
+  const snap=activeSnap.map(c=>{
     const cp=clProg(c.checklist);
     return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'}${c.participants?.length?' participantes:'+c.participants.join(','): ''} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
   }).join('\n');
+  const doneNote = oldDoneCount > 0 ? `\n[+${oldDoneCount} card(s) concluídos há mais de 7 dias omitidos do snapshot]` : '';
   return `Você é o Agente Ágil do time de mídia da Digital Hering (Grupo Azzas 2154).
 Analisa o Kanban, age sobre ele e ajuda os usuários a entender o sistema. Responde em português, direto e acionável.
 CRÍTICO: ao usar ferramentas, use EXATAMENTE o card_id listado como [ID:xxx] abaixo. Exemplo: card_id="c2". Nunca invente IDs. As colunas válidas estão listadas como [COL:xxx].
@@ -2718,7 +2771,7 @@ AÇÕES QUE POSSO EXECUTAR:
 Você está conversando com um PO ou Organizador — pode usar todas as ferramentas sem restrição.
 
 BOARD (${new Date().toLocaleDateString('pt-BR')}):
-${snap}
+${snap}${doneNote}
 
 Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
 WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>c.col==='blocker'&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
@@ -2816,7 +2869,12 @@ async function qa(tab,q){
       display=(display?display+'\n\n':'')+acoes;
     }
     appMsg(tab,'ai',display||'(sem resposta)');
-    agHistory[tab].push({role:'assistant',content:finalText||'ok'});
+    // Salva no histórico com resumo das ações, para o modelo manter contexto em turnos futuros
+    const histContent = [
+      ...(finalText ? [finalText] : []),
+      ...(toolsUsed.length > 0 ? ['[ações executadas: '+toolsUsed.map(t=>(t.result.ok?'✅ ':'❌ ')+t.name+': '+t.result.msg).join(' | ')+']'] : [])
+    ].join('\n\n') || 'ok';
+    agHistory[tab].push({role:'assistant',content:histContent});
     fbSaveMsgs(tab);
   }catch(e){
     setLoad(tab,false);
@@ -2834,6 +2892,7 @@ function showToast(msg, duration=3500){
     t=document.createElement('div');
     t.id='kb-toast';
     t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:999px;padding:9px 20px;font-size:12px;color:var(--txt);z-index:999;backdrop-filter:blur(12px);transition:opacity .3s;pointer-events:none;';
+    t.setAttribute('role','status'); t.setAttribute('aria-live','polite'); t.setAttribute('aria-atomic','true');
     document.body.appendChild(t);
   }
   t.textContent=msg; t.style.opacity='1';
@@ -4569,7 +4628,10 @@ function hideCtxMenu(){
 
 // Fecha ao clicar fora ou pressionar Esc
 document.addEventListener('click', hideCtxMenu);
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') hideCtxMenu(); });
+document.addEventListener('keydown', e=>{ 
+  if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
+});
 document.addEventListener('contextmenu', e=>{
   // Se não clicou num card, mostra o menu padrão do browser
   if(!e.target.closest('.card')) hideCtxMenu();
@@ -4754,9 +4816,99 @@ window.addEventListener('fb-ready',()=>{
     },15000);
   });
 });
+// ═══════════════════════════════════════════════════════
+// BUSCA GLOBAL (Ctrl+K)
+// ═══════════════════════════════════════════════════════
+let _searchIdx = 0;
+
+function openSearch(){
+  document.getElementById('search-overlay').classList.add('open');
+  const inp = document.getElementById('search-inp');
+  inp.value = '';
+  renderSearchResults();
+  setTimeout(()=>inp.focus(), 50);
+}
+
+function closeSearch(){
+  document.getElementById('search-overlay').classList.remove('open');
+}
+
+function renderSearchResults(){
+  const q = (document.getElementById('search-inp').value||'').toLowerCase().trim();
+  const container = document.getElementById('search-results');
+  _searchIdx = 0;
+  if(!q){
+    container.innerHTML = '<div class="search-empty">Digite para buscar entre os cards do board…</div>';
+    return;
+  }
+  const matches = cards.filter(c=>{
+    if(c.archived) return false;
+    return (c.title||'').toLowerCase().includes(q)
+      || (c.desc||'').toLowerCase().includes(q)
+      || (c.po||'').toLowerCase().includes(q)
+      || (c.owner||'').toLowerCase().includes(q)
+      || (members.find(m=>m.init===c.owner)?.name||'').toLowerCase().includes(q);
+  });
+  if(!matches.length){
+    container.innerHTML = '<div class="search-empty">Nenhum card encontrado para "<strong>'+esc(q)+'</strong>"</div>';
+    return;
+  }
+  container.innerHTML = matches.slice(0,20).map((c,i)=>{
+    const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
+    const tag = getTag(c.tag);
+    const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag.pi).c};border-color:${getPal(tag.pi).c};background:${getPal(tag.pi).bg};">${esc(tag.label)}</span>` : '';
+    const owner = members.find(m=>m.init===c.owner);
+    const ownerTxt = owner ? owner.name : (c.owner||'');
+    return `<div class="search-result${i===0?' active':''}" data-id="${esc(c.id)}" onclick="openSearchCard('${esc(c.id)}')" onmouseover="setSearchIdx(${i})">
+      <span class="sr-col-dot" style="background:${col.color};" title="${esc(col.name)}"></span>
+      <span class="sr-title">${esc(c.title)}</span>
+      ${tagHtml}
+      <span class="sr-meta">${esc(ownerTxt)}${c.due?' · '+c.due:''}</span>
+    </div>`;
+  }).join('');
+}
+
+function setSearchIdx(i){
+  _searchIdx = i;
+  document.querySelectorAll('#search-results .search-result').forEach((el,j)=>el.classList.toggle('active',j===i));
+}
+
+function handleSearchKey(e){
+  const items = document.querySelectorAll('#search-results .search-result');
+  if(e.key==='ArrowDown'){ e.preventDefault(); setSearchIdx(Math.min(_searchIdx+1, items.length-1)); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); setSearchIdx(Math.max(_searchIdx-1, 0)); }
+  else if(e.key==='Enter'){ e.preventDefault(); const active=document.querySelector('#search-results .search-result.active'); if(active) openSearchCard(active.dataset.id); }
+  else if(e.key==='Escape'){ closeSearch(); }
+}
+
+function openSearchCard(id){
+  closeSearch();
+  openCard(id);
+}
+
+
 renderBoard();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
+
+<!-- BUSCA GLOBAL Ctrl+K -->
+<div id="search-overlay" onclick="if(event.target===this) closeSearch();">
+  <div class="search-box" role="dialog" aria-label="Buscar cards">
+    <div class="search-inp-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="search-inp" type="text" placeholder="Buscar cards por título, descrição, PO ou responsável…"
+        oninput="renderSearchResults()" onkeydown="handleSearchKey(event)"
+        autocomplete="off" spellcheck="false">
+      <span class="search-kbd">Esc</span>
+    </div>
+    <div id="search-results"></div>
+    <div class="search-hint">
+      <span><kbd>↑↓</kbd> navegar</span>
+      <span><kbd>Enter</kbd> abrir card</span>
+      <span><kbd>Esc</kbd> fechar</span>
+    </div>
+  </div>
+</div>
 </body>
 </html>
