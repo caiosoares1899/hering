@@ -368,6 +368,37 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 }
 .err-filter-btn:hover:not(.active){ color:var(--txt);border-color:rgba(56,182,255,.3); }
 
+
+/* ── BOARD SETUP MODAL ──────────────────────────────────────────── */
+#board-setup-ov{display:none;position:fixed;inset:0;z-index:9500;background:rgba(2,10,24,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;}
+#board-setup-ov.open{display:flex;}
+.bs-modal{background:rgba(10,37,64,.97);border:1px solid rgba(56,182,255,.2);border-radius:14px;width:min(480px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;}
+.bs-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(56,182,255,.12);}
+.bs-title{font-family:"Syne",sans-serif;font-size:15px;font-weight:700;color:var(--txt);}
+.bs-close{background:none;border:none;color:rgba(200,230,255,.4);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
+.bs-close:hover{color:var(--txt);background:rgba(56,182,255,.1);}
+.bs-body{padding:20px;}
+.bs-field{margin-bottom:14px;}
+.bs-label{font-size:11px;color:rgba(200,230,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
+.bs-inp{width:100%;background:rgba(3,13,26,.8);border:1px solid rgba(56,182,255,.2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:"DM Sans",sans-serif;outline:none;box-sizing:border-box;}
+.bs-inp:focus{border-color:var(--accent);}
+.bs-emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.bs-emoji-opt{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:8px;border:1px solid rgba(56,182,255,.15);background:rgba(56,182,255,.06);cursor:pointer;transition:all .12s;}
+.bs-emoji-opt:hover,.bs-emoji-opt.sel{border-color:var(--accent);background:rgba(56,182,255,.18);}
+.bs-color-row{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.bs-color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .12s;}
+.bs-color-opt.sel{border-color:white;}
+.bs-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid rgba(56,182,255,.1);}
+.bs-existing{margin-bottom:16px;}
+.bs-existing-title{font-size:11px;color:rgba(200,230,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.bs-board-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(56,182,255,.05);border:1px solid rgba(56,182,255,.1);border-radius:8px;margin-bottom:6px;}
+.bs-board-icon{font-size:18px;width:28px;text-align:center;}
+.bs-board-info{flex:1;min-width:0;}
+.bs-board-name{font-size:13px;color:var(--txt);font-weight:600;}
+.bs-board-id{font-size:10px;color:rgba(200,230,255,.4);}
+.bs-board-actions{display:flex;gap:6px;}
+.bs-del-btn{background:none;border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.7);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;}
+.bs-del-btn:hover{background:rgba(255,107,107,.1);color:var(--danger);}
 </style>
 </head>
 <body>
@@ -401,8 +432,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
       <button class="btn" onclick="toggleMonitorSection()" id="btn-monitor" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🐛 Bugs</button>
       <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
-      <a href="kanban-dados.html" target="_blank" class="btn" style="color:#38b6ff;border-color:rgba(56,182,255,.3);">📊 Dados</a>
-      <a href="kanban-midia.html" target="_blank" class="btn" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📱 Mídia</a>
+      <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+      <button class="btn" onclick="openBoardSetup()" title="Criar novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙ Novo board</button>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
         <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
         <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
@@ -722,7 +753,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.5 · painel</div>
+<div class="version">v1.7 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1624,10 +1655,38 @@ function toggleSqCol(sqId, colId){
 }
 // ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
 
-const SQUADS = [
+// Squads base — sempre presentes
+let SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
 ];
+// URL helper: abre o board de um squad no kanban unificado
+function squadBoardUrl(squadId){ return 'kanban.html?squad=' + squadId; }
+
+// Carrega squads criados via painel de setup do Firebase
+function loadExtraSquads(callback){
+  window._get(window._ref(window._db,'kanban/squads_meta')).then(snap=>{
+    const val=snap.val()||{};
+    Object.entries(val).forEach(([id,meta])=>{
+      if(!meta||!meta.label) return;
+      if(!SQUADS.find(s=>s.id===id)){
+        SQUADS.push({id, label:meta.label, icon:meta.emoji||'🐟', color:meta.color||'#38b6ff', wipLimit:parseInt(meta.wipLimit)||3});
+      }
+    });
+    // Atualiza links dinâmicos no header
+    renderSquadLinks();
+    if(callback) callback();
+  }).catch(()=>{ if(callback) callback(); });
+}
+
+// Renderiza os links "Abrir Board" no header dinamicamente
+function renderSquadLinks(){
+  const wrap = document.getElementById('squad-links-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = SQUADS.map(sq=>
+    `<a href="kanban.html?squad=${sq.id}" target="_blank" class="btn" style="color:${sq.color};border-color:${sq.color}33;">${sq.icon} ${sq.label.replace('Squad ','')}</a>`
+  ).join('');
+}
 const DEFAULT_COLUMNS = ['backlog','todo','progress','blocker','done'];
 const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
 const COL_COLORS = {backlog:'#888',todo:'#38b6ff',progress:'#1de9b6',blocker:'#ff6b6b',done:'#639922'};
@@ -1665,7 +1724,7 @@ window.addEventListener('auth-change',e=>{
 
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
-  loadAll();
+  loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); });
   loadPresence();
   loadAgentUsage();
   loadPcalEvents();
@@ -1743,7 +1802,7 @@ function renderSquadCards(){
         </div>
         <div style="display:flex;gap:7px;align-items:center;">
           <button class="cfg-squad-btn" data-sqid="${sq.id}" style="padding:4px 10px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;">⚙ Config</button>
-          <a href="kanban-"+sq.id+".html" target="_blank" class="squad-link">Abrir Board ↗</a>
+          <a href="kanban.html?squad="+sq.id target="_blank" class="squad-link">Abrir Board ↗</a>
         </div>
       </div>
       ${goal?`<div style="font-size:11px;color:var(--txt2);background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.2);border-radius:6px;padding:6px 10px;margin-bottom:10px;">🎯 ${goal}</div>`:''}
@@ -1922,6 +1981,252 @@ function renderColDist(){
   });
 }
 
+
+// ═══════════════════════════════════════════════════════
+// BOARD SETUP
+// ═══════════════════════════════════════════════════════
+let _bsSelectedEmoji = '💬';
+let _bsSelectedColor = '#38b6ff';
+
+function openBoardSetup(){
+  document.getElementById('board-setup-ov').classList.add('open');
+  bsRenderExisting();
+  bsUpdatePreview();
+}
+
+function closeBoardSetup(){
+  document.getElementById('board-setup-ov').classList.remove('open');
+}
+
+function bsSelectEmoji(el, emoji){
+  document.querySelectorAll('.bs-emoji-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  _bsSelectedEmoji = emoji;
+  bsUpdatePreview();
+}
+
+function bsSelectColor(el, color){
+  document.querySelectorAll('.bs-color-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  _bsSelectedColor = color;
+}
+
+function bsUpdatePreview(){
+  const id   = (document.getElementById('bs-id')?.value||'').trim();
+  const name = (document.getElementById('bs-name')?.value||'').trim();
+  const prev = document.getElementById('bs-preview');
+  const txt  = document.getElementById('bs-preview-txt');
+  const lnk  = document.getElementById('bs-preview-link');
+  if(!prev) return;
+  if(id && name){
+    prev.style.display = 'block';
+    txt.textContent = _bsSelectedEmoji + ' ' + name;
+    const url = 'kanban.html?squad=' + id;
+    lnk.href = url;
+    lnk.textContent = url;
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+function bsRenderExisting(){
+  const list = document.getElementById('bs-existing-list');
+  if(!list) return;
+  // Mostra squads base + os carregados do Firebase
+  list.innerHTML = SQUADS.map(sq=>`
+    <div class="bs-board-item">
+      <div class="bs-board-icon">${sq.icon}</div>
+      <div class="bs-board-info">
+        <div class="bs-board-name">${sq.label}</div>
+        <div class="bs-board-id">kanban.html?squad=${sq.id}</div>
+      </div>
+      <div class="bs-board-actions">
+        <a href="kanban.html?squad=${sq.id}" target="_blank"
+           style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(56,182,255,.3);border-radius:6px;">
+          Abrir ↗
+        </a>
+        ${!['dados','midia'].includes(sq.id) ? `<button class="bs-del-btn" onclick="bsDeleteBoard('${sq.id}','${sq.label}')">🗑</button>` : ''}
+      </div>
+    </div>`
+  ).join('');
+}
+
+async function saveNewBoard(){
+  const id       = (document.getElementById('bs-id')?.value||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  const name     = (document.getElementById('bs-name')?.value||'').trim();
+  const subtitle = (document.getElementById('bs-subtitle')?.value||'').trim();
+  const wip      = parseInt(document.getElementById('bs-wip')?.value||'3');
+
+  if(!id){ alert('Defina um ID para o squad (ex: cx).'); return; }
+  if(!name){ alert('Defina o nome do squad.'); return; }
+  if(SQUADS.find(s=>s.id===id)){ alert('Já existe um squad com o ID "'+id+'". Escolha outro.'); return; }
+
+  const meta = {
+    label:     name,
+    subtitle:  subtitle || name,
+    agentRole: id,
+    emoji:     _bsSelectedEmoji,
+    color:     _bsSelectedColor,
+    wipLimit:  wip,
+    criadoEm:  new Date().toISOString(),
+    criadoPor: document.getElementById('user-name')?.textContent || '?',
+  };
+
+  try {
+    // Grava em kanban/squads_meta/{id} — lido pelo kanban.html ao selecionar squad
+    await window._set(window._ref(window._db, 'kanban/squads_meta/'+id), meta);
+
+    // Adiciona ao array local para aparecer no painel imediatamente
+    SQUADS.push({id, label:name, icon:_bsSelectedEmoji, color:_bsSelectedColor, wipLimit:wip});
+    renderSquadLinks();
+    bsRenderExisting();
+
+    // Inicia listener do novo squad no painel
+    loadSquadData(id);
+
+    // Limpa formulário
+    ['bs-id','bs-name','bs-subtitle'].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.value=''; });
+    document.getElementById('bs-preview').style.display='none';
+
+    showBsToast('✅ Board "'+name+'" criado! Acesse: kanban.html?squad='+id);
+  } catch(e) {
+    alert('Erro ao salvar: '+e.message);
+  }
+}
+
+async function bsDeleteBoard(id, label){
+  if(!confirm('Excluir o board "'+label+'"?\n\nOs dados dos cards no Firebase NÃO serão apagados — só a configuração do board no painel.')) return;
+  try {
+    await window._set(window._ref(window._db, 'kanban/squads_meta/'+id), null);
+    SQUADS = SQUADS.filter(s=>s.id!==id);
+    renderSquadLinks();
+    bsRenderExisting();
+    renderSquadCards();
+    showBsToast('🗑 Board "'+label+'" removido do painel.');
+  } catch(e) {
+    alert('Erro ao excluir: '+e.message);
+  }
+}
+
+function showBsToast(msg){
+  let t = document.getElementById('bs-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'bs-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid rgba(56,182,255,.25);border-radius:999px;padding:9px 20px;font-size:12px;color:#e8f4fd;z-index:9999;transition:opacity .3s;pointer-events:none;';
+    t.setAttribute('role','status');
+    t.setAttribute('aria-live','polite');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.style.opacity='0', 4000);
+}
+
+// Helper: inicia listener de um squad específico (para novos boards criados em sessão)
+function loadSquadData(sqId){
+  window._onValue(window._ref(window._db,'kanban/squads/'+sqId+'/dados'),snap=>{
+    const val=snap.val()||{};
+    squadData[sqId]={
+      cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({...card,id:card.id||('idx_'+i)})):[],
+      columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+      tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
+      agilCfg:val.agil_cfg||{},
+    };
+    renderAll();
+  });
+}
+
+// Fechar modal com Esc
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeBoardSetup();
+});
+
 </script>
+
+<!-- BOARD SETUP MODAL -->
+<div id="board-setup-ov">
+  <div class="bs-modal">
+    <div class="bs-header">
+      <div class="bs-title">⚙ Setup de Boards</div>
+      <button class="bs-close" onclick="closeBoardSetup()">✕</button>
+    </div>
+    <div class="bs-body">
+
+      <!-- Boards existentes -->
+      <div class="bs-existing">
+        <div class="bs-existing-title">Boards ativos</div>
+        <div id="bs-existing-list"></div>
+      </div>
+
+      <!-- Formulário de novo board -->
+      <div style="border-top:1px solid rgba(56,182,255,.1);padding-top:16px;margin-top:4px;">
+        <div class="bs-existing-title" style="margin-bottom:12px;">Criar novo board</div>
+
+        <div class="bs-field">
+          <label class="bs-label">ID do squad <span style="color:rgba(200,230,255,.35);font-size:10px;">(letras/números, sem espaços, ex: cx)</span></label>
+          <input class="bs-inp" id="bs-id" placeholder="ex: cx" maxlength="20"
+            oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_-]/g,''); bsUpdatePreview();">
+        </div>
+
+        <div class="bs-field">
+          <label class="bs-label">Nome do squad</label>
+          <input class="bs-inp" id="bs-name" placeholder="ex: Squad CX" maxlength="40" oninput="bsUpdatePreview();">
+        </div>
+
+        <div class="bs-field">
+          <label class="bs-label">Subtítulo / área</label>
+          <input class="bs-inp" id="bs-subtitle" placeholder="ex: Customer Experience" maxlength="60">
+        </div>
+
+        <div class="bs-field">
+          <label class="bs-label">Emoji</label>
+          <div class="bs-emoji-grid" id="bs-emoji-grid">
+            <div class="bs-emoji-opt sel" onclick="bsSelectEmoji(this,'💬')">💬</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🛍️')">🛍️</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'📦')">📦</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🎯')">🎯</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🚀')">🚀</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'⚡')">⚡</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🔧')">🔧</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🎨')">🎨</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'📈')">📈</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🐟')">🐟</div>
+          </div>
+        </div>
+
+        <div class="bs-field">
+          <label class="bs-label">Cor do squad</label>
+          <div class="bs-color-row" id="bs-color-row">
+            <div class="bs-color-opt" style="background:#d67fff;" onclick="bsSelectColor(this,'#d67fff')"></div>
+            <div class="bs-color-opt sel" style="background:#38b6ff;" onclick="bsSelectColor(this,'#38b6ff')"></div>
+            <div class="bs-color-opt" style="background:#1de9b6;" onclick="bsSelectColor(this,'#1de9b6')"></div>
+            <div class="bs-color-opt" style="background:#ffd166;" onclick="bsSelectColor(this,'#ffd166')"></div>
+            <div class="bs-color-opt" style="background:#ff6b6b;" onclick="bsSelectColor(this,'#ff6b6b')"></div>
+            <div class="bs-color-opt" style="background:#a78bfa;" onclick="bsSelectColor(this,'#a78bfa')"></div>
+            <div class="bs-color-opt" style="background:#34d399;" onclick="bsSelectColor(this,'#34d399')"></div>
+            <div class="bs-color-opt" style="background:#fb923c;" onclick="bsSelectColor(this,'#fb923c')"></div>
+          </div>
+        </div>
+
+        <div class="bs-field">
+          <label class="bs-label">WIP limit padrão</label>
+          <input class="bs-inp" id="bs-wip" type="number" min="1" max="20" value="3" style="width:80px;">
+        </div>
+
+        <div id="bs-preview" style="display:none;padding:10px 14px;border-radius:8px;border:1px solid rgba(56,182,255,.15);background:rgba(56,182,255,.05);font-size:12px;color:var(--txt2);margin-top:4px;">
+          Preview: <strong id="bs-preview-txt"></strong> →
+          <a id="bs-preview-link" href="#" target="_blank" style="color:var(--accent);text-decoration:none;font-size:11px;"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="bs-footer">
+      <button class="btn" onclick="closeBoardSetup()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveNewBoard()">✅ Criar board</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
