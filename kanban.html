@@ -523,6 +523,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .dep-node-card:hover{border-color:rgba(56,182,255,.3);background:rgba(10,37,64,.9);}
 .dep-node-card.is-root{border-left:3px solid var(--accent);}
 .dep-node-card.is-dependent{border-left:3px solid rgba(56,182,255,.3);}
+.dep-node-card.is-self{border-left:3px solid var(--teal);background:rgba(29,233,182,.08);border-color:rgba(29,233,182,.25);}
 .dep-node-col{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .dep-node-title{font-size:12px;color:var(--txt);font-weight:600;flex:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1169,7 +1170,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
-  <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
@@ -1258,10 +1258,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="panel-hd">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <div class="panel-title" id="m-title-disp" style="flex:1;">Card</div>
-      <button id="m-depends-btn" class="parent-btn" onclick="openDependsPicker()" title="Definir dependência">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
-        <span id="m-depends-lbl">Dependência</span>
-      </button>
+      <div style="position:relative;" id="m-depends-wrap">
+        <button id="m-depends-btn" class="parent-btn" onclick="toggleDepsMenu()" title="Dependências">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
+          <span id="m-depends-lbl">Dependência</span>
+        </button>
+        <div id="m-deps-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;
+          background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
+          box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:180px;z-index:500;overflow:hidden;">
+          <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;transition:background .12s;"
+            onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+            🔗 Definir dependência
+          </button>
+          <div style="height:1px;background:rgba(56,182,255,.1);margin:0 10px;"></div>
+          <button onclick="openCardDepMapModal();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;transition:background .12s;"
+            onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+            ⛓ Ver mapa de dependências
+          </button>
+          <button onclick="unlinkDependsOn();closeDepsMenu();" id="m-deps-unlink-btn" style="display:none;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;color:rgba(255,107,107,.7);font-size:12px;cursor:pointer;text-align:left;transition:background .12s;"
+            onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='none'">
+            ✕ Remover dependência
+          </button>
+        </div>
+      </div>
     </div>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
@@ -3227,7 +3246,7 @@ function swAgTab(tab){
   ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
 }
 function renderMd(txt){
-  return txt
+  txt = txt
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     // Tabelas markdown simples
     .replace(/^\|(.+)\|$/gm, row=>'<tr>'+row.split('|').filter((_,i,a)=>i>0&&i<a.length-1).map(c=>`<td style="padding:3px 8px;border:1px solid rgba(56,182,255,.15);font-size:11px;">${c.trim()}</td>`).join('')+'</tr>')
@@ -5917,7 +5936,7 @@ function openDepMap(){
   renderDepMap();
 }
 
-function renderDepMap(){
+function renderDepMap(selfId){
   const body=document.getElementById('dep-map-body'); if(!body) return;
   const chains=buildDepChains();
   if(!chains.length){
@@ -5944,13 +5963,13 @@ function renderDepMap(){
 
     const tree=document.createElement('div');
     tree.className='dep-tree';
-    renderDepNode(tree, chain, 0);
+    renderDepNode(tree, chain, 0, selfId);
     wrap.appendChild(tree);
     body.appendChild(wrap);
   });
 }
 
-function renderDepNode(container, node, depth){
+function renderDepNode(container, node, depth, selfId){
   const c=node.card;
   const col=columns.find(x=>x.id===c.col);
 
@@ -5959,7 +5978,8 @@ function renderDepNode(container, node, depth){
   row.style.paddingLeft=(depth*22)+'px';
 
   const cardDiv=document.createElement('div');
-  cardDiv.className='dep-node-card '+(depth===0?'is-root':'is-dependent');
+  const isSelfNode = typeof selfId!=='undefined' && c.id===selfId;
+  cardDiv.className='dep-node-card '+(isSelfNode?'is-self dep-node-card ':(depth===0?'is-root':'is-dependent'));
   cardDiv.innerHTML=
     '<div class="dep-node-col" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="dep-node-title">'+esc(c.title)+'</span>'+
@@ -5975,7 +5995,7 @@ function renderDepNode(container, node, depth){
     arrow.style.cssText='font-size:10px;color:rgba(56,182,255,.35);padding:2px 0 2px '+(depth*22+10)+'px;';
     arrow.textContent='└─ depende de ↓';
     container.appendChild(arrow);
-    node.dependents.forEach(child=>renderDepNode(container,child,depth+1));
+    node.dependents.forEach(child=>renderDepNode(container,child,depth+1,selfId));
   }
 }
 
@@ -6054,6 +6074,35 @@ function renderMiniNode(container, node, selfId){
     container.appendChild(arrow);
     node.dependents.forEach(child=>renderMiniNode(container,child,selfId));
   }
+}
+
+function toggleDepsMenu(){
+  const menu = document.getElementById('m-deps-menu');
+  if(!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  if(isOpen){ menu.style.display='none'; return; }
+  // Show/hide "Remover" button based on whether card has a dependency
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  const unlinkBtn = document.getElementById('m-deps-unlink-btn');
+  if(unlinkBtn) unlinkBtn.style.display = card?.dependsOn ? 'flex' : 'none';
+  menu.style.display = 'block';
+  // Close when clicking outside
+  setTimeout(()=>{
+    document.addEventListener('click', closeDepsMenuOutside, {once:true});
+  }, 10);
+}
+function closeDepsMenu(){
+  const menu = document.getElementById('m-deps-menu');
+  if(menu) menu.style.display='none';
+}
+function closeDepsMenuOutside(e){
+  if(!e.target.closest('#m-depends-wrap')) closeDepsMenu();
+}
+
+function openCardDepMapModal(){
+  // Opens the full dep map modal filtered to show this card's chains prominently
+  document.getElementById('dep-map-ov').classList.add('open');
+  renderDepMap(editingId); // pass selfId to highlight
 }
 
 renderBoard();
