@@ -162,26 +162,73 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{overflow-x:auto;padding-bottom:8px;}
+.board-wrap{
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:8px;
+  /* Altura dinâmica: viewport menos o espaço acima do board (header + toolbar) */
+  max-height:calc(100vh - 180px);
+}
 .board-wrap.mode-expanded-wrap{
   overflow-x:auto;
-  overflow-y:visible;
-  position:sticky;
-  /* Garante que a scrollbar horizontal fica visível na tela */
+  overflow-y:hidden;
   max-width:100%;
 }
-.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
-.board.raia-mode{display:block;}
-/* column */
-.col{width:100%;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
+/* Board ocupa 100% da altura do wrapper */
+.board{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(0,1fr));
+  gap:10px;
+  align-items:stretch; /* todas as colunas com a mesma altura */
+  width:100%;
+  height:100%;
+}
+.board.raia-mode{display:block;height:auto;}
+/* column — flex column para que col-body cresça e role internamente */
+.col{
+  width:100%;
+  background:var(--glass);
+  border:1px solid var(--glass-b);
+  border-radius:var(--r2);
+  overflow:hidden;
+  backdrop-filter:blur(12px);
+  transition:opacity .2s;
+  display:flex;
+  flex-direction:column;
+  min-height:0; /* necessário para o flex funcionar dentro de grid */
+}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
+.col-hd{
+  padding:9px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid var(--glass-b);
+  cursor:default;
+  flex-shrink:0; /* header não encolhe */
+}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-collapse-btn:hover{color:var(--txt);}
-.col-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:40px;}
+/* col-body: cresce para preencher o espaço e rola internamente (estilo Trello) */
+.col-body{
+  padding:6px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-height:40px;
+  flex:1; /* ocupa todo o espaço disponível na coluna */
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(56,182,255,.15) transparent;
+}
+/* Botão + Card fica fixo no rodapé da coluna */
+.add-btn{
+  flex-shrink:0;
+}
 /* card */
 .card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
 .card:hover{border-color:var(--accent);transform:translateY(-1px);}
@@ -204,13 +251,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-lbl{font-size:8px;color:var(--txt3);margin-top:2px;}
 
 .btn-modelo:hover{opacity:1;}
-.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
+.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;flex-shrink:0;}
 .add-btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid;}
 /* raia mode */
 .raia-row{margin-bottom:12px;}
 .raia-label{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--cyan);padding:6px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
-.raia-cols{display:flex;gap:10px;align-items:flex-start;}
-.raia-cols .col{min-width:160px;min-height:60px;}
+.raia-cols{display:flex;gap:10px;align-items:stretch;}
+.raia-cols .col{min-width:160px;min-height:60px;max-height:400px;display:flex;flex-direction:column;}
 /* FAB */
 .fab{position:fixed;bottom:22px;right:22px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .fab-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;font-size:13px;font-family:"Syne",sans-serif;font-weight:700;background:rgba(37,99,201,.88);border:1px solid rgba(56,182,255,.45);border-radius:999px;color:#fff;cursor:pointer;box-shadow:0 4px 28px rgba(37,99,201,.45);transition:all .2s;backdrop-filter:blur(14px);}
@@ -327,12 +374,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(0,1fr));
   gap:10px;
+  align-items:stretch;
+  height:100%;
 }
 .board.mode-expanded{
   display:flex!important;
   flex-wrap:nowrap;
   gap:10px;
   min-width:max-content;
+  height:100%;
+  align-items:stretch;
 }
 .board.mode-expanded .col{
   width:272px;
@@ -717,31 +768,44 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   /* Goal bar compacta */
   .goal-bar{font-size:10px;padding:5px 10px;margin-bottom:.5rem;}
 
-  /* Board: scroll horizontal, cada coluna = ~85vw */
+  /* Board: scroll horizontal, cada coluna = ~85vw (estilo Trello) */
   .board-wrap{
     overflow-x:auto;
+    overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
     margin:0 -.7rem;
-    padding:0 .7rem 8px;
+    padding:0 .7rem 0;
     scrollbar-width:none;
+    /* Altura: viewport - header - toolbar - bottom nav */
+    height:calc(100vh - 200px);
+    max-height:calc(100vh - 200px);
   }
   .board-wrap::-webkit-scrollbar{display:none;}
   .board{
     display:flex!important;
     gap:10px;
     min-width:max-content;
-    align-items:start;
+    align-items:stretch;
+    height:100%;
   }
   .col{
     width:78vw;
     max-width:280px;
     min-width:220px;
     flex-shrink:0;
+    display:flex;
+    flex-direction:column;
   }
-  .col-hd{padding:8px 10px;}
+  .col-hd{padding:8px 10px;flex-shrink:0;}
   .col-title{font-size:12px;}
-  .col-body{padding:5px;}
-  .add-btn{margin:5px;width:calc(100% - 10px);}
+  .col-body{
+    padding:5px;
+    flex:1;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+  .add-btn{margin:5px;width:calc(100% - 10px);flex-shrink:0;}
 
   /* Cards: text truncate melhorado */
   .card{padding:8px 9px;}
@@ -1240,8 +1304,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="field"><label class="fl">Fim (calculado)</label><input class="fi" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
       </div>
       <div style="margin-top:10px;" class="cfg-sec-title">WIP & Capacidade</div>
+      <p style="font-size:11px;color:var(--txt3);margin-bottom:8px;line-height:1.5;">⚡ O limite de WIP agora é configurado <strong>por coluna</strong> no editor de colunas abaixo (marque “WIP” na coluna desejada e defina o limite). O campo global abaixo é usado como fallback quando nenhuma coluna tem WIP habilitado.</p>
       <div class="frow">
-        <div class="field"><label class="fl">Limite de WIP</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
+        <div class="field"><label class="fl">Limite de WIP (global / fallback)</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
         <div class="field"><label class="fl">Capacidade (%)</label><input class="fi" id="cfg-capacity" type="number" min="0" max="100"></div>
       </div>
       <div style="margin-top:10px;" class="cfg-sec-title">Modo de impedimentos</div>
@@ -2039,6 +2104,8 @@ function renderBoard(){
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
+  // Recalcula alturas do layout Trello após renderizar
+  requestAnimationFrame(()=>applyViewMode());
 }
 
 function renderNormal(board,activeCards){
@@ -2052,8 +2119,8 @@ function renderNormal(board,activeCards){
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
-        <span class="col-cnt" id="cnt-${col.id}" style="${col.id==='progress'&&agilCfg.wip&&colCards.length>parseInt(agilCfg.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
-          ${col.id==='progress'&&agilCfg.wip ? colCards.length+'/'+agilCfg.wip : colCards.length}
+        <span class="col-cnt" id="cnt-${col.id}" style="${col.wipEnabled&&col.wip&&colCards.length>parseInt(col.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
+          ${col.wipEnabled&&col.wip ? colCards.length+'/'+col.wip : colCards.length}
         </span>
         ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
@@ -2240,14 +2307,23 @@ function toggleCol(id){
 
 function updateMetrics(){
   const g=document.getElementById('met-grid'); if(!g) return;
-  const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
-  const bl=cards.filter(c=>c.col==='blocker'&&!c.archived).length;
-  const done=cards.filter(c=>c.col==='done'&&!c.archived).length;
-  const wipLimit=parseInt(agilCfg.wip||3);
+  // WIP: soma de cards em colunas com wipEnabled=true
+  const wipCols=columns.filter(c=>c.wipEnabled);
+  const wipColIds=new Set(wipCols.map(c=>c.id));
+  const wip=cards.filter(c=>wipColIds.has(c.col)&&!c.archived).length;
+  // Limite total de WIP: soma dos limites individuais das colunas WIP
+  const wipLimit=wipCols.reduce((s,c)=>s+parseInt(c.wip||3),0)||parseInt(agilCfg.wip||3);
+  // Coluna de bloqueios: qualquer coluna com id 'blocker' ou nome contendo 'impedi'
+  const blockerColId=columns.find(c=>c.id==='blocker'||c.name?.toLowerCase().includes('impedi'))?.id||'blocker';
+  const bl=cards.filter(c=>c.col===blockerColId&&!c.archived).length;
+  // Coluna de concluídos: qualquer coluna com id 'done' ou nome contendo 'conclu'
+  const doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+  const done=cards.filter(c=>c.col===doneColId&&!c.archived).length;
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
-  g.innerHTML=`<div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">limite ${wipLimit}</div></div>
+  const wipLabel=wipCols.length?wipCols.map(c=>c.name).join(', '):'nenhuma';
+  g.innerHTML=`<div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">limite ${wipLimit}${wipCols.length?'':' (global)'}</div></div>
     <div class="met"><div class="met-lbl">Throughput</div><div class="met-val">${done}</div><div class="met-sub">concluídos</div></div>
-    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':''}"">${bl}</div><div class="met-sub">${bl?'atenção':' ok'}</div></div>
+    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':''}">${bl}</div><div class="met-sub">${bl?'atenção':' ok'}</div></div>
     <div class="met"><div class="met-lbl">Capacidade</div><div class="met-val">${agilCfg.capacity||'—'}%</div><div class="met-sub">configurado</div></div>`;
 }
 
@@ -2319,9 +2395,9 @@ function maybeSnapshot(){
   const snapshot={
     date:today,squad:ACTIVE_SQUAD,
     total:cards.filter(c=>!c.archived).length,
-    wip:cards.filter(c=>c.col==='progress'&&!c.archived).length,
-    done:cards.filter(c=>c.col==='done'&&!c.archived).length,
-    blockers:cards.filter(c=>c.col==='blocker'&&!c.archived).length,
+    wip:cards.filter(c=>columns.find(x=>x.id===c.col)?.wipEnabled&&!c.archived).length,
+    done:cards.filter(c=>(c.col==='done'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('conclu'))&&!c.archived).length,
+    blockers:cards.filter(c=>(c.col==='blocker'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('impedi'))&&!c.archived).length,
     byCol:columns.reduce((acc,col)=>{
       acc[col.id]=cards.filter(c=>c.col===col.id&&!c.archived).length;
       return acc;
@@ -2669,6 +2745,11 @@ function renderColEditor(){
     row.innerHTML=`<span style="font-size:12px;color:var(--txt3);">${i+1}</span>
       <input class="col-edit-inp" value="${esc(col.name)}" oninput="columns[${i}].name=this.value">
       <input type="color" value="${col.color}" onchange="columns[${i}].color=this.value" style="width:30px;height:28px;border:none;background:none;cursor:pointer;">
+      <label style="font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:3px;" title="Habilitar limite WIP nesta coluna">
+        <input type="checkbox" ${col.wipEnabled?'checked':''} onchange="columns[${i}].wipEnabled=this.checked;renderColEditor()">
+        WIP
+      </label>
+      ${col.wipEnabled?`<input type="number" min="1" max="99" value="${col.wip||3}" oninput="columns[${i}].wip=parseInt(this.value)||3" style="width:42px;padding:3px 5px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:DM Sans,sans-serif;" title="Limite máximo de cards nesta coluna">`:'<span style="width:42px;"></span>'}
       <label style="font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:3px;"><input type="checkbox" ${col.collapsible?'checked':''} onchange="columns[${i}].collapsible=this.checked"> Min.</label>
       ${columns.length>1?`<button class="icon-btn" onclick="delColumn(${i})">✕</button>`:''}
       <button class="icon-btn" style="color:var(--txt2);" onclick="moveCol(${i},-1)" ${i===0?'disabled':''}">▲</button>
@@ -2959,7 +3040,7 @@ BOARD (${new Date().toLocaleDateString('pt-BR')}):
 ${snap}${doneNote}
 
 Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
-WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>c.col==='blocker'&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
+WIP:${(()=>{const wc=columns.filter(c=>c.wipEnabled);const wi=new Set(wc.map(c=>c.id));return cards.filter(c=>wi.has(c.col)&&!c.archived).length+'/'+(wc.reduce((s,c)=>s+parseInt(c.wip||3),0)||parseInt(agilCfg.wip||3));})()}(colunas WIP: ${columns.filter(c=>c.wipEnabled).map(c=>c.name).join(', ')||'nenhuma configurada'}) | Bloqueios:${cards.filter(c=>(c.col==='blocker'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('impedi'))&&!c.archived).length} | Concluídos:${cards.filter(c=>(c.col==='done'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('conclu'))&&!c.archived).length}
 Sprint:${agilCfg.sprintNum||'?'} | Capacidade:${agilCfg.capacity||'??'}% | Objetivo:${agilCfg.goal||'não definido'}
 Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}
 Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais): ${members.map(m=>m.init).join(', ')||'nenhum'}
@@ -4121,24 +4202,18 @@ function setViewMode(mode){
     board.classList.add('mode-'+mode);
   }
   if(wrap){
-    if(mode==='expanded'){
-      // Calcula altura disponível: viewport - tudo acima do board
-      const wrapTop=wrap.getBoundingClientRect().top;
-      const available=window.innerHeight - wrapTop - 16;
-      wrap.style.maxHeight=available+'px';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='auto';
-      wrap.style.paddingBottom='0';
-    } else {
-      wrap.style.maxHeight='';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='visible';
-      wrap.style.paddingBottom='8px';
-    }
+    // Calcula altura disponível: viewport - tudo acima do board (layout estilo Trello)
+    const wrapTop=wrap.getBoundingClientRect().top;
+    const available=window.innerHeight - wrapTop - 16;
+    wrap.style.maxHeight=available+'px';
+    wrap.style.height=available+'px';
+    wrap.style.overflowX='auto';
+    wrap.style.overflowY='hidden';
+    wrap.style.paddingBottom='0';
   }
 }
 function applyViewMode(){ setViewMode(viewMode); }
-window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
+window.addEventListener('resize', ()=>{ setViewMode(viewMode); });
 
 // ── CALENDÁRIO ───────────────────────────────────────────────────
 const EV_COLORS=[
@@ -4471,14 +4546,30 @@ function handleDrop(e, colId){
   const sourceCol = _dragSourceCol;
   if(sourceCol === colId) return; // mesma coluna, nada a fazer
   saveUndo('mover card');
-  // Move o card
+  // Salva estado anterior para rollback em caso de falha
   const prevColDrop = sourceCol;
   const prevBlockerDrop = card.blocker||false;
+  const prevEdited = card.edited;
+  const prevEditedAt = card.editedAt;
+  // Atualiza otimisticamente a UI
   card.col = colId;
   card.edited = window._currentUser?.displayName||'Usuário';
   card.editedAt = new Date().toISOString().split('T')[0];
   renderBoard();
-  fbSaveAll();
+  // Persiste no Firebase e faz rollback se falhar (evita rubber banding)
+  const savePromise = window._fbReady
+    ? window._set(window._ref(window._db, FB+'/cards'), cards)
+    : Promise.reject(new Error('Firebase não pronto'));
+  savePromise.catch(()=>{
+    // Rollback: reverte o card para a coluna anterior
+    card.col = prevColDrop;
+    card.edited = prevEdited;
+    card.editedAt = prevEditedAt;
+    renderBoard();
+    showToast('⚠️ Falha ao salvar. Card revertido.');
+  });
+  fbSet(FB+'/tags', tags);
+  fbSet(FB+'/columns', columns);
   runAutoRules('move', card.id, colId);
   // Dispara notificações (mesma lógica do saveCard hook)
   const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
@@ -4675,11 +4766,14 @@ function runAutoRules(eventType, cardId, extraVal){
       qa(tab, `[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`);
     }
   });
-  // Checa WIP
+  // Checa WIP — usa colunas com wipEnabled (configurado pelo PO)
   const wipRule=activeRules.find(r=>r.trigger==='wip_exceeded');
   if(wipRule){
-    const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
-    if(wip>parseInt(agilCfg.wip||3)){
+    const wipCols2=columns.filter(c=>c.wipEnabled);
+    const wipColIds2=new Set(wipCols2.map(c=>c.id));
+    const wip=cards.filter(c=>wipColIds2.has(c.col)&&!c.archived).length;
+    const wipLimit2=wipCols2.reduce((s,c)=>s+parseInt(c.wip||3),0)||parseInt(agilCfg.wip||3);
+    if(wip>wipLimit2){
       if(wipRule.action==='notify_agent'){
         const tab=wipRule.actionVal||'metricas';
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
@@ -4811,8 +4905,8 @@ function showCtxMenu(e, cardId){
       Mover para ${col.name}
     </div>`).join('');
 
-  const isProg = card.col==='progress';
-  const isBlocker = card.col==='blocker';
+  const isProg = columns.find(c=>c.id===card.col)?.wipEnabled || false;
+  const isBlocker = card.col==='blocker'||columns.find(c=>c.id===card.col)?.name?.toLowerCase().includes('impedi');
 
   menu.innerHTML = `
     <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
@@ -4948,7 +5042,11 @@ function ctxMove(colId){
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
-function ctxProgress(){ ctxMove('progress'); }
+function ctxProgress(){ 
+  // Usa a primeira coluna WIP configurada pelo PO, ou fallback para 'progress'
+  const wipCol=columns.find(c=>c.wipEnabled);
+  ctxMove(wipCol?.id||'progress'); 
+}
 function ctxBlock(){ ctxMove('blocker'); }
 function ctxDone(){ ctxMove('done'); }
 
@@ -5102,19 +5200,22 @@ window.addEventListener('fb-ready',()=>{
       window.addEventListener('beforeunload',()=>window._remove(pRef));
     }
   });
-  // Listener de presença
-  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),snap=>{
+  // Listener de presença — apenas renderiza quem está online
+  // Guarda o unsubscribe para evitar múltiplos listeners acumulados
+  if(window._presenceUnsub) window._presenceUnsub();
+  window._presenceUnsub = window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),snap=>{
     const val=snap.val()||{};
     const now=Date.now();
     const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
     renderOnline(online);
-    // Heartbeat a cada 15s
-    clearInterval(window._heartbeat);
+  });
+  // Heartbeat iniciado UMA única vez por sessão — sem risco de memory leak
+  if(!window._heartbeat){
     window._heartbeat=setInterval(()=>{
       if(window._currentUser&&window._fbReady)
         window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),{ts:Date.now()});
     },15000);
-  });
+  }
 });
 
 // ═══════════════════════════════════════════════════════
