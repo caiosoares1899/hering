@@ -1950,6 +1950,7 @@ function toggleCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
   renderBoard();
+  if(viewMode==='expanded') setTimeout(()=>setViewMode('expanded'),50);
 }
 
 function updateMetrics(){
