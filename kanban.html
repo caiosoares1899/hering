@@ -179,7 +179,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(0,1fr));
   gap:10px;
-  align-items:stretch; /* todas as colunas com a mesma altura */
+  align-items:flex-start; /* colunas adaptam ao conteúdo (estilo Trello) */
   width:100%;
   height:100%;
 }
@@ -195,7 +195,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   transition:opacity .2s;
   display:flex;
   flex-direction:column;
-  min-height:0; /* necessário para o flex funcionar dentro de grid */
+  min-height:0;
+  max-height:100%; /* não ultrapassa o board-wrap */
 }
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
 .col-hd{
@@ -219,7 +220,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   flex-direction:column;
   gap:5px;
   min-height:40px;
-  flex:1; /* ocupa todo o espaço disponível na coluna */
+  flex:0 1 auto; /* cresce apenas o necessário (estilo Trello) */
   overflow-y:auto;
   overflow-x:hidden;
   scrollbar-width:thin;
@@ -283,8 +284,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .po-box{background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:10px;}
 .po-lbl{font-size:9px;color:#7eb3ff;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
-.po-ta{width:100%;background:transparent;border:none;color:var(--txt);font-family:"DM Sans",sans-serif;font-size:12px;line-height:1.6;resize:none;min-height:56px;}
-.po-ta:focus{outline:none;}
+.po-ta{width:100%;background:rgba(3,13,26,.4);border:1px solid rgba(56,182,255,.15);border-radius:var(--r);padding:10px;color:var(--txt);font-size:12px;font-family:'DM Sans',sans-serif;min-height:80px;resize:vertical;outline:none;transition:border .2s;box-sizing:border-box;}
+.po-ta:focus{border-color:var(--accent);background:rgba(3,13,26,.6);}
+.markdown-view { line-height: 1.5; font-size: 12px; }
+.markdown-view em { color: var(--txt3); font-style: italic; }
 .cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
 .cl-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
@@ -374,7 +377,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(0,1fr));
   gap:10px;
-  align-items:stretch;
+  align-items:flex-start;
   height:100%;
 }
 .board.mode-expanded{
@@ -383,7 +386,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   gap:10px;
   min-width:max-content;
   height:100%;
-  align-items:stretch;
+  align-items:flex-start;
 }
 .board.mode-expanded .col{
   width:272px;
@@ -601,8 +604,76 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
   cursor:pointer;padding:0;}
 .notif-mark-all:hover{text-decoration:underline;}
-/* @mention highlight */
-.mention{color:var(--accent);font-weight:600;}
+/* @mention highlight & popover */
+.mention-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(56,182,255,0.1);
+  padding: 0 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  display: inline-block;
+}
+.mention-link:hover {
+  background: var(--accent);
+  color: #fff;
+}
+/* Popover de menção */
+.mention-popover {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(6,26,46,0.98);
+  border: 1px solid var(--glass-b);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 140px;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(10px);
+}
+.mention-link:hover .mention-popover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.mention-pop-av {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  background: var(--glass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.mention-pop-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt);
+  text-align: center;
+  line-height: 1.2;
+}
+.mention-pop-role {
+  font-size: 9px;
+  color: var(--txt3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 
 /* Mention dropdown */
 .mention-dropdown{
@@ -3061,8 +3132,31 @@ function swAgTab(tab){
   ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
 }
 function renderMd(txt){
-  return txt
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  if(!txt) return '';
+  // 1. Primeiro escapa HTML do texto original para segurança
+  let safeTxt = txt
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  // 2. Depois processa as menções @usuario (inserindo HTML seguro)
+  const mentionRe = /@([A-Z0-9]{2,4})\b/gi;
+  safeTxt = safeTxt.replace(mentionRe, (match, init) => {
+    const member = members.find(m => m.init.toUpperCase() === init.toUpperCase());
+    if(!member) return match;
+    const av = member.foto 
+      ? `<img src="${member.foto}" class="mention-pop-av" onerror="this.style.display='none'">`
+      : `<div class="mention-pop-av">${member.init.toUpperCase()}</div>`;
+    return `<span class="mention-link">@${member.init.toUpperCase()}
+      <div class="mention-popover">
+        ${av}
+        <div class="mention-pop-name">${member.name}</div>
+        <div class="mention-pop-role">${member.role || 'Membro'}</div>
+      </div>
+    </span>`;
+  });
+
+  return safeTxt
     // Tabelas markdown simples
     .replace(/^\|(.+)\|$/gm, row=>'<tr>'+row.split('|').filter((_,i,a)=>i>0&&i<a.length-1).map(c=>`<td style="padding:3px 8px;border:1px solid rgba(56,182,255,.15);font-size:11px;">${c.trim()}</td>`).join('')+'</tr>')
     .replace(/(<tr>.*<\/tr>\n?)+/gs, t=>`<table style="border-collapse:collapse;margin:6px 0;width:100%;">${t}</table>`)
@@ -3942,11 +4036,12 @@ function timeAgo(ts){
 // 1. @menção nos campos de texto
 function parseMentions(text, cardId){
   if(!text) return;
-  const re=/@([A-Z]{2,3})/g; let m;
+  // Regex melhorada: captura @ seguido de 2 a 4 letras/números (iniciais)
+  const re=/@([A-Z0-9]{2,4})\b/gi; let m;
   while((m=re.exec(text))!==null){
     const init=m[1];
     const uid=getUidByInit(init); if(!uid) continue;
-    if(uid===window._currentUser?.uid) continue; // não notifica a si mesmo
+    // Habilitado auto-notificação para testes conforme solicitado pelo usuário
     createNotif(uid,'mention',
       '@'+init+' — você foi mencionado',
       text.substring(0,80)+(text.length>80?'…':''),
@@ -3957,7 +4052,7 @@ function parseMentions(text, cardId){
 // 2. Responsável atribuído
 function notifAssigned(newOwnerInit, cardId, cardTitle){
   const uid=getUidByInit(newOwnerInit); if(!uid) return;
-  if(uid===window._currentUser?.uid) return;
+  // Habilitado auto-notificação para testes
   createNotif(uid,'assigned',
     'Você foi atribuído a um card',
     cardTitle?.substring(0,60),
@@ -3970,7 +4065,7 @@ function notifUnblocked(card){
   const targets=[card.owner,...(card.participants||[])].filter(Boolean);
   const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
   uids.forEach(uid=>{
-    if(uid===window._currentUser?.uid) return;
+    // Habilitado auto-notificação para testes
     createNotif(uid,'unblocked',
       'Card desbloqueado!',
       card.title?.substring(0,60),
@@ -3983,7 +4078,7 @@ function notifDone(card){
   const targets=[card.owner,...(card.participants||[])].filter(Boolean);
   const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
   uids.forEach(uid=>{
-    if(uid===window._currentUser?.uid) return;
+    // Habilitado auto-notificação para testes
     createNotif(uid,'done',
       'Card concluído 🎉',
       card.title?.substring(0,60),
@@ -4000,7 +4095,7 @@ function notifRisk(card){
       if(!u||!uid) return;
       const role=u.role||'membro';
       if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
-      if(uid===window._currentUser?.uid) return;
+      // Habilitado auto-notificação para testes
       createNotif(uid,'risk',
         '⚠ Risco mapeado em card',
         card.title?.substring(0,60),
@@ -4012,7 +4107,7 @@ function notifRisk(card){
 // 6. Checklist 100% concluída
 function notifChecklistDone(card){
   const uid=getUidByInit(card.owner); if(!uid) return;
-  if(uid===window._currentUser?.uid) return;
+  // Habilitado auto-notificação para testes
   createNotif(uid,'checklist',
     'Checklist concluída!',
     card.title?.substring(0,60),
