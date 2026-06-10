@@ -1024,7 +1024,7 @@ function renderOKR(){
       </div>
       <p class="pc-card-title">${c.title}</p>
       <div class="pc-card-footer">
-        ${c.owner?`<span>👤 ${c.owner}</span>`:''}
+        ${c.owner?`<span>👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
         ${c.due?`<span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
         ${checklistPct(c)}
       </div>
@@ -1142,7 +1142,7 @@ function openPcModal(squadId, cardId){
     </div>`:''}
 
     ${(card.owner||card.due||card.sp)?`<div class="pc-meta-row">
-      ${card.owner?`<div class="pc-meta-item"><div class="lbl">Responsável</div><div class="val">👤 ${card.owner}</div></div>`:''}
+      ${card.owner?`<div class="pc-meta-item"><div class="lbl">Responsável</div><div class="val">👤 ${resolveOwnerName(card.owner,squadId)}</div></div>`:''}
       ${card.due?`<div class="pc-meta-item"><div class="lbl">Prazo</div><div class="val">📅 ${new Date(card.due+'T00:00:00').toLocaleDateString('pt-BR')}</div></div>`:''}
       ${card.sp?`<div class="pc-meta-item"><div class="lbl">Story Points</div><div class="val">${card.sp} pts</div></div>`:''}
     </div>`:''}
@@ -2042,6 +2042,18 @@ function renderComparison(){
   }).join('');
 }
 
+// Helper: resolve init → nome completo buscando nos dados do squad
+function resolveOwnerName(init, squadId){
+  if(!init) return init;
+  const d = squadData[squadId];
+  if(!d) return init;
+  // Try members array (populated from Firebase usuarios)
+  const m = (d.members||[]).find(x=>x.init===init||x.email?.startsWith(init.toLowerCase()));
+  if(m && m.name) return m.name.split(' ').slice(0,2).join(' ');
+  // Fallback: return init as-is
+  return init;
+}
+
 // ── BLOQUEIOS ──────────────────────────────────────────────────────
 function resolveAllBlockers(){
   const squadsToSave = new Set();
@@ -2104,7 +2116,7 @@ function renderBlockers(){
       <div class="pc-card-chips">
         <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
         <span class="pc-col-badge">${colName}</span>
-        ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${c.owner}</span>`:''}
+        ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
       </div>
       <p class="pc-card-title">${c.title}</p>
       ${c.blockerReason?`<div style="font-size:11px;color:var(--danger);opacity:.85;">🚧 ${c.blockerReason}</div>`:''}
@@ -2317,7 +2329,15 @@ function loadSquadData(sqId){
       columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
       tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
       agilCfg:val.agil_cfg||{},
+      members: squadData[sqId]?.members||[], // populated separately below
     };
+    // Load members (usuarios inscritos neste squad) for owner name resolution
+    window._get(window._ref(window._db,'kanban/usuarios')).then(us=>{
+      const usVal=us.val()||{};
+      squadData[sqId].members=Object.values(usVal).filter(u=>
+        u.inscrito||u.squads?.[sqId]||u.role==='adm'
+      ).map(u=>({init:u.init||'',name:u.nome||u.email||'',email:u.email||''}));
+    }).catch(()=>{});
     renderAll();
   });
 }
