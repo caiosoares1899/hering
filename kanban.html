@@ -1094,8 +1094,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="toolbar">
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <div style="display:flex;gap:2px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;padding:2px;">
-    <button class="view-btn active" id="view-onepage" onclick="setViewMode('onepage')" title="One Page">⊞</button>
-    <button class="view-btn" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
+    <button class="view-btn" id="view-onepage" onclick="setViewMode('onepage')" title="One Page">⊞</button>
+    <button class="view-btn active" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
   </div>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔍 Filtros</button>
   <div class="tb-sep"></div>
@@ -1288,7 +1288,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <!-- Descrição full-width -->
     <div class="field">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar pessoas, @card: para mencionar cards</span></label>
-      <div class="fi-mention-wrap"><textarea class="fi fi-ta" id="m-desc" rows="4" oninput="scheduleAutoSave()" style="resize:vertical;min-height:70px;width:100%;box-sizing:border-box;"></textarea></div>
+      <div class="fi-mention-wrap"><textarea class="fi fi-ta" id="m-desc" rows="4" oninput="scheduleAutoSave();renderDescPreview()" style="resize:vertical;min-height:70px;width:100%;box-sizing:border-box;"></textarea></div>
+      <div id="m-desc-preview" style="display:none;margin-top:4px;padding:7px 10px;border-radius:8px;border:1px solid rgba(56,182,255,.1);background:rgba(3,13,26,.5);font-size:12px;color:var(--txt2);line-height:1.6;word-break:break-word;"></div>
     </div>
 
     <!-- Insights do PO full-width -->
@@ -2562,6 +2563,7 @@ function openCard(id){
     initMentionDropdown('m-desc');
     initMentionDropdown('m-po');
     loadComments(id);
+    renderDescPreview();
   }, 100);
 }
 
@@ -3877,7 +3879,7 @@ function hideLinkedDropdown(){
 document.addEventListener('click', e=>{
   if(!e.target.closest('.link-search')) hideLinkedDropdown();
   // Remover card vinculado via data-lcid
-  if(e.target.classList.contains('linked-chip-rm') && e.target.dataset.lcid){
+  if((e.target.classList.contains('linked-chip-rm') || e.target.classList.contains('minicard-rm')) && e.target.dataset.lcid){
     removeLinkedCard(e.target.dataset.lcid);
   }
 });
@@ -4265,7 +4267,9 @@ function renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos){
 
 function insertCardMentionInline(ta, atPos, curPos, cardId, cardTitle, dd){
   const val=ta.value;
-  const token='[[CARD:'+cardId+':'+cardTitle+']]';
+  // Store short display title in textarea (max 40 chars) but full ID for rendering
+  const shortTitle=cardTitle.length>40?cardTitle.substring(0,40)+'…':cardTitle;
+  const token='[[CARD:'+cardId+':'+shortTitle+']]';
   ta.value=val.slice(0,atPos)+token+val.slice(curPos);
   ta.selectionStart=ta.selectionEnd=atPos+token.length;
   dd.classList.remove('open');
@@ -4334,7 +4338,7 @@ function insertMention(ta, atPos, curPos, init){
 // ── FIM MENTION DROPDOWN ─────────────────────────────────────────
 
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
-let viewMode = localStorage.getItem('boardViewMode')||'onepage';
+let viewMode = localStorage.getItem('boardViewMode')||'expanded';
 function setViewMode(mode){
   viewMode=mode;
   localStorage.setItem('boardViewMode',mode);
@@ -5737,6 +5741,25 @@ function insertCardMention(cardId,cardTitle){
   ta.selectionStart=ta.selectionEnd=(replaced+token).length;
   document.getElementById('comment-mention-dd').classList.remove('show');
   ta.focus();
+}
+
+function renderDescPreview(){
+  const ta = document.getElementById('m-desc');
+  const preview = document.getElementById('m-desc-preview');
+  if(!ta || !preview) return;
+  const raw = ta.value;
+  // Show preview only if text contains mentions
+  if(!raw.includes('[[CARD:') && !/@[A-Z]{2,4}/.test(raw)){
+    preview.style.display='none';
+    return;
+  }
+  preview.style.display='block';
+  preview.innerHTML = renderMd(raw);
+  // Wire card mention clicks
+  preview.querySelectorAll('.mention-card').forEach(el=>{
+    const cid=el.dataset.cid;
+    if(cid) el.onclick=()=>{ closeOv('card-ov'); openCard(cid); };
+  });
 }
 
 renderBoard();
