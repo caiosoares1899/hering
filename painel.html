@@ -260,7 +260,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .embed-area.show{display:block;}
 
 
-.err-chart{display:flex;align-items:flex-end;gap:3px;height:50px;padding:4px 0;}
+.err-chart{display:flex;align-items:flex-end;gap:3px;height:100px;padding:4px 0;}
 .err-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .err-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .3s;}
 .err-bar-lbl{font-size:8px;color:var(--txt3);white-space:nowrap;}
@@ -271,6 +271,82 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.88);
   backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .pc-modal-ov.open{display:flex;}
+
+/* ── PANEL CARDS (OKR, Bloqueios, Riscos) ──────────────────────── */
+.pc-modal{
+  background:rgba(8,28,52,.98);border:1px solid rgba(56,182,255,.18);
+  border-radius:16px;width:min(560px,92vw);max-height:85vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;
+}
+.pc-modal-hd{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:16px 20px 14px;border-bottom:1px solid rgba(56,182,255,.1);
+  flex-shrink:0;
+}
+.pc-modal-hd-title{
+  font-family:"Syne",sans-serif;font-size:14px;font-weight:700;
+  color:var(--txt);line-height:1.4;flex:1;
+}
+.pc-modal-body{
+  padding:16px 20px;overflow-y:auto;flex:1;
+  display:flex;flex-direction:column;gap:10px;
+}
+.pc-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:2px;}
+.pc-chip{
+  font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px;
+  border:1px solid;white-space:nowrap;
+}
+.pc-chip-tag{background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);}
+.pc-chip-okr{background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.4);color:#ffd700;}
+.pc-chip-squad{background:rgba(56,182,255,.08);border-color:rgba(56,182,255,.2);color:var(--txt2);}
+.pc-chip-col{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--txt3);}
+.pc-chip-prio{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--danger);}
+.pc-section{
+  background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.1);
+  border-radius:10px;padding:10px 12px;
+}
+.pc-section-lbl{
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--txt3);margin-bottom:5px;
+}
+.pc-section-val{font-size:12px;color:var(--txt2);line-height:1.6;}
+.pc-section.po{background:rgba(37,99,201,.08);border-color:rgba(37,99,201,.2);}
+.pc-section.po .pc-section-lbl{color:#7eb3ff;}
+.pc-section.blocker{background:rgba(255,107,107,.07);border-color:rgba(255,107,107,.25);}
+.pc-section.blocker .pc-section-lbl{color:var(--danger);}
+.pc-section.riscos{background:rgba(255,209,102,.06);border-color:rgba(255,209,102,.2);}
+.pc-section.riscos .pc-section-lbl{color:var(--warn);}
+.pc-meta-row{display:flex;gap:16px;flex-wrap:wrap;}
+.pc-meta-item{display:flex;flex-direction:column;gap:2px;}
+.pc-meta-item .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);}
+.pc-meta-item .val{font-size:12px;color:var(--txt2);}
+.pc-cl-bar{height:4px;background:rgba(56,182,255,.1);border-radius:999px;overflow:hidden;margin:5px 0 6px;}
+.pc-cl-fill{height:100%;background:var(--teal);border-radius:999px;}
+.pc-cl-item{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:2px 0;}
+.pc-cl-item.done{color:var(--teal);}
+.pc-footer{padding:12px 20px;border-top:1px solid rgba(56,182,255,.1);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
+
+/* ── OKR / BLOQUEIO / RISCO TILE CARDS ────────────────────────── */
+.panel-card{
+  background:rgba(6,20,44,.85);border:1px solid rgba(56,182,255,.12);
+  border-radius:12px;padding:12px 14px;cursor:pointer;
+  transition:border-color .15s,transform .1s,box-shadow .15s;
+  display:flex;flex-direction:column;gap:7px;
+}
+.panel-card:hover{border-color:rgba(56,182,255,.3);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.panel-card.okr{border-left:3px solid rgba(255,215,0,.5);}
+.panel-card.risco{border-left:3px solid rgba(255,209,102,.5);}
+.panel-card.blocker{border-left:3px solid rgba(255,107,107,.5);}
+.pc-card-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.pc-card-title{font-size:12px;font-weight:600;color:var(--txt);line-height:1.45;margin:0;}
+.pc-card-footer{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px;}
+.pc-card-footer span{font-size:10px;color:var(--txt3);}
+.pc-col-badge{
+  font-size:9px;padding:1px 7px;border-radius:999px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  color:var(--txt3);
+}
 
 /* Monitor de erros — layout limpo */
 .err-log-item{
@@ -329,7 +405,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .err-stack.open{ display:block; }
 .err-chart{
   display:flex;align-items:flex-end;gap:3px;
-  height:52px;padding:4px 0;margin-top:6px;
+  height:100px;padding:4px 0;margin-top:6px;
 }
 .err-bar-wrap{
   flex:1;display:flex;flex-direction:column;
@@ -574,9 +650,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   <!-- MONITORAMENTO DE ERROS -->
   <div id="monitor-section" style="display:none;">
-    <div class="sec-title">🐛 Monitoramento de Erros
+    <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span>🐛 Monitoramento de Erros</span>
       <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
-      <button onclick="clearResolvedErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
+      <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
+      <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
     </div>
     <div class="err-stats-grid">
       <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
@@ -745,12 +823,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="pc-modal-ov" id="pc-modal-ov">
   <div class="pc-modal">
     <div class="pc-modal-hd">
-      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;" id="pc-modal-title">Card</div>
+      <div class="pc-modal-hd-title" id="pc-modal-title">Card</div>
       <button class="x-btn" onclick="closePcModal()">✕</button>
     </div>
     <div class="pc-modal-body" id="pc-modal-body"></div>
-    <div style="padding:10px 16px;border-top:1px solid var(--glass-b);display:flex;gap:8px;justify-content:flex-end;">
-      <a id="pc-modal-link" href="#" target="_blank" class="save-btn" style="text-decoration:none;font-size:11px;padding:6px 14px;">Abrir no Board ↗</a>
+    <div class="pc-footer">
+      <a id="pc-modal-link" href="#" target="_blank" class="save-btn" style="text-decoration:none;font-size:11px;padding:6px 16px;">Abrir no Board ↗</a>
       <button onclick="closePcModal()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>
     </div>
   </div>
@@ -934,18 +1012,24 @@ function renderOKR(){
   if(cnt) cnt.textContent=okrs.length;
   if(!okrs.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum card OKR encontrado.</div>'; return; }
   el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">'
-    +okrs.map(c=>`
-    <div class="panel-card okr" onclick="openPcModal('${c._squad.id}','${c.id}')">
-      <div><span class="pc-tag" style="background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);color:#ffd700;">🎯 OKR</span>
-        <span style="font-size:9px;color:var(--txt3);margin-left:4px;">${c._squad.icon}</span></div>
-      <div class="pc-title">${c.title}</div>
-      <div class="pc-meta">
-        ${c.owner?'<span>👤 '+c.owner+'</span>':''}
-        ${c.due?'<span>📅 '+new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')+'</span>':''}
-        <span style="font-size:9px;padding:1px 6px;border-radius:999px;background:rgba(56,182,255,.1);color:var(--accent);">${c.col}</span>
+    +okrs.map(c=>{
+      const sq=c._squad;
+      const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
+      return `
+    <div class="panel-card okr" onclick="openPcModal('${sq.id}','${c.id}')">
+      <div class="pc-card-chips">
+        <span class="pc-chip pc-chip-okr">🎯 OKR</span>
+        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
+        <span class="pc-col-badge">${colName}</span>
+      </div>
+      <p class="pc-card-title">${c.title}</p>
+      <div class="pc-card-footer">
+        ${c.owner?`<span>👤 ${c.owner}</span>`:''}
+        ${c.due?`<span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
         ${checklistPct(c)}
       </div>
-    </div>`).join('')+'</div>';
+    </div>`;
+    }).join('')+'</div>';
 }
 
 // ── RISCOS ──────────────────────────────────────────────────────
@@ -961,19 +1045,24 @@ function renderRiscos(){
   });
   if(cnt) cnt.textContent=riscos.length;
   if(!riscos.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">✅ Nenhum card com risco mapeado.</div>'; return; }
-  el.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'
-    +riscos.map(c=>`
-    <div class="panel-card risco" onclick="openPcModal('${c._squad.id}','${c.id}')">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:10px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3);padding:1px 7px;border-radius:999px;">${c._squad.icon} ${c._squad.label}</span>
-        <span class="pc-title">${c.title}</span>
-        <span style="font-size:9px;color:var(--warn);margin-left:auto;">⚠ ${c.riscos.length} risco${c.riscos.length>1?'s':''}</span>
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">'
+    +riscos.map(c=>{
+      const sq=c._squad;
+      const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
+      return `
+    <div class="panel-card risco" onclick="openPcModal('${sq.id}','${c.id}')">
+      <div class="pc-card-chips">
+        <span class="pc-chip" style="background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.3);color:var(--warn);">⚠ ${c.riscos.length} risco${c.riscos.length>1?'s':''}</span>
+        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
+        <span class="pc-col-badge">${colName}</span>
       </div>
-      <div style="margin-top:4px;display:flex;flex-direction:column;gap:2px;">
-        ${c.riscos.slice(0,2).map(r=>`<div style="font-size:10px;color:var(--txt2);">• ${r}</div>`).join('')}
-        ${c.riscos.length>2?`<div style="font-size:9px;color:var(--txt3);">+${c.riscos.length-2} mais...</div>`:''}
+      <p class="pc-card-title">${c.title}</p>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        ${c.riscos.slice(0,2).map(r=>`<div style="font-size:10px;color:var(--txt3);">• ${r}</div>`).join('')}
+        ${c.riscos.length>2?`<div style="font-size:9px;color:var(--txt3);opacity:.7;">+${c.riscos.length-2} mais...</div>`:''}
       </div>
-    </div>`).join('')+'</div>';
+    </div>`;
+    }).join('')+'</div>';
 }
 
 // ── USO AGENTE ÁGIL ──────────────────────────────────────────────
@@ -1032,23 +1121,47 @@ function openPcModal(squadId, cardId){
   const cl=card.checklist||[];
   const done=cl.filter(i=>i.done).length;
   
+  const prioEmoji={'critical':'🔥 Crítica','high':'🔴 Alta','medium':'🟡 Média','low':'🟢 Baixa'};
   document.getElementById('pc-modal-body').innerHTML=`
-    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      ${tag?`<span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:700;background:${tag.isOKR?'rgba(255,215,0,.15)':'rgba(56,182,255,.15)'};border:1px solid ${tag.isOKR?'rgba(255,215,0,.4)':'rgba(56,182,255,.3)'};color:${tag.isOKR?'#ffd700':'var(--accent)'};">${tag.label}</span>`:''}
-      <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(56,182,255,.1);color:var(--accent);border:1px solid rgba(56,182,255,.2);">${sq.icon} ${sq.label}</span>
-      <span style="font-size:10px;padding:2px 8px;border-radius:999px;background:var(--glass);color:var(--txt2);border:1px solid var(--glass-b);">${colName}</span>
-      ${card.priority?`<span style="font-size:12px;">${{'critical':'🔥','high':'🔴','medium':'🟡','low':'🟢'}[card.priority]||''}</span>`:''}
+    <div class="pc-chips">
+      ${tag?`<span class="pc-chip ${tag.isOKR?'pc-chip-okr':'pc-chip-tag'}">${tag.label}</span>`:''}
+      ${card.isOKR&&!tag?.isOKR?'<span class="pc-chip pc-chip-okr">🎯 OKR</span>':''}
+      <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label}</span>
+      <span class="pc-chip pc-chip-col">${colName}</span>
+      ${card.priority?`<span class="pc-chip pc-chip-prio">${prioEmoji[card.priority]||card.priority}</span>`:''}
     </div>
-    ${card.desc?`<div class="pc-field"><div class="pc-field-label">Descrição</div><div class="pc-field-val" style="color:var(--txt2);">${card.desc}</div></div>`:''}
-    ${card.po?`<div class="pc-field" style="background:rgba(37,99,201,.08);border:1px solid rgba(37,99,201,.2);border-radius:8px;padding:8px;"><div class="pc-field-label" style="color:#7eb3ff;">🎯 Insights do PO</div><div class="pc-field-val">${card.po}</div></div>`:''}
-    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      ${card.owner?`<div class="pc-field"><div class="pc-field-label">Responsável</div><div class="pc-field-val">👤 ${card.owner}</div></div>`:''}
-      ${card.due?`<div class="pc-field"><div class="pc-field-label">Prazo</div><div class="pc-field-val">📅 ${new Date(card.due+'T00:00:00').toLocaleDateString('pt-BR')}</div></div>`:''}
-      ${card.sp?`<div class="pc-field"><div class="pc-field-label">Story Points</div><div class="pc-field-val">${card.sp} pts</div></div>`:''}
-    </div>
-    ${cl.length?'<div class="pc-field"><div class="pc-field-label">Checklist ('+done+'/'+cl.length+')</div><div style="height:4px;background:rgba(56,182,255,.1);border-radius:999px;overflow:hidden;margin-top:4px;"><div style="width:'+Math.round(done/cl.length*100)+'%;height:100%;background:var(--teal);border-radius:999px;"></div></div><div style="margin-top:5px;display:flex;flex-direction:column;gap:3px;">'+cl.map(i=>'<div style="font-size:11px;color:'+(i.done?'var(--teal)':'var(--txt2)')+';display:flex;align-items:center;gap:5px;">'+(i.done?'✓':'○')+' '+i.t+'</div>').join('')+'</div></div>':''}
-    ${card.riscos?.length?'<div class="pc-field"><div class="pc-field-label" style="color:var(--warn);">⚠ Riscos</div>'+card.riscos.map(r=>'<div style="font-size:11px;color:var(--txt2);padding:3px 0;border-bottom:1px solid rgba(56,182,255,.06);">• '+r+'</div>').join('')+'</div>':''}
-    ${card.blockerReason?'<div class="pc-field" style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;padding:8px;"><div class="pc-field-label" style="color:var(--danger);">🚧 Impedimento</div><div class="pc-field-val">'+card.blockerReason+'</div></div>':''}
+
+    ${card.desc?`<div class="pc-section">
+      <div class="pc-section-lbl">Descrição</div>
+      <div class="pc-section-val">${card.desc}</div>
+    </div>`:''}
+
+    ${card.po?`<div class="pc-section po">
+      <div class="pc-section-lbl">🎯 Insights do PO</div>
+      <div class="pc-section-val">${card.po}</div>
+    </div>`:''}
+
+    ${(card.owner||card.due||card.sp)?`<div class="pc-meta-row">
+      ${card.owner?`<div class="pc-meta-item"><div class="lbl">Responsável</div><div class="val">👤 ${card.owner}</div></div>`:''}
+      ${card.due?`<div class="pc-meta-item"><div class="lbl">Prazo</div><div class="val">📅 ${new Date(card.due+'T00:00:00').toLocaleDateString('pt-BR')}</div></div>`:''}
+      ${card.sp?`<div class="pc-meta-item"><div class="lbl">Story Points</div><div class="val">${card.sp} pts</div></div>`:''}
+    </div>`:''}
+
+    ${cl.length?`<div class="pc-section">
+      <div class="pc-section-lbl">Checklist (${done}/${cl.length})</div>
+      <div class="pc-cl-bar"><div class="pc-cl-fill" style="width:${Math.round(done/cl.length*100)}%;"></div></div>
+      ${cl.map(i=>`<div class="pc-cl-item${i.done?' done':''}">${i.done?'✓':'○'} ${i.t}</div>`).join('')}
+    </div>`:''}
+
+    ${card.riscos?.length?`<div class="pc-section riscos">
+      <div class="pc-section-lbl">⚠ Riscos (${card.riscos.length})</div>
+      ${card.riscos.map(r=>`<div class="pc-section-val" style="padding:3px 0;border-bottom:1px solid rgba(255,209,102,.1);">• ${r}</div>`).join('')}
+    </div>`:''}
+
+    ${card.blockerReason?`<div class="pc-section blocker">
+      <div class="pc-section-lbl">🚧 Impedimento</div>
+      <div class="pc-section-val">${card.blockerReason}</div>
+    </div>`:''}
   `;
   
   document.getElementById('pc-modal-ov').classList.add('open');
@@ -1431,11 +1544,19 @@ function renderErrChart(){
   }
   // Conta por dia
   const counts=days.map(day=>{
+    // Primary: use stored error_stats (incremented in real-time by kanban)
     let n=0;
     SQUADS.forEach(sq=>{
       if(errFilterSquad!=='all'&&sq.id!==errFilterSquad) return;
       n+=(errStats[sq.id]?.[day]||0);
     });
+    // Fallback: if no stored stats, derive from allErrors timestamps
+    if(n===0){
+      n=allErrors.filter(e=>{
+        if(errFilterSquad!=='all'&&e.squad!==errFilterSquad) return false;
+        return (e.entry.ts||'').startsWith(day);
+      }).length;
+    }
     return n;
   });
   const maxN=Math.max(...counts,1);
@@ -1444,9 +1565,10 @@ function renderErrChart(){
     const pct=Math.round(n/maxN*100);
     const lbl=day.split('-').slice(1).join('/');
     const color=n===0?'rgba(56,182,255,.1)':n>5?'rgba(255,107,107,.7)':n>2?'rgba(255,209,102,.7)':'rgba(56,182,255,.5)';
+    const barH=Math.max(Math.round(pct*0.8),2); // px, out of ~80px parent
     return `<div class="err-bar-wrap" title="${day}: ${n} erros">
-      <div class="err-bar" style="height:${Math.max(pct,2)}%;background:${color};" onclick="setDateFilter('${day}')"></div>
-      <div class="err-bar-lbl">${lbl}</div>
+      <div class="err-bar" style="height:${barH}px;background:${color};" onclick="setDateFilter('${day}')"></div>
+      <div class="err-bar-lbl">${lbl}${n>0?'<br><b>'+n+'</b>':''}</div>
     </div>`;
   }).join('');
 }
@@ -1457,6 +1579,20 @@ function cycleErrStatus(errId, squad){
   item.entry.status=next;
   window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+errId+'/status'),next)
     .then(()=>renderErrors()).catch(e=>showToast('❌ '+e.message));
+}
+
+function resolveAllErrors(){
+  const open = allErrors.filter(e => (e.entry.status||'novo') !== 'resolvido');
+  if(!open.length){ showPainelToast('Nenhum erro aberto para resolver.'); return; }
+  if(!confirm('Marcar '+open.length+' erro(s) aberto(s) como Resolvido?')) return;
+  Promise.all(open.map(({id, squad}) => {
+    const item = allErrors.find(e => e.id===id && e.squad===squad);
+    if(item) item.entry.status = 'resolvido';
+    return window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+id+'/status'),'resolvido');
+  })).then(() => {
+    renderErrors();
+    showPainelToast('✅ '+open.length+' erro(s) marcado(s) como Resolvido!');
+  }).catch(e => showPainelToast('❌ Erro ao salvar: '+e.message));
 }
 
 function clearResolvedErrors(){
@@ -1960,17 +2096,21 @@ function renderBlockers(){
   });
   count.textContent=blockers.length;
   if(!blockers.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">✅ Nenhum bloqueio ativo em nenhum squad.</div>'; return; }
-  list.innerHTML=blockers.map(c=>`
-    <div class="panel-card" onclick="openPcModal('${c._squad.id}','${c.id}')" style="cursor:pointer;padding:8px 10px;background:rgba(3,13,26,.7);border:1px solid rgba(255,107,107,.3);border-radius:10px;border-left:3px solid rgba(255,107,107,.6);margin-bottom:6px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:10px;background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.3);padding:1px 7px;border-radius:999px;">${c._squad.icon} ${c._squad.label}</span>
-        <span class="blocker-title">${c.title}</span>
-        ${c.owner?`<span style="font-size:9px;color:var(--txt3);">👤 ${c.owner}</span>`:''}
+  list.innerHTML=blockers.map(c=>{
+    const sq=c._squad;
+    const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
+    return `
+    <div class="panel-card blocker" onclick="openPcModal('${sq.id}','${c.id}')">
+      <div class="pc-card-chips">
+        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
+        <span class="pc-col-badge">${colName}</span>
+        ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${c.owner}</span>`:''}
       </div>
-      ${c.blockerReason?'<div class="blocker-meta">🚧 '+c.blockerReason+'</div>':''}
-      ${c.due?'<div class="blocker-meta">📅 Prazo: '+new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')+'</div>':''}
-    </div>
-  `).join('');
+      <p class="pc-card-title">${c.title}</p>
+      ${c.blockerReason?`<div style="font-size:11px;color:var(--danger);opacity:.85;">🚧 ${c.blockerReason}</div>`:''}
+      ${c.due?`<div class="pc-card-footer"><span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span></div>`:''}
+    </div>`;
+  }).join('');
 }
 
 // ── TENDÊNCIA (SNAPSHOTS) ──────────────────────────────────────────
