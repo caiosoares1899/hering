@@ -1184,17 +1184,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- CARD MODAL -->
 <div class="ov" id="card-ov">
 <div class="panel card-panel">
-  <div id="m-parent-bar" class="card-parent-bar" style="display:none;">
-    <span style="color:var(--txt3);font-size:10px;">Filho de:</span>
-    <a id="m-parent-link" onclick="openParentCard()"></a>
-    <button onclick="unlinkParent()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:auto;" title="Remover relação pai">✕</button>
+  <div id="m-depends-bar" class="card-parent-bar" style="display:none;">
+    <span style="color:var(--txt3);font-size:10px;">Depende de:</span>
+    <a id="m-depends-link" onclick="openDependsOnCard()"></a>
+    <button onclick="unlinkDependsOn()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:auto;" title="Remover dependência">✕</button>
   </div>
   <div class="panel-hd">
     <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
       <div class="panel-title" id="m-title-disp" style="flex:1;">Card</div>
-      <button id="m-parent-btn" class="parent-btn" onclick="openParentPicker()" title="Definir card pai">
+      <button id="m-depends-btn" class="parent-btn" onclick="openDependsPicker()" title="Definir dependência">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
-        <span id="m-parent-lbl">Pai/Filho</span>
+        <span id="m-depends-lbl">Dependência</span>
       </button>
     </div>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
@@ -1287,7 +1287,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- Descrição full-width -->
     <div class="field">
-      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar</span></label>
+      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar pessoas, @card: para mencionar cards</span></label>
       <div class="fi-mention-wrap"><textarea class="fi fi-ta" id="m-desc" rows="4" oninput="scheduleAutoSave()" style="resize:vertical;min-height:70px;width:100%;box-sizing:border-box;"></textarea></div>
     </div>
 
@@ -2555,7 +2555,7 @@ function openCard(id){
   }
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
-  renderParentBar(c);
+  renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
@@ -2611,9 +2611,9 @@ function saveCard(){
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       participants:getParticipants(),
       isOKR:document.getElementById('m-is-okr')?.checked||false,
-      parentId:prevCard?.parentId||null,
-      childIds:prevCard?.childIds||[],
-      comments:prevCard?.comments||{},
+      dependsOn:c.dependsOn||null,
+      dependents:c.dependents||[],
+      comments:c.comments||{},
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
@@ -4221,14 +4221,57 @@ function handleMentionInput(ta, dd){
     if(/\s/.test(val[i])) break;
   }
   if(atPos < 0){ dd.classList.remove('open'); _mentionActive=null; return; }
-  const query = val.slice(atPos+1, pos).toLowerCase();
+  const query = val.slice(atPos+1, pos);
+
+  // @card: → busca cards
+  if(query.toLowerCase().startsWith('card:')){
+    const cardQuery = query.slice(5).toLowerCase();
+    const cardMatches = cards.filter(c=>
+      !c.archived && c.id !== editingId &&
+      c.title.toLowerCase().includes(cardQuery)
+    ).slice(0,8);
+    if(!cardMatches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
+    _mentionActive = { el:ta, dd, atPos, mode:'card' };
+    renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos);
+    return;
+  }
+
+  // @INICIAIS → busca membros
   const matches = members.filter(m=>
-    m.init.toLowerCase().startsWith(query) ||
-    m.name.toLowerCase().includes(query)
+    m.init.toLowerCase().startsWith(query.toLowerCase()) ||
+    m.name.toLowerCase().includes(query.toLowerCase())
   ).slice(0,8);
   if(!matches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
-  _mentionActive = { el:ta, dd, atPos };
+  _mentionActive = { el:ta, dd, atPos, mode:'user' };
   renderMentionDropdown(dd, matches, ta, atPos, pos);
+}
+
+function renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos){
+  dd.innerHTML='';
+  dd.classList.add('open');
+  cardMatches.forEach((card,i)=>{
+    const col=columns.find(c=>c.id===card.col);
+    const opt=document.createElement('div');
+    opt.className='mention-option'+(i===0?' active':'');
+    opt.innerHTML=
+      '<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:'+(col?.color||'var(--glass)')+
+      '22;border:1px solid '+(col?.color||'var(--glass-b)')+';color:'+(col?.color||'var(--txt3)')+
+      ';margin-right:6px;">'+(col?.name||card.col)+'</span>'+
+      '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(card.title)+'</span>';
+    opt.onclick=()=>insertCardMentionInline(ta, atPos, pos, card.id, card.title, dd);
+    dd.appendChild(opt);
+  });
+}
+
+function insertCardMentionInline(ta, atPos, curPos, cardId, cardTitle, dd){
+  const val=ta.value;
+  const token='[[CARD:'+cardId+':'+cardTitle+']]';
+  ta.value=val.slice(0,atPos)+token+val.slice(curPos);
+  ta.selectionStart=ta.selectionEnd=atPos+token.length;
+  dd.classList.remove('open');
+  _mentionActive=null;
+  ta.dispatchEvent(new Event('input'));
+  scheduleAutoSave();
 }
 
 function renderMentionDropdown(dd, matches, ta, atPos, pos){
@@ -5446,14 +5489,14 @@ function openSearchCard(id){
 // ═══════════════════════════════════════════════════════
 // PARENT / CHILD CARD
 // ═══════════════════════════════════════════════════════
-function openParentPicker(){
-  document.getElementById('parent-search-inp').value='';
-  searchParentCards('');
-  document.getElementById('parent-picker-ov').classList.add('open');
+function openDependsPicker(){
+  document.getElementById('depends-search-inp').value='';
+  searchDependsCards('');
+  document.getElementById('depends-picker-ov').classList.add('open');
 }
 
-function searchParentCards(q){
-  const res = document.getElementById('parent-search-results'); if(!res) return;
+function searchDependsCards(q){
+  const res = document.getElementById('depends-search-results'); if(!res) return;
   const lower = q.trim().toLowerCase();
   const exclude = new Set([editingId]);
   // Also exclude cards that have this card as parent (prevent cycles)
@@ -5477,60 +5520,60 @@ function searchParentCards(q){
       '<div class="minicard-body"><div class="minicard-title">'+esc(card.title)+'</div>'+
       '<div class="minicard-meta"><span class="minicard-col">'+(col?.name||card.col)+'</span></div></div>'+
       (isCurrentParent?'<span style="font-size:9px;color:var(--teal);">✓ pai atual</span>':'');
-    div.onclick=()=>setParentCard(card.id);
+    div.onclick=()=>setDependsOn(card.id);
     res.appendChild(div);
   });
 }
 
-function setParentCard(parentId){
+function setDependsOn(parentId){
   const card = cards.find(c=>c.id===editingId); if(!card) return;
-  card.parentId = parentId;
+  card.dependsOn = parentId;
   // Also add this card to parent's children list
   const parent = cards.find(c=>c.id===parentId);
   if(parent){
-    if(!parent.childIds) parent.childIds=[];
-    if(!parent.childIds.includes(editingId)) parent.childIds.push(editingId);
+    if(!parent.dependents) parent.dependents=[];
+    if(!parent.dependents.includes(editingId)) parent.dependents.push(editingId);
   }
   fbSaveAll();
-  closeOv('parent-picker-ov');
-  renderParentBar(card);
+  closeOv('depends-picker-ov');
+  renderDependsBar(card);
   renderBoard();
   showToast('🔗 Card vinculado como filho de "'+parent?.title?.substring(0,30)+'"');
 }
 
-function unlinkParent(){
-  const card = cards.find(c=>c.id===editingId); if(!card||!card.parentId) return;
-  const parent = cards.find(c=>c.id===card.parentId);
-  if(parent && parent.childIds) parent.childIds=parent.childIds.filter(id=>id!==editingId);
-  card.parentId=null;
+function unlinkDependsOn(){
+  const card = cards.find(c=>c.id===editingId); if(!card||!card.dependsOn) return;
+  const parent = cards.find(c=>c.id===card.dependsOn);
+  if(parent && parent.dependents) parent.dependents=parent.dependents.filter(id=>id!==editingId);
+  card.dependsOn=null;
   fbSaveAll();
-  closeOv('parent-picker-ov');
-  renderParentBar(card);
+  closeOv('depends-picker-ov');
+  renderDependsBar(card);
   renderBoard();
 }
 
-function openParentCard(){
+function openDependsOnCard(){
   const card=cards.find(c=>c.id===editingId); if(!card?.parentId) return;
   closeOv('card-ov');
-  openCard(card.parentId);
+  openCard(card.dependsOn);
 }
 
-function renderParentBar(card){
-  const bar=document.getElementById('m-parent-bar');
-  const link=document.getElementById('m-parent-link');
-  const lbl=document.getElementById('m-parent-lbl');
+function renderDependsBar(card){
+  const bar=document.getElementById('m-depends-bar');
+  const link=document.getElementById('m-depends-link');
+  const lbl=document.getElementById('m-depends-lbl');
   if(!bar||!link) return;
   if(card?.parentId){
-    const parent=cards.find(c=>c.id===card.parentId);
+    const parent=cards.find(c=>c.id===card.dependsOn);
     if(parent){
       bar.style.display='flex';
       link.textContent=parent.title.substring(0,40)+(parent.title.length>40?'…':'');
-      if(lbl) lbl.textContent='Filho';
+      if(lbl) lbl.textContent='Depende de';
       return;
     }
   }
   bar.style.display='none';
-  if(lbl) lbl.textContent='Pai/Filho';
+  if(lbl) lbl.textContent='Dependência';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -5730,19 +5773,19 @@ renderBoard();
 </div>
 
 <!-- PARENT CARD PICKER -->
-<div class="ov" id="parent-picker-ov" style="z-index:9100;">
+<div class="ov" id="depends-picker-ov" style="z-index:9100;">
   <div class="panel" style="max-width:480px;width:92vw;">
     <div class="panel-hd">
-      <div class="panel-title">🔗 Definir card pai</div>
-      <button class="x-btn" onclick="closeOv('parent-picker-ov')">✕</button>
+      <div class="panel-title">🔗 Definir dependência</div>
+      <button class="x-btn" onclick="closeOv('depends-picker-ov')">✕</button>
     </div>
     <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
-      <p style="font-size:12px;color:var(--txt2);">Selecione o card que será o <strong>pai</strong> deste card.</p>
-      <input class="fi" id="parent-search-inp" placeholder="Buscar card pelo título..." oninput="searchParentCards(this.value)" autocomplete="off">
-      <div id="parent-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+      <p style="font-size:12px;color:var(--txt2);">Selecione o card do qual este card <strong>depende</strong>.</p>
+      <input class="fi" id="depends-search-inp" placeholder="Buscar card pelo título..." oninput="searchDependsCards(this.value)" autocomplete="off">
+      <div id="depends-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
-        <button class="btn" style="font-size:11px;color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="unlinkParent()">Remover relação pai</button>
-        <button class="btn" onclick="closeOv('parent-picker-ov')">Cancelar</button>
+        <button class="btn" style="font-size:11px;color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="unlinkDependsOn()">Remover dependência</button>
+        <button class="btn" onclick="closeOv('depends-picker-ov')">Cancelar</button>
       </div>
     </div>
   </div>
