@@ -436,17 +436,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 
 
-  <!-- FILTRO DE COLUNAS -->
-  <div class="col-filter-wrap">
-    <div class="col-filter-toggle" onclick="toggleColFilter()">
-      <span class="col-filter-toggle-icon" id="col-filter-icon">▶</span>
-      <span>Colunas visíveis</span>
-      <span id="col-filter-count" style="font-size:10px;color:var(--txt3);margin-left:2px;"></span>
-    </div>
-    <div class="col-filter-body" id="col-filter-body">
-      <div class="col-filter-grid" id="col-filter-grid"></div>
-    </div>
-  </div>
 
   <!-- DISTRIBUIÇÃO POR COLUNA -->
   <div class="sec-title">📋 Distribuição por coluna</div>
@@ -1503,67 +1492,26 @@ function addGuestByEmail(){
 // ── FIM GERENCIAMENTO USUÁRIOS ─────────────────────────────────────
 
 
-// ── FILTRO DE COLUNAS DO PAINEL ──────────────────────────────────
-let hiddenCols = new Set(JSON.parse(localStorage.getItem('painel_hidden_cols')||'[]'));
-let colFilterOpen = false;
-let allColsKnown = new Map(); // id → {name, color}
 
-function toggleColFilter(){
-  colFilterOpen = !colFilterOpen;
-  document.getElementById('col-filter-body')?.classList.toggle('open', colFilterOpen);
-  const icon = document.getElementById('col-filter-icon');
-  if(icon) icon.classList.toggle('open', colFilterOpen);
-}
 
-function buildColList(){
-  // Coleta todas as colunas de todos os squads visíveis
-  const seen = new Map();
+// ── FILTRO DE COLUNAS POR SQUAD ──────────────────────────────────
+// hiddenColsBySq: { dados: Set(['done',...]), midia: Set([...]) }
+let hiddenColsBySq = {};
+function initHiddenCols(){
   SQUADS.forEach(sq=>{
-    const d = squadData[sq.id]; if(!d) return;
-    (d.columns||[]).forEach(col=>{
-      if(!seen.has(col.id)) seen.set(col.id, {name:col.name, color:col.color||'#4a9eff'});
-    });
-  });
-  allColsKnown = seen;
-  renderColFilterGrid();
-}
-
-function renderColFilterGrid(){
-  const grid = document.getElementById('col-filter-grid'); if(!grid) return;
-  const hidden = hiddenCols.size;
-  const total = allColsKnown.size;
-  const countEl = document.getElementById('col-filter-count');
-  if(countEl) countEl.textContent = hidden ? `(${total-hidden} de ${total} visíveis)` : '';
-
-  grid.innerHTML = '';
-  allColsKnown.forEach((col, id)=>{
-    const checked = !hiddenCols.has(id);
-    const wrap = document.createElement('label');
-    wrap.className = 'col-cb-wrap' + (checked?' checked':'');
-    wrap.innerHTML =
-      '<div class="col-cb"><span class="col-cb-check">✓</span></div>'+
-      '<div class="col-cb-dot" style="background:'+col.color+'"></div>'+
-      '<span class="col-cb-label">'+col.name+'</span>';
-    wrap.onclick = ()=>toggleColVisibility(id, wrap);
-    grid.appendChild(wrap);
+    const saved = localStorage.getItem('hcols_'+sq.id);
+    hiddenColsBySq[sq.id] = new Set(saved ? JSON.parse(saved) : []);
   });
 }
-
-function toggleColVisibility(colId, wrap){
-  if(hiddenCols.has(colId)){
-    hiddenCols.delete(colId);
-    wrap.classList.add('checked');
-  } else {
-    hiddenCols.add(colId);
-    wrap.classList.remove('checked');
-  }
-  localStorage.setItem('painel_hidden_cols', JSON.stringify([...hiddenCols]));
-  renderColFilterGrid();
-  renderAll(); // re-renderiza tudo com o novo filtro
+function isColVisible(sqId, colId){
+  return !hiddenColsBySq[sqId]?.has(colId);
 }
-
-function isColVisible(colId){
-  return !hiddenCols.has(colId);
+function toggleSqCol(sqId, colId){
+  const s = hiddenColsBySq[sqId]||new Set();
+  if(s.has(colId)) s.delete(colId); else s.add(colId);
+  hiddenColsBySq[sqId] = s;
+  localStorage.setItem('hcols_'+sqId, JSON.stringify([...s]));
+  renderAll();
 }
 // ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
 
@@ -1607,6 +1555,7 @@ window.addEventListener('auth-change',e=>{
 });
 
 window.addEventListener('fb-ready',()=>{
+  initHiddenCols();
   loadAll();
   loadPresence();
   loadAgentUsage();
@@ -1643,7 +1592,6 @@ function loadAll(){
 
 function renderAll(){
   updateTimestamp();
-  buildColList();
   renderSquadCards();
   renderConsolidated();
   renderComparison();
@@ -1831,7 +1779,7 @@ function renderColDist(){
     card.innerHTML=`
       <div class="card-title">${sq.icon} ${sq.label}</div>
       <div class="col-bar">
-        ${(d.columns||[]).filter(col=>isColVisible(col.id)).map(col=>{
+        ${(d.columns||[]).filter(col=>isColVisible(sq.id,col.id)).map(col=>{
           const n=cards.filter(c=>c.col===col.id).length;
           const pct=Math.round(n/total*100);
           return `<div class="col-row">
