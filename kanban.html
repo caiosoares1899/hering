@@ -498,11 +498,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .notif-btn{position:relative;background:none;border:none;cursor:pointer;
   font-size:18px;padding:4px;line-height:1;color:var(--txt2);transition:color .2s;}
 .notif-btn:hover{color:var(--txt);}
-.notif-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);
-  color:#fff;font-size:9px;font-weight:800;border-radius:999px;
-  min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;
-  padding:0 4px;pointer-events:none;display:none;}
-.notif-badge.show{display:flex;}
+.notif-btn.has-unread{color:var(--txt);}
+.notif-btn.ring{animation:bell-ring .5s ease;}
+@keyframes bell-ring{
+  0%,100%{transform:rotate(0);}
+  20%{transform:rotate(-20deg);}
+  40%{transform:rotate(20deg);}
+  60%{transform:rotate(-12deg);}
+  80%{transform:rotate(8deg);}
+}
+.notif-badge{
+  position:absolute;top:-4px;right:-4px;
+  background:var(--danger);color:#fff;
+  font-size:9px;font-weight:800;border-radius:999px;
+  min-width:17px;height:17px;
+  align-items:center;justify-content:center;
+  padding:0 4px;pointer-events:none;
+  display:none;  /* hidden by default */
+  box-shadow:0 0 0 2px var(--deep);
+  animation:none;
+}
+.notif-badge.show{
+  display:flex;
+  animation:notif-pop .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes notif-pop{
+  0%{transform:scale(0);}
+  100%{transform:scale(1);}
+}
 .notif-panel{position:fixed;top:56px;right:12px;z-index:90;width:320px;
   background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:14px;
   box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;flex-direction:column;
@@ -3756,7 +3779,18 @@ function renderNotifs(notifs){
   const list = document.getElementById('notif-list'); if(!list) return;
   const badge = document.getElementById('notif-badge');
   const unread = notifs.filter(n=>!n.read).length;
-  if(badge){ badge.textContent=unread; badge.classList.toggle('show', unread>0); }
+  const btn = document.getElementById('notif-btn');
+  if(badge){
+    const wasShowing = badge.classList.contains('show');
+    badge.textContent = unread > 9 ? '9+' : unread;
+    badge.classList.toggle('show', unread > 0);
+    // Ring the bell when a new unread arrives
+    if(unread > 0 && !wasShowing && btn){
+      btn.classList.add('ring');
+      setTimeout(()=>btn.classList.remove('ring'), 600);
+    }
+  }
+  if(btn) btn.classList.toggle('has-unread', unread > 0);
   if(!notifs.length){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
