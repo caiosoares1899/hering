@@ -730,6 +730,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        localStorage.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
@@ -973,8 +975,8 @@ function renderAgentLogs(){
     <div class="agent-log-item">
       <span class="agent-log-meta">${new Date(l.ts||l._ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}<br>${l._squad.icon}</span>
       <div>
-        <div style="font-size:10px;color:var(--cyan);font-weight:600;">${l.user||'?'} · ${l.tab||'daily'}</div>
-        <div style="font-size:11px;color:var(--txt2);margin-top:2px;">${(l.q||'').substring(0,100)}${(l.q||'').length>100?'…':''}</div>
+        <div style="font-size:10px;color:var(--cyan);font-weight:600;">${esc(l.user||'?')} · ${esc(l.tab||'daily')}</div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:2px;">${esc((l.q||'').substring(0,100))}${(l.q||'').length>100?'…':''}</div>
       </div>
     </div>`).join('');
 }
