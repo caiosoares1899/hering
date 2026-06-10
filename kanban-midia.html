@@ -169,7 +169,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .x-btn{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
 .x-btn:hover{color:var(--danger);}
 /* card modal */
-.card-panel{max-width:530px;max-height:90vh;overflow-y:auto;}
+.card-panel{max-width:860px;max-height:92vh;overflow-y:auto;}
 .modal-body{padding:14px 16px;display:flex;flex-direction:column;gap:11px;}
 .field{display:flex;flex-direction:column;gap:3px;}
 .fl{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
@@ -387,6 +387,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 }
 .tag-blocker:hover{background:rgba(255,107,107,.25);}
 .card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;}
+
+
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+.modal-col{display:flex;flex-direction:column;gap:10px;}
+.modal-divider{border:none;border-top:1px solid var(--glass-b);margin:4px 0;}
+.card-attr-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.okr-check-wrap{display:flex;align-items:center;gap:8px;padding:7px 10px;
+  border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.4);cursor:pointer;}
+.okr-check-wrap:hover{border-color:rgba(255,215,0,.3);}
+.linked-wrap{padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.4);}
+.modal-ft-row{display:flex;align-items:center;gap:6px;padding:10px 16px;
+  border-top:1px solid var(--glass-b);background:rgba(3,13,26,.3);}
 
 /* Indicativos do card */
 .card-indicators{display:flex;gap:4px;align-items:center;margin:3px 0 4px;flex-wrap:wrap;}
@@ -960,102 +972,165 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="panel-title" id="m-title-disp">Card</div>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
-  <div class="modal-body">
-    <div class="field"><label class="fl">Título</label><input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()" onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}"></div>
-    <div class="frow">
-      <div class="field"><label class="fl">Tag</label><select class="fi" id="m-tag" onchange="scheduleAutoSave()"></select></div>
-      <div class="field"><label class="fl">Coluna</label><select class="fi" id="m-col"></select></div>
+
+  <div class="modal-body" style="padding:14px 16px;">
+
+    <!-- Título full-width -->
+    <div class="field"><label class="fl">Título</label>
+      <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()"
+        onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
-    <div class="frow">
-      <div class="field"><label class="fl">Responsável</label><select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select></div>
-      <div class="field"><label class="fl">Prazo</label><input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()"></div>
-    </div>
-    <div class="field">
-      <label class="fl">Participantes</label>
-      <div class="part-list" id="m-participants"></div>
-      <div style="display:flex;gap:5px;">
-        <select class="fi" id="m-part-select" style="flex:1;font-size:11px;padding:5px 8px;">
-          <option value="">+ Adicionar participante...</option>
-        </select>
-        <button class="btn btn-sm btn-teal" onclick="addParticipant()">+ Add</button>
+
+    <!-- Grid 2 colunas -->
+    <div class="modal-grid">
+
+      <!-- COLUNA ESQUERDA -->
+      <div class="modal-col">
+
+        <!-- Tag + Coluna -->
+        <div class="card-attr-row">
+          <div class="field"><label class="fl">Tag</label>
+            <select class="fi" id="m-tag" onchange="scheduleAutoSave()"></select>
+          </div>
+          <div class="field"><label class="fl">Coluna</label>
+            <select class="fi" id="m-col"></select>
+          </div>
+        </div>
+
+        <!-- Responsável + Prazo -->
+        <div class="card-attr-row">
+          <div class="field"><label class="fl">Responsável</label>
+            <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
+          </div>
+          <div class="field"><label class="fl">Prazo</label>
+            <input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()">
+          </div>
+        </div>
+
+        <!-- SP + Prioridade -->
+        <div class="card-attr-row">
+          <div class="field"><label class="fl">Story Points</label>
+            <input class="fi" id="m-sp" type="number" min="0" max="100" placeholder="0" oninput="scheduleAutoSave()">
+          </div>
+          <div class="field"><label class="fl">Prioridade</label>
+            <select class="fi" id="m-priority" onchange="scheduleAutoSave()">
+              <option value="">— sem prioridade —</option>
+              <option value="low">🟢 Baixa</option>
+              <option value="medium">🟡 Média</option>
+              <option value="high">🔴 Alta</option>
+              <option value="critical">🔥 Crítica</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Participantes -->
+        <div class="field">
+          <label class="fl">Participantes</label>
+          <div class="part-list" id="m-participants"></div>
+          <div style="display:flex;gap:5px;">
+            <select class="fi" id="m-part-select" style="flex:1;font-size:11px;padding:5px 8px;">
+              <option value="">+ Adicionar participante...</option>
+            </select>
+            <button class="btn btn-sm btn-teal" onclick="addParticipant()">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="field"><label class="fl">Descrição</label>
+          <textarea class="fi fi-ta" id="m-desc" rows="3" oninput="scheduleAutoSave()"
+            placeholder="Use @INICIAIS para mencionar membros..."></textarea>
+        </div>
+
+        <!-- Insights do PO -->
+        <div class="po-box">
+          <div class="po-lbl">🎯 Insights do PO</div>
+          <textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea>
+        </div>
+
+        <!-- Impedimento (oculto por padrão) -->
+        <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
+          <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🚧 Impedimento</div>
+          <textarea class="fi fi-ta" id="m-blocker-reason" rows="2"
+            placeholder="Descreva o impedimento e o que está bloqueando..."
+            style="border-color:rgba(255,107,107,.3);"></textarea>
+          <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-top:6px;"
+            onclick="removeBlockerTag()">✕ Remover impedimento</button>
+        </div>
+
+        <!-- Meta criação/edição -->
+        <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
       </div>
-    </div>
-    <div class="field"><label class="fl">Descrição</label><textarea class="fi fi-ta" id="m-desc" rows="2" oninput="scheduleAutoSave()"></textarea></div>
-    <div class="po-box"><div class="po-lbl">🎯 Insights do PO</div><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
-    <div class="cl-sec">
-      <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
-      <div class="cl-items" id="m-checklist"></div>
-      <div class="cl-add-r"><input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()"><button class="cl-ab" onclick="addCI()">+ Add</button></div>
-    </div>
-    <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
-      <div class="cl-hd-row">
-        <div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div>
-      </div>
-      <div class="cl-items" id="m-riscos"></div>
-      <div class="cl-add-r">
-        <input class="cl-ai" id="risco-inp" placeholder="Descreva um risco..." onkeydown="if(event.key==='Enter')addRisco()">
-        <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="addRisco()">+ Add</button>
-      </div>
-    </div>
-    <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
-      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🚧 Impedimento</div>
-      <textarea class="fi fi-ta" id="m-blocker-reason" rows="2" placeholder="Descreva o impedimento e o que está bloqueando..." style="border-color:rgba(255,107,107,.3);"></textarea>
-      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-top:6px;" onclick="removeBlockerTag()">✕ Remover impedimento</button>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <div class="field" style="flex:1;">
-        <label class="fl">Story Points</label>
-        <input class="fi" id="m-sp" type="number" min="0" max="100" placeholder="0" oninput="scheduleAutoSave()">
-      </div>
-      <div class="field" style="flex:1;">
-        <label class="fl">Prioridade</label>
-        <select class="fi" id="m-priority" onchange="scheduleAutoSave()">
-          <option value="">— sem prioridade —</option>
-          <option value="low">🟢 Baixa</option>
-          <option value="medium">🟡 Média</option>
-          <option value="high">🔴 Alta</option>
-          <option value="critical">🔥 Crítica</option>
-        </select>
-      </div>
-    </div>
-    <div class="meta-r"><span id="m-meta-c"></span><span id="m-meta-e"></span></div>
-  </div>
-  <div class="panel-ft" style="justify-content:space-between;">
-    <button class="btn btn-sm" id="btn-del-card" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
-    <div style="display:flex;gap:7px;">
-      <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar este card como modelo">📋 Salvar modelo</button>
-      <button class="btn btn-teal btn-sm" onclick="archiveCard()">📦 Arquivar</button>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--glass-b);margin-top:4px;">
+
+      <!-- COLUNA DIREITA -->
+      <div class="modal-col">
+
+        <!-- Checklist -->
+        <div class="cl-sec">
+          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
+          <div class="cl-items" id="m-checklist"></div>
+          <div class="cl-add-r">
+            <input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()">
+            <button class="cl-ab" onclick="addCI()">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Riscos -->
+        <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
+          <div class="cl-hd-row">
+            <div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div>
+          </div>
+          <div class="cl-items" id="m-riscos"></div>
+          <div class="cl-add-r">
+            <input class="cl-ai" id="risco-inp" placeholder="Descreva um risco..."
+              onkeydown="if(event.key==='Enter')addRisco()">
+            <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);"
+              onclick="addRisco()">+ Add</button>
+          </div>
+        </div>
+
         <!-- OKR -->
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.4);">
+        <label class="okr-check-wrap">
           <input type="checkbox" id="m-is-okr" style="width:16px;height:16px;accent-color:var(--warn);flex-shrink:0;">
           <div>
             <div style="font-size:12px;font-weight:600;color:var(--txt);">🎯 Card OKR</div>
-            <div style="font-size:10px;color:var(--txt3);">Destacado no painel</div>
+            <div style="font-size:10px;color:var(--txt3);">Aparece destacado no painel</div>
           </div>
         </label>
+
         <!-- Cards vinculados -->
-        <div style="padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.4);">
+        <div class="linked-wrap">
           <div style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🔗 Cards vinculados</div>
           <div class="link-search" style="margin-bottom:5px;">
             <input class="link-search-input" id="link-search-inp"
-              placeholder="Buscar pelo título..."
+              placeholder="Buscar card pelo título..."
               oninput="searchLinkedCards(this.value)"
               autocomplete="off">
             <div class="link-dropdown" id="link-dropdown"></div>
           </div>
           <div class="linked-cards" id="linked-cards-list"></div>
         </div>
-      </div>
-      <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
-      <div style="flex:1;"></div>
-      <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
-      <button class="btn btn-p btn-sm" onclick="saveCard()">💾 Salvar</button>
-    </div>
+
+      </div><!-- /col direita -->
+    </div><!-- /modal-grid -->
+  </div><!-- /modal-body -->
+
+  <!-- Rodapé limpo -->
+  <div class="modal-ft-row">
+    <button class="btn btn-sm" id="btn-del-card"
+      style="color:var(--danger);border-color:rgba(255,107,107,.3);"
+      onclick="deleteCard()">🗑 Excluir</button>
+    <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
+    <button class="btn btn-sm btn-teal" onclick="archiveCard()">📦 Arquivar</button>
+    <div style="flex:1;"></div>
+    <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
+    <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
+    <button class="btn btn-p btn-sm" onclick="saveCard()">💾 Salvar</button>
   </div>
+
 </div>
 </div>
 
+<!-- CONFIGURAÇÕES -->
 <!-- CONFIGURAÇÕES -->
 <div class="ov" id="cfg-ov">
 <div class="panel cfg-panel">
