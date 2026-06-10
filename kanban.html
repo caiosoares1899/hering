@@ -972,7 +972,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
-  <button class="btn btn-sm" onclick="resolveAllBugs()" title="Marcar todos os cards com tag Bug/Bloqueio como Concluído" style="color:var(--danger);border-color:rgba(255,107,107,.3);">✅ Resolver bugs</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
@@ -2023,7 +2022,7 @@ function renderNormal(board,activeCards){
   board.className='board';
   columns.forEach(col=>{
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
-    const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']||4)-(PRIO[b.priority||'']||4));
+    const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
     const canCollapse=col.collapsible!==false;
@@ -2081,7 +2080,7 @@ function renderRaiaOwner(board,activeCards){
     const raiaBoard=row.querySelector('.raia-cols');
     columns.forEach(col=>{
       const PRIO2={'critical':0,'high':1,'medium':2,'low':3,'':4};
-      const colCards=ownerCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO2[a.priority||'']||4)-(PRIO2[b.priority||'']||4));
+      const colCards=ownerCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO2[a.priority||'']??4)-(PRIO2[b.priority||'']??4));
       const safeId=owner||'none';
       const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
       const rColId='raia-'+safeId+'-'+col.id;
@@ -2127,7 +2126,7 @@ function renderRaiaTag(board,activeCards){
     const raiaBoard=row.querySelector('.raia-cols');
     columns.forEach(col=>{
       const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
-      const colCards=tagCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']||4)-(PRIO[b.priority||'']||4));
+      const colCards=tagCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
       const tColId='raia-tag-'+tagId+'-'+col.id;
       const tCollapsed=collapsedCols.has(tColId);
       const div=document.createElement('div');
@@ -4800,7 +4799,7 @@ function showCtxMenu(e, cardId){
       <span class="ctx-item-icon">👤</span> Atribuir a mim
     </div>
     <div class="ctx-item" onclick="ctxToggleOKR()">
-      <span class="ctx-item-icon">${card.okr ? '⭐' : '🎯'}</span> ${card.okr ? 'Remover OKR' : 'Marcar como OKR'}
+      <span class="ctx-item-icon">${card.isOKR ? '⭐' : '🎯'}</span> ${card.isOKR ? 'Remover OKR' : 'Marcar como OKR'}
     </div>
     <div class="ctx-item" onclick="openCard('${cardId}')">
       <span class="ctx-item-icon">✏️</span> Editar card
@@ -4876,9 +4875,9 @@ function resolveAllBugs(){
 
 function ctxToggleOKR(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
-  card.okr = !card.okr;
+  card.isOKR = !card.isOKR;
   fbSaveAll(); renderBoard();
-  showToast(card.okr ? '🎯 Card marcado como OKR!' : 'OKR removido');
+  showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
 function ctxMove(colId){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
