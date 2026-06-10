@@ -620,6 +620,44 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .comment-action-btn{background:none;border:none;font-size:10px;color:var(--txt3);cursor:pointer;padding:0;}
 .comment-action-btn:hover{color:var(--txt);}
 .comment-inp-wrap{display:flex;gap:8px;align-items:flex-start;}
+
+/* ── EDIT-ON-CLICK FIELDS (descrição + comentários) ──── */
+.eoc-wrap{position:relative;width:100%;}
+.eoc-display{
+  min-height:38px;padding:8px 10px;border-radius:8px;
+  border:1px solid transparent;background:transparent;
+  font-size:12px;color:var(--txt2);line-height:1.6;
+  word-break:break-word;cursor:text;
+  transition:border-color .15s,background .15s;
+}
+.eoc-display:hover{border-color:rgba(56,182,255,.15);background:rgba(3,13,26,.4);}
+.eoc-display.is-empty::before{content:attr(data-placeholder);color:var(--txt3);font-style:italic;}
+.eoc-display.is-empty{color:transparent;}
+.eoc-display a,.eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
+.eoc-editing .eoc-display{display:none;}
+.eoc-editing .eoc-textarea{display:block!important;}
+.eoc-editing .eoc-actions{display:flex!important;}
+.eoc-textarea{
+  display:none;width:100%;background:rgba(3,13,26,.85);
+  border:1px solid rgba(56,182,255,.3);border-radius:8px;
+  padding:8px 10px;font-size:12px;color:var(--txt);
+  font-family:"DM Sans",sans-serif;resize:vertical;min-height:70px;
+  outline:none;box-sizing:border-box;line-height:1.6;
+}
+.eoc-textarea:focus{border-color:rgba(56,182,255,.5);}
+.eoc-actions{
+  display:none;gap:6px;margin-top:5px;align-items:center;
+}
+.eoc-save{background:var(--accent);border:none;border-radius:6px;
+  color:#fff;font-size:11px;font-weight:700;padding:4px 12px;cursor:pointer;}
+.eoc-cancel{background:none;border:1px solid var(--glass-b);border-radius:6px;
+  color:var(--txt3);font-size:11px;padding:4px 10px;cursor:pointer;}
+.eoc-cancel:hover{color:var(--txt);}
+.eoc-hint{font-size:10px;color:var(--txt3);margin-left:4px;}
+
+/* Comment eoc variant (smaller) */
+.eoc-comment .eoc-display{min-height:28px;font-size:12px;}
+.eoc-comment .eoc-textarea{min-height:56px;resize:none;}
 .comment-inp-avatar{width:28px;height:28px;border-radius:50%;background:var(--glass);
   border:1px solid var(--glass-b);display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;overflow:hidden;}
@@ -1265,17 +1303,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </button>
         <div id="m-deps-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;
           background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-          box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:180px;z-index:500;overflow:hidden;">
-          <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;transition:background .12s;"
+          box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
+          <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
             onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
             🔗 Definir dependência
           </button>
-          <div style="height:1px;background:rgba(56,182,255,.1);margin:0 10px;"></div>
-          <button onclick="openCardDepMapModal();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;transition:background .12s;"
+          <button onclick="openCardDepMapModal();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
             onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-            ⛓ Ver mapa de dependências
+            ⛓ Ver dependências deste card
           </button>
-          <button onclick="unlinkDependsOn();closeDepsMenu();" id="m-deps-unlink-btn" style="display:none;align-items:center;gap:8px;width:100%;padding:9px 14px;background:none;border:none;color:rgba(255,107,107,.7);font-size:12px;cursor:pointer;text-align:left;transition:background .12s;"
+          <div style="height:1px;background:rgba(56,182,255,.1);margin:0 10px;"></div>
+          <button onclick="unlinkDependsOn();closeDepsMenu();" id="m-deps-unlink-btn" style="display:none;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:rgba(255,107,107,.7);font-size:12px;cursor:pointer;text-align:left;"
             onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='none'">
             ✕ Remover dependência
           </button>
@@ -1388,8 +1426,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <!-- Descrição full-width -->
     <div class="field">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar pessoas, @card: para mencionar cards</span></label>
-      <div class="fi-mention-wrap"><textarea class="fi fi-ta" id="m-desc" rows="4" oninput="scheduleAutoSave();renderDescPreview()" style="resize:vertical;min-height:70px;width:100%;box-sizing:border-box;"></textarea></div>
-      <div id="m-desc-preview" style="display:none;margin-top:4px;padding:7px 10px;border-radius:8px;border:1px solid rgba(56,182,255,.1);background:rgba(3,13,26,.5);font-size:12px;color:var(--txt2);line-height:1.6;word-break:break-word;"></div>
+      <div class="eoc-wrap" id="desc-eoc">
+        <div class="eoc-display is-empty" id="m-desc-display"
+          data-placeholder="Adicionar descrição..."
+          onclick="eocEdit('desc-eoc')"></div>
+        <textarea class="eoc-textarea" id="m-desc" rows="4"
+          oninput="scheduleAutoSave()"
+          onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('desc-eoc');}"></textarea>
+        <div class="eoc-actions">
+          <button class="eoc-save" onclick="eocSave('desc-eoc')">Salvar</button>
+          <button class="eoc-cancel" onclick="eocCancel('desc-eoc')">Cancelar</button>
+          <span class="eoc-hint">Esc para cancelar · @card: para cards · @INICIAIS para pessoas</span>
+        </div>
+      </div>
     </div>
 
     <!-- Insights do PO full-width -->
@@ -1406,12 +1455,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="comment-list" id="m-comment-list"></div>
       <div class="comment-inp-wrap">
         <div class="comment-inp-avatar" id="m-comment-avatar">?</div>
-        <div class="comment-inp-box">
-          <textarea class="comment-inp" id="m-comment-inp" placeholder="Escrever um comentário... (@ para mencionar)" rows="1"
-            oninput="autoResizeCommentInp(this);handleCommentMentions(this)"
-            onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
-          <div class="link-dropdown" id="comment-mention-dd" style="position:absolute;bottom:100%;left:0;width:100%;z-index:20;margin-bottom:4px;"></div>
-          <button class="comment-send-btn" onclick="submitComment()">Enviar</button>
+        <div style="flex:1;min-width:0;">
+          <div class="eoc-wrap eoc-comment" id="comment-eoc">
+            <div class="eoc-display is-empty" id="m-comment-display"
+              data-placeholder="Escrever um comentário..."
+              onclick="eocEdit('comment-eoc')"></div>
+            <div style="position:relative;">
+              <textarea class="eoc-textarea" id="m-comment-inp"
+                oninput="autoResizeCommentInp(this);handleCommentMentions(this)"
+                onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('comment-eoc');}
+                  else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
+              <div class="link-dropdown" id="comment-mention-dd" style="position:absolute;bottom:100%;left:0;width:100%;z-index:20;margin-bottom:4px;"></div>
+            </div>
+            <div class="eoc-actions">
+              <button class="eoc-save" onclick="submitComment()">Enviar</button>
+              <button class="eoc-cancel" onclick="eocCancel('comment-eoc')">Cancelar</button>
+              <span class="eoc-hint">Ctrl+Enter · @ para mencionar · @card: para cards</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2639,7 +2700,7 @@ function openCard(id){
   document.getElementById('m-col').value=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-due').value=c.due||'';
-  document.getElementById('m-desc').value=c.desc||'';
+  eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
   document.getElementById('m-po').value=c.po||'';
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
   document.getElementById('m-sp').value=c.sp||'';
@@ -2660,7 +2721,6 @@ function openCard(id){
   document.getElementById('card-ov').classList.add('open');
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
-    initMentionDropdown('m-desc');
     initMentionDropdown('m-po');
     loadComments(id);
     renderDescPreview();
@@ -2683,7 +2743,9 @@ function openNewCard(col){
   renderLinkedChips();
   editingId=null;
   populateTagSelect(); populateOwnerSelect(); populateColSelect();
-  ['m-title','m-desc','m-po'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-title').value='';
+  document.getElementById('m-po').value='';
+  eocInitDisplay('desc-eoc','','Adicionar descrição...');
   document.getElementById('m-title-disp').textContent='Novo card';
   document.getElementById('m-tag').value=tags[0]?.id||'';
   document.getElementById('m-col').value=col||columns[0]?.id||'backlog';
@@ -5787,6 +5849,7 @@ function submitComment(){
     fbSaveAll();
   }
   inp.value=''; inp.style.height='auto';
+  eocResetComment();
   loadComments(_commentCardId);
   // Fire @mention notifications from comment
   parseMentions(text, _commentCardId);
@@ -6103,6 +6166,102 @@ function openCardDepMapModal(){
   // Opens the full dep map modal filtered to show this card's chains prominently
   document.getElementById('dep-map-ov').classList.add('open');
   renderDepMap(editingId); // pass selfId to highlight
+}
+
+// ═══════════════════════════════════════════════════════
+// EDIT-ON-CLICK (EOC) — campos que editam ao clicar
+// ═══════════════════════════════════════════════════════
+
+function eocEdit(wrapId){
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  wrap.classList.add('eoc-editing');
+  const ta = wrap.querySelector('.eoc-textarea');
+  if(ta){
+    ta.style.display='block';
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = ta.value.length;
+    // Init mention dropdown if not done yet
+    if(!ta._mentionInited){
+      initMentionDropdown(ta.id);
+    }
+  }
+}
+
+function eocSave(wrapId){
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  wrap.classList.remove('eoc-editing');
+  const ta = wrap.querySelector('.eoc-textarea');
+  const display = wrap.querySelector('.eoc-display');
+  if(!ta || !display) return;
+  ta.style.display='none';
+  _eocRenderDisplay(display, ta.value, ta.placeholder||'');
+  scheduleAutoSave();
+}
+
+function eocCancel(wrapId){
+  const wrap = document.getElementById(wrapId);
+  if(!wrap) return;
+  wrap.classList.remove('eoc-editing');
+  const ta = wrap.querySelector('.eoc-textarea');
+  const display = wrap.querySelector('.eoc-display');
+  if(!ta || !display) return;
+  ta.style.display='none';
+  // Restore original value from card data
+  if(wrapId==='desc-eoc' && editingId){
+    const card=cards.find(c=>c.id===editingId);
+    if(card) ta.value=card.desc||'';
+  }
+  _eocRenderDisplay(display, ta.value, display.dataset.placeholder||'');
+}
+
+function _eocRenderDisplay(display, text, placeholder){
+  if(!text || !text.trim()){
+    display.classList.add('is-empty');
+    display.innerHTML='';
+  } else {
+    display.classList.remove('is-empty');
+    display.innerHTML = renderMd(text);
+    // Wire card mention clicks
+    display.querySelectorAll('.mention-card').forEach(el=>{
+      el.style.pointerEvents='auto';
+      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(el.getAttribute('onclick')?.match(/'([^']+)'/)?.[1]||''); };
+    });
+    // Wire mention-card via data-cid if present
+    display.querySelectorAll('.mention-card[data-cid]').forEach(el=>{
+      el.style.pointerEvents='auto';
+      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(el.dataset.cid); };
+    });
+    // @user mentions show tooltip on click
+    display.querySelectorAll('.mention-user').forEach(el=>{
+      el.style.pointerEvents='auto';
+    });
+  }
+}
+
+// Initialize display when opening card
+function eocInitDisplay(wrapId, text, placeholder){
+  const wrap=document.getElementById(wrapId); if(!wrap) return;
+  const ta=wrap.querySelector('.eoc-textarea');
+  const display=wrap.querySelector('.eoc-display');
+  if(ta) ta.value=text||'';
+  if(display){
+    display.dataset.placeholder=placeholder||'Adicionar descrição...';
+    _eocRenderDisplay(display, text||'', placeholder||'');
+  }
+  wrap.classList.remove('eoc-editing');
+  if(ta) ta.style.display='none';
+}
+
+// After submitComment, reset comment eoc
+function eocResetComment(){
+  const wrap=document.getElementById('comment-eoc'); if(!wrap) return;
+  const ta=wrap.querySelector('.eoc-textarea');
+  const display=wrap.querySelector('.eoc-display');
+  if(ta){ ta.value=''; ta.style.height='auto'; ta.style.display='none'; }
+  if(display){ display.innerHTML=''; display.classList.add('is-empty'); }
+  wrap.classList.remove('eoc-editing');
 }
 
 renderBoard();
