@@ -1208,6 +1208,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
   <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
+  <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
@@ -1407,21 +1408,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </div>
       </div>
     </div><!-- /modal-grid -->
-
-    <!-- Mini-mapa de dependências do card -->
-    <div id="m-dep-mini-wrap" style="display:none;">
-      <div class="card-dep-mini" id="m-dep-mini">
-        <div class="card-dep-mini-hd">
-          <span class="card-dep-mini-lbl">⛓ Dependências</span>
-          <div class="card-dep-mini-nav">
-            <button id="dep-mini-prev" onclick="depMiniNav(-1)" disabled>‹</button>
-            <span id="dep-mini-page">1/1</span>
-            <button id="dep-mini-next" onclick="depMiniNav(1)" disabled>›</button>
-          </div>
-        </div>
-        <div class="card-dep-mini-body" id="dep-mini-body"></div>
-      </div>
-    </div>
 
     <!-- Descrição full-width -->
     <div class="field">
