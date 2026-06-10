@@ -1655,7 +1655,7 @@ function renderSquadCards(){
         <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="font-size:20px;color:${bl?'var(--danger)':'var(--txt)'};">${bl}</div><div class="met-sub">${bl?'⚠ atenção':'ok'}</div></div>
       </div>
       <div class="col-bar">
-        ${(d.columns||[]).map(col=>{
+        ${(d.columns||[]).filter(col=>isColVisible(sq.id,col.id)).map(col=>{
           const n=cards.filter(c=>c.col===col.id).length;
           const pct=total>0?Math.round(n/total*100):0;
           return `<div class="col-row">
@@ -1667,7 +1667,26 @@ function renderSquadCards(){
       </div>
     `;
     container.appendChild(card);
+    renderColToggle(sq, d, card);
   });
+}
+
+function renderColToggle(sq, d, cardEl){
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(56,182,255,.08);';
+  (d.columns||[]).forEach(col=>{
+    const hid = (hiddenColsBySq[sq.id]||new Set()).has(col.id);
+    const chip = document.createElement('span');
+    chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;border:1px solid '+(hid?'rgba(255,255,255,.06)':'rgba(56,182,255,.28)')+';background:'+(hid?'transparent':'rgba(56,182,255,.08)')+';color:'+(hid?'rgba(255,255,255,.2)':'var(--txt2)')+';';
+    const dot = document.createElement('span');
+    dot.style.cssText = 'width:6px;height:6px;border-radius:50%;flex-shrink:0;background:'+col.color+';opacity:'+(hid?0.2:1)+';';
+    chip.appendChild(dot);
+    chip.appendChild(document.createTextNode(col.name));
+    chip.onclick = ()=>toggleSqCol(sq.id, col.id);
+    chip.title = (hid?'Mostrar':'Ocultar')+' '+col.name;
+    wrap.appendChild(chip);
+  });
+  cardEl.appendChild(wrap);
 }
 
 // ── CONSOLIDADO ────────────────────────────────────────────────────
