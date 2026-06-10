@@ -3732,8 +3732,15 @@ document.addEventListener('click', e=>{
 });
 
 // ── Cria uma notificação para um usuário ──────────────────────────
+// Deduplication: track recently created notifs (uid+type+cardId) within 5s
+const _recentNotifs = new Map();
 function createNotif(targetUid, type, title, sub, cardId){
   if(!window._fbReady || !targetUid) return;
+  // Evita duplicatas: mesma uid+type+card dentro de 5s
+  const dedupeKey = targetUid+'|'+type+'|'+(cardId||'');
+  const lastTs = _recentNotifs.get(dedupeKey)||0;
+  if(Date.now()-lastTs < 5000) return;
+  _recentNotifs.set(dedupeKey, Date.now());
   const notif = {
     id: 'n'+Date.now()+Math.random().toString(36).slice(2,6),
     type, title, sub, cardId,
@@ -3952,6 +3959,9 @@ function checkDueNotifs(){
 // ── Hook no saveCard para disparar notificações ───────────────────
 const _origSaveCardForNotif = saveCard;
 saveCard = function(){
+  // Cancela auto-save pendente para evitar duplo disparo de notificações
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = null;
   // Captura estado anterior
   const prevCard = editingId ? cards.find(c=>c.id===editingId) : null;
   const prevOwner = prevCard?.owner||'';
@@ -4726,9 +4736,9 @@ function addBlockerTag(cardId){
   const card = cards.find(x=>x.id===cardId); if(!card) return;
   openCard(cardId);
   setTimeout(()=>{
-    const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
-  initLinkedCards(c);
-  document.getElementById('m-blocker-row').style.display='block';
+    const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
+    initLinkedCards(card);
+    document.getElementById('m-blocker-row').style.display='block';
     document.getElementById('m-blocker-reason').value = card.blockerReason||'';
     document.getElementById('m-blocker-reason').focus();
   },100);
