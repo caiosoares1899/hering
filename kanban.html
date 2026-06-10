@@ -1561,12 +1561,15 @@ const ACTIVE_SQUAD = (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/g
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
+// Squads criados via painel são carregados do Firebase em loadSquadsFromFirebase().
+// Apenas dados e midia existem por padrão.
 const SQUAD_META_DEFAULT = {
-  dados: { label: 'Squad Dados 📊',   subtitle: 'Time de Dados',      agentRole: 'dados'    },
-  midia: { label: 'Squad Mídia 📱',   subtitle: 'Marketing de Performance', agentRole: 'mídia' },
-  ecom:  { label: 'Squad E-com 🛍️',  subtitle: 'E-commerce',          agentRole: 'e-commerce'},
-  cx:    { label: 'Squad CX 💬',      subtitle: 'Customer Experience', agentRole: 'CX'       },
+  dados: { label: 'Squad Dados 📊', subtitle: 'Time de Dados',            agentRole: 'dados' },
+  midia: { label: 'Squad Mídia 📱', subtitle: 'Marketing de Performance',  agentRole: 'mídia' },
 };
+
+// Squads ativos — começa com o default, pode ser estendido pelo Firebase
+let SQUAD_META_LIVE = { ...SQUAD_META_DEFAULT };
 
 // Resolve meta do squad ativo (pode ser sobrescrito por dados do Firebase)
 let _squadMeta = SQUAD_META_DEFAULT[ACTIVE_SQUAD] || {
@@ -1583,6 +1586,32 @@ const SQUAD_LABELS = Object.fromEntries(
 const FB = 'kanban/squads/' + ACTIVE_SQUAD + '/dados';
 
 // Aplica identidade visual do squad assim que o DOM estiver pronto
+// Carrega squads criados via painel do Firebase (kanban/squads_meta)
+function loadSquadsFromFirebase(callback) {
+  if (!window._fbReady) { if (callback) callback(); return; }
+  window._get(window._ref(window._db, 'kanban/squads_meta')).then(snap => {
+    const val = snap.val() || {};
+    Object.entries(val).forEach(([id, meta]) => {
+      if (meta && meta.label) {
+        SQUAD_META_LIVE[id] = {
+          label:     meta.label,
+          subtitle:  meta.subtitle  || meta.label,
+          agentRole: meta.agentRole || id,
+          emoji:     meta.emoji     || '🐟',
+          color:     meta.color     || '#38b6ff',
+        };
+      }
+    });
+    // Atualiza SQUAD_LABELS (usado em vários pontos do board)
+    Object.assign(SQUAD_LABELS, Object.fromEntries(
+      Object.entries(SQUAD_META_LIVE).map(([k,v]) => [k, v.label])
+    ));
+    // Atualiza _squadMeta do squad ativo se veio do Firebase
+    if (SQUAD_META_LIVE[ACTIVE_SQUAD]) _squadMeta = SQUAD_META_LIVE[ACTIVE_SQUAD];
+    if (callback) callback();
+  }).catch(() => { if (callback) callback(); });
+}
+
 function applySquadIdentity() {
   const { label, subtitle } = _squadMeta;
   const titleEl = document.getElementById('page-title');
@@ -1810,30 +1839,13 @@ function showApp(user) {
 }
 
 function showSquadSelectorFiltered(squadIds) {
-  // Fecha tela de login
   document.getElementById('login-ov').style.display = 'none';
-
-  // Filtra o grid do seletor para mostrar só os squads do usuário
-  const grid = document.getElementById('squad-sel-grid');
-  if (grid) {
-    const SQUADS_VISIBLE = [
-      { id: 'dados', emoji: '📊', name: 'Squad Dados',  sub: 'Time de Dados' },
-      { id: 'midia', emoji: '📱', name: 'Squad Mídia',  sub: 'Marketing de Performance' },
-      { id: 'ecom',  emoji: '🛍️', name: 'Squad E-com', sub: 'E-commerce' },
-      { id: 'cx',    emoji: '💬', name: 'Squad CX',     sub: 'Customer Experience' },
-    ];
-    const meus = SQUADS_VISIBLE.filter(s => squadIds.includes(s.id));
-    grid.innerHTML = meus.map(s =>
-      `<a class="squad-sel-card" href="kanban.html?squad=${s.id}">
-        <span class="squad-sel-emoji">${s.emoji}</span>
-        <div class="squad-sel-name">${s.name}</div>
-        <div class="squad-sel-sub">${s.sub}</div>
-      </a>`
-    ).join('');
-  }
-
-  const sel = document.getElementById('squad-selector');
-  if (sel) sel.classList.add('active');
+  // Carrega squads do Firebase antes de renderizar (inclui novos boards)
+  loadSquadsFromFirebase(() => {
+    if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
+    const sel = document.getElementById('squad-selector');
+    if (sel) sel.classList.add('active');
+  });
 }
 
 window.addEventListener('auth-change',e=>{
@@ -4918,6 +4930,7 @@ window.addEventListener('fb-ready',()=>{
   }).catch(()=>{});
   applyBlockerMode();
   fbLoadAll();
+  loadSquadsFromFirebase(() => applySquadIdentity()); // atualiza título com dados do Firebase
   loadAutoRules();
   loadCalEvents();
   applyViewMode();
@@ -5023,19 +5036,26 @@ function openSearchCard(id){
 
 // ── SQUAD SELECTOR ──────────────────────────────────────────────────────
 (function initSquadSelector() {
-  // Squads disponíveis para o seletor — extende SQUAD_META_DEFAULT
-  const SQUADS_VISIBLE = [
-    { id: 'dados', emoji: '📊', name: 'Squad Dados',   sub: 'Time de Dados' },
-    { id: 'midia', emoji: '📱', name: 'Squad Mídia',   sub: 'Marketing de Performance' },
-    { id: 'ecom',  emoji: '🛍️', name: 'Squad E-com',  sub: 'E-commerce' },
-    { id: 'cx',    emoji: '💬', name: 'Squad CX',      sub: 'Customer Experience' },
-  ];
+  const squadParam = new URLSearchParams(window.location.search).get('squad');
 
-  const validSquads = SQUADS_VISIBLE.map(s => s.id);
-  const squadParam  = new URLSearchParams(window.location.search).get('squad');
+  function renderSelectorGrid(filterIds) {
+    const grid = document.getElementById('squad-sel-grid');
+    if (!grid) return;
+    // Usa SQUAD_META_LIVE (já populado pelo Firebase se disponível)
+    const entries = Object.entries(SQUAD_META_LIVE)
+      .filter(([id]) => !filterIds || filterIds.includes(id));
+    grid.innerHTML = entries.map(([id, meta]) =>
+      `<a class="squad-sel-card" href="${window.location.pathname}?squad=${id}">
+        <span class="squad-sel-emoji">${meta.emoji || '🐟'}</span>
+        <div class="squad-sel-name">${meta.label}</div>
+        <div class="squad-sel-sub">${meta.subtitle || ''}</div>
+      </a>`
+    ).join('');
+  }
 
-  if (!squadParam || !validSquads.includes(squadParam)) {
-    // Mostra seletor; oculta app
+  // Sem squad na URL ou squad desconhecido: mostra seletor
+  const knownAtStart = Object.keys(SQUAD_META_DEFAULT);
+  if (!squadParam || !knownAtStart.includes(squadParam)) {
     document.addEventListener('DOMContentLoaded', function() {
       const sel = document.getElementById('squad-selector');
       const app = document.getElementById('app-root');
@@ -5044,19 +5064,20 @@ function openSearchCard(id){
       if (app) app.style.display = 'none';
       if (login) login.style.display = 'none';
 
-      // Gera cards
-      const grid = document.getElementById('squad-sel-grid');
-      if (grid) {
-        grid.innerHTML = SQUADS_VISIBLE.map(s =>
-          `<a class="squad-sel-card" href="${window.location.pathname}?squad=${s.id}">
-            <span class="squad-sel-emoji">${s.emoji}</span>
-            <div class="squad-sel-name">${s.name}</div>
-            <div class="squad-sel-sub">${s.sub}</div>
-          </a>`
-        ).join('');
-      }
+      // Renderiza com defaults primeiro; atualiza quando Firebase carregar
+      renderSelectorGrid(null);
+      // Aguarda Firebase estar pronto para incluir squads criados via painel
+      const waitFb = setInterval(() => {
+        if (window._fbReady) {
+          clearInterval(waitFb);
+          loadSquadsFromFirebase(() => renderSelectorGrid(null));
+        }
+      }, 200);
     });
   }
+
+  // Expõe para showSquadSelectorFiltered
+  window._renderSelectorGrid = renderSelectorGrid;
 })();
 
 renderBoard();
