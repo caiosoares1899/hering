@@ -162,74 +162,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{
-  overflow-x:auto;
-  overflow-y:hidden;
-  padding-bottom:8px;
-  /* Altura dinâmica: viewport menos o espaço acima do board (header + toolbar) */
-  max-height:calc(100vh - 180px);
-}
+.board-wrap{overflow-x:auto;padding-bottom:8px;}
 .board-wrap.mode-expanded-wrap{
   overflow-x:auto;
-  overflow-y:hidden;
+  overflow-y:visible;
+  position:sticky;
+  /* Garante que a scrollbar horizontal fica visível na tela */
   max-width:100%;
 }
-/* Board ocupa 100% da altura do wrapper */
-.board{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(0,1fr));
-  gap:10px;
-  align-items:flex-start; /* colunas adaptam ao conteúdo (estilo Trello) */
-  width:100%;
-  height:100%;
-}
-.board.raia-mode{display:block;height:auto;}
-/* column — flex column para que col-body cresça e role internamente */
-.col{
-  width:100%;
-  background:var(--glass);
-  border:1px solid var(--glass-b);
-  border-radius:var(--r2);
-  overflow:hidden;
-  backdrop-filter:blur(12px);
-  transition:opacity .2s;
-  display:flex;
-  flex-direction:column;
-  min-height:0;
-  max-height:100%; /* não ultrapassa o board-wrap */
-}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
+.board.raia-mode{display:block;}
+/* column */
+.col{width:100%;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{
-  padding:9px 12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  border-bottom:1px solid var(--glass-b);
-  cursor:default;
-  flex-shrink:0; /* header não encolhe */
-}
+.col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-collapse-btn:hover{color:var(--txt);}
-/* col-body: cresce para preencher o espaço e rola internamente (estilo Trello) */
-.col-body{
-  padding:6px;
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  min-height:40px;
-  flex:0 1 auto; /* cresce apenas o necessário (estilo Trello) */
-  overflow-y:auto;
-  overflow-x:hidden;
-  scrollbar-width:thin;
-  scrollbar-color:rgba(56,182,255,.15) transparent;
-}
-/* Botão + Card fica fixo no rodapé da coluna */
-.add-btn{
-  flex-shrink:0;
-}
+.col-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:40px;}
 /* card */
 .card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
 .card:hover{border-color:var(--accent);transform:translateY(-1px);}
@@ -252,13 +204,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-lbl{font-size:8px;color:var(--txt3);margin-top:2px;}
 
 .btn-modelo:hover{opacity:1;}
-.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;flex-shrink:0;}
+.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
 .add-btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid;}
 /* raia mode */
 .raia-row{margin-bottom:12px;}
 .raia-label{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--cyan);padding:6px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
-.raia-cols{display:flex;gap:10px;align-items:stretch;}
-.raia-cols .col{min-width:160px;min-height:60px;max-height:400px;display:flex;flex-direction:column;}
+.raia-cols{display:flex;gap:10px;align-items:flex-start;}
+.raia-cols .col{min-width:160px;min-height:60px;}
 /* FAB */
 .fab{position:fixed;bottom:22px;right:22px;z-index:50;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
 .fab-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;font-size:13px;font-family:"Syne",sans-serif;font-weight:700;background:rgba(37,99,201,.88);border:1px solid rgba(56,182,255,.45);border-radius:999px;color:#fff;cursor:pointer;box-shadow:0 4px 28px rgba(37,99,201,.45);transition:all .2s;backdrop-filter:blur(14px);}
@@ -284,91 +236,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .po-box{background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:10px;}
 .po-lbl{font-size:9px;color:#7eb3ff;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
-.po-ta{width:100%;background:rgba(3,13,26,.4);border:1px solid rgba(56,182,255,.15);border-radius:var(--r);padding:10px;color:var(--txt);font-size:12px;font-family:'DM Sans',sans-serif;min-height:80px;resize:vertical;outline:none;transition:border .2s;box-sizing:border-box;}
-.po-ta:focus{border-color:var(--accent);background:rgba(3,13,26,.6);}
-.markdown-view { line-height: 1.5; font-size: 12px; }
-.markdown-view em { color: var(--txt3); font-style: italic; }
-
-/* Menções e Popovers */
-.mention-link {
-  color: var(--accent);
-  background: rgba(37,99,201,.12);
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-weight: 700;
-  cursor: pointer;
-  position: relative;
-  display: inline-block;
-  transition: all .2s;
-}
-.mention-link:hover {
-  background: rgba(37,99,201,.25);
-  color: #fff;
-}
-.mention-popover {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%) translateY(5px);
-  width: 180px;
-  background: rgba(6,26,46,.98);
-  border: 1px solid var(--glass-b);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5);
-  backdrop-filter: blur(16px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  z-index: 1000;
-  opacity: 0;
-  pointer-events: none;
-  transition: all .2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.mention-link:hover .mention-popover {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateX(-50%) translateY(0);
-}
-.mention-pop-av {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid rgba(56,182,255,.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 800;
-  color: #fff;
-  object-fit: cover;
-}
-.mention-pop-name {
-  font-weight: 700;
-  font-size: 13px;
-  color: #fff;
-  text-align: center;
-}
-.mention-pop-role {
-  font-size: 10px;
-  color: var(--txt3);
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  text-align: center;
-}
-/* Triângulo do popover */
-.mention-popover::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 6px;
-  border-style: solid;
-  border-color: var(--glass-b) transparent transparent transparent;
-}
+.po-ta{width:100%;background:transparent;border:none;color:var(--txt);font-family:"DM Sans",sans-serif;font-size:12px;line-height:1.6;resize:none;min-height:56px;}
+.po-ta:focus{outline:none;}
 .cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
 .cl-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
@@ -458,16 +327,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(0,1fr));
   gap:10px;
-  align-items:flex-start;
-  height:100%;
 }
 .board.mode-expanded{
   display:flex!important;
   flex-wrap:nowrap;
   gap:10px;
   min-width:max-content;
-  height:100%;
-  align-items:flex-start;
 }
 .board.mode-expanded .col{
   width:272px;
@@ -602,7 +467,93 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card-has-desc{font-size:11px;color:var(--txt3);margin-right:3px;letter-spacing:1px;vertical-align:middle;}
 
 /* Cards vinculados */
-.linked-cards{display:flex;flex-direction:column;gap:5px;margin-top:4px;}
+.linked-cards{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+
+/* ── PARENT/CHILD CARD ─────────────────────────────────── */
+.card-parent-bar{
+  display:flex;align-items:center;gap:8px;padding:5px 10px;
+  background:rgba(56,182,255,.06);border-bottom:1px solid rgba(56,182,255,.1);
+  font-size:11px;color:var(--txt2);
+}
+.card-parent-bar a{color:var(--accent);text-decoration:none;cursor:pointer;}
+.card-parent-bar a:hover{text-decoration:underline;}
+.parent-btn{
+  display:flex;align-items:center;gap:5px;
+  background:none;border:1px solid rgba(56,182,255,.2);border-radius:6px;
+  color:var(--txt2);font-size:10px;padding:3px 9px;cursor:pointer;
+  transition:border-color .15s,color .15s;
+}
+.parent-btn:hover{border-color:var(--accent);color:var(--accent);}
+.parent-btn svg{opacity:.7;}
+
+/* ── MINICARD (linked card Trello-style) ───────────────── */
+.minicard{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(6,20,44,.9);border:1px solid rgba(56,182,255,.15);
+  border-radius:8px;padding:7px 10px;cursor:pointer;
+  transition:border-color .15s,background .15s;
+  position:relative;
+}
+.minicard:hover{border-color:rgba(56,182,255,.35);background:rgba(10,37,64,.9);}
+.minicard-left{width:4px;border-radius:4px;align-self:stretch;flex-shrink:0;}
+.minicard-body{flex:1;min-width:0;}
+.minicard-title{font-size:11px;color:var(--txt);font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.minicard-meta{display:flex;gap:6px;align-items:center;margin-top:2px;}
+.minicard-col{font-size:9px;color:var(--txt3);}
+.minicard-owner{font-size:9px;color:var(--txt3);}
+.minicard-rm{
+  background:none;border:none;color:rgba(200,230,255,.25);
+  cursor:pointer;font-size:13px;padding:0 2px;line-height:1;
+  flex-shrink:0;
+}
+.minicard-rm:hover{color:var(--danger);}
+
+/* ── COMENTÁRIOS ───────────────────────────────────────── */
+.comments-wrap{margin-top:4px;}
+.comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
+.comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+.comment-item{display:flex;gap:8px;}
+.comment-avatar{width:28px;height:28px;border-radius:50%;background:var(--glass);
+  border:1px solid var(--glass-b);display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;overflow:hidden;}
+.comment-avatar img{width:100%;height:100%;object-fit:cover;}
+.comment-bubble{flex:1;min-width:0;}
+.comment-meta{font-size:10px;color:var(--txt3);margin-bottom:3px;}
+.comment-meta strong{color:var(--txt2);font-weight:600;}
+.comment-text{font-size:12px;color:var(--txt);background:rgba(6,20,44,.8);
+  border:1px solid rgba(56,182,255,.1);border-radius:8px;padding:7px 10px;
+  line-height:1.55;word-break:break-word;}
+.comment-text a.card-mention{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
+.comment-text a.user-mention{color:var(--teal);text-decoration:underline;cursor:pointer;}
+.comment-actions{display:flex;gap:8px;margin-top:3px;}
+.comment-action-btn{background:none;border:none;font-size:10px;color:var(--txt3);cursor:pointer;padding:0;}
+.comment-action-btn:hover{color:var(--txt);}
+.comment-inp-wrap{display:flex;gap:8px;align-items:flex-start;}
+.comment-inp-avatar{width:28px;height:28px;border-radius:50%;background:var(--glass);
+  border:1px solid var(--glass-b);display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;overflow:hidden;}
+.comment-inp-avatar img{width:100%;height:100%;object-fit:cover;}
+.comment-inp-box{flex:1;position:relative;}
+.comment-inp{width:100%;background:rgba(3,13,26,.8);border:1px solid rgba(56,182,255,.15);
+  border-radius:8px;padding:8px 10px;font-size:12px;color:var(--txt);
+  font-family:"DM Sans",sans-serif;resize:none;outline:none;
+  min-height:36px;box-sizing:border-box;transition:border-color .15s;
+  line-height:1.5;}
+.comment-inp:focus{border-color:rgba(56,182,255,.35);}
+.comment-inp::placeholder{color:var(--txt3);}
+.comment-send-btn{
+  display:none;margin-top:5px;
+  background:var(--accent);border:none;border-radius:6px;
+  color:#fff;font-size:11px;font-weight:700;padding:4px 12px;cursor:pointer;
+}
+.comment-inp-box:focus-within .comment-send-btn{display:block;}
+
+/* ── @MENTION STYLED ────────────────────────────────────── */
+.mention-user{color:var(--teal);text-decoration:underline;font-weight:600;cursor:pointer;}
+.mention-card{color:var(--accent);text-decoration:underline;font-weight:600;cursor:pointer;}
+
 .linked-chip{display:flex;align-items:center;gap:6px;padding:5px 8px;
   background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.2);
   border-radius:8px;cursor:pointer;transition:all .15s;font-size:11px;}
@@ -685,76 +636,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
   cursor:pointer;padding:0;}
 .notif-mark-all:hover{text-decoration:underline;}
-/* @mention highlight & popover */
-.mention-link {
-  color: var(--accent);
-  font-weight: 700;
-  text-decoration: none;
-  background: rgba(56,182,255,0.1);
-  padding: 0 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  display: inline-block;
-}
-.mention-link:hover {
-  background: var(--accent);
-  color: #fff;
-}
-/* Popover de menção */
-.mention-popover {
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: rgba(6,26,46,0.98);
-  border: 1px solid var(--glass-b);
-  border-radius: 12px;
-  padding: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 140px;
-  pointer-events: none;
-  opacity: 0;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  backdrop-filter: blur(10px);
-}
-.mention-link:hover .mention-popover {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-.mention-pop-av {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--accent);
-  background: var(--glass);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--accent);
-}
-.mention-pop-name {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--txt);
-  text-align: center;
-  line-height: 1.2;
-}
-.mention-pop-role {
-  font-size: 9px;
-  color: var(--txt3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+/* @mention highlight */
+.mention{color:var(--accent);font-weight:600;}
 
 /* Mention dropdown */
 .mention-dropdown{
@@ -920,44 +803,31 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   /* Goal bar compacta */
   .goal-bar{font-size:10px;padding:5px 10px;margin-bottom:.5rem;}
 
-  /* Board: scroll horizontal, cada coluna = ~85vw (estilo Trello) */
+  /* Board: scroll horizontal, cada coluna = ~85vw */
   .board-wrap{
     overflow-x:auto;
-    overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
     margin:0 -.7rem;
-    padding:0 .7rem 0;
+    padding:0 .7rem 8px;
     scrollbar-width:none;
-    /* Altura: viewport - header - toolbar - bottom nav */
-    height:calc(100vh - 200px);
-    max-height:calc(100vh - 200px);
   }
   .board-wrap::-webkit-scrollbar{display:none;}
   .board{
     display:flex!important;
     gap:10px;
     min-width:max-content;
-    align-items:stretch;
-    height:100%;
+    align-items:start;
   }
   .col{
     width:78vw;
     max-width:280px;
     min-width:220px;
     flex-shrink:0;
-    display:flex;
-    flex-direction:column;
   }
-  .col-hd{padding:8px 10px;flex-shrink:0;}
+  .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
-  .col-body{
-    padding:5px;
-    flex:1;
-    overflow-y:auto;
-    overflow-x:hidden;
-    -webkit-overflow-scrolling:touch;
-  }
-  .add-btn{margin:5px;width:calc(100% - 10px);flex-shrink:0;}
+  .col-body{padding:5px;}
+  .add-btn{margin:5px;width:calc(100% - 10px);}
 
   /* Cards: text truncate melhorado */
   .card{padding:8px 9px;}
@@ -1291,8 +1161,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- CARD MODAL -->
 <div class="ov" id="card-ov">
 <div class="panel card-panel">
+  <div id="m-parent-bar" class="card-parent-bar" style="display:none;">
+    <span style="color:var(--txt3);font-size:10px;">Filho de:</span>
+    <a id="m-parent-link" onclick="openParentCard()"></a>
+    <button onclick="unlinkParent()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:auto;" title="Remover relação pai">✕</button>
+  </div>
   <div class="panel-hd">
-    <div class="panel-title" id="m-title-disp">Card</div>
+    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+      <div class="panel-title" id="m-title-disp" style="flex:1;">Card</div>
+      <button id="m-parent-btn" class="parent-btn" onclick="openParentPicker()" title="Definir card pai">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
+        <span id="m-parent-lbl">Pai/Filho</span>
+      </button>
+    </div>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
@@ -1393,6 +1274,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
     </div>
 
+    <!-- Comentários e Atividade -->
+    <div class="comments-wrap" id="m-comments-wrap">
+      <div class="comments-hd">
+        <span class="comments-hd-lbl">💬 Comentários e atividade</span>
+      </div>
+      <div class="comment-list" id="m-comment-list"></div>
+      <div class="comment-inp-wrap">
+        <div class="comment-inp-avatar" id="m-comment-avatar">?</div>
+        <div class="comment-inp-box">
+          <textarea class="comment-inp" id="m-comment-inp" placeholder="Escrever um comentário... (@ para mencionar)" rows="1"
+            oninput="autoResizeCommentInp(this);handleCommentMentions(this)"
+            onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
+          <div class="link-dropdown" id="comment-mention-dd" style="position:absolute;bottom:100%;left:0;width:100%;z-index:20;margin-bottom:4px;"></div>
+          <button class="comment-send-btn" onclick="submitComment()">Enviar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Impedimento (oculto por padrão) -->
     <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
       <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🚧 Impedimento</div>
@@ -1456,9 +1355,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="field"><label class="fl">Fim (calculado)</label><input class="fi" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
       </div>
       <div style="margin-top:10px;" class="cfg-sec-title">WIP & Capacidade</div>
-      <p style="font-size:11px;color:var(--txt3);margin-bottom:8px;line-height:1.5;">⚡ O limite de WIP agora é configurado <strong>por coluna</strong> no editor de colunas abaixo (marque “WIP” na coluna desejada e defina o limite). O campo global abaixo é usado como fallback quando nenhuma coluna tem WIP habilitado.</p>
       <div class="frow">
-        <div class="field"><label class="fl">Limite de WIP (global / fallback)</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
+        <div class="field"><label class="fl">Limite de WIP</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
         <div class="field"><label class="fl">Capacidade (%)</label><input class="fi" id="cfg-capacity" type="number" min="0" max="100"></div>
       </div>
       <div style="margin-top:10px;" class="cfg-sec-title">Modo de impedimentos</div>
@@ -1921,9 +1819,20 @@ let _hasLocalSession = false; // true só depois do primeiro save desta sessão
 function fbSaveAll(){
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
-  fbSet(FB+'/cards', cards);
-  fbSet(FB+'/tags', tags);
-  fbSet(FB+'/columns', columns);
+  if(!window._fbReady){
+    // Firebase not ready — just mark local, return resolved promise
+    return Promise.resolve();
+  }
+  // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
+  return Promise.all([
+    window._set(fb(FB+'/cards'), cards),
+    window._set(fb(FB+'/tags'), tags),
+    window._set(fb(FB+'/columns'), columns),
+  ]).catch(err=>{
+    if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
+      console.warn('[fbSaveAll] write failed:', err);
+    throw err; // re-throw so handleDrop .catch can revert
+  });
 }
 function fbSaveMsgs(tab){
   const msgs=Array.from(document.querySelectorAll('#msgs-'+tab+' .msg')).map(m=>({
@@ -2256,8 +2165,6 @@ function renderBoard(){
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
-  // Recalcula alturas do layout Trello após renderizar
-  requestAnimationFrame(()=>applyViewMode());
 }
 
 function renderNormal(board,activeCards){
@@ -2271,8 +2178,8 @@ function renderNormal(board,activeCards){
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
-        <span class="col-cnt" id="cnt-${col.id}" style="${col.wipEnabled&&col.wip&&colCards.length>parseInt(col.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
-          ${col.wipEnabled&&col.wip ? colCards.length+'/'+col.wip : colCards.length}
+        <span class="col-cnt" id="cnt-${col.id}" style="${col.id==='progress'&&agilCfg.wip&&colCards.length>parseInt(agilCfg.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
+          ${col.id==='progress'&&agilCfg.wip ? colCards.length+'/'+agilCfg.wip : colCards.length}
         </span>
         ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
@@ -2459,23 +2366,14 @@ function toggleCol(id){
 
 function updateMetrics(){
   const g=document.getElementById('met-grid'); if(!g) return;
-  // WIP: soma de cards em colunas com wipEnabled=true
-  const wipCols=columns.filter(c=>c.wipEnabled);
-  const wipColIds=new Set(wipCols.map(c=>c.id));
-  const wip=cards.filter(c=>wipColIds.has(c.col)&&!c.archived).length;
-  // Limite total de WIP: soma dos limites individuais das colunas WIP
-  const wipLimit=wipCols.reduce((s,c)=>s+parseInt(c.wip||3),0)||parseInt(agilCfg.wip||3);
-  // Coluna de bloqueios: qualquer coluna com id 'blocker' ou nome contendo 'impedi'
-  const blockerColId=columns.find(c=>c.id==='blocker'||c.name?.toLowerCase().includes('impedi'))?.id||'blocker';
-  const bl=cards.filter(c=>c.col===blockerColId&&!c.archived).length;
-  // Coluna de concluídos: qualquer coluna com id 'done' ou nome contendo 'conclu'
-  const doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
-  const done=cards.filter(c=>c.col===doneColId&&!c.archived).length;
+  const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
+  const bl=cards.filter(c=>c.col==='blocker'&&!c.archived).length;
+  const done=cards.filter(c=>c.col==='done'&&!c.archived).length;
+  const wipLimit=parseInt(agilCfg.wip||3);
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
-  const wipLabel=wipCols.length?wipCols.map(c=>c.name).join(', '):'nenhuma';
-  g.innerHTML=`<div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">limite ${wipLimit}${wipCols.length?'':' (global)'}</div></div>
+  g.innerHTML=`<div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">limite ${wipLimit}</div></div>
     <div class="met"><div class="met-lbl">Throughput</div><div class="met-val">${done}</div><div class="met-sub">concluídos</div></div>
-    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':''}">${bl}</div><div class="met-sub">${bl?'atenção':' ok'}</div></div>
+    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':''}"">${bl}</div><div class="met-sub">${bl?'atenção':' ok'}</div></div>
     <div class="met"><div class="met-lbl">Capacidade</div><div class="met-val">${agilCfg.capacity||'—'}%</div><div class="met-sub">configurado</div></div>`;
 }
 
@@ -2547,9 +2445,9 @@ function maybeSnapshot(){
   const snapshot={
     date:today,squad:ACTIVE_SQUAD,
     total:cards.filter(c=>!c.archived).length,
-    wip:cards.filter(c=>columns.find(x=>x.id===c.col)?.wipEnabled&&!c.archived).length,
-    done:cards.filter(c=>(c.col==='done'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('conclu'))&&!c.archived).length,
-    blockers:cards.filter(c=>(c.col==='blocker'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('impedi'))&&!c.archived).length,
+    wip:cards.filter(c=>c.col==='progress'&&!c.archived).length,
+    done:cards.filter(c=>c.col==='done'&&!c.archived).length,
+    blockers:cards.filter(c=>c.col==='blocker'&&!c.archived).length,
     byCol:columns.reduce((acc,col)=>{
       acc[col.id]=cards.filter(c=>c.col===col.id&&!c.archived).length;
       return acc;
@@ -2628,9 +2526,14 @@ function openCard(id){
   }
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
+  renderParentBar(c);
   document.getElementById('card-ov').classList.add('open');
-  // Inicia mention dropdowns
-  setTimeout(()=>{ initMentionDropdown('m-desc'); initMentionDropdown('m-po'); }, 100);
+  // Inicia mention dropdowns e carrega comentários
+  setTimeout(()=>{
+    initMentionDropdown('m-desc');
+    initMentionDropdown('m-po');
+    loadComments(id);
+  }, 100);
 }
 
 function checkEditPermission(){
@@ -2679,6 +2582,9 @@ function saveCard(){
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       participants:getParticipants(),
       isOKR:document.getElementById('m-is-okr')?.checked||false,
+      parentId:prevCard?.parentId||null,
+      childIds:prevCard?.childIds||[],
+      comments:prevCard?.comments||{},
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
@@ -2897,11 +2803,6 @@ function renderColEditor(){
     row.innerHTML=`<span style="font-size:12px;color:var(--txt3);">${i+1}</span>
       <input class="col-edit-inp" value="${esc(col.name)}" oninput="columns[${i}].name=this.value">
       <input type="color" value="${col.color}" onchange="columns[${i}].color=this.value" style="width:30px;height:28px;border:none;background:none;cursor:pointer;">
-      <label style="font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:3px;" title="Habilitar limite WIP nesta coluna">
-        <input type="checkbox" ${col.wipEnabled?'checked':''} onchange="columns[${i}].wipEnabled=this.checked;renderColEditor()">
-        WIP
-      </label>
-      ${col.wipEnabled?`<input type="number" min="1" max="99" value="${col.wip||3}" oninput="columns[${i}].wip=parseInt(this.value)||3" style="width:42px;padding:3px 5px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:DM Sans,sans-serif;" title="Limite máximo de cards nesta coluna">`:'<span style="width:42px;"></span>'}
       <label style="font-size:10px;color:var(--txt3);display:flex;align-items:center;gap:3px;"><input type="checkbox" ${col.collapsible?'checked':''} onchange="columns[${i}].collapsible=this.checked"> Min.</label>
       ${columns.length>1?`<button class="icon-btn" onclick="delColumn(${i})">✕</button>`:''}
       <button class="icon-btn" style="color:var(--txt2);" onclick="moveCol(${i},-1)" ${i===0?'disabled':''}">▲</button>
@@ -3192,7 +3093,7 @@ BOARD (${new Date().toLocaleDateString('pt-BR')}):
 ${snap}${doneNote}
 
 Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
-WIP:${(()=>{const wc=columns.filter(c=>c.wipEnabled);const wi=new Set(wc.map(c=>c.id));return cards.filter(c=>wi.has(c.col)&&!c.archived).length+'/'+(wc.reduce((s,c)=>s+parseInt(c.wip||3),0)||parseInt(agilCfg.wip||3));})()}(colunas WIP: ${columns.filter(c=>c.wipEnabled).map(c=>c.name).join(', ')||'nenhuma configurada'}) | Bloqueios:${cards.filter(c=>(c.col==='blocker'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('impedi'))&&!c.archived).length} | Concluídos:${cards.filter(c=>(c.col==='done'||columns.find(x=>x.id===c.col)?.name?.toLowerCase().includes('conclu'))&&!c.archived).length}
+WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>c.col==='blocker'&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
 Sprint:${agilCfg.sprintNum||'?'} | Capacidade:${agilCfg.capacity||'??'}% | Objetivo:${agilCfg.goal||'não definido'}
 Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}
 Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais): ${members.map(m=>m.init).join(', ')||'nenhum'}
@@ -3213,26 +3114,8 @@ function swAgTab(tab){
   ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
 }
 function renderMd(txt){
-  if(!txt) return '';
-  // 1. Primeiro escapa HTML do texto original para segurança
-  let safeTxt = txt
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
-
-  // 2. Depois processa as menções @usuario (inserindo HTML seguro)
-  // Regex melhorada para aceitar iniciais de 2 a 4 caracteres alfanuméricos
-  const mentionRe = /@([A-Z0-9]{2,4})/gi;
-  safeTxt = safeTxt.replace(mentionRe, (match, init) => {
-    const member = members.find(m => m.init.toUpperCase() === init.toUpperCase());
-    if(!member) return match;
-    const av = member.foto 
-      ? `<img src="${member.foto}" class="mention-pop-av" onerror="this.style.display='none'">`
-      : `<div class="mention-pop-av">${member.init.toUpperCase()}</div>`;
-    return `<span class="mention-link">@${member.init.toUpperCase()}<div class="mention-popover">${av}<div class="mention-pop-name">${member.name}</div><div class="mention-pop-role">${member.role || 'Membro'}</div></div></span>`;
-  });
-
-  return safeTxt
+  return txt
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     // Tabelas markdown simples
     .replace(/^\|(.+)\|$/gm, row=>'<tr>'+row.split('|').filter((_,i,a)=>i>0&&i<a.length-1).map(c=>`<td style="padding:3px 8px;border:1px solid rgba(56,182,255,.15);font-size:11px;">${c.trim()}</td>`).join('')+'</tr>')
     .replace(/(<tr>.*<\/tr>\n?)+/gs, t=>`<table style="border-collapse:collapse;margin:6px 0;width:100%;">${t}</table>`)
@@ -3254,6 +3137,17 @@ function renderMd(txt){
     // Quebras de linha — não duplica após blocos
     .replace(/(<\/div>|<\/tr>|<hr[^>]*>)<br>/g,'$1')
     .replace(/\n/g,'<br>');
+  // @USER mentions → teal underlined (done separately to avoid chain complexity)
+  const _members = typeof members !== 'undefined' ? members : [];
+  txt = txt.replace(/@([A-Z]{2,4})\b/g,(m,init)=>{
+    const mem=_members.find(x=>x.init===init);
+    return mem ? '<span class="mention-user" title="'+esc(mem.name)+'" onclick="void(0)">@'+init+'</span>' : m;
+  });
+  // [[CARD:id:title]] → blue underlined clickable
+  txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
+    return '<span class="mention-card" onclick="openCard(\'' + id + '\')" title="Abrir card">📎 ' + title + '</span>';
+  });
+  return txt;
 }
 function appMsg(tab,role,txt){
   const w=document.getElementById('msgs-'+tab);
@@ -3880,14 +3774,23 @@ function renderLinkedChips(){
   list.innerHTML = '';
   editingLinkedCards.forEach(lc=>{
     const col = columns.find(c=>c.id===lc.col);
-    const chip = document.createElement('div');
-    chip.className = 'linked-chip';
-    chip.innerHTML =
-      '<span class="linked-chip-col">'+(col?.name||lc.col)+'</span>'+
-      '<span class="linked-chip-title" title="'+esc(lc.title)+'">'+esc(lc.title)+'</span>'+
-      '<button class="linked-chip-rm" data-lcid="'+lc.id+'" title="Remover vínculo">✕</button>';
-    chip.querySelector('.linked-chip-title').onclick = ()=>{ closeOv('card-ov'); openCard(lc.id); };
-    list.appendChild(chip);
+    const relCard = cards.find(c=>c.id===lc.id);
+    const card = document.createElement('div');
+    card.className = 'minicard';
+    const colColor = col?.color||'var(--glass-b)';
+    const ownerTxt = relCard?.owner ? '👤 '+relCard.owner : '';
+    card.innerHTML =
+      '<div class="minicard-left" style="background:'+colColor+';"></div>'+
+      '<div class="minicard-body">'+
+        '<div class="minicard-title">'+esc(lc.title)+'</div>'+
+        '<div class="minicard-meta">'+
+          '<span class="minicard-col">'+(col?.name||lc.col)+'</span>'+
+          (ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<button class="minicard-rm" data-lcid="'+lc.id+'" title="Remover vínculo">✕</button>';
+    card.querySelector('.minicard-body').onclick = ()=>{ closeOv('card-ov'); openCard(lc.id); };
+    list.appendChild(card);
   });
   const ind = document.getElementById('cs-links-ind');
   if(ind) ind.textContent = editingLinkedCards.length+' vínculo(s)';
@@ -4112,12 +4015,11 @@ function timeAgo(ts){
 // 1. @menção nos campos de texto
 function parseMentions(text, cardId){
   if(!text) return;
-  // Regex melhorada: captura @ seguido de 2 a 4 letras/números (iniciais)
-  const re=/@([A-Z0-9]{2,4})\b/gi; let m;
+  const re=/@([A-Z]{2,3})/g; let m;
   while((m=re.exec(text))!==null){
     const init=m[1];
     const uid=getUidByInit(init); if(!uid) continue;
-    // Habilitado auto-notificação para testes conforme solicitado pelo usuário
+    if(uid===window._currentUser?.uid) continue; // não notifica a si mesmo
     createNotif(uid,'mention',
       '@'+init+' — você foi mencionado',
       text.substring(0,80)+(text.length>80?'…':''),
@@ -4128,7 +4030,7 @@ function parseMentions(text, cardId){
 // 2. Responsável atribuído
 function notifAssigned(newOwnerInit, cardId, cardTitle){
   const uid=getUidByInit(newOwnerInit); if(!uid) return;
-  // Habilitado auto-notificação para testes
+  if(uid===window._currentUser?.uid) return;
   createNotif(uid,'assigned',
     'Você foi atribuído a um card',
     cardTitle?.substring(0,60),
@@ -4141,7 +4043,7 @@ function notifUnblocked(card){
   const targets=[card.owner,...(card.participants||[])].filter(Boolean);
   const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
   uids.forEach(uid=>{
-    // Habilitado auto-notificação para testes
+    if(uid===window._currentUser?.uid) return;
     createNotif(uid,'unblocked',
       'Card desbloqueado!',
       card.title?.substring(0,60),
@@ -4154,7 +4056,7 @@ function notifDone(card){
   const targets=[card.owner,...(card.participants||[])].filter(Boolean);
   const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
   uids.forEach(uid=>{
-    // Habilitado auto-notificação para testes
+    if(uid===window._currentUser?.uid) return;
     createNotif(uid,'done',
       'Card concluído 🎉',
       card.title?.substring(0,60),
@@ -4171,7 +4073,7 @@ function notifRisk(card){
       if(!u||!uid) return;
       const role=u.role||'membro';
       if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
-      // Habilitado auto-notificação para testes
+      if(uid===window._currentUser?.uid) return;
       createNotif(uid,'risk',
         '⚠ Risco mapeado em card',
         card.title?.substring(0,60),
@@ -4183,7 +4085,7 @@ function notifRisk(card){
 // 6. Checklist 100% concluída
 function notifChecklistDone(card){
   const uid=getUidByInit(card.owner); if(!uid) return;
-  // Habilitado auto-notificação para testes
+  if(uid===window._currentUser?.uid) return;
   createNotif(uid,'checklist',
     'Checklist concluída!',
     card.title?.substring(0,60),
@@ -4373,18 +4275,24 @@ function setViewMode(mode){
     board.classList.add('mode-'+mode);
   }
   if(wrap){
-    // Calcula altura disponível: viewport - tudo acima do board (layout estilo Trello)
-    const wrapTop=wrap.getBoundingClientRect().top;
-    const available=window.innerHeight - wrapTop - 16;
-    wrap.style.maxHeight=available+'px';
-    wrap.style.height=available+'px';
-    wrap.style.overflowX='auto';
-    wrap.style.overflowY='hidden';
-    wrap.style.paddingBottom='0';
+    if(mode==='expanded'){
+      // Calcula altura disponível: viewport - tudo acima do board
+      const wrapTop=wrap.getBoundingClientRect().top;
+      const available=window.innerHeight - wrapTop - 16;
+      wrap.style.maxHeight=available+'px';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='auto';
+      wrap.style.paddingBottom='0';
+    } else {
+      wrap.style.maxHeight='';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='visible';
+      wrap.style.paddingBottom='8px';
+    }
   }
 }
 function applyViewMode(){ setViewMode(viewMode); }
-window.addEventListener('resize', ()=>{ setViewMode(viewMode); });
+window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
 // ── CALENDÁRIO ───────────────────────────────────────────────────
 const EV_COLORS=[
@@ -4717,42 +4625,42 @@ function handleDrop(e, colId){
   const sourceCol = _dragSourceCol;
   if(sourceCol === colId) return; // mesma coluna, nada a fazer
   saveUndo('mover card');
-  // Salva estado anterior para rollback em caso de falha
   const prevColDrop = sourceCol;
   const prevBlockerDrop = card.blocker||false;
-  const prevEdited = card.edited;
-  const prevEditedAt = card.editedAt;
-  // Atualiza otimisticamente a UI
+
+  // Optimistic update: muta local e renderiza imediatamente para UX fluida
   card.col = colId;
   card.edited = window._currentUser?.displayName||'Usuário';
   card.editedAt = new Date().toISOString().split('T')[0];
+  card._savePending = true; // flag: ignora echo do Firebase durante o save
   renderBoard();
-  // Persiste no Firebase e faz rollback se falhar (evita rubber banding)
-  const savePromise = window._fbReady
-    ? window._set(window._ref(window._db, FB+'/cards'), cards)
-    : Promise.reject(new Error('Firebase não pronto'));
-  savePromise.catch(()=>{
-    // Rollback: reverte o card para a coluna anterior
-    card.col = prevColDrop;
-    card.edited = prevEdited;
-    card.editedAt = prevEditedAt;
-    renderBoard();
-    showToast('⚠️ Falha ao salvar. Card revertido.');
-  });
-  fbSet(FB+'/tags', tags);
-  fbSet(FB+'/columns', columns);
+
+  // Persiste — reverte em caso de falha (anti rubber-banding)
+  fbSaveAll()
+    .then(()=>{
+      card._savePending = false;
+      // Notificações só depois de confirmado pelo Firebase
+      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+      if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
+      if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
+      // Feedback visual
+      const destCol = document.getElementById('col-'+colId);
+      if(destCol){
+        destCol.style.transition='box-shadow .3s';
+        destCol.style.boxShadow='0 0 0 2px var(--teal)';
+        setTimeout(()=>destCol.style.boxShadow='',600);
+      }
+    })
+    .catch(err=>{
+      // Reverte o estado local se o Firebase falhou
+      card._savePending = false;
+      card.col = prevColDrop;
+      card.edited = card._prevEdited||card.edited;
+      renderBoard();
+      showToast('⚠ Falha ao salvar movimentação — revertido');
+      console.warn('handleDrop save failed:', err);
+    });
   runAutoRules('move', card.id, colId);
-  // Dispara notificações (mesma lógica do saveCard hook)
-  const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
-  if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
-  if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
-  // Feedback visual no header da coluna destino
-  const destCol = document.getElementById('col-'+colId);
-  if(destCol){
-    destCol.style.transition='box-shadow .3s';
-    destCol.style.boxShadow='0 0 0 2px var(--teal)';
-    setTimeout(()=>destCol.style.boxShadow='',600);
-  }
 }
 
 // Calcula onde inserir o ghost/card com base na posição Y do mouse
@@ -4937,14 +4845,11 @@ function runAutoRules(eventType, cardId, extraVal){
       qa(tab, `[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`);
     }
   });
-  // Checa WIP — usa colunas com wipEnabled (configurado pelo PO)
+  // Checa WIP
   const wipRule=activeRules.find(r=>r.trigger==='wip_exceeded');
   if(wipRule){
-    const wipCols2=columns.filter(c=>c.wipEnabled);
-    const wipColIds2=new Set(wipCols2.map(c=>c.id));
-    const wip=cards.filter(c=>wipColIds2.has(c.col)&&!c.archived).length;
-    const wipLimit2=wipCols2.reduce((s,c)=>s+parseInt(c.wip||3),0)||parseInt(agilCfg.wip||3);
-    if(wip>wipLimit2){
+    const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
+    if(wip>parseInt(agilCfg.wip||3)){
       if(wipRule.action==='notify_agent'){
         const tab=wipRule.actionVal||'metricas';
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
@@ -5076,8 +4981,8 @@ function showCtxMenu(e, cardId){
       Mover para ${col.name}
     </div>`).join('');
 
-  const isProg = columns.find(c=>c.id===card.col)?.wipEnabled || false;
-  const isBlocker = card.col==='blocker'||columns.find(c=>c.id===card.col)?.name?.toLowerCase().includes('impedi');
+  const isProg = card.col==='progress';
+  const isBlocker = card.col==='blocker';
 
   menu.innerHTML = `
     <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
@@ -5213,11 +5118,7 @@ function ctxMove(colId){
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
-function ctxProgress(){ 
-  // Usa a primeira coluna WIP configurada pelo PO, ou fallback para 'progress'
-  const wipCol=columns.find(c=>c.wipEnabled);
-  ctxMove(wipCol?.id||'progress'); 
-}
+function ctxProgress(){ ctxMove('progress'); }
 function ctxBlock(){ ctxMove('blocker'); }
 function ctxDone(){ ctxMove('done'); }
 
@@ -5371,22 +5272,28 @@ window.addEventListener('fb-ready',()=>{
       window.addEventListener('beforeunload',()=>window._remove(pRef));
     }
   });
-  // Listener de presença — apenas renderiza quem está online
-  // Guarda o unsubscribe para evitar múltiplos listeners acumulados
+  // Listener de presença — renderiza lista de online
+  // Guarda referência do unsubscribe para evitar listeners duplicados
   if(window._presenceUnsub) window._presenceUnsub();
-  window._presenceUnsub = window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),snap=>{
-    const val=snap.val()||{};
-    const now=Date.now();
-    const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
-    renderOnline(online);
-  });
-  // Heartbeat iniciado UMA única vez por sessão — sem risco de memory leak
-  if(!window._heartbeat){
-    window._heartbeat=setInterval(()=>{
-      if(window._currentUser&&window._fbReady)
-        window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),{ts:Date.now()});
-    },15000);
-  }
+  window._presenceUnsub = window._onValue(
+    window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),
+    snap=>{
+      const val=snap.val()||{};
+      const now=Date.now();
+      const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
+      renderOnline(online);
+    }
+  );
+
+  // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
+  clearInterval(window._heartbeat);
+  window._heartbeat = setInterval(()=>{
+    if(window._currentUser && window._fbReady)
+      window._update(
+        window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
+        {ts:Date.now()}
+      );
+  }, 15000);
 });
 
 // ═══════════════════════════════════════════════════════
@@ -5507,6 +5414,259 @@ function openSearchCard(id){
   window._renderSelectorGrid = renderSelectorGrid;
 })();
 
+// ═══════════════════════════════════════════════════════
+// PARENT / CHILD CARD
+// ═══════════════════════════════════════════════════════
+function openParentPicker(){
+  document.getElementById('parent-search-inp').value='';
+  searchParentCards('');
+  document.getElementById('parent-picker-ov').classList.add('open');
+}
+
+function searchParentCards(q){
+  const res = document.getElementById('parent-search-results'); if(!res) return;
+  const lower = q.trim().toLowerCase();
+  const exclude = new Set([editingId]);
+  // Also exclude cards that have this card as parent (prevent cycles)
+  const currentCard = cards.find(c=>c.id===editingId);
+  const results = cards.filter(c=>
+    !c.archived && !exclude.has(c.id) &&
+    (!lower || c.title.toLowerCase().includes(lower))
+  ).slice(0,10);
+  if(!results.length){
+    res.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum card encontrado.</div>';
+    return;
+  }
+  res.innerHTML='';
+  results.forEach(card=>{
+    const col=columns.find(c=>c.id===card.col);
+    const div=document.createElement('div');
+    div.className='minicard';
+    const isCurrentParent = currentCard?.parentId===card.id;
+    div.innerHTML=
+      '<div class="minicard-left" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
+      '<div class="minicard-body"><div class="minicard-title">'+esc(card.title)+'</div>'+
+      '<div class="minicard-meta"><span class="minicard-col">'+(col?.name||card.col)+'</span></div></div>'+
+      (isCurrentParent?'<span style="font-size:9px;color:var(--teal);">✓ pai atual</span>':'');
+    div.onclick=()=>setParentCard(card.id);
+    res.appendChild(div);
+  });
+}
+
+function setParentCard(parentId){
+  const card = cards.find(c=>c.id===editingId); if(!card) return;
+  card.parentId = parentId;
+  // Also add this card to parent's children list
+  const parent = cards.find(c=>c.id===parentId);
+  if(parent){
+    if(!parent.childIds) parent.childIds=[];
+    if(!parent.childIds.includes(editingId)) parent.childIds.push(editingId);
+  }
+  fbSaveAll();
+  closeOv('parent-picker-ov');
+  renderParentBar(card);
+  renderBoard();
+  showToast('🔗 Card vinculado como filho de "'+parent?.title?.substring(0,30)+'"');
+}
+
+function unlinkParent(){
+  const card = cards.find(c=>c.id===editingId); if(!card||!card.parentId) return;
+  const parent = cards.find(c=>c.id===card.parentId);
+  if(parent && parent.childIds) parent.childIds=parent.childIds.filter(id=>id!==editingId);
+  card.parentId=null;
+  fbSaveAll();
+  closeOv('parent-picker-ov');
+  renderParentBar(card);
+  renderBoard();
+}
+
+function openParentCard(){
+  const card=cards.find(c=>c.id===editingId); if(!card?.parentId) return;
+  closeOv('card-ov');
+  openCard(card.parentId);
+}
+
+function renderParentBar(card){
+  const bar=document.getElementById('m-parent-bar');
+  const link=document.getElementById('m-parent-link');
+  const lbl=document.getElementById('m-parent-lbl');
+  if(!bar||!link) return;
+  if(card?.parentId){
+    const parent=cards.find(c=>c.id===card.parentId);
+    if(parent){
+      bar.style.display='flex';
+      link.textContent=parent.title.substring(0,40)+(parent.title.length>40?'…':'');
+      if(lbl) lbl.textContent='Filho';
+      return;
+    }
+  }
+  bar.style.display='none';
+  if(lbl) lbl.textContent='Pai/Filho';
+}
+
+// ═══════════════════════════════════════════════════════
+// COMENTÁRIOS E ATIVIDADE
+// ═══════════════════════════════════════════════════════
+let _commentCardId = null;
+
+function loadComments(cardId){
+  _commentCardId = cardId;
+  const list = document.getElementById('m-comment-list'); if(!list) return;
+  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  // Update avatar
+  const av = document.getElementById('m-comment-avatar');
+  if(av && window._currentUser){
+    if(window._currentUser.photoURL){
+      av.innerHTML='<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
+    } else {
+      av.textContent=window._currentUserInit||'?';
+    }
+  }
+  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/cards/'+cardId+'/comments').then(snap=>{
+    const val=snap.val()||{};
+    renderCommentList(Object.values(val).sort((a,b)=>a.ts.localeCompare(b.ts)));
+  }).catch(()=>{
+    fbGet(FB+'/cards').then(snap=>{
+      const cardsVal=snap.val()||[];
+      const c=Array.isArray(cardsVal)?cardsVal.find(x=>x&&x.id===cardId):Object.values(cardsVal).find(x=>x&&x.id===cardId);
+      const comments=c?.comments?Object.values(c.comments).sort((a,b)=>a.ts.localeCompare(b.ts)):[];
+      renderCommentList(comments);
+    }).catch(()=>renderCommentList([]));
+  });
+}
+
+function renderCommentList(comments){
+  const list=document.getElementById('m-comment-list'); if(!list) return;
+  list.innerHTML='';
+  if(!comments.length){
+    list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhum comentário ainda. Seja o primeiro!</div>';
+    return;
+  }
+  comments.forEach(c=>{
+    const item=document.createElement('div');
+    item.className='comment-item';
+    item.dataset.cid=c.id||'';
+    const avatarHtml=c.foto
+      ? '<img src="'+esc(c.foto)+'" style="width:100%;height:100%;object-fit:cover;">'
+      : '<span>'+esc((c.init||c.author||'?').substring(0,2).toUpperCase())+'</span>';
+    const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const textHtml=renderMentionText(esc(c.text||''));
+    const canDel=c.uid===window._currentUser?.uid||window._currentUserRole==='adm';
+    item.innerHTML=
+      '<div class="comment-avatar">'+avatarHtml+'</div>'+
+      '<div class="comment-bubble">'+
+        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong> · '+dt+'</div>'+
+        '<div class="comment-text">'+textHtml+'</div>'+
+        (canDel?'<div class="comment-actions"><button class="comment-action-btn">Excluir</button></div>':'')
+      +'</div>';
+    if(canDel){
+      const delBtn=item.querySelector('.comment-action-btn');
+      if(delBtn) delBtn.onclick=()=>deleteComment(c.id);
+    }
+    // Wire card-mention clicks
+    item.querySelectorAll('.mention-card').forEach(el=>{
+      const cid=el.dataset.cid;
+      if(cid) el.onclick=()=>{ closeOv('card-ov'); openCard(cid); };
+    });
+    list.appendChild(item);
+  });
+}
+
+function renderMentionText(text){
+  if(!text) return '';
+  // @USER mentions → teal underlined
+  text=text.replace(/@([A-Z]{2,4})/g,'<span class="mention-user">@$1</span>');
+  // [[CARD:id:title]] → blue underlined (data-cid for click wiring after insertion)
+  text=text.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,function(m,id,title){
+    return '<span class="mention-card" data-cid="'+id+'">📎 '+title+'</span>';
+  });
+  return text;
+}
+
+function autoResizeCommentInp(ta){
+  ta.style.height='auto';
+  ta.style.height=Math.min(ta.scrollHeight,120)+'px';
+}
+
+function submitComment(){
+  const inp=document.getElementById('m-comment-inp'); if(!inp) return;
+  const text=inp.value.trim(); if(!text) return;
+  const user=window._currentUser; if(!user) return;
+  const comment={
+    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+    uid:user.uid,
+    author:user.displayName||user.email||'?',
+    init:window._currentUserInit||'?',
+    foto:user.photoURL||'',
+    text,
+    ts:new Date().toISOString(),
+  };
+  // Save to Firebase under the card's data
+  const cardObj=cards.find(c=>c.id===_commentCardId);
+  if(cardObj){
+    if(!cardObj.comments) cardObj.comments={};
+    cardObj.comments[comment.id]=comment;
+    fbSaveAll();
+  }
+  inp.value=''; inp.style.height='auto';
+  loadComments(_commentCardId);
+  // Fire @mention notifications from comment
+  parseMentions(text, _commentCardId);
+}
+
+function deleteComment(cid){
+  const cardObj=cards.find(c=>c.id===_commentCardId);
+  if(!cardObj||!cardObj.comments) return;
+  delete cardObj.comments[cid];
+  fbSaveAll();
+  loadComments(_commentCardId);
+}
+
+// ── @card mention in textareas ────────────────────────────────────────
+function handleCommentMentions(ta){
+  autoResizeCommentInp(ta);
+  const val=ta.value;
+  const cur=ta.selectionStart;
+  const beforeCursor=val.slice(0,cur);
+  const atMatch=beforeCursor.match(/@card\s+(\S*)$/i)||beforeCursor.match(/@c(\S{0,20})$/);
+  const dd=document.getElementById('comment-mention-dd');
+  if(!dd) return;
+  if(atMatch){
+    const q=atMatch[1]||'';
+    const results=cards.filter(c=>!c.archived&&c.id!==_commentCardId&&
+      c.title.toLowerCase().includes(q.toLowerCase())).slice(0,6);
+    if(results.length){
+      dd.innerHTML='';
+      results.forEach(c=>{
+        const col=columns.find(x=>x.id===c.col);
+        const div=document.createElement('div');
+        div.className='link-option';
+        div.innerHTML='<span class="link-option-col">'+(col?.name||c.col)+'</span>'+
+          '<span style="flex:1;color:var(--txt);">'+esc(c.title)+'</span>';
+        div.onclick=()=>insertCardMention(c.id, c.title);
+        dd.appendChild(div);
+      });
+      dd.classList.add('show');
+      return;
+    }
+  }
+  dd.classList.remove('show');
+}
+
+function insertCardMention(cardId,cardTitle){
+  const ta=document.getElementById('m-comment-inp'); if(!ta) return;
+  const val=ta.value;
+  const cur=ta.selectionStart;
+  const before=val.slice(0,cur);
+  // Replace the @card... trigger with the mention token
+  const replaced=before.replace(/@card\s+\S*$/i,'').replace(/@c\S{0,20}$/,'');
+  const token='[[CARD:'+cardId+':'+cardTitle+']]';
+  ta.value=replaced+token+val.slice(cur);
+  ta.selectionStart=ta.selectionEnd=(replaced+token).length;
+  document.getElementById('comment-mention-dd').classList.remove('show');
+  ta.focus();
+}
+
 renderBoard();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
@@ -5538,6 +5698,25 @@ renderBoard();
     <!-- cards gerados por JS -->
   </div>
   <div class="squad-sel-hint">Selecione o board do seu squad</div>
+</div>
+
+<!-- PARENT CARD PICKER -->
+<div class="ov" id="parent-picker-ov" style="z-index:9100;">
+  <div class="panel" style="max-width:480px;width:92vw;">
+    <div class="panel-hd">
+      <div class="panel-title">🔗 Definir card pai</div>
+      <button class="x-btn" onclick="closeOv('parent-picker-ov')">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+      <p style="font-size:12px;color:var(--txt2);">Selecione o card que será o <strong>pai</strong> deste card.</p>
+      <input class="fi" id="parent-search-inp" placeholder="Buscar card pelo título..." oninput="searchParentCards(this.value)" autocomplete="off">
+      <div id="parent-search-results" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+        <button class="btn" style="font-size:11px;color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="unlinkParent()">Remover relação pai</button>
+        <button class="btn" onclick="closeOv('parent-picker-ov')">Cancelar</button>
+      </div>
+    </div>
+  </div>
 </div>
 </body>
 </html>
