@@ -1906,7 +1906,7 @@ function autoRegistrar(user){
       if(user.photoURL&&existe.foto!==user.photoURL) fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL});
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
-        members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||''});
+        members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
       // Direciona para o squad correto com base nos squads do usuário
       resolveSquadAndShow(user, existe.squads || {});
     }
@@ -1928,7 +1928,7 @@ function confirmarInscricao(){
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
-    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||''});
+    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
   window._currentUserInit=init;
   fbSaveAll();
   closeOv('insc-ov');
@@ -3734,8 +3734,7 @@ function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
-  _notifListener = true;
-  window._onValue(ref, snap=>{
+  _notifListener = window._onValue(ref, snap=>{
     const val = snap.val()||{};
     const now = Date.now();
     const TTL = NOTIF_TTL_DAYS * 86400000;
@@ -3872,14 +3871,20 @@ function notifDone(card){
 
 // 5. Risco adicionado — notifica PO e Organizadores
 function notifRisk(card){
-  const privileged=members.filter(m=>m.role==='po'||m.role==='organizador'||m.role==='adm');
-  privileged.forEach(m=>{
-    if(m.uid===window._currentUser?.uid) return;
-    createNotif(m.uid,'risk',
-      '⚠ Risco mapeado em card',
-      card.title?.substring(0,60),
-      card.id);
-  });
+  // members pode não ter role populado — lê direto do Firebase
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const all=snap.val()||{};
+    Object.entries(all).forEach(([uid,u])=>{
+      if(!u||!uid) return;
+      const role=u.role||'membro';
+      if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
+      if(uid===window._currentUser?.uid) return;
+      createNotif(uid,'risk',
+        '⚠ Risco mapeado em card',
+        card.title?.substring(0,60),
+        card.id);
+    });
+  }).catch(()=>{});
 }
 
 // 6. Checklist 100% concluída
@@ -3941,7 +3946,7 @@ saveCard = function(){
     notifUnblocked(card);
 
   // Movido para feito
-  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
+  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
   if(prevCol!==card.col && card.col===doneCol?.id)
     notifDone(card);
 
@@ -4423,12 +4428,18 @@ function handleDrop(e, colId){
   if(sourceCol === colId) return; // mesma coluna, nada a fazer
   saveUndo('mover card');
   // Move o card
+  const prevColDrop = sourceCol;
+  const prevBlockerDrop = card.blocker||false;
   card.col = colId;
   card.edited = window._currentUser?.displayName||'Usuário';
   card.editedAt = new Date().toISOString().split('T')[0];
   renderBoard();
   fbSaveAll();
   runAutoRules('move', card.id, colId);
+  // Dispara notificações (mesma lógica do saveCard hook)
+  const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+  if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
+  if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
   // Feedback visual no header da coluna destino
   const destCol = document.getElementById('col-'+colId);
   if(destCol){
@@ -4887,6 +4898,9 @@ function ctxMove(colId){
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
   renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+  // Notificações
+  const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+  if(ant!==colId && colId===_doneColId) notifDone(card);
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
