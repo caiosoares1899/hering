@@ -1254,28 +1254,38 @@ function renderErrors(){
   el.innerHTML=filtered.slice(0,50).map(({id,squad,entry})=>{
     const cat=entry.category||'geral';
     const status=entry.status||'novo';
-    const ts=new Date(entry.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const sq=SQUADS.find(s=>s.id===squad);
-    return `<div class="err-log-item cat-${cat} status-${status}" id="erritem-${id}">
-      <div class="err-hd">
-        <span class="err-badge cat-${cat}">${CAT_LABELS[cat]||cat}</span>
-        <span class="err-msg" title="${(entry.msg||'').replace(/"/g,"'")}">
-          ${sq?sq.icon+' ':''}${(entry.msg||'Erro desconhecido').substring(0,120)}
-        </span>
-        <span class="err-status ${status}" onclick="cycleErrStatus('${id}','${squad}')" title="Clique para mudar status">
-          ${{novo:'🔴 Novo',visto:'🟡 Visto',resolvido:'✅ OK'}[status]||status}
-        </span>
-      </div>
-      <div class="err-meta">
-        <span>📅 ${ts}</span>
-        <span>👤 ${entry.user||'?'}</span>
-        ${entry.source?'<span>📄 '+(entry.source.split('/').slice(-1)[0]||entry.source)+'</span>':''}
-        ${entry.line?`<span>Linha ${entry.line}</span>`:''}
-      </div>
-      ${entry.stack?`<div class="err-stack" id="stack-${id}" onclick="this.classList.toggle('show')" title="Clique para expandir">
-        ${(entry.stack||'').substring(0,400)}
-      </div>`:''}
-    </div>`;
+    const ts=new Date(entry.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const stackLines=(entry.stack||'').split('\n').slice(0,3).filter(Boolean);
+    return '<div class="err-log-item cat-'+cat+' status-'+status+'">'
+
+      // Header: badge + mensagem + status
+      +'<div class="err-hd">'
+      +'<span class="err-badge cat-'+cat+'">'+(CAT_LABELS[cat]||cat)+'</span>'
+      +'<span class="err-msg">'+(sq?sq.icon+' ':'')+((entry.msg||'Erro desconhecido').substring(0,80))+'</span>'
+      +'<span class="err-status '+status+'" data-eid="'+id+'" data-esq="'+squad+'" onclick="cycleErrStatus(this.dataset.eid,this.dataset.esq)">'
+      +({novo:'🔴 Novo',visto:'🟡 Visto',resolvido:'✅ OK'}[status]||status)
+      +'</span>'
+      +'</div>'
+
+      // Meta: data, usuário, arquivo
+      +'<div class="err-meta">'
+      +'<span>📅 '+ts+'</span>'
+      +'<span>👤 '+(entry.user||'?')+'</span>'
+      +(entry.source?'<span>📄 '+entry.source.split('/').pop()+(entry.line?' :'+entry.line:'')+'</span>':'')
+      +'</div>'
+
+      // Stack trace compacto (só primeiras 2 linhas, fonte mono pequena)
+      +(stackLines.length
+        ? '<div class="err-stack" style="font-size:9px;color:var(--txt3);font-family:monospace;'
+          +'background:rgba(0,0,0,.3);border-radius:5px;padding:5px 8px;margin-top:4px;'
+          +'white-space:normal;word-break:break-all;line-height:1.5;display:none;" '
+          +'onclick="this.style.display=this.style.display===\'none\'?\'block\':\'none\'">'
+          +stackLines.map(l=>l.trim().substring(0,120)).join('<br>')
+          +'</div>'
+        : '')
+
+      +'</div>';
   }).join('');
 }
 
