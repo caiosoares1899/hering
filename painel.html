@@ -549,7 +549,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
 
   <!-- BLOQUEIOS -->
-  <div class="sec-title">🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></div>
+  <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></span>
+    <button class="btn btn-sm" onclick="resolveAllBlockers()" title="Mover todos os bloqueios ativos para Concluído" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);padding:3px 10px;">✅ Resolver todos</button>
+  </div>
   <div id="blockers-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio.</div></div>
 
   <!-- RISCOS -->
@@ -1904,6 +1907,47 @@ function renderComparison(){
 }
 
 // ── BLOQUEIOS ──────────────────────────────────────────────────────
+function resolveAllBlockers(){
+  const squadsToSave = new Set();
+  let count = 0;
+  SQUADS.forEach(sq=>{
+    const d = squadData[sq.id]; if(!d) return;
+    const doneCol = d.columns?.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id || 'done';
+    d.cards.forEach(c=>{
+      if(!c.archived && (c.col==='blocker' || (c.blocker && c.blockerReason)) && c.col!==doneCol){
+        c.col = doneCol;
+        c.doneAt = new Date().toISOString();
+        c.blocker = false;
+        count++;
+        squadsToSave.add(sq.id);
+      }
+    });
+  });
+  if(!count){ showPainelToast('Nenhum bloqueio ativo encontrado.'); return; }
+  // Save each affected squad to Firebase
+  squadsToSave.forEach(sqId=>{
+    const d = squadData[sqId]; if(!d) return;
+    const ref = window._ref(window._db, 'kanban/squads/'+sqId+'/dados/cards');
+    window._set(ref, d.cards).catch(e=>console.error('Save error',sqId,e));
+  });
+  renderAll();
+  showPainelToast('✅ '+count+' bloqueio'+(count>1?'s':'')+' marcado'+(count>1?'s':'')+' como Concluído!');
+}
+
+function showPainelToast(msg){
+  let t = document.getElementById('painel-toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'painel-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid rgba(56,182,255,.25);border-radius:999px;padding:9px 20px;font-size:12px;color:#e8f4fd;z-index:9999;transition:opacity .3s;pointer-events:none;';
+    t.setAttribute('role','status'); t.setAttribute('aria-live','polite');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.style.opacity='0', 4000);
+}
+
 function renderBlockers(){
   const list=document.getElementById('blockers-list');
   const count=document.getElementById('blockers-count');
