@@ -19,7 +19,15 @@
     --success: #2ecc71;
     --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
+  
+  /* SCROLLBARS CUSTOMIZADAS ESTILO TRELLO */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(56,182,255,0.2); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,0.4); }
+
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); }
+  
   body {
     background-color: var(--deep);
     color: var(--txt1);
@@ -28,6 +36,7 @@
     flex-direction: column;
     overflow: hidden;
   }
+  
   header {
     background: var(--surface);
     padding: 10px 20px;
@@ -56,69 +65,94 @@
   }
   .actions-btn:hover { background: var(--accent); color: var(--deep); border-color: var(--accent); }
 
-  /* BOARD */
-  .board-wrap { flex: 1; overflow-x: auto; overflow-y: hidden; padding: 20px; display: flex; }
-  .board { display: flex; gap: 20px; align-items: flex-start; height: 100%; min-width: max-content; }
-  
-  .col {
-    width: 320px; max-height: 100%; background: var(--surface); border-radius: 8px;
-    display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.03);
-    transition: width 0.3s, min-width 0.3s; position: relative;
+  /* BOARD WRAP COM SCROLL APENAS HORIZONTAL */
+  .board-wrap { 
+    flex: 1; 
+    overflow-x: auto; 
+    overflow-y: hidden; 
+    padding: 20px; 
+    display: flex; 
   }
-  .col.collapsed { width: 45px; min-width: 45px; height: 100%; }
+  
+  /* GRID DO BOARD FIXADO PARA ALTURA MÁXIMA DA TELA */
+  .board { 
+    display: flex; 
+    gap: 15px; 
+    align-items: flex-start; 
+    height: 100%; 
+    min-width: max-content; 
+  }
+  
+  /* ESTILO DE COLUNAS FIXAS (PADRÃO TRELLO) */
+  .col {
+    width: 280px; 
+    max-height: 100%; 
+    background: var(--surface); 
+    border-radius: 6px;
+    display: flex; 
+    flex-direction: column; 
+    border: 1px solid rgba(255,255,255,0.03);
+    flex-shrink: 0;
+  }
+  
+  .col.collapsed { width: 45px; min-width: 45px; }
   .col.collapsed .col-body, .col.collapsed .add-btn, .col.collapsed .col-title { display: none; }
   .col.collapsed .col-hd {
     flex-direction: column; height: 100%; padding: 15px 0; justify-content: flex-start; gap: 20px; cursor: pointer;
   }
   .col.collapsed .col-cnt { margin: 0; }
-  .col.collapsed .col-collapse-btn { transform: rotate(0deg); }
 
-  .col-hd { padding: 15px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-  .col-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+  .col-hd { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .col-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
   .col-title .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-  .col-cnt { background: var(--surface-light); padding: 2px 8px; border-radius: 10px; font-size: 11px; color: var(--txt2); font-weight: bold; border: 1px solid rgba(255,255,255,0.05); }
-  .col-collapse-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 12px; padding: 2px; }
+  .col-cnt { background: var(--surface-light); padding: 2px 6px; border-radius: 4px; font-size: 11px; color: var(--txt2); font-weight: bold; }
+  .col-collapse-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 12px; }
   .col-collapse-btn:hover { color: var(--txt1); }
 
+  /* ROLAGEM INTERNA DA COLUNA (PERFEITO PARA LONGOS HISTÓRICOS) */
   .col-body {
-    flex: 1; overflow-y: auto; padding: 0 12px 12px 12px; display: flex; flex-direction: column; gap: 12px;
-    min-height: 50px; transition: background 0.2s; border-radius: 0 0 8px 8px;
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 4px 10px 10px 10px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px;
+    transition: background 0.2s;
   }
-  .col-body.dragover { background: rgba(56,182,255,0.04); border: 2px dashed rgba(56,182,255,0.2); margin: 0 10px 10px 10px; border-radius: 6px; }
+  .col-body.dragover { background: rgba(56,182,255,0.04); border: 2px dashed rgba(56,182,255,0.2); border-radius: 4px; }
 
   /* CARDS */
   .card {
-    background: var(--surface-light); border-radius: 6px; padding: 14px;
+    background: var(--surface-light); border-radius: 4px; padding: 12px;
     border: 1px solid rgba(255,255,255,0.05); cursor: grab; position: relative;
-    transition: transform 0.1s, box-shadow 0.2s, border-color 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: box-shadow 0.15s, border-color 0.15s;
     user-select: none;
   }
   .card:active { cursor: grabbing; }
-  .card:hover { border-color: rgba(56,182,255,0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-  .card.dragging { opacity: 0.4; transform: scale(0.98); }
+  .card:hover { border-color: rgba(56,182,255,0.25); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+  .card.dragging { opacity: 0.4; }
   
   .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-  .tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
+  .tag { font-size: 9px; padding: 1px 5px; border-radius: 2px; font-weight: 600; text-transform: uppercase; }
   
-  .card-title { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--txt1); margin-bottom: 6px; word-wrap: break-word; }
-  .card-desc { font-size: 12px; color: var(--txt2); line-height: 1.4; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-wrap: break-word; }
+  .card-title { font-size: 13px; font-weight: 500; line-height: 1.35; color: var(--txt1); margin-bottom: 6px; word-wrap: break-word; }
+  .card-desc { font-size: 11px; color: var(--txt2); line-height: 1.3; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
   
-  .card-ft { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--txt3); border-top: 1px solid rgba(255,255,255,0.03); padding-top: 10px; }
+  .card-ft { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--txt3); padding-top: 8px; }
   .card-owner { display: flex; align-items: center; gap: 5px; color: var(--txt2); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .avatar-owner { width: 18px; height: 18px; border-radius: 50%; background: #444; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; color: #fff; }
+  .avatar-owner { width: 16px; height: 16px; border-radius: 50%; background: #444; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: #fff; }
   
-  .card-meta { display: flex; align-items: center; gap: 8px; }
-  .meta-item { display: flex; align-items: center; gap: 3px; }
-  
+  .card-meta { display: flex; align-items: center; gap: 6px; }
   .prio-badge { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-  .prio-critical { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .prio-critical { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
   .prio-high { background: var(--warning); }
   .prio-medium { background: #3498db; }
   .prio-low { background: var(--txt3); }
 
   .add-btn {
-    background: none; border: none; color: var(--txt3); padding: 12px; text-align: left;
-    font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; border-radius: 0 0 8px 8px;
+    background: none; border: none; color: var(--txt3); padding: 10px 12px; text-align: left;
+    font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; flex-shrink: 0;
   }
   .add-btn:hover { color: var(--accent); background: rgba(56,182,255,0.02); }
 
@@ -127,117 +161,78 @@
     position: absolute; background: #0c1a30; border: 1px solid rgba(56,182,255,0.2);
     border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; padding: 5px 0; min-width: 160px;
   }
-  .ctx-item {
-    padding: 8px 14px; font-size: 13px; color: var(--txt2); cursor: pointer; display: flex; align-items: center; gap: 8px;
-  }
+  .ctx-item { padding: 8px 14px; font-size: 13px; color: var(--txt2); cursor: pointer; display: flex; align-items: center; gap: 8px; }
   .ctx-item:hover { background: var(--accent); color: var(--deep); }
-  .ctx-sep { hieght: 1px; background: rgba(255,255,255,0.05); margin: 5px 0; }
+  .ctx-sep { height: 1px; background: rgba(255,255,255,0.05); margin: 5px 0; }
 
-  /* MODAL */
+  /* MODALS */
   .modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(3,13,26,0.8);
-    backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; z-index: 2000;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s;
   }
   .modal-overlay.active { opacity: 1; pointer-events: auto; }
   .modal {
-    background: var(--surface); border: 1px solid rgba(56,182,255,0.15); width: 100%; max-width: 550px;
-    border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column;
-    max-height: 90vh; transform: scale(0.95); transition: transform 0.2s;
+    background: var(--surface); border: 1px solid rgba(56,182,255,0.15); width: 100%; max-width: 500px;
+    border-radius: 6px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column;
+    max-height: 85vh; transform: scale(0.97); transition: transform 0.15s;
   }
   .modal-overlay.active .modal { transform: scale(1); }
-  .modal-hd { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; }
-  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-hd { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 15px; font-weight: 600; }
   .modal-close { background: none; border: none; color: var(--txt3); font-size: 20px; cursor: pointer; }
-  .modal-close:hover { color: var(--txt1); }
   
-  .modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
   .form-group label { font-size: 12px; color: var(--txt2); font-weight: 500; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   
   input[type="text"], textarea, select {
     background: var(--surface-light); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 4px; padding: 10px; color: var(--txt1); font-size: 13px; width: 100%; outline: none;
-    transition: border-color 0.2s;
+    border-radius: 4px; padding: 8px 10px; color: var(--txt1); font-size: 13px; width: 100%; outline: none;
   }
   input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 80px; }
 
-  .modal-ft { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end; gap: 10px; background: rgba(0,0,0,0.1); }
-  .btn { padding: 8px 16px; border-radius: 4px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  .btn-sec { background: var(--surface-light); color: var(--txt2); border: 1px solid rgba(255,255,255,0.05); }
-  .btn-sec:hover { background: rgba(255,255,255,0.05); color: var(--txt1); }
+  .modal-ft { padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end; gap: 10px; background: rgba(0,0,0,0.1); }
+  .btn { padding: 8px 14px; border-radius: 4px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-sec { background: var(--surface-light); color: var(--txt2); }
   .btn-pri { background: var(--accent); color: var(--deep); }
-  .btn-pri:hover { background: #29a3f0; }
   .btn-danger { background: var(--danger); color: #fff; }
-  .btn-danger:hover { background: #ff4d4d; }
 
   /* SEARCH OVERLAY */
   #search-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(3,13,26,0.6);
     backdrop-filter: blur(2px); z-index: 2500; display: none; align-items: flex-start; justify-content: center; padding-top: 50px;
   }
-  .search-box {
-    background: var(--surface); border: 1px solid rgba(56,182,255,0.2); width: 100%; max-width: 650px;
-    border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); display: flex; flex-direction: column; max-height: 70vh;
-  }
-  .search-inp-wrap { display: flex; align-items: center; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 12px; }
-  .search-icon { color: var(--txt3); font-size: 16px; }
-  #search-inp { background: none; border: none; font-size: 15px; color: var(--txt1); width: 100%; outline: none; }
-  .search-kbd { background: var(--surface-light); border: 1px solid rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 11px; color: var(--txt3); }
-  #search-results { overflow-y: auto; flex: 1; padding: 10px 0; }
-  .search-item { padding: 12px 18px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; border-left: 2px solid transparent; }
-  .search-item:hover, .search-item.selected { background: var(--surface-light); border-left-color: var(--accent); }
-  .search-item-title { font-size: 14px; font-weight: 600; color: var(--txt1); display: flex; align-items: center; gap: 8px; }
-  .search-item-meta { font-size: 11px; color: var(--txt3); }
-  .search-hint { padding: 8px 18px; border-top: 1px solid rgba(255,255,255,0.03); font-size: 11px; color: var(--txt3); display: flex; gap: 15px; background: rgba(0,0,0,0.05); }
-  .search-hint kbd { background: var(--surface-light); padding: 1px 4px; border-radius: 3px; }
+  .search-box { background: var(--surface); border: 1px solid rgba(56,182,255,0.2); width: 100%; max-width: 600px; border-radius: 6px; display: flex; flex-direction: column; max-height: 70vh; }
+  .search-inp-wrap { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px; }
+  #search-inp { background: none; border: none; font-size: 14px; color: var(--txt1); width: 100%; outline: none; }
+  #search-results { overflow-y: auto; flex: 1; }
+  .search-item { padding: 10px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+  .search-item:hover, .search-item.selected { background: var(--surface-light); }
+  .search-item-title { font-size: 13px; font-weight: 600; color: var(--txt1); }
 
-  /* SQUAD SELECTOR GRID */
-  #squad-selector {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--deep);
-    z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
-  }
-  .squad-sel-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; color: var(--accent); }
-  .squad-sel-subtitle { font-size: 14px; color: var(--txt2); margin-bottom: 30px; }
-  .squad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; width: 100%; max-width: 900px; }
-  .squad-card {
-    background: var(--surface); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;
-    cursor: pointer; transition: all 0.2s; text-align: center; display: flex; flex-direction: column; gap: 6px;
-  }
-  .squad-card:hover { border-color: var(--accent); background: var(--surface-light); transform: translateY(-2px); }
-  .squad-name { font-size: 16px; font-weight: 600; color: var(--txt1); }
-  .squad-meta { font-size: 12px; color: var(--txt3); }
+  /* SELECTOR SQUAD */
+  #squad-selector { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--deep); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  .squad-sel-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; color: var(--accent); }
+  .squad-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; width: 100%; max-width: 800px; }
+  .squad-card { background: var(--surface); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 6px; cursor: pointer; text-align: center; }
+  .squad-card:hover { border-color: var(--accent); background: var(--surface-light); }
 
   /* UNDO FLOATER */
   .undo-btn {
     position: fixed; bottom: 20px; right: 20px; background: var(--warning); color: #000;
     padding: 10px 16px; border-radius: 4px; font-size: 13px; font-weight: bold; border: none;
-    cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: none; z-index: 1500; align-items: center; gap: 6px;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display: none; z-index: 1500; align-items: center; gap: 6px;
   }
-  .undo-btn:hover { background: #f39c12; }
-
-  /* CONFIG OVERLAY */
-  #config-overlay { display: none; } /* Controlado via modal padrão */
-
-  /* UTILS */
-  .badge-prio-text { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; width: max-content; }
-  .bg-critical { background: rgba(255,107,107,0.15); color: #ff6b6b; }
-  .bg-high { background: rgba(241,196,15,0.15); color: #f1c40f; }
-  .bg-medium { background: rgba(52,152,219,0.15); color: #3498db; }
-  .bg-low { background: rgba(148,163,184,0.15); color: #94a3b8; }
-
-  /* CHECKLIST MINI */
-  .chk-summary { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--txt2); background: rgba(255,255,255,0.04); padding: 1px 5px; border-radius: 3px; }
-  .chk-done { color: var(--success); background: rgba(46,204,113,0.1); }
-
-  /* CHECKLIST EDIT COMPONENT */
-  .chk-edit-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; max-height: 150px; overflow-y: auto; padding-right: 4px; }
-  .chk-edit-item { display: flex; align-items: center; gap: 8px; }
-  .chk-edit-item input[type="text"] { padding: 6px; }
+  
+  /* ELEMENTOS DE CHECKLIST EDITÁVEL */
+  .chk-edit-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; max-height: 120px; overflow-y: auto; }
+  .chk-edit-item { display: flex; align-items: center; gap: 6px; }
   .chk-del-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 14px; }
   .chk-del-btn:hover { color: var(--danger); }
+  .chk-summary { font-size: 10px; padding: 1px 4px; border-radius: 3px; background: rgba(255,255,255,0.05); color: var(--txt2); }
+  .chk-done { color: var(--success); background: rgba(46,204,113,0.1); }
 </style>
 </head>
 <body>
@@ -245,12 +240,12 @@
 <header>
   <div class="header-left">
     <div class="logo">🐟 <span>Maré Digital</span></div>
-    <div class="squad-title" id="active-squad-title">Carregando squad...</div>
+    <div class="squad-title" id="active-squad-title">Carregando...</div>
   </div>
   <div class="header-right">
-    <div class="online-list" id="online-users" title="Usuários ativos nos últimos 30s"></div>
+    <div class="online-list" id="online-users"></div>
     <button class="actions-btn" onclick="openSearch()">🔍 Buscar (Ctrl+K)</button>
-    <button class="actions-btn" onclick="openConfigModal()">⚙️ Configs Ágeis</button>
+    <button class="actions-btn" onclick="openConfigModal()">⚙️ Configs de WIP</button>
     <button class="actions-btn" onclick="changeSquad()">🔄 Trocar Squad</button>
   </div>
 </header>
@@ -271,45 +266,45 @@
       
       <div class="form-group">
         <label for="f-title">Título do Card *</label>
-        <input type="text" id="f-title" placeholder="Ex: Fix memory leak no polling do server">
+        <input type="text" id="f-title" placeholder="Ex: Ajustar mapeamento da tag Google">
       </div>
       
       <div class="form-group">
         <label for="f-desc">Descrição / Critérios de Aceite</label>
-        <textarea id="f-desc" placeholder="Detalhes da entrega, links úteis ou logs de erro…"></textarea>
+        <textarea id="f-desc" placeholder="Detalhes técnicos, links de homologação..."></textarea>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="f-priority">Prioridade Ágil</label>
+          <label for="f-priority">Prioridade</label>
           <select id="f-priority">
-            <option value="low">⚡ Baixa (Low)</option>
-            <option value="medium" selected>⚡ Média (Medium)</option>
-            <option value="high">🔥 Alta (High)</option>
-            <option value="critical">🚨 Crítica (Blocker)</option>
+            <option value="low">⚡ Baixa</option>
+            <option value="medium" selected>⚡ Média</option>
+            <option value="high">🔥 Alta</option>
+            <option value="critical">🚨 Crítica / Impedimento</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="f-owner">Responsável (Dev/Design)</label>
-          <input type="text" id="f-owner" placeholder="Nome ou iniciais">
+          <label for="f-owner">Responsável (Iniciais)</label>
+          <input type="text" id="f-owner" placeholder="Ex: LA, CAIO, JOW">
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="f-po">Product Owner (PO)</label>
-          <input type="text" id="f-po" placeholder="Iniciais do PO garantidor">
+          <label for="f-po">Garantidor / PO</label>
+          <input type="text" id="f-po" placeholder="Ex: RAFA">
         </div>
         <div class="form-group">
           <label for="f-tags">Tags (Separadas por vírgula)</label>
-          <input type="text" id="f-tags" placeholder="Ex: bug, backend, sprint3">
+          <input type="text" id="f-tags" placeholder="Ex: tags, tiktok, bug">
         </div>
       </div>
 
-      <div class="form-group" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
+      <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
         <label style="display:flex; justify-content:space-between; align-items:center;">
-          <span>Checklist de Critérios (Def. of Done)</span>
-          <button class="actions-btn" style="padding:2px 8px; font-size:11px;" onclick="addChecklistItemField('', false)">+ Item</button>
+          <span>Critérios de Aceite (Checklist)</span>
+          <button class="actions-btn" style="padding:2px 8px; font-size:11px;" onclick="addChecklistItemField('', false)">+ Adicionar</button>
         </label>
         <div class="chk-edit-list" id="modal-checklist-container"></div>
       </div>
@@ -317,40 +312,39 @@
     <div class="modal-ft">
       <button class="btn btn-danger" id="btn-delete-card" onclick="deleteCurrentCard()" style="margin-right:auto;">Excluir Card</button>
       <button class="btn btn-sec" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-pri" onclick="saveCardForm()">Salvar Modificações</button>
+      <button class="btn btn-pri" onclick="saveCardForm()">Salvar Card</button>
     </div>
   </div>
 </div>
 
 <div id="config-modal" class="modal-overlay" onclick="if(event.target===this) closeConfigModal();">
-  <div class="modal" style="max-width: 400px;">
+  <div class="modal" style="max-width: 450px;">
     <div class="modal-hd">
-      <h3 class="modal-title">Configurações Ágeis (Squad)</h3>
+      <h3 class="modal-title">Configurações de Limites de WIP</h3>
       <button class="modal-close" onclick="closeConfigModal()">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label for="cfg-wip">Limite de WIP (Em Progresso)</label>
-        <input type="text" id="cfg-wip" placeholder="Ex: 3 (Deixa em branco p/ ilimitado)">
-        <small style="color:var(--txt3); font-size:11px; margin-top:2px;">Gargalos acendem alerta visual na coluna de execução.</small>
-      </div>
-      <div class="form-group">
-        <label for="cfg-insight">Metas / Insights da Sprint</label>
-        <textarea id="cfg-insight" placeholder="Ex: Focar em zerar os débitos técnicos de infra externa."></textarea>
+      <p style="font-size: 13px; color: var(--txt2); margin-bottom: 10px;">Defina qual coluna deve possuir limite de WIP ativo. Deixe em branco se a coluna possuir fluxo livre.</p>
+      
+      <div id="wip-column-selectors-container" style="display:flex; flex-direction:column; gap:12px;">
+        </div>
+
+      <div class="form-group" style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
+        <label for="cfg-insight">Metas de Entrega da Sprint</label>
+        <textarea id="cfg-insight" placeholder="Ex: Focar em limpar o fluxo de Code Review e homologações externas."></textarea>
       </div>
     </div>
     <div class="modal-ft">
-      <button class="btn btn-sec" onclick="closeConfigModal()">Fechar</button>
-      <button class="btn btn-pri" onclick="saveAgileConfigs()">Aplicar Limites</button>
+      <button class="btn btn-sec" onclick="closeConfigModal()">Cancelar</button>
+      <button class="btn btn-pri" onclick="saveAgileConfigs()">Salvar Configurações</button>
     </div>
   </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, onValue, set, update, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-  // Configuração padrão do Firebase Realtime Database para persistência em tempo real
   const firebaseConfig = {
     databaseURL: "https://mare-digital-kanban-default-rtdb.firebaseio.com/"
   };
@@ -358,88 +352,84 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Expõe primitivos do firebase com segurança para o escopo legado encapsulado do app
   window._db = db;
   window._ref = ref;
   window._onValue = onValue;
   window._set = set;
   window._update = update;
-  window._push = push;
-  window._remove = remove;
   window._fbReady = true;
 </script>
 
 <script>
-// ESCOPO GLOBAL DO QUADRO KANBAN
 const columns = [
   { id: 'backlog', name: 'Backlog do Produto', color: '#94a3b8' },
   { id: 'ready', name: 'Pronto p/ Puxar', color: '#f1c40f' },
-  { id: 'progress', name: 'Em Progresso (WIP)', color: '#38b6ff', collapsible: false },
+  { id: 'progress', name: 'Em Progresso', color: '#38b6ff', collapsible: false },
   { id: 'review', name: 'Code Review / Homolog', color: '#9b59b6' },
   { id: 'done', name: 'Entregue (Done 🎉)', color: '#2ecc71' }
 ];
 
 let cards = [];
 let collapsedCols = new Set();
-let agilCfg = { wip: '', insight: '' };
+let agilCfg = { colWip: {}, insight: '' };
 let draggedCardId = null;
-let lastStateUndo = null; // Buffer simples para Command Pattern (Desfazer)
+let lastStateUndo = null;
 
-// Parâmetros de roteamento por Squad via Query String (?squad=nome)
+// Roteamento automático de Squad via URL Parameter
 const urlParams = new URLSearchParams(window.location.search);
 let ACTIVE_SQUAD = urlParams.get('squad');
 
-// Mock identificador simples de presença do usuário logado baseado no fingerprint de tela
+// REMOÇÃO DO PROMPT INVASIVO: Configura iniciais silenciosamente em background por default
 const generateShortUID = () => 'USR-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 if(!localStorage.getItem('mare_uid')) {
   localStorage.setItem('mare_uid', generateShortUID());
-  localStorage.setItem('mare_uname', prompt('Informe suas iniciais de time (Ex: AM, JOW, GABS):') || 'DEV');
+  localStorage.setItem('mare_uname', 'DEV'); // Inicial padrão amigável sem interromper a navegação do usuário
 }
 window._currentUser = {
   uid: localStorage.getItem('mare_uid'),
   name: localStorage.getItem('mare_uname').substring(0, 5).toUpperCase()
 };
 
-// Inicialização Assíncrona acoplada ao polling de injeção do Firebase SDK
 function initKanban() {
-  if(!ACTIVE_SQUAD) {
-    // Se não há squad definido na URL, o injetor do seletor assume o controle de render
-    return;
-  }
+  if(!ACTIVE_SQUAD) return;
   
-  document.getElementById('active-squad-title').innerText = '🐟 Squad: ' + ACTIVE_SQUAD.toUpperCase();
+  document.getElementById('active-squad-title').innerText = '📊 Squad: ' + ACTIVE_SQUAD.toUpperCase();
   document.getElementById('page-title').innerText = `(${ACTIVE_SQUAD.toUpperCase()}) Maré Digital`;
 
   const waitFb = setInterval(() => {
     if(window._fbReady) {
       clearInterval(waitFb);
       
-      // Escuta mutações nos cards do squad selecionado
+      // Monitoramento reativo em tempo real dos cards do respectivo Squad
       window._onValue(window._ref(window._db, 'kanban/squads/' + ACTIVE_SQUAD + '/cards'), (snapshot) => {
         const data = snapshot.val() || {};
         cards = Object.keys(data).map(id => ({ id, ...data[id] }));
         renderBoard();
       });
 
-      // Escuta configurações ágeis do squad
+      // Monitoramento reativo das configurações ágeis do squad (Mapeamento de WIP flexível)
       window._onValue(window._ref(window._db, 'kanban/squads/' + ACTIVE_SQUAD + '/configs'), (snapshot) => {
-        agilCfg = snapshot.val() || { wip: '', insight: '' };
+        const val = snapshot.val() || {};
+        agilCfg = {
+          colWip: val.colWip || {},
+          insight: val.insight || ''
+        };
         renderBoard();
       });
 
-      // CORREÇÃO: Escuta Presença Online evitando estouro de intervalo de memória (Vazamento corrigido)
+      // ESCUTA PRESENÇA ONLINE (Com correção definitiva de Memory Leak)
       window._onValue(window._ref(window._db, 'kanban/squads/' + ACTIVE_SQUAD + '/presence'), (snapshot) => {
         const val = snapshot.val() || {};
         const now = Date.now();
         const onlineUsers = Object.values(val).filter(u => now - u.ts < 30000);
         renderOnlineUsers(onlineUsers);
         
-        // Limpa o batimento cardíaco anterior se existir para matar o vazamento de memória na TV da Daily
+        // CORREÇÃO: Limpa o intervalo pré-existente fora do callback para estancar o vazamento de memória
         if (window._heartbeatTimer) {
           clearInterval(window._heartbeatTimer);
         }
         
-        // Seta o novo heartbeat de forma limpa
+        // Declara o batimento cardíaco da sessão de forma controlada
         window._heartbeatTimer = setInterval(() => {
           if(window._currentUser && window._fbReady) {
             window._update(window._ref(window._db, 'kanban/squads/' + ACTIVE_SQUAD + '/presence/' + window._currentUser.uid), {
@@ -453,13 +443,11 @@ function initKanban() {
   }, 200);
 }
 
-// ESCUTA DE EVENTO DOM LOADED
 document.addEventListener('DOMContentLoaded', initKanban);
 
-// PERSISTÊNCIA COMPLETA NO FIREBASE REALTME
+// Sincronização e persistência atômica no banco de dados em nuvem
 async function fbSaveAll() {
   if(!window._fbReady) return;
-  // Converte array local de volta em chave/valor estruturado puro
   const dataMap = {};
   cards.forEach(c => {
     const { id, ...cleanCard } = c;
@@ -468,18 +456,17 @@ async function fbSaveAll() {
   await window._set(window._ref(window._db, 'kanban/squads/' + ACTIVE_SQUAD + '/cards'), dataMap);
 }
 
-// RENDERIZAÇÃO DO QUADRO E SUAS COLUNAS
+// RENDERIZAÇÃO DO BOARD E TRATAMENTO DE INTERFACE ESTILO TRELLO (Scroll Interno de Colunas)
 function renderBoard() {
   const board = document.getElementById('board');
   if(!board) return;
+  
+  // Se o overlay de busca estiver na tela, congela re-renderizações em background para preservar foco do teclado
+  if(document.getElementById('search-overlay').style.display === 'flex') return;
+  
   board.innerHTML = '';
 
-  const activeSearch = document.getElementById('search-overlay').style.display === 'flex';
-  // Se estiver com overlay de busca ativo, congela atualizações do grid de fundo para evitar perda de foco
-  if(activeSearch) return;
-
   columns.forEach(col => {
-    // Filtra e ordena cards por prioridade (Critical -> High -> Medium -> Low)
     const prioOrder = { 'critical': 0, 'high': 1, 'medium': 2, 'low': 3, '': 4 };
     const colCards = cards
       .filter(c => c.col === col.id)
@@ -490,8 +477,9 @@ function renderBoard() {
     colEl.className = `col ${isCollapsed ? 'collapsed' : ''}`;
     colEl.id = `col-${col.id}`;
 
-    // Verificação visual do estouro de Limite de WIP (Work In Progress)
-    const isWipExceeded = col.id === 'progress' && agilCfg.wip && colCards.length > parseInt(agilCfg.wip);
+    // Avaliação dinâmica de WIP com base na configuração customizada pelo PO por coluna
+    const maxWipAllowed = agilCfg.colWip && agilCfg.colWip[col.id] ? parseInt(agilCfg.colWip[col.id]) : null;
+    const isWipExceeded = maxWipAllowed && colCards.length > maxWipAllowed;
     const canCollapse = col.collapsible !== false;
 
     colEl.innerHTML = `
@@ -502,7 +490,7 @@ function renderBoard() {
         </h3>
         <div style="display:flex; align-items:center; gap:6px;" onclick="event.stopPropagation();">
           <span class="col-cnt" ${isWipExceeded ? 'style="background:rgba(255,107,107,0.2); border-color:var(--danger); color:var(--danger);"' : ''}>
-            ${col.id === 'progress' && agilCfg.wip ? `${colCards.length}/${agilCfg.wip}` : colCards.length}
+            ${maxWipAllowed ? `${colCards.length}/${maxWipAllowed}` : colCards.length}
           </span>
           ${canCollapse ? `<button class="col-collapse-btn" onclick="toggleColumn('${col.id}')">${isCollapsed ? '▶' : '▼'}</button>` : ''}
         </div>
@@ -519,7 +507,7 @@ function renderBoard() {
         bodyEl.appendChild(createCardElement(card));
       });
 
-      // Registra interceptores nativos de Drag Over HTML5 API
+      // Escutas nativas HTML5 Drag & Drop API
       bodyEl.addEventListener('dragover', (e) => {
         e.preventDefault();
         bodyEl.classList.add('dragover');
@@ -530,31 +518,27 @@ function renderBoard() {
   });
 }
 
-// FÁBRICA DE ELEMENTO DOM CARD COM COMPONENTIZAÇÃO DE TAGS E CHECKLIST
 function createCardElement(card) {
   const el = document.createElement('div');
   el.className = 'card';
   el.draggable = true;
   el.id = `card-${card.id}`;
 
-  // Processamento de Tags
   let tagsHtml = '';
   if(card.tags && card.tags.trim()) {
     card.tags.split(',').forEach(t => {
       if(!t.trim()) return;
-      tagsHtml += `<span class="tag" style="background:rgba(56,182,255,0.08); color:var(--accent); border:1px solid rgba(56,182,255,0.15);">${escapeHtml(t.trim())}</span>`;
+      tagsHtml += `<span class="tag" style="background:rgba(56,182,255,0.06); color:var(--accent); border:1px solid rgba(56,182,255,0.12);">${escapeHtml(t.trim())}</span>`;
     });
   }
 
-  // Processamento de Mini-Checklist inline
   let checklistHtml = '';
   if(card.checklist && card.checklist.length > 0) {
     const total = card.checklist.length;
     const done = card.checklist.filter(i => i.done).length;
-    checklistHtml = `<div class="chk-summary ${done === total ? 'chk-done' : ''}" title="Critérios do Card">☑️ ${done}/${total}</div>`;
+    checklistHtml = `<div class="chk-summary ${done === total ? 'chk-done' : ''}">☑️ ${done}/${total}</div>`;
   }
 
-  // Processamento do Dono da Tarefa
   const ownerName = card.owner && card.owner.trim() ? card.owner.trim().toUpperCase() : '?';
   const ownerLetter = ownerName.substring(0, 2);
 
@@ -574,7 +558,6 @@ function createCardElement(card) {
     </div>
   `;
 
-  // Eventos de Drag & Drop HTML5
   el.addEventListener('dragstart', () => {
     draggedCardId = card.id;
     el.classList.add('dragging');
@@ -585,16 +568,13 @@ function createCardElement(card) {
     document.querySelectorAll('.col-body').forEach(b => b.classList.remove('dragover'));
   });
 
-  // Interceptor de clique duplo para edição rápida
   el.addEventListener('dblclick', () => openEditCard(card.id));
-  
-  // Interceptor de menu de contexto (botão direito)
   el.addEventListener('contextmenu', (e) => openContextMenu(e, card.id));
 
   return el;
 }
 
-// CORREÇÃO CRÍTICA DO DRAG AND DROP (Evita o bug de Rubber Banding em redes instáveis)
+// CORREÇÃO: Sincronização Assíncrona do Drop para Matar o Bug de "Rubber Banding"
 async function handleDrop(e, targetColId) {
   e.preventDefault();
   const bodyEl = document.getElementById(`body-${targetColId}`);
@@ -606,32 +586,29 @@ async function handleDrop(e, targetColId) {
   if(cardIndex === -1) return;
 
   const card = cards[cardIndex];
-  if(card.col === targetColId) return; // Nenhuma alteração real de fluxo detectada
+  if(card.col === targetColId) return;
 
-  // Salva backup de rollback (Mecanismo de Desfazer)
   lastStateUndo = JSON.parse(JSON.stringify(cards));
 
-  // Altera a coluna temporariamente no objeto local para dar feedback visual imediato ao usuário
   const oldColId = card.col;
   card.col = targetColId;
-  renderBoard();
+  renderBoard(); // Update otimista imediato na tela
 
   try {
-    // Sincroniza e força o await no Firebase ANTES de liberar o estado definitivo
+    // Força o await e garante a consistência do banco remoto antes de dar o fluxo por concluído
     await fbSaveAll();
     showUndoFloater();
   } catch (error) {
-    console.error("Erro na persistência do Firebase ao mover card, aplicando rollback automático:", error);
-    // Rollback de segurança caso a conexão caia ou falhe a gravação
+    console.error("Erro na persistência assíncrona do Firebase, forçando rollback:", error);
     card.col = oldColId;
     renderBoard();
-    alert("Falha na sincronização com a nuvem. Movimento revertido para evitar dessincronia do time.");
+    alert("Falha de conexão com a rede. Movimentação revertida de forma segura.");
   }
 }
 
-// OPERAÇÕES DO MODELO DE DADOS (C.R.U.D)
+// OPERAÇÕES DO MODELO DE CARDS
 function openNewCard(colId) {
-  document.getElementById('modal-title').innerText = "Novo Card Kanban";
+  document.getElementById('modal-title').innerText = "Adicionar Demanda";
   document.getElementById('f-id').value = '';
   document.getElementById('f-col').value = colId;
   document.getElementById('f-title').value = '';
@@ -651,7 +628,7 @@ function openEditCard(cardId) {
   const card = cards.find(c => c.id === cardId);
   if(!card) return;
 
-  document.getElementById('modal-title').innerText = "Detalhes / Critérios do Card";
+  document.getElementById('modal-title').innerText = "Critérios & Detalhes da Entrega";
   document.getElementById('f-id').value = card.id;
   document.getElementById('f-col').value = card.col;
   document.getElementById('f-title').value = card.title;
@@ -677,12 +654,11 @@ function addChecklistItemField(text = '', done = false) {
   div.className = 'chk-edit-item';
   div.innerHTML = `
     <input type="checkbox" ${done ? 'checked' : ''} class="chk-edit-cb">
-    <input type="text" value="${escapeHtml(text)}" placeholder="Critério de aceite..." class="chk-edit-input">
+    <input type="text" value="${escapeHtml(text)}" placeholder="Critério de aceite/DoD..." class="chk-edit-input">
     <button class="chk-del-btn" onclick="this.parentElement.remove()">×</button>
   `;
   container.appendChild(div);
-  const inp = div.querySelector('.chk-edit-input');
-  if(!text) inp.focus();
+  if(!text) div.querySelector('.chk-edit-input').focus();
 }
 
 async function saveCardForm() {
@@ -696,38 +672,27 @@ async function saveCardForm() {
   const tags = document.getElementById('f-tags').value.trim();
 
   if(!title) {
-    alert("O título do card é obrigatório para manter o quadro inteligível.");
+    alert("O título do card é obrigatório.");
     return;
   }
 
-  // Mapeia itens do checklist editados em tela
   const checklist = [];
   document.querySelectorAll('.chk-edit-item').forEach(item => {
     const cb = item.querySelector('.chk-edit-cb').checked;
     const txt = item.querySelector('.chk-edit-input').value.trim();
-    if(txt) {
-      checklist.push({ text: txt, done: cb });
-    }
+    if(txt) checklist.push({ text: txt, done: cb });
   });
 
   lastStateUndo = JSON.parse(JSON.stringify(cards));
 
   if(id) {
-    // Modo Edição de Card Existente
     const card = cards.find(c => c.id === id);
     if(card) {
-      card.title = title;
-      card.desc = desc;
-      card.priority = priority;
-      card.owner = owner;
-      card.po = po;
-      card.tags = tags;
-      card.checklist = checklist;
+      card.title = title; card.desc = desc; card.priority = priority;
+      card.owner = owner; card.po = po; card.tags = tags; card.checklist = checklist;
     }
   } else {
-    // Modo Criação de Novo Card
-    const newId = 'CARD-' + Date.now();
-    cards.push({ id: newId, col, title, desc, priority, owner, po, tags, checklist });
+    cards.push({ id: 'CARD-' + Date.now(), col, title, desc, priority, owner, po, tags, checklist });
   }
 
   closeModal();
@@ -739,7 +704,7 @@ async function deleteCurrentCard() {
   const id = document.getElementById('f-id').value;
   if(!id) return;
 
-  if(confirm("Deseja expurgar permanentemente este card do Backlog do Squad?")) {
+  if(confirm("Confirmar a remoção definitiva deste card?")) {
     lastStateUndo = JSON.parse(JSON.stringify(cards));
     cards = cards.filter(c => c.id !== id);
     closeModal();
@@ -753,7 +718,7 @@ function closeModal() {
   document.getElementById('card-modal').classList.remove('active');
 }
 
-// CONTEXT MENU HANDLING (Clique rápido de priorização e troca de coluna)
+// CONTEXT MENU
 function openContextMenu(e, cardId) {
   e.preventDefault();
   const card = cards.find(c => c.id === cardId);
@@ -765,12 +730,11 @@ function openContextMenu(e, cardId) {
   menu.style.left = `${e.pageX}px`;
   menu.style.top = `${e.pageY}px`;
 
-  // Geração dinâmica de opções de colunas destino
   columns.forEach(col => {
     if(col.id === card.col) return;
     const item = document.createElement('div');
     item.className = 'ctx-item';
-    item.innerHTML = `➡️ Mover para: <b>${col.name}</b>`;
+    item.innerHTML = `➡️ Fluxo: <b>${col.name}</b>`;
     item.onclick = async () => {
       lastStateUndo = JSON.parse(JSON.stringify(cards));
       card.col = col.id;
@@ -782,34 +746,6 @@ function openContextMenu(e, cardId) {
     menu.appendChild(item);
   });
 
-  const sep = document.createElement('div');
-  sep.className = 'ctx-sep';
-  menu.appendChild(sep);
-
-  // Alteração rápida de prioridades
-  const prios = [
-    { id: 'low', label: '⚡ Baixa (Low)' },
-    { id: 'medium', label: '⚡ Média (Medium)' },
-    { id: 'high', label: '🔥 Alta (High)' },
-    { id: 'critical', label: '🚨 Crítica (Blocker)' }
-  ];
-  
-  prios.forEach(p => {
-    if(p.id === card.priority) return;
-    const item = document.createElement('div');
-    item.className = 'ctx-item';
-    item.innerText = p.label;
-    item.onclick = async () => {
-      lastStateUndo = JSON.parse(JSON.stringify(cards));
-      card.priority = p.id;
-      menu.style.display = 'none';
-      renderBoard();
-      await fbSaveAll();
-    };
-    menu.appendChild(item);
-  });
-
-  // Fechamento de segurança do menu
   const closeHandler = () => {
     menu.style.display = 'none';
     document.removeEventListener('click', closeHandler);
@@ -817,17 +753,14 @@ function openContextMenu(e, cardId) {
   setTimeout(() => document.addEventListener('click', closeHandler), 10);
 }
 
-// MECANISMO DE CONTROL Z (UNDO FLOATER)
+// FLOATER DO CONTROL+Z (UNDO)
 let undoTimer = null;
 function showUndoFloater() {
   const btn = document.getElementById('undo-btn');
   if(!btn) return;
   btn.style.display = 'flex';
-  
   if(undoTimer) clearTimeout(undoTimer);
-  undoTimer = setTimeout(() => {
-    btn.style.display = 'none';
-  }, 8000); // Exibe botão por 8 segundos
+  undoTimer = setTimeout(() => btn.style.display = 'none', 8000);
 }
 
 async function doUndo() {
@@ -840,25 +773,33 @@ async function doUndo() {
   }
 }
 
-// COLUMN COLLAPSIBILITY UI MANAGEMENT
 function toggleColumn(colId) {
-  if(collapsedCols.has(colId)) {
-    collapsedCols.delete(colId);
-  } else {
-    collapsedCols.add(colId);
-  }
+  if(collapsedCols.has(colId)) collapsedCols.delete(colId);
+  else collapsedCols.add(colId);
   renderBoard();
 }
 
 function handleColHeaderClick(colId) {
-  if(collapsedCols.has(colId)) {
-    toggleColumn(colId);
-  }
+  if(collapsedCols.has(colId)) toggleColumn(colId);
 }
 
-// CONFIGURAÇÕES ÁGEIS MODAL
+// MODAL CONFIGURAÇÕES ÁGEIS (WIP ALOCADO DINAMICAMENTE POR COLUNA)
 function openConfigModal() {
-  document.getElementById('cfg-wip').value = agilCfg.wip || '';
+  const container = document.getElementById('wip-column-selectors-container');
+  container.innerHTML = '';
+
+  columns.forEach(col => {
+    const currentWip = agilCfg.colWip && agilCfg.colWip[col.id] ? agilCfg.colWip[col.id] : '';
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    group.style.cssText = 'display:grid; grid-template-columns:1fr 80px; align-items:center; gap:10px;';
+    group.innerHTML = `
+      <span style="font-size:13px; color:var(--txt1); font-weight:500;">${col.name}</span>
+      <input type="text" class="wip-cfg-input" data-colid="${col.id}" value="${currentWip}" placeholder="S/L" style="padding: 6px; text-align:center;">
+    `;
+    container.appendChild(group);
+  });
+
   document.getElementById('cfg-insight').value = agilCfg.insight || '';
   document.getElementById('config-modal').classList.add('active');
 }
@@ -868,10 +809,18 @@ function closeConfigModal() {
 }
 
 async function saveAgileConfigs() {
-  const wip = document.getElementById('cfg-wip').value.trim();
+  const colWipMap = {};
+  document.querySelectorAll('.wip-cfg-input').forEach(inp => {
+    const val = inp.value.trim();
+    const colId = inp.dataset.colid;
+    if(val && !isNaN(val)) {
+      colWipMap[colId] = val;
+    }
+  });
+
   const insight = document.getElementById('cfg-insight').value.trim();
   
-  agilCfg = { wip, insight };
+  agilCfg = { colWip: colWipMap, insight };
   closeConfigModal();
   renderBoard();
 
@@ -880,28 +829,22 @@ async function saveAgileConfigs() {
   }
 }
 
-// RENDER DE USUÁRIOS ONLINE
 function renderOnlineUsers(users) {
   const container = document.getElementById('online-users');
-  if(!container) return;
-  container.innerHTML = '';
-
+  if(!container) return; container.innerHTML = '';
   users.forEach(u => {
     const div = document.createElement('div');
-    div.className = 'avatar-mini';
-    div.innerText = u.name || '?';
-    div.title = `Ativo agora: ${u.name}`;
+    div.className = 'avatar-mini'; div.innerText = u.name || '?';
+    div.title = `Usuário logado: ${u.name}`;
     container.appendChild(div);
   });
 }
 
-// INTERCEPTORES DE BUSCA GLOBAL (Ctrl + K)
+// CONTROLES DE BUSCA GLOBAL (Ctrl + K)
 function openSearch() {
-  const overlay = document.getElementById('search-overlay');
-  overlay.style.display = 'flex';
+  document.getElementById('search-overlay').style.display = 'flex';
   const inp = document.getElementById('search-inp');
-  inp.value = '';
-  inp.focus();
+  inp.value = ''; inp.focus();
   renderSearchResults();
 }
 
@@ -922,8 +865,7 @@ function renderSearchResults() {
       c.title.toLowerCase().includes(query) ||
       (c.desc && c.desc.toLowerCase().includes(query)) ||
       (c.owner && c.owner.toLowerCase().includes(query)) ||
-      (c.tags && c.tags.toLowerCase().includes(query)) ||
-      (c.po && c.po.toLowerCase().includes(query))
+      (c.tags && c.tags.toLowerCase().includes(query))
     );
   }
 
@@ -932,24 +874,17 @@ function renderSearchResults() {
     return;
   }
 
-  // Clampa índice de seleção teclado
   if(selectedSearchIdx >= filtered.length) selectedSearchIdx = filtered.length - 1;
   if(selectedSearchIdx < 0) selectedSearchIdx = 0;
 
   filtered.forEach((card, idx) => {
     const item = document.createElement('div');
     item.className = `search-item ${idx === selectedSearchIdx ? 'selected' : ''}`;
-    
     const colName = columns.find(col => col.id === card.col)?.name || card.col;
-    
     item.innerHTML = `
-      <div class="search-item-title">
-        <span class="badge-prio-text bg-${card.priority || 'medium'}">${(card.priority || 'medium').toUpperCase()}</span>
-        ${escapeHtml(card.title)}
-      </div>
-      <div class="search-item-meta">Coluna: <b>${colName}</b> | Resp: ${escapeHtml(card.owner || 'Ninguém')}</div>
+      <div class="search-item-title">${escapeHtml(card.title)}</div>
+      <div style="font-size:11px; color:var(--txt3); margin-top:2px;">Coluna: <b>${colName}</b> | Resp: ${escapeHtml(card.owner || 'Ninguém')}</div>
     `;
-    
     item.onclick = () => {
       closeSearch();
       openEditCard(card.id);
@@ -960,47 +895,18 @@ function renderSearchResults() {
 
 function handleSearchKey(e) {
   const items = document.querySelectorAll('.search-item');
-  if(e.key === 'Escape') {
-    closeSearch();
-  } else if(e.key === 'ArrowDown') {
-    e.preventDefault();
-    selectedSearchIdx++;
-    renderSearchResults();
-    ensureSearchScroll();
-  } else if(e.key === 'ArrowUp') {
-    e.preventDefault();
-    selectedSearchIdx--;
-    renderSearchResults();
-    ensureSearchScroll();
-  } else if(e.key === 'Enter') {
-    e.preventDefault();
-    if(items[selectedSearchIdx]) items[selectedSearchIdx].click();
-  }
+  if(e.key === 'Escape') closeSearch();
+  else if(e.key === 'ArrowDown') { e.preventDefault(); selectedSearchIdx++; renderSearchResults(); }
+  else if(e.key === 'ArrowUp') { e.preventDefault(); selectedSearchIdx--; renderSearchResults(); }
+  else if(e.key === 'Enter' && items[selectedSearchIdx]) { e.preventDefault(); items[selectedSearchIdx].click(); }
 }
 
-function ensureSearchScroll() {
-  const activeItem = document.querySelector('.search-item.selected');
-  if(activeItem) activeItem.scrollIntoView({ block: 'nearest' });
-}
-
-// Atalho de Teclado Nativo
 window.addEventListener('keydown', (e) => {
-  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-    e.preventDefault();
-    openSearch();
-  }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); }
 });
 
-// ROUTING DE SQUADS
-function changeSquad() {
-  window.location.search = '';
-}
-
-// UTILS EXTRA SANITIZATION
-function escapeHtml(str) {
-  if(!str) return '';
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
+function changeSquad() { window.location.search = ''; }
+function escapeHtml(str) { if(!str) return ''; return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 </script>
 
 <script>
@@ -1008,47 +914,22 @@ function escapeHtml(str) {
   if(!ACTIVE_SQUAD) {
     const selOverlay = document.getElementById('squad-selector');
     selOverlay.innerHTML = `
-      <div class="squad-sel-title">🐟 Maré Digital Kanban</div>
-      <div class="squad-sel-subtitle">Selecione ou crie um Squad ágil para sincronizar as cerimônias da sprint:</div>
-      <div class="squad-grid" id="squad-grid-target">Carregando squads disponíveis na nuvem...</div>
-      <button class="btn btn-pri" style="margin-top:30px; padding:12px 24px;" onclick="createNewSquadFlow()">+ Criar Novo Squad</button>
+      <div class="squad-sel-title">🐟 Maré Digital — Kanban Hering</div>
+      <div class="squad-sel-subtitle">Selecione o Squad de atuação para carregar as colunas fixas e o backlog:</div>
+      <div class="squad-grid" id="squad-grid-target">Carregando marés ativas no Firebase...</div>
     `;
-
-    window.createNewSquadFlow = function() {
-      const name = prompt("Informe o identificador do novo Squad (Sem espaços/acentos):");
-      if(name) {
-        const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if(cleanName) window.location.search = `?squad=${cleanName}`;
-      }
-    };
 
     function renderSelectorGrid(squadsMap) {
       const target = document.getElementById('squad-grid-target');
-      if(!target) return;
-      target.innerHTML = '';
-
-      if(!squadsMap || Object.keys(squadsMap).length === 0) {
-        // Estado inicial vazio
-        const items = ['squad-alpha', 'squad-beta', 'growth-team'];
-        items.forEach(s => {
-          const card = document.createElement('div');
-          card.className = 'squad-card';
-          card.onclick = () => window.location.search = `?squad=${s}`;
-          card.innerHTML = `<div class="squad-name">${s.toUpperCase()}</div><div class="squad-meta">Clique para inicializar na maré</div>`;
-          target.appendChild(card);
-        });
-        return;
-      }
-
-      Object.keys(squadsMap).forEach(key => {
-        const cardsCount = squadsMap[key].cards ? Object.keys(squadsMap[key].cards).length : 0;
+      if(!target) return; target.innerHTML = '';
+      const defaults = ['squad-dados', 'squad-midia', 'squad-growth'];
+      const keys = squadsMap ? Object.keys(squadsMap) : defaults;
+      
+      keys.forEach(key => {
         const card = document.createElement('div');
         card.className = 'squad-card';
         card.onclick = () => window.location.search = `?squad=${key}`;
-        card.innerHTML = `
-          <div class="squad-name">${key.toUpperCase()}</div>
-          <div class="squad-meta">${cardsCount} cards ativos no board</div>
-        `;
+        card.innerHTML = `<div class="squad-name">${key.toUpperCase()}</div><div class="squad-meta">Entrar no board da squad</div>`;
         target.appendChild(card);
       });
     }
@@ -1062,30 +943,28 @@ function escapeHtml(str) {
       }
     }, 200);
   } else {
-    // Esconde seletor se houver squad setado via query string
     const s = document.getElementById('squad-selector');
     if(s) s.style.display = 'none';
   }
 })();
 </script>
 
-<button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
+<button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer Ação</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
 
 <div id="search-overlay" onclick="if(event.target===this) closeSearch();">
-  <div class="search-box" role="dialog" aria-label="Buscar cards">
+  <div class="search-box">
     <div class="search-inp-wrap">
       <span class="search-icon">🔍</span>
-      <input id="search-inp" type=\"text\" placeholder="Buscar cards por título, descrição, PO ou responsável…"
-        oninput="renderSearchResults()" onkeydown="handleSearchKey(event)"
-        autocomplete="off" spellcheck="false">
+      <input id="search-inp" type="text" placeholder="Buscar cards por título, critérios, PO ou responsável..."
+        oninput="renderSearchResults()" onkeydown="handleSearchKey(event)" autocomplete="off">
       <span class="search-kbd">Esc</span>
     </div>
     <div id="search-results"></div>
     <div class="search-hint">
-      <span><kbd>↑↓</kbd> navegar</span>
-      <span><kbd>Enter</kbd> abrir card</span>
-      <span><kbd>Esc</kbd> fechar</span>
+      <span><kbd>↑↓</kbd> Navegar</span>
+      <span><kbd>Enter</kbd> Abrir</span>
+      <span><kbd>Esc</kbd> Fechar</span>
     </div>
   </div>
 </div>
