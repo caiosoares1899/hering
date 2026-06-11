@@ -160,14 +160,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:2px;}
-.board-wrap.mode-expanded-wrap{
+.board-wrap{
   overflow-x:auto;
-  overflow-y:visible;
-  position:sticky;
-  /* Garante que a scrollbar horizontal fica visível na tela */
-  max-width:100%;
+  overflow-y:hidden;
+  padding-bottom:2px;
+  max-height:calc(100vh - 100px); /* limita ao viewport menos header+toolbar */
 }
+
 .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
 .board.raia-mode{display:block!important;}
 .board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
@@ -363,7 +362,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   flex-shrink:0;
 }
 .board.mode-expanded .col-body{
-  max-height:calc(100vh - 160px);
+  max-height:calc(100vh - 155px);
   overflow-y:auto;
   overflow-x:hidden;
 }
