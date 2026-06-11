@@ -4605,6 +4605,8 @@ function insertMention(ta, atPos, curPos, init){
 // ── FIM MENTION DROPDOWN ─────────────────────────────────────────
 
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
+// Migra chave antiga e força default 'expanded'
+(()=>{ const old=localStorage.getItem('boardViewMode'); if(old==='expanded') localStorage.setItem('boardViewMode2','expanded'); localStorage.removeItem('boardViewMode'); })();
 let viewMode = localStorage.getItem('boardViewMode2')||'expanded';
 function setViewMode(mode){
   viewMode=mode;
