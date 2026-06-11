@@ -5753,13 +5753,12 @@ function openSearchCard(id){
     ).join('');
   }
 
-  // Sem squad na URL ou squad desconhecido: mostra seletor
-  const knownAtStart = Object.keys(SQUAD_META_DEFAULT);
-  if (!squadParam || !knownAtStart.includes(squadParam)) {
+  // Sem squad na URL: mostra seletor
+  if (!squadParam) {
     document.addEventListener('DOMContentLoaded', function() {
       const sel = document.getElementById('squad-selector');
       const app = document.getElementById('app-root');
-      const login = document.getElementById('login-screen');
+      const login = document.getElementById('login-ov');
       if (sel) sel.classList.add('active');
       if (app) app.style.display = 'none';
       if (login) login.style.display = 'none';
