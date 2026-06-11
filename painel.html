@@ -537,7 +537,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="pcal-tabs" id="pcal-tabs-bar">
     <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
     <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
-    <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Squad Mídia</div>
+    <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Marketing de Performance</div>
     <div class="pcal-tab"     id="pcal-tab-midiacriativa"  onclick="setPcalTab('midiacriativa')">🎨 Squad Mídia Criativa</div>
     <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Gestão Digital</div>
   </div>
@@ -552,7 +552,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
         <option value="all">Todos os squads</option>
         <option value="dados">📊 Squad Dados</option>
-        <option value="midia">📱 Squad Mídia</option>
+        <option value="midia">📱 Mkt Performance</option>
       </select>
       <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
     </div>
@@ -1194,7 +1194,7 @@ function checklistPct(c){
 // ── CALENDÁRIO DO PAINEL ─────────────────────────────────────────
 const PCAL_COLORS=[
   {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
-  {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Squad Mídia'},
+  {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Marketing de Performance'},
   {id:'midiacriativa', bg:'rgba(168,85,247,.8)', txt:'#fff', label:'🎨 Squad Mídia Criativa'},
   {id:'gestao',  bg:'rgba(150,80,220,.8)',  txt:'#fff', label:'Gestão Digital'},
   {id:'geral',   bg:'rgba(255,209,102,.8)', txt:'#333', label:'Geral'},
@@ -1801,10 +1801,11 @@ function toggleSqCol(sqId, colId){
 
 // Squads base — sempre presentes
 let SQUADS = [
-  {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
-  {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
+  {id:'dados',         label:'Squad Dados',               icon:'📊', color:'#38b6ff', wipLimit:3},
+  {id:'midia',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
+  {id:'midiacriativa', label:'Squad Mídia Criativa',       icon:'🎨', color:'#a855f7', wipLimit:3},
 ];
-// Squads dinâmicos (midiacriativa etc.) são carregados do Firebase via loadExtraSquads()
+// Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
 // URL helper: abre o board de um squad no kanban unificado
 function squadBoardUrl(squadId){ return 'kanban.html?squad=' + squadId; }
 
