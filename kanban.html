@@ -1662,9 +1662,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- ABA USUARIOS -->
     <div class="tab-c" id="cfgtab-usuarios">
-      <div class="cfg-sec-title">Usuários inscritos</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:0;">Usuários inscritos</div>
+        <button class="btn btn-sm" onclick="convidarMembro()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Convidar por email</button>
+      </div>
       <div id="usuarios-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-      <p style="font-size:11px;color:var(--txt3);margin-top:8px;">Usuários que entraram via "Inscrever-se no quadro". O PO pode alterar o papel de cada um.</p>
+      <p style="font-size:11px;color:var(--txt3);margin-top:8px;">O PO pode alterar o papel de cada usuário ou convidar alguém pelo email.</p>
     </div>
 
     <!-- ABA TAGS -->
@@ -1973,13 +1976,14 @@ const WORKER_URL = localStorage.getItem('kanban_worker_url') || 'https://falling
 // ── MULTI-SQUAD: detecta squad via URL param ─────────────────────────
 const _urlParams = new URLSearchParams(window.location.search);
 // Redireciona squad legado 'criacao' para 'midiacriativa'
-const _rawSquad = (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,'');
-if(_rawSquad === 'criacao'){
-  const _newUrl = new URL(window.location.href);
-  _newUrl.searchParams.set('squad', 'midiacriativa');
-  window.location.replace(_newUrl.toString());
+if((_urlParams.get('squad')||'') === 'criacao'){
+  var _u = new URL(window.location.href);
+  _u.searchParams.set('squad','midiacriativa');
+  window.location.replace(_u.toString());
 }
-const ACTIVE_SQUAD = _rawSquad === 'criacao' ? 'midiacriativa' : _rawSquad;
+const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,'')==='criacao'
+  ? 'midiacriativa'
+  : (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,''));
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
@@ -2163,10 +2167,16 @@ function fbLoadAll(){
     Object.entries(val).forEach(([uid,u])=>{
       const hasInit = u.init && u.init.trim().length > 0;
       // Carrega se: tem iniciais E (está inscrito neste squad OU inscrito legado sem squads)
-      const inThisSquad = (u.role === 'adm') || (u.squads ? u.squads[ACTIVE_SQUAD]===true : (u.inscrito===true||u.inscrito==='true'));
+      // inThisSquad: ADM global, ou inscrito neste squad específico, ou inscrito legado
+      const inThisSquad = (u.role === 'adm') ||
+        (u.squads && u.squads[ACTIVE_SQUAD]===true) ||
+        // legado: inscrito:true sem squads obj
+        (!u.squads && (u.inscrito===true||u.inscrito==='true'));
       if(hasInit && inThisSquad){
         if(!members.find(m=>m.init===u.init))
-          members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||'', uid:uid, role:u.role||'membro'});
+          members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||'', uid:uid,
+            // Role: prefer squad-specific role (squads_roles.SQUAD) over global role
+            role:(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro'});
       }
     });
     // Re-popula selects se modal estiver aberto
@@ -3158,7 +3168,15 @@ function renderUsuarios(){
     });
   });
 }
-function alterarRole(uid,role){ fbUpdate('kanban/usuarios/'+uid,{role}); if(window._currentUser?.uid===uid) window._currentUserRole=role; }
+function alterarRole(uid,role){
+  // Salva role específica do squad + atualiza global só se não for multi-squad
+  const update = {};
+  update['squads_roles/'+ACTIVE_SQUAD] = role;
+  // Mantém role global para compatibilidade (usa a mais alta entre todos os squads)
+  update['role'] = role;
+  fbUpdate('kanban/usuarios/'+uid, update);
+  if(window._currentUser?.uid===uid) window._currentUserRole=role;
+}
 
 // --- Tags ---
 function renderTagEditor(){
@@ -6574,6 +6592,33 @@ function loadAttachments(card){
   // Reset add row
   const row=document.getElementById('m-attach-inp-row');
   if(row) row.style.display='none';
+}
+
+// ── CONVITE POR EMAIL (PO pode adicionar usuário ao squad) ──────────────────
+function convidarMembro(){
+  const email = prompt('Email do usuário a convidar (@ciahering.com.br):');
+  if(!email || !email.includes('@')) return;
+  // Busca o usuário pelo email no Firebase
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const all = snap.val()||{};
+    const entry = Object.entries(all).find(([,u])=>u.email===email.trim().toLowerCase());
+    if(!entry){
+      showToast('❌ Usuário não encontrado. Ele precisa fazer login uma vez primeiro.');
+      return;
+    }
+    const [uid, u] = entry;
+    const upd = {};
+    upd['squads/'+ACTIVE_SQUAD] = true;
+    upd['inscrito'] = true;
+    // If no role set for this squad, default to membro
+    if(!u.squads_roles?.[ACTIVE_SQUAD]){
+      upd['squads_roles/'+ACTIVE_SQUAD] = 'membro';
+      upd['role'] = u.role||'membro';
+    }
+    fbUpdate('kanban/usuarios/'+uid, upd).then(()=>{
+      showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!');
+    });
+  });
 }
 
 renderBoard();
