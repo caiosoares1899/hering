@@ -108,13 +108,11 @@ async function handleAuth(user) {
     document.getElementById("user-avatar").src = user.photoURL || "";
     document.getElementById("user-name").textContent = user.displayName || user.email;
     
-    // Mostra/Esconde aba Admin
     const adminTab = document.querySelector('.tab-btn[data-tab="admin"]');
     if (user.uid === ADMIN_UID) {
       adminTab.style.display = "block";
     } else {
       adminTab.style.display = "none";
-      // Se estiver na aba admin e não for admin, volta pra apostas
       if (document.querySelector('.tab-btn.active').dataset.tab === 'admin') {
         switchTab('apostas');
       }
@@ -314,12 +312,12 @@ function renderMatchList() {
           </div>
           <div class="match-teams">
             <div class="team">
-              <span class="flag">${getFlag(m.home)}</span>
+              <img class="flag-img" src="${getFlagUrl(m.home)}" alt=""/>
               <span class="team-name">${m.home}</span>
             </div>
             <span class="match-vs">VS</span>
             <div class="team away">
-              <span class="flag">${getFlag(m.away)}</span>
+              <img class="flag-img" src="${getFlagUrl(m.away)}" alt=""/>
               <span class="team-name">${m.away}</span>
             </div>
           </div>
@@ -334,15 +332,16 @@ function renderMatchList() {
   container.innerHTML = html;
 }
 
-function getFlag(team) {
-  const flags = {
-    "México":"🇲🇽","Equador":"🇪🇨","Canadá":"🇨🇦","Romênia":"🇷🇴","Marrocos":"🇲🇦","Argentina":"🇦🇷",
-    "Portugal":"🇵🇹","Croácia":"🇭🇷","Espanha":"🇪🇸","Suíça":"🇨🇭","Brasil":"🇧🇷","Alemanha":"🇩🇪",
-    "França":"🇫🇷","Polônia":"🇵🇱","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Sérvia":"🇷🇸","Estados Unidos":"🇺🇸",
-    "Uruguai":"🇺🇾","Holanda":"🇳🇱","Senegal":"🇸🇳","Itália":"🇮🇹","Japão":"🇯🇵","Colômbia":"🇨🇴",
-    "Coreia do Sul":"🇰🇷","Nigéria":"🇳🇬","Costa Rica":"🇨🇷","Tunísia":"🇹🇳","Chile":"🇨🇱","Turquia":"🇹🇷"
+function getFlagUrl(team) {
+  const codes = {
+    "México":"mx","Equador":"ec","Canadá":"ca","Romênia":"ro","Marrocos":"ma","Argentina":"ar",
+    "Portugal":"pt","Croácia":"hr","Espanha":"es","Suíça":"ch","Brasil":"br","Alemanha":"de",
+    "França":"fr","Polônia":"pl","Inglaterra":"gb-eng","Sérvia":"rs","Estados Unidos":"us",
+    "Uruguai":"uy","Holanda":"nl","Senegal":"sn","Itália":"it","Japão":"jp","Colômbia":"co",
+    "Coreia do Sul":"kr","Nigéria":"ng","Costa Rica":"cr","Tunísia":"tn","Chile":"cl","Turquia":"tr"
   };
-  return flags[team] || "🏳️";
+  const code = codes[team] || "un";
+  return `https://flagcdn.com/w40/${code}.png`;
 }
 
 async function renderRanking() {
@@ -683,9 +682,9 @@ h1.hero-title{
 .match-date{font-size:.72rem;color:var(--white-40);font-weight:500;}
 .match-venue{font-size:.65rem;color:var(--white-40);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
 .match-teams{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.team{display:flex;align-items:center;gap:7px;flex:1;}
+.team{display:flex;align-items:center;gap:10px;flex:1;}
 .team.away{flex-direction:row-reverse;}
-.flag{font-size:1.4rem;}
+.flag-img{width:28px;height:20px;object-fit:cover;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.2);}
 .team-name{font-family:var(--font-display);font-size:.88rem;font-weight:600;letter-spacing:-.01em;}
 .match-vs{font-family:var(--font-display);font-size:.65rem;font-weight:700;color:var(--white-40);letter-spacing:.1em;padding:0 8px;}
 
@@ -993,7 +992,7 @@ h1.hero-title{
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v1.2 - UID Admin Protected</div>
+<div class="version">v1.3 - FlagCDN Integrated</div>
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
