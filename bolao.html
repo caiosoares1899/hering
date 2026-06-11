@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Bolão Copa Digital Hering 2026</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>"/>
+<!-- PWA -->
+<meta name="theme-color" content="#04101f"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Bolão Hering"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2304101f'/><text y='.85em' font-size='72' x='50%' text-anchor='middle'>⚽</text></svg>"/>
+<!-- Manifest inline via JS -->
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <script type="module">
@@ -633,6 +641,26 @@ function showToast(msg, type="info") {
 init();
 </script>
 
+<!-- PWA manifest inline -->
+<script>
+(function() {
+  const manifest = {
+    name: "Bolão Copa Digital Hering 2026",
+    short_name: "Bolão Hering",
+    description: "Palpite nos jogos da Copa e dispute o título entre os squads",
+    start_url: "./", display: "standalone", orientation: "portrait",
+    background_color: "#04101f", theme_color: "#04101f",
+    icons: [
+      { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2304101f'/%3E%3Ctext y='.85em' font-size='72' x='50%25' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" },
+      { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2304101f'/%3E%3Ctext y='.85em' font-size='72' x='50%25' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
+  const link = Object.assign(document.createElement("link"),{rel:"manifest",href:URL.createObjectURL(blob)});
+  document.head.appendChild(link);
+})();
+</script>
+
 <style>
 :root{
   --navy-900:#04101f; --navy-800:#06172d; --navy-700:#0a1f35; --navy-600:#0d2847;
@@ -990,12 +1018,87 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
   .matches-grid{grid-template-columns:repeat(2,1fr);}
 }
 @media(max-width:600px){
+  /* Layout base */
   .matches-grid{grid-template-columns:1fr;}
   .login-card{padding:28px 20px;}
-  .hero{padding:36px 16px 24px;}
-  .tabs-bar,.tab-content{padding-left:14px;padding-right:14px;}
+  .hero{padding:24px 16px 16px;}
+  .tab-content{padding:0 12px;}
   .flags-carpet{height:30px;}
   .flag-tile{width:38px;height:24px;}
+
+  /* Header compacto */
+  header{height:52px;padding:0 14px;}
+  .logo-icon{font-size:1.2rem;}
+  .logo-text{font-size:.9rem;}
+  .logo-sub{display:none;}
+  .squad-badge-pill{display:none;}
+
+  /* Hero mais compacto */
+  h1.hero-title{font-size:1.8rem;}
+  .hero-eyebrow{display:none;}
+  .scoring-pills{gap:5px;}
+  .scoring-pill{font-size:.7rem;padding:4px 10px;}
+  .btn-classificacao{font-size:.75rem;padding:6px 14px;margin-top:12px;}
+
+  /* Tabs viram bottom nav */
+  .tabs-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    z-index:200;
+    background:rgba(4,16,31,.96);
+    backdrop-filter:blur(20px);
+    border-top:1px solid var(--glass-border);
+    border-bottom:none;
+    padding:0;
+    padding-bottom:env(safe-area-inset-bottom);
+    display:flex;justify-content:space-around;
+    gap:0;
+    height:calc(56px + env(safe-area-inset-bottom));
+    align-items:stretch;
+    margin:0;
+    overflow:visible;
+  }
+  .tab-btn{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:2px;padding:6px 2px;
+    font-size:.55rem;font-weight:600;
+    letter-spacing:.02em;
+    border-bottom:none;
+    border-top:2px solid transparent;
+    margin-bottom:0;
+    color:var(--white-40);
+    min-width:0;
+  }
+  .tab-btn::before{
+    font-size:1.2rem;line-height:1;
+    content:attr(data-icon);
+    display:block;
+  }
+  .tab-btn.active{
+    color:var(--cyan);
+    border-top-color:var(--cyan);
+    border-bottom:none;
+    background:rgba(126,200,227,.05);
+  }
+
+  /* Padding pro conteúdo não ficar atrás da bottom nav */
+  #app-content{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+
+  /* Cards mais compactos */
+  .match-card{padding:12px;}
+  .match-meta{margin-bottom:8px;}
+  .match-venue{display:none;}
+  .team-name{font-size:.8rem;}
+  .flag-img{width:22px;height:15px;}
+
+  /* Ranking */
+  .rank-row{padding:9px 12px;}
+  .rank-name{font-size:.82rem;}
+  .rank-pts{font-size:.9rem;}
+
+  /* Admin / participantes */
+  .admin-card{padding:16px;}
+  .rules-card{padding:18px;}
 }
 </style>
 </head>
@@ -1065,13 +1168,13 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 <!-- App -->
 <div id="app-content">
   <div class="tabs-bar">
-    <button class="tab-btn active" data-tab="apostas">⚽ Apostar</button>
-    <button class="tab-btn" data-tab="ranking-geral">🏆 Ranking Geral</button>
-    <button class="tab-btn" data-tab="ranking-squad">🏷️ Por Squad</button>
-    <button class="tab-btn" data-tab="ranking-coragem">🎲 Coragem</button>
-    <button class="tab-btn" data-tab="regras">📋 Regras</button>
-    <button class="tab-btn" data-tab="participantes" style="display:none">👥 Participantes</button>
-    <button class="tab-btn" data-tab="admin" style="display:none">🔧 Admin</button>
+    <button class="tab-btn active" data-tab="apostas" data-icon="⚽">Apostar</button>
+    <button class="tab-btn" data-tab="ranking-geral" data-icon="🏆">Geral</button>
+    <button class="tab-btn" data-tab="ranking-squad" data-icon="🏷️">Squad</button>
+    <button class="tab-btn" data-tab="ranking-coragem" data-icon="🎲">Coragem</button>
+    <button class="tab-btn" data-tab="regras" data-icon="📋">Regras</button>
+    <button class="tab-btn" data-tab="participantes" data-icon="👥" style="display:none">Pessoas</button>
+    <button class="tab-btn" data-tab="admin" data-icon="🔧" style="display:none">Admin</button>
   </div>
 
   <div class="tab-content active" id="tab-apostas">
@@ -1181,7 +1284,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v2.7 · coragem + convidados + bandeiras + regras</div>
+<div class="version">v2.8 · PWA + mobile nav</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
