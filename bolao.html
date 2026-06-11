@@ -280,7 +280,7 @@ function setupListeners() {
 
 // ─── APOSTAS ────────────────────────────────────────────────────────────────
 function isMatchOpen(match) {
-  return new Date() < new Date(new Date(match.time).getTime() - 3600000);
+  return new Date() < new Date(new Date(match.time).getTime() - 300000);
 }
 
 window.saveBet = async function(matchId) {
@@ -401,7 +401,7 @@ function renderMatchList(filtro) {
       const d = new Date(m.time);
       const dateStr = d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
       const timeStr = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-      const closes = new Date(d.getTime()-3600000);
+      const closes = new Date(d.getTime()-300000);
       const closesStr = closes.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) +
         (closes.toDateString()===new Date().toDateString() ? "" : " "+closes.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
 
@@ -1307,7 +1307,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   <div class="scoring-pills">
     <div class="scoring-pill"><span class="pts">3 pts</span> Placar exato</div>
     <div class="scoring-pill"><span class="pts">1 pt</span> Vencedor ou empate</div>
-    <div class="scoring-pill"><span class="pts">🔒</span> Palpites fecham 1h antes</div>
+    <div class="scoring-pill"><span class="pts">🔒</span> Palpites fecham 5 min antes</div>
   </div>
   <a href="https://ge.globo.com/futebol/copa-do-mundo/" target="_blank" rel="noopener" class="btn-classificacao">
     📊 Classificação dos grupos em tempo real
@@ -1415,7 +1415,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 
       <div class="rule-divider"></div>
       <div class="rule-note">
-        ⏰ <strong>Prazo:</strong> Palpites fecham <strong>1 hora antes</strong> de cada jogo. Depois disso não dá pra criar nem editar.<br/><br/>
+        ⏰ <strong>Prazo:</strong> Palpites fecham <strong>5 minutos antes</strong> de cada jogo. Depois disso não dá pra criar nem editar.<br/><br/>
         🏷️ <strong>Ranking por squad:</strong> Usa a <strong>média de pontos</strong> dos membros do squad — então um squad pequeno e afiado pode bater um squad grande e chuteiro.<br/><br/>
         📊 <strong>Classificação ao vivo:</strong> Acompanhe a tabela de grupos em tempo real pelo botão na página inicial.<br/><br/>
         🔐 <strong>Login:</strong> Necessário entrar com sua conta Google Hering para participar.
