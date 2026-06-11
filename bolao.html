@@ -15,6 +15,12 @@
 <!-- Manifest inline via JS -->
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
+<!-- CONFIG GLOBAL — altere aqui sem mexer no resto -->
+<script>
+  // Troque para "matamata" quando a fase de grupos acabar
+  window.PRIMEIRA_ABA_APOSTAS = "grupos"; // "grupos" | "matamata"
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -181,7 +187,8 @@ async function handleAuth(user) {
       document.getElementById("squad-modal").style.display = "flex";
     }
     setupRealtimeListeners();
-    renderMatchList();
+    renderMatchList("grupos");
+    renderMatchList("matamata");
     renderRanking();
   } else {
     currentUser = null;
@@ -210,7 +217,7 @@ window.selectSquad = async function(squad) {
   document.getElementById("squad-modal").style.display = "none";
   document.getElementById("squad-badge").textContent = squad;
   document.getElementById("squad-badge").style.display = "inline";
-  renderMatchList(); renderRanking();
+  renderMatchList("grupos"); renderMatchList("matamata"); renderRanking();
   showToast(`Squad ${squad} registrado! ⚽`, "success");
 };
 window.changeSquad = function() { document.getElementById("squad-modal").style.display = "flex"; };
@@ -219,15 +226,19 @@ window.changeSquad = function() { document.getElementById("squad-modal").style.d
 function setupRealtimeListeners() {
   onValue(ref(db, `bets/${currentUser.uid}`), snap => {
     allBets = snap.exists() ? snap.val() : {};
-    renderMatchList();
+    renderMatchList("grupos");
+    renderMatchList("matamata");
   });
   onValue(ref(db, `bets`), snap => {
     allUserBets = snap.exists() ? snap.val() : {};
-    renderMatchList(); // atualiza odds
+    renderMatchList("grupos");
+    renderMatchList("matamata");
   });
   onValue(ref(db, `results`), snap => {
     allResults = snap.exists() ? snap.val() : {};
-    renderMatchList(); renderRanking();
+    renderMatchList("grupos");
+    renderMatchList("matamata");
+    renderRanking();
   });
   onValue(ref(db, `users`), snap => {
     allUsers = snap.exists() ? snap.val() : {};
@@ -243,6 +254,8 @@ function switchTab(tabName) {
   document.querySelectorAll(".tab-content").forEach(c => {
     c.classList.toggle("active", c.id === "tab-" + tabName);
   });
+  if (tabName === "apostas-grupos")   renderMatchList("grupos");
+  if (tabName === "apostas-matamata") renderMatchList("matamata");
   if (tabName === "ranking-geral" || tabName === "ranking-squad") renderRanking();
   if (tabName === "ranking-coragem") renderRankingCoragem();
   if (tabName === "participantes") renderParticipants();
@@ -320,16 +333,32 @@ function calcOdds(matchId, homeTeam, awayTeam) {
            pctAway:Math.round(countAway/total*100), total };
 }
 
+// Fases que pertencem à fase de grupos vs mata-mata
+const FASES_GRUPOS   = ["Grupo A","Grupo B","Grupo C","Grupo D","Grupo E","Grupo F",
+                        "Grupo G","Grupo H","Grupo I","Grupo J","Grupo K","Grupo L"];
+const FASES_MATAMATA = ["Rodada de 32","Oitavas de Final","Quartas de Final","Semifinal","3º Lugar","Final"];
+
 // ─── RENDER MATCHES ──────────────────────────────────────────────────────────
-function renderMatchList() {
-  const container = document.getElementById("matches-container");
+function renderMatchList(filtro) {
+  // filtro: "grupos" | "matamata" | undefined (ambos)
+  const containerGrupos   = document.getElementById("matches-container-grupos");
+  const containerMatamata = document.getElementById("matches-container-matamata");
+  const container = filtro === "matamata" ? containerMatamata : containerGrupos;
   if (!container) return;
+
+  const fasesPermitidas = filtro === "matamata" ? FASES_MATAMATA
+                        : filtro === "grupos"    ? FASES_GRUPOS
+                        : [...FASES_GRUPOS, ...FASES_MATAMATA];
+
   const byFase = {};
-  MATCHES.forEach(m => { (byFase[m.fase] = byFase[m.fase]||[]).push(m); });
+  MATCHES.forEach(m => {
+    if (!fasesPermitidas.includes(m.fase)) return;
+    (byFase[m.fase] = byFase[m.fase]||[]).push(m);
+  });
 
   let html = "";
   Object.entries(byFase).forEach(([fase, matches]) => {
-    html += `<div class="fase-header"><span class="fase-label">${fase}</span></div><div class="matches-grid">`;
+    html += `<div class="fase-header fase-group-gap"><span class="fase-label">${fase}</span></div><div class="matches-grid">`;
     matches.forEach(m => {
       const bet=allBets[m.id], result=allResults[m.id], open=isMatchOpen(m);
       const pts = result&&bet ? calcPoints(bet,result) : null;
@@ -806,7 +835,9 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .tab-content.active{display:block;}
 
 /* ── MATCHES ────────────────────────────────────────────────────────────────── */
-.fase-header{margin:24px 0 12px;display:flex;align-items:center;gap:12px;}
+.fase-header{margin:16px 0 10px;display:flex;align-items:center;gap:12px;}
+.fase-group-gap{margin-top:36px;}
+.fase-group-gap:first-child{margin-top:16px;}
 .fase-label{font-family:var(--font-display);font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--cyan-dim);}
 .fase-header::after{content:'';flex:1;height:1px;background:var(--white-08);}
 .matches-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:8px;}
@@ -1168,7 +1199,8 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 <!-- App -->
 <div id="app-content">
   <div class="tabs-bar">
-    <button class="tab-btn active" data-tab="apostas" data-icon="⚽">Apostar</button>
+    <button class="tab-btn" data-tab="apostas-grupos" data-icon="⚽" id="btn-grupos">Grupos</button>
+    <button class="tab-btn" data-tab="apostas-matamata" data-icon="⚔️" id="btn-matamata">Mata-mata</button>
     <button class="tab-btn" data-tab="ranking-geral" data-icon="🏆">Geral</button>
     <button class="tab-btn" data-tab="ranking-squad" data-icon="🏷️">Squad</button>
     <button class="tab-btn" data-tab="ranking-coragem" data-icon="🎲">Coragem</button>
@@ -1177,8 +1209,12 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
     <button class="tab-btn" data-tab="admin" data-icon="🔧" style="display:none">Admin</button>
   </div>
 
-  <div class="tab-content active" id="tab-apostas">
-    <div id="matches-container"><p class="empty-state" style="padding:60px 0">Carregando jogos...</p></div>
+  <div class="tab-content" id="tab-apostas-grupos">
+    <div id="matches-container-grupos"><p class="empty-state" style="padding:60px 0">Carregando jogos...</p></div>
+  </div>
+
+  <div class="tab-content" id="tab-apostas-matamata">
+    <div id="matches-container-matamata"><p class="empty-state" style="padding:60px 0">Carregando jogos...</p></div>
   </div>
 
   <div class="tab-content" id="tab-ranking-geral">
@@ -1284,7 +1320,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v2.8 · PWA + mobile nav</div>
+<div class="version">v2.9 · grupos / mata-mata separados</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -1400,6 +1436,15 @@ const SQUADS_LOCAL = ["Site Hering","APP","Criação","Mídia","Outlet","Marketp
 
 window.addEventListener("DOMContentLoaded", () => {
   buildCarpet();
+
+  // Ativa a primeira aba conforme config PRIMEIRA_ABA_APOSTAS
+  const primeiraTab = PRIMEIRA_ABA_APOSTAS === "matamata" ? "apostas-matamata" : "apostas-grupos";
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  const btnAtivo = document.querySelector(`.tab-btn[data-tab="${primeiraTab}"]`);
+  const tabAtivo = document.getElementById(`tab-${primeiraTab}`);
+  if (btnAtivo) btnAtivo.classList.add("active");
+  if (tabAtivo) tabAtivo.classList.add("active");
 
   const sg = document.getElementById("squad-grid");
   SQUADS_LOCAL.forEach(s => {
