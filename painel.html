@@ -8,55 +8,12 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 
-/* ── SCROLLBARS CUSTOMIZADAS (estilo Trello) ─────────────────────
-   Finas, arredondadas, cor do tema, aparecem só no hover */
-
-/* Firefox */
+/* ── SCROLLBARS CUSTOMIZADAS ───────────────────── */
 * { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.25) transparent; }
-
-/* Webkit (Chrome, Safari, Edge) */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; border-radius: 999px; }
-::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.22);
-  border-radius: 999px;
-  transition: background .2s;
-}
+::-webkit-scrollbar-thumb { background: rgba(56,182,255,.22); border-radius: 999px; transition: background .2s; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
-::-webkit-scrollbar-corner { background: transparent; }
-
-/* Board horizontal — barra mais visível no modo expandido */
-.board-wrap::-webkit-scrollbar { height: 5px; }
-.board-wrap::-webkit-scrollbar-track {
-  background: rgba(56,182,255,.04);
-  border-radius: 999px;
-  margin: 0 8px;
-}
-.board-wrap::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.3);
-  border-radius: 999px;
-}
-.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.55); }
-
-/* Colunas do board */
-.col-body::-webkit-scrollbar { width: 3px; }
-.col-body::-webkit-scrollbar-thumb { background: rgba(56,182,255,.15); border-radius: 999px; }
-
-/* Modais e painéis com scroll */
-.card-panel::-webkit-scrollbar,
-.cfg-panel::-webkit-scrollbar,
-.ag-body::-webkit-scrollbar,
-.ql-panel::-webkit-scrollbar,
-.msgs::-webkit-scrollbar { width: 4px; }
-.card-panel::-webkit-scrollbar-thumb,
-.cfg-panel::-webkit-scrollbar-thumb,
-.ag-body::-webkit-scrollbar-thumb,
-.ql-panel::-webkit-scrollbar-thumb,
-.msgs::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.18);
-  border-radius: 999px;
-}
-/* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
 :root{
   --deep:#030d1a;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
@@ -69,7 +26,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),
              radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
-.app{position:relative;z-index:2;padding:1rem 1.4rem 2rem;}
+.app{position:relative;z-index:2;padding:1rem 1.4rem 2rem;max-width:1600px;margin:0 auto;}
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;}
 .hd-title{font-family:"Syne",sans-serif;font-size:20px;font-weight:800;}
 .hd-sub{font-size:11px;color:var(--txt3);}
@@ -79,21 +36,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{border-color:var(--accent);}
 .btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+
 /* Grid */
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-@media(max-width:900px){.grid-2{grid-template-columns:1fr;}.grid-4{grid-template-columns:1fr 1fr;}.grid-3{grid-template-columns:1fr 1fr;}}
-@media(max-width:480px){.grid-4,.grid-3{grid-template-columns:1fr;}}
+@media(max-width:1200px){ .grid-4{grid-template-columns:repeat(3,1fr);} }
+@media(max-width:900px){ .grid-2{grid-template-columns:1fr;} .grid-4{grid-template-columns:1fr 1fr;} .grid-3{grid-template-columns:1fr 1fr;} }
+@media(max-width:480px){ .grid-4,.grid-3{grid-template-columns:1fr;} }
+
 /* Cards */
-.card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:16px;backdrop-filter:blur(12px);}
+.card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:16px;backdrop-filter:blur(12px);height:fit-content;}
 .card-title{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+
 /* Squad card */
 .squad-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .squad-name{font-family:"Syne",sans-serif;font-size:16px;font-weight:800;}
 .squad-sprint{font-size:11px;color:var(--txt2);}
 .squad-link{font-size:11px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid rgba(56,182,255,.3);border-radius:999px;}
 .squad-link:hover{background:rgba(56,182,255,.1);}
+
 /* Metric */
 .met{padding:10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);}
 .met-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px;}
@@ -102,6 +64,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .met-ok{color:var(--teal);}
 .met-warn{color:var(--warn);}
 .met-bad{color:var(--danger);}
+
 /* Col bar */
 .col-bar{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
 .col-row{display:flex;align-items:center;gap:8px;font-size:11px;}
@@ -109,372 +72,81 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-track{flex:1;height:6px;background:rgba(56,182,255,.1);border-radius:999px;overflow:hidden;}
 .col-fill{height:100%;border-radius:999px;transition:width .6s ease;}
 .col-count{width:24px;text-align:right;color:var(--txt3);font-size:10px;}
-/* Blocker list */
-.blocker-item{padding:7px 10px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);margin-bottom:5px;font-size:11px;}
-.blocker-title{font-weight:600;color:var(--danger);}
-.blocker-meta{font-size:10px;color:var(--txt3);margin-top:2px;}
-/* Throughput trend */
-.trend-row{display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(56,182,255,.07);}
-.trend-row:last-child{border:none;}
-.trend-date{width:75px;color:var(--txt3);}
-.trend-bar-wrap{flex:1;}
-.trend-bar{height:8px;background:rgba(29,233,182,.6);border-radius:999px;}
-.trend-val{width:28px;text-align:right;color:var(--teal);font-weight:600;}
-/* Status dot */
-.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.status-ok{background:var(--teal);}
-.status-warn{background:var(--warn);}
-.status-bad{background:var(--danger);}
-/* Section title */
-.sec-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--txt);
-  border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin-bottom:12px;
-  display:flex;align-items:center;gap:8px;}
-.sec-title .badge{font-size:9px;}
-/* Loading */
-.loading{display:flex;align-items:center;gap:8px;color:var(--txt3);font-size:12px;padding:16px 0;}
-.dots span{animation:blink 1.2s infinite;}
-.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
-/* Login */
-.login-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.97);
-  backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:20px;}
 
-/* Filtro de squad */
-.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;}
-.filter-btn{padding:6px 16px;font-size:12px;font-family:'DM Sans',sans-serif;
-  border:1px solid var(--glass-b);border-radius:999px;
-  background:var(--glass);color:var(--txt2);cursor:pointer;transition:all .2s;}
-.filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
-.filter-btn:hover:not(.active){border-color:var(--accent);color:var(--txt);}
+/* Modais Base */
+.modal-ov{position:fixed;inset:0;z-index:9000;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.modal-ov.open{display:flex;}
+.modal-panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.6);}
 
-/* Config modal */
-.cfg-ov{position:fixed;inset:0;z-index:100;background:rgba(1,8,16,.88);
-  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
-.cfg-ov.open{display:flex;}
-.cfg-panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);
-  border-radius:14px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
-.cfg-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
-  display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;background:rgba(6,26,46,.97);border-radius:14px 14px 0 0;z-index:1;}
+/* Config modal especifico */
+.cfg-ov{ z-index:9100; }
+.cfg-panel{ max-width:480px; }
+.cfg-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(6,26,46,.97);z-index:1;}
 .cfg-hd-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
 .cfg-body{padding:16px;display:flex;flex-direction:column;gap:14px;}
-.cfg-sec{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;
-  letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:2px;}
+.cfg-sec{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:2px;}
 .cfg-field{display:flex;flex-direction:column;gap:3px;}
 .cfg-label{font-size:10px;color:var(--txt2);font-weight:500;}
-.cfg-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;
-  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.cfg-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
 .cfg-input:focus{outline:none;border-color:var(--accent);}
 .cfg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .cfg-ft{padding:10px 16px;border-top:1px solid var(--glass-b);display:flex;gap:8px;justify-content:flex-end;}
+
+/* Board Setup Modal */
+#board-setup-ov{ z-index:9500; }
+.bs-modal{ background:rgba(10,37,64,.97); border:1px solid rgba(56,182,255,.2); border-radius:14px; width:min(520px,95vw); max-height:92vh; display:flex; flex-direction:column; }
+.bs-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(56,182,255,.12); flex-shrink:0; }
+.bs-title{ font-family:"Syne",sans-serif; font-size:15px; font-weight:700; color:var(--txt); }
+.bs-close{ background:none; border:none; color:rgba(200,230,255,.4); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:4px; }
+.bs-body{ padding:20px; overflow-y:auto; flex:1; }
+.bs-field{ margin-bottom:14px; }
+.bs-label{ font-size:11px; color:rgba(200,230,255,.6); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; display:block; }
+.bs-inp{ width:100%; background:rgba(3,13,26,.8); border:1px solid rgba(56,182,255,.2); border-radius:8px; padding:9px 12px; font-size:13px; color:var(--txt); font-family:"DM Sans",sans-serif; outline:none; }
+.bs-emoji-grid{ display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.bs-emoji-opt{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:18px; border-radius:8px; border:1px solid rgba(56,182,255,.15); background:rgba(56,182,255,.06); cursor:pointer; }
+.bs-emoji-opt.sel{ border-color:var(--accent); background:rgba(56,182,255,.18); }
+.bs-color-row{ display:flex; gap:8px; margin-top:4px; flex-wrap:wrap; }
+.bs-color-opt{ width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; }
+.bs-color-opt.sel{ border-color:white; }
+.bs-footer{ display:flex; gap:8px; justify-content:flex-end; padding:14px 20px; border-top:1px solid rgba(56,182,255,.1); flex-shrink:0; }
+.bs-existing{ margin-bottom:16px; }
+.bs-existing-title{ font-size:11px; color:rgba(200,230,255,.5); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+.bs-board-item{ display:flex; align-items:center; gap:10px; padding:8px 12px; background:rgba(56,182,255,.05); border:1px solid rgba(56,182,255,.1); border-radius:8px; margin-bottom:6px; }
+.bs-board-icon{ font-size:18px; width:28px; text-align:center; }
+.bs-board-info{ flex:1; min-width:0; }
+.bs-board-name{ font-size:13px; color:var(--txt); font-weight:600; }
+.bs-board-id{ font-size:10px; color:rgba(200,230,255,.4); }
+
 .x-btn{background:none;border:none;color:rgba(200,230,255,.5);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
 .x-btn:hover{color:var(--danger);}
-.save-btn{padding:7px 18px;font-size:12px;background:rgba(37,99,201,.7);color:#fff;
-  border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.save-btn:hover{background:rgba(37,99,201,.9);}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-  background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:999px;
-  padding:9px 20px;font-size:12px;color:var(--txt);z-index:999;
-  backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none;}
+.save-btn{padding:7px 18px;font-size:12px;background:rgba(37,99,201,.7);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:999px;padding:9px 20px;font-size:12px;color:var(--txt);z-index:9999;backdrop-filter:blur(12px);opacity:0;transition:opacity .3s;pointer-events:none;}
 .toast.show{opacity:1;}
 
-/* Version */
 .version{position:fixed;bottom:6px;right:12px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
-/* Refresh */
-.refresh-bar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--txt3);margin-bottom:1rem;}
-.last-update{font-size:10px;}
-/* Comparison table */
-.cmp-table{width:100%;border-collapse:collapse;font-size:11px;}
-.cmp-table th{padding:6px 10px;text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--glass-b);}
-.cmp-table td{padding:7px 10px;border-bottom:1px solid rgba(56,182,255,.06);}
-.cmp-table tr:last-child td{border:none;}
-.cmp-table .winner{color:var(--teal);font-weight:700;}
 
-/* Modal evento do painel */
-.pev-modal-ov{position:fixed;inset:0;z-index:300;background:rgba(1,8,16,.88);
-  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
-.pev-modal-ov.open{display:flex;}
-.pev-modal{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:14px;
-  width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.6);}
-.pev-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
-  display:flex;align-items:center;justify-content:space-between;}
-.pev-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
-.pev-field{display:flex;flex-direction:column;gap:3px;}
-.pev-label{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
-.pev-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;
-  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;box-sizing:border-box;}
-.pev-input:focus{outline:none;border-color:var(--accent);}
-.pev-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.pev-colors{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
-.pev-color-btn{width:22px;height:22px;border-radius:50%;cursor:pointer;
-  border:2px solid transparent;transition:all .15s;flex-shrink:0;}
-.pev-color-btn.sel{border-color:#fff;transform:scale(1.15);}
-.pev-ft{padding:10px 16px;border-top:1px solid var(--glass-b);
-  display:flex;gap:7px;justify-content:flex-end;align-items:center;}
+/* Estilos adicionais para o painel */
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;}
+.filter-btn{padding:6px 16px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--glass-b);border-radius:999px;background:var(--glass);color:var(--txt2);cursor:pointer;transition:all .2s;}
+.filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
 
-
-/* Calendário do painel — baseado no board */
-.pcal-weekdays-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
-.pcal-tabs{display:flex;gap:0;border-bottom:1px solid var(--glass-b);
-  margin-bottom:14px;overflow-x:auto;scrollbar-width:none;}
-.pcal-tabs::-webkit-scrollbar{display:none;}
-.pcal-tab{padding:8px 16px;font-size:11px;color:var(--txt2);cursor:pointer;
-  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;
-  white-space:nowrap;font-family:'DM Sans',sans-serif;}
-.pcal-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
-.pcal-tab:hover:not(.on){color:var(--txt);}
-.pcal-content{display:none;}.pcal-content.on{display:block;}
-
-/* Grade — usa as mesmas classes do board */
-.pcal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
-  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
-.pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
-.pcal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:130px;}
-.pcal-wd{font-size:9px;color:var(--txt3);font-weight:700;text-align:center;
-  text-transform:uppercase;letter-spacing:.05em;padding:3px 0;}
-.pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.pcal-day{min-height:74px;padding:5px;border-radius:8px;
-  background:rgba(3,13,26,.5);border:1px solid rgba(56,182,255,.07);
-  cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
-.pcal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
-.pcal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
-.pcal-day.other-month{opacity:.3;pointer-events:none;}
-.pcal-day.has-events{border-color:rgba(29,233,182,.2);}
-.pcal-day-num{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px;}
-.pcal-day.today .pcal-day-num{color:var(--accent);font-weight:800;}
-.pcal-event{font-size:9px;padding:2px 5px;border-radius:3px;margin-bottom:2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
-  font-weight:600;line-height:1.4;}
-.pcal-event:hover{opacity:.8;}
-.pcal-add-btn{position:absolute;bottom:3px;right:4px;background:none;border:none;
-  color:rgba(56,182,255,.25);cursor:pointer;font-size:13px;opacity:0;transition:opacity .15s;}
-.pcal-day:hover .pcal-add-btn{opacity:1;}
-/* Legenda */
-.cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;
-  padding-top:8px;border-top:1px solid var(--glass-b);}
-.cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
-.cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-/* Embed area */
-.embed-area{margin-top:10px;border-radius:8px;overflow:hidden;display:none;}
-.embed-area.show{display:block;}
-
-
-.err-chart{display:flex;align-items:flex-end;gap:3px;height:100px;padding:4px 0;}
-.err-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.err-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .3s;}
-.err-bar-lbl{font-size:8px;color:var(--txt3);white-space:nowrap;}
-
-
-.err-filters::-webkit-scrollbar{display:none;}
-
-.pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.88);
-  backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
-.pc-modal-ov.open{display:flex;}
-
-/* ── PANEL CARDS (OKR, Bloqueios, Riscos) ──────────────────────── */
-.pc-modal{
-  background:rgba(8,28,52,.98);border:1px solid rgba(56,182,255,.18);
-  border-radius:16px;width:min(560px,92vw);max-height:85vh;
-  display:flex;flex-direction:column;
-  box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;
-}
-.pc-modal-hd{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:16px 20px 14px;border-bottom:1px solid rgba(56,182,255,.1);
-  flex-shrink:0;
-}
-.pc-modal-hd-title{
-  font-family:"Syne",sans-serif;font-size:14px;font-weight:700;
-  color:var(--txt);line-height:1.4;flex:1;
-}
-.pc-modal-body{
-  padding:16px 20px;overflow-y:auto;flex:1;
-  display:flex;flex-direction:column;gap:10px;
-}
-.pc-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:2px;}
-.pc-chip{
-  font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px;
-  border:1px solid;white-space:nowrap;
-}
-.pc-chip-tag{background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);}
-.pc-chip-okr{background:rgba(255,215,0,.12);border-color:rgba(255,215,0,.4);color:#ffd700;}
-.pc-chip-squad{background:rgba(56,182,255,.08);border-color:rgba(56,182,255,.2);color:var(--txt2);}
-.pc-chip-col{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--txt3);}
-.pc-chip-prio{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--danger);}
-.pc-section{
-  background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.1);
-  border-radius:10px;padding:10px 12px;
-}
-.pc-section-lbl{
-  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
-  color:var(--txt3);margin-bottom:5px;
-}
-.pc-section-val{font-size:12px;color:var(--txt2);line-height:1.6;}
-.pc-section.po{background:rgba(37,99,201,.08);border-color:rgba(37,99,201,.2);}
-.pc-section.po .pc-section-lbl{color:#7eb3ff;}
-.pc-section.blocker{background:rgba(255,107,107,.07);border-color:rgba(255,107,107,.25);}
-.pc-section.blocker .pc-section-lbl{color:var(--danger);}
-.pc-section.riscos{background:rgba(255,209,102,.06);border-color:rgba(255,209,102,.2);}
-.pc-section.riscos .pc-section-lbl{color:var(--warn);}
-.pc-meta-row{display:flex;gap:16px;flex-wrap:wrap;}
-.pc-meta-item{display:flex;flex-direction:column;gap:2px;}
-.pc-meta-item .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);}
-.pc-meta-item .val{font-size:12px;color:var(--txt2);}
-.pc-cl-bar{height:4px;background:rgba(56,182,255,.1);border-radius:999px;overflow:hidden;margin:5px 0 6px;}
-.pc-cl-fill{height:100%;background:var(--teal);border-radius:999px;}
-.pc-cl-item{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:2px 0;}
-.pc-cl-item.done{color:var(--teal);}
-.pc-footer{padding:12px 20px;border-top:1px solid rgba(56,182,255,.1);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
-
-/* ── OKR / BLOQUEIO / RISCO TILE CARDS ────────────────────────── */
-.panel-card{
-  background:rgba(6,20,44,.85);border:1px solid rgba(56,182,255,.12);
-  border-radius:12px;padding:12px 14px;cursor:pointer;
-  transition:border-color .15s,transform .1s,box-shadow .15s;
-  display:flex;flex-direction:column;gap:7px;
-}
-.panel-card:hover{border-color:rgba(56,182,255,.3);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
-.panel-card.okr{border-left:3px solid rgba(255,215,0,.5);}
-.panel-card.risco{border-left:3px solid rgba(255,209,102,.5);}
-.panel-card.blocker{border-left:3px solid rgba(255,107,107,.5);}
+.panel-card{background:rgba(6,20,44,.85);border:1px solid rgba(56,182,255,.12);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:7px;}
+.panel-card:hover{border-color:rgba(56,182,255,.3);transform:translateY(-1px);}
 .pc-card-chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.pc-chip{font-size:9px;padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);background:rgba(56,182,255,.05);color:var(--txt2);}
 .pc-card-title{font-size:12px;font-weight:600;color:var(--txt);line-height:1.45;margin:0;}
-.pc-card-footer{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px;}
-.pc-card-footer span{font-size:10px;color:var(--txt3);}
-.pc-col-badge{
-  font-size:9px;padding:1px 7px;border-radius:999px;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-  color:var(--txt3);
-}
+.pc-card-footer{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:2px;font-size:10px;color:var(--txt3);}
+.pc-col-badge{font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--txt3);}
 
-/* Monitor de erros — layout limpo */
-.err-log-item{
-  padding:10px 12px;
-  background:rgba(3,13,26,.6);
-  border:1px solid var(--glass-b);
-  border-radius:10px;
-  margin-bottom:6px;
-  transition:border-color .15s;
-}
-.err-log-item:hover{ border-color:rgba(56,182,255,.2); }
-.err-log-item.cat-firebase{ border-left:3px solid rgba(255,209,102,.6); }
-.err-log-item.cat-agente{   border-left:3px solid rgba(56,182,255,.6); }
-.err-log-item.cat-importacao{ border-left:3px solid rgba(150,80,220,.6); }
-.err-log-item.cat-ui{      border-left:3px solid rgba(255,107,107,.6); }
-.err-log-item.cat-geral{   border-left:3px solid rgba(150,200,240,.2); }
-.err-log-item.status-resolvido{ opacity:.4; }
-.err-hd{
-  display:flex;align-items:center;gap:8px;margin-bottom:4px;
-}
-.err-badge{
-  font-size:9px;padding:2px 7px;border-radius:999px;
-  font-weight:700;white-space:nowrap;flex-shrink:0;
-}
-.err-badge.cat-firebase{  background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
-.err-badge.cat-agente{    background:rgba(56,182,255,.1);color:var(--accent);border:1px solid rgba(56,182,255,.2);}
-.err-badge.cat-importacao{background:rgba(150,80,220,.1);color:#d67fff;border:1px solid rgba(150,80,220,.22);}
-.err-badge.cat-ui{        background:rgba(255,107,107,.1);color:var(--danger);border:1px solid rgba(255,107,107,.2);}
-.err-badge.cat-geral{     background:rgba(150,200,240,.06);color:var(--txt3);border:1px solid var(--glass-b);}
-.err-msg{
-  font-size:11px;color:var(--txt);font-weight:500;flex:1;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.err-status{
-  font-size:9px;padding:2px 8px;border-radius:999px;
-  font-weight:700;cursor:pointer;flex-shrink:0;
-  transition:opacity .15s;
-}
-.err-status:hover{ opacity:.8; }
-.err-status.novo{      background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.3);}
-.err-status.visto{     background:rgba(255,209,102,.1);color:var(--warn);border:1px solid rgba(255,209,102,.2);}
-.err-status.resolvido{ background:rgba(29,233,182,.1);color:var(--teal);border:1px solid rgba(29,233,182,.2);}
-.err-meta{
-  font-size:10px;color:var(--txt3);
-  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-  margin-top:3px;
-}
-.err-meta span{ display:flex;align-items:center;gap:3px; }
-.err-stack{
-  font-size:9px;color:var(--txt3);font-family:monospace;
-  background:rgba(0,0,0,.3);border-radius:6px;
-  padding:6px 8px;margin-top:6px;
-  white-space:pre-wrap;word-break:break-all;line-height:1.5;
-  display:none;max-height:120px;overflow-y:auto;
-}
-.err-stack.open{ display:block; }
-.err-chart{
-  display:flex;align-items:flex-end;gap:3px;
-  height:100px;padding:4px 0;margin-top:6px;
-}
-.err-bar-wrap{
-  flex:1;display:flex;flex-direction:column;
-  align-items:center;gap:2px;
-}
-.err-bar{
-  width:100%;border-radius:3px 3px 0 0;
-  min-height:2px;transition:height .3s;
-}
-.err-bar-lbl{ font-size:8px;color:var(--txt3); }
-.err-stats-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:10px;margin-bottom:14px;
-}
-.err-filters{
-  display:flex;flex-direction:column;gap:5px;
-  margin-bottom:12px;
-}
-.err-filter-row{
-  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-}
-.err-filter-label{
-  font-size:9px;color:var(--txt3);font-weight:700;
-  text-transform:uppercase;letter-spacing:.06em;
-  min-width:40px;
-}
-.err-filter-btn{
-  padding:3px 9px;font-size:10px;
-  border:1px solid var(--glass-b);border-radius:999px;
-  background:var(--glass);color:var(--txt3);
-  cursor:pointer;white-space:nowrap;flex-shrink:0;
-  transition:all .15s;
-}
-.err-filter-btn.active{
-  background:rgba(37,99,201,.4);border-color:var(--blue);color:#fff;
-}
-.err-filter-btn:hover:not(.active){ color:var(--txt);border-color:rgba(56,182,255,.3); }
+.trend-row{display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(56,182,255,.07);}
+.trend-date{width:75px;color:var(--txt3);}
+.trend-bar-wrap{flex:1;height:8px;background:rgba(56,182,255,.05);border-radius:999px;overflow:hidden;}
+.trend-bar{height:100%;background:rgba(29,233,182,.6);border-radius:999px;}
+.trend-val{width:28px;text-align:right;color:var(--teal);font-weight:600;}
 
-
-/* ── BOARD SETUP MODAL ──────────────────────────────────────────── */
-#board-setup-ov{display:none;position:fixed;inset:0;z-index:9500;background:rgba(2,10,24,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;}
-#board-setup-ov.open{display:flex;}
-.bs-modal{background:rgba(10,37,64,.97);border:1px solid rgba(56,182,255,.2);border-radius:14px;width:min(480px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;}
-.bs-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(56,182,255,.12);}
-.bs-title{font-family:"Syne",sans-serif;font-size:15px;font-weight:700;color:var(--txt);}
-.bs-close{background:none;border:none;color:rgba(200,230,255,.4);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
-.bs-close:hover{color:var(--txt);background:rgba(56,182,255,.1);}
-.bs-body{padding:20px;}
-.bs-field{margin-bottom:14px;}
-.bs-label{font-size:11px;color:rgba(200,230,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
-.bs-inp{width:100%;background:rgba(3,13,26,.8);border:1px solid rgba(56,182,255,.2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:"DM Sans",sans-serif;outline:none;box-sizing:border-box;}
-.bs-inp:focus{border-color:var(--accent);}
-.bs-emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
-.bs-emoji-opt{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:8px;border:1px solid rgba(56,182,255,.15);background:rgba(56,182,255,.06);cursor:pointer;transition:all .12s;}
-.bs-emoji-opt:hover,.bs-emoji-opt.sel{border-color:var(--accent);background:rgba(56,182,255,.18);}
-.bs-color-row{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
-.bs-color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .12s;}
-.bs-color-opt.sel{border-color:white;}
-.bs-footer{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid rgba(56,182,255,.1);}
-.bs-existing{margin-bottom:16px;}
-.bs-existing-title{font-size:11px;color:rgba(200,230,255,.5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
-.bs-board-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(56,182,255,.05);border:1px solid rgba(56,182,255,.1);border-radius:8px;margin-bottom:6px;}
-.bs-board-icon{font-size:18px;width:28px;text-align:center;}
-.bs-board-info{flex:1;min-width:0;}
-.bs-board-name{font-size:13px;color:var(--txt);font-weight:600;}
-.bs-board-id{font-size:10px;color:rgba(200,230,255,.4);}
-.bs-board-actions{display:flex;gap:6px;}
-.bs-del-btn{background:none;border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.7);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;}
-.bs-del-btn:hover{background:rgba(255,107,107,.1);color:var(--danger);}
+/* Login */
+.login-ov{position:fixed;inset:0;z-index:9999;background:rgba(1,8,16,.97);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
 </style>
 </head>
 <body>
@@ -499,350 +171,135 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 <!-- APP -->
 <div class="app" id="app-root" style="display:none;">
-  <div class="hd">
+  <header class="hd">
     <div>
-      <div class="hd-title">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span></div>
-      <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
+      <h1 class="hd-title">🐟 Maré Digital</h1>
+      <div class="hd-sub">Painel Multi-Squad · <span id="last-update">...</span></div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
-      <button class="btn" onclick="toggleMonitorSection()" id="btn-monitor" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🐛 Bugs</button>
-      <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
-      <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div id="squad-links-wrap" style="display:flex;gap:8px;"></div>
+      <div style="width:1px;height:24px;background:var(--glass-b);"></div>
       <button class="btn" onclick="openBoardSetup()" title="Criar novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙ Novo board</button>
-      <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
-        <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
-        <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
-        <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;" title="Sair">✕</button>
-      </div>
+      <div class="badge" id="user-name">...</div>
+      <button onclick="doSignOut()" class="btn" style="padding:6px;border-radius:50%;" title="Sair">✕</button>
     </div>
-  </div>
+  </header>
 
-  <div class="refresh-bar">
-    <span class="status-dot status-ok" id="conn-dot"></span>
-    <span>Firebase conectado</span>
-    <span class="last-update" id="last-update"></span>
-  </div>
-
-
-  <!-- USUÁRIOS ONLINE -->
-  <div class="sec-title" id="online-section-title">👥 Quem está online <span class="badge" id="online-count">0</span></div>
-  <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-    <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
-  </div>
-
-
-  <!-- CALENDÁRIO DO PAINEL -->
-<div id="pcal-section" style="display:none;margin-bottom:20px;">
-  <div class="pcal-tabs" id="pcal-tabs-bar">
-    <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
-    <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
-    <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Squad Mídia</div>
-    <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Gestão Digital</div>
-  </div>
-
-  <!-- Grade principal (all / dados / midia) -->
-  <div class="pcal-content on" id="pcal-all">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
-      <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
-      <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
-      <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
-      <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
-        <option value="all">Todos os squads</option>
-        <option value="dados">📊 Squad Dados</option>
-        <option value="midia">📱 Squad Mídia</option>
-      </select>
-      <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
-    </div>
-    <div class="pcal-weekdays-row">
-      <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
-      <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
-    </div>
-    <div class="pcal-grid" id="pcal-grid"></div>
-    <div class="cal-legend" id="pcal-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
-  </div>
-
-  <!-- Gestão -->
-  <div class="pcal-content" id="pcal-gestao">
-    <div style="border-top:1px solid var(--glass-b);padding-top:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:600;color:var(--txt2);">📌 Eventos de Gestão cadastrados</div>
-        <button onclick="openPevModal('','','painel')" style="padding:4px 12px;font-size:10px;background:rgba(150,80,220,.15);color:#d67fff;border:1px solid rgba(150,80,220,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento de Gestão</button>
-      </div>
-      <div class="pcal-weekdays-row">
-        <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
-        <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
-      </div>
-      <div class="pcal-grid" id="pcal-gestao-grid"></div>
-      <div class="cal-legend" id="pcal-gestao-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
-    </div>
-  </div>
-</div>
-
-  <!-- FILTRO DE SQUAD -->
+  <!-- FILTRO -->
   <div class="filter-bar">
-    <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">🏠 Todos os squads</button>
-    <button class="filter-btn"        id="fb-dados"  onclick="setFilter('dados')">📊 Squad Dados</button>
-    <button class="filter-btn"        id="fb-midia"  onclick="setFilter('midia')">📱 Squad Mídia</button>
+    <button class="filter-btn active" id="fb-all" onclick="setFilter('all')">Todos Squads</button>
+    <!-- Inserido dinamicamente -->
   </div>
 
-  <!-- SQUADS EM TEMPO REAL -->
-  <div class="sec-title">🏃 Squads em tempo real</div>
-  <div class="grid-2" id="squad-cards" style="margin-bottom:20px;"></div>
+  <main>
+    <!-- SEÇÃO: SQUAD CARDS -->
+    <div class="grid-4" id="squad-cards" style="margin-bottom:24px;"></div>
 
-  <!-- MÉTRICAS CONSOLIDADAS -->
-  <div class="sec-title">📊 Consolidado</div>
-  <div class="grid-4" style="margin-bottom:20px;">
-    <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos</div></div>
-    <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
-    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos</div></div>
-    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput</div></div>
-  </div>
-
-  <!-- TABELA COMPARATIVA -->
-  <div id="cmp-section">
-  <div class="sec-title">⚖️ Comparação</div>
-  <div class="card" style="margin-bottom:20px;">
-    <table class="cmp-table">
-      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Squad Mídia</th></tr></thead>
-      <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
-    </table>
-  </div>
-  </div>
-
-  <!-- AGENTE ÁGIL USAGE -->
-  <div class="sec-title">🤖 Uso do Agente Ágil</div>
-  <div class="grid-3" style="margin-bottom:12px;">
-    <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">ambos os squads</div></div>
-    <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
-    <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
-  </div>
-  <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
-
-  <!-- OKR -->
-  <div class="sec-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
-  <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
-
-  <!-- BLOQUEIOS -->
-  <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
-    <span>🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></span>
-    <button class="btn btn-sm" onclick="resolveAllBlockers()" title="Mover todos os bloqueios ativos para Concluído" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);padding:3px 10px;">✅ Resolver todos</button>
-  </div>
-  <div id="blockers-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio.</div></div>
-
-  <!-- RISCOS -->
-  <div class="sec-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
-  <div id="risco-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Sem cards com riscos.</div></div>
-
-  <!-- TENDÊNCIA -->
-  <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
-  <div class="grid-2" style="margin-bottom:20px;">
-    <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
-    <div class="card"><div class="card-title">📱 Squad Mídia — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
-  </div>
-
-
-
-  <!-- DISTRIBUIÇÃO POR COLUNA -->
-  <div class="sec-title">📋 Distribuição por coluna</div>
-  <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
-
-  <!-- MONITORAMENTO DE ERROS -->
-  <div id="monitor-section" style="display:none;">
-    <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span>🐛 Monitoramento de Erros</span>
-      <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
-      <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
-      <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
-    </div>
-    <div class="err-stats-grid">
-      <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
-      <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
-      <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
-      <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
-    </div>
-    <div class="card" style="margin-bottom:14px;">
-      <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
-      <div class="err-chart" id="err-chart"></div>
-    </div>
-    <div class="err-filters">
-      <div class="err-filter-row">
-        <span class="err-filter-label">Squad</span>
-        <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
+    <div class="grid-2">
+      <!-- SEÇÃO: OKRs -->
+      <div class="card">
+        <div class="card-title">🎯 OKRs Ativos <span class="badge" id="okr-count">0</span></div>
+        <div id="okr-list"></div>
       </div>
-      <div class="err-filter-row">
-        <span class="err-filter-label">Tipo</span>
-        <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','geral')"      id="ef-cat-geral">⚙ Geral</button>
-      </div>
-      <div class="err-filter-row">
-        <span class="err-filter-label">Status</span>
-        <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
-      </div>
-    </div></div>
-    <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
-  </div>
-
-
-<!-- Modal evento do painel -->
-<div class="pev-modal-ov" id="pev-modal-ov">
-  <div class="pev-modal">
-    <div class="pev-hd">
-      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;" id="pev-modal-title">Novo Evento</div>
-      <button class="x-btn" onclick="closePevModal()">✕</button>
-    </div>
-    <div class="pev-body">
-      <div class="pev-field">
-        <label class="pev-label">Título</label>
-        <input class="pev-input" id="pev-title" placeholder="Nome do evento...">
-      </div>
-      <div class="pev-row">
-        <div class="pev-field"><label class="pev-label">Data início</label><input class="pev-input" id="pev-start" type="date"></div>
-        <div class="pev-field"><label class="pev-label">Data fim</label><input class="pev-input" id="pev-end" type="date"></div>
-      </div>
-      <div class="pev-field">
-        <label class="pev-label">Squad / Origem</label>
-        <select class="pev-input" id="pev-squad">
-          <option value="gestao">🏢 Gestão Digital Hering</option>
-          <option value="dados">📊 Squad Dados</option>
-          <option value="midia">📱 Squad Mídia</option>
-          <option value="geral">🌐 Geral (todos)</option>
-        </select>
-      </div>
-      <div class="pev-field">
-        <label class="pev-label">Descrição</label>
-        <textarea class="pev-input" id="pev-desc" rows="2" style="resize:vertical;line-height:1.5;"></textarea>
-      </div>
-      <div class="pev-field">
-        <label class="pev-label">Link</label>
-        <input class="pev-input" id="pev-link" placeholder="https://meet.google.com/...">
-      </div>
-      <div class="pev-field">
-        <label class="pev-label">Cor</label>
-        <div class="pev-colors" id="pev-colors"></div>
+      <!-- SEÇÃO: BLOQUEIOS -->
+      <div class="card">
+        <div class="card-title">🚧 Impedimentos <span class="badge" id="blockers-count" style="background:var(--danger);color:#fff;">0</span></div>
+        <div id="blockers-list"></div>
       </div>
     </div>
-    <div class="pev-ft">
-      <button id="pev-del-btn" onclick="deletePevEvent()" style="color:var(--danger);border:1px solid rgba(255,107,107,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;margin-right:auto;display:none;">🗑 Excluir</button>
-      <button onclick="closePevModal()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
-      <button onclick="savePevEvent()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Salvar</button>
+
+    <div class="grid-2" style="margin-top:24px;">
+       <!-- SEÇÃO: TENDÊNCIA -->
+       <div class="card">
+         <div class="card-title">📈 Tendência (Cards Concluídos)</div>
+         <div id="trend-container" class="grid-2" style="gap:20px;">
+           <!-- Inserido dinamicamente por squad -->
+         </div>
+       </div>
+       <!-- SEÇÃO: RISCOS -->
+       <div class="card">
+         <div class="card-title">⚠ Riscos Mapeados <span class="badge" id="risco-count">0</span></div>
+         <div id="risco-list"></div>
+       </div>
     </div>
-  </div>
+  </main>
 </div>
 
-<!-- CONFIG MODAL DO PAINEL -->
-<div class="cfg-ov" id="cfg-ov">
-  <div class="cfg-panel">
+<!-- CONFIG MODAL -->
+<div class="modal-ov cfg-ov" id="cfg-ov">
+  <div class="modal-panel cfg-panel">
     <div class="cfg-hd">
-      <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
-        <div class="cfg-hd-title" id="cfg-modal-title">⚙ Configurações</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;">
-          <button class="err-filter-btn active" id="pcfg-tab-sprint" onclick="setPcfgTab('sprint')">⚙ Config</button>
-          <button class="err-filter-btn" id="pcfg-tab-users"  onclick="setPcfgTab('users')">👥 Usuários</button>
-          <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
-        </div>
-      </div>
+      <div class="cfg-hd-title" id="cfg-modal-title">⚙ Configurações</div>
       <button class="x-btn" onclick="closeCfg()">✕</button>
     </div>
     <div class="cfg-body">
-
-      <!-- Aba ADMs -->
-      <div id="painel-cfg-adm" style="display:none;">
-        <div class="cfg-sec">Administradores do sistema</div>
-        <div id="pcfg-adm-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
-        <div class="cfg-sec" style="margin-top:8px;">Adicionar ADM por email</div>
-        <div style="display:flex;gap:6px;">
-          <input class="cfg-input" id="pcfg-adm-email" placeholder="email@ciahering.com.br" style="flex:1;">
-          <button class="save-btn" onclick="addAdmEmail()">+ ADM</button>
-        </div>
-        <div style="font-size:10px;color:var(--txt3);margin-top:5px;">ADMs têm acesso total a todos os boards e ao painel.</div>
+      <div class="cfg-sec">Sprint</div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Número da sprint</label><input class="cfg-input" id="cfg-sprint-num" type="number"></div>
+        <div class="cfg-field"><label class="cfg-label">Duração (dias)</label><input class="cfg-input" id="cfg-sprint-days" type="number" value="14"></div>
       </div>
-
-      <!-- Aba Usuários -->
-      <div id="painel-cfg-users" style="display:none;">
-        <div class="cfg-sec">Membros do Squad</div>
-        <div id="pcfg-users-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
-        <div class="cfg-sec" style="margin-top:10px;">Adicionar convidado por email</div>
-        <div style="display:flex;gap:6px;">
-          <input class="cfg-input" id="pcfg-guest-email" placeholder="email@ciahering.com.br" style="flex:1;">
-          <button class="save-btn" onclick="addGuestByEmail()">+ Convidado</button>
-        </div>
-        <div style="font-size:10px;color:var(--txt3);margin-top:5px;">Convidados têm acesso de leitura.</div>
+      <div class="cfg-field"><label class="cfg-label">Objetivo da sprint</label><textarea class="cfg-input" id="cfg-goal" rows="2"></textarea></div>
+      <div class="cfg-sec">WIP & Capacidade</div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Limite de WIP</label><input class="cfg-input" id="cfg-wip" type="number"></div>
+        <div class="cfg-field"><label class="cfg-label">Capacidade (%)</label><input class="cfg-input" id="cfg-capacity" type="number"></div>
       </div>
-
-      <!-- Aba Sprint/Config -->
-      <div id="painel-cfg-sprint">
-        <div class="cfg-sec">Sprint</div>
-        <div class="cfg-row">
-          <div class="cfg-field"><label class="cfg-label">Número da sprint</label><input class="cfg-input" id="cfg-sprint-num" type="number" min="1"></div>
-          <div class="cfg-field"><label class="cfg-label">Duração (dias)</label><input class="cfg-input" id="cfg-sprint-days" type="number" min="1" max="60" oninput="calcCfgEnd()"></div>
-        </div>
-        <div class="cfg-row">
-          <div class="cfg-field"><label class="cfg-label">Início</label><input class="cfg-input" id="cfg-sprint-start" type="date" oninput="calcCfgEnd()"></div>
-          <div class="cfg-field"><label class="cfg-label">Fim (calculado)</label><input class="cfg-input" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
-        </div>
-        <div class="cfg-field"><label class="cfg-label">Objetivo da sprint</label><textarea class="cfg-input" id="cfg-goal" rows="2" style="resize:vertical;min-height:50px;line-height:1.5;"></textarea></div>
-
-        <div class="cfg-sec">WIP & Capacidade</div>
-        <div class="cfg-row">
-          <div class="cfg-field"><label class="cfg-label">Limite de WIP</label><input class="cfg-input" id="cfg-wip" type="number" min="1"></div>
-          <div class="cfg-field"><label class="cfg-label">Capacidade (%)</label><input class="cfg-input" id="cfg-capacity" type="number" min="0" max="100"></div>
-        </div>
-
-        <div class="cfg-sec">Modo de impedimentos</div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
-            <input type="radio" name="cfg-blocker" id="cfg-bmode-col" value="col" style="accent-color:var(--accent);"> 🗂 Coluna separada
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
-            <input type="radio" name="cfg-blocker" id="cfg-bmode-tag" value="tag" style="accent-color:var(--danger);"> 🚧 Tag no card
-          </label>
-        </div>
-      </div>
-
-    </div><!-- /cfg-body -->
+    </div>
     <div class="cfg-ft">
-      <button class="x-btn" onclick="closeCfg()" style="font-size:12px;color:var(--txt2);padding:7px 14px;border:1px solid var(--glass-b);border-radius:10px;">Cancelar</button>
+      <button class="btn" onclick="closeCfg()">Cancelar</button>
       <button class="save-btn" onclick="saveCfg()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOARD SETUP MODAL -->
+<div class="modal-ov" id="board-setup-ov">
+  <div class="bs-modal">
+    <div class="bs-header">
+      <div class="bs-title">⚙ Setup de Boards</div>
+      <button class="bs-close" onclick="closeBoardSetup()">✕</button>
+    </div>
+    <div class="bs-body">
+      <div class="bs-existing">
+        <div class="bs-existing-title">Boards ativos</div>
+        <div id="bs-existing-list"></div>
+      </div>
+      <div style="border-top:1px solid rgba(56,182,255,.1);padding-top:16px;margin-top:16px;">
+        <div class="bs-existing-title">Criar novo board</div>
+        <div class="bs-field">
+          <label class="bs-label">ID do squad (ex: cx)</label>
+          <input class="bs-inp" id="bs-id" placeholder="ex: cx" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_-]/g,'');">
+        </div>
+        <div class="bs-field">
+          <label class="bs-label">Nome do squad</label>
+          <input class="bs-inp" id="bs-name" placeholder="ex: Squad CX">
+        </div>
+        <div class="bs-field">
+          <label class="bs-label">Emoji</label>
+          <div class="bs-emoji-grid" id="bs-emoji-grid">
+            <div class="bs-emoji-opt sel" onclick="bsSelectEmoji(this,'💬')">💬</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🛍️')">🛍️</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'📦')">📦</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🎯')">🎯</div>
+            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🚀')">🚀</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bs-footer">
+      <button class="btn" onclick="closeBoardSetup()">Cancelar</button>
+      <button class="btn btn-p" onclick="saveNewBoard()">✅ Criar board</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- MODAL CARD NO PAINEL -->
-<div class="pc-modal-ov" id="pc-modal-ov">
-  <div class="pc-modal">
-    <div class="pc-modal-hd">
-      <div class="pc-modal-hd-title" id="pc-modal-title">Card</div>
-      <button class="x-btn" onclick="closePcModal()">✕</button>
-    </div>
-    <div class="pc-modal-body" id="pc-modal-body"></div>
-    <div class="pc-footer">
-      <a id="pc-modal-link" href="#" target="_blank" class="save-btn" style="text-decoration:none;font-size:11px;padding:6px 16px;">Abrir no Board ↗</a>
-      <button onclick="closePcModal()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<div class="version">v1.8 · painel</div>
-
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -853,956 +310,51 @@ const firebaseConfig = {
   messagingSenderId: localStorage.getItem('fb_messagingSenderId')|| '122502391131',
   appId:             localStorage.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
 };
+
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 
-window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._get=get;
+window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get;
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
-window._fbReady=true;
-window.dispatchEvent(new Event('fb-ready'));
-// Captura resultado do redirect de autenticação
-getRedirectResult(auth).then(result=>{
-  if(result?.user && sessionStorage.getItem('pendingInsc')){
-    sessionStorage.removeItem('pendingInsc');
-    window._pendingInsc=true;
-  }
-}).catch(()=>{});
 
-onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
-</script>
-
-<script>
-// ── SQUADS CONFIGURADOS ────────────────────────────────────────────
-
-// ── FILTRO DE SQUAD ────────────────────────────────────────────────
-let activeFilter = 'all';
-
-function setFilter(id){
-  activeFilter = id;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('fb-'+id)?.classList.add('active');
-  renderAll();
-}
-
-function squadVisible(sqId){
-  return activeFilter === 'all' || activeFilter === sqId;
-}
-
-// ── CONFIG DO SQUAD ────────────────────────────────────────────────
-let cfgSquadId = null;
-
-function openCfg(squadId){
-  cfgSquadId = squadId;
-  const sq = SQUADS.find(s=>s.id===squadId); if(!sq){ showToast("Squad não encontrado"); return; }
-  const d = squadData[squadId]||{};
-  const cfg = d.agilCfg||{};
-
-  document.getElementById('cfg-modal-title').textContent = '⚙ Configurar — ' + sq.icon + ' ' + sq.label;
-  document.getElementById('cfg-sprint-num').value = cfg.sprintNum||'';
-  document.getElementById('cfg-sprint-days').value = cfg.sprintDays||'14';
-  document.getElementById('cfg-sprint-start').value = cfg.sprintStart||'';
-  document.getElementById('cfg-sprint-end').value = cfg.sprintEnd||'';
-  document.getElementById('cfg-goal').value = cfg.goal||'';
-  document.getElementById('cfg-wip').value = cfg.wip||'3';
-  document.getElementById('cfg-capacity').value = cfg.capacity||'80';
-  const bmode = cfg.blockerMode||'col';
-  document.getElementById('cfg-bmode-'+bmode).checked = true;
-
-  document.getElementById('cfg-ov').classList.add('open');
-}
-
-function closeCfg(){
-  document.getElementById('cfg-ov').classList.remove('open');
-  cfgSquadId = null;
-}
-
-function calcCfgEnd(){
-  const start = document.getElementById('cfg-sprint-start').value;
-  const days = parseInt(document.getElementById('cfg-sprint-days').value||'14');
-  if(!start) return;
-  const end = new Date(start+'T00:00:00'); end.setDate(end.getDate()+days-1);
-  document.getElementById('cfg-sprint-end').value = end.toISOString().split('T')[0];
-}
-
-function saveCfg(){
-  if(!cfgSquadId) return;
-  calcCfgEnd();
-  const cfg = {
-    sprintNum: document.getElementById('cfg-sprint-num').value,
-    sprintDays: document.getElementById('cfg-sprint-days').value,
-    sprintStart: document.getElementById('cfg-sprint-start').value,
-    sprintEnd: document.getElementById('cfg-sprint-end').value,
-    goal: document.getElementById('cfg-goal').value,
-    wip: document.getElementById('cfg-wip').value,
-    capacity: document.getElementById('cfg-capacity').value,
-    blockerMode: document.querySelector('input[name="cfg-blocker"]:checked')?.value||'col',
-  };
-
-  // Salva no Firebase
-  const ref = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados/agil_cfg');
-  window._set(ref, cfg)
-    .then(()=>{ showToast('✅ Configurações salvas!'); closeCfg(); })
-    .catch(e=>{ console.error(e); showToast('❌ Erro ao salvar: '+e.message); });
-}
-
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3000);
-}
-
-// Fecha modal clicando fora
-document.addEventListener('click', e=>{
-  if(e.target.id==='cfg-ov') closeCfg();
-});
-// ── FIM CONFIG ─────────────────────────────────────────────────────
-
-
-// ── PRESENÇA GLOBAL ──────────────────────────────────────────────
-function loadPresence(){
-  SQUADS.forEach(sq=>{
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/presence'),snap=>{
-      const val=snap.val()||{};
-      const now=Date.now();
-      const online=Object.values(val).filter(u=>now-u.ts<30000).map(u=>({...u,_squad:sq}));
-      window['_presence_'+sq.id]=online;
-      renderOnline();
-    });
-  });
-}
-function renderOnline(){
-  const all=[...( window._presence_dados||[]),...(window._presence_midia||[])];
-  const el=document.getElementById('online-list'); if(!el) return;
-  const count=document.getElementById('online-count'); if(count) count.textContent=all.length;
-  if(!all.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no momento.</div>'; return; }
-  el.innerHTML=all.map(u=>{
-    const foto=u.foto?'<img src="'+u.foto+'" style="width:20px;height:20px;border-radius:50%;">':'';
-    return '<div class="online-pill">'
-      +'<span class="online-pip"></span>'
-      +foto
-      +'<span>'+(u.nome||u.init||'?')+'</span>'
-      +'<span style="font-size:9px;color:var(--txt3);background:rgba(56,182,255,.1);padding:1px 6px;border-radius:999px;">'+u._squad.icon+'</span>'
-      +'</div>';
-  }).join('');
-  // Filtra por squad ativo se necessário
-  if(activeFilter!=='all'){
-    const filtered=all.filter(u=>u._squad.id===activeFilter);
-    el.innerHTML=filtered.length
-      ? filtered.map(u=>'<div class="online-pill"><span class="online-pip"></span>'+(u.foto?'<img src="'+u.foto+'">':'')+(u.nome||u.init||'?')+'</div>').join('')
-      : '<div style="font-size:11px;color:var(--txt3);">Nenhum online neste squad.</div>';
-  }
-}
-
-// ── OKR ──────────────────────────────────────────────────────────
-function renderOKR(){
-  const el=document.getElementById('okr-list'); if(!el) return;
-  const cnt=document.getElementById('okr-count');
-  const sec=document.getElementById('okr-section-title');
-  let okrs=[];
-  SQUADS.forEach(sq=>{
-    if(!squadVisible(sq.id)) return;
-    const d=squadData[sq.id]; if(!d) return;
-    d.cards.filter(c=>!c.archived&&(c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
-      .forEach(c=>okrs.push({...c,_squad:sq}));
-  });
-  if(cnt) cnt.textContent=okrs.length;
-  if(!okrs.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum card OKR encontrado.</div>'; return; }
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">'
-    +okrs.map(c=>{
-      const sq=c._squad;
-      const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
-      return `
-    <div class="panel-card okr" onclick="openPcModal('${sq.id}','${c.id}')">
-      <div class="pc-card-chips">
-        <span class="pc-chip pc-chip-okr">🎯 OKR</span>
-        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
-        <span class="pc-col-badge">${colName}</span>
-      </div>
-      <p class="pc-card-title">${c.title}</p>
-      <div class="pc-card-footer">
-        ${c.owner?`<span>👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
-        ${c.due?`<span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
-        ${checklistPct(c)}
-      </div>
-    </div>`;
-    }).join('')+'</div>';
-}
-
-// ── RISCOS ──────────────────────────────────────────────────────
-function renderRiscos(){
-  const el=document.getElementById('risco-list'); if(!el) return;
-  const cnt=document.getElementById('risco-count');
-  let riscos=[];
-  SQUADS.forEach(sq=>{
-    if(!squadVisible(sq.id)) return;
-    const d=squadData[sq.id]; if(!d) return;
-    d.cards.filter(c=>!c.archived&&c.riscos?.length>0)
-      .forEach(c=>riscos.push({...c,_squad:sq}));
-  });
-  if(cnt) cnt.textContent=riscos.length;
-  if(!riscos.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">✅ Nenhum card com risco mapeado.</div>'; return; }
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">'
-    +riscos.map(c=>{
-      const sq=c._squad;
-      const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
-      return `
-    <div class="panel-card risco" onclick="openPcModal('${sq.id}','${c.id}')">
-      <div class="pc-card-chips">
-        <span class="pc-chip" style="background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.3);color:var(--warn);">⚠ ${c.riscos.length} risco${c.riscos.length>1?'s':''}</span>
-        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
-        <span class="pc-col-badge">${colName}</span>
-      </div>
-      <p class="pc-card-title">${c.title}</p>
-      <div style="display:flex;flex-direction:column;gap:2px;">
-        ${c.riscos.slice(0,2).map(r=>`<div style="font-size:10px;color:var(--txt3);">• ${r}</div>`).join('')}
-        ${c.riscos.length>2?`<div style="font-size:9px;color:var(--txt3);opacity:.7;">+${c.riscos.length-2} mais...</div>`:''}
-      </div>
-    </div>`;
-    }).join('')+'</div>';
-}
-
-// ── USO AGENTE ÁGIL ──────────────────────────────────────────────
-function loadAgentUsage(){
-  let totalAll=0;
-  SQUADS.forEach(sq=>{
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/agent_usage'),snap=>{
-      const val=snap.val()||{};
-      const total=val.total||0;
-      const el=document.getElementById('au-'+sq.id); if(el) el.textContent=total;
-      window['_aguse_'+sq.id]=val;
-      // Total combinado
-      const t1=window._aguse_dados?.total||0;
-      const t2=window._aguse_midia?.total||0;
-      const totalEl=document.getElementById('au-total'); if(totalEl) totalEl.textContent=t1+t2;
-      // Últimas 5 entradas combinadas
-      renderAgentLogs();
-    });
-  });
-}
-function renderAgentLogs(){
-  const logEl=document.getElementById('agent-logs'); if(!logEl) return;
-  let logs=[];
-  SQUADS.forEach(sq=>{
-    const val=window['_aguse_'+sq.id]||{};
-    const entries=Object.entries(val.logs||{}).map(([ts,l])=>({...l,_squad:sq,_ts:parseInt(ts)}));
-    logs.push(...entries);
-  });
-  logs.sort((a,b)=>b._ts-a._ts);
-  const recent=logs.slice(0,8);
-  if(!recent.length){ logEl.innerHTML=''; return; }
-  logEl.innerHTML=recent.map(l=>`
-    <div class="agent-log-item">
-      <span class="agent-log-meta">${new Date(l.ts||l._ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}<br>${l._squad.icon}</span>
-      <div>
-        <div style="font-size:10px;color:var(--cyan);font-weight:600;">${esc(l.user||'?')} · ${esc(l.tab||'daily')}</div>
-        <div style="font-size:11px;color:var(--txt2);margin-top:2px;">${esc((l.q||'').substring(0,100))}${(l.q||'').length>100?'…':''}</div>
-      </div>
-    </div>`).join('');
-}
-
-// ── MODAL CARD NO PAINEL ─────────────────────────────────────────
-function openPcModal(squadId, cardId){
-  const sq=SQUADS.find(s=>s.id===squadId); if(!sq) return;
-  const d=squadData[squadId]; if(!d) return;
-  // Busca por id exato, ou por id sem prefixo, ou por índice
-  const card=d.cards.find(c=>c.id===cardId||String(c.id)===String(cardId))
-    || d.cards.find(c=>c.title&&cardId.includes(c.id?.substring(0,8)));
-  if(!card){ console.warn('openPcModal: card não encontrado',cardId,'em',squadId); return; }
-  const colName=d.columns?.find(col=>col.id===card.col)?.name||card.col;
-  const tag=d.tags?.find(t=>t.id===card.tag);
-  
-  document.getElementById('pc-modal-title').textContent=card.title;
-  document.getElementById('pc-modal-link').href=squadBoardUrl(squadId);
-  
-  const cl=card.checklist||[];
-  const done=cl.filter(i=>i.done).length;
-  
-  const prioEmoji={'critical':'🔥 Crítica','high':'🔴 Alta','medium':'🟡 Média','low':'🟢 Baixa'};
-  document.getElementById('pc-modal-body').innerHTML=`
-    <div class="pc-chips">
-      ${tag?`<span class="pc-chip ${tag.isOKR?'pc-chip-okr':'pc-chip-tag'}">${tag.label}</span>`:''}
-      ${card.isOKR&&!tag?.isOKR?'<span class="pc-chip pc-chip-okr">🎯 OKR</span>':''}
-      <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label}</span>
-      <span class="pc-chip pc-chip-col">${colName}</span>
-      ${card.priority?`<span class="pc-chip pc-chip-prio">${prioEmoji[card.priority]||card.priority}</span>`:''}
-    </div>
-
-    ${card.desc?`<div class="pc-section">
-      <div class="pc-section-lbl">Descrição</div>
-      <div class="pc-section-val">${card.desc}</div>
-    </div>`:''}
-
-    ${card.po?`<div class="pc-section po">
-      <div class="pc-section-lbl">🎯 Insights do PO</div>
-      <div class="pc-section-val">${card.po}</div>
-    </div>`:''}
-
-    ${(card.owner||card.due||card.sp)?`<div class="pc-meta-row">
-      ${card.owner?`<div class="pc-meta-item"><div class="lbl">Responsável</div><div class="val">👤 ${resolveOwnerName(card.owner,squadId)}</div></div>`:''}
-      ${card.due?`<div class="pc-meta-item"><div class="lbl">Prazo</div><div class="val">📅 ${new Date(card.due+'T00:00:00').toLocaleDateString('pt-BR')}</div></div>`:''}
-      ${card.sp?`<div class="pc-meta-item"><div class="lbl">Story Points</div><div class="val">${card.sp} pts</div></div>`:''}
-    </div>`:''}
-
-    ${cl.length?`<div class="pc-section">
-      <div class="pc-section-lbl">Checklist (${done}/${cl.length})</div>
-      <div class="pc-cl-bar"><div class="pc-cl-fill" style="width:${Math.round(done/cl.length*100)}%;"></div></div>
-      ${cl.map(i=>`<div class="pc-cl-item${i.done?' done':''}">${i.done?'✓':'○'} ${i.t}</div>`).join('')}
-    </div>`:''}
-
-    ${card.riscos?.length?`<div class="pc-section riscos">
-      <div class="pc-section-lbl">⚠ Riscos (${card.riscos.length})</div>
-      ${card.riscos.map(r=>`<div class="pc-section-val" style="padding:3px 0;border-bottom:1px solid rgba(255,209,102,.1);">• ${r}</div>`).join('')}
-    </div>`:''}
-
-    ${card.blockerReason?`<div class="pc-section blocker">
-      <div class="pc-section-lbl">🚧 Impedimento</div>
-      <div class="pc-section-val">${card.blockerReason}</div>
-    </div>`:''}
-  `;
-  
-  document.getElementById('pc-modal-ov').classList.add('open');
-}
-function closePcModal(){
-  document.getElementById('pc-modal-ov').classList.remove('open');
-}
-
-// Event delegation para botão ⚙ Config dos squad cards
-document.addEventListener('click', function(e){
-  const btn = e.target.closest('[data-sqid]');
-  if(btn && btn.tagName === 'BUTTON') openCfg(btn.dataset.sqid);
-});
-
-document.addEventListener('click',e=>{if(e.target.id==='pc-modal-ov')closePcModal();});
-
-// ── HELPER ───────────────────────────────────────────────────────
-function checklistPct(c){
-  const cl=c.checklist||[]; if(!cl.length) return '';
-  const d=cl.filter(i=>i.done).length;
-  return `<span>☑ ${d}/${cl.length}</span>`;
-}
-// ── FIM PAINEL JS ────────────────────────────────────────────────
-
-
-// ── CALENDÁRIO DO PAINEL ─────────────────────────────────────────
-const PCAL_COLORS=[
-  {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
-  {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Squad Mídia'},
-  {id:'gestao',  bg:'rgba(150,80,220,.8)',  txt:'#fff', label:'Gestão Digital'},
-  {id:'geral',   bg:'rgba(255,209,102,.8)', txt:'#333', label:'Geral'},
-  {id:'blue',    bg:'rgba(37,99,201,.8)',   txt:'#fff', label:'Azul'},
-  {id:'danger',  bg:'rgba(255,107,107,.8)', txt:'#fff', label:'Urgente'},
-];
-// Cores dos boards individuais mapeadas pelo squad
-const SQUAD_COLOR_MAP={dados:'dados',midia:'midia'};
-
-let pcalYear=new Date().getFullYear();
-let pcalMonth=new Date().getMonth();
-let pcalTab='all';
-let pcalEvents=[]; // eventos gerais do painel (gestão + geral)
-let pcalEditId=null;
-let pcalShowSection=false;
-// Eventos dos boards individuais carregados em squadData já existem
-// Eventos de gestão: Firebase kanban/painel/cal_events
-
-function togglePcalSection(){
-  pcalShowSection=!pcalShowSection;
-  document.getElementById('pcal-section').style.display=pcalShowSection?'block':'none';
-  document.getElementById('btn-pcal').style.background=pcalShowSection?'rgba(29,233,182,.15)':'';
-  document.getElementById('btn-pcal').style.borderColor=pcalShowSection?'rgba(29,233,182,.5)':'rgba(29,233,182,.3)';
-  if(pcalShowSection){ renderPcal(); renderPcalGestao(); }
-}
-
-function setPcalTab(tab){
-  pcalTab=tab;
-  document.querySelectorAll('.pcal-tab').forEach(t=>t.classList.remove('on'));
-  document.getElementById('pcal-tab-'+tab)?.classList.add('on');
-  document.querySelectorAll('.pcal-content').forEach(c=>c.classList.remove('on'));
-  // Tabs all/dados/midia usam o mesmo grid
-  if(tab==='gestao'){
-    document.getElementById('pcal-gestao').classList.add('on');
-    renderPcalGestao();
+onAuthStateChanged(auth,user=>{ 
+  if(user) {
+    document.getElementById('login-ov').style.display='none';
+    document.getElementById('app-root').style.display='block';
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    initApp();
   } else {
-    document.getElementById('pcal-all').classList.add('on');
-    // Atualiza filtro de squad
-    const sel=document.getElementById('pcal-filter-sel');
-    if(sel&&tab!=='all') sel.value=tab; else if(sel) sel.value='all';
-    renderPcal();
+    document.getElementById('login-ov').style.display='flex';
+    document.getElementById('app-root').style.display='none';
   }
-}
-
-function pcalNav(dir){
-  pcalMonth+=dir;
-  if(pcalMonth>11){pcalMonth=0;pcalYear++;}
-  if(pcalMonth<0){pcalMonth=11;pcalYear--;}
-  renderPcal(); renderPcalGestao();
-}
-function pcalGoToday(){ pcalYear=new Date().getFullYear(); pcalMonth=new Date().getMonth(); renderPcal(); renderPcalGestao(); }
-
-function getAllPcalEvents(){
-  // Junta eventos dos boards + eventos do painel
-  const boardEvs=[];
-  SQUADS.forEach(sq=>{
-    const d=squadData[sq.id]; if(!d?.cal_events) return;
-    const evs=Array.isArray(d.cal_events)?d.cal_events:Object.values(d.cal_events);
-    evs.forEach(ev=>boardEvs.push({...ev, _squad:sq.id, _source:'board'}));
-  });
-  const panelEvs=pcalEvents.map(ev=>({...ev, _source:'painel'}));
-  return [...boardEvs,...panelEvs];
-}
-
-function renderPcal(){
-  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const lbl=document.getElementById('pcal-month-lbl');
-  if(lbl) lbl.textContent=MESES[pcalMonth]+' '+pcalYear;
-  const grid=document.getElementById('pcal-grid'); if(!grid) return;
-  grid.innerHTML='';
-  const today=new Date(); today.setHours(0,0,0,0);
-  const first=new Date(pcalYear,pcalMonth,1);
-  const last=new Date(pcalYear,pcalMonth+1,0);
-  const startDay=first.getDay();
-  const prevLast=new Date(pcalYear,pcalMonth,0);
-  // Filtro de squad
-  const filterSq=document.getElementById('pcal-filter-sel')?.value||pcalTab;
-  const allEvs=getAllPcalEvents().filter(ev=>{
-    if(filterSq==='all'||filterSq==='geral') return true;
-    return ev._squad===filterSq||ev.squad===filterSq||ev._squad===undefined;
-  });
-  // Dias mês anterior
-  for(let i=startDay-1;i>=0;i--)
-    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth-1,prevLast.getDate()-i),true,allEvs));
-  // Dias do mês
-  for(let d=1;d<=last.getDate();d++){
-    const dt=new Date(pcalYear,pcalMonth,d);
-    grid.appendChild(makePcalDay(dt,false,allEvs,dt.getTime()===today.getTime()));
-  }
-  // Preenche
-  const rem=(7-grid.children.length%7)%7;
-  for(let d=1;d<=rem&&rem<7;d++)
-    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth+1,d),true,allEvs));
-  renderPcalLegend('pcal-legend',allEvs);
-}
-
-function renderPcalGestao(){
-  const grid=document.getElementById('pcal-gestao-grid'); if(!grid) return;
-  grid.innerHTML='';
-  const today=new Date(); today.setHours(0,0,0,0);
-  const first=new Date(pcalYear,pcalMonth,1);
-  const last=new Date(pcalYear,pcalMonth+1,0);
-  const startDay=first.getDay();
-  const prevLast=new Date(pcalYear,pcalMonth,0);
-  const gestaoEvs=pcalEvents.filter(ev=>ev.squad==='gestao'||ev.squad==='geral');
-  for(let i=startDay-1;i>=0;i--)
-    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth-1,prevLast.getDate()-i),true,gestaoEvs));
-  for(let d=1;d<=last.getDate();d++){
-    const dt=new Date(pcalYear,pcalMonth,d);
-    grid.appendChild(makePcalDay(dt,false,gestaoEvs,dt.getTime()===today.getTime()));
-  }
-  const rem=(7-grid.children.length%7)%7;
-  for(let d=1;d<=rem&&rem<7;d++)
-    grid.appendChild(makePcalDay(new Date(pcalYear,pcalMonth+1,d),true,gestaoEvs));
-  renderPcalLegend('pcal-gestao-legend',gestaoEvs);
-}
-
-function makePcalDay(date,otherMonth,evs,isToday=false){
-  const ds=date.toISOString().split('T')[0];
-  const dayEvs=evs.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
-  const div=document.createElement('div');
-  div.className='pcal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
-  div.innerHTML=`<div class="pcal-day-num">${date.getDate()}</div>`
-    +dayEvs.slice(0,2).map(ev=>{
-      const squad=ev._squad||ev.squad||'geral';
-      const col=PCAL_COLORS.find(c=>c.id===squad)||PCAL_COLORS.find(c=>c.id===ev.color)||PCAL_COLORS[3];
-      return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
-        onclick="event.stopPropagation();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')"
-        title="${ev.title}">${ev.title}</div>`;
-    }).join('')
-    +(dayEvs.length>2?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-2} mais</div>`:'');
-  div.onclick=()=>openPevModal(ds);
-  return div;
-}
-
-function renderPcalLegend(elId, evs){
-  const el=document.getElementById(elId); if(!el) return;
-  const squadsPresentes=new Set(evs.map(ev=>ev._squad||ev.squad||'geral'));
-  el.innerHTML=[...squadsPresentes].map(sq=>{
-    const col=PCAL_COLORS.find(c=>c.id===sq)||PCAL_COLORS[3];
-    return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label||sq}</div>`;
-  }).join('');
-}
-
-// ── MODAL EVENTO PAINEL ──────────────────────────────────────────
-function openPevModal(dateStr='', evId='', source='painel'){
-  pcalEditId=evId||null;
-  const ev=evId?pcalEvents.find(e=>e.id===evId):null;
-  document.getElementById('pev-modal-title').textContent=ev?'Editar Evento':'Novo Evento';
-  document.getElementById('pev-title').value=ev?.title||'';
-  document.getElementById('pev-start').value=ev?.start||dateStr||new Date().toISOString().split('T')[0];
-  document.getElementById('pev-end').value=ev?.end||dateStr||'';
-  document.getElementById('pev-desc').value=ev?.desc||'';
-  document.getElementById('pev-link').value=ev?.link||'';
-  document.getElementById('pev-squad').value=ev?.squad||'gestao';
-  document.getElementById('pev-del-btn').style.display=ev?'':'none';
-  renderPevColors(ev?.color||'gestao');
-  document.getElementById('pev-modal-ov').classList.add('open');
-}
-function closePevModal(){ document.getElementById('pev-modal-ov').classList.remove('open'); pcalEditId=null; }
-
-function renderPevColors(sel){
-  document.getElementById('pev-colors').innerHTML=PCAL_COLORS.map(col=>
-    `<button class="pev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};"
-      onclick="selectPevColor('${col.id}')" title="${col.label}"></button>`
-  ).join('');
-}
-function selectPevColor(id){ renderPevColors(id); }
-function getSelPevColor(){
-  const btns=[...document.querySelectorAll('#pev-colors .pev-color-btn')];
-  const idx=btns.findIndex(b=>b.classList.contains('sel'));
-  return PCAL_COLORS[idx]?.id||'gestao';
-}
-
-function savePevEvent(){
-  const title=document.getElementById('pev-title').value.trim(); if(!title) return;
-  const squad=document.getElementById('pev-squad').value;
-  const ev={
-    id:pcalEditId||'pev'+Date.now(), title,
-    start:document.getElementById('pev-start').value,
-    end:document.getElementById('pev-end').value||document.getElementById('pev-start').value,
-    desc:document.getElementById('pev-desc').value,
-    link:document.getElementById('pev-link').value,
-    squad, color:getSelPevColor(),
-    createdBy:window._currentUser?.displayName||'?',
-    updatedAt:new Date().toISOString(),
-  };
-  if(pcalEditId){ const idx=pcalEvents.findIndex(e=>e.id===pcalEditId); if(idx>-1) pcalEvents[idx]=ev; }
-  else pcalEvents.push(ev);
-  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
-    .then(()=>{ showToast('✅ Evento salvo!'); closePevModal(); renderPcal(); renderPcalGestao(); })
-    .catch(e=>showToast('❌ '+e.message));
-}
-function deletePevEvent(){
-  if(!pcalEditId||!confirm('Excluir este evento?')) return;
-  pcalEvents=pcalEvents.filter(e=>e.id!==pcalEditId);
-  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
-    .then(()=>{ showToast('🗑 Evento excluído'); closePevModal(); renderPcal(); renderPcalGestao(); });
-}
-
-
-function loadPcalEvents(){
-  // Eventos do painel (gestão + geral)
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
-    const val=snap.val();
-    pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
-    if(pcalShowSection){ renderPcal(); renderPcalGestao(); }
-  });
-
-  // Eventos dos squads (cal_events de cada board)
-  SQUADS.forEach(sq=>{
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/cal_events'),snap=>{
-      const val=snap.val();
-      if(!squadData[sq.id]) squadData[sq.id]={};
-      squadData[sq.id].cal_events=val?(Array.isArray(val)?val:Object.values(val)):[];
-      if(pcalShowSection) renderPcal();
-    });
-  });
-}
-
-// Event delegation para botão ⚙ Config dos squad cards
-document.addEventListener('click', function(e){
-  const btn = e.target.closest('[data-sqid]');
-  if(btn && btn.tagName === 'BUTTON') openCfg(btn.dataset.sqid);
 });
 
-document.addEventListener('click',e=>{ if(e.target.id==='pev-modal-ov') closePevModal(); });
-// ── FIM CALENDÁRIO PAINEL ─────────────────────────────────────────
-
-
-// ── MONITORAMENTO DE ERROS ─────────────────────────────────────────
-let allErrors = [];   // {id, squad, entry}
-let errFilterSquad = 'all';
-let errFilterCat   = 'all';
-let errFilterStatus= 'all';
-let monitorVisible = false;
-let errStats = {}; // {squad: {date: count}}
-
-const CAT_LABELS = {firebase:'🔥 Firebase',agente:'🤖 Agente',importacao:'📥 Import',ui:'💻 UI',geral:'⚙ Geral'};
-const STATUS_CYCLE = {novo:'visto', visto:'resolvido', resolvido:'novo'};
-
-function toggleMonitorSection(){
-  monitorVisible=!monitorVisible;
-  document.getElementById('monitor-section').style.display=monitorVisible?'block':'none';
-  const btn=document.getElementById('btn-monitor');
-  btn.style.background=monitorVisible?'rgba(255,107,107,.15)':'';
-  btn.style.borderColor=monitorVisible?'rgba(255,107,107,.5)':'rgba(255,107,107,.3)';
-  if(monitorVisible) renderErrors();
-}
-
-function setErrFilter(type, val){
-  if(type==='squad') errFilterSquad=val;
-  if(type==='cat')   errFilterCat=val;
-  if(type==='status') errFilterStatus=val;
-  // Atualiza botões
-  if(type==='squad'){
-    ['all','dados','midia'].forEach(v=>document.getElementById('ef-squad-'+v)?.classList.toggle('active',v===val));
-  }
-  if(type==='cat'){
-    ['all','firebase','agente','ui','importacao'].forEach(v=>document.getElementById('ef-cat-'+v)?.classList.toggle('active',v===val));
-  }
-  if(type==='status'){
-    ['all','novo','visto'].forEach(v=>document.getElementById('ef-status-'+v)?.classList.toggle('active',v===val));
-  }
-  renderErrors();
-}
-
-function getFilteredErrors(){
-  return allErrors.filter(({squad,entry})=>{
-    if(errFilterSquad!=='all'&&squad!==errFilterSquad) return false;
-    if(errFilterCat!=='all'&&entry.category!==errFilterCat) return false;
-    if(errFilterStatus!=='all'&&entry.status!==errFilterStatus) return false;
-    return true;
-  }).sort((a,b)=>b.entry.ts.localeCompare(a.entry.ts));
-}
-
-function renderErrors(){
-  const filtered=getFilteredErrors();
-  const open=allErrors.filter(e=>e.entry.status==='novo').length;
-  const resolved=allErrors.filter(e=>e.entry.status==='resolvido').length;
-  const dados=allErrors.filter(e=>e.squad==='dados').length;
-  const midia=allErrors.filter(e=>e.squad==='midia').length;
-  const last24h=allErrors.filter(e=>{
-    const ts=new Date(e.entry.ts); const now=new Date();
-    return (now-ts)<86400000;
-  }).filter(e=>e.entry.status!=='resolvido').length;
-
-  // Stats
-  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  set('es-open',last24h);
-  set('es-dados',dados);
-  set('es-midia',midia);
-  set('es-resolved',resolved);
-  set('err-open-count',open+' abertos');
-  document.getElementById('err-open-count').style.background=open?'rgba(255,107,107,.2)':'rgba(29,233,182,.1)';
-  document.getElementById('err-open-count').style.color=open?'var(--danger)':'var(--teal)';
-  document.getElementById('err-open-count').style.borderColor=open?'rgba(255,107,107,.3)':'rgba(29,233,182,.2)';
-
-  // Gráfico 7 dias
-  renderErrChart();
-
-  // Lista
-  const el=document.getElementById('err-list'); if(!el) return;
-  if(!filtered.length){
-    el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:12px 0;">✅ Nenhum erro encontrado com os filtros atuais.</div>';
-    return;
-  }
-  el.innerHTML=filtered.slice(0,50).map(({id,squad,entry})=>{
-    const cat=entry.category||'geral';
-    const status=entry.status||'novo';
-    const sq=SQUADS.find(s=>s.id===squad);
-    const ts=new Date(entry.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const stackLines=(entry.stack||'').split('\n').slice(0,3).filter(Boolean);
-    return '<div class="err-log-item cat-'+cat+' status-'+status+'">'
-
-      // Header: badge + mensagem + status
-      +'<div class="err-hd">'
-      +'<span class="err-badge cat-'+cat+'">'+(CAT_LABELS[cat]||cat)+'</span>'
-      +'<span class="err-msg">'+(sq?sq.icon+' ':'')+((entry.msg||'Erro desconhecido').substring(0,80))+'</span>'
-      +'<span class="err-status '+status+'" data-eid="'+id+'" data-esq="'+squad+'" onclick="cycleErrStatus(this.dataset.eid,this.dataset.esq)">'
-      +({novo:'🔴 Novo',visto:'🟡 Visto',resolvido:'✅ OK'}[status]||status)
-      +'</span>'
-      +'</div>'
-
-      // Meta: data, usuário, arquivo
-      +'<div class="err-meta">'
-      +'<span>📅 '+ts+'</span>'
-      +'<span>👤 '+(entry.user||'?')+'</span>'
-      +(entry.source?'<span>📄 '+entry.source.split('/').pop()+(entry.line?' :'+entry.line:'')+'</span>':'')
-      +'</div>'
-
-      // Stack trace compacto (só primeiras 2 linhas, fonte mono pequena)
-      +(stackLines.length
-        ? '<div class="err-stack" style="font-size:9px;color:var(--txt3);font-family:monospace;'
-          +'background:rgba(0,0,0,.3);border-radius:5px;padding:5px 8px;margin-top:4px;'
-          +'white-space:normal;word-break:break-all;line-height:1.5;display:none;" '
-          +'onclick="this.classList.toggle(\'open\')">'
-          +stackLines.map(l=>l.trim().substring(0,120)).join('<br>')
-          +'</div>'
-        : '')
-
-      +'</div>';
-  }).join('');
-}
-
-function renderErrChart(){
-  const chart=document.getElementById('err-chart'); if(!chart) return;
-  const days=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    days.push(d.toISOString().split('T')[0]);
-  }
-  // Conta por dia
-  const counts=days.map(day=>{
-    // Primary: use stored error_stats (incremented in real-time by kanban)
-    let n=0;
-    SQUADS.forEach(sq=>{
-      if(errFilterSquad!=='all'&&sq.id!==errFilterSquad) return;
-      n+=(errStats[sq.id]?.[day]||0);
-    });
-    // Fallback: if no stored stats, derive from allErrors timestamps
-    if(n===0){
-      n=allErrors.filter(e=>{
-        if(errFilterSquad!=='all'&&e.squad!==errFilterSquad) return false;
-        return (e.entry.ts||'').startsWith(day);
-      }).length;
-    }
-    return n;
-  });
-  const maxN=Math.max(...counts,1);
-  chart.innerHTML=days.map((day,i)=>{
-    const n=counts[i];
-    const pct=Math.round(n/maxN*100);
-    const lbl=day.split('-').slice(1).join('/');
-    const color=n===0?'rgba(56,182,255,.1)':n>5?'rgba(255,107,107,.7)':n>2?'rgba(255,209,102,.7)':'rgba(56,182,255,.5)';
-    const barH=Math.max(Math.round(pct*0.8),2); // px, out of ~80px parent
-    return `<div class="err-bar-wrap" title="${day}: ${n} erros">
-      <div class="err-bar" style="height:${barH}px;background:${color};" onclick="setDateFilter('${day}')"></div>
-      <div class="err-bar-lbl">${lbl}${n>0?'<br><b>'+n+'</b>':''}</div>
-    </div>`;
-  }).join('');
-}
-
-function cycleErrStatus(errId, squad){
-  const item=allErrors.find(e=>e.id===errId&&e.squad===squad); if(!item) return;
-  const next=STATUS_CYCLE[item.entry.status||'novo']||'novo';
-  item.entry.status=next;
-  window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+errId+'/status'),next)
-    .then(()=>renderErrors()).catch(e=>showToast('❌ '+e.message));
-}
-
-function resolveAllErrors(){
-  const open = allErrors.filter(e => (e.entry.status||'novo') !== 'resolvido');
-  if(!open.length){ showPainelToast('Nenhum erro aberto para resolver.'); return; }
-  if(!confirm('Marcar '+open.length+' erro(s) aberto(s) como Resolvido?')) return;
-  Promise.all(open.map(({id, squad}) => {
-    const item = allErrors.find(e => e.id===id && e.squad===squad);
-    if(item) item.entry.status = 'resolvido';
-    return window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+id+'/status'),'resolvido');
-  })).then(() => {
-    renderErrors();
-    showPainelToast('✅ '+open.length+' erro(s) marcado(s) como Resolvido!');
-  }).catch(e => showPainelToast('❌ Erro ao salvar: '+e.message));
-}
-
-function clearResolvedErrors(){
-  if(!confirm('Remover todos os erros resolvidos do log?')) return;
-  const toDelete=allErrors.filter(e=>e.entry.status==='resolvido');
-  Promise.all(toDelete.map(({id,squad})=>
-    window._set(window._ref(window._db,'kanban/squads/'+squad+'/error_logs/'+id),null)
-  )).then(()=>{ showToast('✅ Erros resolvidos removidos'); });
-}
-
-function loadErrorLogs(){
-  SQUADS.forEach(sq=>{
-    // Error logs
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/error_logs'),snap=>{
-      const val=snap.val()||{};
-      // Remove entradas deste squad e reinsere
-      allErrors=allErrors.filter(e=>e.squad!==sq.id);
-      Object.entries(val).forEach(([id,entry])=>{
-        if(entry&&entry.ts) allErrors.push({id,squad:sq.id,entry});
-      });
-      // Atualiza badge no botão
-      const open=allErrors.filter(e=>e.entry.status==='novo').length;
-      const btn=document.getElementById('btn-monitor');
-      if(btn) btn.textContent='🐛 Bugs'+(open?` (${open})`:'');
-      if(monitorVisible) renderErrors();
-    });
-    // Stats diários
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/error_stats'),snap=>{
-      const val=snap.val()||{};
-      errStats[sq.id]=val;
-      if(monitorVisible) renderErrChart();
-    });
-  });
-}
-// ── FIM MONITORAMENTO ─────────────────────────────────────────────
-
-
-
-// ── GERENCIAMENTO DE ADMs ─────────────────────────────────────────
-function loadAdmList(){
-  // Carrega ADMs extras salvos no Firebase
-  window._get(window._ref(window._db,'kanban/config/adm_emails')).then(snap=>{
-    const saved=snap.val();
-    if(saved&&Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
-    renderAdmList();
-  }).catch(()=>renderAdmList());
-}
-
-function renderAdmList(){
-  const list=document.getElementById('pcfg-adm-list'); if(!list) return;
-  list.innerHTML='';
-  ADM_EMAILS.forEach(email=>{
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
-    const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=email;
-    const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(255,209,102,.15);color:var(--warn);border:1px solid rgba(255,209,102,.3);'; badge.textContent='ADM';
-    const rm=document.createElement('button');
-    rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
-    rm.textContent='✕'; rm.title='Remover ADM';
-    const emailCopy=email;
-    rm.onclick=()=>removeAdmEmail(emailCopy);
-    row.appendChild(lbl); row.appendChild(badge); row.appendChild(rm);
-    list.appendChild(row);
+function initApp(){
+  loadExtraSquads(()=>{
+    loadAll();
+    renderSquadLinks();
+    renderFilterBar();
   });
 }
 
-function addAdmEmail(){
-  const email=document.getElementById('pcfg-adm-email')?.value?.trim();
-  if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
-  if(ADM_EMAILS.includes(email)){ showToast('Já é ADM'); return; }
-  ADM_EMAILS.push(email);
-  saveAdmEmails();
-  // Atualiza role no Firebase do usuário se existir
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
-    const entry=Object.entries(val).find(([uid,u])=>u.email===email);
-    if(entry){
-        window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'adm')
-          .catch(e=>console.warn('Não foi possível setar role ADM (Firebase Rules):',e.message));
-      }
-  });
-  document.getElementById('pcfg-adm-email').value='';
-}
-
-function removeAdmEmail(email){
-  if(!confirm('Remover '+email+' dos ADMs?')) return;
-  ADM_EMAILS=ADM_EMAILS.filter(e=>e!==email);
-  saveAdmEmails();
-}
-
-function saveAdmEmails(){
-  window._set(window._ref(window._db,'kanban/config/adm_emails'), ADM_EMAILS)
-    .then(()=>{ showToast('✅ ADMs atualizados'); renderAdmList(); })
-    .catch(e=>showToast('❌ '+e.message));
-}
-// ── FIM GERENCIAMENTO ADMs ────────────────────────────────────────
-
-// ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
-function setPcfgTab(tab){
-  ['sprint','users','adm'].forEach(t=>{
-    const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
-    const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
-  });
-  if(tab==='users') loadPcfgUsers();
-  if(tab==='adm')  renderAdmList();
-}
-
-function loadPcfgUsers(){
-  if(!cfgSquadId) return;
-  const list=document.getElementById('pcfg-users-list'); if(!list) return;
-  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
-    const membersArr=Object.entries(val).filter(([uid,u])=>{
-      if(u.squads) return u.squads[cfgSquadId]===true;
-      return u.inscrito===true||u.inscrito==='true';
-    });
-    if(!membersArr.length){
-      list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito.</div>';
-      return;
-    }
-    const ROLES=['adm','po','organizador','membro','convidado'];
-    list.innerHTML='';
-    membersArr.forEach(([uid,u])=>{
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:4px;';
-      // Avatar
-      const av=document.createElement(u.foto?'img':'div');
-      if(u.foto){ av.src=u.foto; av.style.cssText='width:28px;height:28px;border-radius:50%;object-fit:cover;'; }
-      else{ av.style.cssText='width:28px;height:28px;border-radius:50%;background:rgba(37,99,201,.4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;'; av.textContent=u.init||'?'; }
-      // Info
-      const info=document.createElement('div'); info.style.flex='1';
-      const nome=document.createElement('div'); nome.style.cssText='font-size:11px;font-weight:600;'; nome.textContent=u.nome||u.email||'?';
-      const email=document.createElement('div'); email.style.cssText='font-size:9px;color:var(--txt3);'; email.textContent=u.email||'';
-      info.appendChild(nome); info.appendChild(email);
-      // Select
-      const sel=document.createElement('select');
-      sel.style.cssText='padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;';
-      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(u.role===r) opt.selected=true; sel.appendChild(opt); });
-      sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
-      row.appendChild(av); row.appendChild(info); row.appendChild(sel);
-      list.appendChild(row);
-    });
-  }).catch(e=>{ list.innerHTML='<div style="font-size:11px;color:var(--danger);">Erro: '+e.message+'</div>'; });
-}
-function updateUserRole(uid, role){
-  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'),role)
-    .then(()=>{ showToast('✅ Role atualizado'); loadPcfgUsers(); })
-    .catch(e=>{
-      if(e.code==='PERMISSION_DENIED'||e.message?.includes('permission')){
-        showToast('⚠ Firebase Rules bloqueou. Adicione a regra de ADM nas Database Rules.');
-        console.warn('Para permitir ADMs editarem roles, adicione nas Firebase Rules:\n'+
-          '".write": "auth != null && root.child(\'kanban/usuarios/\'+auth.uid+\'/role\').val() === \'adm\'"');
-      } else {
-        showToast('❌ '+e.message);
-      }
-    });
-}
-
-function addGuestByEmail(){
-  const email=document.getElementById('pcfg-guest-email')?.value?.trim(); if(!email) return;
-  // Busca usuário pelo email no Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
-    const entry=Object.entries(val).find(([uid,u])=>u.email===email);
-    if(entry){
-      const [uid,u]=entry;
-      const upd={role:u.role||'convidado'}; upd['squads/'+cfgSquadId]=true;
-      window._update(window._ref(window._db,'kanban/usuarios/'+uid),upd)
-        .then(()=>{ showToast('✅ '+email+' adicionado como convidado'); loadPcfgUsers(); document.getElementById('pcfg-guest-email').value=''; });
-    } else {
-      showToast('⚠ Usuário não encontrado — precisa ter feito login ao menos uma vez');
-    }
-  });
-}
-// ── FIM GERENCIAMENTO USUÁRIOS ─────────────────────────────────────
-
-
-
-
-// ── FILTRO DE COLUNAS POR SQUAD ──────────────────────────────────
-// hiddenColsBySq: { dados: Set(['done',...]), midia: Set([...]) }
-let hiddenColsBySq = {};
-function initHiddenCols(){
-  SQUADS.forEach(sq=>{
-    const saved = localStorage.getItem('hcols_'+sq.id);
-    hiddenColsBySq[sq.id] = new Set(saved ? JSON.parse(saved) : []);
-  });
-}
-function isColVisible(sqId, colId){
-  return !hiddenColsBySq[sqId]?.has(colId);
-}
-function toggleSqCol(sqId, colId){
-  const s = hiddenColsBySq[sqId]||new Set();
-  if(s.has(colId)) s.delete(colId); else s.add(colId);
-  hiddenColsBySq[sqId] = s;
-  localStorage.setItem('hcols_'+sqId, JSON.stringify([...s]));
-  renderAll();
-}
-// ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
-
-// Squads base — sempre presentes
+// ESTADO GLOBAL
 let SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
 ];
-// URL helper: abre o board de um squad no kanban unificado
-function squadBoardUrl(squadId){ return 'kanban.html?squad=' + squadId; }
+let squadData = {};
+let snapshots = {};
+let activeFilter = 'all';
+let hiddenColsBySq = {};
 
-// Carrega squads criados via painel de setup do Firebase
+const DEFAULT_COLUMNS = ['backlog','todo','progress','blocker','done'];
+const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
+const COL_COLORS = {backlog:'#888',todo:'#38b6ff',progress:'#1de9b6',blocker:'#ff6b6b',done:'#639922'};
+
 function loadExtraSquads(callback){
   window._get(window._ref(window._db,'kanban/squads_meta')).then(snap=>{
     const val=snap.val()||{};
@@ -1812,86 +364,23 @@ function loadExtraSquads(callback){
         SQUADS.push({id, label:meta.label, icon:meta.emoji||'🐟', color:meta.color||'#38b6ff', wipLimit:parseInt(meta.wipLimit)||3});
       }
     });
-    // Atualiza links dinâmicos no header
-    renderSquadLinks();
     if(callback) callback();
   }).catch(()=>{ if(callback) callback(); });
 }
 
-// Renderiza os links "Abrir Board" no header dinamicamente
-function renderSquadLinks(){
-  const wrap = document.getElementById('squad-links-wrap');
-  if(!wrap) return;
-  wrap.innerHTML = SQUADS.map(sq=>
-    `<a href="kanban.html?squad=${sq.id}" target="_blank" class="btn" style="color:${sq.color};border-color:${sq.color}33;">${sq.icon} ${sq.label.replace('Squad ','')}</a>`
-  ).join('');
-}
-const DEFAULT_COLUMNS = ['backlog','todo','progress','blocker','done'];
-const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
-const COL_COLORS = {backlog:'#888',todo:'#38b6ff',progress:'#1de9b6',blocker:'#ff6b6b',done:'#639922'};
-
-// Estado carregado
-let squadData = {};
-let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
-function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); } // {dados:{cards,columns,agilCfg}, midia:{...}}
-let snapshots = {};  // {dados:{date:snap,...}, midia:{...}}
-
-function doSignIn(){
-  const err=document.getElementById('login-err'); err.style.display='none';
-  window._signIn().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; });
-}
-function doSignOut(){ window._signOut(); }
-
-window.addEventListener('auth-change',e=>{
-  const user=e.detail;
-  if(user){
-    if(user.email && !user.email.endsWith('@ciahering.com.br')){
-      document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br';
-      document.getElementById('login-err').style.display='block';
-      window._signOut(); return;
-    }
-    document.getElementById('login-ov').style.display='none';
-    document.getElementById('app-root').style.display='block';
-    document.getElementById('user-name').textContent=user.displayName||user.email;
-    const av=document.getElementById('user-avatar');
-    if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
-  } else {
-    document.getElementById('login-ov').style.display='flex';
-    document.getElementById('app-root').style.display='none';
-  }
-});
-
-window.addEventListener('fb-ready',()=>{
-  initHiddenCols();
-  loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); });
-  loadPresence();
-  loadAgentUsage();
-  loadPcalEvents();
-  loadErrorLogs();
-  loadAdmList();
-});
-
 function loadAll(){
   SQUADS.forEach(sq=>{
-    // Ouve dados do squad
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados'),snap=>{
       const val=snap.val()||{};
       squadData[sq.id]={
-        cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({
-          ...card,
-          // Garante que todo card tem um id único e consistente
-          id: card.id || ('idx_'+i),
-        })):[],
-        columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
-        tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
-        agilCfg:val.agil_cfg||{},
+        cards: val.cards ? (Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({...card, id:card.id||('idx_'+i)})) : [],
+        columns: val.columns ? (Array.isArray(val.columns)?val.columns:Object.values(val.columns)) : DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+        agilCfg: val.agil_cfg||{},
       };
       renderAll();
     });
-    // Ouve snapshots (tendência)
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/snapshots'),snap=>{
-      const val=snap.val()||{};
-      snapshots[sq.id]=val;
+      snapshots[sq.id]=snap.val()||{};
       renderTrend();
     });
   });
@@ -1900,36 +389,30 @@ function loadAll(){
 function renderAll(){
   updateTimestamp();
   renderSquadCards();
-  renderConsolidated();
-  renderComparison();
-  renderBlockers();
-  renderColDist();
   renderOKR();
+  renderBlockers();
   renderRiscos();
 }
 
 function updateTimestamp(){
-  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const now=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('last-update').textContent='Atualizado às '+now;
 }
 
-// ── SQUAD CARDS ────────────────────────────────────────────────────
 function renderSquadCards(){
   const container=document.getElementById('squad-cards'); if(!container) return;
   container.innerHTML='';
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
-    if(!squadVisible(sq.id)) return;
-    const cards=d.cards.filter(c=>!c.archived&&isColVisible(sq.id,c.col));
-    const wip=cards.filter(c=>c.col==='progress').length;
-    const done=cards.filter(c=>c.col==='done').length;
-    const bl=cards.filter(c=>c.col==='blocker').length;
-    const total=cards.length;
-    const wipLimit=parseInt(d.agilCfg?.wip||sq.wipLimit||3);
-    const wipColor=wip>wipLimit?'var(--danger)':wip===wipLimit?'var(--warn)':'var(--teal)';
-    const spDone=cards.filter(c=>c.col==='done').reduce((s,c)=>s+parseInt(c.sp||0),0);
-    const sprint=d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'Sprint —';
-    const goal=d.agilCfg?.goal||'';
+    if(activeFilter !== 'all' && activeFilter !== sq.id) return;
+
+    const cards = (d.cards || []).filter(c=>!c.archived);
+    const wip = cards.filter(c=>c.col==='progress').length;
+    const done = cards.filter(c=>c.col==='done').length;
+    const bl = cards.filter(c=>c.col==='blocker').length;
+    const total = cards.length;
+    const wipLimit = parseInt(d.agilCfg?.wip || sq.wipLimit || 3);
+    const wipColor = wip > wipLimit ? 'var(--danger)' : wip === wipLimit ? 'var(--warn)' : 'var(--teal)';
 
     const card=document.createElement('div');
     card.className='card';
@@ -1937,26 +420,25 @@ function renderSquadCards(){
       <div class="squad-header">
         <div>
           <div class="squad-name">${sq.icon} ${sq.label}</div>
-          <div class="squad-sprint">${sprint} · Capacidade ${d.agilCfg?.capacity||'—'}%</div>
+          <div class="squad-sprint">${d.agilCfg?.sprintNum ? 'Sprint '+d.agilCfg.sprintNum : 'Sprint —'}</div>
         </div>
-        <div style="display:flex;gap:7px;align-items:center;">
-          <button class="cfg-squad-btn" data-sqid="${sq.id}" style="padding:4px 10px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;">⚙ Config</button>
-          <a href="${squadBoardUrl(sq.id)}" target="_blank" class="squad-link">Abrir Board ↗</a>
+        <div style="display:flex;gap:7px;">
+          <button class="btn" onclick="openCfg('${sq.id}')" style="padding:4px 8px;font-size:10px;">⚙</button>
+          <a href="kanban.html?squad=${sq.id}" target="_blank" class="squad-link">Abrir ↗</a>
         </div>
       </div>
-      ${goal?`<div style="font-size:11px;color:var(--txt2);background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.2);border-radius:6px;padding:6px 10px;margin-bottom:10px;">🎯 ${goal}</div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
-        <div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor};font-size:20px;">${wip}</div><div class="met-sub">lim. ${wipLimit}</div></div>
-        <div class="met"><div class="met-lbl">Total</div><div class="met-val" style="font-size:20px;">${total}</div><div class="met-sub">ativos</div></div>
-        <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" style="font-size:20px;">${done}</div><div class="met-sub">${spDone} pts</div></div>
-        <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="font-size:20px;color:${bl?'var(--danger)':'var(--txt)'};">${bl}</div><div class="met-sub">${bl?'⚠ atenção':'ok'}</div></div>
+      <div class="grid-4" style="gap:6px;margin-bottom:12px;">
+        <div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor};font-size:18px;">${wip}</div><div class="met-sub">lim. ${wipLimit}</div></div>
+        <div class="met"><div class="met-lbl">Total</div><div class="met-val" style="font-size:18px;">${total}</div></div>
+        <div class="met"><div class="met-lbl">Done</div><div class="met-val met-ok" style="font-size:18px;">${done}</div></div>
+        <div class="met"><div class="met-lbl">Block</div><div class="met-val" style="font-size:18px;color:${bl?'var(--danger)':'var(--txt)'};">${bl}</div></div>
       </div>
       <div class="col-bar">
-        ${(d.columns||[]).filter(col=>isColVisible(sq.id,col.id)).map(col=>{
-          const n=cards.filter(c=>c.col===col.id).length;
-          const pct=total>0?Math.round(n/total*100):0;
+        ${(d.columns||[]).slice(0,5).map(col=>{
+          const n = cards.filter(c=>c.col===col.id).length;
+          const pct = total>0 ? Math.round(n/total*100) : 0;
           return `<div class="col-row">
-            <span class="col-row-name" title="${col.name}">${col.name}</span>
+            <span class="col-row-name">${col.name}</span>
             <div class="col-track"><div class="col-fill" style="width:${pct}%;background:${col.color||'#38b6ff'};"></div></div>
             <span class="col-count">${n}</span>
           </div>`;
@@ -1964,473 +446,177 @@ function renderSquadCards(){
       </div>
     `;
     container.appendChild(card);
-    renderColToggle(sq, d, card);
   });
 }
 
-function renderColToggle(sq, d, cardEl){
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(56,182,255,.08);';
-  (d.columns||[]).forEach(col=>{
-    const hid = (hiddenColsBySq[sq.id]||new Set()).has(col.id);
-    const chip = document.createElement('span');
-    chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;border:1px solid '+(hid?'rgba(255,255,255,.06)':'rgba(56,182,255,.28)')+';background:'+(hid?'transparent':'rgba(56,182,255,.08)')+';color:'+(hid?'rgba(255,255,255,.2)':'var(--txt2)')+';';
-    const dot = document.createElement('span');
-    dot.style.cssText = 'width:6px;height:6px;border-radius:50%;flex-shrink:0;background:'+col.color+';opacity:'+(hid?0.2:1)+';';
-    chip.appendChild(dot);
-    chip.appendChild(document.createTextNode(col.name));
-    chip.onclick = ()=>toggleSqCol(sq.id, col.id);
-    chip.title = (hid?'Mostrar':'Ocultar')+' '+col.name;
-    wrap.appendChild(chip);
-  });
-  cardEl.appendChild(wrap);
-}
-
-// ── CONSOLIDADO ────────────────────────────────────────────────────
-function renderConsolidated(){
-  let total=0,wip=0,bl=0,done=0;
+function renderOKR(){
+  const el=document.getElementById('okr-list'); if(!el) return;
+  let okrs=[];
   SQUADS.forEach(sq=>{
+    if(activeFilter !== 'all' && activeFilter !== sq.id) return;
     const d=squadData[sq.id]; if(!d) return;
-    if(!squadVisible(sq.id)) return;
-    const cards=d.cards.filter(c=>!c.archived);
-    total+=cards.length;
-    wip+=cards.filter(c=>c.col==='progress').length;
-    bl+=cards.filter(c=>c.col==='blocker').length;
-    done+=cards.filter(c=>c.col==='done').length;
+    d.cards.filter(c=>!c.archived && (c.isOKR || c.tag==='okr')).forEach(c=>okrs.push({...c,_squad:sq}));
   });
-  document.getElementById('m-total').textContent=total||'—';
-  document.getElementById('m-wip').textContent=wip||'—';
-  document.getElementById('m-blockers').textContent=bl||'0';
-  document.getElementById('m-done').textContent=done||'—';
-}
-
-// ── COMPARAÇÃO ─────────────────────────────────────────────────────
-function renderComparison(){
-  const tbody=document.getElementById('cmp-body');
-  // Esconde comparação se estiver filtrando um squad específico
-  const cmpSection = document.getElementById('cmp-section');
-  if(cmpSection) cmpSection.style.display = activeFilter==='all' ? '' : 'none';
-  const metrics=[
-    {label:'Cards ativos', fn:d=>d.cards.filter(c=>!c.archived).length, higher:'winner'},
-    {label:'Em Progresso (WIP)', fn:d=>d.cards.filter(c=>c.col==='progress'&&!c.archived).length, lower:'winner'},
-    {label:'Concluídos', fn:d=>d.cards.filter(c=>c.col==='done'&&!c.archived).length, higher:'winner'},
-    {label:'Bloqueios ativos', fn:d=>d.cards.filter(c=>c.col==='blocker'&&!c.archived).length, lower:'winner'},
-    {label:'Story Points concluídos', fn:d=>d.cards.filter(c=>c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0), higher:'winner'},
-    {label:'Cards com prazo', fn:d=>d.cards.filter(c=>c.due&&!c.archived).length, higher:'neutral'},
-    {label:'Cards atrasados', fn:d=>{const today=new Date();today.setHours(0,0,0,0);return d.cards.filter(c=>c.due&&!c.archived&&c.col!=='done'&&new Date(c.due+'T00:00:00')<today).length;}, lower:'winner'},
-    {label:'Sprint atual', fn:d=>d.agilCfg?.sprintNum||'—', compare:false},
-  ];
-  const dataArr=SQUADS.map(sq=>squadData[sq.id]);
-  if(dataArr.some(d=>!d)){ tbody.innerHTML='<tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>'; return; }
-
-  tbody.innerHTML=metrics.map(m=>{
-    const vals=dataArr.map(d=>m.fn(d));
-    const [v0,v1]=vals;
-    let c0='',c1='';
-    if(m.compare!==false && typeof v0==='number' && typeof v1==='number'){
-      if(m.higher==='winner'){
-        if(v0>v1) c0='winner'; else if(v1>v0) c1='winner';
-      } else if(m.lower==='winner'){
-        if(v0<v1) c0='winner'; else if(v1<v0) c1='winner';
-      }
-    }
-    return `<tr>
-      <td style="color:var(--txt2);">${m.label}</td>
-      <td class="${c0}">${v0}</td>
-      <td class="${c1}">${v1}</td>
-    </tr>`;
-  }).join('');
-}
-
-// Helper: resolve init → nome completo buscando nos dados do squad
-function resolveOwnerName(init, squadId){
-  if(!init) return init;
-  const d = squadData[squadId];
-  if(!d) return init;
-  // Try members array (populated from Firebase usuarios)
-  const m = (d.members||[]).find(x=>x.init===init||x.email?.startsWith(init.toLowerCase()));
-  if(m && m.name) return m.name.split(' ').slice(0,2).join(' ');
-  // Fallback: return init as-is
-  return init;
-}
-
-// ── BLOQUEIOS ──────────────────────────────────────────────────────
-function resolveAllBlockers(){
-  const squadsToSave = new Set();
-  let count = 0;
-  SQUADS.forEach(sq=>{
-    const d = squadData[sq.id]; if(!d) return;
-    const doneCol = d.columns?.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id || 'done';
-    d.cards.forEach(c=>{
-      if(!c.archived && (c.col==='blocker' || (c.blocker && c.blockerReason)) && c.col!==doneCol){
-        c.col = doneCol;
-        c.doneAt = new Date().toISOString();
-        c.blocker = false;
-        count++;
-        squadsToSave.add(sq.id);
-      }
-    });
-  });
-  if(!count){ showPainelToast('Nenhum bloqueio ativo encontrado.'); return; }
-  // Save each affected squad to Firebase
-  squadsToSave.forEach(sqId=>{
-    const d = squadData[sqId]; if(!d) return;
-    const ref = window._ref(window._db, 'kanban/squads/'+sqId+'/dados/cards');
-    window._set(ref, d.cards).catch(e=>console.error('Save error',sqId,e));
-  });
-  renderAll();
-  showPainelToast('✅ '+count+' bloqueio'+(count>1?'s':'')+' marcado'+(count>1?'s':'')+' como Concluído!');
-}
-
-function showPainelToast(msg){
-  let t = document.getElementById('painel-toast');
-  if(!t){
-    t = document.createElement('div');
-    t.id = 'painel-toast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid rgba(56,182,255,.25);border-radius:999px;padding:9px 20px;font-size:12px;color:#e8f4fd;z-index:9999;transition:opacity .3s;pointer-events:none;';
-    t.setAttribute('role','status'); t.setAttribute('aria-live','polite');
-    document.body.appendChild(t);
-  }
-  t.textContent = msg; t.style.opacity = '1';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>t.style.opacity='0', 4000);
+  document.getElementById('okr-count').textContent = okrs.length;
+  if(!okrs.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:10px;">Nenhum card OKR.</div>'; return; }
+  el.innerHTML = okrs.map(c=>`
+    <div class="panel-card" style="margin-bottom:8px;">
+      <div class="pc-card-chips"><span class="pc-chip">${c._squad.icon} ${c._squad.label}</span></div>
+      <p class="pc-card-title">${c.title}</p>
+    </div>
+  `).join('');
 }
 
 function renderBlockers(){
-  const list=document.getElementById('blockers-list');
-  const count=document.getElementById('blockers-count');
+  const el=document.getElementById('blockers-list'); if(!el) return;
   let blockers=[];
   SQUADS.forEach(sq=>{
+    if(activeFilter !== 'all' && activeFilter !== sq.id) return;
     const d=squadData[sq.id]; if(!d) return;
-    if(!squadVisible(sq.id)) return;
-    const bl=d.cards.filter(c=>(c.col==='blocker'||(c.blocker&&c.blockerReason))&&!c.archived);
-    bl.forEach(c=>blockers.push({...c, _squad:sq}));
+    d.cards.filter(c=>!c.archived && c.col==='blocker').forEach(c=>blockers.push({...c,_squad:sq}));
   });
-  count.textContent=blockers.length;
-  if(!blockers.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">✅ Nenhum bloqueio ativo em nenhum squad.</div>'; return; }
-  list.innerHTML=blockers.map(c=>{
-    const sq=c._squad;
-    const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
-    return `
-    <div class="panel-card blocker" onclick="openPcModal('${sq.id}','${c.id}')">
-      <div class="pc-card-chips">
-        <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
-        <span class="pc-col-badge">${colName}</span>
-        ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
-      </div>
+  document.getElementById('blockers-count').textContent = blockers.length;
+  if(!blockers.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:10px;">Nenhum bloqueio.</div>'; return; }
+  el.innerHTML = blockers.map(c=>`
+    <div class="panel-card" style="margin-bottom:8px;border-left:3px solid var(--danger);">
+      <div class="pc-card-chips"><span class="pc-chip">${c._squad.icon} ${c._squad.label}</span></div>
       <p class="pc-card-title">${c.title}</p>
-      ${c.blockerReason?`<div style="font-size:11px;color:var(--danger);opacity:.85;">🚧 ${c.blockerReason}</div>`:''}
-      ${c.due?`<div class="pc-card-footer"><span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span></div>`:''}
-    </div>`;
-  }).join('');
+      ${c.blockerReason ? `<div style="font-size:10px;color:var(--danger);">🚧 ${c.blockerReason}</div>` : ''}
+    </div>
+  `).join('');
 }
 
-// ── TENDÊNCIA (SNAPSHOTS) ──────────────────────────────────────────
-function renderTrend(){
+function renderRiscos(){
+  const el=document.getElementById('risco-list'); if(!el) return;
+  let riscos=[];
   SQUADS.forEach(sq=>{
-    const el=document.getElementById('trend-'+sq.id); if(!el) return;
-    const card=el.closest('.card'); if(card) card.style.display=squadVisible(sq.id)?'':'none';
-    const snaps=snapshots[sq.id]||{};
-    const keys=Object.keys(snaps).sort().slice(-7); // últimos 7 dias
-    if(!keys.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Aguardando dados históricos (o board salva automaticamente 1x/dia).</div>'; return; }
-    const maxDone=Math.max(...keys.map(k=>snaps[k].done||0),1);
-    el.innerHTML=keys.map(date=>{
-      const s=snaps[date];
-      const done=s.done||0;
-      const pct=Math.round(done/maxDone*100);
-      const d=new Date(date+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-      return `<div class="trend-row">
-        <span class="trend-date">${d}</span>
-        <div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%"></div></div>
-        <span class="trend-val">${done}</span>
-      </div>`;
-    }).join('');
-  });
-}
-
-// ── DISTRIBUIÇÃO POR COLUNA ────────────────────────────────────────
-function renderColDist(){
-  const container=document.getElementById('col-dist');
-  container.innerHTML='';
-  SQUADS.forEach(sq=>{
+    if(activeFilter !== 'all' && activeFilter !== sq.id) return;
     const d=squadData[sq.id]; if(!d) return;
-    if(!squadVisible(sq.id)) return;
-    const cards=d.cards.filter(c=>!c.archived);
-    const total=cards.length||1;
-    const card=document.createElement('div');
-    card.className='card';
-    card.innerHTML=`
-      <div class="card-title">${sq.icon} ${sq.label}</div>
-      <div class="col-bar">
-        ${(d.columns||[]).filter(col=>isColVisible(sq.id,col.id)).map(col=>{
-          const n=cards.filter(c=>c.col===col.id).length;
-          const pct=Math.round(n/total*100);
-          return `<div class="col-row">
-            <span class="col-row-name" title="${col.name}">${col.name}</span>
-            <div class="col-track"><div class="col-fill" style="width:${pct}%;background:${col.color||'#38b6ff'};"></div></div>
-            <span class="col-count">${n}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    `;
-    container.appendChild(card);
+    d.cards.filter(c=>!c.archived && c.riscos?.length > 0).forEach(c=>riscos.push({...c,_squad:sq}));
+  });
+  document.getElementById('risco-count').textContent = riscos.length;
+  if(!riscos.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:10px;">Nenhum risco.</div>'; return; }
+  el.innerHTML = riscos.map(c=>`
+    <div class="panel-card" style="margin-bottom:8px;">
+      <div class="pc-card-chips"><span class="pc-chip">${c._squad.icon} ${c._squad.label}</span></div>
+      <p class="pc-card-title">${c.title}</p>
+    </div>
+  `).join('');
+}
+
+function renderTrend(){
+  const container = document.getElementById('trend-container'); if(!container) return;
+  container.innerHTML = '';
+  SQUADS.forEach(sq=>{
+    if(activeFilter !== 'all' && activeFilter !== sq.id) return;
+    const snaps = snapshots[sq.id] || {};
+    const keys = Object.keys(snaps).sort().slice(-5);
+    if(!keys.length) return;
+    
+    const div = document.createElement('div');
+    div.innerHTML = `<div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--cyan);">${sq.icon} ${sq.label}</div>`;
+    const max = Math.max(...keys.map(k=>snaps[k].done||0), 1);
+    
+    keys.forEach(date=>{
+      const done = snaps[date].done || 0;
+      const pct = Math.round(done/max*100);
+      div.innerHTML += `
+        <div class="trend-row">
+          <span class="trend-date">${date.split('-').slice(1).reverse().join('/')}</span>
+          <div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%"></div></div>
+          <span class="trend-val">${done}</span>
+        </div>`;
+    });
+    container.appendChild(div);
   });
 }
 
+function renderFilterBar(){
+  const bar = document.querySelector('.filter-bar');
+  bar.innerHTML = `<button class="filter-btn ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Todos</button>`;
+  SQUADS.forEach(sq=>{
+    bar.innerHTML += `<button class="filter-btn ${activeFilter===sq.id?'active':''}" onclick="setFilter('${sq.id}')">${sq.icon} ${sq.label.replace('Squad ','')}</button>`;
+  });
+}
 
-// ═══════════════════════════════════════════════════════
-// BOARD SETUP
-// ═══════════════════════════════════════════════════════
-let _bsSelectedEmoji = '💬';
-let _bsSelectedColor = '#38b6ff';
+function setFilter(id){
+  activeFilter = id;
+  renderFilterBar();
+  renderAll();
+  renderTrend();
+}
 
-function openBoardSetup(){
+function renderSquadLinks(){
+  const wrap = document.getElementById('squad-links-wrap');
+  wrap.innerHTML = SQUADS.map(sq=>
+    `<a href="kanban.html?squad=${sq.id}" target="_blank" class="btn" style="color:${sq.color};border-color:${sq.color}33;">${sq.icon}</a>`
+  ).join('');
+}
+
+// MODAIS
+window.openBoardSetup = () => {
   document.getElementById('board-setup-ov').classList.add('open');
-  bsRenderExisting();
-  bsUpdatePreview();
-}
-
-function closeBoardSetup(){
-  document.getElementById('board-setup-ov').classList.remove('open');
-}
-
-function bsSelectEmoji(el, emoji){
-  document.querySelectorAll('.bs-emoji-opt').forEach(e=>e.classList.remove('sel'));
-  el.classList.add('sel');
-  _bsSelectedEmoji = emoji;
-  bsUpdatePreview();
-}
-
-function bsSelectColor(el, color){
-  document.querySelectorAll('.bs-color-opt').forEach(e=>e.classList.remove('sel'));
-  el.classList.add('sel');
-  _bsSelectedColor = color;
-}
-
-function bsUpdatePreview(){
-  const id   = (document.getElementById('bs-id')?.value||'').trim();
-  const name = (document.getElementById('bs-name')?.value||'').trim();
-  const prev = document.getElementById('bs-preview');
-  const txt  = document.getElementById('bs-preview-txt');
-  const lnk  = document.getElementById('bs-preview-link');
-  if(!prev) return;
-  if(id && name){
-    prev.style.display = 'block';
-    txt.textContent = _bsSelectedEmoji + ' ' + name;
-    const url = 'kanban.html?squad=' + id;
-    lnk.href = url;
-    lnk.textContent = url;
-  } else {
-    prev.style.display = 'none';
-  }
-}
-
-function bsRenderExisting(){
   const list = document.getElementById('bs-existing-list');
-  if(!list) return;
-  // Mostra squads base + os carregados do Firebase
   list.innerHTML = SQUADS.map(sq=>`
     <div class="bs-board-item">
       <div class="bs-board-icon">${sq.icon}</div>
       <div class="bs-board-info">
         <div class="bs-board-name">${sq.label}</div>
-        <div class="bs-board-id">kanban.html?squad=${sq.id}</div>
+        <div class="bs-board-id">ID: ${sq.id}</div>
       </div>
-      <div class="bs-board-actions">
-        <a href="kanban.html?squad=${sq.id}" target="_blank"
-           style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(56,182,255,.3);border-radius:6px;">
-          Abrir ↗
-        </a>
-        ${!['dados','midia'].includes(sq.id) ? `<button class="bs-del-btn" onclick="bsDeleteBoard('${sq.id}','${sq.label}')">🗑</button>` : ''}
-      </div>
-    </div>`
-  ).join('');
-}
+    </div>
+  `).join('');
+};
+window.closeBoardSetup = () => document.getElementById('board-setup-ov').classList.remove('open');
 
-async function saveNewBoard(){
-  const id       = (document.getElementById('bs-id')?.value||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
-  const name     = (document.getElementById('bs-name')?.value||'').trim();
-  const subtitle = (document.getElementById('bs-subtitle')?.value||'').trim();
-  const wip      = parseInt(document.getElementById('bs-wip')?.value||'3');
+let _bsSelectedEmoji = '💬';
+window.bsSelectEmoji = (el, emoji) => {
+  document.querySelectorAll('.bs-emoji-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  _bsSelectedEmoji = emoji;
+};
 
-  if(!id){ alert('Defina um ID para o squad (ex: cx).'); return; }
-  if(!name){ alert('Defina o nome do squad.'); return; }
-  if(SQUADS.find(s=>s.id===id)){ alert('Já existe um squad com o ID "'+id+'". Escolha outro.'); return; }
-
-  const meta = {
-    label:     name,
-    subtitle:  subtitle || name,
-    agentRole: id,
-    emoji:     _bsSelectedEmoji,
-    color:     _bsSelectedColor,
-    wipLimit:  wip,
-    criadoEm:  new Date().toISOString(),
-    criadoPor: document.getElementById('user-name')?.textContent || '?',
-  };
-
+window.saveNewBoard = async () => {
+  const id = document.getElementById('bs-id').value.trim();
+  const name = document.getElementById('bs-name').value.trim();
+  if(!id || !name) return alert('Preencha ID e Nome');
+  
+  const meta = { label: name, emoji: _bsSelectedEmoji, color: '#38b6ff', wipLimit: 3, criadoEm: new Date().toISOString() };
   try {
-    // Grava em kanban/squads_meta/{id} — lido pelo kanban.html ao selecionar squad
     await window._set(window._ref(window._db, 'kanban/squads_meta/'+id), meta);
+    SQUADS.push({id, label:name, icon:_bsSelectedEmoji, color:'#38b6ff', wipLimit:3});
+    initApp();
+    closeBoardSetup();
+    showToast('✅ Board criado!');
+  } catch(e) { alert('Erro: '+e.message); }
+};
 
-    // Adiciona ao array local para aparecer no painel imediatamente
-    SQUADS.push({id, label:name, icon:_bsSelectedEmoji, color:_bsSelectedColor, wipLimit:wip});
-    renderSquadLinks();
-    bsRenderExisting();
+window.openCfg = (id) => {
+  const sq = SQUADS.find(s=>s.id===id);
+  const d = squadData[id] || {};
+  document.getElementById('cfg-modal-title').textContent = '⚙ Config — ' + sq.label;
+  document.getElementById('cfg-sprint-num').value = d.agilCfg?.sprintNum || '';
+  document.getElementById('cfg-ov').classList.add('open');
+  window._currentCfgId = id;
+};
+window.closeCfg = () => document.getElementById('cfg-ov').classList.remove('open');
+window.saveCfg = async () => {
+  const id = window._currentCfgId;
+  const cfg = { sprintNum: document.getElementById('cfg-sprint-num').value };
+  await window._set(window._ref(window._db, 'kanban/squads/'+id+'/dados/agil_cfg'), cfg);
+  closeCfg();
+  showToast('✅ Salvo!');
+};
 
-    // Inicia listener do novo squad no painel
-    loadSquadData(id);
-
-    // Limpa formulário
-    ['bs-id','bs-name','bs-subtitle'].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.value=''; });
-    document.getElementById('bs-preview').style.display='none';
-
-    showBsToast('✅ Board "'+name+'" criado! Acesse: kanban.html?squad='+id);
-  } catch(e) {
-    alert('Erro ao salvar: '+e.message);
-  }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
 }
 
-async function bsDeleteBoard(id, label){
-  if(!confirm('Excluir o board "'+label+'"?\n\nOs dados dos cards no Firebase NÃO serão apagados — só a configuração do board no painel.')) return;
-  try {
-    await window._set(window._ref(window._db, 'kanban/squads_meta/'+id), null);
-    SQUADS = SQUADS.filter(s=>s.id!==id);
-    renderSquadLinks();
-    bsRenderExisting();
-    renderSquadCards();
-    showBsToast('🗑 Board "'+label+'" removido do painel.');
-  } catch(e) {
-    alert('Erro ao excluir: '+e.message);
-  }
-}
-
-function showBsToast(msg){
-  let t = document.getElementById('bs-toast');
-  if(!t){
-    t = document.createElement('div');
-    t.id = 'bs-toast';
-    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(6,26,46,.97);border:1px solid rgba(56,182,255,.25);border-radius:999px;padding:9px 20px;font-size:12px;color:#e8f4fd;z-index:9999;transition:opacity .3s;pointer-events:none;';
-    t.setAttribute('role','status');
-    t.setAttribute('aria-live','polite');
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.style.opacity = '1';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>t.style.opacity='0', 4000);
-}
-
-// Helper: inicia listener de um squad específico (para novos boards criados em sessão)
-function loadSquadData(sqId){
-  window._onValue(window._ref(window._db,'kanban/squads/'+sqId+'/dados'),snap=>{
-    const val=snap.val()||{};
-    squadData[sqId]={
-      cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({...card,id:card.id||('idx_'+i)})):[],
-      columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
-      tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
-      agilCfg:val.agil_cfg||{},
-      members: squadData[sqId]?.members||[], // populated separately below
-    };
-    // Load members (usuarios inscritos neste squad) for owner name resolution
-    window._get(window._ref(window._db,'kanban/usuarios')).then(us=>{
-      const usVal=us.val()||{};
-      squadData[sqId].members=Object.values(usVal).filter(u=>
-        u.inscrito||u.squads?.[sqId]||u.role==='adm'
-      ).map(u=>({init:u.init||'',name:u.nome||u.email||'',email:u.email||''}));
-    }).catch(()=>{});
-    renderAll();
-  });
-}
-
-// Fechar modal com Esc
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape') closeBoardSetup();
-});
+window.doSignIn = () => window._signIn().catch(e=>alert(e.message));
+window.doSignOut = () => window._signOut();
 
 </script>
-
-<!-- BOARD SETUP MODAL -->
-<div id="board-setup-ov">
-  <div class="bs-modal">
-    <div class="bs-header">
-      <div class="bs-title">⚙ Setup de Boards</div>
-      <button class="bs-close" onclick="closeBoardSetup()">✕</button>
-    </div>
-    <div class="bs-body">
-
-      <!-- Boards existentes -->
-      <div class="bs-existing">
-        <div class="bs-existing-title">Boards ativos</div>
-        <div id="bs-existing-list"></div>
-      </div>
-
-      <!-- Formulário de novo board -->
-      <div style="border-top:1px solid rgba(56,182,255,.1);padding-top:16px;margin-top:4px;">
-        <div class="bs-existing-title" style="margin-bottom:12px;">Criar novo board</div>
-
-        <div class="bs-field">
-          <label class="bs-label">ID do squad <span style="color:rgba(200,230,255,.35);font-size:10px;">(letras/números, sem espaços, ex: cx)</span></label>
-          <input class="bs-inp" id="bs-id" placeholder="ex: cx" maxlength="20"
-            oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_-]/g,''); bsUpdatePreview();">
-        </div>
-
-        <div class="bs-field">
-          <label class="bs-label">Nome do squad</label>
-          <input class="bs-inp" id="bs-name" placeholder="ex: Squad CX" maxlength="40" oninput="bsUpdatePreview();">
-        </div>
-
-        <div class="bs-field">
-          <label class="bs-label">Subtítulo / área</label>
-          <input class="bs-inp" id="bs-subtitle" placeholder="ex: Customer Experience" maxlength="60">
-        </div>
-
-        <div class="bs-field">
-          <label class="bs-label">Emoji</label>
-          <div class="bs-emoji-grid" id="bs-emoji-grid">
-            <div class="bs-emoji-opt sel" onclick="bsSelectEmoji(this,'💬')">💬</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🛍️')">🛍️</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'📦')">📦</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🎯')">🎯</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🚀')">🚀</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'⚡')">⚡</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🔧')">🔧</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🎨')">🎨</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'📈')">📈</div>
-            <div class="bs-emoji-opt" onclick="bsSelectEmoji(this,'🐟')">🐟</div>
-          </div>
-        </div>
-
-        <div class="bs-field">
-          <label class="bs-label">Cor do squad</label>
-          <div class="bs-color-row" id="bs-color-row">
-            <div class="bs-color-opt" style="background:#d67fff;" onclick="bsSelectColor(this,'#d67fff')"></div>
-            <div class="bs-color-opt sel" style="background:#38b6ff;" onclick="bsSelectColor(this,'#38b6ff')"></div>
-            <div class="bs-color-opt" style="background:#1de9b6;" onclick="bsSelectColor(this,'#1de9b6')"></div>
-            <div class="bs-color-opt" style="background:#ffd166;" onclick="bsSelectColor(this,'#ffd166')"></div>
-            <div class="bs-color-opt" style="background:#ff6b6b;" onclick="bsSelectColor(this,'#ff6b6b')"></div>
-            <div class="bs-color-opt" style="background:#a78bfa;" onclick="bsSelectColor(this,'#a78bfa')"></div>
-            <div class="bs-color-opt" style="background:#34d399;" onclick="bsSelectColor(this,'#34d399')"></div>
-            <div class="bs-color-opt" style="background:#fb923c;" onclick="bsSelectColor(this,'#fb923c')"></div>
-          </div>
-        </div>
-
-        <div class="bs-field">
-          <label class="bs-label">WIP limit padrão</label>
-          <input class="bs-inp" id="bs-wip" type="number" min="1" max="20" value="3" style="width:80px;">
-        </div>
-
-        <div id="bs-preview" style="display:none;padding:10px 14px;border-radius:8px;border:1px solid rgba(56,182,255,.15);background:rgba(56,182,255,.05);font-size:12px;color:var(--txt2);margin-top:4px;">
-          Preview: <strong id="bs-preview-txt"></strong> →
-          <a id="bs-preview-link" href="#" target="_blank" style="color:var(--accent);text-decoration:none;font-size:11px;"></a>
-        </div>
-      </div>
-    </div>
-
-    <div class="bs-footer">
-      <button class="btn" onclick="closeBoardSetup()">Cancelar</button>
-      <button class="btn btn-p" onclick="saveNewBoard()">✅ Criar board</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
