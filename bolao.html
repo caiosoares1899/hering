@@ -24,7 +24,7 @@ const firebaseConfig = {
 };
 
 const ADMIN_UID = "T0Pjey3JKObSN4sbZCa727joZLd2";
-const SQUADS = ["Site Hering","APP","Criação","Mídia","Outlet","Marketplace","CX","Gestão","Dados"];
+const SQUADS = ["Site Hering","APP","Criação","Mídia","Outlet","Marketplace","CX","Gestão","Dados","Convidados"];
 
 const MATCHES = [
   {"id":"m001","fase":"Grupo A","home":"México","away":"África do Sul","time":"2026-06-11T16:00:00-03:00","venue":"Cidade do México"},
@@ -235,6 +235,7 @@ function switchTab(tabName) {
     c.classList.toggle("active", c.id === "tab-" + tabName);
   });
   if (tabName === "ranking-geral" || tabName === "ranking-squad") renderRanking();
+  if (tabName === "ranking-coragem") renderRankingCoragem();
   if (tabName === "participantes") renderParticipants();
 }
 
@@ -336,7 +337,7 @@ function renderMatchList() {
       if (!result) {
         const o = odds || { home:"—", draw:"—", away:"—", pctHome:0, pctDraw:0, pctAway:0, total:0 };
         oddsHtml = `<div class="odds-row">
-          <span class="odds-label">🐟 odds da galera</span>
+          <span class="odds-label">🐟 odds do cardume — vai com a maré ou vai contra a corrente?</span>
           <div class="odds-pills">
             <div class="odd-pill">
               <span class="odd-team">${m.home.split(" ")[0]}</span>
@@ -474,19 +475,103 @@ async function renderRanking() {
   const sqList = Object.entries(squadStats)
     .map(([name,s])=>({name,avg:(s.pts/s.members).toFixed(1),total:s.pts,members:s.members}))
     .sort((a,b)=>parseFloat(b.avg)-parseFloat(a.avg));
-  sc.innerHTML = `<div class="ranking-table">${sqList.map((s,i)=>`
-    <div class="rank-row">
-      <div class="rank-pos">${medal(i)}</div>
-      <div class="rank-info">
-        <span class="rank-name">${s.name}</span>
-        <span class="rank-squad">${s.members} participante${s.members!==1?"s":""}</span>
+
+  // Ranking geral de squads (cabeçalho)
+  sc.innerHTML = `
+    <div class="ranking-table sq-overview">${sqList.map((s,i)=>`
+      <div class="rank-row sq-header-row" onclick="toggleSquadDetail('${s.name}')" style="cursor:pointer">
+        <div class="rank-pos">${medal(i)}</div>
+        <div class="rank-info">
+          <span class="rank-name">${s.name}</span>
+          <span class="rank-squad">${s.members} participante${s.members!==1?"s":""}</span>
+        </div>
+        <div class="rank-stats">
+          <span class="rank-pts">${s.avg} média</span>
+          <span class="rank-detail">${s.total} pts total</span>
+        </div>
+        <span class="sq-chevron" id="chev-${s.name.replace(/\s/g,'_')}">›</span>
       </div>
-      <div class="rank-stats">
-        <span class="rank-pts">${s.avg} média</span>
-        <span class="rank-detail">${s.total} pts total</span>
-      </div>
-    </div>`).join("")}</div>`;
+      <div class="sq-detail" id="sqd-${s.name.replace(/\s/g,'_')}" style="display:none">
+        ${list.filter(u=>u.squad===s.name)
+              .sort((a,b)=>b.pts-a.pts||b.exact-a.exact)
+              .map((u,j)=>`
+          <div class="rank-row rank-row-inner ${u.uid===currentUser?.uid?"rank-me":""}">
+            <div class="rank-pos">${medal(j)}</div>
+            <img src="${u.photo||""}" class="rank-avatar" onerror="this.style.display='none'" alt=""/>
+            <div class="rank-info">
+              <span class="rank-name">${u.name||"Anônimo"}${u.uid===currentUser?.uid?" (você)":""}</span>
+              <span class="rank-squad">${u.bets} apostas</span>
+            </div>
+            <div class="rank-stats">
+              <span class="rank-pts">${u.pts} pts</span>
+              <span class="rank-detail">${u.exact} exatos · ${u.winner} vit</span>
+            </div>
+          </div>`).join("")}
+      </div>`).join("")}
+    </div>`;
 }
+
+// ─── RANKING DE CORAGEM 🎲 ───────────────────────────────────────────────────
+async function renderRankingCoragem() {
+  const c = document.getElementById("ranking-coragem");
+  if (!c) return;
+  const betsSnap  = await get(ref(db, `bets`));
+  const usersSnap = await get(ref(db, `users`));
+  if (!usersSnap.exists()) { c.innerHTML = `<p class="empty-state">Nenhum participante ainda.</p>`; return; }
+  const users = usersSnap.val();
+  const bets  = betsSnap.exists() ? betsSnap.val() : {};
+  const list  = [];
+
+  Object.entries(users).forEach(([uid, p]) => {
+    let courage=0, hits=0, bestOdd=null, bestMatch="";
+    const uB = bets[uid]||{};
+    Object.entries(allResults).forEach(([mid, res]) => {
+      const b = uB[mid]; if (!b) return;
+      const pt = calcPoints(b, res); if (!pt) return;
+      const odd = b.oddAtSave || 1.0;
+      const cPts = parseFloat((pt * odd).toFixed(2));
+      courage += cPts; hits++;
+      if (!bestOdd || odd > bestOdd) { bestOdd = odd; bestMatch = mid; }
+    });
+    if (hits > 0 || Object.keys(uB).length > 0)
+      list.push({uid,...p, courage:parseFloat(courage.toFixed(1)), hits,
+                 bestOdd:bestOdd?.toFixed(2)||"—", bets:Object.keys(uB).length});
+  });
+  list.sort((a,b)=>b.courage-a.courage||b.hits-a.hits);
+
+  if (!list.length) { c.innerHTML = `<p class="empty-state">Aguardando resultados para calcular.</p>`; return; }
+
+  const medal = i => i===0?"🥇":i===1?"🥈":i===2?"🥉":`<span class="pos-num">#${i+1}</span>`;
+  c.innerHTML = `
+    <div class="coragem-header">
+      <span>Pontuação = pts normais × odd registrada no momento do palpite</span>
+    </div>
+    <div class="ranking-table">${list.map((u,i)=>`
+      <div class="rank-row ${u.uid===currentUser?.uid?"rank-me":""}">
+        <div class="rank-pos">${medal(i)}</div>
+        <img src="${u.photo||""}" class="rank-avatar" onerror="this.style.display='none'" alt=""/>
+        <div class="rank-info">
+          <span class="rank-name">${u.name||"Anônimo"}${u.uid===currentUser?.uid?" (você)":""}</span>
+          <span class="rank-squad">${u.squad||"—"} · melhor odd: <strong style="color:var(--amber)">${u.bestOdd}</strong></span>
+        </div>
+        <div class="rank-stats">
+          <span class="rank-pts courage-pts">${u.courage} pts</span>
+          <span class="rank-detail">${u.hits} acerto${u.hits!==1?"s":""} ponderado${u.hits!==1?"s":""}</span>
+        </div>
+      </div>`).join("")}
+    </div>`;
+}
+
+// ─── TOGGLE SQUAD DETAIL ─────────────────────────────────────────────────────
+window.toggleSquadDetail = function(name) {
+  const key = name.replace(/\s/g,'_');
+  const detail = document.getElementById(`sqd-${key}`);
+  const chev   = document.getElementById(`chev-${key}`);
+  if (!detail) return;
+  const open = detail.style.display === 'none';
+  detail.style.display = open ? 'block' : 'none';
+  if (chev) chev.style.transform = open ? 'rotate(90deg)' : 'rotate(0deg)';
+};
 
 // ─── PARTICIPANTES (ADMIN) ───────────────────────────────────────────────────
 async function renderParticipants() {
@@ -589,7 +674,7 @@ body{font-family:var(--font-body);background:var(--navy-900);color:var(--white-9
   backdrop-filter:blur(8px);
   border-bottom:1px solid rgba(37,99,201,.2);
   overflow:hidden;
-  height:52px;
+  height:38px;
 }
 .flags-carpet::before,.flags-carpet::after{
   content:'';position:absolute;top:0;bottom:0;width:80px;z-index:3;pointer-events:none;
@@ -599,7 +684,7 @@ body{font-family:var(--font-body);background:var(--navy-900);color:var(--white-9
 
 .flags-row{
   display:flex;align-items:center;gap:3px;
-  height:52px;overflow:hidden;
+  height:38px;overflow:hidden;
 }
 .flags-row-inner{
   display:flex;gap:3px;align-items:center;
@@ -608,8 +693,8 @@ body{font-family:var(--font-body);background:var(--navy-900);color:var(--white-9
 }
 .flag-tile{
   display:inline-block;flex-shrink:0;
-  width:64px;height:44px;
-  border-radius:4px;overflow:hidden;
+  width:46px;height:30px;
+  border-radius:3px;overflow:hidden;
   box-shadow:0 2px 6px rgba(0,0,0,.5);
   opacity:.85;
 }
@@ -774,7 +859,42 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .rank-stats{text-align:right;}
 .rank-pts{display:block;font-family:var(--font-display);font-size:.95rem;font-weight:700;color:var(--cyan);}
 .rank-detail{display:block;font-size:.65rem;color:var(--white-40);}
+.courage-pts{color:var(--amber) !important;}
+.coragem-header{
+  background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  border-radius:var(--r-sm);padding:8px 14px;
+  font-size:.75rem;color:rgba(245,158,11,.8);
+  margin-bottom:12px;line-height:1.5;
+}
 .empty-state{color:var(--white-40);font-size:.88rem;text-align:center;padding:40px 0;}
+/* Squad accordion */
+.sq-header-row{
+  border:1px solid var(--glass-border) !important;
+  background:var(--white-08) !important;
+  transition:background .2s;
+}
+.sq-header-row:hover{background:rgba(37,99,201,.15) !important;}
+.sq-chevron{
+  font-size:1.1rem;color:var(--cyan);margin-left:4px;flex-shrink:0;
+  transition:transform .25s;display:inline-block;
+}
+.sq-detail{
+  background:rgba(4,16,31,.4);
+  border:1px solid var(--white-05);
+  border-top:none;
+  border-radius:0 0 var(--r-md) var(--r-md);
+  padding:6px 8px 8px;
+  margin-bottom:8px;
+  margin-top:-8px;
+}
+.rank-row-inner{
+  background:var(--white-05) !important;
+  border-color:var(--white-05) !important;
+  margin-bottom:4px;
+}
+.rank-row-inner:last-child{margin-bottom:0;}
+.sq-overview{gap:0 !important;}
+.sq-overview .rank-row{margin-bottom:8px;}
 
 /* ── PARTICIPANTES (ADMIN) ─────────────────────────────────────────────────── */
 .participants-grid{display:flex;flex-direction:column;gap:8px;}
@@ -836,7 +956,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 }
 
 /* ── RULES ──────────────────────────────────────────────────────────────────── */
-.rules-card{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:24px;max-width:560px;}
+.rules-card{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:32px;max-width:100%;}
 .rules-card h3{font-family:var(--font-display);font-size:1.05rem;font-weight:700;margin-bottom:18px;}
 .rule-section-title{
   font-family:var(--font-display);font-size:.68rem;font-weight:700;
@@ -873,8 +993,8 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
   .login-card{padding:28px 20px;}
   .hero{padding:36px 16px 24px;}
   .tabs-bar,.tab-content{padding-left:14px;padding-right:14px;}
-  .flags-carpet{height:40px;}
-  .flag-tile{width:50px;height:34px;}
+  .flags-carpet{height:30px;}
+  .flag-tile{width:38px;height:24px;}
 }
 </style>
 </head>
@@ -947,6 +1067,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
     <button class="tab-btn active" data-tab="apostas">⚽ Apostar</button>
     <button class="tab-btn" data-tab="ranking-geral">🏆 Ranking Geral</button>
     <button class="tab-btn" data-tab="ranking-squad">🏷️ Por Squad</button>
+    <button class="tab-btn" data-tab="ranking-coragem">🎲 Coragem</button>
     <button class="tab-btn" data-tab="regras">📋 Regras</button>
     <button class="tab-btn" data-tab="participantes" style="display:none">👥 Participantes</button>
     <button class="tab-btn" data-tab="admin" style="display:none">🔧 Admin</button>
@@ -964,6 +1085,11 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
   <div class="tab-content" id="tab-ranking-squad">
     <div class="fase-header" style="margin-top:8px"><span class="fase-label">Ranking por Squad</span></div>
     <div id="ranking-squads"><p class="empty-state">Carregando...</p></div>
+  </div>
+
+  <div class="tab-content" id="tab-ranking-coragem">
+    <div class="fase-header" style="margin-top:8px"><span class="fase-label">🎲 Ranking de Coragem</span></div>
+    <div id="ranking-coragem"><p class="empty-state">Carregando...</p></div>
   </div>
 
   <div class="tab-content" id="tab-regras">
@@ -1054,7 +1180,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v2.5 · regras + classificação GE</div>
+<div class="version">v2.7 · coragem + convidados + bandeiras + regras</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -1166,7 +1292,7 @@ function buildCarpet() {
 })();
 
 // ─── SQUAD MODAL BUTTONS ─────────────────────────────────────────────────────
-const SQUADS_LOCAL = ["Site Hering","APP","Criação","Mídia","Outlet","Marketplace","CX","Gestão","Dados"];
+const SQUADS_LOCAL = ["Site Hering","APP","Criação","Mídia","Outlet","Marketplace","CX","Gestão","Dados","Convidados"];
 
 window.addEventListener("DOMContentLoaded", () => {
   buildCarpet();
