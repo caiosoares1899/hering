@@ -2434,8 +2434,8 @@ function renderBoard(){
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
-  // Reaplica altura das colunas após renderização
-  requestAnimationFrame(()=>setViewMode(viewMode));
+  // Reaplica wrap height para modo expandido (só em modo normal, não raia)
+  if(!raiaMode) requestAnimationFrame(()=>setViewMode(viewMode));
 }
 
 function renderNormal(board,activeCards){
@@ -2469,10 +2469,6 @@ function renderNormal(board,activeCards){
 
 function renderRaiaOwner(board,activeCards){
   board.className='board raia-mode'+(viewMode?' mode-'+viewMode:'');
-  // DEBUG — remover após diagnóstico
-  console.log('[RAIA] activeCards:', activeCards.length, 'activeFilters:', JSON.stringify(activeFilters));
-  console.log('[RAIA] owners encontrados:', [...new Set(activeCards.filter(c=>c.owner).map(c=>c.owner))]);
-
   // Separa: com dono em cima, sem dono embaixo
   const withOwner=[...new Set(activeCards.filter(c=>c.owner).map(c=>c.owner))];
   const hasUnowned=activeCards.some(c=>!c.owner);
