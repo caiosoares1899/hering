@@ -1224,11 +1224,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
     <div class="field">
       <label class="fl">Suas iniciais no board</label>
-      <input class="fi" id="insc-init" maxlength="3" placeholder="Ex: CS" style="text-transform:uppercase;max-width:100px;">
+      <input class="fi" id="insc-init" maxlength="3" placeholder="Ex: CS" style="text-transform:uppercase;max-width:100px;" oninput="this.value=this.value.toUpperCase();document.getElementById('insc-init-err').style.display='none'">
     </div>
     <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong>Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
+      <div id="insc-init-err" style="display:none;font-size:11px;color:var(--danger);margin-bottom:6px;"></div>
       <button class="btn btn-p" onclick="confirmarInscricao()">Confirmar inscrição</button>
     </div>
   </div>
@@ -2412,7 +2413,21 @@ function mostrarInscricao(user,dados){
 function confirmarInscricao(){
   const user=window._currentUser; if(!user) return;
   const init=document.getElementById('insc-init').value.trim().toUpperCase().substring(0,3);
-  if(!init){ alert('Defina suas iniciais.'); return; }
+  if(!init){ showToast('⚠ Defina suas iniciais.'); return; }
+  // Valida se iniciais já estão em uso por outro membro do squad
+  const conflict=members.find(m=>m.init===init && m.email!==user.email);
+  if(conflict){
+    const errEl=document.getElementById('insc-init-err');
+    if(errEl){
+      errEl.textContent='⚠ Iniciais "'+init+'" já usadas por '+( conflict.name.split(' ')[0]||conflict.init)+'. Escolha outras.';
+      errEl.style.display='block';
+    }
+    return;
+  }
+  // Oculta erro se existia
+  const errEl=document.getElementById('insc-init-err');
+  if(errEl) errEl.style.display='none';
+
   const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
@@ -3812,6 +3827,7 @@ function parseTrelloJSON(raw){
       createdAt:today,
       editedAt:today,
       _trelloList:listMap[card.idList]?.name||'?',
+      _trelloMemberIds:card.idMembers||[],  // preserved for member modal
       _mapped:colInfo.mapped,
     };
   });
@@ -3829,6 +3845,14 @@ function parseTrelloJSON(raw){
     withRiscos:imported.filter(c=>c.riscos?.length>0).length,
   };
 
+  // Build resolution map: trelloMemberId → boardInit (for the modal)
+  const memberResolutions={};
+  const uniqueMemberIds=[...new Set((imported).flatMap(c=>c._trelloMemberIds||[]))];
+  uniqueMemberIds.forEach(tmId=>{
+    const resolved=resolveOwner(tmId);
+    if(resolved) memberResolutions[tmId]=resolved;
+  });
+
   return{
     boardName:data.name,
     allLists: data.lists||[],
@@ -3839,6 +3863,8 @@ function parseTrelloJSON(raw){
     newTags:newTagsToCreate,
     warnings,
     stats,
+    _memberMap:memberMap,         // { trelloId → {fullName, username, initials} }
+    _memberResolutions:memberResolutions, // { trelloId → boardInit }
   };
 }
 function previewTrelloImport(){
@@ -3912,8 +3938,111 @@ function previewTrelloImport(){
   }
 }
 
+// Stores custom member mapping decided by PO in modal
+let _trelloMemberOverride = {}; // { trelloMemberId: boardInit }
+
 function confirmTrelloImport(){
   if(!_trelloParsed){ return; }
+  // Show member confirmation modal first
+  openTrelloMembersModal();
+}
+
+function openTrelloMembersModal(){
+  const rows = document.getElementById('trello-member-rows');
+  if(!rows) { doTrelloImport(); return; }
+  rows.innerHTML = '';
+  _trelloMemberOverride = {};
+
+  // Collect unique Trello members from cards
+  const trelloMemberIds = [...new Set(
+    (_trelloParsed.cards||[]).flatMap(c=>c.idMembers||[])
+  )];
+  const memberMap = _trelloParsed._memberMap || {};
+
+  if(!trelloMemberIds.length){ doTrelloImport(); return; }
+
+  trelloMemberIds.forEach(tmId=>{
+    const tm = memberMap[tmId]; if(!tm) return;
+    const autoMatch = _trelloParsed._memberResolutions?.[tmId] || '';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.1);border-radius:8px;';
+
+    // Trello side
+    const trelloSide = document.createElement('div');
+    trelloSide.innerHTML =
+      '<div style="font-size:12px;font-weight:600;color:var(--txt);">'+esc(tm.fullName||tm.username)+'</div>'+
+      '<div style="font-size:10px;color:var(--txt3);">@'+esc(tm.username||'')+(tm.initials?' · Iniciais Trello: '+esc(tm.initials):'')+'</div>';
+
+    // Arrow
+    const arrow = document.createElement('div');
+    arrow.innerHTML = '<span style="color:var(--txt3);font-size:16px;">→</span>';
+    arrow.style.textAlign = 'center';
+
+    // Board side: select with board members + "sem match"
+    const boardSide = document.createElement('div');
+    const sel = document.createElement('select');
+    sel.style.cssText = 'width:100%;padding:5px 8px;font-size:11px;background:rgba(3,13,26,.9);border:1px solid rgba(56,182,255,.2);border-radius:7px;color:var(--txt);font-family:DM Sans,sans-serif;';
+    sel.dataset.tmId = tmId;
+
+    const optNone = document.createElement('option');
+    optNone.value = ''; optNone.textContent = '— sem responsável —';
+    sel.appendChild(optNone);
+
+    members.forEach(bm=>{
+      const opt = document.createElement('option');
+      opt.value = bm.init;
+      opt.textContent = bm.init+' · '+bm.name.split(' ').slice(0,2).join(' ');
+      if(bm.init === autoMatch) opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    // Visual indicator if auto-matched or not
+    const matchTag = document.createElement('div');
+    matchTag.style.cssText = 'font-size:9px;margin-top:3px;';
+    if(autoMatch){
+      matchTag.style.color = 'var(--teal)';
+      matchTag.textContent = '✓ match automático';
+    } else {
+      matchTag.style.color = 'var(--warn)';
+      matchTag.textContent = '⚠ não encontrado — selecione manualmente';
+    }
+
+    boardSide.appendChild(sel);
+    boardSide.appendChild(matchTag);
+    row.appendChild(trelloSide);
+    row.appendChild(arrow);
+    row.appendChild(boardSide);
+    rows.appendChild(row);
+  });
+
+  document.getElementById('trello-members-ov').classList.add('open');
+}
+
+function confirmarTrelloMembers(){
+  // Collect selections from modal
+  _trelloMemberOverride = {};
+  document.querySelectorAll('#trello-member-rows select').forEach(sel=>{
+    if(sel.value && sel.dataset.tmId)
+      _trelloMemberOverride[sel.dataset.tmId] = sel.value;
+  });
+  closeOv('trello-members-ov');
+  doTrelloImport();
+}
+
+function doTrelloImport(){
+  if(!_trelloParsed){ return; }
+  // Apply member override from modal to all cards
+  if(Object.keys(_trelloMemberOverride).length){
+    _trelloParsed.cards.forEach(card=>{
+      const mainMember = card._trelloMemberIds?.[0];
+      if(mainMember && _trelloMemberOverride[mainMember]!==undefined){
+        card.owner = _trelloMemberOverride[mainMember];
+      }
+      const extraMembers = (card._trelloMemberIds||[]).slice(1)
+        .map(mid=>_trelloMemberOverride[mid]||'').filter(Boolean);
+      if(extraMembers.length) card.participants=[...new Set(extraMembers)];
+    });
+  }
   // Apply manual column mapping from UI selectors
   const selects = document.querySelectorAll('.trello-col-map-select');
   if(selects.length){
@@ -3935,7 +4064,7 @@ function confirmTrelloImport(){
     });
   }
   // Remove metadados internos antes de salvar
-  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListName,_mapped,...card})=>card);
+  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
   cards.push(...cleanCards);
   fbSaveAll(); renderBoard();
   // Limpa e fecha
@@ -6786,6 +6915,24 @@ renderBoard();
     </div>
     <div class="dep-map-body" id="dep-map-body">
       <div class="dep-empty">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRMAÇÃO DE MEMBROS DO TRELLO -->
+<div class="ov" id="trello-members-ov" style="z-index:9200;">
+  <div class="panel" style="max-width:560px;width:92vw;">
+    <div class="panel-hd">
+      <div class="panel-title">👥 Confirmar mapeamento de membros</div>
+      <button class="x-btn" onclick="closeOv('trello-members-ov')">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:70vh;overflow-y:auto;">
+      <p style="font-size:12px;color:var(--txt2);">Membros encontrados no Trello. Confirme ou corrija as iniciais do board para cada um antes de importar.</p>
+      <div id="trello-member-rows" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid rgba(56,182,255,.1);">
+        <button class="btn" onclick="closeOv('trello-members-ov')">Cancelar</button>
+        <button class="btn btn-p" onclick="confirmarTrelloMembers()">✅ Importar com este mapeamento</button>
+      </div>
     </div>
   </div>
 </div>
