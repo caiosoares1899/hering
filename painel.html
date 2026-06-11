@@ -1005,8 +1005,8 @@ function renderOKR(){
   let okrs=[];
   SQUADS.forEach(sq=>{
     if(!squadVisible(sq.id)) return;
-    const d=squadData[sq.id]; if(!d) return;
-    d.cards.filter(c=>!c.archived&&(c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
+    (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived&&(c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
       .forEach(c=>okrs.push({...c,_squad:sq}));
   });
   if(cnt) cnt.textContent=okrs.length;
@@ -1039,8 +1039,8 @@ function renderRiscos(){
   let riscos=[];
   SQUADS.forEach(sq=>{
     if(!squadVisible(sq.id)) return;
-    const d=squadData[sq.id]; if(!d) return;
-    d.cards.filter(c=>!c.archived&&c.riscos?.length>0)
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
+    (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived&&c.riscos?.length>0)
       .forEach(c=>riscos.push({...c,_squad:sq}));
   });
   if(cnt) cnt.textContent=riscos.length;
@@ -1992,7 +1992,7 @@ function renderConsolidated(){
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d) return;
     if(!squadVisible(sq.id)) return;
-    const cards=d.cards.filter(c=>!c.archived);
+    const cards=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived);
     total+=cards.length;
     wip+=cards.filter(c=>c.col==='progress').length;
     bl+=cards.filter(c=>c.col==='blocker').length;
@@ -2011,13 +2011,13 @@ function renderComparison(){
   const cmpSection = document.getElementById('cmp-section');
   if(cmpSection) cmpSection.style.display = activeFilter==='all' ? '' : 'none';
   const metrics=[
-    {label:'Cards ativos', fn:d=>d.cards.filter(c=>!c.archived).length, higher:'winner'},
-    {label:'Em Progresso (WIP)', fn:d=>d.cards.filter(c=>c.col==='progress'&&!c.archived).length, lower:'winner'},
-    {label:'Concluídos', fn:d=>d.cards.filter(c=>c.col==='done'&&!c.archived).length, higher:'winner'},
-    {label:'Bloqueios ativos', fn:d=>d.cards.filter(c=>c.col==='blocker'&&!c.archived).length, lower:'winner'},
-    {label:'Story Points concluídos', fn:d=>d.cards.filter(c=>c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0), higher:'winner'},
-    {label:'Cards com prazo', fn:d=>d.cards.filter(c=>c.due&&!c.archived).length, higher:'neutral'},
-    {label:'Cards atrasados', fn:d=>{const today=new Date();today.setHours(0,0,0,0);return d.cards.filter(c=>c.due&&!c.archived&&c.col!=='done'&&new Date(c.due+'T00:00:00')<today).length;}, lower:'winner'},
+    {label:'Cards ativos', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived).length, higher:'winner'},
+    {label:'Em Progresso (WIP)', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.col==='progress'&&!c.archived).length, lower:'winner'},
+    {label:'Concluídos', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.col==='done'&&!c.archived).length, higher:'winner'},
+    {label:'Bloqueios ativos', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.col==='blocker'&&!c.archived).length, lower:'winner'},
+    {label:'Story Points concluídos', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0), higher:'winner'},
+    {label:'Cards com prazo', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.due&&!c.archived).length, higher:'neutral'},
+    {label:'Cards atrasados', fn:d=>{const today=new Date();today.setHours(0,0,0,0);return (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.due&&!c.archived&&c.col!=='done'&&new Date(c.due+'T00:00:00')<today).length;}, lower:'winner'},
     {label:'Sprint atual', fn:d=>d.agilCfg?.sprintNum||'—', compare:false},
   ];
   const dataArr=SQUADS.map(sq=>squadData[sq.id]);
@@ -2059,10 +2059,10 @@ function resolveAllBlockers(){
   const squadsToSave = new Set();
   let count = 0;
   SQUADS.forEach(sq=>{
-    const d = squadData[sq.id]; if(!d) return;
+    const d = squadData[sq.id]; if(!d || !d.cards) return;
     const doneCol = d.columns?.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id || 'done';
-    d.cards.forEach(c=>{
-      if(!c.archived && (c.col==='blocker' || (c.blocker && c.blockerReason)) && c.col!==doneCol){
+    (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
+      if(c && !c.archived && (c.col==='blocker' || (c.blocker && c.blockerReason)) && c.col!==doneCol){
         c.col = doneCol;
         c.doneAt = new Date().toISOString();
         c.blocker = false;
@@ -2101,9 +2101,9 @@ function renderBlockers(){
   const count=document.getElementById('blockers-count');
   let blockers=[];
   SQUADS.forEach(sq=>{
-    const d=squadData[sq.id]; if(!d) return;
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
     if(!squadVisible(sq.id)) return;
-    const bl=d.cards.filter(c=>(c.col==='blocker'||(c.blocker&&c.blockerReason))&&!c.archived);
+    const bl=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && (c.col==='blocker'||(c.blocker&&c.blockerReason))&&!c.archived);
     bl.forEach(c=>blockers.push({...c, _squad:sq}));
   });
   count.textContent=blockers.length;
@@ -2153,9 +2153,9 @@ function renderColDist(){
   const container=document.getElementById('col-dist');
   container.innerHTML='';
   SQUADS.forEach(sq=>{
-    const d=squadData[sq.id]; if(!d) return;
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
     if(!squadVisible(sq.id)) return;
-    const cards=d.cards.filter(c=>!c.archived);
+    const cards=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived);
     const total=cards.length||1;
     const card=document.createElement('div');
     card.className='card';
