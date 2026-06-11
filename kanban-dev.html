@@ -129,7 +129,7 @@
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
 }
-html,body{height:100%;overflow:hidden;}
+html,body{height:100vh;overflow:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
 .bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
@@ -139,15 +139,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-.app{
-  position:relative;z-index:2;
-  padding:.9rem 1.2rem .5rem;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  box-sizing:border-box;
-}
+.app{position:relative;z-index:2;padding:.9rem 1.2rem .5rem;height:100vh;overflow:hidden;box-sizing:border-box;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;}
 .hd-l{display:flex;align-items:center;gap:8px;}
@@ -168,15 +160,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{
-  flex:1;
-  overflow:hidden;
-  min-height:0;
-  padding-bottom:0;
-  /* Pass height to children */
-  display:flex;
-  flex-direction:column;
-}
+.board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:2px;}
 .board-wrap.mode-expanded-wrap{
   overflow-x:auto;
   overflow-y:visible;
@@ -372,26 +356,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   flex-wrap:nowrap;
   gap:10px;
   min-width:max-content;
-  flex:1;
-  min-height:0;
-  overflow-x:auto;
-  overflow-y:hidden;
-  padding-bottom:0;
-  align-items:stretch;
 }
 .board.mode-expanded .col{
   width:272px;
   min-width:272px;
   flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  /* height comes from align-items:stretch on parent */
 }
 .board.mode-expanded .col-body{
-  flex:1;
+  max-height:calc(100vh - 160px);
   overflow-y:auto;
   overflow-x:hidden;
-  min-height:0;
 }
 .view-btn{padding:4px 10px;font-size:11px;font-family:'DM Sans',sans-serif;
   border:1px solid var(--glass-b);border-radius:6px;background:var(--glass);
@@ -959,11 +933,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   /* ── GLOBAL ───────────────────────────────────────────── */
   .hd-badge,.tb-sep,#online-bar{display:none;}
-  .app{
-    padding:.5rem .6rem 74px;
-    height:auto;
-    overflow:visible;
-  }
+  .app{padding:.5rem .6rem 74px;}
   *{-webkit-tap-highlight-color:transparent;}
 
   /* ── HEADER ──────────────────────────────────────────── */
@@ -1004,7 +974,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .board-wrap{
     overflow-x:auto;-webkit-overflow-scrolling:touch;
     margin:0 -.6rem;padding:0 .6rem 8px;scrollbar-width:none;
-    flex:none;overflow-y:visible;
   }
   .board-wrap::-webkit-scrollbar{display:none;}
   .board{display:flex!important;gap:10px;min-width:max-content;align-items:start;}
@@ -1012,10 +981,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
   .col-body{
-    max-height:62vh;overflow-y:auto;
+    max-height:65vh;overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     padding:5px;
-    flex:none;
   }
   .col-body::-webkit-scrollbar{width:3px;}
   .col-body::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:999px;}
@@ -1218,12 +1186,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card.aged-2{opacity:.55;filter:saturate(.4) sepia(.2);}
 .card.aged-2::after{content:'💤';position:absolute;top:5px;right:6px;font-size:10px;opacity:.6;}
 
-
-@media(max-width:768px){
-  .board.mode-expanded .col{height:auto;}
-  .board.mode-expanded .col-body{flex:none;max-height:62vh;}
-  .board.mode-expanded{height:auto;overflow-x:auto;overflow-y:visible;}
-}
 </style>
 </head>
 <body>
@@ -1956,7 +1918,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.1</div>
+<div class="version">v8.2</div>
 
 <!-- FIREBASE SDK -->
 <script>
@@ -2596,11 +2558,11 @@ function renderBoard(){
   else renderNormal(board,activeCards);
   updateMetrics();
   // Reaplica wrap height para modo expandido (só em modo normal, não raia)
-
+  if(!raiaMode) requestAnimationFrame(()=>setViewMode(viewMode));
 }
 
 function renderNormal(board,activeCards){
-  board.className='board mode-'+(viewMode||'expanded');
+  board.className='board';
   columns.forEach(col=>{
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
@@ -4792,11 +4754,26 @@ function setViewMode(mode){
     board.classList.add('mode-'+mode);
   }
   if(wrap){
-    // Layout via CSS (flex:1 no board-wrap + height:100% nas cols)
-    // Nenhum cálculo JS necessário
+    if(mode==='expanded'){
+      // Calcula altura disponível: viewport - tudo acima do board
+      const wrapTop=wrap.getBoundingClientRect().top;
+      const available=window.innerHeight - wrapTop - 16;
+      wrap.style.maxHeight=available+'px';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='auto';
+      wrap.style.paddingBottom='0';
+    } else {
+      wrap.style.maxHeight='';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='visible';
+      wrap.style.paddingBottom='8px';
+    }
   }
 }
-function applyViewMode(){ setViewMode(viewMode); }
+function applyViewMode(){
+  // Delay one frame so board is laid out before height calculation
+  requestAnimationFrame(()=>setViewMode(viewMode));
+}
 window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
 // ── CALENDÁRIO ───────────────────────────────────────────────────
@@ -5011,7 +4988,7 @@ function logError(msg, source='', line=0, col=0, err=null){
     };
     const key='err_'+Date.now();
     // Usa window._set diretamente — sem passar por fbSet para evitar loop
-    // DEV: error logging disabled — Promise.resolve() mantém o .catch encadeado
+    // DEV: error logging disabled
     Promise.resolve()
       .catch(e=>{
         // Se Firebase Rules bloquear, desabilita o logger para não tentar de novo
