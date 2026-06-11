@@ -2469,6 +2469,9 @@ function renderNormal(board,activeCards){
 
 function renderRaiaOwner(board,activeCards){
   board.className='board raia-mode'+(viewMode?' mode-'+viewMode:'');
+  // DEBUG — remover após diagnóstico
+  console.log('[RAIA] activeCards:', activeCards.length, 'activeFilters:', JSON.stringify(activeFilters));
+  console.log('[RAIA] owners encontrados:', [...new Set(activeCards.filter(c=>c.owner).map(c=>c.owner))]);
 
   // Separa: com dono em cima, sem dono embaixo
   const withOwner=[...new Set(activeCards.filter(c=>c.owner).map(c=>c.owner))];
