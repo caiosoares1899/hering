@@ -599,6 +599,46 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .minicard-rm:hover{color:var(--danger);}
 
 /* ── COMENTÁRIOS ───────────────────────────────────────── */
+
+/* ── ANEXOS E LINKS ─────────────────────────────────────── */
+.attach-wrap{margin-top:2px;}
+.attach-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.attach-lbl{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--txt2);}
+.attach-add-btn{margin-left:auto;background:rgba(56,182,255,.08);
+  border:1px solid rgba(56,182,255,.2);border-radius:6px;
+  color:var(--accent);font-size:11px;padding:2px 10px;cursor:pointer;
+  transition:background .12s;}
+.attach-add-btn:hover{background:rgba(56,182,255,.15);}
+.attach-list{display:flex;flex-direction:column;gap:5px;}
+.attach-item{display:flex;align-items:center;gap:8px;padding:6px 10px;
+  background:rgba(6,20,44,.7);border:1px solid rgba(56,182,255,.1);
+  border-radius:8px;transition:border-color .12s;}
+.attach-item:hover{border-color:rgba(56,182,255,.25);}
+.attach-favicon{width:20px;height:20px;border-radius:4px;flex-shrink:0;
+  object-fit:contain;background:rgba(56,182,255,.08);padding:2px;}
+.attach-favicon-fallback{width:20px;height:20px;border-radius:4px;flex-shrink:0;
+  background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.2);
+  display:flex;align-items:center;justify-content:center;font-size:11px;}
+.attach-info{flex:1;min-width:0;}
+.attach-title{font-size:12px;color:var(--txt);font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.attach-url{font-size:10px;color:var(--txt3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.attach-open{background:none;border:none;color:var(--txt3);
+  font-size:12px;cursor:pointer;padding:2px 4px;border-radius:4px;}
+.attach-open:hover{color:var(--accent);background:rgba(56,182,255,.1);}
+.attach-rm{background:none;border:none;color:rgba(255,107,107,.4);
+  font-size:12px;cursor:pointer;padding:2px 4px;border-radius:4px;}
+.attach-rm:hover{color:var(--danger);}
+.attach-inp-row{display:flex;gap:6px;margin-top:6px;}
+.attach-inp{flex:1;background:rgba(3,13,26,.8);border:1px solid rgba(56,182,255,.2);
+  border-radius:7px;padding:6px 10px;font-size:12px;color:var(--txt);
+  font-family:"DM Sans",sans-serif;outline:none;}
+.attach-inp:focus{border-color:rgba(56,182,255,.4);}
+.attach-save-btn{background:var(--accent);border:none;border-radius:7px;
+  color:#fff;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;}
+.attach-empty{font-size:11px;color:var(--txt3);padding:4px 0;}
 .comments-wrap{margin-top:4px;}
 .comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
@@ -624,15 +664,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* ── EDIT-ON-CLICK FIELDS (descrição + comentários) ──── */
 .eoc-wrap{position:relative;width:100%;}
 .eoc-display{
-  min-height:38px;padding:8px 10px;border-radius:8px;
-  border:1px solid transparent;background:transparent;
-  font-size:12px;color:var(--txt2);line-height:1.6;
+  min-height:44px;padding:8px 10px;border-radius:8px;
+  border:1px solid rgba(56,182,255,.08);
+  background:rgba(56,182,255,.04);
+  font-size:13px;color:var(--txt);line-height:1.65;
   word-break:break-word;cursor:text;
-  transition:border-color .15s,background .15s;
+  transition:background .12s, border-color .12s;
 }
-.eoc-display:hover{border-color:rgba(56,182,255,.15);background:rgba(3,13,26,.4);}
-.eoc-display.is-empty::before{content:attr(data-placeholder);color:var(--txt3);font-style:italic;}
-.eoc-display.is-empty{color:transparent;}
+.eoc-display:hover{background:rgba(56,182,255,.08);border-color:rgba(56,182,255,.18);}
+.eoc-display.is-empty::before{content:attr(data-placeholder);color:var(--txt3);font-style:italic;font-size:12px;}
+.eoc-display.is-empty{min-height:44px;}
 .eoc-display a,.eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
 .eoc-editing .eoc-display{display:none;}
 .eoc-editing .eoc-textarea{display:block!important;}
@@ -678,8 +719,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .comment-inp-box:focus-within .comment-send-btn{display:block;}
 
 /* ── @MENTION STYLED ────────────────────────────────────── */
-.mention-user{color:var(--teal);text-decoration:underline;font-weight:600;cursor:pointer;}
-.mention-card{color:var(--accent);text-decoration:underline;font-weight:600;cursor:pointer;}
+.mention-user{
+  display:inline-flex;align-items:center;
+  background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.25);
+  color:var(--teal);border-radius:999px;padding:0 7px;font-weight:700;
+  font-size:11px;cursor:pointer;white-space:nowrap;
+}
+.mention-card{
+  display:inline-flex;align-items:center;gap:3px;
+  background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);
+  color:var(--accent);border-radius:5px;padding:0 7px;font-weight:600;
+  font-size:11px;cursor:pointer;white-space:nowrap;text-decoration:none;
+}
 
 .linked-chip{display:flex;align-items:center;gap:6px;padding:5px 8px;
   background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.2);
@@ -1398,14 +1449,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <button class="cl-ab" style="background:rgba(255,209,102,.15);color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="addRisco()">+ Add</button>
           </div>
         </div>
-        <div class="linked-wrap">
-          <div style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🔗 Cards vinculados</div>
-          <div class="link-search" style="margin-bottom:5px;">
-            <input class="link-search-input" id="link-search-inp" placeholder="Buscar card pelo título..." oninput="searchLinkedCards(this.value)" autocomplete="off">
-            <div class="link-dropdown" id="link-dropdown"></div>
-          </div>
-          <div class="linked-cards" id="linked-cards-list"></div>
-        </div>
+
       </div>
     </div><!-- /modal-grid -->
 
@@ -1431,6 +1475,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="po-box">
       <div class="po-lbl">🎯 Insights do PO</div>
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
+    </div>
+
+    <!-- Anexos e Links Externos -->
+    <div class="attach-wrap" id="m-attach-wrap">
+      <div class="attach-hd">
+        <span class="attach-lbl">🔗 Anexos e links</span>
+        <button class="attach-add-btn" onclick="attachToggleAdd()">+ Adicionar</button>
+      </div>
+      <div class="attach-list" id="m-attach-list"></div>
+      <div id="m-attach-inp-row" style="display:none;" class="attach-inp-row">
+        <input class="attach-inp" id="m-attach-url" type="url" placeholder="Cole a URL (Drive, Notion, Figma...)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();attachSave();}
+            else if(event.key==='Escape'){attachToggleAdd();}">
+        <button class="attach-save-btn" onclick="attachSave()">Salvar</button>
+      </div>
     </div>
 
     <!-- Comentários e Atividade -->
@@ -2711,6 +2770,7 @@ function openCard(id){
     loadComments(id);
     renderDescPreview();
     renderCardDepMini(id);
+    const _card=cards.find(c=>c.id===id); loadAttachments(_card);
   }, 100);
 }
 
@@ -2764,6 +2824,7 @@ function saveCard(){
       isOKR:document.getElementById('m-is-okr')?.checked||false,
       dependsOn:c.dependsOn||null,
       dependents:c.dependents||[],
+      links:c.links||[],
       comments:c.comments||{},
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
@@ -4487,10 +4548,10 @@ function insertMention(ta, atPos, curPos, init){
 // ── FIM MENTION DROPDOWN ─────────────────────────────────────────
 
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
-let viewMode = localStorage.getItem('boardViewMode')||'expanded';
+let viewMode = localStorage.getItem('boardViewMode2')||'expanded';
 function setViewMode(mode){
   viewMode=mode;
-  localStorage.setItem('boardViewMode',mode);
+  localStorage.setItem('boardViewMode2',mode);
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+mode)?.classList.add('active');
   const board=document.getElementById('board');
@@ -6209,10 +6270,13 @@ function _eocRenderDisplay(display, text, placeholder){
   } else {
     display.classList.remove('is-empty');
     display.innerHTML = renderMd(text);
-    // Wire card mention clicks
+    // Wire card mention clicks — extract id from onclick attr
     display.querySelectorAll('.mention-card').forEach(el=>{
       el.style.pointerEvents='auto';
-      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(el.getAttribute('onclick')?.match(/'([^']+)'/)?.[1]||''); };
+      const onclickAttr = el.getAttribute('onclick')||'';
+      const idMatch = onclickAttr.match(/openCard\(["']([^"']+)["']\)/);
+      const cid = el.dataset.cid || (idMatch && idMatch[1]) || '';
+      if(cid) el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(cid); };
     });
     // Wire mention-card via data-cid if present
     display.querySelectorAll('.mention-card[data-cid]').forEach(el=>{
@@ -6248,6 +6312,163 @@ function eocResetComment(){
   if(ta){ ta.value=''; ta.style.height='auto'; ta.style.display='none'; }
   if(display){ display.innerHTML=''; display.classList.add('is-empty'); }
   wrap.classList.remove('eoc-editing');
+}
+
+// ═══════════════════════════════════════════════════════
+// ANEXOS E LINKS EXTERNOS
+// ═══════════════════════════════════════════════════════
+
+// Known service icons (emoji or text fallback)
+const KNOWN_SERVICES = [
+  { pattern: /drive\.google\.com/i,   icon: '📁', label: 'Google Drive',  color: '#4285F4' },
+  { pattern: /docs\.google\.com/i,    icon: '📄', label: 'Google Docs',   color: '#4285F4' },
+  { pattern: /sheets\.google\.com/i,  icon: '📊', label: 'Google Sheets', color: '#0F9D58' },
+  { pattern: /slides\.google\.com/i,  icon: '📽', label: 'Slides',        color: '#F4B400' },
+  { pattern: /notion\.so/i,           icon: '▫', label: 'Notion',         color: '#fff' },
+  { pattern: /figma\.com/i,           icon: '🎨', label: 'Figma',         color: '#A259FF' },
+  { pattern: /miro\.com/i,            icon: '🟡', label: 'Miro',          color: '#FFD02F' },
+  { pattern: /milanote\.com/i,        icon: '📌', label: 'Milanote',      color: '#E84646' },
+  { pattern: /github\.com/i,          icon: '🐙', label: 'GitHub',        color: '#fff' },
+  { pattern: /linear\.app/i,          icon: '⚡', label: 'Linear',        color: '#5E6AD2' },
+  { pattern: /slack\.com/i,           icon: '💬', label: 'Slack',         color: '#4A154B' },
+  { pattern: /loom\.com/i,            icon: '🎥', label: 'Loom',          color: '#625DF5' },
+  { pattern: /youtube\.com|youtu\.be/i,icon:'▶', label: 'YouTube',        color: '#FF0000' },
+  { pattern: /trello\.com/i,          icon: '📋', label: 'Trello',        color: '#0052CC' },
+  { pattern: /confluence/i,           icon: '📖', label: 'Confluence',    color: '#0052CC' },
+  { pattern: /jira/i,                 icon: '🔵', label: 'Jira',          color: '#0052CC' },
+  { pattern: /databricks\.com/i,      icon: '🔶', label: 'Databricks',    color: '#FF3621' },
+  { pattern: /looker\.com|datastudio|lookerstudio/i, icon:'📊', label:'Looker', color:'#4285F4'},
+  { pattern: /powerbi\.com/i,         icon: '📊', label: 'Power BI',      color: '#F2C811' },
+  { pattern: /metabase\.com/i,        icon: '📊', label: 'Metabase',      color: '#509EE3' },
+  { pattern: /dropbox\.com/i,         icon: '📦', label: 'Dropbox',       color: '#0061FF' },
+  { pattern: /sharepoint\.com|onedrive\.live/i, icon:'☁', label:'Microsoft', color:'#0078D4'},
+  { pattern: /canva\.com/i,           icon: '🎨', label: 'Canva',         color: '#00C4CC' },
+  { pattern: /vercel\.com/i,          icon: '▲', label: 'Vercel',         color: '#fff' },
+];
+
+function getServiceInfo(url){
+  for(const s of KNOWN_SERVICES){
+    if(s.pattern.test(url)) return s;
+  }
+  return null;
+}
+
+function getFaviconUrl(url){
+  try{
+    const host = new URL(url).hostname;
+    return 'https://www.google.com/s2/favicons?sz=32&domain='+host;
+  } catch(e){ return null; }
+}
+
+function attachToggleAdd(){
+  const row = document.getElementById('m-attach-inp-row');
+  const inp = document.getElementById('m-attach-url');
+  if(!row) return;
+  const open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'flex';
+  if(!open && inp){ inp.value=''; inp.focus(); }
+}
+
+function attachSave(){
+  const inp = document.getElementById('m-attach-url'); if(!inp) return;
+  let url = inp.value.trim();
+  if(!url) return;
+  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(!card) return;
+  if(!card.links) card.links=[];
+  // Auto-detect title
+  const svc = getServiceInfo(url);
+  let title = svc?.label || '';
+  try{ const u=new URL(url); if(!title) title=u.hostname.replace(/^www\./,''); } catch(e){}
+  card.links.push({ id:'lnk'+Date.now(), url, title, ts:new Date().toISOString() });
+  fbSaveAll();
+  renderAttachList(card.links);
+  inp.value='';
+  document.getElementById('m-attach-inp-row').style.display='none';
+}
+
+function attachRemove(linkId){
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(!card||!card.links) return;
+  card.links = card.links.filter(l=>l.id!==linkId);
+  fbSaveAll();
+  renderAttachList(card.links);
+}
+
+function renderAttachList(links){
+  const list = document.getElementById('m-attach-list'); if(!list) return;
+  list.innerHTML='';
+  if(!links||!links.length){
+    list.innerHTML='<div class="attach-empty">Nenhum link adicionado ainda.</div>';
+    return;
+  }
+  links.forEach(lnk=>{
+    const svc = getServiceInfo(lnk.url);
+    const faviconUrl = getFaviconUrl(lnk.url);
+    const item = document.createElement('div');
+    item.className = 'attach-item';
+
+    // Build icon with createElement (avoids nested-quote issues)
+    if(faviconUrl){
+      const img = document.createElement('img');
+      img.className = 'attach-favicon';
+      img.src = faviconUrl;
+      const fb = document.createElement('div');
+      fb.className = 'attach-favicon-fallback';
+      fb.style.display = 'none';
+      fb.textContent = svc?.icon||'🔗';
+      img.onerror = function(){ this.style.display='none'; fb.style.display='flex'; };
+      item.appendChild(img);
+      item.appendChild(fb);
+    } else {
+      const fb = document.createElement('div');
+      fb.className = 'attach-favicon-fallback';
+      fb.textContent = svc?.icon||'🔗';
+      item.appendChild(fb);
+    }
+
+    let displayUrl = '';
+    try{
+      const u = new URL(lnk.url);
+      displayUrl = u.hostname.replace(/^www\./, '') + u.pathname.substring(0,30) + (u.pathname.length>30?'…':'');
+    } catch(e){ displayUrl = lnk.url.substring(0,40); }
+
+    const info = document.createElement('div');
+    info.className = 'attach-info';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'attach-title';
+    titleEl.textContent = lnk.title||displayUrl;
+    const urlEl = document.createElement('div');
+    urlEl.className = 'attach-url';
+    urlEl.textContent = displayUrl;
+    info.appendChild(titleEl);
+    info.appendChild(urlEl);
+    item.appendChild(info);
+
+    const openBtn = document.createElement('button');
+    openBtn.className = 'attach-open';
+    openBtn.title = 'Abrir';
+    openBtn.textContent = '↗';
+    openBtn.onclick = ()=>window.open(lnk.url,'_blank');
+
+    const rmBtn = document.createElement('button');
+    rmBtn.className = 'attach-rm';
+    rmBtn.title = 'Remover';
+    rmBtn.textContent = '✕';
+    rmBtn.onclick = ()=>attachRemove(lnk.id);
+
+    item.appendChild(openBtn);
+    item.appendChild(rmBtn);
+    list.appendChild(item);
+  });
+}
+
+function loadAttachments(card){
+  renderAttachList(card?.links||[]);
+  // Reset add row
+  const row=document.getElementById('m-attach-inp-row');
+  if(row) row.style.display='none';
 }
 
 renderBoard();
