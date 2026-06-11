@@ -6,7 +6,6 @@
 <title>Bolão Copa Digital Hering 2026</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -35,7 +34,7 @@ const SQUADS = [
 // ─── JOGOS DA COPA 2026 (104 JOGOS) ─────────────────────────────────────────
 const MATCHES = [
   {"id":"m001","fase":"Grupo A","home":"México","away":"África do Sul","time":"2026-06-11T16:00:00-03:00","venue":"Cidade do México"},
-  {"id":"m002","fase":"Grupo A","home":"República da Coreia","away":"Tchéquia","time":"2026-06-11T23:00:00-03:00","venue":"Guadalajara"},
+  {"id":"m002","fase":"Grupo A","home":"Coreia do Sul","away":"Tchéquia","time":"2026-06-11T23:00:00-03:00","venue":"Guadalajara"},
   {"id":"m003","fase":"Grupo B","home":"Canadá","away":"Bósnia e Herzegovina","time":"2026-06-12T16:00:00-03:00","venue":"Toronto"},
   {"id":"m004","fase":"Grupo D","home":"Estados Unidos","away":"Paraguai","time":"2026-06-12T22:00:00-03:00","venue":"Los Angeles"},
   {"id":"m005","fase":"Grupo B","home":"Catar","away":"Suíça","time":"2026-06-13T16:00:00-03:00","venue":"San Francisco"},
@@ -61,7 +60,7 @@ const MATCHES = [
   {"id":"m025","fase":"Grupo A","home":"Tchéquia","away":"África do Sul","time":"2026-06-18T13:00:00-03:00","venue":"Atlanta"},
   {"id":"m026","fase":"Grupo B","home":"Suíça","away":"Canadá","time":"2026-06-18T16:00:00-03:00","venue":"Los Angeles"},
   {"id":"m027","fase":"Grupo B","home":"Canadá","away":"Catar","time":"2026-06-18T19:00:00-03:00","venue":"Vancouver"},
-  {"id":"m028","fase":"Grupo A","home":"México","away":"República da Coreia","time":"2026-06-18T22:00:00-03:00","venue":"Guadalajara"},
+  {"id":"m028","fase":"Grupo A","home":"México","away":"Coreia do Sul","time":"2026-06-18T22:00:00-03:00","venue":"Guadalajara"},
   {"id":"m029","fase":"Grupo D","home":"Turquia","away":"Paraguai","time":"2026-06-19T01:00:00-03:00","venue":"São Francisco"},
   {"id":"m030","fase":"Grupo D","home":"Estados Unidos","away":"Austrália","time":"2026-06-19T16:00:00-03:00","venue":"Seattle"},
   {"id":"m031","fase":"Grupo C","home":"Escócia","away":"Marrocos","time":"2026-06-19T19:00:00-03:00","venue":"Boston"},
@@ -83,7 +82,7 @@ const MATCHES = [
   {"id":"m047","fase":"Grupo L","home":"Inglaterra","away":"Gana","time":"2026-06-23T17:00:00-03:00","venue":"Boston"},
   {"id":"m048","fase":"Grupo L","home":"Panamá","away":"Croácia","time":"2026-06-23T20:00:00-03:00","venue":"Toronto"},
   {"id":"m049","fase":"Grupo A","home":"Tchéquia","away":"México","time":"2026-06-24T22:00:00-03:00","venue":"Cidade do México"},
-  {"id":"m050","fase":"Grupo A","home":"África do Sul","away":"República da Coreia","time":"2026-06-24T22:00:00-03:00","venue":"Monterrey"},
+  {"id":"m050","fase":"Grupo A","home":"África do Sul","away":"Coreia do Sul","time":"2026-06-24T22:00:00-03:00","venue":"Monterrey"},
   {"id":"m051","fase":"Grupo B","home":"Suíça","away":"Canadá","time":"2026-06-24T16:00:00-03:00","venue":"Vancouver"},
   {"id":"m052","fase":"Grupo B","home":"Bósnia e Herzegovina","away":"Catar","time":"2026-06-24T16:00:00-03:00","venue":"Seattle"},
   {"id":"m053","fase":"Grupo C","home":"Escócia","away":"Brasil","time":"2026-06-24T19:00:00-03:00","venue":"Miami"},
@@ -419,10 +418,10 @@ function getFlagUrl(team) {
     "Uruguai":"uy","Holanda":"nl","Senegal":"sn","Itália":"it","Japão":"jp","Colômbia":"co",
     "Coreia do Sul":"kr","Nigéria":"ng","Costa Rica":"cr","Tunísia":"tn","Chile":"cl","Turquia":"tr",
     "África do Sul":"za","Tchéquia":"cz","Bósnia e Herzegovina":"ba","Paraguai":"py","Catar":"qa",
-    "Escócia":"gb-sct","Austrália":"au","Curaçao":"cw","Países Baixos":"nl","Tunísia":"tn","Cabo Verde":"cv",
+    "Escócia":"gb-sct","Austrália":"au","Curaçao":"cw","Países Baixos":"nl","Cabo Verde":"cv",
     "Arábia Saudita":"sa","Bélgica":"be","Egito":"eg","Irã":"ir","Nova Zelândia":"nz","Iraque":"iq",
     "Noruega":"no","Argélia":"dz","Áustria":"at","Jordânia":"jo","R.D. Congo":"cd","Uzbequistão":"uz",
-    "Gana":"gh","Panamá":"pa","Haiti":"ht"
+    "Gana":"gh","Panamá":"pa","Haiti":"ht","Suécia":"se","Costa do Marfim":"ci"
   };
   const code = codes[team] || "un";
   return `https://flagcdn.com/w40/${code}.png`;
@@ -1093,7 +1092,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const sel = document.getElementById("admin-match");
   const MATCHES_LOCAL = [
     {"id":"m001","home":"México","away":"África do Sul"},
-    {"id":"m002","home":"República da Coreia","away":"Tchéquia"},
+    {"id":"m002","home":"Coreia do Sul","away":"Tchéquia"},
     {"id":"m003","home":"Canadá","away":"Bósnia e Herzegovina"},
     {"id":"m004","home":"Estados Unidos","away":"Paraguai"},
     {"id":"m005","home":"Catar","away":"Suíça"},
@@ -1119,7 +1118,7 @@ window.addEventListener("DOMContentLoaded", () => {
     {"id":"m025","home":"Tchéquia","away":"África do Sul"},
     {"id":"m026","home":"Suíça","away":"Canadá"},
     {"id":"m027","home":"Canadá","away":"Catar"},
-    {"id":"m028","home":"México","away":"República da Coreia"},
+    {"id":"m028","home":"México","away":"Coreia do Sul"},
     {"id":"m029","home":"Turquia","away":"Paraguai"},
     {"id":"m030","home":"Estados Unidos","away":"Austrália"},
     {"id":"m031","home":"Escócia","away":"Marrocos"},
@@ -1141,7 +1140,7 @@ window.addEventListener("DOMContentLoaded", () => {
     {"id":"m047","home":"Inglaterra","away":"Gana"},
     {"id":"m048","home":"Panamá","away":"Croácia"},
     {"id":"m049","home":"Tchéquia","away":"México"},
-    {"id":"m050","home":"África do Sul","away":"República da Coreia"},
+    {"id":"m050","home":"África do Sul","away":"Coreia do Sul"},
     {"id":"m051","home":"Suíça","away":"Canadá"},
     {"id":"m052","home":"Bósnia e Herzegovina","away":"Catar"},
     {"id":"m053","home":"Escócia","away":"Brasil"},
