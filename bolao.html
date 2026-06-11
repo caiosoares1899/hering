@@ -46,7 +46,7 @@ const MATCHES = [
   {"id":"m002","fase":"Grupo A","home":"Coreia do Sul","away":"Tchéquia","time":"2026-06-11T23:00:00-03:00","venue":"Guadalajara"},
   {"id":"m003","fase":"Grupo B","home":"Canadá","away":"Bósnia e Herzegovina","time":"2026-06-12T16:00:00-03:00","venue":"Toronto"},
   {"id":"m004","fase":"Grupo D","home":"Estados Unidos","away":"Paraguai","time":"2026-06-12T22:00:00-03:00","venue":"Los Angeles"},
-  {"id":"m005","fase":"Grupo B","home":"Bósnia e Herzegovina","away":"Suíça","time":"2026-06-13T16:00:00-03:00","venue":"San Francisco"},
+  {"id":"m005","fase":"Grupo B","home":"Catar","away":"Suíça","time":"2026-06-13T16:00:00-03:00","venue":"San Francisco"},
   {"id":"m006","fase":"Grupo C","home":"Brasil","away":"Marrocos","time":"2026-06-13T19:00:00-03:00","venue":"Nova York/Nova Jersey"},
   {"id":"m007","fase":"Grupo C","home":"Haiti","away":"Escócia","time":"2026-06-13T22:00:00-03:00","venue":"Boston"},
   {"id":"m008","fase":"Grupo D","home":"Austrália","away":"Turquia","time":"2026-06-14T01:00:00-03:00","venue":"Vancouver"},
@@ -68,7 +68,7 @@ const MATCHES = [
   {"id":"m024","fase":"Grupo L","home":"Gana","away":"Panamá","time":"2026-06-17T20:00:00-03:00","venue":"Toronto"},
   {"id":"m025","fase":"Grupo A","home":"Tchéquia","away":"África do Sul","time":"2026-06-18T13:00:00-03:00","venue":"Atlanta"},
   {"id":"m026","fase":"Grupo B","home":"Suíça","away":"Canadá","time":"2026-06-18T16:00:00-03:00","venue":"Los Angeles"},
-  {"id":"m027","fase":"Grupo B","home":"Canadá","away":"Catar","time":"2026-06-18T19:00:00-03:00","venue":"Vancouver"},
+  {"id":"m027","fase":"Grupo B","home":"Bósnia e Herzegovina","away":"Catar","time":"2026-06-18T19:00:00-03:00","venue":"Vancouver"},
   {"id":"m028","fase":"Grupo A","home":"México","away":"Coreia do Sul","time":"2026-06-18T22:00:00-03:00","venue":"Guadalajara"},
   {"id":"m029","fase":"Grupo D","home":"Turquia","away":"Paraguai","time":"2026-06-19T01:00:00-03:00","venue":"São Francisco"},
   {"id":"m030","fase":"Grupo D","home":"Estados Unidos","away":"Austrália","time":"2026-06-19T16:00:00-03:00","venue":"Seattle"},
@@ -189,6 +189,7 @@ async function handleAuth(user) {
     setupRealtimeListeners();
     renderMatchList("grupos");
     renderMatchList("matamata");
+    renderDayAlert();
     renderRanking();
   } else {
     currentUser = null;
@@ -228,16 +229,19 @@ function setupRealtimeListeners() {
     allBets = snap.exists() ? snap.val() : {};
     renderMatchList("grupos");
     renderMatchList("matamata");
+    renderDayAlert();
   });
   onValue(ref(db, `bets`), snap => {
     allUserBets = snap.exists() ? snap.val() : {};
     renderMatchList("grupos");
     renderMatchList("matamata");
+    renderDayAlert();
   });
   onValue(ref(db, `results`), snap => {
     allResults = snap.exists() ? snap.val() : {};
     renderMatchList("grupos");
     renderMatchList("matamata");
+    renderDayAlert();
     renderRanking();
   });
   onValue(ref(db, `users`), snap => {
@@ -338,6 +342,36 @@ const FASES_GRUPOS   = ["Grupo A","Grupo B","Grupo C","Grupo D","Grupo E","Grupo
                         "Grupo G","Grupo H","Grupo I","Grupo J","Grupo K","Grupo L"];
 const FASES_MATAMATA = ["Rodada de 32","Oitavas de Final","Quartas de Final","Semifinal","3º Lugar","Final"];
 
+// ─── ALERTA DO DIA ───────────────────────────────────────────────────────────
+function renderDayAlert() {
+  const banner = document.getElementById("day-alert");
+  if (!banner || !currentUser) return;
+
+  const today = new Date().toDateString();
+  const jogosHoje = MATCHES.filter(m => {
+    const d = new Date(m.time);
+    return d.toDateString() === today && isMatchOpen(m) && !allResults[m.id];
+  });
+  const semPalpite = jogosHoje.filter(m => !allBets[m.id]);
+
+  if (semPalpite.length === 0) {
+    banner.style.display = "none";
+    return;
+  }
+
+  const total = jogosHoje.length;
+  const feitos = total - semPalpite.length;
+  banner.style.display = "flex";
+  banner.innerHTML = `
+    <span class="day-alert-icon">⚽</span>
+    <div class="day-alert-text">
+      <strong>Jogos hoje!</strong>
+      Você fez ${feitos} de ${total} palpite${total!==1?"s":""} —
+      <span class="day-alert-missing">${semPalpite.length} faltando</span>
+    </div>
+    <button class="day-alert-btn" onclick="switchTab('apostas-grupos')">Ver jogos</button>`;
+}
+
 // ─── RENDER MATCHES ──────────────────────────────────────────────────────────
 function renderMatchList(filtro) {
   // filtro: "grupos" | "matamata" | undefined (ambos)
@@ -418,8 +452,11 @@ function renderMatchList(filtro) {
         betRow = `<div class="bet-preview">Faça login para apostar</div>`;
       }
 
+      const isToday   = d.toDateString() === new Date().toDateString();
+      const isPending = isToday && open && !bet && !result && currentUser;
+
       html += `
-        <div class="match-card ${open?"match-open":"match-done"}">
+        <div class="match-card ${open?"match-open":"match-done"}${isPending?" match-today-pending":""}${isToday&&open?" match-today":""}">
           <div class="match-meta">
             <span class="match-date">📅 ${dateStr} • ${timeStr}</span>
             <span class="match-venue">📍 ${m.venue}</span>
@@ -845,6 +882,48 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .match-card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.3);}
 .match-card.match-open{border-color:rgba(37,99,201,.4);}
 .match-card.match-done{opacity:.88;}
+
+/* Jogo de hoje com palpite pendente — moldura verde pulsando */
+.match-card.match-today-pending{
+  border-color:#22c55e !important;
+  box-shadow:0 0 0 1px #22c55e, 0 0 16px rgba(34,197,94,.25);
+  animation:pulseGreen 2s ease-in-out infinite;
+}
+@keyframes pulseGreen{
+  0%,100%{box-shadow:0 0 0 1px #22c55e, 0 0 10px rgba(34,197,94,.2);}
+  50%{box-shadow:0 0 0 2px #22c55e, 0 0 24px rgba(34,197,94,.45);}
+}
+
+/* Banner de alerta do dia */
+#day-alert{
+  display:flex;align-items:center;gap:12px;
+  margin:0 24px 16px;
+  padding:12px 16px;
+  background:rgba(34,197,94,.1);
+  border:1px solid rgba(34,197,94,.35);
+  border-radius:var(--r-md);
+  position:relative;z-index:1;
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.day-alert-icon{font-size:1.4rem;flex-shrink:0;animation:bounce 1.2s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+.day-alert-text{flex:1;font-size:.82rem;color:var(--white-70);line-height:1.4;}
+.day-alert-text strong{display:block;color:#4ade80;font-size:.88rem;margin-bottom:1px;}
+.day-alert-missing{color:#4ade80;font-weight:700;}
+.day-alert-btn{
+  flex-shrink:0;
+  background:#22c55e;color:#04101f;
+  border:none;border-radius:var(--r-sm);
+  font-family:var(--font-body);font-size:.75rem;font-weight:700;
+  padding:7px 14px;cursor:pointer;
+  transition:background .15s;white-space:nowrap;
+}
+.day-alert-btn:hover{background:#4ade80;}
+@media(max-width:600px){
+  #day-alert{margin:0 12px 12px;}
+  .day-alert-btn{display:none;}
+}
 .match-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:4px;}
 .match-date{font-size:.7rem;color:var(--white-40);font-weight:500;}
 .match-venue{font-size:.63rem;color:var(--white-40);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
@@ -990,7 +1069,12 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .admin-card h3{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:16px;color:var(--amber);}
 .form-group{margin-bottom:12px;}
 .form-group label{display:block;font-size:.75rem;color:var(--white-40);margin-bottom:5px;font-weight:500;}
-.form-group select,.form-group input[type=number]{width:100%;background:var(--white-08);border:1px solid var(--white-15);border-radius:var(--r-sm);color:var(--white);font-family:var(--font-body);font-size:.85rem;padding:8px 12px;outline:none;transition:border-color .2s;}
+.form-group select,.form-group input[type=number]{width:100%;background:var(--white-08);border:1px solid var(--white-15);border-radius:var(--r-sm);color:var(--white);font-family:var(--font-body);font-size:.85rem;padding:8px 12px;outline:none;transition:border-color .2s;-moz-appearance:textfield;}
+.form-group input[type=number]::-webkit-inner-spin-button,
+.form-group input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .form-group select:focus,.form-group input[type=number]:focus{border-color:var(--blue-light);}
 .form-group select option{background:var(--navy-700);}
 .btn-admin{background:var(--amber);color:var(--navy-900);border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:.85rem;font-weight:700;padding:10px 22px;cursor:pointer;transition:background .2s;}
@@ -1198,6 +1282,10 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 
 <!-- App -->
 <div id="app-content">
+
+  <!-- Banner de jogos do dia -->
+  <div id="day-alert" style="display:none"></div>
+
   <div class="tabs-bar">
     <button class="tab-btn" data-tab="apostas-grupos" data-icon="⚽" id="btn-grupos">Grupos</button>
     <button class="tab-btn" data-tab="apostas-matamata" data-icon="⚔️" id="btn-matamata">Mata-mata</button>
@@ -1320,7 +1408,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v2.9 · grupos / mata-mata separados</div>
+<div class="version">v3.0 · alerta do dia + borda pulsante</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -1458,7 +1546,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const MATCHES_ADM = [
     ["m001","México","África do Sul"],["m002","Coreia do Sul","Tchéquia"],
     ["m003","Canadá","Bósnia e Herzegovina"],["m004","Estados Unidos","Paraguai"],
-    ["m005","Bósnia e Herzegovina","Suíça"],["m006","Brasil","Marrocos"],
+    ["m005","Catar","Suíça"],["m006","Brasil","Marrocos"],
     ["m007","Haiti","Escócia"],["m008","Austrália","Turquia"],
     ["m009","Alemanha","Curaçao"],["m010","Costa do Marfim","Equador"],
     ["m011","Países Baixos","Japão"],["m012","Suécia","Tunísia"],
@@ -1469,7 +1557,7 @@ window.addEventListener("DOMContentLoaded", () => {
     ["m021","Portugal","R.D. Congo"],["m022","Uzbequistão","Colômbia"],
     ["m023","Inglaterra","Croácia"],["m024","Gana","Panamá"],
     ["m025","Tchéquia","África do Sul"],["m026","Suíça","Canadá"],
-    ["m027","Canadá","Catar"],["m028","México","Coreia do Sul"],
+    ["m027","Bósnia e Herzegovina","Catar"],["m028","México","Coreia do Sul"],
     ["m029","Turquia","Paraguai"],["m030","Estados Unidos","Austrália"],
     ["m031","Escócia","Marrocos"],["m032","Brasil","Haiti"],
     ["m033","Tunísia","Japão"],["m034","Países Baixos","Suécia"],
