@@ -538,6 +538,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
     <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
     <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Squad Mídia</div>
+    <div class="pcal-tab"     id="pcal-tab-midiacriativa"  onclick="setPcalTab('midiacriativa')">🎨 Squad Mídia Criativa</div>
     <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Gestão Digital</div>
   </div>
 
@@ -585,6 +586,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">🏠 Todos os squads</button>
     <button class="filter-btn"        id="fb-dados"  onclick="setFilter('dados')">📊 Squad Dados</button>
     <button class="filter-btn"        id="fb-midia"  onclick="setFilter('midia')">📱 Squad Mídia</button>
+    <button class="filter-btn"        id="fb-midiacriativa"  onclick="setFilter('midiacriativa')">🎨 Squad Mídia Criativa</button>
   </div>
 
   <!-- SQUADS EM TEMPO REAL -->
@@ -605,7 +607,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="sec-title">⚖️ Comparação</div>
   <div class="card" style="margin-bottom:20px;">
     <table class="cmp-table">
-      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Squad Mídia</th></tr></thead>
+      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Squad Mídia</th><th>🎨 Mídia Criativa</th></tr></thead>
       <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
     </table>
   </div>
@@ -672,6 +674,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
         <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
         <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('squad','midiacriativa')" id="ef-squad-midiacriativa">🎨 Criativa</button>
       </div>
       <div class="err-filter-row">
         <span class="err-filter-label">Tipo</span>
@@ -715,6 +718,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <option value="gestao">🏢 Gestão Digital Hering</option>
           <option value="dados">📊 Squad Dados</option>
           <option value="midia">📱 Squad Mídia</option>
+          <option value="midiacriativa">🎨 Squad Mídia Criativa</option>
           <option value="geral">🌐 Geral (todos)</option>
         </select>
       </div>
@@ -1191,6 +1195,7 @@ function checklistPct(c){
 const PCAL_COLORS=[
   {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
   {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Squad Mídia'},
+  {id:'midiacriativa', bg:'rgba(168,85,247,.8)', txt:'#fff', label:'🎨 Squad Mídia Criativa'},
   {id:'gestao',  bg:'rgba(150,80,220,.8)',  txt:'#fff', label:'Gestão Digital'},
   {id:'geral',   bg:'rgba(255,209,102,.8)', txt:'#333', label:'Geral'},
   {id:'blue',    bg:'rgba(37,99,201,.8)',   txt:'#fff', label:'Azul'},
@@ -1798,6 +1803,7 @@ function toggleSqCol(sqId, colId){
 let SQUADS = [
   {id:'dados', label:'Squad Dados', icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'midia', label:'Squad Mídia', icon:'📱', color:'#1de9b6', wipLimit:3},
+  {id:'midiacriativa', label:'Squad Mídia Criativa', icon:'🎨', color:'#a855f7', wipLimit:3},
 ];
 // URL helper: abre o board de um squad no kanban unificado
 function squadBoardUrl(squadId){ return 'kanban.html?squad=' + squadId; }
