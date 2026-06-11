@@ -36,17 +36,15 @@
 ::-webkit-scrollbar-corner { background: transparent; }
 
 /* Board horizontal — barra mais visível no modo expandido */
-.board-wrap::-webkit-scrollbar { height: 5px; }
-.board-wrap::-webkit-scrollbar-track {
-  background: rgba(56,182,255,.04);
-  border-radius: 999px;
-  margin: 0 8px;
-}
+.board-wrap::-webkit-scrollbar { height: 2px; }
+.board-wrap::-webkit-scrollbar-track { background: transparent; }
 .board-wrap::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.3);
+  background: rgba(56,182,255,.2);
   border-radius: 999px;
 }
-.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.55); }
+.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
+/* Firefox */
+.board-wrap { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.2) transparent; }
 /* ── SQUAD SELECTOR ────────────────────────────────────────────── */
 #squad-selector{
   display:none;position:fixed;inset:0;z-index:8000;
@@ -162,7 +160,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{overflow-x:auto;padding-bottom:8px;}
+.board-wrap{overflow-x:auto;padding-bottom:3px;}
 .board-wrap.mode-expanded-wrap{
   overflow-x:auto;
   overflow-y:visible;
@@ -1275,6 +1273,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <option value="late">Atrasados</option>
     <option value="today">Vencem hoje</option>
     <option value="week">Próximos 7 dias</option>
+  </select>
+  <select id="f-priority" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Qualquer prioridade</option>
+    <option value="critical">🔥 Crítica</option>
+    <option value="high">🔴 Alta</option>
+    <option value="medium">🟡 Média</option>
+    <option value="low">🟢 Baixa</option>
   </select>
   <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
     <input type="checkbox" id="f-blocker" onchange="applyFilters()" style="accent-color:var(--danger);"> Só impedidos
@@ -2567,7 +2572,7 @@ function renderRaiaTag(board,activeCards){
   });
 }
 
-let activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
+let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -2588,6 +2593,7 @@ function applyFilters(){
     owner:document.getElementById('f-owner').value,
     tag:document.getElementById('f-tag').value,
     due:document.getElementById('f-due').value,
+    priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
     risco:document.getElementById('f-risco').checked,
   };
@@ -2597,14 +2603,16 @@ function clearFilters(){
   document.getElementById('f-owner').value='';
   document.getElementById('f-tag').value='';
   document.getElementById('f-due').value='';
+  const fp=document.getElementById('f-priority'); if(fp) fp.value='';
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
-  activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
+  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false};
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!ignoreOwner&&activeFilters.owner&&card.owner!==activeFilters.owner) return false;
   if(!ignoreTag&&activeFilters.tag&&card.tag!==activeFilters.tag) return false;
+  if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.due){
