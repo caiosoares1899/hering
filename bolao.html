@@ -284,10 +284,10 @@ function isMatchOpen(match) {
 }
 
 window.saveBet = async function(matchId) {
-  if (!currentUser) { showToast("Faça login para apostar","error"); return; }
+  if (!currentUser) { showToast("Faça login para palpitar","error"); return; }
   if (!userProfile?.squad) { document.getElementById("squad-modal").style.display="flex"; return; }
   const match = MATCHES.find(m => m.id === matchId);
-  if (!match || !isMatchOpen(match)) { showToast("Apostas encerradas ⏰","error"); return; }
+  if (!match || !isMatchOpen(match)) { showToast("Palpites encerradas ⏰","error"); return; }
   const hScore = parseInt(document.getElementById(`home-${matchId}`).value);
   const aScore = parseInt(document.getElementById(`away-${matchId}`).value);
   if (isNaN(hScore)||isNaN(aScore)||hScore<0||aScore<0) { showToast("Placar inválido","error"); return; }
@@ -438,7 +438,7 @@ function renderMatchList(filtro) {
         const ptsCls = pts===3?"pts-3":pts===1?"pts-1":"pts-0";
         statusBadge = `<span class="status-badge encerrado">Encerrado</span>${bet?`<span class="pts-badge ${ptsCls}">${pts} pt${pts!==1?"s":""}</span>`:""}`;
       } else if (!open) {
-        statusBadge = `<span class="status-badge fechado">Apostas encerradas</span>`;
+        statusBadge = `<span class="status-badge fechado">Palpites encerrados</span>`;
       } else {
         statusBadge = `<span class="status-badge aberto">Até ${closesStr}</span>`;
       }
@@ -449,7 +449,7 @@ function renderMatchList(filtro) {
       } else if (open && currentUser) {
         betRow = `<div class="bet-row"><input type="number" id="home-${m.id}" min="0" max="20" value="${bet?.home??""}" placeholder="0" class="score-input"/><span class="vs-sep">×</span><input type="number" id="away-${m.id}" min="0" max="20" value="${bet?.away??""}" placeholder="0" class="score-input"/><button class="btn-bet" onclick="saveBet('${m.id}')">${bet?"Atualizar":"Palpitar"}</button></div>`;
       } else if (!open && currentUser) {
-        betRow = `<div class="result-row"><div class="bet-preview locked">${bet?`🔒 Aposta: ${bet.home}×${bet.away}`:"Você não apostou"}</div></div>`;
+        betRow = `<div class="result-row"><div class="bet-preview locked">${bet?`🔒 Aposta: ${bet.home}×${bet.away}`:"Você não palpitou"}</div></div>`;
       } else {
         betRow = `<div class="bet-preview">Faça login para apostar</div>`;
       }
@@ -1307,7 +1307,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   <div class="scoring-pills">
     <div class="scoring-pill"><span class="pts">3 pts</span> Placar exato</div>
     <div class="scoring-pill"><span class="pts">1 pt</span> Vencedor ou empate</div>
-    <div class="scoring-pill"><span class="pts">🔒</span> Apostas fecham 1h antes</div>
+    <div class="scoring-pill"><span class="pts">🔒</span> Palpits fecham 1h antes</div>
   </div>
   <a href="https://ge.globo.com/futebol/copa-do-mundo/" target="_blank" rel="noopener" class="btn-classificacao">
     📊 Classificação dos grupos em tempo real
@@ -1381,7 +1381,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       <div class="rule-section-title">⚽ Pontuação básica</div>
       <div class="rule-item">
         <div class="rule-pts">3</div>
-        <div class="rule-info"><strong>Placar exato</strong><span>Acertou exatamente o número de gols de cada time — ex: apostou 2×1 e deu 2×1</span></div>
+        <div class="rule-info"><strong>Placar exato</strong><span>Acertou exatamente o número de gols de cada time — ex: palpitou 2×1 e deu 2×1</span></div>
       </div>
       <div class="rule-item">
         <div class="rule-pts">1</div>
@@ -1389,7 +1389,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       </div>
       <div class="rule-item" style="border-bottom:none">
         <div class="rule-pts" style="color:var(--white-40)">0</div>
-        <div class="rule-info"><strong>Errou o resultado</strong><span>Apostou no time errado ou num empate que não aconteceu</span></div>
+        <div class="rule-info"><strong>Errou o resultado</strong><span>Palpitou no time errado ou num empate que não aconteceu</span></div>
       </div>
 
       <div class="rule-divider"></div>
@@ -1397,7 +1397,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       <div class="rule-note rule-note-fish">
         As odds são calculadas <strong>em tempo real</strong> a partir dos palpites da galera — sem casa de apostas, sem algoritmo externo. A lógica é simples:<br/><br/>
         <strong>Odd = (total de palpites ÷ palpites naquele resultado) × 1.1</strong><br/><br/>
-        Se 10 pessoas apostaram e 8 foram em Brasil, a odd do Brasil é baixa (favorito da turma). Se só 1 apostou em empate, a odd do empate é altíssima. Ou seja: <strong>quanto mais impopular o palpite, maior a odd</strong>.<br/><br/>
+        Se 10 pessoas palpitaram e 8 foram em Brasil, a odd do Brasil é baixa (favorito da turma). Se só 1 palpittou em empate, a odd do empate é altíssima. Ou seja: <strong>quanto mais impopular o palpite, maior a odd</strong>.<br/><br/>
         O multiplicador de 10% é o "vigor" — garante que a soma das probabilidades implícitas seja sempre um pouquinho maior que 100%, como em casas de apostas reais. Antes de haver palpites o campo mostra <strong>—</strong>.
       </div>
 
@@ -1410,12 +1410,12 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
         Exemplos:<br/>
         • Acertou placar exato (3 pts) num palpite com odd 3.50 → <strong>10.5 pts de coragem</strong><br/>
         • Acertou o vencedor (1 pt) num palpite com odd 1.10 → <strong>1.1 pt de coragem</strong><br/><br/>
-        Acertar o favorito vale pouco. Acertar o azarão que ninguém apostou vale <em>muito</em>. Coragem e faro!
+        Acertar o favorito vale pouco. Acertar o azarão que ninguém palpitou vale <em>muito</em>. Coragem e faro!
       </div>
 
       <div class="rule-divider"></div>
       <div class="rule-note">
-        ⏰ <strong>Prazo:</strong> Apostas fecham <strong>1 hora antes</strong> de cada jogo. Depois disso não dá pra criar nem editar.<br/><br/>
+        ⏰ <strong>Prazo:</strong> Palpites fecham <strong>1 hora antes</strong> de cada jogo. Depois disso não dá pra criar nem editar.<br/><br/>
         🏷️ <strong>Ranking por squad:</strong> Usa a <strong>média de pontos</strong> dos membros do squad — então um squad pequeno e afiado pode bater um squad grande e chuteiro.<br/><br/>
         📊 <strong>Classificação ao vivo:</strong> Acompanhe a tabela de grupos em tempo real pelo botão na página inicial.<br/><br/>
         🔐 <strong>Login:</strong> Necessário entrar com sua conta Google Hering para participar.
