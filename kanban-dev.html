@@ -1983,9 +1983,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   window._signOut = () => { location.reload(); };
   window._pendingInsc = false;
 
-  // ── Dispara auth-change ──────────────────────────────────
+  // ── DEV Bootstrap ───────────────────────────────────────
   window.addEventListener('DOMContentLoaded', ()=>{
-    document.dispatchEvent(new CustomEvent('auth-change', { detail: window._currentUser }));
+
+    // 1. Dispara fb-ready ANTES do auth-change (fbLoadAll precisa rodar primeiro)
+    window.dispatchEvent(new Event('fb-ready'));
+
+    // 2. Seta role/init do user dev
+    window._currentUserInit = 'CS';
+    window._currentUserRole = 'adm';
+
+    // 3. Intercepta o auth-change listener do app para bypassar autoRegistrar
+    //    e mostrar o board direto com seed data
+    const _origAddEL = window.addEventListener.bind(window);
+    // Sobrescreve temporariamente para capturar o listener do auth-change do app
+    // (o app registra window.addEventListener('auth-change', ...) no script principal)
+    // Abordagem mais simples: dispara auth-change depois do DOMContentLoaded
+    // mas o listener do app já registrou via script inline — então só disparamos:
+    setTimeout(()=>{
+      // Garante que o app já registrou seus listeners
+      document.dispatchEvent(new CustomEvent('auth-change', { detail: window._currentUser }));
+    }, 50);
   });
 
   console.log('%c🧪 KANBAN DEV MODE — Firebase mockado, sem persistência', 'background:#1a3a2a;color:#1de9b6;padding:4px 8px;border-radius:4px;font-weight:bold;');
@@ -6699,6 +6717,22 @@ function loadAttachments(card){
   // Auto-login dev user
   window._currentUserInit = 'CS';
   window._currentUserRole = 'adm';
+
+  // Pre-popula o mock store para que os fbListen do fbLoadAll encontrem os dados
+  if(window._set && window._ref && window._db){
+    const base = 'kanban/squads/' + ACTIVE_SQUAD + '/dados';
+    window._set(window._ref(window._db, base + '/cards'),   cards);
+    window._set(window._ref(window._db, base + '/tags'),    tags);
+    window._set(window._ref(window._db, base + '/columns'), columns);
+    // Popula usuários
+    members.forEach(m=>{
+      window._set(window._ref(window._db, 'kanban/usuarios/' + m.uid), {
+        uid: m.uid, nome: m.name, email: m.email, init: m.init,
+        foto: m.foto, role: m.role, inscrito: true,
+        squads: { [ACTIVE_SQUAD]: true }
+      });
+    });
+  }
 
   console.log('🧪 Seed: ' + cards.length + ' cards, ' + members.length + ' membros, ' + tags.length + ' tags');
 })();
