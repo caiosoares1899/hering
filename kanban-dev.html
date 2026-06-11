@@ -2001,8 +2001,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     // Abordagem mais simples: dispara auth-change depois do DOMContentLoaded
     // mas o listener do app já registrou via script inline — então só disparamos:
     setTimeout(()=>{
-      // Garante que o app já registrou seus listeners
-      document.dispatchEvent(new CustomEvent('auth-change', { detail: window._currentUser }));
+      // Dispara auth-change → autoRegistrar → showApp → renderBoard
+      window.dispatchEvent(new CustomEvent('auth-change', { detail: window._currentUser }));
+      
+      // Fallback: força exibição do board após 300ms caso o fluxo normal falhe
+      setTimeout(()=>{
+        const root = document.getElementById('app-root');
+        if(root && root.style.display === 'none'){
+          console.warn('🧪 DEV: forçando exibição do board (fallback)');
+          root.style.display = 'block';
+          document.getElementById('login-ov').style.display = 'none';
+          document.getElementById('fab').style.display = 'flex';
+          document.getElementById('user-name').textContent = window._currentUser.displayName;
+          if(typeof renderBoard === 'function') renderBoard();
+          if(typeof applyViewMode === 'function') applyViewMode();
+        }
+      }, 300);
     }, 50);
   });
 
