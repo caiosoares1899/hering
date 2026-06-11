@@ -171,7 +171,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   max-width:100%;
 }
 .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
-.board.raia-mode{display:block;}
+.board.raia-mode{display:block!important;}
+.board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
+.board.raia-mode.mode-expanded .col{width:240px;min-width:240px;}
 .board.raia-mode.mode-expanded .col-body{
   max-height:calc(var(--raia-col-h, 60vh));
   overflow-y:auto;
