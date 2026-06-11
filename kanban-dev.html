@@ -4753,22 +4753,7 @@ function setViewMode(mode){
     board.classList.remove('mode-onepage','mode-expanded');
     board.classList.add('mode-'+mode);
   }
-  if(wrap){
-    if(mode==='expanded'){
-      // Calcula altura disponível: viewport - tudo acima do board
-      const wrapTop=wrap.getBoundingClientRect().top;
-      const available=window.innerHeight - wrapTop - 16;
-      wrap.style.maxHeight=available+'px';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='auto';
-      wrap.style.paddingBottom='0';
-    } else {
-      wrap.style.maxHeight='';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='visible';
-      wrap.style.paddingBottom='8px';
-    }
-  }
+  // wrap overflow handled purely by CSS (overflow-y:hidden always)
 }
 function applyViewMode(){
   // Delay one frame so board is laid out before height calculation
