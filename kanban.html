@@ -5921,7 +5921,11 @@ function renderCommentList(comments){
 function renderMentionText(text){
   if(!text) return '';
   // @USER mentions → teal underlined
-  text=text.replace(/@([A-Z]{2,4})/g,'<span class="mention-user">@$1</span>');
+  text=text.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
+    const _mem=typeof members!=='undefined'?members.find(x=>typeof getMemberHandle==='function'&&getMemberHandle(x)===handle.toLowerCase()):null;
+    const title=_mem?_mem.name:handle;
+    return '<span class="mention-user" title="'+esc(title)+'">@'+esc(handle)+'</span>';
+  });
   // [[CARD:id:title]] → blue underlined (data-cid for click wiring after insertion)
   text=text.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,function(m,id,title){
     return '<span class="mention-card" data-cid="'+id+'">📎 '+title+'</span>';
