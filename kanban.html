@@ -1239,8 +1239,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="app" id="app-root" style="display:none;">
 <div class="hd">
   <div class="hd-l">
-    <div class="hd-title" id="hd-squad-title">🐟 Maré Digital</div>
-    <span class="hd-badge" id="sprint-badge">Maré Digital 🐟</span>
+    <div class="hd-title">🐟 Maré Digital</div>
+    <span class="hd-badge" id="sprint-badge">Carregando...</span>
 
   </div>
   <div class="hd-btns">
@@ -2028,16 +2028,17 @@ function loadSquadsFromFirebase(callback) {
 }
 
 function applySquadIdentity() {
-  const { label, subtitle } = _squadMeta;
+  const { label, subtitle, emoji } = _squadMeta;
   const titleEl = document.getElementById('page-title');
   if (titleEl) titleEl.textContent = '🐟 Maré Digital · ' + subtitle;
-  const hdTitle = document.getElementById('hd-squad-title');
-  if (hdTitle) hdTitle.textContent = label;
+  
+  const sprintBadge = document.getElementById('sprint-badge');
+  if (sprintBadge) sprintBadge.textContent = (emoji || '🐟') + ' ' + label;
+
   const metaTitle = document.getElementById('meta-app-title');
   if (metaTitle) metaTitle.setAttribute('content', 'Maré · ' + label);
   const loginSub = document.getElementById('login-subtitle');
   if (loginSub) loginSub.textContent = 'Digital Hering · ' + subtitle;
-  // sprint-badge é atualizado por applyAgilCfg(); já vai usar SQUAD_LABELS[ACTIVE_SQUAD]
 }
 document.addEventListener('DOMContentLoaded', applySquadIdentity);
 // ── FIM SQUAD ────────────────────────────────────────────────────
