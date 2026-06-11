@@ -284,16 +284,27 @@ function isMatchOpen(match) {
   return new Date() < new Date(new Date(match.time).getTime() - 3600000);
 }
 
-window.saveBet = async function(matchId) {
+window.saveBet = async function(matchId, hVal, aVal) {
   if (!currentUser) { showToast("Faça login para apostar","error"); return; }
   if (!userProfile?.squad) { document.getElementById("squad-modal").style.display="flex"; return; }
   const match = MATCHES.find(m => m.id === matchId);
   if (!match || !isMatchOpen(match)) { showToast("Apostas encerradas ⏰","error"); return; }
-  const hScore = parseInt(document.getElementById(`home-${matchId}`).value);
-  const aScore = parseInt(document.getElementById(`away-${matchId}`).value);
+
+  // Se não passou valores direto, tenta pegar do DOM (fallback)
+  let hScore = hVal !== undefined ? parseInt(hVal) : NaN;
+  let aScore = aVal !== undefined ? parseInt(aVal) : NaN;
+  if (isNaN(hScore) || isNaN(aScore)) {
+    // Pega o input VISÍVEL (não o de uma tab oculta)
+    const inputs = document.querySelectorAll(`input[data-match="${matchId}"]`);
+    for (const inp of inputs) {
+      if (inp.offsetParent !== null) { // visível
+        if (inp.dataset.side === "home") hScore = parseInt(inp.value);
+        if (inp.dataset.side === "away") aScore = parseInt(inp.value);
+      }
+    }
+  }
   if (isNaN(hScore)||isNaN(aScore)||hScore<0||aScore<0) { showToast("Placar inválido","error"); return; }
 
-  // Captura a odd do palpite no momento do save (pra ranking de coragem)
   const oddsSnap = calcOdds(matchId, match.home, match.away);
   const diff = hScore - aScore;
   let oddAtSave = null;
@@ -302,7 +313,6 @@ window.saveBet = async function(matchId) {
     else if (diff < 0) oddAtSave = parseFloat(oddsSnap.away) || null;
     else               oddAtSave = parseFloat(oddsSnap.draw) || null;
   }
-
   await set(ref(db, `bets/${currentUser.uid}/${matchId}`),
     { home:hScore, away:aScore, squad:userProfile.squad, name:currentUser.displayName,
       savedAt:Date.now(), oddAtSave });
@@ -403,8 +413,7 @@ function buildMatchCard(m) {
 
   let statusBadge = "";
   if (result) {
-    const ptsCls = pts===3?"pts-3":pts===1?"pts-1":"pts-0";
-    statusBadge = `<span class="status-badge encerrado">Encerrado</span>${bet?`<span class="pts-badge ${ptsCls}">${pts} pt${pts!==1?"s":""}</span>`:""}`;
+    statusBadge = `<span class="status-badge encerrado">Encerrado</span>`;
   } else if (!open) {
     statusBadge = `<span class="status-badge fechado">Apostas encerradas</span>`;
   } else {
@@ -413,16 +422,32 @@ function buildMatchCard(m) {
 
   let betRow = "";
   if (result) {
-    betRow = `<div class="result-row">
-      <div class="scoreboard">
-        <div class="sb-team"><img class="sb-flag" src="${getFlagUrl(m.home)}" alt=""/><span class="sb-name">${m.home}</span></div>
-        <div class="sb-score"><span class="sb-num">${result.home}</span><span class="sb-sep">–</span><span class="sb-num">${result.away}</span></div>
-        <div class="sb-team right"><img class="sb-flag" src="${getFlagUrl(m.away)}" alt=""/><span class="sb-name">${m.away}</span></div>
-      </div>
-      ${bet?`<div class="bet-tag ${pts===3?"bet-exact":pts===1?"bet-winner":"bet-miss"}">${pts===3?"🎯":pts===1?"✓":"✗"} seu palpite: ${bet.home}–${bet.away}</div>`:`<div class="bet-tag bet-empty">sem palpite</div>`}
-    </div>`;
+    const ptsCls = pts===3?"pts-3":pts===1?"pts-1":"pts-0";
+    const ptsIcon = pts===3?"🎯":pts===1?"✓":"✗";
+    betRow = `
+      <div class="result-block">
+        <div class="rb-score">
+          <span class="rb-num">${result.home}</span>
+          <span class="rb-sep">–</span>
+          <span class="rb-num">${result.away}</span>
+        </div>
+        <div class="rb-right">
+          ${bet
+            ? `<span class="rb-bet ${ptsCls}">${ptsIcon} ${bet.home}–${bet.away}</span>
+               <span class="pts-badge ${ptsCls}">${pts} pt${pts!==1?"s":""}</span>`
+            : `<span class="rb-bet rb-empty">sem palpite</span>`}
+        </div>
+      </div>`;
   } else if (open && currentUser) {
-    betRow = `<div class="bet-row"><input type="number" id="home-${m.id}" min="0" max="20" value="${bet?.home??""}" placeholder="0" class="score-input"/><span class="vs-sep">×</span><input type="number" id="away-${m.id}" min="0" max="20" value="${bet?.away??""}" placeholder="0" class="score-input"/><button class="btn-bet" onclick="saveBet('${m.id}')">${bet?"Atualizar":"Palpitar"}</button></div>`;
+    betRow = `<div class="bet-row">
+      <input type="number" data-match="${m.id}" data-side="home" min="0" max="20" value="${bet?.home??""}" placeholder="0" class="score-input" oninput="this.dataset.val=this.value"/>
+      <span class="vs-sep">×</span>
+      <input type="number" data-match="${m.id}" data-side="away" min="0" max="20" value="${bet?.away??""}" placeholder="0" class="score-input" oninput="this.dataset.val=this.value"/>
+      <button class="btn-bet" onclick="
+        const inp=this.parentElement.querySelectorAll('input');
+        saveBet('${m.id}',inp[0].value,inp[1].value)
+      ">${bet?"Atualizar":"Palpitar"}</button>
+    </div>`;
   } else if (!open && currentUser) {
     betRow = `<div class="result-row"><div class="bet-preview locked">${bet?`🔒 ${bet.home}×${bet.away}`:"Você não apostou"}</div></div>`;
   } else {
@@ -1089,28 +1114,22 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .vs-sep{color:var(--white-40);font-size:.8rem;flex-shrink:0;}
 .btn-bet{flex:1;min-width:0;background:var(--blue-main);border:none;border-radius:var(--r-sm);color:var(--white);font-family:var(--font-body);font-size:.78rem;font-weight:600;padding:8px 10px;cursor:pointer;transition:background .2s,transform .15s;white-space:nowrap;}
 .btn-bet:hover{background:var(--blue-light);transform:translateY(-1px);}
-.result-row{margin-bottom:10px;}
-.scoreboard{
+/* Result block — compacto */
+.result-block{
   display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-bottom:10px;
   background:var(--white-05);border-radius:var(--r-sm);
-  padding:8px 10px;margin-bottom:6px;gap:6px;
+  padding:8px 12px;
 }
-.sb-team{display:flex;align-items:center;gap:5px;flex:1;min-width:0;}
-.sb-team.right{flex-direction:row-reverse;text-align:right;}
-.sb-flag{width:20px;height:14px;object-fit:cover;border-radius:2px;flex-shrink:0;}
-.sb-name{font-size:.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--white-70);}
-.sb-score{display:flex;align-items:center;gap:5px;flex-shrink:0;padding:0 6px;}
-.sb-num{font-family:var(--font-display);font-size:1.3rem;font-weight:800;color:var(--white);}
-.sb-sep{font-family:var(--font-display);font-size:.9rem;color:var(--white-40);}
-.bet-tag{
-  font-size:.68rem;font-weight:600;
-  border-radius:20px;padding:3px 10px;
-  display:inline-block;
-}
-.bet-exact{background:rgba(126,200,227,.15);color:var(--cyan);border:1px solid rgba(126,200,227,.3);}
-.bet-winner{background:rgba(37,99,201,.15);color:#93c5fd;border:1px solid rgba(37,99,201,.3);}
-.bet-miss{background:var(--white-05);color:var(--white-40);border:1px solid var(--white-08);}
-.bet-empty{background:var(--white-05);color:var(--white-40);border:1px solid var(--white-08);font-style:italic;}
+.rb-score{display:flex;align-items:center;gap:8px;}
+.rb-num{font-family:var(--font-display);font-size:1.6rem;font-weight:800;color:var(--white);line-height:1;}
+.rb-sep{font-family:var(--font-display);font-size:1rem;color:var(--white-40);}
+.rb-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.rb-bet{font-size:.72rem;font-weight:600;color:var(--white-40);}
+.rb-bet.pts-3{color:var(--cyan);}
+.rb-bet.pts-1{color:#93c5fd;}
+.rb-bet.pts-0{color:var(--white-40);}
+.rb-empty{font-style:italic;}
 .match-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .status-badge{font-size:.62rem;font-weight:600;letter-spacing:.06em;border-radius:20px;padding:3px 10px;text-transform:uppercase;}
 .status-badge.aberto{background:rgba(37,99,201,.25);color:var(--cyan);border:1px solid rgba(37,99,201,.4);}
@@ -1634,7 +1653,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v3.1 · resultado + por data + admin configs</div>
+<div class="version">v3.2 · resultado limpo + fix palpite por data</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
