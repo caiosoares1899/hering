@@ -36,17 +36,15 @@
 ::-webkit-scrollbar-corner { background: transparent; }
 
 /* Board horizontal — barra mais visível no modo expandido */
-.board-wrap::-webkit-scrollbar { height: 5px; }
-.board-wrap::-webkit-scrollbar-track {
-  background: rgba(56,182,255,.04);
-  border-radius: 999px;
-  margin: 0 8px;
-}
+.board-wrap::-webkit-scrollbar { height: 2px; }
+.board-wrap::-webkit-scrollbar-track { background: transparent; }
 .board-wrap::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.3);
+  background: rgba(56,182,255,.2);
   border-radius: 999px;
 }
-.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.55); }
+.board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
+/* Firefox */
+.board-wrap { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.2) transparent; }
 /* ── SQUAD SELECTOR ────────────────────────────────────────────── */
 #squad-selector{
   display:none;position:fixed;inset:0;z-index:8000;
@@ -131,7 +129,7 @@
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
 }
-html,body{min-height:100vh;overflow-x:hidden;}
+html,body{height:100%;overflow:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
 .bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
@@ -141,7 +139,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-.app{position:relative;z-index:2;padding:.9rem 1.2rem 5rem;}
+.app{
+  position:relative;z-index:2;
+  padding:.9rem 1.2rem .5rem;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  box-sizing:border-box;
+}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;}
 .hd-l{display:flex;align-items:center;gap:8px;}
@@ -162,7 +168,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{overflow-x:auto;padding-bottom:8px;}
+.board-wrap{
+  flex:1;
+  overflow:hidden;
+  min-height:0;
+  padding-bottom:2px;
+}
 .board-wrap.mode-expanded-wrap{
   overflow-x:auto;
   overflow-y:visible;
@@ -171,7 +182,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   max-width:100%;
 }
 .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
-.board.raia-mode{display:block;}
+.board.raia-mode{display:block!important;}
+.board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
+.board.raia-mode.mode-expanded .col{width:240px;min-width:240px;}
 .board.raia-mode.mode-expanded .col-body{
   max-height:calc(var(--raia-col-h, 60vh));
   overflow-y:auto;
@@ -356,11 +369,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   flex-wrap:nowrap;
   gap:10px;
   min-width:max-content;
+  height:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding-bottom:2px;
 }
 .board.mode-expanded .col{
   width:272px;
   min-width:272px;
   flex-shrink:0;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.board.mode-expanded .col-body{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  min-height:0;
 }
 .view-btn{padding:4px 10px;font-size:11px;font-family:'DM Sans',sans-serif;
   border:1px solid var(--glass-b);border-radius:6px;background:var(--glass);
@@ -928,7 +954,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   /* ── GLOBAL ───────────────────────────────────────────── */
   .hd-badge,.tb-sep,#online-bar{display:none;}
-  .app{padding:.5rem .6rem 74px;}
+  .app{
+    padding:.5rem .6rem 74px;
+    height:auto;
+    overflow:visible;
+  }
   *{-webkit-tap-highlight-color:transparent;}
 
   /* ── HEADER ──────────────────────────────────────────── */
@@ -969,6 +999,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .board-wrap{
     overflow-x:auto;-webkit-overflow-scrolling:touch;
     margin:0 -.6rem;padding:0 .6rem 8px;scrollbar-width:none;
+    flex:none;overflow-y:visible;
   }
   .board-wrap::-webkit-scrollbar{display:none;}
   .board{display:flex!important;gap:10px;min-width:max-content;align-items:start;}
@@ -976,9 +1007,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
   .col-body{
-    max-height:65vh;overflow-y:auto;
+    max-height:62vh;overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     padding:5px;
+    flex:none;
   }
   .col-body::-webkit-scrollbar{width:3px;}
   .col-body::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:999px;}
@@ -1181,6 +1213,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card.aged-2{opacity:.55;filter:saturate(.4) sepia(.2);}
 .card.aged-2::after{content:'💤';position:absolute;top:5px;right:6px;font-size:10px;opacity:.6;}
 
+
+@media(max-width:768px){
+  .board.mode-expanded .col{height:auto;}
+  .board.mode-expanded .col-body{flex:none;max-height:62vh;}
+  .board.mode-expanded{height:auto;overflow-x:auto;overflow-y:visible;}
+}
 </style>
 </head>
 <body>
@@ -1268,6 +1306,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <option value="late">Atrasados</option>
     <option value="today">Vencem hoje</option>
     <option value="week">Próximos 7 dias</option>
+  </select>
+  <select id="f-priority" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Qualquer prioridade</option>
+    <option value="critical">🔥 Crítica</option>
+    <option value="high">🔴 Alta</option>
+    <option value="medium">🟡 Média</option>
+    <option value="low">🟢 Baixa</option>
   </select>
   <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
     <input type="checkbox" id="f-blocker" onchange="applyFilters()" style="accent-color:var(--danger);"> Só impedidos
@@ -2023,6 +2068,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   console.log('%c🧪 KANBAN DEV MODE — Firebase mockado, sem persistência', 'background:#1a3a2a;color:#1de9b6;padding:4px 8px;border-radius:4px;font-weight:bold;');
 })();
 </script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURL')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectId')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucket')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderId')|| '122502391131',
+  appId:             localStorage.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+
+window._db=db; window._ref=ref; window._set=set; window._get=get;
+window._onValue=onValue; window._update=update; window._remove=remove;
+window._auth=auth; window._provider=provider;
+window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ if(insc) window._pendingInsc=true; });
+window._signOut=()=>signOut(auth);
+window._fbReady=true;
+window.dispatchEvent(new Event('fb-ready'));
+onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
+</script>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -2506,14 +2580,18 @@ function renderBoard(){
   if(cards.length>0) setTimeout(maybeSnapshot,2000);
   // Aplica modo de visualização
   board.classList.remove('mode-onepage','mode-expanded');
-  board.classList.add('mode-'+(viewMode||'onepage'));
+  board.classList.add('mode-'+(viewMode||'expanded'));
   board.innerHTML='';
   // Em modo raia por pessoa, ignora o filtro de owner (a raia já organiza por isso)
-  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c,raiaMode==='owner',raiaMode==='tag'));
+  // Em raia, ignora filtros de owner E tag (a raia já organiza por essas dimensões)
+  const isRaia = raiaMode==='owner'||raiaMode==='tag';
+  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, isRaia, isRaia));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
+  // Reaplica wrap height para modo expandido (só em modo normal, não raia)
+
 }
 
 function renderNormal(board,activeCards){
@@ -2547,7 +2625,6 @@ function renderNormal(board,activeCards){
 
 function renderRaiaOwner(board,activeCards){
   board.className='board raia-mode'+(viewMode?' mode-'+viewMode:'');
-
   // Separa: com dono em cima, sem dono embaixo
   const withOwner=[...new Set(activeCards.filter(c=>c.owner).map(c=>c.owner))];
   const hasUnowned=activeCards.some(c=>!c.owner);
@@ -2644,7 +2721,7 @@ function renderRaiaTag(board,activeCards){
   });
 }
 
-let activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
+let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -2665,6 +2742,7 @@ function applyFilters(){
     owner:document.getElementById('f-owner').value,
     tag:document.getElementById('f-tag').value,
     due:document.getElementById('f-due').value,
+    priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
     risco:document.getElementById('f-risco').checked,
   };
@@ -2674,14 +2752,16 @@ function clearFilters(){
   document.getElementById('f-owner').value='';
   document.getElementById('f-tag').value='';
   document.getElementById('f-due').value='';
+  const fp=document.getElementById('f-priority'); if(fp) fp.value='';
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
-  activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
+  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false};
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!ignoreOwner&&activeFilters.owner&&card.owner!==activeFilters.owner) return false;
   if(!ignoreTag&&activeFilters.tag&&card.tag!==activeFilters.tag) return false;
+  if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.due){
@@ -4692,6 +4772,8 @@ function insertMention(ta, atPos, curPos, init){
 // ── FIM MENTION DROPDOWN ─────────────────────────────────────────
 
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
+// Migra chave antiga e força default 'expanded'
+(()=>{ const old=localStorage.getItem('boardViewMode'); if(old==='expanded') localStorage.setItem('boardViewMode2','expanded'); localStorage.removeItem('boardViewMode'); })();
 let viewMode = localStorage.getItem('boardViewMode2')||'expanded';
 function setViewMode(mode){
   viewMode=mode;
@@ -4705,20 +4787,8 @@ function setViewMode(mode){
     board.classList.add('mode-'+mode);
   }
   if(wrap){
-    if(mode==='expanded'){
-      // Calcula altura disponível: viewport - tudo acima do board
-      const wrapTop=wrap.getBoundingClientRect().top;
-      const available=window.innerHeight - wrapTop - 16;
-      wrap.style.maxHeight=available+'px';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='auto';
-      wrap.style.paddingBottom='0';
-    } else {
-      wrap.style.maxHeight='';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='visible';
-      wrap.style.paddingBottom='8px';
-    }
+    // Layout via CSS (flex:1 no board-wrap + height:100% nas cols)
+    // Nenhum cálculo JS necessário
   }
 }
 function applyViewMode(){ setViewMode(viewMode); }
@@ -6007,7 +6077,11 @@ function renderCommentList(comments){
 function renderMentionText(text){
   if(!text) return '';
   // @USER mentions → teal underlined
-  text=text.replace(/@([A-Z]{2,4})/g,'<span class="mention-user">@$1</span>');
+  text=text.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
+    const _mem=typeof members!=='undefined'?members.find(x=>typeof getMemberHandle==='function'&&getMemberHandle(x)===handle.toLowerCase()):null;
+    const title=_mem?_mem.name:handle;
+    return '<span class="mention-user" title="'+esc(title)+'">@'+esc(handle)+'</span>';
+  });
   // [[CARD:id:title]] → blue underlined (data-cid for click wiring after insertion)
   text=text.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,function(m,id,title){
     return '<span class="mention-card" data-cid="'+id+'">📎 '+title+'</span>';
@@ -6616,9 +6690,6 @@ function loadAttachments(card){
   if(row) row.style.display='none';
 }
 
-// ══════════════════════════════════════════════════════════════
-// 🧪 DEV SEED DATA — Time fictício Maré Digital Innovation Lab
-// ══════════════════════════════════════════════════════════════
 (function injectDevSeed(){
 
   // ── Membros fictícios ────────────────────────────────────
