@@ -2424,14 +2424,18 @@ function renderBoard(){
   if(cards.length>0) setTimeout(maybeSnapshot,2000);
   // Aplica modo de visualização
   board.classList.remove('mode-onepage','mode-expanded');
-  board.classList.add('mode-'+(viewMode||'onepage'));
+  board.classList.add('mode-'+(viewMode||'expanded'));
   board.innerHTML='';
   // Em modo raia por pessoa, ignora o filtro de owner (a raia já organiza por isso)
-  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c,raiaMode==='owner',raiaMode==='tag'));
+  // Em raia, ignora filtros de owner E tag (a raia já organiza por essas dimensões)
+  const isRaia = raiaMode==='owner'||raiaMode==='tag';
+  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, isRaia, isRaia));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
+  // Reaplica altura das colunas após renderização
+  requestAnimationFrame(()=>setViewMode(viewMode));
 }
 
 function renderNormal(board,activeCards){
@@ -4641,7 +4645,10 @@ function setViewMode(mode){
     }
   }
 }
-function applyViewMode(){ setViewMode(viewMode); }
+function applyViewMode(){
+  // Delay one frame so board is laid out before height calculation
+  requestAnimationFrame(()=>setViewMode(viewMode));
+}
 window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
 // ── CALENDÁRIO ───────────────────────────────────────────────────
