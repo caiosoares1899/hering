@@ -569,31 +569,55 @@ body{font-family:var(--font-body);background:var(--navy-900);color:var(--white-9
 .orb3{width:200px;height:200px;background:rgba(37,99,201,.1);top:50%;left:60%;animation-delay:-13s;}
 @keyframes drift{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-40px) scale(1.05);}}
 
-/* ── FLAGS TICKER ──────────────────────────────────────────────────────────── */
-.flags-ticker{
+/* ── FLAGS CARPET ──────────────────────────────────────────────────────────── */
+.flags-carpet{
   position:relative;z-index:2;
-  background:rgba(4,16,31,.7);
+  background:rgba(4,16,31,.75);
   backdrop-filter:blur(8px);
-  border-bottom:1px solid rgba(37,99,201,.25);
-  height:38px;overflow:hidden;
+  border-bottom:1px solid rgba(37,99,201,.2);
+  overflow:hidden;
+  /* 3 linhas de bandeiras: cada bandeira 36px altura + 4px gap × 3 = 116px */
+  height:116px;
+  display:flex;flex-direction:column;
+  /* degrade nas laterais */
 }
-.flags-ticker-inner{
-  display:flex;align-items:center;gap:10px;
-  animation:tickerScroll 60s linear infinite;
-  white-space:nowrap;padding:0 20px;height:100%;
-  width:max-content;
+.flags-carpet::before,.flags-carpet::after{
+  content:'';position:absolute;top:0;bottom:0;width:60px;z-index:3;pointer-events:none;
 }
-.flags-ticker-inner:hover{animation-play-state:paused;}
-.ticker-flag{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:.72rem;color:var(--white-40);font-weight:500;
-  padding:0 8px;
+.flags-carpet::before{left:0;background:linear-gradient(90deg,rgba(4,16,31,.9),transparent);}
+.flags-carpet::after{right:0;background:linear-gradient(90deg,transparent,rgba(4,16,31,.9));}
+
+.flags-row{
+  display:flex;align-items:center;gap:4px;
+  height:36px;overflow:hidden;flex-shrink:0;
 }
-.ticker-flag img{width:22px;height:15px;object-fit:cover;border-radius:2px;opacity:.7;}
-.ticker-sep{color:var(--white-15);font-size:.8rem;}
-@keyframes tickerScroll{
+/* linha 1 esquerda→direita, linha 2 direita→esquerda, linha 3 esquerda→direita */
+.flags-row-inner{
+  display:flex;gap:4px;align-items:center;
+  width:max-content;white-space:nowrap;
+}
+.flags-row:nth-child(1) .flags-row-inner{animation:carpetLTR 55s linear infinite;}
+.flags-row:nth-child(2) .flags-row-inner{animation:carpetRTL 65s linear infinite;}
+.flags-row:nth-child(3) .flags-row-inner{animation:carpetLTR 48s linear infinite;}
+
+.flag-tile{
+  display:inline-block;flex-shrink:0;
+  width:52px;height:34px;
+  border-radius:3px;overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
+  opacity:.72;
+  transition:opacity .2s,transform .2s;
+}
+.flag-tile:hover{opacity:1;transform:scale(1.08);z-index:1;}
+.flag-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+
+@keyframes carpetLTR{
   0%{transform:translateX(0);}
   100%{transform:translateX(-50%);}
+}
+@keyframes carpetRTL{
+  0%{transform:translateX(-50%);}
+  100%{transform:translateX(0);}
 }
 
 /* ── HEADER ────────────────────────────────────────────────────────────────── */
@@ -801,7 +825,8 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
   .login-card{padding:28px 20px;}
   .hero{padding:36px 16px 24px;}
   .tabs-bar,.tab-content{padding-left:14px;padding-right:14px;}
-  .flags-ticker-inner{animation-duration:40s;}
+  .flags-carpet{height:80px;}
+  .flag-tile{width:40px;height:26px;}
 }
 </style>
 </head>
@@ -813,11 +838,11 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 </div>
 <canvas id="fish-canvas"></canvas>
 
-<!-- Ticker de bandeiras -->
-<div class="flags-ticker" id="flags-ticker">
-  <div class="flags-ticker-inner" id="ticker-inner">
-    <!-- populado por JS -->
-  </div>
+<!-- Tapete de bandeiras -->
+<div class="flags-carpet" id="flags-carpet">
+  <div class="flags-row"><div class="flags-row-inner" id="carpet-row-0"></div></div>
+  <div class="flags-row"><div class="flags-row-inner" id="carpet-row-1"></div></div>
+  <div class="flags-row"><div class="flags-row-inner" id="carpet-row-2"></div></div>
 </div>
 
 <!-- Header -->
@@ -948,7 +973,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v2.0 · 🐟 Odds + Ticker + Participantes</div>
+<div class="version">v2.1 · 🏳️ Tapete de bandeiras</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -967,16 +992,21 @@ const ALL_TEAMS = [
   ["Tchéquia","cz"],["África do Sul","za"],["Catar","qa"],["Turquia","tr"]
 ];
 
-function buildTicker() {
-  const inner = document.getElementById("ticker-inner");
-  // duplicamos para loop contínuo
-  const items = [...ALL_TEAMS, ...ALL_TEAMS];
-  inner.innerHTML = items.map(([name, code], i) =>
-    `<span class="ticker-flag">
-      <img src="https://flagcdn.com/w40/${code}.png" alt="${name}"/>
-      ${name}
-    </span>${i < items.length-1 ? '<span class="ticker-sep">·</span>' : ''}`
-  ).join("");
+function buildCarpet() {
+  // 48 países, distribuídos em 3 linhas embaralhadas
+  const shuffled = [...ALL_TEAMS].sort(() => Math.random() - 0.5);
+  const row0 = shuffled.slice(0, 16);
+  const row1 = shuffled.slice(16, 32);
+  const row2 = shuffled.slice(32, 48);
+
+  [row0, row1, row2].forEach((row, i) => {
+    const el = document.getElementById(`carpet-row-${i}`);
+    // duplica 4× para preencher bem a largura e garantir loop contínuo sem branco
+    const tiles = [...row, ...row, ...row, ...row];
+    el.innerHTML = tiles.map(([name, code]) =>
+      `<span class="flag-tile" title="${name}"><img src="https://flagcdn.com/w80/${code}.png" alt="${name}" loading="lazy"/></span>`
+    ).join("");
+  });
 }
 
 // ─── PEIXINHOS (CANVAS) ───────────────────────────────────────────────────────
@@ -1066,7 +1096,7 @@ function buildTicker() {
 const SQUADS_LOCAL = ["Site Hering","APP","Criação","Mídia","Outlet","Marketplace","CX","Gestão","Dados"];
 
 window.addEventListener("DOMContentLoaded", () => {
-  buildTicker();
+  buildCarpet();
 
   const sg = document.getElementById("squad-grid");
   SQUADS_LOCAL.forEach(s => {
