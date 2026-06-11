@@ -245,6 +245,7 @@ function setupRealtimeListeners() {
     renderMatchList("matamata");
     renderDayAlert();
     renderRanking();
+    renderSavedResults();
   });
   onValue(ref(db, `users`), snap => {
     allUsers = snap.exists() ? snap.val() : {};
@@ -280,14 +281,14 @@ function setupListeners() {
 
 // ─── APOSTAS ────────────────────────────────────────────────────────────────
 function isMatchOpen(match) {
-  return new Date() < new Date(new Date(match.time).getTime() - 300000);
+  return new Date() < new Date(new Date(match.time).getTime() - 3600000);
 }
 
 window.saveBet = async function(matchId) {
-  if (!currentUser) { showToast("Faça login para palpitar","error"); return; }
+  if (!currentUser) { showToast("Faça login para apostar","error"); return; }
   if (!userProfile?.squad) { document.getElementById("squad-modal").style.display="flex"; return; }
   const match = MATCHES.find(m => m.id === matchId);
-  if (!match || !isMatchOpen(match)) { showToast("Palpites encerradas ⏰","error"); return; }
+  if (!match || !isMatchOpen(match)) { showToast("Apostas encerradas ⏰","error"); return; }
   const hScore = parseInt(document.getElementById(`home-${matchId}`).value);
   const aScore = parseInt(document.getElementById(`away-${matchId}`).value);
   if (isNaN(hScore)||isNaN(aScore)||hScore<0||aScore<0) { showToast("Placar inválido","error"); return; }
@@ -375,112 +376,89 @@ function renderDayAlert() {
 }
 
 // ─── RENDER MATCHES ──────────────────────────────────────────────────────────
+function buildMatchCard(m) {
+  const bet=allBets[m.id], result=allResults[m.id], open=isMatchOpen(m);
+  const pts = result&&bet ? calcPoints(bet,result) : null;
+  const d = new Date(m.time);
+  const dateStr = d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
+  const timeStr = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  const closes = new Date(d.getTime()-3600000);
+  const closesStr = closes.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) +
+    (closes.toDateString()===new Date().toDateString() ? "" : " "+closes.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
+
+  const odds = !result ? calcOdds(m.id, m.home, m.away) : null;
+  let oddsHtml = "";
+  if (!result) {
+    const o = odds || { home:"—", draw:"—", away:"—", pctHome:0, pctDraw:0, pctAway:0, total:0 };
+    oddsHtml = `<div class="odds-row">
+      <span class="odds-label">🐟 odds do cardume — vai com a maré ou vai contra a corrente?</span>
+      <div class="odds-pills">
+        <div class="odd-pill"><span class="odd-team">${m.home.split(" ")[0]}</span><span class="odd-val">${o.home}</span><span class="odd-pct">${o.total?o.pctHome+"%":"—"}</span></div>
+        <div class="odd-pill draw"><span class="odd-team">Empate</span><span class="odd-val">${o.draw}</span><span class="odd-pct">${o.total?o.pctDraw+"%":"—"}</span></div>
+        <div class="odd-pill"><span class="odd-team">${m.away.split(" ")[0]}</span><span class="odd-val">${o.away}</span><span class="odd-pct">${o.total?o.pctAway+"%":"—"}</span></div>
+      </div>
+      <span class="odds-total">${o.total?o.total+" palpite"+(o.total!==1?"s":""):"sem palpites ainda"}</span>
+    </div>`;
+  }
+
+  let statusBadge = "";
+  if (result) {
+    const ptsCls = pts===3?"pts-3":pts===1?"pts-1":"pts-0";
+    statusBadge = `<span class="status-badge encerrado">Encerrado</span>${bet?`<span class="pts-badge ${ptsCls}">${pts} pt${pts!==1?"s":""}</span>`:""}`;
+  } else if (!open) {
+    statusBadge = `<span class="status-badge fechado">Apostas encerradas</span>`;
+  } else {
+    statusBadge = `<span class="status-badge aberto">Até ${closesStr}</span>`;
+  }
+
+  let betRow = "";
+  if (result) {
+    betRow = `<div class="result-row">
+      <div class="scoreboard">
+        <div class="sb-team"><img class="sb-flag" src="${getFlagUrl(m.home)}" alt=""/><span class="sb-name">${m.home}</span></div>
+        <div class="sb-score"><span class="sb-num">${result.home}</span><span class="sb-sep">–</span><span class="sb-num">${result.away}</span></div>
+        <div class="sb-team right"><img class="sb-flag" src="${getFlagUrl(m.away)}" alt=""/><span class="sb-name">${m.away}</span></div>
+      </div>
+      ${bet?`<div class="bet-tag ${pts===3?"bet-exact":pts===1?"bet-winner":"bet-miss"}">${pts===3?"🎯":pts===1?"✓":"✗"} seu palpite: ${bet.home}–${bet.away}</div>`:`<div class="bet-tag bet-empty">sem palpite</div>`}
+    </div>`;
+  } else if (open && currentUser) {
+    betRow = `<div class="bet-row"><input type="number" id="home-${m.id}" min="0" max="20" value="${bet?.home??""}" placeholder="0" class="score-input"/><span class="vs-sep">×</span><input type="number" id="away-${m.id}" min="0" max="20" value="${bet?.away??""}" placeholder="0" class="score-input"/><button class="btn-bet" onclick="saveBet('${m.id}')">${bet?"Atualizar":"Palpitar"}</button></div>`;
+  } else if (!open && currentUser) {
+    betRow = `<div class="result-row"><div class="bet-preview locked">${bet?`🔒 ${bet.home}×${bet.away}`:"Você não apostou"}</div></div>`;
+  } else {
+    betRow = `<div class="bet-preview">Faça login para apostar</div>`;
+  }
+
+  const isToday  = d.toDateString() === new Date().toDateString();
+  const isBrazil = m.home === "Brasil" || m.away === "Brasil";
+  const isPending= isToday && open && !bet && !result && currentUser;
+  const isDone   = isToday && open && !!bet && !result && currentUser;
+
+  return `<div class="match-card ${open?"match-open":"match-done"}${isBrazil&&!bet&&open&&!result?" match-brazil-pending":""}${isBrazil&&!!bet&&open&&!result?" match-brazil-done":""}${!isBrazil&&isPending?" match-today-pending":""}${!isBrazil&&isDone?" match-today-done":""}">
+    <div class="match-meta">
+      <span class="match-date">📅 ${dateStr} • ${timeStr}</span>
+      <span class="match-venue">📍 ${m.venue}</span>
+    </div>
+    <div class="match-teams">
+      <div class="team"><img class="flag-img" src="${getFlagUrl(m.home)}" alt=""/><span class="team-name">${m.home}</span></div>
+      <span class="match-vs">VS</span>
+      <div class="team away"><img class="flag-img" src="${getFlagUrl(m.away)}" alt=""/><span class="team-name">${m.away}</span></div>
+    </div>
+    ${betRow}${oddsHtml}
+    <div class="match-footer">${statusBadge}</div>
+  </div>`;
+}
+
 function renderMatchList(filtro) {
-  // filtro: "grupos" | "matamata" | undefined (ambos)
-  const containerGrupos   = document.getElementById("matches-container-grupos");
-  const containerMatamata = document.getElementById("matches-container-matamata");
-  const container = filtro === "matamata" ? containerMatamata : containerGrupos;
+  const container = document.getElementById(filtro==="matamata"?"matches-container-matamata":"matches-container-grupos");
   if (!container) return;
-
-  const fasesPermitidas = filtro === "matamata" ? FASES_MATAMATA
-                        : filtro === "grupos"    ? FASES_GRUPOS
-                        : [...FASES_GRUPOS, ...FASES_MATAMATA];
-
+  const fasesPermitidas = filtro==="matamata" ? FASES_MATAMATA : filtro==="grupos" ? FASES_GRUPOS : [...FASES_GRUPOS,...FASES_MATAMATA];
   const byFase = {};
-  MATCHES.forEach(m => {
-    if (!fasesPermitidas.includes(m.fase)) return;
-    (byFase[m.fase] = byFase[m.fase]||[]).push(m);
-  });
-
+  MATCHES.forEach(m => { if (!fasesPermitidas.includes(m.fase)) return; (byFase[m.fase]=byFase[m.fase]||[]).push(m); });
   let html = "";
-  Object.entries(byFase).forEach(([fase, matches]) => {
+  Object.entries(byFase).forEach(([fase,matches]) => {
     html += `<div class="fase-header fase-group-gap"><span class="fase-label">${fase}</span></div><div class="matches-grid">`;
-    matches.forEach(m => {
-      const bet=allBets[m.id], result=allResults[m.id], open=isMatchOpen(m);
-      const pts = result&&bet ? calcPoints(bet,result) : null;
-      const d = new Date(m.time);
-      const dateStr = d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
-      const timeStr = d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-      const closes = new Date(d.getTime()-300000);
-      const closesStr = closes.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) +
-        (closes.toDateString()===new Date().toDateString() ? "" : " "+closes.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}));
-
-      // Odds — sempre mostra se o jogo não tiver resultado ainda
-      const odds = !result ? calcOdds(m.id, m.home, m.away) : null;
-      let oddsHtml = "";
-      if (!result) {
-        const o = odds || { home:"—", draw:"—", away:"—", pctHome:0, pctDraw:0, pctAway:0, total:0 };
-        oddsHtml = `<div class="odds-row">
-          <span class="odds-label">🐟 odds do cardume — vai com a maré ou vai contra a corrente?</span>
-          <div class="odds-pills">
-            <div class="odd-pill">
-              <span class="odd-team">${m.home.split(" ")[0]}</span>
-              <span class="odd-val">${o.home}</span>
-              <span class="odd-pct">${o.total ? o.pctHome+"%" : "—"}</span>
-            </div>
-            <div class="odd-pill draw">
-              <span class="odd-team">Empate</span>
-              <span class="odd-val">${o.draw}</span>
-              <span class="odd-pct">${o.total ? o.pctDraw+"%" : "—"}</span>
-            </div>
-            <div class="odd-pill">
-              <span class="odd-team">${m.away.split(" ")[0]}</span>
-              <span class="odd-val">${o.away}</span>
-              <span class="odd-pct">${o.total ? o.pctAway+"%" : "—"}</span>
-            </div>
-          </div>
-          <span class="odds-total">${o.total ? o.total+" palpite"+(o.total!==1?"s":"") : "sem palpites ainda"}</span>
-        </div>`;
-      }
-
-      let statusBadge = "";
-      if (result) {
-        const ptsCls = pts===3?"pts-3":pts===1?"pts-1":"pts-0";
-        statusBadge = `<span class="status-badge encerrado">Encerrado</span>${bet?`<span class="pts-badge ${ptsCls}">${pts} pt${pts!==1?"s":""}</span>`:""}`;
-      } else if (!open) {
-        statusBadge = `<span class="status-badge fechado">Palpites encerrados</span>`;
-      } else {
-        statusBadge = `<span class="status-badge aberto">Até ${closesStr}</span>`;
-      }
-
-      let betRow = "";
-      if (result) {
-        betRow = `<div class="result-row"><div class="score-display"><span class="score-num">${result.home}</span><span class="score-sep">×</span><span class="score-num">${result.away}</span></div>${bet?`<div class="bet-preview">Aposta: ${bet.home}×${bet.away}</div>`:`<div class="bet-preview no-bet">Sem aposta</div>`}</div>`;
-      } else if (open && currentUser) {
-        betRow = `<div class="bet-row"><input type="number" id="home-${m.id}" min="0" max="20" value="${bet?.home??""}" placeholder="0" class="score-input"/><span class="vs-sep">×</span><input type="number" id="away-${m.id}" min="0" max="20" value="${bet?.away??""}" placeholder="0" class="score-input"/><button class="btn-bet" onclick="saveBet('${m.id}')">${bet?"Atualizar":"Palpitar"}</button></div>`;
-      } else if (!open && currentUser) {
-        betRow = `<div class="result-row"><div class="bet-preview locked">${bet?`🔒 Palpite: ${bet.home}×${bet.away}`:"Você não palpitou"}</div></div>`;
-      } else {
-        betRow = `<div class="bet-preview">Faça login para apostar</div>`;
-      }
-
-      const isToday   = d.toDateString() === new Date().toDateString();
-      const isBrazil  = m.home === "Brasil" || m.away === "Brasil";
-      const isPending = isToday && open && !bet && !result && currentUser;
-      const isDone    = isToday && open && !!bet && !result && currentUser;
-
-      html += `
-        <div class="match-card ${open?"match-open":"match-done"}${isBrazil&&!bet&&open&&!result?" match-brazil-pending":""}${isBrazil&&!!bet&&open&&!result?" match-brazil-done":""}${!isBrazil&&isPending?" match-today-pending":""}${!isBrazil&&isDone?" match-today-done":""}">
-          <div class="match-meta">
-            <span class="match-date">📅 ${dateStr} • ${timeStr}</span>
-            <span class="match-venue">📍 ${m.venue}</span>
-          </div>
-          <div class="match-teams">
-            <div class="team">
-              <img class="flag-img" src="${getFlagUrl(m.home)}" alt=""/>
-              <span class="team-name">${m.home}</span>
-            </div>
-            <span class="match-vs">VS</span>
-            <div class="team away">
-              <img class="flag-img" src="${getFlagUrl(m.away)}" alt=""/>
-              <span class="team-name">${m.away}</span>
-            </div>
-          </div>
-          ${betRow}
-          ${oddsHtml}
-          <div class="match-footer">${statusBadge}</div>
-        </div>`;
-    });
+    matches.forEach(m => { html += buildMatchCard(m); });
     html += `</div>`;
   });
   container.innerHTML = html;
@@ -696,7 +674,130 @@ window.adminSetResult = async function() {
   if (!confirm("Confirmar resultado?")) return;
   await set(ref(db,`results/${mid}`),{home:h,away:a,updatedAt:Date.now()});
   showToast("Resultado salvo! 🏆","success");
+  renderSavedResults();
 };
+
+window.adminDeleteResult = async function(mid) {
+  if (!confirm("Remover este resultado?")) return;
+  await set(ref(db,`results/${mid}`), null);
+  showToast("Resultado removido","info");
+  renderSavedResults();
+};
+
+async function renderSavedResults() {
+  const c = document.getElementById("saved-results-list");
+  if (!c) return;
+  const snap = await get(ref(db,"results"));
+  if (!snap.exists()) { c.innerHTML=`<p class="empty-state" style="padding:16px 0;font-size:.8rem">Nenhum resultado ainda.</p>`; return; }
+  const results = snap.val();
+  const rows = Object.entries(results).map(([mid,r]) => {
+    const m = MATCHES.find(x=>x.id===mid);
+    if (!m) return "";
+    return `<div class="saved-result-row">
+      <span class="sr-match">${m.home} <strong>${r.home}–${r.away}</strong> ${m.away}</span>
+      <div class="sr-actions">
+        <button class="sr-edit-btn" onclick="adminEditResult('${mid}','${m.home}','${m.away}',${r.home},${r.away})">✏️</button>
+        <button class="sr-del-btn" onclick="adminDeleteResult('${mid}')">🗑️</button>
+      </div>
+    </div>`;
+  }).filter(Boolean);
+  c.innerHTML = rows.length ? rows.join("") : `<p class="empty-state" style="padding:16px 0;font-size:.8rem">Nenhum resultado ainda.</p>`;
+}
+
+window.adminEditResult = function(mid, home, away, h, a) {
+  document.getElementById("admin-match").value = mid;
+  document.getElementById("admin-home-label").textContent = home;
+  document.getElementById("admin-away-label").textContent = away;
+  document.getElementById("admin-home").value = h;
+  document.getElementById("admin-away").value = a;
+  document.getElementById("admin-home").focus();
+  showToast("Resultado carregado para edição","info");
+};
+
+window.loadMatchBets = async function(mid) {
+  const c = document.getElementById("match-bets-list");
+  if (!c || !mid) { if(c) c.innerHTML=""; return; }
+  const m = MATCHES.find(x=>x.id===mid);
+  c.innerHTML = `<p class="empty-state" style="padding:12px 0;font-size:.8rem">Carregando...</p>`;
+  const betsSnap  = await get(ref(db,`bets`));
+  const usersSnap = await get(ref(db,`users`));
+  const result    = allResults[mid];
+  if (!betsSnap.exists()) { c.innerHTML=`<p class="empty-state" style="font-size:.8rem">Sem apostas.</p>`; return; }
+  const betsData  = betsSnap.val();
+  const usersData = usersSnap.exists() ? usersSnap.val() : {};
+  const rows = [];
+  Object.entries(betsData).forEach(([uid,uBets]) => {
+    const bet = uBets[mid]; if (!bet) return;
+    const u   = usersData[uid]||{};
+    const pts = result ? calcPoints(bet,result) : null;
+    rows.push({name:u.name||"Anônimo", squad:u.squad||"—",
+               score:`${bet.home}–${bet.away}`, pts, savedAt:bet.savedAt});
+  });
+  rows.sort((a,b)=>(b.pts??-1)-(a.pts??-1)||(a.name.localeCompare(b.name)));
+  if (!rows.length) { c.innerHTML=`<p class="empty-state" style="font-size:.8rem">Sem apostas neste jogo.</p>`; return; }
+  c.innerHTML = `
+    <div class="bets-table">
+      <div class="bets-table-head">
+        <span>Participante</span><span>Squad</span><span>Palpite</span><span>Pts</span>
+      </div>
+      ${rows.map(r=>`
+      <div class="bets-table-row">
+        <span class="bt-name">${r.name}</span>
+        <span class="bt-squad">${r.squad}</span>
+        <span class="bt-score">${r.score}</span>
+        <span class="bt-pts ${r.pts===3?"pts-3":r.pts===1?"pts-1":r.pts===0?"pts-0":""}">${r.pts!==null?r.pts+"pts":"—"}</span>
+      </div>`).join("")}
+    </div>
+    <p style="font-size:.68rem;color:var(--white-40);margin-top:8px">${rows.length} palpite${rows.length!==1?"s":""}</p>`;
+};
+
+// ─── SUB-TABS (Por grupo / Por data) ─────────────────────────────────────────
+window.switchSubTab = function(btn, tipo) {
+  const parent = btn.closest(".tab-content");
+  parent.querySelectorAll(".sub-tab").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  const sub = btn.dataset.sub;
+  const idGrupo = `matches-container-${tipo}`;
+  const idData  = `matches-container-${tipo}-data`;
+  document.getElementById(idGrupo).style.display = sub==="por-grupo"  ? "block" : "none";
+  document.getElementById(idData ).style.display = sub==="por-data"   ? "block" : "none";
+  if (sub==="por-data") renderByDate(tipo);
+};
+
+function renderByDate(tipo) {
+  const c = document.getElementById(`matches-container-${tipo}-data`);
+  if (!c) return;
+  const fases = tipo==="matamata" ? FASES_MATAMATA : FASES_GRUPOS;
+  const matches = MATCHES.filter(m=>fases.includes(m.fase));
+  const today = new Date().toDateString();
+
+  // Agrupa por data
+  const byDate = {};
+  matches.forEach(m => {
+    const d   = new Date(m.time);
+    const key = d.toDateString();
+    (byDate[key] = byDate[key]||[]).push(m);
+  });
+
+  // Ordena: hoje primeiro, depois crescente
+  const sorted = Object.keys(byDate).sort((a,b) => {
+    if (a===today) return -1; if (b===today) return 1;
+    return new Date(a)-new Date(b);
+  });
+
+  let html = "";
+  sorted.forEach(dateKey => {
+    const d = new Date(dateKey);
+    const isToday = dateKey===today;
+    const label = isToday
+      ? "🟢 Hoje — " + d.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})
+      : d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
+    html += `<div class="fase-header fase-group-gap"><span class="fase-label ${isToday?"fase-today":""}">${label}</span></div><div class="matches-grid">`;
+    byDate[dateKey].forEach(m => { html += buildMatchCard(m); });
+    html += `</div>`;
+  });
+  c.innerHTML = html || `<p class="empty-state">Sem jogos.</p>`;
+}
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
 function showToast(msg, type="info") {
@@ -988,13 +1089,28 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .vs-sep{color:var(--white-40);font-size:.8rem;flex-shrink:0;}
 .btn-bet{flex:1;min-width:0;background:var(--blue-main);border:none;border-radius:var(--r-sm);color:var(--white);font-family:var(--font-body);font-size:.78rem;font-weight:600;padding:8px 10px;cursor:pointer;transition:background .2s,transform .15s;white-space:nowrap;}
 .btn-bet:hover{background:var(--blue-light);transform:translateY(-1px);}
-.result-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
-.score-display{display:flex;align-items:center;gap:5px;}
-.score-num{font-family:var(--font-display);font-size:1.4rem;font-weight:800;}
-.score-sep{font-family:var(--font-display);font-size:.9rem;color:var(--white-40);}
-.bet-preview{font-size:.72rem;color:var(--white-40);}
-.bet-preview.locked{color:var(--white-70);}
-.bet-preview.no-bet{font-style:italic;}
+.result-row{margin-bottom:10px;}
+.scoreboard{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--white-05);border-radius:var(--r-sm);
+  padding:8px 10px;margin-bottom:6px;gap:6px;
+}
+.sb-team{display:flex;align-items:center;gap:5px;flex:1;min-width:0;}
+.sb-team.right{flex-direction:row-reverse;text-align:right;}
+.sb-flag{width:20px;height:14px;object-fit:cover;border-radius:2px;flex-shrink:0;}
+.sb-name{font-size:.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--white-70);}
+.sb-score{display:flex;align-items:center;gap:5px;flex-shrink:0;padding:0 6px;}
+.sb-num{font-family:var(--font-display);font-size:1.3rem;font-weight:800;color:var(--white);}
+.sb-sep{font-family:var(--font-display);font-size:.9rem;color:var(--white-40);}
+.bet-tag{
+  font-size:.68rem;font-weight:600;
+  border-radius:20px;padding:3px 10px;
+  display:inline-block;
+}
+.bet-exact{background:rgba(126,200,227,.15);color:var(--cyan);border:1px solid rgba(126,200,227,.3);}
+.bet-winner{background:rgba(37,99,201,.15);color:#93c5fd;border:1px solid rgba(37,99,201,.3);}
+.bet-miss{background:var(--white-05);color:var(--white-40);border:1px solid var(--white-08);}
+.bet-empty{background:var(--white-05);color:var(--white-40);border:1px solid var(--white-08);font-style:italic;}
 .match-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .status-badge{font-size:.62rem;font-weight:600;letter-spacing:.06em;border-radius:20px;padding:3px 10px;text-transform:uppercase;}
 .status-badge.aberto{background:rgba(37,99,201,.25);color:var(--cyan);border:1px solid rgba(37,99,201,.4);}
@@ -1112,6 +1228,29 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .squad-btn:hover{background:rgba(37,99,201,.2);border-color:rgba(37,99,201,.5);color:var(--white);transform:translateY(-2px);}
 
 /* ── ADMIN ──────────────────────────────────────────────────────────────────── */
+/* Sub-tabs */
+.sub-tabs{display:flex;gap:4px;padding:12px 0 8px;}
+.sub-tab{background:transparent;border:1px solid var(--white-08);border-radius:20px;font-family:var(--font-body);font-size:.78rem;font-weight:500;color:var(--white-40);padding:5px 14px;cursor:pointer;transition:all .2s;}
+.sub-tab.active{background:rgba(37,99,201,.2);border-color:rgba(37,99,201,.5);color:var(--cyan);}
+.sub-tab:hover:not(.active){color:var(--white-70);border-color:var(--white-15);}
+.fase-today{color:#4ade80 !important;}
+/* Resultados salvos */
+.saved-result-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--white-05);font-size:.8rem;}
+.saved-result-row:last-child{border-bottom:none;}
+.sr-match{flex:1;color:var(--white-70);}
+.sr-match strong{color:var(--cyan);font-family:var(--font-display);}
+.sr-actions{display:flex;gap:6px;}
+.sr-edit-btn,.sr-del-btn{background:var(--white-05);border:1px solid var(--white-08);border-radius:6px;font-size:.75rem;padding:3px 7px;cursor:pointer;transition:background .15s;}
+.sr-edit-btn:hover{background:rgba(37,99,201,.3);}
+.sr-del-btn:hover{background:rgba(239,68,68,.2);}
+/* Tabela apostas admin */
+.bets-table{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.bets-table-head{display:grid;grid-template-columns:2fr 1fr 80px 50px;gap:8px;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--white-40);padding:6px 8px;}
+.bets-table-row{display:grid;grid-template-columns:2fr 1fr 80px 50px;gap:8px;background:var(--white-05);border:1px solid var(--white-05);border-radius:8px;padding:7px 8px;font-size:.78rem;align-items:center;}
+.bt-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bt-squad{color:var(--white-40);font-size:.7rem;}
+.bt-score{font-family:var(--font-display);font-weight:700;}
+.bt-pts{font-family:var(--font-display);font-weight:700;text-align:right;}
 .admin-card{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:24px;max-width:480px;margin-bottom:24px;}
 .admin-card h3{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:16px;color:var(--amber);}
 .form-group{margin-bottom:12px;}
@@ -1261,6 +1400,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   /* Admin / participantes */
   .admin-card{padding:16px;}
   .rules-card{padding:18px;}
+
 }
 </style>
 </head>
@@ -1307,7 +1447,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   <div class="scoring-pills">
     <div class="scoring-pill"><span class="pts">3 pts</span> Placar exato</div>
     <div class="scoring-pill"><span class="pts">1 pt</span> Vencedor ou empate</div>
-    <div class="scoring-pill"><span class="pts">🔒</span> Palpites fecham 5 min antes</div>
+    <div class="scoring-pill"><span class="pts">🔒</span> Apostas fecham 1h antes</div>
   </div>
   <a href="https://ge.globo.com/futebol/copa-do-mundo/" target="_blank" rel="noopener" class="btn-classificacao">
     📊 Classificação dos grupos em tempo real
@@ -1352,11 +1492,23 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   </div>
 
   <div class="tab-content" id="tab-apostas-grupos">
+    <!-- Sub-tabs -->
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-sub="por-grupo" onclick="switchSubTab(this,'grupos')">📋 Por grupo</button>
+      <button class="sub-tab" data-sub="por-data" onclick="switchSubTab(this,'grupos')">📅 Por data</button>
+    </div>
     <div id="matches-container-grupos"><p class="empty-state" style="padding:60px 0">Carregando jogos...</p></div>
+    <div id="matches-container-grupos-data" style="display:none"></div>
   </div>
 
   <div class="tab-content" id="tab-apostas-matamata">
+    <!-- Sub-tabs -->
+    <div class="sub-tabs">
+      <button class="sub-tab active" data-sub="por-grupo" onclick="switchSubTab(this,'matamata')">📋 Por fase</button>
+      <button class="sub-tab" data-sub="por-data" onclick="switchSubTab(this,'matamata')">📅 Por data</button>
+    </div>
     <div id="matches-container-matamata"><p class="empty-state" style="padding:60px 0">Carregando jogos...</p></div>
+    <div id="matches-container-matamata-data" style="display:none"></div>
   </div>
 
   <div class="tab-content" id="tab-ranking-geral">
@@ -1381,7 +1533,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       <div class="rule-section-title">⚽ Pontuação básica</div>
       <div class="rule-item">
         <div class="rule-pts">3</div>
-        <div class="rule-info"><strong>Placar exato</strong><span>Acertou exatamente o número de gols de cada time — ex: palpitou 2×1 e deu 2×1</span></div>
+        <div class="rule-info"><strong>Placar exato</strong><span>Acertou exatamente o número de gols de cada time — ex: apostou 2×1 e deu 2×1</span></div>
       </div>
       <div class="rule-item">
         <div class="rule-pts">1</div>
@@ -1389,7 +1541,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       </div>
       <div class="rule-item" style="border-bottom:none">
         <div class="rule-pts" style="color:var(--white-40)">0</div>
-        <div class="rule-info"><strong>Errou o resultado</strong><span>Palpitou no time errado ou num empate que não aconteceu</span></div>
+        <div class="rule-info"><strong>Errou o resultado</strong><span>Apostou no time errado ou num empate que não aconteceu</span></div>
       </div>
 
       <div class="rule-divider"></div>
@@ -1397,7 +1549,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       <div class="rule-note rule-note-fish">
         As odds são calculadas <strong>em tempo real</strong> a partir dos palpites da galera — sem casa de apostas, sem algoritmo externo. A lógica é simples:<br/><br/>
         <strong>Odd = (total de palpites ÷ palpites naquele resultado) × 1.1</strong><br/><br/>
-        Se 10 pessoas palpitaram e 8 foram em Brasil, a odd do Brasil é baixa (favorito da turma). Se só 1 palpittou em empate, a odd do empate é altíssima. Ou seja: <strong>quanto mais impopular o palpite, maior a odd</strong>.<br/><br/>
+        Se 10 pessoas apostaram e 8 foram em Brasil, a odd do Brasil é baixa (favorito da turma). Se só 1 apostou em empate, a odd do empate é altíssima. Ou seja: <strong>quanto mais impopular o palpite, maior a odd</strong>.<br/><br/>
         O multiplicador de 10% é o "vigor" — garante que a soma das probabilidades implícitas seja sempre um pouquinho maior que 100%, como em casas de apostas reais. Antes de haver palpites o campo mostra <strong>—</strong>.
       </div>
 
@@ -1410,12 +1562,12 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
         Exemplos:<br/>
         • Acertou placar exato (3 pts) num palpite com odd 3.50 → <strong>10.5 pts de coragem</strong><br/>
         • Acertou o vencedor (1 pt) num palpite com odd 1.10 → <strong>1.1 pt de coragem</strong><br/><br/>
-        Acertar o favorito vale pouco. Acertar o azarão que ninguém palpitou vale <em>muito</em>. Coragem e faro!
+        Acertar o favorito vale pouco. Acertar o azarão que ninguém apostou vale <em>muito</em>. Coragem e faro!
       </div>
 
       <div class="rule-divider"></div>
       <div class="rule-note">
-        ⏰ <strong>Prazo:</strong> Palpites fecham <strong>5 minutos antes</strong> de cada jogo. Depois disso não dá pra criar nem editar.<br/><br/>
+        ⏰ <strong>Prazo:</strong> Apostas fecham <strong>1 hora antes</strong> de cada jogo. Depois disso não dá pra criar nem editar.<br/><br/>
         🏷️ <strong>Ranking por squad:</strong> Usa a <strong>média de pontos</strong> dos membros do squad — então um squad pequeno e afiado pode bater um squad grande e chuteiro.<br/><br/>
         📊 <strong>Classificação ao vivo:</strong> Acompanhe a tabela de grupos em tempo real pelo botão na página inicial.<br/><br/>
         🔐 <strong>Login:</strong> Necessário entrar com sua conta Google Hering para participar.
@@ -1429,25 +1581,45 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   </div>
 
   <div class="tab-content" id="tab-admin">
-    <div class="admin-card" style="margin-top:8px">
-      <h3>🔧 Registrar Resultado</h3>
-      <p style="font-size:.8rem;color:var(--white-40);margin-bottom:16px">Os pontos são calculados automaticamente após salvar.</p>
-      <div class="form-group">
-        <label>Jogo</label>
-        <select id="admin-match"><option value="">Selecione o jogo...</option></select>
-      </div>
-      <div class="score-row">
-        <div class="score-team-block">
-          <label id="admin-home-label">Time da Casa</label>
-          <input type="number" id="admin-home" min="0" max="20" placeholder="0"/>
+    <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+
+      <!-- Registrar resultado -->
+      <div class="admin-card">
+        <h3>🔧 Registrar Resultado</h3>
+        <p style="font-size:.8rem;color:var(--white-40);margin-bottom:16px">Os pontos são calculados automaticamente após salvar.</p>
+        <div class="form-group">
+          <label>Jogo</label>
+          <select id="admin-match"><option value="">Selecione o jogo...</option></select>
         </div>
-        <div class="score-x">×</div>
-        <div class="score-team-block">
-          <label id="admin-away-label">Time Visitante</label>
-          <input type="number" id="admin-away" min="0" max="20" placeholder="0"/>
+        <div class="score-row">
+          <div class="score-team-block">
+            <label id="admin-home-label">Time da Casa</label>
+            <input type="number" id="admin-home" min="0" max="20" placeholder="0"/>
+          </div>
+          <div class="score-x">×</div>
+          <div class="score-team-block">
+            <label id="admin-away-label">Time Visitante</label>
+            <input type="number" id="admin-away" min="0" max="20" placeholder="0"/>
+          </div>
         </div>
+        <button class="btn-admin" onclick="adminSetResult()">💾 Salvar Resultado</button>
       </div>
-      <button class="btn-admin" onclick="adminSetResult()">💾 Salvar Resultado</button>
+
+      <!-- Resultados salvos -->
+      <div class="admin-card">
+        <h3>📋 Resultados Salvos</h3>
+        <div id="saved-results-list"><p class="empty-state" style="padding:16px 0;font-size:.8rem">Nenhum resultado ainda.</p></div>
+      </div>
+    </div>
+
+    <!-- Apostas das pessoas -->
+    <div class="admin-card" style="margin-top:16px;max-width:100%">
+      <h3>👁️ Apostas por Jogo</h3>
+      <div class="form-group" style="max-width:400px">
+        <label>Selecione o jogo</label>
+        <select id="admin-bets-match" onchange="loadMatchBets(this.value)"><option value="">Selecione...</option></select>
+      </div>
+      <div id="match-bets-list"></div>
     </div>
   </div>
 </div>
@@ -1462,7 +1634,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v3.0 · alerta do dia + borda pulsante</div>
+<div class="version">v3.1 · resultado + por data + admin configs</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -1652,10 +1824,15 @@ window.addEventListener("DOMContentLoaded", () => {
     ["m103","Perd. m101","Perd. m102"],["m104","Venc. m101","Venc. m102"]
   ];
   const sel = document.getElementById("admin-match");
+  const selBets = document.getElementById("admin-bets-match");
   MATCHES_ADM.forEach(([id,h,a]) => {
     const o = document.createElement("option");
     o.value = id; o.textContent = `${id} · ${h} × ${a}`;
     sel.appendChild(o);
+    if (selBets) {
+      const o2 = o.cloneNode(true);
+      selBets.appendChild(o2);
+    }
   });
   sel.onchange = () => {
     const m = MATCHES_ADM.find(x=>x[0]===sel.value);
