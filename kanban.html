@@ -926,152 +926,183 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* ── MOBILE ──────────────────────────────────────────── */
 @media(max-width:768px){
 
-  /* Esconde elementos desktop desnecessários */
-  .hd-badge{display:none;}
-  .tb-sep{display:none;}
-  #online-bar{display:none;}
+  /* ── GLOBAL ───────────────────────────────────────────── */
+  .hd-badge,.tb-sep,#online-bar{display:none;}
+  .app{padding:.5rem .6rem 74px;}
+  *{-webkit-tap-highlight-color:transparent;}
 
-  /* App padding */
-  .app{padding:.6rem .7rem 72px;}
-
-  /* Header compacto */
-  .hd{margin-bottom:.5rem;gap:6px;}
+  /* ── HEADER ──────────────────────────────────────────── */
+  .hd{margin-bottom:.4rem;gap:6px;}
   .hd-title{font-size:15px;}
   #user-badge span#user-name{
-    max-width:120px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    display:block;
+    max-width:100px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;display:block;
   }
 
-  /* Toolbar: UMA linha, scroll horizontal, sem quebra */
+  /* ── TOOLBAR: scroll horizontal ──────────────────────── */
   .toolbar{
-    display:flex;
-    flex-wrap:nowrap;
-    overflow-x:auto;
+    display:flex;flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;
-    gap:5px;
-    margin:0 -.7rem .6rem;
-    padding:0 .7rem 6px;
-    scrollbar-width:none;
+    gap:4px;margin:0 -.6rem .5rem;
+    padding:0 .6rem 5px;scrollbar-width:none;
   }
   .toolbar::-webkit-scrollbar{display:none;}
   .toolbar .btn-sm{
-    white-space:nowrap;
-    flex-shrink:0;
-    padding:5px 10px;
-    font-size:11px;
+    white-space:nowrap;flex-shrink:0;
+    padding:6px 11px;font-size:11px;
+    min-height:34px;
   }
 
-  /* Filter bar: scroll horizontal */
+  /* ── FILTER BAR ───────────────────────────────────────── */
   #filter-bar{
-    flex-wrap:nowrap;
-    overflow-x:auto;
+    flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;
-    margin:0 -.7rem .5rem;
-    padding:0 .7rem 4px;
-    scrollbar-width:none;
-    gap:6px;
+    margin:0 -.6rem .4rem;padding:0 .6rem 4px;
+    scrollbar-width:none;gap:5px;
   }
   #filter-bar::-webkit-scrollbar{display:none;}
-  #filter-bar select,
-  #filter-bar label{flex-shrink:0;white-space:nowrap;font-size:11px;}
+  #filter-bar select,#filter-bar label{
+    flex-shrink:0;white-space:nowrap;font-size:11px;
+  }
 
-  /* Goal bar compacta */
-  .goal-bar{font-size:10px;padding:5px 10px;margin-bottom:.5rem;}
-
-  /* Board: scroll horizontal, cada coluna = ~85vw */
+  /* ── BOARD ────────────────────────────────────────────── */
   .board-wrap{
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    margin:0 -.7rem;
-    padding:0 .7rem 8px;
-    scrollbar-width:none;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    margin:0 -.6rem;padding:0 .6rem 8px;scrollbar-width:none;
   }
   .board-wrap::-webkit-scrollbar{display:none;}
-  .board{
-    display:flex!important;
-    gap:10px;
-    min-width:max-content;
-    align-items:start;
-  }
-  .col{
-    width:78vw;
-    max-width:280px;
-    min-width:220px;
-    flex-shrink:0;
-  }
+  .board{display:flex!important;gap:10px;min-width:max-content;align-items:start;}
+  .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
-  .col-body{padding:5px;}
+  .col-body{
+    max-height:65vh;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:5px;
+  }
+  .col-body::-webkit-scrollbar{width:3px;}
+  .col-body::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:999px;}
   .add-btn{margin:5px;width:calc(100% - 10px);}
 
-  /* Cards: text truncate melhorado */
-  .card{padding:8px 9px;}
+  /* ── CARDS ────────────────────────────────────────────── */
+  .card{padding:9px 10px;}
+  .card:hover{transform:none;}
   .card-title{
-    font-size:12px;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
+    font-size:12px;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:3;
+    -webkit-box-orient:vertical;overflow:hidden;
     margin-bottom:4px;
   }
   .card-desc{
-    display:-webkit-box;
-    -webkit-line-clamp:1;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-    font-size:10px;
+    display:-webkit-box;-webkit-line-clamp:1;
+    -webkit-box-orient:vertical;overflow:hidden;font-size:10px;
   }
-  .card:hover{transform:none;}
 
-  /* Modais: tela cheia */
+  /* ── RAIA ─────────────────────────────────────────────── */
+  .raia-row{gap:6px;}
+  .raia-owner-name{font-size:12px;}
+  .raia-cols{gap:6px;}
+  .raia-cols .col{width:72vw;min-width:210px;}
+
+  /* ── MODAIS: bottom sheet ─────────────────────────────── */
   .ov{padding:0;align-items:flex-end;}
   .panel{
-    max-width:100%!important;
-    max-height:92vh;
-    border-radius:var(--r2) var(--r2) 0 0;
+    max-width:100%!important;width:100%!important;
+    max-height:96vh;
+    border-radius:16px 16px 0 0;
     border-bottom:none;
   }
-  .panel-hd{border-radius:var(--r2) var(--r2) 0 0;}
-  .card-panel{max-height:92vh;overflow-y:auto;}
-  .ag-panel{max-height:92vh;}
-  .cfg-panel{max-height:88vh;}
-  .ql-panel{max-height:85vh;}
-  .modal-body{padding:10px 12px;}
+  .panel-hd{border-radius:16px 16px 0 0;padding:12px 14px 10px;}
+
+  /* Card modal: tela cheia com scroll */
+  .card-panel{max-height:96vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .ag-panel,.cfg-panel{max-height:94vh;}
+  .ql-panel{max-height:88vh;}
+  .modal-body{padding:10px 12px;gap:9px;}
+
+  /* Grid 2 colunas → 1 coluna no mobile */
+  .modal-grid{
+    grid-template-columns:1fr!important;
+    gap:8px;
+  }
+
+  /* frow 2 colunas → manter 2 mas menores */
   .frow{gap:6px;}
+  .frow .field{min-width:0;}
 
-  /* Mensagens do agente */
-  .msgs{max-height:200px;}
+  /* Campos: tamanho toque */
+  .fi,.fi-ta{font-size:14px;padding:8px 10px;}
+  select.fi{font-size:14px;}
 
-  /* Abas: scroll */
-  .ag-tabs,.ag-tabs#cfg-tabs,.ag-tabs#help-tabs{
-    overflow-x:auto;
+  /* Labels menores */
+  .fl{font-size:9px;}
+
+  /* card-attr-row: empilha em 2x2 */
+  .card-attr-row{grid-template-columns:1fr 1fr;gap:6px;}
+
+  /* Dependência button no header */
+  #m-depends-lbl{display:none;}
+
+  /* ── MENÇÃO DROPDOWN ─────────────────────────────────── */
+  .mention-dropdown{
+    max-height:180px;overflow-y:auto;
     -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    flex-shrink:0;
+  }
+  .mention-option{padding:10px 12px;min-height:44px;}
+
+  /* ── EOC FIELDS ──────────────────────────────────────── */
+  .eoc-display{min-height:48px;font-size:13px;}
+  .eoc-textarea{font-size:14px;min-height:80px;}
+  .eoc-actions{gap:8px;}
+  .eoc-save,.eoc-cancel{min-height:36px;padding:6px 14px;font-size:12px;}
+  .eoc-hint{display:none;}
+
+  /* ── COMENTÁRIOS ─────────────────────────────────────── */
+  .comment-inp-avatar{width:32px;height:32px;flex-shrink:0;}
+  .comment-inp{font-size:14px;}
+  .comment-send-btn{min-height:36px;font-size:12px;}
+  .comment-item{gap:8px;}
+  .comment-avatar{width:30px;height:30px;}
+  .comment-text{font-size:12px;}
+
+  /* ── ANEXOS ──────────────────────────────────────────── */
+  .attach-add-btn{min-height:34px;padding:4px 12px;}
+  .attach-inp{font-size:14px;padding:8px 10px;}
+  .attach-save-btn{min-height:36px;}
+
+  /* ── PARTICIPANTES ───────────────────────────────────── */
+  #m-part-select{font-size:13px;}
+
+  /* ── CHECKLIST / RISCOS ──────────────────────────────── */
+  .cl-ai{font-size:13px;padding:7px 9px;}
+
+  /* ── MENSAGENS DO AGENTE ─────────────────────────────── */
+  .msgs{max-height:180px;}
+
+  /* ── ABAS ─────────────────────────────────────────────── */
+  .ag-tabs,.ag-tabs#cfg-tabs,.ag-tabs#help-tabs{
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;flex-shrink:0;
   }
   .ag-tabs::-webkit-scrollbar{display:none;}
-  .ag-tab{
-    white-space:nowrap;
-    flex-shrink:0;
-    padding:8px 11px;
-    font-size:10px;
-  }
+  .ag-tab{white-space:nowrap;flex-shrink:0;padding:9px 12px;font-size:11px;}
 
-  /* FAB: ESCONDIDO — substituído pela bottom nav */
+  /* ── PAINEL / DEP MAP ────────────────────────────────── */
+  .dep-map-panel{max-height:94vh;}
+  .pc-modal{max-height:94vh;}
+
+  /* ── FAB → bottom nav ────────────────────────────────── */
   .fab{display:none!important;}
-
-  /* Padding bottom para bottom nav */
-  .app{padding-bottom:72px;}
 }
 
 /* Telas muito pequenas (<380px) */
 @media(max-width:380px){
-  .col{width:84vw;max-width:260px;}
+  .col{width:88vw;max-width:260px;}
+  .raia-cols .col{width:78vw;}
   .hd-title{font-size:13px;}
   .btn-sm{font-size:10px;padding:5px 8px;}
+  .frow{grid-template-columns:1fr!important;}
+  .modal-grid{gap:6px;}
 }
 
 /* Safe area iOS (notch/home bar) */
@@ -1455,7 +1486,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- Descrição full-width -->
     <div class="field">
-      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @INICIAIS para mencionar pessoas, @card: para mencionar cards</span></label>
+      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
       <div class="eoc-wrap" id="desc-eoc">
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
@@ -1466,7 +1497,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="eoc-actions">
           <button class="eoc-save" onclick="eocSave('desc-eoc')">Salvar</button>
           <button class="eoc-cancel" onclick="eocCancel('desc-eoc')">Cancelar</button>
-          <span class="eoc-hint">Esc para cancelar · @card: para cards · @INICIAIS para pessoas</span>
+          <span class="eoc-hint">Esc para cancelar · @card: para cards · @nome.sobrenome para pessoas</span>
         </div>
       </div>
     </div>
@@ -2391,7 +2422,7 @@ function renderBoard(){
   board.classList.add('mode-'+(viewMode||'onepage'));
   board.innerHTML='';
   // Em modo raia por pessoa, ignora o filtro de owner (a raia já organiza por isso)
-  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c,raiaMode==='owner'));
+  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c,raiaMode==='owner',raiaMode==='tag'));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
@@ -2561,9 +2592,9 @@ function clearFilters(){
   activeFilters={owner:'',tag:'',due:'',blocker:false,risco:false};
   renderBoard();
 }
-function passesFilter(card, ignoreOwner=false){
+function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!ignoreOwner&&activeFilters.owner&&card.owner!==activeFilters.owner) return false;
-  if(activeFilters.tag&&card.tag!==activeFilters.tag) return false;
+  if(!ignoreTag&&activeFilters.tag&&card.tag!==activeFilters.tag) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.due){
@@ -3380,9 +3411,10 @@ function renderMd(txt){
     .replace(/\n/g,'<br>');
   // @USER mentions → teal underlined (done separately to avoid chain complexity)
   const _members = typeof members !== 'undefined' ? members : [];
-  txt = txt.replace(/@([A-Z]{2,4})\b/g,(m,init)=>{
-    const mem=_members.find(x=>x.init===init);
-    return mem ? '<span class="mention-user" title="'+esc(mem.name)+'" onclick="void(0)">@'+init+'</span>' : m;
+  txt = txt.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
+    // Match by handle (email local) or init
+    const mem=_members.find(x=>getMemberHandle(x)===handle.toLowerCase())||_members.find(x=>x.init===handle.toUpperCase());
+    return mem ? '<span class="mention-user" title="'+esc(mem.name)+'" onclick="void(0)">@'+esc(handle)+'</span>' : m;
   });
   // [[CARD:id:title]] → blue underlined clickable
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
@@ -4449,10 +4481,12 @@ function handleMentionInput(ta, dd){
   }
 
   // @INICIAIS → busca membros
-  const matches = members.filter(m=>
-    m.init.toLowerCase().startsWith(query.toLowerCase()) ||
-    m.name.toLowerCase().includes(query.toLowerCase())
-  ).slice(0,8);
+  const matches = members.filter(m=>{
+    const handle = getMemberHandle(m);
+    return handle.toLowerCase().includes(query.toLowerCase()) ||
+      m.name.toLowerCase().includes(query.toLowerCase()) ||
+      m.init.toLowerCase().startsWith(query.toLowerCase());
+  }).slice(0,8);
   if(!matches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
   _mentionActive = { el:ta, dd, atPos, mode:'user' };
   renderMentionDropdown(dd, matches, ta, atPos, pos);
@@ -4496,8 +4530,9 @@ function renderMentionDropdown(dd, matches, ta, atPos, pos){
     const av = m.foto
       ? '<img src="'+m.foto+'" onerror="this.style.display=\'none\'">' 
       : '<div class="mention-avatar">'+m.init+'</div>';
+    const handle = getMemberHandle(m);
     opt.innerHTML = av
-      + '<span class="mention-init">@'+m.init+'</span>'
+      + '<span class="mention-init">@'+handle+'</span>'
       + '<span class="mention-name">'+m.name+'</span>';
     opt.onmousedown = e=>{ e.preventDefault(); insertMention(ta, atPos, pos, m.init); };
     dd.appendChild(opt);
@@ -4526,19 +4561,41 @@ function handleMentionKey(e, ta, dd){
     const activeOpt = dd.querySelector('.mention-option.active');
     if(activeOpt){
       e.preventDefault();
-      const init = activeOpt.querySelector('.mention-init').textContent.slice(1);
+      const handleFromOpt = activeOpt.querySelector('.mention-init').textContent.slice(1);
+      // find member by handle
+      const memByHandle = members.find(mm => getMemberHandle(mm)===handleFromOpt) || members.find(mm=>mm.init===handleFromOpt);
       const pos = ta.selectionStart;
-      insertMention(ta, _mentionActive?.atPos??0, pos, init);
+      insertMention(ta, _mentionActive?.atPos??0, pos, memByHandle?.init||handleFromOpt);
     }
   } else if(e.key==='Escape'){
     dd.classList.remove('open');
   }
 }
 
+function getMemberHandle(m){
+  // Derive @nome.sobrenome from email (nome.sobrenome@ciahering.com.br)
+  // or from name ("Caio Soares" → caio.soares)
+  if(m.email){
+    const local = m.email.split('@')[0]; // e.g. "caio.soares"
+    if(local && /^[a-z0-9._-]+$/i.test(local)) return local.toLowerCase();
+  }
+  // Fallback: first + last name
+  const parts = (m.name||m.init||'').trim().split(/\s+/);
+  if(parts.length >= 2) return (parts[0]+'.'+parts[parts.length-1]).toLowerCase().replace(/[^a-z0-9._-]/g,'');
+  return m.init||'?';
+}
+
+function getMemberByHandle(handle){
+  // Find member by handle (email local or name.surname)
+  return members.find(m => getMemberHandle(m) === handle.toLowerCase());
+}
+
 function insertMention(ta, atPos, curPos, init){
+  const member = members.find(m=>m.init===init);
+  const handle = member ? getMemberHandle(member) : init;
   const val = ta.value;
-  ta.value = val.slice(0,atPos) + '@'+init+' ' + val.slice(curPos);
-  ta.selectionStart = ta.selectionEnd = atPos + init.length + 2;
+  ta.value = val.slice(0,atPos) + '@'+handle+' ' + val.slice(curPos);
+  ta.selectionStart = ta.selectionEnd = atPos + handle.length + 2;
   ta.dispatchEvent(new Event('input'));
   const dd = document.getElementById(ta.id+'-mention-dd');
   if(dd) dd.classList.remove('open');
