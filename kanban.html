@@ -1667,7 +1667,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-sm" onclick="convidarMembro()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Convidar por email</button>
       </div>
       <div id="usuarios-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-      <p style="font-size:11px;color:var(--txt3);margin-top:8px;">O PO pode alterar o papel de cada usuário ou convidar alguém pelo email.</p>
+
+      <!-- Emails externos autorizados -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(56,182,255,.1);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="cfg-sec-title" style="margin-bottom:0;font-size:11px;">🔓 Emails externos autorizados</div>
+          <button class="btn btn-sm" onclick="abrirAddExterno()" style="font-size:10px;color:rgba(255,209,102,.9);border-color:rgba(255,209,102,.3);">+ Adicionar externo</button>
+        </div>
+        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora do @ciahering.com.br que podem acessar este board. Entram como convidado.</p>
+        <div id="externos-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+        <div id="add-externo-row" style="display:none;margin-top:8px;gap:6px;" class="frow">
+          <input class="fi" id="externo-email-inp" type="email" placeholder="email@dominio.com" style="flex:1;font-size:12px;">
+          <input class="fi" id="externo-nome-inp" type="text" placeholder="Nome (opcional)" style="flex:1;font-size:12px;">
+          <button class="btn btn-sm btn-teal" onclick="salvarExterno()">Salvar</button>
+          <button class="btn btn-sm" onclick="document.getElementById('add-externo-row').style.display='none'">✕</button>
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:var(--txt3);margin-top:12px;">O PO pode alterar o papel de cada usuário ou convidar alguém pelo email.</p>
     </div>
 
     <!-- ABA TAGS -->
@@ -1942,6 +1959,7 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+// hd sugerido para facilitar login do time interno (freelancers clicam em "Usar outra conta")
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
@@ -2298,10 +2316,27 @@ function showSquadSelectorFiltered(squadIds) {
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   if(user){
+    // Valida domínio: @ciahering.com.br OU email na whitelist de externos
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
-      document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br';
-      document.getElementById('login-err').style.display='block';
-      window._signOut(); return;
+      // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
+      fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+        const externos = snap.val() || {};
+        const allowed = Object.values(externos).map(e=>e.email||e).includes(user.email);
+        if(!allowed){
+          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça ao PO para adicionar seu email como externo.';
+          document.getElementById('login-err').style.display='block';
+          window._signOut();
+        } else {
+          // Email externo autorizado — prossegue como convidado
+          window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+          autoRegistrar(user);
+        }
+      }).catch(()=>{
+        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br.';
+        document.getElementById('login-err').style.display='block';
+        window._signOut();
+      });
+      return; // aguarda verificação async
     }
     window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     autoRegistrar(user);
@@ -2318,8 +2353,8 @@ function autoRegistrar(user){
     const existe=snap.val();
     const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     if(!existe){
-      // Novo usuário via Google Auth — inscreve automaticamente no squad atual como membro
-      const newRole=isAdmUser(user)?'adm':'membro';
+      // Novo usuário: freelancers (email não-ciahering) entram como convidado
+      const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
       fbSet('kanban/usuarios/'+user.uid,{
         uid:user.uid, nome:user.displayName||'', email:user.email,
@@ -3071,7 +3106,7 @@ function swCfgTab(tab){
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
   if(tab==='agil') fillAgilTab();
-  if(tab==='usuarios') renderUsuarios();
+  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); }
   if(tab==='tags') renderTagEditor();
   if(tab==='worker') document.getElementById('worker-url-inp').value=localStorage.getItem('kanban_worker_url')||'';
   if(tab==='firebase'){ document.getElementById('fb-url').value=localStorage.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=localStorage.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=localStorage.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=localStorage.getItem('fb_appId')||''; }
@@ -3159,7 +3194,8 @@ function renderUsuarios(){
       const roleLabels={membro:'Membro',organizador:'Organizador',po:'PO'};
       const role=u.role||'membro';
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
-      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} <span style="font-size:10px;color:var(--txt3);">(${esc(u.init||'?')})</span></div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} <span style="font-size:10px;color:var(--txt3);">(${esc(u.init||'?')})</span></div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
+<select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
         <option value="membro"${(u.role||'membro')==='membro'?' selected':''}>Membro</option>
         <option value="organizador"${u.role==='organizador'?' selected':''}>Organizador</option>
         <option value="po"${u.role==='po'?' selected':''}>PO</option>
@@ -3169,13 +3205,23 @@ function renderUsuarios(){
   });
 }
 function alterarRole(uid,role){
-  // Salva role específica do squad + atualiza global só se não for multi-squad
   const update = {};
   update['squads_roles/'+ACTIVE_SQUAD] = role;
-  // Mantém role global para compatibilidade (usa a mais alta entre todos os squads)
   update['role'] = role;
   fbUpdate('kanban/usuarios/'+uid, update);
   if(window._currentUser?.uid===uid) window._currentUserRole=role;
+}
+
+function removerMembro(uid, nome){
+  if(!confirm('Remover "'+nome+'" deste squad?')) return;
+  // Remove a inscrição deste squad (mantém o usuário global para outros squads)
+  const update = {};
+  update['squads/'+ACTIVE_SQUAD] = null;
+  update['squads_roles/'+ACTIVE_SQUAD] = null;
+  fbUpdate('kanban/usuarios/'+uid, update).then(()=>{
+    showToast('✅ '+nome+' removido do squad.');
+    renderUsuarios();
+  });
 }
 
 // --- Tags ---
@@ -6596,7 +6642,7 @@ function loadAttachments(card){
 
 // ── CONVITE POR EMAIL (PO pode adicionar usuário ao squad) ──────────────────
 function convidarMembro(){
-  const email = prompt('Email do usuário a convidar (@ciahering.com.br):');
+  const email = prompt('Email do usuário a convidar (qualquer email Google para freelancers):');
   if(!email || !email.includes('@')) return;
   // Busca o usuário pelo email no Firebase
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
@@ -6619,6 +6665,64 @@ function convidarMembro(){
       showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!');
     });
   });
+}
+
+// ── EMAILS EXTERNOS AUTORIZADOS ───────────────────────────────────────────
+function renderExternos(){
+  const list = document.getElementById('externos-list'); if(!list) return;
+  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+    const val = snap.val()||{};
+    const entries = Object.entries(val);
+    if(!entries.length){
+      list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum email externo autorizado.</div>';
+      return;
+    }
+    list.innerHTML='';
+    entries.forEach(([key, ext])=>{
+      const email = ext.email||ext;
+      const nome = ext.nome||'';
+      const row = document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.2);border-radius:8px;';
+      row.innerHTML=
+        '<span style="font-size:11px;color:var(--warn);">🔓</span>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:12px;color:var(--txt);">'+(nome||email)+'</div>'+
+          (nome?'<div style="font-size:10px;color:var(--txt3);">'+email+'</div>':'')+
+        '</div>'+
+        '<button style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>';
+      row.querySelector('button').onclick=()=>removerExterno(key);
+      list.appendChild(row);
+    });
+  }).catch(()=>{
+    const list=document.getElementById('externos-list');
+    if(list) list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum.</div>';
+  });
+}
+
+function abrirAddExterno(){
+  const row = document.getElementById('add-externo-row');
+  if(row){ row.style.display='flex'; document.getElementById('externo-email-inp').focus(); }
+}
+
+function salvarExterno(){
+  const emailInp = document.getElementById('externo-email-inp');
+  const nomeInp = document.getElementById('externo-nome-inp');
+  const email = emailInp?.value.trim().toLowerCase();
+  if(!email||!email.includes('@')){ showToast('❌ Email inválido.'); return; }
+  if(email.endsWith('@ciahering.com.br')){ showToast('❌ Emails @ciahering não precisam ser adicionados aqui.'); return; }
+  const key = 'ext_'+Date.now();
+  const ext = { email, nome: nomeInp?.value.trim()||'', adicionadoEm: new Date().toISOString(), adicionadoPor: window._currentUserInit||'' };
+  fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, ext);
+  emailInp.value=''; if(nomeInp) nomeInp.value='';
+  document.getElementById('add-externo-row').style.display='none';
+  showToast('✅ '+email+' autorizado como externo!');
+  setTimeout(renderExternos, 500);
+}
+
+function removerExterno(key){
+  fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, null);
+  showToast('✅ Email externo removido.');
+  setTimeout(renderExternos, 500);
 }
 
 renderBoard();
