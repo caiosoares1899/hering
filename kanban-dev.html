@@ -2595,7 +2595,7 @@ function renderBoard(){
 }
 
 function renderNormal(board,activeCards){
-  board.className='board';
+  board.className='board mode-'+(viewMode||'expanded');
   columns.forEach(col=>{
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
