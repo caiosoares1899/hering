@@ -510,6 +510,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       <button class="btn" onclick="openBoardSetup()" title="Criar novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙ Novo board</button>
+      <button class="btn" onclick="openGlobalUsersModal()" title="Gerenciar usuários" style="color:var(--accent);border-color:rgba(56,182,255,.35);">🗂 Usuários</button>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
         <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
         <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
@@ -531,15 +532,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
   </div>
 
-  <!-- GESTÃO GLOBAL DE USUÁRIOS -->
-  <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-    <span>🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span></span>
-    <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
-      style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;min-width:200px;">
-  </div>
-  <div id="global-users-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
-    <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
-  </div>
+
 
 
   <!-- CALENDÁRIO DO PAINEL -->
@@ -1894,6 +1887,14 @@ window.addEventListener('fb-ready',()=>{
 let _globalUsersCache = {}; // { uid: userObj }
 const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
 
+function openGlobalUsersModal(){
+  document.getElementById('global-users-ov').classList.add('open');
+  renderGlobalUsers();
+}
+function closeGlobalUsersModal(){
+  document.getElementById('global-users-ov').classList.remove('open');
+}
+
 function loadGlobalUsers(){
   window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
     _globalUsersCache = snap.val() || {};
@@ -2598,6 +2599,25 @@ document.addEventListener('keydown', e=>{
     <div class="bs-footer">
       <button class="btn" onclick="closeBoardSetup()">Cancelar</button>
       <button class="btn btn-p" onclick="saveNewBoard()">✅ Criar board</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: GESTÃO GLOBAL DE USUÁRIOS -->
+<div class="cfg-ov" id="global-users-ov">
+  <div class="cfg-panel" style="max-width:720px;">
+    <div class="cfg-hd">
+      <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
+        <div class="cfg-hd-title">🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span></div>
+        <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
+          style="padding:6px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;max-width:320px;">
+      </div>
+      <button class="x-btn" onclick="closeGlobalUsersModal()">✕</button>
+    </div>
+    <div class="cfg-body">
+      <div id="global-users-list" style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+      </div>
     </div>
   </div>
 </div>
