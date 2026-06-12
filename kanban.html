@@ -2118,7 +2118,7 @@ function fbSet(path,val){
   window._set(fb(path),val)?.catch(()=>{}); // silencioso — evita loop com logError
 }
 function fbGet(path){ return window._get(fb(path)); }
-function fbUpdate(path,val){ if(window._fbReady) window._update(fb(path),val); }
+function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); return window._update(fb(path),val); }
 function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
 
 let _lastLocalSave = 0;
@@ -3247,10 +3247,9 @@ function removerMembro(uid, nome){
   const update = {};
   update['squads/'+ACTIVE_SQUAD] = null;
   update['squads_roles/'+ACTIVE_SQUAD] = null;
-  fbUpdate('kanban/usuarios/'+uid, update).then(()=>{
-    showToast('✅ '+nome+' removido do squad.');
-    renderUsuarios();
-  });
+  fbUpdate('kanban/usuarios/'+uid, update);
+  showToast('✅ '+nome+' removido do squad.');
+  renderUsuarios();
 }
 
 // --- Tags ---
@@ -6843,9 +6842,8 @@ function convidarMembro(){
       upd['squads_roles/'+ACTIVE_SQUAD] = 'membro';
       upd['role'] = u.role||'membro';
     }
-    fbUpdate('kanban/usuarios/'+uid, upd).then(()=>{
-      showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!');
-    });
+    fbUpdate('kanban/usuarios/'+uid, upd);
+    showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!');
   });
 }
 
