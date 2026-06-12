@@ -5257,9 +5257,10 @@ function wrapWithErrorLog(fn, context){
   };
 }
 // Aplica wrapper após init
-window.addEventListener('fb-ready',()=>{
+if(window._fbReady){ if(typeof qa==='function') window.qa=wrapWithErrorLog(qa,'Agente Ágil'); }
+else window.addEventListener('fb-ready',()=>{
   if(typeof qa==='function') window.qa=wrapWithErrorLog(qa,'Agente Ágil');
-});
+}, {once:true});
 // ── FIM MONITORAMENTO ─────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════
@@ -5947,7 +5948,14 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });
 
-window.addEventListener('fb-ready',()=>{
+// Robusto contra race: se fb-ready já disparou antes deste listener
+// ser registrado (pode acontecer dependendo da ordem de execução de
+// <script type="module"> vs <script> normal), executa imediatamente.
+function _onFbReady(fn){
+  if(window._fbReady) fn();
+  else window.addEventListener('fb-ready', fn, {once:true});
+}
+_onFbReady(()=>{
   // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop)
   window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
     const val=s.val();
