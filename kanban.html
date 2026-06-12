@@ -2176,7 +2176,29 @@ function fbLoadAll(){
     if(!val) return;
     // Aceita tanto array quanto objeto (Firebase converte arrays esparsas em objetos)
     const incoming = Array.isArray(val) ? val : Object.values(val);
-    if(incoming.length){ columns=incoming.filter(Boolean); renderBoard(); }
+    const cleaned = incoming.filter(Boolean);
+    if(!cleaned.length) return;
+
+    // Proteção contra regressão: se a lista atual tem colunas (por ids)
+    // que NÃO existem na lista recebida, e a lista recebida tem MENOS
+    // colunas, isso pode ser uma escrita antiga sobrescrevendo uma nova
+    // coluna criada por outro usuário. Mescla: mantém colunas extras
+    // que existiam localmente mas não vieram no update.
+    const currentIds = new Set(columns.map(c=>c.id));
+    const incomingIds = new Set(cleaned.map(c=>c.id));
+    const missingFromIncoming = columns.filter(c=>!incomingIds.has(c.id));
+
+    if(missingFromIncoming.length && cleaned.length < columns.length){
+      console.warn('[columns] Update recebido tem menos colunas que o estado local. '+
+        'Mantendo colunas extras: '+missingFromIncoming.map(c=>c.name).join(', '));
+      // Mantém ordem: usa o incoming como base e acrescenta as que faltam no final
+      columns = [...cleaned, ...missingFromIncoming];
+      // Re-salva o merge para corrigir o Firebase
+      fbSet(FB+'/columns', columns);
+    } else {
+      columns = cleaned;
+    }
+    renderBoard();
   });
   // Agil cfg — realtime
   fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); }});
@@ -3163,12 +3185,33 @@ function saveAgilCfg(){
   calcSprintEnd();
   agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value};
   fbSet(FB+'/agil_cfg',agilCfg);
-  fbSet(FB+'/columns',columns);
   fbSet(FB+'/tags',tags);
-  applyAgilCfg();
-  renderBoard();
-  closeOv('cfg-ov');
-  showToast('✅ Configurações salvas!');
+
+  // Antes de salvar columns, busca o estado atual no Firebase e mescla —
+  // evita sobrescrever colunas criadas por outro usuário desde o último load.
+  fbGet(FB+'/columns').then(snap=>{
+    const remoteVal = snap.val();
+    const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
+    const localIds = new Set(columns.map(c=>c.id));
+    const extraRemote = remote.filter(c=>c && !localIds.has(c.id));
+    const merged = extraRemote.length ? [...columns, ...extraRemote] : columns;
+    if(extraRemote.length){
+      columns = merged; // atualiza estado local também
+      showToast('ℹ Coluna(s) criada(s) por outro usuário foram preservadas: '+extraRemote.map(c=>c.name).join(', '));
+    }
+    fbSet(FB+'/columns', merged);
+    applyAgilCfg();
+    renderBoard();
+    closeOv('cfg-ov');
+    showToast('✅ Configurações salvas!');
+  }).catch(()=>{
+    // Fallback: se a leitura falhar, salva como está (comportamento anterior)
+    fbSet(FB+'/columns',columns);
+    applyAgilCfg();
+    renderBoard();
+    closeOv('cfg-ov');
+    showToast('✅ Configurações salvas!');
+  });
 }
 function applyAgilCfg(){
   const _meta = SQUAD_META_LIVE[ACTIVE_SQUAD] || SQUAD_META_DEFAULT[ACTIVE_SQUAD] || {};
