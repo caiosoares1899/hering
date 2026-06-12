@@ -2064,7 +2064,7 @@ function applySquadIdentity() {
   if (titleEl) titleEl.textContent = '🐟 Maré Digital · ' + subtitle;
   
   const sprintBadge = document.getElementById('sprint-badge');
-  if (sprintBadge) sprintBadge.textContent = (emoji || '🐟') + ' ' + label;
+  if (sprintBadge) sprintBadge.textContent = '🐟 ' + label + (emoji ? ' '+emoji : '');
 
   const metaTitle = document.getElementById('meta-app-title');
   if (metaTitle) metaTitle.setAttribute('content', 'Maré · ' + label);
@@ -3158,7 +3158,8 @@ function saveAgilCfg(){
   showToast('✅ Configurações salvas!');
 }
 function applyAgilCfg(){
-  const squadLabel=SQUAD_LABELS[ACTIVE_SQUAD]||ACTIVE_SQUAD;
+  const _meta = SQUAD_META_LIVE[ACTIVE_SQUAD] || SQUAD_META_DEFAULT[ACTIVE_SQUAD] || {};
+  const squadLabel = '🐟 ' + (_meta.label||ACTIVE_SQUAD) + (_meta.emoji ? ' '+_meta.emoji : '');
   if(agilCfg.sprintNum) document.getElementById('sprint-badge').textContent=squadLabel+' · Sprint '+agilCfg.sprintNum;
   else document.getElementById('sprint-badge').textContent=squadLabel;
   const gb=document.getElementById('goal-bar');
@@ -3955,7 +3956,7 @@ function openTrelloMembersModal(){
 
   // Collect unique Trello members from cards
   const trelloMemberIds = [...new Set(
-    (_trelloParsed.cards||[]).flatMap(c=>c.idMembers||[])
+    (_trelloParsed.cards||[]).flatMap(c=>c._trelloMemberIds||[])
   )];
   const memberMap = _trelloParsed._memberMap || {};
 
