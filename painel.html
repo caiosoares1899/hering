@@ -531,6 +531,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
   </div>
 
+  <!-- GESTÃO GLOBAL DE USUÁRIOS -->
+  <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <span>🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span></span>
+    <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
+      style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;min-width:200px;">
+  </div>
+  <div id="global-users-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px;">
+    <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+  </div>
+
 
   <!-- CALENDÁRIO DO PAINEL -->
 <div id="pcal-section" style="display:none;margin-bottom:20px;">
@@ -1870,13 +1880,162 @@ window.addEventListener('auth-change',e=>{
 
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
-  loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); });
+  loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); loadGlobalUsers(); });
   loadPresence();
   loadAgentUsage();
   loadPcalEvents();
   loadErrorLogs();
   loadAdmList();
 });
+
+// ══════════════════════════════════════════════════════════════
+// 🗂 GESTÃO GLOBAL DE USUÁRIOS — todos os squads
+// ══════════════════════════════════════════════════════════════
+let _globalUsersCache = {}; // { uid: userObj }
+const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
+
+function loadGlobalUsers(){
+  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
+    _globalUsersCache = snap.val() || {};
+    renderGlobalUsers();
+  });
+}
+
+function renderGlobalUsers(){
+  const list = document.getElementById('global-users-list');
+  const countEl = document.getElementById('global-users-count');
+  if(!list) return;
+
+  const search = (document.getElementById('gu-search')?.value||'').toLowerCase().trim();
+
+  let entries = Object.entries(_globalUsersCache);
+  if(search){
+    entries = entries.filter(([uid,u])=>
+      (u.nome||'').toLowerCase().includes(search) ||
+      (u.email||'').toLowerCase().includes(search) ||
+      (u.init||'').toLowerCase().includes(search)
+    );
+  }
+
+  // Ordena por nome
+  entries.sort((a,b)=>(a[1].nome||a[1].email||'').localeCompare(b[1].nome||b[1].email||''));
+
+  if(countEl) countEl.textContent = entries.length;
+
+  if(!entries.length){
+    list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum usuário encontrado.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  entries.forEach(([uid, u])=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;flex-wrap:wrap;';
+
+    // Avatar
+    const av = document.createElement(u.foto?'img':'div');
+    if(u.foto){ av.src=u.foto; av.style.cssText='width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;'; }
+    else{ av.style.cssText='width:32px;height:32px;border-radius:50%;background:rgba(37,99,201,.4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;'; av.textContent=u.init||'?'; }
+
+    // Info
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:140px;';
+    const nome = document.createElement('div');
+    nome.style.cssText = 'font-size:12px;font-weight:600;';
+    nome.textContent = (u.nome||u.email||'?') + (u.init?' ('+u.init+')':'');
+    const email = document.createElement('div');
+    email.style.cssText = 'font-size:9px;color:var(--txt3);';
+    email.textContent = u.email||'';
+    info.appendChild(nome);
+    info.appendChild(email);
+
+    // Squads chips — checkboxes para cada squad conhecido
+    const squadsWrap = document.createElement('div');
+    squadsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;';
+
+    SQUADS.forEach(sq=>{
+      const inSquad = u.squads && u.squads[sq.id]===true;
+      const chip = document.createElement('label');
+      chip.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'+
+        (inSquad
+          ? 'background:rgba('+(sq.id==='dados'?'56,182,255':sq.id==='midia'?'29,233,182':'168,85,247')+',.15);border:1px solid rgba('+(sq.id==='dados'?'56,182,255':sq.id==='midia'?'29,233,182':'168,85,247')+',.35);color:var(--txt);'
+          : 'background:rgba(255,255,255,.03);border:1px solid var(--glass-b);color:var(--txt3);');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = inSquad;
+      cb.style.cssText = 'width:12px;height:12px;cursor:pointer;accent-color:var(--accent);';
+      cb.onchange = ()=>toggleUserSquad(uid, sq.id, cb.checked);
+
+      const lbl = document.createElement('span');
+      lbl.textContent = (sq.icon||'') + ' ' + sq.label;
+
+      chip.appendChild(cb);
+      chip.appendChild(lbl);
+      squadsWrap.appendChild(chip);
+    });
+
+    // Role select (global) — aplica a 'role' raiz do usuário
+    const roleWrap = document.createElement('div');
+    roleWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+    const roleLbl = document.createElement('span');
+    roleLbl.style.cssText = 'font-size:9px;color:var(--txt3);';
+    roleLbl.textContent = 'Role:';
+    const roleSel = document.createElement('select');
+    roleSel.style.cssText = 'padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;';
+    GLOBAL_ROLES.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r; opt.textContent = r;
+      if((u.role||'membro')===r) opt.selected = true;
+      roleSel.appendChild(opt);
+    });
+    roleSel.onchange = ()=>updateGlobalUserRole(uid, roleSel.value);
+    roleWrap.appendChild(roleLbl);
+    roleWrap.appendChild(roleSel);
+
+    // Botão excluir (remove o usuário inteiro de kanban/usuarios)
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '🗑';
+    delBtn.title = 'Excluir usuário completamente';
+    delBtn.style.cssText = 'background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:3px 8px;cursor:pointer;flex-shrink:0;';
+    delBtn.onclick = ()=>deleteGlobalUser(uid, u.nome||u.email);
+
+    row.appendChild(av);
+    row.appendChild(info);
+    row.appendChild(squadsWrap);
+    row.appendChild(roleWrap);
+    row.appendChild(delBtn);
+    list.appendChild(row);
+  });
+}
+
+function toggleUserSquad(uid, squadId, checked){
+  const upd = {};
+  upd['squads/'+squadId] = checked ? true : null;
+  // Se desmarcando, também remove role específica do squad
+  if(!checked) upd['squads_roles/'+squadId] = null;
+  // Se marcando e não tem role global ainda, define como membro
+  const u = _globalUsersCache[uid] || {};
+  if(checked && !u.role) upd['role'] = 'membro';
+  window._update(window._ref(window._db,'kanban/usuarios/'+uid), upd)
+    .then(()=>{
+      showToast(checked ? '✅ Adicionado ao squad' : '✅ Removido do squad');
+    })
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+function updateGlobalUserRole(uid, role){
+  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'), role)
+    .then(()=>showToast('✅ Role atualizado para '+role))
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+function deleteGlobalUser(uid, nome){
+  if(!confirm('Excluir completamente o usuário "'+nome+'"?\n\nIsso remove o acesso dele de TODOS os squads. Ele precisará se inscrever novamente.')) return;
+  window._set(window._ref(window._db,'kanban/usuarios/'+uid), null)
+    .then(()=>showToast('✅ '+nome+' excluído.'))
+    .catch(e=>showToast('❌ '+e.message));
+}
 
 function loadAll(){
   SQUADS.forEach(sq=>{
