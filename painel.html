@@ -585,7 +585,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="filter-bar">
     <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">🏠 Todos os squads</button>
     <button class="filter-btn"        id="fb-dados"  onclick="setFilter('dados')">📊 Squad Dados</button>
-    <button class="filter-btn"        id="fb-midia"  onclick="setFilter('midia')">📱 Squad Mídia</button>
+    <button class="filter-btn"        id="fb-midia"  onclick="setFilter('midia')">📱 Marketing de Performance</button>
     <button class="filter-btn"        id="fb-midiacriativa"  onclick="setFilter('midiacriativa')">🎨 Squad Mídia Criativa</button>
   </div>
 
@@ -607,7 +607,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="sec-title">⚖️ Comparação</div>
   <div class="card" style="margin-bottom:20px;">
     <table class="cmp-table">
-      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Squad Mídia</th><th>🎨 Mídia Criativa</th></tr></thead>
+      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Mkt Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
       <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
     </table>
   </div>
@@ -618,7 +618,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="grid-3" style="margin-bottom:12px;">
     <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">ambos os squads</div></div>
     <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
-    <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
+    <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
   </div>
   <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
 
@@ -641,7 +641,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
   <div class="grid-2" style="margin-bottom:20px;">
     <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
-    <div class="card"><div class="card-title">📱 Squad Mídia — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
+    <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
   </div>
 
 
@@ -661,7 +661,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="err-stats-grid">
       <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
       <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
-      <div class="met"><div class="met-lbl">Squad Mídia</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
+      <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
       <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
     </div>
     <div class="card" style="margin-bottom:14px;">
@@ -673,7 +673,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <span class="err-filter-label">Squad</span>
         <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
         <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mídia</button>
+        <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mkt Perf</button>
         <button class="err-filter-btn"        onclick="setErrFilter('squad','midiacriativa')" id="ef-squad-midiacriativa">🎨 Criativa</button>
       </div>
       <div class="err-filter-row">
@@ -717,7 +717,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <select class="pev-input" id="pev-squad">
           <option value="gestao">🏢 Gestão Digital Hering</option>
           <option value="dados">📊 Squad Dados</option>
-          <option value="midia">📱 Squad Mídia</option>
+          <option value="midia">📱 Marketing de Performance</option>
           <option value="midiacriativa">🎨 Squad Mídia Criativa</option>
           <option value="geral">🌐 Geral (todos)</option>
         </select>
