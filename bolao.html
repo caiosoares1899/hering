@@ -25,7 +25,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, set, get, onValue }
+import { getDatabase, ref, set, get, onValue, update }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -656,13 +656,11 @@ window.toggleSquadDetail = function(name) {
 };
 
 // ─── PARTICIPANTES (ADMIN) ───────────────────────────────────────────────────
-async function renderParticipants() {
+function renderParticipants() {
   const c = document.getElementById("participants-container");
   if (!c) return;
-  const snap = await get(ref(db, "users"));
-  if (!snap.exists()) { c.innerHTML = `<p class="empty-state">Nenhum participante ainda.</p>`; return; }
-  const users = snap.val();
-  const list  = Object.entries(users).sort((a,b)=>(a[1].name||"").localeCompare(b[1].name||""));
+  if (!Object.keys(allUsers).length) { c.innerHTML = `<p class="empty-state">Nenhum participante ainda.</p>`; return; }
+  const list = Object.entries(allUsers).sort((a,b)=>(a[1].name||"").localeCompare(b[1].name||""));
 
   c.innerHTML = `
     <div class="participants-grid">
@@ -685,8 +683,14 @@ async function renderParticipants() {
 }
 
 window.adminChangeSquad = async function(uid, squad) {
-  await set(ref(db, `users/${uid}/squad`), squad || null);
-  showToast(`Squad atualizado para ${squad||"(sem squad)"}`, "success");
+  // Atualização otimista local — evita que o onValue re-renderize com valor antigo
+  if (allUsers[uid]) allUsers[uid].squad = squad || null;
+  try {
+    await update(ref(db, `users/${uid}`), { squad: squad || null });
+    showToast(`Squad atualizado para ${squad||"(sem squad)"}`, "success");
+  } catch(e) {
+    showToast("Erro ao atualizar squad: " + e.message, "error");
+  }
 };
 
 // ─── ADMIN RESULTS ───────────────────────────────────────────────────────────
