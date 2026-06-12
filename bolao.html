@@ -683,13 +683,17 @@ function renderParticipants() {
 }
 
 window.adminChangeSquad = async function(uid, squad) {
+  if (currentUser?.uid !== ADMIN_UID) { showToast("Apenas admin pode alterar squads","error"); return; }
   // Atualização otimista local — evita que o onValue re-renderize com valor antigo
+  const prevSquad = allUsers[uid]?.squad;
   if (allUsers[uid]) allUsers[uid].squad = squad || null;
   try {
-    await update(ref(db, `users/${uid}`), { squad: squad || null });
+    await set(ref(db, `users/${uid}/squad`), squad || null);
     showToast(`Squad atualizado para ${squad||"(sem squad)"}`, "success");
   } catch(e) {
+    if (allUsers[uid]) allUsers[uid].squad = prevSquad; // desfaz otimismo
     showToast("Erro ao atualizar squad: " + e.message, "error");
+    renderParticipants();
   }
 };
 
