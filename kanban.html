@@ -1292,6 +1292,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 <div class="toolbar">
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
+  <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
   <div style="display:flex;gap:2px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;padding:2px;">
     <button class="view-btn" id="view-onepage" onclick="setViewMode('onepage')" title="One Page">⊞</button>
     <button class="view-btn active" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
@@ -2202,6 +2203,33 @@ function fbLoadAll(){
   });
   // Agil cfg — realtime
   fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); }});
+
+  // ── Re-sync periódico de columns/tags ───────────────────────────────────
+  // onValue só dispara em writes — sessões longas abertas ANTES de uma
+  // coluna nova ser criada por outro usuário (e sem novos writes em
+  // /columns desde então) nunca recebem a atualização. Poll a cada 60s
+  // como rede de segurança para manter colunas/tags sincronizadas.
+  setInterval(()=>{
+    fbGet(FB+'/columns').then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
+      if(!incoming.length) return;
+      const currentIds=columns.map(c=>c.id).sort().join(',');
+      const incomingIds=incoming.map(c=>c.id).sort().join(',');
+      if(currentIds!==incomingIds){
+        columns=incoming;
+        renderBoard();
+      }
+    }).catch(()=>{});
+    fbGet(FB+'/tags').then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
+      if(!incoming.length) return;
+      const currentIds=tags.map(t=>t.id).sort().join(',');
+      const incomingIds=incoming.map(t=>t.id).sort().join(',');
+      if(currentIds!==incomingIds) tags=incoming;
+    }).catch(()=>{});
+  }, 60000);
   // Quick lists
   fbListen(FB+'/ql_items',val=>{ 
     if(val) qlItems=val;
@@ -6946,6 +6974,24 @@ function removerExterno(key){
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, null);
   showToast('✅ Email externo removido.');
   setTimeout(renderExternos, 500);
+}
+
+function resyncColumnsAndTags(){
+  Promise.all([fbGet(FB+'/columns'), fbGet(FB+'/tags')]).then(([colSnap, tagSnap])=>{
+    let changed=false;
+    const colVal=colSnap.val();
+    if(colVal){
+      const incoming=(Array.isArray(colVal)?colVal:Object.values(colVal)).filter(Boolean);
+      if(incoming.length){ columns=incoming; changed=true; }
+    }
+    const tagVal=tagSnap.val();
+    if(tagVal){
+      const incoming=(Array.isArray(tagVal)?tagVal:Object.values(tagVal)).filter(Boolean);
+      if(incoming.length) tags=incoming;
+    }
+    if(changed) renderBoard();
+    showToast('✅ Colunas e tags recarregadas!');
+  }).catch(()=>showToast('❌ Erro ao recarregar.'));
 }
 
 renderBoard();
