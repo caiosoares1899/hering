@@ -2185,19 +2185,19 @@ function fbLoadAll(){
     // colunas, isso pode ser uma escrita antiga sobrescrevendo uma nova
     // coluna criada por outro usuário. Mescla: mantém colunas extras
     // que existiam localmente mas não vieram no update.
-    const currentIds = new Set(columns.map(c=>c.id));
-    const incomingIds = new Set(cleaned.map(c=>c.id));
-    const missingFromIncoming = columns.filter(c=>!incomingIds.has(c.id));
+    const incoming = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
+    if(!incoming.length) return;
 
-    if(missingFromIncoming.length && cleaned.length < columns.length){
-      console.warn('[columns] Update recebido tem menos colunas que o estado local. '+
-        'Mantendo colunas extras: '+missingFromIncoming.map(c=>c.name).join(', '));
-      // Mantém ordem: usa o incoming como base e acrescenta as que faltam no final
-      columns = [...cleaned, ...missingFromIncoming];
-      // Re-salva o merge para corrigir o Firebase
-      fbSet(FB+'/columns', columns);
+    // Mescla colunas: garante que colunas locais (como as padrão) não sumam
+    // se o Firebase retornar uma lista parcial.
+    const incomingIds = new Set(incoming.map(c => c.id));
+    const missingFromIncoming = columns.filter(c => !incomingIds.has(c.id));
+
+    if(missingFromIncoming.length){
+      // Se faltam colunas no que veio do Firebase, mesclamos para não sumirem.
+      columns = [...incoming, ...missingFromIncoming];
     } else {
-      columns = cleaned;
+      columns = incoming;
     }
     renderBoard();
   });
