@@ -2344,8 +2344,9 @@ window.addEventListener('auth-change',e=>{
           window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
           autoRegistrar(user);
         }
-      }).catch(()=>{
-        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br.';
+      }).catch((err)=>{
+        console.error('[externos check] erro:', err);
+        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         window._signOut();
       });
