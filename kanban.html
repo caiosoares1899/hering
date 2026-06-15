@@ -1940,7 +1940,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.1.1</div>
+<div class="version">v8.1.2</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2174,22 +2174,33 @@ function fbLoadAll(){
   });
   // Columns
   fbListen(FB+'/columns',val=>{
-    if(!val) return;
+    if(!val){
+      // Firebase sem dados: garante DEFAULT_COLUMNS
+      if(!columns.length) columns=[...DEFAULT_COLUMNS];
+      renderBoard();
+      return;
+    }
     // Aceita tanto array quanto objeto (Firebase converte arrays esparsas em objetos)
     const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
-    if(!cleaned.length) return;
-
-    // Merge: garante que colunas locais (ex: "Em Progresso") não sumam
-    // se o Firebase retornar uma lista parcial ou desatualizada.
-    const incomingIds = new Set(cleaned.map(c=>c.id));
-    const missingFromIncoming = columns.filter(c=>!incomingIds.has(c.id));
-
-    if(missingFromIncoming.length){
-      // Mantém colunas locais que não vieram no update
-      columns = [...cleaned, ...missingFromIncoming];
-    } else {
-      columns = cleaned;
+    if(!cleaned.length){
+      if(!columns.length) columns=[...DEFAULT_COLUMNS];
+      renderBoard();
+      return;
     }
+
+    // Merge: garante que colunas padrao e locais nunca sumam,
+    // mesmo que o Firebase retorne lista parcial/desatualizada.
+    // Fonte de verdade = uniao de DEFAULT_COLUMNS + columns local + Firebase
+    const cleanedIds = new Set(cleaned.map(c=>c.id));
+    const baseColumns = DEFAULT_COLUMNS
+      .concat(columns)
+      .filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); // dedup por id
+    const missingFromFirebase = baseColumns.filter(c=>!cleanedIds.has(c.id));
+
+    columns = missingFromFirebase.length
+      ? [...cleaned, ...missingFromFirebase]
+      : cleaned;
+
     renderBoard();
   });
   // Agil cfg — realtime
@@ -2205,10 +2216,13 @@ function fbLoadAll(){
       const val=snap.val(); if(!val) return;
       const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
       if(!incoming.length) return;
-      const currentIds=columns.map(c=>c.id).sort().join(',');
-      const incomingIds=incoming.map(c=>c.id).sort().join(',');
-      if(currentIds!==incomingIds){
-        columns=incoming;
+      // Mesmo merge do listener: garante DEFAULT_COLUMNS nunca somem
+      const incomingIds2=new Set(incoming.map(c=>c.id));
+      const base=DEFAULT_COLUMNS.concat(columns).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i);
+      const missing=base.filter(c=>!incomingIds2.has(c.id));
+      const merged=missing.length?[...incoming,...missing]:incoming;
+      if(JSON.stringify(merged.map(c=>c.id).sort())!==JSON.stringify(columns.map(c=>c.id).sort())){
+        columns=merged;
         renderBoard();
       }
     }).catch(()=>{});
