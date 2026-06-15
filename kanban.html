@@ -1846,6 +1846,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <span id="backup-auto-status" style="font-size:11px;color:var(--txt3);"></span>
       </div>
       <div id="backup-last" style="font-size:10px;color:var(--txt3);margin-top:8px;"></div>
+
+      <div style="height:1px;background:var(--glass-b);margin:14px 0 10px;"></div>
+      <div class="cfg-sec-title">🗂 Histórico de snapshots no Firebase</div>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">
+        Cada backup manual ou automático salva um snapshot completo no Firebase. Clique em qualquer um para baixar o JSON.
+      </p>
+      <div id="backup-history" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;">
+        <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+      </div>
     </div>
 
   </div>
@@ -1992,7 +2001,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.2.0</div>
+<div class="version">v8.2.1</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7050,7 +7059,7 @@ function resyncColumnsAndTags(){
 
 function buildBackupPayload(){
   return {
-    version: '8.1.3',
+    version: '8.2.1',
     squad: ACTIVE_SQUAD,
     exportedAt: new Date().toISOString(),
     exportedBy: window._currentUser?.displayName||window._currentUser?.email||'anônimo',
@@ -7079,11 +7088,8 @@ function exportBackupJSON(){
   a.click();
   URL.revokeObjectURL(url);
   showToast('✅ Backup baixado: ' + a.download);
-  fbSet('kanban/squads/'+ACTIVE_SQUAD+'/backup_meta/last_manual',{
-    ts: new Date().toISOString(),
-    by: window._currentUser?.displayName||'?',
-    cards: cards.filter(c=>!c.archived).length,
-  });
+  // Salva snapshot no Firebase
+  saveSnapshotToFirebase(payload, 'manual');
 }
 
 function copyBackupJSON(){
@@ -7150,6 +7156,7 @@ function loadBackupTab(){
   if(lastEl && lastAuto){
     lastEl.textContent = '⏱ Último backup automático: '+new Date(lastAuto).toLocaleString('pt-BR');
   }
+  renderBackupHistory();
 }
 
 function updateBackupAutoStatus(){
@@ -7202,12 +7209,12 @@ async function sendBackupEmail(isTest=false){
     });
     const now = new Date().toISOString();
     localStorage.setItem('backup_auto_last_'+ACTIVE_SQUAD, now);
-    fbSet('kanban/squads/'+ACTIVE_SQUAD+'/backup_meta/last_auto',{
-      ts: now, by: 'auto', cards: ativos.length,
-    });
+    // Salva snapshot no Firebase
+    saveSnapshotToFirebase(payload, isTest?'teste':'auto');
     showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
     const lastEl = document.getElementById('backup-last');
     if(lastEl) lastEl.textContent = '⏱ Último backup automático: '+new Date(now).toLocaleString('pt-BR');
+    renderBackupHistory();
     return true;
   } catch(e){
     showToast('❌ Erro ao enviar email: '+( e?.text||e?.message||JSON.stringify(e)));
@@ -7217,6 +7224,80 @@ async function sendBackupEmail(isTest=false){
 }
 
 function testBackupEmail(){ sendBackupEmail(true); }
+
+// Salva snapshot completo no Firebase em backups/{date}
+function saveSnapshotToFirebase(payload, type){
+  const date = new Date().toISOString().split('T')[0];
+  const key  = date; // uma entrada por dia (sobrescreve se rodar 2x no mesmo dia)
+  const meta = {
+    ts:    new Date().toISOString(),
+    type:  type, // 'manual' | 'auto' | 'teste'
+    by:    window._currentUser?.displayName || window._currentUser?.email || '?',
+    cards: (payload.board?.cards||[]).filter(c=>!c.archived).length,
+    cols:  (payload.board?.columns||[]).length,
+  };
+  // Salva meta separado (leve) + snapshot completo
+  fbSet('kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/meta', meta);
+  fbSet('kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/data', payload);
+  console.log('[Backup] Snapshot salvo no Firebase: backups/'+key);
+}
+
+// Renderiza histórico de snapshots do Firebase na aba Backup
+function renderBackupHistory(){
+  const el = document.getElementById('backup-history'); if(!el) return;
+  el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  window._get(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups'))
+    .then(snap=>{
+      const val = snap.val();
+      if(!val || !Object.keys(val).length){
+        el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum snapshot salvo ainda.</div>';
+        return;
+      }
+      // Ordena por data desc
+      const entries = Object.entries(val)
+        .sort(([a],[b])=>b.localeCompare(a))
+        .slice(0,10); // mostra os 10 mais recentes
+      el.innerHTML = entries.map(([date, snap])=>{
+        const meta = snap.meta || {};
+        const label = meta.type==='auto' ? '🤖 Auto' : meta.type==='teste' ? '🧪 Teste' : '👤 Manual';
+        const ts = meta.ts ? new Date(meta.ts).toLocaleString('pt-BR') : date;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
+          background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:8px;cursor:pointer;"
+          onclick="downloadSnapshotFromFirebase('${date}')"
+          title="Clique para baixar o JSON deste snapshot">
+          <span style="font-size:16px;">💾</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:600;color:#e8f4fd;">${ts} ${label}</div>
+            <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
+          </div>
+          <span style="font-size:10px;color:var(--accent);">⬇ baixar</span>
+        </div>`;
+      }).join('');
+    })
+    .catch(()=>{
+      el.innerHTML = '<div style="font-size:11px;color:var(--danger);">Erro ao carregar histórico.</div>';
+    });
+}
+
+// Baixa um snapshot específico do Firebase
+function downloadSnapshotFromFirebase(date){
+  showToast('⏳ Baixando snapshot de '+date+'...');
+  window._get(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+date+'/data'))
+    .then(snap=>{
+      const val = snap.val();
+      if(!val){ showToast('❌ Snapshot não encontrado'); return; }
+      const json = JSON.stringify(val, null, 2);
+      const blob = new Blob([json], {type:'application/json'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = 'mare-digital-'+ACTIVE_SQUAD+'-'+date+'.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ Snapshot '+date+' baixado!');
+    })
+    .catch(()=>showToast('❌ Erro ao baixar snapshot'));
+}
 
 // ── Agendador semanal (domingo à meia-noite) ─────────────────────────────
 function scheduleWeeklyBackup(){
