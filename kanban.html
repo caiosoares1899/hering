@@ -1940,7 +1940,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.1.2</div>
+<div class="version">v8.1.3</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2592,7 +2592,7 @@ function renderBoard(){
   else renderNormal(board,activeCards);
   updateMetrics();
   // Reaplica wrap height para modo expandido (só em modo normal, não raia)
-  if(!raiaMode) requestAnimationFrame(()=>setViewMode(viewMode));
+  if(!raiaMode) setTimeout(()=>setViewMode(viewMode), 100);
 }
 
 function renderNormal(board,activeCards){
@@ -4983,9 +4983,12 @@ function setViewMode(mode){
   if(wrap){
     if(mode==='expanded'){
       // Calcula altura disponível: viewport - tudo acima do board
+      // Math.max(300, ...) garante mínimo de 300px caso o layout ainda
+      // não esteja pronto no primeiro render (wrapTop=0 ou negativo)
       const wrapTop=wrap.getBoundingClientRect().top;
       const available=window.innerHeight - wrapTop - 16;
-      wrap.style.maxHeight=available+'px';
+      const safeHeight=Math.max(300, available);
+      wrap.style.maxHeight=safeHeight+'px';
       wrap.style.overflowX='auto';
       wrap.style.overflowY='auto';
       wrap.style.paddingBottom='0';
@@ -4999,7 +5002,7 @@ function setViewMode(mode){
 }
 function applyViewMode(){
   // Delay one frame so board is laid out before height calculation
-  requestAnimationFrame(()=>setViewMode(viewMode));
+  setTimeout(()=>setViewMode(viewMode), 150);
 }
 window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
