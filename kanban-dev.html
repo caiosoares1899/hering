@@ -1608,6 +1608,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
+    <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
   </div>
   <div class="cfg-body">
 
@@ -1775,6 +1776,53 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div style="display:flex;justify-content:flex-end;padding-top:8px;"><button class="btn btn-p btn-sm" onclick="saveFbConfig()">Salvar e recarregar</button></div>
     </div>
 
+    <!-- ABA BACKUP -->
+    <div class="tab-c" id="cfgtab-backup">
+      <div class="cfg-sec-title">💾 Exportar dados</div>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:10px;">
+        Gera um snapshot completo do board (cards, colunas, tags, eventos, links, modelos) em JSON — compatível com o formato de importação do sistema.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <button class="btn btn-teal btn-sm" onclick="exportBackupJSON()">⬇ Baixar JSON agora</button>
+        <button class="btn btn-sm" onclick="copyBackupJSON()" id="btn-copy-json">📋 Copiar JSON</button>
+        <button class="btn btn-sm" onclick="previewBackupStats()" style="color:var(--cyan);border-color:rgba(56,182,255,.3);">📊 Ver resumo</button>
+      </div>
+      <div id="backup-stats" style="display:none;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;font-size:11px;color:var(--txt2);line-height:1.8;margin-bottom:14px;"></div>
+
+      <div style="height:1px;background:var(--glass-b);margin:4px 0 14px;"></div>
+      <div class="cfg-sec-title">📧 Backup automático semanal por email</div>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:10px;">
+        Todo domingo à meia-noite (horário do browser), enquanto o app estiver aberto, o sistema envia um backup do board pro email configurado abaixo via <strong>EmailJS</strong> (gratuito).
+        <br><a href="https://www.emailjs.com" target="_blank" style="color:var(--accent);font-size:10px;">Como configurar o EmailJS →</a>
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="field"><label class="fl">Seu email (destinatário)</label>
+          <input class="fi" id="backup-email" type="email" placeholder="caio.soares@ciahering.com.br" oninput="saveBackupConfig()">
+        </div>
+        <div class="field"><label class="fl">EmailJS — Service ID</label>
+          <input class="fi" id="emailjs-service" placeholder="service_xxxxxxx" oninput="saveBackupConfig()">
+        </div>
+        <div class="field"><label class="fl">EmailJS — Template ID</label>
+          <input class="fi" id="emailjs-template" placeholder="template_xxxxxxx" oninput="saveBackupConfig()">
+        </div>
+        <div class="field"><label class="fl">EmailJS — Public Key</label>
+          <input class="fi" id="emailjs-pubkey" placeholder="xxxxxxxxxxxxxxx" oninput="saveBackupConfig()">
+        </div>
+      </div>
+      <div style="background:rgba(37,99,201,.08);border:1px solid rgba(37,99,201,.2);border-radius:var(--r);padding:10px;margin-top:10px;font-size:10px;color:#7eb3ff;line-height:1.8;">
+        <strong>Como configurar (5 min):</strong><br>
+        1. Crie conta grátis em <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent);">emailjs.com</a><br>
+        2. Adicione um serviço de email (Gmail, Outlook...)<br>
+        3. Crie um template com variáveis: <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{squad}}</code>, <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{date}}</code>, <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{summary}}</code><br>
+        4. Cole os IDs acima e clique em "Testar envio"
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;">
+        <button class="btn btn-p btn-sm" onclick="testBackupEmail()">📤 Testar envio agora</button>
+        <span id="backup-auto-status" style="font-size:11px;color:var(--txt3);"></span>
+      </div>
+      <div id="backup-last" style="font-size:10px;color:var(--txt3);margin-top:8px;"></div>
+    </div>
+
   </div>
 </div>
 </div>
@@ -1919,7 +1967,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.2</div>
+<div class="version">v8.2.1</div>
 
 <!-- FIREBASE SDK -->
 <script>
@@ -2247,7 +2295,25 @@ function fbLoadAll(){
   // Tags
   fbListen(FB+'/tags',val=>{ if(val&&Array.isArray(val)&&val.length) tags=val; });
   // Columns
-  fbListen(FB+'/columns',val=>{ if(val&&Array.isArray(val)&&val.length){ columns=val; renderBoard(); }});
+  fbListen(FB+'/columns',val=>{
+    if(!val){
+      if(!columns.length) columns=[...DEFAULT_COLUMNS];
+      renderBoard();
+      return;
+    }
+    const cleaned=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
+    if(!cleaned.length){
+      if(!columns.length) columns=[...DEFAULT_COLUMNS];
+      renderBoard();
+      return;
+    }
+    // Merge: garante DEFAULT_COLUMNS + colunas locais nunca somam
+    const cleanedIds=new Set(cleaned.map(c=>c.id));
+    const base=DEFAULT_COLUMNS.concat(columns).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i);
+    const missing=base.filter(c=>!cleanedIds.has(c.id));
+    columns=missing.length?[...cleaned,...missing]:cleaned;
+    renderBoard();
+  });
   // Agil cfg — realtime
   fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); }});
   // Quick lists
@@ -2559,7 +2625,7 @@ function renderBoard(){
   else renderNormal(board,activeCards);
   updateMetrics();
   // Reaplica wrap height para modo expandido (só em modo normal, não raia)
-  if(!raiaMode) requestAnimationFrame(()=>setViewMode(viewMode));
+  if(!raiaMode) setTimeout(()=>setViewMode(viewMode), 100);
 }
 
 function renderNormal(board,activeCards){
@@ -3151,7 +3217,7 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','tags','auto','importar','worker','firebase'];
+  const TABS=['agil','usuarios','tags','auto','importar','worker','firebase','backup'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
@@ -3159,6 +3225,7 @@ function swCfgTab(tab){
   if(tab==='usuarios') renderUsuarios();
   if(tab==='tags') renderTagEditor();
   if(tab==='worker') document.getElementById('worker-url-inp').value=localStorage.getItem('kanban_worker_url')||'';
+  if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=localStorage.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=localStorage.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=localStorage.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=localStorage.getItem('fb_appId')||''; }
 }
 
@@ -4754,11 +4821,25 @@ function setViewMode(mode){
     board.classList.remove('mode-onepage','mode-expanded');
     board.classList.add('mode-'+mode);
   }
-  // wrap overflow handled purely by CSS (overflow-y:hidden always)
+  if(wrap){
+    if(mode==='expanded'){
+      const wrapTop=wrap.getBoundingClientRect().top;
+      const available=window.innerHeight - wrapTop - 16;
+      const safeHeight=Math.max(300, available);
+      wrap.style.maxHeight=safeHeight+'px';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='auto';
+      wrap.style.paddingBottom='0';
+    } else {
+      wrap.style.maxHeight='';
+      wrap.style.overflowX='auto';
+      wrap.style.overflowY='visible';
+      wrap.style.paddingBottom='8px';
+    }
+  }
 }
 function applyViewMode(){
-  // Delay one frame so board is laid out before height calculation
-  requestAnimationFrame(()=>setViewMode(viewMode));
+  setTimeout(()=>setViewMode(viewMode), 150);
 }
 window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
@@ -5951,27 +6032,9 @@ function unlinkDependsOn(){
 }
 
 function openDependsOnCard(){
-  const card=cards.find(c=>c.id===editingId); if(!card?.parentId) return;
+  const card=cards.find(c=>c.id===editingId); if(!card?.dependsOn) return;
   closeOv('card-ov');
   openCard(card.dependsOn);
-}
-
-function renderDependsBar(card){
-  const bar=document.getElementById('m-depends-bar');
-  const link=document.getElementById('m-depends-link');
-  const lbl=document.getElementById('m-depends-lbl');
-  if(!bar||!link) return;
-  if(card?.parentId){
-    const parent=cards.find(c=>c.id===card.dependsOn);
-    if(parent){
-      bar.style.display='flex';
-      link.textContent=parent.title.substring(0,40)+(parent.title.length>40?'…':'');
-      if(lbl) lbl.textContent='Depende de';
-      return;
-    }
-  }
-  bar.style.display='none';
-  if(lbl) lbl.textContent='Dependência';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6165,7 +6228,6 @@ function renderDescPreview(){
 // MAPA DE DEPENDÊNCIAS
 // ═══════════════════════════════════════════════════════
 
-// Fix renderDependsBar: was checking card?.parentId instead of card?.dependsOn
 function renderDependsBar(card){
   const bar=document.getElementById('m-depends-bar');
   const link=document.getElementById('m-depends-link');
@@ -6790,6 +6852,166 @@ function loadAttachments(card){
   console.log('🧪 Seed: ' + cards.length + ' cards, ' + members.length + ' membros, ' + tags.length + ' tags');
 })();
 
+
+// ═══════════════════════════════════════════════════════
+// BACKUP & EXPORT
+// ═══════════════════════════════════════════════════════
+
+function buildBackupPayload(){
+  return {
+    version: '8.2.1',
+    squad: ACTIVE_SQUAD,
+    exportedAt: new Date().toISOString(),
+    exportedBy: window._currentUser?.displayName||window._currentUser?.email||'anônimo',
+    board: {
+      cards: cards,
+      columns: columns,
+      tags: tags,
+      agilCfg: agilCfg,
+      qlItems: qlItems,
+      links: links,
+      calEvents: calEvents,
+      autoRules: autoRules,
+    }
+  };
+}
+
+function exportBackupJSON(){
+  const payload=buildBackupPayload();
+  const json=JSON.stringify(payload,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toISOString().split('T')[0];
+  a.href=url; a.download='mare-digital-'+ACTIVE_SQUAD+'-'+date+'.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Backup baixado: '+a.download);
+}
+
+function copyBackupJSON(){
+  const json=JSON.stringify(buildBackupPayload(),null,2);
+  navigator.clipboard.writeText(json).then(()=>{
+    const btn=document.getElementById('btn-copy-json');
+    const orig=btn.textContent; btn.textContent='✅ Copiado!';
+    setTimeout(()=>btn.textContent=orig,2000);
+  }).catch(()=>showToast('❌ Erro ao copiar'));
+}
+
+function previewBackupStats(){
+  const el=document.getElementById('backup-stats'); if(!el) return;
+  const ativos=cards.filter(c=>!c.archived);
+  const byCol=columns.reduce((acc,col)=>{ acc[col.name]=ativos.filter(c=>c.col===col.id).length; return acc; },{});
+  const colSummary=Object.entries(byCol).map(([n,c])=>n+': '+c).join(' · ');
+  el.innerHTML='<strong style="color:var(--txt);">📦 Conteúdo do backup</strong><br>'+
+    '• '+ativos.length+' cards ativos · '+cards.filter(c=>c.archived).length+' arquivados<br>'+
+    '• '+columns.length+' colunas · '+tags.length+' tags<br>'+
+    '• '+(qlItems.modelos?.length||0)+' modelos · '+(qlItems.recorrentes?.length||0)+' recorrentes<br>'+
+    '• '+(calEvents.length)+' eventos<br>• '+colSummary;
+  el.style.display='block';
+}
+
+function saveBackupConfig(){
+  const cfg={
+    email:    document.getElementById('backup-email')?.value||'',
+    service:  document.getElementById('emailjs-service')?.value||'',
+    template: document.getElementById('emailjs-template')?.value||'',
+    pubkey:   document.getElementById('emailjs-pubkey')?.value||'',
+  };
+  localStorage.setItem('backup_cfg_'+ACTIVE_SQUAD,JSON.stringify(cfg));
+  updateBackupAutoStatus();
+}
+
+function loadBackupCfg(){
+  const raw=localStorage.getItem('backup_cfg_'+ACTIVE_SQUAD);
+  return raw?JSON.parse(raw):{};
+}
+
+function loadBackupTab(){
+  const cfg=loadBackupCfg();
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+  set('backup-email',cfg.email); set('emailjs-service',cfg.service);
+  set('emailjs-template',cfg.template); set('emailjs-pubkey',cfg.pubkey);
+  updateBackupAutoStatus();
+  const lastEl=document.getElementById('backup-last');
+  const lastAuto=localStorage.getItem('backup_auto_last_'+ACTIVE_SQUAD);
+  if(lastEl&&lastAuto) lastEl.textContent='⏱ Último backup automático: '+new Date(lastAuto).toLocaleString('pt-BR');
+}
+
+function updateBackupAutoStatus(){
+  const el=document.getElementById('backup-auto-status'); if(!el) return;
+  const cfg=loadBackupCfg();
+  const ok=cfg.email&&cfg.service&&cfg.template&&cfg.pubkey;
+  el.textContent=ok?'✅ Configurado — envia todo domingo':'⚠ Preencha os campos para ativar';
+  el.style.color=ok?'var(--teal)':'var(--warn)';
+}
+
+async function sendBackupEmail(isTest=false){
+  const cfg=loadBackupCfg();
+  if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey){
+    showToast('⚠ Configure o email e o EmailJS na aba Backup primeiro.'); return false;
+  }
+  if(!window.emailjs){
+    await new Promise((res,rej)=>{
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+      s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    });
+    emailjs.init(cfg.pubkey);
+  }
+  const payload=buildBackupPayload();
+  const ativos=cards.filter(c=>!c.archived);
+  const summary=[
+    'Squad: '+ACTIVE_SQUAD,
+    'Cards ativos: '+ativos.length,
+    'Colunas: '+columns.map(c=>c.name+' ('+ativos.filter(x=>x.col===c.id).length+')').join(', '),
+    'Exportado em: '+new Date().toLocaleString('pt-BR'),
+  ].join('\n');
+  try{
+    await emailjs.send(cfg.service,cfg.template,{
+      to_email:cfg.email, squad:ACTIVE_SQUAD,
+      date:new Date().toLocaleDateString('pt-BR'),
+      summary:summary, is_test:isTest?'(TESTE)':'',
+    });
+    const now=new Date().toISOString();
+    localStorage.setItem('backup_auto_last_'+ACTIVE_SQUAD,now);
+    showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
+    const lastEl=document.getElementById('backup-last');
+    if(lastEl) lastEl.textContent='⏱ Último backup automático: '+new Date(now).toLocaleString('pt-BR');
+    return true;
+  } catch(e){
+    showToast('❌ Erro ao enviar email: '+(e?.text||e?.message||JSON.stringify(e)));
+    console.error('EmailJS error:',e); return false;
+  }
+}
+
+function testBackupEmail(){ sendBackupEmail(true); }
+
+function scheduleWeeklyBackup(){
+  function msUntilNextSunday(){
+    const now=new Date();
+    const daysUntilSun=now.getDay()===0?7:7-now.getDay();
+    const next=new Date(now);
+    next.setDate(now.getDate()+daysUntilSun);
+    next.setHours(0,5,0,0);
+    return next.getTime()-now.getTime();
+  }
+  function doWeeklyBackup(){
+    const cfg=loadBackupCfg();
+    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
+    const lastAuto=localStorage.getItem('backup_auto_last_'+ACTIVE_SQUAD);
+    if(lastAuto&&(Date.now()-new Date(lastAuto).getTime())/86400000<6) return;
+    sendBackupEmail(false);
+  }
+  const ms=msUntilNextSunday();
+  console.log('[Backup] Próximo backup automático em '+Math.round(ms/3600000)+'h');
+  setTimeout(()=>{ doWeeklyBackup(); setInterval(doWeeklyBackup,7*24*60*60*1000); },ms);
+}
+
+window.addEventListener('auth-change',e=>{
+  if(e.detail) setTimeout(scheduleWeeklyBackup,3000);
+},{once:true});
+
+// ── FIM BACKUP ────────────────────────────────────────────────────────────
 
 renderBoard();
 </script>
