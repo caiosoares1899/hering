@@ -812,21 +812,37 @@ function renderByDate(tipo) {
     (byDate[key] = byDate[key]||[]).push(m);
   });
 
-  // Ordena: hoje primeiro, depois crescente
+  // Um dia está "encerrado" se todos os jogos dele têm resultado
+  const isDayDone = (dateKey) =>
+    byDate[dateKey].every(m => !!allResults[m.id]);
+
+  // Ordena: hoje primeiro → futuros crescente → dias encerrados por último crescente
   const sorted = Object.keys(byDate).sort((a,b) => {
-    if (a===today) return -1; if (b===today) return 1;
-    return new Date(a)-new Date(b);
+    const aDone = isDayDone(a), bDone = isDayDone(b);
+    if (aDone && !bDone) return 1;   // encerrados vão pro fim
+    if (!aDone && bDone) return -1;
+    if (a===today) return -1;        // hoje sempre primeiro (entre os não-encerrados)
+    if (b===today) return 1;
+    return new Date(a)-new Date(b);  // cronológico
   });
 
   let html = "";
   sorted.forEach(dateKey => {
     const d = new Date(dateKey);
     const isToday = dateKey===today;
+    const dayDone = isDayDone(dateKey);
     const label = isToday
       ? "🟢 Hoje — " + d.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})
       : d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
-    html += `<div class="fase-header fase-group-gap"><span class="fase-label ${isToday?"fase-today":""}">${label}</span></div><div class="matches-grid">`;
-    byDate[dateKey].forEach(m => { html += buildMatchCard(m); });
+    const doneTag = dayDone ? `<span class="day-done-tag">✅ encerrado</span>` : "";
+    html += `<div class="fase-header fase-group-gap"><span class="fase-label ${isToday&&!dayDone?"fase-today":""}">${label}</span>${doneTag}</div><div class="matches-grid">`;
+    const dayMatches = [...byDate[dateKey]].sort((a,b) => {
+      const aDone = !!allResults[a.id], bDone = !!allResults[b.id];
+      if (aDone && !bDone) return 1;
+      if (!aDone && bDone) return -1;
+      return new Date(a.time) - new Date(b.time);
+    });
+    dayMatches.forEach(m => { html += buildMatchCard(m); });
     html += `</div>`;
   });
   c.innerHTML = html || `<p class="empty-state">Sem jogos.</p>`;
@@ -1261,6 +1277,7 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
 .sub-tab.active{background:rgba(37,99,201,.2);border-color:rgba(37,99,201,.5);color:var(--cyan);}
 .sub-tab:hover:not(.active){color:var(--white-70);border-color:var(--white-15);}
 .fase-today{color:#4ade80 !important;}
+.day-done-tag{font-size:.6rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--white-40);border:1px solid var(--white-15);border-radius:20px;padding:2px 8px;}
 /* Resultados salvos */
 .saved-result-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--white-05);font-size:.8rem;}
 .saved-result-row:last-child{border-bottom:none;}
@@ -1661,7 +1678,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v3.2 · resultado limpo + fix palpite por data</div>
+<div class="version">v3.3 · encerrados por último na view por data</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
