@@ -1940,7 +1940,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.1</div>
+<div class="version">v8.1.1</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2176,26 +2176,17 @@ function fbLoadAll(){
   fbListen(FB+'/columns',val=>{
     if(!val) return;
     // Aceita tanto array quanto objeto (Firebase converte arrays esparsas em objetos)
-    const incoming = Array.isArray(val) ? val : Object.values(val);
-    const cleaned = incoming.filter(Boolean);
+    const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
     if(!cleaned.length) return;
 
-    // Proteção contra regressão: se a lista atual tem colunas (por ids)
-    // que NÃO existem na lista recebida, e a lista recebida tem MENOS
-    // colunas, isso pode ser uma escrita antiga sobrescrevendo uma nova
-    // coluna criada por outro usuário. Mescla: mantém colunas extras
-    // que existiam localmente mas não vieram no update.
-    const currentIds = new Set(columns.map(c=>c.id));
+    // Merge: garante que colunas locais (ex: "Em Progresso") não sumam
+    // se o Firebase retornar uma lista parcial ou desatualizada.
     const incomingIds = new Set(cleaned.map(c=>c.id));
     const missingFromIncoming = columns.filter(c=>!incomingIds.has(c.id));
 
-    if(missingFromIncoming.length && cleaned.length < columns.length){
-      console.warn('[columns] Update recebido tem menos colunas que o estado local. '+
-        'Mantendo colunas extras: '+missingFromIncoming.map(c=>c.name).join(', '));
-      // Mantém ordem: usa o incoming como base e acrescenta as que faltam no final
+    if(missingFromIncoming.length){
+      // Mantém colunas locais que não vieram no update
       columns = [...cleaned, ...missingFromIncoming];
-      // Re-salva o merge para corrigir o Firebase
-      fbSet(FB+'/columns', columns);
     } else {
       columns = cleaned;
     }
@@ -6193,27 +6184,9 @@ function unlinkDependsOn(){
 }
 
 function openDependsOnCard(){
-  const card=cards.find(c=>c.id===editingId); if(!card?.parentId) return;
+  const card=cards.find(c=>c.id===editingId); if(!card?.dependsOn) return;
   closeOv('card-ov');
   openCard(card.dependsOn);
-}
-
-function renderDependsBar(card){
-  const bar=document.getElementById('m-depends-bar');
-  const link=document.getElementById('m-depends-link');
-  const lbl=document.getElementById('m-depends-lbl');
-  if(!bar||!link) return;
-  if(card?.parentId){
-    const parent=cards.find(c=>c.id===card.dependsOn);
-    if(parent){
-      bar.style.display='flex';
-      link.textContent=parent.title.substring(0,40)+(parent.title.length>40?'…':'');
-      if(lbl) lbl.textContent='Depende de';
-      return;
-    }
-  }
-  bar.style.display='none';
-  if(lbl) lbl.textContent='Dependência';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6407,7 +6380,6 @@ function renderDescPreview(){
 // MAPA DE DEPENDÊNCIAS
 // ═══════════════════════════════════════════════════════
 
-// Fix renderDependsBar: was checking card?.parentId instead of card?.dependsOn
 function renderDependsBar(card){
   const bar=document.getElementById('m-depends-bar');
   const link=document.getElementById('m-depends-link');
