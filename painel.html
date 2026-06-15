@@ -509,6 +509,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button class="btn" onclick="toggleMonitorSection()" id="btn-monitor" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🐛 Bugs</button>
       <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+      <button class="btn" onclick="openGlobalBackup()" title="Exportar backup de todos os squads" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾 Backup</button>
       <button class="btn" onclick="openBoardSetup()" title="Criar novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙ Novo board</button>
       <button class="btn" onclick="openGlobalUsersModal()" title="Gerenciar usuários" style="color:var(--accent);border-color:rgba(56,182,255,.35);">🗂 Usuários</button>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
@@ -2514,10 +2515,336 @@ function loadSquadData(sqId){
 
 // Fechar modal com Esc
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape') closeBoardSetup();
+  if(e.key==='Escape'){ closeBoardSetup(); closeGlobalBackup(); }
 });
 
+// ═══════════════════════════════════════════════════════
+// BACKUP GLOBAL — TODOS OS SQUADS
+// ═══════════════════════════════════════════════════════
+
+function openGlobalBackup(){
+  loadGlobalBackupCfg();
+  renderGlobalBackupStats();
+  const el = document.getElementById('global-backup-ov');
+  if(el){ el.style.display='flex'; }
+}
+
+function closeGlobalBackup(){
+  const el = document.getElementById('global-backup-ov');
+  if(el) el.style.display='none';
+}
+
+// Fecha ao clicar fora do modal
+document.getElementById('global-backup-ov')?.addEventListener('click', function(e){
+  if(e.target === this) closeGlobalBackup();
+});
+
+function buildGlobalPayload(){
+  const squadsPayload = {};
+  SQUADS.forEach(sq=>{
+    const d = squadData[sq.id]||{};
+    squadsPayload[sq.id] = {
+      meta: { id: sq.id, label: sq.label, icon: sq.icon, color: sq.color },
+      cards:    d.cards    || [],
+      columns:  d.columns  || [],
+      tags:     d.tags     || [],
+      agilCfg:  d.agilCfg  || {},
+      cal_events: d.cal_events || [],
+    };
+  });
+  return {
+    version:     '8.2.0',
+    source:      'painel',
+    exportedAt:  new Date().toISOString(),
+    exportedBy:  window._currentUser?.displayName || window._currentUser?.email || 'painel',
+    total_squads: SQUADS.length,
+    total_cards:  SQUADS.reduce((acc,sq)=>{
+      return acc + (squadData[sq.id]?.cards?.filter(c=>!c.archived)?.length||0);
+    }, 0),
+    squads: squadsPayload,
+  };
+}
+
+function exportAllSquadsJSON(){
+  const payload = buildGlobalPayload();
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().split('T')[0];
+  a.href     = url;
+  a.download = 'mare-digital-TODOS-' + date + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  localStorage.setItem('gb_last_manual', new Date().toISOString());
+  showToast('✅ Backup completo baixado: ' + a.download);
+  renderGlobalBackupStats();
+}
+
+function exportEachSquadJSON(){
+  const date = new Date().toISOString().split('T')[0];
+  SQUADS.forEach(sq=>{
+    const d = squadData[sq.id]||{};
+    const payload = {
+      version:    '8.2.0',
+      source:     'painel',
+      exportedAt: new Date().toISOString(),
+      squad:      sq.id,
+      cards:      d.cards    || [],
+      columns:    d.columns  || [],
+      tags:       d.tags     || [],
+      agilCfg:    d.agilCfg  || {},
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'mare-digital-' + sq.id + '-' + date + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  showToast('✅ ' + SQUADS.length + ' arquivos baixados (um por squad)');
+}
+
+function copyAllSquadsJSON(){
+  const json = JSON.stringify(buildGlobalPayload(), null, 2);
+  navigator.clipboard.writeText(json).then(()=>{
+    const btn = document.getElementById('btn-gb-copy');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado!';
+    setTimeout(()=>btn.textContent=orig, 2000);
+  }).catch(()=> showToast('❌ Erro ao copiar — use Baixar JSON'));
+}
+
+function renderGlobalBackupStats(){
+  const el = document.getElementById('gb-stats'); if(!el) return;
+  el.innerHTML = SQUADS.map(sq=>{
+    const d = squadData[sq.id]||{};
+    const ativos    = (d.cards||[]).filter(c=>!c.archived);
+    const bloqueios = ativos.filter(c=>c.col==='blocker').length;
+    const done      = ativos.filter(c=>c.col==='done').length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+      background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.1);border-radius:10px;">
+      <span style="font-size:18px;">${sq.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;color:#e8f4fd;">${sq.label}</div>
+        <div style="font-size:10px;color:rgba(150,200,240,.6);">
+          ${ativos.length} cards · ${done} concluídos · ${bloqueios>0?'<span style="color:#ff6b6b;">'+bloqueios+' bloqueios</span>':'0 bloqueios'}
+        </div>
+      </div>
+      <span style="font-size:10px;color:rgba(150,200,240,.4);">${(d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'sem sprint')}</span>
+    </div>`;
+  }).join('') + (()=>{
+    const lastManual = localStorage.getItem('gb_last_manual');
+    const lastAuto   = localStorage.getItem('gb_last_auto');
+    const total = SQUADS.reduce((a,sq)=>a+(squadData[sq.id]?.cards?.filter(c=>!c.archived)?.length||0),0);
+    return `<div style="font-size:11px;color:rgba(150,200,240,.5);padding:4px 0;">
+      Total: <strong style="color:rgba(200,230,255,.7);">${total} cards ativos</strong> em ${SQUADS.length} squads
+      ${lastManual?' · Último manual: '+new Date(lastManual).toLocaleDateString('pt-BR'):''}
+      ${lastAuto?' · Último auto: '+new Date(lastAuto).toLocaleDateString('pt-BR'):''}
+    </div>`;
+  })();
+}
+
+// ── Config EmailJS global ─────────────────────────────────────────────────
+function saveGlobalBackupCfg(){
+  const cfg = {
+    email:    document.getElementById('gb-email')?.value    ||'',
+    service:  document.getElementById('gb-service')?.value  ||'',
+    template: document.getElementById('gb-template')?.value ||'',
+    pubkey:   document.getElementById('gb-pubkey')?.value   ||'',
+  };
+  localStorage.setItem('gb_backup_cfg', JSON.stringify(cfg));
+  updateGlobalBackupStatus();
+}
+
+function loadGlobalBackupCfg(){
+  const raw = localStorage.getItem('gb_backup_cfg');
+  const cfg = raw ? JSON.parse(raw) : {};
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+  set('gb-email',    cfg.email);
+  set('gb-service',  cfg.service);
+  set('gb-template', cfg.template);
+  set('gb-pubkey',   cfg.pubkey);
+  updateGlobalBackupStatus();
+  const lastEl = document.getElementById('gb-last-backup');
+  const lastAuto = localStorage.getItem('gb_last_auto');
+  if(lastEl && lastAuto)
+    lastEl.textContent = '⏱ Último automático: '+new Date(lastAuto).toLocaleString('pt-BR');
+}
+
+function updateGlobalBackupStatus(){
+  const el = document.getElementById('gb-auto-status'); if(!el) return;
+  const raw = localStorage.getItem('gb_backup_cfg');
+  const cfg = raw ? JSON.parse(raw) : {};
+  const ok  = cfg.email && cfg.service && cfg.template && cfg.pubkey;
+  el.textContent = ok ? '✅ Configurado — envia todo domingo' : '⚠ Preencha os campos para ativar';
+  el.style.color = ok ? '#1de9b6' : '#ffd166';
+}
+
+async function sendGlobalBackupEmail(isTest=false){
+  const raw = localStorage.getItem('gb_backup_cfg');
+  const cfg = raw ? JSON.parse(raw) : {};
+  if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey){
+    showToast('⚠ Configure email e EmailJS no modal de Backup');
+    return false;
+  }
+  // Carrega EmailJS SDK se necessário
+  if(!window.emailjs){
+    await new Promise((res,rej)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    emailjs.init(cfg.pubkey);
+  }
+  const payload = buildGlobalPayload();
+  const summary = SQUADS.map(sq=>{
+    const d = squadData[sq.id]||{};
+    const ativos = (d.cards||[]).filter(c=>!c.archived);
+    return sq.icon+' '+sq.label+': '+ativos.length+' cards ativos';
+  }).join('\n');
+
+  try{
+    await emailjs.send(cfg.service, cfg.template, {
+      to_email:     cfg.email,
+      date:         new Date().toLocaleDateString('pt-BR'),
+      total_cards:  String(payload.total_cards),
+      total_squads: String(payload.total_squads),
+      summary:      summary,
+      is_test:      isTest ? '(TESTE)' : '',
+    });
+    const now = new Date().toISOString();
+    localStorage.setItem('gb_last_auto', now);
+    showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
+    const lastEl = document.getElementById('gb-last-backup');
+    if(lastEl) lastEl.textContent = '⏱ Último automático: '+new Date(now).toLocaleString('pt-BR');
+    return true;
+  } catch(e){
+    showToast('❌ Erro ao enviar: '+(e?.text||e?.message||JSON.stringify(e)));
+    console.error('EmailJS global backup error:', e);
+    return false;
+  }
+}
+
+function testGlobalBackupEmail(){ sendGlobalBackupEmail(true); }
+
+// ── Agendador semanal (domingo 00:05) ────────────────────────────────────
+(function scheduleGlobalWeeklyBackup(){
+  function msUntilNextSunday(){
+    const now = new Date();
+    const daysUntilSun = now.getDay() === 0 ? 7 : 7 - now.getDay();
+    const next = new Date(now);
+    next.setDate(now.getDate() + daysUntilSun);
+    next.setHours(0, 5, 0, 0);
+    return next.getTime() - now.getTime();
+  }
+
+  function doWeekly(){
+    const raw = localStorage.getItem('gb_backup_cfg');
+    const cfg = raw ? JSON.parse(raw) : {};
+    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
+    const lastAuto = localStorage.getItem('gb_last_auto');
+    if(lastAuto){
+      const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
+      if(daysSince < 6) return;
+    }
+    sendGlobalBackupEmail(false);
+  }
+
+  const ms = msUntilNextSunday();
+  console.log('[Backup Global] Próximo envio automático em ' + Math.round(ms/3600000) + 'h');
+  setTimeout(()=>{
+    doWeekly();
+    setInterval(doWeekly, 7 * 24 * 60 * 60 * 1000);
+  }, ms);
+})();
+
+// ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
+
 </script>
+
+<!-- BACKUP GLOBAL MODAL -->
+<div id="global-backup-ov" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.18);border-radius:16px;width:min(580px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:14px 18px;border-bottom:1px solid rgba(56,182,255,.1);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;">💾 Backup Global — Todos os Squads</div>
+      <button onclick="closeGlobalBackup()" style="background:none;border:none;color:rgba(200,230,255,.5);cursor:pointer;font-size:18px;line-height:1;">✕</button>
+    </div>
+    <div style="padding:16px 18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Resumo por squad -->
+      <div id="gb-stats" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <!-- Botões de export -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="exportAllSquadsJSON()" class="btn" style="background:rgba(29,233,182,.15);border-color:rgba(29,233,182,.35);color:#1de9b6;font-weight:700;">
+          ⬇ Baixar JSON completo
+        </button>
+        <button onclick="exportEachSquadJSON()" class="btn" style="border-color:rgba(56,182,255,.3);color:var(--accent);">
+          ⬇ Baixar um arquivo por squad
+        </button>
+        <button onclick="copyAllSquadsJSON()" class="btn" id="btn-gb-copy">
+          📋 Copiar JSON
+        </button>
+      </div>
+
+      <div style="height:1px;background:rgba(56,182,255,.1);"></div>
+
+      <!-- Email automático -->
+      <div>
+        <div style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">📧 Backup automático semanal por email</div>
+        <p style="font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:10px;">
+          Todo domingo à meia-noite envia um backup consolidado de <strong>todos os squads</strong> pro email configurado abaixo via EmailJS (gratuito).
+        </p>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Email destinatário</label>
+            <input id="gb-email" type="email" placeholder="caio.soares@ciahering.com.br"
+              style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+              oninput="saveGlobalBackupCfg()">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">EmailJS Service ID</label>
+              <input id="gb-service" placeholder="service_xxxxxxx"
+                style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+                oninput="saveGlobalBackupCfg()">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Template ID</label>
+              <input id="gb-template" placeholder="template_xxxxxxx"
+                style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+                oninput="saveGlobalBackupCfg()">
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Public Key</label>
+            <input id="gb-pubkey" placeholder="xxxxxxxxxxxxxxx"
+              style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+              oninput="saveGlobalBackupCfg()">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button onclick="testGlobalBackupEmail()" class="btn" style="background:rgba(37,99,201,.6);border-color:rgba(37,99,201,.8);color:#fff;font-weight:700;">
+            📤 Testar envio agora
+          </button>
+          <span id="gb-auto-status" style="font-size:11px;color:rgba(150,200,240,.4);"></span>
+        </div>
+        <div id="gb-last-backup" style="font-size:10px;color:rgba(150,200,240,.35);margin-top:6px;"></div>
+      </div>
+
+      <div style="background:rgba(37,99,201,.08);border:1px solid rgba(37,99,201,.2);border-radius:8px;padding:10px;font-size:10px;color:#7eb3ff;line-height:1.8;">
+        <strong>Template EmailJS sugerido — variáveis disponíveis:</strong><br>
+        <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{date}}</code>
+        <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{total_cards}}</code>
+        <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{total_squads}}</code>
+        <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">{{summary}}</code>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- BOARD SETUP MODAL -->
 <div id="board-setup-ov">
