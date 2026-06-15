@@ -7379,7 +7379,49 @@ async function runDevSeed(){
   btn.disabled=true; btn.textContent='⏳ Populando...';
   const now=new Date().toISOString();
   const today=now.split('T')[0];
+  const d = (days) => new Date(Date.now()+days*86400000).toISOString().split('T')[0];
 
+  // ── USUÁRIOS FICTÍCIOS ────────────────────────────────────────────────
+  const usuarios = {
+    'uid-test-001': {
+      nome: 'Ana Beatriz Costa', email: 'ana.costa@ciahering.com.br',
+      init: 'ABC', foto: '', role: 'po',
+      inscrito: true, inscritoEm: now,
+      squads: { dev: true }, squads_roles: { dev: 'po' },
+    },
+    'uid-test-002': {
+      nome: 'Rafael Mendes', email: 'rafael.mendes@ciahering.com.br',
+      init: 'RM', foto: '', role: 'membro',
+      inscrito: true, inscritoEm: now,
+      squads: { dev: true }, squads_roles: { dev: 'organizador' },
+    },
+    'uid-test-003': {
+      nome: 'Juliana Ferreira', email: 'juliana.ferreira@ciahering.com.br',
+      init: 'JF', foto: '', role: 'membro',
+      inscrito: true, inscritoEm: now,
+      squads: { dev: true }, squads_roles: { dev: 'membro' },
+    },
+    'uid-test-004': {
+      nome: 'Lucas Oliveira', email: 'lucas.oliveira@ciahering.com.br',
+      init: 'LO', foto: '', role: 'membro',
+      inscrito: true, inscritoEm: now,
+      squads: { dev: true }, squads_roles: { dev: 'membro' },
+    },
+    'uid-test-005': {
+      nome: 'Mariana Santos', email: 'mariana.santos@ciahering.com.br',
+      init: 'MS', foto: '', role: 'membro',
+      inscrito: true, inscritoEm: now,
+      squads: { dev: true }, squads_roles: { dev: 'membro' },
+    },
+    'uid-test-006': {
+      nome: 'Pedro Alves', email: 'pedro.alves@ciahering.com.br',
+      init: 'PA', foto: '', role: 'convidado',
+      inscrito: true, inscritoEm: now,
+      squads: { dev: true }, squads_roles: { dev: 'convidado' },
+    },
+  };
+
+  // ── COLUNAS ────────────────────────────────────────────────────────────
   const seedColumns=[
     {id:'backlog',  name:'Backlog',      color:'#888888',collapsible:true},
     {id:'todo',     name:'A Fazer',      color:'#38b6ff',collapsible:false},
@@ -7388,140 +7430,375 @@ async function runDevSeed(){
     {id:'done',     name:'Concluído',    color:'#639922',collapsible:true},
   ];
 
+  // ── TAGS ───────────────────────────────────────────────────────────────
   const seedTags=[
     {id:'data',label:'Data',pi:0},{id:'ml',label:'ML',pi:4},
     {id:'feat',label:'Feature',pi:1},{id:'infra',label:'Infra',pi:2},{id:'bug',label:'Bloqueio',pi:3},
   ];
 
+  // ── CARDS COMPLETOS ───────────────────────────────────────────────────
   const seedCards=[
-    // BACKLOG
-    {id:'dev-001',col:'backlog',title:'[TESTE] Card simples — arraste entre colunas',
-     desc:'Card básico para testar drag-and-drop. Arraste para "A Fazer" para começar.',
-     tags:['feat'],priority:'medium',owner:'',effort:2,okr:false,
-     checklist:[],risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-002',col:'backlog',title:'[TESTE] Card com todas as tags',
-     desc:'Testa visualização de múltiplas tags. Deve mostrar Data, ML, Feature, Infra e Bloqueio.',
-     tags:['data','ml','feat','infra','bug'],priority:'low',owner:'',effort:5,okr:false,
-     checklist:[],risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-003',col:'backlog',title:'[TESTE] Card OKR 🎯',
-     desc:'Card marcado como OKR. Deve aparecer o ícone 🎯 no card.',
-     tags:['feat'],priority:'high',owner:'',effort:8,okr:true,
-     checklist:[],risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    // A FAZER
-    {id:'dev-004',col:'todo',title:'[TESTE] Checklist — marque e desmarque itens',
-     desc:'Abra o card e interaja com o checklist. Adicione novos itens pelo campo no rodapé.',
-     tags:['feat'],priority:'medium',owner:'',effort:3,okr:false,
-     checklist:[
-       {id:'c1',text:'Marcar este item ✓',done:false},
-       {id:'c2',text:'Este já está marcado',done:true},
-       {id:'c3',text:'Adicionar novo item pelo campo abaixo',done:false},
-       {id:'c4',text:'Reordenar itens arrastando',done:false},
-     ],risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-005',col:'todo',title:'[TESTE] Riscos cadastrados',
-     desc:'Abra o card e veja os riscos. Adicione, edite ou remova riscos.',
-     tags:['infra'],priority:'high',owner:'',effort:5,okr:false,
-     checklist:[],
-     risks:[
-       {id:'r1',text:'Dependência externa sem prazo definido',level:'alto'},
-       {id:'r2',text:'Ambiente de homologação instável',level:'medio'},
-       {id:'r3',text:'Documentação desatualizada',level:'baixo'},
-     ],
-     links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-006',col:'todo',title:'[TESTE] Links anexados ao card',
-     desc:'Abra o card e veja a seção de links. Adicione e remova links.',
-     tags:['feat'],priority:'low',owner:'',effort:2,okr:false,
-     checklist:[],risks:[],
-     links:[
-       {url:'https://caiosoares1899.github.io/hering/',label:'GitHub Pages — Maré Digital'},
-       {url:'https://firebase.google.com',label:'Firebase Console'},
-       {url:'https://emailjs.com',label:'EmailJS Dashboard'},
-     ],
-     dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-007',col:'todo',title:'[TESTE] Dependência — card PAI',
-     desc:'Este card é pai do card "dev-008". Veja o mapa de dependências.',
-     tags:['data'],priority:'medium',owner:'',effort:3,okr:false,
-     checklist:[],risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-008',col:'todo',title:'[TESTE] Dependência — card FILHO (depende de dev-007)',
-     desc:'Este card depende de "dev-007". Ao abrir, veja a barra de dependência no topo.',
-     tags:['data'],priority:'medium',owner:'',effort:3,okr:false,
-     checklist:[],risks:[],links:[],dependsOn:'dev-007',archived:false,createdAt:now,updatedAt:now},
-    // EM PROGRESSO
-    {id:'dev-009',col:'progress',title:'[TESTE] Card completo — OKR + checklist + risco',
-     desc:'Card com múltiplas funcionalidades ativas ao mesmo tempo.',
-     tags:['feat','ml'],priority:'critical',owner:'',effort:8,okr:true,
-     checklist:[
-       {id:'c5',text:'Análise de requisitos',done:true},
-       {id:'c6',text:'Desenvolvimento',done:false},
-       {id:'c7',text:'Testes',done:false},
-       {id:'c8',text:'Deploy',done:false},
-     ],
-     risks:[{id:'r4',text:'Prazo apertado',level:'alto'}],
-     links:[{url:'https://caiosoares1899.github.io/hering/kanban.html',label:'Board Produção'}],
-     dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-010',col:'progress',title:'[TESTE] Modo Raia — clique em Raia na barra',
-     desc:'Ative o Raia (botão no topo) para ver os cards agrupados por dono ou por tag.',
-     tags:['infra'],priority:'low',owner:'',effort:5,okr:false,
-     checklist:[],risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    // IMPEDIMENTOS
-    {id:'dev-011',col:'blocker',title:'[TESTE] Impedimento — deve aparecer no painel',
-     desc:'Card na coluna Impedimentos. Aparece como bloqueio ativo no painel gerencial.',
-     tags:['bug'],priority:'critical',owner:'',effort:1,okr:false,
-     checklist:[],
-     risks:[{id:'r5',text:'Acesso ao banco de dados negado',level:'alto'}],
-     links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    // CONCLUÍDO
-    {id:'dev-012',col:'done',title:'[TESTE] Card concluído — teste arquivar',
-     desc:'Abra este card e clique em Arquivar para testá-lo. Depois veja em "Arquivados" na barra.',
-     tags:['feat'],priority:'medium',owner:'',effort:3,okr:false,
-     checklist:[{id:'c9',text:'Tudo feito!',done:true}],
-     risks:[],links:[],dependsOn:null,archived:false,createdAt:now,updatedAt:now},
-    {id:'dev-013',col:'done',title:'[TESTE] Card arquivado — veja em Arquivados',
-     desc:'Este card já está arquivado. Clique em "Arquivados" na barra de navegação para vê-lo.',
-     tags:['infra'],priority:'low',owner:'',effort:2,okr:false,
-     checklist:[],risks:[],links:[],dependsOn:null,archived:true,createdAt:now,updatedAt:now},
+
+    // BACKLOG ─────────────────────────────────────────────────────────────
+    {
+      id:'dev-001', col:'backlog', title:'Mapear jornada do usuário no app de vendas',
+      desc:'Levantar todos os pontos de contato do vendedor com o sistema, desde o login até o fechamento do pedido. Incluir pontos de fricção identificados nas entrevistas.',
+      po:'Objetivo: reduzir o tempo médio de fechamento de pedido em 30%.\nCritério de aceite: mapa validado com pelo menos 3 vendedores de campo.',
+      tags:['feat','data'], priority:'medium', owner:'ABC', effort:5, isOKR:false,
+      due: d(10),
+      checklist:[
+        {id:'c01',text:'Entrevistar 3 vendedores',done:false},
+        {id:'c02',text:'Mapear fluxo atual (as-is)',done:false},
+        {id:'c03',text:'Identificar pontos de fricção',done:false},
+        {id:'c04',text:'Validar mapa com stakeholders',done:false},
+      ],
+      riscos:[
+        {id:'r01',text:'Dificuldade de agenda com vendedores de campo',level:'medio'},
+      ],
+      links:[],
+      dependsOn:null, dependents:['dev-003'],
+      comments:{},
+      archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-002', col:'backlog', title:'Revisar guia de identidade visual',
+      desc:'Atualizar o guia com as novas diretrizes de cor e tipografia aprovadas pela diretoria em março.',
+      po:'Critério de aceite: guia publicado na intranet e comunicado para todos os times.',
+      tags:['feat'], priority:'low', owner:'MS', effort:3, isOKR:false,
+      due: d(20),
+      checklist:[
+        {id:'c05',text:'Coletar feedbacks do time de criação',done:false},
+        {id:'c06',text:'Atualizar paleta de cores',done:false},
+        {id:'c07',text:'Atualizar tipografia',done:false},
+        {id:'c08',text:'Publicar na intranet',done:false},
+      ],
+      riscos:[],
+      links:[{url:'https://www.figma.com',label:'Figma — Protótipos'}],
+      dependsOn:null, dependents:[],
+      comments:{},
+      archived:false, createdAt:now, updatedAt:now,
+    },
+
+    // A FAZER ─────────────────────────────────────────────────────────────
+    {
+      id:'dev-003', col:'todo', title:'Criar dashboard de performance por canal 🎯',
+      desc:'Desenvolver painel consolidado com métricas de venda por canal (loja física, e-commerce, marketplace). Dados devem ser atualizados diariamente via pipeline do Databricks.',
+      po:'Objetivo: dar visibilidade ao time comercial das metas por canal em tempo real.\nCritério de aceite: dashboard com atualização D-1, filtros por período e canal, acessível para gerentes e diretores.',
+      tags:['data','ml'], priority:'critical', owner:'RM', effort:8, isOKR:true,
+      due: d(5),
+      checklist:[
+        {id:'c09',text:'Definir métricas com time comercial',done:true},
+        {id:'c10',text:'Modelar tabelas no Databricks',done:true},
+        {id:'c11',text:'Desenvolver visualizações',done:false},
+        {id:'c12',text:'Validar com gerentes',done:false},
+        {id:'c13',text:'Deploy em produção',done:false},
+      ],
+      riscos:[
+        {id:'r02',text:'Pipeline do Databricks com latência alta',level:'alto'},
+        {id:'r03',text:'Acesso restrito a dados de marketplace',level:'medio'},
+      ],
+      links:[
+        {url:'https://databricks.com',label:'Databricks Workspace'},
+        {url:'https://lookerstudio.google.com',label:'Looker Studio'},
+      ],
+      dependsOn:'dev-001', dependents:[],
+      comments:{
+        'cmt-001':{
+          id:'cmt-001', author:'ABC', authorInit:'ABC',
+          text:'Priorizei esse card para o sprint atual. Precisamos apresentar na reunião gerencial da sexta.',
+          ts: new Date(Date.now()-2*3600000).toISOString(),
+        },
+        'cmt-002':{
+          id:'cmt-002', author:'RM', authorInit:'RM',
+          text:'@ABC entendido! Já estou modelando as tabelas. Vou precisar de acesso ao schema de marketplace — pode liberar?',
+          ts: new Date(Date.now()-1*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-004', col:'todo', title:'Migrar scripts de ETL para novo ambiente',
+      desc:'Mover os 12 scripts de extração e transformação do servidor legado para o novo cluster. Garantir que todos os testes passem antes de desligar o ambiente antigo.',
+      po:'',
+      tags:['infra','data'], priority:'high', owner:'JF', effort:8, isOKR:false,
+      due: d(7),
+      checklist:[
+        {id:'c14',text:'Inventariar todos os scripts',done:true},
+        {id:'c15',text:'Configurar ambiente novo',done:true},
+        {id:'c16',text:'Migrar scripts (lote 1)',done:false},
+        {id:'c17',text:'Migrar scripts (lote 2)',done:false},
+        {id:'c18',text:'Rodar testes de regressão',done:false},
+        {id:'c19',text:'Desligar servidor legado',done:false},
+      ],
+      riscos:[
+        {id:'r04',text:'Scripts com dependências não documentadas',level:'alto'},
+        {id:'r05',text:'Janela de manutenção muito curta',level:'medio'},
+      ],
+      links:[],
+      dependsOn:null, dependents:['dev-007'],
+      comments:{
+        'cmt-003':{
+          id:'cmt-003', author:'JF', authorInit:'JF',
+          text:'Encontrei 3 scripts com dependências circulares. Vou precisar de mais 2 dias para resolver antes de migrar.',
+          ts: new Date(Date.now()-5*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-005', col:'todo', title:'Implementar autenticação SSO com Google Workspace',
+      desc:'Integrar o login do sistema com o Google Workspace da empresa, eliminando a necessidade de senha separada para os colaboradores.',
+      po:'Critério de aceite: todos os usuários @ciahering.com.br conseguem logar com conta Google sem senha adicional.',
+      tags:['feat','infra'], priority:'high', owner:'LO', effort:5, isOKR:false,
+      due: d(14),
+      checklist:[
+        {id:'c20',text:'Configurar OAuth no Google Cloud Console',done:false},
+        {id:'c21',text:'Implementar fluxo de autenticação',done:false},
+        {id:'c22',text:'Testar com usuários piloto',done:false},
+        {id:'c23',text:'Rollout para todos os usuários',done:false},
+      ],
+      riscos:[
+        {id:'r06',text:'Usuários externos sem conta Google Workspace',level:'medio'},
+      ],
+      links:[{url:'https://console.cloud.google.com',label:'Google Cloud Console'}],
+      dependsOn:null, dependents:[],
+      comments:{},
+      archived:false, createdAt:now, updatedAt:now,
+    },
+
+    // EM PROGRESSO ────────────────────────────────────────────────────────
+    {
+      id:'dev-006', col:'progress', title:'Construir modelo preditivo de churn 🎯',
+      desc:'Desenvolver modelo de ML para prever quais clientes têm maior probabilidade de abandono nos próximos 30 dias, usando histórico de compras, comportamento de navegação e dados de atendimento.',
+      po:'Objetivo: reduzir churn em 15% no próximo trimestre com ações proativas.\nCritério de aceite: modelo com AUC-ROC > 0.80, pipeline de predição rodando semanalmente, alertas automáticos para o time de CRM.',
+      tags:['ml','data'], priority:'critical', owner:'JF', effort:13, isOKR:true,
+      due: d(3),
+      checklist:[
+        {id:'c24',text:'Levantamento e limpeza dos dados',done:true},
+        {id:'c25',text:'Feature engineering',done:true},
+        {id:'c26',text:'Treinar modelo baseline (regressão logística)',done:true},
+        {id:'c27',text:'Treinar modelo final (XGBoost)',done:false},
+        {id:'c28',text:'Validação com time de CRM',done:false},
+        {id:'c29',text:'Deploy do pipeline de predição',done:false},
+        {id:'c30',text:'Monitoramento em produção',done:false},
+      ],
+      riscos:[
+        {id:'r07',text:'Dados de atendimento inconsistentes nos últimos 6 meses',level:'alto'},
+        {id:'r08',text:'Infraestrutura de serving sem SLA definido',level:'medio'},
+        {id:'r09',text:'Possível viés no modelo por sazonalidade',level:'baixo'},
+      ],
+      links:[
+        {url:'https://mlflow.org',label:'MLflow — Tracking de experimentos'},
+        {url:'https://databricks.com',label:'Databricks — Feature Store'},
+      ],
+      dependsOn:null, dependents:[],
+      comments:{
+        'cmt-004':{
+          id:'cmt-004', author:'JF', authorInit:'JF',
+          text:'Baseline com 0.74 AUC. Partindo para o XGBoost com feature selection. Estimativa: até quinta estamos com o modelo final.',
+          ts: new Date(Date.now()-24*3600000).toISOString(),
+        },
+        'cmt-005':{
+          id:'cmt-005', author:'ABC', authorInit:'ABC',
+          text:'Ótimo progresso! @JF lembra de documentar as features mais importantes para o time de CRM entender as predições.',
+          ts: new Date(Date.now()-20*3600000).toISOString(),
+        },
+        'cmt-006':{
+          id:'cmt-006', author:'JF', authorInit:'JF',
+          text:'Anotado! Já estou preparando o notebook de explicabilidade com SHAP values.',
+          ts: new Date(Date.now()-18*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-007', col:'progress', title:'Automatizar relatório semanal de vendas',
+      desc:'Substituir o processo manual de coleta e formatação do relatório semanal por um pipeline automatizado que gera e envia o PDF por email toda segunda-feira às 7h.',
+      po:'',
+      tags:['data','infra'], priority:'medium', owner:'LO', effort:5, isOKR:false,
+      due: d(4),
+      checklist:[
+        {id:'c31',text:'Mapear fonte de dados atual',done:true},
+        {id:'c32',text:'Construir query consolidada',done:true},
+        {id:'c33',text:'Criar template do relatório em PDF',done:false},
+        {id:'c34',text:'Configurar scheduler',done:false},
+        {id:'c35',text:'Testar envio de email',done:false},
+      ],
+      riscos:[{id:'r10',text:'Dependência do ambiente novo de ETL (dev-004)',level:'alto'}],
+      links:[],
+      dependsOn:'dev-004', dependents:[],
+      comments:{
+        'cmt-007':{
+          id:'cmt-007', author:'LO', authorInit:'LO',
+          text:'Bloqueado parcialmente aguardando a migração do ETL (dev-004). Avançando no template do PDF enquanto isso.',
+          ts: new Date(Date.now()-3*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+
+    // IMPEDIMENTOS ────────────────────────────────────────────────────────
+    {
+      id:'dev-008', col:'blocker', title:'Acesso ao banco de produção bloqueado pelo TI',
+      desc:'O time de TI revogou o acesso ao banco de dados de produção sem aviso prévio, impedindo a execução dos scripts de ETL e a atualização dos dashboards.',
+      po:'',
+      tags:['bug','infra'], priority:'critical', owner:'RM', effort:1, isOKR:false,
+      due: today,
+      checklist:[
+        {id:'c36',text:'Abrir chamado no ServiceDesk',done:true},
+        {id:'c37',text:'Escalar para gestor do TI',done:false},
+        {id:'c38',text:'Restaurar acessos',done:false},
+      ],
+      riscos:[
+        {id:'r11',text:'Impacto direto no dashboard de performance (dev-003)',level:'alto'},
+        {id:'r12',text:'SLA de atendimento do TI é 48h',level:'alto'},
+      ],
+      links:[],
+      dependsOn:null, dependents:[],
+      comments:{
+        'cmt-008':{
+          id:'cmt-008', author:'RM', authorInit:'RM',
+          text:'Chamado #45821 aberto. TI informou que foi uma revogação automática por inatividade. Aguardando liberação.',
+          ts: new Date(Date.now()-6*3600000).toISOString(),
+        },
+        'cmt-009':{
+          id:'cmt-009', author:'ABC', authorInit:'ABC',
+          text:'Escalei para o Rafael Passos. Prazo máximo para resolução: amanhã às 12h.',
+          ts: new Date(Date.now()-4*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+
+    // CONCLUÍDO ───────────────────────────────────────────────────────────
+    {
+      id:'dev-009', col:'done', title:'Configurar ambiente de staging',
+      desc:'Provisionar ambiente de staging isolado com cópia anonimizada dos dados de produção para testes de integração.',
+      po:'',
+      tags:['infra'], priority:'high', owner:'PA', effort:5, isOKR:false,
+      due: d(-5),
+      checklist:[
+        {id:'c39',text:'Provisionar servidor',done:true},
+        {id:'c40',text:'Configurar banco de dados',done:true},
+        {id:'c41',text:'Anonimizar dados',done:true},
+        {id:'c42',text:'Documentar acesso',done:true},
+      ],
+      riscos:[],
+      links:[],
+      dependsOn:null, dependents:[],
+      comments:{
+        'cmt-010':{
+          id:'cmt-010', author:'PA', authorInit:'PA',
+          text:'Ambiente configurado e documentado. Credenciais enviadas para o time via LastPass.',
+          ts: new Date(Date.now()-48*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-010', col:'done', title:'Onboarding do time no Maré Digital 🎯',
+      desc:'Apresentar o board para todos os membros do time, explicar fluxo de trabalho, cerimônias ágeis e boas práticas de uso.',
+      po:'Objetivo: 100% do time operando no board até o final do sprint.\nCritério de aceite: todos os membros logados, cards criados e fluxo de daily funcionando.',
+      tags:['feat'], priority:'medium', owner:'ABC', effort:3, isOKR:true,
+      due: d(-2),
+      checklist:[
+        {id:'c43',text:'Preparar material de apresentação',done:true},
+        {id:'c44',text:'Realizar sessão de onboarding',done:true},
+        {id:'c45',text:'Tirar dúvidas individuais',done:true},
+        {id:'c46',text:'Confirmar login de todos',done:true},
+      ],
+      riscos:[],
+      links:[],
+      dependsOn:null, dependents:[],
+      comments:{
+        'cmt-011':{
+          id:'cmt-011', author:'MS', authorInit:'MS',
+          text:'Adorei o board! Muito mais visual que o Trello que usávamos antes.',
+          ts: new Date(Date.now()-72*3600000).toISOString(),
+        },
+        'cmt-012':{
+          id:'cmt-012', author:'ABC', authorInit:'ABC',
+          text:'Fico feliz! Qualquer dúvida podem me chamar.',
+          ts: new Date(Date.now()-70*3600000).toISOString(),
+        },
+      },
+      archived:false, createdAt:now, updatedAt:now,
+    },
+    // ARQUIVADO
+    {
+      id:'dev-011', col:'done', title:'[ARQUIVADO] Levantamento inicial de requisitos',
+      desc:'Card de exemplo arquivado. Veja em "Arquivados" na barra de navegação.',
+      po:'', tags:['feat'], priority:'low', owner:'RM', effort:2, isOKR:false,
+      due: d(-10),
+      checklist:[{id:'c47',text:'Concluído',done:true}],
+      riscos:[], links:[],
+      dependsOn:null, dependents:[],
+      comments:{},
+      archived:true, createdAt:now, updatedAt:now,
+    },
   ];
 
+  // ── CONFIG DE SPRINT ──────────────────────────────────────────────────
   const seedAgilCfg={
-    sprintNum:'42', sprintDays:'14', sprintStart:today,
-    sprintEnd:new Date(Date.now()+13*86400000).toISOString().split('T')[0],
-    goal:'Validar todas as funcionalidades do board com o time antes do deploy em produção',
+    sprintNum:'12', sprintDays:'14', sprintStart:today,
+    sprintEnd:d(13),
+    goal:'Entregar dashboard de performance e modelo preditivo de churn com pipeline automatizado',
     wip:'3', capacity:'80', blockerMode:'col',
   };
 
+  // ── QUICK LISTS ───────────────────────────────────────────────────────
   const seedQlItems={
     recorrentes:[
-      {title:'Daily standup',tag:'feat'},
-      {title:'Review de sprint',tag:'data'},
-      {title:'Retrospectiva',tag:'ml'},
+      {title:'Daily standup — 15min às 9h',tag:'feat'},
+      {title:'Review de sprint — sexta às 14h',tag:'data'},
+      {title:'Retrospectiva — sexta às 15h',tag:'ml'},
+      {title:'Refinamento — quarta às 10h',tag:'feat'},
     ],
     modelos:[
       {title:'[MODELO] Bug Report',tag:'bug'},
-      {title:'[MODELO] Feature Request',tag:'feat'},
-      {title:'[MODELO] Análise de dados',tag:'data'},
+      {title:'[MODELO] Feature Request — com critério de aceite',tag:'feat'},
+      {title:'[MODELO] Análise exploratória de dados',tag:'data'},
+      {title:'[MODELO] Débito técnico',tag:'infra'},
     ],
   };
 
+  // ── LINKS ─────────────────────────────────────────────────────────────
   const seedLinks=[
     {url:'https://caiosoares1899.github.io/hering/kanban.html?squad=dados',label:'Board Dados (prod)'},
     {url:'https://caiosoares1899.github.io/hering/painel.html',label:'Painel gerencial'},
     {url:'https://console.firebase.google.com',label:'Firebase Console'},
+    {url:'https://databricks.com',label:'Databricks Workspace'},
   ];
 
+  // ── EVENTOS DE CALENDÁRIO ─────────────────────────────────────────────
   const seedCalEvents=[
-    {id:'ev-001',title:'Sprint Planning — Dev Sandbox',date:today,
-     color:'blue',squad:'dev',desc:'Planejamento do sprint de testes'},
-    {id:'ev-002',title:'Demo do board para o time',
-     date:new Date(Date.now()+3*86400000).toISOString().split('T')[0],
-     color:'teal',squad:'dev',desc:'Apresentar as funcionalidades novas'},
+    {id:'ev-001',title:'Daily Standup',date:today,color:'blue',squad:'dev',desc:'Standup diário do time — 15min'},
+    {id:'ev-002',title:'Sprint Review',date:d(13),color:'teal',squad:'dev',desc:'Apresentação das entregas do sprint'},
+    {id:'ev-003',title:'Retrospectiva',date:d(13),color:'warn',squad:'dev',desc:'Retrospectiva do sprint'},
+    {id:'ev-004',title:'Refinamento',date:d(2),color:'blue',squad:'dev',desc:'Refinamento do backlog'},
+    {id:'ev-005',title:'Demo — Modelo de Churn',date:d(4),color:'teal',squad:'dev',desc:'Apresentação do modelo preditivo para stakeholders'},
   ];
 
+  // ── REGRAS DE AUTOMAÇÃO ───────────────────────────────────────────────
   const seedAutoRules=[
-    {id:'rule-001',name:'[TESTE] Mover para Concluído ao completar checklist',
-     trigger:'checklist_complete',action:'move_col',targetCol:'done',active:false},
+    {id:'rule-001',name:'Mover para Concluído ao completar todos os checklists',
+     trigger:'checklist_complete',action:'move_col',targetCol:'done',active:true},
+    {id:'rule-002',name:'Notificar ao mover card para Impedimentos',
+     trigger:'move_to_col',sourceCol:'blocker',action:'notify',active:true},
   ];
 
   try {
-    if(!window._fbReady){ seedLog('❌ Firebase não está pronto. Faça login primeiro.','err'); btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste'; return; }
+    if(!window._fbReady){
+      seedLog('❌ Firebase não está pronto. Faça login primeiro.','err');
+      btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste';
+      return;
+    }
+
+    // Salva usuários em kanban/usuarios (path global)
+    for(const [uid, u] of Object.entries(usuarios)){
+      await window._set(window._ref(window._db,'kanban/usuarios/'+uid), u);
+    }
+    seedLog('✅ 6 usuários fictícios criados (kanban/usuarios)','ok');
 
     await window._set(window._ref(window._db, FB+'/columns'), seedColumns);
     seedLog('✅ 5 colunas criadas','ok');
@@ -7530,27 +7807,27 @@ async function runDevSeed(){
     seedLog('✅ 5 tags criadas','ok');
 
     await window._set(window._ref(window._db, FB+'/cards'), seedCards);
-    seedLog('✅ 13 cards criados (12 ativos + 1 arquivado)','ok');
+    seedLog('✅ 11 cards ativos + 1 arquivado criados','ok');
 
     await window._set(window._ref(window._db, FB+'/agil_cfg'), seedAgilCfg);
-    seedLog('✅ Sprint 42 configurado','ok');
+    seedLog('✅ Sprint 12 configurado','ok');
 
     await window._set(window._ref(window._db, FB+'/ql_items'), seedQlItems);
-    seedLog('✅ Modelos e recorrentes criados','ok');
+    seedLog('✅ 4 modelos + 4 recorrentes criados','ok');
 
     await window._set(window._ref(window._db, FB+'/links'), seedLinks);
-    seedLog('✅ 3 links criados','ok');
+    seedLog('✅ 4 links criados','ok');
 
     await window._set(window._ref(window._db, FB+'/cal_events'), seedCalEvents);
-    seedLog('✅ 2 eventos no calendário','ok');
+    seedLog('✅ 5 eventos no calendário criados','ok');
 
     await window._set(window._ref(window._db, FB+'/auto_rules'), seedAutoRules);
-    seedLog('✅ 1 regra de automação criada','ok');
+    seedLog('✅ 2 regras de automação criadas','ok');
 
-    seedLog('🎉 Pronto! Fechando em 2s...','ok');
+    seedLog('🎉 Pronto! Carregando board em 2s...','ok');
     setTimeout(()=>{
       document.getElementById('seed-overlay').classList.remove('active');
-      fbLoadAll(); // recarrega tudo do Firebase
+      fbLoadAll();
     }, 2000);
 
   } catch(e){
@@ -7559,17 +7836,6 @@ async function runDevSeed(){
     btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste';
   }
 }
-
-// Mostra overlay automaticamente quando board dev está zerado após login
-window.addEventListener('auth-change', e=>{
-  if(!e.detail) return; // não logado
-  // Aguarda Firebase carregar
-  setTimeout(()=>{
-    if(ACTIVE_SQUAD==='dev' && cards.filter(c=>!c.archived).length===0){
-      document.getElementById('seed-overlay').classList.add('active');
-    }
-  }, 2500);
-}, {once:true});
 
 // ── FIM DEV SEED ──────────────────────────────────────────────────────────
 
