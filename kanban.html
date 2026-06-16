@@ -36,15 +36,12 @@
 ::-webkit-scrollbar-corner { background: transparent; }
 
 /* Board horizontal — barra mais visível no modo expandido */
-.board-wrap::-webkit-scrollbar { height: 2px; }
-.board-wrap::-webkit-scrollbar-track { background: transparent; }
-.board-wrap::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.2);
-  border-radius: 999px;
-}
+.board-wrap::-webkit-scrollbar { height: 9px; }
+.board-wrap::-webkit-scrollbar-track { background: rgba(0,0,0,.15); border-radius: 4px; margin: 0 4px; }
+.board-wrap::-webkit-scrollbar-thumb { background: rgba(56,182,255,.4); border-radius: 4px; }
 .board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
 /* Firefox */
-.board-wrap { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.2) transparent; }
+.board-wrap { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.4) rgba(0,0,0,.15); }
 /* ── SQUAD SELECTOR ────────────────────────────────────────────── */
 #squad-selector{
   display:none;position:fixed;inset:0;z-index:8000;
@@ -2016,7 +2013,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.3.0</div>
+<div class="version">v8.3.2</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2230,57 +2227,57 @@ function fbSaveMsgs(tab){
 }
 
 function fbLoadAll(){
-  // Cards — realtime
-  fbListen(FB+'/cards',val=>{
-    // Ignora echo apenas se JÁ fizemos um save nessa sessão E foi há menos de 2s
-    if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
-    if(val){ 
-      const incoming = Array.isArray(val)?val:Object.values(val);
-      if(JSON.stringify(incoming) !== JSON.stringify(cards)){
-        cards = incoming; 
-        renderBoard(); 
-      }
-    }
-  });
-  // Tags
-  fbListen(FB+'/tags',val=>{
-    if(!val) return;
-    const incoming = Array.isArray(val) ? val : Object.values(val);
-    if(incoming.length) tags=incoming.filter(Boolean);
-  });
-  // Columns
+  // ── ORDEM IMPORTA: columns e agil_cfg registrados ANTES de cards ──
+  // Assim, quando o listener de cards disparar o primeiro render, as
+  // colunas e a config da sprint (WIP) já terão boa chance de estar
+  // carregadas — evitando o flash onde "Em Progresso" e o WIP somem.
+
+  // Columns — primeiro
   fbListen(FB+'/columns',val=>{
     if(!val){
-      // Firebase sem dados: garante DEFAULT_COLUMNS
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
       renderBoard();
       return;
     }
-    // Aceita tanto array quanto objeto (Firebase converte arrays esparsas em objetos)
     const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
     if(!cleaned.length){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
       renderBoard();
       return;
     }
-
-    // Merge: garante que colunas padrao e locais nunca sumam,
-    // mesmo que o Firebase retorne lista parcial/desatualizada.
-    // Fonte de verdade = uniao de DEFAULT_COLUMNS + columns local + Firebase
+    // Merge: garante que colunas padrão e locais nunca sumam.
     const cleanedIds = new Set(cleaned.map(c=>c.id));
     const baseColumns = DEFAULT_COLUMNS
       .concat(columns)
-      .filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); // dedup por id
+      .filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i);
     const missingFromFirebase = baseColumns.filter(c=>!cleanedIds.has(c.id));
-
     columns = missingFromFirebase.length
       ? [...cleaned, ...missingFromFirebase]
       : cleaned;
-
     renderBoard();
   });
-  // Agil cfg — realtime
-  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); }});
+
+  // Agil cfg — segundo (WIP depende disso)
+  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); renderBoard(); }});
+
+  // Tags — terceiro
+  fbListen(FB+'/tags',val=>{
+    if(!val) return;
+    const incoming = Array.isArray(val) ? val : Object.values(val);
+    if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
+  });
+
+  // Cards — por último, já com columns/agilCfg/tags carregados
+  fbListen(FB+'/cards',val=>{
+    if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
+    if(val){
+      const incoming = Array.isArray(val)?val:Object.values(val);
+      if(JSON.stringify(incoming) !== JSON.stringify(cards)){
+        cards = incoming;
+        renderBoard();
+      }
+    }
+  });
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
   // onValue só dispara em writes — sessões longas abertas ANTES de uma
@@ -2348,7 +2345,7 @@ function fbLoadAll(){
   });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
-    if(val){ blockerMode=val; applyBlockerMode(); }
+    if(val){ blockerMode=val; applyBlockerMode(); renderBoard(); }
   });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
@@ -7101,20 +7098,21 @@ function removerExterno(key){
 }
 
 function resyncColumnsAndTags(){
-  Promise.all([fbGet(FB+'/columns'), fbGet(FB+'/tags')]).then(([colSnap, tagSnap])=>{
-    let changed=false;
+  Promise.all([fbGet(FB+'/columns'), fbGet(FB+'/tags'), fbGet(FB+'/agil_cfg')]).then(([colSnap, tagSnap, agilSnap])=>{
     const colVal=colSnap.val();
     if(colVal){
       const incoming=(Array.isArray(colVal)?colVal:Object.values(colVal)).filter(Boolean);
-      if(incoming.length){ columns=incoming; changed=true; }
+      if(incoming.length) columns=incoming;
     }
     const tagVal=tagSnap.val();
     if(tagVal){
       const incoming=(Array.isArray(tagVal)?tagVal:Object.values(tagVal)).filter(Boolean);
       if(incoming.length) tags=incoming;
     }
-    if(changed) renderBoard();
-    showToast('✅ Colunas e tags recarregadas!');
+    const agilVal=agilSnap.val();
+    if(agilVal){ agilCfg=agilVal; applyAgilCfg(); }
+    renderBoard();
+    showToast('✅ Board recarregado e sincronizado!');
   }).catch(()=>showToast('❌ Erro ao recarregar.'));
 }
 
