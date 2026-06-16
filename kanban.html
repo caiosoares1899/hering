@@ -866,13 +866,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 
 /* Undo */
-.undo-btn{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+.undo-btn{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(10px);
   background:rgba(37,99,201,.9);color:#fff;border:1px solid rgba(56,182,255,.4);
   border-radius:999px;padding:7px 18px;font-size:11px;font-family:'DM Sans',sans-serif;
-  cursor:pointer;z-index:200;display:none;backdrop-filter:blur(12px);
-  box-shadow:0 4px 20px rgba(37,99,201,.4);animation:slideUp .2s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  cursor:pointer;z-index:200;backdrop-filter:blur(12px);
+  box-shadow:0 4px 20px rgba(37,99,201,.4);
+  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;}
+.undo-btn.visible{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
 .undo-btn:hover{background:rgba(37,99,201,1);}
+.undo-btn:active{transform:translateX(-50%) translateY(2px);}
 
 
 /* Raia sem responsável */
@@ -2007,7 +2009,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.2.4</div>
+<div class="version">v8.2.6</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5764,7 +5766,6 @@ function ctxBlockTag(){
 // UNDO (desfazer última ação)
 // ═══════════════════════════════════════════════════════
 let _undoStack = []; // stack de estados anteriores
-let _undoTimer = null;
 
 function saveUndo(label){
   _undoStack.push({cards:JSON.parse(JSON.stringify(cards)), label});
@@ -5773,10 +5774,16 @@ function saveUndo(label){
 }
 function showUndoBtn(label){
   const btn=document.getElementById('undo-btn');
+  if(!btn) return;
   btn.textContent='↩ Desfazer: '+label;
-  btn.style.display='block';
-  clearTimeout(_undoTimer);
-  _undoTimer=setTimeout(()=>btn.style.display='none', 6000);
+  btn.classList.add('visible');
+  clearTimeout(window._undoTimer);
+  window._undoTimer=setTimeout(()=>btn.classList.remove('visible'), 6000);
+}
+function hideUndoBtn(){
+  const btn=document.getElementById('undo-btn');
+  if(!btn) return;
+  btn.classList.remove('visible');
 }
 function doUndo(){
   if(!_undoStack.length) return;
@@ -5784,7 +5791,11 @@ function doUndo(){
   cards=prev.cards;
   fbSaveAll(); renderBoard();
   showToast('↩ Desfeito: '+prev.label);
-  if(!_undoStack.length) document.getElementById('undo-btn').style.display='none';
+  if(_undoStack.length){
+    showUndoBtn(_undoStack[_undoStack.length-1].label);
+  } else {
+    hideUndoBtn();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
