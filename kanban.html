@@ -1492,6 +1492,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <div class="cl-add-r">
             <input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()">
             <button class="cl-ab" onclick="addCI()">+ Add</button>
+            <button class="btn btn-sm" onclick="doUndo()" title="Desfazer última ação (Ctrl+Z)" style="padding:4px 8px;font-size:13px;color:rgba(150,200,240,.5);border-color:rgba(56,182,255,.2);border-radius:var(--r);">↩</button>
           </div>
         </div>
         <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
@@ -2009,7 +2010,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.2.2</div>
+<div class="version">v8.2.3</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3137,6 +3138,7 @@ function renderCL(cl){
     d.addEventListener('drop',e=>{
       e.preventDefault(); d.classList.remove('drag-over');
       const from=w._dragIdx; const to=i; if(from===to) return;
+      saveUndo('reordenar checklist');
       const cur=getCL(); const [moved]=cur.splice(from,1); cur.splice(to,0,moved);
       renderCL(cur); scheduleAutoSave();
     });
@@ -3149,20 +3151,24 @@ function renderCL(cl){
     // Texto editável inline
     const span=document.createElement('span'); span.className='cl-it'; span.textContent=item.t;
     span.title='Clique para editar';
+    let _prev='';
     span.addEventListener('click',()=>{
+      _prev=span.textContent;
       span.contentEditable='true'; span.focus();
-      // Posiciona cursor no final
       const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
       const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
     });
-    span.addEventListener('blur',()=>{ span.contentEditable='false'; scheduleAutoSave(); });
+    span.addEventListener('blur',()=>{
+      span.contentEditable='false';
+      if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
+    });
     span.addEventListener('keydown',e=>{
       if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
-      if(e.key==='Escape'){ span.textContent=item.t; span.blur(); }
+      if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
     });
     // Botão deletar
     const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
-    del.onclick=()=>delCI(i);
+    del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
     d.append(handle,cb,span,del);
     w.appendChild(d);
   });
@@ -3184,7 +3190,7 @@ function renderRiscos(rl){
 function getRiscos(){ return Array.from(document.querySelectorAll('#m-riscos .cl-item')).map(r=>r.querySelector('.cl-it').textContent); }
 function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.value.trim(); if(!v) return; renderRiscos([...getRiscos(),v]); i.value=''; i.focus(); }
 function delRisco(i){ const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); }
-function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
+function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; saveUndo('adicionar item checklist'); renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
 function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
 function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov'); openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }
 
@@ -5895,6 +5901,12 @@ document.addEventListener('click', hideCtxMenu);
 document.addEventListener('keydown', e=>{ 
   if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){
+    // Não intercepta Ctrl+Z dentro de campos de texto editáveis
+    const tag=document.activeElement?.tagName;
+    const isEditing=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement?.contentEditable==='true';
+    if(!isEditing){ e.preventDefault(); doUndo(); }
+  }
 });
 document.addEventListener('contextmenu', e=>{
   // Se não clicou num card, mostra o menu padrão do browser
