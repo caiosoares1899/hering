@@ -7415,16 +7415,23 @@ window.addEventListener('auth-change', e=>{
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
-// ── Trigger seed overlay: aparece quando board dev está zerado após login ──
-window.addEventListener('auth-change', e=>{
-  if(!e.detail) return;
-  // Aguarda Firebase carregar os cards (2.5s)
-  setTimeout(()=>{
-    if(ACTIVE_SQUAD==='dev' && cards.filter(c=>!c.archived).length===0){
-      document.getElementById('seed-overlay')?.classList.add('active');
+// ── Trigger seed overlay: verifica board dev vazio após carregar Firebase ──
+(function checkDevSeed(){
+  if(ACTIVE_SQUAD !== 'dev') return; // só no board dev
+  let attempts = 0;
+  const interval = setInterval(()=>{
+    attempts++;
+    // Aguarda: fbReady + usuário logado + pelo menos 3s de espera
+    if(!window._fbReady || !window._currentUser) return;
+    if(attempts < 6) return; // mínimo 3s (6 * 500ms)
+    clearInterval(interval);
+    const ativos = cards.filter(c=>!c.archived).length;
+    if(ativos === 0){
+      const el = document.getElementById('seed-overlay');
+      if(el) el.classList.add('active');
     }
-  }, 2500);
-}, {once:false}); // once:false pois auth-change pode disparar antes dos cards carregarem
+  }, 500);
+})();
 
 // ═══════════════════════════════════════════════════════
 // DEV SEED — popula board vazio com dados de teste
