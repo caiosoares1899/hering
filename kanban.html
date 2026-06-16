@@ -168,7 +168,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   /* Garante que a scrollbar horizontal fica visível na tela */
   max-width:100%;
 }
-.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;align-items:start;width:100%;}
+.board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;min-width:max-content;}
 .board.raia-mode{display:block!important;}
 .board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
 .board.raia-mode.mode-expanded .col{width:240px;min-width:240px;}
@@ -177,7 +177,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   overflow-y:auto;
 }
 /* column */
-.col{width:100%;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
+.col{width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
 .col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
@@ -359,6 +359,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(0,1fr));
   gap:10px;
+  min-width:0;
+}
+/* onepage: colunas preenchem a largura disponível */
+.board.mode-onepage .col{
+  width:100%;
+  min-width:0;
 }
 .board.mode-expanded{
   display:flex!important;
@@ -366,6 +372,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   gap:10px;
   min-width:max-content;
 }
+/* expanded: colunas de largura fixa com scroll horizontal (estilo Trello) */
 .board.mode-expanded .col{
   width:272px;
   min-width:272px;
@@ -2009,7 +2016,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.2.7</div>
+<div class="version">v8.3.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2660,12 +2667,14 @@ function renderBoard(){
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
-  // Reaplica wrap height para modo expandido (só em modo normal, não raia)
-  if(!raiaMode) setTimeout(()=>setViewMode(viewMode), 100);
+  // Garante a classe de modo correta após render (síncrono, sem timing frágil)
+  if(!raiaMode) setViewMode(viewMode);
 }
 
 function renderNormal(board,activeCards){
-  board.className='board mode-'+(viewMode||'expanded');
+  // Usa classList ao invés de sobrescrever className inteira (evita oscilação)
+  board.classList.remove('raia-mode','mode-onepage','mode-expanded');
+  board.classList.add('mode-'+(viewMode||'expanded'));
   columns.forEach(col=>{
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
@@ -2859,13 +2868,11 @@ function toggleRaiaCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
   renderBoard();
-  if(viewMode==='expanded') setTimeout(()=>setViewMode('expanded'),50);
 }
 function toggleCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
   renderBoard();
-  if(viewMode==='expanded') setTimeout(()=>setViewMode('expanded'),50);
 }
 
 function updateMetrics(){
@@ -5098,34 +5105,16 @@ function setViewMode(mode){
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+mode)?.classList.add('active');
   const board=document.getElementById('board');
-  const wrap=document.querySelector('.board-wrap');
   if(board){
     board.classList.remove('mode-onepage','mode-expanded');
     board.classList.add('mode-'+mode);
   }
-  if(wrap){
-    if(mode==='expanded'){
-      // Calcula altura disponível: viewport - tudo acima do board
-      // Math.max(300, ...) garante mínimo de 300px caso o layout ainda
-      // não esteja pronto no primeiro render (wrapTop=0 ou negativo)
-      const wrapTop=wrap.getBoundingClientRect().top;
-      const available=window.innerHeight - wrapTop - 16;
-      const safeHeight=Math.max(300, available);
-      wrap.style.maxHeight=safeHeight+'px';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='auto';
-      wrap.style.paddingBottom='0';
-    } else {
-      wrap.style.maxHeight='';
-      wrap.style.overflowX='auto';
-      wrap.style.overflowY='visible';
-      wrap.style.paddingBottom='8px';
-    }
-  }
+  // A altura das colunas agora é 100% controlada por CSS (.col-body max-height),
+  // sem cálculo de getBoundingClientRect — elimina o bug de timing onde a
+  // 4ª coluna e o WIP sumiam no primeiro carregamento.
 }
 function applyViewMode(){
-  // Delay one frame so board is laid out before height calculation
-  setTimeout(()=>setViewMode(viewMode), 150);
+  setViewMode(viewMode);
 }
 window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
