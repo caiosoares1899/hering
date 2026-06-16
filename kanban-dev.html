@@ -264,8 +264,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
 .cl-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
-.cl-items{display:flex;flex-direction:column;gap:5px;margin-bottom:7px;}
-.cl-item{display:flex;align-items:center;gap:6px;font-size:12px;}
+.cl-items{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
+.cl-item{display:flex;align-items:center;gap:6px;font-size:12px;border-radius:6px;padding:2px 4px;transition:background .15s;cursor:grab;}
+.cl-item:hover{background:rgba(56,182,255,.07);}
+.cl-item.drag-over{background:rgba(29,233,182,.12);border:1px dashed rgba(29,233,182,.4);}
+.cl-item.dragging{opacity:.4;}
+.cl-drag-handle{color:rgba(150,200,240,.25);font-size:12px;cursor:grab;padding:0 2px;user-select:none;flex-shrink:0;}
+.cl-drag-handle:hover{color:rgba(150,200,240,.6);}
+.cl-it{flex:1;cursor:text;word-break:break-word;min-width:0;border-radius:4px;padding:2px 4px;}
+.cl-it:hover{background:rgba(56,182,255,.1);}
+.cl-it[contenteditable=true]{outline:1px solid rgba(56,182,255,.4);background:rgba(3,13,26,.6);padding:2px 6px;cursor:text;}
 .cl-item input[type=checkbox]{accent-color:var(--teal);}
 .cl-it{flex:1;color:var(--txt);}
 .cl-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;}
@@ -3140,12 +3148,47 @@ function archiveCard(){
   c.archived=true; fbSaveAll(); renderBoard(); closeOv('card-ov');
 }
 function renderCL(cl){
-  const w=document.getElementById('m-checklist'); w.innerHTML='';
-  cl.forEach((item,i)=>{ const d=document.createElement('div'); d.className='cl-item';
-    d.innerHTML=`<input type="checkbox" ${item.done?'checked':''} ><span class="cl-it">${esc(item.t)}</span><button class="cl-del" onclick="delCI(${i})">✕</button>`;
-    w.appendChild(d); });
+  const w=document.getElementById('m-checklist'); if(!w) return; w.innerHTML='';
+  cl.forEach((item,i)=>{
+    const d=document.createElement('div');
+    d.className='cl-item'; d.draggable=true; d.dataset.idx=i;
+    d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; w._dragIdx=i; d.classList.add('dragging'); });
+    d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); w.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
+    d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
+    d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+    d.addEventListener('drop',e=>{
+      e.preventDefault(); d.classList.remove('drag-over');
+      const from=w._dragIdx; const to=i; if(from===to) return;
+      const cur=getCL(); const [moved]=cur.splice(from,1); cur.splice(to,0,moved);
+      renderCL(cur); scheduleAutoSave();
+    });
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
+    cb.addEventListener('change',()=>scheduleAutoSave());
+    const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
+    const span=document.createElement('span'); span.className='cl-it'; span.textContent=item.t;
+    span.title='Clique para editar';
+    span.addEventListener('click',()=>{
+      span.contentEditable='true'; span.focus();
+      const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
+      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    });
+    span.addEventListener('blur',()=>{ span.contentEditable='false'; scheduleAutoSave(); });
+    span.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
+      if(e.key==='Escape'){ span.textContent=item.t; span.blur(); }
+    });
+    const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
+    del.onclick=()=>delCI(i);
+    d.append(handle,cb,span,del);
+    w.appendChild(d);
+  });
 }
-function getCL(){ return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({t:r.querySelector('.cl-it').textContent,done:r.querySelector('input').checked})); }
+function getCL(){
+  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({
+    t: r.querySelector('.cl-it')?.textContent?.trim()||'',
+    done: r.querySelector('input[type=checkbox]')?.checked||false,
+  })).filter(x=>x.t);
+}
 function renderRiscos(rl){
   const w=document.getElementById('m-riscos'); if(!w) return; w.innerHTML='';
   (rl||[]).forEach((item,i)=>{
