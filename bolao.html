@@ -524,20 +524,22 @@ async function renderRanking() {
   const squadStats = {};
 
   Object.entries(users).forEach(([uid, p]) => {
-    let pts=0,exact=0,winner=0;
+    let pts=0,exact=0,winner=0,oddsSum=0;
     const uB = bets[uid]||{};
     Object.entries(allResults).forEach(([mid,res])=>{
       const b=uB[mid]; if(!b) return;
       const pt=calcPoints(b,res); pts+=pt;
       if(pt===3) exact++; else if(pt===1) winner++;
+      if(pt>0 && b.oddAtSave) oddsSum+=parseFloat(b.oddAtSave)||0;
     });
-    list.push({uid,...p,pts,exact,winner,bets:Object.keys(uB).length});
+    list.push({uid,...p,pts,exact,winner,oddsSum:parseFloat(oddsSum.toFixed(2)),bets:Object.keys(uB).length});
     if(p.squad){
       if(!squadStats[p.squad]) squadStats[p.squad]={pts:0,members:0};
       squadStats[p.squad].pts+=pts; squadStats[p.squad].members++;
     }
   });
-  list.sort((a,b)=>b.pts-a.pts||b.exact-a.exact||a.name?.localeCompare(b.name));
+  // Critérios: 1) pts 2) exatos 3) soma odds dos acertos 4) nº apostas 5) alfabético
+  list.sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.oddsSum-a.oddsSum||b.bets-a.bets||a.name?.localeCompare(b.name));
 
   const medal = i => i===0?"🥇":i===1?"🥈":i===2?"🥉":`<span class="pos-num">#${i+1}</span>`;
   c.innerHTML = `<div class="ranking-table">${list.map((u,i)=>`
@@ -550,7 +552,7 @@ async function renderRanking() {
       </div>
       <div class="rank-stats">
         <span class="rank-pts">${u.pts} pts</span>
-        <span class="rank-detail">${u.exact} exatos · ${u.winner} vit</span>
+        <span class="rank-detail">${u.exact} exatos · ${u.winner} vit${u.oddsSum>0?` · 🐟${u.oddsSum.toFixed(1)}`:" "}</span>
       </div>
     </div>`).join("")}</div>`;
 
@@ -575,7 +577,7 @@ async function renderRanking() {
       </div>
       <div class="sq-detail" id="sqd-${s.name.replace(/\s/g,'_')}" style="display:none">
         ${list.filter(u=>u.squad===s.name)
-              .sort((a,b)=>b.pts-a.pts||b.exact-a.exact)
+              .sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.oddsSum-a.oddsSum||b.bets-a.bets)
               .map((u,j)=>`
           <div class="rank-row rank-row-inner ${u.uid===currentUser?.uid?"rank-me":""}">
             <div class="rank-pos">${medal(j)}</div>
@@ -1678,7 +1680,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v3.5 · 4 horários corrigidos fonte oficial</div>
+<div class="version">v3.6 · desempate por odds</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
