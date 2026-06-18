@@ -679,10 +679,25 @@ function renderParticipants() {
               <option value="" ${!u.squad?"selected":""}>(sem squad)</option>
             </select>
           </div>
+          <button class="part-remove-btn" onclick="adminRemoveUser('${uid}','${(u.name||'Anônimo').replace(/'/g,"\\'")}')">🗑️</button>
         </div>`).join("")}
     </div>
     <p style="font-size:.72rem;color:var(--white-40);margin-top:12px">${list.length} participante${list.length!==1?"s":""} cadastrado${list.length!==1?"s":""}</p>`;
 }
+
+window.adminRemoveUser = async function(uid, name) {
+  if (currentUser?.uid !== ADMIN_UID) { showToast("Acesso negado","error"); return; }
+  if (!confirm(`Remover "${name}" do bolão?\n\nIsso apaga o cadastro e todas as apostas da pessoa.`)) return;
+  try {
+    await set(ref(db, `users/${uid}`), null);
+    await set(ref(db, `bets/${uid}`), null);
+    delete allUsers[uid];
+    renderParticipants();
+    showToast(`${name} removido do bolão`, "success");
+  } catch(e) {
+    showToast("Erro ao remover: " + e.message, "error");
+  }
+};
 
 window.adminChangeSquad = async function(uid, squad) {
   if (currentUser?.uid !== ADMIN_UID) { showToast("Apenas admin pode alterar squads","error"); return; }
@@ -1262,6 +1277,12 @@ h1.hero-title{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);f
   cursor:pointer;outline:none;
 }
 .part-squad-wrap select option{background:var(--navy-700);}
+.part-remove-btn{
+  flex-shrink:0;background:transparent;border:1px solid rgba(239,68,68,.25);
+  border-radius:8px;font-size:.8rem;padding:5px 8px;cursor:pointer;
+  color:rgba(239,68,68,.6);transition:all .15s;
+}
+.part-remove-btn:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.5);color:#f87171;}
 
 /* ── SQUAD MODAL ─────────────────────────────────────────────────────────────── */
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(4,16,31,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;}
@@ -1680,7 +1701,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v3.7 · confrontos 18/jun corrigidos</div>
+<div class="version">v3.8 · remover participante</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
