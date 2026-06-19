@@ -157,12 +157,32 @@ async function init() {
     app  = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db   = getDatabase(app);
+    // Carrega overrides de partidas antes de renderizar
+    const overSnap = await get(ref(db, "match_overrides"));
+    if (overSnap.exists()) applyMatchOverrides(overSnap.val());
     onAuthStateChanged(auth, handleAuth);
+    // Listener de overrides em tempo real
+    onValue(ref(db, "match_overrides"), snap => {
+      applyMatchOverrides(snap.exists() ? snap.val() : {});
+      renderMatchList("grupos");
+      renderMatchList("matamata");
+    });
     setupListeners();
     renderMatchList();
   } catch(e) {
     console.error("Firebase init error:", e);
   }
+}
+
+function applyMatchOverrides(overrides) {
+  MATCHES.forEach(m => {
+    const o = overrides[m.id];
+    if (!o) return;
+    if (o.home)  m.home  = o.home;
+    if (o.away)  m.away  = o.away;
+    if (o.time)  m.time  = o.time;
+    if (o.venue) m.venue = o.venue;
+  });
 }
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
@@ -712,6 +732,68 @@ window.adminChangeSquad = async function(uid, squad) {
     showToast("Erro ao atualizar squad: " + e.message, "error");
     renderParticipants();
   }
+};
+
+// ─── EDITOR DE PARTIDAS ──────────────────────────────────────────────────────
+window.loadMatchEditor = async function(mid) {
+  const fields = document.getElementById("match-editor-fields");
+  if (!mid) { fields.style.display="none"; return; }
+  const m = MATCHES.find(x=>x.id===mid);
+  if (!m) return;
+
+  // Converte ISO com offset pra datetime-local (YYYY-MM-DDTHH:mm)
+  const d = new Date(m.time);
+  const brt = new Date(d.getTime() - (d.getTimezoneOffset()*60000));
+  const dtLocal = brt.toISOString().slice(0,16);
+
+  document.getElementById("edit-home").value  = m.home;
+  document.getElementById("edit-away").value  = m.away;
+  document.getElementById("edit-time").value  = dtLocal;
+  document.getElementById("edit-venue").value = m.venue;
+
+  // Checa se tem override ativo
+  const overSnap = await get(ref(db, `match_overrides/${mid}`));
+  const flag = document.getElementById("edit-override-flag");
+  flag.style.display = overSnap.exists() ? "block" : "none";
+
+  fields.style.display = "block";
+};
+
+window.adminSaveMatchEdit = async function() {
+  if (currentUser?.uid !== ADMIN_UID) { showToast("Acesso negado","error"); return; }
+  const mid   = document.getElementById("edit-match-select").value;
+  const home  = document.getElementById("edit-home").value.trim();
+  const away  = document.getElementById("edit-away").value.trim();
+  const venue = document.getElementById("edit-venue").value.trim();
+  const dtRaw = document.getElementById("edit-time").value; // YYYY-MM-DDTHH:mm
+
+  if (!mid||!home||!away||!dtRaw) { showToast("Preencha todos os campos","error"); return; }
+
+  // Converte datetime-local (BRT) de volta pra ISO com offset -03:00
+  const isoTime = dtRaw + ":00-03:00";
+
+  const override = { home, away, venue, time: isoTime };
+  await set(ref(db, `match_overrides/${mid}`), override);
+
+  // Aplica imediatamente em memória
+  const m = MATCHES.find(x=>x.id===mid);
+  if (m) Object.assign(m, override);
+
+  document.getElementById("edit-override-flag").style.display = "block";
+  renderMatchList("grupos");
+  renderMatchList("matamata");
+  showToast(`Partida ${mid} atualizada! ✅`, "success");
+};
+
+window.adminResetMatchEdit = async function() {
+  if (currentUser?.uid !== ADMIN_UID) { showToast("Acesso negado","error"); return; }
+  const mid = document.getElementById("edit-match-select").value;
+  if (!mid || !confirm("Restaurar este jogo para os dados originais do arquivo?")) return;
+  await set(ref(db, `match_overrides/${mid}`), null);
+  document.getElementById("edit-override-flag").style.display = "none";
+  showToast("Jogo restaurado para o original ↩️", "info");
+  // Reload page to re-apply original MATCHES values
+  setTimeout(()=>location.reload(), 800);
 };
 
 // ─── ADMIN RESULTS ───────────────────────────────────────────────────────────
@@ -1332,6 +1414,17 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .form-group select option{background:var(--navy-700);}
 .btn-admin{background:var(--amber);color:var(--navy-900);border:none;border-radius:var(--r-sm);font-family:var(--font-body);font-size:.85rem;font-weight:700;padding:10px 22px;cursor:pointer;transition:background .2s;}
 .btn-admin:hover{background:#fbbf24;}
+.match-editor-grid{display:flex;flex-direction:column;gap:12px;}
+.match-editor-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group input[type=text],.form-group input[type=datetime-local]{
+  width:100%;background:var(--white-08);border:1px solid var(--white-15);
+  border-radius:var(--r-sm);color:var(--white);font-family:var(--font-body);
+  font-size:.85rem;padding:8px 12px;outline:none;transition:border-color .2s;
+}
+.form-group input[type=text]:focus,.form-group input[type=datetime-local]:focus{border-color:var(--blue-light);}
+.form-group input[type=datetime-local]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.5;}
+@media(max-width:600px){.match-editor-row{grid-template-columns:1fr;}}
+.btn-admin:hover{background:#fbbf24;}
 .score-row{display:flex;align-items:flex-end;gap:0;}
 .score-team-block{flex:1;display:flex;flex-direction:column;gap:4px;}
 .score-team-block label{font-size:.72rem;color:var(--white-40);font-weight:500;}
@@ -1688,6 +1781,45 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
       </div>
       <div id="match-bets-list"></div>
     </div>
+
+    <!-- Editor de partidas -->
+    <div class="admin-card" style="margin-top:16px;max-width:100%">
+      <h3>✏️ Editar Partida</h3>
+      <p style="font-size:.8rem;color:var(--white-40);margin-bottom:16px">Útil para atualizar o mata-mata com os times classificados, corrigir horários e locais.</p>
+      <div class="match-editor-grid">
+        <div class="form-group">
+          <label>Jogo</label>
+          <select id="edit-match-select" onchange="loadMatchEditor(this.value)"><option value="">Selecione...</option></select>
+        </div>
+        <div id="match-editor-fields" style="display:none">
+          <div class="match-editor-row">
+            <div class="form-group">
+              <label>Time da Casa</label>
+              <input type="text" id="edit-home" placeholder="Ex: Brasil"/>
+            </div>
+            <div class="form-group">
+              <label>Time Visitante</label>
+              <input type="text" id="edit-away" placeholder="Ex: Argentina"/>
+            </div>
+          </div>
+          <div class="match-editor-row">
+            <div class="form-group">
+              <label>Data e Hora (BRT)</label>
+              <input type="datetime-local" id="edit-time"/>
+            </div>
+            <div class="form-group">
+              <label>Local / Estádio</label>
+              <input type="text" id="edit-venue" placeholder="Ex: MetLife Stadium · Nova Jersey"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
+            <button class="btn-admin" onclick="adminSaveMatchEdit()">💾 Salvar alteração</button>
+            <button class="btn-admin" style="background:var(--white-15);color:var(--white-70)" onclick="adminResetMatchEdit()">↩️ Restaurar original</button>
+          </div>
+          <p id="edit-override-flag" style="font-size:.7rem;color:var(--amber);margin-top:8px;display:none">⚠️ Este jogo tem uma edição ativa (diferente do arquivo original)</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1701,7 +1833,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v3.8 · remover participante</div>
+<div class="version">v3.9 · editor de partidas</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -1892,6 +2024,7 @@ window.addEventListener("DOMContentLoaded", () => {
   ];
   const sel = document.getElementById("admin-match");
   const selBets = document.getElementById("admin-bets-match");
+  const selEdit = document.getElementById("edit-match-select");
   MATCHES_ADM.forEach(([id,h,a]) => {
     const o = document.createElement("option");
     o.value = id; o.textContent = `${id} · ${h} × ${a}`;
@@ -1899,6 +2032,10 @@ window.addEventListener("DOMContentLoaded", () => {
     if (selBets) {
       const o2 = o.cloneNode(true);
       selBets.appendChild(o2);
+      if (selEdit) {
+        const o3 = o.cloneNode(true);
+        selEdit.appendChild(o3);
+      }
     }
   });
   sel.onchange = () => {
