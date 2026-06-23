@@ -2013,7 +2013,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.3.2</div>
+<div class="version">v8.4.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2197,6 +2197,86 @@ function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s
 
 let _lastLocalSave = 0;
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
+// ═══════════════════════════════════════════════════════════════════
+// MÉTRICAS DE FLUXO (Flow Metrics) — instrumentação de movimentação
+// ───────────────────────────────────────────────────────────────────
+// Cada card ganha um histórico leve de transições de coluna em c.flow:
+//   c.flow = { firstStartAt, doneAt, enteredAt:{colId:iso}, log:[{from,to,at}] }
+// Isso habilita Cycle Time, Lead Time, Throughput, Work Item Age e CFD.
+// IDs de início/fim são resolvidos dinamicamente a partir das colunas.
+function _flowStartColIds(){
+  // Início = primeira coluna que NÃO seja backlog/a-fazer puro.
+  const ids = (columns||[]).map(c=>c.id);
+  const explicit = (columns||[]).find(c=>c.id==='progress'||/progress|andamento|fazendo|doing|execu/i.test(c.name||''));
+  if(explicit) return [explicit.id];
+  return ids.length>1 ? [ids[1]] : ids.slice(0,1);
+}
+function _flowDoneColId(){
+  const c=(columns||[]).find(x=>x.id==='done'||/conclu|done|feito|finaliz/i.test(x.name||''));
+  return c?c.id:'done';
+}
+function _flowFirstColId(){
+  return (columns&&columns[0]&&columns[0].id)||'backlog';
+}
+// Marca a entrada de um card numa coluna (chamado em TODA movimentação).
+function recordMove(card, toCol, atISO){
+  if(!card) return;
+  const at = atISO || new Date().toISOString();
+  if(!card.flow) card.flow = { enteredAt:{}, log:[] };
+  if(!card.flow.enteredAt) card.flow.enteredAt = {};
+  if(!card.flow.log) card.flow.log = [];
+  const from = card._lastFlowCol!=null ? card._lastFlowCol : (card.col||null);
+  if(from === toCol && card.flow.enteredAt[toCol]) { card._lastFlowCol = toCol; return; }
+  card.flow.enteredAt[toCol] = at;
+  card.flow.log.push({ from: from||'—', to: toCol, at });
+  if(card.flow.log.length>40) card.flow.log = card.flow.log.slice(-40);
+  const startIds = _flowStartColIds();
+  const doneId = _flowDoneColId();
+  if(startIds.includes(toCol) && !card.flow.firstStartAt) card.flow.firstStartAt = at;
+  if(toCol===doneId){ card.flow.doneAt = at; }
+  else if(card.flow.doneAt && from===doneId){ card.flow.doneAt = null; }
+  card._lastFlowCol = toCol;
+}
+// Backfill: cards importados (ex.: Trello) ou legados sem c.flow.
+function backfillFlow(card){
+  if(!card || card.flow) return;
+  const created = card.createdAt ? card.createdAt + (card.createdAt.length<=10?'T12:00:00.000Z':'') : new Date().toISOString();
+  card.flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null, imported:true };
+  card.flow.enteredAt[card.col] = created;
+  card._lastFlowCol = card.col;
+  const doneId = _flowDoneColId();
+  if(card.col===doneId){
+    const fin = card.doneAt || (card.editedAt? card.editedAt+(card.editedAt.length<=10?'T12:00:00.000Z':''):created);
+    card.flow.firstStartAt = created;
+    card.flow.doneAt = fin;
+  } else if(_flowStartColIds().includes(card.col)){
+    card.flow.firstStartAt = created;
+  }
+}
+function backfillAllFlow(){
+  let n=0;
+  (cards||[]).forEach(c=>{ if(c && !c.flow){ backfillFlow(c); n++; } });
+  return n;
+}
+// ── Reset de contagem por squad (zera métricas pós-import do Trello) ──
+function resetFlowBaseline(opts){
+  opts = opts || {};
+  const now = new Date().toISOString();
+  let n=0;
+  (cards||[]).forEach(c=>{
+    if(!c || c.archived) return;
+    c.flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null, resetAt:now };
+    c.flow.enteredAt[c.col] = now;
+    c._lastFlowCol = c.col;
+    if(_flowStartColIds().includes(c.col)) c.flow.firstStartAt = now;
+    if(c.col===_flowDoneColId()){ c.flow.firstStartAt = now; c.flow.doneAt = now; }
+    n++;
+  });
+  if(window._fbReady){ try{ fbSet(FB+'/flow_baseline', { at: now, by: window._currentUser?.displayName||'?' }); }catch(e){} }
+  fbSaveAll();
+  return n;
+}
+
 function fbSaveAll(){
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
@@ -2274,7 +2354,13 @@ function fbLoadAll(){
       const incoming = Array.isArray(val)?val:Object.values(val);
       if(JSON.stringify(incoming) !== JSON.stringify(cards)){
         cards = incoming;
+        // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
+        const _bf = backfillAllFlow();
+        // Garante que _lastFlowCol esteja consistente com a coluna atual
+        cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
         renderBoard();
+        // Persiste o backfill (1x) sem disparar loop de echo
+        if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
       }
     }
   });
@@ -3088,6 +3174,7 @@ function saveCard(){
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
     const c=cards.find(x=>x.id===editingId); if(!c) return;
+    const _prevCol=c.col; const _newCol=document.getElementById('m-col').value;
     Object.assign(c,{title,tag:document.getElementById('m-tag').value,col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
@@ -3102,11 +3189,14 @@ function saveCard(){
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td});
+    if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
   } else {
-    cards.push({id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
+    const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
       title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td});
+      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
+    recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
+    cards.push(_newCard);
   }
   fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
 }
@@ -3504,6 +3594,7 @@ function executeTool(name,input){
         return{ok:false,msg};
       }
       const ant=found.col; found.col=input.nova_coluna; found.edited=user; found.editedAt=td;
+      recordMove(found, input.nova_coluna); // ← métricas de fluxo
       renderBoard(); 
       fbSaveAll(); 
       runAutoRules('move',found.id,input.nova_coluna);
@@ -3546,6 +3637,7 @@ function executeTool(name,input){
         desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',po:input.po||'',
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
+      recordMove(novo, novo.col); // ← métricas de fluxo
       cards.push(novo); renderBoard(); fbSaveAll();
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
     }
@@ -5454,6 +5546,7 @@ function handleDrop(e, colId){
   card.col = colId;
   card.edited = window._currentUser?.displayName||'Usuário';
   card.editedAt = new Date().toISOString().split('T')[0];
+  recordMove(card, colId); // ← registra transição p/ métricas de fluxo
   card._savePending = true; // flag: ignora echo do Firebase durante o save
   renderBoard();
 
