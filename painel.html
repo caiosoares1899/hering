@@ -102,6 +102,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .met-ok{color:var(--teal);}
 .met-warn{color:var(--warn);}
 .met-bad{color:var(--danger);}
+.flow-met{position:relative;cursor:help;}
+.flow-met:hover{border-color:rgba(56,182,255,.35);}
+.flow-win-btn{font-size:10px;color:var(--txt2);background:transparent;border:1px solid var(--glass-b);border-radius:999px;padding:2px 9px;cursor:pointer;transition:all .15s;}
+.flow-win-btn:hover{border-color:var(--accent);color:var(--txt);}
+.flow-win-btn.active{background:rgba(56,182,255,.12);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.flow-card{padding:14px 16px;}
+.flow-card-hd{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;color:var(--txt);margin-bottom:1px;}
+.flow-card-sub{font-size:10px;color:var(--txt3);margin-bottom:12px;}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:8px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
+.bar-fill{width:100%;max-width:38px;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--teal),rgba(29,233,182,.35));transition:height .4s ease;min-height:2px;position:relative;}
+.bar-fill:hover{filter:brightness(1.2);}
+.bar-cap{font-size:10px;font-weight:700;color:var(--teal);}
+.bar-lbl{font-size:9px;color:var(--txt3);white-space:nowrap;}
+.bar-empty{color:var(--txt3);font-size:11px;align-self:center;margin:auto;}
+.cfd-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11px;}
+.cfd-name{width:96px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.cfd-track{flex:1;height:18px;background:rgba(3,13,26,.5);border-radius:5px;overflow:hidden;display:flex;}
+.cfd-seg{height:100%;transition:width .4s ease;}
+.cfd-count{width:26px;text-align:right;color:var(--txt3);font-size:10px;flex-shrink:0;}
+.aging-item{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid rgba(56,182,255,.06);font-size:12px;}
+.aging-item:last-child{border-bottom:none;}
+.aging-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.aging-title{flex:1;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.aging-col{font-size:10px;color:var(--txt3);background:rgba(56,182,255,.08);padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.aging-age{font-weight:700;font-size:13px;width:54px;text-align:right;font-family:"Syne",sans-serif;}
+.aging-squad{font-size:9px;color:var(--txt3);white-space:nowrap;}
+.aging-empty{color:var(--txt3);font-size:11px;padding:10px 4px;}
 /* Col bar */
 .col-bar{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
 .col-row{display:flex;align-items:center;gap:8px;font-size:11px;}
@@ -599,11 +627,64 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   <!-- MÉTRICAS CONSOLIDADAS -->
   <div class="sec-title">📊 Consolidado</div>
-  <div class="grid-4" style="margin-bottom:20px;">
+  <div class="grid-4" style="margin-bottom:12px;">
     <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos</div></div>
     <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
     <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos</div></div>
-    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput</div></div>
+    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput total</div></div>
+  </div>
+
+  <!-- MÉTRICAS DE FLUXO (FLOW METRICS) -->
+  <div class="sec-title">🌊 Fluxo · últimos <span id="flow-window-lbl">14</span> dias
+    <span style="display:inline-flex;gap:4px;margin-left:auto;font-weight:400;">
+      <button class="flow-win-btn" data-win="7"  onclick="setFlowWindow(7)">7d</button>
+      <button class="flow-win-btn active" data-win="14" onclick="setFlowWindow(14)">14d</button>
+      <button class="flow-win-btn" data-win="30" onclick="setFlowWindow(30)">30d</button>
+    </span>
+  </div>
+  <div class="grid-4" style="margin-bottom:12px;">
+    <div class="met flow-met" title="Tempo médio do início (Em Progresso) até Concluído. Mediana e P85.">
+      <div class="met-lbl">⏱ Cycle Time</div>
+      <div class="met-val" id="m-cycle">—</div>
+      <div class="met-sub" id="m-cycle-sub">mediana · dias</div>
+    </div>
+    <div class="met flow-met" title="Tempo da criação do card até a conclusão (inclui fila no backlog).">
+      <div class="met-lbl">📦 Lead Time</div>
+      <div class="met-val" id="m-lead">—</div>
+      <div class="met-sub" id="m-lead-sub">mediana · dias</div>
+    </div>
+    <div class="met flow-met" title="Cards concluídos por semana, na janela escolhida.">
+      <div class="met-lbl">🚀 Throughput</div>
+      <div class="met-val met-ok" id="m-throughput">—</div>
+      <div class="met-sub" id="m-throughput-sub">cards / semana</div>
+    </div>
+    <div class="met flow-met" title="Idade do card aberto mais antigo (Work Item Age). Sinal de alerta precoce.">
+      <div class="met-lbl">🔥 Item mais velho</div>
+      <div class="met-val" id="m-age">—</div>
+      <div class="met-sub" id="m-age-sub">work item age · dias</div>
+    </div>
+  </div>
+
+  <!-- GRÁFICOS DE FLUXO -->
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card flow-card">
+      <div class="flow-card-hd">📈 Throughput semanal</div>
+      <div class="flow-card-sub">Cards concluídos por semana</div>
+      <div class="bar-chart" id="throughput-chart"></div>
+    </div>
+    <div class="card flow-card">
+      <div class="flow-card-hd">🌊 Fluxo cumulativo (CFD)</div>
+      <div class="flow-card-sub">Distribuição de WIP por estágio · hoje</div>
+      <div id="cfd-chart"></div>
+    </div>
+  </div>
+
+  <!-- AGING WIP -->
+  <div id="aging-section" style="margin-bottom:20px;">
+    <div class="sec-title">⏳ Work Item Age · cards em risco</div>
+    <div class="card">
+      <div id="aging-list"></div>
+    </div>
   </div>
 
   <!-- TABELA COMPARATIVA -->
@@ -815,6 +896,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <input type="radio" name="cfg-blocker" id="cfg-bmode-tag" value="tag" style="accent-color:var(--danger);"> 🚧 Tag no card
           </label>
         </div>
+
+        <div class="cfg-sec">Métricas de fluxo</div>
+        <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:8px;">
+          Cards importados do Trello entram com histórico estimado. Use o botão abaixo para
+          <strong style="color:var(--txt);">zerar a contagem</strong> e começar a medir Cycle Time, Throughput e Work Item Age a partir de agora.
+        </div>
+        <div id="cfg-flow-baseline" style="font-size:10px;color:var(--txt3);margin-bottom:8px;"></div>
+        <button type="button" onclick="resetSquadFlow()" style="font-size:12px;color:var(--warn);padding:8px 14px;border:1px solid rgba(255,209,102,.35);background:rgba(255,209,102,.06);border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+          ⏱ Zerar contagem deste squad
+        </button>
       </div>
 
     </div><!-- /cfg-body -->
@@ -842,7 +933,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.8 · painel</div>
+<div class="version">v1.9 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -920,6 +1011,7 @@ function openCfg(squadId){
   const bmode = cfg.blockerMode||'col';
   document.getElementById('cfg-bmode-'+bmode).checked = true;
 
+  updateFlowBaselineLabel();
   document.getElementById('cfg-ov').classList.add('open');
 }
 
@@ -2044,6 +2136,7 @@ function loadAll(){
     // Ouve dados do squad
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados'),snap=>{
       const val=snap.val()||{};
+      const _prev = squadData[sq.id]||{};
       squadData[sq.id]={
         cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({
           ...card,
@@ -2053,6 +2146,8 @@ function loadAll(){
         columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
         tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
         agilCfg:val.agil_cfg||{},
+        flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
+        cal_events: _prev.cal_events,
       };
       renderAll();
     });
@@ -2061,6 +2156,14 @@ function loadAll(){
       const val=snap.val()||{};
       snapshots[sq.id]=val;
       renderTrend();
+    });
+    // Ouve baseline de fluxo (reset de contagem por squad)
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/flow_baseline'),snap=>{
+      const val=snap.val();
+      if(!squadData[sq.id]) squadData[sq.id]={};
+      squadData[sq.id].flowBaseline = val||null;
+      if(cfgSquadId===sq.id) updateFlowBaselineLabel();
+      renderConsolidated();
     });
   });
 }
@@ -2170,6 +2273,279 @@ function renderConsolidated(){
   document.getElementById('m-wip').textContent=wip||'—';
   document.getElementById('m-blockers').textContent=bl||'0';
   document.getElementById('m-done').textContent=done||'—';
+  renderFlowMetrics();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MÉTRICAS DE FLUXO — engine de cálculo + visualização
+// ═══════════════════════════════════════════════════════════════════
+let FLOW_WINDOW = 14; // dias
+const DAY_MS = 86400000;
+
+function setFlowWindow(d){
+  FLOW_WINDOW = d;
+  document.getElementById('flow-window-lbl').textContent = d;
+  document.querySelectorAll('.flow-win-btn').forEach(b=>b.classList.toggle('active', +b.dataset.win===d));
+  renderFlowMetrics();
+}
+
+// Resolve IDs de início/fim p/ um squad (espelha a heurística do kanban)
+function flowColsFor(d){
+  const cols = d.columns||[];
+  const ids = cols.map(c=>c.id);
+  const start = (cols.find(c=>c.id==='progress'||/progress|andamento|fazendo|doing|execu/i.test(c.name||''))||{}).id
+              || (ids.length>1?ids[1]:ids[0]);
+  const done = (cols.find(c=>c.id==='done'||/conclu|done|feito|finaliz/i.test(c.name||''))||{}).id || 'done';
+  return { startId:start, doneId:done };
+}
+
+// Helpers por squad (usados na tabela de comparação)
+function _squadCycleArr(d){
+  if(!d) return [];
+  const baselineAt=(d.flowBaseline&&d.flowBaseline.at)?new Date(d.flowBaseline.at).getTime():0;
+  const { doneId }=flowColsFor(d);
+  const out=[];
+  (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
+    if(!c||c.archived||c.col!==doneId) return;
+    const st=_startTs(c), dn=_doneTs(c);
+    if(st&&dn&&dn>=st&&dn>=baselineAt) out.push((dn-st)/DAY_MS);
+  });
+  return out;
+}
+function _squadThroughput14(d){
+  if(!d) return 0;
+  const now=Date.now(), winStart=now-14*DAY_MS;
+  const baselineAt=(d.flowBaseline&&d.flowBaseline.at)?new Date(d.flowBaseline.at).getTime():0;
+  const { doneId }=flowColsFor(d);
+  return (Array.isArray(d.cards)?d.cards:[]).filter(c=>{
+    if(!c||c.archived||c.col!==doneId) return false;
+    const dn=_doneTs(c); return dn&&dn>=winStart&&dn>=baselineAt;
+  }).length;
+}
+function _squadMaxAge(d){
+  if(!d) return null;
+  const now=Date.now();
+  const { doneId }=flowColsFor(d);
+  let max=null;
+  (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
+    if(!c||c.archived||c.col===doneId) return;
+    const st=_startTs(c); if(st){ const age=(now-st)/DAY_MS; if(max==null||age>max) max=age; }
+  });
+  return max;
+}
+
+// Início efetivo de um card (firstStartAt do flow, ou createdAt como proxy)
+function _startTs(c){
+  const f=c.flow||{};
+  if(f.firstStartAt) return new Date(f.firstStartAt).getTime();
+  if(f.enteredAt){ const vs=Object.values(f.enteredAt).map(v=>new Date(v).getTime()).filter(n=>!isNaN(n)); if(vs.length) return Math.min(...vs); }
+  if(c.createdAt) return new Date(c.createdAt+(c.createdAt.length<=10?'T12:00:00':'')).getTime();
+  return null;
+}
+function _doneTs(c){
+  const f=c.flow||{};
+  if(f.doneAt) return new Date(f.doneAt).getTime();
+  if(c.doneAt) return new Date(c.doneAt).getTime();
+  return null;
+}
+function _createdTs(c){
+  if(c.createdAt) return new Date(c.createdAt+(c.createdAt.length<=10?'T12:00:00':'')).getTime();
+  return _startTs(c);
+}
+
+// Percentil simples (p em 0..100) sobre array numérico
+function percentile(arr, p){
+  if(!arr.length) return null;
+  const s=[...arr].sort((a,b)=>a-b);
+  const idx=Math.ceil((p/100)*s.length)-1;
+  return s[Math.max(0,Math.min(s.length-1,idx))];
+}
+function median(arr){ return percentile(arr,50); }
+
+// Coleta cards relevantes considerando squads visíveis + baseline de reset
+function _collectFlowCards(){
+  const now=Date.now();
+  const winStart=now - FLOW_WINDOW*DAY_MS;
+  const cycle=[], lead=[], doneInWindow=[], openItems=[];
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
+    const baselineAt = (d.flowBaseline&&d.flowBaseline.at)? new Date(d.flowBaseline.at).getTime() : 0;
+    const { doneId } = flowColsFor(d);
+    const cards=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c&&!c.archived);
+    cards.forEach(c=>{
+      const st=_startTs(c), dn=_doneTs(c), cr=_createdTs(c);
+      // Concluídos: para cycle/lead/throughput (respeita baseline)
+      if(c.col===doneId && dn && dn>=baselineAt){
+        if(st && dn>=st){ cycle.push(Math.max(0,(dn-st)/DAY_MS)); }
+        if(cr && dn>=cr){ lead.push(Math.max(0,(dn-cr)/DAY_MS)); }
+        if(dn>=winStart) doneInWindow.push({sq:sq.id, ts:dn});
+      } else if(c.col!==doneId){
+        // Em aberto: work item age (apenas se já "iniciado")
+        if(st){ openItems.push({sq:sq.id, card:c, age:(now-st)/DAY_MS, col:c.col}); }
+      }
+    });
+  });
+  return { cycle, lead, doneInWindow, openItems };
+}
+
+function renderFlowMetrics(){
+  const { cycle, lead, doneInWindow, openItems } = _collectFlowCards();
+
+  // Cycle Time
+  const cMed=median(cycle), cP85=percentile(cycle,85);
+  document.getElementById('m-cycle').textContent = cMed!=null? cMed.toFixed(1) : '—';
+  document.getElementById('m-cycle-sub').textContent = cP85!=null? ('mediana · P85 '+cP85.toFixed(1)+'d') : 'sem dados ainda';
+
+  // Lead Time
+  const lMed=median(lead), lP85=percentile(lead,85);
+  document.getElementById('m-lead').textContent = lMed!=null? lMed.toFixed(1) : '—';
+  document.getElementById('m-lead-sub').textContent = lP85!=null? ('mediana · P85 '+lP85.toFixed(1)+'d') : 'sem dados ainda';
+
+  // Throughput (cards/semana na janela)
+  const weeks=FLOW_WINDOW/7;
+  const tp = doneInWindow.length/weeks;
+  document.getElementById('m-throughput').textContent = doneInWindow.length? tp.toFixed(1) : '0';
+  document.getElementById('m-throughput-sub').textContent = doneInWindow.length+' em '+FLOW_WINDOW+'d';
+
+  // Work item age — mais velho
+  const ages=openItems.map(o=>o.age);
+  const maxAge=ages.length?Math.max(...ages):null;
+  const ageEl=document.getElementById('m-age');
+  ageEl.textContent = maxAge!=null? Math.round(maxAge) : '—';
+  // cor de alerta: > P85 do cycle (se houver) ou > 2x mediana
+  const ageThreshold = cP85!=null? cP85 : (cMed!=null? cMed*2 : null);
+  ageEl.className = 'met-val' + (maxAge!=null && ageThreshold!=null && maxAge>ageThreshold ? ' met-bad' : (maxAge!=null?' met-warn':''));
+  document.getElementById('m-age-sub').textContent = openItems.length? (openItems.length+' cards em aberto') : 'nada em aberto';
+
+  renderThroughputChart(doneInWindow);
+  renderCFD();
+  renderAgingWip(openItems, ageThreshold, cMed);
+}
+
+// Gráfico de barras — throughput por semana
+function renderThroughputChart(doneInWindow){
+  const chart=document.getElementById('throughput-chart'); if(!chart) return;
+  const now=Date.now();
+  const nBuckets = FLOW_WINDOW<=7? 7 : (FLOW_WINDOW<=14? 7 : 6); // dias ou semanas
+  const isDaily = FLOW_WINDOW<=7;
+  const buckets=[];
+  if(isDaily){
+    for(let i=6;i>=0;i--){
+      const dayStart=new Date(now - i*DAY_MS); dayStart.setHours(0,0,0,0);
+      const s=dayStart.getTime(), e=s+DAY_MS;
+      const cnt=doneInWindow.filter(x=>x.ts>=s&&x.ts<e).length;
+      buckets.push({lbl:['D','S','T','Q','Q','S','S'][dayStart.getDay()]+(dayStart.getDate()), cnt});
+    }
+  } else {
+    const wk=FLOW_WINDOW/7|0 || 2;
+    for(let i=wk-1;i>=0;i--){
+      const e=now - i*7*DAY_MS, s=e-7*DAY_MS;
+      const cnt=doneInWindow.filter(x=>x.ts>=s&&x.ts<e).length;
+      const wd=new Date(s);
+      buckets.push({lbl:(wd.getDate()+'/'+(wd.getMonth()+1)), cnt});
+    }
+  }
+  const max=Math.max(1,...buckets.map(b=>b.cnt));
+  if(!doneInWindow.length){ chart.innerHTML='<div class="bar-empty">Sem conclusões na janela.<br>Comece a mover cards p/ Concluído.</div>'; return; }
+  chart.innerHTML = buckets.map(b=>{
+    const h=Math.round((b.cnt/max)*92);
+    return `<div class="bar-col">
+      <span class="bar-cap">${b.cnt||''}</span>
+      <div class="bar-fill" style="height:${b.cnt?h:2}px;" title="${b.cnt} concluídos"></div>
+      <span class="bar-lbl">${b.lbl}</span>
+    </div>`;
+  }).join('');
+}
+
+// CFD simplificado — distribuição atual de WIP por estágio (snapshot hoje)
+function renderCFD(){
+  const el=document.getElementById('cfd-chart'); if(!el) return;
+  // Agrega contagem por nome de coluna across squads visíveis
+  const byStage={}; const order=[];
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
+    (d.columns||[]).forEach(col=>{
+      const cnt=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c&&!c.archived&&c.col===col.id).length;
+      const key=col.name||col.id;
+      if(!(key in byStage)){ byStage[key]={cnt:0,color:col.color||'#38b6ff'}; order.push(key); }
+      byStage[key].cnt+=cnt;
+    });
+  });
+  const total=order.reduce((s,k)=>s+byStage[k].cnt,0);
+  if(!total){ el.innerHTML='<div class="bar-empty" style="height:60px;display:flex;align-items:center;">Sem cards.</div>'; return; }
+  el.innerHTML = order.map(k=>{
+    const o=byStage[k]; const pct=Math.round((o.cnt/total)*100);
+    return `<div class="cfd-row">
+      <span class="cfd-name" title="${k}">${k}</span>
+      <div class="cfd-track"><div class="cfd-seg" style="width:${pct}%;background:${o.color};" title="${o.cnt} cards (${pct}%)"></div></div>
+      <span class="cfd-count">${o.cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+// Aging WIP — lista de cards abertos por idade (vermelho = risco)
+function renderAgingWip(openItems, threshold, cMed){
+  const el=document.getElementById('aging-list'); if(!el) return;
+  if(!openItems.length){ el.innerHTML='<div class="aging-empty">Nenhum card em aberto com início registrado. Mova cards para "Em Progresso" para começar a medir idade.</div>'; return; }
+  const sorted=[...openItems].sort((a,b)=>b.age-a.age).slice(0,8);
+  el.innerHTML = sorted.map(o=>{
+    const age=Math.round(o.age);
+    let color='var(--teal)', cls='';
+    if(threshold!=null){
+      if(o.age>threshold){ color='var(--danger)'; }
+      else if(cMed!=null && o.age>cMed){ color='var(--warn)'; }
+    } else if(age>=14){ color='var(--danger)'; }
+    else if(age>=7){ color='var(--warn)'; }
+    const sq=SQUADS.find(s=>s.id===o.sq);
+    const d=squadData[o.sq];
+    const colName=(d&&d.columns||[]).find(col=>col.id===o.col)?.name||o.col;
+    return `<div class="aging-item">
+      <span class="aging-dot" style="background:${color};"></span>
+      <span class="aging-title" title="${(o.card.title||'').replace(/"/g,'&quot;')}">${o.card.title||'(sem título)'}</span>
+      <span class="aging-col">${colName}</span>
+      <span class="aging-squad">${sq?sq.icon:''}</span>
+      <span class="aging-age" style="color:${color};">${age}d</span>
+    </div>`;
+  }).join('');
+}
+
+// ── RESET DE CONTAGEM (zera baseline de fluxo de um squad) ──────────
+function resetSquadFlow(){
+  if(!cfgSquadId){ showToast('Selecione um squad.'); return; }
+  const sq=SQUADS.find(s=>s.id===cfgSquadId);
+  if(!confirm('Zerar a contagem de métricas de fluxo do squad "'+(sq?sq.label:cfgSquadId)+'"?\n\nOs cards NÃO são apagados. Apenas Cycle Time, Throughput e Work Item Age passam a contar a partir de agora. Útil após importar histórico do Trello.')) return;
+  const now=new Date().toISOString();
+  const d=squadData[cfgSquadId];
+  const cards=(d&&Array.isArray(d.cards)?d.cards:[]).map(c=>{
+    if(!c||c.archived) return c;
+    const nf={ enteredAt:{}, log:[], firstStartAt:null, doneAt:null, resetAt:now };
+    nf.enteredAt[c.col]=now;
+    const { startId, doneId }=flowColsFor(d);
+    if(c.col===startId){ nf.firstStartAt=now; }
+    if(c.col===doneId){ nf.firstStartAt=now; nf.doneAt=now; }
+    return { ...c, flow:nf, _lastFlowCol:c.col };
+  });
+  Promise.all([
+    window._set(window._ref(window._db,'kanban/squads/'+cfgSquadId+'/dados/cards'), cards),
+    window._set(window._ref(window._db,'kanban/squads/'+cfgSquadId+'/dados/flow_baseline'), {at:now, by:'painel'})
+  ]).then(()=>{
+    if(d){ d.cards=cards; d.flowBaseline={at:now,by:'painel'}; }
+    showToast('⏱ Contagem zerada para '+(sq?sq.label:cfgSquadId));
+    updateFlowBaselineLabel();
+    renderAll();
+  }).catch(e=>{ console.error(e); showToast('❌ Erro: '+e.message); });
+}
+
+function updateFlowBaselineLabel(){
+  const el=document.getElementById('cfg-flow-baseline'); if(!el||!cfgSquadId) return;
+  const d=squadData[cfgSquadId];
+  const b=d&&d.flowBaseline;
+  if(b&&b.at){
+    const dt=new Date(b.at);
+    el.textContent='Contagem atual desde '+dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  } else {
+    el.textContent='Contagem desde o início (sem reset registrado).';
+  }
 }
 
 // ── COMPARAÇÃO ─────────────────────────────────────────────────────
@@ -2186,6 +2562,9 @@ function renderComparison(){
     {label:'Story Points concluídos', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0), higher:'winner'},
     {label:'Cards com prazo', fn:d=>(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.due&&!c.archived).length, higher:'neutral'},
     {label:'Cards atrasados', fn:d=>{const today=new Date();today.setHours(0,0,0,0);return (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.due&&!c.archived&&c.col!=='done'&&new Date(c.due+'T00:00:00')<today).length;}, lower:'winner'},
+    {label:'Cycle Time mediano (d)', fn:d=>{const v=_squadCycleArr(d);const m=median(v);return m!=null?m.toFixed(1):'—';}, lower:'winner'},
+    {label:'Throughput (14d)', fn:d=>_squadThroughput14(d), higher:'winner'},
+    {label:'Item mais velho (d)', fn:d=>{const a=_squadMaxAge(d);return a!=null?Math.round(a):'—';}, lower:'winner'},
     {label:'Sprint atual', fn:d=>d.agilCfg?.sprintNum||'—', compare:false},
   ];
   const dataArr=SQUADS.map(sq=>squadData[sq.id]);
