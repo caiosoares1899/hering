@@ -158,6 +158,44 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin-bottom:12px;
   display:flex;align-items:center;gap:8px;}
 .sec-title .badge{font-size:9px;}
+/* ═══ LEMBRETES (painel) ═══ */
+.lemp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:760px){.lemp-wrap{grid-template-columns:1fr;}}
+.lemp-grid{display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;}
+.lemp-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.lemp-fchk{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txt2);cursor:pointer;
+  padding:3px 9px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(56,182,255,.06);user-select:none;}
+.lemp-fchk:hover{border-color:var(--accent);}
+.lemp-fchk input{accent-color:var(--accent);cursor:pointer;margin:0;}
+.lemp-fchk .fdot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.pit{position:relative;width:calc(50% - 5px);min-width:150px;padding:11px 12px 10px;border-radius:3px;
+  font-family:"DM Sans",sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.3);
+  transform:rotate(var(--rot,-.5deg));border-left:4px solid rgba(0,0,0,.18);}
+.pit .pit-type{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;opacity:.85;margin-bottom:4px;}
+.pit .pit-text{font-size:12px;line-height:1.38;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
+.pit .pit-meta{font-size:9px;margin-top:6px;opacity:.62;color:#1a1208;display:flex;justify-content:space-between;gap:6px;}
+.pit .pit-squad{font-size:8.5px;font-weight:700;opacity:.7;color:#1a1208;margin-top:3px;}
+.pit .pit-del{position:absolute;top:5px;right:6px;width:16px;height:16px;border-radius:50%;border:none;
+  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:10px;line-height:1;display:none;align-items:center;justify-content:center;}
+.pit:hover .pit-del{display:flex;}
+.pit-gestao{background:linear-gradient(135deg,#e2c4ff,#d4a9f5);border-left-color:#9650dc;}.pit-gestao .pit-type{color:#5a1d8f;}
+.pit-po{background:linear-gradient(135deg,#bfe3ff,#a3d4f5);border-left-color:#2563c9;}.pit-po .pit-type{color:#0d4a8f;}
+.pit-proprio{background:linear-gradient(135deg,#bff5e6,#a3f0d4);border-left-color:#1de9b6;}.pit-proprio .pit-type{color:#0a7a5a;}
+.pit-quadro{background:linear-gradient(135deg,#ffe1a8,#ffd180);border-left-color:#ff9800;}.pit-quadro .pit-type{color:#a85a00;}
+.pit-quadro.pit-urg{background:linear-gradient(135deg,#ffc4b8,#ffb3a3);border-left-color:#ff6b6b;}.pit-quadro.pit-urg .pit-type{color:#c0341f;}
+.lemp-empty{color:var(--txt3);font-size:11px;padding:20px;text-align:center;width:100%;line-height:1.6;}
+.lemp-form{display:flex;flex-direction:column;gap:10px;}
+.lemp-form label{font-size:10px;color:var(--txt2);font-weight:600;margin-bottom:-4px;}
+.lemp-form select,.lemp-form textarea{font-family:"DM Sans",sans-serif;background:var(--glass);
+  border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);font-size:12px;padding:9px 11px;width:100%;}
+.lemp-form textarea{resize:vertical;min-height:64px;}
+.lemp-form .row2{display:flex;gap:8px;}
+.lemp-form .row2 select{flex:1;}
+.lemp-form button{padding:10px;font-family:"Syne",sans-serif;font-weight:700;font-size:12px;
+  background:rgba(37,99,201,.9);border:1px solid rgba(56,182,255,.45);border-radius:8px;color:#fff;cursor:pointer;transition:all .2s;}
+.lemp-form button:hover{background:rgba(37,99,201,1);}
+.lemp-form button:disabled{opacity:.4;cursor:not-allowed;}
+.lemp-noauth{color:var(--txt3);font-size:11px;padding:16px;text-align:center;line-height:1.6;background:rgba(56,182,255,.04);border-radius:10px;border:1px dashed var(--glass-b);}
 /* Loading */
 .loading{display:flex;align-items:center;gap:8px;color:var(--txt3);font-size:12px;padding:16px 0;}
 .dots span{animation:blink 1.2s infinite;}
@@ -687,6 +725,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <!-- ═══ LEMBRETES DO QUADRO ═══ -->
+  <div id="lemp-section">
+    <div class="sec-title">📌 Lembretes do quadro</div>
+    <div class="lemp-wrap">
+      <div class="card">
+        <div class="lemp-filters">
+          <label class="lemp-fchk"><input type="checkbox" id="lpf-gestao" checked onchange="renderLembretesPainel()"><span class="fdot" style="background:#9650dc;"></span>Gestão</label>
+          <label class="lemp-fchk"><input type="checkbox" id="lpf-po" checked onchange="renderLembretesPainel()"><span class="fdot" style="background:#2563c9;"></span>PO/Org</label>
+          <label class="lemp-fchk"><input type="checkbox" id="lpf-quadro" onchange="renderLembretesPainel()"><span class="fdot" style="background:#ff9800;"></span>Avisos do quadro</label>
+        </div>
+        <div class="lemp-grid" id="lemp-grid"></div>
+      </div>
+      <div class="card">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;">✏️ Criar lembrete</div>
+        <div id="lemp-form-wrap"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- TABELA COMPARATIVA -->
   <div id="cmp-section">
   <div class="sec-title">⚖️ Comparação</div>
@@ -933,7 +990,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.9.1 · painel</div>
+<div class="version">v1.11 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1167,6 +1224,160 @@ function renderRiscos(){
       </div>
     </div>`;
     }).join('')+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// LEMBRETES DO QUADRO (painel — agregado multi-squad + criação)
+// ═══════════════════════════════════════════════════════
+const LEMP_TIPOS={
+  gestao:{label:'Gestão',cls:'pit-gestao',emoji:'🏛️'},
+  po:{label:'PO / Organizador',cls:'pit-po',emoji:'📋'},
+  quadro:{label:'Quadro',cls:'pit-quadro',emoji:'🌊'},
+};
+function _isAdmPainel(){ return isAdmUser(window._currentUser); }
+
+// Deriva avisos do quadro de UM squad (mesma lógica do kanban)
+function _avisosQuadroSquad(d, sq){
+  const out=[]; if(!d||!d.cards) return out;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const colName=(id)=> d.columns?.find(c=>c.id===id)?.name || id;
+  (Array.isArray(d.cards)?d.cards:[]).filter(c=>c&&!c.archived).forEach(c=>{
+    const titulo=c.title||'(sem título)';
+    if(c.col==='blocker') out.push({tipo:'quadro',urgent:true,text:`🚧 Bloqueado: "${titulo}"`,sub:'impedimento ativo',sq,cardId:c.id,ts:c.editedAt||''});
+    if(c.riscos?.length && c.col!=='done') out.push({tipo:'quadro',urgent:true,text:`⚠ Risco: "${titulo}" (${c.riscos.length})`,sub:'risco mapeado',sq,cardId:c.id,ts:c.editedAt||''});
+    if(c.due && c.col!=='done'){
+      const dd=new Date(c.due+'T00:00:00'); dd.setHours(0,0,0,0);
+      const diff=Math.round((dd-today)/86400000);
+      if(diff<0) out.push({tipo:'quadro',urgent:true,text:`⏰ Atrasado ${Math.abs(diff)}d: "${titulo}"`,sub:'prazo vencido',sq,cardId:c.id,ts:c.due});
+      else if(diff===0) out.push({tipo:'quadro',urgent:true,text:`⚡ Vence hoje: "${titulo}"`,sub:'prazo é hoje',sq,cardId:c.id,ts:c.due});
+      else if(diff<=2) out.push({tipo:'quadro',urgent:false,text:`📅 Vence em ${diff}d: "${titulo}"`,sub:'prazo próximo',sq,cardId:c.id,ts:c.due});
+    }
+    if(c.col==='done' && c.doneAt){
+      const ageH=(Date.now()-new Date(c.doneAt).getTime())/3600000;
+      if(ageH<=48) out.push({tipo:'quadro',urgent:false,text:`✅ Resolvido: "${titulo}"`,sub:'concluído recente',sq,cardId:c.id,ts:c.doneAt});
+    }
+  });
+  return out;
+}
+
+function _collectLembretesPainel(){
+  const f={ gestao:document.getElementById('lpf-gestao')?.checked,
+            po:document.getElementById('lpf-po')?.checked,
+            quadro:document.getElementById('lpf-quadro')?.checked };
+  let list=[];
+  // GESTÃO global (sem squad específico)
+  if(f.gestao) lembretesGestao.forEach(l=>list.push({...l, tipo:'gestao', sq:null}));
+  SQUADS.forEach(sq=>{
+    if(!squadVisible(sq.id)) return;
+    const d=squadData[sq.id]; if(!d) return;
+    (d.lembretes||[]).forEach(l=>{
+      // gestao legado eventualmente ainda no nó do squad
+      if(l.tipo==='gestao' && f.gestao) list.push({...l, sq});
+      else if(l.tipo==='po' && f.po){
+        // mostra alvo do PO direcionado (no painel mostramos todos)
+        list.push({...l, sq});
+      }
+    });
+    if(f.quadro) list.push(..._avisosQuadroSquad(d, sq));
+  });
+  return list.sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || String(b.ts).localeCompare(String(a.ts)));
+}
+
+function renderLembretesPainel(){
+  const grid=document.getElementById('lemp-grid');
+  if(grid){
+    const list=_collectLembretesPainel();
+    if(!list.length){
+      grid.innerHTML='<div class="lemp-empty">📭 Nenhum lembrete.<br>Marque "Avisos do quadro" para ver alertas dos cards, ou crie um lembrete ao lado.</div>';
+    } else {
+      const rots=[-.6,.5,-.4,.7,-.5,.4];
+      grid.innerHTML=list.map((l,i)=>{
+        const t=LEMP_TIPOS[l.tipo]||LEMP_TIPOS.quadro;
+        const urg=(l.tipo==='quadro'&&l.urgent)?' pit-urg':'';
+        const rot=rots[i%rots.length];
+        const sqLabel=l.sq?`${l.sq.icon} ${l.sq.label.replace('Squad ','')}`:(l.tipo==='gestao'?'🌐 Global':'');
+        let del='';
+        if(l.tipo!=='quadro' && _isAdmPainel()){
+          const sid = l.sq? l.sq.id : '__gestao__';
+          del=`<button class="pit-del" onclick="delLembretePainel('${sid}','${esc(l.id||'')}')" title="Remover">✕</button>`;
+        }
+        let meta='';
+        if(l.tipo==='quadro'){
+          meta=`<div class="pit-meta"><span>${esc(l.sub||'')}</span></div>`;
+        } else {
+          const quando=l.ts?new Date(l.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
+          // PO direcionado: mostra alvo
+          let alvo='';
+          if(l.tipo==='po' && l.target && l.target!=='all'){
+            alvo=' · 🎯 '+esc(l.targetLabel||'direcionado');
+          }
+          meta=`<div class="pit-meta"><span>${esc(l.autor||'?')}${alvo}</span><span>${quando}</span></div>`;
+        }
+        return `<div class="pit ${t.cls}${urg}" style="--rot:${rot}deg;">
+          ${del}
+          <div class="pit-type">${t.emoji} ${t.label}</div>
+          <div class="pit-text">${esc(l.text||'')}</div>
+          <div class="pit-squad">${sqLabel}</div>
+          ${meta}
+        </div>`;
+      }).join('');
+    }
+  }
+  _renderLempForm();
+}
+
+function _renderLempForm(){
+  const wrap=document.getElementById('lemp-form-wrap'); if(!wrap) return;
+  if(!_isAdmPainel()){
+    wrap.innerHTML='<div class="lemp-noauth">🔒 Apenas administradores criam avisos de Gestão (globais).<br><br>Lembretes de PO direcionados são criados nas configurações de cada quadro. Membros criam lembretes próprios direto no quadro.</div>';
+    return;
+  }
+  wrap.innerHTML=`
+    <div class="lemp-form">
+      <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:2px;">
+        🏛️ Avisos de <strong style="color:var(--txt);">Gestão</strong> são globais: aparecem em <strong style="color:var(--txt);">todos os quadros</strong>. Para algo específico de uma squad, entre no quadro dela e fixe lá.
+      </div>
+      <div><label>Mensagem de gestão</label>
+        <textarea id="lemp-text" placeholder="Ex.: reunião trimestral de resultados na sexta, 14h. Presença de todos os squads." oninput="_updLempBtn()"></textarea>
+      </div>
+      <button id="lemp-btn" onclick="addLembretePainel()" disabled>🏛️ Publicar aviso global</button>
+    </div>`;
+}
+function _updLempBtn(){
+  const t=document.getElementById('lemp-text')?.value.trim();
+  const b=document.getElementById('lemp-btn'); if(b) b.disabled=!t;
+}
+
+function addLembretePainel(){
+  if(!_isAdmPainel()){ showToast('Sem permissão.'); return; }
+  const text=document.getElementById('lemp-text').value.trim();
+  if(!text) return;
+  const u=window._currentUser;
+  const arr=[...lembretesGestao];
+  arr.push({ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
+    tipo:'gestao', text, autor:u?.displayName||u?.email||'Gestão', autorUid:u?.uid||'', ts:new Date().toISOString() });
+  window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), arr)
+    .then(()=>{ lembretesGestao=arr; showToast('🏛️ Aviso de gestão publicado em todos os quadros'); renderLembretesPainel(); })
+    .catch(e=>showToast('❌ Erro: '+e.message));
+  document.getElementById('lemp-text').value='';
+  _updLempBtn();
+  const chk=document.getElementById('lpf-gestao'); if(chk&&!chk.checked) chk.checked=true;
+}
+
+function delLembretePainel(sqId, id){
+  // sqId === '__gestao__' para avisos globais
+  if(sqId==='__gestao__'){
+    const arr=lembretesGestao.filter(l=>l.id!==id);
+    window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), arr)
+      .then(()=>{ lembretesGestao=arr; renderLembretesPainel(); })
+      .catch(e=>showToast('❌ Erro: '+e.message));
+    return;
+  }
+  const d=squadData[sqId]; if(!d) return;
+  const arr=(d.lembretes||[]).filter(l=>l.id!==id);
+  window._set(window._ref(window._db,'kanban/squads/'+sqId+'/dados/lembretes'), arr)
+    .then(()=>{ d.lembretes=arr; renderLembretesPainel(); })
+    .catch(e=>showToast('❌ Erro: '+e.message));
 }
 
 // ── USO AGENTE ÁGIL ──────────────────────────────────────────────
@@ -1942,6 +2153,7 @@ let squadData = {};
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
 function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); } // {dados:{cards,columns,agilCfg}, midia:{...}}
 let snapshots = {};  // {dados:{date:snap,...}, midia:{...}}
+let lembretesGestao = [];  // GESTÃO global (kanban/painel/lembretes_gestao)
 
 function doSignIn(){
   const err=document.getElementById('login-err'); err.style.display='none';
@@ -1951,6 +2163,7 @@ function doSignOut(){ window._signOut(); }
 
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
+  window._currentUser=user||null;
   if(user){
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
       document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br';
@@ -1976,7 +2189,15 @@ window.addEventListener('fb-ready',()=>{
   loadPcalEvents();
   loadErrorLogs();
   loadAdmList();
+  loadLembretesGestao();
 });
+function loadLembretesGestao(){
+  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+    const val=snap.val();
+    lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    if(typeof renderLembretesPainel==='function') renderLembretesPainel();
+  });
+}
 
 // ══════════════════════════════════════════════════════════════
 // 🗂 GESTÃO GLOBAL DE USUÁRIOS — todos os squads
@@ -2151,6 +2372,7 @@ function loadAll(){
         tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
         agilCfg:val.agil_cfg||{},
         flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
+        lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
         cal_events: _prev.cal_events,
       };
       renderAll();
@@ -2160,6 +2382,13 @@ function loadAll(){
       const val=snap.val()||{};
       snapshots[sq.id]=val;
       renderTrend();
+    });
+    // Ouve lembretes compartilhados do squad (gestão / PO)
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/lembretes'),snap=>{
+      const val=snap.val();
+      if(!squadData[sq.id]) squadData[sq.id]={};
+      squadData[sq.id].lembretes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+      if(typeof renderLembretesPainel==='function') renderLembretesPainel();
     });
     // Ouve baseline de fluxo (reset de contagem por squad)
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/flow_baseline'),snap=>{
@@ -2181,6 +2410,7 @@ function renderAll(){
   renderColDist();
   renderOKR();
   renderRiscos();
+  renderLembretesPainel();
 }
 
 function updateTimestamp(){
