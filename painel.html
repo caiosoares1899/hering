@@ -161,6 +161,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* ═══ LEMBRETES (painel) ═══ */
 .lemp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 @media(max-width:760px){.lemp-wrap{grid-template-columns:1fr;}}
+.kudosp-card{position:relative;width:calc(50% - 5px);min-width:150px;padding:13px 13px 11px;border-radius:11px;
+  background:linear-gradient(150deg,rgba(255,209,102,.13),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);}
+.kudosp-card::before{content:'⭐';position:absolute;top:-8px;left:12px;font-size:15px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}
+.kudosp-from{font-size:10px;color:var(--txt2);margin-top:3px;}
+.kudosp-from b{color:var(--txt);}
+.kudosp-to{color:#ffd166;font-weight:700;}
+.kudosp-text{font-size:12px;line-height:1.4;color:var(--txt);margin-top:5px;}
+.kudosp-meta{font-size:9px;color:var(--txt3);margin-top:7px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.kudosp-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:10px;}
+.kudosp-del:hover{color:var(--danger);}
+.kudosp-form select,.kudosp-form textarea{font-family:"DM Sans",sans-serif;background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);font-size:12px;padding:9px 11px;width:100%;margin-bottom:8px;}
+.kudosp-form textarea{resize:vertical;min-height:54px;}
+.kudosp-form button{width:100%;padding:10px;font-family:"Syne",sans-serif;font-weight:700;font-size:12px;background:rgba(255,209,102,.16);border:1px solid rgba(255,209,102,.4);border-radius:8px;color:#ffd166;cursor:pointer;}
+.kudosp-form button:hover{background:rgba(255,209,102,.26);}
+.kudosp-form button:disabled{opacity:.4;cursor:not-allowed;}
 .lemp-grid{display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;}
 .lemp-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
 .lemp-fchk{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--txt2);cursor:pointer;
@@ -744,6 +759,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <!-- ═══ ESTRELAS DO MAR (Geral) ═══ -->
+  <div id="kudos-section">
+    <div class="sec-title">⭐ Estrelas do Mar · reconhecimento geral</div>
+    <div class="lemp-wrap">
+      <div class="card">
+        <div id="kudosp-grid" class="lemp-grid"></div>
+      </div>
+      <div class="card">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:10px;">🌊 Enviar estrela geral</div>
+        <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:10px;">Estrelas gerais aparecem para todas as squads. Para reconhecimentos do dia a dia de um time, use o ⭐ Estrelas do Mar dentro do quadro.</div>
+        <div id="kudosp-form"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- TABELA COMPARATIVA -->
   <div id="cmp-section">
   <div class="sec-title">⚖️ Comparação</div>
@@ -990,7 +1020,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.11 · painel</div>
+<div class="version">v1.12 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2190,6 +2220,7 @@ window.addEventListener('fb-ready',()=>{
   loadErrorLogs();
   loadAdmList();
   loadLembretesGestao();
+  loadKudosGeral();
 });
 function loadLembretesGestao(){
   window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
@@ -2200,8 +2231,97 @@ function loadLembretesGestao(){
 }
 
 // ══════════════════════════════════════════════════════════════
-// 🗂 GESTÃO GLOBAL DE USUÁRIOS — todos os squads
+// ⭐ ESTRELAS DO MAR (Geral) — mural cross-squad no painel
 // ══════════════════════════════════════════════════════════════
+let kudosGeral = [];
+function loadKudosGeral(){
+  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{
+    const val=snap.val();
+    kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    renderKudosPainel();
+  });
+}
+function _kudosUserOpts(){
+  // lista de usuários a partir do cache global
+  const opts=['<option value="">Para quem? (escolha)</option>'];
+  Object.entries(_globalUsersCache||{}).forEach(([uid,u])=>{
+    if(!u||!u.init) return;
+    if(uid===window._currentUser?.uid) return;
+    opts.push(`<option value="${esc(uid)}" data-init="${esc(u.init)}">${esc(u.nome||u.email||u.init)}</option>`);
+  });
+  return opts.join('');
+}
+function renderKudosPainel(){
+  const grid=document.getElementById('kudosp-grid');
+  if(grid){
+    const list=kudosGeral.slice().sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+    if(!list.length){
+      grid.innerHTML='<div class="lemp-empty">⭐ Nenhuma estrela geral ainda.<br>Reconheça alguém que fez a diferença entre as squads!</div>';
+    } else {
+      grid.innerHTML=list.map(k=>{
+        const quando=k.ts?new Date(k.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
+        const podeApagar = k.fromUid===window._currentUser?.uid || isAdmUser(window._currentUser);
+        const del=podeApagar?`<button class="kudosp-del" onclick="delKudosPainel('${esc(k.id)}')" title="Remover">🗑</button>`:'<span></span>';
+        return `<div class="kudosp-card">
+          <div class="kudosp-from"><b>${esc(k.fromNome||k.fromInit||'?')}</b> reconheceu <span class="kudosp-to">@${esc(k.toInit||'')}</span>${k.toNome?' ('+esc(k.toNome)+')':''}</div>
+          <div class="kudosp-text">${esc(k.texto||'')}</div>
+          <div class="kudosp-meta"><span>${quando}</span>${del}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+  // formulário (só adm cria pelo painel; demais usam o quadro)
+  const fw=document.getElementById('kudosp-form');
+  if(fw){
+    if(!isAdmUser(window._currentUser)){
+      fw.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:14px;text-align:center;background:rgba(255,209,102,.04);border:1px dashed var(--glass-b);border-radius:10px;line-height:1.6;">🔒 Pelo painel, apenas admins enviam estrelas gerais.<br>Todos podem reconhecer pelo ⭐ dentro de cada quadro.</div>';
+    } else {
+      fw.innerHTML=`<div class="kudosp-form">
+        <select id="kudosp-para" onchange="_updKudospBtn()">${_kudosUserOpts()}</select>
+        <textarea id="kudosp-text" placeholder="Ex.: liderou a integração entre as squads com maestria! 🙌" oninput="_updKudospBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudosPainel();}"></textarea>
+        <button id="kudosp-btn" onclick="addKudosPainel()" disabled>⭐ Enviar estrela geral</button>
+        <div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:6px;">Enter envia · Shift+Enter quebra linha</div>
+      </div>`;
+    }
+  }
+}
+function _updKudospBtn(){
+  const para=document.getElementById('kudosp-para')?.value;
+  const txt=document.getElementById('kudosp-text')?.value.trim();
+  const b=document.getElementById('kudosp-btn'); if(b) b.disabled=!(para&&txt);
+}
+function addKudosPainel(){
+  if(!isAdmUser(window._currentUser)){ showToast('Sem permissão.'); return; }
+  const sel=document.getElementById('kudosp-para');
+  const toUid=sel.value;
+  const texto=document.getElementById('kudosp-text').value.trim();
+  if(!toUid||!texto) return;
+  const u=window._currentUser;
+  const toU=_globalUsersCache[toUid]||{};
+  const obj={ id:'k'+Date.now()+Math.random().toString(36).slice(2,6),
+    fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:'', fromFoto:u.photoURL||'',
+    toInit:toU.init||'', toNome:toU.nome||'', texto, scope:'geral', ts:new Date().toISOString() };
+  const arr=[...kudosGeral, obj];
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
+    .then(()=>{ kudosGeral=arr; showToast('⭐ Estrela geral enviada!'); renderKudosPainel();
+      // notifica o agraciado
+      if(toUid && toUid!==u.uid){
+        const nid='n'+Date.now()+Math.random().toString(36).slice(2,6);
+        window._set(window._ref(window._db,'kanban/usuarios/'+toUid+'/notificacoes/'+nid),
+          {id:nid,type:'kudos',title:'⭐ Você recebeu uma Estrela do Mar!',sub:(u.displayName||'Alguém')+': '+texto.substring(0,60),read:false,ts:new Date().toISOString(),squad:'geral'}).catch(()=>{});
+      }
+    })
+    .catch(e=>showToast('Erro: '+e.message));
+  document.getElementById('kudosp-text').value='';
+  sel.value='';
+  _updKudospBtn();
+}
+function delKudosPainel(id){
+  const arr=kudosGeral.filter(k=>k.id!==id);
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
+    .then(()=>{ kudosGeral=arr; renderKudosPainel(); }).catch(()=>{});
+}
+
 let _globalUsersCache = {}; // { uid: userObj }
 const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
 
@@ -2217,6 +2337,7 @@ function loadGlobalUsers(){
   window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
     _globalUsersCache = snap.val() || {};
     renderGlobalUsers();
+    if(typeof renderKudosPainel==='function') renderKudosPainel();
   });
 }
 
@@ -2411,6 +2532,7 @@ function renderAll(){
   renderOKR();
   renderRiscos();
   renderLembretesPainel();
+  if(typeof renderKudosPainel==='function') renderKudosPainel();
 }
 
 function updateTimestamp(){
