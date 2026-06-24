@@ -286,6 +286,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ag-tabs{display:flex;border-bottom:1px solid var(--glass-b);overflow-x:auto;overflow-y:visible;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .ag-tabs::-webkit-scrollbar{display:none;}
 .ag-tab{padding:8px 12px;font-size:11px;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
+/* Menu mais espaçado nas Configurações e Ajuda */
+#cfg-tabs,#help-tabs{padding:2px 4px 0;gap:2px;}
+#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:11px 15px;font-size:12px;border-radius:9px 9px 0 0;}
+#cfg-tabs .ag-tab:hover,#help-tabs .ag-tab:hover{background:rgba(56,182,255,.07);color:var(--txt);}
+#cfg-tabs .ag-tab.on,#help-tabs .ag-tab.on{background:rgba(56,182,255,.1);}
 .ag-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
 .ag-body{padding:12px 14px;overflow-y:auto;flex:1;}
 .tab-c{display:none;}.tab-c.on{display:block;}
@@ -386,11 +391,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .postit .pi-type{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.85;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
 .postit .pi-text{font-size:13px;line-height:1.42;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
 .postit .pi-meta{font-size:9.5px;margin-top:7px;opacity:.62;color:#1a1208;display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.postit .pi-del{position:absolute;top:6px;right:7px;width:18px;height:18px;border-radius:50%;border:none;
-  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:11px;line-height:1;
+.postit .pi-del,.postit .pi-dismiss{position:absolute;top:6px;width:18px;height:18px;border-radius:50%;border:none;
+  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:10px;line-height:1;
   display:none;align-items:center;justify-content:center;}
-.postit:hover .pi-del{display:flex;}
-.postit .pi-del:hover{background:rgba(0,0,0,.25);color:#000;}
+.postit .pi-dismiss{right:7px;}
+.postit .pi-del{right:28px;}
+.postit:hover .pi-del,.postit:hover .pi-dismiss{display:flex;}
+.postit .pi-del:hover,.postit .pi-dismiss:hover{background:rgba(0,0,0,.25);color:#000;}
 .postit .pi-link{font-size:10px;margin-top:6px;color:#1a1208;font-weight:700;opacity:.7;cursor:pointer;text-decoration:underline;}
 /* paletas post-it */
 .pi-gestao{background:linear-gradient(135deg,#e2c4ff,#d4a9f5);border-left-color:#9650dc;}
@@ -414,6 +421,37 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   background:rgba(37,99,201,.9);border:1px solid rgba(56,182,255,.45);border-radius:8px;color:#fff;cursor:pointer;transition:all .2s;}
 .lem-add-btn:hover{background:rgba(37,99,201,1);}
 .lem-add-btn:disabled{opacity:.4;cursor:not-allowed;}
+/* ═══ ESTRELAS DO MAR (Kudos) ═══ */
+.kudos-drawer{left:0;right:auto;border-left:none;border-right:1px solid rgba(255,209,102,.25);
+  transform:translateX(-100%);box-shadow:12px 0 48px rgba(0,0,0,.55);}
+.kudos-drawer.open{transform:translateX(0);}
+.kudos-drawer .lem-hd-title{color:#ffd166;}
+.kudos-scope-tabs{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.kudos-stab{flex:1;font-size:11px;font-weight:600;color:var(--txt2);background:rgba(255,209,102,.05);
+  border:1px solid var(--glass-b);border-radius:9px;padding:8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.kudos-stab:hover{border-color:rgba(255,209,102,.4);}
+.kudos-stab.on{background:rgba(255,209,102,.14);border-color:rgba(255,209,102,.5);color:#ffd166;}
+.kudos-card{position:relative;padding:14px 15px 12px;border-radius:12px;
+  background:linear-gradient(150deg,rgba(255,209,102,.13),rgba(255,209,102,.04));
+  border:1px solid rgba(255,209,102,.25);box-shadow:0 3px 14px rgba(0,0,0,.25);}
+.kudos-card::before{content:'⭐';position:absolute;top:-9px;left:14px;font-size:17px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}
+.kudos-card .kc-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;margin-top:3px;}
+.kudos-card .kc-av{width:26px;height:26px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.kudos-card .kc-av img{width:100%;height:100%;object-fit:cover;}
+.kudos-card .kc-from{font-size:11px;color:var(--txt2);}
+.kudos-card .kc-from b{color:var(--txt);}
+.kudos-card .kc-to{color:#ffd166;font-weight:700;}
+.kudos-card .kc-text{font-size:13px;line-height:1.45;color:var(--txt);margin-top:2px;}
+.kudos-card .kc-meta{font-size:9px;color:var(--txt3);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.kudos-card .kc-scope{font-size:8.5px;padding:2px 7px;border-radius:999px;background:rgba(255,209,102,.12);color:#ffd166;}
+.kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;opacity:0;transition:opacity .15s;}
+.kudos-card:hover .kc-del{opacity:1;}
+.kudos-card .kc-del:hover{color:var(--danger);}
+.kudos-btn{background:rgba(255,209,102,.16)!important;border-color:rgba(255,209,102,.4)!important;color:#ffd166!important;}
+.kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
+.kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+.kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
@@ -726,6 +764,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .comments-wrap{margin-top:4px;}
 .comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
+/* Reações em comentários */
+.rx-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:center;}
+.rx-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(56,182,255,.08);border:1px solid var(--glass-b);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
+.rx-chip:hover{border-color:var(--accent);}
+.rx-chip.rx-mine{background:rgba(56,182,255,.2);border-color:var(--accent);color:var(--txt);}
+.rx-add{position:relative;font-size:12px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(56,182,255,.06);border:1px solid var(--glass-b);cursor:pointer;color:var(--txt3);}
+.rx-add:hover{border-color:var(--accent);color:var(--txt);}
+.rx-picker{position:absolute;bottom:28px;left:50%;transform:translateX(-50%) scale(.9);display:none;gap:3px;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:999px;padding:5px 8px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:50;transition:transform .12s;}
+.rx-picker.open{display:flex;transform:translateX(-50%) scale(1);}
+.rx-picker span{font-size:16px;cursor:pointer;padding:2px;border-radius:6px;transition:transform .1s;}
+.rx-picker span:hover{transform:scale(1.25);}
 .comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
 .comment-item{display:flex;gap:8px;}
 .comment-avatar{width:28px;height:28px;border-radius:50%;background:var(--glass);
@@ -1322,10 +1371,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   </div>
   <div class="hd-btns">
-    <div id="online-bar" style="display:flex;align-items:center;gap:4px;" title="Usuários online"></div>
+    <div id="online-bar" onclick="openTeamList()" style="display:flex;align-items:center;gap:4px;cursor:pointer;" title="Ver equipe do quadro"></div>
     <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
-      <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
-      <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
+      <div id="header-avatar" onclick="openStatusMenu()" title="Definir meu status" style="display:flex;align-items:center;gap:7px;cursor:pointer;position:relative;">
+        <div style="position:relative;display:flex;align-items:center;">
+          <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
+          <span id="user-status-emoji" style="position:absolute;top:-7px;right:-7px;font-size:11px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));"></span>
+        </div>
+        <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
+      </div>
       <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;" title="Sair">✕</button>
     </div>
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
@@ -1383,6 +1437,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
+  <button class="btn btn-sm" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time" style="color:#ffd166;border-color:rgba(255,209,102,.35);">⭐ Estrelas do Mar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
 </div>
@@ -1432,9 +1487,34 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="lem-add" id="lem-add">
     <div class="lem-add-row">
       <select id="lem-type"></select>
-      <textarea id="lem-text" placeholder="Escreva um lembrete..." rows="1" oninput="updLemBtn()"></textarea>
+      <textarea id="lem-text" placeholder="Escreva um lembrete..." rows="1" oninput="updLemBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addLembrete();}"></textarea>
     </div>
-    <button class="lem-add-btn" id="lem-add-btn" onclick="addLembrete()" disabled>Fixar lembrete</button>
+    <button class="lem-add-btn" id="lem-add-btn" onclick="addLembrete()" disabled>📌 Fixar lembrete</button>
+    <div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:5px;">Enter fixa · Shift+Enter quebra linha</div>
+  </div>
+</div>
+
+<!-- ═══ ESTRELAS DO MAR (Kudos) ═══ -->
+<div class="lem-drawer kudos-drawer" id="kudos-drawer">
+  <div class="lem-hd">
+    <div class="lem-hd-title">⭐ Estrelas do Mar</div>
+    <button class="x-btn" onclick="toggleKudos()">✕</button>
+  </div>
+  <div class="kudos-scope-tabs">
+    <button class="kudos-stab on" id="kstab-squad" onclick="setKudosScope('squad')">🐠 Do Cardume</button>
+    <button class="kudos-stab" id="kstab-geral" onclick="setKudosScope('geral')">🌊 Geral</button>
+  </div>
+  <div class="lem-body" id="kudos-body"></div>
+  <div class="lem-add" id="kudos-add">
+    <div style="font-size:10px;color:var(--txt2);margin-bottom:7px;line-height:1.45;">
+      Reconheça alguém do time! Use <strong style="color:var(--accent);">@</strong> para marcar a pessoa. Veja as regras no <span onclick="openHelp();swHelpTab('kudos');" style="color:var(--cyan);cursor:pointer;text-decoration:underline;">❓ Ajuda</span>.
+    </div>
+    <div class="lem-add-row">
+      <select id="kudos-para" title="Para quem é o reconhecimento"></select>
+    </div>
+    <textarea id="kudos-text" placeholder="Ex.: salvou a daily resolvendo aquele bug tenso! 🙌" rows="2" oninput="updKudosBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}" style="width:100%;margin-top:7px;"></textarea>
+    <button class="lem-add-btn kudos-btn" id="kudos-btn" onclick="addKudos()" disabled style="margin-top:8px;">⭐ Enviar estrela</button>
+    <div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:5px;">Enter envia · Shift+Enter quebra linha</div>
   </div>
 </div>
 
@@ -1808,9 +1888,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </div>
         <div>
           <label style="font-size:10px;color:var(--txt2);font-weight:600;">Mensagem</label>
-          <textarea class="fi" id="lemcfg-text" placeholder="Ex.: revisar os cards de mídia antes da daily de amanhã" style="width:100%;font-size:12px;min-height:64px;resize:vertical;" oninput="_updLemCfgBtn()"></textarea>
+          <textarea class="fi" id="lemcfg-text" placeholder="Ex.: revisar os cards de mídia antes da daily de amanhã" style="width:100%;font-size:12px;min-height:64px;resize:vertical;" oninput="_updLemCfgBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addLembreteCfg();}"></textarea>
         </div>
-        <button class="btn btn-teal" id="lemcfg-btn" onclick="addLembreteCfg()" disabled style="font-size:12px;">📌 Enviar lembrete</button>
+        <button class="btn btn-teal" id="lemcfg-btn" onclick="addLembreteCfg()" disabled style="font-size:13px;font-weight:700;padding:12px 18px;justify-content:center;width:100%;border-radius:10px;box-shadow:0 2px 12px rgba(29,233,182,.15);">📌 Enviar lembrete</button>
+        <div style="font-size:10px;color:var(--txt3);text-align:center;margin-top:-2px;">Enter envia · Shift+Enter quebra linha</div>
       </div>
       <div class="cfg-sec-title" style="font-size:11px;">Lembretes ativos da squad</div>
       <div id="lemcfg-list" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -2034,6 +2115,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swHelpTab('cards')">Cards</div>
     <div class="ag-tab" onclick="swHelpTab('agente')">Agente Ágil</div>
     <div class="ag-tab" onclick="swHelpTab('config')">Configurações</div>
+    <div class="ag-tab" onclick="swHelpTab('comunicacao')">💬 Comunicação</div>
+    <div class="ag-tab" onclick="swHelpTab('kudos')">⭐ Estrelas</div>
     <div class="ag-tab" onclick="swHelpTab('agil')">Conceitos Ágeis</div>
   </div>
   <div style="padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;" id="help-body">
@@ -2128,7 +2211,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.6.1</div>
+<div class="version">v8.7.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2300,6 +2383,7 @@ let links=[];
 let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), text, autor, autorUid, init, ts, target?}
 let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
 let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
+let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
 let _lemSeenTs=0;        // último ts visto (p/ badge de não-lidos)
 let agilCfg={};
 
@@ -2542,6 +2626,10 @@ function fbLoadAll(){
   }
   // Lembretes próprios (privados, por uid) — registra quando o usuário é conhecido
   _listenLembretesProprios();
+  // Lembretes dispensados por este usuário (esconde só pra ele)
+  _listenLembretesDismiss();
+  // Estrelas do Mar (kudos)
+  _listenKudos();
   // Membros inscritos — carrega todos do Firebase
   fbListen('kanban/usuarios', val=>{
     if(!val) return;
@@ -2588,13 +2676,71 @@ function fbLoadAll(){
 // ═══════════════════════════════════════════════════════
 // AUTH
 // ═══════════════════════════════════════════════════════
+// ── Lista de equipe do quadro (read-only, qualquer membro vê) ──
+function openTeamList(){
+  let ov=document.getElementById('team-ov');
+  if(ov){ ov.remove(); return; }
+  ov=document.createElement('div');
+  ov.id='team-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:9200;background:rgba(3,9,18,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:flex-end;padding:64px 16px;';
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+  ov.innerHTML=`<div style="background:rgba(6,22,42,.98);border:1px solid var(--glass-b);border-radius:14px;width:min(360px,92vw);max-height:75vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,.55);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--glass-b);">
+      <div id="team-hd" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--txt);">👥 Equipe do quadro</div>
+      <button class="x-btn" onclick="document.getElementById('team-ov').remove()">✕</button>
+    </div>
+    <div id="team-list" style="overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
+      <div style="font-size:11px;color:var(--txt3);padding:12px;text-align:center;">Carregando equipe…</div>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  const onlineUids=new Set();
+  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence')).then(ps=>{
+    const pv=ps.val()||{}; const now=Date.now();
+    Object.entries(pv).forEach(([uid,u])=>{ if(now-(u.ts||0)<30000) onlineUids.add(uid); });
+  }).catch(()=>{}).finally(()=>{
+    fbGet('kanban/usuarios').then(snap=>{
+      const val=snap.val()||{};
+      const list=document.getElementById('team-list'); if(!list) return;
+      const entries=Object.entries(val).filter(([uid,u])=> u.squads? u.squads[ACTIVE_SQUAD]===true : ((u.inscrito===true||u.inscrito==='true')&&u.init));
+      if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:12px;text-align:center;">Nenhum membro inscrito ainda.</div>'; return; }
+      const roleLabels={membro:'Membro',organizador:'Organizador',po:'PO',adm:'Admin'};
+      const roleCol={membro:'var(--accent)',organizador:'var(--warn)',po:'var(--teal)',adm:'#c084fc'};
+      entries.sort((a,b)=>{
+        const oa=onlineUids.has(a[0])?0:1, ob=onlineUids.has(b[0])?0:1;
+        return oa-ob || String(a[1].nome||'').localeCompare(String(b[1].nome||''));
+      });
+      list.innerHTML=entries.map(([uid,u])=>{
+        const role=u.role||'membro';
+        const on=onlineUids.has(uid);
+        const av=safeUrl(u.foto)?`<img src="${safeUrl(u.foto)}" style="width:100%;height:100%;object-fit:cover;">`:esc((u.init||'?').substring(0,2));
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;background:rgba(56,182,255,.04);">
+          <div style="position:relative;width:30px;height:30px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;">
+            ${av}
+            <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:${on?'var(--teal)':'var(--txt3)'};border:1.5px solid var(--deep);"></div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--txt);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.nome||u.email)} <span style="font-size:9px;color:var(--txt3);">(${esc(u.init||'?')})</span></div>
+            <div style="font-size:9px;color:${on?'var(--teal)':'var(--txt3)'};">${on?'● online':'offline'}</div>
+          </div>
+          <span style="font-size:9px;color:${roleCol[role]||roleCol.membro};border:1px solid ${roleCol[role]||roleCol.membro}55;padding:2px 8px;border-radius:999px;flex-shrink:0;">${roleLabels[role]||role}</span>
+        </div>`;
+      }).join('');
+      const count=entries.length, onCount=entries.filter(([uid])=>onlineUids.has(uid)).length;
+      const hd=document.getElementById('team-hd');
+      if(hd) hd.textContent=`👥 Equipe · ${onCount}/${count} online`;
+    });
+  });
+}
+
 function renderOnline(users){
   const bar=document.getElementById('online-bar'); if(!bar) return;
   bar.innerHTML='';
   if(!users.length) return;
   users.slice(0,6).forEach(u=>{
     const el=document.createElement('div');
-    el.title=u.nome+' (online)';
+    const st=STATUS_MAP[u.status];
+    el.title=u.nome+(st?(' · '+st.label):'')+' (online)';
     el.style.cssText='position:relative;width:24px;height:24px;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);';
     const _f=safeUrl(u.foto);
     if(_f) el.innerHTML=`<img src="${_f}" style="width:100%;height:100%;object-fit:cover;">`;
@@ -2603,9 +2749,68 @@ function renderOnline(users){
     const dot=document.createElement('div');
     dot.style.cssText='position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:var(--teal);border:1px solid var(--deep);';
     el.appendChild(dot);
+    // emoji de status (canto superior direito, fora da foto)
+    if(st){
+      const sb=document.createElement('div');
+      sb.style.cssText='position:absolute;top:-5px;right:-5px;font-size:11px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));';
+      sb.textContent=st.emoji;
+      el.style.overflow='visible';
+      el.appendChild(sb);
+    }
     bar.appendChild(el);
   });
   if(users.length>6){ const more=document.createElement('span'); more.style.cssText='font-size:10px;color:var(--teal);'; more.textContent='+'+( users.length-6); bar.appendChild(more); }
+}
+// Mapa de status de presença
+const STATUS_MAP={
+  '':null,
+  foco:{emoji:'🎧',label:'Foco total'},
+  almoco:{emoji:'🍔',label:'Almoço'},
+  reuniao:{emoji:'📞',label:'Em reunião'},
+  ausente:{emoji:'🌙',label:'Ausente'},
+};
+function setMyStatus(s){
+  window._myStatus = s||'';
+  try{ localStorage.setItem('mare_status', window._myStatus); }catch(e){}
+  _reflectMyStatus();
+  // grava imediatamente
+  if(window._currentUser && window._fbReady){
+    window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
+      {status:window._myStatus,ts:Date.now()});
+  }
+  closeStatusMenu();
+  const st=STATUS_MAP[window._myStatus];
+  if(typeof toast==='function') toast(st?('Status: '+st.emoji+' '+st.label):'Status removido');
+}
+function _reflectMyStatus(){
+  const e=document.getElementById('user-status-emoji'); if(!e) return;
+  const st=STATUS_MAP[window._myStatus||''];
+  e.textContent=st?st.emoji:'';
+}
+function openStatusMenu(){
+  let m=document.getElementById('status-menu');
+  if(m){ m.remove(); return; } // toggle
+  m=document.createElement('div');
+  m.id='status-menu';
+  m.style.cssText='position:absolute;top:46px;right:60px;z-index:9000;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:12px;padding:6px;backdrop-filter:blur(14px);box-shadow:0 8px 28px rgba(0,0,0,.5);min-width:170px;';
+  const opts=[['foco','🎧','Foco total'],['reuniao','📞','Em reunião'],['almoco','🍔','Almoço'],['ausente','🌙','Ausente'],['','✓','Disponível']];
+  m.innerHTML='<div style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);padding:6px 10px 4px;">Meu status</div>'+
+    opts.map(([v,e,l])=>{
+      const active=(window._myStatus||'')===v;
+      return `<div onclick="setMyStatus('${v}')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);${active?'background:rgba(56,182,255,.12);':''}" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='${active?'rgba(56,182,255,.12)':'transparent'}'">
+        <span style="font-size:14px;">${e}</span> ${l} ${active?'<span style="margin-left:auto;color:var(--teal);">●</span>':''}
+      </div>`;
+    }).join('');
+  document.body.appendChild(m);
+  setTimeout(()=>document.addEventListener('click',_closeStatusOnOut),10);
+}
+function _closeStatusOnOut(e){
+  const m=document.getElementById('status-menu');
+  if(m && !m.contains(e.target) && !e.target.closest('#header-avatar')){ closeStatusMenu(); }
+}
+function closeStatusMenu(){
+  const m=document.getElementById('status-menu'); if(m) m.remove();
+  document.removeEventListener('click',_closeStatusOnOut);
 }
 function doSignIn(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
@@ -3452,6 +3657,22 @@ function _listenLembretesProprios(){
     if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
   });
 }
+// ── Dispensar lembrete (esconde só pra este usuário) ──
+function _lemDismissPath(){ const u=window._currentUser; return u? FB+'/lembretes_dismiss/'+u.uid : null; }
+function _listenLembretesDismiss(){
+  const p=_lemDismissPath();
+  if(!p){ setTimeout(_listenLembretesDismiss, 1200); return; }
+  fbListen(p, val=>{
+    lembretesDismiss = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+  });
+}
+function dismissLembrete(id){
+  if(!id) return;
+  if(!lembretesDismiss.includes(id)) lembretesDismiss.push(id);
+  const p=_lemDismissPath(); if(p) fbSet(p, lembretesDismiss);
+  renderLembretes();
+}
 function computeAvisosQuadro(){
   const out=[]; const today=new Date(); today.setHours(0,0,0,0);
   (cards||[]).filter(c=>c&&!c.archived).forEach(c=>{
@@ -3492,6 +3713,8 @@ function _collectLembretes(){
   if(f.po)     list.push(...lembretes.filter(l=>l.tipo==='po' && _verPO(l)));
   if(f.proprio) list.push(...lembretesProprios.map(l=>({...l,tipo:'proprio'})));
   if(f.quadro) list.push(...computeAvisosQuadro());
+  // Remove os que ESTE usuário dispensou (avisos do quadro não são dispensáveis — são derivados)
+  list = list.filter(l => l.tipo==='quadro' || !lembretesDismiss.includes(l.id));
   return { list, f };
 }
 function toggleLembretes(){
@@ -3528,8 +3751,16 @@ function renderLembretes(){
     const rot=rots[i%rots.length];
     let delBtn='';
     if(l.tipo!=='quadro'){
-      const mine = l.tipo==='proprio' || (window._currentUser && l.autorUid===window._currentUser.uid) || window._currentUserRole==='adm';
-      if(mine) delBtn=`<button class="pi-del" onclick="delLembrete('${l.tipo}','${esc(l.id||'')}')" title="Remover">✕</button>`;
+      const isOwner = l.tipo==='proprio' || (window._currentUser && l.autorUid===window._currentUser.uid);
+      const canDelete = isOwner || window._currentUserRole==='adm';
+      let btns='';
+      if(l.tipo!=='proprio'){
+        btns+=`<button class="pi-dismiss" onclick="event.stopPropagation();dismissLembrete('${esc(l.id||'')}')" title="Dispensar (só pra você)">✕</button>`;
+      }
+      if(canDelete){
+        btns+=`<button class="pi-del" onclick="event.stopPropagation();delLembrete('${l.tipo}','${esc(l.id||'')}')" title="Excluir para todos">🗑</button>`;
+      }
+      delBtn=btns;
     }
     let meta='';
     if(l.tipo==='quadro'){
@@ -3666,6 +3897,131 @@ function toast(msg){
   if(typeof showToast==='function'){ showToast(msg); return; }
   if(typeof window._toast==='function'){ window._toast(msg); return; }
   console.log('[lembrete]',msg);
+}
+
+// ═══════════════════════════════════════════════════════
+// ⭐ ESTRELAS DO MAR (Kudos / reconhecimento)
+// ═══════════════════════════════════════════════════════
+// Dados: kanban/squads/{squad}/kudos (do Cardume) e kanban/painel/kudos_geral (Geral)
+//   {id, fromUid, fromNome, fromInit, fromFoto, toInit, toNome, texto, scope, ts}
+let kudosSquad=[];   // do cardume (escopo da squad)
+let kudosGeral=[];   // geral (entre squads)
+let _kudosScope='squad';
+
+function _listenKudos(){
+  if(!window._fbReady){ setTimeout(_listenKudos, 1000); return; }
+  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'),snap=>{
+    const val=snap.val();
+    kudosSquad = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    updKudosBadge();
+    if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
+  });
+  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{
+    const val=snap.val();
+    kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    updKudosBadge();
+    if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
+  });
+}
+
+function toggleKudos(){
+  const dr=document.getElementById('kudos-drawer');
+  const wasOpen=dr.classList.contains('open');
+  // fecha o drawer de lembretes se estiver aberto (ambos ocupam a tela)
+  document.getElementById('lem-drawer')?.classList.remove('open');
+  dr.classList.toggle('open');
+  if(!wasOpen){ _populateKudosPara(); renderKudos(); try{ localStorage.setItem('mare_kudos_seen', Date.now()); }catch(e){} updKudosBadge(); }
+}
+function openKudos(){ const dr=document.getElementById('kudos-drawer'); if(!dr.classList.contains('open')) toggleKudos(); }
+function setKudosScope(s){
+  _kudosScope=s;
+  document.getElementById('kstab-squad')?.classList.toggle('on',s==='squad');
+  document.getElementById('kstab-geral')?.classList.toggle('on',s==='geral');
+  renderKudos();
+}
+function _populateKudosPara(){
+  const sel=document.getElementById('kudos-para'); if(!sel) return;
+  const opts=['<option value="">Para quem? (escolha)</option>'];
+  (members||[]).filter(m=>m.init && m.uid!==window._currentUser?.uid).forEach(m=>{
+    opts.push(`<option value="${esc(m.init)}">${esc(m.name||m.init)}</option>`);
+  });
+  sel.innerHTML=opts.join('');
+}
+function updKudosBtn(){
+  const para=document.getElementById('kudos-para')?.value;
+  const txt=document.getElementById('kudos-text')?.value.trim();
+  const btn=document.getElementById('kudos-btn'); if(btn) btn.disabled=!(para&&txt);
+  const ta=document.getElementById('kudos-text');
+  if(ta){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,110)+'px'; }
+}
+function renderKudos(){
+  const body=document.getElementById('kudos-body'); if(!body) return;
+  const list=( _kudosScope==='geral' ? kudosGeral : kudosSquad )
+    .slice().sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  if(!list.length){
+    body.innerHTML=`<div class="kudos-empty">⭐ Nenhuma estrela ${_kudosScope==='geral'?'geral':'do cardume'} ainda.<br>Seja o primeiro a reconhecer alguém do time!</div>`;
+    return;
+  }
+  body.innerHTML=list.map(k=>{
+    const av=k.fromFoto? `<img src="${safeUrl(k.fromFoto)||''}">` : esc((k.fromInit||'?').substring(0,2));
+    const quando=k.ts? new Date(k.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const podeApagar = k.fromUid===window._currentUser?.uid || window._currentUserRole==='adm';
+    const del = podeApagar? `<button class="kc-del" onclick="delKudos('${esc(k.id)}','${k.scope||'squad'}')" title="Remover">🗑</button>`:'<span></span>';
+    return `<div class="kudos-card">
+      <div class="kc-head">
+        <div class="kc-av">${av}</div>
+        <div class="kc-from"><b>${esc(k.fromNome||k.fromInit||'?')}</b> reconheceu <span class="kc-to">@${esc(k.toInit||'')}</span>${k.toNome?' ('+esc(k.toNome)+')':''}</div>
+      </div>
+      <div class="kc-text">${esc(k.texto||'')}</div>
+      <div class="kc-meta"><span class="kc-scope">${k.scope==='geral'?'🌊 Geral':'🐠 Cardume'}</span><span>${quando}</span>${del}</div>
+    </div>`;
+  }).join('');
+}
+function addKudos(){
+  const para=document.getElementById('kudos-para').value;
+  const texto=document.getElementById('kudos-text').value.trim();
+  if(!para||!texto) return;
+  const u=window._currentUser; if(!u){ toast('Faça login para enviar estrelas.'); return; }
+  const m=members.find(x=>x.init===para);
+  const obj={ id:'k'+Date.now()+Math.random().toString(36).slice(2,6),
+    fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:window._currentUserInit||'?', fromFoto:u.photoURL||'',
+    toInit:para, toNome:m?.name||'', texto, scope:_kudosScope, ts:new Date().toISOString() };
+  if(_kudosScope==='geral'){
+    kudosGeral.push(obj);
+    window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(e=>toast('Erro: '+e.message));
+  } else {
+    kudosSquad.push(obj);
+    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(e=>toast('Erro: '+e.message));
+  }
+  // Notifica o agraciado (reaproveita o sistema de notificações)
+  const toUid=getUidByInit(para);
+  if(toUid && toUid!==u.uid){
+    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
+  }
+  document.getElementById('kudos-text').value='';
+  document.getElementById('kudos-para').value='';
+  updKudosBtn();
+  renderKudos();
+  toast('⭐ Estrela enviada para '+(m?.name?.split(' ')[0]||para)+'!');
+}
+function delKudos(id, scope){
+  if(scope==='geral'){
+    kudosGeral=kudosGeral.filter(k=>k.id!==id);
+    window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
+  } else {
+    kudosSquad=kudosSquad.filter(k=>k.id!==id);
+    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(()=>{});
+  }
+  renderKudos();
+}
+function updKudosBadge(){
+  const btn=document.querySelector('[onclick="openKudos()"]'); if(!btn) return;
+  let seen=0; try{ seen=parseInt(localStorage.getItem('mare_kudos_seen')||'0'); }catch(e){}
+  const novos=[...kudosSquad,...kudosGeral].filter(k=>{
+    const t=k.ts?new Date(k.ts).getTime():0;
+    return t>seen && k.fromUid!==window._currentUser?.uid;
+  }).length;
+  btn.textContent = novos>0 ? `⭐ Estrelas do Mar (${novos>9?'9+':novos})` : '⭐ Estrelas do Mar';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -4869,10 +5225,25 @@ const HELP_CONTENT = {
     { icon:'👤', title:'Product Owner (PO)', text:'Responsável por maximizar o valor entregue pelo time. No Maré Digital, o PO gerencia configurações, acessa o Agente Ágil e usa o campo Insights do PO em cada card para descrever objetivo e critério de aceite (formato SMART).' },
     { icon:'🏊', title:'Papéis no board', text:'Convidado: só leitura. Membro: cria e edita cards. Organizador: gerencia colunas e tags. PO: acesso total incluindo Agente Ágil, automações e configurações. ADM: acesso irrestrito a todos os squads.' },
   ],
+  comunicacao: [
+    { icon:'📌', title:'Quadro de lembretes', text:'Abra a aba 📌 Lembretes na lateral direita. São post-its coloridos por tipo: 🏛️ Gestão (avisos globais, aparecem em todos os quadros), 📋 PO/Org (avisos da squad, podem ser direcionados), ✏️ Próprios (privados, só você vê) e 🌊 Quadro (alertas automáticos dos cards). Os filtros no topo ligam/desligam cada tipo; o de Quadro vem desligado por padrão.' },
+    { icon:'✕', title:'Dispensar vs. excluir lembrete', text:'O ✕ em um lembrete DISPENSA ele só pra você — some da sua tela mas continua visível para os outros. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Lembretes próprios só têm o 🗑, pois já são privados.' },
+    { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
+    { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
+    { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
+    { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
+    { icon:'👥', title:'Equipe do quadro', text:'Clique nos avatares de usuários online (topo direito) para abrir a lista completa da equipe do squad: quem está online, papel de cada um (Membro, Organizador, PO, Admin) e iniciais. Útil para saber quem participa do quadro.' },
+  ],
+  kudos: [
+    { icon:'⭐', title:'O que são as Estrelas do Mar', text:'É o mural de reconhecimento do time. Quando alguém faz algo digno de elogio — resolveu um bug tenso, salvou uma entrega, ajudou um colega — você manda uma Estrela pública pra essa pessoa. Levanta a moral e torna o bom trabalho visível. Abra pelo botão ⭐ Estrelas do Mar na toolbar.' },
+    { icon:'🐠', title:'Do Cardume vs. 🌊 Geral', text:'Estrelas "Do Cardume" ficam só dentro da sua squad — para reconhecimentos do dia a dia do time. Estrelas "Geral" são compartilhadas entre todas as squads — para reconhecimentos que merecem visibilidade ampla, como uma entrega que ajudou a empresa toda.' },
+    { icon:'🙌', title:'Como enviar', text:'Escolha a aba (Cardume ou Geral), selecione a pessoa em "Para quem?", escreva o reconhecimento e envie. A pessoa recebe uma notificação 🔔 avisando que ganhou uma Estrela. Enter envia, Shift+Enter quebra linha.' },
+    { icon:'📜', title:'Regras de convivência', text:'As Estrelas são públicas e permanentes (até serem removidas). Use para reconhecer de verdade, não para brincadeiras internas que excluam outros. Reconheça pessoas, não a si mesmo. Quem enviou e os admins podem remover uma Estrela se necessário. Mantenha o respeito: é um espaço de cultura positiva.' },
+  ],
 }
 function openHelp(tab){ swHelpTab(tab||'board'); document.getElementById('help-ov').classList.add('open'); }
 function swHelpTab(tab){
-  const TABS=['board','cards','agente','config','agil'];
+  const TABS=['board','cards','agente','config','comunicacao','kudos','agil'];
   document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   const body=document.getElementById('help-body');
   const items=HELP_CONTENT[tab]||[];
@@ -5099,6 +5470,7 @@ let _notifListener = null;
 const NOTIF_ICONS = {
   mention:    '💬',
   assigned:   '👤',
+  kudos:      '⭐',
   unblocked:  '✅',
   due_today:  '📅',
   due_soon:   '⏰',
@@ -6585,8 +6957,10 @@ _onFbReady(()=>{
   window.addEventListener('auth-change', e=>{
     const user=e.detail;
     if(user&&window._fbReady){
+      try{ window._myStatus = localStorage.getItem('mare_status')||''; }catch(_){ window._myStatus=window._myStatus||''; }
+      _reflectMyStatus();
       const pRef=window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+user.uid);
-      window._set(pRef,{nome:user.displayName||user.email,foto:user.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD,ts:Date.now()});
+      window._set(pRef,{nome:user.displayName||user.email,foto:user.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD,status:window._myStatus||'',ts:Date.now()});
       // Remove ao fechar
       window.addEventListener('beforeunload',()=>window._remove(pRef));
     }
@@ -6610,7 +6984,7 @@ _onFbReady(()=>{
     if(window._currentUser && window._fbReady)
       window._update(
         window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
-        {ts:Date.now()}
+        {ts:Date.now(),status:window._myStatus||''}
       );
   }, 15000);
 });
@@ -6858,6 +7232,7 @@ function renderCommentList(comments){
       '<div class="comment-bubble">'+
         '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong> · '+dt+'</div>'+
         '<div class="comment-text">'+textHtml+'</div>'+
+        _renderReactions(c)+
         (canDel?'<div class="comment-actions"><button class="comment-action-btn">Excluir</button></div>':'')
       +'</div>';
     if(canDel){
@@ -6926,6 +7301,35 @@ function deleteComment(cid){
   delete cardObj.comments[cid];
   fbSaveAll();
   loadComments(_commentCardId);
+}
+
+// ── Reações rápidas em comentários ──
+const REACT_EMOJIS=['👍','👀','❤️','✅','🎉'];
+function toggleReaction(cid, emoji){
+  const cardObj=cards.find(c=>c.id===_commentCardId);
+  if(!cardObj||!cardObj.comments||!cardObj.comments[cid]) return;
+  const uid=window._currentUser?.uid; if(!uid) return;
+  const c=cardObj.comments[cid];
+  if(!c.reactions) c.reactions={};
+  if(c.reactions[uid]===emoji){ delete c.reactions[uid]; } // toggle off
+  else { c.reactions[uid]=emoji; }
+  fbSaveAll();
+  loadComments(_commentCardId);
+}
+function _renderReactions(c){
+  const r=c.reactions||{};
+  const counts={};
+  Object.values(r).forEach(e=>{ counts[e]=(counts[e]||0)+1; });
+  const myUid=window._currentUser?.uid;
+  const myReact=r[myUid];
+  let chips=Object.entries(counts).map(([e,n])=>{
+    const mine=myReact===e;
+    return `<span class="rx-chip${mine?' rx-mine':''}" onclick="toggleReaction('${esc(c.id)}','${e}')" title="${n} reaç${n>1?'ões':'ão'}">${e} ${n}</span>`;
+  }).join('');
+  // botão "+" com picker
+  const picker=REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
+  chips+=`<span class="rx-add" onclick="event.stopPropagation();this.querySelector('.rx-picker').classList.toggle('open')">＋<span class="rx-picker">${picker}</span></span>`;
+  return `<div class="rx-row">${chips}</div>`;
 }
 
 // ── @card mention in textareas ────────────────────────────────────────
