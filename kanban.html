@@ -348,6 +348,72 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .dots span{animation:blink 1.2s infinite;}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ═══ QUADRO DE LEMBRETES (drawer lateral direito) ═══ */
+.lem-tab{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:55;
+  background:rgba(37,99,201,.92);border:1px solid rgba(56,182,255,.45);border-right:none;
+  border-radius:12px 0 0 12px;color:#fff;cursor:pointer;backdrop-filter:blur(14px);
+  box-shadow:-4px 0 24px rgba(37,99,201,.4);transition:all .2s;
+  writing-mode:vertical-rl;text-orientation:mixed;padding:16px 9px;font-family:"Syne",sans-serif;
+  font-weight:700;font-size:13px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+.lem-tab:hover{background:rgba(37,99,201,1);padding-right:13px;}
+.lem-tab .lem-badge{writing-mode:horizontal-tb;background:var(--danger);color:#fff;font-size:10px;
+  font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;
+  justify-content:center;padding:0 4px;box-shadow:0 2px 8px rgba(255,107,107,.5);}
+.lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
+  background:linear-gradient(160deg,rgba(6,22,42,.98),rgba(3,13,26,.99));
+  border-left:1px solid rgba(56,182,255,.25);box-shadow:-12px 0 48px rgba(0,0,0,.55);
+  backdrop-filter:blur(18px);transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;}
+.lem-drawer.open{transform:translateX(0);}
+.lem-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;
+  border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.lem-hd-title{font-family:"Syne",sans-serif;font-weight:800;font-size:18px;color:var(--txt);display:flex;align-items:center;gap:8px;}
+.lem-filters{display:flex;flex-wrap:wrap;gap:7px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.lem-fchk{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;
+  padding:4px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass-h);
+  transition:all .15s;user-select:none;}
+.lem-fchk:hover{border-color:var(--accent);}
+.lem-fchk input{accent-color:var(--accent);cursor:pointer;margin:0;}
+.lem-fchk .fdot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.lem-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;}
+.lem-body::-webkit-scrollbar{width:6px;}
+.lem-body::-webkit-scrollbar-thumb{background:rgba(56,182,255,.25);border-radius:3px;}
+.postit{position:relative;padding:13px 14px 12px;border-radius:3px;font-family:"DM Sans",sans-serif;
+  box-shadow:0 4px 14px rgba(0,0,0,.35),0 1px 3px rgba(0,0,0,.4);
+  transform:rotate(var(--rot,-.6deg));transition:transform .18s,box-shadow .18s;
+  border-left:4px solid rgba(0,0,0,.18);}
+.postit:hover{transform:rotate(0deg) scale(1.015);box-shadow:0 8px 22px rgba(0,0,0,.45);}
+.postit .pi-type{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.85;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.postit .pi-text{font-size:13px;line-height:1.42;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
+.postit .pi-meta{font-size:9.5px;margin-top:7px;opacity:.62;color:#1a1208;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.postit .pi-del{position:absolute;top:6px;right:7px;width:18px;height:18px;border-radius:50%;border:none;
+  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:11px;line-height:1;
+  display:none;align-items:center;justify-content:center;}
+.postit:hover .pi-del{display:flex;}
+.postit .pi-del:hover{background:rgba(0,0,0,.25);color:#000;}
+.postit .pi-link{font-size:10px;margin-top:6px;color:#1a1208;font-weight:700;opacity:.7;cursor:pointer;text-decoration:underline;}
+/* paletas post-it */
+.pi-gestao{background:linear-gradient(135deg,#e2c4ff,#d4a9f5);border-left-color:#9650dc;}
+.pi-gestao .pi-type{color:#5a1d8f;}
+.pi-po{background:linear-gradient(135deg,#bfe3ff,#a3d4f5);border-left-color:#2563c9;}
+.pi-po .pi-type{color:#0d4a8f;}
+.pi-proprio{background:linear-gradient(135deg,#bff5e6,#a3f0d4);border-left-color:#1de9b6;}
+.pi-proprio .pi-type{color:#0a7a5a;}
+.pi-quadro{background:linear-gradient(135deg,#ffe1a8,#ffd180);border-left-color:#ff9800;}
+.pi-quadro .pi-type{color:#a85a00;}
+.pi-quadro.pi-urgent{background:linear-gradient(135deg,#ffc4b8,#ffb3a3);border-left-color:#ff6b6b;}
+.pi-quadro.pi-urgent .pi-type{color:#c0341f;}
+.lem-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+.lem-add{flex-shrink:0;border-top:1px solid var(--glass-b);padding:12px 18px 16px;background:rgba(3,13,26,.6);}
+.lem-add-row{display:flex;gap:8px;margin-bottom:8px;}
+.lem-add select,.lem-add textarea{font-family:"DM Sans",sans-serif;background:var(--glass);
+  border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);font-size:12px;padding:8px 10px;}
+.lem-add select{flex-shrink:0;cursor:pointer;}
+.lem-add textarea{flex:1;resize:none;min-height:38px;}
+.lem-add-btn{width:100%;padding:9px;font-family:"Syne",sans-serif;font-weight:700;font-size:12px;
+  background:rgba(37,99,201,.9);border:1px solid rgba(56,182,255,.45);border-radius:8px;color:#fff;cursor:pointer;transition:all .2s;}
+.lem-add-btn:hover{background:rgba(37,99,201,1);}
+.lem-add-btn:disabled{opacity:.4;cursor:not-allowed;}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
@@ -1346,6 +1412,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="fab-btn" onclick="openAgent()">🤖 Agente Ágil</button>
 </div>
 
+<!-- ═══ QUADRO DE LEMBRETES ═══ -->
+<button class="lem-tab" id="lem-tab" onclick="toggleLembretes()" title="Quadro de lembretes">
+  📌 Lembretes
+  <span class="lem-badge" id="lem-badge" style="display:none;">0</span>
+</button>
+<div class="lem-drawer" id="lem-drawer">
+  <div class="lem-hd">
+    <div class="lem-hd-title">📌 Lembretes</div>
+    <button class="x-btn" onclick="toggleLembretes()">✕</button>
+  </div>
+  <div class="lem-filters" id="lem-filters">
+    <label class="lem-fchk"><input type="checkbox" id="lf-gestao" checked onchange="renderLembretes()"><span class="fdot" style="background:#9650dc;"></span>Gestão</label>
+    <label class="lem-fchk"><input type="checkbox" id="lf-po" checked onchange="renderLembretes()"><span class="fdot" style="background:#2563c9;"></span>PO/Org</label>
+    <label class="lem-fchk"><input type="checkbox" id="lf-proprio" checked onchange="renderLembretes()"><span class="fdot" style="background:#1de9b6;"></span>Próprios</label>
+    <label class="lem-fchk"><input type="checkbox" id="lf-quadro" onchange="renderLembretes()"><span class="fdot" style="background:#ff9800;"></span>Quadro</label>
+  </div>
+  <div class="lem-body" id="lem-body"></div>
+  <div class="lem-add" id="lem-add">
+    <div class="lem-add-row">
+      <select id="lem-type"></select>
+      <textarea id="lem-text" placeholder="Escreva um lembrete..." rows="1" oninput="updLemBtn()"></textarea>
+    </div>
+    <button class="lem-add-btn" id="lem-add-btn" onclick="addLembrete()" disabled>Fixar lembrete</button>
+  </div>
+</div>
+
 <!-- AGENTE ÁGIL -->
 <div class="ov" id="ag-ov">
 <div class="panel ag-panel">
@@ -1616,6 +1708,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="ag-tabs" id="cfg-tabs">
     <div class="ag-tab on" onclick="swCfgTab('agil')">Ágil</div>
     <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
+    <div class="ag-tab" onclick="swCfgTab('lembretes')">📌 Lembretes</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
     <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
@@ -1701,6 +1794,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
       <p style="font-size:11px;color:var(--txt3);margin-top:12px;">O PO pode alterar o papel de cada usuário ou convidar alguém pelo email.</p>
     </div>
+
+    <!-- ABA LEMBRETES -->
+    <div class="tab-c" id="cfgtab-lembretes">
+      <div class="cfg-sec-title">📌 Lembretes direcionados</div>
+      <p style="font-size:11px;color:var(--txt3);margin-bottom:12px;">PO e organizador criam lembretes para um membro específico ou para a squad inteira. Eles aparecem no quadro de lembretes (filtro PO/Org) de quem for o destinatário.</p>
+      <div id="lemcfg-form" style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+        <div class="frow" style="gap:8px;">
+          <div style="flex:1;">
+            <label style="font-size:10px;color:var(--txt2);font-weight:600;">Destinatário</label>
+            <select class="fi" id="lemcfg-target" style="width:100%;font-size:12px;"></select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--txt2);font-weight:600;">Mensagem</label>
+          <textarea class="fi" id="lemcfg-text" placeholder="Ex.: revisar os cards de mídia antes da daily de amanhã" style="width:100%;font-size:12px;min-height:64px;resize:vertical;" oninput="_updLemCfgBtn()"></textarea>
+        </div>
+        <button class="btn btn-teal" id="lemcfg-btn" onclick="addLembreteCfg()" disabled style="font-size:12px;">📌 Enviar lembrete</button>
+      </div>
+      <div class="cfg-sec-title" style="font-size:11px;">Lembretes ativos da squad</div>
+      <div id="lemcfg-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
 
     <!-- ABA TAGS -->
     <div class="tab-c" id="cfgtab-tags">
@@ -2013,7 +2128,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.4.0</div>
+<div class="version">v8.6.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2181,6 +2296,11 @@ let editingId=null;
 let currentQL=null; // 'recorrentes' | 'modelos'
 let qlItems={ recorrentes:[], modelos:[] };
 let links=[];
+// ═══ LEMBRETES ═══ (manuais persistidos no Firebase; quadro = derivado dos cards)
+let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), text, autor, autorUid, init, ts, target?}
+let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
+let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
+let _lemSeenTs=0;        // último ts visto (p/ badge de não-lidos)
 let agilCfg={};
 
 // ═══════════════════════════════════════════════════════
@@ -2405,6 +2525,23 @@ function fbLoadAll(){
     if(val) links=Array.isArray(val)?val:Object.values(val);
     if(document.getElementById('links-ov')?.classList.contains('open')) renderLinksBody();
   });
+  // Lembretes compartilhados (PO / organizador, escopo do squad)
+  fbListen(FB+'/lembretes',val=>{
+    lembretes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    updLemBadge(); 
+    if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+  });
+  // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
+  if(window._fbReady){
+    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+      const val=snap.val();
+      lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+      updLemBadge();
+      if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+    });
+  }
+  // Lembretes próprios (privados, por uid) — registra quando o usuário é conhecido
+  _listenLembretesProprios();
   // Membros inscritos — carrega todos do Firebase
   fbListen('kanban/usuarios', val=>{
     if(!val) return;
@@ -3288,6 +3425,248 @@ function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
 function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov'); openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }
 
 // ═══════════════════════════════════════════════════════
+// QUADRO DE LEMBRETES (post-its)
+// ═══════════════════════════════════════════════════════
+const LEM_TIPOS = {
+  gestao:  { label:'Gestão',        cls:'pi-gestao',  icon:'🏛', emoji:'🏛️' },
+  po:      { label:'PO / Organizador', cls:'pi-po',   icon:'📋', emoji:'📋' },
+  proprio: { label:'Próprio',       cls:'pi-proprio', icon:'✏️', emoji:'✏️' },
+  quadro:  { label:'Quadro',        cls:'pi-quadro',  icon:'🌊', emoji:'🌊' },
+};
+function _canPostTipo(tipo){
+  const r=window._currentUserRole||'convidado';
+  if(tipo==='proprio') return true;
+  if(tipo==='gestao') return r==='adm';
+  if(tipo==='po') return r==='po'||r==='organizador'||r==='adm';
+  return false;
+}
+function _lemPropPath(){ const u=window._currentUser; return u? FB+'/lembretes_prop/'+u.uid : null; }
+function _listenLembretesProprios(){
+  const p=_lemPropPath();
+  if(!p){ setTimeout(_listenLembretesProprios, 1200); return; }
+  fbListen(p, val=>{
+    lembretesProprios = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    updLemBadge();
+    if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+  });
+}
+function computeAvisosQuadro(){
+  const out=[]; const today=new Date(); today.setHours(0,0,0,0);
+  (cards||[]).filter(c=>c&&!c.archived).forEach(c=>{
+    const titulo=c.title||'(sem título)';
+    if(c.col==='blocker'){
+      out.push({tipo:'quadro', urgent:true, text:`🚧 Card bloqueado: "${titulo}"`, cardId:c.id, sub:'impedimento ativo', ts:c.editedAt||''});
+    }
+    if(c.riscos?.length && c.col!=='done'){
+      out.push({tipo:'quadro', urgent:true, text:`⚠ Risco mapeado: "${titulo}" (${c.riscos.length})`, cardId:c.id, sub:(typeof c.riscos[0]==='string'?c.riscos[0].substring(0,60):''), ts:c.editedAt||''});
+    }
+    if(c.due && c.col!=='done'){
+      const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
+      const diff=Math.round((d-today)/86400000);
+      if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${Math.abs(diff)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
+      else if(diff===0) out.push({tipo:'quadro', urgent:true, text:`⚡ Vence hoje: "${titulo}"`, cardId:c.id, sub:'prazo é hoje', ts:c.due});
+      else if(diff<=2) out.push({tipo:'quadro', urgent:false, text:`📅 Vence em ${diff}d: "${titulo}"`, cardId:c.id, sub:'prazo próximo', ts:c.due});
+    }
+    if(c.col==='done' && c.doneAt){
+      const dd=new Date(c.doneAt); const ageH=(Date.now()-dd.getTime())/3600000;
+      if(ageH<=48) out.push({tipo:'quadro', urgent:false, text:`✅ Resolvido: "${titulo}"`, cardId:c.id, sub:'concluído recentemente', ts:c.doneAt});
+    }
+  });
+  return out.sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || String(b.ts).localeCompare(String(a.ts)));
+}
+function _collectLembretes(){
+  const f={ gestao:document.getElementById('lf-gestao')?.checked,
+            po:document.getElementById('lf-po')?.checked,
+            proprio:document.getElementById('lf-proprio')?.checked,
+            quadro:document.getElementById('lf-quadro')?.checked };
+  const myUid=window._currentUser?.uid;
+  const myInit=window._currentUserInit;
+  // Mostra um lembrete de PO direcionado? (target: 'all' | uid | init)
+  const _verPO=(l)=>{ const tg=l.target; if(!tg||tg==='all') return true; return tg===myUid || tg===myInit; };
+  let list=[];
+  // GESTÃO: global (mais avisos de gestão legados que ainda estejam no nó do squad)
+  if(f.gestao){ list.push(...lembretesGestao.map(l=>({...l,tipo:'gestao'})));
+                list.push(...lembretes.filter(l=>l.tipo==='gestao')); }
+  if(f.po)     list.push(...lembretes.filter(l=>l.tipo==='po' && _verPO(l)));
+  if(f.proprio) list.push(...lembretesProprios.map(l=>({...l,tipo:'proprio'})));
+  if(f.quadro) list.push(...computeAvisosQuadro());
+  return { list, f };
+}
+function toggleLembretes(){
+  const dr=document.getElementById('lem-drawer');
+  const wasOpen=dr.classList.contains('open');
+  dr.classList.toggle('open');
+  if(!wasOpen){
+    _populateLemTypeSelect();
+    renderLembretes();
+    _lemSeenTs=Date.now();
+    updLemBadge();
+  }
+}
+function _populateLemTypeSelect(){
+  const sel=document.getElementById('lem-type'); if(!sel) return;
+  const opts=[];
+  // Gestão NÃO é criada aqui — é global (via painel). PO/org cria direcionados na config.
+  if(_canPostTipo('po')) opts.push(`<option value="po">📋 PO/Org (todos)</option>`);
+  opts.push(`<option value="proprio" selected>✏️ Próprio</option>`);
+  sel.innerHTML=opts.join('');
+  sel.value='proprio';
+}
+function renderLembretes(){
+  const body=document.getElementById('lem-body'); if(!body) return;
+  const { list } = _collectLembretes();
+  if(!list.length){
+    body.innerHTML=`<div class="lem-empty">📭 Nenhum lembrete por aqui.<br>Marque mais filtros acima ou fixe um lembrete abaixo.</div>`;
+    return;
+  }
+  const rots=[-.8,.6,-.4,.9,-.6,.5,-1,.7];
+  body.innerHTML=list.map((l,i)=>{
+    const t=LEM_TIPOS[l.tipo]||LEM_TIPOS.proprio;
+    const urgent=l.tipo==='quadro'&&l.urgent?' pi-urgent':'';
+    const rot=rots[i%rots.length];
+    let delBtn='';
+    if(l.tipo!=='quadro'){
+      const mine = l.tipo==='proprio' || (window._currentUser && l.autorUid===window._currentUser.uid) || window._currentUserRole==='adm';
+      if(mine) delBtn=`<button class="pi-del" onclick="delLembrete('${l.tipo}','${esc(l.id||'')}')" title="Remover">✕</button>`;
+    }
+    let meta='';
+    if(l.tipo==='quadro'){
+      meta=`<div class="pi-meta"><span>${esc(l.sub||'')}</span><span>${l.cardId?'ver card →':''}</span></div>`;
+    } else {
+      const quando=l.ts? new Date(l.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
+      // PO direcionado: mostra "→ para Você" ou "→ todos"
+      let alvo='';
+      if(l.tipo==='po' && l.target && l.target!=='all'){
+        const eu = l.target===window._currentUser?.uid || l.target===window._currentUserInit;
+        const nome = eu ? 'você' : (members.find(m=>m.uid===l.target||m.init===l.target)?.name?.split(' ')[0] || l.targetLabel || 'alguém');
+        alvo=` · 🎯 ${esc(nome)}`;
+      }
+      meta=`<div class="pi-meta"><span>${esc(l.autor||l.init||'eu')}${alvo}</span><span>${quando}</span></div>`;
+    }
+    const clickAttr = (l.tipo==='quadro'&&l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard('${esc(l.cardId)}')"` : ` style="--rot:${rot}deg;"`;
+    return `<div class="postit ${t.cls}${urgent}"${clickAttr}>
+      ${delBtn}
+      <div class="pi-type">${t.emoji} ${t.label}</div>
+      <div class="pi-text">${esc(l.text||'')}</div>
+      ${meta}
+    </div>`;
+  }).join('');
+}
+function _lemGoCard(cardId){
+  const card=cards.find(c=>c.id===cardId); if(!card) return;
+  toggleLembretes();
+  if(typeof openCard==='function'){ setTimeout(()=>openCard(cardId),120); }
+}
+function updLemBtn(){
+  const txt=document.getElementById('lem-text')?.value.trim();
+  const btn=document.getElementById('lem-add-btn'); if(btn) btn.disabled=!txt;
+  const ta=document.getElementById('lem-text');
+  if(ta){ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,120)+'px'; }
+}
+function addLembrete(){
+  const tipo=document.getElementById('lem-type').value;
+  const text=document.getElementById('lem-text').value.trim();
+  if(!text) return;
+  if(!_canPostTipo(tipo)){ toast('Você não tem permissão para postar avisos de '+(LEM_TIPOS[tipo]?.label||tipo)); return; }
+  const u=window._currentUser;
+  const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
+    tipo, text, autor:u?.displayName||'?', autorUid:u?.uid||'', init:window._currentUserInit||'', ts:new Date().toISOString() };
+  if(tipo==='proprio'){
+    lembretesProprios.push(obj);
+    const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+  } else {
+    lembretes.push(obj);
+    fbSet(FB+'/lembretes', lembretes);
+  }
+  document.getElementById('lem-text').value='';
+  updLemBtn();
+  const chk=document.getElementById('lf-'+tipo); if(chk&&!chk.checked) chk.checked=true;
+  renderLembretes();
+  toast('📌 Lembrete fixado');
+}
+function delLembrete(tipo, id){
+  if(tipo==='proprio'){
+    lembretesProprios=lembretesProprios.filter(l=>l.id!==id);
+    const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+  } else if(tipo==='gestao'){
+    lembretesGestao=lembretesGestao.filter(l=>l.id!==id);
+    if(window._fbReady) window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), lembretesGestao).catch(()=>{});
+  } else {
+    lembretes=lembretes.filter(l=>l.id!==id);
+    fbSet(FB+'/lembretes', lembretes);
+  }
+  renderLembretes();
+}
+function updLemBadge(){
+  const badge=document.getElementById('lem-badge'); if(!badge) return;
+  const all=[...lembretes, ...lembretesProprios, ...lembretesGestao];
+  const novos=all.filter(l=>{ const t=l.ts?new Date(l.ts).getTime():0; return t>_lemSeenTs; }).length;
+  if(novos>0){ badge.textContent=novos>9?'9+':novos; badge.style.display=''; }
+  else badge.style.display='none';
+}
+
+// ── CONFIG → LEMBRETES (PO direciona p/ usuário ou squad) ──
+function _canManageLemCfg(){ const r=window._currentUserRole; return r==='po'||r==='organizador'||r==='adm'; }
+function renderLemCfg(){
+  // popula destinatários
+  const sel=document.getElementById('lemcfg-target');
+  if(sel){
+    const opts=[`<option value="all">👥 Toda a squad</option>`];
+    members.filter(m=>m.init).forEach(m=>{
+      opts.push(`<option value="${esc(m.uid||m.init)}">${esc(m.name||m.init)}</option>`);
+    });
+    sel.innerHTML=opts.join('');
+  }
+  // lista lembretes PO ativos da squad
+  const list=document.getElementById('lemcfg-list'); if(!list) return;
+  const po=lembretes.filter(l=>l.tipo==='po');
+  if(!po.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum lembrete de PO ativo nesta squad.</div>'; return; }
+  list.innerHTML=po.sort((a,b)=>String(b.ts).localeCompare(String(a.ts))).map(l=>{
+    let alvo='👥 Toda a squad';
+    if(l.target&&l.target!=='all'){
+      const m=members.find(x=>x.uid===l.target||x.init===l.target);
+      alvo='🎯 '+(m?.name||l.targetLabel||l.target);
+    }
+    const quando=l.ts?new Date(l.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:rgba(56,182,255,.05);border:1px solid var(--glass-b);border-radius:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:var(--txt);">${esc(l.text)}</div>
+        <div style="font-size:9px;color:var(--txt3);margin-top:3px;">${esc(alvo)} · ${esc(l.autor||'')} · ${quando}</div>
+      </div>
+      <button class="btn btn-sm" onclick="delLembrete('po','${esc(l.id)}');renderLemCfg();" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);flex-shrink:0;">✕</button>
+    </div>`;
+  }).join('');
+}
+function _updLemCfgBtn(){
+  const t=document.getElementById('lemcfg-text')?.value.trim();
+  const b=document.getElementById('lemcfg-btn'); if(b) b.disabled=!t;
+}
+function addLembreteCfg(){
+  if(!_canManageLemCfg()){ toast('Apenas PO, organizador ou adm podem criar lembretes direcionados.'); return; }
+  const target=document.getElementById('lemcfg-target').value;
+  const text=document.getElementById('lemcfg-text').value.trim();
+  if(!text) return;
+  const u=window._currentUser;
+  // rótulo legível do alvo (p/ exibição mesmo se o membro sair)
+  const m=members.find(x=>x.uid===target||x.init===target);
+  const targetLabel = target==='all' ? 'Toda a squad' : (m?.name||target);
+  const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
+    tipo:'po', text, target, targetLabel,
+    autor:u?.displayName||'?', autorUid:u?.uid||'', init:window._currentUserInit||'', ts:new Date().toISOString() };
+  lembretes.push(obj);
+  fbSet(FB+'/lembretes', lembretes);
+  document.getElementById('lemcfg-text').value='';
+  _updLemCfgBtn();
+  renderLemCfg();
+  toast('📌 Lembrete enviado para '+(target==='all'?'toda a squad':(m?.name?.split(' ')[0]||'o membro')));
+}
+function toast(msg){
+  if(typeof showToast==='function'){ showToast(msg); return; }
+  if(typeof window._toast==='function'){ window._toast(msg); return; }
+  console.log('[lembrete]',msg);
+}
+
+// ═══════════════════════════════════════════════════════
 // ARQUIVADOS
 // ═══════════════════════════════════════════════════════
 function zerarBoard(){
@@ -3394,12 +3773,13 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','tags','auto','importar','worker','firebase','backup'];
+  const TABS=['agil','usuarios','lembretes','tags','auto','importar','worker','firebase','backup'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); }
+  if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags') renderTagEditor();
   if(tab==='worker') document.getElementById('worker-url-inp').value=localStorage.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
