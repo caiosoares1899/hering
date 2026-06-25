@@ -331,6 +331,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cfg-panel{max-width:500px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;}
 .cfg-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
 .cfg-sec-title{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:8px;}
+/* Subtimes editor */
+.st-card{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.st-head{display:flex;align-items:center;gap:8px;}
+.st-name-inp{flex:1;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:6px;padding:5px 9px;color:var(--txt);font-size:13px;font-weight:600;font-family:"DM Sans",sans-serif;}
+.st-members{display:flex;flex-wrap:wrap;gap:5px;min-height:8px;}
+.st-mchip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.3);color:var(--txt);cursor:pointer;transition:all .15s;}
+.st-mchip:hover{background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.4);color:var(--danger);}
+.st-add-sel{background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:6px;padding:5px 9px;color:var(--txt2);font-size:11px;cursor:pointer;font-family:"DM Sans",sans-serif;}
 .add-row{display:flex;gap:6px;flex-wrap:wrap;}
 .add-inp{flex:1;min-width:80px;padding:6px 9px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:"DM Sans",sans-serif;}
 .add-inp:focus{outline:none;border-color:var(--teal);}
@@ -1481,6 +1489,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <select id="f-tag" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todas as tags</option>
   </select>
+  <select id="f-subteam" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Todos os subtimes</option>
+  </select>
   <select id="f-due" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Qualquer prazo</option>
     <option value="late">Atrasados</option>
@@ -1888,6 +1899,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
     <div class="ag-tab" onclick="swCfgTab('lembretes')">📌 Lembretes</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
+    <div class="ag-tab" onclick="swCfgTab('subtimes')">👥 Subtimes</div>
     <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
@@ -2011,6 +2023,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-teal btn-sm" onclick="addTag()">+ Tag</button>
       </div>
       <div style="display:flex;justify-content:flex-end;padding-top:8px;"><button class="btn btn-p btn-sm" onclick="saveTags()">Salvar tags</button></div>
+    </div>
+
+    <!-- ABA SUBTIMES -->
+    <div class="tab-c" id="cfgtab-subtimes">
+      <div class="cfg-sec-title">👥 Subtimes da squad</div>
+      <p style="font-size:11px;color:var(--txt2);margin-bottom:10px;line-height:1.6;">Organize as pessoas em subtimes (ex.: Designers, Redatores). Um card pertence a um subtime quando o <strong>responsável ou um participante</strong> faz parte dele. Subtimes viram filtro e visão de raia. Uma pessoa pode estar em vários.</p>
+      <div id="subteam-editor" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-top:10px;">
+        <div class="cfg-sec-title" style="margin-bottom:8px;">Novo subtime</div>
+        <div class="add-row">
+          <input class="add-inp" id="new-subteam-name" placeholder="Nome do subtime (ex.: Designers)">
+          <input type="color" id="new-subteam-color" value="#1de9b6" style="width:34px;height:30px;border:none;background:none;cursor:pointer;">
+          <button class="btn btn-teal btn-sm" onclick="addSubteam()">+ Subtime</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding-top:10px;"><button class="btn btn-p btn-sm" onclick="saveSubteams()">Salvar subtimes</button></div>
     </div>
 
 
@@ -2315,7 +2343,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.12.0-dev</div>
+<div class="version">v8.13.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2509,7 +2537,23 @@ let tags=[
 let members=[];
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
-let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo)
+let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
+let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
+// Helpers de subtime
+function getSubteam(id){ return subteams.find(s=>s.id===id)||null; }
+// subtimes de um usuário (por init) — pode estar em vários
+function subteamsOfInit(init){ if(!init) return []; return subteams.filter(s=>Array.isArray(s.members)&&s.members.includes(init)); }
+// um card pertence ao subtime se o responsável OU qualquer participante estiver nele
+function cardInSubteam(card, subteamId){
+  const st=getSubteam(subteamId); if(!st||!Array.isArray(st.members)) return false;
+  const inits=new Set([card.owner, ...(card.participants||[])].filter(Boolean));
+  return st.members.some(m=>inits.has(m));
+}
+// todos os subtimes a que um card pertence
+function cardSubteams(card){
+  const inits=new Set([card.owner, ...(card.participants||[])].filter(Boolean));
+  return subteams.filter(s=>Array.isArray(s.members)&&s.members.some(m=>inits.has(m)));
+}
 let editingId=null;
 let currentQL=null; // 'recorrentes' | 'modelos'
 let qlItems={ recorrentes:[], modelos:[] };
@@ -2771,6 +2815,11 @@ function fbLoadAll(){
     }
   });
   // Tags
+  fbListen(FB+'/subtimes',val=>{
+    subteams = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderSubteamEditor();
+    renderBoard();
+  });
   fbListen(FB+'/tags',val=>{
     if(!val) return;
     const incoming = Array.isArray(val) ? val : Object.values(val);
@@ -3426,10 +3475,11 @@ function renderBoard(){
   board.innerHTML='';
   // Em modo raia por pessoa, ignora o filtro de owner (a raia já organiza por isso)
   // Em raia, ignora filtros de owner E tag (a raia já organiza por essas dimensões)
-  const isRaia = raiaMode==='owner'||raiaMode==='tag';
+  const isRaia = raiaMode==='owner'||raiaMode==='tag'||raiaMode==='subteam';
   const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, isRaia, isRaia));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
+  else if(raiaMode==='subteam') renderRaiaSubteam(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
   // Reaplica wrap height para modo expandido (só em modo normal, não raia)
@@ -3565,7 +3615,65 @@ function renderRaiaTag(board,activeCards){
   });
 }
 
-let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false};
+function renderRaiaSubteam(board,activeCards){
+  board.className='board raia-mode'+(viewMode?' mode-'+viewMode:'');
+  // Subtimes com cards, na ordem definida; "sem subtime" por último
+  const subsComCards=subteams.filter(st=>activeCards.some(c=>cardInSubteam(c,st.id)));
+  const temSemSub=activeCards.some(c=>cardSubteams(c).length===0);
+  const ordered=[...subsComCards.map(st=>st.id), ...(temSemSub?['']:[])];
+  if(!ordered.length){
+    board.innerHTML='<div style="padding:40px;text-align:center;color:var(--txt3);font-size:13px;">Nenhum subtime configurado ainda. O PO pode criar subtimes nas Configurações.</div>';
+    return;
+  }
+  ordered.forEach(subId=>{
+    const subCards = subId
+      ? activeCards.filter(c=>cardInSubteam(c,subId))
+      : activeCards.filter(c=>cardSubteams(c).length===0);
+    if(!subCards.length) return;
+    const st=getSubteam(subId);
+    const color=st?.color||'#1de9b6';
+    const total=subCards.length;
+    const row=document.createElement('div'); row.className='raia-row';
+    if(!subId){
+      row.innerHTML=`<div class="raia-unowned-label">
+        <span class="raia-unowned-dot"></span>
+        Sem subtime
+        <span style="margin-left:auto;font-size:10px;background:rgba(255,209,102,.15);padding:1px 8px;border-radius:999px;border:1px solid rgba(255,209,102,.3);">${total} card${total>1?'s':''}</span>
+      </div><div class="raia-cols"></div>`;
+    } else {
+      const mCount=(st?.members||[]).length;
+      row.innerHTML=`<div class="raia-label" style="border-left:3px solid ${color};background:${_hexA(color,.12)};color:${color};"><span class="dot" style="background:${color}"></span> ${esc(st?.name||'Subtime')}<span style="margin-left:8px;font-size:9px;opacity:.7;">${mCount} membro${mCount!==1?'s':''}</span><span style="margin-left:auto;font-size:10px;opacity:.85;">${total} card${total>1?'s':''}</span></div><div class="raia-cols"></div>`;
+    }
+    board.appendChild(row);
+    const raiaBoard=row.querySelector('.raia-cols');
+    columns.forEach(col=>{
+      const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
+      const colCards=subCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
+      const sColId='raia-sub-'+subId+'-'+col.id;
+      const sCollapsed=collapsedCols.has(sColId);
+      const div=document.createElement('div');
+      div.className='col'+(sCollapsed?' collapsed':'');
+      div.style.minWidth='160px';
+      div.innerHTML=`<div class="col-hd">
+        <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="col-cnt">${colCards.length}</span>
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
+        </div>
+      </div><div class="col-body"></div>`;
+      raiaBoard.appendChild(div);
+      const body=div.querySelector('.col-body');
+      if(!sCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
+    });
+  });
+}
+// helper: hex + alpha → rgba
+function _hexA(hex,a){
+  try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
+}
+
+let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -3578,6 +3686,8 @@ function toggleFilters(){
     .concat(extraOwners.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`));
   document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+allOwnerOptions.join('');
   document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+  const fSub=document.getElementById('f-subteam');
+  if(fSub) fSub.innerHTML='<option value="">Todos os subtimes</option>'+subteams.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
   document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
   document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
 }
@@ -3589,6 +3699,7 @@ function applyFilters(){
     priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
     risco:document.getElementById('f-risco').checked,
+    subteam:document.getElementById('f-subteam')?.value||'',
   };
   renderBoard();
 }
@@ -3599,7 +3710,8 @@ function clearFilters(){
   const fp=document.getElementById('f-priority'); if(fp) fp.value='';
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
-  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false};
+  const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
+  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
@@ -3608,6 +3720,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
+  if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.due){
     if(!card.due) return false;
     const d=new Date(card.due+'T00:00:00'); d.setHours(0,0,0,0);
@@ -3619,10 +3732,10 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   return true;
 }
 function toggleRaia(){
-  const order={'':'owner','owner':'tag','tag':''};
+  const order={'':'owner','owner':'tag','tag':'subteam','subteam':''};
   raiaMode=order[raiaMode];
   const btn=document.getElementById('btn-raia');
-  const labels={'':'⇔ Raia','owner':'⇔ Raia · pessoa','tag':'⇔ Raia · tipo'};
+  const labels={'':'⇔ Raia','owner':'⇔ Raia · pessoa','tag':'⇔ Raia · tipo','subteam':'⇔ Raia · subtime'};
   btn.textContent=labels[raiaMode];
   btn.style.borderColor=raiaMode?'var(--teal)':'';
   btn.style.color=raiaMode?'var(--teal)':'';
@@ -4568,7 +4681,7 @@ function _surfaceErr(where, e){
   }catch(_){}
 }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','lembretes','tags','auto','importar','worker','firebase','backup'];
+  const TABS=['agil','usuarios','lembretes','tags','subtimes','auto','importar','worker','firebase','backup'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
@@ -4576,6 +4689,7 @@ function swCfgTab(tab){
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); }
   if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags') renderTagEditor();
+  if(tab==='subtimes') renderSubteamEditor();
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
@@ -4728,6 +4842,63 @@ function setTagColor(i,pi){ tags[i].pi=pi; renderTagEditor(); }
 function delTag(i){ if(tags.length<=1) return; tags.splice(i,1); renderTagEditor(); }
 function addTag(){ const n=document.getElementById('new-tag-name').value.trim(); if(!n) return; tags.push({id:'tag_'+Date.now(),label:n,pi:0}); document.getElementById('new-tag-name').value=''; renderTagEditor(); }
 function saveTags(){ fbSet(FB+'/tags',tags); renderBoard(); closeOv('cfg-ov'); }
+
+// ═══ SUBTIMES ═══
+function renderSubteamEditor(){
+  const box=document.getElementById('subteam-editor'); if(!box) return;
+  if(!subteams.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:10px;text-align:center;">Nenhum subtime ainda. Crie o primeiro abaixo.</div>';
+    return;
+  }
+  box.innerHTML=subteams.map((st,i)=>{
+    const membersChips=(st.members||[]).map(init=>{
+      const m=members.find(x=>x.init===init);
+      return `<span class="st-mchip" onclick="toggleSubteamMember(${i},'${esc(init)}')" title="Remover">${esc(m?m.name.split(' ')[0]:init)} ×</span>`;
+    }).join('');
+    // dropdown de membros disponíveis (todos os members do squad, mesmo já adicionados não duplicam)
+    const opts=members.filter(m=>m.init&&!(st.members||[]).includes(m.init))
+      .map(m=>`<option value="${esc(m.init)}">${esc(m.name)} (${esc(m.init)})</option>`).join('');
+    return `<div class="st-card" style="border-left:3px solid ${st.color||'#1de9b6'};">
+      <div class="st-head">
+        <input type="color" value="${st.color||'#1de9b6'}" onchange="subteams[${i}].color=this.value;renderSubteamEditor()" style="width:26px;height:24px;border:none;background:none;cursor:pointer;flex-shrink:0;">
+        <input class="st-name-inp" value="${esc(st.name||'')}" oninput="subteams[${i}].name=this.value" placeholder="Nome do subtime">
+        <button class="icon-btn" style="color:var(--danger);" onclick="delSubteam(${i})" title="Excluir subtime">🗑</button>
+      </div>
+      <div class="st-members">${membersChips||'<span style="font-size:10px;color:var(--txt3);">Sem membros ainda</span>'}</div>
+      <select class="st-add-sel" onchange="if(this.value){toggleSubteamMember(${i},this.value);this.value='';}">
+        <option value="">+ Adicionar pessoa…</option>${opts}
+      </select>
+    </div>`;
+  }).join('');
+}
+function addSubteam(){
+  const name=document.getElementById('new-subteam-name').value.trim();
+  const color=document.getElementById('new-subteam-color').value||'#1de9b6';
+  if(!name) return;
+  subteams.push({id:'st_'+Date.now(),name,color,members:[]});
+  document.getElementById('new-subteam-name').value='';
+  renderSubteamEditor();
+}
+function delSubteam(i){
+  if(!confirm('Excluir o subtime "'+(subteams[i]?.name||'')+'"?')) return;
+  subteams.splice(i,1);
+  renderSubteamEditor();
+}
+function toggleSubteamMember(i, init){
+  const st=subteams[i]; if(!st) return;
+  if(!Array.isArray(st.members)) st.members=[];
+  if(st.members.includes(init)) st.members=st.members.filter(m=>m!==init);
+  else st.members.push(init);
+  renderSubteamEditor();
+}
+function saveSubteams(){
+  // limpa subtimes sem nome
+  subteams=subteams.filter(st=>st.name&&st.name.trim());
+  fbSet(FB+'/subtimes', subteams);
+  renderBoard();
+  showToast('✅ Subtimes salvos!');
+  closeOv('cfg-ov');
+}
 
 // --- Worker / Firebase ---
 function saveWorkerUrl(){ const url=document.getElementById('worker-url-inp').value.trim(); if(!url) return; safeLS.setItem('kanban_worker_url',url); location.reload(); }
@@ -9240,6 +9411,13 @@ async function runDevSeed(){
     'uid-test-005':{ nome:'Mariana Santos', foto:'', init:'MS', squad:'dev', status:'foco', ts:mAgo(3) },
   };
 
+  // ── 👥 SUBTIMES de exemplo ────────────────────────────────────────────
+  const seedSubtimes=[
+    { id:'st-001', name:'Designers', color:'#ff8c69', members:['MS','LO'] },
+    { id:'st-002', name:'Devs', color:'#38b6ff', members:['RM','JF'] },
+    { id:'st-003', name:'Estratégia', color:'#1de9b6', members:['ABC'] },
+  ];
+
   // ── 📌 LEMBRETES de exemplo ───────────────────────────────────────────
   const seedLembretes=[
     { id:'lem-001', tipo:'po', text:'Lembrem de atualizar os cards antes da daily de amanhã! 🌊', target:'all',
@@ -9308,6 +9486,12 @@ async function runDevSeed(){
       await window._set(window._ref(window._db, FB+'/lembretes'), seedLembretes);
       seedLog('✅ Lembretes de exemplo criados','ok');
     }catch(e){ seedLog('⚠ lembretes não gravados: '+e.message,'err'); }
+
+    // Subtimes de exemplo
+    try{
+      await window._set(window._ref(window._db, FB+'/subtimes'), seedSubtimes);
+      seedLog('✅ 3 subtimes criados (Designers, Devs, Estratégia)','ok');
+    }catch(e){ seedLog('⚠ subtimes não gravados: '+e.message,'err'); }
 
     seedLog('🎉 Pronto! Carregando board em 2s...','ok');
     setTimeout(()=>{
