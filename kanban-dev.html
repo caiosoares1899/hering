@@ -2297,7 +2297,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.4-dev</div>
+<div class="version">v8.10.5-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3069,6 +3069,14 @@ function resolveSquadAndShow(user, userSquads) {
 
   // ADMs entram direto no squad atual (têm acesso a tudo)
   if (isAdmUser(user)) {
+    // ⚡ Garante que o ADM esteja inscrito no squad atual (evita estado inconsistente)
+    if(!userSquads || userSquads[ACTIVE_SQUAD]!==true){
+      const upd={}; upd['squads/'+ACTIVE_SQUAD]=true;
+      fbUpdate('kanban/usuarios/'+user.uid, upd);
+      if(!user._squadsPatched){ user._squadsPatched=true; }
+    }
+    window._currentUserRole='adm';
+    _applyRoleVisibility();
     showApp(user);
     return;
   }
@@ -3117,12 +3125,21 @@ function _devDiag(user){
     let box=document.getElementById('dev-diag');
     if(!box){
       box=document.createElement('div'); box.id='dev-diag';
-      box.style.cssText='position:fixed;bottom:8px;left:8px;z-index:999998;background:rgba(6,26,46,.97);border:1px solid #38b6ff;border-radius:8px;color:#cfe8ff;font:11px/1.6 monospace;padding:10px 30px 10px 12px;max-width:360px;box-shadow:0 6px 24px rgba(0,0,0,.5);';
+      box.style.cssText='position:fixed;bottom:8px;left:8px;z-index:999998;background:rgba(6,26,46,.97);border:1px solid #38b6ff;border-radius:8px;color:#cfe8ff;font:11px/1.6 monospace;padding:10px 30px 10px 12px;max-width:380px;box-shadow:0 6px 24px rgba(0,0,0,.5);';
       const x=document.createElement('button'); x.textContent='✕';
       x.style.cssText='position:absolute;top:6px;right:6px;background:none;border:none;color:#7aa;cursor:pointer;font-size:13px;';
       x.onclick=()=>box.remove();
       box.appendChild(x);
       document.body.appendChild(box);
+      // 🖱 Rastreador de clique: mostra QUAL elemento recebeu o clique
+      document.addEventListener('click', (e)=>{
+        const t=e.target;
+        const card=t.closest? t.closest('.card') : null;
+        const topEl=document.elementFromPoint(e.clientX, e.clientY);
+        let line=document.getElementById('diag-click');
+        if(!line){ line=document.createElement('div'); line.id='diag-click'; line.style.cssText='margin-top:6px;padding-top:6px;border-top:1px solid rgba(56,182,255,.3);color:#ffd166;'; box.appendChild(line); }
+        line.textContent='🖱 clicou em: <'+(t.tagName||'?').toLowerCase()+(t.className&&typeof t.className==='string'?'.'+t.className.split(' ')[0]:'')+'> | em card: '+(card?('SIM ('+(card.getAttribute('data-id')||'?')+')'):'não')+' | topo real: <'+(topEl?.tagName||'?').toLowerCase()+(topEl?.className&&typeof topEl.className==='string'?'.'+topEl.className.split(' ')[0]:'')+'>';
+      }, true);
     }
     const isAdm=isAdmUser(user);
     fbGet('kanban/usuarios/'+user.uid).then(snap=>{
@@ -3130,18 +3147,11 @@ function _devDiag(user){
       const c=document.createElement('div');
       c.innerHTML=
         '<b style="color:#38b6ff;">🔬 Diagnóstico de acesso</b><br>'+
-        'Email logado: <b>'+esc(user.email||'?')+'</b><br>'+
-        'UID: '+esc((user.uid||'?').substring(0,14))+'…<br>'+
-        'Está em ADM_EMAILS: <b style="color:'+(isAdm?'#1de9b6':'#ff6b6b')+';">'+isAdm+'</b><br>'+
-        'Papel detectado (_currentUserRole): <b style="color:'+(window._currentUserRole==='adm'?'#1de9b6':'#ffd166')+';">'+(window._currentUserRole||'(indefinido)')+'</b><br>'+
-        'Squad ativo: <b>'+esc(ACTIVE_SQUAD)+'</b><br>'+
-        '— No Firebase (kanban/usuarios/seu_uid): —<br>'+
-        (fb? ('role: <b>'+esc(fb.role||'(vazio)')+'</b><br>'+
-              'init: <b>'+esc(fb.init||'(vazio)')+'</b><br>'+
-              'inscrito: '+esc(String(fb.inscrito))+'<br>'+
-              'squads: '+esc(JSON.stringify(fb.squads||{}))) :
-             '<b style="color:#ff6b6b;">SEU REGISTRO NÃO EXISTE no Firebase!</b>')+
-        '<br>Você em members[]: <b>'+(members.some(m=>m.uid===user.uid)?'sim':'NÃO')+'</b> ('+members.length+' membros)';
+        'Email: <b>'+esc(user.email||'?')+'</b><br>'+
+        'É ADM: <b style="color:'+(isAdm?'#1de9b6':'#ff6b6b')+';">'+isAdm+'</b> · Papel: <b style="color:'+(window._currentUserRole==='adm'?'#1de9b6':'#ffd166')+';">'+(window._currentUserRole||'?')+'</b><br>'+
+        'Squad: <b>'+esc(ACTIVE_SQUAD)+'</b> · FB squads: '+esc(JSON.stringify(fb?.squads||{}))+'<br>'+
+        'Em members[]: <b>'+(members.some(m=>m.uid===user.uid)?'sim':'NÃO')+'</b> ('+members.length+')<br>'+
+        '<span style="color:#7aa;">👆 Clique num card e veja abaixo o que recebe o clique</span>';
       box.appendChild(c);
     });
   }catch(e){ console.error('diag err',e); }
