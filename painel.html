@@ -164,6 +164,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudosp-card{position:relative;width:calc(50% - 5px);min-width:150px;padding:13px 13px 11px;border-radius:11px;
   background:linear-gradient(150deg,rgba(255,209,102,.13),rgba(255,209,102,.04));border:1px solid rgba(255,209,102,.25);}
 .kudosp-card::before{content:'⭐';position:absolute;top:-8px;left:12px;font-size:15px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}
+.kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
+.kr-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
+.kr-chip:hover{border-color:#ffd166;}
+.kr-chip.kr-mine{background:rgba(255,209,102,.24);border-color:#ffd166;color:var(--txt);}
+.kr-add{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:13px;width:26px;height:24px;border-radius:999px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.2);cursor:pointer;transition:all .15s;}
+.kr-add:hover{border-color:#ffd166;background:rgba(255,209,102,.16);}
+.kr-picker{position:absolute;bottom:30px;left:0;transform:translateY(4px) scale(.95);opacity:0;pointer-events:none;display:flex;gap:3px;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:999px;padding:6px 9px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:50;transition:all .15s;}
+.kr-picker.open{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
+.kr-picker span{font-size:18px;cursor:pointer;padding:2px 3px;border-radius:6px;transition:transform .1s;}
+.kr-picker span:hover{transform:scale(1.3);}
 .kudosp-from{font-size:10px;color:var(--txt2);margin-top:3px;}
 .kudosp-from b{color:var(--txt);}
 .kudosp-to{color:#ffd166;font-weight:700;}
@@ -1020,7 +1030,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v1.12 · painel</div>
+<div class="version">v1.13 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2211,6 +2221,10 @@ window.addEventListener('auth-change',e=>{
   }
 });
 
+// Fecha picker de reação de kudos ao clicar fora
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
+});
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
   loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); loadGlobalUsers(); });
@@ -2265,9 +2279,14 @@ function renderKudosPainel(){
         return `<div class="kudosp-card">
           <div class="kudosp-from"><b>${esc(k.fromNome||k.fromInit||'?')}</b> reconheceu <span class="kudosp-to">@${esc(k.toInit||'')}</span>${k.toNome?' ('+esc(k.toNome)+')':''}</div>
           <div class="kudosp-text">${esc(k.texto||'')}</div>
+          ${_renderKudospReactions(k)}
           <div class="kudosp-meta"><span>${quando}</span>${del}</div>
         </div>`;
       }).join('');
+      // wire pickers
+      grid.querySelectorAll('.kr-add').forEach(btn=>{
+        btn.onclick=(ev)=>{ ev.stopPropagation(); btn.querySelector('.kr-picker').classList.toggle('open'); };
+      });
     }
   }
   // formulário (só adm cria pelo painel; demais usam o quadro)
@@ -2320,6 +2339,31 @@ function delKudosPainel(id){
   const arr=kudosGeral.filter(k=>k.id!==id);
   window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
     .then(()=>{ kudosGeral=arr; renderKudosPainel(); }).catch(()=>{});
+}
+// ── Reações aos kudos no painel ──
+const KUDOSP_EMOJIS=['👏','❤️','😍','🎉','🔥','🙌'];
+function _renderKudospReactions(k){
+  const r=k.reactions||{};
+  const counts={};
+  Object.values(r).forEach(e=>{ counts[e]=(counts[e]||0)+1; });
+  const myUid=window._currentUser?.uid;
+  const myReact=r[myUid];
+  const chips=Object.entries(counts).map(([e,n])=>{
+    const mine=myReact===e;
+    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudospReaction('${esc(k.id)}','${e}')" title="${n}">${e} ${n}</span>`;
+  }).join('');
+  const picker=KUDOSP_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudospReaction('${esc(k.id)}','${e}')">${e}</span>`).join('');
+  const addBtn=`<button class="kr-add" title="Reagir">😊<span class="kr-picker">${picker}</span></button>`;
+  return `<div class="kr-row">${chips}${addBtn}</div>`;
+}
+function toggleKudospReaction(id, emoji){
+  const k=kudosGeral.find(x=>x.id===id); if(!k) return;
+  const uid=window._currentUser?.uid; if(!uid) return;
+  if(!k.reactions) k.reactions={};
+  if(k.reactions[uid]===emoji) delete k.reactions[uid];
+  else k.reactions[uid]=emoji;
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
+  renderKudosPainel();
 }
 
 let _globalUsersCache = {}; // { uid: userObj }
