@@ -2300,7 +2300,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.9-dev</div>
+<div class="version">v8.11.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2370,7 +2370,8 @@ const ADM_UIDS = {
   'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
 };
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
-function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); }
+// Reforço: reconhece ADM por email OU por UID (preencha ADM_UIDS com o uid real se precisar)
+function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 function getEffectiveRole(user, dbRole){
   if(isAdmUser(user)) return 'adm';
   return dbRole||'membro';
@@ -4908,8 +4909,8 @@ Usuário logado agora: ${window._currentUser?.displayName||'desconhecido'} (inic
 
 function openAgent(){
   const role=window._currentUserRole||'membro';
-  if(role!=='po'&&role!=='organizador'){
-    showToast('🔒 Agente Ágil disponível apenas para PO e Organizadores');
+  if(role!=='po'&&role!=='organizador'&&role!=='adm'){
+    showToast('🔒 Agente Ágil disponível apenas para PO, Organizadores e Administradores');
     return;
   }
   updateMetrics();
