@@ -1512,6 +1512,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
+  <div class="tb-sep"></div>
+  <button class="btn btn-sm" onclick="reSeedDev()" title="Re-popular dados de teste (kudos, lembretes, reações)" style="color:var(--teal);border-color:rgba(29,233,182,.4);">🌱 Re-popular</button>
+  <button class="btn btn-sm" onclick="_forceReload()" title="Recarrega ignorando o cache do navegador" style="color:var(--warn);border-color:rgba(255,209,102,.4);">♻️ Limpar cache</button>
 </div>
 
 <div class="board-wrap">
@@ -2297,7 +2300,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.6-dev</div>
+<div class="version">v8.10.7-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8692,7 +8695,19 @@ function seedLog(msg, cls='inf'){
   el.appendChild(d); el.scrollTop=el.scrollHeight;
 }
 
-// Re-popula o seed mesmo com board cheio (botão na config do dev)
+// Recarrega ignorando cache (adiciona timestamp na URL pra forçar download novo)
+function _forceReload(){
+  try{
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+    }
+    if(window.caches&&caches.keys){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{}); }
+  }catch(e){}
+  const u=new URL(window.location.href);
+  u.searchParams.set('_cb', Date.now()); // cache-buster
+  window.location.replace(u.toString());
+}
+
 async function reSeedDev(){
   if(ACTIVE_SQUAD!=='dev'){ alert('A re-população de dados de teste só está disponível no Dev Sandbox.'); return; }
   const ok=confirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes (cards, kudos, lembretes, reações e status).\n\nOs dados atuais do dev serão substituídos. Continuar?');
