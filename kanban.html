@@ -391,13 +391,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .postit .pi-type{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.85;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
 .postit .pi-text{font-size:13px;line-height:1.42;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
 .postit .pi-meta{font-size:9.5px;margin-top:7px;opacity:.62;color:#1a1208;display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.postit .pi-del,.postit .pi-dismiss{position:absolute;top:6px;width:18px;height:18px;border-radius:50%;border:none;
-  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:10px;line-height:1;
+.postit .pi-del,.postit .pi-resolve{position:absolute;top:6px;width:18px;height:18px;border-radius:50%;border:none;
+  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:11px;line-height:1;font-weight:700;
   display:none;align-items:center;justify-content:center;}
-.postit .pi-dismiss{right:7px;}
+.postit .pi-resolve{right:7px;}
 .postit .pi-del{right:28px;}
-.postit:hover .pi-del,.postit:hover .pi-dismiss{display:flex;}
-.postit .pi-del:hover,.postit .pi-dismiss:hover{background:rgba(0,0,0,.25);color:#000;}
+.postit:hover .pi-del,.postit:hover .pi-resolve{display:flex;}
+.postit .pi-resolve:hover{background:#1de9b6;color:#04221a;}
+.postit .pi-del:hover{background:rgba(0,0,0,.25);color:#000;}
 .postit .pi-link{font-size:10px;margin-top:6px;color:#1a1208;font-weight:700;opacity:.7;cursor:pointer;text-decoration:underline;}
 /* paletas post-it */
 .pi-gestao{background:linear-gradient(135deg,#e2c4ff,#d4a9f5);border-left-color:#9650dc;}
@@ -2247,7 +2248,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.9.0</div>
+<div class="version">v8.10.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2255,14 +2256,27 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
+// ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
+const safeLS = (function(){
+  let ok=true;
+  try{ const k='__ls_test__'; window.localStorage.setItem(k,'1'); window.localStorage.removeItem(k); }
+  catch(e){ ok=false; }
+  const mem={};
+  return {
+    getItem(k){ try{ return ok? window.localStorage.getItem(k) : (k in mem? mem[k]:null); }catch(e){ return (k in mem? mem[k]:null); } },
+    setItem(k,v){ try{ if(ok) window.localStorage.setItem(k,v); else mem[k]=String(v); }catch(e){ mem[k]=String(v); } },
+    removeItem(k){ try{ if(ok) window.localStorage.removeItem(k); else delete mem[k]; }catch(e){ delete mem[k]; } },
+  };
+})();
+
 const firebaseConfig = {
-  apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
-  authDomain:        localStorage.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
-  databaseURL:       localStorage.getItem('fb_databaseURL')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
-  projectId:         localStorage.getItem('fb_projectId')        || 'hering-onboarding',
-  storageBucket:     localStorage.getItem('fb_storageBucket')    || 'hering-onboarding.firebasestorage.app',
-  messagingSenderId: localStorage.getItem('fb_messagingSenderId')|| '122502391131',
-  appId:             localStorage.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+  apiKey:            safeLS.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        safeLS.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       safeLS.getItem('fb_databaseURL')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         safeLS.getItem('fb_projectId')        || 'hering-onboarding',
+  storageBucket:     safeLS.getItem('fb_storageBucket')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: safeLS.getItem('fb_messagingSenderId')|| '122502391131',
+  appId:             safeLS.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
 };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
@@ -2282,6 +2296,19 @@ onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(n
 </script>
 
 <script>
+
+// ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
+const safeLS = (function(){
+  let ok=true;
+  try{ const k='__ls_test__'; window.localStorage.setItem(k,'1'); window.localStorage.removeItem(k); }
+  catch(e){ ok=false; }
+  const mem={};
+  return {
+    getItem(k){ try{ return ok? window.localStorage.getItem(k) : (k in mem? mem[k]:null); }catch(e){ return (k in mem? mem[k]:null); } },
+    setItem(k,v){ try{ if(ok) window.localStorage.setItem(k,v); else mem[k]=String(v); }catch(e){ mem[k]=String(v); } },
+    removeItem(k){ try{ if(ok) window.localStorage.removeItem(k); else delete mem[k]; }catch(e){ delete mem[k]; } },
+  };
+})();
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
@@ -2298,7 +2325,7 @@ function getEffectiveRole(user, dbRole){
 }
 // ── FIM ADMs ─────────────────────────────────────────────────────
 
-const WORKER_URL = localStorage.getItem('kanban_worker_url') || 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
+const WORKER_URL = safeLS.getItem('kanban_worker_url') || 'https://falling-bush-7bdd.kicaio97.workers.dev/api/chat';
 // ── SQUAD FIXO ──────────────────────────────────────────────────
 // ── MULTI-SQUAD: detecta squad via URL param ─────────────────────────
 const _urlParams = new URLSearchParams(window.location.search);
@@ -2925,7 +2952,7 @@ const STATUS_MAP={
 };
 function setMyStatus(s){
   window._myStatus = s||'';
-  try{ localStorage.setItem('mare_status', window._myStatus); }catch(e){}
+  try{ safeLS.setItem('mare_status', window._myStatus); }catch(e){}
   _reflectMyStatus();
   // grava imediatamente
   if(window._currentUser && window._fbReady){
@@ -3532,7 +3559,7 @@ function removeParticipant(i){
 function maybeSnapshot(){
   const today=new Date().toISOString().split('T')[0];
   const key='snapshot_'+ACTIVE_SQUAD+'_'+today;
-  const lastSnap=localStorage.getItem(key);
+  const lastSnap=safeLS.getItem(key);
   if(lastSnap) return; // já fez snapshot hoje
   const snapshot={
     date:today,squad:ACTIVE_SQUAD,
@@ -3547,7 +3574,7 @@ function maybeSnapshot(){
     sp_done:cards.filter(c=>c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0),
   };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/snapshots/'+today, snapshot);
-  localStorage.setItem(key,'1');
+  safeLS.setItem(key,'1');
 }
 // ── FIM SNAPSHOTS ────────────────────────────────────────────────────
 
@@ -3915,9 +3942,11 @@ function renderLembretes(){
       const canDelete = isOwner || window._currentUserRole==='adm';
       let btns='';
       if(l.tipo!=='proprio'){
-        btns+=`<button class="pi-dismiss" onclick="event.stopPropagation();dismissLembrete('${esc(l.id||'')}')" title="Dispensar (só pra você)">✕</button>`;
+        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();dismissLembrete('${esc(l.id||'')}')" title="Resolver (some só pra você)">✓</button>`;
+      } else {
+        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();delLembrete('proprio','${esc(l.id||'')}')" title="Resolver (concluir lembrete)">✓</button>`;
       }
-      if(canDelete){
+      if(canDelete && l.tipo!=='proprio'){
         btns+=`<button class="pi-del" onclick="event.stopPropagation();delLembrete('${l.tipo}','${esc(l.id||'')}')" title="Excluir para todos">🗑</button>`;
       }
       delBtn=btns;
@@ -4090,7 +4119,7 @@ function toggleKudos(){
   // fecha o drawer de lembretes se estiver aberto (ambos ocupam a tela)
   document.getElementById('lem-drawer')?.classList.remove('open');
   dr.classList.toggle('open');
-  if(!wasOpen){ _populateKudosPara(); renderKudos(); try{ localStorage.setItem('mare_kudos_seen', Date.now()); }catch(e){} updKudosBadge(); }
+  if(!wasOpen){ _populateKudosPara(); renderKudos(); try{ safeLS.setItem('mare_kudos_seen', Date.now()); }catch(e){} updKudosBadge(); }
 }
 function openKudos(){ const dr=document.getElementById('kudos-drawer'); if(!dr.classList.contains('open')) toggleKudos(); }
 function setKudosScope(s){
@@ -4219,7 +4248,7 @@ function delKudos(id, scope){
 }
 function updKudosBadge(){
   const badge=document.getElementById('kudos-badge'); if(!badge) return;
-  let seen=0; try{ seen=parseInt(localStorage.getItem('mare_kudos_seen')||'0'); }catch(e){}
+  let seen=0; try{ seen=parseInt(safeLS.getItem('mare_kudos_seen')||'0'); }catch(e){}
   const novos=[...kudosSquad,...kudosGeral].filter(k=>{
     const t=k.ts?new Date(k.ts).getTime():0;
     return t>seen && k.fromUid!==window._currentUser?.uid;
@@ -4343,9 +4372,9 @@ function swCfgTab(tab){
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); }
   if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags') renderTagEditor();
-  if(tab==='worker') document.getElementById('worker-url-inp').value=localStorage.getItem('kanban_worker_url')||'';
+  if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
-  if(tab==='firebase'){ document.getElementById('fb-url').value=localStorage.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=localStorage.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=localStorage.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=localStorage.getItem('fb_appId')||''; }
+  if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
 }
 
 // --- Ágil ---
@@ -4495,8 +4524,8 @@ function addTag(){ const n=document.getElementById('new-tag-name').value.trim();
 function saveTags(){ fbSet(FB+'/tags',tags); renderBoard(); closeOv('cfg-ov'); }
 
 // --- Worker / Firebase ---
-function saveWorkerUrl(){ const url=document.getElementById('worker-url-inp').value.trim(); if(!url) return; localStorage.setItem('kanban_worker_url',url); location.reload(); }
-function saveFbConfig(){ localStorage.setItem('fb_databaseURL',document.getElementById('fb-url').value.trim()); localStorage.setItem('fb_apiKey',document.getElementById('fb-key').value.trim()); localStorage.setItem('fb_projectId',document.getElementById('fb-pid').value.trim()); localStorage.setItem('fb_appId',document.getElementById('fb-aid').value.trim()); localStorage.setItem('fb_authDomain',document.getElementById('fb-pid').value.trim()+'.firebaseapp.com'); location.reload(); }
+function saveWorkerUrl(){ const url=document.getElementById('worker-url-inp').value.trim(); if(!url) return; safeLS.setItem('kanban_worker_url',url); location.reload(); }
+function saveFbConfig(){ safeLS.setItem('fb_databaseURL',document.getElementById('fb-url').value.trim()); safeLS.setItem('fb_apiKey',document.getElementById('fb-key').value.trim()); safeLS.setItem('fb_projectId',document.getElementById('fb-pid').value.trim()); safeLS.setItem('fb_appId',document.getElementById('fb-aid').value.trim()); safeLS.setItem('fb_authDomain',document.getElementById('fb-pid').value.trim()+'.firebaseapp.com'); location.reload(); }
 
 // ═══════════════════════════════════════════════════════
 // AGENTE ÁGIL
@@ -5436,7 +5465,7 @@ const HELP_CONTENT = {
   ],
   comunicacao: [
     { icon:'📌', title:'Quadro de lembretes', text:'Abra a aba 📌 Lembretes na lateral direita. São post-its coloridos por tipo: 🏛️ Gestão (avisos globais, aparecem em todos os quadros), 📋 PO/Org (avisos da squad, podem ser direcionados), ✏️ Próprios (privados, só você vê) e 🌊 Quadro (alertas automáticos dos cards). Os filtros no topo ligam/desligam cada tipo; o de Quadro vem desligado por padrão.' },
-    { icon:'✕', title:'Dispensar vs. excluir lembrete', text:'O ✕ em um lembrete DISPENSA ele só pra você — some da sua tela mas continua visível para os outros. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Lembretes próprios só têm o 🗑, pois já são privados.' },
+    { icon:'✓', title:'Resolver vs. excluir lembrete', text:'O ✓ RESOLVE o lembrete só pra você — some da sua tela mas continua visível para os outros que ainda precisam vê-lo. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Em lembretes próprios, o ✓ conclui e remove de vez, já que são privados.' },
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
@@ -5530,7 +5559,7 @@ self.addEventListener('fetch',e=>{
   });
 
   function showInstallBanner(){
-    if(localStorage.getItem('pwa_dismissed')) return;
+    if(safeLS.getItem('pwa_dismissed')) return;
     const banner=document.createElement('div');
     banner.id='install-banner';
     banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(37,99,201,.95);color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-family:DM Sans,sans-serif;backdrop-filter:blur(12px);';
@@ -5542,7 +5571,7 @@ self.addEventListener('fetch',e=>{
   };
   window.dismissInstall=function(){
     const b=document.getElementById('install-banner'); if(b) b.remove();
-    localStorage.setItem('pwa_dismissed','1');
+    safeLS.setItem('pwa_dismissed','1');
   };
 }
 
@@ -5911,9 +5940,9 @@ function notifChecklistDone(card){
 // 7. Prazo vencendo — roda 1x/dia via localStorage
 function checkDueNotifs(){
   const today=new Date().toISOString().split('T')[0];
-  const lastCheck=localStorage.getItem('lastDueCheck_'+ACTIVE_SQUAD);
+  const lastCheck=safeLS.getItem('lastDueCheck_'+ACTIVE_SQUAD);
   if(lastCheck===today) return;
-  localStorage.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
+  safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
   const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
   const tomorrowStr=tomorrow.toISOString().split('T')[0];
   cards.filter(c=>c.due&&!c.archived&&c.col!=='done').forEach(card=>{
@@ -6149,11 +6178,11 @@ function insertMention(ta, atPos, curPos, init){
 
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
 // Migra chave antiga e força default 'expanded'
-(()=>{ const old=localStorage.getItem('boardViewMode'); if(old==='expanded') localStorage.setItem('boardViewMode2','expanded'); localStorage.removeItem('boardViewMode'); })();
-let viewMode = localStorage.getItem('boardViewMode2')||'expanded';
+(()=>{ const old=safeLS.getItem('boardViewMode'); if(old==='expanded') safeLS.setItem('boardViewMode2','expanded'); safeLS.removeItem('boardViewMode'); })();
+let viewMode = safeLS.getItem('boardViewMode2')||'expanded';
 function setViewMode(mode){
   viewMode=mode;
-  localStorage.setItem('boardViewMode2',mode);
+  safeLS.setItem('boardViewMode2',mode);
   document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('view-'+mode)?.classList.add('active');
   const board=document.getElementById('board');
@@ -7167,7 +7196,7 @@ _onFbReady(()=>{
   window.addEventListener('auth-change', e=>{
     const user=e.detail;
     if(user&&window._fbReady){
-      try{ window._myStatus = localStorage.getItem('mare_status')||''; }catch(_){ window._myStatus=window._myStatus||''; }
+      try{ window._myStatus = safeLS.getItem('mare_status')||''; }catch(_){ window._myStatus=window._myStatus||''; }
       _reflectMyStatus();
       const pRef=window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+user.uid);
       window._set(pRef,{nome:user.displayName||user.email,foto:user.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD,status:window._myStatus||'',ts:Date.now()});
@@ -7698,7 +7727,7 @@ function renderDepMap(selfId){
     wrap.className='dep-chain';
 
     // Chain label + editable name
-    const savedName=localStorage.getItem('depChainName_'+chain.id)||'';
+    const savedName=safeLS.getItem('depChainName_'+chain.id)||'';
     const hd=document.createElement('div');
     hd.className='dep-chain-lbl';
     const chainKey='depChainName_'+chain.id;
@@ -7706,7 +7735,7 @@ function renderDepMap(selfId){
       +' Cadeia '+(idx+1)
       +' <input type="text" class="dep-chain-name-inp" value="'+esc(savedName)+'" placeholder="Nomear esta cadeia...">';
     hd.querySelector('.dep-chain-name-inp').addEventListener('input', function(){
-      localStorage.setItem(chainKey, this.value);
+      safeLS.setItem(chainKey, this.value);
     });
     wrap.appendChild(hd);
 
@@ -8271,7 +8300,7 @@ function previewBackupStats(){
     return acc;
   }, {});
   const colSummary = Object.entries(byCol).map(([n,c])=>n+': '+c).join(' · ');
-  const lastManual = localStorage.getItem('backup_last_'+ACTIVE_SQUAD);
+  const lastManual = safeLS.getItem('backup_last_'+ACTIVE_SQUAD);
   el.innerHTML = 
     '<strong style="color:var(--txt);">📦 Conteúdo do backup</strong><br>'+
     '• '+ativos.length+' cards ativos · '+arquivados.length+' arquivados<br>'+
@@ -8290,12 +8319,12 @@ function saveBackupConfig(){
     template: document.getElementById('emailjs-template')?.value||'',
     pubkey:   document.getElementById('emailjs-pubkey')?.value||'',
   };
-  localStorage.setItem('backup_cfg_'+ACTIVE_SQUAD, JSON.stringify(cfg));
+  safeLS.setItem('backup_cfg_'+ACTIVE_SQUAD, JSON.stringify(cfg));
   updateBackupAutoStatus();
 }
 
 function loadBackupCfg(){
-  const raw = localStorage.getItem('backup_cfg_'+ACTIVE_SQUAD);
+  const raw = safeLS.getItem('backup_cfg_'+ACTIVE_SQUAD);
   return raw ? JSON.parse(raw) : {};
 }
 
@@ -8312,7 +8341,7 @@ function loadBackupTab(){
   updateBackupAutoStatus();
   // Mostra último backup automático
   const lastEl = document.getElementById('backup-last');
-  const lastAuto = localStorage.getItem('backup_auto_last_'+ACTIVE_SQUAD);
+  const lastAuto = safeLS.getItem('backup_auto_last_'+ACTIVE_SQUAD);
   if(lastEl && lastAuto){
     lastEl.textContent = '⏱ Último backup automático: '+new Date(lastAuto).toLocaleString('pt-BR');
   }
@@ -8368,7 +8397,7 @@ async function sendBackupEmail(isTest=false){
       is_test:  isTest ? '(TESTE)' : '',
     });
     const now = new Date().toISOString();
-    localStorage.setItem('backup_auto_last_'+ACTIVE_SQUAD, now);
+    safeLS.setItem('backup_auto_last_'+ACTIVE_SQUAD, now);
     // Salva snapshot no Firebase
     saveSnapshotToFirebase(payload, isTest?'teste':'auto');
     showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
@@ -8475,7 +8504,7 @@ function scheduleWeeklyBackup(){
     const cfg = loadBackupCfg();
     if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
     // Não envia se já enviou essa semana
-    const lastAuto = localStorage.getItem('backup_auto_last_'+ACTIVE_SQUAD);
+    const lastAuto = safeLS.getItem('backup_auto_last_'+ACTIVE_SQUAD);
     if(lastAuto){
       const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
       if(daysSince < 6) return; // enviou há menos de 6 dias
