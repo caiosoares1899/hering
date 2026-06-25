@@ -241,7 +241,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .fab-cfg{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:11px;font-family:"DM Sans",sans-serif;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;backdrop-filter:blur(12px);transition:all .2s;}
 .fab-cfg:hover{border-color:var(--accent);color:var(--txt);}
 /* overlays */
-.ov{position:fixed;inset:0;z-index:10000;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
 .panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
 .panel-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(6,26,46,.97);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
@@ -1591,6 +1591,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="lem-add-btn kudos-btn" id="kudos-btn" onclick="addKudos()" disabled style="margin-top:8px;">⭐ Enviar estrela</button>
     <div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:5px;">Enter envia · Shift+Enter quebra linha</div>
   </div>
+</div><!-- /kudos-drawer -->
+
 <!-- AGENTE ÁGIL -->
 <div class="ov" id="ag-ov">
 <div class="panel ag-panel">
@@ -2300,7 +2302,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.11.0-dev</div>
+<div class="version">v8.11.1-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3121,8 +3123,6 @@ function showApp(user) {
   document.getElementById('user-name').textContent = user.displayName || user.email;
   const av = document.getElementById('user-avatar');
   if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
-  // 🔬 DIAGNÓSTICO (dev): mostra estado de auth/role na tela
-  setTimeout(()=>_devDiag(user), 1500);
 }
 function _devDiag(user){
   try{
