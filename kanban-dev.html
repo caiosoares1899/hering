@@ -2297,7 +2297,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.5-dev</div>
+<div class="version">v8.10.6-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3746,6 +3746,9 @@ function populateColSelect(){ document.getElementById('m-col').innerHTML=columns
 
 function openCard(id){
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
+  // Abre o modal PRIMEIRO — assim ele aparece mesmo que algum preenchimento falhe
+  document.getElementById('card-ov').classList.add('open');
+  try{
   populateTagSelect(); populateOwnerSelect(); populateColSelect();
   document.getElementById('m-title').value=c.title;
   document.getElementById('m-title-disp').textContent=c.title;
@@ -3781,6 +3784,7 @@ function openCard(id){
     renderCardDepMini(id);
     const _card=cards.find(c=>c.id===id); loadAttachments(_card);
   }, 100);
+  }catch(e){ _surfaceErr('openCard', e); }
 }
 
 function checkEditPermission(){
@@ -4480,7 +4484,19 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
-function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
+function openCfg(tab){
+  // Abre o overlay PRIMEIRO (mesmo que o preenchimento de uma aba falhe)
+  document.getElementById('cfg-ov').classList.add('open');
+  try{ swCfgTab(tab||'agil'); }
+  catch(e){ _surfaceErr('openCfg/swCfgTab', e); }
+}
+function _surfaceErr(where, e){
+  console.error('['+where+']', e);
+  try{
+    const box=document.getElementById('dev-diag');
+    if(box){ const d=document.createElement('div'); d.style.cssText='margin-top:6px;color:#ff6b6b;'; d.textContent='❌ '+where+': '+(e.message||e); box.appendChild(d); }
+  }catch(_){}
+}
 function swCfgTab(tab){
   const TABS=['agil','usuarios','lembretes','tags','auto','importar','worker','firebase','backup'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
