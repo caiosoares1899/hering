@@ -188,6 +188,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:40px;}
 /* card */
 .card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
+/* Seleção múltipla */
+.card-selected{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(56,182,255,.3);background:rgba(56,182,255,.08);}
+.card-selbox{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:5px;border:1.5px solid var(--accent);background:rgba(3,13,26,.85);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:3;}
+.card-selected .card-selbox{background:var(--accent);color:#021018;}
+.col-selectall{font-size:9px;background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);color:var(--cyan);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;}
+.col-selectall:hover{background:rgba(56,182,255,.2);color:var(--txt);}
+.bulk-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:12px;background:rgba(4,22,39,.96);border:1px solid var(--accent);border-radius:999px;padding:10px 18px;backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:bulkIn .25s ease;}
+@keyframes bulkIn{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
+.bulk-count{font-size:13px;font-weight:700;color:var(--txt);}
+.bulk-del{background:rgba(255,107,107,.16)!important;border-color:rgba(255,107,107,.45)!important;color:var(--danger)!important;font-weight:700;}
+.bulk-del:hover:not(:disabled){background:rgba(255,107,107,.28)!important;}
+.bulk-del:disabled{opacity:.4;cursor:not-allowed;}
 .card:hover{border-color:var(--accent);transform:translateY(-1px);}
 .card.archived{display:none;}
 .card-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:4px;margin-right:3px;font-weight:700;border:1px solid transparent;}
@@ -1521,6 +1533,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="view-btn active" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
   </div>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
+  <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
   <div class="tb-sep"></div>
@@ -2343,7 +2356,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.13.0-dev</div>
+<div class="version">v8.14.1-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2539,6 +2552,67 @@ let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
+// ═══ SELEÇÃO MÚLTIPLA / EXCLUSÃO EM MASSA ═══
+let selectMode=false;
+let selectedCards=new Set();
+function canBulkDelete(){ const r=window._currentUserRole; return r==='adm'||r==='po'||r==='organizador'; }
+function toggleSelectMode(){
+  if(!selectMode && !canBulkDelete()){ showToast('🔒 Seleção múltipla disponível para ADM, PO e Organizadores.'); return; }
+  selectMode=!selectMode;
+  selectedCards.clear();
+  const btn=document.getElementById('btn-select');
+  if(btn){ btn.textContent=selectMode?'✕ Cancelar':'☑️ Selecionar'; btn.style.borderColor=selectMode?'var(--accent)':''; btn.style.color=selectMode?'var(--accent)':''; }
+  renderBoard();
+  updateBulkBar();
+}
+function toggleCardSelection(id){
+  if(selectedCards.has(id)) selectedCards.delete(id);
+  else selectedCards.add(id);
+  // atualiza só o card e a barra (sem re-render completo, mais fluido)
+  const el=document.querySelector('.card[data-id="'+CSS.escape(id)+'"]');
+  if(el){
+    const sel=selectedCards.has(id);
+    el.classList.toggle('card-selected',sel);
+    const box=el.querySelector('.card-selbox'); if(box) box.textContent=sel?'✓':'';
+  }
+  updateBulkBar();
+}
+function selectAllInColumn(colId){
+  const visibleIds=cards.filter(c=>!c.archived && c.col===colId && matchesFilters(c)).map(c=>c.id);
+  const allSelected=visibleIds.length>0 && visibleIds.every(id=>selectedCards.has(id));
+  if(allSelected){ visibleIds.forEach(id=>selectedCards.delete(id)); }
+  else { visibleIds.forEach(id=>selectedCards.add(id)); }
+  renderBoard();
+  updateBulkBar();
+}
+function updateBulkBar(){
+  let bar=document.getElementById('bulk-bar');
+  if(!selectMode){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar=document.createElement('div'); bar.id='bulk-bar'; bar.className='bulk-bar';
+    document.body.appendChild(bar);
+  }
+  const n=selectedCards.size;
+  bar.innerHTML=`<span class="bulk-count">${n} selecionado${n!==1?'s':''}</span>
+    <button class="btn btn-sm" onclick="clearSelection()">Limpar seleção</button>
+    <button class="btn btn-sm bulk-del" ${n===0?'disabled':''} onclick="bulkDeleteSelected()">🗑 Excluir ${n>0?n:''} card${n!==1?'s':''}</button>`;
+}
+function clearSelection(){ selectedCards.clear(); renderBoard(); updateBulkBar(); }
+function bulkDeleteSelected(){
+  if(!canBulkDelete()){ showToast('🔒 Sem permissão.'); return; }
+  const n=selectedCards.size; if(!n) return;
+  if(!confirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
+  const ids=new Set(selectedCards);
+  cards=cards.filter(c=>!ids.has(c.id));
+  fbSaveAll();
+  selectedCards.clear();
+  selectMode=false;
+  const btn=document.getElementById('btn-select');
+  if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
+  renderBoard();
+  updateBulkBar();
+  showToast(`🗑 ${n} card${n!==1?'s':''} excluído${n!==1?'s':''}.`);
+}
 // Helpers de subtime
 function getSubteam(id){ return subteams.find(s=>s.id===id)||null; }
 // subtimes de um usuário (por init) — pode estar em vários
@@ -3447,22 +3521,29 @@ function makeCardEl(card){
   const hasBlockerTag=card.blocker&&blockerMode==='tag';
   const _cardTagIds=getCardTags(card); const _cardTagObjs=_cardTagIds.map(id=>getTag(id)).filter(Boolean);
   const isOKR_=card.isOKR||_cardTagObjs.some(t=>t.isOKR||t.id==='okr'); const isCG_=_cardTagObjs.some(t=>t.isCalGestao||t.id==='cal_gestao');
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'');
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
-  div.setAttribute('draggable','true');
+  div.setAttribute('draggable',selectMode?'false':'true');
   div.setAttribute('role','button');
   div.setAttribute('tabindex','0');
   div.setAttribute('aria-label','Card: '+card.title+(card.owner?' — '+card.owner:''));
-  div.onclick=()=>openCard(card.id);
-  div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openCard(card.id); } };
-  div.oncontextmenu=e=>showCtxMenu(e,card.id);
-  div.ondragstart=e=>handleDragStart(e,card.id);
-  div.ondragend=e=>handleDragEnd(e);
-  addTouchDnD(div,card.id); div.ondblclick=e=>{e.stopPropagation();};
+  if(selectMode){
+    div.onclick=(e)=>{ e.stopPropagation(); toggleCardSelection(card.id); };
+    div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleCardSelection(card.id); } };
+  } else {
+    div.onclick=()=>openCard(card.id);
+    div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openCard(card.id); } };
+    div.oncontextmenu=e=>showCtxMenu(e,card.id);
+    div.ondragstart=e=>handleDragStart(e,card.id);
+    div.ondragend=e=>handleDragEnd(e);
+    addTouchDnD(div,card.id);
+  }
+  div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
-  div.innerHTML=`${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -3497,6 +3578,7 @@ function renderNormal(board,activeCards){
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
+        ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn('${col.id}')" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
         <span class="col-cnt" id="cnt-${col.id}" style="${col.id==='progress'&&agilCfg.wip&&colCards.length>parseInt(agilCfg.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
           ${col.id==='progress'&&agilCfg.wip ? colCards.length+'/'+agilCfg.wip : colCards.length}
         </span>
