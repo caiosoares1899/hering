@@ -2297,7 +2297,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.3-dev</div>
+<div class="version">v8.10.4-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3109,6 +3109,42 @@ function showApp(user) {
   document.getElementById('user-name').textContent = user.displayName || user.email;
   const av = document.getElementById('user-avatar');
   if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
+  // 🔬 DIAGNÓSTICO (dev): mostra estado de auth/role na tela
+  setTimeout(()=>_devDiag(user), 1500);
+}
+function _devDiag(user){
+  try{
+    let box=document.getElementById('dev-diag');
+    if(!box){
+      box=document.createElement('div'); box.id='dev-diag';
+      box.style.cssText='position:fixed;bottom:8px;left:8px;z-index:999998;background:rgba(6,26,46,.97);border:1px solid #38b6ff;border-radius:8px;color:#cfe8ff;font:11px/1.6 monospace;padding:10px 30px 10px 12px;max-width:360px;box-shadow:0 6px 24px rgba(0,0,0,.5);';
+      const x=document.createElement('button'); x.textContent='✕';
+      x.style.cssText='position:absolute;top:6px;right:6px;background:none;border:none;color:#7aa;cursor:pointer;font-size:13px;';
+      x.onclick=()=>box.remove();
+      box.appendChild(x);
+      document.body.appendChild(box);
+    }
+    const isAdm=isAdmUser(user);
+    fbGet('kanban/usuarios/'+user.uid).then(snap=>{
+      const fb=snap.val();
+      const c=document.createElement('div');
+      c.innerHTML=
+        '<b style="color:#38b6ff;">🔬 Diagnóstico de acesso</b><br>'+
+        'Email logado: <b>'+esc(user.email||'?')+'</b><br>'+
+        'UID: '+esc((user.uid||'?').substring(0,14))+'…<br>'+
+        'Está em ADM_EMAILS: <b style="color:'+(isAdm?'#1de9b6':'#ff6b6b')+';">'+isAdm+'</b><br>'+
+        'Papel detectado (_currentUserRole): <b style="color:'+(window._currentUserRole==='adm'?'#1de9b6':'#ffd166')+';">'+(window._currentUserRole||'(indefinido)')+'</b><br>'+
+        'Squad ativo: <b>'+esc(ACTIVE_SQUAD)+'</b><br>'+
+        '— No Firebase (kanban/usuarios/seu_uid): —<br>'+
+        (fb? ('role: <b>'+esc(fb.role||'(vazio)')+'</b><br>'+
+              'init: <b>'+esc(fb.init||'(vazio)')+'</b><br>'+
+              'inscrito: '+esc(String(fb.inscrito))+'<br>'+
+              'squads: '+esc(JSON.stringify(fb.squads||{}))) :
+             '<b style="color:#ff6b6b;">SEU REGISTRO NÃO EXISTE no Firebase!</b>')+
+        '<br>Você em members[]: <b>'+(members.some(m=>m.uid===user.uid)?'sim':'NÃO')+'</b> ('+members.length+' membros)';
+      box.appendChild(c);
+    });
+  }catch(e){ console.error('diag err',e); }
 }
 
 function showSquadSelectorFiltered(squadIds) {
