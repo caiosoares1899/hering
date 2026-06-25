@@ -1359,6 +1359,32 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </style>
 </head>
 <body>
+<!-- 🐞 DEV ERROR CATCHER — mostra erros JS na tela (só no dev) -->
+<div id="dev-err-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:#7a0a0a;color:#fff;font:12px/1.5 monospace;padding:10px 40px 10px 14px;max-height:40vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,.6);white-space:pre-wrap;"></div>
+<script>
+(function(){
+  function showErr(msg){
+    var b=document.getElementById('dev-err-banner'); if(!b) return;
+    b.style.display='block';
+    var line=document.createElement('div');
+    line.style.cssText='border-bottom:1px solid rgba(255,255,255,.2);padding:3px 0;';
+    line.textContent='🐞 '+msg;
+    b.appendChild(line);
+    if(!document.getElementById('dev-err-close')){
+      var x=document.createElement('button'); x.id='dev-err-close'; x.textContent='✕';
+      x.style.cssText='position:fixed;top:8px;right:10px;z-index:1000000;background:#fff;color:#7a0a0a;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;font-weight:bold;';
+      x.onclick=function(){ b.style.display='none'; };
+      document.body.appendChild(x);
+    }
+  }
+  window.addEventListener('error', function(e){
+    showErr((e.message||'Erro')+'  @ linha '+(e.lineno||'?')+':'+(e.colno||'?')+(e.filename?('  ['+String(e.filename).split('/').pop()+']'):''));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r=e.reason; showErr('Promise rejeitada: '+((r&&r.message)||r||'?'));
+  });
+})();
+</script>
 <div class="ocean"></div>
 <div id="bwrap" style="position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;"></div>
 <div class="fish-wrap" id="fwrap"></div>
@@ -2271,7 +2297,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.2-dev</div>
+<div class="version">v8.10.3-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
