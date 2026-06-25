@@ -2248,7 +2248,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.0</div>
+<div class="version">v8.10.1</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2821,6 +2821,14 @@ function fbLoadAll(){
             role:(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro'});
       }
     });
+    // ⚡ Garante que o usuário logado sempre apareça na lista (sobretudo ADM)
+    const cu=window._currentUser;
+    if(cu && window._currentUserInit){
+      if(!members.find(m=>m.uid===cu.uid || m.init===window._currentUserInit)){
+        members.push({init:window._currentUserInit, name:cu.displayName||cu.email||'', email:cu.email||'',
+          foto:cu.photoURL||'', uid:cu.uid, role:window._currentUserRole||'membro'});
+      }
+    }
     // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
     window._allUsers = [];
     Object.entries(val).forEach(([uid,u])=>{
@@ -3098,8 +3106,23 @@ window.addEventListener('auth-change',e=>{
   }
 });
 
+// Aplica visibilidade de UI conforme o papel atual (FAB agente, config)
+function _applyRoleVisibility(){
+  const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
+  const fabBtn=document.querySelector('.fab-btn');
+  const mnavAgent=document.getElementById('mnav-agent');
+  const fabCfg=document.getElementById('fab-cfg-btn');
+  if(fabBtn) fabBtn.style.display=isPOorOrg?'':'none';
+  if(mnavAgent) mnavAgent.style.display=isPOorOrg?'':'none';
+  if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
+}
 function autoRegistrar(user){
   if(!window._fbReady) return;
+  // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
+  if(isAdmUser(user)){
+    window._currentUserRole='adm';
+    _applyRoleVisibility();
+  }
   fbGet('kanban/usuarios/'+user.uid).then(snap=>{
     const existe=snap.val();
     const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -3114,12 +3137,14 @@ function autoRegistrar(user){
         squads:newSquads, criadoEm:new Date().toISOString()
       });
       window._currentUserRole=newRole;
+      _applyRoleVisibility(); // ⚡ aplica visibilidade
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
       window._currentUserRole=getEffectiveRole(user, existe.role);
+      _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
       if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
