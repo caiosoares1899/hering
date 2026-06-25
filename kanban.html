@@ -283,15 +283,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .panel-ft{padding:9px 16px;border-top:1px solid var(--glass-b);display:flex;gap:7px;background:rgba(6,26,46,.97);}
 /* agent */
 .ag-panel{max-width:780px;max-height:88vh;display:flex;flex-direction:column;}
-.ag-tabs{display:flex;border-bottom:1px solid var(--glass-b);overflow-x:auto;overflow-y:visible;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.ag-tabs{display:flex;border-bottom:1px solid var(--glass-b);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .ag-tabs::-webkit-scrollbar{display:none;}
 .ag-tab{padding:8px 12px;font-size:11px;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
-/* Menu mais espaçado nas Configurações e Ajuda */
-#cfg-tabs,#help-tabs{padding:2px 4px 0;gap:2px;}
-#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:11px 15px;font-size:12px;border-radius:9px 9px 0 0;}
-#cfg-tabs .ag-tab:hover,#help-tabs .ag-tab:hover{background:rgba(56,182,255,.07);color:var(--txt);}
-#cfg-tabs .ag-tab.on,#help-tabs .ag-tab.on{background:rgba(56,182,255,.1);}
 .ag-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+/* Menu mais espaçado e legível nas Configurações e Ajuda */
+#cfg-tabs,#help-tabs{padding:6px 8px 0;gap:4px;flex-wrap:nowrap;}
+#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:9px 14px;font-size:12px;border-radius:8px;border-bottom:none;margin-bottom:0;color:var(--txt2);background:transparent;}
+#cfg-tabs .ag-tab:hover,#help-tabs .ag-tab:hover{background:rgba(56,182,255,.08);color:var(--txt);}
+#cfg-tabs .ag-tab.on,#help-tabs .ag-tab.on{background:rgba(56,182,255,.16);color:var(--accent);border-bottom:none;font-weight:700;}
 .ag-body{padding:12px 14px;overflow-y:auto;flex:1;}
 .tab-c{display:none;}.tab-c.on{display:block;}
 .msgs{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;max-height:420px;overflow-y:auto;}
@@ -448,6 +448,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;opacity:0;transition:opacity .15s;}
 .kudos-card:hover .kc-del{opacity:1;}
 .kudos-card .kc-del:hover{color:var(--danger);}
+/* reações aos kudos */
+.kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
+.kr-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
+.kr-chip:hover{border-color:#ffd166;}
+.kr-chip.kr-mine{background:rgba(255,209,102,.24);border-color:#ffd166;color:var(--txt);}
+.kr-add{position:relative;display:inline-flex;align-items:center;justify-content:center;font-size:13px;width:26px;height:24px;border-radius:999px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.2);cursor:pointer;transition:all .15s;}
+.kr-add:hover{border-color:#ffd166;background:rgba(255,209,102,.16);}
+.kr-picker{position:absolute;bottom:30px;left:0;transform:translateY(4px) scale(.95);opacity:0;pointer-events:none;display:flex;gap:3px;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:999px;padding:6px 9px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:50;transition:all .15s;}
+.kr-picker.open{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
+.kr-picker span{font-size:18px;cursor:pointer;padding:2px 3px;border-radius:6px;transition:transform .1s;}
+.kr-picker span:hover{transform:scale(1.3);}
 .kudos-btn{background:rgba(255,209,102,.16)!important;border-color:rgba(255,209,102,.4)!important;color:#ffd166!important;}
 .kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
 .kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
@@ -778,12 +789,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .rx-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(56,182,255,.08);border:1px solid var(--glass-b);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
 .rx-chip:hover{border-color:var(--accent);}
 .rx-chip.rx-mine{background:rgba(56,182,255,.2);border-color:var(--accent);color:var(--txt);}
-.rx-add{position:relative;font-size:12px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(56,182,255,.06);border:1px solid var(--glass-b);cursor:pointer;color:var(--txt3);}
-.rx-add:hover{border-color:var(--accent);color:var(--txt);}
-.rx-picker{position:absolute;bottom:28px;left:50%;transform:translateX(-50%) scale(.9);display:none;gap:3px;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:999px;padding:5px 8px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:50;transition:transform .12s;}
-.rx-picker.open{display:flex;transform:translateX(-50%) scale(1);}
-.rx-picker span{font-size:16px;cursor:pointer;padding:2px;border-radius:6px;transition:transform .1s;}
-.rx-picker span:hover{transform:scale(1.25);}
+.rx-add{display:none;}
+.rx-picker{position:absolute;bottom:32px;left:0;transform:translateY(4px) scale(.95);opacity:0;pointer-events:none;display:flex;gap:3px;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:999px;padding:6px 9px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:50;transition:all .15s;}
+.rx-picker.open{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
+.rx-picker span{font-size:18px;cursor:pointer;padding:2px 3px;border-radius:6px;transition:transform .1s;}
+.rx-picker span:hover{transform:scale(1.3);}
 .comment-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
 .comment-item{display:flex;gap:8px;}
 .comment-avatar{width:28px;height:28px;border-radius:50%;background:var(--glass);
@@ -798,9 +808,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   line-height:1.55;word-break:break-word;}
 .comment-text a.card-mention{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
 .comment-text a.user-mention{color:var(--teal);text-decoration:underline;cursor:pointer;}
-.comment-actions{display:flex;gap:8px;margin-top:3px;}
-.comment-action-btn{background:none;border:none;font-size:10px;color:var(--txt3);cursor:pointer;padding:0;}
-.comment-action-btn:hover{color:var(--txt);}
+.comment-actions{display:flex;gap:6px;margin-top:7px;}
+.cmt-act-btn{position:relative;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);
+  background:rgba(56,182,255,.06);border:1px solid var(--glass-b);border-radius:999px;padding:4px 11px;cursor:pointer;
+  transition:all .15s;font-family:"DM Sans",sans-serif;line-height:1.3;}
+.cmt-act-btn:hover{border-color:var(--accent);color:var(--txt);background:rgba(56,182,255,.12);}
+.cmt-act-btn span{font-size:11px;}
+.cmt-del:hover{border-color:rgba(255,107,107,.5);color:var(--danger);background:rgba(255,107,107,.08);}
 .comment-inp-wrap{display:flex;gap:8px;align-items:flex-start;}
 
 /* ── EDIT-ON-CLICK FIELDS (descrição + comentários) ──── */
@@ -904,6 +918,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .notif-btn{position:relative;background:none;border:none;cursor:pointer;
   font-size:18px;padding:4px;line-height:1;color:var(--txt2);transition:color .2s;}
 .notif-btn:hover{color:var(--txt);}
+.kudos-hdr-btn:hover{filter:brightness(1.15);}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
 @keyframes bell-ring{
@@ -1394,6 +1409,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
   </button>
+  <button class="notif-btn kudos-hdr-btn" id="kudos-hdr-btn" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time">
+    🎉<span class="notif-badge" id="kudos-badge" style="background:#ffd166;color:#1a1208;display:none;">0</span>
+  </button>
   <button class="btn btn-sm" onclick="openSearch()" title="Buscar cards (Ctrl+K)" style="background:var(--glass);border:1px solid var(--glass-b);">🔍</button>
   <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
   </div>
@@ -1437,7 +1455,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="view-btn" id="view-onepage" onclick="setViewMode('onepage')" title="One Page">⊞</button>
     <button class="view-btn active" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
   </div>
-  <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔍 Filtros</button>
+  <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
   <div class="tb-sep"></div>
@@ -1446,7 +1464,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
-  <button class="btn btn-sm" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time" style="color:#ffd166;border-color:rgba(255,209,102,.35);">⭐ Estrelas do Mar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
 </div>
@@ -2230,7 +2247,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.8.0</div>
+<div class="version">v8.9.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2363,6 +2380,11 @@ function applySquadIdentity() {
   if (loginSub) loginSub.textContent = 'Digital Hering · ' + subtitle;
 }
 document.addEventListener('DOMContentLoaded', applySquadIdentity);
+// Fecha qualquer picker de reação ao clicar fora
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.cmt-react')){ document.querySelectorAll('.rx-picker.open').forEach(p=>p.classList.remove('open')); }
+  if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
+});
 // ── FIM SQUAD ────────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
 // ── Seguranca: escape de HTML e validacao de URL ──
@@ -2772,6 +2794,15 @@ function fbLoadAll(){
             role:(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro'});
       }
     });
+    // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
+    window._allUsers = [];
+    Object.entries(val).forEach(([uid,u])=>{
+      if(u.init && u.init.trim() && uid!==window._currentUser?.uid){
+        window._allUsers.push({init:u.init, name:u.nome||u.email||u.init, email:u.email||'', foto:u.foto||'', uid});
+      }
+    });
+    // Re-popula select de kudos se o drawer estiver aberto
+    if(document.getElementById('kudos-drawer')?.classList.contains('open')) _populateKudosPara();
     // Re-popula selects se modal estiver aberto
     if(document.getElementById('card-ov')?.classList.contains('open')){
       populateOwnerSelect();
@@ -4066,13 +4097,19 @@ function setKudosScope(s){
   _kudosScope=s;
   document.getElementById('kstab-squad')?.classList.toggle('on',s==='squad');
   document.getElementById('kstab-geral')?.classList.toggle('on',s==='geral');
+  _populateKudosPara(); // dropdown muda: geral = todos os usuários, cardume = só a squad
   renderKudos();
 }
 function _populateKudosPara(){
   const sel=document.getElementById('kudos-para'); if(!sel) return;
   const opts=['<option value="">Para quem? (escolha)</option>'];
-  (members||[]).filter(m=>m.init && m.uid!==window._currentUser?.uid).forEach(m=>{
-    opts.push(`<option value="${esc(m.init)}">${esc(m.name||m.init)}</option>`);
+  // Geral: todos os usuários da empresa · Cardume: só membros da squad
+  const fonte = _kudosScope==='geral'
+    ? (window._allUsers||[])
+    : (members||[]).filter(m=>m.init && m.uid!==window._currentUser?.uid);
+  // ordena por nome
+  fonte.slice().sort((a,b)=>String(a.name||a.init).localeCompare(String(b.name||b.init))).forEach(m=>{
+    opts.push(`<option value="${esc(m.init)}" data-uid="${esc(m.uid||'')}">${esc(m.name||m.init)}</option>`);
   });
   sel.innerHTML=opts.join('');
 }
@@ -4102,19 +4139,56 @@ function renderKudos(){
         <div class="kc-from"><b>${esc(k.fromNome||k.fromInit||'?')}</b> reconheceu <span class="kc-to">@${esc(k.toInit||'')}</span>${k.toNome?' ('+esc(k.toNome)+')':''}</div>
       </div>
       <div class="kc-text">${esc(k.texto||'')}</div>
+      ${_renderKudosReactions(k)}
       <div class="kc-meta"><span class="kc-scope">${k.scope==='geral'?'🌊 Geral':'🐠 Cardume'}</span><span>${quando}</span>${del}</div>
     </div>`;
   }).join('');
+  // wire pickers
+  body.querySelectorAll('.kr-add').forEach(btn=>{
+    btn.onclick=(ev)=>{ ev.stopPropagation(); btn.querySelector('.kr-picker').classList.toggle('open'); };
+  });
+}
+// ── Reações aos kudos (palmas, coração, festa...) ──
+const KUDOS_EMOJIS=['👏','❤️','😍','🎉','🔥','🙌'];
+function _renderKudosReactions(k){
+  const r=k.reactions||{};
+  const counts={};
+  Object.values(r).forEach(e=>{ counts[e]=(counts[e]||0)+1; });
+  const myUid=window._currentUser?.uid;
+  const myReact=r[myUid];
+  const chips=Object.entries(counts).map(([e,n])=>{
+    const mine=myReact===e;
+    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudosReaction('${esc(k.id)}','${k.scope||'squad'}','${e}')" title="${n}">${e} ${n}</span>`;
+  }).join('');
+  const picker=KUDOS_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudosReaction('${esc(k.id)}','${k.scope||'squad'}','${e}')">${e}</span>`).join('');
+  const addBtn=`<button class="kr-add" title="Reagir">😊<span class="kr-picker">${picker}</span></button>`;
+  return `<div class="kr-row">${chips}${addBtn}</div>`;
+}
+function toggleKudosReaction(id, scope, emoji){
+  const arr = scope==='geral' ? kudosGeral : kudosSquad;
+  const k=arr.find(x=>x.id===id); if(!k) return;
+  const uid=window._currentUser?.uid; if(!uid) return;
+  if(!k.reactions) k.reactions={};
+  if(k.reactions[uid]===emoji) delete k.reactions[uid];
+  else k.reactions[uid]=emoji;
+  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  window._set(window._ref(window._db,path), arr).catch(()=>{});
+  renderKudos();
+  // notifica o autor do kudo que reagiram (se não for ele mesmo)
+  if(k.reactions[uid] && k.fromUid && k.fromUid!==uid){
+    createNotif(k.fromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null);
+  }
 }
 function addKudos(){
   const para=document.getElementById('kudos-para').value;
   const texto=document.getElementById('kudos-text').value.trim();
   if(!para||!texto) return;
   const u=window._currentUser; if(!u){ toast('Faça login para enviar estrelas.'); return; }
-  const m=members.find(x=>x.init===para);
+  // resolve destinatário: na geral pode ser de qualquer squad
+  const m=(members.find(x=>x.init===para)) || ((window._allUsers||[]).find(x=>x.init===para));
   const obj={ id:'k'+Date.now()+Math.random().toString(36).slice(2,6),
     fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:window._currentUserInit||'?', fromFoto:u.photoURL||'',
-    toInit:para, toNome:m?.name||'', texto, scope:_kudosScope, ts:new Date().toISOString() };
+    toInit:para, toNome:m?.name||'', toUid:m?.uid||'', texto, scope:_kudosScope, reactions:{}, ts:new Date().toISOString() };
   if(_kudosScope==='geral'){
     kudosGeral.push(obj);
     window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(e=>toast('Erro: '+e.message));
@@ -4123,7 +4197,7 @@ function addKudos(){
     window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(e=>toast('Erro: '+e.message));
   }
   // Notifica o agraciado (reaproveita o sistema de notificações)
-  const toUid=getUidByInit(para);
+  const toUid = m?.uid || getUidByInit(para);
   if(toUid && toUid!==u.uid){
     createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
   }
@@ -4144,13 +4218,14 @@ function delKudos(id, scope){
   renderKudos();
 }
 function updKudosBadge(){
-  const btn=document.querySelector('[onclick="openKudos()"]'); if(!btn) return;
+  const badge=document.getElementById('kudos-badge'); if(!badge) return;
   let seen=0; try{ seen=parseInt(localStorage.getItem('mare_kudos_seen')||'0'); }catch(e){}
   const novos=[...kudosSquad,...kudosGeral].filter(k=>{
     const t=k.ts?new Date(k.ts).getTime():0;
     return t>seen && k.fromUid!==window._currentUser?.uid;
   }).length;
-  btn.textContent = novos>0 ? `⭐ Estrelas do Mar (${novos>9?'9+':novos})` : '⭐ Estrelas do Mar';
+  if(novos>0){ badge.textContent=novos>9?'9+':novos; badge.style.display=''; }
+  else badge.style.display='none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -5302,7 +5377,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'🔍', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
+    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que aparecem toda sprint. Configure em Recorrentes na toolbar. Ao clicar em Usar, o card é criado pré-preenchido com título e tag.' },
@@ -5369,7 +5444,7 @@ const HELP_CONTENT = {
     { icon:'👥', title:'Equipe do quadro', text:'Clique nos avatares de usuários online (topo direito) para abrir a lista completa da equipe do squad: quem está online, papel de cada um (Membro, Organizador, PO, Admin) e iniciais. Útil para saber quem participa do quadro.' },
   ],
   kudos: [
-    { icon:'⭐', title:'O que são as Estrelas do Mar', text:'É o mural de reconhecimento do time. Quando alguém faz algo digno de elogio — resolveu um bug tenso, salvou uma entrega, ajudou um colega — você manda uma Estrela pública pra essa pessoa. Levanta a moral e torna o bom trabalho visível. Abra pelo botão ⭐ Estrelas do Mar na toolbar.' },
+    { icon:'⭐', title:'O que são as Estrelas do Mar', text:'É o mural de reconhecimento do time. Quando alguém faz algo digno de elogio — resolveu um bug tenso, salvou uma entrega, ajudou um colega — você manda uma Estrela pública pra essa pessoa. Levanta a moral e torna o bom trabalho visível. Abra pelo ícone 🎉 ao lado do sino 🔔 no topo.' },
     { icon:'🐠', title:'Do Cardume vs. 🌊 Geral', text:'Estrelas "Do Cardume" ficam só dentro da sua squad — para reconhecimentos do dia a dia do time. Estrelas "Geral" são compartilhadas entre todas as squads — para reconhecimentos que merecem visibilidade ampla, como uma entrega que ajudou a empresa toda.' },
     { icon:'🙌', title:'Como enviar', text:'Escolha a aba (Cardume ou Geral), selecione a pessoa em "Para quem?", escreva o reconhecimento e envie. A pessoa recebe uma notificação 🔔 avisando que ganhou uma Estrela. Enter envia, Shift+Enter quebra linha.' },
     { icon:'📜', title:'Regras de convivência', text:'As Estrelas são públicas e permanentes (até serem removidas). Use para reconhecer de verdade, não para brincadeiras internas que excluam outros. Reconheça pessoas, não a si mesmo. Quem enviou e os admins podem remover uma Estrela se necessário. Mantenha o respeito: é um espaço de cultura positiva.' },
@@ -7368,10 +7443,18 @@ function renderCommentList(comments){
         '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong> · '+dt+'</div>'+
         '<div class="comment-text">'+textHtml+'</div>'+
         _renderReactions(c)+
-        (canDel?'<div class="comment-actions"><button class="comment-action-btn">Excluir</button></div>':'')
-      +'</div>';
+        '<div class="comment-actions">'+
+          '<button class="cmt-act-btn cmt-react" title="Reagir">😊 <span>Reagir</span>'+
+            '<span class="rx-picker">'+_reactPicker(c)+'</span>'+
+          '</button>'+
+          (canDel?'<button class="cmt-act-btn cmt-del" title="Excluir comentário">🗑 <span>Excluir</span></button>':'')+
+        '</div>'+
+      '</div>';
+    // Wire reagir picker toggle
+    const reactBtn=item.querySelector('.cmt-react');
+    if(reactBtn) reactBtn.onclick=(ev)=>{ ev.stopPropagation(); reactBtn.querySelector('.rx-picker').classList.toggle('open'); };
     if(canDel){
-      const delBtn=item.querySelector('.comment-action-btn');
+      const delBtn=item.querySelector('.cmt-del');
       if(delBtn) delBtn.onclick=()=>deleteComment(c.id);
     }
     // Wire card-mention clicks
@@ -7457,14 +7540,14 @@ function _renderReactions(c){
   Object.values(r).forEach(e=>{ counts[e]=(counts[e]||0)+1; });
   const myUid=window._currentUser?.uid;
   const myReact=r[myUid];
-  let chips=Object.entries(counts).map(([e,n])=>{
+  const chips=Object.entries(counts).map(([e,n])=>{
     const mine=myReact===e;
     return `<span class="rx-chip${mine?' rx-mine':''}" onclick="toggleReaction('${esc(c.id)}','${e}')" title="${n} reaç${n>1?'ões':'ão'}">${e} ${n}</span>`;
   }).join('');
-  // botão "+" com picker
-  const picker=REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
-  chips+=`<span class="rx-add" onclick="event.stopPropagation();this.querySelector('.rx-picker').classList.toggle('open')">＋<span class="rx-picker">${picker}</span></span>`;
-  return `<div class="rx-row">${chips}</div>`;
+  return chips ? `<div class="rx-row">${chips}</div>` : '';
+}
+function _reactPicker(c){
+  return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
 }
 
 // ── @card mention in textareas ────────────────────────────────────────
