@@ -190,7 +190,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
 .card:hover{border-color:var(--accent);transform:translateY(-1px);}
 .card.archived{display:none;}
-.card-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:4px;font-weight:700;border:1px solid transparent;}
+.card-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-bottom:4px;margin-right:3px;font-weight:700;border:1px solid transparent;}
+/* Multi-tag selector no modal */
+.m-tags-box{display:flex;flex-direction:column;gap:6px;}
+.m-tags-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.m-tags-chips:empty{display:none;}
+.m-tag-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid transparent;}
+.m-tag-chip .x{cursor:pointer;opacity:.6;font-weight:800;font-size:12px;line-height:1;}
+.m-tag-chip .x:hover{opacity:1;}
+.m-tags-add{cursor:pointer;}
 .card-title{font-size:11px;font-weight:500;margin-bottom:3px;line-height:1.4;}
 
 .card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px;}
@@ -1693,8 +1701,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <!-- Coluna esquerda: atributos -->
       <div class="modal-col">
         <div class="card-attr-row">
-          <div class="field"><label class="fl">Tag</label>
-            <select class="fi" id="m-tag" onchange="scheduleAutoSave()"></select>
+          <div class="field"><label class="fl">Tags</label>
+            <div id="m-tags-box" class="m-tags-box">
+              <div id="m-tags-chips" class="m-tags-chips"></div>
+              <select class="fi m-tags-add" id="m-tag-add" onchange="addCardTag(this.value)">
+                <option value="">+ Adicionar tag…</option>
+              </select>
+            </div>
           </div>
           <div class="field"><label class="fl">Coluna</label>
             <select class="fi" id="m-col"></select>
@@ -2302,7 +2315,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.11.1-dev</div>
+<div class="version">v8.12.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2764,6 +2777,9 @@ function fbLoadAll(){
     if(incoming.length) tags=incoming.filter(Boolean);
   });
   // Columns
+  fbListen(FB+'/deleted_cols',val=>{
+    if(Array.isArray(val)) _deletedColIds=new Set(val.filter(Boolean));
+  });
   fbListen(FB+'/columns',val=>{
     if(!val){
       // Firebase sem dados: garante DEFAULT_COLUMNS
@@ -2786,7 +2802,7 @@ function fbLoadAll(){
     const baseColumns = DEFAULT_COLUMNS
       .concat(columns)
       .filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); // dedup por id
-    const missingFromFirebase = baseColumns.filter(c=>!cleanedIds.has(c.id));
+    const missingFromFirebase = baseColumns.filter(c=>!cleanedIds.has(c.id) && !_deletedColIds.has(c.id));
 
     columns = missingFromFirebase.length
       ? [...cleaned, ...missingFromFirebase]
@@ -2807,12 +2823,10 @@ function fbLoadAll(){
       const val=snap.val(); if(!val) return;
       const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
       if(!incoming.length) return;
-      // Mesmo merge do listener: garante DEFAULT_COLUMNS nunca somem
       const incomingIds2=new Set(incoming.map(c=>c.id));
-      const base=DEFAULT_COLUMNS.concat(columns).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i);
-      const missing=base.filter(c=>!incomingIds2.has(c.id));
+      const missing=DEFAULT_COLUMNS.filter(c=>!incomingIds2.has(c.id) && !_deletedColIds.has(c.id));
       const merged=missing.length?[...incoming,...missing]:incoming;
-      if(JSON.stringify(merged.map(c=>c.id).sort())!==JSON.stringify(columns.map(c=>c.id).sort())){
+      if(JSON.stringify(merged.map(c=>c.id))!==JSON.stringify(columns.map(c=>c.id))){
         columns=merged;
         renderBoard();
       }
@@ -3324,6 +3338,23 @@ function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) ret
   if(t.isCalGestao||t.id==='cal_gestao') return `<span class="card-tag" style="background:rgba(150,80,220,.15);border-color:rgba(150,80,220,.4);color:#d67fff;font-weight:700;">${esc(t.label)}</span>`;
   const p=getPal(t.pi); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
 
+// ── MULTI-TAG: helper central de compatibilidade ──
+// Sempre retorna um array de IDs de tag, lendo de card.tags (novo) OU card.tag (legado).
+function getCardTags(card){
+  if(!card) return [];
+  if(Array.isArray(card.tags)) return card.tags.filter(Boolean);
+  if(card.tag) return [card.tag];
+  return [];
+}
+// Renderiza todas as tags de um card (múltiplas)
+function tagsHtml(card){
+  return getCardTags(card).map(id=>tagHtml(id)).join('');
+}
+// Card tem a tag X? (considera múltiplas)
+function cardHasTag(card, tagId){
+  return getCardTags(card).includes(tagId);
+}
+
 function getDue(due, isDone){
   if(!due) return {cls:'',lbl:''};
   if(isDone) return {cls:'due-done',lbl:'✓ '+new Date(due+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})};
@@ -3365,7 +3396,8 @@ function makeCardEl(card){
     else if(ageDays>=sprintLen) agingClass=' aged-1';
   }
   const hasBlockerTag=card.blocker&&blockerMode==='tag';
-  const t_=tags.find(t=>t.id===card.tag); const isOKR_=card.isOKR||t_?.isOKR||t_?.id==='okr'; const isCG_=t_?.isCalGestao||t_?.id==='cal_gestao';
+  const _cardTagIds=getCardTags(card); const _cardTagObjs=_cardTagIds.map(id=>getTag(id)).filter(Boolean);
+  const isOKR_=card.isOKR||_cardTagObjs.some(t=>t.isOKR||t.id==='okr'); const isCG_=_cardTagObjs.some(t=>t.isCalGestao||t.id==='cal_gestao');
   div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
@@ -3381,7 +3413,7 @@ function makeCardEl(card){
   div.ondragend=e=>handleDragEnd(e);
   addTouchDnD(div,card.id); div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
-  div.innerHTML=`${tagHtml(card.tag)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  div.innerHTML=`${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -3488,11 +3520,13 @@ function renderRaiaOwner(board,activeCards){
 function renderRaiaTag(board,activeCards){
   board.className='board raia-mode'+(viewMode?' mode-'+viewMode:'');
   // Tipos (tags) com cards, na ordem do board de tags; "sem tipo" por ultimo
-  const tagsComCards=tags.filter(t=>activeCards.some(c=>c.tag===t.id));
-  const temSemTipo=activeCards.some(c=>!getTag(c.tag));
+  const tagsComCards=tags.filter(t=>activeCards.some(c=>cardHasTag(c,t.id)));
+  const temSemTipo=activeCards.some(c=>getCardTags(c).filter(id=>getTag(id)).length===0);
   const ordered=[...tagsComCards.map(t=>t.id), ...(temSemTipo?['']:[])];
   ordered.forEach(tagId=>{
-    const tagCards=activeCards.filter(c=>(getTag(c.tag)?c.tag:'')===tagId);
+    const tagCards=tagId
+      ? activeCards.filter(c=>cardHasTag(c,tagId))
+      : activeCards.filter(c=>getCardTags(c).filter(id=>getTag(id)).length===0);
     if(!tagCards.length) return;
     const t=getTag(tagId);
     const p=t?getPal(t.pi):null;
@@ -3570,7 +3604,7 @@ function clearFilters(){
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!ignoreOwner&&activeFilters.owner&&card.owner!==activeFilters.owner) return false;
-  if(!ignoreTag&&activeFilters.tag&&card.tag!==activeFilters.tag) return false;
+  if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
@@ -3721,7 +3755,7 @@ function scheduleAutoSave(){
     const c=cards.find(x=>x.id===editingId); if(!c) return;
     const _prevColAS=c.col; const _newColAS=document.getElementById('m-col').value;
     const _asBefore=_histSnapshot(c); // 📜 snapshot antes do auto-save
-    Object.assign(c,{title,tag:document.getElementById('m-tag').value,
+    Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,
       po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
@@ -3738,7 +3772,38 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 // CARD MODAL
 // ═══════════════════════════════════════════════════════
-function populateTagSelect(){ document.getElementById('m-tag').innerHTML='<option value="">— sem tag —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
+let editingTags=[]; // tags do card sendo editado (array de IDs)
+function populateTagSelect(){
+  const add=document.getElementById('m-tag-add');
+  if(add){
+    const avail=tags.filter(t=>!editingTags.includes(t.id));
+    add.innerHTML='<option value="">+ Adicionar tag…</option>'+avail.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+  }
+  renderEditingTags();
+}
+function renderEditingTags(){
+  const box=document.getElementById('m-tags-chips'); if(!box) return;
+  box.innerHTML=editingTags.map(id=>{
+    const t=getTag(id); if(!t) return '';
+    let bg,bc,col;
+    if(t.isOKR||t.id==='okr'){ bg='rgba(255,215,0,.15)';bc='rgba(255,215,0,.5)';col='#ffd700'; }
+    else if(t.isCalGestao||t.id==='cal_gestao'){ bg='rgba(150,80,220,.15)';bc='rgba(150,80,220,.4)';col='#d67fff'; }
+    else { const p=getPal(t.pi); bg=p.bg;bc=p.b;col=p.c; }
+    return `<span class="m-tag-chip" style="background:${bg};border-color:${bc};color:${col};"><span>${esc(t.label)}</span><span class="x" onclick="removeCardTag('${esc(id)}')">×</span></span>`;
+  }).join('');
+}
+function addCardTag(id){
+  if(!id) return;
+  if(!editingTags.includes(id)) editingTags.push(id);
+  populateTagSelect();
+  const add=document.getElementById('m-tag-add'); if(add) add.value='';
+  scheduleAutoSave();
+}
+function removeCardTag(id){
+  editingTags=editingTags.filter(t=>t!==id);
+  populateTagSelect();
+  scheduleAutoSave();
+}
 function populateOwnerSelect(){
   document.getElementById('m-owner').innerHTML='<option value="">— sem atribuição —</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
   // Adiciona o usuário logado se não estiver na lista
@@ -3756,7 +3821,7 @@ function openCard(id){
   populateTagSelect(); populateOwnerSelect(); populateColSelect();
   document.getElementById('m-title').value=c.title;
   document.getElementById('m-title-disp').textContent=c.title;
-  document.getElementById('m-tag').value=c.tag;
+  editingTags=getCardTags(c).slice(); populateTagSelect();
   document.getElementById('m-col').value=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-due').value=c.due||'';
@@ -3810,7 +3875,7 @@ function openNewCard(col){
   document.getElementById('m-po').value='';
   eocInitDisplay('desc-eoc','','Adicionar descrição...');
   document.getElementById('m-title-disp').textContent='Novo card';
-  document.getElementById('m-tag').value=tags[0]?.id||'';
+  editingTags=[]; populateTagSelect();
   document.getElementById('m-col').value=col||columns[0]?.id||'backlog';
   document.getElementById('m-owner').value=window._currentUserInit||'';
   document.getElementById('m-due').value='';
@@ -3835,7 +3900,7 @@ function saveCard(){
     const c=cards.find(x=>x.id===editingId); if(!c) return;
     const _prevCol=c.col; const _newCol=document.getElementById('m-col').value;
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
-    Object.assign(c,{title,tag:document.getElementById('m-tag').value,col:document.getElementById('m-col').value,
+    Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
@@ -3852,7 +3917,7 @@ function saveCard(){
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
   } else {
-    const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tag:document.getElementById('m-tag').value,
+    const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
@@ -4450,7 +4515,8 @@ function usarQLItem(i){
   openNewCard();
   document.getElementById('m-title').value=item.title;
   document.getElementById('m-title-disp').textContent=item.title;
-  document.getElementById('m-tag').value=item.tag||tags[0]?.id;
+  editingTags = Array.isArray(item.tags) ? item.tags.slice() : (item.tag?[item.tag]:[]);
+  populateTagSelect();
   document.getElementById('m-desc').value=item.desc||'';
   document.getElementById('m-po').value=item.po||'';
   if(item.checklist?.length) renderCL(item.checklist);
@@ -4546,13 +4612,14 @@ function saveAgilCfg(){
     const remoteVal = snap.val();
     const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
     const localIds = new Set(columns.map(c=>c.id));
-    const extraRemote = remote.filter(c=>c && !localIds.has(c.id));
+    const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
     const merged = extraRemote.length ? [...columns, ...extraRemote] : columns;
     if(extraRemote.length){
       columns = merged; // atualiza estado local também
       showToast('ℹ Coluna(s) criada(s) por outro usuário foram preservadas: '+extraRemote.map(c=>c.name).join(', '));
     }
     fbSet(FB+'/columns', merged);
+    fbSet(FB+'/deleted_cols', Array.from(_deletedColIds));
     applyAgilCfg();
     renderBoard();
     closeOv('cfg-ov');
@@ -4593,7 +4660,8 @@ function renderColEditor(){
   });
 }
 function addColumn(){ const name=document.getElementById('new-col-name').value.trim(); if(!name) return; const color=document.getElementById('new-col-color').value; columns.push({id:'col_'+Date.now(),name,color,collapsible:false}); document.getElementById('new-col-name').value=''; renderColEditor(); }
-function delColumn(i){ if(columns.length<=1) return; if(!confirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return; const oldId=columns[i].id; cards.forEach(c=>{ if(c.col===oldId) c.col=columns[0].id; }); columns.splice(i,1); renderColEditor(); }
+let _deletedColIds = new Set();
+function delColumn(i){ if(columns.length<=1) return; if(!confirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return; const oldId=columns[i].id; _deletedColIds.add(oldId); cards.forEach(c=>{ if(c.col===oldId) c.col=columns[0].id; }); columns.splice(i,1); renderColEditor(); }
 function moveCol(i,dir){ const ni=i+dir; if(ni<0||ni>=columns.length) return; [columns[i],columns[ni]]=[columns[ni],columns[i]]; renderColEditor(); }
 
 
@@ -4803,7 +4871,7 @@ function executeTool(name,input){
       if(!qlItems.modelos) qlItems.modelos=[];
       const nome=input.nome_modelo||c.title;
       if(qlItems.modelos.find(m=>m.title===nome)) return{ok:false,msg:`Modelo "${nome}" já existe`};
-      qlItems.modelos.push({title:nome,tag:c.tag,desc:c.desc||'',po:c.po||'',
+      qlItems.modelos.push({title:nome,tag:c.tag,tags:getCardTags(c).slice(),desc:c.desc||'',po:c.po||'',
         checklist:(c.checklist||[]).map(i=>({t:i.t,done:false})),riscos:c.riscos||[]});
       fbSet(FB+'/ql_items',qlItems);
       return{ok:true,msg:`Card "${c.title}" salvo como modelo "${nome}"`};
@@ -4813,7 +4881,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       if(!qlItems.recorrentes) qlItems.recorrentes=[];
       if(qlItems.recorrentes.find(r=>r.title===c.title)) return{ok:false,msg:`"${c.title}" já está nos recorrentes`};
-      qlItems.recorrentes.push({title:c.title,tag:c.tag,desc:c.desc||''});
+      qlItems.recorrentes.push({title:c.title,tag:c.tag,tags:getCardTags(c).slice(),desc:c.desc||''});
       fbSet(FB+'/ql_items',qlItems);
       return{ok:true,msg:`"${c.title}" adicionado aos recorrentes`};
     }
@@ -6901,7 +6969,7 @@ function runAutoRules(eventType, cardId, extraVal){
     const user='Automação';
     if(rule.action==='move_card'){ card.col=rule.actionVal; card.edited=user; card.editedAt=td; const _cn=columns.find(x=>x.id===rule.actionVal); recordHistory(card, 'moveu para '+(_cn?_cn.name:rule.actionVal), '⚙ Automação'); }
     if(rule.action==='set_priority'){ card.priority=rule.actionVal; card.edited=user; card.editedAt=td; recordHistory(card, 'alterou prioridade: '+(rule.actionVal||'—'), '⚙ Automação'); }
-    if(rule.action==='add_tag'){ card.tag=rule.actionVal; card.edited=user; card.editedAt=td; recordHistory(card, 'alterou tag', '⚙ Automação'); }
+    if(rule.action==='add_tag'){ const _ct=getCardTags(card); if(!_ct.includes(rule.actionVal)){ _ct.push(rule.actionVal); } card.tags=_ct; card.tag=_ct[0]||''; card.edited=user; card.editedAt=td; recordHistory(card, 'adicionou tag', '⚙ Automação'); }
     if(rule.action==='assign_owner' && rule.actionVal){ card.owner=rule.actionVal; card.edited=user; card.editedAt=td; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card, 'definiu responsável: '+(m?m.name:rule.actionVal), '⚙ Automação'); }
     if(rule.action==='notify_agent'){
       const tab=rule.actionVal||'daily';
@@ -7164,7 +7232,7 @@ function resolveAllBugs(){
   let count = 0;
   cards.forEach(c=>{
     if(c.archived) return;
-    const isBug = bugTags.length ? bugTags.includes(c.tag) : c.col==='blocker';
+    const isBug = bugTags.length ? getCardTags(c).some(t=>bugTags.includes(t)) : c.col==='blocker';
     if(isBug && c.col!==doneCol.id){
       c.col = doneCol.id;
       c.doneAt = new Date().toISOString();
@@ -7238,7 +7306,7 @@ function ctxModel(){
     showToast('"'+card.title.substring(0,20)+'" já está nos modelos'); hideCtxMenu(); return;
   }
   qlItems.modelos.push({
-    title:card.title, tag:card.tag, desc:card.desc||'',
+    title:card.title, tag:card.tag, tags:getCardTags(card).slice(), desc:card.desc||'',
     po:card.po||'', checklist:(card.checklist||[]).map(i=>({t:i.t,done:false})), riscos:card.riscos||[],
   });
   fbSet(FB+'/ql_items',qlItems);
@@ -7274,7 +7342,7 @@ function salvarComoModeloModal(){
   if(jaExiste){ alert('"'+title+'" já está nos modelos.'); return; }
   qlItems.modelos.push({
     title,
-    tag:document.getElementById('m-tag').value,
+    tags:editingTags.slice(),tag:(editingTags[0]||''),
     desc:document.getElementById('m-desc').value,
     po:document.getElementById('m-po').value,
     checklist:getCL().map(i=>({t:i.t,done:false})),
