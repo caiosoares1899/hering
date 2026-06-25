@@ -1858,6 +1858,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="zerarBoard()">🗑 Excluir todos os cards</button>
       <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Remove todos os cards ativos e arquivados permanentemente.</p>
     </div>
+    <!-- RE-POPULAR SEED (DEV) -->
+    <div style="margin:0 0 10px;padding:10px 12px;background:rgba(29,233,182,.06);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);">
+      <div style="font-size:10px;color:var(--teal);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">🌱 Dados de teste</div>
+      <button class="btn btn-sm" style="color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="reSeedDev()">🔄 Re-popular dados de teste</button>
+      <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Sobrescreve o board com os dados de demonstração mais recentes (cards, ⭐ kudos, 📌 lembretes, reações e status). Use após atualizar o sistema.</p>
+    </div>
     <!-- ABA ÁGIL -->
     <div class="tab-c on" id="cfgtab-agil">
       <div class="cfg-sec-title">Sprint</div>
@@ -2265,7 +2271,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.0-dev</div>
+<div class="version">v8.10.2-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2839,6 +2845,14 @@ function fbLoadAll(){
             role:(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro'});
       }
     });
+    // ⚡ Garante que o usuário logado sempre apareça na lista (sobretudo ADM)
+    const cu=window._currentUser;
+    if(cu && window._currentUserInit){
+      if(!members.find(m=>m.uid===cu.uid || m.init===window._currentUserInit)){
+        members.push({init:window._currentUserInit, name:cu.displayName||cu.email||'', email:cu.email||'',
+          foto:cu.photoURL||'', uid:cu.uid, role:window._currentUserRole||'membro'});
+      }
+    }
     // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
     window._allUsers = [];
     Object.entries(val).forEach(([uid,u])=>{
@@ -3116,8 +3130,23 @@ window.addEventListener('auth-change',e=>{
   }
 });
 
+// Aplica visibilidade de UI conforme o papel atual (FAB agente, config)
+function _applyRoleVisibility(){
+  const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
+  const fabBtn=document.querySelector('.fab-btn');
+  const mnavAgent=document.getElementById('mnav-agent');
+  const fabCfg=document.getElementById('fab-cfg-btn');
+  if(fabBtn) fabBtn.style.display=isPOorOrg?'':'none';
+  if(mnavAgent) mnavAgent.style.display=isPOorOrg?'':'none';
+  if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
+}
 function autoRegistrar(user){
   if(!window._fbReady) return;
+  // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
+  if(isAdmUser(user)){
+    window._currentUserRole='adm';
+    _applyRoleVisibility();
+  }
   fbGet('kanban/usuarios/'+user.uid).then(snap=>{
     const existe=snap.val();
     const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -3132,12 +3161,14 @@ function autoRegistrar(user){
         squads:newSquads, criadoEm:new Date().toISOString()
       });
       window._currentUserRole=newRole;
+      _applyRoleVisibility(); // ⚡ aplica visibilidade
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
       window._currentUserRole=getEffectiveRole(user, existe.role);
+      _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
       if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
@@ -8573,9 +8604,20 @@ function seedLog(msg, cls='inf'){
   el.appendChild(d); el.scrollTop=el.scrollHeight;
 }
 
+// Re-popula o seed mesmo com board cheio (botão na config do dev)
+async function reSeedDev(){
+  if(ACTIVE_SQUAD!=='dev'){ alert('A re-população de dados de teste só está disponível no Dev Sandbox.'); return; }
+  const ok=confirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes (cards, kudos, lembretes, reações e status).\n\nOs dados atuais do dev serão substituídos. Continuar?');
+  if(!ok) return;
+  // mostra o overlay de seed (que tem o seed-btn e o log) e roda
+  const ov=document.getElementById('seed-overlay');
+  if(ov) ov.classList.add('active');
+  await runDevSeed();
+}
+
 async function runDevSeed(){
   const btn=document.getElementById('seed-btn');
-  btn.disabled=true; btn.textContent='⏳ Populando...';
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Populando...'; }
   const now=new Date().toISOString();
   const today=now.split('T')[0];
   const d = (days) => new Date(Date.now()+days*86400000).toISOString().split('T')[0];
@@ -9035,7 +9077,7 @@ async function runDevSeed(){
   try {
     if(!window._fbReady){
       seedLog('❌ Firebase não está pronto. Faça login primeiro.','err');
-      btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste';
+      if(btn){ btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste'; }
       return;
     }
 
@@ -9091,7 +9133,7 @@ async function runDevSeed(){
   } catch(e){
     seedLog('❌ Erro: '+e.message,'err');
     console.error(e);
-    btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste';
+    if(btn){ btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste'; }
   }
 }
 
