@@ -467,7 +467,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
 .kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
 .kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
-.version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
+.version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:99990;pointer-events:none;background:rgba(1,8,16,.55);padding:1px 6px;border-radius:5px;}
 .hidden{display:none!important;}
 
 /* Modo de visualização */
@@ -2300,7 +2300,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.10.7-dev</div>
+<div class="version">v8.10.9-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8177,8 +8177,10 @@ function getServiceInfo(url){
 
 function getFaviconUrl(url){
   try{
-    const host = new URL(url).hostname;
-    return 'https://www.google.com/s2/favicons?sz=32&domain='+host;
+    const u = new URL(url);
+    // Só tenta favicon para https (http gera 404 no serviço do Google e polui o console).
+    if(u.protocol!=='https:') return null;
+    return 'https://www.google.com/s2/favicons?sz=32&domain='+u.hostname;
   } catch(e){ return null; }
 }
 
@@ -9185,10 +9187,13 @@ async function runDevSeed(){
     }
 
     // Salva usuários em kanban/usuarios (path global)
+    // (pode falhar por regra se não for adm/po — não derruba o resto)
+    let _uOk=0;
     for(const [uid, u] of Object.entries(usuarios)){
-      await window._set(window._ref(window._db,'kanban/usuarios/'+uid), u);
+      try{ await window._set(window._ref(window._db,'kanban/usuarios/'+uid), u); _uOk++; }
+      catch(e){ seedLog('⚠ usuário '+uid+' não gravado (permissão): '+e.message,'err'); }
     }
-    seedLog('✅ 6 usuários fictícios criados (kanban/usuarios)','ok');
+    seedLog('✅ '+_uOk+'/6 usuários fictícios criados (kanban/usuarios)','ok');
 
     await window._set(window._ref(window._db, FB+'/columns'), seedColumns);
     seedLog('✅ 5 colunas criadas','ok');
@@ -9214,18 +9219,26 @@ async function runDevSeed(){
     await window._set(window._ref(window._db, FB+'/auto_rules'), seedAutoRules);
     seedLog('✅ 2 regras de automação criadas','ok');
 
-    await window._set(window._ref(window._db, FB+'/kudos'), seedKudos);
-    seedLog('✅ 4 Estrelas do Mar (com reações) criadas','ok');
+    try{
+      await window._set(window._ref(window._db, FB+'/kudos'), seedKudos);
+      seedLog('✅ 4 Estrelas do Mar (com reações) criadas','ok');
+    }catch(e){ seedLog('⚠ kudos não gravados: '+e.message,'err'); }
 
-    // Presença: grava cada usuário fictício como "online" com status
+    // Presença: a regra do Firebase só deixa escrever na PRÓPRIA uid.
+    // Escrever presença de usuários fictícios é NEGADO — então tentamos e ignoramos a falha.
+    let _pOk=0;
     for(const [uid, p] of Object.entries(seedPresence)){
-      await window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+uid), p);
+      try{ await window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+uid), p); _pOk++; }
+      catch(e){ /* esperado: regra de presence bloqueia uid alheio */ }
     }
-    seedLog('✅ 5 usuários online com status de presença','ok');
+    if(_pOk>0) seedLog('✅ '+_pOk+' usuários online com status','ok');
+    else seedLog('ℹ Presença fictícia não gravada (regra do Firebase só permite a própria) — normal','inf');
 
-    // Lembretes de exemplo (PO direcionado + próprio)
-    await window._set(window._ref(window._db, FB+'/lembretes'), seedLembretes);
-    seedLog('✅ Lembretes de exemplo criados','ok');
+    // Lembretes de exemplo
+    try{
+      await window._set(window._ref(window._db, FB+'/lembretes'), seedLembretes);
+      seedLog('✅ Lembretes de exemplo criados','ok');
+    }catch(e){ seedLog('⚠ lembretes não gravados: '+e.message,'err'); }
 
     seedLog('🎉 Pronto! Carregando board em 2s...','ok');
     setTimeout(()=>{
