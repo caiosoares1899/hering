@@ -163,11 +163,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;}
 /* No modo expandido, limita a altura à viewport pra scrollbar horizontal ficar visível
    e as colunas rolarem verticalmente por dentro. */
-.board-wrap.mode-expanded-wrap{
+".board-wrap.mode-expanded-wrap{
   overflow-x:auto;
   overflow-y:hidden;
   max-width:100%;
-  height:calc(100vh - var(--board-top, 150px));
+  /* 22px de folga no fim = espaço garantido pra scrollbar horizontal ficar visível */
+  height:calc(100vh - var(--board-top, 150px) - 22px);
+  padding-bottom:0;
 }
 /* Em modo raia, a altura volta a ser automática (raia rola na página) */
 .board-wrap.mode-expanded-wrap:has(.board.raia-mode){
@@ -178,7 +180,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* coluna no modo expandido ocupa a altura do wrap e deixa o corpo rolar (exceto raia) */
 .mode-expanded-wrap .board.mode-expanded:not(.raia-mode){height:100%;align-items:flex-start;}
 .mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col{max-height:100%;display:flex;flex-direction:column;}
+.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col-hd{flex-shrink:0;}
 .mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col-body{flex:1 1 auto;overflow-y:auto;min-height:40px;}
+.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .add-btn{flex-shrink:0;}
 .board.raia-mode{display:block!important;}
 .board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
 .board.raia-mode.mode-expanded .col{width:240px;min-width:240px;}
@@ -353,7 +357,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .retro-i{font-size:11px;color:var(--txt);padding:3px 0;border-bottom:1px solid rgba(56,182,255,.07);line-height:1.5;}
 .retro-i:last-child{border:none;}
 /* config */
-.cfg-panel{max-width:640px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;}
+.cfg-panel{max-width:640px;width:92vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.cfg-panel .panel-hd{flex-shrink:0;}
+.cfg-panel #cfg-tabs{flex-shrink:0;}
+.cfg-panel .tab-c{overflow-y:auto;flex:1;}
+.help-panel .panel-hd,.help-panel #help-tabs{flex-shrink:0;}
 .cfg-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
 .cfg-sec-title{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:8px;}
 /* Subtimes editor */
@@ -508,6 +516,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-card .kc-text{font-size:14px;line-height:1.5;color:var(--txt);font-weight:500;}
 .kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;transition:opacity .15s;flex-shrink:0;align-self:flex-start;}
 .kudos-card .kc-del:hover{color:var(--danger);}
+/* Botão "Enviar estrela" que abre o compositor */
+.kudos-fab{width:100%;background:linear-gradient(135deg,#ffd166,#ffb84d);color:#1a1208;border:none;border-radius:10px;
+  padding:12px;font-size:13px;font-weight:800;font-family:"Syne",sans-serif;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 14px rgba(255,209,102,.3);}
+.kudos-fab:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(255,209,102,.45);}
 /* reações aos kudos */
 .kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
 .kr-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
@@ -887,6 +900,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .xdesc-foot .xdesc-meta{margin-top:0;flex:1;min-width:0;}
 .xdesc-save{font-size:10px;font-weight:600;color:var(--teal);background:rgba(29,233,182,.1);border:1px solid rgba(29,233,182,.3);border-radius:6px;padding:4px 11px;cursor:pointer;flex-shrink:0;transition:all .15s;font-family:"DM Sans",sans-serif;}
 .xdesc-save:hover{background:rgba(29,233,182,.2);color:var(--txt);}
+/* Modo leitura da descrição adicional (igual à descrição principal) */
+.xdesc-read{background:rgba(3,13,26,.4);}
+.xdesc-read-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;min-height:18px;}
+.xdesc-read-label{font-size:11px;font-weight:700;color:var(--accent);background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);padding:2px 9px;border-radius:999px;}
+.xdesc-edit{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;transition:all .15s;flex-shrink:0;}
+.xdesc-edit:hover{color:var(--accent);background:rgba(56,182,255,.1);}
+.xdesc-read-text{font-size:13px;line-height:1.55;color:var(--txt);white-space:pre-wrap;word-break:break-word;}
 /* Campos obrigatórios do modelo */
 .reqf-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s;}
 .reqf-row:hover{background:rgba(56,182,255,.07);}
@@ -1662,11 +1682,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="kudos-stab" id="kstab-geral" onclick="setKudosScope('geral')">🌊 Geral</button>
   </div>
   <div class="lem-body" id="kudos-body"></div>
-  <div class="lem-add" id="kudos-add">
+  <button class="kudos-fab" id="kudos-fab" onclick="toggleKudosCompose(true)">⭐ Enviar estrela</button>
+  <div class="lem-add" id="kudos-add" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+      <span style="font-size:11px;font-weight:700;color:#ffd166;">⭐ Nova estrela</span>
+      <button onclick="toggleKudosCompose(false)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;line-height:1;padding:2px 5px;">✕</button>
+    </div>
     <div class="lem-add-row" style="gap:6px;">
       <select id="kudos-para" title="Para quem é o reconhecimento" style="flex:1;"></select>
     </div>
-    <textarea id="kudos-text" placeholder="Reconheça alguém... (Enter envia)" rows="1" oninput="updKudosBtn();this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';" onfocus="this.rows=2;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}" style="width:100%;margin-top:6px;resize:none;"></textarea>
+    <textarea id="kudos-text" placeholder="Reconheça alguém... (Enter envia)" rows="2" oninput="updKudosBtn();this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}" style="width:100%;margin-top:6px;resize:none;"></textarea>
     <button class="lem-add-btn kudos-btn" id="kudos-btn" onclick="addKudos()" disabled style="margin-top:6px;">⭐ Enviar estrela</button>
   </div>
 </div><!-- /kudos-drawer -->
@@ -2335,7 +2360,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 <!-- AJUDA -->
 <div class="ov" id="help-ov">
-<div class="panel" style="max-width:640px;max-height:90vh;display:flex;flex-direction:column;">
+<div class="panel help-panel" style="max-width:640px;width:92vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
     <div class="panel-title">❓ Central de Ajuda · Kanban Hering</div>
     <button class="x-btn" onclick="closeOv('help-ov')">✕</button>
@@ -2441,7 +2466,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.18.1-dev</div>
+<div class="version">v8.18.2-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4099,6 +4124,7 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 let editingTags=[]; // tags do card sendo editado (array de IDs)
 let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,text,author,authorInit,at,editedAt}
+let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
   const canEdit = window._currentUserRole && window._currentUserRole!=='convidado';
@@ -4110,24 +4136,39 @@ function renderExtraDescs(){
       const whenStr=when? new Date(when).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
       const who=d.author||d.authorInit||'';
       const meta=who? `por <b>${esc(who)}</b>${whenStr?' · '+whenStr:''}${d.editedAt&&d.at&&d.editedAt!==d.at?' (editado)':''}` : (whenStr||'');
-      return `<div class="xdesc-card">
-        <div class="xdesc-head">
-          <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
-            ${canEdit?'':'disabled'} oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
-          <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})" ${canEdit?'':'disabled'}>🗑</button>
-        </div>
-        <textarea class="xdesc-text" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
-          ${canEdit?'':'disabled'} oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
-          onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
-        <div class="xdesc-foot">
-          ${meta?`<span class="xdesc-meta">${meta}</span>`:'<span class="xdesc-meta"></span>'}
-          ${canEdit?`<button class="xdesc-save" onclick="saveExtraDesc(${i})">✓ Salvar</button>`:''}
-        </div>
-      </div>`;
+      const isEditing = _editingDescIdx.has(i) || (!d.text||!d.text.trim());
+      if(isEditing && canEdit){
+        // MODO EDIÇÃO
+        return `<div class="xdesc-card editing">
+          <div class="xdesc-head">
+            <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
+              oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
+            <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
+          </div>
+          <textarea class="xdesc-text" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
+            oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
+            onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
+          <div class="xdesc-foot">
+            ${meta?`<span class="xdesc-meta">${meta}</span>`:'<span class="xdesc-meta"></span>'}
+            <button class="xdesc-save" onclick="saveExtraDesc(${i})">✓ Salvar</button>
+          </div>
+        </div>`;
+      } else {
+        // MODO LEITURA (igual à descrição principal)
+        return `<div class="xdesc-card xdesc-read">
+          <div class="xdesc-read-head">
+            ${d.label?`<span class="xdesc-read-label">${esc(d.label)}</span>`:'<span></span>'}
+            ${canEdit?`<button class="xdesc-edit" onclick="editExtraDesc(${i})" title="Editar">✏️</button>`:''}
+          </div>
+          <div class="xdesc-read-text">${esc(d.text||'')}</div>
+          ${meta?`<div class="xdesc-meta">${meta}</div>`:''}
+        </div>`;
+      }
     }).join('');
   }
   document.getElementById('add-desc-btn').style.display = canEdit?'':'none';
 }
+function editExtraDesc(i){ _editingDescIdx.add(i); renderExtraDescs(); }
 function _touchDesc(i){
   const d=editingDescs[i]; if(!d) return;
   // marca autor/data na primeira edição de conteúdo
@@ -4139,6 +4180,7 @@ function _touchDesc(i){
 function addExtraDesc(){
   if(window._currentUserRole==='convidado'){ showToast('🔒 Convidados não podem editar.'); return; }
   editingDescs.push({id:'d'+Date.now(), label:'', text:'', author:'', authorInit:'', at:null, editedAt:null});
+  _editingDescIdx.add(editingDescs.length-1); // nova já entra editável
   renderExtraDescs();
   // foca no rótulo recém-criado
   setTimeout(()=>{ const inps=document.querySelectorAll('.xdesc-label'); inps[inps.length-1]?.focus(); },50);
@@ -4152,6 +4194,7 @@ function _cleanExtraDescs(){
 function removeExtraDesc(i){
   if(!confirm('Remover esta descrição adicional?')) return;
   editingDescs.splice(i,1);
+  _editingDescIdx.clear(); // índices mudaram; reavalia (vazias reabrem sozinhas)
   renderExtraDescs();
   scheduleAutoSave();
 }
@@ -4161,6 +4204,7 @@ function saveExtraDesc(i){
   if(!d.author){ d.author=window._currentUser?.displayName||window._currentUserInit||''; d.authorInit=window._currentUserInit||''; }
   if(!d.at) d.at=new Date().toISOString();
   d.editedAt=new Date().toISOString();
+  _editingDescIdx.delete(i); // sai do modo edição → vira modo leitura
   // se o card já existe, persiste na hora; senão fica no editingDescs até criar o card
   if(editingId){
     const c=cards.find(x=>x.id===editingId);
@@ -4222,7 +4266,7 @@ function openCard(id){
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-due').value=c.due||'';
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
-  editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
+  _editingDescIdx=new Set(); editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
   document.getElementById('m-po').value=c.po||'';
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
   document.getElementById('m-sp').value=c.sp||'';
@@ -4272,7 +4316,7 @@ function openNewCard(col){
   document.getElementById('m-title').value='';
   document.getElementById('m-po').value='';
   eocInitDisplay('desc-eoc','','Adicionar descrição...');
-  editingDescs=[]; renderExtraDescs();
+  editingDescs=[]; _editingDescIdx=new Set(); renderExtraDescs();
   document.getElementById('m-title-disp').textContent='Novo card';
   editingTags=[]; populateTagSelect();
   document.getElementById('m-col').value=col||columns[0]?.id||'backlog';
@@ -4742,6 +4786,14 @@ function _populateKudosPara(){
   });
   sel.innerHTML=opts.join('');
 }
+function toggleKudosCompose(show){
+  const add=document.getElementById('kudos-add');
+  const fab=document.getElementById('kudos-fab');
+  if(!add||!fab) return;
+  add.style.display = show?'block':'none';
+  fab.style.display = show?'none':'block';
+  if(show){ setTimeout(()=>document.getElementById('kudos-text')?.focus(),60); }
+}
 function updKudosBtn(){
   const para=document.getElementById('kudos-para')?.value;
   const txt=document.getElementById('kudos-text')?.value.trim();
@@ -4837,6 +4889,7 @@ function addKudos(){
   document.getElementById('kudos-para').value='';
   updKudosBtn();
   renderKudos();
+  toggleKudosCompose(false); // recolhe o compositor, volta a mostrar os kudos
   toast('⭐ Estrela enviada para '+(m?.name?.split(' ')[0]||para)+'!');
 }
 function delKudos(id, scope){
@@ -6998,10 +7051,17 @@ function setViewMode(mode){
     wrap.style.maxHeight=''; wrap.style.overflowY=''; wrap.style.overflowX=''; wrap.style.paddingBottom='';
     wrap.classList.toggle('mode-expanded-wrap', mode==='expanded');
     if(mode==='expanded'){
-      requestAnimationFrame(()=>{
+      const measure=()=>{
         const top=wrap.getBoundingClientRect().top;
-        document.documentElement.style.setProperty('--board-top', Math.round(top+14)+'px');
-      });
+        // Só aplica se a medição for plausível (board já visível e posicionado).
+        // Se vier 0/negativo (layout não pronto), tenta de novo no próximo frame.
+        if(top>40){
+          document.documentElement.style.setProperty('--board-top', Math.round(top)+'px');
+        } else {
+          requestAnimationFrame(measure);
+        }
+      };
+      requestAnimationFrame(measure);
     }
   }
 }
