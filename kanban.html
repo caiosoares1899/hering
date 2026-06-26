@@ -3426,26 +3426,30 @@ function renderOnline(users){
   bar.innerHTML='';
   if(!users.length) return;
   users.slice(0,6).forEach(u=>{
-    const el=document.createElement('div');
     const st=STATUS_MAP[u.status];
-    el.title=u.nome+(st?(' · '+st.label):'')+' (online)';
-    el.style.cssText='position:relative;width:24px;height:24px;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);';
+    // Wrapper externo (overflow visível) que segura a foto + status sem cortar
+    const wrap=document.createElement('div');
+    wrap.title=u.nome+(st?(' · '+st.label):'')+' (online)';
+    wrap.style.cssText='position:relative;width:24px;height:24px;flex-shrink:0;';
+    // Avatar interno (overflow hidden, recorta a foto no círculo)
+    const el=document.createElement('div');
+    el.style.cssText='width:100%;height:100%;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);box-sizing:border-box;';
     const _f=safeUrl(u.foto);
     if(_f) el.innerHTML=`<img src="${_f}" style="width:100%;height:100%;object-fit:cover;">`;
     else el.textContent=u.init||'?';
-    // bolinha verde
+    wrap.appendChild(el);
+    // bolinha verde (no wrapper, não no avatar — não estoura)
     const dot=document.createElement('div');
-    dot.style.cssText='position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:var(--teal);border:1px solid var(--deep);';
-    el.appendChild(dot);
-    // emoji de status (canto superior direito, fora da foto)
+    dot.style.cssText='position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:var(--teal);border:1.5px solid var(--deep);box-sizing:border-box;';
+    wrap.appendChild(dot);
+    // emoji de status (canto superior direito, no wrapper)
     if(st){
       const sb=document.createElement('div');
-      sb.style.cssText='position:absolute;top:-5px;right:-5px;font-size:11px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));';
+      sb.style.cssText='position:absolute;top:-6px;right:-6px;font-size:11px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));';
       sb.textContent=st.emoji;
-      el.style.overflow='visible';
-      el.appendChild(sb);
+      wrap.appendChild(sb);
     }
-    bar.appendChild(el);
+    bar.appendChild(wrap);
   });
   if(users.length>6){ const more=document.createElement('span'); more.style.cssText='font-size:10px;color:var(--teal);'; more.textContent='+'+( users.length-6); bar.appendChild(more); }
 }
