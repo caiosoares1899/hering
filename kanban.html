@@ -207,7 +207,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-selectall:hover{background:rgba(56,182,255,.2);color:var(--txt);}
 .bulk-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:12px;background:rgba(4,22,39,.96);border:1px solid var(--accent);border-radius:999px;padding:10px 18px;backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:bulkIn .25s ease;}
 @keyframes bulkIn{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
-.bulk-count{font-size:13px;font-weight:700;color:var(--txt);}
+.bulk-count{font-size:13px;font-weight:700;color:var(--txt);white-space:nowrap;}
+.bulk-actions{display:flex;gap:5px;}
+.bulk-act{display:flex;flex-direction:column;align-items:center;gap:1px;background:rgba(56,182,255,.1);border:1px solid var(--glass-b);border-radius:10px;padding:6px 10px;cursor:pointer;color:var(--txt);font-size:15px;transition:all .15s;min-width:54px;font-family:"DM Sans",sans-serif;}
+.bulk-act span{font-size:9px;color:var(--txt2);font-weight:600;}
+.bulk-act:hover:not(:disabled){background:rgba(56,182,255,.2);border-color:var(--accent);}
+.bulk-act:disabled{opacity:.35;cursor:not-allowed;}
+.bulk-act-del{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.3);}
+.bulk-act-del span{color:var(--danger);}
+.bulk-act-del:hover:not(:disabled){background:rgba(255,107,107,.24);border-color:var(--danger);}
+.bulk-pop{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);z-index:9001;background:rgba(6,26,46,.99);border:1px solid var(--accent);border-radius:14px;padding:10px;backdrop-filter:blur(14px);box-shadow:0 10px 36px rgba(0,0,0,.6);max-height:50vh;overflow-y:auto;min-width:240px;max-width:340px;animation:bulkIn .2s ease;}
+.bulk-pop-title{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:7px;padding:0 4px;}
+.bulk-pop-sec{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin:8px 4px 4px;}
+.bulk-pop-item{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:none;border:none;color:var(--txt);font-size:12px;padding:7px 9px;border-radius:8px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:background .12s;}
+.bulk-pop-item:hover{background:rgba(56,182,255,.12);}
+.bulk-tag-chip{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid;font-weight:600;}
 .bulk-del{background:rgba(255,107,107,.16)!important;border-color:rgba(255,107,107,.45)!important;color:var(--danger)!important;font-weight:700;}
 .bulk-del:hover:not(:disabled){background:rgba(255,107,107,.28)!important;}
 .bulk-del:disabled{opacity:.4;cursor:not-allowed;}
@@ -407,6 +421,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .uss-init{font-size:9px;color:var(--txt3);font-weight:600;}
 /* quick lists overlay */
 .ql-panel{max-width:460px;max-height:88vh;overflow-y:auto;}
+.ql-filter-bar{display:flex;gap:6px;padding:10px 14px 4px;flex-wrap:wrap;}
+.ql-filter-inp{flex:1;min-width:130px;background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:11px;font-family:"DM Sans",sans-serif;}
+.ql-filter-inp::placeholder{color:var(--txt3);}
+.ql-filter-sel{background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:8px;padding:6px 8px;color:var(--txt);font-size:11px;font-family:"DM Sans",sans-serif;cursor:pointer;}
 .ql-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);cursor:pointer;transition:all .15s;}
 .ql-item:hover{border-color:var(--accent);}
 .ql-item-title{flex:1;font-size:12px;font-weight:500;}
@@ -460,6 +478,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .postit .pi-type{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.85;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
 .postit .pi-text{font-size:13px;line-height:1.42;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
 .postit .pi-meta{font-size:9.5px;margin-top:7px;opacity:.62;color:#1a1208;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.postit .pi-author{font-weight:700;}
 .postit .pi-del,.postit .pi-resolve{position:absolute;top:6px;width:18px;height:18px;border-radius:50%;border:none;
   background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:11px;line-height:1;font-weight:700;
   display:none;align-items:center;justify-content:center;}
@@ -1963,6 +1982,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   <div class="modal-ft-row">
     <button class="btn btn-sm" id="btn-del-card" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
+    <button class="btn btn-sm" id="btn-dup-card" onclick="duplicarCard()" title="Duplicar este card">⧉ Duplicar</button>
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
     <button class="btn btn-sm btn-teal" onclick="archiveCard()">📦 Arquivar</button>
     <div style="flex:1;"></div>
@@ -2306,6 +2326,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="panel-title" id="ql-title">Lista</div>
     <button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
   </div>
+  <div class="ql-filter-bar" id="ql-filter-bar">
+    <input id="ql-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderQLBody()">
+    <select id="ql-f-tag" class="ql-filter-sel" onchange="renderQLBody()"></select>
+  </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;" id="ql-body">
   </div>
   <div style="padding:10px 14px;border-top:1px solid var(--glass-b);">
@@ -2452,6 +2476,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
   <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
+  <div class="ql-filter-bar">
+    <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
+    <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
+    <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
+  </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;" id="arch-body"></div>
 </div>
 </div>
@@ -2478,7 +2507,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.20.2</div>
+<div class="version">v8.22.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2765,9 +2794,97 @@ function updateBulkBar(){
     document.body.appendChild(bar);
   }
   const n=selectedCards.size;
+  const dis=n===0?'disabled':'';
   bar.innerHTML=`<span class="bulk-count">${n} selecionado${n!==1?'s':''}</span>
-    <button class="btn btn-sm" onclick="clearSelection()">Limpar seleção</button>
-    <button class="btn btn-sm bulk-del" ${n===0?'disabled':''} onclick="bulkDeleteSelected()">🗑 Excluir ${n>0?n:''} card${n!==1?'s':''}</button>`;
+    <div class="bulk-actions">
+      <button class="bulk-act" ${dis} onclick="bulkMove()" title="Mover para coluna">📥<span>Mover</span></button>
+      <button class="bulk-act" ${dis} onclick="bulkAssign()" title="Atribuir responsável">👤<span>Responsável</span></button>
+      <button class="bulk-act" ${dis} onclick="bulkTag()" title="Adicionar/trocar tag">🏷<span>Tag</span></button>
+      <button class="bulk-act" ${dis} onclick="bulkDuplicate()" title="Duplicar cards">⧉<span>Duplicar</span></button>
+      <button class="bulk-act" ${dis} onclick="bulkArchive()" title="Arquivar">📦<span>Arquivar</span></button>
+      <button class="bulk-act bulk-act-del" ${dis} onclick="bulkDeleteSelected()" title="Excluir">🗑<span>Excluir</span></button>
+    </div>
+    <button class="btn btn-sm" onclick="clearSelection()">Limpar</button>`;
+}
+// Mini-popover de escolha (coluna/responsável/tag) ancorado acima da barra
+function _bulkPopover(html){
+  let pop=document.getElementById('bulk-pop');
+  if(pop) pop.remove();
+  pop=document.createElement('div'); pop.id='bulk-pop'; pop.className='bulk-pop';
+  pop.innerHTML=html;
+  document.body.appendChild(pop);
+  setTimeout(()=>{ const close=(e)=>{ if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },50);
+  return pop;
+}
+function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
+function _bulkFinish(msg){
+  fbSaveAll(); 
+  const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
+  selectedCards.clear(); selectMode=false;
+  const btn=document.getElementById('btn-select');
+  if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
+  renderBoard(); updateBulkBar();
+  showToast(msg);
+}
+function bulkMove(){
+  if(!selectedCards.size) return;
+  const opts=columns.map(c=>`<button class="bulk-pop-item" onclick="_doBulkMove('${c.id}')"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
+  _bulkPopover(`<div class="bulk-pop-title">Mover ${selectedCards.size} card(s) para:</div>${opts}`);
+}
+function _doBulkMove(colId){
+  const col=columns.find(c=>c.id===colId);
+  _selectedList().forEach(c=>{ if(c.col!==colId){ recordMove(c,colId); c.col=colId; recordHistory(c,'moveu para '+(col?.name||colId)); } });
+  _bulkFinish('📥 '+selectedCards.size+' card(s) movidos para '+(col?.name||colId)+'.');
+}
+function bulkAssign(){
+  if(!selectedCards.size) return;
+  const opts=members.filter(m=>m.init).map(m=>`<button class="bulk-pop-item" onclick="_doBulkAssign('${esc(m.init)}')">${esc(m.init)} · ${esc(m.name)}</button>`).join('');
+  _bulkPopover(`<div class="bulk-pop-title">Atribuir ${selectedCards.size} card(s) a:</div><button class="bulk-pop-item" onclick="_doBulkAssign('')">— sem responsável —</button>${opts}`);
+}
+function _doBulkAssign(init){
+  const m=members.find(x=>x.init===init);
+  _selectedList().forEach(c=>{ c.owner=init; recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável'); });
+  _bulkFinish('👤 '+selectedCards.size+' card(s) '+(init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável')+'.');
+}
+function bulkTag(){
+  if(!selectedCards.size) return;
+  const opts=tags.map(t=>{ const p=getPal(t.pi); return `<button class="bulk-pop-item" onclick="_doBulkTag('${esc(t.id)}','add')"><span class="bulk-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span> adicionar</button>`; }).join('');
+  const optsSet=tags.map(t=>{ const p=getPal(t.pi); return `<button class="bulk-pop-item" onclick="_doBulkTag('${esc(t.id)}','set')"><span class="bulk-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span> só esta</button>`; }).join('');
+  _bulkPopover(`<div class="bulk-pop-title">Tag em ${selectedCards.size} card(s):</div><div class="bulk-pop-sec">Adicionar tag</div>${opts}<div class="bulk-pop-sec">Substituir por uma só</div>${optsSet}`);
+}
+function _doBulkTag(tagId, mode){
+  _selectedList().forEach(c=>{
+    let arr=getCardTags(c);
+    if(mode==='set'){ arr=[tagId]; }
+    else if(!arr.includes(tagId)){ arr=[...arr, tagId]; }
+    c.tags=arr; c.tag=arr[0]||'';
+  });
+  const t=getTag(tagId);
+  _bulkFinish('🏷 Tag "'+(t?.label||'')+'" aplicada em '+selectedCards.size+' card(s).');
+}
+function bulkDuplicate(){
+  if(!selectedCards.size) return;
+  if(!confirm('Duplicar '+selectedCards.size+' card(s)?')) return;
+  const user=window._currentUser?.displayName||'Usuário';
+  const td=new Date().toISOString().split('T')[0];
+  let count=0;
+  _selectedList().forEach(c=>{
+    const novo=JSON.parse(JSON.stringify(c));
+    novo.id='c'+Date.now()+'_'+(count++);
+    novo.title=(c.title||'')+' (cópia)';
+    novo.archived=false;
+    novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
+    novo.history=[]; novo.moveLog=[];
+    recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
+    cards.push(novo);
+  });
+  _bulkFinish('⧉ '+count+' card(s) duplicados.');
+}
+function bulkArchive(){
+  if(!selectedCards.size) return;
+  if(!confirm('Arquivar '+selectedCards.size+' card(s)?')) return;
+  _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; recordHistory(c,'arquivou o card'); } });
+  _bulkFinish('📦 '+selectedCards.size+' card(s) arquivados.');
 }
 function clearSelection(){ selectedCards.clear(); renderBoard(); updateBulkBar(); }
 function bulkDeleteSelected(){
@@ -4397,6 +4514,32 @@ function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.archived=true; fbSaveAll(); renderBoard(); closeOv('card-ov');
 }
+// Duplica um card (objeto) e adiciona ao board; retorna o novo
+function _duplicarCardObj(card){
+  const user=window._currentUser?.displayName||'Usuário';
+  const td=new Date().toISOString().split('T')[0];
+  const novo=JSON.parse(JSON.stringify(card));
+  novo.id='c'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+  novo.title=(card.title||'')+' (cópia)';
+  novo.archived=false;
+  novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
+  novo.history=[]; novo.moveLog=[];
+  recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
+  cards.push(novo);
+  return novo;
+}
+function duplicarCard(){
+  if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const novo=_duplicarCardObj(c);
+  fbSaveAll(); renderBoard(); closeOv('card-ov');
+  showToast('⧉ Card duplicado.');
+}
+function ctxDuplicate(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
+  _duplicarCardObj(card);
+  fbSaveAll(); renderBoard(); hideCtxMenu();
+  showToast('⧉ Card duplicado.');
+}
 function renderCL(cl){
   const w=document.getElementById('m-checklist'); if(!w) return; w.innerHTML='';
   cl.forEach((item,i)=>{
@@ -4612,7 +4755,9 @@ function renderLembretes(){
         const nome = eu ? 'você' : (members.find(m=>m.uid===l.target||m.init===l.target)?.name?.split(' ')[0] || l.targetLabel || 'alguém');
         alvo=` · 🎯 ${esc(nome)}`;
       }
-      meta=`<div class="pi-meta"><span>${esc(l.autor||l.init||'eu')}${alvo}</span><span>${quando}</span></div>`;
+      // Sempre mostra QUEM criou (primeiro nome), pequeno no canto
+      const autorNome = (l.autor||'').split(' ')[0] || l.init || 'alguém';
+      meta=`<div class="pi-meta"><span class="pi-author">✎ ${esc(autorNome)}${alvo}</span><span>${quando}</span></div>`;
     }
     const clickAttr = (l.tipo==='quadro'&&l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard('${esc(l.cardId)}')"` : ` style="--rot:${rot}deg;"`;
     return `<div class="postit ${t.cls}${urgent}"${clickAttr}>
@@ -4934,8 +5079,29 @@ function zerarBoard(){
 }
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
-  const archived=cards.filter(c=>c.archived);
-  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado.</div>'; }
+  let archived=cards.filter(c=>c.archived);
+  // Popula dropdowns de filtro preservando a seleção atual
+  const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner');
+  const fNomeEl=document.getElementById('arch-f-nome');
+  if(fTag){
+    const prev=fTag.value;
+    const tagsUsadas=[...new Set(archived.flatMap(c=>getCardTags(c)))].filter(Boolean);
+    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+tagsUsadas.map(id=>{const t=getTag(id);return t?`<option value="${esc(id)}">${esc(t.label)}</option>`:''}).join('');
+    fTag.value=prev;
+  }
+  if(fOwner){
+    const prev=fOwner.value;
+    const ownersUsados=[...new Set(archived.map(c=>c.owner).filter(Boolean))];
+    fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(m.name.split(' ')[0]):''}</option>`}).join('');
+    fOwner.value=prev;
+  }
+  // Aplica filtros
+  const qNome=(fNomeEl?.value||'').toLowerCase().trim();
+  const qTag=fTag?.value||''; const qOwner=fOwner?.value||'';
+  if(qNome) archived=archived.filter(c=>(c.title||'').toLowerCase().includes(qNome));
+  if(qTag) archived=archived.filter(c=>getCardTags(c).includes(qTag));
+  if(qOwner) archived=archived.filter(c=>c.owner===qOwner);
+  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
     const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t.pi);
     const row=document.createElement('div'); row.className='ql-item';
@@ -4961,10 +5127,25 @@ function openQL(tipo){
 }
 function renderQLBody(){
   const body=document.getElementById('ql-body'); body.innerHTML='';
-  const items=qlItems[currentQL]||[];
-  if(!items.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item ainda. Adicione abaixo.</div>'; return; }
+  const allItems=qlItems[currentQL]||[];
+  // Popula filtro de tag preservando seleção
+  const fTag=document.getElementById('ql-f-tag'), fNomeEl=document.getElementById('ql-f-nome');
+  if(fTag){
+    const prev=fTag.value;
+    const tagsUsadas=[...new Set(allItems.flatMap(it=>Array.isArray(it.tags)?it.tags:(it.tag?[it.tag]:[])))].filter(Boolean);
+    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+tagsUsadas.map(id=>{const t=getTag(id);return t?`<option value="${esc(id)}">${esc(t.label)}</option>`:''}).join('');
+    fTag.value=prev;
+  }
+  if(!allItems.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item ainda. Adicione abaixo.</div>'; return; }
+  // Aplica filtros, mantendo o índice ORIGINAL (usado nos onclick)
+  const qNome=(fNomeEl?.value||'').toLowerCase().trim();
+  const qTag=fTag?.value||'';
+  let indexed=allItems.map((item,i)=>({item,i}));
+  if(qNome) indexed=indexed.filter(o=>(o.item.title||'').toLowerCase().includes(qNome));
+  if(qTag) indexed=indexed.filter(o=>{const tg=Array.isArray(o.item.tags)?o.item.tags:(o.item.tag?[o.item.tag]:[]);return tg.includes(qTag);});
+  if(!indexed.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item com esse filtro.</div>'; return; }
   const canCfg = ['adm','po','organizador'].includes(window._currentUserRole);
-  items.forEach((item,i)=>{
+  indexed.forEach(({item,i})=>{
     const t=getTag(item.tag)||{label:'',pi:0}; const p=getPal(t.pi);
     const row=document.createElement('div'); row.className='ql-item';
     const nReq=(item.requiredFields||[]).length;
@@ -7919,6 +8100,9 @@ function showCtxMenu(e, cardId){
 
     <div class="ctx-item" onclick="ctxModel()">
       <span class="ctx-item-icon">📋</span> Salvar como modelo
+    </div>
+    <div class="ctx-item" onclick="ctxDuplicate()">
+      <span class="ctx-item-icon">⧉</span> Duplicar card
     </div>
     <div class="ctx-item warn" onclick="ctxArchive()">
       <span class="ctx-item-icon">📦</span> Arquivar card
