@@ -951,7 +951,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .eoc-display:hover{background:rgba(56,182,255,.08);border-color:rgba(56,182,255,.18);}
 .eoc-display.is-empty::before{content:attr(data-placeholder);color:var(--txt3);font-style:italic;font-size:12px;}
 .eoc-display.is-empty{min-height:44px;}
-.eoc-display a,.eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
+.eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
+.eoc-display a.desc-link{pointer-events:auto;cursor:pointer;position:relative;z-index:2;}
 .eoc-editing .eoc-display{display:none;}
 .eoc-editing .eoc-textarea{display:block!important;}
 .eoc-editing .eoc-actions{display:flex!important;}
@@ -1870,7 +1871,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="eoc-actions">
           <button class="eoc-save" onclick="eocSave('desc-eoc')">Salvar</button>
           <button class="eoc-cancel" onclick="eocCancel('desc-eoc')">Cancelar</button>
-          <span class="eoc-hint">Esc para cancelar · @card: para cards · @nome.sobrenome para pessoas</span>
+          <span class="eoc-hint">Esc para cancelar · 🔗 para link nomeado · @card: para cards · @nome.sobrenome para pessoas</span>
         </div>
       </div>
     </div>
@@ -2477,7 +2478,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.20.0</div>
+<div class="version">v8.20.2</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2808,7 +2809,7 @@ let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), t
 let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
 let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
-let _lemSeenTs=0;        // último ts visto (p/ badge de não-lidos)
+let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts visto (p/ badge de não-lidos), persistido
 let agilCfg={};
 
 // ═══════════════════════════════════════════════════════
@@ -4559,6 +4560,7 @@ function toggleLembretes(){
     _populateLemTypeSelect();
     renderLembretes();
     _lemSeenTs=Date.now();
+    safeLS.setItem('lemSeenTs', String(_lemSeenTs));
     updLemBadge();
   }
 }
@@ -4665,6 +4667,7 @@ function delLembrete(tipo, id){
     fbSet(FB+'/lembretes', lembretes);
   }
   renderLembretes();
+  updLemBadge();
 }
 function updLemBadge(){
   const badge=document.getElementById('lem-badge'); if(!badge) return;
@@ -5749,6 +5752,10 @@ function renderMd(txt){
   // [[CARD:id:title]] → blue underlined clickable
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
     return '<span class="mention-card" onclick="openCard(\'' + id + '\')" title="Abrir card">📎 ' + title + '</span>';
+  });
+  // Links nomeados: [texto](url) → <a> com o texto visível (estilo Word)
+  txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function(m, label, url){
+    return '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+esc(url)+'">'+esc(label)+'</a>';
   });
   // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
   // Evita mexer em URLs que já estão dentro de atributos HTML (href/src/onclick) já gerados.
@@ -8856,11 +8863,19 @@ function _fmtText(taId, type, arg){
   else if(type==='underline') wrap=['__','__'];
   else if(type==='color')     wrap=['{cor:'+(arg||'#38b6ff')+'|','}'];
   else if(type==='link'){
-    const placeholder = sel || 'https://';
+    const sel=ta.value.substring(s,e);
+    // Pede a URL; o texto visível é a seleção (ou pergunta também)
+    let url=prompt('URL do link:', 'https://');
+    if(url===null) return;
+    url=url.trim(); if(!url) return;
+    if(!/^https?:\/\//i.test(url)) url='https://'+url.replace(/^\/+/,'');
+    let label=sel;
+    if(!label){ label=prompt('Texto do link (deixe vazio para mostrar a URL):','')||url; }
+    const md='['+label+']('+url+')';
     const before=ta.value.substring(0,s), after=ta.value.substring(e);
-    ta.value = before + placeholder + after;
+    ta.value = before + md + after;
     ta.focus();
-    ta.selectionStart=s; ta.selectionEnd=s+placeholder.length;
+    ta.selectionStart=s; ta.selectionEnd=s+md.length;
     ta.dispatchEvent(new Event('input',{bubbles:true}));
     return;
   } else return;
