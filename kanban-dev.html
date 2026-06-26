@@ -517,10 +517,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;transition:opacity .15s;flex-shrink:0;align-self:flex-start;}
 .kudos-card .kc-del:hover{color:var(--danger);}
 /* Botão "Enviar estrela" que abre o compositor */
-.kudos-fab{width:100%;background:linear-gradient(135deg,#ffd166,#ffb84d);color:#1a1208;border:none;border-radius:10px;
-  padding:12px;font-size:13px;font-weight:800;font-family:"Syne",sans-serif;cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(255,209,102,.3);}
-.kudos-fab:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(255,209,102,.45);}
+.kudos-fab-wrap{display:flex;justify-content:center;padding:4px 0 2px;}
+.kudos-fab{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#ffd166,#ffb84d);color:#1a1208;border:none;border-radius:999px;
+  padding:11px 22px;font-size:13px;font-weight:800;font-family:"Syne",sans-serif;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 14px rgba(255,209,102,.35);}
+.kudos-fab:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 7px 20px rgba(255,209,102,.5);}
+.kudos-fab:active{transform:translateY(0) scale(.99);}
+.kudos-fab-star{font-size:15px;animation:fabStar 2.5s ease-in-out infinite;}
+@keyframes fabStar{0%,100%{transform:rotate(0) scale(1);}45%{transform:rotate(-12deg) scale(1.15);}55%{transform:rotate(10deg) scale(1.15);}}
+.kudos-fab-txt{letter-spacing:.2px;}
 /* reações aos kudos */
 .kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
 .kr-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
@@ -907,6 +912,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .xdesc-edit{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;transition:all .15s;flex-shrink:0;}
 .xdesc-edit:hover{color:var(--accent);background:rgba(56,182,255,.1);}
 .xdesc-read-text{font-size:13px;line-height:1.55;color:var(--txt);white-space:pre-wrap;word-break:break-word;}
+/* Barra de ferramentas de formatação */
+.fmt-toolbar{display:none;align-items:center;gap:3px;padding:5px 6px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap;}
+.eoc-editing .fmt-toolbar,.xdesc-card.editing .fmt-toolbar{display:flex;}
+.fmt-btn{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;}
+.fmt-btn:hover{background:rgba(56,182,255,.18);color:var(--txt);}
+.fmt-colors{display:inline-flex;gap:3px;padding:0 4px;border-left:1px solid var(--glass-b);border-right:1px solid var(--glass-b);margin:0 2px;}
+.fmt-color{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;padding:0;transition:transform .12s;}
+.fmt-color:hover{transform:scale(1.2);}
+.desc-link{color:var(--accent);text-decoration:underline;word-break:break-all;}
+.desc-link:hover{color:var(--cyan);}
+/* quando tem toolbar, o textarea cola nela */
+.eoc-editing .fmt-toolbar + .eoc-textarea{border-radius:0 0 8px 8px;}
 /* Campos obrigatórios do modelo */
 .reqf-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s;}
 .reqf-row:hover{background:rgba(56,182,255,.07);}
@@ -1682,7 +1699,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="kudos-stab" id="kstab-geral" onclick="setKudosScope('geral')">🌊 Geral</button>
   </div>
   <div class="lem-body" id="kudos-body"></div>
-  <button class="kudos-fab" id="kudos-fab" onclick="toggleKudosCompose(true)">⭐ Enviar estrela</button>
+  <div class="kudos-fab-wrap">
+    <button class="kudos-fab" id="kudos-fab" onclick="toggleKudosCompose(true)">
+      <span class="kudos-fab-star">⭐</span>
+      <span class="kudos-fab-txt">Reconhecer alguém</span>
+    </button>
+  </div>
   <div class="lem-add" id="kudos-add" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
       <span style="font-size:11px;font-weight:700;color:#ffd166;">⭐ Nova estrela</span>
@@ -1873,6 +1895,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
           onclick="eocEdit('desc-eoc')"></div>
+        <div class="fmt-toolbar" data-for="m-desc">
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','bold')" title="Negrito"><b>B</b></button>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','italic')" title="Itálico"><i>I</i></button>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','underline')" title="Sublinhado"><u>U</u></button>
+          <span class="fmt-colors">
+            <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#ff6b6b')" title="Vermelho"></button>
+            <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#ffd166')" title="Amarelo"></button>
+            <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#1de9b6')" title="Verde"></button>
+            <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#38b6ff')" title="Azul"></button>
+          </span>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','link')" title="Link">🔗</button>
+        </div>
         <textarea class="eoc-textarea" id="m-desc" rows="4"
           oninput="scheduleAutoSave()"
           onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('desc-eoc');}"></textarea>
@@ -2466,7 +2500,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.18.2-dev</div>
+<div class="version">v8.19.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4139,13 +4173,26 @@ function renderExtraDescs(){
       const isEditing = _editingDescIdx.has(i) || (!d.text||!d.text.trim());
       if(isEditing && canEdit){
         // MODO EDIÇÃO
+        const taId='xdesc-ta-'+i;
         return `<div class="xdesc-card editing">
           <div class="xdesc-head">
             <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
               oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
           </div>
-          <textarea class="xdesc-text" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
+          <div class="fmt-toolbar">
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
+            <span class="fmt-colors">
+              <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ff6b6b')"></button>
+              <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ffd166')"></button>
+              <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#1de9b6')"></button>
+              <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#38b6ff')"></button>
+            </span>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','link')" title="Link">🔗</button>
+          </div>
+          <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
             oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
             onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
           <div class="xdesc-foot">
@@ -4154,13 +4201,13 @@ function renderExtraDescs(){
           </div>
         </div>`;
       } else {
-        // MODO LEITURA (igual à descrição principal)
+        // MODO LEITURA (igual à descrição principal, com formatação renderizada)
         return `<div class="xdesc-card xdesc-read">
           <div class="xdesc-read-head">
             ${d.label?`<span class="xdesc-read-label">${esc(d.label)}</span>`:'<span></span>'}
             ${canEdit?`<button class="xdesc-edit" onclick="editExtraDesc(${i})" title="Editar">✏️</button>`:''}
           </div>
-          <div class="xdesc-read-text">${esc(d.text||'')}</div>
+          <div class="xdesc-read-text">${renderMd(d.text||'')}</div>
           ${meta?`<div class="xdesc-meta">${meta}</div>`:''}
         </div>`;
       }
@@ -5651,6 +5698,10 @@ function renderMd(txt){
     // Negrito e itálico
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // Sublinhado: __texto__
+    .replace(/__(.+?)__/g,'<u>$1</u>')
+    // Cor: {cor:HEX|texto}  ex: {cor:#ff6b6b|importante}
+    .replace(/\{cor:(#[0-9a-fA-F]{3,6}|[a-z]+)\|(.+?)\}/g,'<span style="color:$1;">$2</span>')
     // Código inline
     .replace(/`(.+?)`/g,'<code style="background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 5px;border-radius:4px;font-size:10px;">$1</code>')
     // Listas
@@ -5671,6 +5722,11 @@ function renderMd(txt){
   // [[CARD:id:title]] → blue underlined clickable
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
     return '<span class="mention-card" onclick="openCard(\'' + id + '\')" title="Abrir card">📎 ' + title + '</span>';
+  });
+  // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
+  txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
+    const safe=esc(url);
+    return pre + '<a href="'+safe+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+safe+'</a>';
   });
   return txt;
 }
@@ -8758,6 +8814,33 @@ function openCardDepMapModal(){
 // EDIT-ON-CLICK (EOC) — campos que editam ao clicar
 // ═══════════════════════════════════════════════════════
 
+// ── inserir marcador de formatação na seleção do textarea ──
+function _fmtText(taId, type, arg){
+  const ta=document.getElementById(taId); if(!ta) return;
+  const s=ta.selectionStart, e=ta.selectionEnd;
+  const sel=ta.value.substring(s,e);
+  let wrap;
+  if(type==='bold')      wrap=['**','**'];
+  else if(type==='italic')    wrap=['*','*'];
+  else if(type==='underline') wrap=['__','__'];
+  else if(type==='color')     wrap=['{cor:'+(arg||'#38b6ff')+'|','}'];
+  else if(type==='link'){
+    const placeholder = sel || 'https://';
+    const before=ta.value.substring(0,s), after=ta.value.substring(e);
+    ta.value = before + placeholder + after;
+    ta.focus();
+    ta.selectionStart=s; ta.selectionEnd=s+placeholder.length;
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    return;
+  } else return;
+  const newText = sel || (type==='color'?'texto':type==='bold'?'negrito':type==='italic'?'itálico':'sublinhado');
+  const before=ta.value.substring(0,s), after=ta.value.substring(e);
+  ta.value = before + wrap[0] + newText + wrap[1] + after;
+  ta.focus();
+  const cs = s + wrap[0].length;
+  ta.selectionStart = cs; ta.selectionEnd = cs + newText.length;
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+}
 function eocEdit(wrapId){
   const wrap = document.getElementById(wrapId);
   if(!wrap) return;
