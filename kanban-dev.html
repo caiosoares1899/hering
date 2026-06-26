@@ -2532,7 +2532,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.20.1-dev</div>
+<div class="version">v8.20.2-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2863,7 +2863,7 @@ let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), t
 let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
 let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
-let _lemSeenTs=0;        // último ts visto (p/ badge de não-lidos)
+let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts visto (p/ badge de não-lidos), persistido
 let agilCfg={};
 
 // ═══════════════════════════════════════════════════════
@@ -4658,6 +4658,7 @@ function toggleLembretes(){
     _populateLemTypeSelect();
     renderLembretes();
     _lemSeenTs=Date.now();
+    safeLS.setItem('lemSeenTs', String(_lemSeenTs));
     updLemBadge();
   }
 }
@@ -4764,6 +4765,7 @@ function delLembrete(tipo, id){
     fbSet(FB+'/lembretes', lembretes);
   }
   renderLembretes();
+  updLemBadge();
 }
 function updLemBadge(){
   const badge=document.getElementById('lem-badge'); if(!badge) return;
