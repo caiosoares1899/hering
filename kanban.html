@@ -157,15 +157,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{overflow-x:auto;padding-bottom:3px;}
+.board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;}
+/* No modo expandido, limita a altura à viewport pra scrollbar horizontal ficar visível
+   e as colunas rolarem verticalmente por dentro. */
 .board-wrap.mode-expanded-wrap{
   overflow-x:auto;
-  overflow-y:visible;
-  position:sticky;
-  /* Garante que a scrollbar horizontal fica visível na tela */
+  overflow-y:hidden;
   max-width:100%;
+  height:calc(100vh - var(--board-top, 150px));
+}
+/* Em modo raia, a altura volta a ser automática (raia rola na página) */
+.board-wrap.mode-expanded-wrap:has(.board.raia-mode){
+  height:auto;
+  overflow-y:visible;
 }
 .board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;min-width:max-content;}
+/* coluna no modo expandido ocupa a altura do wrap e deixa o corpo rolar (exceto raia) */
+.mode-expanded-wrap .board.mode-expanded:not(.raia-mode){height:100%;align-items:flex-start;}
+.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col{max-height:100%;display:flex;flex-direction:column;}
+.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col-body{flex:1 1 auto;overflow-y:auto;min-height:40px;}
 .board.raia-mode{display:block!important;}
 .board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
 .board.raia-mode.mode-expanded .col{width:240px;min-width:240px;}
@@ -308,8 +318,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ag-tab{padding:8px 12px;font-size:11px;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
 .ag-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
 /* Menu mais espaçado e legível nas Configurações e Ajuda */
-#cfg-tabs,#help-tabs{padding:6px 8px 0;gap:4px;flex-wrap:nowrap;}
-#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:9px 14px;font-size:12px;border-radius:8px;border-bottom:none;margin-bottom:0;color:var(--txt2);background:transparent;}
+#cfg-tabs,#help-tabs{padding:8px 8px 10px;gap:5px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;align-items:center;scrollbar-width:thin;scrollbar-color:rgba(56,182,255,.4) transparent;border-bottom:1px solid var(--glass-b);}
+#cfg-tabs::-webkit-scrollbar,#help-tabs::-webkit-scrollbar{height:6px;}
+#cfg-tabs::-webkit-scrollbar-thumb,#help-tabs::-webkit-scrollbar-thumb{background:rgba(56,182,255,.4);border-radius:3px;}
+#cfg-tabs::-webkit-scrollbar-track,#help-tabs::-webkit-scrollbar-track{background:transparent;}
+#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:8px 14px;font-size:12px;line-height:1.2;border-radius:8px;border-bottom:none;margin-bottom:0;color:var(--txt2);background:transparent;flex-shrink:0;white-space:nowrap;}
 #cfg-tabs .ag-tab:hover,#help-tabs .ag-tab:hover{background:rgba(56,182,255,.08);color:var(--txt);}
 #cfg-tabs .ag-tab.on,#help-tabs .ag-tab.on{background:rgba(56,182,255,.16);color:var(--accent);border-bottom:none;font-weight:700;}
 .ag-body{padding:12px 14px;overflow-y:auto;flex:1;}
@@ -337,7 +350,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .retro-i{font-size:11px;color:var(--txt);padding:3px 0;border-bottom:1px solid rgba(56,182,255,.07);line-height:1.5;}
 .retro-i:last-child{border:none;}
 /* config */
-.cfg-panel{max-width:500px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;}
+.cfg-panel{max-width:640px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;}
 .cfg-body{padding:14px 16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
 .cfg-sec-title{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--glass-b);padding-bottom:5px;margin-bottom:8px;}
 /* Subtimes editor */
@@ -365,6 +378,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-edit-inp{flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:"DM Sans",sans-serif;}
 /* member row */
 .user-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);}
+/* Toggle de visualização Usuários / Subtimes */
+.usr-view-toggle{display:flex;gap:4px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:3px;margin-bottom:12px;}
+.uvt-btn{flex:1;background:none;border:none;color:var(--txt2);font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
+.uvt-btn:hover{color:var(--txt);}
+.uvt-btn.on{background:rgba(56,182,255,.16);color:var(--accent);}
+/* Visão por subtime */
+.uss-group{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:11px 13px;}
+.uss-head{display:flex;align-items:center;gap:7px;font-family:"Syne",sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:9px;}
+.uss-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.uss-count{margin-left:auto;font-size:10px;font-weight:600;color:var(--txt2);background:rgba(56,182,255,.1);border:1px solid var(--glass-b);padding:1px 8px;border-radius:999px;}
+.uss-members{display:flex;flex-wrap:wrap;gap:7px;}
+.uss-member{display:flex;align-items:center;gap:6px;background:rgba(56,182,255,.07);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px 3px 3px;font-size:11px;color:var(--txt);}
+.uss-av{width:22px;height:22px;border-radius:50%;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.uss-init{font-size:9px;color:var(--txt3);font-weight:600;}
 /* quick lists overlay */
 .ql-panel{max-width:460px;max-height:88vh;overflow-y:auto;}
 .ql-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);cursor:pointer;transition:all .15s;}
@@ -389,9 +416,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   writing-mode:vertical-rl;text-orientation:mixed;padding:16px 9px;font-family:"Syne",sans-serif;
   font-weight:700;font-size:13px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
 .lem-tab:hover{background:rgba(37,99,201,1);padding-right:13px;}
-.lem-tab .lem-badge{writing-mode:horizontal-tb;background:var(--danger);color:#fff;font-size:10px;
-  font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;
-  justify-content:center;padding:0 4px;box-shadow:0 2px 8px rgba(255,107,107,.5);}
+.lem-tab .lem-badge{writing-mode:horizontal-tb;text-orientation:mixed;background:var(--danger);color:#fff;font-size:12px;
+  font-weight:800;font-family:"DM Sans",sans-serif;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;
+  justify-content:center;padding:0 5px;line-height:1;box-shadow:0 2px 8px rgba(255,107,107,.5);
+  font-variant-numeric:tabular-nums;letter-spacing:0;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(6,22,42,.98),rgba(3,13,26,.99));
   border-left:1px solid rgba(56,182,255,.25);box-shadow:-12px 0 48px rgba(0,0,0,.55);
@@ -460,22 +488,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border:1px solid var(--glass-b);border-radius:9px;padding:8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
 .kudos-stab:hover{border-color:rgba(255,209,102,.4);}
 .kudos-stab.on{background:rgba(255,209,102,.14);border-color:rgba(255,209,102,.5);color:#ffd166;}
-.kudos-card{position:relative;padding:14px 15px 12px;border-radius:12px;
+.kudos-card{position:relative;padding:11px 13px 10px;border-radius:12px;
   background:linear-gradient(150deg,rgba(255,209,102,.13),rgba(255,209,102,.04));
   border:1px solid rgba(255,209,102,.25);box-shadow:0 3px 14px rgba(0,0,0,.25);}
 .kudos-card::before{content:'⭐';position:absolute;top:-9px;left:14px;font-size:17px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));}
-.kudos-card .kc-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;margin-top:3px;}
+.kudos-card .kc-head{display:flex;align-items:center;gap:8px;margin-top:2px;margin-bottom:7px;}
 .kudos-card .kc-av{width:26px;height:26px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);
   display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--accent);flex-shrink:0;}
 .kudos-card .kc-av img{width:100%;height:100%;object-fit:cover;}
-.kudos-card .kc-from{font-size:11px;color:var(--txt2);}
-.kudos-card .kc-from b{color:var(--txt);}
+.kudos-card .kc-headinfo{flex:1;min-width:0;}
+.kudos-card .kc-from{font-size:11.5px;color:var(--txt2);line-height:1.3;}
+.kudos-card .kc-from b{color:var(--txt);font-weight:700;}
 .kudos-card .kc-to{color:#ffd166;font-weight:700;}
-.kudos-card .kc-text{font-size:13px;line-height:1.45;color:var(--txt);margin-top:2px;}
-.kudos-card .kc-meta{font-size:9px;color:var(--txt3);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
-.kudos-card .kc-scope{font-size:8.5px;padding:2px 7px;border-radius:999px;background:rgba(255,209,102,.12);color:#ffd166;}
-.kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;opacity:0;transition:opacity .15s;}
-.kudos-card:hover .kc-del{opacity:1;}
+.kudos-card .kc-meta{font-size:9px;color:var(--txt3);margin-top:2px;display:flex;align-items:center;gap:7px;}
+.kudos-card .kc-scope{font-size:8.5px;padding:1px 6px;border-radius:999px;background:rgba(255,209,102,.12);color:#ffd166;}
+.kudos-card .kc-text{font-size:14px;line-height:1.5;color:var(--txt);font-weight:500;}
+.kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;transition:opacity .15s;flex-shrink:0;align-self:flex-start;}
 .kudos-card .kc-del:hover{color:var(--danger);}
 /* reações aos kudos */
 .kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
@@ -848,6 +876,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* ── EDIT-ON-CLICK FIELDS (descrição + comentários) ──── */
 .eoc-wrap{position:relative;width:100%;}
+/* Descrições adicionais (multi-time) */
+.xdesc-card{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:9px 10px;}
+.xdesc-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.xdesc-label{flex:1;background:rgba(56,182,255,.06);border:1px solid var(--glass-b);border-radius:6px;padding:4px 9px;color:var(--txt);font-size:12px;font-weight:600;font-family:"DM Sans",sans-serif;}
+.xdesc-label::placeholder{color:var(--txt3);font-weight:400;}
+.xdesc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;flex-shrink:0;}
+.xdesc-del:hover{color:var(--danger);background:rgba(255,107,107,.1);}
+.xdesc-del:disabled{opacity:.3;cursor:not-allowed;}
+.xdesc-text{width:100%;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:6px;padding:7px 9px;color:var(--txt);font-size:12.5px;line-height:1.5;font-family:"DM Sans",sans-serif;resize:vertical;}
+.xdesc-meta{font-size:9px;color:var(--txt3);margin-top:5px;}
+.xdesc-meta b{color:var(--txt2);}
+.xdesc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
+.xdesc-foot .xdesc-meta{margin-top:0;flex:1;min-width:0;}
+.xdesc-save{font-size:10px;font-weight:600;color:var(--teal);background:rgba(29,233,182,.1);border:1px solid rgba(29,233,182,.3);border-radius:6px;padding:4px 11px;cursor:pointer;flex-shrink:0;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.xdesc-save:hover{background:rgba(29,233,182,.2);color:var(--txt);}
+/* Campos obrigatórios do modelo */
+.reqf-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s;}
+.reqf-row:hover{background:rgba(56,182,255,.07);}
+.reqf-row input{width:16px;height:16px;accent-color:var(--warn);cursor:pointer;}
+.req-missing, .req-missing.fi, input.req-missing, textarea.req-missing{border-color:var(--warn)!important;box-shadow:0 0 0 1px var(--warn), 0 0 10px rgba(255,209,102,.25)!important;animation:reqShake .4s;}
+.req-missing .eoc-display{border-color:var(--warn)!important;}
+@keyframes reqShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
 .eoc-display{
   min-height:44px;padding:8px 10px;border-radius:8px;
   border:1px solid rgba(56,182,255,.08);
@@ -1501,7 +1551,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
 </div>
 
-<div class="board-wrap">
+<div class="board-wrap" id="board-wrap">
   <div class="board" id="board"></div>
 </div>
 </div>
@@ -1565,15 +1615,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   <div class="lem-body" id="kudos-body"></div>
   <div class="lem-add" id="kudos-add">
-    <div style="font-size:10px;color:var(--txt2);margin-bottom:7px;line-height:1.45;">
-      Reconheça alguém do time! Use <strong style="color:var(--accent);">@</strong> para marcar a pessoa. Veja as regras no <span onclick="openHelp();swHelpTab('kudos');" style="color:var(--cyan);cursor:pointer;text-decoration:underline;">❓ Ajuda</span>.
+    <div class="lem-add-row" style="gap:6px;">
+      <select id="kudos-para" title="Para quem é o reconhecimento" style="flex:1;"></select>
     </div>
-    <div class="lem-add-row">
-      <select id="kudos-para" title="Para quem é o reconhecimento"></select>
-    </div>
-    <textarea id="kudos-text" placeholder="Ex.: salvou a daily resolvendo aquele bug tenso! 🙌" rows="2" oninput="updKudosBtn()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}" style="width:100%;margin-top:7px;"></textarea>
-    <button class="lem-add-btn kudos-btn" id="kudos-btn" onclick="addKudos()" disabled style="margin-top:8px;">⭐ Enviar estrela</button>
-    <div style="font-size:9px;color:var(--txt3);text-align:center;margin-top:5px;">Enter envia · Shift+Enter quebra linha</div>
+    <textarea id="kudos-text" placeholder="Reconheça alguém... (Enter envia)" rows="1" oninput="updKudosBtn();this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';" onfocus="this.rows=2;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}" style="width:100%;margin-top:6px;resize:none;"></textarea>
+    <button class="lem-add-btn kudos-btn" id="kudos-btn" onclick="addKudos()" disabled style="margin-top:6px;">⭐ Enviar estrela</button>
   </div>
 </div>
 
@@ -1670,6 +1716,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()"
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
+    <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
 
     <!-- Grid 2 colunas: atributos | lado direito -->
     <div class="modal-grid">
@@ -1762,6 +1809,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <span class="eoc-hint">Esc para cancelar · @card: para cards · @nome.sobrenome para pessoas</span>
         </div>
       </div>
+    </div>
+
+    <!-- Descrições adicionais (multi-time) -->
+    <div class="field" id="extra-descs-field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label class="fl" style="margin:0;">Descrições adicionais <span style="font-size:9px;color:var(--txt3);font-weight:400;">cada time/pessoa pode adicionar a sua</span></label>
+        <button class="btn btn-sm" id="add-desc-btn" onclick="addExtraDesc()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova descrição</button>
+      </div>
+      <div id="extra-descs-list" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
     <!-- Insights do PO full-width -->
@@ -1925,11 +1981,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- ABA USUARIOS -->
     <div class="tab-c" id="cfgtab-usuarios">
+      <div class="usr-view-toggle">
+        <button class="uvt-btn on" id="uvt-users" onclick="setUsuariosView('users')">👤 Usuários</button>
+        <button class="uvt-btn" id="uvt-subs" onclick="setUsuariosView('subs')">👥 Por subtime</button>
+      </div>
+      <!-- Visão: lista de usuários -->
+      <div id="usr-view-users">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <div class="cfg-sec-title" style="margin-bottom:0;">Usuários inscritos</div>
         <button class="btn btn-sm" onclick="convidarMembro()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Convidar por email</button>
       </div>
       <div id="usuarios-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+      <!-- Visão: por subtime -->
+      <div id="usr-view-subs" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="cfg-sec-title" style="margin-bottom:0;">Membros por subtime</div>
+          <button class="btn btn-sm" onclick="swCfgTab('subtimes')" style="font-size:10px;color:var(--cyan);border-color:rgba(56,182,255,.3);">⚙ Gerenciar subtimes</button>
+        </div>
+        <div id="usuarios-subs-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+      </div>
 
       <!-- Emails externos autorizados -->
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(56,182,255,.1);">
@@ -2179,6 +2250,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+<!-- CONFIG CAMPOS OBRIGATÓRIOS DO MODELO -->
+<div class="ov" id="reqf-ov">
+<div class="panel ql-panel">
+  <div class="panel-hd"><div class="panel-title">⚙ Campos obrigatórios</div><button class="x-btn" onclick="closeOv('reqf-ov')">✕</button></div>
+  <div style="padding:12px 14px;">
+    <div style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Modelo: <b id="reqf-modelo-nome" style="color:var(--txt);"></b><br>Marque os campos que <b>precisam estar preenchidos</b> para o card ser criado a partir deste modelo.</div>
+    <div id="reqf-list" style="display:flex;flex-direction:column;gap:3px;"></div>
+  </div>
+  <div style="padding:10px 14px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;">
+    <button class="btn btn-p btn-sm" onclick="saveReqFields()">Salvar</button>
+  </div>
+</div>
+</div>
+
 <!-- LINKS -->
 <div class="ov" id="links-ov">
 <div class="panel ql-panel">
@@ -2302,7 +2387,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.14.1</div>
+<div class="version">v8.18.1</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2493,7 +2578,34 @@ let tags=[
   {id:'data',label:'Data',pi:0},{id:'ml',label:'ML',pi:4},
   {id:'feat',label:'Feature',pi:1},{id:'infra',label:'Infra',pi:2},{id:'bug',label:'Bloqueio',pi:3},
 ];
+// ── MÚLTIPLAS DESCRIÇÕES: helpers de compatibilidade ──
+// Modelo: card.desc = descrição PRINCIPAL (legado, inalterado).
+//         card.descsExtra = [{id,label,text,author,authorInit,at,editedAt}] = descrições adicionais.
+function getExtraDescs(card){
+  if(!card || !Array.isArray(card.descsExtra)) return [];
+  return card.descsExtra.filter(Boolean);
+}
+// Card tem qualquer descrição com conteúdo (principal OU adicional)?
+function cardHasDesc(card){
+  if(card?.desc && card.desc.trim()) return true;
+  return getExtraDescs(card).some(d=>d.text&&d.text.trim());
+}
+// Texto concatenado de todas as descrições (para busca/menções/IA)
+function cardDescText(card){
+  const parts=[];
+  if(card?.desc) parts.push(card.desc);
+  getExtraDescs(card).forEach(d=>parts.push((d.label?d.label+': ':'')+(d.text||'')));
+  return parts.join('\n\n');
+}
+
 let members=[];
+// Deriva iniciais de um nome ou email (mesma lógica do login)
+function deriveInit(nameOrEmail){
+  if(!nameOrEmail) return '';
+  const base=String(nameOrEmail).split('@')[0].replace(/[._-]+/g,' ').trim();
+  if(!base) return '';
+  return base.split(/\s+/).map(w=>w[0]||'').join('').substring(0,2).toUpperCase();
+}
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
@@ -2947,18 +3059,29 @@ function fbLoadAll(){
     if(!val) return;
     members = [];
     Object.entries(val).forEach(([uid,u])=>{
-      const hasInit = u.init && u.init.trim().length > 0;
-      // Carrega se: tem iniciais E (está inscrito neste squad OU inscrito legado sem squads)
       // inThisSquad: ADM global, ou inscrito neste squad específico, ou inscrito legado
       const inThisSquad = (u.role === 'adm') ||
         (u.squads && u.squads[ACTIVE_SQUAD]===true) ||
         // legado: inscrito:true sem squads obj
         (!u.squads && (u.inscrito===true||u.inscrito==='true'));
-      if(hasInit && inThisSquad){
-        if(!members.find(m=>m.init===u.init))
-          members.push({init:u.init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||'', uid:uid,
-            // Role: prefer squad-specific role (squads_roles.SQUAD) over global role
-            role:(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro'});
+      if(!inThisSquad) return;
+      // Iniciais: usa as cadastradas OU deriva do nome/email (corrige usuários
+      // convidados que ainda não logaram e por isso não têm init salvo —
+      // antes eles sumiam da lista de menção/atribuição).
+      let init = (u.init && u.init.trim()) ? u.init.trim() : deriveInit(u.nome||u.email||'');
+      if(!init) return; // sem nome nem email, não dá pra montar
+      // Evita colisão de iniciais derivadas com alguém que já está na lista
+      if(members.find(m=>m.init===init && m.uid!==uid)){
+        const base=init; let n=2;
+        // tenta acrescentar mais uma letra do nome, senão um número
+        const nm=(u.nome||u.email||'').replace(/[^a-zA-ZÀ-ÿ]/g,'');
+        init = (base+(nm[2]||n)).substring(0,3).toUpperCase();
+        while(members.find(m=>m.init===init && m.uid!==uid)){ init=base+(n++); }
+      }
+      if(!members.find(m=>m.uid===uid)){
+        members.push({init, name:u.nome||u.email||'', email:u.email||'', foto:u.foto||'', uid:uid,
+          role:(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro',
+          noInit:!(u.init&&u.init.trim()) /* marca quem teve init derivado */});
       }
     });
     // ⚡ Garante que o usuário logado sempre apareça na lista (sobretudo ADM)
@@ -3043,16 +3166,21 @@ function openTeamList(){
         const role=u.role||'membro';
         const on=onlineUids.has(uid);
         const av=safeUrl(u.foto)?`<img src="${safeUrl(u.foto)}" style="width:100%;height:100%;object-fit:cover;">`:esc((u.init||'?').substring(0,2));
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;background:rgba(56,182,255,.04);">
-          <div style="position:relative;width:30px;height:30px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;">
+        // Subtimes a que a pessoa pertence (por iniciais)
+        const uinit=u.init||'';
+        const memberSubs=(typeof subteams!=='undefined'?subteams:[]).filter(st=>Array.isArray(st.members)&&st.members.includes(uinit));
+        const subsHtml=memberSubs.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">${memberSubs.map(st=>`<span style="font-size:8px;font-weight:600;padding:1px 6px;border-radius:999px;background:${_hexA(st.color||'#1de9b6',.15)};color:${st.color||'#1de9b6'};border:1px solid ${_hexA(st.color||'#1de9b6',.35)};">${esc(st.name)}</span>`).join('')}</div>`:'';
+        return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 9px;border-radius:9px;background:rgba(56,182,255,.04);">
+          <div style="position:relative;width:30px;height:30px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:1px;">
             ${av}
             <div style="position:absolute;bottom:0;right:0;width:8px;height:8px;border-radius:50%;background:${on?'var(--teal)':'var(--txt3)'};border:1.5px solid var(--deep);"></div>
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:12px;color:var(--txt);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(u.nome||u.email)} <span style="font-size:9px;color:var(--txt3);">(${esc(u.init||'?')})</span></div>
             <div style="font-size:9px;color:${on?'var(--teal)':'var(--txt3)'};">${on?'● online':'offline'}</div>
+            ${subsHtml}
           </div>
-          <span style="font-size:9px;color:${roleCol[role]||roleCol.membro};border:1px solid ${roleCol[role]||roleCol.membro}55;padding:2px 8px;border-radius:999px;flex-shrink:0;">${roleLabels[role]||role}</span>
+          <span style="font-size:9px;color:${roleCol[role]||roleCol.membro};border:1px solid ${roleCol[role]||roleCol.membro}55;padding:2px 8px;border-radius:999px;flex-shrink:0;margin-top:1px;">${roleLabels[role]||role}</span>
         </div>`;
       }).join('');
       const count=entries.length, onCount=entries.filter(([uid])=>onlineUids.has(uid)).length;
@@ -3446,7 +3574,9 @@ function makeCardEl(card){
   div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${card.desc?'<span class="ci ci-desc" title="Tem descrição">≡</span>':''}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
+  const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -3853,7 +3983,7 @@ function scheduleAutoSave(){
     const _asBefore=_histSnapshot(c); // 📜 snapshot antes do auto-save
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
-      due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,
+      due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
     fbSaveAll(); renderBoard();
@@ -3868,6 +3998,77 @@ function scheduleAutoSave(){
 // CARD MODAL
 // ═══════════════════════════════════════════════════════
 let editingTags=[]; // tags do card sendo editado (array de IDs)
+let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,text,author,authorInit,at,editedAt}
+function renderExtraDescs(){
+  const box=document.getElementById('extra-descs-list'); if(!box) return;
+  const canEdit = window._currentUserRole && window._currentUserRole!=='convidado';
+  if(!editingDescs.length){
+    box.innerHTML='<div style="font-size:10.5px;color:var(--txt3);padding:4px 2px;">Nenhuma descrição adicional. Clique em "+ Nova descrição" para outro time registrar a visão dele.</div>';
+  } else {
+    box.innerHTML=editingDescs.map((d,i)=>{
+      const when=d.editedAt||d.at;
+      const whenStr=when? new Date(when).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      const who=d.author||d.authorInit||'';
+      const meta=who? `por <b>${esc(who)}</b>${whenStr?' · '+whenStr:''}${d.editedAt&&d.at&&d.editedAt!==d.at?' (editado)':''}` : (whenStr||'');
+      return `<div class="xdesc-card">
+        <div class="xdesc-head">
+          <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
+            ${canEdit?'':'disabled'} oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
+          <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})" ${canEdit?'':'disabled'}>🗑</button>
+        </div>
+        <textarea class="xdesc-text" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
+          ${canEdit?'':'disabled'} oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
+          onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
+        <div class="xdesc-foot">
+          ${meta?`<span class="xdesc-meta">${meta}</span>`:'<span class="xdesc-meta"></span>'}
+          ${canEdit?`<button class="xdesc-save" onclick="saveExtraDesc(${i})">✓ Salvar</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('add-desc-btn').style.display = canEdit?'':'none';
+}
+function _touchDesc(i){
+  const d=editingDescs[i]; if(!d) return;
+  // marca autor/data na primeira edição de conteúdo
+  if(!d.author){ d.author=window._currentUser?.displayName||window._currentUserInit||''; d.authorInit=window._currentUserInit||''; }
+  if(!d.at) d.at=new Date().toISOString();
+  d.editedAt=new Date().toISOString();
+  scheduleAutoSave();
+}
+function addExtraDesc(){
+  if(window._currentUserRole==='convidado'){ showToast('🔒 Convidados não podem editar.'); return; }
+  editingDescs.push({id:'d'+Date.now(), label:'', text:'', author:'', authorInit:'', at:null, editedAt:null});
+  renderExtraDescs();
+  // foca no rótulo recém-criado
+  setTimeout(()=>{ const inps=document.querySelectorAll('.xdesc-label'); inps[inps.length-1]?.focus(); },50);
+}
+function _cleanExtraDescs(){
+  // remove descrições totalmente vazias (sem rótulo e sem texto)
+  return editingDescs.filter(d=>(d.label&&d.label.trim())||(d.text&&d.text.trim()))
+    .map(d=>({id:d.id||('d'+Date.now()+Math.random().toString(36).slice(2,5)), label:(d.label||'').trim(), text:(d.text||'').trim(),
+      author:d.author||'', authorInit:d.authorInit||'', at:d.at||null, editedAt:d.editedAt||null}));
+}
+function removeExtraDesc(i){
+  if(!confirm('Remover esta descrição adicional?')) return;
+  editingDescs.splice(i,1);
+  renderExtraDescs();
+  scheduleAutoSave();
+}
+function saveExtraDesc(i){
+  const d=editingDescs[i]; if(!d) return;
+  if(!(d.label&&d.label.trim())&&!(d.text&&d.text.trim())){ showToast('Escreva algo antes de salvar.'); return; }
+  if(!d.author){ d.author=window._currentUser?.displayName||window._currentUserInit||''; d.authorInit=window._currentUserInit||''; }
+  if(!d.at) d.at=new Date().toISOString();
+  d.editedAt=new Date().toISOString();
+  // se o card já existe, persiste na hora; senão fica no editingDescs até criar o card
+  if(editingId){
+    const c=cards.find(x=>x.id===editingId);
+    if(c){ c.descsExtra=_cleanExtraDescs(); fbSaveAll(); renderBoard(); }
+  }
+  renderExtraDescs();
+  showToast('✅ Descrição salva!');
+}
 function populateTagSelect(){
   const add=document.getElementById('m-tag-add');
   if(add){
@@ -3918,6 +4119,7 @@ function openCard(id){
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-due').value=c.due||'';
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
+  editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
   document.getElementById('m-po').value=c.po||'';
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
   document.getElementById('m-sp').value=c.sp||'';
@@ -3958,6 +4160,7 @@ function checkEditPermission(){
 
 function openNewCard(col){
   if(!checkEditPermission()) return;
+  _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
   editingLinkedCards=[];
   renderLinkedChips();
   editingId=null;
@@ -3965,6 +4168,7 @@ function openNewCard(col){
   document.getElementById('m-title').value='';
   document.getElementById('m-po').value='';
   eocInitDisplay('desc-eoc','','Adicionar descrição...');
+  editingDescs=[]; renderExtraDescs();
   document.getElementById('m-title-disp').textContent='Novo card';
   editingTags=[]; populateTagSelect();
   document.getElementById('m-col').value=col||columns[0]?.id||'backlog';
@@ -3985,6 +4189,16 @@ function openNewCard(col){
 function saveCard(){
   if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
+  // Validação de campos obrigatórios do modelo (só ao criar card novo)
+  if(!editingId && _pendingRequired.length){
+    const missing=_missingRequired();
+    if(missing.length){
+      _highlightMissingFields(missing);
+      const labels=missing.map(k=>(REQ_FIELDS.find(f=>f.key===k)||{}).label||k);
+      showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
+      return;
+    }
+  }
   const td=new Date().toISOString().split('T')[0];
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
@@ -3993,7 +4207,7 @@ function saveCard(){
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
-      desc:document.getElementById('m-desc').value,po:document.getElementById('m-po').value,
+      desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       participants:getParticipants(),
       isOKR:document.getElementById('m-is-okr')?.checked||false,
@@ -4009,7 +4223,7 @@ function saveCard(){
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
-      title,desc:document.getElementById('m-desc').value,owner:document.getElementById('m-owner').value,
+      title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
@@ -4017,6 +4231,7 @@ function saveCard(){
     cards.push(_newCard);
   }
   fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
+  _clearPendingRequired();
 }
 function toggleCardOKR(cardId){
   const card = cards.find(c=>c.id===cardId); if(!card) return;
@@ -4448,15 +4663,18 @@ function renderKudos(){
     const av=k.fromFoto? `<img src="${safeUrl(k.fromFoto)||''}">` : esc((k.fromInit||'?').substring(0,2));
     const quando=k.ts? new Date(k.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const podeApagar = k.fromUid===window._currentUser?.uid || window._currentUserRole==='adm';
-    const del = podeApagar? `<button class="kc-del" onclick="delKudos('${esc(k.id)}','${k.scope||'squad'}')" title="Remover">🗑</button>`:'<span></span>';
+    const del = podeApagar? `<button class="kc-del" onclick="event.stopPropagation();delKudos('${esc(k.id)}','${k.scope||'squad'}')" title="Remover">🗑</button>`:'';
     return `<div class="kudos-card">
       <div class="kc-head">
         <div class="kc-av">${av}</div>
-        <div class="kc-from"><b>${esc(k.fromNome||k.fromInit||'?')}</b> reconheceu <span class="kc-to">@${esc(k.toInit||'')}</span>${k.toNome?' ('+esc(k.toNome)+')':''}</div>
+        <div class="kc-headinfo">
+          <div class="kc-from"><b>${esc((k.fromNome||k.fromInit||'?').split(' ').slice(0,2).join(' '))}</b> <span style="color:var(--txt3);">→</span> <span class="kc-to">@${esc(k.toInit||'')}</span></div>
+          <div class="kc-meta"><span class="kc-scope">${k.scope==='geral'?'🌊 Geral':'🐠 Cardume'}</span><span>${quando}</span></div>
+        </div>
+        ${del}
       </div>
       <div class="kc-text">${esc(k.texto||'')}</div>
       ${_renderKudosReactions(k)}
-      <div class="kc-meta"><span class="kc-scope">${k.scope==='geral'?'🌊 Geral':'🐠 Cardume'}</span><span>${quando}</span>${del}</div>
     </div>`;
   }).join('');
   // wire pickers
@@ -4588,12 +4806,52 @@ function renderQLBody(){
   const body=document.getElementById('ql-body'); body.innerHTML='';
   const items=qlItems[currentQL]||[];
   if(!items.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item ainda. Adicione abaixo.</div>'; return; }
+  const canCfg = ['adm','po','organizador'].includes(window._currentUserRole);
   items.forEach((item,i)=>{
     const t=getTag(item.tag)||{label:'',pi:0}; const p=getPal(t.pi);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span><button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
+    const nReq=(item.requiredFields||[]).length;
+    // Só modelos têm campos obrigatórios (não recorrentes)
+    const reqBtn = (currentQL==='modelos' && canCfg)
+      ? `<button class="btn btn-sm" onclick="openReqFields(${i})" title="Definir campos obrigatórios" style="font-size:10px;color:${nReq?'var(--warn)':'var(--txt2)'};border-color:${nReq?'rgba(255,209,102,.4)':'var(--glass-b)'};">⚙ Obrigatórios${nReq?' ('+nReq+')':''}</button>`
+      : '';
+    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span>${reqBtn}<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
     body.appendChild(row);
   });
+}
+// Campos que podem ser exigidos num modelo
+const REQ_FIELDS=[
+  {key:'title', label:'Título'},
+  {key:'owner', label:'Responsável'},
+  {key:'due', label:'Prazo'},
+  {key:'tags', label:'Tag'},
+  {key:'desc', label:'Descrição'},
+  {key:'po', label:'Objetivo / PO'},
+  {key:'priority', label:'Prioridade'},
+  {key:'checklist', label:'Checklist (1+ item)'},
+];
+function openReqFields(i){
+  const item=qlItems.modelos[i]; if(!item) return;
+  const cur=new Set(item.requiredFields||[]);
+  const ov=document.getElementById('reqf-ov');
+  document.getElementById('reqf-modelo-nome').textContent=item.title;
+  document.getElementById('reqf-list').innerHTML=REQ_FIELDS.map(f=>`
+    <label class="reqf-row">
+      <input type="checkbox" value="${f.key}" ${cur.has(f.key)?'checked':''}>
+      <span>${f.label}</span>
+    </label>`).join('');
+  ov.dataset.idx=i;
+  ov.classList.add('open');
+}
+function saveReqFields(){
+  const ov=document.getElementById('reqf-ov');
+  const i=parseInt(ov.dataset.idx); const item=qlItems.modelos[i]; if(!item) return;
+  const checked=[...document.querySelectorAll('#reqf-list input:checked')].map(c=>c.value);
+  item.requiredFields=checked;
+  fbSet(FB+'/ql_items',qlItems);
+  ov.classList.remove('open');
+  renderQLBody();
+  showToast(checked.length?`✅ ${checked.length} campo(s) obrigatório(s) definido(s)`:'Campos obrigatórios removidos');
 }
 function addQLItem(){
   const title=document.getElementById('ql-new-title').value.trim(); if(!title) return;
@@ -4617,7 +4875,59 @@ function usarQLItem(i){
   document.getElementById('m-po').value=item.po||'';
   if(item.checklist?.length) renderCL(item.checklist);
   if(item.riscos?.length) renderRiscos(item.riscos);
+  // Guarda os campos obrigatórios deste modelo pra validar na criação
+  _pendingRequired = (currentQL==='modelos' && Array.isArray(item.requiredFields)) ? item.requiredFields.slice() : [];
+  _pendingRequiredModelo = item.title||'';
+  _renderRequiredHint();
 }
+let _pendingRequired=[];
+let _pendingRequiredModelo='';
+function _renderRequiredHint(){
+  const el=document.getElementById('req-hint'); if(!el) return;
+  if(!_pendingRequired.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const labels=_pendingRequired.map(k=>(REQ_FIELDS.find(f=>f.key===k)||{}).label||k);
+  el.style.display='block';
+  el.innerHTML=`⚠ Modelo "<b>${esc(_pendingRequiredModelo)}</b>": preencha os campos obrigatórios — ${esc(labels.join(', '))}`;
+}
+// Verifica se um campo obrigatório está preenchido no modal atual
+function _reqFieldFilled(key){
+  switch(key){
+    case 'title': return !!document.getElementById('m-title').value.trim();
+    case 'owner': return !!document.getElementById('m-owner').value;
+    case 'due': return !!document.getElementById('m-due').value;
+    case 'tags': return editingTags.length>0;
+    case 'desc': return !!document.getElementById('m-desc').value.trim() || _cleanExtraDescs().length>0;
+    case 'po': return !!document.getElementById('m-po').value.trim();
+    case 'priority': return !!(document.getElementById('m-priority')?.value);
+    case 'checklist': return getCL().length>0;
+    default: return true;
+  }
+}
+// Retorna lista de campos obrigatórios não preenchidos
+function _missingRequired(){
+  return _pendingRequired.filter(k=>!_reqFieldFilled(k));
+}
+// Destaca visualmente os campos obrigatórios faltando
+const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority'};
+function _highlightMissingFields(missing){
+  // limpa destaques antigos
+  document.querySelectorAll('.req-missing').forEach(el=>el.classList.remove('req-missing'));
+  missing.forEach(k=>{
+    let el=null;
+    if(_FIELD_EL[k]) el=document.getElementById(_FIELD_EL[k]);
+    else if(k==='tags') el=document.getElementById('m-tags-box');
+    else if(k==='desc') el=document.getElementById('desc-eoc');
+    else if(k==='checklist') el=document.getElementById('m-cl-list')||document.getElementById('m-checklist');
+    if(el){ el.classList.add('req-missing'); }
+  });
+  // foca no primeiro faltando
+  const first=missing.find(k=>_FIELD_EL[k]); if(first) document.getElementById(_FIELD_EL[first])?.focus();
+}
+function _clearPendingRequired(){ _pendingRequired=[]; _pendingRequiredModelo=''; _renderRequiredHint(); document.querySelectorAll('.req-missing').forEach(el=>el.classList.remove('req-missing')); }
+// Ao editar qualquer campo do modal, remove o destaque vermelho daquele campo
+document.addEventListener('input', (e)=>{
+  const t=e.target.closest('.req-missing'); if(t) t.classList.remove('req-missing');
+}, true);
 
 // ═══════════════════════════════════════════════════════
 // LINKS
@@ -4657,7 +4967,7 @@ function swCfgTab(tab){
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
   if(tab==='agil') fillAgilTab();
-  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); }
+  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags') renderTagEditor();
   if(tab==='subtimes') renderSubteamEditor();
@@ -4753,6 +5063,40 @@ function moveCol(i,dir){ const ni=i+dir; if(ni<0||ni>=columns.length) return; [c
 
 
 // --- Usuários ---
+function setUsuariosView(v){
+  document.getElementById('uvt-users').classList.toggle('on',v==='users');
+  document.getElementById('uvt-subs').classList.toggle('on',v==='subs');
+  document.getElementById('usr-view-users').style.display = v==='users'?'block':'none';
+  document.getElementById('usr-view-subs').style.display = v==='subs'?'block':'none';
+  if(v==='subs') renderUsuariosSubs();
+}
+function renderUsuariosSubs(){
+  const box=document.getElementById('usuarios-subs-list'); if(!box) return;
+  if(!subteams.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px;text-align:center;">Nenhum subtime criado ainda. Use "⚙ Gerenciar subtimes" para criar.</div>';
+    return;
+  }
+  // membros sem nenhum subtime
+  const allInSub=new Set();
+  subteams.forEach(st=>(st.members||[]).forEach(i=>allInSub.add(i)));
+  const semSub=members.filter(m=>!allInSub.has(m.init));
+  box.innerHTML=subteams.map(st=>{
+    const mem=(st.members||[]).map(init=>{
+      const m=members.find(x=>x.init===init);
+      const nome=m?m.name:init;
+      const foto=m&&safeUrl(m.foto)?`<img src="${safeUrl(m.foto)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`:`<div class="uss-av">${esc(init)}</div>`;
+      return `<div class="uss-member">${foto}<span>${esc(nome.split(' ').slice(0,2).join(' '))}</span><span class="uss-init">${esc(init)}</span></div>`;
+    }).join('')||'<div style="font-size:10px;color:var(--txt3);">Sem membros</div>';
+    return `<div class="uss-group" style="border-left:3px solid ${st.color||'#1de9b6'};">
+      <div class="uss-head"><span class="uss-dot" style="background:${st.color||'#1de9b6'}"></span>${esc(st.name)}<span class="uss-count">${(st.members||[]).length}</span></div>
+      <div class="uss-members">${mem}</div>
+    </div>`;
+  }).join('') + (semSub.length?`
+    <div class="uss-group" style="border-left:3px solid var(--txt3);opacity:.85;">
+      <div class="uss-head"><span class="uss-dot" style="background:var(--txt3)"></span>Sem subtime<span class="uss-count">${semSub.length}</span></div>
+      <div class="uss-members">${semSub.map(m=>`<div class="uss-member"><div class="uss-av">${esc(m.init)}</div><span>${esc(m.name.split(' ').slice(0,2).join(' '))}</span></div>`).join('')}</div>
+    </div>`:'');
+}
 function renderUsuarios(){
   const list=document.getElementById('usuarios-list'); list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   fbGet('kanban/usuarios').then(snap=>{
@@ -6540,6 +6884,18 @@ function setViewMode(mode){
     board.classList.remove('mode-onepage','mode-expanded');
     board.classList.add('mode-'+mode);
   }
+  const wrap=document.getElementById('board-wrap');
+  if(wrap){
+    wrap.classList.toggle('mode-expanded-wrap', mode==='expanded');
+    // Mede a distância do topo do board até o topo da viewport e ajusta a altura
+    // dinamicamente, pra funcionar mesmo quando a toolbar quebra em 2 linhas.
+    if(mode==='expanded'){
+      requestAnimationFrame(()=>{
+        const top=wrap.getBoundingClientRect().top;
+        document.documentElement.style.setProperty('--board-top', Math.round(top+14)+'px');
+      });
+    }
+  }
   // A altura das colunas agora é 100% controlada por CSS (.col-body max-height),
   // sem cálculo de getBoundingClientRect — elimina o bug de timing onde a
   // 4ª coluna e o WIP sumiam no primeiro carregamento.
@@ -7470,7 +7826,7 @@ function salvarComoModeloModal(){
   qlItems.modelos.push({
     title,
     tags:editingTags.slice(),tag:(editingTags[0]||''),
-    desc:document.getElementById('m-desc').value,
+    desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
     po:document.getElementById('m-po').value,
     checklist:getCL().map(i=>({t:i.t,done:false})),
     riscos:getRiscos(),
@@ -7606,7 +7962,7 @@ function renderSearchResults(){
   const matches = cards.filter(c=>{
     if(c.archived) return false;
     return (c.title||'').toLowerCase().includes(q)
-      || (c.desc||'').toLowerCase().includes(q)
+      || cardDescText(c).toLowerCase().includes(q)
       || (c.po||'').toLowerCase().includes(q)
       || (c.owner||'').toLowerCase().includes(q)
       || (members.find(m=>m.init===c.owner)?.name||'').toLowerCase().includes(q);
