@@ -386,6 +386,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-edit-inp{flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.7);color:var(--txt);font-family:"DM Sans",sans-serif;}
 /* member row */
 .user-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);}
+/* Pílula de iniciais editável (com alerta de duplicata) */
+.init-pill{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--accent);background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);padding:1px 7px;border-radius:999px;cursor:pointer;margin-left:4px;transition:all .15s;}
+.init-pill:hover{background:rgba(56,182,255,.2);}
+.init-pill.init-dup{color:var(--danger);background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.4);animation:dupPulse 1.6s ease-in-out infinite;}
+@keyframes dupPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,.3);}50%{box-shadow:0 0 0 3px rgba(255,107,107,.08);}}
 /* Toggle de visualização Usuários / Subtimes */
 .usr-view-toggle{display:flex;gap:4px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:3px;margin-bottom:12px;}
 .uvt-btn{flex:1;background:none;border:none;color:var(--txt2);font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
@@ -514,10 +519,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;transition:opacity .15s;flex-shrink:0;align-self:flex-start;}
 .kudos-card .kc-del:hover{color:var(--danger);}
 /* Botão "Enviar estrela" que abre o compositor */
-.kudos-fab{width:100%;background:linear-gradient(135deg,#ffd166,#ffb84d);color:#1a1208;border:none;border-radius:10px;
-  padding:12px;font-size:13px;font-weight:800;font-family:"Syne",sans-serif;cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(255,209,102,.3);}
-.kudos-fab:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(255,209,102,.45);}
+.kudos-fab-wrap{display:flex;justify-content:center;padding:4px 0 2px;}
+.kudos-fab{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#ffd166,#ffb84d);color:#1a1208;border:none;border-radius:999px;
+  padding:11px 22px;font-size:13px;font-weight:800;font-family:"Syne",sans-serif;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 14px rgba(255,209,102,.35);}
+.kudos-fab:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 7px 20px rgba(255,209,102,.5);}
+.kudos-fab:active{transform:translateY(0) scale(.99);}
+.kudos-fab-star{font-size:15px;animation:fabStar 2.5s ease-in-out infinite;}
+@keyframes fabStar{0%,100%{transform:rotate(0) scale(1);}45%{transform:rotate(-12deg) scale(1.15);}55%{transform:rotate(10deg) scale(1.15);}}
+.kudos-fab-txt{letter-spacing:.2px;}
 /* reações aos kudos */
 .kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
 .kr-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
@@ -911,6 +921,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .xdesc-edit{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;transition:all .15s;flex-shrink:0;}
 .xdesc-edit:hover{color:var(--accent);background:rgba(56,182,255,.1);}
 .xdesc-read-text{font-size:13px;line-height:1.55;color:var(--txt);white-space:pre-wrap;word-break:break-word;}
+/* Barra de ferramentas de formatação */
+.fmt-toolbar{display:none;align-items:center;gap:3px;padding:5px 6px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap;}
+.eoc-editing .fmt-toolbar,.xdesc-card.editing .fmt-toolbar{display:flex;}
+.fmt-btn{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;}
+.fmt-btn:hover{background:rgba(56,182,255,.18);color:var(--txt);}
+.fmt-colors{display:inline-flex;gap:3px;padding:0 4px;border-left:1px solid var(--glass-b);border-right:1px solid var(--glass-b);margin:0 2px;}
+.fmt-color{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;padding:0;transition:transform .12s;}
+.fmt-color:hover{transform:scale(1.2);}
+.desc-link{color:var(--accent);text-decoration:underline;word-break:break-all;}
+.desc-link:hover{color:var(--cyan);}
+/* quando tem toolbar, o textarea cola nela */
+.eoc-editing .fmt-toolbar + .eoc-textarea{border-radius:0 0 8px 8px;}
 /* Campos obrigatórios do modelo */
 .reqf-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s;}
 .reqf-row:hover{background:rgba(56,182,255,.07);}
@@ -1634,7 +1656,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="kudos-stab" id="kstab-geral" onclick="setKudosScope('geral')">🌊 Geral</button>
   </div>
   <div class="lem-body" id="kudos-body"></div>
-  <button class="kudos-fab" id="kudos-fab" onclick="toggleKudosCompose(true)">⭐ Enviar estrela</button>
+  <div class="kudos-fab-wrap">
+    <button class="kudos-fab" id="kudos-fab" onclick="toggleKudosCompose(true)">
+      <span class="kudos-fab-star">⭐</span>
+      <span class="kudos-fab-txt">Reconhecer alguém</span>
+    </button>
+  </div>
   <div class="lem-add" id="kudos-add" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
       <span style="font-size:11px;font-weight:700;color:#ffd166;">⭐ Nova estrela</span>
@@ -1825,6 +1852,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
           onclick="eocEdit('desc-eoc')"></div>
+        <div class="fmt-toolbar" data-for="m-desc">
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','bold')" title="Negrito"><b>B</b></button>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','italic')" title="Itálico"><i>I</i></button>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','underline')" title="Sublinhado"><u>U</u></button>
+          <span class="fmt-colors">
+            <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#ff6b6b')" title="Vermelho"></button>
+            <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#ffd166')" title="Amarelo"></button>
+            <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#1de9b6')" title="Verde"></button>
+            <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#38b6ff')" title="Azul"></button>
+          </span>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','link')" title="Link">🔗</button>
+        </div>
         <textarea class="eoc-textarea" id="m-desc" rows="4"
           oninput="scheduleAutoSave()"
           onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('desc-eoc');}"></textarea>
@@ -2012,9 +2051,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
       <!-- Visão: lista de usuários -->
       <div id="usr-view-users">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:6px;">
         <div class="cfg-sec-title" style="margin-bottom:0;">Usuários inscritos</div>
-        <button class="btn btn-sm" onclick="convidarMembro()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Convidar por email</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm" onclick="abrirReatribuir()" style="font-size:10px;color:var(--warn);border-color:rgba(255,209,102,.3);" title="Mover cards de uma pessoa para outra">🔄 Reatribuir cards</button>
+          <button class="btn btn-sm" onclick="convidarMembro()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Convidar por email</button>
+        </div>
       </div>
       <div id="usuarios-list" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
@@ -2276,6 +2318,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- CONFIG CAMPOS OBRIGATÓRIOS DO MODELO -->
+<!-- REATRIBUIR CARDS (de uma pessoa para outra) -->
+<div class="ov" id="reassign-ov">
+<div class="panel ql-panel">
+  <div class="panel-hd"><div class="panel-title">🔄 Reatribuir cards</div><button class="x-btn" onclick="closeOv('reassign-ov')">✕</button></div>
+  <div style="padding:14px;">
+    <div style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Move os cards atribuídos de uma pessoa (ou inicial) para outra. Útil quando iniciais foram trocadas ou cards ficaram no dono errado.</div>
+    <label class="fl">DE (quem está atribuído hoje)</label>
+    <select id="reassign-from" style="width:100%;margin-bottom:10px;" onchange="_updReassignCount()"></select>
+    <label class="fl">PARA (novo responsável)</label>
+    <select id="reassign-to" style="width:100%;margin-bottom:10px;"></select>
+    <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txt);margin-bottom:6px;cursor:pointer;">
+      <input type="checkbox" id="reassign-participantes" checked style="width:15px;height:15px;accent-color:var(--warn);">
+      Incluir cards onde a pessoa é participante (não só responsável)
+    </label>
+    <div id="reassign-count" style="font-size:11px;color:var(--warn);margin:8px 0;"></div>
+  </div>
+  <div style="padding:10px 14px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:8px;">
+    <button class="btn btn-sm" onclick="closeOv('reassign-ov')">Cancelar</button>
+    <button class="btn btn-p btn-sm" onclick="executarReatribuir()">Reatribuir</button>
+  </div>
+</div>
+</div>
+
 <div class="ov" id="reqf-ov">
 <div class="panel ql-panel">
   <div class="panel-hd"><div class="panel-title">⚙ Campos obrigatórios</div><button class="x-btn" onclick="closeOv('reqf-ov')">✕</button></div>
@@ -2412,7 +2477,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.18.2</div>
+<div class="version">v8.20.0</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2630,6 +2695,29 @@ function deriveInit(nameOrEmail){
   const base=String(nameOrEmail).split('@')[0].replace(/[._-]+/g,' ').trim();
   if(!base) return '';
   return base.split(/\s+/).map(w=>w[0]||'').join('').substring(0,2).toUpperCase();
+}
+// Garante inicial única no squad: se já existe, tenta a 3ª letra do nome, depois sufixo numérico.
+// allUsers: objeto {uid:user} do Firebase; excludeUid: uid do próprio (não conta como conflito).
+function uniqueInitForSquad(desiredInit, allUsers, excludeUid, fullName){
+  desiredInit=(desiredInit||'').toUpperCase().trim() || 'XX';
+  const used=new Set();
+  Object.entries(allUsers||{}).forEach(([uid,u])=>{
+    if(uid===excludeUid) return;
+    // só considera quem está NESTE squad
+    const inSquad = (u.squads && u.squads[ACTIVE_SQUAD]===true) || (!u.squads && (u.inscrito===true||u.inscrito==='true'));
+    if(inSquad && u.init) used.add(u.init.toUpperCase());
+  });
+  if(!used.has(desiredInit)) return desiredInit;
+  // tenta acrescentar a 3ª/4ª letra do nome (ex.: AB → ABU de "André Bucciarelli")
+  const letters=(fullName||'').replace(/[^a-zA-ZÀ-ÿ]/g,'').toUpperCase();
+  for(let k=2;k<letters.length;k++){
+    const cand=(desiredInit+letters[k]).substring(0,3);
+    if(!used.has(cand)) return cand;
+  }
+  // por fim, sufixo numérico: AB2, AB3...
+  let n=2;
+  while(used.has(desiredInit+n)) n++;
+  return desiredInit+n;
 }
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
@@ -4039,13 +4127,26 @@ function renderExtraDescs(){
       const isEditing = _editingDescIdx.has(i) || (!d.text||!d.text.trim());
       if(isEditing && canEdit){
         // MODO EDIÇÃO
+        const taId='xdesc-ta-'+i;
         return `<div class="xdesc-card editing">
           <div class="xdesc-head">
             <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
               oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
           </div>
-          <textarea class="xdesc-text" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
+          <div class="fmt-toolbar">
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
+            <span class="fmt-colors">
+              <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ff6b6b')"></button>
+              <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ffd166')"></button>
+              <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#1de9b6')"></button>
+              <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#38b6ff')"></button>
+            </span>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','link')" title="Link">🔗</button>
+          </div>
+          <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
             oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
             onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
           <div class="xdesc-foot">
@@ -4054,13 +4155,13 @@ function renderExtraDescs(){
           </div>
         </div>`;
       } else {
-        // MODO LEITURA (igual à descrição principal)
+        // MODO LEITURA (igual à descrição principal, com formatação renderizada)
         return `<div class="xdesc-card xdesc-read">
           <div class="xdesc-read-head">
             ${d.label?`<span class="xdesc-read-label">${esc(d.label)}</span>`:'<span></span>'}
             ${canEdit?`<button class="xdesc-edit" onclick="editExtraDesc(${i})" title="Editar">✏️</button>`:''}
           </div>
-          <div class="xdesc-read-text">${esc(d.text||'')}</div>
+          <div class="xdesc-read-text">${renderMd(d.text||'')}</div>
           ${meta?`<div class="xdesc-meta">${meta}</div>`:''}
         </div>`;
       }
@@ -5171,7 +5272,10 @@ function renderUsuarios(){
       const roleLabels={membro:'Membro',organizador:'Organizador',po:'PO'};
       const role=u.role||'membro';
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
-      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} <span style="font-size:10px;color:var(--txt3);">(${esc(u.init||'?')})</span></div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
+      // ⚠ Detecta colisão de iniciais com outro membro do squad
+      const dupInit = entries.some(([uid2,u2])=>uid2!==uid && (u2.init||'').toUpperCase()===(u.init||'').toUpperCase() && u.init);
+      const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial('${uid}','${esc(u.init||'')}','${esc((u.nome||u.email||'').replace(/'/g,''))}')" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
 <select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
         <option value="membro"${(u.role||'membro')==='membro'?' selected':''}>Membro</option>
         <option value="organizador"${u.role==='organizador'?' selected':''}>Organizador</option>
@@ -5181,12 +5285,90 @@ function renderUsuarios(){
     });
   });
 }
+// ── Reatribuir cards de uma pessoa/inicial para outra ──
+function abrirReatribuir(){
+  const opts = members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
+  // "DE" também aceita iniciais órfãs (que aparecem em cards mas não têm membro)
+  const orphanInits=[...new Set(cards.map(c=>c.owner).filter(Boolean))].filter(i=>!members.find(m=>m.init===i));
+  const orphanOpts=orphanInits.map(i=>`<option value="${esc(i)}">${esc(i)} · (sem membro vinculado)</option>`).join('');
+  document.getElementById('reassign-from').innerHTML='<option value="">— escolha —</option>'+opts+orphanOpts;
+  document.getElementById('reassign-to').innerHTML='<option value="">— escolha —</option>'+opts;
+  document.getElementById('reassign-count').textContent='';
+  document.getElementById('reassign-ov').classList.add('open');
+}
+function _reassignTargets(){
+  const from=document.getElementById('reassign-from').value;
+  const incPart=document.getElementById('reassign-participantes').checked;
+  if(!from) return [];
+  return cards.filter(c=> c.owner===from || (incPart && Array.isArray(c.participantes) && c.participantes.includes(from)));
+}
+function _updReassignCount(){
+  const n=_reassignTargets().length;
+  document.getElementById('reassign-count').textContent = n? `${n} card(s) serão reatribuídos.` : '';
+}
+function executarReatribuir(){
+  const from=document.getElementById('reassign-from').value;
+  const to=document.getElementById('reassign-to').value;
+  const incPart=document.getElementById('reassign-participantes').checked;
+  if(!from||!to){ showToast('⚠ Escolha de quem e para quem.'); return; }
+  if(from===to){ showToast('⚠ As iniciais são iguais.'); return; }
+  const alvos=_reassignTargets();
+  if(!alvos.length){ showToast('Nenhum card atribuído a '+from+'.'); return; }
+  const toMember=members.find(m=>m.init===to);
+  if(!confirm(`Reatribuir ${alvos.length} card(s) de "${from}" para "${to}"${toMember?' ('+toMember.name+')':''}?`)) return;
+  alvos.forEach(c=>{
+    if(c.owner===from) c.owner=to;
+    if(incPart && Array.isArray(c.participantes)){
+      const idx=c.participantes.indexOf(from);
+      if(idx>=0){ if(c.participantes.includes(to)) c.participantes.splice(idx,1); else c.participantes[idx]=to; }
+    }
+  });
+  fbSaveAll(); renderBoard();
+  closeOv('reassign-ov');
+  showToast('✅ '+alvos.length+' card(s) reatribuídos de '+from+' para '+to+'.');
+}
 function alterarRole(uid,role){
   const update = {};
   update['squads_roles/'+ACTIVE_SQUAD] = role;
   update['role'] = role;
   fbUpdate('kanban/usuarios/'+uid, update);
   if(window._currentUser?.uid===uid) window._currentUserRole=role;
+}
+// Edita as iniciais de um membro e (opcionalmente) migra os cards atribuídos
+// da inicial antiga para a nova. Resolve casos de iniciais repetidas (ex.: AB/AB).
+async function editarInicial(uid, initAtual, nome){
+  const nova = prompt('Novas iniciais para '+(nome||initAtual)+':\n\n(2 a 4 letras. Use isso para resolver iniciais repetidas — ex.: trocar AB por AK)', initAtual);
+  if(nova===null) return;
+  const novaInit = nova.trim().toUpperCase();
+  if(!novaInit || novaInit.length<1 || novaInit.length>4){ showToast('⚠ Use de 1 a 4 letras.'); return; }
+  if(novaInit===initAtual.toUpperCase()){ return; }
+  // Checa se a nova inicial já existe neste squad
+  const snap = await fbGet('kanban/usuarios');
+  const all = snap.val()||{};
+  const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit &&
+    ((d.squads&&d.squads[ACTIVE_SQUAD]===true)||(!d.squads&&d.inscrito)));
+  if(conflito){ showToast('⚠ Iniciais "'+novaInit+'" já usadas por '+(conflito[1].nome?.split(' ')[0]||novaInit)+'. Escolha outras.'); return; }
+  // Pergunta se deve migrar os cards da inicial antiga
+  const cardsAfetados = cards.filter(c=>c.owner===initAtual || (Array.isArray(c.participantes)&&c.participantes.includes(initAtual)));
+  let migrar=false;
+  if(cardsAfetados.length){
+    migrar = confirm(cardsAfetados.length+' card(s) estão atribuídos à inicial "'+initAtual+'".\n\nMigrar esses cards para "'+novaInit+'"?\n\n⚠ ATENÇÃO: se "'+initAtual+'" é compartilhada com outra pessoa (iniciais repetidas), NÃO migre — os cards podem ser de outra pessoa. Cancele e use a ferramenta "Reatribuir cards" para escolher card por card.');
+  }
+  // Atualiza a inicial do usuário
+  await fbUpdate('kanban/usuarios/'+uid, {init:novaInit});
+  if(window._currentUser?.uid===uid) window._currentUserInit=novaInit;
+  // Migra cards se confirmado
+  if(migrar){
+    cards.forEach(c=>{
+      if(c.owner===initAtual) c.owner=novaInit;
+      if(Array.isArray(c.participantes)){ const idx=c.participantes.indexOf(initAtual); if(idx>=0) c.participantes[idx]=novaInit; }
+    });
+    fbSaveAll(); renderBoard();
+    showToast('✅ Iniciais alteradas para '+novaInit+' e '+cardsAfetados.length+' card(s) migrados.');
+  } else {
+    showToast('✅ Iniciais alteradas para '+novaInit+(cardsAfetados.length?'. Os cards "'+initAtual+'" NÃO foram migrados.':'.'));
+  }
+  renderUsuarios();
 }
 
 function removerMembro(uid, nome){
@@ -5543,6 +5725,10 @@ function renderMd(txt){
     // Negrito e itálico
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // Sublinhado: __texto__
+    .replace(/__(.+?)__/g,'<u>$1</u>')
+    // Cor: {cor:HEX|texto}  ex: {cor:#ff6b6b|importante}
+    .replace(/\{cor:(#[0-9a-fA-F]{3,6}|[a-z]+)\|(.+?)\}/g,'<span style="color:$1;">$2</span>')
     // Código inline
     .replace(/`(.+?)`/g,'<code style="background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 5px;border-radius:4px;font-size:10px;">$1</code>')
     // Listas
@@ -5563,6 +5749,12 @@ function renderMd(txt){
   // [[CARD:id:title]] → blue underlined clickable
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
     return '<span class="mention-card" onclick="openCard(\'' + id + '\')" title="Abrir card">📎 ' + title + '</span>';
+  });
+  // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
+  // Evita mexer em URLs que já estão dentro de atributos HTML (href/src/onclick) já gerados.
+  txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
+    const safe=esc(url);
+    return pre + '<a href="'+safe+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+safe+'</a>';
   });
   return txt;
 }
@@ -8653,6 +8845,33 @@ function openCardDepMapModal(){
 // EDIT-ON-CLICK (EOC) — campos que editam ao clicar
 // ═══════════════════════════════════════════════════════
 
+// ── inserir marcador de formatação na seleção do textarea ──
+function _fmtText(taId, type, arg){
+  const ta=document.getElementById(taId); if(!ta) return;
+  const s=ta.selectionStart, e=ta.selectionEnd;
+  const sel=ta.value.substring(s,e);
+  let wrap;
+  if(type==='bold')      wrap=['**','**'];
+  else if(type==='italic')    wrap=['*','*'];
+  else if(type==='underline') wrap=['__','__'];
+  else if(type==='color')     wrap=['{cor:'+(arg||'#38b6ff')+'|','}'];
+  else if(type==='link'){
+    const placeholder = sel || 'https://';
+    const before=ta.value.substring(0,s), after=ta.value.substring(e);
+    ta.value = before + placeholder + after;
+    ta.focus();
+    ta.selectionStart=s; ta.selectionEnd=s+placeholder.length;
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    return;
+  } else return;
+  const newText = sel || (type==='color'?'texto':type==='bold'?'negrito':type==='italic'?'itálico':'sublinhado');
+  const before=ta.value.substring(0,s), after=ta.value.substring(e);
+  ta.value = before + wrap[0] + newText + wrap[1] + after;
+  ta.focus();
+  const cs = s + wrap[0].length;
+  ta.selectionStart = cs; ta.selectionEnd = cs + newText.length;
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+}
 function eocEdit(wrapId){
   const wrap = document.getElementById(wrapId);
   if(!wrap) return;
@@ -8921,13 +9140,22 @@ function convidarMembro(){
     const upd = {};
     upd['squads/'+ACTIVE_SQUAD] = true;
     upd['inscrito'] = true;
+    // ⚠ Previne colisão de iniciais no squad: se a inicial da pessoa já é usada
+    // por outro membro DESTE squad, gera uma única (ex.: AB → ABU ou AB2) e avisa.
+    const desired = (u.init||deriveInit(u.nome||u.email)||'XX').toUpperCase();
+    const uniq = uniqueInitForSquad(desired, all, uid, u.nome||u.email);
+    let avisoInit='';
+    if(uniq!==desired){
+      upd['init'] = uniq;
+      avisoInit = ' (iniciais ajustadas de '+desired+' para '+uniq+' para evitar conflito)';
+    }
     // If no role set for this squad, default to membro
     if(!u.squads_roles?.[ACTIVE_SQUAD]){
       upd['squads_roles/'+ACTIVE_SQUAD] = 'membro';
       upd['role'] = u.role||'membro';
     }
     fbUpdate('kanban/usuarios/'+uid, upd);
-    showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!');
+    showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!'+avisoInit);
   });
 }
 
