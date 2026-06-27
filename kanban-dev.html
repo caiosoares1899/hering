@@ -424,6 +424,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .uss-init{font-size:9px;color:var(--txt3);font-weight:600;}
 /* quick lists overlay */
 .ql-panel{max-width:460px;max-height:88vh;overflow-y:auto;}
+/* Modais bonitos (alert/confirm/prompt) */
+.ui-modal-ov{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(2,8,18,.72);backdrop-filter:blur(6px);opacity:0;transition:opacity .18s ease;padding:20px;}
+.ui-modal-ov.open{opacity:1;}
+.ui-modal{background:linear-gradient(160deg,rgba(8,30,52,.99),rgba(5,20,38,.99));border:1px solid var(--accent);border-radius:18px;padding:24px 24px 20px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.6);text-align:center;transform:scale(.92) translateY(10px);transition:transform .2s cubic-bezier(.2,.8,.3,1.2);}
+.ui-modal-ov.open .ui-modal{transform:scale(1) translateY(0);}
+.ui-modal-icon{font-size:30px;margin-bottom:10px;line-height:1;}
+.ui-modal-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:800;color:var(--txt);margin-bottom:8px;}
+.ui-modal-msg{font-size:13px;color:var(--txt2);line-height:1.55;margin-bottom:16px;}
+.ui-modal-input{width:100%;background:rgba(3,13,26,.85);border:1px solid rgba(56,182,255,.4);border-radius:10px;padding:11px 13px;color:var(--txt);font-size:14px;font-family:"DM Sans",sans-serif;margin-bottom:16px;outline:none;transition:border-color .15s;}
+.ui-modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,182,255,.12);}
+.ui-modal-actions{display:flex;gap:10px;justify-content:center;}
+.ui-modal-btn{flex:1;max-width:160px;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;transition:all .15s;border:1px solid;}
+.ui-modal-cancel{background:rgba(56,182,255,.06);border-color:var(--glass-b);color:var(--txt2);}
+.ui-modal-cancel:hover{background:rgba(56,182,255,.14);color:var(--txt);}
+.ui-modal-ok{background:linear-gradient(135deg,var(--accent),#2563c9);border-color:transparent;color:#fff;}
+.ui-modal-ok:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.ui-modal-ok.danger{background:linear-gradient(135deg,#ff6b6b,#d64545);}
+.ui-modal-icon.danger{filter:drop-shadow(0 2px 8px rgba(255,107,107,.4));}
 .ql-filter-bar{display:flex;gap:6px;padding:10px 14px 4px;flex-wrap:wrap;}
 .ql-filter-inp{flex:1;min-width:130px;background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:11px;font-family:"DM Sans",sans-serif;}
 .ql-filter-inp::placeholder{color:var(--txt3);}
@@ -2561,7 +2579,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.22.0-dev</div>
+<div class="version">v8.23.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2916,9 +2934,9 @@ function _doBulkTag(tagId, mode){
   const t=getTag(tagId);
   _bulkFinish('🏷 Tag "'+(t?.label||'')+'" aplicada em '+selectedCards.size+' card(s).');
 }
-function bulkDuplicate(){
+async function bulkDuplicate(){
   if(!selectedCards.size) return;
-  if(!confirm('Duplicar '+selectedCards.size+' card(s)?')) return;
+  if(!await uiConfirm('Duplicar '+selectedCards.size+' card(s)?',{title:'Duplicar cards',okText:'Duplicar'})) return;
   const user=window._currentUser?.displayName||'Usuário';
   const td=new Date().toISOString().split('T')[0];
   let count=0;
@@ -2934,17 +2952,17 @@ function bulkDuplicate(){
   });
   _bulkFinish('⧉ '+count+' card(s) duplicados.');
 }
-function bulkArchive(){
+async function bulkArchive(){
   if(!selectedCards.size) return;
-  if(!confirm('Arquivar '+selectedCards.size+' card(s)?')) return;
+  if(!await uiConfirm('Arquivar '+selectedCards.size+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
   _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; recordHistory(c,'arquivou o card'); } });
   _bulkFinish('📦 '+selectedCards.size+' card(s) arquivados.');
 }
 function clearSelection(){ selectedCards.clear(); renderBoard(); updateBulkBar(); }
-function bulkDeleteSelected(){
+async function bulkDeleteSelected(){
   if(!canBulkDelete()){ showToast('🔒 Sem permissão.'); return; }
   const n=selectedCards.size; if(!n) return;
-  if(!confirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
+  if(!await uiConfirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
   const ids=new Set(selectedCards);
   cards=cards.filter(c=>!ids.has(c.id));
   fbSaveAll();
@@ -4410,8 +4428,8 @@ function _cleanExtraDescs(){
     .map(d=>({id:d.id||('d'+Date.now()+Math.random().toString(36).slice(2,5)), label:(d.label||'').trim(), text:(d.text||'').trim(),
       author:d.author||'', authorInit:d.authorInit||'', at:d.at||null, editedAt:d.editedAt||null}));
 }
-function removeExtraDesc(i){
-  if(!confirm('Remover esta descrição adicional?')) return;
+async function removeExtraDesc(i){
+  if(!await uiConfirm('Remover esta descrição adicional?',{title:'Remover descrição',danger:true,okText:'Remover'})) return;
   editingDescs.splice(i,1);
   _editingDescIdx.clear(); // índices mudaram; reavalia (vazias reabrem sozinhas)
   renderExtraDescs();
@@ -4606,9 +4624,9 @@ function toggleCardOKR(cardId){
   renderBoard();
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
-function deleteCard(){
+async function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
-  if(!confirm('Excluir "'+c.title+'"? Não pode ser desfeito.')) return;
+  if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
   cards=cards.filter(x=>x.id!==editingId);
   fbSaveAll(); renderBoard(); closeOv('card-ov');
@@ -5165,10 +5183,10 @@ function updKudosBadge(){
 // ═══════════════════════════════════════════════════════
 // ARQUIVADOS
 // ═══════════════════════════════════════════════════════
-function zerarBoard(){
+async function zerarBoard(){
   const sq=SQUAD_LABELS[ACTIVE_SQUAD]||ACTIVE_SQUAD;
-  if(!confirm('⚠ Isso vai excluir TODOS os cards de '+sq+' permanentemente. Tem certeza?')) return;
-  if(!confirm('Segunda confirmação: excluir todos os '+cards.length+' cards?')) return;
+  if(!await uiConfirm('⚠ Isso vai excluir TODOS os cards de '+sq+' permanentemente. Tem certeza?')) return;
+  if(!await uiConfirm('Segunda confirmação: excluir todos os '+cards.length+' cards?')) return;
   cards=[];
   fbSet(FB+'/cards',[]);
   renderBoard();
@@ -5209,7 +5227,7 @@ function openArquivados(){
   document.getElementById('arch-ov').classList.add('open');
 }
 function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; fbSaveAll(); renderBoard(); openArquivados(); }
-function excluirArquivado(id){ if(!confirm('Excluir permanentemente?')) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(); openArquivados(); }
+async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
@@ -5504,7 +5522,7 @@ function renderColEditor(){
 }
 function addColumn(){ const name=document.getElementById('new-col-name').value.trim(); if(!name) return; const color=document.getElementById('new-col-color').value; columns.push({id:'col_'+Date.now(),name,color,collapsible:false}); document.getElementById('new-col-name').value=''; renderColEditor(); }
 let _deletedColIds = new Set();
-function delColumn(i){ if(columns.length<=1) return; if(!confirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return; const oldId=columns[i].id; _deletedColIds.add(oldId); cards.forEach(c=>{ if(c.col===oldId) c.col=columns[0].id; }); columns.splice(i,1); renderColEditor(); }
+async function delColumn(i){ if(columns.length<=1) return; if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return; const oldId=columns[i].id; _deletedColIds.add(oldId); cards.forEach(c=>{ if(c.col===oldId) c.col=columns[0].id; }); columns.splice(i,1); renderColEditor(); }
 function moveCol(i,dir){ const ni=i+dir; if(ni<0||ni>=columns.length) return; [columns[i],columns[ni]]=[columns[ni],columns[i]]; renderColEditor(); }
 
 
@@ -5598,7 +5616,7 @@ function _updReassignCount(){
   const n=_reassignTargets().length;
   document.getElementById('reassign-count').textContent = n? `${n} card(s) serão reatribuídos.` : '';
 }
-function executarReatribuir(){
+async function executarReatribuir(){
   const from=document.getElementById('reassign-from').value;
   const to=document.getElementById('reassign-to').value;
   const incPart=document.getElementById('reassign-participantes').checked;
@@ -5607,7 +5625,7 @@ function executarReatribuir(){
   const alvos=_reassignTargets();
   if(!alvos.length){ showToast('Nenhum card atribuído a '+from+'.'); return; }
   const toMember=members.find(m=>m.init===to);
-  if(!confirm(`Reatribuir ${alvos.length} card(s) de "${from}" para "${to}"${toMember?' ('+toMember.name+')':''}?`)) return;
+  if(!await uiConfirm(`Reatribuir ${alvos.length} card(s) de "${from}" para "${to}"${toMember?' ('+toMember.name+')':''}?`)) return;
   alvos.forEach(c=>{
     if(c.owner===from) c.owner=to;
     if(incPart && Array.isArray(c.participantes)){
@@ -5629,7 +5647,7 @@ function alterarRole(uid,role){
 // Edita as iniciais de um membro e (opcionalmente) migra os cards atribuídos
 // da inicial antiga para a nova. Resolve casos de iniciais repetidas (ex.: AB/AB).
 async function editarInicial(uid, initAtual, nome){
-  const nova = prompt('Novas iniciais para '+(nome||initAtual)+':\n\n(2 a 4 letras. Use isso para resolver iniciais repetidas — ex.: trocar AB por AK)', initAtual);
+  const nova = await uiPrompt('Novas iniciais para '+(nome||initAtual)+':\n\n(2 a 4 letras. Use isso para resolver iniciais repetidas — ex.: trocar AB por AK)', initAtual);
   if(nova===null) return;
   const novaInit = nova.trim().toUpperCase();
   if(!novaInit || novaInit.length<1 || novaInit.length>4){ showToast('⚠ Use de 1 a 4 letras.'); return; }
@@ -5644,7 +5662,7 @@ async function editarInicial(uid, initAtual, nome){
   const cardsAfetados = cards.filter(c=>c.owner===initAtual || (Array.isArray(c.participantes)&&c.participantes.includes(initAtual)));
   let migrar=false;
   if(cardsAfetados.length){
-    migrar = confirm(cardsAfetados.length+' card(s) estão atribuídos à inicial "'+initAtual+'".\n\nMigrar esses cards para "'+novaInit+'"?\n\n⚠ ATENÇÃO: se "'+initAtual+'" é compartilhada com outra pessoa (iniciais repetidas), NÃO migre — os cards podem ser de outra pessoa. Cancele e use a ferramenta "Reatribuir cards" para escolher card por card.');
+    migrar = await uiConfirm(cardsAfetados.length+' card(s) estão atribuídos à inicial "'+initAtual+'".\n\nMigrar esses cards para "'+novaInit+'"?\n\n⚠ ATENÇÃO: se "'+initAtual+'" é compartilhada com outra pessoa (iniciais repetidas), NÃO migre — os cards podem ser de outra pessoa. Cancele e use a ferramenta "Reatribuir cards" para escolher card por card.');
   }
   // Atualiza a inicial do usuário
   await fbUpdate('kanban/usuarios/'+uid, {init:novaInit});
@@ -5663,8 +5681,8 @@ async function editarInicial(uid, initAtual, nome){
   renderUsuarios();
 }
 
-function removerMembro(uid, nome){
-  if(!confirm('Remover "'+nome+'" deste squad?')) return;
+async function removerMembro(uid, nome){
+  if(!await uiConfirm('Remover "'+nome+'" deste squad?',{title:'Remover do squad',danger:true,okText:'Remover'})) return;
   // Remove a inscrição deste squad (mantém o usuário global para outros squads)
   const update = {};
   update['squads/'+ACTIVE_SQUAD] = null;
@@ -5723,8 +5741,8 @@ function addSubteam(){
   document.getElementById('new-subteam-name').value='';
   renderSubteamEditor();
 }
-function delSubteam(i){
-  if(!confirm('Excluir o subtime "'+(subteams[i]?.name||'')+'"?')) return;
+async function delSubteam(i){
+  if(!await uiConfirm('Excluir o subtime "'+(subteams[i]?.name||'')+'"?',{title:'Excluir subtime',danger:true,okText:'Excluir'})) return;
   subteams.splice(i,1);
   renderSubteamEditor();
 }
@@ -6133,6 +6151,47 @@ function showToast(msg, duration=3500){
   clearTimeout(t._timer);
   t._timer=setTimeout(()=>t.style.opacity='0', duration);
 }
+
+// ═══════════════════════════════════════════════════════
+// MODAIS BONITOS (substituem alert/confirm/prompt nativos)
+// ═══════════════════════════════════════════════════════
+function _uiModal({title, message, kind, defaultValue, placeholder, okText, cancelText, danger}){
+  return new Promise(resolve=>{
+    // remove modal anterior se houver
+    const old=document.getElementById('ui-modal-ov'); if(old) old.remove();
+    const ov=document.createElement('div'); ov.id='ui-modal-ov'; ov.className='ui-modal-ov';
+    const isPrompt=kind==='prompt', isConfirm=kind==='confirm';
+    const msgHtml=(message||'').split('\n').map(l=>`<div>${esc(l)||'&nbsp;'}</div>`).join('');
+    ov.innerHTML=`
+      <div class="ui-modal" role="dialog" aria-modal="true">
+        <div class="ui-modal-icon ${danger?'danger':''}">${danger?'⚠️':(isPrompt?'✏️':(isConfirm?'❓':'💬'))}</div>
+        ${title?`<div class="ui-modal-title">${esc(title)}</div>`:''}
+        <div class="ui-modal-msg">${msgHtml}</div>
+        ${isPrompt?`<input class="ui-modal-input" id="ui-modal-input" value="${esc(defaultValue||'')}" placeholder="${esc(placeholder||'')}">`:''}
+        <div class="ui-modal-actions">
+          ${(isConfirm||isPrompt)?`<button class="ui-modal-btn ui-modal-cancel" id="ui-modal-cancel">${esc(cancelText||'Cancelar')}</button>`:''}
+          <button class="ui-modal-btn ui-modal-ok${danger?' danger':''}" id="ui-modal-ok">${esc(okText||'OK')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=>ov.classList.add('open'));
+    const inp=ov.querySelector('#ui-modal-input');
+    const close=(val)=>{ ov.classList.remove('open'); setTimeout(()=>ov.remove(),180); resolve(val); };
+    ov.querySelector('#ui-modal-ok').onclick=()=>close(isPrompt?(inp?inp.value:''):true);
+    const cancelBtn=ov.querySelector('#ui-modal-cancel'); if(cancelBtn) cancelBtn.onclick=()=>close(isPrompt?null:false);
+    ov.addEventListener('mousedown',e=>{ if(e.target===ov) close(isPrompt?null:false); });
+    document.addEventListener('keydown',function esc_(e){
+      if(!document.getElementById('ui-modal-ov')){ document.removeEventListener('keydown',esc_); return; }
+      if(e.key==='Escape'){ close(isPrompt?null:false); document.removeEventListener('keydown',esc_); }
+      else if(e.key==='Enter' && (kind!=='prompt' || document.activeElement===inp)){ if(!isPrompt||inp){ e.preventDefault(); close(isPrompt?inp.value:true); document.removeEventListener('keydown',esc_); } }
+    });
+    if(inp){ setTimeout(()=>{ inp.focus(); inp.select(); },60); }
+    else { setTimeout(()=>ov.querySelector('#ui-modal-ok').focus(),60); }
+  });
+}
+function uiAlert(message, opts={}){ return _uiModal({message, kind:'alert', ...opts}); }
+function uiConfirm(message, opts={}){ return _uiModal({message, kind:'confirm', ...opts}); }
+function uiPrompt(message, defaultValue='', opts={}){ return _uiModal({message, kind:'prompt', defaultValue, ...opts}); }
 
 // ═══════════════════════════════════════════════════════
 // IMPORTAR TRELLO
@@ -6580,7 +6639,7 @@ function confirmarTrelloMembers(){
   doTrelloImport();
 }
 
-function doTrelloImport(){
+async function doTrelloImport(){
   if(!_trelloParsed){ return; }
   // Apply member override from modal to all cards
   if(Object.keys(_trelloMemberOverride).length){
@@ -6605,7 +6664,7 @@ function doTrelloImport(){
   const total=_trelloParsed.total;
   const boardName=_trelloParsed.boardName;
   if(!merge){
-    if(!confirm(`Isso vai substituir todos os ${cards.length} cards existentes por ${total} cards do Trello. Confirma?`)) return;
+    if(!await uiConfirm(`Isso vai substituir todos os ${cards.length} cards existentes por ${total} cards do Trello. Confirma?`)) return;
     cards=[];
   }
   // Cria tags novas que vieram do Trello
@@ -7594,8 +7653,8 @@ function saveEvent(){
   closeEvModal(); renderCal();
   showToast('✅ Evento salvo!');
 }
-function deleteEvent(){
-  if(!editingEvId||!confirm('Excluir este evento?')) return;
+async function deleteEvent(){
+  if(!editingEvId||!await uiConfirm('Excluir este evento do calendário?',{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
   calEvents=calEvents.filter(e=>e.id!==editingEvId);
   fbSet(FB+'/cal_events',calEvents);
   closeEvModal(); renderCal();
@@ -8253,11 +8312,11 @@ document.addEventListener('contextmenu', e=>{
 });
 
 // Ações do context menu
-function resolveAllBugs(){
+async function resolveAllBugs(){
   const bugTags = tags.filter(t=>
     /bug|bloqueio|blocker|erro|error|fix/i.test(t.label||t.id)
   ).map(t=>t.id);
-  if(!bugTags.length && !confirm('Nenhuma tag de bug encontrada automaticamente.\nDeseja mover TODOS os cards de Impedimentos para Concluído?')) return;
+  if(!bugTags.length && !await uiConfirm('Nenhuma tag de bug encontrada automaticamente.\nDeseja mover TODOS os cards de Impedimentos para Concluído?')) return;
   const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))||columns[columns.length-1];
   let count = 0;
   cards.forEach(c=>{
@@ -8352,9 +8411,9 @@ function ctxArchive(){
   hideCtxMenu();
 }
 
-function ctxDelete(){
+async function ctxDelete(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
-  if(!confirm('Excluir "'+card.title+'"? Não pode ser desfeito.')) return;
+  if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   cards=cards.filter(x=>x.id!==_ctxCardId);
   fbSaveAll(); renderBoard();
   showToast('Card excluído');
@@ -8365,11 +8424,11 @@ function ctxDelete(){
 // ═══════════════════════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════════════════════
-function salvarComoModeloModal(){
+async function salvarComoModeloModal(){
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
   if(!qlItems.modelos) qlItems.modelos=[];
   const jaExiste=qlItems.modelos.find(m=>m.title===title);
-  if(jaExiste){ alert('"'+title+'" já está nos modelos.'); return; }
+  if(jaExiste){ await uiAlert('"'+title+'" já está nos modelos.',{title:'Modelo duplicado'}); return; }
   qlItems.modelos.push({
     title,
     tags:editingTags.slice(),tag:(editingTags[0]||''),
@@ -8383,11 +8442,11 @@ function salvarComoModeloModal(){
   btn.textContent='✅ Salvo!'; btn.disabled=true;
   setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },2000);
 }
-function salvarComoModelo(id){
+async function salvarComoModelo(id){
   const card=cards.find(x=>x.id===id); if(!card) return;
   if(!qlItems.modelos) qlItems.modelos=[];
   const jaExiste=qlItems.modelos.find(m=>m.title===card.title);
-  if(jaExiste){ alert('"'+card.title+'" já está nos modelos.'); return; }
+  if(jaExiste){ await uiAlert('"'+card.title+'" já está nos modelos.',{title:'Modelo duplicado'}); return; }
   qlItems.modelos.push({
     title: card.title,
     tag: card.tag,
@@ -9141,7 +9200,7 @@ function openCardDepMapModal(){
 // ═══════════════════════════════════════════════════════
 
 // ── inserir marcador de formatação na seleção do textarea ──
-function _fmtText(taId, type, arg){
+async function _fmtText(taId, type, arg){
   const ta=document.getElementById(taId); if(!ta) return;
   const s=ta.selectionStart, e=ta.selectionEnd;
   const sel=ta.value.substring(s,e);
@@ -9153,12 +9212,12 @@ function _fmtText(taId, type, arg){
   else if(type==='link'){
     const sel=ta.value.substring(s,e);
     // Pede a URL; o texto visível é a seleção (ou pergunta também)
-    let url=prompt('URL do link:', 'https://');
+    let url=await uiPrompt('URL do link:', 'https://',{title:'🔗 Inserir link',placeholder:'https://...'});
     if(url===null) return;
     url=url.trim(); if(!url) return;
     if(!/^https?:\/\//i.test(url)) url='https://'+url.replace(/^\/+/,'');
     let label=sel;
-    if(!label){ label=prompt('Texto do link (deixe vazio para mostrar a URL):','')||url; }
+    if(!label){ label=await uiPrompt('Texto do link (deixe vazio para mostrar a URL):','',{title:'🔗 Nome do link',placeholder:'Ex.: Board do Bolão'})||url; }
     const md='['+label+']('+url+')';
     const before=ta.value.substring(0,s), after=ta.value.substring(e);
     ta.value = before + md + after;
@@ -9430,8 +9489,8 @@ function loadAttachments(card){
 }
 
 // ── CONVITE POR EMAIL (PO pode adicionar usuário ao squad) ──────────────────
-function convidarMembro(){
-  const email = prompt('Email do usuário a convidar (qualquer email Google para freelancers):');
+async function convidarMembro(){
+  const email = await uiPrompt('Digite o email do usuário a convidar:','',{title:'Convidar membro',placeholder:'email@exemplo.com'});
   if(!email || !email.includes('@')) return;
   // Busca o usuário pelo email no Firebase
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
@@ -9854,8 +9913,8 @@ function _forceReload(){
 }
 
 async function reSeedDev(){
-  if(ACTIVE_SQUAD!=='dev'){ alert('A re-população de dados de teste só está disponível no Dev Sandbox.'); return; }
-  const ok=confirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes (cards, kudos, lembretes, reações e status).\n\nOs dados atuais do dev serão substituídos. Continuar?');
+  if(ACTIVE_SQUAD!=='dev'){ await uiAlert('A re-população de dados de teste só está disponível no Dev Sandbox.'); return; }
+  const ok=await uiConfirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes (cards, kudos, lembretes, reações e status).\n\nOs dados atuais do dev serão substituídos. Continuar?');
   if(!ok) return;
   // mostra o overlay de seed (que tem o seed-btn e o log) e roda
   const ov=document.getElementById('seed-overlay');
