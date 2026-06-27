@@ -74,6 +74,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-title{font-family:"Syne",sans-serif;font-size:20px;font-weight:800;}
 .hd-sub{font-size:11px;color:var(--txt3);}
 .badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+/* Navegação por abas do painel */
+.ptab-nav{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap;border-bottom:1px solid var(--glass-b);padding-bottom:0;}
+.ptab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt3);font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;padding:10px 16px;cursor:pointer;transition:all .15s;margin-bottom:-1px;}
+.ptab-btn:hover{color:var(--txt2);}
+.ptab-btn.on{color:var(--accent);border-bottom-color:var(--accent);}
+.ptab-pane{display:none;}
+.ptab-pane.on{display:block;animation:ptabIn .25s ease;}
+@keyframes ptabIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+/* Selo de usuário de teste */
+.test-badge{font-size:8.5px;background:rgba(255,209,102,.18);color:var(--warn);border:1px solid rgba(255,209,102,.35);border-radius:999px;padding:1px 6px;margin-left:4px;font-weight:700;letter-spacing:.02em;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;font-size:12px;
   font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);
   background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
@@ -617,7 +627,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <span class="last-update" id="last-update"></span>
   </div>
 
+  <!-- NAVEGAÇÃO POR ABAS -->
+  <div class="ptab-nav" id="ptab-nav">
+    <button class="ptab-btn on" data-tab="visao" onclick="swPtab('visao')">📊 Visão Geral</button>
+    <button class="ptab-btn" data-tab="fluxo" onclick="swPtab('fluxo')">📈 Fluxo</button>
+    <button class="ptab-btn" data-tab="saude" onclick="swPtab('saude')">🚩 Saúde</button>
+    <button class="ptab-btn" data-tab="pessoas" onclick="swPtab('pessoas')">💬 Pessoas</button>
+  </div>
 
+  <div class="ptab-pane on" id="ppane-visao"></div>
+  <div class="ptab-pane" id="ppane-fluxo"></div>
+  <div class="ptab-pane" id="ppane-saude"></div>
+  <div class="ptab-pane" id="ppane-pessoas"></div>
+
+
+  <span class="psec-marker" data-sec="visao" hidden></span>
   <!-- USUÁRIOS ONLINE -->
   <div class="sec-title" id="online-section-title">👥 Quem está online <span class="badge" id="online-count">0</span></div>
   <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
@@ -627,6 +651,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 
 
+  <span class="psec-marker" data-sec="pessoas" hidden></span>
   <!-- CALENDÁRIO DO PAINEL -->
 <div id="pcal-section" style="display:none;margin-bottom:20px;">
   <div class="pcal-tabs" id="pcal-tabs-bar">
@@ -676,6 +701,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
+  <span class="psec-marker" data-sec="visao" hidden></span>
   <!-- FILTRO DE SQUAD -->
   <div class="filter-bar">
     <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">🏠 Todos os squads</button>
@@ -684,10 +710,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="filter-btn"        id="fb-midiacriativa"  onclick="setFilter('midiacriativa')">🎨 Squad Mídia Criativa</button>
   </div>
 
+  <span class="psec-marker" data-sec="visao" hidden></span>
   <!-- SQUADS EM TEMPO REAL -->
   <div class="sec-title">🏃 Squads em tempo real</div>
   <div class="grid-2" id="squad-cards" style="margin-bottom:20px;"></div>
 
+  <span class="psec-marker" data-sec="visao" hidden></span>
   <!-- MÉTRICAS CONSOLIDADAS -->
   <div class="sec-title">📊 Consolidado</div>
   <div class="grid-4" style="margin-bottom:12px;">
@@ -697,6 +725,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput total</div></div>
   </div>
 
+  <span class="psec-marker" data-sec="fluxo" hidden></span>
   <!-- MÉTRICAS DE FLUXO (FLOW METRICS) -->
   <div class="sec-title">🌊 Fluxo · últimos <span id="flow-window-lbl">14</span> dias
     <span style="display:inline-flex;gap:4px;margin-left:auto;font-weight:400;">
@@ -728,6 +757,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <span class="psec-marker" data-sec="fluxo" hidden></span>
   <!-- GRÁFICOS DE FLUXO -->
   <div class="grid-2" style="margin-bottom:20px;">
     <div class="card flow-card">
@@ -742,6 +772,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <span class="psec-marker" data-sec="fluxo" hidden></span>
   <!-- AGING WIP -->
   <div id="aging-section" style="margin-bottom:20px;">
     <div class="sec-title">⏳ Work Item Age · cards em risco</div>
@@ -750,6 +781,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <span class="psec-marker" data-sec="pessoas" hidden></span>
   <!-- ═══ LEMBRETES DO QUADRO ═══ -->
   <div id="lemp-section">
     <div class="sec-title">📌 Lembretes do quadro</div>
@@ -769,6 +801,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <span class="psec-marker" data-sec="pessoas" hidden></span>
   <!-- ═══ ESTRELAS DO MAR (Geral) ═══ -->
   <div id="kudos-section">
     <div class="sec-title">⭐ Estrelas do Mar · reconhecimento geral</div>
@@ -784,6 +817,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 
+  <span class="psec-marker" data-sec="saude" hidden></span>
   <!-- TABELA COMPARATIVA -->
   <div id="cmp-section">
   <div class="sec-title">⚖️ Comparação</div>
@@ -795,6 +829,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   </div>
 
+  <span class="psec-marker" data-sec="saude" hidden></span>
   <!-- AGENTE ÁGIL USAGE -->
   <div class="sec-title">🤖 Uso do Agente Ágil</div>
   <div class="grid-3" style="margin-bottom:12px;">
@@ -804,10 +839,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
 
+  <span class="psec-marker" data-sec="saude" hidden></span>
   <!-- OKR -->
   <div class="sec-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
   <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
 
+  <span class="psec-marker" data-sec="saude" hidden></span>
   <!-- BLOQUEIOS -->
   <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
     <span>🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></span>
@@ -815,10 +852,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   <div id="blockers-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio.</div></div>
 
+  <span class="psec-marker" data-sec="saude" hidden></span>
   <!-- RISCOS -->
   <div class="sec-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
   <div id="risco-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Sem cards com riscos.</div></div>
 
+  <span class="psec-marker" data-sec="fluxo" hidden></span>
   <!-- TENDÊNCIA -->
   <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
   <div class="grid-2" style="margin-bottom:20px;">
@@ -828,10 +867,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 
 
+  <span class="psec-marker" data-sec="fluxo" hidden></span>
   <!-- DISTRIBUIÇÃO POR COLUNA -->
   <div class="sec-title">📋 Distribuição por coluna</div>
   <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
 
+  <span class="psec-marker" data-sec="saude" hidden></span>
   <!-- MONITORAMENTO DE ERROS -->
   <div id="monitor-section" style="display:none;">
     <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -1182,10 +1223,11 @@ function renderOnline(){
   if(!all.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no momento.</div>'; return; }
   el.innerHTML=all.map(u=>{
     const foto=u.foto?'<img src="'+u.foto+'" style="width:20px;height:20px;border-radius:50%;">':'';
+    const testBadge=_isTestUser(u.uid, u)?'<span class="test-badge">🧪</span>':'';
     return '<div class="online-pill">'
       +'<span class="online-pip"></span>'
       +foto
-      +'<span>'+(u.nome||u.init||'?')+'</span>'
+      +'<span>'+(u.nome||u.init||'?')+'</span>'+testBadge
       +'<span style="font-size:9px;color:var(--txt3);background:rgba(56,182,255,.1);padding:1px 6px;border-radius:999px;">'+u._squad.icon+'</span>'
       +'</div>';
   }).join('');
@@ -1566,6 +1608,7 @@ let pcalShowSection=false;
 
 function togglePcalSection(){
   pcalShowSection=!pcalShowSection;
+  if(pcalShowSection) swPtab('pessoas'); // calendário fica na aba Pessoas
   document.getElementById('pcal-section').style.display=pcalShowSection?'block':'none';
   document.getElementById('btn-pcal').style.background=pcalShowSection?'rgba(29,233,182,.15)':'';
   document.getElementById('btn-pcal').style.borderColor=pcalShowSection?'rgba(29,233,182,.5)':'rgba(29,233,182,.3)';
@@ -1789,6 +1832,7 @@ const STATUS_CYCLE = {novo:'visto', visto:'resolvido', resolvido:'novo'};
 
 function toggleMonitorSection(){
   monitorVisible=!monitorVisible;
+  if(monitorVisible) swPtab('saude'); // monitor de erros fica na aba Saúde
   document.getElementById('monitor-section').style.display=monitorVisible?'block':'none';
   const btn=document.getElementById('btn-monitor');
   btn.style.background=monitorVisible?'rgba(255,107,107,.15)':'';
@@ -2212,6 +2256,7 @@ window.addEventListener('auth-change',e=>{
     }
     document.getElementById('login-ov').style.display='none';
     document.getElementById('app-root').style.display='block';
+    try{ _distributePanes(); }catch(e){}
     document.getElementById('user-name').textContent=user.displayName||user.email;
     const av=document.getElementById('user-avatar');
     if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
@@ -2385,6 +2430,12 @@ function loadGlobalUsers(){
   });
 }
 
+// Detecta usuários de teste/sandbox (fictícios criados no seed do dev)
+function _isTestUser(uid, u){
+  if(uid && /^uid-test-/i.test(uid)) return true;
+  if(u && (u.squad==='dev' || u._squad?.id==='dev')) return true;
+  return false;
+}
 function renderGlobalUsers(){
   const list = document.getElementById('global-users-list');
   const countEl = document.getElementById('global-users-count');
@@ -2427,6 +2478,7 @@ function renderGlobalUsers(){
     const nome = document.createElement('div');
     nome.style.cssText = 'font-size:12px;font-weight:600;';
     nome.textContent = (u.nome||u.email||'?') + (u.init?' ('+u.init+')':'');
+    if(_isTestUser(uid, u)){ const tb=document.createElement('span'); tb.className='test-badge'; tb.textContent='🧪 TESTE'; nome.appendChild(tb); }
     const email = document.createElement('div');
     email.style.cssText = 'font-size:9px;color:var(--txt3);';
     email.textContent = u.email||'';
@@ -2566,7 +2618,34 @@ function loadAll(){
   });
 }
 
+// ABA SWITCHING + DISTRIBUIÇÃO DE SEÇÕES NAS ABAS
+let _panesReady=false;
+function _distributePanes(){
+  if(_panesReady) return;
+  const markers=[...document.querySelectorAll('.psec-marker')];
+  if(!markers.length) return;
+  const panes={ visao:document.getElementById('ppane-visao'), fluxo:document.getElementById('ppane-fluxo'),
+                saude:document.getElementById('ppane-saude'), pessoas:document.getElementById('ppane-pessoas') };
+  if(!panes.visao) return;
+  markers.forEach(marker=>{
+    const tab=marker.getAttribute('data-sec');
+    const pane=panes[tab]; if(!pane) return;
+    const nodes=[];
+    let n=marker.nextSibling;
+    while(n && !(n.nodeType===1 && n.classList && n.classList.contains('psec-marker'))){
+      nodes.push(n); n=n.nextSibling;
+    }
+    nodes.forEach(node=>pane.appendChild(node));
+    marker.remove();
+  });
+  _panesReady=true;
+}
+function swPtab(tab){
+  document.querySelectorAll('.ptab-btn').forEach(b=>b.classList.toggle('on', b.getAttribute('data-tab')===tab));
+  document.querySelectorAll('.ptab-pane').forEach(p=>p.classList.toggle('on', p.id==='ppane-'+tab));
+}
 function renderAll(){
+  _distributePanes();
   updateTimestamp();
   renderSquadCards();
   renderConsolidated();
