@@ -448,6 +448,44 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ql-filter-inp{flex:1;min-width:130px;background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:11px;font-family:"DM Sans",sans-serif;}
 .ql-filter-inp::placeholder{color:var(--txt3);}
 .ql-filter-sel{background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:8px;padding:6px 8px;color:var(--txt);font-size:11px;font-family:"DM Sans",sans-serif;cursor:pointer;}
+/* Relatório de tempo por tag */
+.tempo-filter-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--glass-b);flex-wrap:wrap;}
+.tempo-intro{font-size:11.5px;color:var(--txt2);line-height:1.55;margin:8px 0 14px;}
+.tempo-cards{display:flex;flex-direction:column;gap:12px;}
+.tempo-row{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:12px;padding:12px 14px;}
+.tempo-row-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.tempo-tag{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;border:1px solid;}
+.tempo-pct{font-size:11px;font-weight:700;color:var(--accent);}
+.tempo-bar{height:6px;background:rgba(56,182,255,.08);border-radius:999px;overflow:hidden;margin-bottom:10px;}
+.tempo-bar-fill{height:100%;border-radius:999px;transition:width .4s ease;}
+.tempo-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.tempo-met{display:flex;flex-direction:column;align-items:center;text-align:center;background:rgba(56,182,255,.04);border-radius:8px;padding:7px 4px;}
+.tempo-met-v{font-size:14px;font-weight:800;color:var(--txt);font-family:"DM Sans",sans-serif;}
+.tempo-met-l{font-size:8.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;margin-top:2px;}
+.tempo-total{margin-top:14px;padding-top:12px;border-top:1px solid var(--glass-b);font-size:12px;color:var(--txt2);text-align:center;}
+@media(max-width:560px){.tempo-metrics{grid-template-columns:repeat(2,1fr);}}
+/* Config de fluxo */
+.fluxo-cfg-block{margin-bottom:18px;}
+.fluxo-cfg-label{font-size:12.5px;font-weight:700;color:var(--txt);margin-bottom:8px;}
+.fluxo-cfg-label span{font-weight:400;font-size:11px;color:var(--txt3);}
+.fluxo-col-list{display:flex;flex-wrap:wrap;gap:7px;}
+.fluxo-col-item{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:9px;border:1px solid var(--glass-b);background:rgba(3,13,26,.5);cursor:pointer;font-size:12px;color:var(--txt2);transition:all .15s;}
+.fluxo-col-item:hover{border-color:rgba(56,182,255,.35);}
+.fluxo-col-item.on{background:rgba(56,182,255,.12);border-color:var(--accent);color:var(--txt);font-weight:600;}
+.fluxo-col-item input{accent-color:var(--accent);cursor:pointer;}
+.fluxo-col-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.tempo-stages{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--glass-b);}
+.tempo-stage{display:flex;align-items:center;gap:5px;background:rgba(56,182,255,.05);border-radius:7px;padding:4px 9px;font-size:10.5px;}
+.tempo-stage-dot{width:7px;height:7px;border-radius:50%;}
+.tempo-stage-n{color:var(--txt2);}
+.tempo-stage-v{color:var(--txt);font-weight:700;}
+/* Modal de recorrência */
+.rec-switch{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--txt);cursor:pointer;padding:10px 12px;background:rgba(29,233,182,.06);border:1px solid rgba(29,233,182,.2);border-radius:10px;}
+.rec-switch input{accent-color:var(--teal);width:16px;height:16px;cursor:pointer;}
+.rec-field{margin-bottom:10px;}
+.rec-lbl{display:block;font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;font-weight:600;}
+.rec-input{width:100%;background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:9px;padding:9px 11px;color:var(--txt);font-size:13px;font-family:"DM Sans",sans-serif;}
+.rec-input:focus{outline:none;border-color:var(--accent);}
 .ql-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);cursor:pointer;transition:all .15s;}
 .ql-item:hover{border-color:var(--accent);}
 .ql-item-title{flex:1;font-size:12px;font-weight:500;}
@@ -1684,6 +1722,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Tempo por tag</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
   <div class="tb-sep"></div>
@@ -1731,6 +1770,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <label class="lem-fchk"><input type="checkbox" id="lf-po" checked onchange="renderLembretes()"><span class="fdot" style="background:#2563c9;"></span>PO/Org</label>
     <label class="lem-fchk"><input type="checkbox" id="lf-proprio" checked onchange="renderLembretes()"><span class="fdot" style="background:#1de9b6;"></span>Próprios</label>
     <label class="lem-fchk"><input type="checkbox" id="lf-quadro" onchange="renderLembretes()"><span class="fdot" style="background:#ff9800;"></span>Quadro</label>
+    <label class="lem-fchk" id="lf-quadro-todos-wrap" style="display:none;"><input type="checkbox" id="lf-quadro-todos" onchange="renderLembretes()"><span class="fdot" style="background:#ffb84d;"></span>👁 Todos os cards</label>
   </div>
   <div class="lem-body" id="lem-body"></div>
   <div class="lem-add" id="lem-add">
@@ -2084,6 +2124,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swCfgTab('lembretes')">📌 Lembretes</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
     <div class="ag-tab" onclick="swCfgTab('subtimes')">👥 Subtimes</div>
+    <div class="ag-tab" onclick="swCfgTab('fluxo')">⚙ Fluxo</div>
     <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
@@ -2242,6 +2283,30 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
       <div style="display:flex;justify-content:flex-end;padding-top:10px;"><button class="btn btn-p btn-sm" onclick="saveSubteams()">Salvar subtimes</button></div>
     </div>
+
+
+    <!-- ABA FLUXO (config do relatório de tempo) -->
+    <div class="tab-c" id="cfgtab-fluxo">
+      <div class="cfg-sec-title">⚙ Fluxo do trabalho</div>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Configure quais colunas marcam o <b>início</b> e o <b>fim</b> do trabalho. Isso define como o relatório <b>⏱ Tempo por tag</b> calcula o lead e o cycle time. Se deixar em branco, o sistema tenta adivinhar automaticamente.
+      </p>
+      <div class="fluxo-cfg-block">
+        <div class="fluxo-cfg-label">🟢 Coluna(s) de início <span>(quando o trabalho começa de fato, ex.: "Em andamento")</span></div>
+        <div id="fluxo-start-cols" class="fluxo-col-list"></div>
+      </div>
+      <div class="fluxo-cfg-block">
+        <div class="fluxo-cfg-label">🏁 Coluna(s) de fim <span>(quando a tarefa é concluída, ex.: "Concluído")</span></div>
+        <div id="fluxo-done-cols" class="fluxo-col-list"></div>
+      </div>
+      <div class="fluxo-cfg-block">
+        <div class="fluxo-cfg-label">📊 Etapas no relatório <span>(colunas intermediárias para medir tempo em cada fase — opcional)</span></div>
+        <div id="fluxo-report-cols" class="fluxo-col-list"></div>
+      </div>
+      <button class="btn btn-teal" onclick="salvarFluxoCfg()" style="margin-top:8px;">💾 Salvar configuração de fluxo</button>
+      <button class="btn btn-sm" onclick="resetFluxoCfg()" style="margin-top:8px;margin-left:8px;">↺ Voltar ao automático</button>
+    </div>
+
 
 
     <!-- ABA AUTOMAÇÕES -->
@@ -2557,6 +2622,66 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- ARQUIVADOS -->
+<!-- MODAL DE RECORRÊNCIA -->
+<div class="ov" id="rec-ov">
+<div class="panel" style="max-width:440px;width:92vw;">
+  <div class="panel-hd">
+    <div class="panel-title">🔁 Recorrência automática</div>
+    <button class="x-btn" onclick="closeOv('rec-ov')">✕</button>
+  </div>
+  <div style="padding:14px 16px;">
+    <p style="font-size:11.5px;color:var(--txt2);line-height:1.5;margin:0 0 14px;">Quando ativado, este card volta sozinho pro quadro na frequência escolhida. O sistema verifica ao abrir o board e avisa quem estiver online.</p>
+    <label class="rec-switch"><input type="checkbox" id="rec-active" onchange="_recToggleActive()"> <span>Ativar recorrência automática</span></label>
+    <div id="rec-config" style="margin-top:14px;opacity:.4;pointer-events:none;">
+      <div class="rec-field">
+        <label class="rec-lbl">Frequência</label>
+        <select id="rec-type" class="rec-input" onchange="_recRenderSub()">
+          <option value="days">A cada X dias</option>
+          <option value="weekly">Toda semana</option>
+          <option value="monthly">Todo mês</option>
+        </select>
+      </div>
+      <div id="rec-sub"></div>
+      <div class="rec-field" style="margin-top:6px;">
+        <label class="rec-lbl">Coluna de destino</label>
+        <select id="rec-col" class="rec-input"></select>
+      </div>
+      <div class="rec-field">
+        <label class="rec-lbl">Responsável (opcional)</label>
+        <select id="rec-owner" class="rec-input"></select>
+      </div>
+      <p style="font-size:11px;color:var(--txt3);margin:10px 0 0;line-height:1.5;">💡 O conteúdo do card (descrição, checklist, tag) é copiado do item recorrente. Edite o item para mudar o que vem preenchido.</p>
+    </div>
+    <button class="btn btn-teal" onclick="salvarRecorrencia()" style="margin-top:16px;width:100%;">💾 Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- RELATÓRIO DE TEMPO POR TAG -->
+<div class="ov" id="tempo-ov">
+<div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">⏱ Tempo por tag</div>
+    <button class="x-btn" onclick="closeOv('tempo-ov')">✕</button>
+  </div>
+  <div class="tempo-filter-bar">
+    <select id="tempo-periodo" class="ql-filter-sel" onchange="renderTempoReport()">
+      <option value="all">Todo o período</option>
+      <option value="30">Últimos 30 dias</option>
+      <option value="60">Últimos 60 dias</option>
+      <option value="90">Últimos 90 dias</option>
+    </select>
+    <select id="tempo-escopo" class="ql-filter-sel" onchange="renderTempoReport()">
+      <option value="done">Só cards concluídos</option>
+      <option value="all">Todos (inclui em andamento)</option>
+    </select>
+    <button class="btn btn-sm" onclick="exportTempoCSV()" style="color:var(--teal);border-color:rgba(29,233,182,.3);margin-left:auto;">⬇ CSV</button>
+  </div>
+  <div style="padding:6px 16px 16px;overflow-y:auto;flex:1;" id="tempo-body"></div>
+</div>
+</div>
+
+<!-- RELATÓRIO DE TEMPO - fim -->
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
   <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
@@ -2591,7 +2716,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.26.0-dev</div>
+<div class="version">v8.29.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2836,6 +2961,7 @@ function uniqueInitForSquad(desiredInit, allUsers, excludeUid, fullName){
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
+let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
 // ═══ SELEÇÃO MÚLTIPLA / EXCLUSÃO EM MASSA ═══
@@ -3036,14 +3162,33 @@ let _hasLocalSession = false; // true só depois do primeiro save desta sessão
 // Isso habilita Cycle Time, Lead Time, Throughput, Work Item Age e CFD.
 // IDs de início/fim são resolvidos dinamicamente a partir das colunas.
 function _flowStartColIds(){
+  // Se o PO configurou, usa a config dele (só colunas que ainda existem)
+  if(flowConfig.startCols && flowConfig.startCols.length){
+    const valid=flowConfig.startCols.filter(id=>(columns||[]).some(c=>c.id===id));
+    if(valid.length) return valid;
+  }
+  // Fallback: heurística automática (primeira coluna que não seja backlog puro)
   const ids = (columns||[]).map(c=>c.id);
   const explicit = (columns||[]).find(c=>c.id==='progress'||/progress|andamento|fazendo|doing|execu/i.test(c.name||''));
   if(explicit) return [explicit.id];
   return ids.length>1 ? [ids[1]] : ids.slice(0,1);
 }
 function _flowDoneColId(){
+  // Se o PO configurou, usa a primeira coluna de fim configurada
+  if(flowConfig.doneCols && flowConfig.doneCols.length){
+    const valid=flowConfig.doneCols.find(id=>(columns||[]).some(c=>c.id===id));
+    if(valid) return valid;
+  }
   const c=(columns||[]).find(x=>x.id==='done'||/conclu|done|feito|finaliz/i.test(x.name||''));
   return c?c.id:'done';
+}
+// Todas as colunas de fim (pode haver mais de uma: Concluído, Cancelado, etc.)
+function _flowDoneColIds(){
+  if(flowConfig.doneCols && flowConfig.doneCols.length){
+    const valid=flowConfig.doneCols.filter(id=>(columns||[]).some(c=>c.id===id));
+    if(valid.length) return valid;
+  }
+  const d=_flowDoneColId(); return d?[d]:[];
 }
 function _flowFirstColId(){
   return (columns&&columns[0]&&columns[0].id)||'backlog';
@@ -3424,6 +3569,16 @@ function fbLoadAll(){
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
     if(val){ blockerMode=val; applyBlockerMode(); }
+  });
+  // Config de fluxo (colunas início/fim/relatório do tempo por tag)
+  fbListen(FB+'/config/flow',val=>{
+    if(val && typeof val==='object'){
+      flowConfig={
+        startCols: Array.isArray(val.startCols)?val.startCols:[],
+        doneCols: Array.isArray(val.doneCols)?val.doneCols:[],
+        reportCols: Array.isArray(val.reportCols)?val.reportCols:[],
+      };
+    }
   });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
@@ -4798,9 +4953,20 @@ function dismissLembrete(id){
   const p=_lemDismissPath(); if(p) fbSet(p, lembretesDismiss);
   renderLembretes();
 }
+// Verdadeiro se o usuário atual está no card (responsável ou participante)
+function _euEstouNoCard(c){
+  const me=window._currentUserInit; if(!me) return false;
+  const inits=new Set([c.owner, ...(c.participants||c.participantes||[])].filter(Boolean));
+  return inits.has(me);
+}
 function computeAvisosQuadro(){
   const out=[]; const today=new Date(); today.setHours(0,0,0,0);
+  // PO/org/adm podem optar por ver TODOS os cards (toggle). Senão, só os cards onde a pessoa está.
+  const canSeeAll = ['po','organizador','adm'].includes(window._currentUserRole);
+  const verTodos = canSeeAll && document.getElementById('lf-quadro-todos')?.checked;
   (cards||[]).filter(c=>c&&!c.archived).forEach(c=>{
+    // Filtro: aviso só aparece pra quem está no card (ou pro PO que ativou "ver todos")
+    if(!verTodos && !_euEstouNoCard(c)) return;
     const titulo=c.title||'(sem título)';
     if(c.col==='blocker'){
       out.push({tipo:'quadro', urgent:true, text:`🚧 Card bloqueado: "${titulo}"`, cardId:c.id, sub:'impedimento ativo', ts:c.editedAt||''});
@@ -4865,6 +5031,11 @@ function _populateLemTypeSelect(){
 }
 function renderLembretes(){
   const body=document.getElementById('lem-body'); if(!body) return;
+  // Toggle "ver todos os cards" só aparece para PO/org/adm E quando o filtro Quadro está ligado
+  const canSeeAll=['po','organizador','adm'].includes(window._currentUserRole);
+  const quadroOn=document.getElementById('lf-quadro')?.checked;
+  const todosWrap=document.getElementById('lf-quadro-todos-wrap');
+  if(todosWrap) todosWrap.style.display=(canSeeAll && quadroOn)?'inline-flex':'none';
   const { list } = _collectLembretes();
   if(!list.length){
     body.innerHTML=`<div class="lem-empty">📭 Nenhum lembrete por aqui.<br>Marque mais filtros acima ou fixe um lembrete abaixo.</div>`;
@@ -5224,6 +5395,136 @@ async function zerarBoard(){
   closeOv('cfg-ov');
   showToast('🗑 Board zerado com sucesso');
 }
+// ═══════════════════════════════════════════════════════
+// RELATÓRIO DE TEMPO POR TAG
+// ═══════════════════════════════════════════════════════
+let _tempoData=null;
+function _cardTempos(c){
+  const now=Date.now();
+  let createdMs=null;
+  if(c.createdAt){ const s=c.createdAt.length<=10?c.createdAt+'T12:00:00.000Z':c.createdAt; createdMs=new Date(s).getTime(); }
+  else if(c.flow?.log?.length){ createdMs=new Date(c.flow.log[0].at).getTime(); }
+  const doneMs = c.flow?.doneAt ? new Date(c.flow.doneAt).getTime() : null;
+  const endMs = doneMs || now;
+  const lead = (createdMs!=null) ? Math.max(0,(endMs-createdMs)/3600000) : null;
+  const startMs = c.flow?.firstStartAt ? new Date(c.flow.firstStartAt).getTime() : null;
+  const cycle = (startMs!=null) ? Math.max(0,(endMs-startMs)/3600000) : null;
+  return { lead, cycle, done: !!doneMs };
+}
+// Tempo (horas) que um card passou em cada coluna, a partir do flow.log
+function _cardTempoPorColuna(c){
+  const out={};
+  const log=c.flow?.log; if(!log||!log.length) return out;
+  const now=Date.now();
+  for(let i=0;i<log.length;i++){
+    const entrada=new Date(log[i].at).getTime();
+    const saida = (i+1<log.length) ? new Date(log[i+1].at).getTime() : (c.flow?.doneAt? new Date(c.flow.doneAt).getTime() : now);
+    const col=log[i].to;
+    const h=Math.max(0,(saida-entrada)/3600000);
+    out[col]=(out[col]||0)+h;
+  }
+  return out;
+}
+function _fmtHoras(h){
+  if(h==null) return '—';
+  if(h<1) return '<1h';
+  if(h<24) return Math.round(h)+'h';
+  const d=Math.floor(h/24), rh=Math.round(h%24);
+  return rh? d+'d '+rh+'h' : d+'d';
+}
+function openTempoReport(){
+  document.getElementById('tempo-ov').classList.add('open');
+  renderTempoReport();
+}
+function _computeTempoData(){
+  const periodo=document.getElementById('tempo-periodo')?.value||'all';
+  const escopo=document.getElementById('tempo-escopo')?.value||'done';
+  const cutoff = periodo==='all' ? 0 : Date.now()-parseInt(periodo)*86400000;
+  const porTag={};
+  cards.filter(c=>!c.archived).forEach(c=>{
+    const t=_cardTempos(c);
+    if(escopo==='done' && !t.done) return;
+    if(cutoff){
+      const ref = c.flow?.doneAt ? new Date(c.flow.doneAt).getTime() : (c.createdAt?new Date(c.createdAt).getTime():0);
+      if(ref < cutoff) return;
+    }
+    const tagsDoCard=getCardTags(c);
+    const lista = tagsDoCard.length?tagsDoCard:['__sem_tag__'];
+    const porCol = (flowConfig.reportCols&&flowConfig.reportCols.length)? _cardTempoPorColuna(c) : null;
+    lista.forEach(tagId=>{
+      if(!porTag[tagId]) porTag[tagId]={count:0, leadSum:0, leadN:0, cycleSum:0, cycleN:0, doneCount:0, stages:{}};
+      const g=porTag[tagId];
+      g.count++;
+      if(t.done) g.doneCount++;
+      if(t.lead!=null){ g.leadSum+=t.lead; g.leadN++; }
+      if(t.cycle!=null){ g.cycleSum+=t.cycle; g.cycleN++; }
+      if(porCol){ flowConfig.reportCols.forEach(cid=>{ if(porCol[cid]!=null){ g.stages[cid]=(g.stages[cid]||0)+porCol[cid]; } }); }
+    });
+  });
+  const rows=Object.entries(porTag).map(([tagId,g])=>{
+    const tag = tagId==='__sem_tag__' ? {label:'(sem tag)', pi:-1} : getTag(tagId);
+    return {
+      tagId, label: tag?.label||tagId, pi: tag?.pi,
+      count: g.count, doneCount: g.doneCount,
+      leadAvg: g.leadN? g.leadSum/g.leadN : null,
+      leadTotal: g.leadSum,
+      cycleAvg: g.cycleN? g.cycleSum/g.cycleN : null,
+      cycleTotal: g.cycleSum,
+      stages: g.stages||{},
+    };
+  }).sort((a,b)=>b.leadTotal-a.leadTotal);
+  _tempoData=rows;
+  return rows;
+}
+function renderTempoReport(){
+  const body=document.getElementById('tempo-body'); if(!body) return;
+  const rows=_computeTempoData();
+  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo selecionado.</div>'; return; }
+  const totalCards=rows.reduce((s,r)=>s+r.count,0);
+  const totalLead=rows.reduce((s,r)=>s+r.leadTotal,0);
+  let html=`<div class="tempo-intro">Quanto tempo o time investiu em cada tipo de demanda (por tag). <b>Lead</b> = da criação até concluir. <b>Cycle</b> = do início do trabalho até concluir.</div>`;
+  html+=`<div class="tempo-cards">`;
+  rows.forEach(r=>{
+    const p=r.pi>=0?getPal(r.pi):{bg:'rgba(120,120,120,.15)',b:'rgba(120,120,120,.3)',c:'var(--txt3)'};
+    const pctTempo = totalLead>0? Math.round(r.leadTotal/totalLead*100) : 0;
+    html+=`<div class="tempo-row">
+      <div class="tempo-row-hd">
+        <span class="tempo-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(r.label)}</span>
+        <span class="tempo-pct">${pctTempo}% do tempo</span>
+      </div>
+      <div class="tempo-bar"><div class="tempo-bar-fill" style="width:${pctTempo}%;background:${p.c};"></div></div>
+      <div class="tempo-metrics">
+        <div class="tempo-met"><span class="tempo-met-v">${r.count}</span><span class="tempo-met-l">cards${r.doneCount<r.count?' ('+r.doneCount+' concl.)':''}</span></div>
+        <div class="tempo-met"><span class="tempo-met-v">${_fmtHoras(r.leadAvg)}</span><span class="tempo-met-l">lead médio</span></div>
+        <div class="tempo-met"><span class="tempo-met-v">${_fmtHoras(r.cycleAvg)}</span><span class="tempo-met-l">cycle médio</span></div>
+        <div class="tempo-met"><span class="tempo-met-v">${_fmtHoras(r.leadTotal)}</span><span class="tempo-met-l">lead total</span></div>
+      </div>
+      ${(flowConfig.reportCols&&flowConfig.reportCols.length&&Object.keys(r.stages).length)?`
+      <div class="tempo-stages">
+        ${flowConfig.reportCols.map(cid=>{ const col=columns.find(c=>c.id===cid); if(!col||r.stages[cid]==null) return ''; return `<div class="tempo-stage"><span class="tempo-stage-dot" style="background:${col.color||'#38b6ff'}"></span><span class="tempo-stage-n">${esc(col.name)}</span><span class="tempo-stage-v">${_fmtHoras(r.stages[cid])}</span></div>`; }).join('')}
+      </div>`:''}
+    </div>`;
+  });
+  html+=`</div>`;
+  html+=`<div class="tempo-total">Total: <b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado</div>`;
+  body.innerHTML=html;
+}
+function exportTempoCSV(){
+  const rows=_tempoData||_computeTempoData();
+  if(!rows.length){ showToast('Nada para exportar.'); return; }
+  const esc2=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  let csv='Tag;Cards;Concluidos;Lead medio (h);Cycle medio (h);Lead total (h);Cycle total (h)\n';
+  rows.forEach(r=>{
+    csv+=[esc2(r.label), r.count, r.doneCount,
+      r.leadAvg!=null?r.leadAvg.toFixed(1):'', r.cycleAvg!=null?r.cycleAvg.toFixed(1):'',
+      r.leadTotal.toFixed(1), r.cycleTotal.toFixed(1)].join(';')+'\n';
+  });
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='tempo-por-tag-'+ACTIVE_SQUAD+'-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('⬇ CSV exportado.');
+}
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
   let archived=cards.filter(c=>c.archived);
@@ -5300,7 +5601,15 @@ function renderQLBody(){
     const reqBtn = (currentQL==='modelos' && canCfg)
       ? `<button class="btn btn-sm" onclick="openReqFields(${i})" title="Definir campos obrigatórios" style="font-size:10px;color:${nReq?'var(--warn)':'var(--txt2)'};border-color:${nReq?'rgba(255,209,102,.4)':'var(--glass-b)'};">⚙ Obrigatórios${nReq?' ('+nReq+')':''}</button>`
       : '';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span>${reqBtn}<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
+    // Recorrentes ganham botão de configurar a recorrência automática
+    let recBtn='';
+    if(currentQL==='recorrentes'){
+      const rec=item.recurrence;
+      const ativa = rec&&rec.type&&item.active!==false;
+      const lbl = ativa ? _recurrenceLabel(rec) : 'Configurar auto';
+      recBtn=`<button class="btn btn-sm" onclick="openRecorrenciaModal(${i})" title="Recorrência automática" style="font-size:10px;color:${ativa?'var(--teal)':'var(--txt2)'};border-color:${ativa?'rgba(29,233,182,.4)':'var(--glass-b)'};">🔁 ${esc(lbl)}</button>`;
+    }
+    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span>${recBtn}${reqBtn}<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
     body.appendChild(row);
   });
 }
@@ -5347,7 +5656,185 @@ function addQLItem(){
   document.getElementById('ql-new-title').value='';
   renderQLBody();
 }
+// ═══════════════════════════════════════════════════════
+// RECORRÊNCIA AUTOMÁTICA DE CARDS
+// ═══════════════════════════════════════════════════════
+const _DIAS_SEMANA=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+// Descrição legível de uma regra de recorrência
+function _recurrenceLabel(rec){
+  if(!rec||!rec.type) return '';
+  if(rec.type==='days') return 'A cada '+(rec.interval||1)+' dia(s)';
+  if(rec.type==='weekly') return 'Toda '+(_DIAS_SEMANA[rec.weekday??1]||'semana');
+  if(rec.type==='monthly') return 'Todo dia '+(rec.monthday||1)+' do mês';
+  return '';
+}
+// Calcula a próxima data de criação devida (>= a partir de 'desde'), ou null
+function _nextDueDate(rec, desde){
+  if(!rec||!rec.type) return null;
+  const d=new Date(desde); d.setHours(0,0,0,0);
+  if(rec.type==='days'){
+    return d; // a verificação de intervalo é feita em _recurrenceDue via lastCreated
+  }
+  if(rec.type==='weekly'){
+    const alvo=rec.weekday??1;
+    while(d.getDay()!==alvo) d.setDate(d.getDate()+1);
+    return d;
+  }
+  if(rec.type==='monthly'){
+    const dia=Math.min(rec.monthday||1,28);
+    if(d.getDate()>dia) d.setMonth(d.getMonth()+1);
+    d.setDate(dia);
+    return d;
+  }
+  return null;
+}
+// Decide se um item recorrente deve gerar um card hoje
+function _recurrenceDue(item, hoje){
+  const rec=item.recurrence; if(!rec||!rec.type||item.active===false) return false;
+  const today=new Date(hoje); today.setHours(0,0,0,0);
+  const last=item.lastCreated? new Date(item.lastCreated+'T00:00:00') : null;
+  if(last) last.setHours(0,0,0,0);
+  if(rec.type==='days'){
+    if(!last) return true; // nunca criado → cria agora
+    const dias=Math.round((today-last)/86400000);
+    return dias >= (rec.interval||1);
+  }
+  if(rec.type==='weekly'){
+    if(today.getDay()!==(rec.weekday??1)) return false;
+    return !last || last.getTime()!==today.getTime();
+  }
+  if(rec.type==='monthly'){
+    const dia=Math.min(rec.monthday||1,28);
+    if(today.getDate()!==dia) return false;
+    return !last || last.getTime()!==today.getTime();
+  }
+  return false;
+}
+// Cria um card a partir de um item recorrente
+function _criarCardRecorrente(item){
+  const td=new Date().toISOString().split('T')[0];
+  const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
+  const novo={
+    id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    col:item.col||(columns[0]?.id)||'backlog',
+    tags, tag:tags[0]||'',
+    title:item.title||'(recorrente)',
+    desc:item.desc||'',
+    descsExtra:[],
+    owner:item.owner||'',
+    due:'', po:item.po||'',
+    checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
+    riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
+    sp:item.sp||'', priority:item.priority||'medium',
+    participants:Array.isArray(item.participants)?item.participants.slice():[],
+    archived:false, created:'🔁 Recorrência', edited:'🔁 Recorrência', createdAt:td, editedAt:td,
+    _recorrente:true,
+  };
+  recordHistory(novo,'criado automaticamente (recorrência)');
+  recordMove(novo, novo.col);
+  cards.push(novo);
+  return novo;
+}
+// Processa todos os recorrentes ao abrir o quadro: cria os devidos e avisa
+function processRecorrentes(){
+  if(!window._fbReady) return;
+  const recs=(qlItems.recorrentes||[]).filter(it=>it.recurrence&&it.recurrence.type&&it.active!==false);
+  if(!recs.length) return;
+  const hoje=new Date().toISOString().split('T')[0];
+  let criados=[]; let mudou=false;
+  recs.forEach(item=>{
+    if(_recurrenceDue(item, hoje)){
+      const card=_criarCardRecorrente(item);
+      item.lastCreated=hoje;
+      criados.push(card);
+      mudou=true;
+    }
+  });
+  if(mudou){
+    fbSaveAll();
+    fbSet(FB+'/ql_items',qlItems);
+    renderBoard();
+    // Avisa: lembrete + notificação + toast
+    criados.forEach(card=>{
+      // lembrete próprio pra quem abriu
+      const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
+        tipo:'proprio', text:'🔁 Card recorrente voltou: "'+card.title+'"',
+        autor:'Recorrência', autorUid:'', init:'🔁',
+        cardId:card.id, ts:new Date().toISOString() };
+      lembretes.push(obj);
+      // notificação pro responsável (se houver)
+      if(card.owner){
+        const uid=getUidByInit(card.owner);
+        if(uid) createNotif(uid,'recorrente','🔁 Card recorrente voltou', card.title, card.id);
+      }
+    });
+    fbSet(FB+'/lembretes', lembretes);
+    updLemBadge();
+    showToast('🔁 '+criados.length+' card(s) recorrente(s) voltaram pro quadro.');
+  }
+}
 function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items',qlItems); renderQLBody(); }
+// ── Modal de configuração de recorrência ──
+let _recEditIdx=null;
+function openRecorrenciaModal(i){
+  _recEditIdx=i;
+  const item=qlItems.recorrentes[i]; if(!item) return;
+  const rec=item.recurrence||{};
+  document.getElementById('rec-active').checked = !!(rec.type && item.active!==false);
+  document.getElementById('rec-type').value = rec.type||'days';
+  const colSel=document.getElementById('rec-col');
+  colSel.innerHTML=(columns||[]).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  colSel.value=item.col||(columns[0]?.id)||'';
+  const ownSel=document.getElementById('rec-owner');
+  ownSel.innerHTML='<option value="">— sem responsável —</option>'+members.filter(m=>m.init).map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
+  ownSel.value=item.owner||'';
+  _recRenderSub();
+  _recToggleActive();
+  document.getElementById('rec-ov').classList.add('open');
+}
+function _recToggleActive(){
+  const on=document.getElementById('rec-active').checked;
+  const cfg=document.getElementById('rec-config');
+  cfg.style.opacity=on?'1':'.4';
+  cfg.style.pointerEvents=on?'auto':'none';
+}
+function _recRenderSub(){
+  const type=document.getElementById('rec-type').value;
+  const sub=document.getElementById('rec-sub');
+  const item=qlItems.recorrentes[_recEditIdx]||{}; const rec=item.recurrence||{};
+  if(type==='days'){
+    sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Intervalo (dias)</label><input type="number" id="rec-interval" class="rec-input" min="1" max="365" value="${rec.interval||7}"></div>`;
+  } else if(type==='weekly'){
+    const wd=rec.weekday??1;
+    sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Dia da semana</label><select id="rec-weekday" class="rec-input">${_DIAS_SEMANA.map((d,idx)=>`<option value="${idx}" ${idx===wd?'selected':''}>${d}</option>`).join('')}</select></div>`;
+  } else if(type==='monthly'){
+    sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Dia do mês (1-28)</label><input type="number" id="rec-monthday" class="rec-input" min="1" max="28" value="${rec.monthday||1}"></div>`;
+  }
+}
+function salvarRecorrencia(){
+  const item=qlItems.recorrentes[_recEditIdx]; if(!item) return;
+  const on=document.getElementById('rec-active').checked;
+  if(!on){
+    item.active=false;
+    fbSet(FB+'/ql_items',qlItems); renderQLBody(); closeOv('rec-ov');
+    showToast('Recorrência desativada.');
+    return;
+  }
+  const type=document.getElementById('rec-type').value;
+  const rec={ type };
+  if(type==='days') rec.interval=Math.max(1,parseInt(document.getElementById('rec-interval').value)||7);
+  else if(type==='weekly') rec.weekday=parseInt(document.getElementById('rec-weekday').value)||0;
+  else if(type==='monthly') rec.monthday=Math.min(28,Math.max(1,parseInt(document.getElementById('rec-monthday').value)||1));
+  item.recurrence=rec;
+  item.active=true;
+  item.col=document.getElementById('rec-col').value;
+  item.owner=document.getElementById('rec-owner').value;
+  if(item.lastCreated===undefined) item.lastCreated=null;
+  fbSet(FB+'/ql_items',qlItems);
+  renderQLBody();
+  closeOv('rec-ov');
+  showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec));
+}
 function usarQLItem(i){
   const item=qlItems[currentQL][i]; if(!item) return;
   closeOv('ql-ov');
@@ -5459,7 +5946,7 @@ function _surfaceErr(where, e){
   }catch(_){}
 }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','lembretes','tags','subtimes','auto','importar','worker','firebase','backup'];
+  const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
@@ -5468,6 +5955,7 @@ function swCfgTab(tab){
   if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags') renderTagEditor();
   if(tab==='subtimes') renderSubteamEditor();
+  if(tab==='fluxo') renderFluxoCfg();
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
@@ -5737,6 +6225,46 @@ function addTag(){ const n=document.getElementById('new-tag-name').value.trim();
 function saveTags(){ fbSet(FB+'/tags',tags); renderBoard(); closeOv('cfg-ov'); }
 
 // ═══ SUBTIMES ═══
+// ═══════════════════════════════════════════════════════
+// CONFIG DE FLUXO (relatório de tempo personalizável)
+// ═══════════════════════════════════════════════════════
+function _fluxoColRow(col, group, checked){
+  return `<label class="fluxo-col-item${checked?' on':''}">
+    <input type="checkbox" value="${esc(col.id)}" data-group="${group}" ${checked?'checked':''} onchange="this.closest('.fluxo-col-item').classList.toggle('on',this.checked)">
+    <span class="fluxo-col-dot" style="background:${col.color||'#38b6ff'}"></span>
+    <span>${esc(col.name)}</span>
+  </label>`;
+}
+function renderFluxoCfg(){
+  // Se nada configurado, pré-seleciona o que a heurística detecta
+  const autoStart = flowConfig.startCols.length? flowConfig.startCols : _flowStartColIds();
+  const autoDone = flowConfig.doneCols.length? flowConfig.doneCols : _flowDoneColIds();
+  const report = flowConfig.reportCols||[];
+  const sEl=document.getElementById('fluxo-start-cols');
+  const dEl=document.getElementById('fluxo-done-cols');
+  const rEl=document.getElementById('fluxo-report-cols');
+  if(sEl) sEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'start',autoStart.includes(c.id))).join('');
+  if(dEl) dEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'done',autoDone.includes(c.id))).join('');
+  if(rEl) rEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'report',report.includes(c.id))).join('');
+}
+function salvarFluxoCfg(){
+  const grab=g=>[...document.querySelectorAll(`#cfgtab-fluxo input[data-group="${g}"]:checked`)].map(i=>i.value);
+  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report') };
+  if(!cfg.startCols.length || !cfg.doneCols.length){
+    uiAlert('Marque pelo menos uma coluna de início e uma de fim para o cálculo funcionar.',{title:'Configuração incompleta'});
+    return;
+  }
+  flowConfig=cfg;
+  fbSet(FB+'/config/flow', cfg);
+  showToast('💾 Fluxo configurado. O relatório de tempo já usa as novas colunas.');
+}
+async function resetFluxoCfg(){
+  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada.',{title:'Resetar fluxo',okText:'Resetar'})) return;
+  flowConfig={ startCols:[], doneCols:[], reportCols:[] };
+  fbSet(FB+'/config/flow', flowConfig);
+  renderFluxoCfg();
+  showToast('↺ Voltou para a detecção automática.');
+}
 function renderSubteamEditor(){
   const box=document.getElementById('subteam-editor'); if(!box) return;
   if(!subteams.length){
@@ -8572,6 +9100,8 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+  // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
+  setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
   // Carrega ADMs extras do Firebase
   fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; });
   // Presença online
