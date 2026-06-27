@@ -1695,9 +1695,31 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* Composer de entrada */
 .camp-composer {
-  border-top:1px solid var(--glass-b); padding:14px 16px; flex-shrink:0;
-  background:rgba(0,0,0,.2); display:flex; flex-direction:column; gap:8px;
+  border-top:1px solid var(--glass-b); padding:0; flex-shrink:0;
+  background:rgba(0,0,0,.2); display:flex; flex-direction:column; gap:0;
 }
+.camp-composer-toggle {
+  display:flex; align-items:center; gap:8px; padding:10px 16px; cursor:pointer;
+  font-size:11px; color:var(--txt3); user-select:none; transition:color .15s;
+  border:none; background:none; width:100%; text-align:left;
+}
+.camp-composer-toggle:hover { color:var(--txt2); }
+.camp-composer-toggle .camp-comp-arrow { font-size:9px; transition:transform .2s; }
+.camp-composer-toggle.open .camp-comp-arrow { transform:rotate(180deg); }
+.camp-composer-body {
+  display:none; flex-direction:column; gap:8px; padding:0 16px 14px;
+}
+.camp-composer-body.open { display:flex; }
+/* Links fixos na sidebar */
+.camp-fixed-links { display:flex; flex-direction:column; gap:6px; }
+.camp-fixed-link-item { display:flex; align-items:center; gap:6px; }
+.camp-fixed-link-item a { font-size:11px; color:var(--ct2,var(--accent)); text-decoration:none; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.camp-fixed-link-item a:hover { text-decoration:underline; }
+.camp-fixed-link-del { background:none; border:none; color:var(--txt3); cursor:pointer; font-size:10px; padding:0 3px; opacity:0; transition:opacity .15s; flex-shrink:0; }
+.camp-fixed-link-item:hover .camp-fixed-link-del { opacity:1; }
+.camp-fixed-link-del:hover { color:var(--danger); }
+.camp-fixed-add-btn { font-size:10px; color:var(--ct2,var(--accent)); background:none; border:1px dashed var(--ct-border,rgba(56,182,255,.25)); border-radius:6px; padding:5px 10px; cursor:pointer; text-align:center; transition:border-color .15s; width:100%; }
+.camp-fixed-add-btn:hover { border-color:var(--ct2,var(--accent)); }
 .camp-composer-row { display:flex; gap:8px; align-items:center; }
 .camp-composer select, .camp-composer input[type=text] {
   background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
@@ -3040,7 +3062,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.1-dev</div>
+<div class="version">v8.30.2-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6022,6 +6044,20 @@ function renderCampDetalhe(c){
           <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${c.mostrarArquivados==='todos'?'Todos':'Só ativos'}</span></div>
         </div>
         <div>
+          <div class="camp-sidebar-sec">🎨 KVs da campanha</div>
+          <div class="camp-fixed-links" id="camp-kvs-list">
+            ${_renderFixedLinks(c.kvs||[],'kvs',c.id)}
+          </div>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','kvs')" style="margin-top:6px;">+ Adicionar KV</button>
+        </div>
+        <div>
+          <div class="camp-sidebar-sec">📋 ${c.tipo==='colecao'?'Lista de produtos':'Lista de criativos'}</div>
+          <div class="camp-fixed-links" id="camp-lista-list">
+            ${_renderFixedLinks(c.lista||[],'lista',c.id)}
+          </div>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
+        </div>
+        <div>
           <div class="camp-sidebar-sec">Cards vinculados (${vinculados.length})</div>
           <div class="camp-card-list">
             ${vinculados.length?vinculados.map(card=>{
@@ -6043,23 +6079,29 @@ function renderCampDetalhe(c){
             : '<div class="camp-timeline-empty">📝 Nenhum registro ainda.<br>Adicione aprendizados, resultados e links abaixo.</div>'}
         </div>
         <div class="camp-composer" id="camp-composer">
-          <div class="camp-composer-row">
-            <select id="camp-comp-tipo" style="flex:0 0 auto;">
-              <option value="aprendizado">💡 Aprendizado</option>
-              <option value="resultado">📊 Resultado</option>
-              <option value="problema">🚧 Problema</option>
-              <option value="link">🔗 Link</option>
-              <option value="registro">📝 Registro</option>
-            </select>
-            <input type="text" id="camp-comp-titulo" placeholder="Título (opcional)" style="flex:1;">
-          </div>
-          <textarea id="camp-comp-corpo" placeholder="Descreva com detalhes... Shift+Enter para nova linha."
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.ctrlKey){event.preventDefault();saveCampEntrada();}"
-            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"></textarea>
-          <div class="camp-composer-links" id="camp-comp-links-wrap"></div>
-          <div class="camp-composer-row">
-            <button class="camp-add-link-btn" onclick="campAddLink()">+ Adicionar link</button>
-            <button class="camp-send-btn" onclick="saveCampEntrada()">💾 Registrar</button>
+          <button class="camp-composer-toggle" id="camp-comp-toggle" onclick="toggleCampComposer()">
+            <span>✏️ Novo registro</span>
+            <span class="camp-comp-arrow">▼</span>
+          </button>
+          <div class="camp-composer-body" id="camp-comp-body">
+            <div class="camp-composer-row">
+              <select id="camp-comp-tipo" style="flex:0 0 auto;">
+                <option value="aprendizado">💡 Aprendizado</option>
+                <option value="resultado">📊 Resultado</option>
+                <option value="problema">🚧 Problema</option>
+                <option value="link">🔗 Link</option>
+                <option value="registro">📝 Registro</option>
+              </select>
+              <input type="text" id="camp-comp-titulo" placeholder="Título (opcional)" style="flex:1;">
+            </div>
+            <textarea id="camp-comp-corpo" placeholder="Descreva com detalhes... Shift+Enter para nova linha."
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.ctrlKey){event.preventDefault();saveCampEntrada();}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"></textarea>
+            <div class="camp-composer-links" id="camp-comp-links-wrap"></div>
+            <div class="camp-composer-row">
+              <button class="camp-add-link-btn" onclick="campAddLink()">+ Adicionar link</button>
+              <button class="camp-send-btn" onclick="saveCampEntrada()">💾 Registrar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -6197,6 +6239,44 @@ async function saveCamp(){
     showToast('✅ Campanha salva!');
     if(_campAtual?.id===id){ _campAtual=camp; renderCampDetalhe(camp); }
   } catch(e){ uiAlert('Erro ao salvar: '+e.message); }
+}
+
+function toggleCampComposer(forceOpen){
+  const toggle = document.getElementById('camp-comp-toggle');
+  const body   = document.getElementById('camp-comp-body');
+  if(!toggle||!body) return;
+  const isOpen = body.classList.contains('open');
+  const open   = forceOpen!==undefined ? forceOpen : !isOpen;
+  body.classList.toggle('open', open);
+  toggle.classList.toggle('open', open);
+  if(open) setTimeout(()=>document.getElementById('camp-comp-corpo')?.focus(), 80);
+}
+
+function _renderFixedLinks(links, tipo, campId){
+  if(!links||!links.length) return '<div style="font-size:10px;color:var(--txt3);padding:2px 0;">Nenhum link adicionado.</div>';
+  return links.map((l,i)=>`
+    <div class="camp-fixed-link-item">
+      <a href="${safeUrl(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}">${esc(l.label||l.url)}</a>
+      <button class="camp-fixed-link-del" onclick="campDelFixedLink('${esc(campId)}','${tipo}',${i})" title="Remover">✕</button>
+    </div>`).join('');
+}
+
+async function campAddFixedLink(campId, tipo){
+  const url   = await uiPrompt('URL do link:', '', {title: tipo==='kvs'?'Adicionar KV':'Adicionar link', placeholder:'https://'});
+  if(!url||!url.trim()) return;
+  const label = await uiPrompt('Texto exibido (opcional):', '', {placeholder: tipo==='kvs'?'Ex: KV Dia dos Pais — versão aprovada':'Ex: Lista de produtos Inverno 2026'});
+  const camp  = _campanhas[campId]; if(!camp) return;
+  const arr   = [...(camp[tipo]||[]), {url:url.trim(), label:(label||'').trim()}];
+  try{
+    await window._set(_campRef(campId+'/'+tipo), arr);
+  } catch(e){ uiAlert('Erro: '+e.message); }
+}
+
+async function campDelFixedLink(campId, tipo, idx){
+  if(!await uiConfirm('Remover este link?',{danger:true,okText:'Remover'})) return;
+  const camp = _campanhas[campId]; if(!camp) return;
+  const arr  = (camp[tipo]||[]).filter((_,i)=>i!==idx);
+  await window._set(_campRef(campId+'/'+tipo), arr.length?arr:null).catch(e=>uiAlert(e.message));
 }
 
 async function campDeleteFromDetail(){
@@ -11286,6 +11366,7 @@ async function runDevSeed(){
   const seedTags=[
     {id:'data',label:'Data',pi:0},{id:'ml',label:'ML',pi:4},
     {id:'feat',label:'Feature',pi:1},{id:'infra',label:'Infra',pi:2},{id:'bug',label:'Bloqueio',pi:3},
+    {id:'tag-diapais',label:'Dia dos Pais',pi:5},{id:'tag-inverno',label:'Inverno 2026',pi:6},
   ];
 
   // ── CARDS COMPLETOS ───────────────────────────────────────────────────
@@ -11595,6 +11676,126 @@ async function runDevSeed(){
       comments:{},
       archived:true, createdAt:now, updatedAt:now,
     },
+
+    // ── CARDS — DIA DOS PAIS 2026 (tag: tag-diapais) ─────────────────
+    {
+      id:'dev-dp-001', col:'done', title:'Definir estratégia comercial Dia dos Pais',
+      desc:'Alinhar posicionamento, descontos, kits e mecânica de campanha com o time comercial.',
+      po:'Aprovado em reunião com Diretoria Comercial em 10/06.\nFoco em kits curados com ticket acima de R$250.',
+      tags:['tag-diapais'], priority:'high', owner:'ABC', effort:5, isOKR:true,
+      due: d(-15), checklist:[
+        {id:'dp-c01',text:'Reunião com time comercial',done:true},
+        {id:'dp-c02',text:'Definir mix de produtos',done:true},
+        {id:'dp-c03',text:'Aprovação da diretoria',done:true},
+      ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-dp-002', col:'done', title:'Subir lista de produtos — Dia dos Pais',
+      desc:'Cadastrar e publicar a lista de produtos selecionados para a campanha no sistema de e-commerce.',
+      po:'Lista final com 47 SKUs aprovada pela equipe de compras.',
+      tags:['tag-diapais'], priority:'high', owner:'RM', effort:3, isOKR:false,
+      due: d(-12), checklist:[
+        {id:'dp-c04',text:'Receber lista do comercial',done:true},
+        {id:'dp-c05',text:'Validar disponibilidade no estoque',done:true},
+        {id:'dp-c06',text:'Cadastrar no sistema',done:true},
+        {id:'dp-c07',text:'Publicar na vitrine',done:true},
+      ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-dp-003', col:'progress', title:'Construir landing page Dia dos Pais',
+      desc:'Montar a landing page dedicada com os kits curados, storytelling emocional e CTA de compra.',
+      po:'Referência de layout aprovada. Usar conceito "presente completo para ele".',
+      tags:['tag-diapais'], priority:'high', owner:'JF', effort:8, isOKR:false,
+      due: d(3), checklist:[
+        {id:'dp-c08',text:'Wireframe aprovado',done:true},
+        {id:'dp-c09',text:'Desenvolvimento front-end',done:true},
+        {id:'dp-c10',text:'Integração com catálogo',done:false},
+        {id:'dp-c11',text:'Testes de responsividade',done:false},
+        {id:'dp-c12',text:'Review final e publicação',done:false},
+      ], riscos:['Integração com catálogo pode atrasar dependendo do time de TI'],
+      links:[{url:'https://figma.com/dp2026',label:'Figma — LP Dia dos Pais'}],
+      comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-dp-004', col:'blocker', title:'Aprovar KV final com Criação',
+      desc:'Key visual principal da campanha aguardando revisão e aprovação da Diretoria de Marketing.',
+      po:'KV enviado em 20/06. Retorno esperado em até 2 dias úteis.',
+      tags:['tag-diapais'], priority:'high', owner:'MS', effort:2, isOKR:false,
+      due: d(1), impedimento:'KV enviado para aprovação mas Diretora de Mkt está em viagem até 30/06. Aguardando retorno.',
+      checklist:[
+        {id:'dp-c13',text:'Briefing passado para Criação',done:true},
+        {id:'dp-c14',text:'1ª versão entregue',done:true},
+        {id:'dp-c15',text:'Revisão e ajustes',done:true},
+        {id:'dp-c16',text:'Aprovação final',done:false},
+      ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-dp-005', col:'backlog', title:'Configurar rastreamento GA4 — Dia dos Pais',
+      desc:'Implementar eventos customizados no GA4 para medir performance da landing page e dos kits individualmente.',
+      tags:['tag-diapais'], priority:'medium', owner:'LO', effort:5, isOKR:false,
+      due: d(5), checklist:[
+        {id:'dp-c17',text:'Mapear eventos a rastrear',done:false},
+        {id:'dp-c18',text:'Implementar no GTM',done:false},
+        {id:'dp-c19',text:'Validar no debug mode',done:false},
+      ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+
+    // ── CARDS — INVERNO 2026 (tag: tag-inverno) ───────────────────────
+    {
+      id:'dev-inv-001', col:'done', title:'Definir calendário de veiculação — Inverno 2026',
+      desc:'Mapear datas de início de veiculação por canal: e-mail, social, paid media e site.',
+      po:'Calendário alinhado com time de mídia. Início em 01/07.',
+      tags:['tag-inverno'], priority:'high', owner:'ABC', effort:3, isOKR:false,
+      due: d(-4), checklist:[
+        {id:'inv-c01',text:'Reunião de kick-off com mídia',done:true},
+        {id:'inv-c02',text:'Definir janelas por canal',done:true},
+        {id:'inv-c03',text:'Publicar calendário no Drive',done:true},
+      ], riscos:[], links:[{url:'https://docs.google.com/cal-inv26',label:'Calendário de veiculação — Drive'}],
+      comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-inv-002', col:'progress', title:'Subir lista de produtos — Inverno 2026',
+      desc:'Catalogar e publicar todos os produtos da coleção de inverno no e-commerce. 3 famílias: Casacos, Malhas e Acessórios.',
+      po:'Lista v3 final recebida do comercial. Priorizar publicação dos casacos primeiro.',
+      tags:['tag-inverno'], priority:'high', owner:'RM', effort:5, isOKR:false,
+      due: d(4), checklist:[
+        {id:'inv-c04',text:'Receber lista v3 final',done:true},
+        {id:'inv-c05',text:'Publicar família Casacos (18 SKUs)',done:true},
+        {id:'inv-c06',text:'Publicar família Malhas (22 SKUs)',done:false},
+        {id:'inv-c07',text:'Publicar família Acessórios (14 SKUs)',done:false},
+        {id:'inv-c08',text:'QA das páginas de produto',done:false},
+      ], riscos:['Fotos dos acessórios ainda não chegaram do estúdio'],
+      links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
+    {
+      id:'dev-inv-003', col:'progress', title:'Construir home de inverno no site',
+      desc:'Desenvolver e publicar a home temática com a nova coleção de inverno, incluindo banner principal, vitrine de destaques e storytelling da coleção.',
+      po:'Layout aprovado. Banner hero usa o KV principal ❄️.',
+      tags:['tag-inverno'], priority:'high', owner:'JF', effort:8, isOKR:true,
+      due: d(7), checklist:[
+        {id:'inv-c09',text:'Receber KV aprovado',done:false},
+        {id:'inv-c10',text:'Desenvolver banner hero',done:false},
+        {id:'inv-c11',text:'Montar vitrine de destaques',done:false},
+        {id:'inv-c12',text:'Seção de storytelling da coleção',done:false},
+        {id:'inv-c13',text:'Testes A/B no hero',done:false},
+        {id:'inv-c14',text:'Publicar e monitorar',done:false},
+      ], riscos:['Depende do KV aprovado (dev-dp-004 ainda em aprovação)'],
+      links:[{url:'https://figma.com/home-inv26',label:'Figma — Home Inverno 2026'}],
+      comments:{}, archived:false, createdAt:now, updatedAt:now,
+      impedimento:'KV principal ainda não aprovado (veja card "Aprovar KV final com Criação"). Desenvolvimento pausado.',
+    },
+    {
+      id:'dev-inv-004', col:'backlog', title:'Início da veiculação paga — Inverno 2026',
+      desc:'Ativar campanhas de mídia paga (Meta Ads + Google Ads) para a coleção de inverno.',
+      po:'Budget aprovado: R$ 45k. Divisão: 60% Meta, 40% Google.\nMeta de ROAS: 3.5x.',
+      tags:['tag-inverno'], priority:'medium', owner:'LO', effort:5, isOKR:false,
+      due: d(10), checklist:[
+        {id:'inv-c15',text:'Configurar campanhas no Meta Ads',done:false},
+        {id:'inv-c16',text:'Configurar campanhas no Google Ads',done:false},
+        {id:'inv-c17',text:'Subir criativos aprovados',done:false},
+        {id:'inv-c18',text:'Ativar e monitorar primeiras 48h',done:false},
+      ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
+    },
   ];
 
   // ── CONFIG DE SPRINT ──────────────────────────────────────────────────
@@ -11715,7 +11916,7 @@ async function runDevSeed(){
     seedLog('✅ 5 tags criadas','ok');
 
     await window._set(window._ref(window._db, FB+'/cards'), seedCards);
-    seedLog('✅ 11 cards ativos + 1 arquivado criados','ok');
+    seedLog('✅ 11 cards base + 9 cards de campanhas (Dia dos Pais + Inverno) criados','ok');
 
     await window._set(window._ref(window._db, FB+'/agil_cfg'), seedAgilCfg);
     seedLog('✅ Sprint 12 configurado','ok');
@@ -11770,7 +11971,7 @@ async function runDevSeed(){
 
       const campanhaDP = {
         id: campId1, tipo:'campanha', nome:'Dia dos Pais 2026', mote:'Para quem nunca esquece',
-        tag:'', dataInicio: d(-20), dataFim: d(12), status:'ativa',
+        tag:'tag-diapais', dataInicio: d(-20), dataFim: d(12), status:'ativa',
         tema:'outono', squads:['dev'], mostrarArquivados:'ativos',
         criadoEm: ts1, criadoPor:'Ana Beatriz Costa', atualizadoEm: ts1,
         entradas:{
@@ -11791,8 +11992,10 @@ async function runDevSeed(){
 
       const colecaoInv = {
         id: campId2, tipo:'colecao', nome:'Inverno 2026', mote:'O frio que aquece',
-        tag:'', dataInicio: d(-5), dataFim: d(60), status:'ativa',
+        tag:'tag-inverno', dataInicio: d(-5), dataFim: d(60), status:'ativa',
         tema:'inverno', squads:['dev'], mostrarArquivados:'ativos',
+        kvs:[{url:'https://drive.google.com/kv-inverno',label:'KV Principal — Inverno 2026 (aprovado)'},{url:'https://drive.google.com/kv-inverno-stories',label:'KV Stories — variação vertical'}],
+        lista:[{url:'https://docs.google.com/lista-inverno',label:'Lista de produtos Inverno 2026 — v3 final'}],
         criadoEm: ts2, criadoPor:'Fernanda Lima', atualizadoEm: ts2,
         entradas:{
           'e-inv-001':{ id:'e-inv-001', tipo:'registro', titulo:'Briefing recebido — Coleção Inverno 2026',
