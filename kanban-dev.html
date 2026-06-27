@@ -598,16 +598,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-card .kc-text{font-size:14px;line-height:1.5;color:var(--txt);font-weight:500;}
 .kudos-card .kc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;transition:opacity .15s;flex-shrink:0;align-self:flex-start;}
 .kudos-card .kc-del:hover{color:var(--danger);}
-/* Botão "Enviar estrela" que abre o compositor */
-.kudos-fab-wrap{display:flex;justify-content:center;padding:4px 0 2px;}
-.kudos-fab{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#ffd166,#ffb84d);color:#1a1208;border:none;border-radius:999px;
-  padding:11px 22px;font-size:13px;font-weight:800;font-family:"Syne",sans-serif;cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 14px rgba(255,209,102,.35);}
-.kudos-fab:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 7px 20px rgba(255,209,102,.5);}
-.kudos-fab:active{transform:translateY(0) scale(.99);}
-.kudos-fab-star{font-size:15px;animation:fabStar 2.5s ease-in-out infinite;}
-@keyframes fabStar{0%,100%{transform:rotate(0) scale(1);}45%{transform:rotate(-12deg) scale(1.15);}55%{transform:rotate(10deg) scale(1.15);}}
-.kudos-fab-txt{letter-spacing:.2px;}
+/* Composer integrado de kudos */
+.kudos-composer{padding:12px 16px;border-top:1px solid rgba(255,209,102,.15);background:rgba(255,209,102,.03);flex-shrink:0;}
+.kudos-composer-hd{font-size:10px;font-weight:700;color:rgba(255,209,102,.6);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.kudos-composer select{width:100%;margin-bottom:6px;background:rgba(3,13,26,.7);border:1px solid rgba(255,209,102,.2);
+  border-radius:8px;padding:7px 10px;font-size:12px;color:var(--txt);font-family:"DM Sans",sans-serif;}
+.kudos-composer select:focus{outline:none;border-color:rgba(255,209,102,.5);}
+.kudos-composer textarea{width:100%;background:rgba(3,13,26,.7);border:1px solid rgba(255,209,102,.2);
+  border-radius:8px;padding:8px 10px;font-size:12px;color:var(--txt);font-family:"DM Sans",sans-serif;
+  resize:none;min-height:54px;max-height:90px;box-sizing:border-box;transition:border-color .15s;}
+.kudos-composer textarea:focus{outline:none;border-color:rgba(255,209,102,.5);}
+.kudos-composer textarea::placeholder{color:var(--txt3);}
+.kudos-composer-row{display:flex;align-items:center;justify-content:space-between;margin-top:7px;gap:8px;}
+.kudos-composer-hint{font-size:9px;color:var(--txt3);}
+.kudos-send-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;
+  background:rgba(255,209,102,.15);border:1px solid rgba(255,209,102,.4);border-radius:999px;
+  font-size:11px;font-weight:700;color:#ffd166;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.kudos-send-btn:hover:not(:disabled){background:rgba(255,209,102,.28);border-color:#ffd166;transform:translateY(-1px);}
+.kudos-send-btn:disabled{opacity:.35;cursor:not-allowed;}
 /* reações aos kudos */
 .kr-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;align-items:center;}
 .kr-chip{font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);cursor:pointer;color:var(--txt2);transition:all .12s;user-select:none;line-height:1.4;}
@@ -1797,22 +1805,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="kudos-stab" id="kstab-geral" onclick="setKudosScope('geral')">🌊 Geral</button>
   </div>
   <div class="lem-body" id="kudos-body"></div>
-  <div class="kudos-fab-wrap">
-    <button class="kudos-fab" id="kudos-fab" onclick="toggleKudosCompose(true)">
-      <span class="kudos-fab-star">⭐</span>
-      <span class="kudos-fab-txt">Reconhecer alguém</span>
-    </button>
-  </div>
-  <div class="lem-add" id="kudos-add" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
-      <span style="font-size:11px;font-weight:700;color:#ffd166;">⭐ Nova estrela</span>
-      <button onclick="toggleKudosCompose(false)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;line-height:1;padding:2px 5px;">✕</button>
+  <div class="kudos-composer">
+    <div class="kudos-composer-hd">⭐ Reconhecer alguém</div>
+    <select id="kudos-para" onchange="updKudosBtn()">
+      <option value="">Para quem?</option>
+    </select>
+    <textarea id="kudos-text" placeholder="Escreva o reconhecimento… (Enter envia)"
+      oninput="updKudosBtn();this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px';"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}"></textarea>
+    <div class="kudos-composer-row">
+      <span class="kudos-composer-hint">Shift+Enter para quebrar linha</span>
+      <button class="kudos-send-btn" id="kudos-btn" onclick="addKudos()" disabled>⭐ Enviar</button>
     </div>
-    <div class="lem-add-row" style="gap:6px;">
-      <select id="kudos-para" title="Para quem é o reconhecimento" style="flex:1;"></select>
-    </div>
-    <textarea id="kudos-text" placeholder="Reconheça alguém... (Enter envia)" rows="2" oninput="updKudosBtn();this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px';" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addKudos();}" style="width:100%;margin-top:6px;resize:none;"></textarea>
-    <button class="lem-add-btn kudos-btn" id="kudos-btn" onclick="addKudos()" disabled style="margin-top:6px;">⭐ Enviar estrela</button>
   </div>
 </div><!-- /kudos-drawer -->
 
@@ -2724,7 +2728,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.29.5-dev</div>
+<div class="version">v8.29.6-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5264,12 +5268,8 @@ function _populateKudosPara(){
   sel.innerHTML=opts.join('');
 }
 function toggleKudosCompose(show){
-  const add=document.getElementById('kudos-add');
-  const fab=document.getElementById('kudos-fab');
-  if(!add||!fab) return;
-  add.style.display = show?'block':'none';
-  fab.style.display = show?'none':'block';
-  if(show){ setTimeout(()=>document.getElementById('kudos-text')?.focus(),60); }
+  // Composer agora sempre visível — mantido para retrocompatibilidade
+  if(show) setTimeout(()=>document.getElementById('kudos-text')?.focus(),60);
 }
 function updKudosBtn(){
   const para=document.getElementById('kudos-para')?.value;
