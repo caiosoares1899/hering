@@ -2673,7 +2673,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.29.7</div>
+<div class="version">v8.29.8</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5199,8 +5199,8 @@ function renderKudos(){
       <div class="kc-head">
         <div class="kc-av">${av}</div>
         <div class="kc-headinfo">
-          <div class="kc-from"><b>${esc((k.fromNome||k.fromInit||'?').split(' ').slice(0,2).join(' '))}</b> <span style="color:var(--txt3);">→</span> <span class="kc-to">@${esc(k.toInit||'')}</span></div>
-          <div class="kc-meta"><span class="kc-scope">${k.scope==='geral'?'🌊 Geral':'🐠 Cardume'}</span><span>${quando}</span></div>
+          <div class="kc-from"><b>${esc((k.fromNome||k.fromInit||'?').split(' ').slice(0,2).join(' '))}</b> <span style="color:var(--txt3);">→</span> <span class="kc-to">${esc(k.toNome||(k.toInit?'@'+k.toInit:'?'))}</span></div>
+          <div class="kc-meta"><span class="kc-scope">${k.scope==='geral'?'🌊 Geral':'🐠 Squad'}</span><span>${quando}</span></div>
         </div>
         ${del}
       </div>
