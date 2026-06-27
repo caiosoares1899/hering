@@ -1753,7 +1753,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="x-btn" onclick="toggleKudos()">✕</button>
   </div>
   <div class="kudos-scope-tabs">
-    <button class="kudos-stab on" id="kstab-squad" onclick="setKudosScope('squad')">🐠 Do Cardume</button>
+    <button class="kudos-stab on" id="kstab-squad" onclick="setKudosScope('squad')">🐠 Sua Squad</button>
     <button class="kudos-stab" id="kstab-geral" onclick="setKudosScope('geral')">🌊 Geral</button>
   </div>
   <div class="lem-body" id="kudos-body"></div>
@@ -2673,7 +2673,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.29.6</div>
+<div class="version">v8.29.7</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5187,7 +5187,7 @@ function renderKudos(){
   const list=( _kudosScope==='geral' ? kudosGeral : kudosSquad )
     .slice().sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
   if(!list.length){
-    body.innerHTML=`<div class="kudos-empty">⭐ Nenhuma estrela ${_kudosScope==='geral'?'geral':'do cardume'} ainda.<br>Seja o primeiro a reconhecer alguém do time!</div>`;
+    body.innerHTML=`<div class="kudos-empty">⭐ Nenhuma estrela ${_kudosScope==='geral'?'geral':'da sua squad'} ainda.<br>Seja o primeiro a reconhecer alguém do time!</div>`;
     return;
   }
   body.innerHTML=list.map(k=>{
@@ -7264,8 +7264,8 @@ const HELP_CONTENT = {
   ],
   kudos: [
     { icon:'⭐', title:'O que são as Estrelas do Mar', text:'É o mural de reconhecimento do time. Quando alguém faz algo digno de elogio — resolveu um bug tenso, salvou uma entrega, ajudou um colega — você manda uma Estrela pública pra essa pessoa. Levanta a moral e torna o bom trabalho visível. Abra pelo ícone 🎉 ao lado do sino 🔔 no topo.' },
-    { icon:'🐠', title:'Do Cardume vs. 🌊 Geral', text:'Estrelas "Do Cardume" ficam só dentro da sua squad — para reconhecimentos do dia a dia do time. Estrelas "Geral" são compartilhadas entre todas as squads — para reconhecimentos que merecem visibilidade ampla, como uma entrega que ajudou a empresa toda.' },
-    { icon:'🙌', title:'Como enviar', text:'Escolha a aba (Cardume ou Geral), selecione a pessoa em "Para quem?", escreva o reconhecimento e envie. A pessoa recebe uma notificação 🔔 avisando que ganhou uma Estrela. Enter envia, Shift+Enter quebra linha.' },
+    { icon:'🐠', title:'Sua Squad vs. 🌊 Geral', text:'Estrelas "Sua Squad" ficam só dentro da sua squad — para reconhecimentos do dia a dia do time. Estrelas "Geral" são compartilhadas entre todas as squads — para reconhecimentos que merecem visibilidade ampla, como uma entrega que ajudou a empresa toda.' },
+    { icon:'🙌', title:'Como enviar', text:'Escolha a aba (Sua Squad ou Geral), selecione a pessoa em "Para quem?", escreva o reconhecimento e envie. A pessoa recebe uma notificação 🔔 avisando que ganhou uma Estrela. Enter envia, Shift+Enter quebra linha.' },
     { icon:'📜', title:'Regras de convivência', text:'As Estrelas são públicas e permanentes (até serem removidas). Use para reconhecer de verdade, não para brincadeiras internas que excluam outros. Reconheça pessoas, não a si mesmo. Quem enviou e os admins podem remover uma Estrela se necessário. Mantenha o respeito: é um espaço de cultura positiva.' },
   ],
 }
