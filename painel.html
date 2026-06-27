@@ -576,6 +576,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .bs-board-actions{display:flex;gap:6px;}
 .bs-del-btn{background:none;border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.7);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;}
 .bs-del-btn:hover{background:rgba(255,107,107,.1);color:var(--danger);}
+
+/* ── ABAS DO PAINEL ─────────────────────────────────────────────── */
+.ptabs{display:flex;gap:0;border-bottom:2px solid var(--glass-b);margin-bottom:20px;overflow-x:auto;}
+.ptabs::-webkit-scrollbar{display:none;}
+.ptab{padding:10px 20px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;
+  color:var(--txt3);cursor:pointer;border:none;background:none;
+  border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;
+  transition:color .15s,border-color .15s;}
+.ptab:hover:not(.on){color:var(--txt2);}
+.ptab.on{color:var(--txt);border-bottom-color:var(--accent);font-weight:600;}
+.ptab-pane{display:none;}
+.ptab-pane.on{display:block;}
 </style>
 </head>
 <body>
@@ -607,8 +619,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
-      <button class="btn" onclick="toggleMonitorSection()" id="btn-monitor" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🐛 Bugs</button>
-      <button class="btn" onclick="togglePcalSection()" id="btn-pcal" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
+
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       <button class="btn" onclick="openGlobalBackup()" title="Exportar backup de todos os squads" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾 Backup</button>
       <button class="btn" onclick="openBoardSetup()" title="Criar novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙ Novo board</button>
@@ -628,265 +639,260 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 
 
-  <!-- USUÁRIOS ONLINE -->
-  <div class="sec-title" id="online-section-title">👥 Quem está online <span class="badge" id="online-count">0</span></div>
-  <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-    <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+  <!-- ABAS PRINCIPAIS -->
+  <div class="ptabs">
+    <button class="ptab on"  id="ptab-visao"   onclick="swPtab('visao')">👁 Visão</button>
+    <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')">🌊 Fluxo</button>
+    <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')">🧑‍🤝‍🧑 Pessoas</button>
+    <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);">🐛 Monitor</button>
   </div>
 
+  <!-- ═══ ABA: VISÃO ═══ -->
+  <div class="ptab-pane on" id="ppane-visao">
 
-
-
-  <!-- CALENDÁRIO DO PAINEL -->
-<div id="pcal-section" style="display:none;margin-bottom:20px;">
-  <div class="pcal-tabs" id="pcal-tabs-bar">
-    <div class="pcal-tab on"  id="pcal-tab-all"    onclick="setPcalTab('all')">🌐 Todos os Squads</div>
-    <div class="pcal-tab"     id="pcal-tab-dados"  onclick="setPcalTab('dados')">📊 Squad Dados</div>
-    <div class="pcal-tab"     id="pcal-tab-midia"  onclick="setPcalTab('midia')">📱 Marketing de Performance</div>
-    <div class="pcal-tab"     id="pcal-tab-midiacriativa"  onclick="setPcalTab('midiacriativa')">🎨 Squad Mídia Criativa</div>
-    <div class="pcal-tab"     id="pcal-tab-gestao" onclick="setPcalTab('gestao')">🏢 Gestão Digital</div>
-  </div>
-
-  <!-- Grade principal (all / dados / midia) -->
-  <div class="pcal-content on" id="pcal-all">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
-      <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
-      <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
-      <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
-      <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
-        <option value="all">Todos os squads</option>
-        <option value="dados">📊 Squad Dados</option>
-        <option value="midia">📱 Mkt Performance</option>
-      </select>
-      <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
+    <div class="sec-title" id="online-section-title">👥 Online agora <span class="badge" id="online-count">0</span></div>
+    <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
     </div>
-    <div class="pcal-weekdays-row">
-      <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
-      <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
-    </div>
-    <div class="pcal-grid" id="pcal-grid"></div>
-    <div class="cal-legend" id="pcal-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
-  </div>
 
-  <!-- Gestão -->
-  <div class="pcal-content" id="pcal-gestao">
-    <div style="border-top:1px solid var(--glass-b);padding-top:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:600;color:var(--txt2);">📌 Eventos de Gestão cadastrados</div>
-        <button onclick="openPevModal('','','painel')" style="padding:4px 12px;font-size:10px;background:rgba(150,80,220,.15);color:#d67fff;border:1px solid rgba(150,80,220,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento de Gestão</button>
+    <div class="filter-bar">
+      <button class="filter-btn active" id="fb-all"           onclick="setFilter('all')">🏠 Todos</button>
+      <button class="filter-btn"        id="fb-dados"         onclick="setFilter('dados')">📊 Dados</button>
+      <button class="filter-btn"        id="fb-midia"         onclick="setFilter('midia')">📱 Mkt Performance</button>
+      <button class="filter-btn"        id="fb-midiacriativa" onclick="setFilter('midiacriativa')">🎨 Mídia Criativa</button>
+    </div>
+
+    <div class="sec-title">🏃 Squads em tempo real</div>
+    <div class="grid-2" id="squad-cards" style="margin-bottom:20px;"></div>
+
+    <div class="sec-title">📊 Consolidado</div>
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos</div></div>
+      <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
+      <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos</div></div>
+      <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput total</div></div>
+    </div>
+
+    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></span>
+      <button class="btn btn-sm" onclick="resolveAllBlockers()" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);padding:3px 10px;">✅ Resolver todos</button>
+    </div>
+    <div id="blockers-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio.</div></div>
+
+    <div class="sec-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
+    <div id="risco-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Sem cards com riscos.</div></div>
+
+    <div class="sec-title" id="okr-section-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
+    <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+
+    <div id="cmp-section">
+      <div class="sec-title">⚖️ Comparação entre squads</div>
+      <div class="card" style="margin-bottom:20px;">
+        <table class="cmp-table">
+          <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Mkt Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
+          <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
+        </table>
       </div>
-      <div class="pcal-weekdays-row">
-        <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
-        <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
+    </div>
+
+  </div><!-- /ppane-visao -->
+
+  <!-- ═══ ABA: FLUXO ═══ -->
+  <div class="ptab-pane" id="ppane-fluxo">
+
+    <div class="sec-title">🌊 Fluxo · últimos <span id="flow-window-lbl">14</span> dias
+      <span style="display:inline-flex;gap:4px;margin-left:auto;font-weight:400;">
+        <button class="flow-win-btn" data-win="7"  onclick="setFlowWindow(7)">7d</button>
+        <button class="flow-win-btn active" data-win="14" onclick="setFlowWindow(14)">14d</button>
+        <button class="flow-win-btn" data-win="30" onclick="setFlowWindow(30)">30d</button>
+      </span>
+    </div>
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="met flow-met" title="Tempo médio do início (Em Progresso) até Concluído.">
+        <div class="met-lbl">⏱ Cycle Time</div>
+        <div class="met-val" id="m-cycle">—</div>
+        <div class="met-sub" id="m-cycle-sub">mediana · dias</div>
       </div>
-      <div class="pcal-grid" id="pcal-gestao-grid"></div>
-      <div class="cal-legend" id="pcal-gestao-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div class="met flow-met" title="Tempo da criação até a conclusão (inclui fila no backlog).">
+        <div class="met-lbl">📦 Lead Time</div>
+        <div class="met-val" id="m-lead">—</div>
+        <div class="met-sub" id="m-lead-sub">mediana · dias</div>
+      </div>
+      <div class="met flow-met" title="Cards concluídos por semana, na janela escolhida.">
+        <div class="met-lbl">🚀 Throughput</div>
+        <div class="met-val met-ok" id="m-throughput">—</div>
+        <div class="met-sub" id="m-throughput-sub">cards / semana</div>
+      </div>
+      <div class="met flow-met" title="Idade do card aberto mais antigo (Work Item Age).">
+        <div class="met-lbl">🔥 Item mais velho</div>
+        <div class="met-val" id="m-age">—</div>
+        <div class="met-sub" id="m-age-sub">work item age · dias</div>
+      </div>
     </div>
-  </div>
-</div>
 
-  <!-- FILTRO DE SQUAD -->
-  <div class="filter-bar">
-    <button class="filter-btn active" id="fb-all"   onclick="setFilter('all')">🏠 Todos os squads</button>
-    <button class="filter-btn"        id="fb-dados"  onclick="setFilter('dados')">📊 Squad Dados</button>
-    <button class="filter-btn"        id="fb-midia"  onclick="setFilter('midia')">📱 Marketing de Performance</button>
-    <button class="filter-btn"        id="fb-midiacriativa"  onclick="setFilter('midiacriativa')">🎨 Squad Mídia Criativa</button>
-  </div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card flow-card">
+        <div class="flow-card-hd">📈 Throughput semanal</div>
+        <div class="flow-card-sub">Cards concluídos por período</div>
+        <div class="tp-chart-wrap" id="throughput-chart"></div>
+      </div>
+      <div class="card flow-card">
+        <div class="flow-card-hd">🌊 Distribuição WIP</div>
+        <div class="flow-card-sub">Cards por estágio · hoje</div>
+        <div id="cfd-chart"></div>
+      </div>
+    </div>
 
-  <!-- SQUADS EM TEMPO REAL -->
-  <div class="sec-title">🏃 Squads em tempo real</div>
-  <div class="grid-2" id="squad-cards" style="margin-bottom:20px;"></div>
+    <div id="aging-section" style="margin-bottom:20px;">
+      <div class="sec-title">⏳ Work Item Age · cards em risco</div>
+      <div class="card"><div id="aging-list"></div></div>
+    </div>
 
-  <!-- MÉTRICAS CONSOLIDADAS -->
-  <div class="sec-title">📊 Consolidado</div>
-  <div class="grid-4" style="margin-bottom:12px;">
-    <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos</div></div>
-    <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
-    <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos</div></div>
-    <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput total</div></div>
-  </div>
+    <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
+      <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
+    </div>
 
-  <!-- MÉTRICAS DE FLUXO (FLOW METRICS) -->
-  <div class="sec-title">🌊 Fluxo · últimos <span id="flow-window-lbl">14</span> dias
-    <span style="display:inline-flex;gap:4px;margin-left:auto;font-weight:400;">
-      <button class="flow-win-btn" data-win="7"  onclick="setFlowWindow(7)">7d</button>
-      <button class="flow-win-btn active" data-win="14" onclick="setFlowWindow(14)">14d</button>
-      <button class="flow-win-btn" data-win="30" onclick="setFlowWindow(30)">30d</button>
-    </span>
-  </div>
-  <div class="grid-4" style="margin-bottom:12px;">
-    <div class="met flow-met" title="Tempo médio do início (Em Progresso) até Concluído. Mediana e P85.">
-      <div class="met-lbl">⏱ Cycle Time</div>
-      <div class="met-val" id="m-cycle">—</div>
-      <div class="met-sub" id="m-cycle-sub">mediana · dias</div>
-    </div>
-    <div class="met flow-met" title="Tempo da criação do card até a conclusão (inclui fila no backlog).">
-      <div class="met-lbl">📦 Lead Time</div>
-      <div class="met-val" id="m-lead">—</div>
-      <div class="met-sub" id="m-lead-sub">mediana · dias</div>
-    </div>
-    <div class="met flow-met" title="Cards concluídos por semana, na janela escolhida.">
-      <div class="met-lbl">🚀 Throughput</div>
-      <div class="met-val met-ok" id="m-throughput">—</div>
-      <div class="met-sub" id="m-throughput-sub">cards / semana</div>
-    </div>
-    <div class="met flow-met" title="Idade do card aberto mais antigo (Work Item Age). Sinal de alerta precoce.">
-      <div class="met-lbl">🔥 Item mais velho</div>
-      <div class="met-val" id="m-age">—</div>
-      <div class="met-sub" id="m-age-sub">work item age · dias</div>
-    </div>
-  </div>
+    <div class="sec-title">📋 Distribuição por coluna</div>
+    <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
 
-  <!-- GRÁFICOS DE FLUXO -->
-  <div class="grid-2" style="margin-bottom:20px;">
-    <div class="card flow-card">
-      <div class="flow-card-hd">📈 Throughput semanal</div>
-      <div class="flow-card-sub">Cards concluídos por semana</div>
-      <div class="tp-chart-wrap" id="throughput-chart"></div>
-    </div>
-    <div class="card flow-card">
-      <div class="flow-card-hd">🌊 Fluxo cumulativo (CFD)</div>
-      <div class="flow-card-sub">Distribuição de WIP por estágio · hoje</div>
-      <div id="cfd-chart"></div>
-    </div>
-  </div>
+  </div><!-- /ppane-fluxo -->
 
-  <!-- AGING WIP -->
-  <div id="aging-section" style="margin-bottom:20px;">
-    <div class="sec-title">⏳ Work Item Age · cards em risco</div>
-    <div class="card">
-      <div id="aging-list"></div>
-    </div>
-  </div>
+  <!-- ═══ ABA: PESSOAS ═══ -->
+  <div class="ptab-pane" id="ppane-pessoas">
 
-  <!-- ═══ LEMBRETES DO QUADRO ═══ -->
-  <div id="lemp-section">
-    <div class="sec-title">📌 Lembretes do quadro</div>
-    <div class="lemp-wrap">
-      <div class="card">
-        <div class="lemp-filters">
-          <label class="lemp-fchk"><input type="checkbox" id="lpf-gestao" checked onchange="renderLembretesPainel()"><span class="fdot" style="background:#9650dc;"></span>Gestão</label>
-          <label class="lemp-fchk"><input type="checkbox" id="lpf-po" checked onchange="renderLembretesPainel()"><span class="fdot" style="background:#2563c9;"></span>PO/Org</label>
-          <label class="lemp-fchk"><input type="checkbox" id="lpf-quadro" onchange="renderLembretesPainel()"><span class="fdot" style="background:#ff9800;"></span>Avisos do quadro</label>
+    <div id="pcal-section" style="margin-bottom:20px;">
+      <div class="sec-title">📅 Calendário dos squads</div>
+      <div class="pcal-tabs" id="pcal-tabs-bar">
+        <div class="pcal-tab on"  id="pcal-tab-all"          onclick="setPcalTab('all')">🌐 Todos</div>
+        <div class="pcal-tab"     id="pcal-tab-dados"         onclick="setPcalTab('dados')">📊 Dados</div>
+        <div class="pcal-tab"     id="pcal-tab-midia"         onclick="setPcalTab('midia')">📱 Mkt Performance</div>
+        <div class="pcal-tab"     id="pcal-tab-midiacriativa" onclick="setPcalTab('midiacriativa')">🎨 Mídia Criativa</div>
+        <div class="pcal-tab"     id="pcal-tab-gestao"        onclick="setPcalTab('gestao')">🏢 Gestão</div>
+      </div>
+      <div class="pcal-content on" id="pcal-all">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+          <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
+          <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
+          <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
+          <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+          <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
+            <option value="all">Todos os squads</option>
+            <option value="dados">📊 Squad Dados</option>
+            <option value="midia">📱 Mkt Performance</option>
+          </select>
+          <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
         </div>
-        <div class="lemp-grid" id="lemp-grid"></div>
+        <div class="pcal-weekdays-row">
+          <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
+          <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
+        </div>
+        <div class="pcal-grid" id="pcal-grid"></div>
+        <div class="cal-legend" id="pcal-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
-      <div class="card">
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;">✏️ Criar lembrete</div>
-        <div id="lemp-form-wrap"></div>
+      <div class="pcal-content" id="pcal-gestao">
+        <div style="border-top:1px solid var(--glass-b);padding-top:12px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:600;color:var(--txt2);">📌 Eventos de Gestão</div>
+            <button onclick="openPevModal('','','painel')" style="padding:4px 12px;font-size:10px;background:rgba(150,80,220,.15);color:#d67fff;border:1px solid rgba(150,80,220,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento de Gestão</button>
+          </div>
+          <div class="pcal-weekdays-row">
+            <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
+            <div class="pcal-wd">Qua</div><div class="pcal-wd">Qui</div><div class="pcal-wd">Sex</div><div class="pcal-wd">Sáb</div>
+          </div>
+          <div class="pcal-grid" id="pcal-gestao-grid"></div>
+          <div class="cal-legend" id="pcal-gestao-legend" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--glass-b);display:flex;gap:8px;flex-wrap:wrap;"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ ESTRELAS DO MAR (Geral) ═══ -->
-  <div id="kudos-section">
-    <div class="sec-title">⭐ Estrelas do Mar · reconhecimento geral</div>
-    <div class="lemp-wrap">
-      <div class="card">
-        <div id="kudosp-grid" class="lemp-grid"></div>
-      </div>
-      <div class="card">
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:10px;">🌊 Enviar estrela geral</div>
-        <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:10px;">Estrelas gerais aparecem para todas as squads. Para reconhecimentos do dia a dia de um time, use o ⭐ Estrelas do Mar dentro do quadro.</div>
-        <div id="kudosp-form"></div>
+    <div id="lemp-section" style="margin-bottom:20px;">
+      <div class="sec-title">📌 Lembretes do quadro</div>
+      <div class="lemp-wrap">
+        <div class="card">
+          <div class="lemp-filters">
+            <label class="lemp-fchk"><input type="checkbox" id="lpf-gestao" checked onchange="renderLembretesPainel()"><span class="fdot" style="background:#9650dc;"></span>Gestão</label>
+            <label class="lemp-fchk"><input type="checkbox" id="lpf-po" checked onchange="renderLembretesPainel()"><span class="fdot" style="background:#2563c9;"></span>PO/Org</label>
+            <label class="lemp-fchk"><input type="checkbox" id="lpf-quadro" onchange="renderLembretesPainel()"><span class="fdot" style="background:#ff9800;"></span>Avisos do quadro</label>
+          </div>
+          <div class="lemp-grid" id="lemp-grid"></div>
+        </div>
+        <div class="card">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px;">✏️ Criar lembrete</div>
+          <div id="lemp-form-wrap"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- TABELA COMPARATIVA -->
-  <div id="cmp-section">
-  <div class="sec-title">⚖️ Comparação</div>
-  <div class="card" style="margin-bottom:20px;">
-    <table class="cmp-table">
-      <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Mkt Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
-      <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
-    </table>
-  </div>
-  </div>
-
-  <!-- AGENTE ÁGIL USAGE -->
-  <div class="sec-title">🤖 Uso do Agente Ágil</div>
-  <div class="grid-3" style="margin-bottom:12px;">
-    <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">ambos os squads</div></div>
-    <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
-    <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
-  </div>
-  <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
-
-  <!-- OKR -->
-  <div class="sec-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
-  <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
-
-  <!-- BLOQUEIOS -->
-  <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
-    <span>🚧 Bloqueios ativos <span class="badge" id="blockers-count">0</span></span>
-    <button class="btn btn-sm" onclick="resolveAllBlockers()" title="Mover todos os bloqueios ativos para Concluído" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);padding:3px 10px;">✅ Resolver todos</button>
-  </div>
-  <div id="blockers-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Nenhum bloqueio.</div></div>
-
-  <!-- RISCOS -->
-  <div class="sec-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
-  <div id="risco-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Sem cards com riscos.</div></div>
-
-  <!-- TENDÊNCIA -->
-  <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
-  <div class="grid-2" style="margin-bottom:20px;">
-    <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
-    <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
-  </div>
-
-
-
-  <!-- DISTRIBUIÇÃO POR COLUNA -->
-  <div class="sec-title">📋 Distribuição por coluna</div>
-  <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
-
-  <!-- MONITORAMENTO DE ERROS -->
-  <div id="monitor-section" style="display:none;">
-    <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span>🐛 Monitoramento de Erros</span>
-      <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
-      <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
-      <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
-    </div>
-    <div class="err-stats-grid">
-      <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
-      <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
-      <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
-      <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
-    </div>
-    <div class="card" style="margin-bottom:14px;">
-      <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
-      <div class="tp-chart-wrap" id="err-chart" style="margin-top:8px;"></div>
-    </div>
-    <div class="err-filters">
-      <div class="err-filter-row">
-        <span class="err-filter-label">Squad</span>
-        <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"   id="ef-squad-all">Todos</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')" id="ef-squad-dados">📊 Dados</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')" id="ef-squad-midia">📱 Mkt Perf</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('squad','midiacriativa')" id="ef-squad-midiacriativa">🎨 Criativa</button>
+    <div id="kudos-section" style="margin-bottom:20px;">
+      <div class="sec-title">⭐ Estrelas do Mar · reconhecimento geral</div>
+      <div class="lemp-wrap">
+        <div class="card"><div id="kudosp-grid" class="lemp-grid"></div></div>
+        <div class="card">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:10px;">🌊 Enviar estrela geral</div>
+          <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:10px;">Estrelas gerais aparecem para todas as squads. Para reconhecimentos do dia a dia, use o ⭐ dentro do quadro.</div>
+          <div id="kudosp-form"></div>
+        </div>
       </div>
-      <div class="err-filter-row">
-        <span class="err-filter-label">Tipo</span>
-        <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('cat','geral')"      id="ef-cat-geral">⚙ Geral</button>
-      </div>
-      <div class="err-filter-row">
-        <span class="err-filter-label">Status</span>
-        <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
-        <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
-      </div>
-    </div></div>
-    <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
-  </div>
+    </div>
 
+    <div class="sec-title">🤖 Uso do Agente Ágil</div>
+    <div class="grid-3" style="margin-bottom:12px;">
+      <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">todos os squads</div></div>
+      <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
+      <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
+    </div>
+    <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
+
+  </div><!-- /ppane-pessoas -->
+
+  <!-- ═══ ABA: MONITOR ═══ -->
+  <div class="ptab-pane" id="ppane-monitor">
+    <div id="monitor-section">
+      <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span>🐛 Monitoramento de Erros</span>
+        <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
+        <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
+        <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
+      </div>
+      <div class="err-stats-grid">
+        <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
+        <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
+        <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
+        <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
+        <div class="tp-chart-wrap" id="err-chart" style="margin-top:8px;"></div>
+      </div>
+      <div class="err-filters">
+        <div class="err-filter-row">
+          <span class="err-filter-label">Squad</span>
+          <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"          id="ef-squad-all">Todos</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')"        id="ef-squad-dados">📊 Dados</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')"        id="ef-squad-midia">📱 Mkt Perf</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('squad','midiacriativa')" id="ef-squad-midiacriativa">🎨 Criativa</button>
+        </div>
+        <div class="err-filter-row">
+          <span class="err-filter-label">Tipo</span>
+          <button class="err-filter-btn active" onclick="setErrFilter('cat','all')"        id="ef-cat-all">Todos</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('cat','firebase')"   id="ef-cat-firebase">🔥 Firebase</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('cat','agente')"     id="ef-cat-agente">🤖 Agente</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('cat','ui')"         id="ef-cat-ui">💻 UI</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('cat','importacao')" id="ef-cat-importacao">📥 Import</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('cat','geral')"      id="ef-cat-geral">⚙ Geral</button>
+        </div>
+        <div class="err-filter-row">
+          <span class="err-filter-label">Status</span>
+          <button class="err-filter-btn active" onclick="setErrFilter('status','all')"   id="ef-status-all">Todos</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('status','novo')"  id="ef-status-novo">🔴 Novo</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('status','visto')" id="ef-status-visto">🟡 Visto</button>
+        </div>
+      </div>
+      <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
+    </div>
+  </div><!-- /ppane-monitor -->
 
 <!-- Modal evento do painel -->
 <div class="pev-modal-ov" id="pev-modal-ov">
@@ -1040,7 +1046,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.1 · painel</div>
+<div class="version">v2.2 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1182,15 +1188,16 @@ function loadPresence(){
       const online=Object.values(val).filter(u=>now-u.ts<30000).map(u=>({...u,_squad:sq}));
       window['_presence_'+sq.id]=online;
       renderOnline();
+  setTimeout(_restoreTab, 300);
     });
   });
 }
 function renderOnline(){
-  const all=[...( window._presence_dados||[]),...(window._presence_midia||[])];
+  const all=SQUADS.flatMap(sq=>window['_presence_'+sq.id]||[]);
   const el=document.getElementById('online-list'); if(!el) return;
   const count=document.getElementById('online-count'); if(count) count.textContent=all.length;
   if(!all.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no momento.</div>'; return; }
-  el.innerHTML=all.map(u=>{
+  const renderPills=list=>list.map(u=>{
     const foto=u.foto?'<img src="'+u.foto+'" style="width:20px;height:20px;border-radius:50%;">':'';
     return '<div class="online-pill">'
       +'<span class="online-pip"></span>'
@@ -1199,12 +1206,11 @@ function renderOnline(){
       +'<span style="font-size:9px;color:var(--txt3);background:rgba(56,182,255,.1);padding:1px 6px;border-radius:999px;">'+u._squad.icon+'</span>'
       +'</div>';
   }).join('');
-  // Filtra por squad ativo se necessário
   if(activeFilter!=='all'){
     const filtered=all.filter(u=>u._squad.id===activeFilter);
-    el.innerHTML=filtered.length
-      ? filtered.map(u=>'<div class="online-pill"><span class="online-pip"></span>'+(u.foto?'<img src="'+u.foto+'">':'')+(u.nome||u.init||'?')+'</div>').join('')
-      : '<div style="font-size:11px;color:var(--txt3);">Nenhum online neste squad.</div>';
+    el.innerHTML=filtered.length ? renderPills(filtered) : '<div style="font-size:11px;color:var(--txt3);">Nenhum online neste squad.</div>';
+  } else {
+    el.innerHTML=renderPills(all);
   }
 }
 
@@ -1574,12 +1580,30 @@ let pcalShowSection=false;
 // Eventos dos boards individuais carregados em squadData já existem
 // Eventos de gestão: Firebase kanban/painel/cal_events
 
-function togglePcalSection(){
-  pcalShowSection=!pcalShowSection;
-  document.getElementById('pcal-section').style.display=pcalShowSection?'block':'none';
-  document.getElementById('btn-pcal').style.background=pcalShowSection?'rgba(29,233,182,.15)':'';
-  document.getElementById('btn-pcal').style.borderColor=pcalShowSection?'rgba(29,233,182,.5)':'rgba(29,233,182,.3)';
-  if(pcalShowSection){ renderPcal(); renderPcalGestao(); }
+function _isPtab(t){return document.getElementById('ppane-'+t)?.classList.contains('on');}
+function togglePcalSection(){ swPtab('pessoas'); }
+
+function swPtab(tab){
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.ptab-pane').forEach(p=>p.classList.remove('on'));
+  const btn=document.getElementById('ptab-'+tab);
+  const pane=document.getElementById('ppane-'+tab);
+  if(btn) btn.classList.add('on');
+  if(pane) pane.classList.add('on');
+  // side-effects por aba
+  if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
+  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); }
+  if(tab==='monitor'){ renderErrors(); renderErrChart(); }
+  // salvar aba ativa
+  try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
+}
+
+// Restaurar aba salva
+function _restoreTab(){
+  try{
+    const saved=localStorage.getItem('_painel_tab');
+    if(saved && document.getElementById('ptab-'+saved)) swPtab(saved);
+  } catch(e){}
 }
 
 function setPcalTab(tab){
@@ -1762,7 +1786,7 @@ function loadPcalEvents(){
   window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
     const val=snap.val();
     pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
-    if(pcalShowSection){ renderPcal(); renderPcalGestao(); }
+    if(_isPtab('pessoas')){ renderPcal(); renderPcalGestao(); }
   });
 
   // Eventos dos squads (cal_events de cada board)
@@ -1771,7 +1795,7 @@ function loadPcalEvents(){
       const val=snap.val();
       if(!squadData[sq.id]) squadData[sq.id]={};
       squadData[sq.id].cal_events=val?(Array.isArray(val)?val:Object.values(val)):[];
-      if(pcalShowSection) renderPcal();
+      if(_isPtab('pessoas')) renderPcal();
     });
   });
 }
@@ -1792,19 +1816,13 @@ let errFilterSquad = 'all';
 let errFilterCat   = 'all';
 let errFilterStatus= 'all';
 let monitorVisible = false;
+let doneInWindow = [];
 let errStats = {}; // {squad: {date: count}}
 
 const CAT_LABELS = {firebase:'🔥 Firebase',agente:'🤖 Agente',importacao:'📥 Import',ui:'💻 UI',geral:'⚙ Geral'};
 const STATUS_CYCLE = {novo:'visto', visto:'resolvido', resolvido:'novo'};
 
-function toggleMonitorSection(){
-  monitorVisible=!monitorVisible;
-  document.getElementById('monitor-section').style.display=monitorVisible?'block':'none';
-  const btn=document.getElementById('btn-monitor');
-  btn.style.background=monitorVisible?'rgba(255,107,107,.15)':'';
-  btn.style.borderColor=monitorVisible?'rgba(255,107,107,.5)':'rgba(255,107,107,.3)';
-  if(monitorVisible) renderErrors();
-}
+function toggleMonitorSection(){ swPtab('monitor'); }
 
 function setErrFilter(type, val){
   if(type==='squad') errFilterSquad=val;
@@ -1994,13 +2012,13 @@ function loadErrorLogs(){
       const open=allErrors.filter(e=>e.entry.status==='novo').length;
       const btn=document.getElementById('btn-monitor');
       if(btn) btn.textContent='🐛 Bugs'+(open?` (${open})`:'');
-      if(monitorVisible) renderErrors();
+      if(_isPtab('monitor')) renderErrors();
     });
     // Stats diários
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/error_stats'),snap=>{
       const val=snap.val()||{};
       errStats[sq.id]=val;
-      if(monitorVisible) renderErrChart();
+      if(_isPtab('monitor')) renderErrChart();
     });
   });
 }
@@ -2787,7 +2805,7 @@ function median(arr){ return percentile(arr,50); }
 function _collectFlowCards(){
   const now=Date.now();
   const winStart=now - FLOW_WINDOW*DAY_MS;
-  const cycle=[], lead=[], doneInWindow=[], openItems=[];
+  const cycle=[], lead=[], openItems=[]; doneInWindow.length=0;
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
     const baselineAt = (d.flowBaseline&&d.flowBaseline.at)? new Date(d.flowBaseline.at).getTime() : 0;
