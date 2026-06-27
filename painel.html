@@ -326,30 +326,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pcal-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
 .pcal-tab:hover:not(.on){color:var(--txt);}
 .pcal-content{display:none;}.pcal-content.on{display:block;}
-
-/* Grade — usa as mesmas classes do board */
 .pcal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
   border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
 .pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
-.pcal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:130px;}
-.pcal-wd{font-size:9px;color:var(--txt3);font-weight:700;text-align:center;
-  text-transform:uppercase;letter-spacing:.05em;padding:3px 0;}
+.pcal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:140px;text-align:center;}
+.pcal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
+  text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
 .pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.pcal-day{min-height:74px;padding:5px;border-radius:8px;
-  background:rgba(3,13,26,.5);border:1px solid rgba(56,182,255,.07);
-  cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.pcal-day{min-height:80px;padding:5px;border-radius:var(--r);
+  background:rgba(3,13,26,.35);border:1px solid rgba(56,182,255,.07);
+  cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
 .pcal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
 .pcal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
-.pcal-day.other-month{opacity:.3;pointer-events:none;}
+.pcal-day.other-month{opacity:.35;pointer-events:none;}
 .pcal-day.has-events{border-color:rgba(29,233,182,.2);}
-.pcal-day-num{font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px;}
+.pcal-day-num{font-size:12.5px;font-weight:700;color:var(--txt);margin-bottom:4px;}
+.pcal-day.other-month .pcal-day-num{color:var(--txt3);}
 .pcal-day.today .pcal-day-num{color:var(--accent);font-weight:800;}
-.pcal-event{font-size:9px;padding:2px 5px;border-radius:3px;margin-bottom:2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
-  font-weight:600;line-height:1.4;}
-.pcal-event:hover{opacity:.8;}
-.pcal-add-btn{position:absolute;bottom:3px;right:4px;background:none;border:none;
-  color:rgba(56,182,255,.25);cursor:pointer;font-size:13px;opacity:0;transition:opacity .15s;}
+.pcal-event{font-family:"DM Sans",sans-serif;font-size:10.5px;padding:3px 8px;border-radius:5px;margin-bottom:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;
+  color:#fff;display:block;position:relative;transition:filter .15s,transform .1s;}
+.pcal-event:hover{filter:brightness(1.12);transform:translateY(-1px);padding-right:18px;}
+.pcal-event .pcal-ev-del{position:absolute;top:50%;right:3px;transform:translateY(-50%);
+  background:rgba(0,0,0,.35);border:none;color:#fff;border-radius:3px;
+  font-size:9px;width:14px;height:14px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;opacity:0;transition:opacity .15s;}
+.pcal-event:hover .pcal-ev-del{opacity:.9;}
+.pcal-event .pcal-ev-del:hover{background:rgba(255,107,107,.9);}
+.pcal-add-btn{position:absolute;bottom:4px;right:4px;background:none;border:none;
+  color:rgba(56,182,255,.25);cursor:pointer;font-size:14px;opacity:0;transition:opacity .15s;}
 .pcal-day:hover .pcal-add-btn{opacity:1;}
 /* Legenda */
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;
@@ -1046,7 +1051,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.2 · painel</div>
+<div class="version">v2.3 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1708,7 +1713,7 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
       const col=PCAL_COLORS.find(c=>c.id===squad)||PCAL_COLORS.find(c=>c.id===ev.color)||PCAL_COLORS[3];
       return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
         onclick="event.stopPropagation();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')"
-        title="${ev.title}">${ev.title}</div>`;
+        title="${ev.title}">${ev.title}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent('${ev.id||''}','${ev._source||'painel'}')" title="Excluir">✕</button></div>`;
     }).join('')
     +(dayEvs.length>2?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-2} mais</div>`:'');
   div.onclick=()=>openPevModal(ds);
@@ -1740,6 +1745,20 @@ function openPevModal(dateStr='', evId='', source='painel'){
   document.getElementById('pev-modal-ov').classList.add('open');
 }
 function closePevModal(){ document.getElementById('pev-modal-ov').classList.remove('open'); pcalEditId=null; }
+
+function deletePcalEvent(evId, source){
+  if(!evId) return;
+  uiConfirm('Excluir este evento?', ok=>{
+    if(!ok) return;
+    const ref = source==='painel'
+      ? window._ref(window._db, 'kanban/painel/cal_events/'+evId)
+      : null;
+    if(!ref){ renderPcal(); return; }
+    window._set(ref, null)
+      .then(()=>{ showToast('🗑 Evento excluído'); renderPcal(); renderPcalGestao(); })
+      .catch(e=>showToast('Erro: '+e.message,'err'));
+  });
+}
 
 function renderPevColors(sel){
   document.getElementById('pev-colors').innerHTML=PCAL_COLORS.map(col=>
