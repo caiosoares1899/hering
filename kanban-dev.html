@@ -1601,6 +1601,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:flex; align-items:center; gap:12px; flex-shrink:0;
   background:rgba(0,0,0,.2);
 }
+.camp-hd > .x-btn { margin-left:auto; }
 .camp-hd-title { font-family:"Syne",sans-serif; font-size:16px; font-weight:800; flex:1; }
 .camp-hd-emoji { font-size:22px; line-height:1; }
 .camp-hd-sub   { font-size:11px; color:var(--txt3); margin-top:1px; }
@@ -2912,7 +2913,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="camp-hd-title" id="camp-det-hd-nome">—</div>
       </div>
       <button class="btn btn-sm" onclick="openCampEdit(window._campAtual?.id)" style="color:var(--txt2);border-color:var(--glass-b);">✏️ Editar</button>
-      <button class="x-btn" onclick="closeOv('camp-ov')">✕</button>
+      <button class="btn btn-sm" onclick="campDeleteFromDetail()" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+      <button class="x-btn" onclick="closeOv('camp-ov')" style="margin-left:0;">✕</button>
     </div>
     <div class="camp-detail" id="camp-detail-inner">
       <!-- preenchido por renderCampDetalhe() -->
@@ -3038,7 +3040,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.0-dev</div>
+<div class="version">v8.30.1-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6195,6 +6197,15 @@ async function saveCamp(){
     showToast('✅ Campanha salva!');
     if(_campAtual?.id===id){ _campAtual=camp; renderCampDetalhe(camp); }
   } catch(e){ uiAlert('Erro ao salvar: '+e.message); }
+}
+
+async function campDeleteFromDetail(){
+  if(!_campAtual) return;
+  const c = _campanhas[_campAtual.id];
+  if(!await uiConfirm('Excluir a campanha "'+esc(c?.nome||_campAtual.id)+'"? As entradas serão apagadas permanentemente.',{danger:true,okText:'Excluir'})) return;
+  await window._set(_campRef(_campAtual.id), null).catch(e=>uiAlert(e.message));
+  showToast('🗑 Campanha excluída.');
+  campBack();
 }
 
 async function campDeleteCurrent(){
@@ -11747,6 +11758,61 @@ async function runDevSeed(){
       await window._set(window._ref(window._db, FB+'/subtimes'), seedSubtimes);
       seedLog('✅ 3 subtimes criados (Designers, Devs, Estratégia)','ok');
     }catch(e){ seedLog('⚠ subtimes não gravados: '+e.message,'err'); }
+
+    // ── CAMPANHAS & COLEÇÕES de exemplo ──────────────────────────────
+    try{
+      const campBase = 'kanban/campanhas';
+      const campId1  = 'camp-seed-diapaisdev';
+      const campId2  = 'col-seed-invernodev';
+      const ts1 = new Date(Date.now()-10*86400000).toISOString();
+      const ts2 = new Date(Date.now()-5*86400000).toISOString();
+      const ts3 = new Date().toISOString();
+
+      const campanhaDP = {
+        id: campId1, tipo:'campanha', nome:'Dia dos Pais 2026', mote:'Para quem nunca esquece',
+        tag:'', dataInicio: d(-20), dataFim: d(12), status:'ativa',
+        tema:'outono', squads:['dev'], mostrarArquivados:'ativos',
+        criadoEm: ts1, criadoPor:'Ana Beatriz Costa', atualizadoEm: ts1,
+        entradas:{
+          'e-dp-001':{ id:'e-dp-001', tipo:'aprendizado', titulo:'Kit com curadoria converte melhor',
+            corpo:'Testamos dois formatos: lista de produtos avulsos vs. kit curado com tema. O kit com narrativa ("presente completo pra ele") teve 34% mais cliques no CTA.\n\nPontos de atenção:\n- Foto do produto principal precisa mostrar o contexto de uso (pai com filho)\n- Descrição curta e emocional performa melhor que técnica',
+            links:[{url:'https://datastudio.google.com',label:'Dashboard GA4 — Dia dos Pais'}],
+            autor:'Ana Beatriz Costa', autorUid:'uid-test-001', ts: ts1 },
+          'e-dp-002':{ id:'e-dp-002', tipo:'resultado', titulo:'Resultados parciais semana 1',
+            corpo:'📊 Resultados acumulados até 27/06:\n\n• ROAS campanha paga: 4.2x (meta: 3.5x) ✅\n• Taxa de conversão landing: 3.8% (acima da média de 2.9%)\n• Ticket médio: R$ 287 (aumento de 12% vs. ano anterior)\n• Top produto: Kit Perfumaria Masculina (438 unidades)',
+            links:[],
+            autor:'Rafael Mendes', autorUid:'uid-test-002', ts: ts2 },
+          'e-dp-003':{ id:'e-dp-003', tipo:'problema', titulo:'Atraso na entrega dos KVs de Criação',
+            corpo:'Os key visuals chegaram com 3 dias de atraso em relação ao planejado, o que comprimiu o tempo de revisão e aprovação.\n\nImpacto: subimos as peças com menos variações de formato do que gostaríamos (faltou o formato stories vertical otimizado).\n\nAção: alinhar com Criação um buffer de 5 dias úteis nas próximas campanhas.',
+            links:[],
+            autor:'Caio Soares', autorUid:'uid-test-005', ts: ts3 },
+        }
+      };
+
+      const colecaoInv = {
+        id: campId2, tipo:'colecao', nome:'Inverno 2026', mote:'O frio que aquece',
+        tag:'', dataInicio: d(-5), dataFim: d(60), status:'ativa',
+        tema:'inverno', squads:['dev'], mostrarArquivados:'ativos',
+        criadoEm: ts2, criadoPor:'Fernanda Lima', atualizadoEm: ts2,
+        entradas:{
+          'e-inv-001':{ id:'e-inv-001', tipo:'registro', titulo:'Briefing recebido — Coleção Inverno 2026',
+            corpo:'Recebimento do briefing completo da coleção de inverno. Peças principais:\n\n• Casacos e jaquetas (foco de lançamento)\n• Linha de malhas e tricôs\n• Acessórios (cachecol, gorro, luva)\n\nConceito criativo aprovado: "Conforto que não abre mão do estilo".\nPaleta de cores: tons terrosos, vinho, azul navy e off-white.',
+            links:[{url:'https://drive.google.com',label:'Briefing completo — Drive'}],
+            autor:'Fernanda Lima', autorUid:'uid-test-003', ts: ts2 },
+          'e-inv-002':{ id:'e-inv-002', tipo:'link', titulo:'Referências visuais aprovadas',
+            corpo:'Board de referências visuais aprovado pelo time de criação e diretoria de moda.',
+            links:[
+              {url:'https://pinterest.com',label:'Board Pinterest — Inverno 2026'},
+              {url:'https://drive.google.com',label:'Moodboard aprovado (PDF)'},
+            ],
+            autor:'Pedro Alves', autorUid:'uid-test-004', ts: ts3 },
+        }
+      };
+
+      await window._set(window._ref(window._db, campBase+'/'+campId1), campanhaDP);
+      await window._set(window._ref(window._db, campBase+'/'+campId2), colecaoInv);
+      seedLog('✅ 2 campanhas de exemplo criadas (Dia dos Pais + Inverno 2026)','ok');
+    }catch(e){ seedLog('⚠ campanhas não gravadas: '+e.message,'err'); }
 
     seedLog('🎉 Pronto! Carregando board em 2s...','ok');
     setTimeout(()=>{
