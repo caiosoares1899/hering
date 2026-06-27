@@ -593,6 +593,140 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ptab.on{color:var(--txt);border-bottom-color:var(--accent);font-weight:600;}
 .ptab-pane{display:none;}
 .ptab-pane.on{display:block;}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE — layout de monitoramento (≤ 600px)
+   ═══════════════════════════════════════════════════════ */
+@media(max-width:600px){
+
+  /* ── Layout base ── */
+  .app{ padding:.75rem .85rem 5rem; } /* bottom padding p/ tab bar */
+
+  /* ── Header: empilha título + botões ── */
+  .hd{ flex-direction:column; align-items:flex-start; gap:10px; margin-bottom:.8rem; }
+  .hd > div:last-child{ width:100%; display:flex; flex-wrap:wrap; gap:6px; }
+  .hd-title{ font-size:17px; }
+  .hd-sub{ display:none; } /* economiza espaço */
+
+  /* Botões do header menores */
+  .btn{ padding:5px 11px; font-size:11px; }
+
+  /* Squad links: scroll horizontal em vez de wrap */
+  #squad-links-wrap{
+    overflow-x:auto; flex-wrap:nowrap !important;
+    scrollbar-width:none; padding-bottom:2px;
+  }
+  #squad-links-wrap::-webkit-scrollbar{ display:none; }
+  #squad-links-wrap .btn{ white-space:nowrap; flex-shrink:0; }
+
+  /* ── Abas: fixas no bottom para acesso rápido ── */
+  .ptabs{
+    position:fixed; bottom:0; left:0; right:0; z-index:100;
+    background:rgba(6,20,40,.97); border-top:1px solid var(--glass-b);
+    border-bottom:none; margin-bottom:0;
+    display:flex; justify-content:space-around;
+    backdrop-filter:blur(16px); padding:2px 0 env(safe-area-inset-bottom);
+  }
+  .ptab{
+    flex:1; padding:8px 4px 6px; font-size:10px;
+    border-bottom:none; border-top:2px solid transparent;
+    margin-bottom:0; text-align:center; display:flex;
+    flex-direction:column; align-items:center; gap:2px;
+    color:var(--txt3);
+  }
+  .ptab.on{ border-top-color:var(--accent); color:var(--txt); border-bottom:none; }
+
+  /* ── Refresh bar ── */
+  .refresh-bar{ font-size:10px; margin-bottom:.6rem; gap:6px; }
+
+  /* ── Métricas: 2x2 em mobile (grid-4 → 2 cols) ── */
+  .grid-4{ grid-template-columns:1fr 1fr !important; gap:8px; }
+  .grid-3{ grid-template-columns:1fr 1fr !important; gap:8px; }
+  .grid-2{ grid-template-columns:1fr !important; gap:10px; }
+  .met{ padding:10px 10px 8px; }
+  .met-val{ font-size:26px; } /* mais legível no celular */
+  .met-lbl{ font-size:10px; }
+
+  /* ── Squad cards: 1 coluna ── */
+  #squad-cards{ grid-template-columns:1fr !important; gap:10px; }
+
+  /* ── Seções ── */
+  .sec-title{ font-size:11px; padding-bottom:6px; margin-bottom:10px; }
+
+  /* ── Filter bar: scroll horizontal ── */
+  .filter-bar{
+    flex-wrap:nowrap; overflow-x:auto;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch;
+    gap:6px; padding-bottom:4px; margin-bottom:.9rem;
+  }
+  .filter-bar::-webkit-scrollbar{ display:none; }
+  .filter-btn{ white-space:nowrap; flex-shrink:0; padding:5px 13px; font-size:11px; }
+
+  /* ── Online pills: scroll horizontal ── */
+  #online-list{
+    flex-wrap:nowrap; overflow-x:auto;
+    scrollbar-width:none; padding-bottom:4px;
+    margin-bottom:14px;
+  }
+  #online-list::-webkit-scrollbar{ display:none; }
+
+  /* ── Comparação: scroll horizontal ── */
+  .cmp-table{ font-size:10px; }
+  .cmp-table th, .cmp-table td{ padding:5px 8px; }
+  #cmp-section .card{ overflow-x:auto; padding:10px; }
+
+  /* ── Gráficos de fluxo: 1 coluna ── */
+  .flow-card{ padding:12px; }
+  .grid-2 .flow-card + .flow-card{ margin-top:0; }
+
+  /* ── Aging WIP ── */
+  .aging-item{ gap:7px; }
+  .aging-age{ font-size:15px; }
+
+  /* ── Calendário ── */
+  .pcal-tabs{ margin-bottom:8px; }
+  .pcal-tab{ padding:6px 10px; font-size:10px; }
+  .pcal-day{ min-height:52px; padding:3px; }
+  .pcal-day-num{ font-size:10px; margin-bottom:2px; }
+  .pcal-event{ font-size:9px; padding:2px 4px; border-radius:3px; }
+  .pcal-month-lbl{ font-size:12px; min-width:110px; }
+  .pcal-nav-btn{ padding:3px 8px; font-size:11px; }
+  .pcal-wd{ font-size:8px; padding:2px 0; }
+
+  /* ── Lembretes & Kudos: 1 coluna ── */
+  .lemp-wrap{ grid-template-columns:1fr !important; gap:10px; }
+  .kudosp-card{ width:calc(50% - 4px); min-width:130px; }
+
+  /* ── Bloqueios / riscos: padding menor ── */
+  .blocker-item{ padding:6px 8px; }
+
+  /* ── Flow window buttons ── */
+  .sec-title .flow-win-btn{ padding:2px 7px; font-size:9px; }
+
+  /* ── Monitor: err-stats-grid ── */
+  .err-stats-grid{ grid-template-columns:1fr 1fr !important; }
+
+  /* ── Card (glass) padding ── */
+  .card{ padding:12px; }
+}
+
+/* ── Telas pequenas extra (≤ 380px) ── */
+@media(max-width:380px){
+  .app{ padding:.6rem .65rem 5rem; }
+  .ptab{ font-size:9px; }
+  .met-val{ font-size:22px; }
+  .pcal-day{ min-height:44px; }
+}
+
+/* ── Header: labels só em desktop ── */
+.hd-btn-adm::after{ content:attr(title); margin-left:4px; font-size:11px; }
+@media(max-width:600px){ .hd-btn-adm::after{ display:none; } }
+
+/* ── Abas mobile: emoji maior + label ── */
+@media(max-width:600px){
+  .ptab .ptab-icon{ font-size:16px; line-height:1; }
+  .ptab .ptab-lbl{ font-size:9px; line-height:1; }
+}
 </style>
 </head>
 <body>
@@ -623,12 +757,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <button class="btn" onclick="loadAll()">🔄 Atualizar</button>
-
+      <button class="btn" onclick="loadAll()" title="Atualizar dados">🔄</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
-      <button class="btn" onclick="openGlobalBackup()" title="Exportar backup de todos os squads" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾 Backup</button>
-      <button class="btn" onclick="openBoardSetup()" title="Criar novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙ Novo board</button>
-      <button class="btn" onclick="openGlobalUsersModal()" title="Gerenciar usuários" style="color:var(--accent);border-color:rgba(56,182,255,.35);">🗂 Usuários</button>
+      <button class="btn hd-btn-adm" onclick="openGlobalBackup()" title="Backup" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾</button>
+      <button class="btn hd-btn-adm" onclick="openBoardSetup()" title="Novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙</button>
+      <button class="btn hd-btn-adm" onclick="openGlobalUsersModal()" title="Usuários" style="color:var(--accent);border-color:rgba(56,182,255,.35);">🗂</button>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
         <img id="user-avatar" width="20" height="20" style="border-radius:50%;display:none;">
         <span id="user-name" style="font-size:11px;color:var(--txt2);"></span>
@@ -646,10 +779,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   <!-- ABAS PRINCIPAIS -->
   <div class="ptabs">
-    <button class="ptab on"  id="ptab-visao"   onclick="swPtab('visao')">👁 Visão</button>
-    <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')">🌊 Fluxo</button>
-    <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')">🧑‍🤝‍🧑 Pessoas</button>
-    <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);">🐛 Monitor</button>
+    <button class="ptab on"  id="ptab-visao"   onclick="swPtab('visao')"><span class="ptab-icon">👁</span><span class="ptab-lbl">Visão</span></button>
+    <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')"><span class="ptab-icon">🌊</span><span class="ptab-lbl">Fluxo</span></button>
+    <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
+    <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
   </div>
 
   <!-- ═══ ABA: VISÃO ═══ -->
@@ -1051,7 +1184,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.4 · painel</div>
+<div class="version">v2.5 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
