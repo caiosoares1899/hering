@@ -1575,6 +1575,174 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 }
 .seed-log-line{padding:1px 0;}
 .seed-log .ok{color:#1de9b6;}.seed-log .err{color:#ff6b6b;}.seed-log .inf{color:#38b6ff;}
+/* ═══════════════════════════════════════════════════════
+   CAMPANHAS & COLEÇÕES
+   ═══════════════════════════════════════════════════════ */
+
+/* Temas */
+.camp-tema-inverno   { --ct:#1a3a5c; --ct2:#4a9ede; --ct3:#a8d8f0; --ct-bg:rgba(26,58,92,.18);  --ct-border:rgba(74,158,222,.35); }
+.camp-tema-verao     { --ct:#6b2d0a; --ct2:#ff7c2a; --ct3:#ffd166; --ct-bg:rgba(255,124,42,.12); --ct-border:rgba(255,124,42,.4);  }
+.camp-tema-altoverao { --ct:#7a1a1a; --ct2:#ff3b3b; --ct3:#ffd166; --ct-bg:rgba(255,59,59,.12);  --ct-border:rgba(255,59,59,.4);   }
+.camp-tema-outono    { --ct:#5c2e0a; --ct2:#d4691e; --ct3:#f0c080; --ct-bg:rgba(212,105,30,.12); --ct-border:rgba(212,105,30,.4);  }
+.camp-tema-primavera { --ct:#1a4a2e; --ct2:#3cba78; --ct3:#f4a8c8; --ct-bg:rgba(60,186,120,.1);  --ct-border:rgba(60,186,120,.35); }
+.camp-tema-neutro    { --ct:#1a3050; --ct2:#38b6ff; --ct3:#7ec8e3; --ct-bg:rgba(56,182,255,.1);  --ct-border:rgba(56,182,255,.3);  }
+
+/* Overlay principal */
+#camp-ov { z-index:180; }
+.camp-panel {
+  background:rgba(6,18,36,.98); border:1px solid var(--ct-border,var(--glass-b));
+  border-radius:16px; width:min(920px,95vw); height:88vh;
+  display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.7);
+  transition:border-color .3s;
+}
+.camp-hd {
+  padding:16px 20px; border-bottom:1px solid var(--ct-border,var(--glass-b));
+  display:flex; align-items:center; gap:12px; flex-shrink:0;
+  background:rgba(0,0,0,.2);
+}
+.camp-hd-title { font-family:"Syne",sans-serif; font-size:16px; font-weight:800; flex:1; }
+.camp-hd-emoji { font-size:22px; line-height:1; }
+.camp-hd-sub   { font-size:11px; color:var(--txt3); margin-top:1px; }
+
+/* Lista de campanhas */
+.camp-list-wrap { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
+.camp-filter-bar { display:flex; gap:8px; flex-wrap:wrap; padding:12px 20px; border-bottom:1px solid var(--glass-b); flex-shrink:0; }
+.camp-filter-sel { padding:5px 10px; font-size:11px; border:1px solid var(--glass-b); border-radius:8px;
+  background:rgba(3,13,26,.8); color:var(--txt); font-family:"DM Sans",sans-serif; cursor:pointer; }
+.camp-card {
+  border:1px solid var(--glass-b); border-radius:12px; padding:14px 16px;
+  background:rgba(10,30,55,.5); cursor:pointer; transition:all .18s;
+  display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+}
+.camp-card:hover { border-color:var(--ct2,var(--accent)); background:rgba(10,30,55,.8); transform:translateY(-1px); }
+.camp-card-icon  { font-size:26px; line-height:1; }
+.camp-card-name  { font-family:"Syne",sans-serif; font-size:14px; font-weight:700; color:var(--txt); }
+.camp-card-mote  { font-size:11px; color:var(--txt3); margin-top:2px; font-style:italic; }
+.camp-card-meta  { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; align-items:center; }
+.camp-card-pill  { font-size:9px; padding:2px 8px; border-radius:999px; background:var(--ct-bg,rgba(56,182,255,.1));
+  border:1px solid var(--ct-border,rgba(56,182,255,.2)); color:var(--ct3,var(--accent)); white-space:nowrap; }
+.camp-card-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.camp-status-pill { font-size:9px; padding:3px 10px; border-radius:999px; font-weight:700; white-space:nowrap; }
+.camp-status-planejamento { background:rgba(56,182,255,.12); color:var(--accent); border:1px solid rgba(56,182,255,.3); }
+.camp-status-ativa        { background:rgba(29,233,182,.12); color:var(--teal);   border:1px solid rgba(29,233,182,.3); }
+.camp-status-encerrada    { background:rgba(150,200,240,.06); color:var(--txt3);  border:1px solid rgba(150,200,240,.15); }
+.camp-card-count { font-size:10px; color:var(--txt3); }
+.camp-empty { text-align:center; color:var(--txt3); font-size:12px; padding:48px 20px; line-height:1.8; }
+
+/* Footer com botão novo */
+.camp-list-ft { padding:12px 20px; border-top:1px solid var(--glass-b); display:flex; justify-content:flex-end; gap:8px; flex-shrink:0; }
+
+/* ── DETALHE de campanha ── */
+.camp-detail { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.camp-detail-hd {
+  padding:20px 24px 16px; flex-shrink:0;
+  background:linear-gradient(180deg, var(--ct-bg,rgba(56,182,255,.08)), transparent);
+  border-bottom:1px solid var(--ct-border,var(--glass-b));
+}
+.camp-detail-nome  { font-family:"Syne",sans-serif; font-size:22px; font-weight:800; margin-bottom:3px; }
+.camp-detail-mote  { font-size:13px; color:var(--ct3,var(--txt2)); font-style:italic; margin-bottom:12px; }
+.camp-detail-pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.camp-detail-body  { flex:1; display:grid; grid-template-columns:280px 1fr; overflow:hidden; }
+@media(max-width:700px){ .camp-detail-body{ grid-template-columns:1fr; } }
+
+/* Coluna esquerda — metadados + cards */
+.camp-sidebar { border-right:1px solid var(--glass-b); overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
+.camp-sidebar-sec { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--ct2,var(--accent)); margin-bottom:6px; }
+.camp-meta-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(56,182,255,.05); }
+.camp-meta-row:last-child { border:none; }
+.camp-meta-lbl { color:var(--txt3); }
+.camp-meta-val { color:var(--txt); font-weight:600; }
+.camp-card-list { display:flex; flex-direction:column; gap:4px; }
+.camp-card-item {
+  display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px;
+  background:rgba(56,182,255,.04); border:1px solid rgba(56,182,255,.08);
+  cursor:pointer; transition:all .12s; font-size:11px;
+}
+.camp-card-item:hover { background:rgba(56,182,255,.12); border-color:rgba(56,182,255,.25); }
+.camp-card-item-col { font-size:9px; padding:1px 6px; border-radius:999px; white-space:nowrap; }
+.camp-card-item-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.camp-card-item-owner { font-size:9px; color:var(--txt3); flex-shrink:0; }
+
+/* Coluna direita — timeline de entradas */
+.camp-timeline { overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:0; }
+.camp-timeline-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.camp-entry {
+  position:relative; padding:12px 14px 12px 36px; margin-bottom:12px;
+  border-radius:10px; border:1px solid rgba(56,182,255,.1);
+  background:rgba(3,13,26,.4);
+}
+.camp-entry::before {
+  content:attr(data-icon); position:absolute; left:10px; top:13px; font-size:14px; line-height:1;
+}
+.camp-entry-tipo-aprendizado { border-left:3px solid #38b6ff; }
+.camp-entry-tipo-resultado   { border-left:3px solid #1de9b6; }
+.camp-entry-tipo-problema    { border-left:3px solid #ff6b6b; }
+.camp-entry-tipo-link        { border-left:3px solid #ffd166; }
+.camp-entry-tipo-registro    { border-left:3px solid #a855f7; }
+.camp-entry-titulo { font-size:12px; font-weight:700; color:var(--txt); margin-bottom:4px; }
+.camp-entry-corpo  { font-size:12px; color:var(--txt2); line-height:1.6; white-space:pre-wrap; }
+.camp-entry-links  { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
+.camp-entry-link   { font-size:11px; color:var(--accent); text-decoration:none; }
+.camp-entry-link:hover { text-decoration:underline; }
+.camp-entry-meta   { font-size:9px; color:var(--txt3); margin-top:7px; }
+.camp-entry-del    { position:absolute; top:8px; right:8px; background:none; border:none;
+  color:var(--txt3); cursor:pointer; font-size:11px; opacity:0; transition:opacity .15s; }
+.camp-entry:hover .camp-entry-del { opacity:1; }
+.camp-entry-del:hover { color:var(--danger); }
+.camp-timeline-empty { text-align:center; color:var(--txt3); font-size:11px; padding:32px 0; line-height:1.8; }
+
+/* Composer de entrada */
+.camp-composer {
+  border-top:1px solid var(--glass-b); padding:14px 16px; flex-shrink:0;
+  background:rgba(0,0,0,.2); display:flex; flex-direction:column; gap:8px;
+}
+.camp-composer-row { display:flex; gap:8px; align-items:center; }
+.camp-composer select, .camp-composer input[type=text] {
+  background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
+  padding:7px 10px; font-size:12px; color:var(--txt); font-family:"DM Sans",sans-serif;
+}
+.camp-composer select:focus, .camp-composer input:focus, .camp-composer textarea:focus {
+  outline:none; border-color:var(--ct2,var(--accent));
+}
+.camp-composer textarea {
+  width:100%; background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
+  padding:8px 10px; font-size:12px; color:var(--txt); font-family:"DM Sans",sans-serif;
+  resize:none; min-height:60px; max-height:120px; box-sizing:border-box; transition:border-color .15s;
+}
+.camp-composer-links { display:flex; flex-direction:column; gap:5px; }
+.camp-composer-link-row { display:flex; gap:6px; align-items:center; }
+.camp-composer-link-row input { flex:1; }
+.camp-composer-link-del { background:none; border:none; color:var(--txt3); cursor:pointer; font-size:14px; padding:0 4px; }
+.camp-add-link-btn { font-size:10px; color:var(--accent); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
+.camp-send-btn {
+  align-self:flex-end; padding:7px 18px; font-size:11px; font-weight:700;
+  background:var(--ct-bg,rgba(56,182,255,.12)); border:1px solid var(--ct-border,rgba(56,182,255,.35));
+  border-radius:999px; color:var(--ct2,var(--accent)); cursor:pointer; font-family:"DM Sans",sans-serif;
+  transition:all .15s;
+}
+.camp-send-btn:hover { background:var(--ct-bg,rgba(56,182,255,.22)); transform:translateY(-1px); }
+
+/* Modal de edição de campanha */
+.camp-edit-modal {
+  background:rgba(6,18,36,.98); border:1px solid var(--glass-b); border-radius:14px;
+  width:min(520px,95vw); max-height:90vh; overflow-y:auto; padding:0;
+  display:flex; flex-direction:column;
+}
+.camp-edit-hd  { padding:16px 20px; border-bottom:1px solid var(--glass-b); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.camp-edit-body{ padding:20px; display:flex; flex-direction:column; gap:14px; flex:1; overflow-y:auto; }
+.camp-edit-ft  { padding:12px 20px; border-top:1px solid var(--glass-b); display:flex; gap:8px; justify-content:flex-end; flex-shrink:0; }
+.camp-field    { display:flex; flex-direction:column; gap:4px; }
+.camp-label    { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--txt3); }
+.camp-inp      { background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
+  padding:8px 12px; font-size:13px; color:var(--txt); font-family:"DM Sans",sans-serif; }
+.camp-inp:focus{ outline:none; border-color:var(--accent); }
+.camp-tema-grid{ display:flex; gap:8px; flex-wrap:wrap; }
+.camp-tema-opt { padding:7px 14px; border-radius:10px; border:2px solid transparent; cursor:pointer;
+  font-size:13px; transition:all .15s; background:rgba(3,13,26,.6); }
+.camp-tema-opt.sel { border-color:white; transform:scale(1.05); }
+.camp-squad-checks { display:flex; gap:8px; flex-wrap:wrap; }
+.camp-squad-chk { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -1735,6 +1903,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Tempo por tag</button>
   <div class="tb-sep"></div>
+  <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="reSeedDev()" title="Re-popular dados de teste (kudos, lembretes, reações)" style="color:var(--teal);border-color:rgba(29,233,182,.4);">🌱 Re-popular</button>
@@ -2694,6 +2863,147 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- RELATÓRIO DE TEMPO - fim -->
+<!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
+<div class="ov" id="camp-ov">
+<div class="camp-panel camp-tema-neutro" id="camp-panel">
+
+  <!-- Vista: Lista -->
+  <div id="camp-view-lista" style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+    <div class="camp-hd">
+      <span class="camp-hd-emoji" id="camp-list-emoji">📣</span>
+      <div>
+        <div class="camp-hd-title">Campanhas &amp; Coleções</div>
+        <div class="camp-hd-sub">Histórico e fluxo por campanha do squad</div>
+      </div>
+      <button class="x-btn" onclick="closeOv('camp-ov')">✕</button>
+    </div>
+    <div class="camp-filter-bar">
+      <select class="camp-filter-sel" id="camp-f-tipo" onchange="renderCampList()">
+        <option value="all">Todos os tipos</option>
+        <option value="campanha">📣 Campanhas</option>
+        <option value="colecao">👗 Coleções</option>
+      </select>
+      <select class="camp-filter-sel" id="camp-f-status" onchange="renderCampList()">
+        <option value="all">Todos os status</option>
+        <option value="ativa">✅ Ativas</option>
+        <option value="planejamento">📋 Planejamento</option>
+        <option value="encerrada">🔒 Encerradas</option>
+      </select>
+      <select class="camp-filter-sel" id="camp-f-order" onchange="renderCampList()">
+        <option value="recente">Mais recentes primeiro</option>
+        <option value="nome">Por nome</option>
+        <option value="status">Por status</option>
+      </select>
+    </div>
+    <div class="camp-list-wrap" id="camp-list-body">
+      <div class="camp-empty">Carregando campanhas...</div>
+    </div>
+    <div class="camp-list-ft">
+      <button class="btn btn-sm" onclick="openCampEdit(null)" style="color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova campanha</button>
+    </div>
+  </div>
+
+  <!-- Vista: Detalhe -->
+  <div id="camp-view-detalhe" style="display:none;flex-direction:column;height:100%;overflow:hidden;">
+    <div class="camp-hd">
+      <button class="btn btn-sm" onclick="campBack()" style="flex-shrink:0;">← Voltar</button>
+      <span class="camp-hd-emoji" id="camp-det-emoji">📣</span>
+      <div style="flex:1;min-width:0;">
+        <div class="camp-hd-title" id="camp-det-hd-nome">—</div>
+      </div>
+      <button class="btn btn-sm" onclick="openCampEdit(window._campAtual?.id)" style="color:var(--txt2);border-color:var(--glass-b);">✏️ Editar</button>
+      <button class="x-btn" onclick="closeOv('camp-ov')">✕</button>
+    </div>
+    <div class="camp-detail" id="camp-detail-inner">
+      <!-- preenchido por renderCampDetalhe() -->
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Modal editar/criar campanha -->
+<div class="ov" id="camp-edit-ov" style="z-index:210;">
+<div class="camp-edit-modal">
+  <div class="camp-edit-hd">
+    <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="camp-edit-title">Nova Campanha</span>
+    <button class="x-btn" onclick="closeOv('camp-edit-ov')">✕</button>
+  </div>
+  <div class="camp-edit-body">
+    <div class="camp-field">
+      <label class="camp-label">Tipo</label>
+      <div style="display:flex;gap:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="camp-tipo" value="campanha" checked> 📣 Campanha
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="camp-tipo" value="colecao"> 👗 Coleção
+        </label>
+      </div>
+    </div>
+    <div class="camp-field">
+      <label class="camp-label">Nome</label>
+      <input class="camp-inp" id="camp-edit-nome" placeholder="Ex: Dia dos Pais 2026">
+    </div>
+    <div class="camp-field">
+      <label class="camp-label">Mote / tagline</label>
+      <input class="camp-inp" id="camp-edit-mote" placeholder="Ex: Para quem nunca esquece">
+    </div>
+    <div class="camp-field">
+      <label class="camp-label">Tag vinculada (cards com essa tag entram automaticamente)</label>
+      <select class="camp-inp" id="camp-edit-tag">
+        <option value="">Nenhuma tag vinculada</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="camp-field">
+        <label class="camp-label">Data início</label>
+        <input class="camp-inp" type="date" id="camp-edit-inicio">
+      </div>
+      <div class="camp-field">
+        <label class="camp-label">Data fim</label>
+        <input class="camp-inp" type="date" id="camp-edit-fim">
+      </div>
+    </div>
+    <div class="camp-field">
+      <label class="camp-label">Status</label>
+      <select class="camp-inp" id="camp-edit-status">
+        <option value="planejamento">📋 Planejamento</option>
+        <option value="ativa">✅ Ativa</option>
+        <option value="encerrada">🔒 Encerrada</option>
+      </select>
+    </div>
+    <div class="camp-field">
+      <label class="camp-label">Cards vinculados — exibir</label>
+      <select class="camp-inp" id="camp-edit-mostrar-arquivados">
+        <option value="ativos">Só cards ativos</option>
+        <option value="todos">Todos (incluindo arquivados)</option>
+      </select>
+    </div>
+    <div class="camp-field">
+      <label class="camp-label">Tema visual</label>
+      <div class="camp-tema-grid" id="camp-tema-grid">
+        <div class="camp-tema-opt sel" data-tema="neutro"    onclick="campSelTema(this,'neutro')">🎯 Neutro</div>
+        <div class="camp-tema-opt"     data-tema="inverno"   onclick="campSelTema(this,'inverno')">❄️ Inverno</div>
+        <div class="camp-tema-opt"     data-tema="verao"     onclick="campSelTema(this,'verao')">☀️ Verão</div>
+        <div class="camp-tema-opt"     data-tema="altoverao" onclick="campSelTema(this,'altoverao')">🔥 Alto Verão</div>
+        <div class="camp-tema-opt"     data-tema="outono"    onclick="campSelTema(this,'outono')">🍂 Outono</div>
+        <div class="camp-tema-opt"     data-tema="primavera" onclick="campSelTema(this,'primavera')">🌸 Primavera</div>
+      </div>
+    </div>
+    <div class="camp-field" id="camp-edit-squads-wrap">
+      <label class="camp-label">Squads participantes (multi-squad)</label>
+      <div class="camp-squad-checks" id="camp-edit-squads"></div>
+    </div>
+  </div>
+  <div class="camp-edit-ft">
+    <button class="btn btn-sm" id="camp-edit-del-btn" onclick="campDeleteCurrent()" style="color:var(--danger);border-color:rgba(255,107,107,.3);margin-right:auto;display:none;">🗑 Excluir</button>
+    <button class="btn btn-sm" onclick="closeOv('camp-edit-ov')">Cancelar</button>
+    <button class="btn btn-sm" onclick="saveCamp()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">💾 Salvar</button>
+  </div>
+</div>
+</div>
+<!-- fim CAMPANHAS -->
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
   <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
@@ -2728,7 +3038,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.29.8-dev</div>
+<div class="version">v8.30.0-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5546,6 +5856,357 @@ function exportTempoCSV(){
   a.click(); URL.revokeObjectURL(url);
   showToast('⬇ CSV exportado.');
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// CAMPANHAS & COLEÇÕES
+// ═══════════════════════════════════════════════════════════════════
+
+const CAMP_TEMAS = {
+  neutro:    { emoji:'🎯', label:'Neutro',     cls:'camp-tema-neutro'    },
+  inverno:   { emoji:'❄️', label:'Inverno',    cls:'camp-tema-inverno'   },
+  verao:     { emoji:'☀️', label:'Verão',      cls:'camp-tema-verao'     },
+  altoverao: { emoji:'🔥', label:'Alto Verão', cls:'camp-tema-altoverao' },
+  outono:    { emoji:'🍂', label:'Outono',     cls:'camp-tema-outono'    },
+  primavera: { emoji:'🌸', label:'Primavera',  cls:'camp-tema-primavera' },
+};
+const CAMP_TIPO_ICONS = { aprendizado:'💡', resultado:'📊', problema:'🚧', link:'🔗', registro:'📝' };
+const CAMP_TIPO_LABELS = { aprendizado:'Aprendizado', resultado:'Resultado', problema:'Problema', link:'Link', registro:'Registro' };
+
+let _campanhas = {};           // id -> objeto campanha
+let _campAtual  = null;        // campanha em detalhe
+let _campEditId = null;        // id sendo editado (null = novo)
+let _campEditTema = 'neutro';  // tema selecionado no edit modal
+let _campComposerLinks = [];   // links do composer ativo
+
+// Caminho Firebase: global (cross-squad configurado no painel)
+function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'/'+sub:'')); }
+
+// ── Carregar ──────────────────────────────────────────────────────
+function loadCampanhas(){
+  window._onValue(_campRef(), snap=>{
+    _campanhas = snap.val()||{};
+    // se o detalhe estiver aberto, atualiza
+    if(_campAtual && document.getElementById('camp-view-detalhe').style.display!=='none'){
+      _campAtual = _campanhas[_campAtual.id]||_campAtual;
+      renderCampDetalhe(_campAtual);
+    }
+    renderCampList();
+  });
+}
+
+// ── Abrir overlay ─────────────────────────────────────────────────
+function openCamp(){
+  _campAtual = null;
+  document.getElementById('camp-view-lista').style.display   = 'flex';
+  document.getElementById('camp-view-detalhe').style.display = 'none';
+  _applyTemaPanel('neutro');
+  renderCampList();
+  document.getElementById('camp-ov').classList.add('open');
+}
+
+function campBack(){
+  _campAtual = null;
+  document.getElementById('camp-view-lista').style.display   = 'flex';
+  document.getElementById('camp-view-detalhe').style.display = 'none';
+  _applyTemaPanel('neutro');
+  renderCampList();
+}
+
+function _applyTemaPanel(tema){
+  const panel = document.getElementById('camp-panel');
+  Object.values(CAMP_TEMAS).forEach(t=>panel.classList.remove(t.cls));
+  panel.classList.add(CAMP_TEMAS[tema]?.cls||'camp-tema-neutro');
+}
+
+// ── Lista ─────────────────────────────────────────────────────────
+function renderCampList(){
+  const body = document.getElementById('camp-list-body'); if(!body) return;
+  let list = Object.values(_campanhas);
+
+  const fTipo   = document.getElementById('camp-f-tipo')?.value||'all';
+  const fStatus = document.getElementById('camp-f-status')?.value||'all';
+  const fOrder  = document.getElementById('camp-f-order')?.value||'recente';
+
+  // Filtrar por squad ativo
+  list = list.filter(c=> !c.squads || c.squads.includes(ACTIVE_SQUAD) || c.squads.length===0);
+  if(fTipo   !=='all') list=list.filter(c=>c.tipo===fTipo);
+  if(fStatus !=='all') list=list.filter(c=>c.status===fStatus);
+
+  list.sort((a,b)=>{
+    if(fOrder==='nome') return String(a.nome).localeCompare(String(b.nome));
+    if(fOrder==='status'){ const o={ativa:0,planejamento:1,encerrada:2}; return (o[a.status]||0)-(o[b.status]||0); }
+    return String(b.criadoEm||'').localeCompare(String(a.criadoEm||''));
+  });
+
+  if(!list.length){
+    body.innerHTML='<div class="camp-empty">📣 Nenhuma campanha cadastrada ainda.<br>Crie a primeira com o botão abaixo.</div>';
+    return;
+  }
+  body.innerHTML = list.map(c=>{
+    const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
+    const tagObj = c.tag ? getTag(c.tag) : null;
+    // contar cards vinculados
+    const mostrarArq = c.mostrarArquivados==='todos';
+    const vinculados = cards.filter(card=>{
+      if(!mostrarArq && card.archived) return false;
+      return c.tag ? getCardTags(card).includes(c.tag) : false;
+    });
+    const statusCls = `camp-status-${c.status||'planejamento'}`;
+    const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
+    const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
+    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe('${esc(c.id)}')">
+      <div class="camp-card-icon">${tema.emoji}</div>
+      <div>
+        <div class="camp-card-name">${esc(c.nome||'Sem nome')}</div>
+        ${c.mote?`<div class="camp-card-mote">"${esc(c.mote)}"</div>`:''}
+        <div class="camp-card-meta">
+          <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
+          ${tagObj?`<span class="camp-card-pill" style="background:${tagObj.bg||'rgba(56,182,255,.1)'};border-color:${tagObj.bg||'rgba(56,182,255,.2)'};color:${tagObj.color||'#38b6ff'}">🏷 ${esc(tagObj.label)}</span>`:''}
+          <span class="camp-card-pill">📅 ${esc(periodo)}</span>
+        </div>
+      </div>
+      <div class="camp-card-right">
+        <span class="camp-status-pill ${statusCls}">${statusLabel}</span>
+        <span class="camp-card-count">${vinculados.length} card${vinculados.length!==1?'s':''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detalhe ───────────────────────────────────────────────────────
+function openCampDetalhe(id){
+  const c = _campanhas[id]; if(!c) return;
+  _campAtual = {...c, id};
+  document.getElementById('camp-view-lista').style.display   = 'none';
+  document.getElementById('camp-view-detalhe').style.display = 'flex';
+  _applyTemaPanel(c.tema||'neutro');
+  renderCampDetalhe(_campAtual);
+}
+
+function renderCampDetalhe(c){
+  const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
+  document.getElementById('camp-det-emoji').textContent = tema.emoji;
+  document.getElementById('camp-det-hd-nome').textContent = c.nome||'—';
+
+  const tagObj = c.tag ? getTag(c.tag) : null;
+  const mostrarArq = c.mostrarArquivados==='todos';
+  const vinculados = cards.filter(card=>{
+    if(!mostrarArq && card.archived) return false;
+    return c.tag ? getCardTags(card).includes(c.tag) : false;
+  }).sort((a,b)=>String(a.col).localeCompare(String(b.col)));
+
+  const entradas = Object.values(c.entradas||{}).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
+  const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
+  const squadsStr = (c.squads||[ACTIVE_SQUAD]).join(', ');
+
+  document.getElementById('camp-detail-inner').innerHTML = `
+    <div class="camp-detail-hd">
+      <div class="camp-detail-nome">${tema.emoji} ${esc(c.nome||'—')}</div>
+      ${c.mote?`<div class="camp-detail-mote">"${esc(c.mote)}"</div>`:''}
+      <div class="camp-detail-pills">
+        <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
+        <span class="camp-status-pill camp-status-${c.status||'planejamento'}">${statusLabel}</span>
+        ${tagObj?`<span class="camp-card-pill" style="background:${tagObj.bg};border-color:${tagObj.bg};color:${tagObj.color}">🏷 ${esc(tagObj.label)}</span>`:''}
+      </div>
+    </div>
+    <div class="camp-detail-body">
+      <div class="camp-sidebar">
+        <div>
+          <div class="camp-sidebar-sec">Metadados</div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Período</span><span class="camp-meta-val">${esc(periodo)}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${esc(squadsStr)}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Tag vinculada</span><span class="camp-meta-val">${tagObj?esc(tagObj.label):'Nenhuma'}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${c.mostrarArquivados==='todos'?'Todos':'Só ativos'}</span></div>
+        </div>
+        <div>
+          <div class="camp-sidebar-sec">Cards vinculados (${vinculados.length})</div>
+          <div class="camp-card-list">
+            ${vinculados.length?vinculados.map(card=>{
+              const col = columns.find(cl=>cl.id===card.col);
+              const colColor = col?.color||'#38b6ff';
+              return `<div class="camp-card-item" onclick="openCard('${esc(card.id)}')">
+                <span class="camp-card-item-col" style="background:${colColor}22;color:${colColor};border:1px solid ${colColor}44;">${esc(col?.name||card.col)}</span>
+                <span class="camp-card-item-title">${esc(card.title||'(sem título)')}</span>
+                <span class="camp-card-item-owner">${esc(card.owner||'')}</span>
+              </div>`;
+            }).join(''):'<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum card vinculado.</div>'}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;overflow:hidden;">
+        <div class="camp-timeline" id="camp-timeline-body">
+          ${entradas.length
+            ? entradas.map(e=>_renderEntrada(e,c.id)).join('')
+            : '<div class="camp-timeline-empty">📝 Nenhum registro ainda.<br>Adicione aprendizados, resultados e links abaixo.</div>'}
+        </div>
+        <div class="camp-composer" id="camp-composer">
+          <div class="camp-composer-row">
+            <select id="camp-comp-tipo" style="flex:0 0 auto;">
+              <option value="aprendizado">💡 Aprendizado</option>
+              <option value="resultado">📊 Resultado</option>
+              <option value="problema">🚧 Problema</option>
+              <option value="link">🔗 Link</option>
+              <option value="registro">📝 Registro</option>
+            </select>
+            <input type="text" id="camp-comp-titulo" placeholder="Título (opcional)" style="flex:1;">
+          </div>
+          <textarea id="camp-comp-corpo" placeholder="Descreva com detalhes... Shift+Enter para nova linha."
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.ctrlKey){event.preventDefault();saveCampEntrada();}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"></textarea>
+          <div class="camp-composer-links" id="camp-comp-links-wrap"></div>
+          <div class="camp-composer-row">
+            <button class="camp-add-link-btn" onclick="campAddLink()">+ Adicionar link</button>
+            <button class="camp-send-btn" onclick="saveCampEntrada()">💾 Registrar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  _campComposerLinks = [];
+  _renderComposerLinks();
+}
+
+function _renderEntrada(e, campId){
+  const icon = CAMP_TIPO_ICONS[e.tipo]||'📝';
+  const links = (e.links||[]).map(l=>`<a class="camp-entry-link" href="${safeUrl(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a>`).join('');
+  const quando = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  const podeApagar = e.autorUid===window._currentUser?.uid || window._currentUserRole==='adm' || window._currentUserRole==='po';
+  return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'}" data-icon="${icon}">
+    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
+    ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
+    <div class="camp-entry-corpo">${esc(e.corpo||'')}</div>
+    ${links?`<div class="camp-entry-links">${links}</div>`:''}
+    <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
+  </div>`;
+}
+
+function campAddLink(){
+  _campComposerLinks.push({url:'',label:''});
+  _renderComposerLinks();
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('.camp-comp-link-url');
+    inputs[inputs.length-1]?.focus();
+  },50);
+}
+
+function _renderComposerLinks(){
+  const wrap=document.getElementById('camp-comp-links-wrap'); if(!wrap) return;
+  wrap.innerHTML=_campComposerLinks.map((l,i)=>`
+    <div class="camp-composer-link-row">
+      <input class="camp-comp-link-url" type="url" placeholder="URL" value="${esc(l.url)}"
+        oninput="_campComposerLinks[${i}].url=this.value">
+      <input type="text" placeholder="Texto exibido (opcional)" value="${esc(l.label)}"
+        oninput="_campComposerLinks[${i}].label=this.value" style="flex:1;">
+      <button class="camp-composer-link-del" onclick="_campComposerLinks.splice(${i},1);_renderComposerLinks()">✕</button>
+    </div>`).join('');
+}
+
+async function saveCampEntrada(){
+  if(!_campAtual) return;
+  const tipo   = document.getElementById('camp-comp-tipo')?.value||'registro';
+  const titulo = document.getElementById('camp-comp-titulo')?.value.trim()||'';
+  const corpo  = document.getElementById('camp-comp-corpo')?.value.trim()||'';
+  const links  = _campComposerLinks.filter(l=>l.url.trim());
+  if(!corpo && !links.length){ uiAlert('Escreva algo ou adicione um link antes de registrar.'); return; }
+  const u = window._currentUser;
+  const id = 'e'+Date.now()+Math.random().toString(36).slice(2,6);
+  const entrada = { id, tipo, titulo, corpo, links, autor: u?.displayName||u?.email||'?', autorUid:u?.uid||'', ts:new Date().toISOString() };
+  try{
+    await window._set(_campRef(_campAtual.id+'/entradas/'+id), entrada);
+    // Limpar composer
+    document.getElementById('camp-comp-corpo').value='';
+    document.getElementById('camp-comp-corpo').style.height='';
+    document.getElementById('camp-comp-titulo').value='';
+    document.getElementById('camp-comp-tipo').value='aprendizado';
+    _campComposerLinks=[];
+    _renderComposerLinks();
+    showToast('✅ Registro salvo!');
+  } catch(e){ uiAlert('Erro ao salvar: '+e.message); }
+}
+
+async function delCampEntrada(campId, entradaId){
+  if(!await uiConfirm('Remover este registro?',{danger:true,okText:'Remover'})) return;
+  await window._set(_campRef(campId+'/entradas/'+entradaId), null).catch(e=>uiAlert(e.message));
+}
+
+// ── Criar / Editar campanha ───────────────────────────────────────
+function openCampEdit(id){
+  _campEditId = id||null;
+  const c = id ? (_campanhas[id]||{}) : {};
+  _campEditTema = c.tema||'neutro';
+  document.getElementById('camp-edit-title').textContent = id?'Editar Campanha':'Nova Campanha';
+  document.getElementById('camp-edit-del-btn').style.display = id?'inline-flex':'none';
+  // Preencher campos
+  document.querySelectorAll('input[name="camp-tipo"]').forEach(r=>{ r.checked=r.value===(c.tipo||'campanha'); });
+  document.getElementById('camp-edit-nome').value   = c.nome||'';
+  document.getElementById('camp-edit-mote').value   = c.mote||'';
+  document.getElementById('camp-edit-inicio').value = c.dataInicio||'';
+  document.getElementById('camp-edit-fim').value    = c.dataFim||'';
+  document.getElementById('camp-edit-status').value = c.status||'planejamento';
+  document.getElementById('camp-edit-mostrar-arquivados').value = c.mostrarArquivados||'ativos';
+  // Tags
+  const tagSel = document.getElementById('camp-edit-tag');
+  tagSel.innerHTML='<option value="">Nenhuma tag vinculada</option>'+tags.map(t=>`<option value="${esc(t.id)}" ${c.tag===t.id?'selected':''}>${esc(t.label)}</option>`).join('');
+  // Tema
+  document.querySelectorAll('.camp-tema-opt').forEach(el=>el.classList.toggle('sel',el.dataset.tema===_campEditTema));
+  // Squads
+  const squadsWrap = document.getElementById('camp-edit-squads');
+  const KNOWN_SQUADS = typeof SQUADS!=='undefined' ? SQUADS : [{id:ACTIVE_SQUAD,label:ACTIVE_SQUAD,icon:''}];
+  squadsWrap.innerHTML = KNOWN_SQUADS.map(sq=>`
+    <label class="camp-squad-chk">
+      <input type="checkbox" name="camp-squads" value="${esc(sq.id)}" ${(c.squads||[ACTIVE_SQUAD]).includes(sq.id)?'checked':''}>
+      ${sq.icon||''} ${esc(sq.label||sq.id)}
+    </label>`).join('');
+  document.getElementById('camp-edit-ov').classList.add('open');
+}
+
+function campSelTema(el, tema){
+  _campEditTema=tema;
+  document.querySelectorAll('.camp-tema-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+async function saveCamp(){
+  const nome = document.getElementById('camp-edit-nome').value.trim();
+  if(!nome){ uiAlert('Defina um nome para a campanha.'); return; }
+  const tipo  = document.querySelector('input[name="camp-tipo"]:checked')?.value||'campanha';
+  const squads = [...document.querySelectorAll('input[name="camp-squads"]:checked')].map(cb=>cb.value);
+  const u = window._currentUser;
+  const id = _campEditId || ('c'+Date.now()+Math.random().toString(36).slice(2,6));
+  const existing = _campanhas[id]||{};
+  const camp = {
+    ...existing,
+    id, nome, tipo,
+    mote:   document.getElementById('camp-edit-mote').value.trim(),
+    tag:    document.getElementById('camp-edit-tag').value||'',
+    dataInicio: document.getElementById('camp-edit-inicio').value||'',
+    dataFim:    document.getElementById('camp-edit-fim').value||'',
+    status:     document.getElementById('camp-edit-status').value||'planejamento',
+    mostrarArquivados: document.getElementById('camp-edit-mostrar-arquivados').value||'ativos',
+    tema: _campEditTema,
+    squads: squads.length?squads:[ACTIVE_SQUAD],
+    criadoEm: existing.criadoEm||new Date().toISOString(),
+    criadoPor: existing.criadoPor||u?.displayName||u?.email||'?',
+    atualizadoEm: new Date().toISOString(),
+  };
+  try{
+    await window._set(_campRef(id), camp);
+    closeOv('camp-edit-ov');
+    showToast('✅ Campanha salva!');
+    if(_campAtual?.id===id){ _campAtual=camp; renderCampDetalhe(camp); }
+  } catch(e){ uiAlert('Erro ao salvar: '+e.message); }
+}
+
+async function campDeleteCurrent(){
+  if(!_campEditId) return;
+  const c = _campanhas[_campEditId];
+  if(!await uiConfirm('Excluir a campanha "'+esc(c?.nome||_campEditId)+'"? As entradas serão apagadas.',{danger:true,okText:'Excluir'})) return;
+  await window._set(_campRef(_campEditId), null).catch(e=>uiAlert(e.message));
+  closeOv('camp-edit-ov');
+  if(_campAtual?.id===_campEditId){ campBack(); }
+  showToast('🗑 Campanha excluída.');
+}
+
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
   let archived=cards.filter(c=>c.archived);
@@ -9131,6 +9792,7 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+  loadCampanhas();
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
   // Carrega ADMs extras do Firebase
