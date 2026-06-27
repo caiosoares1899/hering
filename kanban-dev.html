@@ -2679,6 +2679,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <option value="done">Só cards concluídos</option>
       <option value="all">Todos (inclui em andamento)</option>
     </select>
+    <select id="tempo-tag" class="ql-filter-sel" onchange="renderTempoReport()"></select>
     <button class="btn btn-sm" onclick="exportTempoCSV()" style="color:var(--teal);border-color:rgba(29,233,182,.3);margin-left:auto;">⬇ CSV</button>
   </div>
   <div style="padding:6px 16px 16px;overflow-y:auto;flex:1;" id="tempo-body"></div>
@@ -2720,7 +2721,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.29.1-dev</div>
+<div class="version">v8.29.3-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5482,15 +5483,26 @@ function _computeTempoData(){
 }
 function renderTempoReport(){
   const body=document.getElementById('tempo-body'); if(!body) return;
-  const rows=_computeTempoData();
-  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo selecionado.</div>'; return; }
+  const allRows=_computeTempoData();
+  let rows=allRows;
+  const fTag=document.getElementById('tempo-tag');
+  if(fTag){
+    const prev=fTag.value;
+    const opts=allRows.map(r=>`<option value="${esc(r.tagId)}">${esc(r.label)}</option>`).join('');
+    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+opts;
+    fTag.value=prev;
+  }
+  const totalLeadGeral=allRows.reduce((s,r)=>s+r.leadTotal,0);
+  const tagSel=fTag?.value||'';
+  if(tagSel) rows=allRows.filter(r=>r.tagId===tagSel);
+  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo/tag selecionado.</div>'; return; }
   const totalCards=rows.reduce((s,r)=>s+r.count,0);
   const totalLead=rows.reduce((s,r)=>s+r.leadTotal,0);
   let html=`<div class="tempo-intro">Quanto tempo o time investiu em cada tipo de demanda (por tag). <b>Lead</b> = da criação até concluir. <b>Cycle</b> = do início do trabalho até concluir.</div>`;
   html+=`<div class="tempo-cards">`;
   rows.forEach(r=>{
     const p=r.pi>=0?getPal(r.pi):{bg:'rgba(120,120,120,.15)',b:'rgba(120,120,120,.3)',c:'var(--txt3)'};
-    const pctTempo = totalLead>0? Math.round(r.leadTotal/totalLead*100) : 0;
+    const pctTempo = totalLeadGeral>0? Math.round(r.leadTotal/totalLeadGeral*100) : 0;
     html+=`<div class="tempo-row">
       <div class="tempo-row-hd">
         <span class="tempo-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(r.label)}</span>
@@ -5510,11 +5522,13 @@ function renderTempoReport(){
     </div>`;
   });
   html+=`</div>`;
-  html+=`<div class="tempo-total">Total: <b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado</div>`;
+  html+=`<div class="tempo-total">${tagSel?'Tag selecionada: ':'Total: '}<b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado${tagSel&&totalLeadGeral>0?' · <b>'+Math.round(totalLead/totalLeadGeral*100)+'%</b> do tempo total':''}</div>`;
   body.innerHTML=html;
 }
 function exportTempoCSV(){
-  const rows=_tempoData||_computeTempoData();
+  let rows=_tempoData||_computeTempoData();
+  const tagSel=document.getElementById('tempo-tag')?.value||'';
+  if(tagSel) rows=rows.filter(r=>r.tagId===tagSel);
   if(!rows.length){ showToast('Nada para exportar.'); return; }
   const esc2=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   let csv='Tag;Cards;Concluidos;Lead medio (h);Cycle medio (h);Lead total (h);Cycle total (h)\n';
@@ -5759,20 +5773,24 @@ function processRecorrentes(){
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     // Avisa: lembrete + notificação + toast
+    let lemPropMudou=false;
     criados.forEach(card=>{
-      // lembrete próprio pra quem abriu
+      // lembrete próprio pra quem abriu (salvo no caminho correto dos próprios)
       const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
         tipo:'proprio', text:'🔁 Card recorrente voltou: "'+card.title+'"',
         autor:'Recorrência', autorUid:'', init:'🔁',
         cardId:card.id, ts:new Date().toISOString() };
-      lembretes.push(obj);
+      lembretesProprios.push(obj);
+      lemPropMudou=true;
       // notificação pro responsável (se houver)
       if(card.owner){
         const uid=getUidByInit(card.owner);
         if(uid) createNotif(uid,'recorrente','🔁 Card recorrente voltou', card.title, card.id);
       }
     });
-    fbSet(FB+'/lembretes', lembretes);
+    if(lemPropMudou){
+      const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+    }
     updLemBadge();
     showToast('🔁 '+criados.length+' card(s) recorrente(s) voltaram pro quadro.');
   }
