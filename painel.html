@@ -1051,7 +1051,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.3 · painel</div>
+<div class="version">v2.4 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2220,18 +2220,21 @@ function squadBoardUrl(squadId){ return 'kanban.html?squad=' + squadId; }
 
 // Carrega squads criados via painel de setup do Firebase
 function loadExtraSquads(callback){
-  window._get(window._ref(window._db,'kanban/squads_meta')).then(snap=>{
+  let firstRun=true;
+  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{
     const val=snap.val()||{};
+    let changed=false;
     Object.entries(val).forEach(([id,meta])=>{
       if(!meta||!meta.label) return;
       if(!SQUADS.find(s=>s.id===id)){
         SQUADS.push({id, label:meta.label, icon:meta.emoji||'🐟', color:meta.color||'#38b6ff', wipLimit:parseInt(meta.wipLimit)||3});
+        changed=true;
       }
     });
-    // Atualiza links dinâmicos no header
     renderSquadLinks();
-    if(callback) callback();
-  }).catch(()=>{ if(callback) callback(); });
+    if(firstRun){ firstRun=false; if(callback) callback(); }
+    else if(changed){ loadAll(); renderSquadCards(); }
+  });
 }
 
 // Renderiza os links "Abrir Board" no header dinamicamente
@@ -2580,7 +2583,10 @@ function deleteGlobalUser(uid, nome){
 }
 
 function loadAll(){
+  if(!window._squadListeners) window._squadListeners = {};
   SQUADS.forEach(sq=>{
+    if(window._squadListeners[sq.id]) return; // ja ouvindo, evita listener duplicado
+    window._squadListeners[sq.id] = true;
     // Ouve dados do squad
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados'),snap=>{
       const val=snap.val()||{};
@@ -3281,7 +3287,7 @@ function bsRenderExisting(){
            style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(56,182,255,.3);border-radius:6px;">
           Abrir ↗
         </a>
-        ${!['dados','midia'].includes(sq.id) ? `<button class="bs-del-btn" onclick="bsDeleteBoard('${sq.id}','${sq.label}')">🗑</button>` : ''}
+        ${!PROTECTED_SQUADS.includes(sq.id) ? `<button class="bs-del-btn" onclick="bsDeleteBoard('${sq.id}','${sq.label}')" title="Excluir board">&#128465;</button>` : ''}
       </div>
     </div>`
   ).join('');
@@ -3293,9 +3299,10 @@ async function saveNewBoard(){
   const subtitle = (document.getElementById('bs-subtitle')?.value||'').trim();
   const wip      = parseInt(document.getElementById('bs-wip')?.value||'3');
 
-  if(!id){ alert('Defina um ID para o squad (ex: cx).'); return; }
-  if(!name){ alert('Defina o nome do squad.'); return; }
-  if(SQUADS.find(s=>s.id===id)){ alert('Já existe um squad com o ID "'+id+'". Escolha outro.'); return; }
+  if(!id){ uiAlert('Defina um ID para o squad (ex: cx, marketplace).'); return; }
+  if(!name){ uiAlert('Defina o nome do squad.'); return; }
+  if(SQUADS.find(s=>s.id===id)){ uiAlert('Já existe um squad com o ID “'+id+'”. Escolha outro.'); return; }
+  if(isNaN(wip)||wip<1){ uiAlert('WIP limit deve ser um número maior que 0.'); return; }
 
   const meta = {
     label:     name,
@@ -3323,28 +3330,41 @@ async function saveNewBoard(){
     // Inicia listener do novo squad no painel
     loadSquadData(id);
 
-    // Limpa formulário
+    // Limpa formulário e reset de seleção
     ['bs-id','bs-name','bs-subtitle'].forEach(fid=>{ const el=document.getElementById(fid); if(el) el.value=''; });
     document.getElementById('bs-preview').style.display='none';
+    _bsSelectedEmoji='💬'; _bsSelectedColor='#38b6ff';
+    document.querySelectorAll('.bs-emoji-opt').forEach(e=>e.classList.remove('sel'));
+    document.querySelectorAll('.bs-color-opt').forEach(e=>e.classList.remove('sel'));
+    const wip_el=document.getElementById('bs-wip'); if(wip_el) wip_el.value='3';
 
-    showBsToast('✅ Board "'+name+'" criado! Acesse: kanban.html?squad='+id);
+    showBsToast('✅ Board “'+name+'” criado! Acesse: kanban.html?squad='+id);
   } catch(e) {
-    alert('Erro ao salvar: '+e.message);
+    uiAlert('Erro ao salvar: '+e.message);
   }
 }
 
+const PROTECTED_SQUADS = ['dados','midia','midiacriativa'];
 async function bsDeleteBoard(id, label){
-  if(!confirm('Excluir o board "'+label+'"?\n\nOs dados dos cards no Firebase NÃO serão apagados — só a configuração do board no painel.')) return;
-  try {
-    await window._set(window._ref(window._db, 'kanban/squads_meta/'+id), null);
-    SQUADS = SQUADS.filter(s=>s.id!==id);
-    renderSquadLinks();
-    bsRenderExisting();
-    renderSquadCards();
-    showBsToast('🗑 Board "'+label+'" removido do painel.');
-  } catch(e) {
-    alert('Erro ao excluir: '+e.message);
+  if((typeof PROTECTED_SQUADS!=='undefined'?PROTECTED_SQUADS:['dados','midia','midiacriativa']).includes(id)){
+    uiAlert('Este board é nativo e não pode ser excluído.');
+    return;
   }
+  uiConfirm('Excluir o board “'+label+'”? Os dados dos cards no Firebase NÃO serão apagados, só a configuração no painel.', async ok=>{
+    if(!ok) return;
+    try {
+      await window._set(window._ref(window._db, 'kanban/squads_meta/'+id), null);
+      SQUADS = SQUADS.filter(s=>s.id!==id);
+      if(window._squadListeners) delete window._squadListeners[id];
+      delete squadData[id];
+      renderSquadLinks();
+      bsRenderExisting();
+      renderSquadCards();
+      showBsToast('Board “'+label+'” removido do painel.');
+    } catch(e) {
+      uiAlert('Erro ao excluir: '+e.message);
+    }
+  });
 }
 
 function showBsToast(msg){
