@@ -1625,7 +1625,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.9 · painel</div>
+<div class="version">v2.10 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2448,7 +2448,7 @@ function renderPainelCamp(){
           </div>`;
         }).join('');
         return `<div class="pcamp-group">
-          <div class="pcamp-group-hd" onclick="_pCampActiveSquad=(${JSON.stringify(allSquads)}[0]||'dados');window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')">
+          <div class="pcamp-group-hd" onclick="_pCampActiveSquad='${esc(allSquads[0]||'dados')}';window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')">
             <span style="font-size:18px;">${tema.emoji}</span>
             <div class="pcamp-group-nome">${esc(c0.nome||'—')}</div>
             <span class="camp-ms-badge">🔗 ${allSquads.length} squads</span>
