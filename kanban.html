@@ -1748,6 +1748,41 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-tema-opt.sel { border-color:white; transform:scale(1.05); }
 .camp-squad-checks { display:flex; gap:8px; flex-wrap:wrap; }
 .camp-squad-chk { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
+/* Cores por squad */
+.camp-sq-dados         { --sqc:#38b6ff; --sqb:rgba(56,182,255,.35);  --sqbg:rgba(56,182,255,.1);  }
+.camp-sq-midia         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
+.camp-sq-midiacriativa { --sqc:#f4a8c8; --sqb:rgba(244,168,200,.35); --sqbg:rgba(244,168,200,.1); }
+.camp-sq-dev           { --sqc:#a78bfa; --sqb:rgba(167,139,250,.35); --sqbg:rgba(167,139,250,.1); }
+/* Badge multi-squad */
+.camp-ms-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;
+  font-size:9px;font-weight:700;background:rgba(255,209,102,.12);color:#ffd166;
+  border:1px solid rgba(255,209,102,.3); }
+/* Toggle multi-squad no detalhe */
+.camp-ms-toggle-bar {
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  border-bottom:1px solid var(--glass-b);background:rgba(0,0,0,.15);flex-shrink:0;
+}
+.camp-ms-toggle-btn {
+  padding:4px 12px;font-size:11px;font-weight:600;border-radius:999px;cursor:pointer;
+  transition:all .15s;font-family:'DM Sans',sans-serif;
+  background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);color:#ffd166;
+}
+.camp-ms-toggle-btn.on { background:rgba(255,209,102,.22);border-color:#ffd166; }
+.camp-ms-toggle-btn:hover { background:rgba(255,209,102,.22); }
+/* Filtro de squad no multi-squad */
+.camp-sq-filter { display:flex;gap:4px;align-items:center;flex-wrap:wrap; }
+.camp-sq-pill {
+  padding:3px 10px;border-radius:999px;font-size:10px;cursor:pointer;
+  border:1px solid var(--sqb,rgba(56,182,255,.3));background:transparent;
+  color:var(--sqc,#38b6ff);transition:all .15s;
+}
+.camp-sq-pill.on { background:var(--sqbg,rgba(56,182,255,.15)); }
+/* Badge de squad em cards e entradas */
+.camp-sq-tag {
+  display:inline-block;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:700;
+  border:1px solid var(--sqb,rgba(56,182,255,.3));color:var(--sqc,#38b6ff);
+  background:var(--sqbg,rgba(56,182,255,.08));flex-shrink:0;
+}
 </style>
 </head>
 <body>
@@ -2960,8 +2995,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="camp-tema-opt"     data-tema="primavera" onclick="campSelTema(this,'primavera')">🌸 Primavera</div>
       </div>
     </div>
-    <div class="camp-field" id="camp-edit-squads-wrap">
-      <label class="camp-label">Squads participantes (multi-squad)</label>
+    <div class="camp-field">
+      <label class="camp-label">Multi-squad</label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;">
+        <input type="checkbox" id="camp-edit-multisquad" onchange="document.getElementById('camp-edit-squads-wrap').style.display=this.checked?'block':'none'">
+        <span>Ativar visão multi-squad — outros squads verão esta campanha no board deles</span>
+      </label>
+    </div>
+    <div class="camp-field" id="camp-edit-squads-wrap" style="display:none;">
+      <label class="camp-label">Squads participantes</label>
       <div class="camp-squad-checks" id="camp-edit-squads"></div>
     </div>
   </div>
@@ -3008,7 +3050,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.3</div>
+<div class="version">v8.30.4</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5861,8 +5903,15 @@ function renderCampList(){
   const fStatus = document.getElementById('camp-f-status')?.value||'all';
   const fOrder  = document.getElementById('camp-f-order')?.value||'recente';
 
-  // Filtrar por squad ativo
-  list = list.filter(c=> !c.squads || c.squads.includes(ACTIVE_SQUAD) || c.squads.length===0);
+  // Filtrar por squad ativo (vê as próprias + as multi-squad onde participa)
+  list = list.filter(c=>{
+    const squads = c.squads||[];
+    return squads.includes(ACTIVE_SQUAD) || squads.length===0 || c.multiSquad;
+  }).filter(c=>{
+    // multi-squad sem o squad atual: só aparece se squad está listado
+    if(c.multiSquad && !(c.squads||[]).includes(ACTIVE_SQUAD)) return false;
+    return true;
+  });
   if(fTipo   !=='all') list=list.filter(c=>c.tipo===fTipo);
   if(fStatus !=='all') list=list.filter(c=>c.status===fStatus);
 
@@ -5888,11 +5937,12 @@ function renderCampList(){
     });
     const statusCls = `camp-status-${c.status||'planejamento'}`;
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
+    const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':'';
     const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
     return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe('${esc(c.id)}')">
       <div class="camp-card-icon">${tema.emoji}</div>
       <div>
-        <div class="camp-card-name">${esc(c.nome||'Sem nome')}</div>
+        <div class="camp-card-name">${esc(c.nome||'Sem nome')} ${msBadge}</div>
         ${c.mote?`<div class="camp-card-mote">"${esc(c.mote)}"</div>`:''}
         <div class="camp-card-meta">
           <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
@@ -5923,36 +5973,67 @@ function renderCampDetalhe(c){
   document.getElementById('camp-det-emoji').textContent = tema.emoji;
   document.getElementById('camp-det-hd-nome').textContent = c.nome||'—';
 
-  const tagObj = c.tag ? getTag(c.tag) : null;
-  const mostrarArq = c.mostrarArquivados==='todos';
-  const vinculados = cards.filter(card=>{
-    if(!mostrarArq && card.archived) return false;
-    return c.tag ? getCardTags(card).includes(c.tag) : false;
-  }).sort((a,b)=>String(a.col).localeCompare(String(b.col)));
+  const mostrarArq   = c.mostrarArquivados==='todos';
+  const campTags     = (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
+  const isMS         = !!(c.multiSquad);
+  const msSquads     = (c.squads||[ACTIVE_SQUAD]);
+  const statusLabel  = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
+  const periodo      = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
 
-  const entradas = Object.values(c.entradas||{}).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
-  const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
-  const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
-  const squadsStr = (c.squads||[ACTIVE_SQUAD]).join(', ');
+  // Modo: 'squad' (só ACTIVE_SQUAD) ou 'multi' (todos os squads)
+  if(!window._campViewMode) window._campViewMode = 'squad';
+  const viewMode = isMS ? window._campViewMode : 'squad';
+
+  // Cards: squad vs multi
+  const _filterCards = (sqId, cardsArr) => {
+    return (cardsArr||[]).filter(card=>{
+      if(!mostrarArq && card.archived) return false;
+      return campTags.length ? campTags.some(t=>(card.tags||[]).includes(t)||(card.tag===t)) : false;
+    });
+  };
+  // No modo squad, usa os cards do board atual
+  const vinculadosLocal = _filterCards(ACTIVE_SQUAD, cards).sort((a,b)=>String(a.col).localeCompare(String(b.col)));
+
+  // Entradas: agrega de todas as campanhas com mesmo ID raiz ou desta campanha
+  // No modo multi, inclui entradas das campanhas irmãs (mesmo nome, outros squads)
+  const todasEntradas = Object.values(c.entradas||{}).map(e=>({...e,_squad:ACTIVE_SQUAD}));
+  // filtro de squad ativo no multi
+  const _sqFilter = window._campSqFilter||'all';
+
+  const entrFiltradas = todasEntradas
+    .filter(e=> _sqFilter==='all' || e._squad===_sqFilter)
+    .sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 
   document.getElementById('camp-detail-inner').innerHTML = `
     <div class="camp-detail-hd">
-      <div class="camp-detail-nome">${tema.emoji} ${esc(c.nome||'—')}</div>
+      <div class="camp-detail-nome">${tema.emoji} ${esc(c.nome||'—')}${isMS?` <span class="camp-ms-badge">🔗 Multi-squad</span>`:''}</div>
       ${c.mote?`<div class="camp-detail-mote">"${esc(c.mote)}"</div>`:''}
       <div class="camp-detail-pills">
         <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
         <span class="camp-status-pill camp-status-${c.status||'planejamento'}">${statusLabel}</span>
-        ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=getTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg};border-color:${tobj.bg};color:${tobj.color}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
+        ${campTags.map(tid=>{const tobj=getTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg};border-color:${tobj.bg};color:${tobj.color}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
       </div>
     </div>
+    ${isMS?`
+    <div class="camp-ms-toggle-bar">
+      <span style="font-size:11px;color:var(--txt3);">Visão:</span>
+      <button class="camp-ms-toggle-btn ${viewMode==='squad'?'on':''}" onclick="setCampViewMode('squad')">🐟 Só meu squad</button>
+      <button class="camp-ms-toggle-btn ${viewMode==='multi'?'on':''}" onclick="setCampViewMode('multi')">🔗 Todos os squads</button>
+      ${viewMode==='multi'?`
+      <div class="camp-sq-filter" style="margin-left:8px;">
+        <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${sq}</span>`;}).join('')}
+        ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todos</span>`:''}
+      </div>`:''}
+    </div>`:''}
     <div class="camp-detail-body">
       <div class="camp-sidebar">
         <div>
           <div class="camp-sidebar-sec">Metadados</div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Período</span><span class="camp-meta-val">${esc(periodo)}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${esc(squadsStr)}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Tags vinculadas</span><span class="camp-meta-val">${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=getTag(tid);return tobj?esc(tobj.label):'';}).filter(Boolean).join(', ')||'Nenhuma'}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${c.mostrarArquivados==='todos'?'Todos':'Só ativos'}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span style="color:${sqc.text};font-size:10px;">${sq}</span>`;}).join(' · ')}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Tags vinculadas</span><span class="camp-meta-val">${campTags.map(tid=>{const tobj=getTag(tid);return tobj?esc(tobj.label):'';}).filter(Boolean).join(', ')||'Nenhuma'}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${mostrarArq?'Todos':'Só ativos'}</span></div>
         </div>
         <div>
           <div class="camp-sidebar-sec">🎨 KVs da campanha</div>
@@ -5969,11 +6050,12 @@ function renderCampDetalhe(c){
           <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
-          <div class="camp-sidebar-sec">Cards vinculados (${vinculados.length})</div>
+          <div class="camp-sidebar-sec">Cards vinculados (${vinculadosLocal.length}${isMS&&viewMode==='multi'?' · só este squad':''})</div>
           <div class="camp-card-list">
-            ${vinculados.length?vinculados.map(card=>{
-              const col = columns.find(cl=>cl.id===card.col);
-              const colColor = col?.color||'#38b6ff';
+            ${vinculadosLocal.length?vinculadosLocal.map(card=>{
+              const col=columns.find(cl=>cl.id===card.col);
+              const colColor=col?.color||'#38b6ff';
+              const sqc=_sqColor(ACTIVE_SQUAD);
               return `<div class="camp-card-item" onclick="openCard('${esc(card.id)}')">
                 <span class="camp-card-item-col" style="background:${colColor}22;color:${colColor};border:1px solid ${colColor}44;">${esc(col?.name||card.col)}</span>
                 <span class="camp-card-item-title">${esc(card.title||'(sem título)')}</span>
@@ -5985,8 +6067,8 @@ function renderCampDetalhe(c){
       </div>
       <div style="display:flex;flex-direction:column;overflow:hidden;">
         <div class="camp-timeline" id="camp-timeline-body">
-          ${entradas.length
-            ? entradas.map(e=>_renderEntrada(e,c.id)).join('')
+          ${entrFiltradas.length
+            ? entrFiltradas.map(e=>_renderEntrada(e,c.id)).join('')
             : '<div class="camp-timeline-empty">📝 Nenhum registro ainda.<br>Adicione aprendizados, resultados e links abaixo.</div>'}
         </div>
         <div class="camp-composer" id="camp-composer">
@@ -6020,6 +6102,25 @@ function renderCampDetalhe(c){
   _campComposerLinks = [];
   _renderComposerLinks();
 }
+
+function setCampViewMode(mode){
+  window._campViewMode  = mode;
+  window._campSqFilter  = 'all';
+  if(_campAtual) renderCampDetalhe(_campAtual);
+}
+
+function setCampSqFilter(sq){
+  window._campSqFilter = sq;
+  if(_campAtual) renderCampDetalhe(_campAtual);
+}
+
+const SQUAD_COLORS = {
+  dados:         {bg:'rgba(56,182,255,.1)',  border:'rgba(56,182,255,.35)',  text:'#38b6ff'},
+  midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
+  midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
+  dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
+};
+function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
 
 function _renderEntrada(e, campId){
   const icon = CAMP_TIPO_ICONS[e.tipo]||'📝';
@@ -6104,6 +6205,10 @@ function openCampEdit(id){
   _renderCampTagPicker();
   // Tema
   document.querySelectorAll('.camp-tema-opt').forEach(el=>el.classList.toggle('sel',el.dataset.tema===_campEditTema));
+  // Multi-squad
+  const msChk = document.getElementById('camp-edit-multisquad');
+  if(msChk){ msChk.checked = !!(c.multiSquad); }
+  document.getElementById('camp-edit-squads-wrap').style.display = c.multiSquad?'block':'none';
   // Squads
   const squadsWrap = document.getElementById('camp-edit-squads');
   const KNOWN_SQUADS = typeof SQUADS!=='undefined' ? SQUADS : [{id:ACTIVE_SQUAD,label:ACTIVE_SQUAD,icon:''}];
@@ -6164,6 +6269,7 @@ async function saveCamp(){
     status:     document.getElementById('camp-edit-status').value||'planejamento',
     mostrarArquivados: document.getElementById('camp-edit-mostrar-arquivados').value||'ativos',
     tema: _campEditTema,
+    multiSquad: document.getElementById('camp-edit-multisquad')?.checked||false,
     squads: squads.length?squads:[ACTIVE_SQUAD],
     criadoEm: existing.criadoEm||new Date().toISOString(),
     criadoPor: existing.criadoPor||u?.displayName||u?.email||'?',
