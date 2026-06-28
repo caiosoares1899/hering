@@ -1681,18 +1681,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-entry-tipo-problema    { border-left:3px solid #ff6b6b; }
 .camp-entry-tipo-link        { border-left:3px solid #ffd166; }
 .camp-entry-tipo-registro    { border-left:3px solid #a855f7; }
-.camp-entry-titulo { font-size:12px; font-weight:700; color:var(--txt); margin-bottom:4px; }
-.camp-entry-corpo  { font-size:12px; color:var(--txt2); line-height:1.6; white-space:pre-wrap; }
+.camp-entry-titulo { font-size:12px; font-weight:600; color:var(--txt); margin-bottom:4px; font-family:'DM Sans',sans-serif; letter-spacing:-.01em; }
+.camp-entry-corpo  { font-size:11.5px; color:var(--txt2); line-height:1.65; white-space:pre-wrap; font-family:'DM Sans',sans-serif; font-weight:400; }
 .camp-entry-links  { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
 .camp-entry-link   { font-size:11px; color:var(--accent); text-decoration:none; }
 .camp-entry-link:hover { text-decoration:underline; }
-.camp-entry-meta   { font-size:9px; color:var(--txt3); margin-top:7px; }
+.camp-entry-meta   { font-size:9px; color:var(--txt3); margin-top:7px; font-family:'DM Sans',sans-serif; font-weight:400; letter-spacing:.01em; }
 .camp-entry-sq-hd {
   display:flex; align-items:center; gap:6px; margin-bottom:8px;
   padding-bottom:7px; border-bottom:1px solid rgba(255,255,255,.06);
 }
 .camp-entry-sq-icon { font-size:15px; line-height:1; }
-.camp-entry-sq-name { font-size:10px; font-weight:700; }
+.camp-entry-sq-name { font-size:10px; font-weight:500; letter-spacing:.03em; font-family:'DM Sans',sans-serif; }
 .camp-entry-del    { position:absolute; top:8px; right:8px; background:none; border:none;
   color:var(--txt3); cursor:pointer; font-size:11px; opacity:0; transition:opacity .15s; }
 .camp-entry:hover .camp-entry-del { opacity:1; }
@@ -3109,7 +3109,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.7-dev</div>
+<div class="version">v8.30.8-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6277,9 +6277,15 @@ function _renderEntrada(e, campId){
   if(isMulti){
     const sqc  = _sqColor(e._squad);
     // Pegar emoji + label do squad (SQUADS existe no board; no painel usa squadData)
-    const sqInfo = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===e._squad);
-    const sqEmoji = sqInfo?.icon||'🐟';
-    const sqLabel = sqInfo?.label||e._squad;
+    // Buscar info do squad: SQUADS global ou squads_meta carregado ou fallback por id
+    const _SQUADS_ALL = typeof SQUADS!=='undefined' ? SQUADS : [];
+    const sqInfo  = _SQUADS_ALL.find(s=>s.id===e._squad);
+    const _SQ_FALLBACK = {
+      dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',
+      cx:'💬',marketplace:'🛒',ecommerce:'🛍',logistica:'🚚',
+    };
+    const sqEmoji = sqInfo?.icon || _SQ_FALLBACK[e._squad] || '🐟';
+    const sqLabel = sqInfo?.label || e._squad;
     sqHeader = `<div class="camp-entry-sq-hd">
       <span class="camp-entry-sq-icon">${sqEmoji}</span>
       <span class="camp-entry-sq-name" style="color:${sqc.text};">${esc(sqLabel)}</span>
