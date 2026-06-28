@@ -1733,7 +1733,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.29 · painel</div>
+<div class="version">v2.30 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1875,8 +1875,6 @@ function loadPresence(){
       const online=Object.values(val).filter(u=>now-u.ts<30000).map(u=>({...u,_squad:sq}));
       window['_presence_'+sq.id]=online;
       renderOnline();
-  setTimeout(_restoreTab, 300);
-  loadPainelCampanhas();
     });
   });
 }
@@ -3980,6 +3978,8 @@ window.addEventListener('fb-ready',()=>{
   loadAdmList();
   loadLembretesGestao();
   loadKudosGeral();
+  loadPainelCampanhas();
+  setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
   window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
