@@ -1128,7 +1128,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="filter-bar">
       <button class="filter-btn active" id="fb-all"           onclick="setFilter('all')">🏠 Todos</button>
       <button class="filter-btn"        id="fb-dados"         onclick="setFilter('dados')">📊 Dados</button>
-      <button class="filter-btn"        id="fb-midia"         onclick="setFilter('midia')">📱 Mkt Performance</button>
+      <button class="filter-btn"        id="fb-midia"         onclick="setFilter('midia')">📱 Marketing de Performance</button>
       <button class="filter-btn"        id="fb-midiacriativa" onclick="setFilter('midiacriativa')">🎨 Mídia Criativa</button>
     </div>
 
@@ -1215,7 +1215,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="sec-title">⚖️ Comparação entre squads</div>
       <div class="card" style="margin-bottom:20px;">
         <table class="cmp-table">
-          <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Mkt Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
+          <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Marketing de Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
           <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
         </table>
       </div>
@@ -1293,7 +1293,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="pcal-tabs" id="pcal-tabs-bar">
         <div class="pcal-tab on"  id="pcal-tab-all"          onclick="setPcalTab('all')">🌐 Todos</div>
         <div class="pcal-tab"     id="pcal-tab-dados"         onclick="setPcalTab('dados')">📊 Dados</div>
-        <div class="pcal-tab"     id="pcal-tab-midia"         onclick="setPcalTab('midia')">📱 Mkt Performance</div>
+        <div class="pcal-tab"     id="pcal-tab-midia"         onclick="setPcalTab('midia')">📱 Marketing de Performance</div>
         <div class="pcal-tab"     id="pcal-tab-midiacriativa" onclick="setPcalTab('midiacriativa')">🎨 Mídia Criativa</div>
         <div class="pcal-tab"     id="pcal-tab-gestao"        onclick="setPcalTab('gestao')">🏢 Gestão</div>
       </div>
@@ -1306,7 +1306,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
             <option value="all">Todos os squads</option>
             <option value="dados">📊 Squad Dados</option>
-            <option value="midia">📱 Mkt Performance</option>
+            <option value="midia">📱 Marketing de Performance</option>
           </select>
           <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
         </div>
@@ -1367,7 +1367,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="grid-3" style="margin-bottom:12px;">
       <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">todos os squads</div></div>
       <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
-      <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
+      <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
     </div>
     <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
 
@@ -1385,7 +1385,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="err-stats-grid">
         <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
         <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
-        <div class="met"><div class="met-lbl">Mkt Performance</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
+        <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
         <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
       </div>
       <div class="card" style="margin-bottom:14px;">
@@ -1737,7 +1737,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.35 · painel</div>
+<div class="version">v2.36 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1947,6 +1947,12 @@ const _SQUAD_COLORS_CAMP = {
   dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
 };
 function _sqColor(sqId){ return _SQUAD_COLORS_CAMP[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
+const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev' };
+function _sqLabel(sqId){
+  const info = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sqId);
+  if(info?.label) return info.label.replace(/^Squad\s+/,'');
+  return _SQ_LABELS[sqId]||sqId;
+}
 
 // ── Toggle de visão multi-squad (painel) — carrega dados pontuais dos outros squads ──
 async function setCampViewMode(mode){
@@ -2262,7 +2268,7 @@ function renderCampDetalhe(c){
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
-        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${sq}</span>`;}).join('')}
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${esc(_sqLabel(sq))}</span>`;}).join('')}
         ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todas</span>`:''}
       </div>`:''}
     </div>`:''}
@@ -2562,7 +2568,7 @@ function openCampCardsGrid(){
   let filtersHtml = '';
   if(ctx.viewMode==='multi' && squadsPresent.length>1){
     filtersHtml += '<select class="camp-filter-sel" id="camp-grid-f-squad" onchange="_renderCampCardsGrid()"><option value="all">Todas as squads</option>'+
-      squadsPresent.map(sq=>`<option value="${esc(sq)}">${esc(sq)}</option>`).join('')+'</select>';
+      squadsPresent.map(sq=>`<option value="${esc(sq)}">${esc(_sqLabel(sq))}</option>`).join('')+'</select>';
   }
   // Colunas presentes
   const colsPresent = [...new Set(cards.map(c=>c.col))];
@@ -2594,8 +2600,7 @@ function _renderCampCardsGrid(){
     const colColor = col?.color||'#38b6ff';
     const sqc = _sqColor(sq_);
     const sqInfo = SQUADS.find(s=>s.id===sq_);
-    const _SQ_LBL={dados:'Dados',midia:'Mkt Performance',midiacriativa:'Mídia Criativa',dev:'Dev'};
-    const sqLabel = sqInfo?.label||_SQ_LBL[sq_]||sq_;
+    const sqLabel = _sqLabel(sq_);
     const sqEmoji = sqInfo?.icon||_SQ_FB[sq_]||'🐟';
     const sqBadge = ctx.viewMode==='multi'
       ? `<span class="camp-sq-tag" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};">${sqEmoji} ${esc(sqLabel)}</span>`
@@ -2800,7 +2805,7 @@ function renderPainelCamp(){
           const nEnt = Object.keys(campSq?.entradas||{}).length;
           return `<div class="pcamp-sq-row">
             <div class="pcamp-sq-dot" style="background:${sqc.text};"></div>
-            <span class="pcamp-sq-name" style="color:${sqc.text};">${sq}</span>
+            <span class="pcamp-sq-name" style="color:${sqc.text};">${esc(_sqLabel(sq))}</span>
             <div class="pcamp-sq-pills">
               <span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">📝 ${nEnt} registro${nEnt!==1?'s':''}</span>
               ${campSq?.status?`<span style="font-size:9px;color:var(--txt3);">${{ativa:'✅ Ativa',planejamento:'📋 Plan.',encerrada:'🔒 Enc.'}[campSq.status]||campSq.status}</span>`:''}
@@ -2860,7 +2865,7 @@ function renderPainelCamp(){
     const nEntradas = Object.keys(c.entradas||{}).length;
     const tipoPill  = c.tipo==='colecao'?'👗 Coleção':'📣 Campanha';
     const kvs       = c.kvs||[];
-    const sqBadges  = squads.map(sq=>{ const sqc=_painelSqColor(sq); return `<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${sq}</span>`; }).join('');
+    const sqBadges  = squads.map(sq=>{ const sqc=_painelSqColor(sq); return `<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${esc(_sqLabel(sq))}</span>`; }).join('');
     return `<div class="card pcamp-individual" style="padding:10px 14px;cursor:pointer;" onclick="_pCampActiveSquad='${esc((squads[0]||'dados'))}';window._campViewMode='squad';openCampDetalhe('${esc(c.id)}')">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <span style="font-size:18px;line-height:1;flex-shrink:0;">${tema.emoji}</span>
