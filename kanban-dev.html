@@ -1687,6 +1687,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-entry-link   { font-size:11px; color:var(--accent); text-decoration:none; }
 .camp-entry-link:hover { text-decoration:underline; }
 .camp-entry-meta   { font-size:9px; color:var(--txt3); margin-top:7px; }
+.camp-entry-sq-hd {
+  display:flex; align-items:center; gap:6px; margin-bottom:8px;
+  padding-bottom:7px; border-bottom:1px solid rgba(255,255,255,.06);
+}
+.camp-entry-sq-icon { font-size:15px; line-height:1; }
+.camp-entry-sq-name { font-size:10px; font-weight:700; }
 .camp-entry-del    { position:absolute; top:8px; right:8px; background:none; border:none;
   color:var(--txt3); cursor:pointer; font-size:11px; opacity:0; transition:opacity .15s; }
 .camp-entry:hover .camp-entry-del { opacity:1; }
@@ -3103,7 +3109,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.6-dev</div>
+<div class="version">v8.30.7-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6261,12 +6267,27 @@ const SQUAD_COLORS = {
 function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
 
 function _renderEntrada(e, campId){
-  const icon = CAMP_TIPO_ICONS[e.tipo]||'📝';
+  const icon  = CAMP_TIPO_ICONS[e.tipo]||'📝';
   const links = (e.links||[]).map(l=>`<a class="camp-entry-link" href="${safeUrl(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a>`).join('');
   const quando = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
   const podeApagar = e.autorUid===window._currentUser?.uid || window._currentUserRole==='adm' || window._currentUserRole==='po';
-  return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'}" data-icon="${icon}">
+  // Squad header — aparece só no modo multi-squad quando a entrada tem _squad
+  const isMulti = window._campViewMode==='multi' && e._squad;
+  let sqHeader = '';
+  if(isMulti){
+    const sqc  = _sqColor(e._squad);
+    // Pegar emoji + label do squad (SQUADS existe no board; no painel usa squadData)
+    const sqInfo = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===e._squad);
+    const sqEmoji = sqInfo?.icon||'🐟';
+    const sqLabel = sqInfo?.label||e._squad;
+    sqHeader = `<div class="camp-entry-sq-hd">
+      <span class="camp-entry-sq-icon">${sqEmoji}</span>
+      <span class="camp-entry-sq-name" style="color:${sqc.text};">${esc(sqLabel)}</span>
+    </div>`;
+  }
+  return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'}" data-icon="${icon}" ${isMulti?`style="border-left-color:${_sqColor(e._squad).text};"`:''}>
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
+    ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
     <div class="camp-entry-corpo">${esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
