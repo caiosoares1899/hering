@@ -1592,7 +1592,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 #card-ov.above-camp { z-index:220 !important; }
 .camp-panel {
   background:rgba(6,18,36,.98); border:1px solid var(--ct-border,var(--glass-b));
-  border-radius:16px; width:min(920px,95vw); height:88vh;
+  border-radius:16px; width:min(1240px,97vw); height:92vh;
   display:flex; flex-direction:column; overflow:hidden;
   box-shadow:0 24px 64px rgba(0,0,0,.7);
   transition:border-color .3s;
@@ -1645,7 +1645,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-detail-nome  { font-family:"Syne",sans-serif; font-size:22px; font-weight:800; margin-bottom:3px; }
 .camp-detail-mote  { font-size:13px; color:var(--ct3,var(--txt2)); font-style:italic; margin-bottom:12px; }
 .camp-detail-pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-.camp-detail-body  { flex:1; display:grid; grid-template-columns:280px 1fr; overflow:hidden; }
+.camp-detail-body  { flex:1; display:grid; grid-template-columns:248px 1fr; overflow:hidden; min-height:0; }
 @media(max-width:700px){ .camp-detail-body{ grid-template-columns:1fr; } }
 
 /* Coluna esquerda — metadados + cards */
@@ -1657,17 +1657,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-meta-val { color:var(--txt); font-weight:500; font-family:'DM Sans',sans-serif; }
 .camp-card-list { display:flex; flex-direction:column; gap:4px; }
 .camp-card-item {
-  display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px;
+  font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:7px;
   background:rgba(56,182,255,.04); border:1px solid rgba(56,182,255,.08);
   cursor:pointer; transition:all .12s; font-size:11px;
 }
 .camp-card-item:hover { background:rgba(56,182,255,.12); border-color:rgba(56,182,255,.25); }
 .camp-card-item-col { font-size:9px; padding:1px 6px; border-radius:999px; white-space:nowrap; }
-.camp-card-item-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.camp-card-item-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'DM Sans',sans-serif; font-weight:400; font-size:11px; }
 .camp-card-item-owner { font-size:9px; color:var(--txt3); flex-shrink:0; }
 
 /* Coluna direita — timeline de entradas */
-.camp-timeline { overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:0; }
+.camp-timeline { overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:0; min-height:0; flex:1; }
 .camp-timeline-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .camp-entry {
   position:relative; padding:12px 14px 12px 36px; margin-bottom:12px;
@@ -3115,7 +3115,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.13-dev</div>
+<div class="version">v8.30.14-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6195,6 +6195,13 @@ function renderCampDetalhe(c){
             ${_renderFixedLinks(c.lista||[],'lista',c.id)}
           </div>
           <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
+        </div>
+        <div>
+          <div class="camp-sidebar-sec">🔗 Links importantes</div>
+          <div class="camp-fixed-links" id="camp-links-list">
+            ${_renderFixedLinks(c.links||[],'links',c.id)}
+          </div>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','links')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">Cards vinculados (${vinculadosLocal.length}${viewMode==='multi'?' · todas as squads':' · minha squad'})</div>
