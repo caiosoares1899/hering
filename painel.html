@@ -1631,7 +1631,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.17 · painel</div>
+<div class="version">v2.18 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1912,15 +1912,7 @@ function renderCampList(){
   const fStatus = document.getElementById('camp-f-status')?.value||'all';
   const fOrder  = document.getElementById('camp-f-order')?.value||'recente';
 
-  // Filtrar por squad ativo (vê as próprias + as multi-squad onde participa)
-  list = list.filter(c=>{
-    const squads = c.squads||[];
-    return squads.includes(ACTIVE_SQUAD) || squads.length===0 || c.multiSquad;
-  }).filter(c=>{
-    // multi-squad sem o squad atual: só aparece se squad está listado
-    if(c.multiSquad && !(c.squads||[]).includes(ACTIVE_SQUAD)) return false;
-    return true;
-  });
+  // Painel: sem filtro por squad — ADM vê tudo
   if(fTipo   !=='all') list=list.filter(c=>c.tipo===fTipo);
   if(fStatus !=='all') list=list.filter(c=>c.status===fStatus);
 
@@ -1985,7 +1977,7 @@ function renderCampDetalhe(c){
   const mostrarArq = c.mostrarArquivados==='todos';
   const campTags   = (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
   const isMS       = !!(c.multiSquad);
-  const msSquads   = c.squads&&c.squads.length ? c.squads : [_pCampActiveSquad||SQUADS[0]?.id||'dados'];
+  const msSquads   = c.squads&&c.squads.length ? c.squads : (SQUADS.map(s=>s.id));
   const statusLabel= {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
   const periodo    = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
 
@@ -2003,7 +1995,7 @@ function renderCampDetalhe(c){
 
   // Helper: cards e colunas por squad
   const _sqCards = (sq) => {
-    if(sq===_pCampActiveSquad||(!_pCampActiveSquad&&sq===SQUADS[0]?.id)){
+    if(sq===_pCampActiveSquad||(!_pCampActiveSquad&&sq===msSquads[0])){
       return (squadData[sq]?.cards||[]).filter(c=>c&&c.id);
     }
     return (_campCrossData[sq]?.cards||[]).filter(c=>c&&c.id);
@@ -2019,7 +2011,7 @@ function renderCampDetalhe(c){
     return campTags.length ? campTags.some(t=>cardTags.includes(t)) : false;
   });
 
-  const _squadsParaCards = viewMode==='multi' ? msSquads : [_pCampActiveSquad||msSquads[0]];
+  const _squadsParaCards = viewMode==='multi' ? msSquads : [_pCampActiveSquad||msSquads[0]||'dados'];
   const vinculados = _squadsParaCards
     .flatMap(sq=>_filterCards(sq).map(card=>({...card,_squad:sq})))
     .sort((a,b)=>String(a._squad).localeCompare(String(b._squad))||String(a.col).localeCompare(String(b.col)));
@@ -2271,10 +2263,10 @@ function openCampEdit(id){
   document.getElementById('camp-edit-squads-wrap').style.display = c.multiSquad?'block':'none';
   // Squads
   const squadsWrap = document.getElementById('camp-edit-squads');
-  const KNOWN_SQUADS = typeof SQUADS!=='undefined' ? SQUADS : [{id:ACTIVE_SQUAD,label:ACTIVE_SQUAD,icon:''}];
+  const KNOWN_SQUADS = typeof SQUADS!=='undefined' ? SQUADS : [{id:'dados',label:'dados',icon:'📊'}];
   squadsWrap.innerHTML = KNOWN_SQUADS.map(sq=>`
     <label class="camp-squad-chk">
-      <input type="checkbox" name="camp-squads" value="${esc(sq.id)}" ${(c.squads||[ACTIVE_SQUAD]).includes(sq.id)?'checked':''}>
+      <input type="checkbox" name="camp-squads" value="${esc(sq.id)}" ${(c.squads||[]).includes(sq.id)?'checked':''}>
       ${sq.icon||''} ${esc(sq.label||sq.id)}
     </label>`).join('');
   document.getElementById('camp-edit-ov').classList.add('open');
@@ -2334,7 +2326,7 @@ async function saveCamp(){
     mostrarArquivados: document.getElementById('camp-edit-mostrar-arquivados').value||'ativos',
     tema: _campEditTema,
     multiSquad: document.getElementById('camp-edit-multisquad')?.checked||false,
-    squads: squads.length?squads:[ACTIVE_SQUAD],
+    squads: squads.length?squads:[],
     criadoEm: existing.criadoEm||new Date().toISOString(),
     criadoPor: existing.criadoPor||u?.displayName||u?.email||'?',
     atualizadoEm: new Date().toISOString(),
