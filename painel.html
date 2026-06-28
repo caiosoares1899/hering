@@ -1631,7 +1631,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.18 · painel</div>
+<div class="version">v2.19 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1928,13 +1928,14 @@ function renderCampList(){
   }
   body.innerHTML = list.map(c=>{
     const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
-    const tagObj = c.tag ? getTag(c.tag) : null;
+    const tagObj = null; // painel usa _pTag diretamente abaixo
     // contar cards vinculados
     const mostrarArq = c.mostrarArquivados==='todos';
     const vinculados = cards.filter(card=>{
       if(!mostrarArq && card.archived) return false;
       const campTags=(c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
-    return campTags.length ? campTags.some(t=>getCardTags(card).includes(t)) : false;
+    const _ct=Array.isArray(card.tags)?card.tags:(card.tag?[card.tag]:[]);
+    return campTags.length ? campTags.some(t=>_ct.includes(t)) : false;
     });
     const statusCls = `camp-status-${c.status||'planejamento'}`;
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
@@ -1947,7 +1948,7 @@ function renderCampList(){
         ${c.mote?`<div class="camp-card-mote">"${esc(c.mote)}"</div>`:''}
         <div class="camp-card-meta">
           <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
-          ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=getTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg||'rgba(56,182,255,.1)'};border-color:${tobj.bg||'rgba(56,182,255,.2)'};color:${tobj.color||'#38b6ff'}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
+          ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=_pTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg||'rgba(56,182,255,.1)'};border-color:${tobj.bg||'rgba(56,182,255,.2)'};color:${tobj.color||'#38b6ff'}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
           <span class="camp-card-pill">📅 ${esc(periodo)}</span>
         </div>
       </div>
