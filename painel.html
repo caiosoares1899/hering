@@ -1631,7 +1631,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.11 · painel</div>
+<div class="version">v2.12 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1979,49 +1979,80 @@ function renderCampDetalhe(c){
   document.getElementById('camp-det-emoji').textContent = tema.emoji;
   document.getElementById('camp-det-hd-nome').textContent = c.nome||'—';
 
-  const mostrarArq   = c.mostrarArquivados==='todos';
-  const campTags     = (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
-  const isMS         = !!(c.multiSquad);
-  const msSquads     = (c.squads||[_pCampActiveSquad||'dados']);
-  const statusLabel  = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
-  const periodo      = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
+  const mostrarArq = c.mostrarArquivados==='todos';
+  const campTags   = (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
+  const isMS       = !!(c.multiSquad);
+  const msSquads   = c.squads&&c.squads.length ? c.squads : [_pCampActiveSquad||SQUADS[0]?.id||'dados'];
+  const statusLabel= {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
+  const periodo    = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
 
-  // No painel: modo sempre 'multi' para ver todos os squads
   if(!window._campViewMode) window._campViewMode = isMS?'multi':'squad';
   const viewMode = isMS ? window._campViewMode : 'squad';
 
-  // Cards de todos os squads participantes (painel tem acesso a squadData)
-  const _filterCards = (sqId, cardsArr) => {
-    return (cardsArr||[]).filter(card=>{
-      if(!mostrarArq && card.archived) return false;
-      return campTags.length ? campTags.some(t=>(card.tags||[]).includes(t)||(card.tag===t)) : false;
-    });
+  // Helper: tags — busca em squadData de todos os squads
+  const _pTag = (tid) => {
+    for(const sq of SQUADS){
+      const t=(squadData[sq.id]?.tags||[]).find(t=>t.id===tid);
+      if(t) return t;
+    }
+    return null;
   };
-  // Painel: carrega de squadData de todos os squads participantes
-  const _allSquadsForView = viewMode==='multi' ? msSquads : [msSquads[0]||_pCampActiveSquad||'dados'];
-  const vinculadosLocal = _allSquadsForView.flatMap(sq=>
-    _filterCards(sq, _pGetCards(sq)).map(card=>({...card,_squad:sq}))
-  ).sort((a,b)=>String(a.col).localeCompare(String(b.col)));
 
-  // Entradas: agrega de todos os squads participantes (painel tem acesso a _painelCampanhas)
+  // Helper: cards e colunas por squad
+  const _sqCards = (sq) => {
+    if(sq===_pCampActiveSquad||(!_pCampActiveSquad&&sq===SQUADS[0]?.id)){
+      return (squadData[sq]?.cards||[]).filter(c=>c&&c.id);
+    }
+    return (_campCrossData[sq]?.cards||[]).filter(c=>c&&c.id);
+  };
+  const _sqCols = (sq) => {
+    return squadData[sq]?.columns||_campCrossData[sq]?.columns||[];
+  };
+
+  // Filtro de cards pela tag
+  const _filterCards = (sq) => _sqCards(sq).filter(card=>{
+    if(!mostrarArq && card.archived) return false;
+    const cardTags = Array.isArray(card.tags)?card.tags:(card.tag?[card.tag]:[]);
+    return campTags.length ? campTags.some(t=>cardTags.includes(t)) : false;
+  });
+
+  const _squadsParaCards = viewMode==='multi' ? msSquads : [_pCampActiveSquad||msSquads[0]];
+  const vinculados = _squadsParaCards
+    .flatMap(sq=>_filterCards(sq).map(card=>({...card,_squad:sq})))
+    .sort((a,b)=>String(a._squad).localeCompare(String(b._squad))||String(a.col).localeCompare(String(b.col)));
+
+  // Entradas: agrega campanhas irmãs no modo multi
   const _sqFilter = window._campSqFilter||'all';
-  let todasEntradas = [];
+  let todasEntradas;
   if(viewMode==='multi'){
-    // busca campanhas com mesmo nome em outros squads
-    Object.values(_painelCampanhas||{}).forEach(oc=>{
-      if(oc.nome===c.nome){
-        const sq = (oc.squads||[])[0]||'dados';
+    todasEntradas = [];
+    Object.values(_campanhas||{}).forEach(oc=>{
+      if(String(oc.nome||'').toLowerCase()===String(c.nome||'').toLowerCase()){
+        const sq=(oc.squads&&oc.squads.length)?oc.squads[0]:(_pCampActiveSquad||'dados');
         Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:sq}));
       }
     });
-    if(!todasEntradas.length) todasEntradas = Object.values(c.entradas||{}).map(e=>({...e,_squad:(c.squads||[])[0]||'dados'}));
+    if(!todasEntradas.length)
+      todasEntradas=Object.values(c.entradas||{}).map(e=>({...e,_squad:msSquads[0]||'dados'}));
   } else {
-    todasEntradas = Object.values(c.entradas||{}).map(e=>({...e,_squad:(c.squads||[])[0]||'dados'}));
+    todasEntradas=Object.values(c.entradas||{}).map(e=>({...e,_squad:_pCampActiveSquad||msSquads[0]||'dados'}));
   }
-
   const entrFiltradas = todasEntradas
-    .filter(e=> _sqFilter==='all' || e._squad===_sqFilter)
+    .filter(e=>_sqFilter==='all'||e._squad===_sqFilter)
     .sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+
+  // Render tag pills
+  const tagPills = campTags.map(tid=>{
+    const t=_pTag(tid);
+    return t?`<span class="camp-card-pill" style="background:${t.bg||'rgba(56,182,255,.1)'};border-color:${t.bg||'rgba(56,182,255,.2)'};color:${t.color||'#38b6ff'}">🏷 ${esc(t.label)}</span>`:'';
+  }).join('');
+
+  // Squad badges na barra de metadados
+  const sqBadgesHd = msSquads.map(sq=>{
+    const sqc=_sqColor(sq);
+    const sqInfo=SQUADS.find(s=>s.id===sq);
+    return `<span style="color:${sqc.text};font-size:11px;">${sqInfo?.icon||'🐟'} ${sqInfo?.label||sq}</span>`;
+  }).join(' &nbsp;');
 
   document.getElementById('camp-detail-inner').innerHTML = `
     <div class="camp-detail-hd">
@@ -2030,19 +2061,19 @@ function renderCampDetalhe(c){
       <div class="camp-detail-pills">
         <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
         <span class="camp-status-pill camp-status-${c.status||'planejamento'}">${statusLabel}</span>
-        ${campTags.map(tid=>{const tobj=_pGetTag(tid,null);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg||'rgba(56,182,255,.1)'};border-color:${tobj.bg||'rgba(56,182,255,.2)'};color:${tobj.color||'#38b6ff'}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
+        ${tagPills}
       </div>
     </div>
     ${isMS?`
     <div class="camp-ms-toggle-bar">
       <span style="font-size:11px;color:var(--txt3);">Visão:</span>
-      <button class="camp-ms-toggle-btn ${viewMode==='squad'?'on':''}" onclick="setCampViewMode('squad')">🐟 Só meu squad</button>
-      <button class="camp-ms-toggle-btn ${viewMode==='multi'?'on':''}" onclick="setCampViewMode('multi')">🔗 Todos os squads</button>
+      <button class="camp-ms-toggle-btn ${viewMode==='squad'?'on':''}" onclick="setCampViewMode('squad')">🐟 Só minha squad</button>
+      <button class="camp-ms-toggle-btn ${viewMode==='multi'?'on':''}" onclick="setCampViewMode('multi')">🔗 Todas as squads</button>
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
         ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${sq}</span>`;}).join('')}
-        ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todos</span>`:''}
+        ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todas</span>`:''}
       </div>`:''}
     </div>`:''}
     <div class="camp-detail-body">
@@ -2050,9 +2081,9 @@ function renderCampDetalhe(c){
         <div>
           <div class="camp-sidebar-sec">Metadados</div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Período</span><span class="camp-meta-val">${esc(periodo)}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span style="color:${sqc.text};font-size:10px;">${sq}</span>`;}).join(' · ')}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Tags vinculadas</span><span class="camp-meta-val">${campTags.map(tid=>{const tobj=getTag(tid);return tobj?esc(tobj.label):'';}).filter(Boolean).join(', ')||'Nenhuma'}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${mostrarArq?'Todos':'Só ativos'}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val" style="display:flex;gap:8px;flex-wrap:wrap;">${sqBadgesHd}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Tags</span><span class="camp-meta-val">${campTags.map(tid=>{const t=_pTag(tid);return t?esc(t.label):'';}).filter(Boolean).join(', ')||'Nenhuma'}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Cards</span><span class="camp-meta-val">${mostrarArq?'Todos':'Só ativos'}</span></div>
         </div>
         <div>
           <div class="camp-sidebar-sec">🎨 KVs da campanha</div>
@@ -2069,20 +2100,25 @@ function renderCampDetalhe(c){
           <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
-          <div class="camp-sidebar-sec">Cards vinculados (${vinculadosLocal.length}${isMS&&viewMode==='multi'?' · só este squad':''})</div>
+          <div class="camp-sidebar-sec">Cards vinculados (${vinculados.length}${viewMode==='multi'?' · todas as squads':' · minha squad'})</div>
           <div class="camp-card-list">
-            ${vinculadosLocal.length?vinculadosLocal.map(card=>{
-              const sqId = card._squad||_pCampActiveSquad||'dados';
-              const col = _pGetColumns(sqId).find(cl=>cl.id===card.col);
-              const colColor=col?.color||'#38b6ff';
-              const sqc=_sqColor(sqId);
-              return `<div class="camp-card-item" onclick="_pOpenCard('${esc(card.id)}','${esc(sqId)}')">
-                <span class="camp-sq-tag camp-sq-${esc(sqId)}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};">${esc(sqId)}</span>
+            ${vinculados.length ? vinculados.map(card=>{
+              const sq_  = card._squad||_pCampActiveSquad||'dados';
+              const cols = _sqCols(sq_);
+              const col  = cols.find(cl=>cl.id===card.col);
+              const colColor = col?.color||'#38b6ff';
+              const sqc_ = _sqColor(sq_);
+              const sqInfo = SQUADS.find(s=>s.id===sq_);
+              const sqBadge = isMS && viewMode==='multi'
+                ? `<span class="camp-sq-tag" style="--sqc:${sqc_.text};--sqb:${sqc_.border};--sqbg:${sqc_.bg};">${sqInfo?.icon||''} ${esc(sq_)}</span>`
+                : '';
+              return `<div class="camp-card-item" onclick="_pOpenCard('${esc(card.id)}','${esc(sq_)}')">
+                ${sqBadge}
                 <span class="camp-card-item-col" style="background:${colColor}22;color:${colColor};border:1px solid ${colColor}44;">${esc(col?.name||card.col)}</span>
                 <span class="camp-card-item-title">${esc(card.title||'(sem título)')}</span>
                 <span class="camp-card-item-owner">${esc(card.owner||'')}</span>
               </div>`;
-            }).join(''):'<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum card vinculado.</div>'}
+            }).join('') : '<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum card vinculado.</div>'}
           </div>
         </div>
       </div>
@@ -2124,24 +2160,6 @@ function renderCampDetalhe(c){
   _renderComposerLinks();
 }
 
-function setCampViewMode(mode){
-  window._campViewMode  = mode;
-  window._campSqFilter  = 'all';
-  if(_campAtual) renderCampDetalhe(_campAtual);
-}
-
-function setCampSqFilter(sq){
-  window._campSqFilter = sq;
-  if(_campAtual) renderCampDetalhe(_campAtual);
-}
-
-const SQUAD_COLORS = {
-  dados:         {bg:'rgba(56,182,255,.1)',  border:'rgba(56,182,255,.35)',  text:'#38b6ff'},
-  midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
-  midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
-  dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
-};
-function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
 
 function _renderEntrada(e, campId){
   const icon  = CAMP_TIPO_ICONS[e.tipo]||'📝';
