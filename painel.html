@@ -1631,7 +1631,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.16 · painel</div>
+<div class="version">v2.17 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1867,12 +1867,15 @@ function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
     _campanhas = snap.val()||{};
-    // se o detalhe estiver aberto, atualiza
-    if(_campAtual && document.getElementById('camp-view-detalhe').style.display!=='none'){
+    // atualiza detalhe se estiver aberto
+    if(_campAtual && document.getElementById('camp-view-detalhe')?.style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
       renderCampDetalhe(_campAtual);
     }
     renderCampList();
+    // painel: atualiza lista e verifica ADM
+    renderPainelCamp();
+    _checkPainelAdmCamp();
   });
 }
 
@@ -2418,11 +2421,7 @@ function _painelSqColor(sq){ return PAINEL_SQ_COLORS[sq]||{bg:'rgba(56,182,255,.
 let _painelCampanhas = {};
 
 function loadPainelCampanhas(){
-  window._onValue(window._ref(window._db,'kanban/campanhas'), snap=>{
-    _painelCampanhas = snap.val()||{};
-    renderPainelCamp();
-    _checkPainelAdmCamp();
-  });
+  loadCampanhas(); // usa _campanhas como fonte única
 }
 
 function _checkPainelAdmCamp(){
@@ -2450,13 +2449,15 @@ function renderPainelCamp(){
   // Agrupa pelo nome normalizado
   const msGroups = {};
   const individual = [];
+  const _seenIds = new Set();
   list.forEach(c=>{
     if(c.multiSquad){
       const key = String(c.nome||'').toLowerCase().trim();
       if(!msGroups[key]) msGroups[key]=[];
-      msGroups[key].push(c);
+      // evitar duplicatas pelo id dentro do grupo
+      if(!msGroups[key].find(x=>x.id===c.id)) msGroups[key].push(c);
     } else {
-      individual.push(c);
+      if(!_seenIds.has(c.id)){ _seenIds.add(c.id); individual.push(c); }
     }
   });
 
@@ -2500,7 +2501,7 @@ function renderPainelCamp(){
             ${sqRows}
             ${kvs.length?`<div style="margin-top:8px;border-top:1px solid rgba(255,209,102,.1);padding-top:8px;">
               <div style="font-size:9px;color:rgba(255,209,102,.6);font-weight:700;text-transform:uppercase;margin-bottom:4px;">🎨 KVs</div>
-              ${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
+              ${[...new Map(kvs.map(l=>[l.url,l])).values()].map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
             </div>`:''}
             <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,209,102,.1);">
               <button onclick="event.stopPropagation();_pCampActiveSquad='${esc(allSquads[0]||'dados')}';window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')"
@@ -2519,9 +2520,11 @@ function renderPainelCamp(){
     el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhuma campanha individual cadastrada.</div>';
     return;
   }
-  // Agrupar por squad
+  // Agrupar por squad, deduplicando por id
+  const _seen = new Set();
   const _bySquad = {};
-  individual.forEach(ci=>{const sq=(ci.squads&&ci.squads[0])||'outros';if(!_bySquad[sq])_bySquad[sq]=[];_bySquad[sq].push(ci);});
+  individual.filter(ci=>{ if(_seen.has(ci.id)) return false; _seen.add(ci.id); return true; })
+    .forEach(ci=>{const sq=(ci.squads&&ci.squads[0])||'outros';if(!_bySquad[sq])_bySquad[sq]=[];_bySquad[sq].push(ci);});
 
   el.innerHTML = Object.entries(_bySquad).map(([sq,camps])=>{
     const sqcol=_painelSqColor(sq);
@@ -2594,7 +2597,7 @@ async function painelCampActivateAll(){
   checks.forEach(chk=>{
     const id  = chk.dataset.campId;
     const val = chk.checked;
-    const cur = _painelCampanhas[id];
+    const cur = _campanhas[id];
     if(cur && !!(cur.multiSquad) !== val) updates.push({id, val});
   });
   if(!updates.length){ showToast('Nenhuma alteração detectada.'); return; }
