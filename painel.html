@@ -1733,7 +1733,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.30 · painel</div>
+<div class="version">v2.31 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2711,7 +2711,7 @@ const PAINEL_SQ_COLORS = {
 };
 function _painelSqColor(sq){ return PAINEL_SQ_COLORS[sq]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
 
-let _painelCampanhas = {};
+// _painelCampanhas removido — usa _campanhas como fonte única
 
 function loadPainelCampanhas(){
   loadCampanhas(); // usa _campanhas como fonte única
@@ -2727,7 +2727,7 @@ function renderPainelCamp(){
   const elMs = document.getElementById('painel-camp-ms-list');
   if(!el) return;
 
-  let list = Object.values(_painelCampanhas);
+  let list = Object.values(_campanhas);
   const fTipo   = document.getElementById('painel-camp-f-tipo')?.value||'all';
   const fStatus = document.getElementById('painel-camp-f-status')?.value||'all';
   if(fTipo  !=='all') list=list.filter(c=>c.tipo===fTipo);
@@ -2863,7 +2863,7 @@ function renderPainelCamp(){
 
 function openPainelCampMsEdit(){
   const body = document.getElementById('painel-ms-edit-body'); if(!body) return;
-  const all  = Object.values(_painelCampanhas);
+  const all  = Object.values(_campanhas);
   body.innerHTML = !all.length
     ? '<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha cadastrada.</div>'
     : `<div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.6;">
