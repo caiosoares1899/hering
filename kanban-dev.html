@@ -2974,10 +2974,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <input class="camp-inp" id="camp-edit-mote" placeholder="Ex: Para quem nunca esquece">
     </div>
     <div class="camp-field">
-      <label class="camp-label">Tag vinculada (cards com essa tag entram automaticamente)</label>
-      <select class="camp-inp" id="camp-edit-tag">
-        <option value="">Nenhuma tag vinculada</option>
-      </select>
+      <label class="camp-label">Tags vinculadas (cards com qualquer uma dessas tags entram automaticamente)</label>
+      <div id="camp-edit-tags-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:8px;min-height:38px;"></div>
+      <div style="font-size:9px;color:var(--txt3);margin-top:3px;">Clique nas tags para selecionar/deselecionar</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="camp-field">
@@ -3062,7 +3061,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.2-dev</div>
+<div class="version">v8.30.3-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5900,6 +5899,7 @@ let _campanhas = {};           // id -> objeto campanha
 let _campAtual  = null;        // campanha em detalhe
 let _campEditId = null;        // id sendo editado (null = novo)
 let _campEditTema = 'neutro';  // tema selecionado no edit modal
+let _campEditTags  = [];       // tags selecionadas no edit modal
 let _campComposerLinks = [];   // links do composer ativo
 
 // Caminho Firebase: global (cross-squad configurado no painel)
@@ -5973,7 +5973,8 @@ function renderCampList(){
     const mostrarArq = c.mostrarArquivados==='todos';
     const vinculados = cards.filter(card=>{
       if(!mostrarArq && card.archived) return false;
-      return c.tag ? getCardTags(card).includes(c.tag) : false;
+      const campTags=(c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
+    return campTags.length ? campTags.some(t=>getCardTags(card).includes(t)) : false;
     });
     const statusCls = `camp-status-${c.status||'planejamento'}`;
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
@@ -5985,7 +5986,7 @@ function renderCampList(){
         ${c.mote?`<div class="camp-card-mote">"${esc(c.mote)}"</div>`:''}
         <div class="camp-card-meta">
           <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
-          ${tagObj?`<span class="camp-card-pill" style="background:${tagObj.bg||'rgba(56,182,255,.1)'};border-color:${tagObj.bg||'rgba(56,182,255,.2)'};color:${tagObj.color||'#38b6ff'}">🏷 ${esc(tagObj.label)}</span>`:''}
+          ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=getTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg||'rgba(56,182,255,.1)'};border-color:${tobj.bg||'rgba(56,182,255,.2)'};color:${tobj.color||'#38b6ff'}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
           <span class="camp-card-pill">📅 ${esc(periodo)}</span>
         </div>
       </div>
@@ -6031,7 +6032,7 @@ function renderCampDetalhe(c){
       <div class="camp-detail-pills">
         <span class="camp-card-pill">${c.tipo==='colecao'?'👗 Coleção':'📣 Campanha'}</span>
         <span class="camp-status-pill camp-status-${c.status||'planejamento'}">${statusLabel}</span>
-        ${tagObj?`<span class="camp-card-pill" style="background:${tagObj.bg};border-color:${tagObj.bg};color:${tagObj.color}">🏷 ${esc(tagObj.label)}</span>`:''}
+        ${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=getTag(tid);return tobj?`<span class="camp-card-pill" style="background:${tobj.bg};border-color:${tobj.bg};color:${tobj.color}">🏷 ${esc(tobj.label)}</span>`:'';}).join('')}
       </div>
     </div>
     <div class="camp-detail-body">
@@ -6040,7 +6041,7 @@ function renderCampDetalhe(c){
           <div class="camp-sidebar-sec">Metadados</div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Período</span><span class="camp-meta-val">${esc(periodo)}</span></div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${esc(squadsStr)}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Tag vinculada</span><span class="camp-meta-val">${tagObj?esc(tagObj.label):'Nenhuma'}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Tags vinculadas</span><span class="camp-meta-val">${(c.tags&&c.tags.length?c.tags:(c.tag?[c.tag]:[])).map(tid=>{const tobj=getTag(tid);return tobj?esc(tobj.label):'';}).filter(Boolean).join(', ')||'Nenhuma'}</span></div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${c.mostrarArquivados==='todos'?'Todos':'Só ativos'}</span></div>
         </div>
         <div>
@@ -6188,9 +6189,9 @@ function openCampEdit(id){
   document.getElementById('camp-edit-fim').value    = c.dataFim||'';
   document.getElementById('camp-edit-status').value = c.status||'planejamento';
   document.getElementById('camp-edit-mostrar-arquivados').value = c.mostrarArquivados||'ativos';
-  // Tags
-  const tagSel = document.getElementById('camp-edit-tag');
-  tagSel.innerHTML='<option value="">Nenhuma tag vinculada</option>'+tags.map(t=>`<option value="${esc(t.id)}" ${c.tag===t.id?'selected':''}>${esc(t.label)}</option>`).join('');
+  // Tags multi-select
+  _campEditTags = [...(c.tags||( c.tag?[c.tag]:[] ))]; // migra campo legado
+  _renderCampTagPicker();
   // Tema
   document.querySelectorAll('.camp-tema-opt').forEach(el=>el.classList.toggle('sel',el.dataset.tema===_campEditTema));
   // Squads
@@ -6202,6 +6203,30 @@ function openCampEdit(id){
       ${sq.icon||''} ${esc(sq.label||sq.id)}
     </label>`).join('');
   document.getElementById('camp-edit-ov').classList.add('open');
+}
+
+function _renderCampTagPicker(){
+  const wrap = document.getElementById('camp-edit-tags-wrap'); if(!wrap) return;
+  wrap.innerHTML = tags.map(t=>{
+    const sel = _campEditTags.includes(t.id);
+    const p   = getPal ? getPal(t.pi) : {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.3)',c:'#38b6ff'};
+    return `<span onclick="campToggleTag('${esc(t.id)}')" style="
+      padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
+      background:${sel?p.bg:'rgba(3,13,26,.6)'};
+      border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
+      color:${sel?p.c:'var(--txt3)'};
+      transition:all .15s;
+      ${sel?'box-shadow:0 0 6px '+p.b+';':''}"
+    >${esc(t.label)}</span>`;
+  }).join('');
+  if(!tags.length) wrap.innerHTML='<span style="font-size:11px;color:var(--txt3);">Nenhuma tag criada no board.</span>';
+}
+
+function campToggleTag(tagId){
+  const idx = _campEditTags.indexOf(tagId);
+  if(idx>=0) _campEditTags.splice(idx,1);
+  else _campEditTags.push(tagId);
+  _renderCampTagPicker();
 }
 
 function campSelTema(el, tema){
@@ -6222,7 +6247,8 @@ async function saveCamp(){
     ...existing,
     id, nome, tipo,
     mote:   document.getElementById('camp-edit-mote').value.trim(),
-    tag:    document.getElementById('camp-edit-tag').value||'',
+    tags:   _campEditTags.slice(),
+    tag:    _campEditTags[0]||'', // retrocompat
     dataInicio: document.getElementById('camp-edit-inicio').value||'',
     dataFim:    document.getElementById('camp-edit-fim').value||'',
     status:     document.getElementById('camp-edit-status').value||'planejamento',
