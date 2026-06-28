@@ -1681,6 +1681,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-entry:hover .camp-entry-del { opacity:1; }
 .camp-entry-del:hover { color:var(--danger); }
 .camp-timeline-empty { text-align:center; color:var(--txt3); font-size:11px; padding:32px 0; line-height:1.8; }
+.camp-tl-filter-bar { display:flex;gap:6px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--glass-b);flex-shrink:0;background:rgba(0,0,0,.1); }
+.camp-tl-search { flex:1;background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--txt);font-family:'DM Sans',sans-serif; }
+.camp-tl-search:focus { outline:none;border-color:var(--accent); }
+.camp-tl-tipo-sel { background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--txt);font-family:'DM Sans',sans-serif;cursor:pointer; }
+.camp-tl-count { font-size:10px;color:var(--txt3);white-space:nowrap; }
 
 /* Composer de entrada */
 .camp-composer {
@@ -3057,7 +3062,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.11</div>
+<div class="version">v8.30.12</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5950,6 +5955,14 @@ function renderCampList(){
     body.innerHTML='<div class="camp-empty">📣 Nenhuma campanha cadastrada ainda.<br>Crie a primeira com o botão abaixo.</div>';
     return;
   }
+  // Deduplicar multi-squad: mostrar só uma entrada por nome
+  const _msNomesVistos = new Set();
+  list = list.filter(c=>{
+    if(!c.multiSquad) return true;
+    const key = String(c.nome||'').toLowerCase().trim();
+    if(_msNomesVistos.has(key)) return false;
+    _msNomesVistos.add(key); return true;
+  });
   body.innerHTML = list.map(c=>{
     const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
     const tagObj = c.tag ? getTag(c.tag) : null;
@@ -6118,6 +6131,19 @@ function renderCampDetalhe(c){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;overflow:hidden;">
+        <div class="camp-tl-filter-bar">
+          <input class="camp-tl-search" id="camp-tl-search" type="text" placeholder="🔍 Buscar na timeline... (Ctrl+F)"
+            oninput="_filterTimeline()" onkeydown="if(event.key==='Escape'){this.value='';_filterTimeline();}">
+          <select class="camp-tl-tipo-sel" id="camp-tl-tipo" onchange="_filterTimeline()">
+            <option value="all">Todos os tipos</option>
+            <option value="aprendizado">💡 Aprendizado</option>
+            <option value="resultado">📊 Resultado</option>
+            <option value="problema">🚧 Problema</option>
+            <option value="link">🔗 Link</option>
+            <option value="registro">📝 Registro</option>
+          </select>
+          <span class="camp-tl-count" id="camp-tl-count"></span>
+        </div>
         <div class="camp-timeline" id="camp-timeline-body">
           ${entrFiltradas.length
             ? entrFiltradas.map(e=>_renderEntrada(e,c.id)).join('')
@@ -6153,6 +6179,10 @@ function renderCampDetalhe(c){
     </div>`;
   _campComposerLinks = [];
   _renderComposerLinks();
+  // Limpar filtros da timeline
+  const _s=document.getElementById('camp-tl-search'); if(_s) _s.value='';
+  const _t=document.getElementById('camp-tl-tipo'); if(_t) _t.value='all';
+  const _co=document.getElementById('camp-tl-count'); if(_co) _co.textContent='';
 }
 
 async function setCampViewMode(mode){
@@ -6374,6 +6404,43 @@ async function saveCamp(){
     showToast('✅ Campanha salva!');
     if(_campAtual?.id===id){ _campAtual=camp; renderCampDetalhe(camp); }
   } catch(e){ uiAlert('Erro ao salvar: '+e.message); }
+}
+
+function _filterTimeline(){
+  const q     = (document.getElementById('camp-tl-search')?.value||'').toLowerCase().trim();
+  const tipo  = document.getElementById('camp-tl-tipo')?.value||'all';
+  const body  = document.getElementById('camp-timeline-body'); if(!body) return;
+  const items = body.querySelectorAll('.camp-entry');
+  let visible = 0;
+  items.forEach(el=>{
+    const elTipo  = el.className.match(/camp-entry-tipo-(\w+)/)?.[1]||'';
+    const elText  = el.textContent.toLowerCase();
+    const matchT  = tipo==='all' || elTipo===tipo;
+    const matchQ  = !q || elText.includes(q);
+    const show    = matchT && matchQ;
+    el.style.display = show?'':'none';
+    if(show) visible++;
+  });
+  const count = document.getElementById('camp-tl-count');
+  if(count) count.textContent = (q||tipo!=='all') ? visible+' resultado'+(visible!==1?'s':'') : '';
+  // Highlight texto buscado
+  if(q){
+    items.forEach(el=>{
+      if(el.style.display==='none') return;
+      const corpo = el.querySelector('.camp-entry-corpo');
+      if(!corpo) return;
+      const orig = corpo.getAttribute('data-orig')||corpo.textContent;
+      corpo.setAttribute('data-orig', orig);
+      const re = new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi');
+      corpo.innerHTML = esc(orig).replace(re, '<mark style="background:rgba(255,209,102,.35);color:var(--txt);border-radius:2px;">$1</mark>');
+    });
+  } else {
+    // Limpar highlights
+    document.querySelectorAll('.camp-entry-corpo[data-orig]').forEach(el=>{
+      el.textContent = el.getAttribute('data-orig');
+      el.removeAttribute('data-orig');
+    });
+  }
 }
 
 function toggleCampComposer(forceOpen){
