@@ -3110,7 +3110,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.11-dev</div>
+<div class="version">v8.30.12-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10116,7 +10116,15 @@ _onFbReady(()=>{
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
   // Abrir card específico via URL param ?opencard= (usado pelo multi-squad de campanhas)
   const _openCardParam = _urlParams.get('opencard');
-  if(_openCardParam){ setTimeout(()=>{ const _oc=cards.find(x=>x.id===_openCardParam); if(_oc) openCard(_oc.id); }, 2500); }
+  if(_openCardParam){
+    // Aguarda os cards carregarem do Firebase antes de abrir
+    const _tryOpenCard = (attempts) => {
+      const _oc = cards.find(x=>x.id===_openCardParam);
+      if(_oc){ openCard(_oc.id); }
+      else if(attempts>0){ setTimeout(()=>_tryOpenCard(attempts-1), 600); }
+    };
+    setTimeout(()=>_tryOpenCard(8), 1000);
+  }
   // Carrega ADMs extras do Firebase
   fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; });
   // Presença online
