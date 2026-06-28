@@ -1631,7 +1631,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.19 · painel</div>
+<div class="version">v2.20 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1929,13 +1929,15 @@ function renderCampList(){
   body.innerHTML = list.map(c=>{
     const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
     const tagObj = null; // painel usa _pTag diretamente abaixo
-    // contar cards vinculados
+    // contar cards vinculados (painel: agrega de todos os squads participantes)
     const mostrarArq = c.mostrarArquivados==='todos';
-    const vinculados = cards.filter(card=>{
+    const campTags=(c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
+    const _campSquads = c.squads&&c.squads.length ? c.squads : SQUADS.map(s=>s.id);
+    const _allCards = _campSquads.flatMap(sq=>(squadData[sq]?.cards||[]).filter(card=>card&&card.id));
+    const vinculados = _allCards.filter(card=>{
       if(!mostrarArq && card.archived) return false;
-      const campTags=(c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
-    const _ct=Array.isArray(card.tags)?card.tags:(card.tag?[card.tag]:[]);
-    return campTags.length ? campTags.some(t=>_ct.includes(t)) : false;
+      const _ct=Array.isArray(card.tags)?card.tags:(card.tag?[card.tag]:[]);
+      return campTags.length ? campTags.some(t=>_ct.includes(t)) : false;
     });
     const statusCls = `camp-status-${c.status||'planejamento'}`;
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
