@@ -816,10 +816,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Coluna esquerda — metadados + cards */
 .camp-sidebar { border-right:1px solid var(--glass-b); overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:14px; }
 .camp-sidebar-sec { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--ct2,var(--accent)); margin-bottom:6px; }
-.camp-meta-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; padding:4px 0; border-bottom:1px solid rgba(56,182,255,.05); }
+.camp-meta-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; font-family:'DM Sans',sans-serif; font-weight:400; padding:5px 0; border-bottom:1px solid rgba(56,182,255,.05); }
 .camp-meta-row:last-child { border:none; }
-.camp-meta-lbl { color:var(--txt3); }
-.camp-meta-val { color:var(--txt); font-weight:600; }
+.camp-meta-lbl { color:var(--txt3); font-weight:400; letter-spacing:.01em; }
+.camp-meta-val { color:var(--txt); font-weight:500; font-family:'DM Sans',sans-serif; }
 .camp-card-list { display:flex; flex-direction:column; gap:4px; }
 .camp-card-item {
   display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px;
@@ -847,18 +847,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-entry-tipo-problema    { border-left:3px solid #ff6b6b; }
 .camp-entry-tipo-link        { border-left:3px solid #ffd166; }
 .camp-entry-tipo-registro    { border-left:3px solid #a855f7; }
-.camp-entry-titulo { font-size:12px; font-weight:700; color:var(--txt); margin-bottom:4px; }
-.camp-entry-corpo  { font-size:12px; color:var(--txt2); line-height:1.6; white-space:pre-wrap; }
+.camp-entry-titulo { font-size:12px; font-weight:500; color:var(--txt); margin-bottom:5px; font-family:'DM Sans',sans-serif; letter-spacing:0; line-height:1.4; }
+.camp-entry-corpo  { font-size:11.5px; color:rgba(200,220,240,.75); line-height:1.7; white-space:pre-wrap; font-family:'DM Sans',sans-serif; font-weight:400; }
 .camp-entry-links  { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
 .camp-entry-link   { font-size:11px; color:var(--accent); text-decoration:none; }
 .camp-entry-link:hover { text-decoration:underline; }
-.camp-entry-meta   { font-size:9px; color:var(--txt3); margin-top:7px; }
+.camp-entry-meta   { font-size:9px; color:var(--txt3); margin-top:7px; font-family:'DM Sans',sans-serif; font-weight:400; }
 .camp-entry-sq-hd {
   display:flex; align-items:center; gap:6px; margin-bottom:8px;
   padding-bottom:7px; border-bottom:1px solid rgba(255,255,255,.06);
 }
 .camp-entry-sq-icon { font-size:15px; line-height:1; }
-.camp-entry-sq-name { font-size:10px; font-weight:700; }
+.camp-entry-sq-name { font-size:10px; font-weight:500; letter-spacing:.03em; font-family:'DM Sans',sans-serif; }
 .camp-entry-del    { position:absolute; top:8px; right:8px; background:none; border:none;
   color:var(--txt3); cursor:pointer; font-size:11px; opacity:0; transition:opacity .15s; }
 .camp-entry:hover .camp-entry-del { opacity:1; }
@@ -1631,7 +1631,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.12 · painel</div>
+<div class="version">v2.16 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1830,8 +1830,8 @@ function _pGetCardTags(card){
   return [];
 }
 function _pOpenCard(cardId, sqId){
-  // abre board desse squad numa nova aba
-  window.open('kanban.html?squad='+sqId+'&card='+cardId,'_blank');
+  // abre board desse squad numa nova aba com o card já aberto
+  window.open('kanban.html?squad='+sqId+'&opencard='+cardId,'_blank');
 }
 function _pSafeUrl(u){ try{ return new URL(String(u)).href; }catch(e){ return '#'; } }
 
@@ -2051,7 +2051,8 @@ function renderCampDetalhe(c){
   const sqBadgesHd = msSquads.map(sq=>{
     const sqc=_sqColor(sq);
     const sqInfo=SQUADS.find(s=>s.id===sq);
-    return `<span style="color:${sqc.text};font-size:11px;">${sqInfo?.icon||'🐟'} ${sqInfo?.label||sq}</span>`;
+    const _SQ_FB={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+    return `<span style="color:${sqc.text};font-size:11px;">${sqInfo?.icon||_SQ_FB[sq]||'🐟'} ${sqInfo?.label||sq}</span>`;
   }).join(' &nbsp;');
 
   document.getElementById('camp-detail-inner').innerHTML = `
@@ -2109,8 +2110,9 @@ function renderCampDetalhe(c){
               const colColor = col?.color||'#38b6ff';
               const sqc_ = _sqColor(sq_);
               const sqInfo = SQUADS.find(s=>s.id===sq_);
+              const _SQ_FB2={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
               const sqBadge = isMS && viewMode==='multi'
-                ? `<span class="camp-sq-tag" style="--sqc:${sqc_.text};--sqb:${sqc_.border};--sqbg:${sqc_.bg};">${sqInfo?.icon||''} ${esc(sq_)}</span>`
+                ? `<span class="camp-sq-tag" style="--sqc:${sqc_.text};--sqb:${sqc_.border};--sqbg:${sqc_.bg};">${sqInfo?.icon||_SQ_FB2[sq_]||'🐟'} ${esc(sq_)}</span>`
                 : '';
               return `<div class="camp-card-item" onclick="_pOpenCard('${esc(card.id)}','${esc(sq_)}')">
                 ${sqBadge}
@@ -2172,7 +2174,8 @@ function _renderEntrada(e, campId){
   if(isMulti){
     const sqc     = _sqColor(e._squad);
     const sqInfo  = SQUADS.find(s=>s.id===e._squad);
-    const sqEmoji = sqInfo?.icon||'🐟';
+    const _SQ_FALLBACK = {dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',cx:'💬',marketplace:'🛒'};
+    const sqEmoji = sqInfo?.icon||_SQ_FALLBACK[e._squad]||'🐟';
     const sqLabel = sqInfo?.label||e._squad;
     sqHeader = `<div class="camp-entry-sq-hd">
       <span class="camp-entry-sq-icon">${sqEmoji}</span>
@@ -2485,20 +2488,26 @@ function renderPainelCamp(){
           </div>`;
         }).join('');
         return `<div class="pcamp-group">
-          <div class="pcamp-group-hd" onclick="_pCampActiveSquad='${esc(allSquads[0]||'dados')}';window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')">
+          <div class="pcamp-group-hd" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';this.querySelector('.pcamp-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'">
             <span style="font-size:18px;">${tema.emoji}</span>
             <div class="pcamp-group-nome">${esc(c0.nome||'—')}</div>
             <span class="camp-ms-badge">🔗 ${allSquads.length} squads</span>
             <span style="font-size:10px;color:var(--txt3);">${statusLbl} · 📝 ${nEntradas}</span>
-            <span style="font-size:11px;color:var(--txt3);">▶</span>
+            <span class="pcamp-arrow" style="font-size:11px;color:var(--txt3);margin-left:auto;">▶</span>
           </div>
-          <div class="pcamp-group-body" style="display:none;">
+          <div class="pcamp-group-body" style="display:none;flex-direction:column;gap:6px;">
             ${c0.mote?`<div style="font-size:11px;color:var(--txt3);font-style:italic;margin-bottom:8px;">"${esc(c0.mote)}"</div>`:''}
             ${sqRows}
             ${kvs.length?`<div style="margin-top:8px;border-top:1px solid rgba(255,209,102,.1);padding-top:8px;">
               <div style="font-size:9px;color:rgba(255,209,102,.6);font-weight:700;text-transform:uppercase;margin-bottom:4px;">🎨 KVs</div>
               ${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
             </div>`:''}
+            <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,209,102,.1);">
+              <button onclick="event.stopPropagation();_pCampActiveSquad='${esc(allSquads[0]||'dados')}';window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')"
+                style="width:100%;padding:7px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:8px;color:#ffd166;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                📋 Abrir visão completa →
+              </button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -2510,7 +2519,17 @@ function renderPainelCamp(){
     el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhuma campanha individual cadastrada.</div>';
     return;
   }
-  el.innerHTML = individual.map(c=>{
+  // Agrupar por squad
+  const _bySquad = {};
+  individual.forEach(ci=>{const sq=(ci.squads&&ci.squads[0])||'outros';if(!_bySquad[sq])_bySquad[sq]=[];_bySquad[sq].push(ci);});
+
+  el.innerHTML = Object.entries(_bySquad).map(([sq,camps])=>{
+    const sqcol=_painelSqColor(sq);
+    const sqInfo2=SQUADS.find(s=>s.id===sq);
+    const _SQ_FB3={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+    const sqEmoji2=sqInfo2?.icon||_SQ_FB3[sq]||'🐟';
+    const sqLabel2=sqInfo2?.label||sq;
+    const campList=camps.map(c=>{
     const tema      = PAINEL_CAMP_TEMAS[c.tema||'neutro']||PAINEL_CAMP_TEMAS.neutro;
     const statusCls = {ativa:'color:var(--teal)',planejamento:'color:var(--accent)',encerrada:'color:var(--txt3)'}[c.status]||'';
     const statusLbl = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
@@ -2535,6 +2554,13 @@ function renderPainelCamp(){
           ${kvs.length?`<div style="margin-top:5px;">${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🎨 ${esc(l.label||l.url)}</a>`).join('')}</div>`:''}
         </div>
       </div>
+    </div>`;
+    }).join('');
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${sqcol.text};margin-bottom:6px;padding:4px 0;border-bottom:1px solid ${sqcol.border};">
+        ${sqEmoji2} ${esc(sqLabel2)}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">${campList}</div>
     </div>`;
   }).join('');
 }
