@@ -3103,7 +3103,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.5-dev</div>
+<div class="version">v8.30.6-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5938,7 +5938,8 @@ const CAMP_TIPO_ICONS = { aprendizado:'💡', resultado:'📊', problema:'🚧',
 const CAMP_TIPO_LABELS = { aprendizado:'Aprendizado', resultado:'Resultado', problema:'Problema', link:'Link', registro:'Registro' };
 
 let _campanhas = {};           // id -> objeto campanha
-let _campAtual  = null;        // campanha em detalhe
+let _campAtual     = null;  // campanha em detalhe
+let _campCrossData = {};    // cache pontual: {sqId:{cards,columns}} — carregado só quando usuário pede multi-squad
 let _campEditId = null;        // id sendo editado (null = novo)
 let _campEditTema = 'neutro';  // tema selecionado no edit modal
 let _campEditTags  = [];       // tags selecionadas no edit modal
@@ -6081,14 +6082,33 @@ function renderCampDetalhe(c){
       return campTags.length ? campTags.some(t=>(card.tags||[]).includes(t)||(card.tag===t)) : false;
     });
   };
-  // No modo squad, usa os cards do board atual
-  const vinculadosLocal = _filterCards(ACTIVE_SQUAD, cards).sort((a,b)=>String(a.col).localeCompare(String(b.col)));
+  // Cards: modo squad = só board atual; modo multi = cards locais + cache pontual dos outros squads
+  const _getSquadCards = sq => sq===ACTIVE_SQUAD ? cards : (_campCrossData[sq]?.cards||[]);
+  const _getSquadCols  = sq => sq===ACTIVE_SQUAD ? columns : (_campCrossData[sq]?.columns||[]);
+  const _squadsParaCards = viewMode==='multi' ? msSquads : [ACTIVE_SQUAD];
+  const vinculadosLocal = _squadsParaCards
+    .flatMap(sq=>_filterCards(sq, _getSquadCards(sq)).map(card=>({...card,_squad:sq})))
+    .sort((a,b)=>String(a._squad).localeCompare(String(b._squad))||String(a.col).localeCompare(String(b.col)));
 
   // Entradas: agrega de todas as campanhas com mesmo ID raiz ou desta campanha
   // No modo multi, inclui entradas das campanhas irmãs (mesmo nome, outros squads)
-  const todasEntradas = Object.values(c.entradas||{}).map(e=>({...e,_squad:ACTIVE_SQUAD}));
-  // filtro de squad ativo no multi
   const _sqFilter = window._campSqFilter||'all';
+  let todasEntradas;
+  if(viewMode==='multi'){
+    // Agrega entradas de todas as campanhas com mesmo nome (campanhas irmãs de outros squads)
+    todasEntradas = [];
+    Object.values(_campanhas||{}).forEach(oc=>{
+      if(String(oc.nome||'').toLowerCase()===String(c.nome||'').toLowerCase()){
+        const sq = (oc.squads&&oc.squads.length)?oc.squads[0]:ACTIVE_SQUAD;
+        Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:sq}));
+      }
+    });
+    if(!todasEntradas.length)
+      todasEntradas = Object.values(c.entradas||{}).map(e=>({...e,_squad:ACTIVE_SQUAD}));
+  } else {
+    todasEntradas = Object.values(c.entradas||{}).map(e=>({...e,_squad:ACTIVE_SQUAD}));
+  }
+  // filtro de squad ativo no multi
 
   const entrFiltradas = todasEntradas
     .filter(e=> _sqFilter==='all' || e._squad===_sqFilter)
@@ -6107,8 +6127,8 @@ function renderCampDetalhe(c){
     ${isMS?`
     <div class="camp-ms-toggle-bar">
       <span style="font-size:11px;color:var(--txt3);">Visão:</span>
-      <button class="camp-ms-toggle-btn ${viewMode==='squad'?'on':''}" onclick="setCampViewMode('squad')">🐟 Só meu squad</button>
-      <button class="camp-ms-toggle-btn ${viewMode==='multi'?'on':''}" onclick="setCampViewMode('multi')">🔗 Todos os squads</button>
+      <button class="camp-ms-toggle-btn ${viewMode==='squad'?'on':''}" onclick="setCampViewMode('squad')">🐟 Só minha squad</button>
+      <button class="camp-ms-toggle-btn ${viewMode==='multi'?'on':''}" onclick="setCampViewMode('multi')">🔗 Todas as squads</button>
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
@@ -6140,13 +6160,21 @@ function renderCampDetalhe(c){
           <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
-          <div class="camp-sidebar-sec">Cards vinculados (${vinculadosLocal.length}${isMS&&viewMode==='multi'?' · só este squad':''})</div>
+          <div class="camp-sidebar-sec">Cards vinculados (${vinculadosLocal.length}${viewMode==='multi'?' · todas as squads':' · minha squad'})</div>
           <div class="camp-card-list">
             ${vinculadosLocal.length?vinculadosLocal.map(card=>{
-              const col=columns.find(cl=>cl.id===card.col);
-              const colColor=col?.color||'#38b6ff';
-              const sqc=_sqColor(ACTIVE_SQUAD);
-              return `<div class="camp-card-item" onclick="openCard('${esc(card.id)}')">
+              const sq_  = card._squad||ACTIVE_SQUAD;
+              const col  = _getSquadCols(sq_).find(cl=>cl.id===card.col)||columns.find(cl=>cl.id===card.col);
+              const colColor = col?.color||'#38b6ff';
+              const sqc_ = _sqColor(sq_);
+              const sqBadge = sq_!==ACTIVE_SQUAD
+                ? `<span class="camp-sq-tag" style="--sqc:${sqc_.text};--sqb:${sqc_.border};--sqbg:${sqc_.bg};">${esc(sq_)}</span>`
+                : '';
+              const openFn = sq_===ACTIVE_SQUAD
+                ? `openCard('${esc(card.id)}')`
+                : `window.open('kanban.html?squad=${esc(sq_)}','_blank')`;
+              return `<div class="camp-card-item" onclick="${openFn}">
+                ${sqBadge}
                 <span class="camp-card-item-col" style="background:${colColor}22;color:${colColor};border:1px solid ${colColor}44;">${esc(col?.name||card.col)}</span>
                 <span class="camp-card-item-title">${esc(card.title||'(sem título)')}</span>
                 <span class="camp-card-item-owner">${esc(card.owner||'')}</span>
@@ -6193,9 +6221,29 @@ function renderCampDetalhe(c){
   _renderComposerLinks();
 }
 
-function setCampViewMode(mode){
-  window._campViewMode  = mode;
-  window._campSqFilter  = 'all';
+async function setCampViewMode(mode){
+  window._campViewMode = mode;
+  window._campSqFilter = 'all';
+  if(mode==='multi' && _campAtual){
+    // Fetch pontual (one-shot) — não cria listener, não sobrecarrega outros squads
+    const outros = (_campAtual.squads||[]).filter(sq=>sq!==ACTIVE_SQUAD&&!_campCrossData[sq]);
+    if(outros.length){
+      const btn = document.querySelector('.camp-ms-toggle-btn:not(.on)');
+      const orig = btn?.textContent;
+      if(btn){ btn.textContent='⏳...'; btn.disabled=true; }
+      await Promise.all(outros.map(sq=>
+        window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
+          .then(snap=>{
+            const val=snap.val()||{};
+            _campCrossData[sq]={
+              cards:   val.cards   ?(Array.isArray(val.cards)   ?val.cards   :Object.values(val.cards))   :[],
+              columns: val.columns ?(Array.isArray(val.columns) ?val.columns :Object.values(val.columns)) :[],
+            };
+          }).catch(()=>{ _campCrossData[sq]={cards:[],columns:[]}; })
+      ));
+      if(btn){ btn.textContent=orig; btn.disabled=false; }
+    }
+  }
   if(_campAtual) renderCampDetalhe(_campAtual);
 }
 
