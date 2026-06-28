@@ -757,7 +757,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 #camp-ov { z-index:180; }
 .camp-panel {
   background:rgba(6,18,36,.98); border:1px solid var(--ct-border,var(--glass-b));
-  border-radius:16px; width:min(920px,95vw); height:88vh;
+  border-radius:16px; width:min(1240px,97vw); height:92vh;
   display:flex; flex-direction:column; overflow:hidden;
   box-shadow:0 24px 64px rgba(0,0,0,.7);
   transition:border-color .3s;
@@ -810,7 +810,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-detail-nome  { font-family:"Syne",sans-serif; font-size:22px; font-weight:800; margin-bottom:3px; }
 .camp-detail-mote  { font-size:13px; color:var(--ct3,var(--txt2)); font-style:italic; margin-bottom:12px; }
 .camp-detail-pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-.camp-detail-body  { flex:1; display:grid; grid-template-columns:280px 1fr; overflow:hidden; }
+.camp-detail-body  { flex:1; display:grid; grid-template-columns:248px 1fr; overflow:hidden; min-height:0; }
 @media(max-width:700px){ .camp-detail-body{ grid-template-columns:1fr; } }
 
 /* Coluna esquerda — metadados + cards */
@@ -822,17 +822,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-meta-val { color:var(--txt); font-weight:500; font-family:'DM Sans',sans-serif; }
 .camp-card-list { display:flex; flex-direction:column; gap:4px; }
 .camp-card-item {
-  display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px;
+  font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:7px;
   background:rgba(56,182,255,.04); border:1px solid rgba(56,182,255,.08);
   cursor:pointer; transition:all .12s; font-size:11px;
 }
 .camp-card-item:hover { background:rgba(56,182,255,.12); border-color:rgba(56,182,255,.25); }
 .camp-card-item-col { font-size:9px; padding:1px 6px; border-radius:999px; white-space:nowrap; }
-.camp-card-item-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.camp-card-item-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'DM Sans',sans-serif; font-weight:400; font-size:11px; }
 .camp-card-item-owner { font-size:9px; color:var(--txt3); flex-shrink:0; }
 
 /* Coluna direita — timeline de entradas */
-.camp-timeline { overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:0; }
+.camp-timeline { overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:0; min-height:0; flex:1; }
 .camp-timeline-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .camp-entry {
   position:relative; padding:12px 14px 12px 36px; margin-bottom:12px;
@@ -1636,7 +1636,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.21 · painel</div>
+<div class="version">v2.23 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1840,6 +1840,40 @@ function _pOpenCard(cardId, sqId){
 }
 function _pSafeUrl(u){ try{ return new URL(String(u)).href; }catch(e){ return '#'; } }
 
+// ── Cores por squad (painel) ──
+const _SQUAD_COLORS_CAMP = {
+  dados:         {bg:'rgba(56,182,255,.1)',  border:'rgba(56,182,255,.35)',  text:'#38b6ff'},
+  midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
+  midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
+  dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
+};
+function _sqColor(sqId){ return _SQUAD_COLORS_CAMP[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
+
+// ── Toggle de visão multi-squad (painel) — carrega dados pontuais dos outros squads ──
+async function setCampViewMode(mode){
+  window._campViewMode = mode;
+  window._campSqFilter = 'all';
+  if(mode==='multi' && _campAtual){
+    const outros = (_campAtual.squads||[]).filter(sq=>!squadData[sq]?.cards && !_campCrossData[sq]);
+    if(outros.length){
+      await Promise.all(outros.map(sq=>
+        window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
+          .then(snap=>{ const v=snap.val()||{}; _campCrossData[sq]={
+            cards:   v.cards   ?(Array.isArray(v.cards)   ?v.cards   :Object.values(v.cards))   :[],
+            columns: v.columns ?(Array.isArray(v.columns) ?v.columns :Object.values(v.columns)) :[],
+          }; })
+          .catch(()=>{ _campCrossData[sq]={cards:[],columns:[]}; })
+      ));
+    }
+  }
+  if(_campAtual) renderCampDetalhe(_campAtual);
+}
+
+function setCampSqFilter(sq){
+  window._campSqFilter = sq;
+  if(_campAtual) renderCampDetalhe(_campAtual);
+}
+
 let _pCampActiveSquad = null; // squad atual no contexto do painel
 
 
@@ -1860,6 +1894,7 @@ const CAMP_TIPO_LABELS = { aprendizado:'Aprendizado', resultado:'Resultado', pro
 
 let _campanhas = {};           // id -> objeto campanha
 let _campAtual  = null;        // campanha em detalhe
+let _campCrossData = {};       // cache pontual {sqId:{cards,columns}} para multi-squad
 let _campEditId = null;        // id sendo editado (null = novo)
 let _campEditTema = 'neutro';  // tema selecionado no edit modal
 let _campEditTags  = [];       // tags selecionadas no edit modal
@@ -1867,6 +1902,35 @@ let _campComposerLinks = [];   // links do composer ativo
 
 // Caminho Firebase: global (cross-squad configurado no painel)
 function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'/'+sub:'')); }
+
+// ── Modais UI (painel) — equivalentes simples aos do board ──
+function _uiModalPainel({message, kind, defaultValue, placeholder, okText, danger}){
+  return new Promise(resolve=>{
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(1,8,16,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;';
+    const isPrompt  = kind==='prompt';
+    const isConfirm = kind==='confirm';
+    ov.innerHTML = `<div style="background:rgba(6,18,36,.99);border:1px solid var(--glass-b);border-radius:14px;width:min(420px,95vw);padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+      <div style="font-size:13px;color:var(--txt);line-height:1.6;margin-bottom:16px;white-space:pre-wrap;">${esc(message||'')}</div>
+      ${isPrompt?`<input id="_uimp-inp" type="text" value="${esc(defaultValue||'')}" placeholder="${esc(placeholder||'')}" style="width:100%;box-sizing:border-box;background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:'DM Sans',sans-serif;margin-bottom:16px;">`:''}
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        ${(isConfirm||isPrompt)?`<button id="_uimp-cancel" style="padding:7px 16px;font-size:12px;border-radius:8px;border:1px solid var(--glass-b);background:none;color:var(--txt2);cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>`:''}
+        <button id="_uimp-ok" style="padding:7px 16px;font-size:12px;border-radius:8px;border:1px solid ${danger?'rgba(255,107,107,.4)':'rgba(29,233,182,.4)'};background:${danger?'rgba(255,107,107,.15)':'rgba(29,233,182,.15)'};color:${danger?'#ff6b6b':'#1de9b6'};cursor:pointer;font-weight:600;font-family:'DM Sans',sans-serif;">${esc(okText||'OK')}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const inp = ov.querySelector('#_uimp-inp');
+    if(inp){ inp.focus(); inp.select(); inp.onkeydown=e=>{ if(e.key==='Enter') done(isPrompt?inp.value:true); if(e.key==='Escape') done(isPrompt?null:false); }; }
+    const done = (val)=>{ ov.remove(); resolve(val); };
+    ov.querySelector('#_uimp-ok').onclick = ()=>done(isPrompt?(inp?inp.value:''):true);
+    const cancel = ov.querySelector('#_uimp-cancel');
+    if(cancel) cancel.onclick = ()=>done(isPrompt?null:false);
+    ov.onclick = e=>{ if(e.target===ov) done(isPrompt?null:false); };
+  });
+}
+function uiAlert(message, opts={}){ return _uiModalPainel({message, kind:'alert', ...opts}); }
+function uiConfirm(message, opts={}){ return _uiModalPainel({message, kind:'confirm', ...opts}); }
+function uiPrompt(message, defaultValue='', opts={}){ return _uiModalPainel({message, kind:'prompt', defaultValue, ...opts}); }
 
 // ── Carregar ──────────────────────────────────────────────────────
 function loadCampanhas(){
@@ -2104,6 +2168,13 @@ function renderCampDetalhe(c){
           <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
+          <div class="camp-sidebar-sec">🔗 Links importantes</div>
+          <div class="camp-fixed-links" id="camp-links-list">
+            ${_renderFixedLinks(c.links||[],'links',c.id)}
+          </div>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','links')" style="margin-top:6px;">+ Adicionar link</button>
+        </div>
+        <div>
           <div class="camp-sidebar-sec">Cards vinculados (${vinculados.length}${viewMode==='multi'?' · todas as squads':' · minha squad'})</div>
           <div class="camp-card-list">
             ${vinculados.length ? vinculados.map(card=>{
@@ -2315,7 +2386,7 @@ function _renderCampTagPicker(){
       ${sel?'box-shadow:0 0 6px '+p.b+';':''}"
     >${esc(t.label)}</span>`;
   }).join('');
-  if(!tags.length) wrap.innerHTML='<span style="font-size:11px;color:var(--txt3);">Nenhuma tag criada no board.</span>';
+  if(!allTags.length) wrap.innerHTML='<span style="font-size:11px;color:var(--txt3);">Nenhuma tag criada no board.</span>';
 }
 
 function campToggleTag(tagId){
