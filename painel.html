@@ -1625,7 +1625,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.8 · painel</div>
+<div class="version">v2.9 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2361,6 +2361,187 @@ async function campDeleteCurrent(){
   showToast('🗑 Campanha excluída.');
 }
 
+
+// ═══ CAMPANHAS & COLEÇÕES — PAINEL (lista + gerenciamento) ══════════
+const PAINEL_CAMP_TEMAS = {
+  neutro:{emoji:'🎯'},inverno:{emoji:'❄️'},verao:{emoji:'☀️'},
+  altoverao:{emoji:'🔥'},outono:{emoji:'🍂'},primavera:{emoji:'🌸'},
+};
+const PAINEL_SQ_COLORS = {
+  dados:         {bg:'rgba(56,182,255,.12)', border:'rgba(56,182,255,.4)',  text:'#38b6ff'},
+  midia:         {bg:'rgba(29,233,182,.12)', border:'rgba(29,233,182,.4)',  text:'#1de9b6'},
+  midiacriativa: {bg:'rgba(244,168,200,.12)',border:'rgba(244,168,200,.4)', text:'#f4a8c8'},
+  dev:           {bg:'rgba(167,139,250,.12)',border:'rgba(167,139,250,.4)', text:'#a78bfa'},
+};
+function _painelSqColor(sq){ return PAINEL_SQ_COLORS[sq]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
+
+let _painelCampanhas = {};
+
+function loadPainelCampanhas(){
+  window._onValue(window._ref(window._db,'kanban/campanhas'), snap=>{
+    _painelCampanhas = snap.val()||{};
+    renderPainelCamp();
+    _checkPainelAdmCamp();
+  });
+}
+
+function _checkPainelAdmCamp(){
+  const btn = document.getElementById('painel-camp-ms-edit-btn');
+  if(btn) btn.style.display = _isAdmPainel()?'inline-block':'none';
+}
+
+function renderPainelCamp(){
+  const el   = document.getElementById('painel-camp-list');
+  const elMs = document.getElementById('painel-camp-ms-list');
+  if(!el) return;
+
+  let list = Object.values(_painelCampanhas);
+  const fTipo   = document.getElementById('painel-camp-f-tipo')?.value||'all';
+  const fStatus = document.getElementById('painel-camp-f-status')?.value||'all';
+  if(fTipo  !=='all') list=list.filter(c=>c.tipo===fTipo);
+  if(fStatus!=='all') list=list.filter(c=>c.status===fStatus);
+  list.sort((a,b)=>{
+    const so={ativa:0,planejamento:1,encerrada:2};
+    if((so[a.status]||0)!==(so[b.status]||0)) return (so[a.status]||0)-(so[b.status]||0);
+    return String(b.dataInicio||'').localeCompare(String(a.dataInicio||''));
+  });
+
+  // Separar multi-squad de individuais
+  // Agrupa pelo nome normalizado
+  const msGroups = {};
+  const individual = [];
+  list.forEach(c=>{
+    if(c.multiSquad){
+      const key = String(c.nome||'').toLowerCase().trim();
+      if(!msGroups[key]) msGroups[key]=[];
+      msGroups[key].push(c);
+    } else {
+      individual.push(c);
+    }
+  });
+
+  // ── Multi-squad ──
+  if(elMs){
+    const msKeys = Object.keys(msGroups);
+    if(!msKeys.length){
+      elMs.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha multi-squad ativa.</div>';
+    } else {
+      elMs.innerHTML = msKeys.map(key=>{
+        const group = msGroups[key];
+        const c0    = group[0];
+        const tema  = PAINEL_CAMP_TEMAS[c0.tema||'neutro']||PAINEL_CAMP_TEMAS.neutro;
+        const nEntradas = group.reduce((s,c)=>s+Object.keys(c.entradas||{}).length,0);
+        const allSquads = [...new Set(group.flatMap(c=>c.squads||[]))];
+        const kvs = group.flatMap(c=>c.kvs||[]);
+        const statusLbl={ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c0.status]||c0.status;
+        const sqRows = allSquads.map(sq=>{
+          const sqc  = _painelSqColor(sq);
+          const campSq = group.find(c=>(c.squads||[]).includes(sq));
+          const nEnt = Object.keys(campSq?.entradas||{}).length;
+          return `<div class="pcamp-sq-row">
+            <div class="pcamp-sq-dot" style="background:${sqc.text};"></div>
+            <span class="pcamp-sq-name" style="color:${sqc.text};">${sq}</span>
+            <div class="pcamp-sq-pills">
+              <span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">📝 ${nEnt} registro${nEnt!==1?'s':''}</span>
+              ${campSq?.status?`<span style="font-size:9px;color:var(--txt3);">${{ativa:'✅ Ativa',planejamento:'📋 Plan.',encerrada:'🔒 Enc.'}[campSq.status]||campSq.status}</span>`:''}
+            </div>
+          </div>`;
+        }).join('');
+        return `<div class="pcamp-group">
+          <div class="pcamp-group-hd" onclick="_pCampActiveSquad=(${JSON.stringify(allSquads)}[0]||'dados');window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')">
+            <span style="font-size:18px;">${tema.emoji}</span>
+            <div class="pcamp-group-nome">${esc(c0.nome||'—')}</div>
+            <span class="camp-ms-badge">🔗 ${allSquads.length} squads</span>
+            <span style="font-size:10px;color:var(--txt3);">${statusLbl} · 📝 ${nEntradas}</span>
+            <span style="font-size:11px;color:var(--txt3);">▶</span>
+          </div>
+          <div class="pcamp-group-body" style="display:none;">
+            ${c0.mote?`<div style="font-size:11px;color:var(--txt3);font-style:italic;margin-bottom:8px;">"${esc(c0.mote)}"</div>`:''}
+            ${sqRows}
+            ${kvs.length?`<div style="margin-top:8px;border-top:1px solid rgba(255,209,102,.1);padding-top:8px;">
+              <div style="font-size:9px;color:rgba(255,209,102,.6);font-weight:700;text-transform:uppercase;margin-bottom:4px;">🎨 KVs</div>
+              ${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
+            </div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Individuais ──
+  if(!individual.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhuma campanha individual cadastrada.</div>';
+    return;
+  }
+  el.innerHTML = individual.map(c=>{
+    const tema      = PAINEL_CAMP_TEMAS[c.tema||'neutro']||PAINEL_CAMP_TEMAS.neutro;
+    const statusCls = {ativa:'color:var(--teal)',planejamento:'color:var(--accent)',encerrada:'color:var(--txt3)'}[c.status]||'';
+    const statusLbl = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
+    const periodo   = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'—';
+    const squads    = c.squads||[];
+    const nEntradas = Object.keys(c.entradas||{}).length;
+    const tipoPill  = c.tipo==='colecao'?'👗 Coleção':'📣 Campanha';
+    const kvs       = c.kvs||[];
+    const sqBadges  = squads.map(sq=>{ const sqc=_painelSqColor(sq); return `<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${sq}</span>`; }).join('');
+    return `<div class="card pcamp-individual" style="padding:10px 14px;cursor:pointer;" onclick="_pCampActiveSquad='${esc((squads[0]||'dados'))}';window._campViewMode='squad';openCampDetalhe('${esc(c.id)}')">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <span style="font-size:18px;line-height:1;flex-shrink:0;">${tema.emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+            <span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;">${esc(c.nome||'—')}</span>
+            <span style="font-size:9px;padding:1px 6px;border-radius:999px;background:rgba(56,182,255,.08);color:var(--txt3);border:1px solid rgba(56,182,255,.15);">${tipoPill}</span>
+            <span style="font-size:9px;${statusCls};margin-left:auto;">${statusLbl}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--txt3);">
+            ${sqBadges}<span>📅 ${esc(periodo)}</span><span>📝 ${nEntradas}</span>
+          </div>
+          ${kvs.length?`<div style="margin-top:5px;">${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🎨 ${esc(l.label||l.url)}</a>`).join('')}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPainelCampMsEdit(){
+  const body = document.getElementById('painel-ms-edit-body'); if(!body) return;
+  const all  = Object.values(_painelCampanhas);
+  body.innerHTML = !all.length
+    ? '<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha cadastrada.</div>'
+    : `<div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.6;">
+        Ative <b>Multi-squad</b> nas campanhas que envolvem mais de um squad. Campanhas com o mesmo nome serão agrupadas na visão consolidada.
+      </div>`
+      + all.map(c=>{
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:0;">
+            <input type="checkbox" ${c.multiSquad?'checked':''} data-camp-id="${esc(c.id)}" class="painel-ms-chk">
+            <span style="font-size:12px;font-weight:600;">${esc(c.nome||'—')}</span>
+            <span style="font-size:9px;color:var(--txt3);">${c.tipo==='colecao'?'👗':'📣'}</span>
+          </label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            ${(c.squads||[]).map(sq=>`<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${_painelSqColor(sq).bg};border:1px solid ${_painelSqColor(sq).border};color:${_painelSqColor(sq).text};">${sq}</span>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+  document.getElementById('painel-camp-ms-ov').classList.add('open');
+}
+
+async function painelCampActivateAll(){
+  const checks = document.querySelectorAll('.painel-ms-chk');
+  const updates = [];
+  checks.forEach(chk=>{
+    const id  = chk.dataset.campId;
+    const val = chk.checked;
+    const cur = _painelCampanhas[id];
+    if(cur && !!(cur.multiSquad) !== val) updates.push({id, val});
+  });
+  if(!updates.length){ showToast('Nenhuma alteração detectada.'); return; }
+  try{
+    for(const u of updates)
+      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/multiSquad'), u.val);
+    showToast('✅ '+updates.length+' campanha(s) atualizada(s)!');
+    document.getElementById('painel-camp-ms-ov').classList.remove('open');
+  } catch(e){ uiAlert('Erro: '+e.message); }
+}
 
 function renderOKR(){
   const el=document.getElementById('okr-list'); if(!el) return;
