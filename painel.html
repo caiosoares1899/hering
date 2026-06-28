@@ -1192,17 +1192,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- Modal gerenciar agrupamentos multi-squad (ADM) -->
     <div class="ov" id="painel-camp-ms-ov" style="z-index:9500;">
-      <div style="background:rgba(6,18,36,.98);border:1px solid var(--glass-b);border-radius:14px;width:min(540px,95vw);max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;">
+      <div style="background:rgba(6,18,36,.98);border:1px solid var(--glass-b);border-radius:14px;width:min(600px,95vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
         <div style="padding:16px 20px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;">🔗 Agrupamentos Multi-squad</span>
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;">🔗 Gerenciar Agrupamentos</span>
           <button class="x-btn" onclick="document.getElementById('painel-camp-ms-ov').classList.remove('open')">✕</button>
+        </div>
+        <div style="display:flex;gap:4px;padding:10px 20px 0;flex-shrink:0;border-bottom:1px solid var(--glass-b);">
+          <button class="pms-tab pms-tab-on" id="pms-tab-auto" onclick="_pmsSwitchTab('auto')" style="padding:7px 14px;font-size:12px;border:none;background:none;color:var(--txt);border-bottom:2px solid var(--teal);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">⚡ Automático & Squads</button>
+          <button class="pms-tab" id="pms-tab-manual" onclick="_pmsSwitchTab('manual')" style="padding:7px 14px;font-size:12px;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">🗂 Grupos manuais</button>
         </div>
         <div style="padding:16px 20px;flex:1;overflow-y:auto;" id="painel-ms-edit-body">
           <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
         </div>
-        <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;">
+        <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;" id="painel-ms-footer">
           <button class="btn btn-sm" onclick="document.getElementById('painel-camp-ms-ov').classList.remove('open')">Fechar</button>
-          <button class="btn btn-sm" onclick="painelCampActivateAll()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Ativar multi-squad selecionadas</button>
+          <button class="btn btn-sm" id="painel-ms-save-btn" onclick="painelCampActivateAll()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">💾 Salvar alterações</button>
         </div>
       </div>
     </div>
@@ -1733,7 +1737,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.33 · painel</div>
+<div class="version">v2.34 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2747,16 +2751,27 @@ function renderPainelCamp(){
   });
 
   // Separar multi-squad de individuais
-  // Agrupa pelo nome normalizado
+  // Mapa: campanhaId → grupo manual (se pertencer a um)
+  const _campToGrupo = {};
+  Object.values(_gruposCamp).forEach(g=>{
+    (g.campanhaIds||[]).forEach(cid=>{ _campToGrupo[cid]=g; });
+  });
+
+  // Agrupa: por grupo manual (prioridade) ou por nome normalizado
   const msGroups = {};
   const individual = [];
   const _seenIds = new Set();
   list.forEach(c=>{
-    if(c.multiSquad){
+    const grupoManual = _campToGrupo[c.id];
+    if(grupoManual){
+      // Grupo manual: agrupa sob o nome do grupo
+      const key = '__grupo__'+grupoManual.id;
+      if(!msGroups[key]) msGroups[key]={ _grupoNome:grupoManual.nome, _isManual:true, camps:[] };
+      if(!msGroups[key].camps.find(x=>x.id===c.id)) msGroups[key].camps.push(c);
+    } else if(c.multiSquad){
       const key = String(c.nome||'').toLowerCase().trim();
-      if(!msGroups[key]) msGroups[key]=[];
-      // evitar duplicatas pelo id dentro do grupo
-      if(!msGroups[key].find(x=>x.id===c.id)) msGroups[key].push(c);
+      if(!msGroups[key]) msGroups[key]={ _grupoNome:c.nome, _isManual:false, camps:[] };
+      if(!msGroups[key].camps.find(x=>x.id===c.id)) msGroups[key].camps.push(c);
     } else {
       if(!_seenIds.has(c.id)){ _seenIds.add(c.id); individual.push(c); }
     }
@@ -2769,7 +2784,10 @@ function renderPainelCamp(){
       elMs.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha multi-squad ativa.</div>';
     } else {
       elMs.innerHTML = msKeys.map(key=>{
-        const group = msGroups[key];
+        const groupObj = msGroups[key];
+        const group = groupObj.camps;
+        const grupoNome = groupObj._grupoNome;
+        const isManual  = groupObj._isManual;
         const c0    = group[0];
         const tema  = PAINEL_CAMP_TEMAS[c0.tema||'neutro']||PAINEL_CAMP_TEMAS.neutro;
         const nEntradas = group.reduce((s,c)=>s+Object.keys(c.entradas||{}).length,0);
@@ -2792,7 +2810,7 @@ function renderPainelCamp(){
         return `<div class="pcamp-group">
           <div class="pcamp-group-hd" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none';this.querySelector('.pcamp-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'">
             <span style="font-size:18px;">${tema.emoji}</span>
-            <div class="pcamp-group-nome">${esc(c0.nome||'—')}</div>
+            <div class="pcamp-group-nome">${esc(grupoNome||'—')}${isManual?' <span style="font-size:9px;color:#ffd166;">🗂 manual</span>':''}</div>
             <span class="camp-ms-badge">🔗 ${allSquads.length} squads</span>
             <span style="font-size:10px;color:var(--txt3);">${statusLbl} · 📝 ${nEntradas}</span>
             <span class="pcamp-arrow" style="font-size:11px;color:var(--txt3);margin-left:auto;">▶</span>
@@ -2869,45 +2887,180 @@ function renderPainelCamp(){
   }).join('');
 }
 
+let _pmsTab = 'auto';
+let _gruposCamp = {}; // grupos manuais carregados
+
+function loadGruposCamp(){
+  window._onValue(window._ref(window._db,'kanban/painel/grupos_campanha'), snap=>{
+    _gruposCamp = snap.val()||{};
+    renderPainelCamp();
+  });
+}
+
+function _pmsSwitchTab(tab){
+  _pmsTab = tab;
+  document.getElementById('pms-tab-auto').style.borderBottomColor  = tab==='auto'?'var(--teal)':'transparent';
+  document.getElementById('pms-tab-auto').style.color  = tab==='auto'?'var(--txt)':'var(--txt3)';
+  document.getElementById('pms-tab-manual').style.borderBottomColor = tab==='manual'?'var(--teal)':'transparent';
+  document.getElementById('pms-tab-manual').style.color = tab==='manual'?'var(--txt)':'var(--txt3)';
+  openPainelCampMsEdit();
+}
+
 function openPainelCampMsEdit(){
   const body = document.getElementById('painel-ms-edit-body'); if(!body) return;
-  const all  = Object.values(_campanhas);
-  body.innerHTML = !all.length
-    ? '<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha cadastrada.</div>'
-    : `<div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.6;">
-        Ative <b>Multi-squad</b> nas campanhas que envolvem mais de um squad. Campanhas com o mesmo nome serão agrupadas na visão consolidada.
-      </div>`
-      + all.map(c=>{
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:0;">
-            <input type="checkbox" ${c.multiSquad?'checked':''} data-camp-id="${esc(c.id)}" class="painel-ms-chk">
-            <span style="font-size:12px;font-weight:600;">${esc(c.nome||'—')}</span>
-            <span style="font-size:9px;color:var(--txt3);">${c.tipo==='colecao'?'👗':'📣'}</span>
-          </label>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            ${(c.squads||[]).map(sq=>`<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${_painelSqColor(sq).bg};border:1px solid ${_painelSqColor(sq).border};color:${_painelSqColor(sq).text};">${sq}</span>`).join('')}
+  const saveBtn = document.getElementById('painel-ms-save-btn');
+
+  if(_pmsTab==='auto'){
+    // ── ABA 1: Multi-squad + squads extras ──
+    saveBtn.style.display = 'inline-block';
+    saveBtn.textContent = '💾 Salvar alterações';
+    saveBtn.setAttribute('onclick','painelCampActivateAll()');
+    const all = Object.values(_campanhas);
+    const KNOWN = SQUADS.map(s=>s.id);
+    body.innerHTML = !all.length
+      ? '<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha cadastrada.</div>'
+      : `<div style="font-size:11px;color:var(--txt3);margin-bottom:14px;line-height:1.6;">
+          Ative <b>Multi-squad</b> nas campanhas que envolvem mais de um squad. Marque os <b>squads participantes</b> — incluindo squads extras (ex: Dados para relatórios). Eles passam a ver a campanha no board deles.
+        </div>`
+        + all.map(c=>{
+          const squads = c.squads||[];
+          return `<div style="padding:10px 12px;border:1px solid var(--glass-b);border-radius:9px;margin-bottom:8px;" data-camp-row="${esc(c.id)}">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:0;">
+                <input type="checkbox" ${c.multiSquad?'checked':''} data-camp-id="${esc(c.id)}" class="painel-ms-chk" onchange="this.closest('[data-camp-row]').querySelector('.pms-squads-box').style.display=this.checked?'flex':'none'">
+                <span style="font-size:13px;font-weight:600;">${esc(c.nome||'—')}</span>
+                <span style="font-size:10px;color:var(--txt3);">${c.tipo==='colecao'?'👗':'📣'}</span>
+              </label>
+            </div>
+            <div class="pms-squads-box" style="display:${c.multiSquad?'flex':'none'};gap:6px;flex-wrap:wrap;padding-left:22px;">
+              ${KNOWN.map(sq=>{
+                const on=squads.includes(sq); const sc=_painelSqColor(sq);
+                const sqInfo=SQUADS.find(s=>s.id===sq);
+                return `<label class="pms-sq-chk" data-camp="${esc(c.id)}" data-sq="${esc(sq)}" style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer;padding:3px 9px;border-radius:999px;border:1px solid ${on?sc.border:'var(--glass-b)'};background:${on?sc.bg:'transparent'};color:${on?sc.text:'var(--txt3)'};" onclick="_pmsToggleSq(this)">
+                  <input type="checkbox" ${on?'checked':''} style="display:none;"> ${sqInfo?.icon||''} ${esc(sq)}
+                </label>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }).join('');
+  } else {
+    // ── ABA 2: Grupos manuais ──
+    saveBtn.style.display = 'none';
+    const grupos = Object.values(_gruposCamp);
+    const all = Object.values(_campanhas);
+    body.innerHTML = `
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;line-height:1.6;">
+        Agrupe campanhas de <b>nomes diferentes</b> numa visão consolidada (ex: "Verão Site" + "Verão App" → grupo "Verão 2026").
+      </div>
+      <button class="btn btn-sm" onclick="_pmsNovoGrupo()" style="color:var(--teal);border-color:rgba(29,233,182,.3);margin-bottom:14px;">+ Criar grupo manual</button>
+      ${grupos.length ? grupos.map(g=>{
+        const camps = (g.campanhaIds||[]).map(id=>_campanhas[id]).filter(Boolean);
+        return `<div style="padding:12px;border:1px solid rgba(255,209,102,.25);border-radius:10px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:14px;">🗂</span>
+            <span style="font-size:13px;font-weight:600;flex:1;">${esc(g.nome||'Grupo')}</span>
+            <button class="btn btn-sm" onclick="_pmsEditGrupo('${esc(g.id)}')" style="font-size:10px;padding:3px 9px;">✏️</button>
+            <button class="btn btn-sm" onclick="_pmsDelGrupo('${esc(g.id)}')" style="font-size:10px;padding:3px 9px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Desagrupar</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding-left:24px;">
+            ${camps.length?camps.map(c=>`<div style="font-size:11px;color:var(--txt2);">• ${esc(c.nome||'—')} <span style="color:var(--txt3);">(${(c.squads||[]).join(', ')})</span></div>`).join(''):'<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha.</div>'}
           </div>
         </div>`;
-      }).join('');
+      }).join('') : '<div style="font-size:11px;color:var(--txt3);padding:12px 0;">Nenhum grupo manual criado ainda.</div>'}
+    `;
+  }
   document.getElementById('painel-camp-ms-ov').classList.add('open');
 }
 
+function _pmsToggleSq(el){
+  const cb = el.querySelector('input');
+  cb.checked = !cb.checked;
+  const sq = el.dataset.sq, sc=_painelSqColor(sq);
+  if(cb.checked){ el.style.border='1px solid '+sc.border; el.style.background=sc.bg; el.style.color=sc.text; }
+  else { el.style.border='1px solid var(--glass-b)'; el.style.background='transparent'; el.style.color='var(--txt3)'; }
+}
+
 async function painelCampActivateAll(){
-  const checks = document.querySelectorAll('.painel-ms-chk');
+  const rows = document.querySelectorAll('[data-camp-row]');
   const updates = [];
-  checks.forEach(chk=>{
-    const id  = chk.dataset.campId;
-    const val = chk.checked;
-    const cur = _campanhas[id];
-    if(cur && !!(cur.multiSquad) !== val) updates.push({id, val});
+  rows.forEach(row=>{
+    const id = row.dataset.campRow;
+    const cur = _campanhas[id]; if(!cur) return;
+    const isMS = row.querySelector('.painel-ms-chk')?.checked||false;
+    const squads = [...row.querySelectorAll('.pms-sq-chk')].filter(l=>l.querySelector('input').checked).map(l=>l.dataset.sq);
+    const curSquads = cur.squads||[];
+    const msChanged = !!cur.multiSquad !== isMS;
+    const sqChanged = JSON.stringify([...curSquads].sort()) !== JSON.stringify([...squads].sort());
+    if(msChanged || sqChanged){
+      updates.push({id, multiSquad:isMS, squads: squads.length?squads:curSquads});
+    }
   });
   if(!updates.length){ showToast('Nenhuma alteração detectada.'); return; }
   try{
-    for(const u of updates)
-      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/multiSquad'), u.val);
+    for(const u of updates){
+      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/multiSquad'), u.multiSquad);
+      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/squads'), u.squads);
+    }
     showToast('✅ '+updates.length+' campanha(s) atualizada(s)!');
     document.getElementById('painel-camp-ms-ov').classList.remove('open');
   } catch(e){ uiAlert('Erro: '+e.message); }
+}
+
+// ── Grupos manuais ──
+async function _pmsNovoGrupo(){
+  const nome = await uiPrompt('Nome do grupo (ex: Verão 2026):','',{title:'Criar grupo manual',placeholder:'Verão 2026'});
+  if(!nome||!nome.trim()) return;
+  _pmsEditGrupoCampanhas(null, nome.trim());
+}
+
+async function _pmsEditGrupo(gid){
+  const g = _gruposCamp[gid]; if(!g) return;
+  _pmsEditGrupoCampanhas(gid, g.nome, g.campanhaIds||[]);
+}
+
+async function _pmsEditGrupoCampanhas(gid, nome, selecionadas=[]){
+  const all = Object.values(_campanhas);
+  // Modal simples de seleção via checkboxes
+  const body = document.getElementById('painel-ms-edit-body');
+  const saveBtn = document.getElementById('painel-ms-save-btn');
+  saveBtn.style.display='none';
+  body.innerHTML = `
+    <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🗂 ${esc(nome)}</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Selecione as campanhas que formam este grupo:</div>
+    ${all.map(c=>`<label style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;cursor:pointer;">
+      <input type="checkbox" class="pms-grupo-camp" value="${esc(c.id)}" ${selecionadas.includes(c.id)?'checked':''}>
+      <span style="font-size:12px;font-weight:600;">${esc(c.nome||'—')}</span>
+      <span style="font-size:9px;color:var(--txt3);">${(c.squads||[]).join(', ')}</span>
+    </label>`).join('')}
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-sm" onclick="_pmsSwitchTab('manual')">← Voltar</button>
+      <button class="btn btn-sm" onclick="_pmsSalvarGrupo('${gid||''}','${esc(nome).replace(/'/g,"\\'")}')" style="color:var(--teal);border-color:rgba(29,233,182,.3);margin-left:auto;">💾 Salvar grupo</button>
+    </div>
+  `;
+}
+
+async function _pmsSalvarGrupo(gid, nome){
+  const ids = [...document.querySelectorAll('.pms-grupo-camp:checked')].map(cb=>cb.value);
+  if(ids.length<1){ uiAlert('Selecione ao menos uma campanha.'); return; }
+  const id = gid || ('grp'+Date.now()+Math.random().toString(36).slice(2,6));
+  const grupo = {
+    id, nome,
+    campanhaIds: ids,
+    criadoEm: _gruposCamp[id]?.criadoEm || new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+  };
+  try{
+    await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+id), grupo);
+    showToast('✅ Grupo salvo!');
+    _pmsSwitchTab('manual');
+  } catch(e){ uiAlert('Erro: '+e.message); }
+}
+
+async function _pmsDelGrupo(gid){
+  const g = _gruposCamp[gid];
+  if(!await uiConfirm('Desagrupar "'+esc(g?.nome||gid)+'"? As campanhas voltam a aparecer separadas.',{danger:true,okText:'Desagrupar'})) return;
+  await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+gid), null).catch(e=>uiAlert(e.message));
+  showToast('🗑 Grupo desagrupado.');
 }
 
 function renderOKR(){
@@ -3987,6 +4140,7 @@ window.addEventListener('fb-ready',()=>{
   loadLembretesGestao();
   loadKudosGeral();
   loadPainelCampanhas();
+  loadGruposCamp();
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
