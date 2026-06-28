@@ -3189,7 +3189,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.17-dev</div>
+<div class="version">v8.30.19-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5555,9 +5555,10 @@ function renderLembretes(){
       }
       // Sempre mostra QUEM criou (primeiro nome), pequeno no canto
       const autorNome = (l.autor||'').split(' ')[0] || l.init || 'alguém';
-      meta=`<div class="pi-meta"><span class="pi-author">✎ ${esc(autorNome)}${alvo}</span><span>${quando}</span></div>`;
+      const verCard = l.cardId ? ' · ver card →' : '';
+      meta=`<div class="pi-meta"><span class="pi-author">✎ ${esc(autorNome)}${alvo}</span><span>${quando}${verCard}</span></div>`;
     }
-    const clickAttr = (l.tipo==='quadro'&&l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard('${esc(l.cardId)}')"` : ` style="--rot:${rot}deg;"`;
+    const clickAttr = (l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard('${esc(l.cardId)}')"` : ` style="--rot:${rot}deg;"`;
     return `<div class="postit ${t.cls}${urgent}"${clickAttr}>
       ${delBtn}
       <div class="pi-type">${t.emoji} ${t.label}</div>
@@ -6245,7 +6246,7 @@ function renderCampDetalhe(c){
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
-        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${sq}</span>`;}).join('')}
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${esc(_sqLabel(sq))}</span>`;}).join('')}
         ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todos</span>`:''}
       </div>`:''}
     </div>`:''}
@@ -6254,7 +6255,7 @@ function renderCampDetalhe(c){
         <div>
           <div class="camp-sidebar-sec">Metadados</div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Período</span><span class="camp-meta-val">${esc(periodo)}</span></div>
-          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span style="color:${sqc.text};font-size:10px;">${sq}</span>`;}).join(' · ')}</span></div>
+          <div class="camp-meta-row"><span class="camp-meta-lbl">Squads</span><span class="camp-meta-val">${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span style="color:${sqc.text};font-size:10px;">${esc(_sqLabel(sq))}</span>`;}).join(' · ')}</span></div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Tags vinculadas</span><span class="camp-meta-val">${campTags.map(tid=>{const tobj=getTag(tid);return tobj?esc(tobj.label):'';}).filter(Boolean).join(', ')||'Nenhuma'}</span></div>
           <div class="camp-meta-row"><span class="camp-meta-lbl">Cards exibidos</span><span class="camp-meta-val">${mostrarArq?'Todos':'Só ativos'}</span></div>
         </div>
@@ -6388,6 +6389,13 @@ const SQUAD_COLORS = {
   dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
 };
 function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
+const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev' };
+function _sqLabel(sqId){
+  // Tenta SQUADS (config dinâmica), senão usa mapa fixo, senão o próprio id
+  const info = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sqId);
+  if(info?.label) return info.label.replace(/^Squad\s+/,'');
+  return _SQ_LABELS[sqId]||sqId;
+}
 
 function _renderEntrada(e, campId){
   const icon  = CAMP_TIPO_ICONS[e.tipo]||'📝';
@@ -6676,7 +6684,7 @@ function openCampCardsGrid(){
   let filtersHtml = '';
   if(ctx.viewMode==='multi' && squadsPresent.length>1){
     filtersHtml += '<select class="camp-filter-sel" id="camp-grid-f-squad" onchange="_renderCampCardsGrid()"><option value="all">Todas as squads</option>'+
-      squadsPresent.map(sq=>`<option value="${esc(sq)}">${esc(sq)}</option>`).join('')+'</select>';
+      squadsPresent.map(sq=>`<option value="${esc(sq)}">${esc(_sqLabel(sq))}</option>`).join('')+'</select>';
   }
   const colsPresent = [...new Set(cards.map(c=>c.col))];
   filtersHtml += '<select class="camp-filter-sel" id="camp-grid-f-col" onchange="_renderCampCardsGrid()"><option value="all">Todas as colunas</option>'+
@@ -6963,7 +6971,7 @@ function processRecorrentes(){
     criados.forEach(card=>{
       // lembrete próprio pra quem abriu (salvo no caminho correto dos próprios)
       const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
-        tipo:'proprio', text:'🔁 Card recorrente voltou: "'+card.title+'"',
+        tipo:'proprio', text:'🔁 Novo card recorrente criado: "'+card.title+'"',
         autor:'Recorrência', autorUid:'', init:'🔁',
         cardId:card.id, ts:new Date().toISOString() };
       lembretesProprios.push(obj);
@@ -6971,7 +6979,7 @@ function processRecorrentes(){
       // notificação pro responsável (se houver)
       if(card.owner){
         const uid=getUidByInit(card.owner);
-        if(uid) createNotif(uid,'recorrente','🔁 Card recorrente voltou', card.title, card.id);
+        if(uid) createNotif(uid,'recorrente','🔁 Novo card recorrente criado', card.title, card.id);
       }
     });
     if(lemPropMudou){
