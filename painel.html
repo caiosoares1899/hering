@@ -582,6 +582,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .bs-del-btn{background:none;border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.7);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;}
 .bs-del-btn:hover{background:rgba(255,107,107,.1);color:var(--danger);}
 
+/* ── Campanhas multi-squad no painel ── */
+.pcamp-group { border:1px solid rgba(255,209,102,.25); border-radius:12px; overflow:hidden; margin-bottom:10px; }
+.pcamp-group-hd { display:flex;align-items:center;gap:10px;padding:12px 16px; background:rgba(255,209,102,.06); cursor:pointer; }
+.pcamp-group-hd:hover { background:rgba(255,209,102,.1); }
+.pcamp-group-nome { font-family:'Syne',sans-serif;font-size:13px;font-weight:700;flex:1; }
+.pcamp-group-body { padding:12px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(255,209,102,.15); }
+.pcamp-sq-row { display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(3,13,26,.4); }
+.pcamp-sq-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.pcamp-sq-name { font-size:11px;font-weight:600;flex-shrink:0;min-width:90px; }
+.pcamp-sq-pills { display:flex;gap:4px;flex-wrap:wrap;flex:1; }
+.pcamp-individual { border:1px solid var(--glass-b); border-radius:10px; padding:10px 14px; }
+.pcamp-sq-filter-bar { display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px; }
+.pcamp-sq-fbtn { padding:2px 8px;border-radius:999px;font-size:10px;border:1px solid var(--glass-b);
+  background:none;color:var(--txt3);cursor:pointer;transition:all .15s; }
+.pcamp-sq-fbtn.on { color:var(--txt);border-color:var(--accent);background:rgba(56,182,255,.1); }
+
 /* ── ABAS DO PAINEL ─────────────────────────────────────────────── */
 .ptabs{display:flex;gap:0;border-bottom:2px solid var(--glass-b);margin-bottom:20px;overflow-x:auto;}
 .ptabs::-webkit-scrollbar{display:none;}
@@ -822,6 +838,58 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <div class="sec-title" id="okr-section-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
     <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+
+    <!-- CAMPANHAS -->
+    <div id="painel-camp-section" style="margin-bottom:20px;">
+      <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>📣 Campanhas & Coleções</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="painel-camp-f-tipo" onchange="renderPainelCamp()" style="padding:3px 8px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;">
+            <option value="all">Todos</option>
+            <option value="campanha">📣 Campanhas</option>
+            <option value="colecao">👗 Coleções</option>
+          </select>
+          <select id="painel-camp-f-status" onchange="renderPainelCamp()" style="padding:3px 8px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;">
+            <option value="all">Todos status</option>
+            <option value="ativa">✅ Ativas</option>
+            <option value="planejamento">📋 Planejamento</option>
+            <option value="encerrada">🔒 Encerradas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Multi-squad: visão consolidada (ADM pode editar) -->
+      <div id="painel-camp-ms" style="margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#ffd166;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+          🔗 Multi-squad
+          <button id="painel-camp-ms-edit-btn" onclick="openPainelCampMsEdit()" style="display:none;font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);color:#ffd166;cursor:pointer;">⚙ Gerenciar agrupamentos</button>
+        </div>
+        <div id="painel-camp-ms-list"><div style="font-size:11px;color:var(--txt3);">—</div></div>
+      </div>
+
+      <!-- Individuais -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:8px;">🐟 Por squad</div>
+      <div id="painel-camp-list" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:11px;color:var(--txt3);">Carregando campanhas...</div>
+      </div>
+    </div>
+
+    <!-- Modal gerenciar agrupamentos multi-squad (ADM) -->
+    <div class="ov" id="painel-camp-ms-ov" style="z-index:310;">
+      <div style="background:rgba(6,18,36,.98);border:1px solid var(--glass-b);border-radius:14px;width:min(540px,95vw);max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">🔗 Agrupamentos Multi-squad</span>
+          <button class="x-btn" onclick="document.getElementById('painel-camp-ms-ov').classList.remove('open')">✕</button>
+        </div>
+        <div style="padding:16px 20px;flex:1;overflow-y:auto;" id="painel-ms-edit-body">
+          <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+        </div>
+        <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;">
+          <button class="btn btn-sm" onclick="document.getElementById('painel-camp-ms-ov').classList.remove('open')">Fechar</button>
+          <button class="btn btn-sm" onclick="painelCampActivateAll()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Ativar multi-squad selecionadas</button>
+        </div>
+      </div>
+    </div>
 
     <div id="cmp-section">
       <div class="sec-title">⚖️ Comparação entre squads</div>
@@ -1184,7 +1252,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.5 · painel</div>
+<div class="version">v2.7 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1327,6 +1395,7 @@ function loadPresence(){
       window['_presence_'+sq.id]=online;
       renderOnline();
   setTimeout(_restoreTab, 300);
+  loadPainelCampanhas();
     });
   });
 }
@@ -1353,6 +1422,197 @@ function renderOnline(){
 }
 
 // ── OKR ──────────────────────────────────────────────────────────
+// ═══ CAMPANHAS & COLEÇÕES — PAINEL ══════════════════════════════════
+const PAINEL_CAMP_TEMAS = {
+  neutro:{emoji:'🎯'},inverno:{emoji:'❄️'},verao:{emoji:'☀️'},
+  altoverao:{emoji:'🔥'},outono:{emoji:'🍂'},primavera:{emoji:'🌸'},
+};
+const PAINEL_SQ_COLORS = {
+  dados:         {bg:'rgba(56,182,255,.12)', border:'rgba(56,182,255,.4)',  text:'#38b6ff'},
+  midia:         {bg:'rgba(29,233,182,.12)', border:'rgba(29,233,182,.4)',  text:'#1de9b6'},
+  midiacriativa: {bg:'rgba(244,168,200,.12)',border:'rgba(244,168,200,.4)', text:'#f4a8c8'},
+  dev:           {bg:'rgba(167,139,250,.12)',border:'rgba(167,139,250,.4)', text:'#a78bfa'},
+};
+function _painelSqColor(sq){ return PAINEL_SQ_COLORS[sq]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
+
+let _painelCampanhas = {};
+let _painelCampSqFilter = 'all'; // filtro ativo nas visões multi-squad
+
+function loadPainelCampanhas(){
+  window._onValue(window._ref(window._db,'kanban/campanhas'), snap=>{
+    _painelCampanhas = snap.val()||{};
+    renderPainelCamp();
+    _checkPainelAdmCamp();
+  });
+}
+
+function _checkPainelAdmCamp(){
+  const isAdm = _isAdmPainel();
+  const btn = document.getElementById('painel-camp-ms-edit-btn');
+  if(btn) btn.style.display = isAdm?'inline-block':'none';
+}
+
+function renderPainelCamp(){
+  const el   = document.getElementById('painel-camp-list');
+  const elMs = document.getElementById('painel-camp-ms-list');
+  if(!el) return;
+
+  let list = Object.values(_painelCampanhas);
+  const fTipo   = document.getElementById('painel-camp-f-tipo')?.value||'all';
+  const fStatus = document.getElementById('painel-camp-f-status')?.value||'all';
+  if(fTipo  !=='all') list=list.filter(c=>c.tipo===fTipo);
+  if(fStatus!=='all') list=list.filter(c=>c.status===fStatus);
+  list.sort((a,b)=>{
+    const so={ativa:0,planejamento:1,encerrada:2};
+    if((so[a.status]||0)!==(so[b.status]||0)) return (so[a.status]||0)-(so[b.status]||0);
+    return String(b.dataInicio||'').localeCompare(String(a.dataInicio||''));
+  });
+
+  const msGroups = {};   // nome normalizado → [campanha, ...]
+  const individual = [];
+
+  list.forEach(c=>{
+    if(c.multiSquad){
+      const key = String(c.nome||'').toLowerCase().trim();
+      if(!msGroups[key]) msGroups[key]=[];
+      msGroups[key].push(c);
+    } else {
+      individual.push(c);
+    }
+  });
+
+  // ── Multi-squad ──
+  if(elMs){
+    const msKeys = Object.keys(msGroups);
+    if(!msKeys.length){
+      elMs.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha multi-squad ativa.</div>';
+    } else {
+      elMs.innerHTML = msKeys.map(key=>{
+        const group = msGroups[key];
+        const c0    = group[0];
+        const tema  = PAINEL_CAMP_TEMAS[c0.tema]||PAINEL_CAMP_TEMAS.neutro;
+        const statusLbl = {ativa:'✅',planejamento:'📋',encerrada:'🔒'}[c0.status]||'';
+        const nEntradas = group.reduce((s,c)=>s+Object.keys(c.entradas||{}).length,0);
+        // Squads participantes únicos
+        const allSquads = [...new Set(group.flatMap(c=>c.squads||[]))];
+        const sqRows = allSquads.map(sq=>{
+          const sqc = _painelSqColor(sq);
+          const campSq = group.find(c=>(c.squads||[]).includes(sq));
+          const nCards = 0; // sem acesso direto aos cards de outros squads no painel
+          const nEnt   = Object.keys(campSq?.entradas||{}).length;
+          return `<div class="pcamp-sq-row">
+            <div class="pcamp-sq-dot" style="background:${sqc.text};"></div>
+            <span class="pcamp-sq-name" style="color:${sqc.text};">${sq}</span>
+            <div class="pcamp-sq-pills">
+              <span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">📝 ${nEnt} registro${nEnt!==1?'s':''}</span>
+              ${campSq?.status?`<span style="font-size:9px;color:var(--txt3);">${{ativa:'✅ Ativa',planejamento:'📋 Plan.',encerrada:'🔒 Enc.'}[campSq.status]||campSq.status}</span>`:''}
+            </div>
+          </div>`;
+        }).join('');
+        // KVs consolidados
+        const kvs = [...new Set(group.flatMap(c=>(c.kvs||[])))];
+        return `<div class="pcamp-group">
+          <div class="pcamp-group-hd" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'flex':'none'">
+            <span style="font-size:18px;">${tema.emoji}</span>
+            <div class="pcamp-group-nome">${esc(c0.nome||'—')}</div>
+            <span class="camp-ms-badge">🔗 ${allSquads.length} squads</span>
+            <span style="font-size:10px;color:var(--txt3);">${statusLbl} · 📝 ${nEntradas}</span>
+            <span style="font-size:11px;color:var(--txt3);">▼</span>
+          </div>
+          <div class="pcamp-group-body" style="display:none;">
+            ${c0.mote?`<div style="font-size:11px;color:var(--txt3);font-style:italic;margin-bottom:8px;">"${esc(c0.mote)}"</div>`:''}
+            ${sqRows}
+            ${kvs.length?`<div style="margin-top:8px;border-top:1px solid rgba(255,209,102,.1);padding-top:8px;">
+              <div style="font-size:9px;color:rgba(255,209,102,.6);font-weight:700;text-transform:uppercase;margin-bottom:4px;">🎨 KVs</div>
+              ${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
+            </div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Individuais ──
+  if(!individual.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhuma campanha individual cadastrada.</div>';
+    return;
+  }
+  el.innerHTML = individual.map(c=>{
+    const tema = PAINEL_CAMP_TEMAS[c.tema]||PAINEL_CAMP_TEMAS.neutro;
+    const statusCls = {ativa:'color:var(--teal)',planejamento:'color:var(--accent)',encerrada:'color:var(--txt3)'}[c.status]||'';
+    const statusLbl = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
+    const periodo   = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'—';
+    const squads    = (c.squads||[]);
+    const nEntradas = Object.keys(c.entradas||{}).length;
+    const tipoPill  = c.tipo==='colecao'?'👗 Coleção':'📣 Campanha';
+    const kvs       = (c.kvs||[]);
+    const sqBadges  = squads.map(sq=>{ const sqc=_painelSqColor(sq); return `<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${sq}</span>`; }).join('');
+    return `<div class="card pcamp-individual" style="padding:10px 14px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <span style="font-size:18px;line-height:1;flex-shrink:0;">${tema.emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
+            <span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;">${esc(c.nome||'—')}</span>
+            <span style="font-size:9px;padding:1px 6px;border-radius:999px;background:rgba(56,182,255,.08);color:var(--txt3);border:1px solid rgba(56,182,255,.15);">${tipoPill}</span>
+            <span style="font-size:9px;${statusCls};margin-left:auto;">${statusLbl}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--txt3);">
+            ${sqBadges}
+            <span>📅 ${esc(periodo)}</span>
+            <span>📝 ${nEntradas}</span>
+          </div>
+          ${kvs.length?`<div style="margin-top:5px;">${kvs.map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🎨 ${esc(l.label||l.url)}</a>`).join('')}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Editor de agrupamentos multi-squad (ADM) ──────────────────────
+function openPainelCampMsEdit(){
+  const body = document.getElementById('painel-ms-edit-body'); if(!body) return;
+  const all  = Object.values(_painelCampanhas);
+  if(!all.length){ body.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha cadastrada.</div>'; }
+  else {
+    body.innerHTML = `<div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.6;">
+      Ative <b>Multi-squad</b> nas campanhas que envolvem mais de um squad. Campanhas com o mesmo nome serão agrupadas na visão consolidada do painel.
+    </div>`+all.map(c=>{
+      const sqc = _painelSqColor((c.squads||[])[0]||'dados');
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:1;min-width:0;">
+          <input type="checkbox" ${c.multiSquad?'checked':''} data-camp-id="${esc(c.id)}" class="painel-ms-chk">
+          <span style="font-size:12px;font-weight:600;">${esc(c.nome||'—')}</span>
+          <span style="font-size:9px;color:var(--txt3);">${c.tipo==='colecao'?'👗':'📣'}</span>
+        </label>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          ${(c.squads||[]).map(sq=>`<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${_painelSqColor(sq).bg};border:1px solid ${_painelSqColor(sq).border};color:${_painelSqColor(sq).text};">${sq}</span>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('painel-camp-ms-ov').classList.add('open');
+}
+
+async function painelCampActivateAll(){
+  const checks = document.querySelectorAll('.painel-ms-chk');
+  const updates = [];
+  checks.forEach(chk=>{
+    const id  = chk.dataset.campId;
+    const val = chk.checked;
+    const cur = _painelCampanhas[id];
+    if(cur && !!(cur.multiSquad) !== val) updates.push({id, val});
+  });
+  if(!updates.length){ showToast('Nenhuma alteração detectada.'); return; }
+  try{
+    for(const u of updates){
+      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/multiSquad'), u.val);
+    }
+    showToast('✅ '+updates.length+' campanha(s) atualizada(s)!');
+    document.getElementById('painel-camp-ms-ov').classList.remove('open');
+  } catch(e){ uiAlert('Erro: '+e.message); }
+}
+
+
 function renderOKR(){
   const el=document.getElementById('okr-list'); if(!el) return;
   const cnt=document.getElementById('okr-count');
