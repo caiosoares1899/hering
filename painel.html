@@ -1933,6 +1933,16 @@ function uiConfirm(message, opts={}){ return _uiModalPainel({message, kind:'conf
 function uiPrompt(message, defaultValue='', opts={}){ return _uiModalPainel({message, kind:'prompt', defaultValue, ...opts}); }
 
 // ── Carregar ──────────────────────────────────────────────────────
+// Helper global para buscar tags em qualquer squad
+const _pTag = (tid) => {
+  for(const sq of SQUADS){
+    const sid = typeof sq === 'string' ? sq : sq.id;
+    const t=(squadData[sid]?.tags||[]).find(t=>t.id===tid);
+    if(t) return t;
+  }
+  return null;
+};
+
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
     _campanhas = snap.val()||{};
@@ -1997,7 +2007,7 @@ function renderCampList(){
   }
   body.innerHTML = list.map(c=>{
     const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
-    const tagObj = null; // painel usa _pTag diretamente abaixo
+    // const tagObj = null; // painel usa _pTag diretamente abaixo
     // contar cards vinculados (painel: agrega de todos os squads participantes)
     const mostrarArq = c.mostrarArquivados==='todos';
     const campTags=(c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
@@ -2056,14 +2066,8 @@ function renderCampDetalhe(c){
   if(!window._campViewMode) window._campViewMode = isMS?'multi':'squad';
   const viewMode = isMS ? window._campViewMode : 'squad';
 
-  // Helper: tags — busca em squadData de todos os squads
-  const _pTag = (tid) => {
-    for(const sq of SQUADS){
-      const t=(squadData[sq.id]?.tags||[]).find(t=>t.id===tid);
-      if(t) return t;
-    }
-    return null;
-  };
+  // Helper: tags — busca em squadData de todos os squads (movido para fora para evitar ReferenceError)
+  // const _pTag definido globalmente abaixo
 
   // Helper: cards e colunas por squad
   const _sqCards = (sq) => {
