@@ -1975,6 +1975,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
+  <button class="btn btn-sm" id="btn-adm-participar" onclick="toggleAdmParticipar()" style="display:none;" title="Participar ou sair deste quadro como membro visível"></button>
   <div class="tb-sep"></div>
   <div class="card-fn-wrap" style="position:relative;display:inline-block;">
     <button class="btn btn-sm" onclick="toggleCardFnMenu(event)" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
@@ -3163,7 +3164,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.21</div>
+<div class="version">v8.30.22</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3964,10 +3965,14 @@ function fbLoadAll(){
   // Membros inscritos — carrega todos do Firebase
   fbListen('kanban/usuarios', val=>{
     if(!val) return;
+    window._allUsersRaw = val; // dados crus p/ checagens (ex: ADM participando do quadro)
     members = [];
     Object.entries(val).forEach(([uid,u])=>{
-      // inThisSquad: ADM global, ou inscrito neste squad específico, ou inscrito legado
-      const inThisSquad = (u.role === 'adm') ||
+      // inThisSquad: inscrito neste squad específico, ou inscrito legado.
+      // ADM NÃO entra mais automaticamente — vira "fantasma" e só aparece se
+      // se inscrever ativamente neste quadro (toggle "Participar"). Mantém TODO
+      // o acesso pelo role; isto só evita poluir a lista de membros/menções.
+      const inThisSquad =
         (u.squads && u.squads[ACTIVE_SQUAD]===true) ||
         // legado: inscrito:true sem squads obj
         (!u.squads && (u.inscrito===true||u.inscrito==='true'));
@@ -3991,10 +3996,15 @@ function fbLoadAll(){
           noInit:!(u.init&&u.init.trim()) /* marca quem teve init derivado */});
       }
     });
-    // ⚡ Garante que o usuário logado sempre apareça na lista (sobretudo ADM)
+    // ⚡ Garante que o usuário logado apareça na lista — EXCETO ADM fantasma.
+    // O ADM só aparece pra si mesmo se estiver inscrito neste quadro (toggle Participar).
+    // Membros/PO/org normais continuam aparecendo sempre.
     const cu=window._currentUser;
     if(cu && window._currentUserInit){
-      if(!members.find(m=>m.uid===cu.uid || m.init===window._currentUserInit)){
+      const cuData = val[cu.uid]||{};
+      const admInscrito = (cuData.squads && cuData.squads[ACTIVE_SQUAD]===true);
+      const ehAdmFantasma = isAdmUser(cu) && !admInscrito;
+      if(!ehAdmFantasma && !members.find(m=>m.uid===cu.uid || m.init===window._currentUserInit)){
         members.push({init:window._currentUserInit, name:cu.displayName||cu.email||'', email:cu.email||'',
           foto:cu.photoURL||'', uid:cu.uid, role:window._currentUserRole||'membro'});
       }
@@ -4012,6 +4022,8 @@ function fbLoadAll(){
     if(document.getElementById('card-ov')?.classList.contains('open')){
       populateOwnerSelect();
     }
+    // Atualiza o botão de participar/sair do ADM
+    updAdmParticiparBtn();
   });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
@@ -4401,6 +4413,53 @@ function confirmarInscricao(){
   fbSaveAll();
   closeOv('insc-ov');
   renderBoard();
+}
+
+// ── ADM "fantasma": participar/sair do quadro como membro visível ──
+function _admEstaParticipando(){
+  const u=window._currentUser; if(!u||!window._allUsersRaw) return false;
+  const data=window._allUsersRaw[u.uid]||{};
+  return !!(data.squads && data.squads[ACTIVE_SQUAD]===true);
+}
+function updAdmParticiparBtn(){
+  const btn=document.getElementById('btn-adm-participar'); if(!btn) return;
+  const u=window._currentUser;
+  // Só aparece para ADM
+  if(!u || !isAdmUser(u)){ btn.style.display='none'; return; }
+  btn.style.display='';
+  const participando=_admEstaParticipando();
+  if(participando){
+    btn.textContent='👻 Sair do quadro';
+    btn.style.color='var(--txt2)';
+    btn.style.borderColor='var(--glass-b)';
+    btn.title='Você está visível como membro deste quadro. Clique para voltar a ser fantasma (mantém todo o acesso).';
+  } else {
+    btn.textContent='🙋 Participar do quadro';
+    btn.style.color='var(--teal)';
+    btn.style.borderColor='rgba(29,233,182,.3)';
+    btn.title='Você é fantasma aqui: tem acesso total mas não aparece na lista de membros. Clique para participar ativamente.';
+  }
+}
+async function toggleAdmParticipar(){
+  const u=window._currentUser; if(!u||!isAdmUser(u)) return;
+  const participando=_admEstaParticipando();
+  if(participando){
+    // Sair: remove a inscrição neste squad
+    if(!await uiConfirm('Voltar a ser fantasma neste quadro? Você sai da lista de membros mas mantém todo o acesso de ADM.',{title:'Sair do quadro',okText:'Sair'})) return;
+    const upd={}; upd['squads/'+ACTIVE_SQUAD]=null;
+    fbUpdate('kanban/usuarios/'+u.uid, upd);
+    showToast('👻 Você voltou a ser fantasma neste quadro.');
+  } else {
+    // Participar: inscreve no squad
+    let init=window._currentUserInit;
+    if(!init){ init=deriveInit(u.displayName||u.email||''); }
+    const upd={init, inscritoEm:new Date().toISOString()};
+    upd['squads/'+ACTIVE_SQUAD]=true;
+    fbUpdate('kanban/usuarios/'+u.uid, upd);
+    window._currentUserInit=init;
+    showToast('🙋 Você agora participa deste quadro como membro.');
+  }
+  setTimeout(updAdmParticiparBtn, 400);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8656,6 +8715,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.' },
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar) e 📦 Arquivados (cards que saíram do quadro). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
+    { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), o ADM clica em 🙋 Participar do quadro na toolbar. Para voltar a ser invisível, clica em 👻 Sair do quadro. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
     { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.' },
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com seis ações em massa: 📥 Mover para coluna, 👤 Responsável, 🏷 Tag (adicionar ou substituir), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
