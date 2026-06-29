@@ -3163,7 +3163,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.20</div>
+<div class="version">v8.30.21</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5581,8 +5581,9 @@ function delLembrete(tipo, id){
 }
 function updLemBadge(){
   const badge=document.getElementById('lem-badge'); if(!badge) return;
-  const all=[...lembretes, ...lembretesProprios, ...lembretesGestao];
-  const novos=all.filter(l=>{ const t=l.ts?new Date(l.ts).getTime():0; return t>_lemSeenTs; }).length;
+  // Usa a MESMA lógica da lista (filtros de PO, dispensados, etc) para não contar fantasmas
+  const { list } = _collectLembretes();
+  const novos = list.filter(l=>{ const t=l.ts?new Date(l.ts).getTime():0; return t>_lemSeenTs; }).length;
   if(novos>0){ badge.textContent=novos>9?'9+':novos; badge.style.display=''; }
   else badge.style.display='none';
 }
