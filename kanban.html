@@ -1724,6 +1724,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-entry-tipo-estrategia  { border-left:3px solid #5f9ea0; }
 .camp-entry-titulo { font-size:12px; font-weight:500; color:var(--txt); margin-bottom:5px; font-family:'DM Sans',sans-serif; letter-spacing:0; line-height:1.4; }
 .camp-entry-corpo  { font-size:11.5px; color:rgba(200,220,240,.75); line-height:1.7; white-space:pre-wrap; font-family:'DM Sans',sans-serif; font-weight:400; }
+.camp-fmt-btn { background:rgba(3,13,26,.6); border:1px solid var(--glass-b); border-radius:5px; color:var(--txt2); font-size:11px; padding:3px 8px; cursor:pointer; min-width:26px; transition:all .12s; font-family:'DM Sans',sans-serif; }
+.camp-fmt-btn:hover { background:rgba(56,182,255,.15); border-color:rgba(56,182,255,.3); color:var(--txt); }
 .camp-entry-links  { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
 .camp-entry-link   { font-size:11px; color:var(--accent); text-decoration:none; }
 .camp-entry-link:hover { text-decoration:underline; }
@@ -1975,7 +1977,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
-  <button class="btn btn-sm" id="btn-adm-participar" onclick="toggleAdmParticipar()" style="display:none;" title="Participar ou sair deste quadro como membro visível"></button>
   <div class="tb-sep"></div>
   <div class="card-fn-wrap" style="position:relative;display:inline-block;">
     <button class="btn btn-sm" onclick="toggleCardFnMenu(event)" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
@@ -3164,7 +3165,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.22</div>
+<div class="version">v8.30.24</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4070,11 +4071,13 @@ function openTeamList(){
       <div id="team-hd" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--txt);">👥 Equipe do quadro</div>
       <button class="x-btn" onclick="document.getElementById('team-ov').remove()">✕</button>
     </div>
+    <div id="team-adm-toggle-wrap" style="display:none;padding:10px 14px;border-bottom:1px solid var(--glass-b);background:rgba(167,139,250,.06);"></div>
     <div id="team-list" style="overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:7px;">
       <div style="font-size:11px;color:var(--txt3);padding:12px;text-align:center;">Carregando equipe…</div>
     </div>
   </div>`;
   document.body.appendChild(ov);
+  _renderTeamAdmToggle();
   const onlineUids=new Set();
   window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence')).then(ps=>{
     const pv=ps.val()||{}; const now=Date.now();
@@ -4422,22 +4425,23 @@ function _admEstaParticipando(){
   return !!(data.squads && data.squads[ACTIVE_SQUAD]===true);
 }
 function updAdmParticiparBtn(){
-  const btn=document.getElementById('btn-adm-participar'); if(!btn) return;
+  // Botão antigo da toolbar foi movido para o modal de Equipe.
+  // Mantém compat: se existir, atualiza; senão, atualiza o toggle do modal.
+  _renderTeamAdmToggle();
+}
+function _renderTeamAdmToggle(){
+  const wrap=document.getElementById('team-adm-toggle-wrap');
+  if(!wrap) return;
   const u=window._currentUser;
-  // Só aparece para ADM
-  if(!u || !isAdmUser(u)){ btn.style.display='none'; return; }
-  btn.style.display='';
+  if(!u || !isAdmUser(u)){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
   const participando=_admEstaParticipando();
   if(participando){
-    btn.textContent='👻 Sair do quadro';
-    btn.style.color='var(--txt2)';
-    btn.style.borderColor='var(--glass-b)';
-    btn.title='Você está visível como membro deste quadro. Clique para voltar a ser fantasma (mantém todo o acesso).';
+    wrap.innerHTML=`<div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:7px;">👻 Você participa deste quadro como <b>membro visível</b>. Pode voltar a ser fantasma (mantém todo o acesso).</div>
+      <button class="btn btn-sm" onclick="toggleAdmParticipar()" style="width:100%;color:var(--txt2);">👻 Sair do quadro (virar fantasma)</button>`;
   } else {
-    btn.textContent='🙋 Participar do quadro';
-    btn.style.color='var(--teal)';
-    btn.style.borderColor='rgba(29,233,182,.3)';
-    btn.title='Você é fantasma aqui: tem acesso total mas não aparece na lista de membros. Clique para participar ativamente.';
+    wrap.innerHTML=`<div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:7px;">👻 Você é <b>fantasma</b> aqui: tem acesso total mas não aparece na lista de membros, menções ou atribuições.</div>
+      <button class="btn btn-sm" onclick="toggleAdmParticipar()" style="width:100%;color:var(--teal);border-color:rgba(29,233,182,.3);">🙋 Participar do quadro como membro</button>`;
   }
 }
 async function toggleAdmParticipar(){
@@ -4459,7 +4463,10 @@ async function toggleAdmParticipar(){
     window._currentUserInit=init;
     showToast('🙋 Você agora participa deste quadro como membro.');
   }
-  setTimeout(updAdmParticiparBtn, 400);
+  setTimeout(()=>{ _renderTeamAdmToggle();
+    // recarrega a lista de equipe se o modal estiver aberto
+    if(document.getElementById('team-ov')){ document.getElementById('team-ov').remove(); openTeamList(); }
+  }, 400);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6361,8 +6368,17 @@ function renderCampDetalhe(c){
               </select>
               <input type="text" id="camp-comp-titulo" placeholder="Título (opcional)" style="flex:1;">
             </div>
-            <textarea id="camp-comp-corpo" placeholder="Descreva com detalhes... Shift+Enter para nova linha."
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.ctrlKey){event.preventDefault();saveCampEntrada();}"
+            <div class="camp-fmt-bar" style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;margin-bottom:5px;">
+              <button type="button" class="camp-fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('camp-comp-corpo','bold')" title="Negrito"><b>B</b></button>
+              <button type="button" class="camp-fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('camp-comp-corpo','italic')" title="Itálico"><i>I</i></button>
+              <button type="button" class="camp-fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('camp-comp-corpo','underline')" title="Sublinhado"><u>U</u></button>
+              <button type="button" class="camp-fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('camp-comp-corpo','link')" title="Inserir link">🔗</button>
+              <span style="width:1px;height:16px;background:var(--glass-b);margin:0 3px;"></span>
+              <button type="button" class="camp-fmt-btn" onmousedown="event.preventDefault()" onclick="_campInsertMention('user')" title="Mencionar pessoa">@</button>
+              <button type="button" class="camp-fmt-btn" onmousedown="event.preventDefault()" onclick="_campInsertMention('card')" title="Vincular card">#</button>
+            </div>
+            <textarea id="camp-comp-corpo" placeholder="Descreva com detalhes... Digite @ para pessoas, @card: para cards. **negrito**, *itálico*. Shift+Enter = nova linha."
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.ctrlKey){const _dd=document.getElementById('camp-comp-corpo-mention-dd');if(_dd&&_dd.classList.contains('open'))return;event.preventDefault();saveCampEntrada();}"
               oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';"></textarea>
             <div class="camp-composer-links" id="camp-comp-links-wrap"></div>
             <div class="camp-composer-row">
@@ -6456,7 +6472,7 @@ function _renderEntrada(e, campId){
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
-    <div class="camp-entry-corpo">${esc(e.corpo||'')}</div>
+    <div class="camp-entry-corpo">${typeof renderMd==='function'?renderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
     <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
   </div>`;
@@ -6481,6 +6497,60 @@ function _renderComposerLinks(){
         oninput="_campComposerLinks[${i}].label=this.value" style="flex:1;">
       <button class="camp-composer-link-del" onclick="_campComposerLinks.splice(${i},1);_renderComposerLinks()">✕</button>
     </div>`).join('');
+}
+
+// Inserir menção de pessoa (@) ou card (#) no composer de campanha
+async function _campInsertMention(kind){
+  const ta=document.getElementById('camp-comp-corpo'); if(!ta) return;
+  if(kind==='user'){
+    const mems = (typeof members!=='undefined'?members:[]).filter(m=>m.init);
+    if(!mems.length){ uiAlert('Nenhum membro disponível para mencionar neste squad.'); return; }
+    // monta lista pra escolher
+    const opts = mems.map(m=>`<div onclick="_campDoInsertMention('user','${esc(getMemberHandle(m))}')" style="padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'"><span style="width:22px;height:22px;border-radius:999px;background:rgba(56,182,255,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${esc(m.init)}</span>${esc(m.name||m.init)}</div>`).join('');
+    _showMentionPicker('Mencionar pessoa', opts);
+  } else {
+    const cs = (typeof cards!=='undefined'?cards:[]).filter(c=>!c.archived);
+    if(!cs.length){ uiAlert('Nenhum card disponível para vincular.'); return; }
+    window._campMentionCards = cs;
+    const opts = cs.slice(0,80).map((c,idx)=>{
+      const col=columns.find(cl=>cl.id===c.col);
+      return `<div onclick="_campDoInsertCard(${idx})" style="padding:8px 12px;cursor:pointer;font-size:12px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'">📎 ${esc(c.title||'(sem título)')} <span style="font-size:9px;color:var(--txt3);">${esc(col?.name||'')}</span></div>`;
+    }).join('');
+    _showMentionPicker('Vincular card', opts);
+  }
+}
+function _showMentionPicker(titulo, optsHtml){
+  let ov=document.getElementById('camp-mention-ov');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='camp-mention-ov';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(1,8,16,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem;';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML=`<div style="background:rgba(6,18,36,.99);border:1px solid var(--glass-b);border-radius:12px;width:min(400px,94vw);max-height:70vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">${esc(titulo)}</span>
+      <button onclick="document.getElementById('camp-mention-ov').remove()" style="background:none;border:none;color:var(--txt3);font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px;">${optsHtml}</div>
+  </div>`;
+  ov.style.display='flex';
+  ov.onclick=e=>{ if(e.target===ov) ov.remove(); };
+}
+function _campDoInsertCard(idx){
+  const c=(window._campMentionCards||[])[idx]; if(!c) return;
+  _campDoInsertMention('card', c.id, c.title||'card');
+}
+function _campDoInsertMention(kind, val, title){
+  const ta=document.getElementById('camp-comp-corpo'); if(!ta) return;
+  let insert='';
+  if(kind==='user') insert='@'+val+' ';
+  else insert='[[CARD:'+val+':'+(title||'card')+']] ';
+  const s=ta.selectionStart||ta.value.length;
+  ta.value = ta.value.substring(0,s) + insert + ta.value.substring(ta.selectionEnd||s);
+  const ov=document.getElementById('camp-mention-ov'); if(ov) ov.remove();
+  ta.focus();
+  ta.selectionStart=ta.selectionEnd=s+insert.length;
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
 }
 
 async function saveCampEntrada(){
@@ -6633,14 +6703,16 @@ function _filterTimeline(){
       const corpo = el.querySelector('.camp-entry-corpo');
       if(!corpo) return;
       const orig = corpo.getAttribute('data-orig')||corpo.textContent;
+      if(!corpo.getAttribute('data-orig-html')) corpo.setAttribute('data-orig-html', corpo.innerHTML);
       corpo.setAttribute('data-orig', orig);
       const re = new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi');
       corpo.innerHTML = esc(orig).replace(re, '<mark style="background:rgba(255,209,102,.35);color:var(--txt);border-radius:2px;">$1</mark>');
     });
   } else {
-    // Limpar highlights
-    document.querySelectorAll('.camp-entry-corpo[data-orig]').forEach(el=>{
-      el.textContent = el.getAttribute('data-orig');
+    // Limpar highlights — restaura o HTML formatado original (não texto puro)
+    document.querySelectorAll('.camp-entry-corpo[data-orig-html]').forEach(el=>{
+      el.innerHTML = el.getAttribute('data-orig-html');
+      el.removeAttribute('data-orig-html');
       el.removeAttribute('data-orig');
     });
   }
@@ -6654,7 +6726,10 @@ function toggleCampComposer(forceOpen){
   const open   = forceOpen!==undefined ? forceOpen : !isOpen;
   body.classList.toggle('open', open);
   toggle.classList.toggle('open', open);
-  if(open) setTimeout(()=>document.getElementById('camp-comp-corpo')?.focus(), 80);
+  if(open) setTimeout(()=>{
+    const ta=document.getElementById('camp-comp-corpo');
+    if(ta){ initMentionDropdown('camp-comp-corpo'); ta.focus(); }
+  }, 80);
 }
 
 function _renderFixedLinks(links, tipo, campId){
@@ -8715,7 +8790,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.' },
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar) e 📦 Arquivados (cards que saíram do quadro). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
-    { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), o ADM clica em 🙋 Participar do quadro na toolbar. Para voltar a ser invisível, clica em 👻 Sair do quadro. Sair nunca remove nenhum acesso.' },
+    { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
     { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.' },
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com seis ações em massa: 📥 Mover para coluna, 👤 Responsável, 🏷 Tag (adicionar ou substituir), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
