@@ -1089,6 +1089,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div style="position:relative;display:inline-block;">
+        <button class="btn" onclick="togglePainelNotif(event)" title="Minhas notificações e lembretes" id="painel-notif-btn">🔔<span id="painel-notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;">0</span></button>
+        <div id="painel-notif-drop" style="display:none;position:absolute;top:100%;right:0;margin-top:6px;width:min(380px,90vw);max-height:480px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:600;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🔔 Minhas notificações</span>
+            <span style="font-size:10px;color:var(--txt3);" id="painel-notif-sub">todos os squads</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:8px;" id="painel-notif-list">
+            <div style="font-size:11px;color:var(--txt3);padding:16px;text-align:center;">Carregando...</div>
+          </div>
+        </div>
+      </div>
       <button class="btn" onclick="loadAll()" title="Atualizar dados">🔄</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       <button class="btn hd-btn-adm" onclick="openGlobalBackup()" title="Backup" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾</button>
@@ -1115,6 +1127,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')"><span class="ptab-icon">🌊</span><span class="ptab-lbl">Fluxo</span></button>
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
+    <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
   </div>
 
   <!-- ═══ ABA: VISÃO ═══ -->
@@ -1419,6 +1432,61 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
     </div>
   </div><!-- /ppane-monitor -->
+
+  <div class="ptab-pane" id="ppane-status">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:600;">🔋 Status do sistema</div>
+        <div style="font-size:11px;color:var(--txt3);">Saúde e crescimento dos dados no Firebase (estimativas do lado cliente)</div>
+      </div>
+      <button class="btn btn-sm" onclick="loadStatusData()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">🔄 Atualizar</button>
+    </div>
+    <div style="font-size:10px;color:var(--txt3);background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.15);border-radius:8px;padding:8px 12px;margin-bottom:14px;line-height:1.5;">
+      ⚠️ O Firebase não expõe a quota oficial (leituras/downloads/limite do plano) pelo navegador — esses números só existem no Console. Aqui mostramos <b>proxies mensuráveis</b>: peso dos dados, contagens, latência e presença. Servem para acompanhar o crescimento e detectar squads inflando o banco.
+    </div>
+
+    <!-- Cards de resumo -->
+    <div class="status-grid" id="status-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;">
+      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+        <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Peso total</div>
+        <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-peso-total">—</div>
+        <div style="font-size:10px;color:var(--txt3);" id="st-peso-sub">medindo...</div>
+      </div>
+      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+        <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Cards totais</div>
+        <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-cards-total">—</div>
+        <div style="font-size:10px;color:var(--txt3);" id="st-cards-sub">em todos os squads</div>
+      </div>
+      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+        <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Latência de leitura</div>
+        <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-latencia">—</div>
+        <div style="font-size:10px;color:var(--txt3);" id="st-latencia-sub">ping ao banco</div>
+      </div>
+      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+        <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Online agora</div>
+        <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-online">—</div>
+        <div style="font-size:10px;color:var(--txt3);">usuários ativos</div>
+      </div>
+    </div>
+
+    <!-- Barra de saúde geral -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;">Indicador de saúde</span>
+        <span style="font-size:13px;font-weight:600;" id="st-saude-lbl">—</span>
+      </div>
+      <div style="height:10px;background:rgba(3,13,26,.8);border-radius:999px;overflow:hidden;">
+        <div id="st-saude-bar" style="height:100%;width:0%;border-radius:999px;transition:width .5s,background .5s;background:var(--teal);"></div>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:8px;line-height:1.5;" id="st-saude-txt">Calculado a partir do peso total dos dados. Bancos do RTDB no plano Spark têm 1 GB de armazenamento e 10 GB/mês de download como referência.</div>
+    </div>
+
+    <!-- Detalhamento por squad -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;">
+      <div style="font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;margin-bottom:12px;">Peso por squad</div>
+      <div id="st-squad-list"><div style="font-size:11px;color:var(--txt3);">Clique em 🔄 Atualizar para medir.</div></div>
+    </div>
+  </div><!-- /ppane-status -->
 
 
 <!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
@@ -1737,7 +1805,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.36 · painel</div>
+<div class="version">v2.37 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3475,6 +3543,7 @@ function swPtab(tab){
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); }
+  if(tab==='status'){ loadStatusData(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
 }
@@ -3893,6 +3962,204 @@ function clearResolvedErrors(){
   )).then(()=>{ showToast('✅ Erros resolvidos removidos'); });
 }
 
+// ── STATUS DO SISTEMA (proxies do cliente) ──
+function _fmtBytes(b){
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(2)+' MB';
+}
+async function loadStatusData(){
+  const listEl = document.getElementById('st-squad-list');
+  if(listEl) listEl.innerHTML='<div style="font-size:11px;color:var(--txt3);">Medindo dados de cada squad...</div>';
+
+  // 1) Latência: cronometra um get simples
+  let latencia = null;
+  try{
+    const t0 = performance.now();
+    await window._get(window._ref(window._db,'kanban/config'));
+    latencia = Math.round(performance.now()-t0);
+  } catch(e){ latencia = null; }
+  const latEl=document.getElementById('st-latencia');
+  if(latEl){
+    latEl.textContent = latencia!=null ? latencia+' ms' : '—';
+    const sub=document.getElementById('st-latencia-sub');
+    if(sub){
+      const q = latencia==null?'':(latencia<150?'⚡ ótima':latencia<400?'✅ boa':latencia<900?'⚠️ lenta':'🔴 muito lenta');
+      sub.textContent = q||'ping ao banco';
+    }
+  }
+
+  // 2) Online agora (presence já carregado)
+  const online = SQUADS.flatMap(sq=>window['_presence_'+sq.id]||[]);
+  const onEl=document.getElementById('st-online'); if(onEl) onEl.textContent = online.length;
+
+  // 3) Peso por squad: mede o JSON de cada nó /dados
+  const KNOWN = SQUADS.map(s=>s.id);
+  let totalBytes = 0, totalCards = 0;
+  const rows = [];
+  for(const sq of KNOWN){
+    try{
+      const snap = await window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'));
+      const val = snap.val()||{};
+      const bytes = new Blob([JSON.stringify(val)]).size;
+      const nCards = val.cards ? (Array.isArray(val.cards)?val.cards.filter(Boolean).length:Object.keys(val.cards).length) : 0;
+      totalBytes += bytes; totalCards += nCards;
+      rows.push({sq, bytes, nCards});
+    } catch(e){
+      rows.push({sq, bytes:0, nCards:0, err:true});
+    }
+  }
+  // Campanhas e grupos (globais)
+  let campBytes=0;
+  try{
+    const cs=await window._get(window._ref(window._db,'kanban/campanhas'));
+    campBytes=new Blob([JSON.stringify(cs.val()||{})]).size;
+    totalBytes+=campBytes;
+  }catch(e){}
+
+  // Resumo
+  const pTot=document.getElementById('st-peso-total');
+  if(pTot) pTot.textContent=_fmtBytes(totalBytes);
+  const pSub=document.getElementById('st-peso-sub');
+  if(pSub) pSub.textContent=KNOWN.length+' squads + campanhas';
+  const cTot=document.getElementById('st-cards-total');
+  if(cTot) cTot.textContent=totalCards;
+
+  // Indicador de saúde: referência Spark = 1 GB storage
+  const limiteRef = 1073741824; // 1 GB
+  const pct = Math.min(100, (totalBytes/limiteRef)*100);
+  const bar=document.getElementById('st-saude-bar');
+  const lbl=document.getElementById('st-saude-lbl');
+  if(bar){
+    // escala visual: como o uso real é minúsculo vs 1GB, usamos escala log amigável
+    const visualPct = Math.min(100, Math.max(2, Math.log10(totalBytes/1024+1)/Math.log10(limiteRef/1024)*100));
+    bar.style.width = visualPct+'%';
+    let cor, txt;
+    if(pct<25){ cor='var(--teal)'; txt='Saudável'; }
+    else if(pct<60){ cor='var(--warn)'; txt='Crescendo'; }
+    else if(pct<85){ cor='#ff9f43'; txt='Atenção'; }
+    else { cor='var(--danger)'; txt='Crítico'; }
+    bar.style.background=cor;
+    if(lbl){ lbl.textContent=txt; lbl.style.color=cor; }
+  }
+  const stxt=document.getElementById('st-saude-txt');
+  if(stxt) stxt.textContent='Usando '+_fmtBytes(totalBytes)+' de ~1 GB de referência (plano Spark). Equivale a '+pct.toFixed(3)+'% do armazenamento. Download mensal não é medível pelo cliente.';
+
+  // Lista por squad (ordenada por peso desc)
+  rows.sort((a,b)=>b.bytes-a.bytes);
+  const maxB = Math.max(...rows.map(r=>r.bytes), 1);
+  if(listEl){
+    listEl.innerHTML = rows.map(r=>{
+      const sc=_painelSqColor(r.sq);
+      const w=Math.max(2,(r.bytes/maxB)*100);
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:${sc.text};font-weight:600;">${esc(_sqLabel(r.sq))}</span>
+          <span style="color:var(--txt3);">${_fmtBytes(r.bytes)} · ${r.nCards} cards${r.err?' ⚠️':''}</span>
+        </div>
+        <div style="height:7px;background:rgba(3,13,26,.8);border-radius:999px;overflow:hidden;">
+          <div style="height:100%;width:${w}%;background:${sc.text};border-radius:999px;"></div>
+        </div>
+      </div>`;
+    }).join('') + (campBytes? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-b);font-size:11px;color:var(--txt3);">📣 Campanhas: ${_fmtBytes(campBytes)}</div>`:'');
+  }
+}
+
+// ── SININHO UNIFICADO (notificações + lembretes do ADM logado) ──
+let _painelNotifs = [];
+let _painelNotifListeners = false;
+
+function loadPainelNotifs(){
+  const user = window._currentUser; if(!user) return;
+  // Sininho é para o ADM logado — esconde para não-ADM
+  const btn = document.getElementById('painel-notif-btn');
+  if(btn) btn.style.display = _isAdmPainel() ? 'inline-flex' : 'none';
+  if(!_isAdmPainel()) return;
+  // 1) Notificações do usuário (já são unificadas por uid, independente de squad)
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), snap=>{
+    const val = snap.val()||{};
+    const notifs = Object.values(val).filter(Boolean).map(n=>({
+      _kind:'notif', id:n.id, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'',
+    }));
+    _mergePainelNotifs('notif', notifs);
+  });
+  // 2) Lembretes próprios em cada squad
+  SQUADS.forEach(sq=>{
+    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/lembretes_prop/'+user.uid), snap=>{
+      const val = snap.val();
+      const lems = (val ? (Array.isArray(val)?val:Object.values(val)) : []).filter(Boolean).map(l=>({
+        _kind:'lembrete', id:l.id, title:l.text||'', sub:'', cardId:l.cardId||'',
+        ts:l.ts||'', read:false, squad:sq.id, autor:l.autor||'',
+      }));
+      _mergePainelNotifs('lembrete:'+sq.id, lems);
+    });
+  });
+}
+
+// Mantém grupos separados por fonte e reconcilia em _painelNotifs
+const _painelNotifGroups = {};
+function _mergePainelNotifs(groupKey, items){
+  _painelNotifGroups[groupKey] = items;
+  _painelNotifs = Object.values(_painelNotifGroups).flat()
+    .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
+  renderPainelNotifs();
+}
+
+function renderPainelNotifs(){
+  const badge = document.getElementById('painel-notif-badge');
+  const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read).length + _painelNotifs.filter(n=>n._kind==='lembrete').length;
+  if(badge){
+    if(naoLidas>0){ badge.textContent = naoLidas>99?'99+':naoLidas; badge.style.display='flex'; }
+    else badge.style.display='none';
+  }
+  const list = document.getElementById('painel-notif-list'); if(!list) return;
+  if(!_painelNotifs.length){
+    list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:24px 16px;text-align:center;">Nenhuma notificação ou lembrete.</div>';
+    return;
+  }
+  list.innerHTML = _painelNotifs.slice(0,50).map(n=>{
+    const sqc = n.squad ? _painelSqColor(n.squad) : null;
+    const sqBadge = n.squad ? `<span style="font-size:8px;padding:1px 6px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${esc(_sqLabel(n.squad))}</span>` : '';
+    const icon = n._kind==='lembrete' ? '✎' : '🔔';
+    const quando = n.ts ? _relTime(n.ts) : '';
+    const dotRead = (n._kind==='notif' && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
+    const openAttr = (n.cardId && n.squad) ? `onclick="window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
+    return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(10,30,55,.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(10,30,55,.4)\'"':''}>
+      <span style="font-size:13px;flex-shrink:0;">${icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:var(--txt);line-height:1.4;">${esc(n.title)}</div>
+        ${n.sub?`<div style="font-size:10px;color:var(--txt3);margin-top:2px;">${esc(n.sub)}</div>`:''}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">${sqBadge}<span style="font-size:9px;color:var(--txt3);">${quando}</span></div>
+      </div>
+      ${dotRead}
+    </div>`;
+  }).join('');
+}
+
+function _relTime(ts){
+  try{
+    const d=new Date(ts); const diff=Date.now()-d.getTime();
+    const min=Math.round(diff/60000);
+    if(min<1) return 'agora';
+    if(min<60) return min+'min';
+    const h=Math.round(min/60); if(h<24) return h+'h';
+    const dias=Math.round(h/24); if(dias<7) return dias+'d';
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  }catch(e){ return ''; }
+}
+
+function togglePainelNotif(e){
+  e?.stopPropagation();
+  const drop=document.getElementById('painel-notif-drop');
+  if(drop) drop.style.display = drop.style.display==='none' ? 'flex' : 'none';
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#painel-notif-btn') && !e.target.closest('#painel-notif-drop')){
+    const drop=document.getElementById('painel-notif-drop'); if(drop) drop.style.display='none';
+  }
+});
+
 function loadErrorLogs(){
   SQUADS.forEach(sq=>{
     // Error logs
@@ -4174,6 +4441,7 @@ window.addEventListener('fb-ready',()=>{
   loadKudosGeral();
   loadPainelCampanhas();
   loadGruposCamp();
+  loadPainelNotifs();
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
