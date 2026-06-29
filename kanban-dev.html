@@ -3218,7 +3218,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.26-dev</div>
+<div class="version">v8.30.27-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6341,8 +6341,8 @@ function renderCampDetalhe(c){
     todasEntradas = [];
     Object.values(_campanhas||{}).forEach(oc=>{
       if(String(oc.nome||'').toLowerCase()===String(c.nome||'').toLowerCase()){
-        const sq = (oc.squads&&oc.squads.length)?oc.squads[0]:ACTIVE_SQUAD;
-        Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:sq}));
+        const sqFallback = (oc.squads&&oc.squads.length)?oc.squads[0]:ACTIVE_SQUAD;
+        Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:e._squad||sqFallback}));
       }
     });
     if(!todasEntradas.length)
@@ -6652,7 +6652,7 @@ async function saveCampEntrada(){
   if(!corpo && !links.length){ uiAlert('Escreva algo ou adicione um link antes de registrar.'); return; }
   const u = window._currentUser;
   const id = 'e'+Date.now()+Math.random().toString(36).slice(2,6);
-  const entrada = { id, tipo, titulo, corpo, links, autor: u?.displayName||u?.email||'?', autorUid:u?.uid||'', ts:new Date().toISOString() };
+  const entrada = { id, tipo, titulo, corpo, links, autor: u?.displayName||u?.email||'?', autorUid:u?.uid||'', ts:new Date().toISOString(), _squad:ACTIVE_SQUAD };
   try{
     await window._set(_campRef(_campAtual.id+'/entradas/'+id), entrada);
     // Limpar composer
