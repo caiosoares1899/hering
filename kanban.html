@@ -1971,24 +1971,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="toolbar">
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
-  <div style="display:flex;gap:2px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;padding:2px;">
-    <button class="view-btn" id="view-onepage" onclick="setViewMode('onepage')" title="One Page">⊞</button>
-    <button class="view-btn active" id="view-expanded" onclick="setViewMode('expanded')" title="Expandido (scroll)">⇔</button>
-  </div>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
   <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
   <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="openQL('recorrentes')" title="Itens recorrentes">🔁 Recorrentes</button>
-  <button class="btn btn-sm" onclick="openQL('modelos')" title="Cards modelo">📋 Modelos</button>
+  <div class="card-fn-wrap" style="position:relative;display:inline-block;">
+    <button class="btn btn-sm" onclick="toggleCardFnMenu(event)" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
+    <div class="card-fn-menu" id="card-fn-menu" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);z-index:500;min-width:190px;overflow:hidden;">
+      <div class="card-fn-item" onclick="openQL('recorrentes');hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">🔁 Recorrentes</div>
+      <div class="card-fn-item" onclick="openQL('agendamentos');hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📅 Agendamentos</div>
+      <div class="card-fn-item" onclick="openQL('modelos');hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📋 Modelos</div>
+      <div style="height:1px;background:var(--glass-b);margin:2px 0;"></div>
+      <div class="card-fn-item" onclick="openArquivados();hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📦 Arquivados</div>
+    </div>
+  </div>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
   <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Tempo por tag</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
-  <button class="btn btn-sm" onclick="openArquivados()">📦 Arquivados</button>
 </div>
 
 <div class="board-wrap" id="board-wrap">
@@ -2911,6 +2914,30 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+
+
+<!-- Modal de agendamento (definir data de entrada do card) -->
+<div class="ov" id="agcfg-ov">
+<div class="panel" style="max-width:420px;width:92vw;">
+  <div class="panel-hd">
+    <div class="panel-title">📅 Agendar entrada do card</div>
+    <button class="x-btn" onclick="closeOv('agcfg-ov')">✕</button>
+  </div>
+  <div style="padding:16px;">
+    <div class="rec-field">
+      <label class="rec-lbl">Data de entrada no quadro</label>
+      <input type="date" id="agcfg-data" class="rec-input" style="width:100%;box-sizing:border-box;">
+      <div style="font-size:10px;color:var(--txt3);margin-top:6px;line-height:1.5;">Quando essa data chegar, o card entra automaticamente no quadro com notificação e lembrete. Se a pessoa não abrir, ele relembra por até 3 dias.</div>
+    </div>
+    <div class="rec-field" style="margin-top:10px;">
+      <label class="rec-lbl">Coluna de entrada</label>
+      <select id="agcfg-col" class="rec-input" style="width:100%;"></select>
+    </div>
+    <button class="btn btn-teal" onclick="salvarAgendamento()" style="margin-top:14px;width:100%;">💾 Salvar agendamento</button>
+  </div>
+</div>
+</div>
+
 <!-- RELATÓRIO DE TEMPO POR TAG -->
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -3136,7 +3163,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.18</div>
+<div class="version">v8.30.20</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3550,7 +3577,7 @@ function cardSubteams(card){
 }
 let editingId=null;
 let currentQL=null; // 'recorrentes' | 'modelos'
-let qlItems={ recorrentes:[], modelos:[] };
+let qlItems={ recorrentes:[], modelos:[], agendamentos:[] };
 let links=[];
 // ═══ LEMBRETES ═══ (manuais persistidos no Firebase; quadro = derivado dos cards)
 let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), text, autor, autorUid, init, ts, target?}
@@ -5055,6 +5082,12 @@ function populateColSelect(){ document.getElementById('m-col').innerHTML=columns
 
 function openCard(id){
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
+  // Marca card automático (recorrente/agendado) como visto — para de relembrar
+  if(c._autoVisto===false){
+    c._autoVisto = true;
+    const idx = cards.findIndex(x=>x.id===id);
+    if(idx>=0 && window._fbReady){ fbSet(FB+'/cards/'+idx+'/_autoVisto', true); }
+  }
   // Se camp-ov estiver aberto, elevar card-ov acima dele
   const _cov=document.getElementById('card-ov');
   if(document.getElementById('camp-ov')?.classList.contains('open')){
@@ -5140,6 +5173,33 @@ function openNewCard(col){
 function saveCard(){
   if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
+  // ── Modo edição de item recorrente/modelo/agendamento ──
+  if(_editingQLItem){
+    const {tipo, idx} = _editingQLItem;
+    const item = (qlItems[tipo]||[])[idx];
+    if(item){
+      item.title = title;
+      item.tags  = editingTags.slice();
+      item.tag   = editingTags[0]||'';
+      item.col   = document.getElementById('m-col').value;
+      item.owner = document.getElementById('m-owner').value;
+      item.po    = document.getElementById('m-po').value;
+      item.desc  = document.getElementById('m-desc').value;
+      item.descsExtra = _cleanExtraDescs();
+      item.checklist = getCL().map(c=>({t:c.t, done:false})); // recorrente sempre nasce desmarcado
+      item.riscos = getRiscos();
+      item.sp = document.getElementById('m-sp').value;
+      item.priority = document.getElementById('m-priority').value;
+      item.participants = getParticipants();
+      fbSet(FB+'/ql_items',qlItems);
+    }
+    cards = cards.filter(c=>!c._isQLTemp);
+    _editingQLItem = null;
+    editingId = null;
+    closeOv('card-ov');
+    showToast('✅ Item atualizado');
+    return;
+  }
   // Validação de campos obrigatórios do modelo (só ao criar card novo)
   if(!editingId && _pendingRequired.length){
     const missing=_missingRequired();
@@ -6686,9 +6746,20 @@ async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card perm
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
 // ═══════════════════════════════════════════════════════
+function toggleCardFnMenu(e){
+  e?.stopPropagation();
+  const m=document.getElementById('card-fn-menu');
+  if(m) m.style.display = m.style.display==='none' ? 'block' : 'none';
+}
+function hideCardFnMenu(){
+  const m=document.getElementById('card-fn-menu'); if(m) m.style.display='none';
+}
+document.addEventListener('click',e=>{ if(!e.target.closest('.card-fn-wrap')) hideCardFnMenu(); });
+
 function openQL(tipo){
   currentQL=tipo;
-  const titles={recorrentes:'🔁 Itens recorrentes',modelos:'📋 Cards modelo'};
+  if(!qlItems[tipo]) qlItems[tipo]=[];
+  const titles={recorrentes:'🔁 Itens recorrentes',modelos:'📋 Cards modelo',agendamentos:'📅 Cards agendados'};
   document.getElementById('ql-title').textContent=titles[tipo];
   // Popula tag select
   document.getElementById('ql-new-tag').innerHTML=tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
@@ -6731,9 +6802,43 @@ function renderQLBody(){
       const lbl = ativa ? _recurrenceLabel(rec) : 'Configurar auto';
       recBtn=`<button class="btn btn-sm" onclick="openRecorrenciaModal(${i})" title="Recorrência automática" style="font-size:10px;color:${ativa?'var(--teal)':'var(--txt2)'};border-color:${ativa?'rgba(29,233,182,.4)':'var(--glass-b)'};">🔁 ${esc(lbl)}</button>`;
     }
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span>${recBtn}${reqBtn}<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button><button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
+    if(currentQL==='agendamentos'){
+      const temData = item.data && !item.criado;
+      const jaCriado = item.criado;
+      const lbl = jaCriado ? '✅ Criado '+(item.criadoEm||'') : (temData ? _fmtDataAg(item.data) : 'Definir data');
+      recBtn=`<button class="btn btn-sm" onclick="openAgendamentoModal(${i})" title="Data de entrada" style="font-size:10px;color:${jaCriado?'var(--txt3)':(temData?'var(--teal)':'var(--txt2)')};border-color:${temData&&!jaCriado?'rgba(29,233,182,.4)':'var(--glass-b)'};">📅 ${esc(lbl)}</button>`;
+    }
+    const usarBtn = currentQL==='agendamentos'
+      ? '' // agendamentos não têm "+ Usar" manual, entram por data
+      : `<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button>`;
+    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span>${recBtn}${reqBtn}<button class="btn btn-sm" onclick="openQLEdit(${i})" title="Editar conteúdo" style="font-size:10px;">✏️</button>${usarBtn}<button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
     body.appendChild(row);
   });
+}
+function _fmtDataAg(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); }catch(e){ return d; } }
+
+let _agEditIdx = -1;
+function openAgendamentoModal(i){
+  _agEditIdx = i;
+  const item = (qlItems.agendamentos||[])[i]; if(!item) return;
+  if(item.criado){ showToast('Esse card já entrou no quadro.'); return; }
+  document.getElementById('agcfg-data').value = item.data||'';
+  const colSel = document.getElementById('agcfg-col');
+  colSel.innerHTML = columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  colSel.value = item.col||(columns[0]?.id)||'';
+  document.getElementById('agcfg-ov').classList.add('open');
+}
+function salvarAgendamento(){
+  if(_agEditIdx<0) return;
+  const item = (qlItems.agendamentos||[])[_agEditIdx]; if(!item) return;
+  const data = document.getElementById('agcfg-data').value;
+  if(!data){ showToast('Escolha uma data.'); return; }
+  item.data = data;
+  item.col  = document.getElementById('agcfg-col').value;
+  fbSet(FB+'/ql_items',qlItems);
+  closeOv('agcfg-ov');
+  renderQLBody();
+  showToast('📅 Agendamento salvo para '+_fmtDataAg(data));
 }
 // Campos que podem ser exigidos num modelo
 const REQ_FIELDS=[
@@ -6851,6 +6956,7 @@ function _criarCardRecorrente(item){
     participants:Array.isArray(item.participants)?item.participants.slice():[],
     archived:false, created:'🔁 Recorrência', edited:'🔁 Recorrência', createdAt:td, editedAt:td,
     _recorrente:true,
+    _autoCriadoEm:td, _autoVisto:false, _autoTipo:'recorrente',
   };
   recordHistory(novo,'criado automaticamente (recorrência)');
   recordMove(novo, novo.col);
@@ -6899,9 +7005,151 @@ function processRecorrentes(){
     showToast('🔁 '+criados.length+' card(s) recorrente(s) voltaram pro quadro.');
   }
 }
+
+// ── AGENDAMENTOS: cards únicos agendados para uma data ──
+function _criarCardAgendado(item){
+  const td=new Date().toISOString().split('T')[0];
+  const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
+  const novo={
+    id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    col:item.col||(columns[0]?.id)||'backlog',
+    tags, tag:tags[0]||'',
+    title:item.title||'(agendado)',
+    desc:item.desc||'', descsExtra:[],
+    owner:item.owner||'', due:item.dueCard||'', po:item.po||'',
+    checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
+    riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
+    sp:item.sp||'', priority:item.priority||'medium',
+    participants:Array.isArray(item.participants)?item.participants.slice():[],
+    archived:false, created:'📅 Agendamento', edited:'📅 Agendamento', createdAt:td, editedAt:td,
+    _autoCriadoEm:td, _autoVisto:false, _autoTipo:'agendado',
+  };
+  recordHistory(novo,'criado automaticamente (agendamento)');
+  recordMove(novo, novo.col);
+  cards.push(novo);
+  return novo;
+}
+function processAgendamentos(){
+  if(!window._fbReady) return;
+  const ags=(qlItems.agendamentos||[]).filter(it=>it.data && !it.criado);
+  if(!ags.length) return;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  let criados=[]; let mudou=false;
+  ags.forEach(item=>{
+    const dataAg=new Date(item.data+'T00:00:00'); dataAg.setHours(0,0,0,0);
+    if(dataAg<=hoje){
+      const card=_criarCardAgendado(item);
+      item.criado=true; item.criadoEm=new Date().toISOString().split('T')[0];
+      criados.push(card); mudou=true;
+    }
+  });
+  if(mudou){
+    fbSaveAll();
+    fbSet(FB+'/ql_items',qlItems);
+    renderBoard();
+    let lemPropMudou=false;
+    criados.forEach(card=>{
+      const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
+        tipo:'proprio', text:'📅 Card agendado entrou no quadro: "'+card.title+'"',
+        autor:'Agendamento', autorUid:'', init:'📅',
+        cardId:card.id, ts:new Date().toISOString() };
+      lembretesProprios.push(obj); lemPropMudou=true;
+      if(card.owner){
+        const uid=getUidByInit(card.owner);
+        if(uid) createNotif(uid,'recorrente','📅 Card agendado entrou no quadro', card.title, card.id);
+      }
+    });
+    if(lemPropMudou){ const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios); }
+    updLemBadge();
+    showToast('📅 '+criados.length+' card(s) agendado(s) entraram no quadro.');
+  }
+}
+
+// ── RELEMBRETE: avisa sobre cards automáticos não vistos (até 3 dias) ──
+function processRelembreteAuto(){
+  if(!window._fbReady) return;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  // Cards criados automaticamente, ainda não vistos, criados há 1-3 dias
+  const pendentes = cards.filter(c=>{
+    if(!c._autoCriadoEm || c._autoVisto!==false || c.archived) return false;
+    const criadoEm=new Date(c._autoCriadoEm+'T00:00:00'); criadoEm.setHours(0,0,0,0);
+    const dias=Math.round((hoje-criadoEm)/86400000);
+    return dias>=1 && dias<=3;
+  });
+  if(!pendentes.length) return;
+  // Só relembra uma vez por dia: guarda data do último relembrete por card
+  const hojeStr=new Date().toISOString().split('T')[0];
+  let lemPropMudou=false;
+  pendentes.forEach(card=>{
+    if(card._autoRelembradoEm===hojeStr) return; // já relembrou hoje
+    const dias=Math.round((hoje-new Date(card._autoCriadoEm+'T00:00:00'))/86400000);
+    const emoji=card._autoTipo==='agendado'?'📅':'🔁';
+    const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
+      tipo:'proprio', text:emoji+' Card ainda não aberto ('+dias+'º dia): "'+card.title+'"',
+      autor:'Relembrete', autorUid:'', init:'⏰',
+      cardId:card.id, ts:new Date().toISOString() };
+    lembretesProprios.push(obj); lemPropMudou=true;
+    card._autoRelembradoEm=hojeStr;
+    const idx=cards.findIndex(x=>x.id===card.id);
+    if(idx>=0) fbSet(FB+'/cards/'+idx+'/_autoRelembradoEm', hojeStr);
+    // notifica o responsável também
+    if(card.owner){
+      const uid=getUidByInit(card.owner);
+      if(uid) createNotif(uid,'recorrente',emoji+' Card ainda não aberto', card.title, card.id);
+    }
+  });
+  if(lemPropMudou){
+    const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+    updLemBadge();
+  }
+}
 function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items',qlItems); renderQLBody(); }
 // ── Modal de configuração de recorrência ──
 let _recEditIdx=null;
+let _qlEditIdx = -1;
+let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente via modal de card
+
+// Edição completa: abre o item como se fosse um card real no quadro
+function openQLEdit(i){
+  const tipo = currentQL;
+  const item = (qlItems[tipo]||[])[i]; if(!item) return;
+  _editingQLItem = { tipo, idx:i };
+  // Cria um card temporário em memória a partir do item
+  const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
+  const tempId = '__qltmp__'+Date.now();
+  const tempCard = {
+    id: tempId,
+    col: item.col||(columns[0]?.id)||'backlog',
+    tags, tag:tags[0]||'',
+    title: item.title||'',
+    desc: item.desc||'', descsExtra: Array.isArray(item.descsExtra)?item.descsExtra.slice():[],
+    owner: item.owner||'', due:'', po: item.po||'',
+    checklist: Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
+    riscos: Array.isArray(item.riscos)?JSON.parse(JSON.stringify(item.riscos)):[],
+    sp: item.sp||'', priority: item.priority||'medium',
+    participants: Array.isArray(item.participants)?item.participants.slice():[],
+    archived:false, created:'(item salvo)', edited:'(item salvo)',
+    createdAt:'—', editedAt:'—', _isQLTemp:true,
+  };
+  cards.push(tempCard); // temporário; será removido ao fechar/salvar
+  closeOv('ql-ov');
+  openCard(tempId);
+  // Ajusta título do modal e esconde coisas que não fazem sentido para um item
+  setTimeout(()=>{
+    const lbl = {recorrentes:'🔁 Editar recorrente',agendamentos:'📅 Editar agendamento',modelos:'📋 Editar modelo'}[tipo]||'Editar item';
+    const disp=document.getElementById('m-title-disp'); if(disp) disp.setAttribute('data-qlmode',lbl);
+    const btnDel=document.getElementById('btn-del-card'); if(btnDel) btnDel.style.visibility='hidden';
+  }, 50);
+}
+
+// Remove card temporário de QL ao fechar o modal sem salvar
+function _cleanupQLTemp(){
+  if(_editingQLItem){
+    cards = cards.filter(c=>!c._isQLTemp);
+    _editingQLItem = null;
+  }
+}
+
 function openRecorrenciaModal(i){
   _recEditIdx=i;
   const item=qlItems.recorrentes[i]; if(!item) return;
@@ -8404,6 +8652,9 @@ const HELP_CONTENT = {
     { icon:'🏷', title:'Múltiplas tags por card', text:'Um card pode ter mais de uma tag ao mesmo tempo. Adicione quantas precisar no campo Tags. Na raia por tag, cards com várias tags aparecem em cada linha correspondente.' },
     { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. O histórico de comentários fica salvo no Firebase.' },
     { icon:'📋', title:'Salvar como modelo', text:'Clique no ícone 📋 no rodapé de qualquer card para salvá-lo como modelo. O modelo copia tag, descrição, PO, checklist (desmarcado) e riscos.' },
+    { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
+    { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.' },
+    { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar) e 📦 Arquivados (cards que saíram do quadro). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
     { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.' },
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com seis ações em massa: 📥 Mover para coluna, 👤 Responsável, 🏷 Tag (adicionar ou substituir), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
@@ -9169,16 +9420,16 @@ function insertMention(ta, atPos, curPos, init){
 // ── MODO DE VISUALIZAÇÃO ─────────────────────────────────────────
 // Migra chave antiga e força default 'expanded'
 (()=>{ const old=safeLS.getItem('boardViewMode'); if(old==='expanded') safeLS.setItem('boardViewMode2','expanded'); safeLS.removeItem('boardViewMode'); })();
-let viewMode = safeLS.getItem('boardViewMode2')||'expanded';
+let viewMode = 'expanded';
 function setViewMode(mode){
-  viewMode=mode;
-  safeLS.setItem('boardViewMode2',mode);
-  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('view-'+mode)?.classList.add('active');
+  // One-page removido — board sempre no modo expandido
+  mode = 'expanded';
+  viewMode='expanded';
+  safeLS.setItem('boardViewMode2','expanded');
   const board=document.getElementById('board');
   if(board){
     board.classList.remove('mode-onepage','mode-expanded');
-    board.classList.add('mode-'+mode);
+    board.classList.add('mode-expanded');
   }
   const wrap=document.getElementById('board-wrap');
   if(wrap){
@@ -9994,6 +10245,9 @@ function showCtxMenu(e, cardId){
     <div class="ctx-item" onclick="ctxModel()">
       <span class="ctx-item-icon">📋</span> Salvar como modelo
     </div>
+    <div class="ctx-item" onclick="ctxRecorrente()">
+      <span class="ctx-item-icon">🔁</span> Salvar como recorrente
+    </div>
     <div class="ctx-item" onclick="ctxDuplicate()">
       <span class="ctx-item-icon">⧉</span> Duplicar card
     </div>
@@ -10133,6 +10387,28 @@ function ctxModel(){
   hideCtxMenu();
 }
 
+function ctxRecorrente(){
+  const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
+  if(!qlItems.recorrentes) qlItems.recorrentes=[];
+  // Evita duplicar pelo título
+  let idx = qlItems.recorrentes.findIndex(r=>r.title===card.title);
+  if(idx<0){
+    qlItems.recorrentes.push({
+      title:card.title, tag:card.tag, tags:getCardTags(card).slice(), desc:card.desc||'',
+      po:card.po||'', checklist:(card.checklist||[]).map(i=>({t:i.t,done:false})), riscos:card.riscos||[],
+      owner:card.owner||'', col:card.col||(columns[0]?.id)||'', active:false,
+    });
+    idx = qlItems.recorrentes.length-1;
+    fbSet(FB+'/ql_items',qlItems);
+    showToast('🔁 Salvo como recorrente — configure abaixo');
+  } else {
+    showToast('Já existe um recorrente com esse nome — abrindo config');
+  }
+  hideCtxMenu();
+  // Abre o modal de configuração de recorrência já apontando para este item
+  setTimeout(()=>openRecorrenciaModal(idx), 150);
+}
+
 function ctxArchive(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   saveUndo('arquivar card');
@@ -10142,12 +10418,13 @@ function ctxArchive(){
 }
 
 async function ctxDelete(){
-  const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  const cardId = _ctxCardId; // captura antes do await (hideCtxMenu zera _ctxCardId)
+  const card=cards.find(x=>x.id===cardId); if(!card){ hideCtxMenu(); return; }
+  hideCtxMenu();
   if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
-  cards=cards.filter(x=>x.id!==_ctxCardId);
+  cards=cards.filter(x=>x.id!==cardId);
   fbSaveAll(); renderBoard();
   showToast('Card excluído');
-  hideCtxMenu();
 }
 // ═══════════════════════════════════════════════════════
 
@@ -10192,7 +10469,14 @@ async function salvarComoModelo(id){
 }
 function closeOv(id){
   document.getElementById(id)?.classList.remove('open');
-  if(id==='card-ov') document.getElementById('card-ov')?.classList.remove('above-camp');
+  if(id==='card-ov'){
+    document.getElementById('card-ov')?.classList.remove('above-camp');
+    // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
+    if(_editingQLItem){
+      cards = cards.filter(c=>!c._isQLTemp);
+      _editingQLItem = null; editingId = null;
+    }
+  }
 }
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov) ov.classList.remove('open');}));
 
@@ -10238,6 +10522,10 @@ _onFbReady(()=>{
   loadCampanhas();
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
+  // Agendamentos: cria cards agendados cuja data chegou
+  setTimeout(()=>{ try{ processAgendamentos(); }catch(e){ console.warn('Agendamento:', e); } }, 3700);
+  // Relembrete: avisa sobre cards automáticos não vistos (até 3 dias)
+  setTimeout(()=>{ try{ processRelembreteAuto(); }catch(e){ console.warn('Relembrete:', e); } }, 4000);
   // Abrir card específico via URL param ?opencard= (usado pelo multi-squad de campanhas)
   const _openCardParam = _urlParams.get('opencard');
   if(_openCardParam){
