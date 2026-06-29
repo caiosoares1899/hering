@@ -3218,7 +3218,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.25-dev</div>
+<div class="version">v8.30.26-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5589,10 +5589,13 @@ function computeAvisosQuadro(){
   return out.sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || String(b.ts).localeCompare(String(a.ts)));
 }
 function _collectLembretes(){
-  const f={ gestao:document.getElementById('lf-gestao')?.checked,
-            po:document.getElementById('lf-po')?.checked,
-            proprio:document.getElementById('lf-proprio')?.checked,
-            quadro:document.getElementById('lf-quadro')?.checked };
+  // Usa ?? true/false para fallback caso o element não esteja acessível (ex: iOS Safari)
+  const f={
+    gestao:  document.getElementById('lf-gestao')?.checked  ?? true,
+    po:      document.getElementById('lf-po')?.checked      ?? true,
+    proprio: document.getElementById('lf-proprio')?.checked ?? true,
+    quadro:  document.getElementById('lf-quadro')?.checked  ?? false,
+  };
   const myUid=window._currentUser?.uid;
   const myInit=window._currentUserInit;
   // Mostra um lembrete de PO direcionado? (target: 'all' | uid | init)
@@ -5615,8 +5618,12 @@ function toggleLembretes(){
   if(!wasOpen){
     _populateLemTypeSelect();
     renderLembretes();
-    _lemSeenTs=Date.now();
-    safeLS.setItem('lemSeenTs', String(_lemSeenTs));
+    // Só marca como "visto" se a lista realmente tem algo pra mostrar
+    const { list } = _collectLembretes();
+    if(list.length > 0){
+      _lemSeenTs=Date.now();
+      safeLS.setItem('lemSeenTs', String(_lemSeenTs));
+    }
     updLemBadge();
   }
 }
