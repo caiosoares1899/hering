@@ -1740,6 +1740,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-entry-tipo-registro    { border-left:3px solid #a855f7; }
 .camp-entry-tipo-mudanca     { border-left:3px solid #ff9f43; }
 .camp-entry-tipo-estrategia  { border-left:3px solid #5f9ea0; }
+/* Squad gestão — entrada de ADM */
+.camp-entry-gestao-sq { border-left-color:#c084fc !important; background:rgba(150,80,220,.04); }
 .camp-entry-titulo { font-size:12px; font-weight:500; color:var(--txt); margin-bottom:5px; font-family:'DM Sans',sans-serif; letter-spacing:0; line-height:1.4; }
 .camp-entry-corpo  { font-size:11.5px; color:rgba(200,220,240,.75); line-height:1.7; white-space:pre-wrap; font-family:'DM Sans',sans-serif; font-weight:400; }
 .camp-fmt-btn { background:rgba(3,13,26,.6); border:1px solid var(--glass-b); border-radius:5px; color:var(--txt2); font-size:11px; padding:3px 8px; cursor:pointer; min-width:26px; transition:all .12s; font-family:'DM Sans',sans-serif; }
@@ -3218,7 +3220,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.27-dev</div>
+<div class="version">v8.30.28-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6524,9 +6526,10 @@ const SQUAD_COLORS = {
   midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
   midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
   dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
+  gestao:        {bg:'rgba(150,80,220,.1)',  border:'rgba(150,80,220,.35)',  text:'#c084fc'},
 };
 function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
-const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev' };
+const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
 function _sqLabel(sqId){
   // Tenta SQUADS (config dinâmica), senão usa mapa fixo, senão o próprio id
   const info = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sqId);
@@ -6540,7 +6543,7 @@ function _renderEntrada(e, campId){
   const quando = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
   const podeApagar = e.autorUid===window._currentUser?.uid || window._currentUserRole==='adm' || window._currentUserRole==='po';
   // Squad header — aparece só no modo multi-squad quando a entrada tem _squad
-  const isMulti = window._campViewMode==='multi' && e._squad;
+  const isMulti = e._squad && (window._campViewMode==='multi' || e._squad==='gestao');
   let sqHeader = '';
   if(isMulti){
     const sqc  = _sqColor(e._squad);
@@ -6549,7 +6552,7 @@ function _renderEntrada(e, campId){
     const _SQUADS_ALL = typeof SQUADS!=='undefined' ? SQUADS : [];
     const sqInfo  = _SQUADS_ALL.find(s=>s.id===e._squad);
     const _SQ_FALLBACK = {
-      dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',
+      dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',gestao:'🏛',
       cx:'💬',marketplace:'🛒',ecommerce:'🛍',logistica:'🚚',
     };
     const sqEmoji = sqInfo?.icon || _SQ_FALLBACK[e._squad] || '🐟';
@@ -6559,7 +6562,7 @@ function _renderEntrada(e, campId){
       <span class="camp-entry-sq-name" style="color:${sqc.text};">${esc(sqLabel)}</span>
     </div>`;
   }
-  return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'}" data-icon="${icon}" ${isMulti?`style="border-left-color:${_sqColor(e._squad).text};"`:''}>
+  return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'} ${e._squad==='gestao'?'camp-entry-gestao-sq':''}" data-icon="${icon}" ${isMulti?`style="border-left-color:${_sqColor(e._squad).text};"`:''}>
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
@@ -6652,7 +6655,8 @@ async function saveCampEntrada(){
   if(!corpo && !links.length){ uiAlert('Escreva algo ou adicione um link antes de registrar.'); return; }
   const u = window._currentUser;
   const id = 'e'+Date.now()+Math.random().toString(36).slice(2,6);
-  const entrada = { id, tipo, titulo, corpo, links, autor: u?.displayName||u?.email||'?', autorUid:u?.uid||'', ts:new Date().toISOString(), _squad:ACTIVE_SQUAD };
+  const squadEntrada = (typeof isAdmUser==='function' && isAdmUser(u)) ? 'gestao' : ACTIVE_SQUAD;
+  const entrada = { id, tipo, titulo, corpo, links, autor: u?.displayName||u?.email||'?', autorUid:u?.uid||'', ts:new Date().toISOString(), _squad:squadEntrada };
   try{
     await window._set(_campRef(_campAtual.id+'/entradas/'+id), entrada);
     // Limpar composer
