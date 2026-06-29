@@ -1805,7 +1805,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.37 · painel</div>
+<div class="version">v2.38 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2442,6 +2442,30 @@ function renderCampDetalhe(c){
 }
 
 
+// Render de texto enriquecido para campanhas (display): negrito, itálico, links, menções, cards
+function _campRenderMd(txt){
+  if(!txt) return '';
+  txt = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/__(.+?)__/g,'<u>$1</u>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 5px;border-radius:4px;font-size:10px;">$1</code>');
+  // Menção de pessoa @handle
+  txt = txt.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,h)=>
+    '<span style="color:var(--teal);font-weight:600;">@'+h+'</span>');
+  // Card vinculado [[CARD:id:title]]
+  txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,(m,id,title)=>
+    '<span style="color:#38b6ff;font-weight:600;cursor:default;" title="Card: '+id+'">📎 '+title+'</span>');
+  // Links nomeados [texto](url)
+  txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,label,url)=>
+    '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+label+'</a>');
+  // Links soltos
+  txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g,(m,pre,url)=>
+    pre+'<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--cyan);">'+url+'</a>');
+  txt = txt.replace(/\n/g,'<br>');
+  return txt;
+}
+
 function _renderEntrada(e, campId){
   const icon  = CAMP_TIPO_ICONS[e.tipo]||'📝';
   const links = (e.links||[]).map(l=>`<a class="camp-entry-link" href="${_pSafeUrl(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a>`).join('');
@@ -2466,7 +2490,7 @@ function _renderEntrada(e, campId){
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
-    <div class="camp-entry-corpo">${esc(e.corpo||'')}</div>
+    <div class="camp-entry-corpo">${typeof _campRenderMd==='function'?_campRenderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
     <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
   </div>`;
