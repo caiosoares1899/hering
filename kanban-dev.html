@@ -1324,6 +1324,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     padding:6px 11px;font-size:11px;
     min-height:34px;
   }
+.card-fn-item { cursor:pointer; -webkit-tap-highlight-color:rgba(56,182,255,.2); touch-action:manipulation; user-select:none; }
   #card-fn-menu {
     position:fixed !important;
     top:auto !important;
@@ -2039,11 +2040,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div class="card-fn-wrap" style="position:relative;display:inline-block;">
     <button class="btn btn-sm" onclick="toggleCardFnMenu(event)" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
     <div class="card-fn-menu" id="card-fn-menu" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);z-index:500;min-width:190px;overflow:hidden;">
-      <div class="card-fn-item" onclick="openQL('recorrentes');hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">🔁 Recorrentes</div>
-      <div class="card-fn-item" onclick="openQL('agendamentos');hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📅 Agendamentos</div>
-      <div class="card-fn-item" onclick="openQL('modelos');hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📋 Modelos</div>
+      <div class="card-fn-item" onclick="openQL('recorrentes');hideCardFnMenu()" role="button" tabindex="0" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">🔁 Recorrentes</div>
+      <div class="card-fn-item" onclick="openQL('agendamentos');hideCardFnMenu()" role="button" tabindex="0" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📅 Agendamentos</div>
+      <div class="card-fn-item" onclick="openQL('modelos');hideCardFnMenu()" role="button" tabindex="0" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📋 Modelos</div>
       <div style="height:1px;background:var(--glass-b);margin:2px 0;"></div>
-      <div class="card-fn-item" onclick="openArquivados();hideCardFnMenu()" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📦 Arquivados</div>
+      <div class="card-fn-item" onclick="openArquivados();hideCardFnMenu()" role="button" tabindex="0" style="padding:10px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s;" onmouseover="this.style.background='rgba(56,182,255,.1)'" onmouseout="this.style.background='none'">📦 Arquivados</div>
     </div>
   </div>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
@@ -3234,7 +3235,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.29-dev</div>
+<div class="version">v8.30.30-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6991,18 +6992,24 @@ async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card perm
 // ═══════════════════════════════════════════════════════
 function toggleCardFnMenu(e){
   e?.stopPropagation();
+  e?.preventDefault();
   const m=document.getElementById('card-fn-menu');
   if(!m) return;
   if(m.style.display!=='none'){ m.style.display='none'; return; }
+  // Posiciona abaixo do botão (necessário com position:fixed no mobile)
   const btn=document.getElementById('card-fn-btn');
   if(btn && window.innerWidth<=700){
     const r=btn.getBoundingClientRect();
     m.style.top=(r.bottom+4)+'px';
   }
   m.style.display='block';
+  // Impede que o listener do document feche imediatamente
+  m._justOpened = true;
+  setTimeout(()=>{ m._justOpened = false; }, 50);
 }
 function hideCardFnMenu(){
-  const m=document.getElementById('card-fn-menu'); if(m) m.style.display='none';
+  const m=document.getElementById('card-fn-menu');
+  if(m && !m._justOpened) m.style.display='none';
 }
 document.addEventListener('click',e=>{ if(!e.target.closest('.card-fn-wrap')) hideCardFnMenu(); });
 
