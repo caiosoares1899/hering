@@ -3248,7 +3248,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.33-dev</div>
+<div class="version">v8.30.34-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8448,6 +8448,24 @@ function parseTrelloJSON(raw){
     }
   });
 
+  // ── Resolução semântica → id real ──
+  const SEMANTIC_TO_REAL = {
+    todo:     columns.find(c=>/to.?do|a fazer|backlog.*semana|sprint|próxim/i.test(c.name))?.id || columns[1]?.id || columns[0]?.id,
+    backlog:  columns.find(c=>/backlog/i.test(c.name))?.id || columns[0]?.id,
+    progress: columns.find(c=>/andamento|progresso|doing|progress|wip/i.test(c.name))?.id || columns[1]?.id || columns[0]?.id,
+    blocker:  columns.find(c=>/bloqueado|bloqueada|stuck|blocked/i.test(c.name))?.id || null,
+    done:     columns.find(c=>/feito|done|conclu|pronto|entregue|finalizado/i.test(c.name))?.id || columns[columns.length-1]?.id,
+  };
+  Object.keys(listColMap).forEach(lid=>{
+    const sem = listColMap[lid].col;
+    const real = SEMANTIC_TO_REAL[sem];
+    if(real) listColMap[lid].col = real;
+    else if(!columns.find(c=>c.id===sem)){
+      listColMap[lid].col = columns[0]?.id||'backlog';
+      listColMap[lid].mapped = false;
+    }
+  });
+
   // ── 2. IDENTIFICAÇÃO DE LABELS ESPECIAIS ───────────────────────
   // Labels que indicam ESTADO (não canal/tipo) → viram impedimento ou risco
   const LABEL_BLOCKER_KEYS=['bloqueada','bloqueado','travada','travado','impedida','impedido','stuck','blocked'];
@@ -8641,7 +8659,8 @@ function parseTrelloJSON(raw){
       createdAt:today,
       editedAt:today,
       _trelloList:listMap[card.idList]?.name||'?',
-      _trelloMemberIds:card.idMembers||[],  // preserved for member modal
+      _trelloListId:card.idList,  // id da lista — usado pelo mapeamento manual
+      _trelloMemberIds:card.idMembers||[],
       _mapped:colInfo.mapped,
     };
   });
@@ -8882,7 +8901,7 @@ async function doTrelloImport(){
     });
   }
   // Remove metadados internos antes de salvar
-  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
+  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListId,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
   cards.push(...cleanCards);
   fbSaveAll(); renderBoard();
   // Limpa e fecha
