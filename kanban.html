@@ -3225,7 +3225,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.30</div>
+<div class="version">v8.30.31</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3296,6 +3296,33 @@ const ADM_UIDS = {
 };
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
+
+// ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
+// Estrutura: kanban/squads/{squad}/access_log/{YYYY-MM-DD}/{uid} = {init, ts, role}
+// Um registro por pessoa por dia (sobrescreve se acessar de novo no mesmo dia — não cresce sem limite).
+// Mantém só os últimos 60 dias (limpeza leve roda 1x a cada carregamento, throttled).
+function _logAccess(user, role){
+  if(!user || !user.uid || !window._fbReady) return;
+  const today = new Date().toISOString().split('T')[0];
+  const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
+  window._set(window._ref(window._db, path), {
+    init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
+  }).catch(()=>{});
+  // Limpeza leve: 1x por sessão, remove dias com mais de 60 dias
+  if(!window._accessLogCleaned){
+    window._accessLogCleaned = true;
+    window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log')).then(snap=>{
+      const val = snap.val(); if(!val) return;
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+      Object.keys(val).forEach(day=>{
+        if(day < cutoffStr){
+          window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+day), null).catch(()=>{});
+        }
+      });
+    }).catch(()=>{});
+  }
+}
 function getEffectiveRole(user, dbRole){
   if(isAdmUser(user)) return 'adm';
   return dbRole||'membro';
@@ -4402,6 +4429,7 @@ function autoRegistrar(user){
       });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
+      _logAccess(user, newRole);
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
@@ -4409,6 +4437,7 @@ function autoRegistrar(user){
     } else {
       window._currentUserRole=getEffectiveRole(user, existe.role);
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
+      _logAccess(user, window._currentUserRole);
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
       if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
@@ -8359,7 +8388,27 @@ function parseTrelloJSON(raw){
     }
   });
 
-  // ── 2. IDENTIFICAÇÃO DE LABELS ESPECIAIS ───────────────────────
+  // ── Resolução semântica → id real ──
+  // As keys do LISTA_SEMANTICA usam strings como 'todo','backlog','progress','blocker','done'.
+  // Precisamos convertê-las para o id real das colunas do board.
+  const SEMANTIC_TO_REAL = {
+    todo:     columns.find(c=>/to.?do|a fazer|backlog.*semana|sprint|próxim/i.test(c.name))?.id || columns[1]?.id || columns[0]?.id,
+    backlog:  columns.find(c=>/backlog/i.test(c.name))?.id || columns[0]?.id,
+    progress: columns.find(c=>/andamento|progresso|doing|progress|wip/i.test(c.name))?.id || columns[1]?.id || columns[0]?.id,
+    blocker:  columns.find(c=>/bloqueado|bloqueada|stuck|blocked/i.test(c.name))?.id || null,
+    done:     columns.find(c=>/feito|done|conclu|pronto|entregue|finalizado/i.test(c.name))?.id || columns[columns.length-1]?.id,
+  };
+  // Aplica resolução no listColMap
+  Object.keys(listColMap).forEach(lid=>{
+    const sem = listColMap[lid].col;
+    const real = SEMANTIC_TO_REAL[sem];
+    if(real) listColMap[lid].col = real;
+    else if(!columns.find(c=>c.id===sem)){
+      // col semântico não resolveu e não é id válido → usa primeira coluna
+      listColMap[lid].col = columns[0]?.id||'backlog';
+      listColMap[lid].mapped = false;
+    }
+  });
   // Labels que indicam ESTADO (não canal/tipo) → viram impedimento ou risco
   const LABEL_BLOCKER_KEYS=['bloqueada','bloqueado','travada','travado','impedida','impedido','stuck','blocked'];
   const LABEL_RISCO_KEYS=['risco','risk','atenção','atencao','alerta'];
@@ -8552,7 +8601,8 @@ function parseTrelloJSON(raw){
       createdAt:today,
       editedAt:today,
       _trelloList:listMap[card.idList]?.name||'?',
-      _trelloMemberIds:card.idMembers||[],  // preserved for member modal
+      _trelloListId:card.idList,  // id da lista — usado pelo mapeamento manual
+      _trelloMemberIds:card.idMembers||[],
       _mapped:colInfo.mapped,
     };
   });
@@ -8793,7 +8843,7 @@ async function doTrelloImport(){
     });
   }
   // Remove metadados internos antes de salvar
-  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
+  const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListId,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
   cards.push(...cleanCards);
   fbSaveAll(); renderBoard();
   // Limpa e fecha
