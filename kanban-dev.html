@@ -3248,7 +3248,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.32-dev</div>
+<div class="version">v8.30.33-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3320,6 +3320,29 @@ const ADM_UIDS = {
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
 // Reforço: reconhece ADM por email OU por UID (preencha ADM_UIDS com o uid real se precisar)
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
+
+// ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
+function _logAccess(user, role){
+  if(!user || !user.uid || !window._fbReady) return;
+  const today = new Date().toISOString().split('T')[0];
+  const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
+  window._set(window._ref(window._db, path), {
+    init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
+  }).catch(()=>{});
+  if(!window._accessLogCleaned){
+    window._accessLogCleaned = true;
+    window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log')).then(snap=>{
+      const val = snap.val(); if(!val) return;
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+      const cutoffStr = cutoff.toISOString().split('T')[0];
+      Object.keys(val).forEach(day=>{
+        if(day < cutoffStr){
+          window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+day), null).catch(()=>{});
+        }
+      });
+    }).catch(()=>{});
+  }
+}
 function getEffectiveRole(user, dbRole){
   if(isAdmUser(user)) return 'adm';
   return dbRole||'membro';
@@ -4464,6 +4487,7 @@ function autoRegistrar(user){
       });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
+      _logAccess(user, newRole);
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
@@ -4471,6 +4495,7 @@ function autoRegistrar(user){
     } else {
       window._currentUserRole=getEffectiveRole(user, existe.role);
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
+      _logAccess(user, window._currentUserRole);
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
       if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
