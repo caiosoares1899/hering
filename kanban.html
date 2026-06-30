@@ -1329,6 +1329,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     padding:6px 11px;font-size:11px;
     min-height:34px;
   }
+  /* Menu flutuante não pode ser cortado pelo overflow da toolbar */
+  #card-fn-menu {
+    position:fixed !important;
+    top:auto !important;
+    left:8px !important;
+    right:8px !important;
+    width:auto !important;
+    min-width:0 !important;
+    z-index:9000 !important;
+  }
 
   /* ── FILTER BAR ───────────────────────────────────────── */
   #filter-bar{
@@ -1585,7 +1595,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   background:rgba(0,0,0,.2);
 }
 .camp-hd > .x-btn { margin-left:auto; }
-.camp-hd-title { font-family:"Syne",sans-serif; font-size:16px; font-weight:800; flex:1; }
+.camp-hd-title { font-family:"DM Sans",sans-serif; font-size:15px; font-weight:600; letter-spacing:-.01em; flex:1; }
 .camp-hd-emoji { font-size:22px; line-height:1; }
 .camp-hd-sub   { font-size:11px; color:var(--txt3); margin-top:1px; }
 
@@ -1669,29 +1679,64 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* ── MOBILE: overlay de campanhas ── */
 @media(max-width:700px){
-  .camp-panel { width:100vw; height:100vh; max-height:100vh; border-radius:0; }
-  .camp-hd { padding:12px 14px; gap:8px; }
-  .camp-hd-title { font-size:14px; }
-  .camp-hd-emoji { font-size:18px; }
-  .camp-detail-hd { padding:14px 16px 12px; }
-  .camp-detail-nome { font-size:17px; }
-  .camp-detail-body { grid-template-columns:1fr; }
-  /* Sidebar vira topo colapsável no mobile */
-  .camp-sidebar { border-right:none; border-bottom:1px solid var(--glass-b); max-height:none; padding:14px; }
-  .camp-timeline { padding:14px; }
-  .camp-ms-toggle-bar { flex-wrap:wrap; padding:8px 12px; }
-  .camp-ms-toggle-btn { font-size:10px; padding:5px 10px; }
-  .camp-filter-bar { padding:10px 14px; }
-  .camp-list-wrap { padding:12px 14px; }
-  .camp-card { grid-template-columns:auto 1fr; padding:12px; }
-  .camp-card-right { grid-column:1/-1; flex-direction:row; justify-content:space-between; margin-top:6px; }
-  .camp-tl-filter-bar { flex-wrap:wrap; padding:8px 12px; }
+  /* Overlay ocupa tela inteira */
+  .camp-panel {
+    width:100vw; height:100dvh; max-height:100dvh;
+    border-radius:0; border:none;
+    overflow:hidden;
+  }
+  /* Header compacto */
+  .camp-hd { padding:10px 12px; gap:6px; }
+  .camp-hd-title { font-size:13px; }
+  .camp-hd-emoji { font-size:17px; }
+  /* Header do detalhe: compactar botões */
+  .camp-det-hd-btns { gap:4px; }
+  .camp-det-hd-btns .btn { font-size:10px; padding:4px 8px; }
+  .camp-btn-lbl { display:none; } /* esconde texto "Editar", deixa só ícone */
+  /* Detalhe: sidebar em cima, timeline embaixo (coluna única) */
+  .camp-detail-body {
+    grid-template-columns:1fr;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  /* Sidebar: altura limitada com scroll próprio */
+  .camp-sidebar {
+    border-right:none;
+    border-bottom:1px solid var(--glass-b);
+    max-height:280px;
+    overflow-y:auto;
+    padding:12px;
+    -webkit-overflow-scrolling:touch;
+  }
+  /* Timeline: cresce e tem scroll */
+  .camp-timeline {
+    padding:12px;
+    overflow-y:auto;
+    min-height:200px;
+    -webkit-overflow-scrolling:touch;
+  }
+  /* Barra de filtro da timeline */
+  .camp-tl-filter-bar { flex-wrap:wrap; padding:8px 10px; gap:5px; }
   .camp-tl-search { min-width:0; flex:1 1 100%; }
-  .camp-cards-grid-panel { width:100vw; height:100vh; max-height:100vh; border-radius:0; }
-  .camp-cards-grid-body { grid-template-columns:1fr; padding:14px; gap:10px; }
-  .camp-edit-modal { width:100vw; height:100vh; max-height:100vh; border-radius:0; }
+  .camp-tl-tipo-sel { flex:1; }
+  /* Toggle multi-squad */
+  .camp-ms-toggle-bar { flex-wrap:wrap; padding:8px 10px; gap:5px; }
+  .camp-ms-toggle-btn { font-size:10px; padding:5px 10px; flex:1; text-align:center; }
+  /* Lista de campanhas */
+  .camp-filter-bar { padding:8px 12px; gap:6px; }
+  .camp-list-wrap { padding:10px 12px; }
+  .camp-card { padding:11px 12px; }
+  .camp-card-right { flex-direction:row; justify-content:space-between; margin-top:5px; }
+  /* Composer */
   .camp-composer { padding:0; }
-  .camp-composer-body { padding:0 12px 12px; }
+  .camp-composer-body { padding:0 10px 10px; }
+  .camp-fmt-bar { gap:4px; }
+  /* Grid de cards */
+  .camp-cards-grid-panel { width:100vw; height:100dvh; max-height:100dvh; border-radius:0; }
+  .camp-cards-grid-body { grid-template-columns:1fr; padding:12px; gap:8px; }
+  .camp-cards-grid-filters { padding:8px 12px; }
+  /* Modal de edição */
+  .camp-edit-modal { width:100vw; height:100dvh; max-height:100dvh; border-radius:0; }
 }
 
 .camp-grid-card { border:1px solid var(--glass-b); border-radius:11px; padding:13px; cursor:pointer;
@@ -3016,9 +3061,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div style="flex:1;min-width:0;">
         <div class="camp-hd-title" id="camp-det-hd-nome">—</div>
       </div>
-      <button class="btn btn-sm" onclick="openCampEdit(window._campAtual?.id)" style="color:var(--txt2);border-color:var(--glass-b);">✏️ Editar</button>
-      <button class="btn btn-sm" onclick="campDeleteFromDetail()" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
-      <button class="x-btn" onclick="closeOv('camp-ov')" style="margin-left:0;">✕</button>
+      <div class="camp-det-hd-btns" style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+        <button class="btn btn-sm" onclick="openCampEdit(window._campAtual?.id)" style="color:var(--txt2);border-color:var(--glass-b);">✏️ <span class="camp-btn-lbl">Editar</span></button>
+        <button class="btn btn-sm" onclick="campDeleteFromDetail()" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <button class="x-btn" onclick="closeOv('camp-ov')" style="margin-left:0;">✕</button>
+      </div>
     </div>
     <div class="camp-detail" id="camp-detail-inner">
       <!-- preenchido por renderCampDetalhe() -->
@@ -3167,7 +3214,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.27</div>
+<div class="version">v8.30.28</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6893,7 +6940,17 @@ async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card perm
 function toggleCardFnMenu(e){
   e?.stopPropagation();
   const m=document.getElementById('card-fn-menu');
-  if(m) m.style.display = m.style.display==='none' ? 'block' : 'none';
+  if(!m) return;
+  if(m.style.display!=='none'){
+    m.style.display='none'; return;
+  }
+  // Posiciona abaixo do botão (necessário com position:fixed no mobile)
+  const btn=document.getElementById('card-fn-btn');
+  if(btn && window.innerWidth<=700){
+    const r=btn.getBoundingClientRect();
+    m.style.top=(r.bottom+4)+'px';
+  }
+  m.style.display='block';
 }
 function hideCardFnMenu(){
   const m=document.getElementById('card-fn-menu'); if(m) m.style.display='none';
