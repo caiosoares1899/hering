@@ -3526,12 +3526,20 @@ function toggleCardSelection(id){
   updateBulkBar();
 }
 function selectAllInColumn(colId){
-  const visibleIds=cards.filter(c=>!c.archived && c.col===colId && passesFilters(c)).map(c=>c.id);
-  const allSelected=visibleIds.length>0 && visibleIds.every(id=>selectedCards.has(id));
-  if(allSelected){ visibleIds.forEach(id=>selectedCards.delete(id)); }
-  else { visibleIds.forEach(id=>selectedCards.add(id)); }
+  // Correção: alterado de matchesFilters para passesFilter
+  const visibleIds = cards.filter(c => !c.archived && c.col === colId && passesFilter(c)).map(c => c.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedCards.has(id));
+  
+  if(allSelected){ 
+    visibleIds.forEach(id => selectedCards.delete(id)); 
+  } else { 
+    visibleIds.forEach(id => selectedCards.add(id)); 
+  }
+  
   renderBoard();
   updateBulkBar();
+}
+
 }
 function updateBulkBar(){
   let bar=document.getElementById('bulk-bar');
