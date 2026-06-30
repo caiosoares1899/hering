@@ -1807,7 +1807,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.40 · painel</div>
+<div class="version">v2.41 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2294,14 +2294,14 @@ function renderCampDetalhe(c){
     todasEntradas = [];
     Object.values(_campanhas||{}).forEach(oc=>{
       if(String(oc.nome||'').toLowerCase()===String(c.nome||'').toLowerCase()){
-        const sq=(oc.squads&&oc.squads.length)?oc.squads[0]:(_pCampActiveSquad||'dados');
-        Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:sq}));
+        const sqFallback=(oc.squads&&oc.squads.length)?oc.squads[0]:(_pCampActiveSquad||'dados');
+        Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:e._squad||sqFallback}));
       }
     });
     if(!todasEntradas.length)
-      todasEntradas=Object.values(c.entradas||{}).map(e=>({...e,_squad:msSquads[0]||'dados'}));
+      todasEntradas=Object.values(c.entradas||{}).map(e=>({...e,_squad:e._squad||msSquads[0]||'dados'}));
   } else {
-    todasEntradas=Object.values(c.entradas||{}).map(e=>({...e,_squad:_pCampActiveSquad||msSquads[0]||'dados'}));
+    todasEntradas=Object.values(c.entradas||{}).map(e=>({...e,_squad:e._squad||_pCampActiveSquad||msSquads[0]||'dados'}));
   }
   const entrFiltradas = todasEntradas
     .filter(e=>_sqFilter==='all'||e._squad===_sqFilter)
