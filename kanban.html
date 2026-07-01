@@ -3259,7 +3259,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.37</div>
+<div class="version">v8.30.38</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9926,48 +9926,86 @@ function calNav(dir){
 }
 function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCal(); }
 
-function renderBoardCalLegend(){
-  const el=document.getElementById('board-cal-legend'); if(!el) return;
+function toggleCalLegendPopup(e, type) {
+  e.stopPropagation();
+  const targetId = 'cal-legend-pop-' + type;
+  const otherId = 'cal-legend-pop-' + (type === 'events' ? 'cards' : 'events');
   
-  // Define o espaçamento vertical e organiza as legendas em linhas separadas
-  el.style.marginTop = '20px';
+  const target = document.getElementById(targetId);
+  const other = document.getElementById(otherId);
+  
+  if (other) other.style.display = 'none';
+  
+  if (target) {
+    const isOpen = target.style.display === 'flex';
+    target.style.display = isOpen ? 'none' : 'flex';
+    
+    if (!isOpen) {
+      const close = (event) => {
+        if (!target.contains(event.target)) {
+          target.style.display = 'none';
+          document.removeEventListener('click', close);
+        }
+      };
+      setTimeout(() => document.addEventListener('click', close), 10);
+    }
+  }
+}
+
+function renderBoardCalLegend(){
+  const el = document.getElementById('board-cal-legend'); if(!el) return;
+  
+  // Organiza o container inferior com os botões nativos do layout
+  el.style.marginTop = '18px';
   el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.gap = '10px';
-  el.style.width = '100%';
-
-  // Cores fixas dos eventos gerais do calendário
-  const CAL_LEGEND_COLORS=[
-    {bg:'rgba(45,110,220,.92)',  id:'blue',   label:'Evento geral'},
-    {bg:'rgba(20,200,155,.92)', id:'teal',   label:'Sprint/Time'},
-    {bg:'rgba(245,195,80,.95)',id:'warn',   label:'Prazo'},
-    {bg:'rgba(240,90,90,.92)',id:'danger', label:'Urgente'},
-    {bg:'rgba(40,170,245,.92)', id:'cyan',   label:'Outros'},
+  el.style.gap = '8px';
+  el.style.position = 'relative';
+  el.style.alignItems = 'center';
+  
+  el.innerHTML = `
+    <span style="font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .05em; font-weight: 700;">Legendas:</span>
+    <div style="position: relative; display: inline-block;">
+      <button class="view-btn" onclick="toggleCalLegendPopup(event, 'events')">🗓️ Tipos de Eventos ▾</button>
+      <div id="cal-legend-pop-events" class="ctx-menu" style="display: none; position: absolute; bottom: calc(100% + 8px); left: 0; padding: 12px; min-width: 220px; flex-direction: column; gap: 8px;"></div>
+    </div>
+    <div style="position: relative; display: inline-block;">
+      <button class="view-btn" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos por Coluna ▾</button>
+      <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; bottom: calc(100% + 8px); left: 0; padding: 12px; min-width: 260px; max-height: 300px; overflow-y: auto; flex-direction: column; gap: 7px;"></div>
+    </div>
+  `;
+  
+  // 1. Popula o popup flutuante de Eventos Gerais
+  const CAL_LEGEND_COLORS = [
+    {bg:'rgba(45,110,220,.92)',  label:'Evento geral'},
+    {bg:'rgba(20,200,155,.92)', label:'Sprint/Time'},
+    {bg:'rgba(245,195,80,.95)', label:'Prazo'},
+    {bg:'rgba(240,90,90,.92)', label:'Urgente'},
+    {bg:'rgba(40,170,245,.92)',  label:'Outros'},
+    {bg:'rgba(160,90,230,.92)',  label:'Gestão Digital'},
   ];
-
-  // 1. Linha de Legenda para os Eventos Gerais (Mantém o padrão de círculos sólidos)
-  const eventsHtml = `<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-    <span style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;min-width:120px;display:inline-block;">🗓️ Eventos:</span>
-    ${CAL_LEGEND_COLORS.map(col=>`
-      <div style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--txt2);">
-        <div style="width:8px; height:8px; border-radius:50%; background:${col.bg};"></div>
-        <span>${col.label}</span>
-      </div>`).join('')}
-  </div>`;
-
-  // 2. Linha de Legenda para Prazos dos Cards (Usa o exato visual dos cards: borda esquerda e fundo transparente)
-  const columnsHtml = `<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-    <span style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;min-width:120px;display:inline-block;">📎 Prazos por Coluna:</span>
-    ${(columns||[]).map(col=>{
-      const bg = _hexA(col.color || '#38b6ff', 0.15);
-      return `
-        <div style="display:inline-flex; align-items:center; font-size:11px; color:var(--txt); padding:3px 10px; background:${bg}; border-left:3px solid ${col.color || '#38b6ff'}; border-radius:5px; font-weight:500;">
-          ${esc(col.name)}
-        </div>`;
-    }).join('')}
-  </div>`;
-
-  el.innerHTML = eventsHtml + columnsHtml;
+  const popEv = el.querySelector('#cal-legend-pop-events');
+  if(popEv){
+    popEv.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">🗓️ Legenda de Eventos</div>' +
+      CAL_LEGEND_COLORS.map(col => `
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--txt2); padding: 2px 4px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: ${col.bg}; flex-shrink: 0;"></div>
+          <span>${col.label}</span>
+        </div>
+      `).join('');
+  }
+  
+  // 2. Popula o popup flutuante de Prazos por Coluna (Escala perfeitamente!)
+  const popCards = el.querySelector('#cal-legend-pop-cards');
+  if(popCards){
+    popCards.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">📎 Prazos por Coluna</div>' +
+      (columns || []).map(col => {
+        const bg = _hexA(col.color || '#38b6ff', 0.15);
+        return `
+          <div style="display: inline-flex; align-items: center; font-size: 11px; color: var(--txt); padding: 4px 10px; background: ${bg}; border-left: 3px solid ${col.color || '#38b6ff'}; border-radius: 5px; font-weight: 500; width: fit-content; white-space: nowrap;">
+            ${esc(col.name)}
+          </div>`;
+      }).join('');
+  }
 }
 function renderCal(){
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
