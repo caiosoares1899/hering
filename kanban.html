@@ -161,12 +161,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;padding-bottom:12px;display:flex;flex-direction:column;}
-.board-wrap:has(.board.raia-mode){overflow-y:auto;}
+.board-wrap{flex:1;min-height:0;display:flex;flex-direction:column;overflow-x:auto;overflow-y:hidden;padding-bottom:10px;}
+.board-wrap:has(.board.raia-mode){display:block;overflow-y:auto;}
 
-.board{flex:1;min-height:0;display:flex;gap:10px;align-items:flex-start;min-width:max-content;}
+.board{flex:1;min-height:0;display:flex;align-items:flex-start;gap:10px;width:max-content;}
 
-.board.raia-mode{display:block!important;height:auto;flex:none;}
+.board.raia-mode{display:block!important;height:auto;width:auto;}
 .board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
 .board.raia-mode.mode-expanded .col{width:240px;min-width:240px;max-height:none;}
 .board.raia-mode.mode-expanded .col-body{max-height:60vh;overflow-y:auto;}
@@ -181,7 +181,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-collapse-btn:hover{color:var(--txt);}
 .col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;overflow-x:hidden;}
-.card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
+
+.add-btn{flex-shrink:0;width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
+.col-more-btn{flex-shrink:0;width:calc(100% - 12px);margin:4px 6px 6px;font-size:10.5px;color:var(--accent);background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:var(--r);padding:6px 8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;font-weight:600;}.card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
 /* Seleção múltipla */
 .card-selected{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(56,182,255,.3);background:rgba(56,182,255,.08);}
 .card-selbox{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:5px;border:1.5px solid var(--accent);background:rgba(3,13,26,.85);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:3;}
@@ -3249,7 +3251,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.47</div>
+<div class="version">v8.30.48</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
