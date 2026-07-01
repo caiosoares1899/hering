@@ -674,9 +674,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   backdrop-filter:blur(10px);display:none;align-items:flex-start;
   justify-content:center;padding:1rem;overflow-y:auto;}
 .cal-ov.open{display:flex;}
-.cal-panel{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);
-  border-radius:var(--r2);width:100%;max-width:900px;min-height:500px;
-  display:flex;flex-direction:column;}
+.cal-panel{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:var(--r2);width:92vw;max-width:1600px;height:90vh;max-height:90vh;display:flex;flex-direction:column;}
+.cal-body{padding:14px 16px;flex:1;overflow-y:auto;}
 .cal-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
   display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;background:rgba(6,26,46,.98);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
@@ -687,14 +686,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
 .cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
 .cal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:140px;text-align:center;}
-.cal-body{padding:14px 16px;flex:1;}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
 .cal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .cal-day{min-height:80px;padding:5px;border-radius:var(--r);
   background:rgba(3,13,26,.5);border:1px solid rgba(56,182,255,.07);
-  cursor:pointer;transition:all .15s;position:relative;}
+  cursor:pointer;transition:all .15s;position:relative; min-width:0; overflow:hidden;}
 .cal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
 .cal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
 .cal-day.other-month{opacity:.35;}
@@ -2044,7 +2042,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openCardFnModal()" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
-  <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
+  <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Tempo por tag</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
@@ -2881,20 +2879,41 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- CALENDÁRIO -->
 <div class="cal-ov" id="cal-ov">
   <div class="cal-panel">
-    <div class="cal-hd">
-      <div class="cal-hd-l">
-        <div class="cal-title">📅 Calendário do Squad</div>
-        <div class="cal-nav">
-          <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
-          <div class="cal-month-lbl" id="cal-month-lbl"></div>
-          <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
-          <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+   <div class="cal-hd" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+      
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="cal-title">📅 Calendários</div>
+        <div style="display:flex; gap:6px;">
+          <button class="view-btn active" data-mode="both" onclick="changeCalView('both')">Tudo</button>
+          <button class="view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
+          <button class="view-btn" data-mode="cards" onclick="changeCalView('cards')">📎 Prazos</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
+        <div class="cal-month-lbl" id="cal-month-lbl"></div>
+        <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
+        <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+      </div>
+      
+      <div style="display:flex; gap:8px; align-items:center;">
         <button class="btn btn-sm btn-teal" onclick="openEvModal()" id="btn-add-event" style="display:none;">+ Evento</button>
         <button class="x-btn" onclick="closeOv('cal-ov')">✕</button>
       </div>
+    </div>
+
+    <div style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap;">
+      <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
+      <select id="cal-f-owner" onchange="renderCal()" style="padding:4px 8px;font-size:11px;background:rgba(3,13,26,.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;outline:none;">
+        <option value="">👤 Qualquer pessoa</option>
+      </select>
+      <select id="cal-f-subteam" onchange="renderCal()" style="padding:4px 8px;font-size:11px;background:rgba(3,13,26,.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;outline:none;">
+        <option value="">👥 Qualquer subtime</option>
+      </select>
+      <select id="cal-f-tag" onchange="renderCal()" style="padding:4px 8px;font-size:11px;background:rgba(3,13,26,.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;outline:none;">
+        <option value="">🏷️ Qualquer tag</option>
+      </select>
     </div>
     <div class="cal-body">
       <div class="cal-weekdays">
@@ -3238,7 +3257,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.32</div>
+<div class="version">v8.30.33</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9857,13 +9876,46 @@ let calMonth=new Date().getMonth();
 let calEvents=[];
 let editingEvId=null;
 
+let calViewMode = 'both';
+
+function changeCalView(mode) {
+  calViewMode = mode;
+  document.querySelectorAll('#cal-ov .view-btn').forEach(btn => {
+    if (btn.hasAttribute('data-mode')) {
+      btn.classList.remove('active');
+      if (btn.getAttribute('data-mode') === mode) btn.classList.add('active');
+    }
+  });
+  renderCal();
+}
+
+function populateCalFilters() {
+  const ownerSel = document.getElementById('cal-f-owner');
+  if(ownerSel) {
+    const cardOwners = cards.filter(c => c.owner).map(c => c.owner);
+    const extraOwners = [...new Set(cardOwners)].filter(o => !members.find(m => m.init === o));
+    const allOwnerOptions = members.map(m => `<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`)
+      .concat(extraOwners.map(o => `<option value="${esc(o)}">${esc(o)}</option>`));
+    ownerSel.innerHTML = '<option value="">👤 Qualquer pessoa</option>' + allOwnerOptions.join('');
+  }
+  const subSel = document.getElementById('cal-f-subteam');
+  if(subSel) {
+    subSel.innerHTML = '<option value="">👥 Qualquer subtime</option>' + subteams.map(st => `<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
+  }
+  const tagSel = document.getElementById('cal-f-tag');
+  if(tagSel) {
+    tagSel.innerHTML = '<option value="">🏷️ Qualquer tag</option>' + tags.map(t => `<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+  }
+}
+
 function openCal(){
   const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
+  populateCalFilters();
   renderCal();
   document.getElementById('cal-ov').classList.add('open');
-
 }
+
 function calNav(dir){
   calMonth+=dir;
   if(calMonth>11){calMonth=0;calYear++;}
@@ -9911,23 +9963,55 @@ const _origRenderCal=renderCal;
 renderCal=function(){ _origRenderCal(); renderBoardCalLegend(); };
 function makeDayEl(date,otherMonth=false,isToday=false){
   const ds=date.toISOString().split('T')[0];
-  const dayEvs=calEvents.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
+  let dayItems = [];
+  
+  const fOwner = document.getElementById('cal-f-owner')?.value || '';
+  const fSubteam = document.getElementById('cal-f-subteam')?.value || '';
+  const fTag = document.getElementById('cal-f-tag')?.value || '';
+  const temFiltroAtivo = fOwner || fSubteam || fTag;
+
+  if((calViewMode === 'both' || calViewMode === 'events') && !temFiltroAtivo){
+    const dayEvs=calEvents.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
+    dayEvs.forEach(ev => dayItems.push({ type: 'event', data: ev }));
+  }
+  
+  if(calViewMode === 'both' || calViewMode === 'cards'){
+    const dayCards=cards.filter(c=>{
+      if (c.archived || c.due !== ds) return false;
+      if (fOwner && c.owner !== fOwner) return false;
+      if (fSubteam && !cardInSubteam(c, fSubteam)) return false;
+      if (fTag && !cardHasTag(c, fTag)) return false;
+      return true;
+    });
+    dayCards.forEach(c => dayItems.push({ type: 'card', data: c }));
+  }
+
   const div=document.createElement('div');
-  div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
+  div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayItems.length?' has-events':'');
   const canEdit=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
+  
   div.innerHTML=`<div class="cal-day-num">${date.getDate()}</div>`
-    +dayEvs.slice(0,3).map(ev=>{
-      const evColor=ev._gestao?'purple':(ev.color||'blue');
-      const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
-      const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
-      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)} — clique para editar">${esc(ev.title)}${delBtn}</div>`;
+    +dayItems.slice(0,3).map(item=>{
+      if(item.type === 'event'){
+        const ev = item.data;
+        const evColor=ev._gestao?'purple':(ev.color||'blue');
+        const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
+        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
+        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)} — clique para editar">${esc(ev.title)}${delBtn}</div>`;
+      } else {
+        const c = item.data;
+        const colInfo = columns.find(x => x.id === c.col);
+        const cardColor = colInfo ? colInfo.color : '#38b6ff';
+        const bg = _hexA(cardColor, 0.15);
+        return `<div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo do card: ${esc(c.title)} — clique para abrir">📎 ${esc(c.title)}</div>`;
+      }
     }).join('')
-    +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-3} mais</div>`:'')
+    +(dayItems.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayItems.length-3} mais</div>`:'')
     +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
+    
   div.onclick=()=>{ const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador'; if(isPO) openEvModal(ds); };
   return div;
 }
-
 function openEvModal(dateStr=''){
   editingEvId=null;
   document.getElementById('ev-modal-title').textContent='Novo Evento';
