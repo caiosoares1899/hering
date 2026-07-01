@@ -1539,6 +1539,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Drag and Drop */
 .card[draggable=true]{cursor:grab;}
 .card[draggable=true]:active{cursor:grabbing;}
+
+/* Drag and Drop de Colunas */
+.col-dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+  transition: transform 0.15s;
+}
+.col-drag-left {
+  box-shadow: -4px 0 0 0 var(--accent) !important;
+}
+.col-drag-right {
+  box-shadow: 4px 0 0 0 var(--accent) !important;
+}
 /* Mobile: feedback quando o long-press arma o drag */
 .card-armed{transform:scale(1.04);border-color:var(--accent)!important;box-shadow:0 6px 20px rgba(56,182,255,.35);transition:transform .12s,box-shadow .12s;}
 .card.dragging{opacity:.35;transform:rotate(2deg);border-color:var(--accent)!important;box-shadow:0 8px 24px rgba(37,99,201,.4);}
@@ -3225,7 +3238,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.31</div>
+<div class="version">v8.30.32</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4798,6 +4811,15 @@ function renderNormal(board,activeCards){
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
+    
+    // Drag and Drop das Colunas
+    div.setAttribute('draggable', selectMode ? 'false' : 'true');
+    div.ondragstart = e => handleColDragStart(e, col.id);
+    div.ondragend = e => handleColDragEnd(e);
+    div.ondragover = e => handleColDragOver(e, col.id);
+    div.ondragleave = e => handleColDragLeave(e);
+    div.ondrop = e => handleColDrop(e, col.id);
+
     const canCollapse=col.collapsible!==false;
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
@@ -10094,14 +10116,82 @@ else window.addEventListener('fb-ready',()=>{
 }, {once:true});
 // ── FIM MONITORAMENTO ─────────────────────────────────────────────
 
-// ═══════════════════════════════════════════════════════
-// DRAG AND DROP
-// ═══════════════════════════════════════════════════════
 let _dragCardId = null;
 let _dragSourceCol = null;
 let _ghostEl = null;
 
+// --- D&D DAS COLUNAS ---
+let _dragColId = null;
+
+function handleColDragStart(e, colId) {
+  // Impede que a coluna seja arrastada se o clique começou dentro da área de cards
+  if (e.target.closest('.card') || e.target.closest('.col-body')) return; 
+  _dragColId = colId;
+  e.dataTransfer.effectAllowed = 'move';
+  requestAnimationFrame(() => e.target.classList.add('col-dragging'));
+  e.stopPropagation();
+}
+
+function handleColDragEnd(e) {
+  e.target.classList.remove('col-dragging');
+  document.querySelectorAll('.col').forEach(c => c.classList.remove('col-drag-left', 'col-drag-right'));
+  _dragColId = null;
+  e.stopPropagation();
+}
+
+function handleColDragOver(e, colId) {
+  if (!_dragColId || _dragColId === colId) return; 
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+
+  const targetCol = e.currentTarget;
+  const rect = targetCol.getBoundingClientRect();
+  const mid = rect.left + rect.width / 2;
+
+  document.querySelectorAll('.col').forEach(c => c.classList.remove('col-drag-left', 'col-drag-right'));
+  if (e.clientX < mid) {
+    targetCol.classList.add('col-drag-left');
+  } else {
+    targetCol.classList.add('col-drag-right');
+  }
+}
+
+function handleColDragLeave(e) {
+  if (!_dragColId) return;
+  e.currentTarget.classList.remove('col-drag-left', 'col-drag-right');
+}
+
+function handleColDrop(e, targetColId) {
+  if (!_dragColId) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (_dragColId === targetColId) return;
+
+  const draggedIdx = columns.findIndex(c => c.id === _dragColId);
+  const targetIdx = columns.findIndex(c => c.id === targetColId);
+
+  if (draggedIdx < 0 || targetIdx < 0) return;
+
+  const targetColEl = e.currentTarget;
+  const rect = targetColEl.getBoundingClientRect();
+  const mid = rect.left + rect.width / 2;
+  
+  let insertIdx = targetIdx;
+  if (e.clientX > mid) insertIdx++;
+  if (draggedIdx < insertIdx) insertIdx--;
+
+  const [removed] = columns.splice(draggedIdx, 1);
+  columns.splice(insertIdx, 0, removed);
+
+  saveUndo('reordenar colunas');
+  fbSet(FB+'/columns', columns);
+  renderBoard();
+}
+
+// --- D&D DOS CARDS ---
 function handleDragStart(e, cardId){
+  e.stopPropagation(); // Protege para não arrastar a coluna junto
   _dragCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   _dragSourceCol = card?.col;
@@ -10152,6 +10242,8 @@ function handleDragLeave(e){
 
 function handleDrop(e, colId){
   e.preventDefault();
+  e.stopPropagation(); // Protege a coluna alvo
+  
   const body = e.currentTarget;
   body.classList.remove('drag-over','drag-over-blocked');
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
