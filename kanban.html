@@ -2905,7 +2905,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
     </div>
 
-    <div style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap;">
+   <div style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap; position:relative; z-index:10;">
       <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
       <select id="cal-f-owner" onchange="renderCal()" style="padding:4px 8px;font-size:11px;background:rgba(3,13,26,.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;outline:none;">
         <option value="">👤 Qualquer pessoa</option>
@@ -2916,14 +2916,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <select id="cal-f-tag" onchange="renderCal()" style="padding:4px 8px;font-size:11px;background:rgba(3,13,26,.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;outline:none;">
         <option value="">🏷️ Qualquer tag</option>
       </select>
+
+      <div id="board-cal-legend" style="margin-left:auto; display:flex; gap:6px; align-items:center;"></div>
     </div>
+    
     <div class="cal-body">
       <div class="cal-weekdays">
         <div class="cal-wd">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
         <div class="cal-wd">Qua</div><div class="cal-wd">Qui</div><div class="cal-wd">Sex</div><div class="cal-wd">Sáb</div>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
-     <div id="board-cal-legend" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"></div>
     </div>
     </div>
 </div>
@@ -3259,7 +3261,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.40</div>
+<div class="version">v8.30.41</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9955,27 +9957,22 @@ function toggleCalLegendPopup(e, type) {
 function renderBoardCalLegend(){
   const el = document.getElementById('board-cal-legend'); if(!el) return;
   
-  // Organiza o container inferior e FORÇA ele a ficar por cima da grid
-  el.style.marginTop = '18px';
-  el.style.display = 'flex';
-  el.style.gap = '8px';
-  el.style.position = 'relative';
-  el.style.zIndex = '100'; // <-- A MÁGICA ACONTECE AQUI
-  el.style.alignItems = 'center';
+  // Limpa margens antigas que não são mais necessárias
+  el.style.marginTop = '0';
   
   el.innerHTML = `
-    <span style="font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .05em; font-weight: 700;">Legendas:</span>
+    <span style="font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; margin-right: 4px;">Legendas:</span>
     <div style="position: relative; display: inline-block;">
-      <button class="view-btn" onclick="toggleCalLegendPopup(event, 'events')">🗓️ Tipos de Eventos ▾</button>
-      <div id="cal-legend-pop-events" class="ctx-menu" style="display: none; position: absolute; bottom: calc(100% + 8px); left: 0; padding: 12px; min-width: 220px; flex-direction: column; gap: 8px; z-index: 9999;"></div>
+      <button class="view-btn" onclick="toggleCalLegendPopup(event, 'events')">🗓️ Eventos ▾</button>
+      <div id="cal-legend-pop-events" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 220px; flex-direction: column; gap: 8px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
     </div>
     <div style="position: relative; display: inline-block;">
-      <button class="view-btn" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos por Coluna ▾</button>
-      <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; bottom: calc(100% + 8px); left: 0; padding: 12px; min-width: 260px; max-height: 300px; overflow-y: auto; flex-direction: column; gap: 7px; z-index: 9999;"></div>
+      <button class="view-btn" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos ▾</button>
+      <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 260px; max-height: 400px; overflow-y: auto; flex-direction: column; gap: 7px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
     </div>
   `;
   
-  // 1. Popula o popup flutuante de Eventos Gerais
+  // 1. Popula o popup de Eventos Gerais
   const CAL_LEGEND_COLORS = [
     {bg:'rgba(45,110,220,.92)',  label:'Evento geral'},
     {bg:'rgba(20,200,155,.92)', label:'Sprint/Time'},
@@ -9986,7 +9983,7 @@ function renderBoardCalLegend(){
   ];
   const popEv = el.querySelector('#cal-legend-pop-events');
   if(popEv){
-    popEv.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">🗓️ Legenda de Eventos</div>' +
+    popEv.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">🗓️ Tipos de Eventos</div>' +
       CAL_LEGEND_COLORS.map(col => `
         <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--txt2); padding: 2px 4px;">
           <div style="width: 8px; height: 8px; border-radius: 50%; background: ${col.bg}; flex-shrink: 0;"></div>
@@ -9994,6 +9991,20 @@ function renderBoardCalLegend(){
         </div>
       `).join('');
   }
+  
+  // 2. Popula o popup de Prazos por Coluna
+  const popCards = el.querySelector('#cal-legend-pop-cards');
+  if(popCards){
+    popCards.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">📎 Prazos por Coluna</div>' +
+      (columns || []).map(col => {
+        const bg = _hexA(col.color || '#38b6ff', 0.15);
+        return `
+          <div style="display: inline-flex; align-items: center; font-size: 11px; color: var(--txt); padding: 4px 10px; background: ${bg}; border-left: 3px solid ${col.color || '#38b6ff'}; border-radius: 5px; font-weight: 500; width: fit-content; white-space: nowrap;">
+            ${esc(col.name)}
+          </div>`;
+      }).join('');
+  }
+}
   
   // 2. Popula o popup flutuante de Prazos por Coluna
   const popCards = el.querySelector('#cal-legend-pop-cards');
