@@ -3259,7 +3259,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.36</div>
+<div class="version">v8.30.37</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9928,17 +9928,46 @@ function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().get
 
 function renderBoardCalLegend(){
   const el=document.getElementById('board-cal-legend'); if(!el) return;
+  
+  // Define o espaçamento vertical e organiza as legendas em linhas separadas
+  el.style.marginTop = '20px';
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
+  el.style.gap = '10px';
+  el.style.width = '100%';
+
+  // Cores fixas dos eventos gerais do calendário
   const CAL_LEGEND_COLORS=[
     {bg:'rgba(45,110,220,.92)',  id:'blue',   label:'Evento geral'},
     {bg:'rgba(20,200,155,.92)', id:'teal',   label:'Sprint/Time'},
     {bg:'rgba(245,195,80,.95)',id:'warn',   label:'Prazo'},
     {bg:'rgba(240,90,90,.92)',id:'danger', label:'Urgente'},
     {bg:'rgba(40,170,245,.92)', id:'cyan',   label:'Outros'},
-    {bg:'rgba(160,90,230,.92)', id:'purple', label:'Gestão Digital'},
   ];
-  // Mostra SEMPRE todas as cores como legenda explicativa
-  el.innerHTML='<span style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-right:2px;align-self:center;">Cores:</span>'+
-    CAL_LEGEND_COLORS.map(col=>'<div class="cal-leg-item"><div class="cal-leg-dot" style="background:'+col.bg+';"></div>'+col.label+'</div>').join('');
+
+  // 1. Linha de Legenda para os Eventos Gerais (Mantém o padrão de círculos sólidos)
+  const eventsHtml = `<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <span style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;min-width:120px;display:inline-block;">🗓️ Eventos:</span>
+    ${CAL_LEGEND_COLORS.map(col=>`
+      <div style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--txt2);">
+        <div style="width:8px; height:8px; border-radius:50%; background:${col.bg};"></div>
+        <span>${col.label}</span>
+      </div>`).join('')}
+  </div>`;
+
+  // 2. Linha de Legenda para Prazos dos Cards (Usa o exato visual dos cards: borda esquerda e fundo transparente)
+  const columnsHtml = `<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <span style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;min-width:120px;display:inline-block;">📎 Prazos por Coluna:</span>
+    ${(columns||[]).map(col=>{
+      const bg = _hexA(col.color || '#38b6ff', 0.15);
+      return `
+        <div style="display:inline-flex; align-items:center; font-size:11px; color:var(--txt); padding:3px 10px; background:${bg}; border-left:3px solid ${col.color || '#38b6ff'}; border-radius:5px; font-weight:500;">
+          ${esc(col.name)}
+        </div>`;
+    }).join('')}
+  </div>`;
+
+  el.innerHTML = eventsHtml + columnsHtml;
 }
 function renderCal(){
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
