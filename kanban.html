@@ -129,7 +129,7 @@
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
 }
-html,body{min-height:100vh;overflow-x:hidden;}
+html,body{height:100vh;height:100dvh;overflow:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
 .bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
@@ -139,7 +139,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-.app{position:relative;z-index:2;padding:.9rem 1.2rem 5rem;}
+.app{position:relative;z-index:2;padding:.9rem 1.2rem 1rem;display:flex;flex-direction:column;height:100vh;height:100dvh;box-sizing:border-box;}
+.hd, .toolbar, #goal-bar, #filter-bar {flex-shrink:0;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;}
 .hd-l{display:flex;align-items:center;gap:8px;}
@@ -160,46 +161,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
 .goal-bar.show{display:flex;}
 /* board */
-.board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;-webkit-overflow-scrolling:touch;}
-/* No modo expandido, limita a altura à viewport pra scrollbar horizontal ficar visível
-   e as colunas rolarem verticalmente por dentro. */
-.board-wrap.mode-expanded-wrap{
-  overflow-x:auto;
-  overflow-y:hidden;
-  max-width:100%;
-  /* 22px de folga no fim = espaço garantido pra scrollbar horizontal ficar visível */
-  height:calc(100vh - var(--board-top, 150px) - 22px);
-  padding-bottom:0;
-}
-/* Em modo raia, a altura volta a ser automática (raia rola na página) */
-.board-wrap.mode-expanded-wrap:has(.board.raia-mode){
-  height:auto;
-  overflow-y:visible;
-}
-.board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;min-width:max-content;}
-/* coluna no modo expandido ocupa a altura do wrap e deixa o corpo rolar (exceto raia) */
-.mode-expanded-wrap .board.mode-expanded:not(.raia-mode){height:100%;align-items:flex-start;}
-.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col{max-height:100%;display:flex;flex-direction:column;}
-.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col-hd{flex-shrink:0;}
-.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col-body{flex:1 1 auto;overflow-y:auto;min-height:40px;}
-.mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .add-btn{flex-shrink:0;}
-.board.raia-mode{display:block!important;}
+.board-wrap{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;display:flex;-webkit-overflow-scrolling:touch;}
+.board-wrap.mode-expanded-wrap{height:auto;max-width:100%;}
+.board-wrap:has(.board.raia-mode){overflow-y:auto;flex-direction:column;}
+
+.board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;height:100%;min-width:max-content;}
+
+.board.raia-mode{display:block!important;height:auto;}
 .board.raia-mode.mode-expanded{display:block!important;flex-wrap:unset;min-width:unset;}
-.board.raia-mode.mode-expanded .col{width:240px;min-width:240px;}
-.board.raia-mode.mode-expanded .col-body{
-  max-height:calc(var(--raia-col-h, 60vh));
-  overflow-y:auto;
-}
+.board.raia-mode.mode-expanded .col{width:240px;min-width:240px;max-height:none;}
+.board.raia-mode.mode-expanded .col-body{max-height:60vh;overflow-y:auto;}
+
 /* column */
-.col{width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
+.col{width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;display:flex;flex-direction:column;max-height:100%;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
+.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-collapse-btn:hover{color:var(--txt);}
-.col-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:40px;}
+.col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;overflow-x:hidden;}
 /* card */
 .card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
 /* Seleção múltipla */
@@ -256,7 +238,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-lbl{font-size:8px;color:var(--txt3);margin-top:2px;}
 
 .btn-modelo:hover{opacity:1;}
-.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
+.add-btn{flex-shrink:0;width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
 .col-more-btn{width:calc(100% - 12px);margin:4px 6px 6px;font-size:10.5px;color:var(--accent);background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:var(--r);padding:6px 8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;font-weight:600;}
 .col-more-btn:hover{background:rgba(56,182,255,.16);}
 .add-btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid;}
@@ -659,7 +641,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   flex-shrink:0;
 }
 .board.mode-expanded .col-body{
-  max-height:calc(100vh - 160px);
+  max-height:none;
   overflow-y:auto;
   overflow-x:hidden;
 }
@@ -1355,8 +1337,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
-  .col-body{
-    max-height:65vh;overflow-y:auto;
+.col-body{
+    max-height:none;
+    overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     padding:5px;
   }
@@ -3268,7 +3251,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.43</div>
+<div class="version">v8.30.44</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9885,6 +9868,7 @@ function setViewMode(mode){
   const wrap=document.getElementById('board-wrap');
   if(wrap){
     wrap.classList.toggle('mode-expanded-wrap', mode==='expanded');
+  }
     // Mede a distância do topo do board até o topo da viewport e ajusta a altura
     // dinamicamente, pra funcionar mesmo quando a toolbar quebra em 2 linhas.
     if(mode==='expanded'){
