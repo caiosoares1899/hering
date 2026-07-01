@@ -3305,7 +3305,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.58</div>
+<div class="version">v8.30.59</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10468,12 +10468,8 @@ async function carregarAgendaDaSquad() {
   const calId = window._squadCalendarId;
   if (!calId) return;
 
-  // Usa a mesma API Key do Firebase que já está configurada
-  const apiKey = safeLS.getItem('fb_apiKey');
-  if (!apiKey) {
-    console.warn("API Key não encontrada para ler o Google Agenda.");
-    return;
-  }
+  // CORREÇÃO: Se não houver chave customizada, usa a chave padrão fixa do seu app
+  const apiKey = safeLS.getItem('fb_apiKey') || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU';
 
   // Busca do mês passado pra frente (não sobrecarrega o app com anos de eventos)
   const hoje = new Date();
@@ -10484,6 +10480,12 @@ async function carregarAgendaDaSquad() {
   try {
     const res = await fetch(url);
     const data = await res.json();
+    
+    // Se o Google retornar algum erro (ex: agenda privada ou bloqueada)
+    if (data.error) {
+      console.error("Erro retornado pela API do Google Calendar:", data.error);
+      return;
+    }
     
     if (data.items) {
       const eventosGoogle = data.items.map(item => {
@@ -10521,7 +10523,7 @@ async function carregarAgendaDaSquad() {
   } catch (error) {
     console.error("Erro ao puxar agenda da Squad:", error);
   }
-}  
+}
   // Limpa outros drag-over
   document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
   body.classList.add('drag-over');
