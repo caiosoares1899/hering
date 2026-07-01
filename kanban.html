@@ -3251,7 +3251,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.44</div>
+<div class="version">v8.30.45</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9855,45 +9855,30 @@ function insertMention(ta, atPos, curPos, init){
 // Migra chave antiga e força default 'expanded'
 (()=>{ const old=safeLS.getItem('boardViewMode'); if(old==='expanded') safeLS.setItem('boardViewMode2','expanded'); safeLS.removeItem('boardViewMode'); })();
 let viewMode = 'expanded';
+
 function setViewMode(mode){
   // One-page removido — board sempre no modo expandido
   mode = 'expanded';
   viewMode='expanded';
   safeLS.setItem('boardViewMode2','expanded');
+  
   const board=document.getElementById('board');
   if(board){
     board.classList.remove('mode-onepage','mode-expanded');
     board.classList.add('mode-expanded');
   }
+  
   const wrap=document.getElementById('board-wrap');
   if(wrap){
     wrap.classList.toggle('mode-expanded-wrap', mode==='expanded');
   }
-    // Mede a distância do topo do board até o topo da viewport e ajusta a altura
-    // dinamicamente, pra funcionar mesmo quando a toolbar quebra em 2 linhas.
-    if(mode==='expanded'){
-      const measure=()=>{
-        const top=wrap.getBoundingClientRect().top;
-        // Só aplica se a medição for plausível (board já visível e posicionado).
-        // Se vier 0/negativo (layout não pronto), tenta de novo no próximo frame.
-        if(top>40){
-          document.documentElement.style.setProperty('--board-top', Math.round(top)+'px');
-        } else {
-          requestAnimationFrame(measure);
-        }
-      };
-      requestAnimationFrame(measure);
-    }
-  }
-  // A altura das colunas agora é 100% controlada por CSS (.col-body max-height),
-  // sem cálculo de getBoundingClientRect — elimina o bug de timing onde a
-  // 4ª coluna e o WIP sumiam no primeiro carregamento.
 }
+
 function applyViewMode(){
   setViewMode(viewMode);
 }
-window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 
+window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
 // ── CALENDÁRIO ───────────────────────────────────────────────────
 const EV_COLORS=[
   {id:'blue',   bg:'rgba(45,110,220,.92)',  txt:'#fff'},
