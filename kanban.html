@@ -1539,19 +1539,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Drag and Drop */
 .card[draggable=true]{cursor:grab;}
 .card[draggable=true]:active{cursor:grabbing;}
-
-/* Drag and Drop de Colunas */
-.col-dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-  transition: transform 0.15s;
-}
-.col-drag-left {
-  box-shadow: -4px 0 0 0 var(--accent) !important;
-}
-.col-drag-right {
-  box-shadow: 4px 0 0 0 var(--accent) !important;
-}
 /* Mobile: feedback quando o long-press arma o drag */
 .card-armed{transform:scale(1.04);border-color:var(--accent)!important;box-shadow:0 6px 20px rgba(56,182,255,.35);transition:transform .12s,box-shadow .12s;}
 .card.dragging{opacity:.35;transform:rotate(2deg);border-color:var(--accent)!important;box-shadow:0 8px 24px rgba(37,99,201,.4);}
@@ -3238,7 +3225,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.33</div>
+<div class="version">v8.30.31</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4811,15 +4798,6 @@ function renderNormal(board,activeCards){
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
-    
-    // Drag and Drop das Colunas
-    div.setAttribute('draggable', selectMode ? 'false' : 'true');
-    div.ondragstart = e => handleColDragStart(e, col.id);
-    div.ondragend = e => handleColDragEnd(e);
-    div.ondragover = e => handleColDragOver(e, col.id);
-    div.ondragleave = e => handleColDragLeave(e);
-    div.ondrop = e => handleColDrop(e, col.id);
-
     const canCollapse=col.collapsible!==false;
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
@@ -10123,25 +10101,18 @@ let _dragCardId = null;
 let _dragSourceCol = null;
 let _ghostEl = null;
 
-// ---> COLE AQUI AS FUNÇÕES DO PASSO 2 <---
-let _dragColId = null;
-
-function handleColDragStart(e, colId) {
-  if (e.target.closest('.card')) return; 
-// ... (resto do código do Passo 2) ...
-
 function handleDragStart(e, cardId){
-  e.stopPropagation(); // <-- ADICIONE ESTA LINHA!
   _dragCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   _dragSourceCol = card?.col;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', cardId);
+  // Aplica classe dragging com pequeno delay para a UI não piscar
   requestAnimationFrame(()=> e.target.classList.add('dragging'));
 }
+
 function handleDragEnd(e){
   e.target.classList.remove('dragging');
-  
   // Limpa todos os estados de drag-over
   document.querySelectorAll('.col-body').forEach(b=>{
     b.classList.remove('drag-over','drag-over-blocked');
