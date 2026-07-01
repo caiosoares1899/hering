@@ -3238,7 +3238,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.32</div>
+<div class="version">v8.30.33</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4811,6 +4811,15 @@ function renderNormal(board,activeCards){
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
+    
+    // Drag and Drop das Colunas
+    div.setAttribute('draggable', selectMode ? 'false' : 'true');
+    div.ondragstart = e => handleColDragStart(e, col.id);
+    div.ondragend = e => handleColDragEnd(e);
+    div.ondragover = e => handleColDragOver(e, col.id);
+    div.ondragleave = e => handleColDragLeave(e);
+    div.ondrop = e => handleColDrop(e, col.id);
+
     const canCollapse=col.collapsible!==false;
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
