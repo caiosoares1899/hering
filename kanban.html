@@ -1925,6 +1925,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ocean"></div>
 <div id="bwrap" style="position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;"></div>
 <div class="fish-wrap" id="fwrap"></div>
+/* Botões de visualização do Calendário */
+.cal-view-btn {
+  background: transparent;
+  border: none;
+  color: var(--txt2);
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cal-view-btn.active {
+  background: rgba(56, 182, 255, 0.15);
+  color: var(--accent);
+  font-weight: 600;
+}
+.cal-view-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--txt);
+}
 
 <!-- LOGIN -->
 <div class="login-ov" id="login-ov">
@@ -2882,25 +2903,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- CALENDÁRIO -->
 <div class="cal-ov" id="cal-ov">
   <div class="cal-panel">
-    <div class="cal-hd">
-      <div class="cal-hd-l">
+  <div class="cal-hd" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+      
+      <div style="display:flex; align-items:center; gap:16px;">
         <div class="cal-title">📅 Calendários</div>
-        <select id="cal-view-mode" onchange="changeCalView(this.value)" style="margin-left:12px;padding:4px 8px;font-size:11px;background:rgba(3,13,26,.8);color:var(--txt);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;outline:none;">
-          <option value="both">Eventos e Prazos dos Cards</option>
-          <option value="events">Só Eventos</option>
-          <option value="cards">Só Prazos dos Cards</option>
-        </select>
-        <div class="cal-nav" style="margin-left:12px;">
-          <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
-          <div class="cal-month-lbl" id="cal-month-lbl"></div>
-          <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
-          <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+        <div style="display:flex; background:rgba(3,13,26,.6); border:1px solid var(--glass-b); border-radius:8px; padding:3px;">
+          <button class="cal-view-btn active" data-mode="both" onclick="changeCalView('both')">Tudo</button>
+          <button class="cal-view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
+          <button class="cal-view-btn" data-mode="cards" onclick="changeCalView('cards')">📎 Prazos</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
+        <div class="cal-month-lbl" id="cal-month-lbl"></div>
+        <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
+        <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+      </div>
+      
+      <div style="display:flex; gap:8px; align-items:center;">
         <button class="btn btn-sm btn-teal" onclick="openEvModal()" id="btn-add-event" style="display:none;">+ Evento</button>
         <button class="x-btn" onclick="closeOv('cal-ov')">✕</button>
       </div>
+      
     </div>
     
     <div style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap;">
@@ -3258,7 +3283,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.37</div>
+<div class="version">v8.30.38</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9879,6 +9904,15 @@ let calViewMode = 'both';
 
 function changeCalView(mode) {
   calViewMode = mode;
+  
+  // Atualiza qual botão está ativo (pintado de azul)
+  document.querySelectorAll('.cal-view-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.getAttribute('data-mode') === mode) {
+      btn.classList.add('active');
+    }
+  });
+  
   renderCal();
 }
 
