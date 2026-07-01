@@ -539,14 +539,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .postit .pi-text{font-size:13px;line-height:1.42;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
 .postit .pi-meta{font-size:9.5px;margin-top:7px;opacity:.62;color:#1a1208;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .postit .pi-author{font-weight:700;}
-.postit .pi-del,.postit .pi-resolve{position:absolute;top:6px;width:18px;height:18px;border-radius:50%;border:none;
-  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:11px;line-height:1;font-weight:700;
-  display:none;align-items:center;justify-content:center;}
-.postit .pi-resolve{right:7px;}
-.postit .pi-del{right:28px;}
-.postit:hover .pi-del,.postit:hover .pi-resolve{display:flex;}
-.postit .pi-resolve:hover{background:#1de9b6;color:#04221a;}
-.postit .pi-del:hover{background:rgba(0,0,0,.25);color:#000;}
+.postit .pi-del, .postit .pi-resolve {
+  position: absolute;
+  top: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.12);
+  color: rgba(0,0,0,.6);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.postit .pi-resolve { right: 7px; }
+.postit .pi-del { right: 38px; }
+.postit:hover .pi-del, .postit:hover .pi-resolve { display: flex; }
+.postit .pi-resolve:hover { background: #1de9b6; color: #04221a; transform: scale(1.15); }
+.postit .pi-del:hover { background: rgba(255,107,107,.8); color: #fff; transform: scale(1.15); }
 .postit .pi-link{font-size:10px;margin-top:6px;color:#1a1208;font-weight:700;opacity:.7;cursor:pointer;text-decoration:underline;}
 /* paletas post-it */
 .pi-gestao{background:linear-gradient(135deg,#e2c4ff,#d4a9f5);border-left-color:#9650dc;}
@@ -3269,7 +3284,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.53</div>
+<div class="version">v8.30.54</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
