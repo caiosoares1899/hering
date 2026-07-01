@@ -3305,7 +3305,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.57</div>
+<div class="version">v8.30.58</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12688,7 +12688,73 @@ function scheduleWeeklyBackup(){
 window.addEventListener('auth-change', e=>{
   if(e.detail) setTimeout(scheduleWeeklyBackup, 3000);
 }, {once:true});
+// ── INTEGRAÇÃO GOOGLE CALENDAR ────────────────────────────────────────────
+function saveCalendarConfig() {
+  const calId = document.getElementById('cfg-calendar-id').value.trim();
+  fbSet(FB+'/config/calendarId', calId);
+  window._squadCalendarId = calId;
+  showToast('✅ Configuração do Calendário salva!');
+  carregarAgendaDaSquad();
+}
 
+async function carregarAgendaDaSquad() {
+  const calId = window._squadCalendarId;
+  if (!calId) return;
+
+  // Usa a mesma API Key do Firebase que já está configurada
+  const apiKey = safeLS.getItem('fb_apiKey');
+  if (!apiKey) {
+    console.warn("API Key não encontrada para ler o Google Agenda.");
+    return;
+  }
+
+  // Busca do mês passado pra frente (não sobrecarrega o app com anos de eventos)
+  const hoje = new Date();
+  const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
+  
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?key=${apiKey}&timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    if (data.items) {
+      const eventosGoogle = data.items.map(item => {
+        // Formata datas
+        let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
+        let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
+        
+        // O Google marca eventos de dia inteiro terminando no dia seguinte, a gente corrige isso pro Kanban:
+        if (item.end.date && end) {
+          let d = new Date(end + 'T00:00:00');
+          d.setDate(d.getDate() - 1);
+          end = d.toISOString().split('T')[0];
+        }
+
+        return {
+          id: item.id,
+          title: '🗓️ ' + (item.summary || '(Sem título)'),
+          start: start,
+          end: end || start,
+          desc: item.description || '',
+          link: item.htmlLink || '',
+          color: 'cyan', // Fica um azul ciano pra diferenciar
+          _gcal: true // Flag pra travar exclusão manual no Kanban
+        };
+      });
+
+      // Junta com os eventos que já existem no board, substituindo os antigos do GCal
+      calEvents = [...calEvents.filter(e => !e._gcal), ...eventosGoogle];
+      
+      // Atualiza a tela se o calendário estiver aberto
+      if (document.getElementById('cal-ov')?.classList.contains('open')) {
+        renderCal();
+      }
+    }
+  } catch (error) {
+    console.error("Erro ao puxar agenda da Squad:", error);
+  }
+}
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
 renderBoard();
