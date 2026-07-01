@@ -2045,7 +2045,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Tempo por tag</button>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
 </div>
@@ -2603,7 +2603,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="tab-c" id="cfgtab-fluxo">
       <div class="cfg-sec-title">⚙ Fluxo do trabalho</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Configure quais colunas marcam o <b>início</b> e o <b>fim</b> do trabalho. Isso define como o relatório <b>⏱ Tempo por tag</b> calcula o lead e o cycle time. Se deixar em branco, o sistema tenta adivinhar automaticamente.
+        Configure quais colunas marcam o <b>início</b> e o <b>fim</b> do trabalho. Isso define como o relatório <b>⏱ Relatórios de Tempo</b> calcula o lead e o cycle time. Se deixar em branco, o sistema tenta adivinhar automaticamente.
       </p>
       <div class="fluxo-cfg-block">
         <div class="fluxo-cfg-label">🟢 Coluna(s) de início <span>(quando o trabalho começa de fato, ex.: "Em andamento")</span></div>
@@ -3041,10 +3041,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
-    <div class="panel-title">⏱ Tempo por tag</div>
+    <div class="panel-title">⏱ Relatório de Tempo</div>
     <button class="x-btn" onclick="closeOv('tempo-ov')">✕</button>
   </div>
   <div class="tempo-filter-bar">
+    <select id="tempo-agrupamento" class="ql-filter-sel" onchange="renderTempoReport()" style="border-color:var(--accent); color:var(--accent);">
+      <option value="tag">🏷️ Agrupar por Tag</option>
+      <option value="owner">👤 Agrupar por Responsável</option>
+    </select>
     <select id="tempo-periodo" class="ql-filter-sel" onchange="renderTempoReport()">
       <option value="all">Todo o período</option>
       <option value="30">Últimos 30 dias</option>
@@ -3264,7 +3268,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.42</div>
+<div class="version">v8.30.43</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6203,8 +6207,11 @@ function openTempoReport(){
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
+  const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
   const cutoff = periodo==='all' ? 0 : Date.now()-parseInt(periodo)*86400000;
-  const porTag={};
+  
+  const porGrupo={};
+
   cards.filter(c=>!c.archived).forEach(c=>{
     const t=_cardTempos(c);
     if(escopo==='done' && !t.done) return;
@@ -6212,12 +6219,21 @@ function _computeTempoData(){
       const ref = c.flow?.doneAt ? new Date(c.flow.doneAt).getTime() : (c.createdAt?new Date(c.createdAt).getTime():0);
       if(ref < cutoff) return;
     }
-    const tagsDoCard=getCardTags(c);
-    const lista = tagsDoCard.length?tagsDoCard:['__sem_tag__'];
+    
+    // Define a chave de agrupamento dependendo da seleção
+    let lista = [];
+    if(agrupamento === 'tag'){
+      const tagsDoCard=getCardTags(c);
+      lista = tagsDoCard.length ? tagsDoCard : ['__sem_tag__'];
+    } else {
+      lista = c.owner ? [c.owner] : ['__sem_dono__'];
+    }
+
     const porCol = (flowConfig.reportCols&&flowConfig.reportCols.length)? _cardTempoPorColuna(c) : null;
-    lista.forEach(tagId=>{
-      if(!porTag[tagId]) porTag[tagId]={count:0, leadSum:0, leadN:0, cycleSum:0, cycleN:0, doneCount:0, stages:{}};
-      const g=porTag[tagId];
+    
+    lista.forEach(groupId=>{
+      if(!porGrupo[groupId]) porGrupo[groupId]={count:0, leadSum:0, leadN:0, cycleSum:0, cycleN:0, doneCount:0, stages:{}};
+      const g=porGrupo[groupId];
       g.count++;
       if(t.done) g.doneCount++;
       if(t.lead!=null){ g.leadSum+=t.lead; g.leadN++; }
@@ -6225,10 +6241,23 @@ function _computeTempoData(){
       if(porCol){ flowConfig.reportCols.forEach(cid=>{ if(porCol[cid]!=null){ g.stages[cid]=(g.stages[cid]||0)+porCol[cid]; } }); }
     });
   });
-  const rows=Object.entries(porTag).map(([tagId,g])=>{
-    const tag = tagId==='__sem_tag__' ? {label:'(sem tag)', pi:-1} : getTag(tagId);
+
+  const rows=Object.entries(porGrupo).map(([groupId,g])=>{
+    let label = groupId;
+    let p = {bg:'rgba(120,120,120,.15)', b:'rgba(120,120,120,.3)', c:'var(--txt3)'}; // default cinza
+
+    if(agrupamento === 'tag'){
+      const tag = groupId==='__sem_tag__' ? {label:'(sem tag)', pi:-1} : getTag(groupId);
+      label = tag?.label || groupId;
+      if(tag && tag.pi >= 0) p = getPal(tag.pi);
+    } else {
+      const membro = members.find(m => m.init === groupId);
+      label = membro ? `${membro.init} · ${membro.name.split(' ')[0]}` : (groupId==='__sem_dono__' ? '(sem responsável)' : groupId);
+      if(groupId!=='__sem_dono__') p = {bg:'rgba(56,182,255,.15)', b:'rgba(56,182,255,.3)', c:'#38b6ff'}; // azul para usuários
+    }
+
     return {
-      tagId, label: tag?.label||tagId, pi: tag?.pi,
+      groupId, label, p,
       count: g.count, doneCount: g.doneCount,
       leadAvg: g.leadN? g.leadSum/g.leadN : null,
       leadTotal: g.leadSum,
@@ -6237,6 +6266,7 @@ function _computeTempoData(){
       stages: g.stages||{},
     };
   }).sort((a,b)=>b.leadTotal-a.leadTotal);
+  
   _tempoData=rows;
   return rows;
 }
@@ -6244,33 +6274,39 @@ function renderTempoReport(){
   const body=document.getElementById('tempo-body'); if(!body) return;
   const allRows=_computeTempoData();
   let rows=allRows;
-  // Popula o filtro de tag preservando a seleção
-  const fTag=document.getElementById('tempo-tag');
-  if(fTag){
-    const prev=fTag.value;
-    const opts=allRows.map(r=>`<option value="${esc(r.tagId)}">${esc(r.label)}</option>`).join('');
-    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+opts;
-    fTag.value=prev;
+  const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
+
+  // Popula o dropdown de filtro secundário (adapta se é tag ou usuário)
+  const fFilter=document.getElementById('tempo-tag');
+  if(fFilter){
+    const prev=fFilter.value;
+    const placeholder = agrupamento === 'tag' ? '🏷 Todas as tags' : '👤 Todos os responsáveis';
+    const opts=allRows.map(r=>`<option value="${esc(r.groupId)}">${esc(r.label)}</option>`).join('');
+    fFilter.innerHTML=`<option value="">${placeholder}</option>`+opts;
+    fFilter.value=prev;
   }
-  // Total geral (de TODAS as tags) — usado pro "% do tempo" mesmo quando filtrado
+  
   const totalLeadGeral=allRows.reduce((s,r)=>s+r.leadTotal,0);
-  // Aplica filtro de tag selecionada
-  const tagSel=fTag?.value||'';
-  if(tagSel) rows=allRows.filter(r=>r.tagId===tagSel);
-  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo/tag selecionado.</div>'; return; }
+  const filterSel=fFilter?.value||'';
+  if(filterSel) rows=allRows.filter(r=>r.groupId===filterSel);
+  
+  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo selecionado.</div>'; return; }
+  
   const totalCards=rows.reduce((s,r)=>s+r.count,0);
   const totalLead=rows.reduce((s,r)=>s+r.leadTotal,0);
-  let html=`<div class="tempo-intro">Quanto tempo o time investiu em cada tipo de demanda (por tag). <b>Lead</b> = da criação até concluir. <b>Cycle</b> = do início do trabalho até concluir.</div>`;
+  
+  const tipoDesc = agrupamento === 'tag' ? 'tipo de demanda (por tag)' : 'membro do time (por responsável)';
+  let html=`<div class="tempo-intro">Tempo investido em cada ${tipoDesc}. <b>Lead</b> = da criação até concluir. <b>Cycle</b> = do início do trabalho até concluir.</div>`;
   html+=`<div class="tempo-cards">`;
+  
   rows.forEach(r=>{
-    const p=r.pi>=0?getPal(r.pi):{bg:'rgba(120,120,120,.15)',b:'rgba(120,120,120,.3)',c:'var(--txt3)'};
     const pctTempo = totalLeadGeral>0? Math.round(r.leadTotal/totalLeadGeral*100) : 0;
     html+=`<div class="tempo-row">
       <div class="tempo-row-hd">
-        <span class="tempo-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(r.label)}</span>
+        <span class="tempo-tag" style="background:${r.p.bg};border-color:${r.p.b};color:${r.p.c}">${esc(r.label)}</span>
         <span class="tempo-pct">${pctTempo}% do tempo</span>
       </div>
-      <div class="tempo-bar"><div class="tempo-bar-fill" style="width:${pctTempo}%;background:${p.c};"></div></div>
+      <div class="tempo-bar"><div class="tempo-bar-fill" style="width:${pctTempo}%;background:${r.p.c};"></div></div>
       <div class="tempo-metrics">
         <div class="tempo-met"><span class="tempo-met-v">${r.count}</span><span class="tempo-met-l">cards${r.doneCount<r.count?' ('+r.doneCount+' concl.)':''}</span></div>
         <div class="tempo-met"><span class="tempo-met-v">${_fmtHoras(r.leadAvg)}</span><span class="tempo-met-l">lead médio</span></div>
@@ -6284,17 +6320,22 @@ function renderTempoReport(){
     </div>`;
   });
   html+=`</div>`;
-  html+=`<div class="tempo-total">${tagSel?'Tag selecionada: ':'Total: '}<b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado${tagSel&&totalLeadGeral>0?' · <b>'+Math.round(totalLead/totalLeadGeral*100)+'%</b> do tempo total':''}</div>`;
+  html+=`<div class="tempo-total">${filterSel?'Item selecionado: ':'Total: '}<b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado${filterSel&&totalLeadGeral>0?' · <b>'+Math.round(totalLead/totalLeadGeral*100)+'%</b> do tempo total':''}</div>`;
   body.innerHTML=html;
 }
+
 function exportTempoCSV(){
   let rows=_tempoData||_computeTempoData();
-  // respeita o filtro de tag selecionado
-  const tagSel=document.getElementById('tempo-tag')?.value||'';
-  if(tagSel) rows=rows.filter(r=>r.tagId===tagSel);
+  const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
+  const filterSel=document.getElementById('tempo-tag')?.value||'';
+  if(filterSel) rows=rows.filter(r=>r.groupId===filterSel);
+  
   if(!rows.length){ showToast('Nada para exportar.'); return; }
   const esc2=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-  let csv='Tag;Cards;Concluidos;Lead medio (h);Cycle medio (h);Lead total (h);Cycle total (h)\n';
+  
+  const colNome = agrupamento === 'tag' ? 'Tag' : 'Responsavel';
+  let csv=`${colNome};Cards;Concluidos;Lead medio (h);Cycle medio (h);Lead total (h);Cycle total (h)\n`;
+  
   rows.forEach(r=>{
     csv+=[esc2(r.label), r.count, r.doneCount,
       r.leadAvg!=null?r.leadAvg.toFixed(1):'', r.cycleAvg!=null?r.cycleAvg.toFixed(1):'',
@@ -6302,7 +6343,7 @@ function exportTempoCSV(){
   });
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download='tempo-por-tag-'+ACTIVE_SQUAD+'-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.href=url; a.download=`tempo-por-${agrupamento}-${ACTIVE_SQUAD}-`+new Date().toISOString().split('T')[0]+'.csv';
   a.click(); URL.revokeObjectURL(url);
   showToast('⬇ CSV exportado.');
 }
