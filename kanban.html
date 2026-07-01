@@ -8544,8 +8544,11 @@ function parseTrelloJSON(raw){
     const colInfo=listColMap[card.idList]||{col:columns[0]?.id||'backlog',mapped:false};
 
     // Tag: primeiro label que NÃO seja especial
-    const firstTagLabel=card.idLabels?.find(lid=>labelTagMap[lid]);
-    const tagId=firstTagLabel?labelTagMap[firstTagLabel]:null;
+   // Tags: coleta todas as labels que NÃO sejam especiais
+const cardTags = (card.idLabels || [])
+  .map(lid => labelTagMap[lid])
+  .filter(Boolean);
+const tagId = cardTags[0] || '';
 
     // Responsável: primeiro membro resolvido
     const ownerInit=card.idMembers?.length?resolveOwner(card.idMembers[0]):'';
@@ -8585,11 +8588,12 @@ function parseTrelloJSON(raw){
     // Prazo
     const due=card.due?card.due.split('T')[0]:'';
 
-    return{
-      id:'trello_'+card.id.substring(0,10),
-      col:colInfo.col,
-      tag:tagId||'',
-      title:card.name,
+    return {
+      id: 'trello_' + card.id.substring(0, 10),
+      col: colInfo.col,
+      tag: tagId,
+      tags: cardTags,
+      title: card.name,
       desc,
       owner:ownerInit,
       participants,
