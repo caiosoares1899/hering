@@ -139,7 +139,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-.app{position:relative;z-index:2;padding:.9rem 1.2rem 5rem;}
+.app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;}
 .hd-l{display:flex;align-items:center;gap:8px;}
@@ -167,8 +167,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   overflow-x:auto;
   overflow-y:hidden;
   max-width:100%;
-  /* 22px de folga no fim = espaço garantido pra scrollbar horizontal ficar visível */
-  height:calc(100vh - var(--board-top, 150px) - 22px);
+  height:calc(100vh - var(--board-top, 150px) - 10px); /* Mudado de 22px para 10px */
   padding-bottom:0;
 }
 /* Em modo raia, a altura volta a ser automática (raia rola na página) */
@@ -651,6 +650,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   flex-wrap:nowrap;
   gap:10px;
   min-width:max-content;
+  padding-bottom: 16px; /* Descola as colunas da barra de rolagem */
 }
 /* expanded: colunas de largura fixa com scroll horizontal (estilo Trello) */
 .board.mode-expanded .col{
@@ -3269,7 +3269,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.52</div>
+<div class="version">v8.30.53</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
