@@ -3305,7 +3305,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.59</div>
+<div class="version">v8.30.60</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12704,7 +12704,7 @@ async function carregarAgendaDaSquad() {
   if (!calId) return;
 
   // Usa a mesma API Key do Firebase que já está configurada
-  const apiKey = safeLS.getItem('fb_apiKey');
+ const apiKey = safeLS.getItem('fb_apiKey') || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU';
   if (!apiKey) {
     console.warn("API Key não encontrada para ler o Google Agenda.");
     return;
