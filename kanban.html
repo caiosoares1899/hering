@@ -3570,13 +3570,32 @@ function _bulkPopover(html){
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
-function _bulkFinish(msg){
+function _bulkFinish(msg, keepSelection){
   fbSaveAll(); 
-  const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
-  selectedCards.clear(); selectMode=false;
-  const btn=document.getElementById('btn-select');
-  if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
-  renderBoard(); updateBulkBar();
+  if(!keepSelection){
+    const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
+    selectedCards.clear(); selectMode=false;
+    const btn=document.getElementById('btn-select');
+    if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
+    renderBoard(); updateBulkBar();
+  } else {
+    // Se for manter a seleção (ex: multi-tag), atualiza só o visual dos cards afetados
+    // sem dar renderBoard() completo para não perder o scroll.
+    _selectedList().forEach(c => {
+      const el = document.querySelector('.card[data-id="'+CSS.escape(c.id)+'"]');
+      if(el){
+        // Atualiza as tags do card no DOM sem reconstruir o card todo
+        const tagsWrap = el.querySelector('.card-tags-container') || el; // Fallback se não tiver container
+        // Nota: tagsHtml(c) retorna o HTML das tags.
+        // Como o innerHTML do card é complexo, o ideal seria ter um container específico.
+        // Para garantir 100% de precisão e manter o scroll, vamos atualizar apenas os cards selecionados.
+        const newEl = makeCardEl(c);
+        el.innerHTML = newEl.innerHTML;
+        el.className = newEl.className;
+      }
+    });
+    updateBulkBar();
+  }
   showToast(msg);
 }
 function bulkMove(){
@@ -3586,8 +3605,14 @@ function bulkMove(){
 }
 function _doBulkMove(colId){
   const col=columns.find(c=>c.id===colId);
+  const n = selectedCards.size;
   _selectedList().forEach(c=>{ if(c.col!==colId){ recordMove(c,colId); c.col=colId; recordHistory(c,'moveu para '+(col?.name||colId)); } });
-  _bulkFinish('📥 '+selectedCards.size+' card(s) movidos para '+(col?.name||colId)+'.');
+  // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
+  // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
+  const wrap = document.getElementById('board-wrap');
+  const scrollX = wrap ? wrap.scrollLeft : 0;
+  _bulkFinish('📥 ' + n + ' card(s) movidos para ' + (col?.name||colId) + '.');
+  if(wrap) wrap.scrollLeft = scrollX;
 }
 function bulkAssign(){
   if(!selectedCards.size) return;
@@ -3596,14 +3621,90 @@ function bulkAssign(){
 }
 function _doBulkAssign(init){
   const m=members.find(x=>x.init===init);
+  const n = selectedCards.size;
   _selectedList().forEach(c=>{ c.owner=init; recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável'); });
-  _bulkFinish('👤 '+selectedCards.size+' card(s) '+(init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável')+'.');
+  _bulkFinish('👤 ' + n + ' card(s) ' + (init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável') + '.', true);
 }
 function bulkTag(){
   if(!selectedCards.size) return;
-  const opts=tags.map(t=>{ const p=getPal(t.pi); return `<button class="bulk-pop-item" onclick="_doBulkTag('${esc(t.id)}','add')"><span class="bulk-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span> adicionar</button>`; }).join('');
-  const optsSet=tags.map(t=>{ const p=getPal(t.pi); return `<button class="bulk-pop-item" onclick="_doBulkTag('${esc(t.id)}','set')"><span class="bulk-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span> só esta</button>`; }).join('');
-  _bulkPopover(`<div class="bulk-pop-title">Tag em ${selectedCards.size} card(s):</div><div class="bulk-pop-sec">Adicionar tag</div>${opts}<div class="bulk-pop-sec">Substituir por uma só</div>${optsSet}`);
+  _renderBulkTagPicker();
+}
+
+function _renderBulkTagPicker(){
+  const n = selectedCards.size;
+  // Vamos criar um picker persistente dentro do popover para permitir múltiplas seleções
+  const html = `
+    <div class="bulk-pop-title">Gerenciar tags (${n} cards)</div>
+    <div class="bulk-pop-sec">Selecionar tags para adicionar:</div>
+    <div id="bulk-tag-picker" style="display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:6px;padding:0 4px 4px;">
+      <button class="btn btn-sm btn-teal" style="flex:1;justify-content:center;" onclick="_doBulkTagMulti('add')">Adicionar</button>
+      <button class="btn btn-sm" style="flex:1;justify-content:center;color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="_doBulkTagMulti('set')">Substituir</button>
+    </div>
+    <div class="tb-sep" style="width:100%;height:1px;margin:8px 0;"></div>
+    <div class="bulk-pop-sec">Ações rápidas:</div>
+    <button class="bulk-pop-item" style="color:var(--danger);" onclick="_doBulkTagClear()">🚫 Remover todas as tags</button>
+  `;
+  const pop = _bulkPopover(html);
+  
+  // Lógica interna do picker (similar a campanhas)
+  window._bulkSelectedTags = window._bulkSelectedTags || [];
+  const renderInternal = () => {
+    const wrap = document.getElementById('bulk-tag-picker'); if(!wrap) return;
+    wrap.innerHTML = tags.map(t=>{
+      const sel = window._bulkSelectedTags.includes(t.id);
+      const p = getPal(t.pi);
+      return `<span onclick="_bulkToggleTag('${esc(t.id)}')" style="
+        padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
+        background:${sel?p.bg:'rgba(3,13,26,.6)'};
+        border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
+        color:${sel?p.c:'var(--txt3)'};
+        transition:all .15s;
+        ${sel?'box-shadow:0 0 6px '+p.b+';':''}"
+      >${esc(t.label)}</span>`;
+    }).join('');
+  };
+  
+  window._bulkToggleTag = (id) => {
+    const idx = window._bulkSelectedTags.indexOf(id);
+    if(idx>=0) window._bulkSelectedTags.splice(idx,1);
+    else window._bulkSelectedTags.push(id);
+    renderInternal();
+  };
+  
+  renderInternal();
+}
+
+function _doBulkTagMulti(mode){
+  const selectedTags = window._bulkSelectedTags || [];
+  if(!selectedTags.length && mode!=='clear'){ showToast('⚠ Selecione ao menos uma tag.'); return; }
+  
+  const n = selectedCards.size;
+  const list = _selectedList();
+  list.forEach(c => {
+    let current = getCardTags(c);
+    if(mode === 'set'){
+      current = [...selectedTags];
+    } else {
+      // add
+      selectedTags.forEach(t => { if(!current.includes(t)) current.push(t); });
+    }
+    c.tags = current;
+    c.tag = current[0] || '';
+    recordHistory(c, (mode==='set'?'substituiu tags por: ':'adicionou tags: ') + selectedTags.map(id=>getTag(id)?.label).join(', '));
+  });
+  
+  window._bulkSelectedTags = [];
+  _bulkFinish(`🏷 Tags atualizadas em ${n} cards.`, true);
+}
+
+function _doBulkTagClear(){
+  _selectedList().forEach(c => {
+    c.tags = [];
+    c.tag = '';
+    recordHistory(c, 'removeu todas as tags');
+  });
+  _bulkFinish(`🚫 Tags removidas de ${selectedCards.size} cards.`, true);
 }
 function _doBulkTag(tagId, mode){
   _selectedList().forEach(c=>{
@@ -3635,9 +3736,14 @@ async function bulkDuplicate(){
 }
 async function bulkArchive(){
   if(!selectedCards.size) return;
-  if(!await uiConfirm('Arquivar '+selectedCards.size+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
+  const n = selectedCards.size;
+  if(!await uiConfirm('Arquivar '+n+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
   _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; recordHistory(c,'arquivou o card'); } });
-  _bulkFinish('📦 '+selectedCards.size+' card(s) arquivados.');
+  // Para arquivar, o card some, então precisamos de renderBoard()
+  const wrap = document.getElementById('board-wrap');
+  const scrollX = wrap ? wrap.scrollLeft : 0;
+  _bulkFinish('📦 ' + n + ' card(s) arquivados.');
+  if(wrap) wrap.scrollLeft = scrollX;
 }
 function clearSelection(){ selectedCards.clear(); renderBoard(); updateBulkBar(); }
 async function bulkDeleteSelected(){
