@@ -10005,20 +10005,7 @@ function renderBoardCalLegend(){
       }).join('');
   }
 }
-  
-  // 2. Popula o popup flutuante de Prazos por Coluna
-  const popCards = el.querySelector('#cal-legend-pop-cards');
-  if(popCards){
-    popCards.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">📎 Prazos por Coluna</div>' +
-      (columns || []).map(col => {
-        const bg = _hexA(col.color || '#38b6ff', 0.15);
-        return `
-          <div style="display: inline-flex; align-items: center; font-size: 11px; color: var(--txt); padding: 4px 10px; background: ${bg}; border-left: 3px solid ${col.color || '#38b6ff'}; border-radius: 5px; font-weight: 500; width: fit-content; white-space: nowrap;">
-            ${esc(col.name)}
-          </div>`;
-      }).join('');
-  }
-}
+
    function renderCal(){
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   document.getElementById('cal-month-lbl').textContent=MESES[calMonth]+' '+calYear;
