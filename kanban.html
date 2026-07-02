@@ -10292,11 +10292,10 @@ function loadCalEvents(){
   });
 
   // ── Carrega o ID do Google Agenda ─────────────────────────
-  fbListen(FB+'/config/calendarId', val => {
-    window._squadCalendarId = val || '';
-    if (window._squadCalendarId) {
-      carregarAgendaDaSquad();
-    }
+  fbListen(FB+'/config/calendars', val => {
+    window._squadCalendars = val || {};
+    carregarTodasAgendasSquad(); // <--- MUDADO PARA O PLURAL
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
   });
 
   // ── Eventos de Gestão Digital (painel) ───────────────────────
