@@ -12825,13 +12825,23 @@ async function carregarTodasAgendasSquad() {
     }
   }));
 
-  // Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
-  calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
-  
-  if (document.getElementById('cal-ov')?.classList.contains('open')) {
-    renderCal();
+// Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
+      calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
+      
+      if (document.getElementById('cal-ov')?.classList.contains('open')) {
+        renderCal();
+      }
+    }
+  } catch (error) {
+    console.error(`Erro ao puxar a agenda [${cal.label}]:`, error);
   }
-}
+} // <- FECHA A FUNÇÃO carregarTodasAgendasSquad
+
+// Garanta que o agendador de backup continue aqui se ele existia antes:
+window.addEventListener('auth-change', e=>{
+  if(e.detail) setTimeout(scheduleWeeklyBackup, 3000);
+}, {once:true});
+
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
 renderBoard();
