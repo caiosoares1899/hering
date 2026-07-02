@@ -12769,6 +12769,7 @@ async function removeCalendarFromList(id) {
 }
 
 // Roda o fetch em loop para cada uma das agendas salvas
+// Roda o fetch em loop para cada uma das agendas salvas
 async function carregarTodasAgendasSquad() {
   const token = safeLS.getItem('gcal_token');
   if (!token) {
@@ -12778,7 +12779,56 @@ async function carregarTodasAgendasSquad() {
 
   const list = Object.values(window._squadCalendars || {});
   
- // Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
+  // Se não houver agendas, limpa os eventos antigos do Google e renderiza o cal limpo
+  if (!list.length) {
+    calEvents = calEvents.filter(e => !e._gcal);
+    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+    return;
+  }
+
+  const hoje = new Date();
+  const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
+  
+  let todosEventosGoogle = [];
+
+  try {
+    // Faz a requisição paralela para todas as agendas cadastradas
+    await Promise.all(list.map(async (cal) => {
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
+      
+      try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (data.items) {
+          data.items.forEach(item => {
+            let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
+            let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
+            
+            if (item.end.date && end) {
+              let d = new Date(end + 'T00:00:00');
+              d.setDate(d.getDate() - 1);
+              end = d.toISOString().split('T')[0];
+            }
+
+            todosEventosGoogle.push({
+              id: item.id,
+              title: '🗓️ ' + (item.summary || '(Sem título)'),
+              start: start,
+              end: end || start,
+              desc: item.description || '',
+              link: item.htmlLink || '',
+              color: 'cyan', 
+              _gcal: true 
+            });
+          });
+        }
+      } catch (errInner) {
+        console.error(`Erro ao puxar a agenda [${cal.label}]:`, errInner);
+      }
+    }));
+
+    // Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
     calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
     
     if (document.getElementById('cal-ov')?.classList.contains('open')) {
