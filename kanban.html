@@ -3305,7 +3305,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.60</div>
+<div class="version">v8.30.61</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3339,13 +3339,23 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-// hd sugerido para facilitar login do time interno (freelancers clicam em "Usar outra conta")
+// hd sugerido para facilitar login do time interno
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
+// Pede a permissão de leitura do Google Agenda
+provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._auth=auth; window._provider=provider;
-window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ if(insc) window._pendingInsc=true; });
+
+// Salva o token de acesso de forma segura no localStorage ao logar
+window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
+  const credential = GoogleAuthProvider.credentialFromResult(r);
+  if (credential && credential.accessToken) {
+    safeLS.setItem('gcal_token', credential.accessToken);
+  }
+  if(insc) window._pendingInsc=true; 
+});
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
@@ -12703,30 +12713,37 @@ async function carregarAgendaDaSquad() {
   const calId = window._squadCalendarId;
   if (!calId) return;
 
-  // Usa a mesma API Key do Firebase que já está configurada
- const apiKey = safeLS.getItem('fb_apiKey') || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU';
-  if (!apiKey) {
-    console.warn("API Key não encontrada para ler o Google Agenda.");
+  // Em vez de API Key, manda o token gerado no login do usuário!
+  const token = safeLS.getItem('gcal_token');
+  if (!token) {
+    console.warn("Token do Google Agenda não encontrado. O usuário precisa deslogar e logar novamente.");
     return;
   }
 
-  // Busca do mês passado pra frente (não sobrecarrega o app com anos de eventos)
   const hoje = new Date();
   const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
   
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?key=${apiKey}&timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
+  // URL limpa sem o parâmetro "?key="
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
 
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}` // <- A credencial segura vai no cabeçalho
+      }
+    });
     const data = await res.json();
+    
+    if (data.error) {
+      console.error("Erro retornado pelo Google Calendar:", data.error);
+      return;
+    }
     
     if (data.items) {
       const eventosGoogle = data.items.map(item => {
-        // Formata datas
         let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
         let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
         
-        // O Google marca eventos de dia inteiro terminando no dia seguinte, a gente corrige isso pro Kanban:
         if (item.end.date && end) {
           let d = new Date(end + 'T00:00:00');
           d.setDate(d.getDate() - 1);
@@ -12740,15 +12757,13 @@ async function carregarAgendaDaSquad() {
           end: end || start,
           desc: item.description || '',
           link: item.htmlLink || '',
-          color: 'cyan', // Fica um azul ciano pra diferenciar
-          _gcal: true // Flag pra travar exclusão manual no Kanban
+          color: 'cyan', 
+          _gcal: true 
         };
       });
 
-      // Junta com os eventos que já existem no board, substituindo os antigos do GCal
       calEvents = [...calEvents.filter(e => !e._gcal), ...eventosGoogle];
       
-      // Atualiza a tela se o calendário estiver aberto
       if (document.getElementById('cal-ov')?.classList.contains('open')) {
         renderCal();
       }
