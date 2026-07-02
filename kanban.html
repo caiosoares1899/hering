@@ -10450,19 +10450,17 @@ function handleColDrop(e, targetColId) {
 
 // --- D&D DOS CARDS ---
 function handleDragStart(e, cardId){
-  e.stopPropagation(); // Protege para não arrastar a coluna junto
+  e.stopPropagation(); 
   _dragCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   _dragSourceCol = card?.col;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', cardId);
-  // Aplica classe dragging com pequeno delay para a UI não piscar
   requestAnimationFrame(()=> e.target.classList.add('dragging'));
 }
 
 function handleDragEnd(e){
   e.target.classList.remove('dragging');
-  // Limpa todos os estados de drag-over
   document.querySelectorAll('.col-body').forEach(b=>{
     b.classList.remove('drag-over','drag-over-blocked');
   });
@@ -10474,6 +10472,90 @@ function handleDragOver(e, colId){
   e.preventDefault();
   if(!_dragCardId) return;
   const body = e.currentTarget;
+  
+  document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
+  body.classList.add('drag-over');
+  e.dataTransfer.dropEffect='move';
+  
+  if(_ghostEl) _ghostEl.remove();
+  _ghostEl = document.createElement('div');
+  _ghostEl.className='card-ghost';
+  
+  const afterEl = getDragAfterElement(body, e.clientY);
+  if(afterEl){
+    body.insertBefore(_ghostEl, afterEl);
+  } else {
+    body.appendChild(_ghostEl);
+  }
+}
+
+function handleDragLeave(e){
+  if(!e.currentTarget.contains(e.relatedTarget)){
+    e.currentTarget.classList.remove('drag-over','drag-over-blocked');
+    if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  }
+}
+
+function handleDrop(e, colId){
+  e.preventDefault();
+  e.stopPropagation(); 
+  
+  const body = e.currentTarget;
+  body.classList.remove('drag-over','drag-over-blocked');
+  if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  if(!_dragCardId) return;
+  const card = cards.find(x=>x.id===_dragCardId);
+  if(!card) return;
+  const sourceCol = _dragSourceCol;
+  if(sourceCol === colId) return; 
+  saveUndo('mover card');
+  const prevColDrop = sourceCol;
+  const prevBlockerDrop = card.blocker||false;
+
+  card.col = colId;
+  card.edited = window._currentUser?.displayName||'Usuário';
+  card.editedAt = new Date().toISOString().split('T')[0];
+  if(prevColDrop!==colId){ const _cn=columns.find(x=>x.id===colId); recordHistory(card, 'moveu para '+(_cn?_cn.name:colId)); } 
+  recordMove(card, colId); 
+  card._savePending = true; 
+  renderBoard();
+
+  fbSaveAll()
+    .then(()=>{
+      card._savePending = false;
+      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+      if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
+      if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
+      const destCol = document.getElementById('col-'+colId);
+      if(destCol){
+        destCol.style.transition='box-shadow .3s';
+        destCol.style.boxShadow='0 0 0 2px var(--teal)';
+        setTimeout(()=>destCol.style.boxShadow='',600);
+      }
+    })
+    .catch(err=>{
+      card._savePending = false;
+      card.col = prevColDrop;
+      card.edited = card._prevEdited||card.edited;
+      renderBoard();
+      showToast('⚠ Falha ao salvar movimentação — revertido');
+      console.warn('handleDrop save failed:', err);
+    });
+  runAutoRules('move', card.id, colId);
+}
+
+function getDragAfterElement(container, y){
+  const draggableEls=[...container.querySelectorAll('.card:not(.dragging):not(.archived)')];
+  return draggableEls.reduce((closest, child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y-(box.top+box.height/2);
+    if(offset<0 && offset>closest.offset){
+      return{offset,element:child};
+    }
+    return closest;
+  },{offset:Number.NEGATIVE_INFINITY}).element;
+}
+
 function saveCalendarConfig() {
   const calId = document.getElementById('cfg-calendar-id').value.trim();
   fbSet(FB+'/config/calendarId', calId);
@@ -10486,20 +10568,15 @@ async function carregarAgendaDaSquad() {
   const calId = window._squadCalendarId;
   if (!calId) return;
 
-  // CORREÇÃO: Se não houver chave customizada, usa a chave padrão fixa do seu app
   const apiKey = safeLS.getItem('fb_apiKey') || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU';
-
-  // Busca do mês passado pra frente (não sobrecarrega o app com anos de eventos)
   const hoje = new Date();
   const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
-  
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?key=${apiKey}&timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
 
   try {
     const res = await fetch(url);
     const data = await res.json();
     
-    // Se o Google retornar algum erro (ex: agenda privada ou bloqueada)
     if (data.error) {
       console.error("Erro retornado pela API do Google Calendar:", data.error);
       return;
@@ -10507,11 +10584,9 @@ async function carregarAgendaDaSquad() {
     
     if (data.items) {
       const eventosGoogle = data.items.map(item => {
-        // Formata datas
         let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
         let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
         
-        // O Google marca eventos de dia inteiro terminando no dia seguinte, a gente corrige isso pro Kanban:
         if (item.end.date && end) {
           let d = new Date(end + 'T00:00:00');
           d.setDate(d.getDate() - 1);
@@ -10525,15 +10600,12 @@ async function carregarAgendaDaSquad() {
           end: end || start,
           desc: item.description || '',
           link: item.htmlLink || '',
-          color: 'cyan', // Fica um azul ciano pra diferenciar
-          _gcal: true // Flag pra travar exclusão manual no Kanban
+          color: 'cyan', 
+          _gcal: true 
         };
       });
 
-      // Junta com os eventos que já existem no board, substituindo os antigos do GCal
       calEvents = [...calEvents.filter(e => !e._gcal), ...eventosGoogle];
-      
-      // Atualiza a tela se o calendário estiver aberto
       if (document.getElementById('cal-ov')?.classList.contains('open')) {
         renderCal();
       }
