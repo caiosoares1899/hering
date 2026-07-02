@@ -7815,8 +7815,11 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
+// ADICIONE ESSA LINHA LOGO ACIMA DE SWCFGTAB:
+function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
+
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario'];
+  const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
