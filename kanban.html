@@ -3349,6 +3349,8 @@ window._onValue=onValue; window._update=update; window._remove=remove;
 window._auth=auth; window._provider=provider;
 
 // Salva o token de acesso de forma segura no localStorage ao logar
+// ... (mantenha o início do bloco igual, até a parte do window._signIn) ...
+
 window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
   const credential = GoogleAuthProvider.credentialFromResult(r);
   if (credential && credential.accessToken) {
@@ -3359,6 +3361,11 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
+
+// ADICIONE ESTAS LINHAS AQUI PARA EXPOR AS FUNÇÕES PRO HTML:
+window.doSignIn = (insc) => window._signIn(insc);
+window.doSignOut = () => window._signOut();
+
 onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 
