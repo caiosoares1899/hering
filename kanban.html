@@ -2467,7 +2467,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
-    <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
+    <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div> </div>
   </div>
   <div class="cfg-body">
 
@@ -2516,27 +2516,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <button class="btn btn-teal btn-sm" onclick="addColumn()">+ Coluna</button>
         </div>
       </div>
-     <div style="display:flex;justify-content:flex-end;padding-top:8px;">
+      <div style="display:flex;justify-content:flex-end;padding-top:8px;">
         <button class="btn btn-p btn-sm" onclick="saveAgilCfg()">Salvar</button>
-      </div>
-    </div>
-
-    <div class="tab-c" id="cfgtab-calendario">
-  <div class="cfg-sec-title">Integrar com Google Agendas da Squad</div>
+     <div class="tab-c" id="cfgtab-calendario">
+  <div class="cfg-sec-title">🗓️ Integração com Google Agenda da Squad</div>
   <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">
-    Sincronize múltiplos calendários do Google (reuniões, rituais, ausências, feriados) diretamente no board.<br><br>
-    <strong>Como funciona:</strong> Convide o e-mail (ID da Agenda) de cada calendário criado para os eventos do time. Certifique-se de que a agenda esteja configurada como <strong>"Disponibilizar ao público"</strong> (ou aberta para a organização) nas configurações do Google Calendar.
+    Sincronize os eventos do time (reuniões, rituais, ausências) diretamente no board usando o Google Agenda.<br><br>
+    <strong>Como funciona:</strong><br>
+    1. Crie uma agenda no Google Calendar e marque como <strong>"Disponibilizar ao público"</strong>.<br>
+    2. Nas configurações dessa agenda, marque <strong>"Adicionar automaticamente todos os convites a esta agenda"</strong>.<br>
+    3. Copie o <strong>ID da agenda</strong> (um e-mail longo no fim da página de config) e cole abaixo.<br>
+    4. Salve esse e-mail nos contatos do Google como "Agenda Squad". Quando criar um evento na sua agenda pessoal, basta <strong>convidá-lo</strong> para o evento espelhar aqui!
   </p>
-
-  <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);">Agendas Conectadas</div>
-  <div id="cfg-calendar-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px; max-height:180px; overflow-y:auto;">
-    </div>
-
-  <div class="cfg-sec-title" style="font-size:9px; border-bottom:none; margin-bottom:4px;">Conectar Nova Agenda</div>
-  <div class="add-row">
-    <input class="add-inp" id="cfg-calendar-label" placeholder="Nome/Rótulo (Ex: Rituais Dados)" style="flex:1; min-width:130px;">
-    <input class="add-inp" id="cfg-calendar-id" type="email" placeholder="ID da Agenda (e-mail longo...)" style="flex:2; min-width:200px;">
-    <button class="btn btn-teal btn-sm" onclick="addCalendarToList()">+ Adicionar</button>
+  <div class="field">
+    <label class="fl">ID da Agenda (E-mail Fantasma)</label>
+    <input class="fi" id="cfg-calendar-id" type="email" placeholder="c_123456789@group.calendar.google.com">
+  </div>
+  <div style="display:flex;justify-content:flex-end;padding-top:12px;">
+    <button class="btn btn-p btn-sm" onclick="saveCalendarConfig()">Salvar e Sincronizar</button>
   </div>
 </div>
 
@@ -3305,7 +3302,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.62</div>
+<div class="version">v8.30.56</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3339,33 +3336,16 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-// hd sugerido para facilitar login do time interno
+// hd sugerido para facilitar login do time interno (freelancers clicam em "Usar outra conta")
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
-// Pede a permissão de leitura do Google Agenda
-provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._auth=auth; window._provider=provider;
-
-// Salva o token de acesso de forma segura no localStorage ao logar
-// ... (mantenha o início do bloco igual, até a parte do window._signIn) ...
-
-window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
-  const credential = GoogleAuthProvider.credentialFromResult(r);
-  if (credential && credential.accessToken) {
-    safeLS.setItem('gcal_token', credential.accessToken);
-  }
-  if(insc) window._pendingInsc=true; 
-});
+window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ if(insc) window._pendingInsc=true; });
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
-
-// ADICIONE ESTAS LINHAS AQUI PARA EXPOR AS FUNÇÕES PRO HTML:
-window.doSignIn = (insc) => window._signIn(insc);
-window.doSignOut = () => window._signOut();
-
 onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 
@@ -3597,7 +3577,6 @@ let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com 
 let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
-let viewMode = 'expanded'; // Define o modo de exibição padrão do board globalmente
 // ═══ SELEÇÃO MÚLTIPLA / EXCLUSÃO EM MASSA ═══
 let selectMode=false;
 let selectedCards=new Set();
@@ -7801,10 +7780,8 @@ function swCfgTab(tab){
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
- // Procure por "if(tab==='calendario')" e substitua o bloco antigo por este:
-  if(tab==='calendario'){ 
-    renderCalendarList(); 
-  }
+  if(tab==='calendario'){ document.getElementById('cfg-calendar-id').value = window._squadCalendarId || ''; }
+}
 // --- Ágil ---
 function calcSprintEnd(){
   const start=document.getElementById('cfg-sprint-start')?.value;
@@ -10266,10 +10243,11 @@ function loadCalEvents(){
   });
 
   // ── Carrega o ID do Google Agenda ─────────────────────────
-  fbListen(FB+'/config/calendars', val => {
-    window._squadCalendars = val || {};
-    carregarTodasAgendasSquad();
-    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+  fbListen(FB+'/config/calendarId', val => {
+    window._squadCalendarId = val || '';
+    if (window._squadCalendarId) {
+      carregarAgendaDaSquad();
+    }
   });
 
   // ── Eventos de Gestão Digital (painel) ───────────────────────
@@ -10451,17 +10429,19 @@ function handleColDrop(e, targetColId) {
 
 // --- D&D DOS CARDS ---
 function handleDragStart(e, cardId){
-  e.stopPropagation(); 
+  e.stopPropagation(); // Protege para não arrastar a coluna junto
   _dragCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   _dragSourceCol = card?.col;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', cardId);
+  // Aplica classe dragging com pequeno delay para a UI não piscar
   requestAnimationFrame(()=> e.target.classList.add('dragging'));
 }
 
 function handleDragEnd(e){
   e.target.classList.remove('dragging');
+  // Limpa todos os estados de drag-over
   document.querySelectorAll('.col-body').forEach(b=>{
     b.classList.remove('drag-over','drag-over-blocked');
   });
@@ -10473,90 +10453,6 @@ function handleDragOver(e, colId){
   e.preventDefault();
   if(!_dragCardId) return;
   const body = e.currentTarget;
-  
-  document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
-  body.classList.add('drag-over');
-  e.dataTransfer.dropEffect='move';
-  
-  if(_ghostEl) _ghostEl.remove();
-  _ghostEl = document.createElement('div');
-  _ghostEl.className='card-ghost';
-  
-  const afterEl = getDragAfterElement(body, e.clientY);
-  if(afterEl){
-    body.insertBefore(_ghostEl, afterEl);
-  } else {
-    body.appendChild(_ghostEl);
-  }
-}
-
-function handleDragLeave(e){
-  if(!e.currentTarget.contains(e.relatedTarget)){
-    e.currentTarget.classList.remove('drag-over','drag-over-blocked');
-    if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
-  }
-}
-
-function handleDrop(e, colId){
-  e.preventDefault();
-  e.stopPropagation(); 
-  
-  const body = e.currentTarget;
-  body.classList.remove('drag-over','drag-over-blocked');
-  if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
-  if(!_dragCardId) return;
-  const card = cards.find(x=>x.id===_dragCardId);
-  if(!card) return;
-  const sourceCol = _dragSourceCol;
-  if(sourceCol === colId) return; 
-  saveUndo('mover card');
-  const prevColDrop = sourceCol;
-  const prevBlockerDrop = card.blocker||false;
-
-  card.col = colId;
-  card.edited = window._currentUser?.displayName||'Usuário';
-  card.editedAt = new Date().toISOString().split('T')[0];
-  if(prevColDrop!==colId){ const _cn=columns.find(x=>x.id===colId); recordHistory(card, 'moveu para '+(_cn?_cn.name:colId)); } 
-  recordMove(card, colId); 
-  card._savePending = true; 
-  renderBoard();
-
-  fbSaveAll()
-    .then(()=>{
-      card._savePending = false;
-      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
-      if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
-      if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
-      const destCol = document.getElementById('col-'+colId);
-      if(destCol){
-        destCol.style.transition='box-shadow .3s';
-        destCol.style.boxShadow='0 0 0 2px var(--teal)';
-        setTimeout(()=>destCol.style.boxShadow='',600);
-      }
-    })
-    .catch(err=>{
-      card._savePending = false;
-      card.col = prevColDrop;
-      card.edited = card._prevEdited||card.edited;
-      renderBoard();
-      showToast('⚠ Falha ao salvar movimentação — revertido');
-      console.warn('handleDrop save failed:', err);
-    });
-  runAutoRules('move', card.id, colId);
-}
-
-function getDragAfterElement(container, y){
-  const draggableEls=[...container.querySelectorAll('.card:not(.dragging):not(.archived)')];
-  return draggableEls.reduce((closest, child)=>{
-    const box=child.getBoundingClientRect();
-    const offset=y-(box.top+box.height/2);
-    if(offset<0 && offset>closest.offset){
-      return{offset,element:child};
-    }
-    return closest;
-  },{offset:Number.NEGATIVE_INFINITY}).element;
-}
-
 function saveCalendarConfig() {
   const calId = document.getElementById('cfg-calendar-id').value.trim();
   fbSet(FB+'/config/calendarId', calId);
@@ -10569,25 +10465,30 @@ async function carregarAgendaDaSquad() {
   const calId = window._squadCalendarId;
   if (!calId) return;
 
-  const apiKey = safeLS.getItem('fb_apiKey') || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU';
+  // Usa a mesma API Key do Firebase que já está configurada
+  const apiKey = safeLS.getItem('fb_apiKey');
+  if (!apiKey) {
+    console.warn("API Key não encontrada para ler o Google Agenda.");
+    return;
+  }
+
+  // Busca do mês passado pra frente (não sobrecarrega o app com anos de eventos)
   const hoje = new Date();
   const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
+  
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?key=${apiKey}&timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
 
   try {
     const res = await fetch(url);
     const data = await res.json();
     
-    if (data.error) {
-      console.error("Erro retornado pela API do Google Calendar:", data.error);
-      return;
-    }
-    
     if (data.items) {
       const eventosGoogle = data.items.map(item => {
+        // Formata datas
         let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
         let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
         
+        // O Google marca eventos de dia inteiro terminando no dia seguinte, a gente corrige isso pro Kanban:
         if (item.end.date && end) {
           let d = new Date(end + 'T00:00:00');
           d.setDate(d.getDate() - 1);
@@ -10601,12 +10502,15 @@ async function carregarAgendaDaSquad() {
           end: end || start,
           desc: item.description || '',
           link: item.htmlLink || '',
-          color: 'cyan', 
-          _gcal: true 
+          color: 'cyan', // Fica um azul ciano pra diferenciar
+          _gcal: true // Flag pra travar exclusão manual no Kanban
         };
       });
 
+      // Junta com os eventos que já existem no board, substituindo os antigos do GCal
       calEvents = [...calEvents.filter(e => !e._gcal), ...eventosGoogle];
+      
+      // Atualiza a tela se o calendário estiver aberto
       if (document.getElementById('cal-ov')?.classList.contains('open')) {
         renderCal();
       }
@@ -10614,7 +10518,7 @@ async function carregarAgendaDaSquad() {
   } catch (error) {
     console.error("Erro ao puxar agenda da Squad:", error);
   }
-}
+}  
   // Limpa outros drag-over
   document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
   body.classList.add('drag-over');
@@ -12781,184 +12685,15 @@ function scheduleWeeklyBackup(){
 window.addEventListener('auth-change', e=>{
   if(e.detail) setTimeout(scheduleWeeklyBackup, 3000);
 }, {once:true});
-// ── INTEGRAÇÃO MÚLTIPLA GOOGLE CALENDAR ────────────────────────────────────
-window._squadCalendars = {}; // Cache local das agendas salvas { id: {id, label} }
-
-function renderCalendarList() {
-  const container = document.getElementById('cfg-calendar-list');
-  if (!container) return;
-
-  const list = Object.values(window._squadCalendars || {});
-  if (!list.length) {
-    container.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:6px 2px;">Nenhuma agenda externa conectada ainda.</div>';
-    return;
-  }
-
-  container.innerHTML = list.map(cal => `
-    <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid var(--glass-b); border-radius:8px;">
-      <span style="font-size:14px;">🗓️</span>
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:12px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.label || 'Agenda Externa')}</div>
-        <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
-      </div>
-      <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
-    </div>
-  `).join('');
-}
-
-function addCalendarToList() {
-  const id = document.getElementById('cfg-calendar-id').value.trim();
-  const label = document.getElementById('cfg-calendar-label').value.trim();
-
-  if (!id) { showToast('⚠ Informe o ID da agenda.'); return; }
-  const finalLabel = label || id.split('@')[0] || 'Agenda';
-
-  // Chave sanitizada para o Firebase não quebrar com pontos/caracteres especiais
-  const key = 'cal_' + id.replace(/[^a-z0-9_-]/gi, '_');
-
-  if (!window._squadCalendars) window._squadCalendars = {};
-  window._squadCalendars[key] = { id, label: finalLabel };
-
-  fbSet(FB+'/config/calendars', window._squadCalendars);
-  document.getElementById('cfg-calendar-id').value = '';
-  document.getElementById('cfg-calendar-label').value = '';
-  
-  renderCalendarList();
-  showToast('✅ Agenda adicionada!');
-  carregarTodasAgendasSquad();
-}
-
-async function removeCalendarFromList(id) {
-  if (!await uiConfirm('Remover a sincronização desta agenda? Os eventos dela sumirão do board.')) return;
-  
-  const key = 'cal_' + id.replace(/[^a-z0-9_-]/gi, '_');
-  if (window._squadCalendars && window._squadCalendars[key]) {
-    delete window._squadCalendars[key];
-    fbSet(FB+'/config/calendars', window._squadCalendars);
-    renderCalendarList();
-    carregarTodasAgendasSquad();
-    showToast('🗑 Agenda removida.');
-  }
-}
-
-// Roda o fetch em loop para cada uma das agendas salvas
-// Roda o fetch em loop para cada uma das agendas salvas
-async function carregarTodasAgendasSquad() {
-  const token = safeLS.getItem('gcal_token');
-  if (!token) {
-    console.warn("Token do Google Agenda não encontrado. Usuário precisa deslogar/logar.");
-    return;
-  }
-
-  const list = Object.values(window._squadCalendars || {});
-  
-  // Se não houver agendas, limpa os eventos antigos do Google e renderiza o cal limpo
-  if (!list.length) {
-    calEvents = calEvents.filter(e => !e._gcal);
-    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
-    return;
-  }
-
-  const hoje = new Date();
-  const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
-  
-  let todosEventosGoogle = [];
-
-  try {
-    // Faz a requisição paralela para todas as agendas cadastradas
-    await Promise.all(list.map(async (cal) => {
-      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
-      
-      try {
-        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        
-        if (data.items) {
-          data.items.forEach(item => {
-            let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
-            let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
-            
-            if (item.end.date && end) {
-              let d = new Date(end + 'T00:00:00');
-              d.setDate(d.getDate() - 1);
-              end = d.toISOString().split('T')[0];
-            }
-
-            todosEventosGoogle.push({
-              id: item.id,
-              title: '🗓️ ' + (item.summary || '(Sem título)'),
-              start: start,
-              end: end || start,
-              desc: item.description || '',
-              link: item.htmlLink || '',
-              color: 'cyan', 
-              _gcal: true 
-            });
-          });
-        }
-      } catch (errInner) {
-        console.error(`Erro ao puxar a agenda [${cal.label}]:`, errInner);
-      }
-    }));
-
-// Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
-    calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
-    
-    if (document.getElementById('cal-ov')?.classList.contains('open')) {
-      renderCal();
-    }
-
-  } catch (error) {
-    console.error("Erro global no carregamento das agendas do Google:", error);
-  }
-} // ── FECHA A FUNÇÃO carregarTodasAgendasSquad ──
-
-// ── Agendador semanal (domingo à meia-noite) ─────────────────────────────
-function scheduleWeeklyBackup(){
-  function msUntilNextSunday(){
-    const now = new Date();
-    const day = now.getDay(); // 0=dom
-    const daysUntilSun = day === 0 ? 7 : 7 - day; // próximo domingo (não hoje)
-    const next = new Date(now);
-    next.setDate(now.getDate() + daysUntilSun);
-    next.setHours(0, 5, 0, 0); // 00:05 pra dar margem
-    return next.getTime() - now.getTime();
-  }
-
-  function doWeeklyBackup(){
-    const cfg = loadBackupCfg();
-    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
-    // Não envia se já enviou essa semana
-    const lastAuto = safeLS.getItem('backup_auto_last_'+ACTIVE_SQUAD);
-    if(lastAuto){
-      const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
-      if(daysSince < 6) return; // enviou há menos de 6 dias
-    }
-    sendBackupEmail(false);
-  }
-
-  const ms = msUntilNextSunday();
-  console.log('[Backup] Próximo backup automático em '+Math.round(ms/3600000)+'h');
-  setTimeout(()=>{
-    doWeeklyBackup();
-    // Reagenda semanalmente
-    setInterval(doWeeklyBackup, 7 * 24 * 60 * 60 * 1000);
-  }, ms);
-} // ── FECHA A FUNÇÃO scheduleWeeklyBackup ──
-
-// Inicia o agendador quando o usuário estiver logado
-window.addEventListener('auth-change', e=>{
-  if(e.detail) setTimeout(scheduleWeeklyBackup, 3000);
-}, {once:true});
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
 renderBoard();
 </script>
-
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
 
+<!-- BUSCA GLOBAL Ctrl+K -->
 <div id="search-overlay" onclick="if(event.target===this) closeSearch();">
   <div class="search-box" role="dialog" aria-label="Buscar cards">
     <div class="search-inp-wrap">
@@ -12976,6 +12711,7 @@ renderBoard();
     </div>
   </div>
 </div>
+
 <!-- SQUAD SELECTOR (exibido quando ?squad= não é passado) -->
 <div id="squad-selector">
   <div class="squad-sel-title">🐟 <span>Maré Digital</span></div>
