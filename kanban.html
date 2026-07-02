@@ -12769,7 +12769,6 @@ async function removeCalendarFromList(id) {
 }
 
 // Roda o fetch em loop para cada uma das agendas salvas
-// Roda o fetch em loop para cada uma das agendas salvas
 async function carregarTodasAgendasSquad() {
   const token = safeLS.getItem('gcal_token');
   if (!token) {
@@ -12779,36 +12778,52 @@ async function carregarTodasAgendasSquad() {
 
   const list = Object.values(window._squadCalendars || {});
   
-  // Se não houver agendas, limpa os eventos antigos do Google e renderiza o cal limpo
-  if (!list.length) {
-    calEvents = calEvents.filter(e => !e._gcal);
-    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
-    return;
+ // Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
+    calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
+    
+    if (document.getElementById('cal-ov')?.classList.contains('open')) {
+      renderCal();
+    }
+
+  } catch (error) {
+    console.error("Erro global no carregamento das agendas do Google:", error);
+  }
+} // ── FIM DA FUNÇÃO carregarTodasAgendasSquad ──
+
+// ── Agendador semanal (domingo à meia-noite) ─────────────────────────────
+function scheduleWeeklyBackup(){
+  function msUntilNextSunday(){
+    const now = new Date();
+    const day = now.getDay(); // 0=dom
+    const daysUntilSun = day === 0 ? 7 : 7 - day; // próximo domingo (não hoje)
+    const next = new Date(now);
+    next.setDate(now.getDate() + daysUntilSun);
+    next.setHours(0, 5, 0, 0); // 00:05 pra dar margem
+    return next.getTime() - now.getTime();
   }
 
-  const hoje = new Date();
-  const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
-  
-  let todosEventosGoogle = [];
+  function doWeeklyBackup(){
+    const cfg = loadBackupCfg();
+    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
+    // Não envia se já enviou essa semana
+    const lastAuto = safeLS.getItem('backup_auto_last_'+ACTIVE_SQUAD);
+    if(lastAuto){
+      const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
+      if(daysSince < 6) return; // enviou há menos de 6 dias
+    }
+    sendBackupEmail(false);
+  }
 
-  try {
-    // Faz a requisição paralela para todas as agendas cadastradas
-    await Promise.all(list.map(async (cal) => {
-      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
-      
-      try {
-        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        
-        if (data.items) {
-          data.items.forEach(item => {
-            let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
-            let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
-            
-            if (item.end.date && end) {
-} // <- FECHA A FUNÇÃO carregarTodasAgendasSquad
+  const ms = msUntilNextSunday();
+  console.log('[Backup] Próximo backup automático em '+Math.round(ms/3600000)+'h');
+  setTimeout(()=>{
+    doWeeklyBackup();
+    // Reagenda semanalmente
+    setInterval(doWeeklyBackup, 7 * 24 * 60 * 60 * 1000);
+  }, ms);
+}
 
-// Garanta que o agendador de backup continue aqui se ele existia antes:
+// Inicia o agendador quando o usuário estiver logado
 window.addEventListener('auth-change', e=>{
   if(e.detail) setTimeout(scheduleWeeklyBackup, 3000);
 }, {once:true});
@@ -12817,10 +12832,10 @@ window.addEventListener('auth-change', e=>{
 
 renderBoard();
 </script>
+
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
 
-<!-- BUSCA GLOBAL Ctrl+K -->
 <div id="search-overlay" onclick="if(event.target===this) closeSearch();">
   <div class="search-box" role="dialog" aria-label="Buscar cards">
     <div class="search-inp-wrap">
