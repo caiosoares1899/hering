@@ -2469,8 +2469,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- CONFIGURAÇÕES -->
-<!-- CONFIGURAÇÕES -->
-<!-- CONFIGURAÇÕES -->
 <div class="ov" id="cfg-ov">
 <div class="panel cfg-panel">
   <div class="panel-hd"><div class="panel-title">⚙ Configurações</div><button class="x-btn" onclick="closeOv('cfg-ov')">✕</button></div>
@@ -2540,8 +2538,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
     </div>
 
-    <div class="tab-c" id="cfgtab-calendario">
-  <div class="cfg-sec-title">🗓️ Integração com Google Agendas da Squad</div>
+<div class="tab-c" id="cfgtab-calendario">
+  <div class="cfg-sec-title"> Integrar com Google Agendas da Squad</div>
   <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">
     Sincronize múltiplos calendários do Google (reuniões, rituais, ausências, feriados) diretamente no board.<br><br>
     <strong>Como funciona:</strong> Cole o ID de cada calendário do Google desejado. Certifique-se de que a agenda esteja configurada como <strong>"Disponibilizar ao público"</strong> (ou aberta para a organização) nas configurações do Google Calendar.
@@ -2558,7 +2556,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="btn btn-teal btn-sm" onclick="addCalendarToList()">+ Adicionar</button>
   </div>
 </div>
-  
 
     <!-- ABA USUARIOS -->
     <div class="tab-c" id="cfgtab-usuarios">
@@ -3016,7 +3013,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 </div>
-
+</div>
+  </div>
+</div> <div class="ev-modal-ov" id="cal-day-pop-ov" style="z-index: 9500;">
+  <div class="ev-modal" style="max-width: 360px;">
+    <div class="ev-modal-hd">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="cal-day-pop-title">Dia 00</div>
+      <button class="x-btn" onclick="closeOv('cal-day-pop-ov')">✕</button>
+    </div>
+    <div class="ev-modal-body" id="cal-day-pop-body" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
+    </div>
+    <div class="ev-modal-ft" id="cal-day-pop-ft">
+    </div>
+  </div>
+</div>
 <!-- ARQUIVADOS -->
 <!-- MODAL DE RECORRÊNCIA -->
 <div class="ov" id="rec-ov">
@@ -3325,7 +3335,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.59</div>
+<div class="version">v8.30.60</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10178,27 +10188,80 @@ function makeDayEl(date,otherMonth=false,isToday=false){
   div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayItems.length?' has-events':'');
   const canEdit=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
   
+  // Renderiza no máximo 2 itens no quadradinho para nunca esmagar o layout
+  const maxVisiveis = 2;
+  const visiveis = dayItems.slice(0, maxVisiveis);
+  const ocultosCount = dayItems.length - maxVisiveis;
+
   div.innerHTML=`<div class="cal-day-num">${date.getDate()}</div>`
-    +dayItems.slice(0,3).map(item=>{
+    +visiveis.map(item=>{
       if(item.type === 'event'){
         const ev = item.data;
         const evColor=ev._gestao?'purple':(ev.color||'blue');
         const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
         const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
-        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)} — clique para editar">${esc(ev.title)}${delBtn}</div>`;
+        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${esc(ev.title)}${delBtn}</div>`;
       } else {
         const c = item.data;
         const colInfo = columns.find(x => x.id === c.col);
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
-        return `<div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo do card: ${esc(c.title)} — clique para abrir">📎 ${esc(c.title)}</div>`;
+        return `<div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
       }
     }).join('')
-    +(dayItems.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayItems.length-3} mais</div>`:'')
+    +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
     +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
     
-  div.onclick=()=>{ const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador'; if(isPO) openEvModal(ds); };
+  // Ao clicar no dia, abre a janela flutuante com a lista completa estilo Google Calendar
+  div.onclick=()=> openCalDayPopover(date, dayItems);
   return div;
+}
+  function openCalDayPopover(date, dayItems) {
+  const ds = date.toISOString().split('T')[0];
+  const opcoes = { weekday: 'long', day: 'numeric', month: 'long' };
+  document.getElementById('cal-day-pop-title').textContent = date.toLocaleDateString('pt-BR', opcoes);
+  
+  const body = document.getElementById('cal-day-pop-body');
+  const ft = document.getElementById('cal-day-pop-ft');
+  if (!body || !ft) return;
+
+  const canEdit = window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
+
+  if (!dayItems.length) {
+    body.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:16px 0;">Nenhum compromisso ou prazo neste dia.</div>';
+  } else {
+    body.innerHTML = dayItems.map(item => {
+      if (item.type === 'event') {
+        const ev = item.data;
+        const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
+        const col = EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0];
+        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
+        return `
+          <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent('${ev.id}')">
+            <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
+            ${delBtn}
+          </div>`;
+      } else {
+        const c = item.data;
+        const colInfo = columns.find(x => x.id === c.col);
+        const cardColor = colInfo ? colInfo.color : '#38b6ff';
+        const bg = _hexA(cardColor, 0.15);
+        return `
+          <div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
+            📎 ${esc(c.title)} <span style="font-size:9.5px;color:var(--txt3);margin-left:4px;">(${esc(colInfo?.name||c.col)})</span>
+          </div>`;
+      }
+    }).join('');
+  }
+
+  if (canEdit) {
+    ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal('${ds}')">+ Novo Evento</button>`;
+    ft.style.display = 'flex';
+  } else {
+    ft.style.display = 'none';
+  }
+
+  document.getElementById('cal-day-pop-ov').classList.add('open');
 }
 function openEvModal(dateStr=''){
   editingEvId=null;
@@ -12873,5 +12936,3 @@ renderBoard();
     </div>
   </div>
 </div>
-</body>
-</html>
