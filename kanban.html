@@ -12828,7 +12828,7 @@ async function carregarTodasAgendasSquad() {
       }
     }));
 
-    // Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
+// Sobrescreve no array global mantendo os eventos manuais e de gestão intactos
     calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
     
     if (document.getElementById('cal-ov')?.classList.contains('open')) {
@@ -12838,7 +12838,7 @@ async function carregarTodasAgendasSquad() {
   } catch (error) {
     console.error("Erro global no carregamento das agendas do Google:", error);
   }
-} // ── FIM DA FUNÇÃO carregarTodasAgendasSquad ──
+} // ── FECHA A FUNÇÃO carregarTodasAgendasSquad ──
 
 // ── Agendador semanal (domingo à meia-noite) ─────────────────────────────
 function scheduleWeeklyBackup(){
@@ -12871,7 +12871,7 @@ function scheduleWeeklyBackup(){
     // Reagenda semanalmente
     setInterval(doWeeklyBackup, 7 * 24 * 60 * 60 * 1000);
   }, ms);
-}
+} // ── FECHA A FUNÇÃO scheduleWeeklyBackup ──
 
 // Inicia o agendador quando o usuário estiver logado
 window.addEventListener('auth-change', e=>{
@@ -12903,7 +12903,6 @@ renderBoard();
     </div>
   </div>
 </div>
-
 <!-- SQUAD SELECTOR (exibido quando ?squad= não é passado) -->
 <div id="squad-selector">
   <div class="squad-sel-title">🐟 <span>Maré Digital</span></div>
