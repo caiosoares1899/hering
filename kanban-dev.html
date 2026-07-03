@@ -3417,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.70-dev</div>
+<div class="version">v8.30.71-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14368,6 +14368,21 @@ async function runDevSeed(){
 // ── FIM DEV SEED ──────────────────────────────────────────────────────────
 
 renderBoard();
+
+// Abre um card automaticamente se veio via link direto (?card=ID) — usado pelo painel
+// pra linkar direto num card específico em vez de só abrir o board na home.
+(function _openCardFromUrl(){
+  const cardId = _urlParams.get('card');
+  if(!cardId) return;
+  let tentativas = 0;
+  const tentar = () => {
+    tentativas++;
+    const existe = cards.find(c=>c.id===cardId);
+    if(existe){ openCard(cardId); return; }
+    if(tentativas < 15) setTimeout(tentar, 400);
+  };
+  setTimeout(tentar, 600);
+})();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
