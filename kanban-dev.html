@@ -39,15 +39,12 @@
 ::-webkit-scrollbar-corner { background: transparent; }
 
 /* Board horizontal — barra mais visível no modo expandido */
-.board-wrap::-webkit-scrollbar { height: 2px; }
-.board-wrap::-webkit-scrollbar-track { background: transparent; }
-.board-wrap::-webkit-scrollbar-thumb {
-  background: rgba(56,182,255,.2);
-  border-radius: 999px;
-}
+.board-wrap::-webkit-scrollbar { height: 9px; }
+.board-wrap::-webkit-scrollbar-track { background: rgba(0,0,0,.15); border-radius: 4px; margin: 0 4px; }
+.board-wrap::-webkit-scrollbar-thumb { background: rgba(56,182,255,.4); border-radius: 4px; }
 .board-wrap::-webkit-scrollbar-thumb:hover { background: rgba(56,182,255,.45); }
 /* Firefox */
-.board-wrap { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.2) transparent; }
+.board-wrap { scrollbar-width: thin; scrollbar-color: rgba(56,182,255,.4) rgba(0,0,0,.15); }
 /* ── SQUAD SELECTOR ────────────────────────────────────────────── */
 #squad-selector{
   display:none;position:fixed;inset:0;z-index:8000;
@@ -142,7 +139,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
-.app{position:relative;z-index:2;padding:.9rem 1.2rem 5rem;}
+.app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;}
 .hd-l{display:flex;align-items:center;gap:8px;}
@@ -166,12 +163,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;-webkit-overflow-scrolling:touch;}
 /* No modo expandido, limita a altura à viewport pra scrollbar horizontal ficar visível
    e as colunas rolarem verticalmente por dentro. */
-".board-wrap.mode-expanded-wrap{
+.board-wrap.mode-expanded-wrap{
   overflow-x:auto;
   overflow-y:hidden;
   max-width:100%;
-  /* 22px de folga no fim = espaço garantido pra scrollbar horizontal ficar visível */
-  height:calc(100vh - var(--board-top, 150px) - 22px);
+  height:calc(100vh - var(--board-top, 150px) - 10px); /* Mudado de 22px para 10px */
   padding-bottom:0;
 }
 /* Em modo raia, a altura volta a ser automática (raia rola na página) */
@@ -194,18 +190,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   overflow-y:auto;
 }
 /* column */
-.col{width:100%;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
+.col{display:flex;flex-direction:column;max-height:100%;width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
+.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-collapse-btn:hover{color:var(--txt);}
-.col-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:40px;}
+.col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;}
+
 /* card */
-.card{background:rgba(6,26,46,.85);border:1px solid var(--glass-b);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:all .2s;position:relative;}
-/* Seleção múltipla */
+.card{background:rgba(6,26,46,.95);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
 .card-selected{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(56,182,255,.3);background:rgba(56,182,255,.08);}
 .card-selbox{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:5px;border:1.5px solid var(--accent);background:rgba(3,13,26,.85);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:3;}
 .card-selected .card-selbox{background:var(--accent);color:#021018;}
@@ -259,7 +255,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-lbl{font-size:8px;color:var(--txt3);margin-top:2px;}
 
 .btn-modelo:hover{opacity:1;}
-.add-btn{width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
+.add-btn{flex-shrink:0;width:calc(100% - 12px);margin:6px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt3);background:transparent;border:1px dashed rgba(56,182,255,.18);border-radius:var(--r);padding:5px 8px;cursor:pointer;transition:all .2s;font-family:"DM Sans",sans-serif;}
 .col-more-btn{width:calc(100% - 12px);margin:4px 6px 6px;font-size:10.5px;color:var(--accent);background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:var(--r);padding:6px 8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;font-weight:600;}
 .col-more-btn:hover{background:rgba(56,182,255,.16);}
 .add-btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid;}
@@ -543,14 +539,30 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .postit .pi-text{font-size:13px;line-height:1.42;color:#1a1208;font-weight:500;white-space:pre-wrap;word-break:break-word;}
 .postit .pi-meta{font-size:9.5px;margin-top:7px;opacity:.62;color:#1a1208;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .postit .pi-author{font-weight:700;}
-.postit .pi-del,.postit .pi-resolve{position:absolute;top:6px;width:18px;height:18px;border-radius:50%;border:none;
-  background:rgba(0,0,0,.12);color:rgba(0,0,0,.5);cursor:pointer;font-size:11px;line-height:1;font-weight:700;
-  display:none;align-items:center;justify-content:center;}
-.postit .pi-resolve{right:7px;}
-.postit .pi-del{right:28px;}
-.postit:hover .pi-del,.postit:hover .pi-resolve{display:flex;}
-.postit .pi-resolve:hover{background:#1de9b6;color:#04221a;}
-.postit .pi-del:hover{background:rgba(0,0,0,.25);color:#000;}
+.postit .pi-del, .postit .pi-resolve {
+  position: absolute;
+  top: 6px;
+  z-index: 10;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.12);
+  color: rgba(0,0,0,.6);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.postit .pi-resolve { right: 7px; }
+.postit .pi-del { right: 38px; }
+.postit:hover .pi-del, .postit:hover .pi-resolve { display: flex; }
+.postit .pi-resolve:hover { background: #1de9b6; color: #04221a; transform: scale(1.15); }
+.postit .pi-del:hover { background: rgba(255,107,107,.8); color: #fff; transform: scale(1.15); }
 .postit .pi-link{font-size:10px;margin-top:6px;color:#1a1208;font-weight:700;opacity:.7;cursor:pointer;text-decoration:underline;}
 /* paletas post-it */
 .pi-gestao{background:linear-gradient(135deg,#e2c4ff,#d4a9f5);border-left-color:#9650dc;}
@@ -634,7 +646,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
 .kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
 .kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
-.version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:99990;pointer-events:none;background:rgba(1,8,16,.55);padding:1px 6px;border-radius:5px;}
+.version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
 
 /* Modo de visualização */
@@ -642,13 +654,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   display:grid!important;
   grid-template-columns:repeat(auto-fit,minmax(0,1fr));
   gap:10px;
+  min-width:0;
+}
+/* onepage: colunas preenchem a largura disponível */
+.board.mode-onepage .col{
+  width:100%;
+  min-width:0;
 }
 .board.mode-expanded{
   display:flex!important;
   flex-wrap:nowrap;
   gap:10px;
   min-width:max-content;
+  padding-bottom: 16px; /* Descola as colunas da barra de rolagem */
 }
+/* expanded: colunas de largura fixa com scroll horizontal (estilo Trello) */
 .board.mode-expanded .col{
   width:272px;
   min-width:272px;
@@ -667,12 +687,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* Calendário */
 .cal-ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.92);
-  backdrop-filter:blur(10px);display:none;align-items:flex-start;
-  justify-content:center;padding:1rem;overflow-y:auto;}
+  backdrop-filter:blur(10px);display:none;align-items:center;
+  justify-content:center;padding:1rem;overflow:hidden;}
 .cal-ov.open{display:flex;}
-.cal-panel{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);
-  border-radius:var(--r2);width:100%;max-width:900px;min-height:500px;
-  display:flex;flex-direction:column;}
+.cal-panel{background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:var(--r2);width:96vw;max-width:1600px;height:calc(100vh - 2rem);max-height:calc(100vh - 2rem);display:flex;flex-direction:column;}.cal-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .cal-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
   display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;background:rgba(6,26,46,.98);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
@@ -683,14 +701,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
 .cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
 .cal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:140px;text-align:center;}
-.cal-body{padding:14px 16px;flex:1;}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
 .cal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.cal-day{min-height:80px;padding:5px;border-radius:var(--r);
-  background:rgba(3,13,26,.5);border:1px solid rgba(56,182,255,.07);
-  cursor:pointer;transition:all .15s;position:relative;}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(85px, 1fr);
+  gap: 3px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.cal-grid::-webkit-scrollbar { width: 4px; }
+.cal-grid::-webkit-scrollbar-thumb { background: rgba(56,182,255,.18); border-radius: 999px; }
+
+.cal-day {
+  padding: 5px;
+  border-radius: var(--r);
+  background: rgba(3,13,26,.5);
+  border: 1px solid rgba(56,182,255,.07);
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 .cal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
 .cal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
 .cal-day.other-month{opacity:.35;}
@@ -1043,7 +1082,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .eoc-display:hover{background:rgba(56,182,255,.08);border-color:rgba(56,182,255,.18);}
 .eoc-display.is-empty::before{content:attr(data-placeholder);color:var(--txt3);font-style:italic;font-size:12px;}
 .eoc-display.is-empty{min-height:44px;}
-".eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
+.eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
 .eoc-display a.desc-link{pointer-events:auto;cursor:pointer;position:relative;z-index:2;}
 .eoc-editing .eoc-display{display:none;}
 .eoc-editing .eoc-textarea{display:block!important;}
@@ -1234,6 +1273,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;}
 .undo-btn.visible{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
 .undo-btn:hover{background:rgba(37,99,201,1);}
+.undo-btn:active{transform:translateX(-50%) translateY(2px);}
 
 
 /* Raia sem responsável */
@@ -1350,8 +1390,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
-  .col-body{
-    max-height:65vh;overflow-y:auto;
+.col-body{
+    max-height:65vh;
+    overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     padding:5px;
   }
@@ -1533,7 +1574,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* Drag and Drop */
 .card[draggable=true]{cursor:grab;}
-".card[draggable=true]:active{cursor:grabbing;}
+.card[draggable=true]:active{cursor:grabbing;}
+
+/* Drag and Drop de Colunas */
+.col-dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+  transition: transform 0.15s;
+}
+.col-drag-left {
+  box-shadow: -4px 0 0 0 var(--accent) !important;
+}
+.col-drag-right {
+  box-shadow: 4px 0 0 0 var(--accent) !important;
+}
 /* Mobile: feedback quando o long-press arma o drag */
 .card-armed{transform:scale(1.04);border-color:var(--accent)!important;box-shadow:0 6px 20px rgba(56,182,255,.35);transition:transform .12s,box-shadow .12s;}
 .card.dragging{opacity:.35;transform:rotate(2deg);border-color:var(--accent)!important;box-shadow:0 8px 24px rgba(37,99,201,.4);}
@@ -1555,29 +1609,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card.aged-2::after{content:'💤';position:absolute;top:5px;right:6px;font-size:10px;opacity:.6;}
 
 
-/* ── SEED EMPTY STATE ── */
-#seed-overlay{
-  display:none;position:fixed;inset:0;z-index:500;
-  background:rgba(3,13,26,.85);backdrop-filter:blur(8px);
-  align-items:center;justify-content:center;padding:24px;
-}
-#seed-overlay.active{display:flex;}
-.seed-panel{
-  background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);
-  border-radius:16px;padding:28px;max-width:480px;width:100%;
-  display:flex;flex-direction:column;gap:14px;
-}
-.seed-title{font-family:Syne,sans-serif;font-size:18px;font-weight:800;}
-.seed-desc{font-size:12px;color:rgba(150,200,240,.7);line-height:1.7;}
-.seed-cards{display:flex;flex-direction:column;gap:6px;font-size:11px;color:rgba(150,200,240,.6);}
-.seed-cards li{padding:4px 0;border-bottom:1px solid rgba(56,182,255,.07);}
-.seed-log{
-  background:rgba(0,0,0,.4);border-radius:8px;padding:10px;
-  font-size:10px;font-family:monospace;max-height:140px;overflow-y:auto;
-  display:none;
-}
-.seed-log-line{padding:1px 0;}
-.seed-log .ok{color:#1de9b6;}.seed-log .err{color:#ff6b6b;}.seed-log .inf{color:#38b6ff;}
 /* ═══════════════════════════════════════════════════════
    CAMPANHAS & COLEÇÕES
    ═══════════════════════════════════════════════════════ */
@@ -1691,14 +1722,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* ── MOBILE: overlay de campanhas ── */
 @media(max-width:700px){
-  .camp-panel { width:100vw; height:100dvh; max-height:100dvh; border-radius:0; border:none; overflow:hidden; }
+  /* Overlay ocupa tela inteira */
+  .camp-panel {
+    width:100vw; height:100dvh; max-height:100dvh;
+    border-radius:0; border:none;
+    overflow:hidden;
+  }
+  /* Header compacto */
   .camp-hd { padding:10px 12px; gap:6px; }
   .camp-hd-title { font-size:13px; }
   .camp-hd-emoji { font-size:17px; }
+  /* Header do detalhe: compactar botões */
   .camp-det-hd-btns { gap:4px; }
   .camp-det-hd-btns .btn { font-size:10px; padding:4px 8px; }
-  .camp-btn-lbl { display:none; }
-  .camp-detail-body { grid-template-columns:1fr; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .camp-btn-lbl { display:none; } /* esconde texto "Editar", deixa só ícone */
+  /* Detalhe: sidebar em cima, timeline embaixo (coluna única) */
+  .camp-detail-body {
+    grid-template-columns:1fr;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
   /* Metadados viram menu suspenso no mobile pra não espremer a timeline */
   .camp-meta-toggle-mobile {
     display:flex; align-items:center; justify-content:space-between; width:100%;
@@ -1708,25 +1751,43 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   }
   .camp-meta-toggle-arrow { transition:transform .2s; font-size:11px; color:var(--txt3); }
   .camp-meta-toggle-mobile.open .camp-meta-toggle-arrow { transform:rotate(180deg); }
-  .camp-sidebar { max-height:0; padding-top:0; padding-bottom:0; overflow:hidden; border-bottom:none; transition:max-height .25s ease; }
-  .camp-sidebar.camp-sidebar-open { max-height:60vh; padding:12px; overflow-y:auto; border-bottom:1px solid var(--glass-b); }
+  .camp-sidebar {
+    max-height:0; padding-top:0; padding-bottom:0; overflow:hidden;
+    border-bottom:none; border-right:none; transition:max-height .25s ease;
+  }
+  .camp-sidebar.camp-sidebar-open {
+    max-height:60vh; padding:12px; overflow-y:auto;
+    border-bottom:1px solid var(--glass-b); -webkit-overflow-scrolling:touch;
+  }
   .camp-meta-toggle-mobile { display:flex; }
-  .camp-timeline { padding:12px; overflow-y:auto; min-height:200px; -webkit-overflow-scrolling:touch; }
+  /* Timeline: cresce e tem scroll */
+  .camp-timeline {
+    padding:12px;
+    overflow-y:auto;
+    min-height:200px;
+    -webkit-overflow-scrolling:touch;
+  }
+  /* Barra de filtro da timeline */
   .camp-tl-filter-bar { flex-wrap:wrap; padding:8px 10px; gap:5px; }
   .camp-tl-search { min-width:0; flex:1 1 100%; }
   .camp-tl-tipo-sel { flex:1; }
+  /* Toggle multi-squad */
   .camp-ms-toggle-bar { flex-wrap:wrap; padding:8px 10px; gap:5px; }
   .camp-ms-toggle-btn { font-size:10px; padding:5px 10px; flex:1; text-align:center; }
+  /* Lista de campanhas */
   .camp-filter-bar { padding:8px 12px; gap:6px; }
   .camp-list-wrap { padding:10px 12px; }
   .camp-card { padding:11px 12px; }
   .camp-card-right { flex-direction:row; justify-content:space-between; margin-top:5px; }
+  /* Composer */
   .camp-composer { padding:0; }
   .camp-composer-body { padding:0 10px 10px; }
   .camp-fmt-bar { gap:4px; }
+  /* Grid de cards */
   .camp-cards-grid-panel { width:100vw; height:100dvh; max-height:100dvh; border-radius:0; }
   .camp-cards-grid-body { grid-template-columns:1fr; padding:12px; gap:8px; }
   .camp-cards-grid-filters { padding:8px 12px; }
+  /* Modal de edição */
   .camp-edit-modal { width:100vw; height:100dvh; max-height:100dvh; border-radius:0; }
 }
 
@@ -1893,6 +1954,29 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border:1px solid var(--sqb,rgba(56,182,255,.3));color:var(--sqc,#38b6ff);
   background:var(--sqbg,rgba(56,182,255,.08));flex-shrink:0;
 }
+/* ── SEED EMPTY STATE ── */
+#seed-overlay{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(3,13,26,.85);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;padding:24px;
+}
+#seed-overlay.active{display:flex;}
+.seed-panel{
+  background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);
+  border-radius:16px;padding:28px;max-width:480px;width:100%;
+  display:flex;flex-direction:column;gap:14px;
+}
+.seed-title{font-family:Syne,sans-serif;font-size:18px;font-weight:800;}
+.seed-desc{font-size:12px;color:rgba(150,200,240,.7);line-height:1.7;}
+.seed-cards{display:flex;flex-direction:column;gap:6px;font-size:11px;color:rgba(150,200,240,.6);}
+.seed-cards li{padding:4px 0;border-bottom:1px solid rgba(56,182,255,.07);}
+.seed-log{
+  background:rgba(0,0,0,.4);border-radius:8px;padding:10px;
+  font-size:10px;font-family:monospace;max-height:140px;overflow-y:auto;
+  display:none;
+}
+.seed-log-line{padding:1px 0;}
+.seed-log .ok{color:#1de9b6;}.seed-log .err{color:#ff6b6b;}.seed-log .inf{color:#38b6ff;}
 </style>
 </head>
 <body>
@@ -2045,8 +2129,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openCardFnModal()" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
-  <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendário</button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Tempo por tag</button>
+  <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
@@ -2131,7 +2215,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button class="kudos-send-btn" id="kudos-btn" onclick="addKudos()" disabled>⭐ Enviar</button>
     </div>
   </div>
-</div><!-- /kudos-drawer -->
+</div>
 
 <!-- AGENTE ÁGIL -->
 <div class="ov" id="ag-ov">
@@ -2437,8 +2521,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- CONFIGURAÇÕES -->
-<!-- CONFIGURAÇÕES -->
-<!-- CONFIGURAÇÕES -->
 <div class="ov" id="cfg-ov">
 <div class="panel cfg-panel">
   <div class="panel-hd"><div class="panel-title">⚙ Configurações</div><button class="x-btn" onclick="closeOv('cfg-ov')">✕</button></div>
@@ -2454,6 +2536,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
+    <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
   </div>
   <div class="cfg-body">
 
@@ -2512,6 +2595,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-p btn-sm" onclick="saveAgilCfg()">Salvar</button>
       </div>
     </div>
+
+<div class="tab-c" id="cfgtab-calendario">
+  <div class="cfg-sec-title"> Integrar com Google Agendas da Squad</div>
+  <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">
+    Sincronize múltiplos calendários do Google (reuniões, rituais, ausências, feriados) diretamente no board.<br><br>
+    <strong>Como funciona:</strong> Cole o ID de cada calendário do Google desejado. Certifique-se de que a agenda esteja configurada como <strong>"Disponibilizar ao público"</strong> (ou aberta para a organização) nas configurações do Google Calendar.
+  </p>
+
+  <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);">Agendas Conectadas</div>
+  <div id="cfg-calendar-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px; max-height:180px; overflow-y:auto;">
+    </div>
+
+  <div class="cfg-sec-title" style="font-size:9px; border-bottom:none; margin-bottom:4px;">Conectar Nova Agenda</div>
+  <div class="add-row">
+    <input class="add-inp" id="cfg-calendar-label" placeholder="Nome/Rótulo (Ex: Rituais Dados)" style="flex:1; min-width:130px;">
+    <input class="add-inp" id="cfg-calendar-id" type="email" placeholder="ID da Agenda (e-mail longo...)" style="flex:2; min-width:200px;">
+    <button class="btn btn-teal btn-sm" onclick="addCalendarToList()">+ Adicionar</button>
+  </div>
+</div>
 
     <!-- ABA USUARIOS -->
     <div class="tab-c" id="cfgtab-usuarios">
@@ -2581,7 +2683,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
 
 
-    <!-- ABA TAGS -->    <!-- ABA TAGS -->
+    <!-- ABA TAGS -->
     <div class="tab-c" id="cfgtab-tags">
       <div class="cfg-sec-title">Tags do board</div>
       <div id="tag-editor" style="display:flex;flex-direction:column;"></div>
@@ -2613,7 +2715,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="tab-c" id="cfgtab-fluxo">
       <div class="cfg-sec-title">⚙ Fluxo do trabalho</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Configure quais colunas marcam o <b>início</b> e o <b>fim</b> do trabalho. Isso define como o relatório <b>⏱ Tempo por tag</b> calcula o lead e o cycle time. Se deixar em branco, o sistema tenta adivinhar automaticamente.
+        Configure quais colunas marcam o <b>início</b> e o <b>fim</b> do trabalho. Isso define como o relatório <b>⏱ Relatórios de Tempo</b> calcula o lead e o cycle time. Se deixar em branco, o sistema tenta adivinhar automaticamente.
       </p>
       <div class="fluxo-cfg-block">
         <div class="fluxo-cfg-label">🟢 Coluna(s) de início <span>(quando o trabalho começa de fato, ex.: "Em andamento")</span></div>
@@ -2630,7 +2732,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button class="btn btn-teal" onclick="salvarFluxoCfg()" style="margin-top:8px;">💾 Salvar configuração de fluxo</button>
       <button class="btn btn-sm" onclick="resetFluxoCfg()" style="margin-top:8px;margin-left:8px;">↺ Voltar ao automático</button>
     </div>
-
 
 
     <!-- ABA AUTOMAÇÕES -->
@@ -2892,28 +2993,54 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- CALENDÁRIO -->
 <div class="cal-ov" id="cal-ov">
   <div class="cal-panel">
-    <div class="cal-hd">
-      <div class="cal-hd-l">
-        <div class="cal-title">📅 Calendário do Squad</div>
-        <div class="cal-nav">
-          <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
-          <div class="cal-month-lbl" id="cal-month-lbl"></div>
-          <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
-          <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+   <div class="cal-hd" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+      
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div class="cal-title">📅 Calendários</div>
+        <div style="display:flex; gap:6px;">
+          <button class="view-btn active" data-mode="both" onclick="changeCalView('both')">Tudo</button>
+          <button class="view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
+          <button class="view-btn" data-mode="cards" onclick="changeCalView('cards')">📎 Prazos</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
+        <div class="cal-month-lbl" id="cal-month-lbl"></div>
+        <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
+        <button class="cal-nav-btn" onclick="calGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
+      </div>
+      
+      <div style="display:flex; gap:8px; align-items:center;">
         <button class="btn btn-sm btn-teal" onclick="openEvModal()" id="btn-add-event" style="display:none;">+ Evento</button>
         <button class="x-btn" onclick="closeOv('cal-ov')">✕</button>
       </div>
     </div>
+
+   <div style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap; position:relative; z-index:10;">
+      <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
+      
+      <select id="cal-f-owner" onchange="renderCal()" class="view-btn" style="color:var(--txt); outline:none;">
+        <option value="">👤 Usuário</option>
+      </select>
+      
+      <select id="cal-f-subteam" onchange="renderCal()" class="view-btn" style="color:var(--txt); outline:none;">
+        <option value="">👥 Subtime</option>
+      </select>
+      
+      <select id="cal-f-tag" onchange="renderCal()" class="view-btn" style="color:var(--txt); outline:none;">
+        <option value="">🏷️ Tag</option>
+      </select>
+
+      <div id="board-cal-legend" style="margin-left:auto; display:flex; gap:6px; align-items:center;"></div>
+    </div>
+    
     <div class="cal-body">
       <div class="cal-weekdays">
         <div class="cal-wd">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
         <div class="cal-wd">Qua</div><div class="cal-wd">Qui</div><div class="cal-wd">Sex</div><div class="cal-wd">Sáb</div>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
-      <div id="board-cal-legend" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--glass-b);"></div>
     </div>
     </div>
 </div>
@@ -2944,7 +3071,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 </div>
-
+</div>
+  </div>
+</div> <div class="ev-modal-ov" id="cal-day-pop-ov" style="z-index: 9500;">
+  <div class="ev-modal" style="max-width: 360px;">
+    <div class="ev-modal-hd">
+      <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="cal-day-pop-title">Dia 00</div>
+      <button class="x-btn" onclick="closeOv('cal-day-pop-ov')">✕</button>
+    </div>
+    <div class="ev-modal-body" id="cal-day-pop-body" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;">
+    </div>
+    <div class="ev-modal-ft" id="cal-day-pop-ft">
+    </div>
+  </div>
+</div>
 <!-- ARQUIVADOS -->
 <!-- MODAL DE RECORRÊNCIA -->
 <div class="ov" id="rec-ov">
@@ -2980,6 +3120,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 </div>
+
+
 
 <!-- Modal de agendamento (definir data de entrada do card) -->
 <!-- Modal de Funções de card -->
@@ -3020,16 +3162,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-
-
 <!-- RELATÓRIO DE TEMPO POR TAG -->
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
-    <div class="panel-title">⏱ Tempo por tag</div>
+    <div class="panel-title">⏱ Relatório de Tempo</div>
     <button class="x-btn" onclick="closeOv('tempo-ov')">✕</button>
   </div>
   <div class="tempo-filter-bar">
+    <select id="tempo-agrupamento" class="ql-filter-sel" onchange="renderTempoReport()" style="border-color:var(--accent); color:var(--accent);">
+      <option value="tag">🏷️ Agrupar por Tag</option>
+      <option value="owner">👤 Agrupar por Responsável</option>
+    </select>
     <select id="tempo-periodo" class="ql-filter-sel" onchange="renderTempoReport()">
       <option value="all">Todo o período</option>
       <option value="30">Últimos 30 dias</option>
@@ -3214,6 +3358,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 <!-- fim CAMPANHAS -->
+
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
   <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
@@ -3248,7 +3393,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.34-dev</div>
+<div class="version">v8.30.60-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3282,16 +3427,31 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-// hd sugerido para facilitar login do time interno (freelancers clicam em "Usar outra conta")
+// hd sugerido para facilitar login do time interno
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
+// SOLICITA PERMISSÃO DE LEITURA DO GOOGLE CALENDAR
+provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._auth=auth; window._provider=provider;
-window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ if(insc) window._pendingInsc=true; });
+
+// Captura e salva o token de acesso de forma segura
+window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
+  const credential = GoogleAuthProvider.credentialFromResult(r);
+  if (credential && credential.accessToken) {
+    safeLS.setItem('gcal_token', credential.accessToken);
+  }
+  if(insc) window._pendingInsc=true; 
+});
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
+
+// Expõe para os botões do HTML poderem chamar
+window.doSignIn = (insc) => window._signIn(insc);
+window.doSignOut = () => window._signOut();
+
 onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 
@@ -3318,10 +3478,12 @@ const ADM_UIDS = {
   'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
 };
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
-// Reforço: reconhece ADM por email OU por UID (preencha ADM_UIDS com o uid real se precisar)
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 
 // ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
+// Estrutura: kanban/squads/{squad}/access_log/{YYYY-MM-DD}/{uid} = {init, ts, role}
+// Um registro por pessoa por dia (sobrescreve se acessar de novo no mesmo dia — não cresce sem limite).
+// Mantém só os últimos 60 dias (limpeza leve roda 1x a cada carregamento, throttled).
 function _logAccess(user, role){
   if(!user || !user.uid || !window._fbReady) return;
   const today = new Date().toISOString().split('T')[0];
@@ -3329,6 +3491,7 @@ function _logAccess(user, role){
   window._set(window._ref(window._db, path), {
     init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
   }).catch(()=>{});
+  // Limpeza leve: 1x por sessão, remove dias com mais de 60 dias
   if(!window._accessLogCleaned){
     window._accessLogCleaned = true;
     window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log')).then(snap=>{
@@ -3545,10 +3708,16 @@ function toggleCardSelection(id){
   updateBulkBar();
 }
 function selectAllInColumn(colId){
-  const visibleIds=cards.filter(c=>!c.archived && c.col===colId && matchesFilters(c)).map(c=>c.id);
-  const allSelected=visibleIds.length>0 && visibleIds.every(id=>selectedCards.has(id));
-  if(allSelected){ visibleIds.forEach(id=>selectedCards.delete(id)); }
-  else { visibleIds.forEach(id=>selectedCards.add(id)); }
+  // Correção: alterado de matchesFilters para passesFilter
+  const visibleIds = cards.filter(c => !c.archived && c.col === colId && passesFilter(c)).map(c => c.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedCards.has(id));
+  
+  if(allSelected){ 
+    visibleIds.forEach(id => selectedCards.delete(id)); 
+  } else { 
+    visibleIds.forEach(id => selectedCards.add(id)); 
+  }
+  
   renderBoard();
   updateBulkBar();
 }
@@ -3583,13 +3752,32 @@ function _bulkPopover(html){
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
-function _bulkFinish(msg){
+function _bulkFinish(msg, keepSelection){
   fbSaveAll(); 
-  const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
-  selectedCards.clear(); selectMode=false;
-  const btn=document.getElementById('btn-select');
-  if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
-  renderBoard(); updateBulkBar();
+  if(!keepSelection){
+    const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
+    selectedCards.clear(); selectMode=false;
+    const btn=document.getElementById('btn-select');
+    if(btn){ btn.textContent='☑️ Selecionar'; btn.style.borderColor=''; btn.style.color=''; }
+    renderBoard(); updateBulkBar();
+  } else {
+    // Se for manter a seleção (ex: multi-tag), atualiza só o visual dos cards afetados
+    // sem dar renderBoard() completo para não perder o scroll.
+    _selectedList().forEach(c => {
+      const el = document.querySelector('.card[data-id="'+CSS.escape(c.id)+'"]');
+      if(el){
+        // Atualiza as tags do card no DOM sem reconstruir o card todo
+        const tagsWrap = el.querySelector('.card-tags-container') || el; // Fallback se não tiver container
+        // Nota: tagsHtml(c) retorna o HTML das tags.
+        // Como o innerHTML do card é complexo, o ideal seria ter um container específico.
+        // Para garantir 100% de precisão e manter o scroll, vamos atualizar apenas os cards selecionados.
+        const newEl = makeCardEl(c);
+        el.innerHTML = newEl.innerHTML;
+        el.className = newEl.className;
+      }
+    });
+    updateBulkBar();
+  }
   showToast(msg);
 }
 function bulkMove(){
@@ -3599,8 +3787,14 @@ function bulkMove(){
 }
 function _doBulkMove(colId){
   const col=columns.find(c=>c.id===colId);
+  const n = selectedCards.size;
   _selectedList().forEach(c=>{ if(c.col!==colId){ recordMove(c,colId); c.col=colId; recordHistory(c,'moveu para '+(col?.name||colId)); } });
-  _bulkFinish('📥 '+selectedCards.size+' card(s) movidos para '+(col?.name||colId)+'.');
+  // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
+  // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
+  const wrap = document.getElementById('board-wrap');
+  const scrollX = wrap ? wrap.scrollLeft : 0;
+  _bulkFinish('📥 ' + n + ' card(s) movidos para ' + (col?.name||colId) + '.');
+  if(wrap) wrap.scrollLeft = scrollX;
 }
 function bulkAssign(){
   if(!selectedCards.size) return;
@@ -3609,14 +3803,90 @@ function bulkAssign(){
 }
 function _doBulkAssign(init){
   const m=members.find(x=>x.init===init);
+  const n = selectedCards.size;
   _selectedList().forEach(c=>{ c.owner=init; recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável'); });
-  _bulkFinish('👤 '+selectedCards.size+' card(s) '+(init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável')+'.');
+  _bulkFinish('👤 ' + n + ' card(s) ' + (init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável') + '.', true);
 }
 function bulkTag(){
   if(!selectedCards.size) return;
-  const opts=tags.map(t=>{ const p=getPal(t.pi); return `<button class="bulk-pop-item" onclick="_doBulkTag('${esc(t.id)}','add')"><span class="bulk-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span> adicionar</button>`; }).join('');
-  const optsSet=tags.map(t=>{ const p=getPal(t.pi); return `<button class="bulk-pop-item" onclick="_doBulkTag('${esc(t.id)}','set')"><span class="bulk-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span> só esta</button>`; }).join('');
-  _bulkPopover(`<div class="bulk-pop-title">Tag em ${selectedCards.size} card(s):</div><div class="bulk-pop-sec">Adicionar tag</div>${opts}<div class="bulk-pop-sec">Substituir por uma só</div>${optsSet}`);
+  _renderBulkTagPicker();
+}
+
+function _renderBulkTagPicker(){
+  const n = selectedCards.size;
+  // Vamos criar um picker persistente dentro do popover para permitir múltiplas seleções
+  const html = `
+    <div class="bulk-pop-title">Gerenciar tags (${n} cards)</div>
+    <div class="bulk-pop-sec">Selecionar tags para adicionar:</div>
+    <div id="bulk-tag-picker" style="display:flex;flex-wrap:wrap;gap:5px;padding:4px 8px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:6px;padding:0 4px 4px;">
+      <button class="btn btn-sm btn-teal" style="flex:1;justify-content:center;" onclick="_doBulkTagMulti('add')">Adicionar</button>
+      <button class="btn btn-sm" style="flex:1;justify-content:center;color:var(--warn);border-color:rgba(255,209,102,.3);" onclick="_doBulkTagMulti('set')">Substituir</button>
+    </div>
+    <div class="tb-sep" style="width:100%;height:1px;margin:8px 0;"></div>
+    <div class="bulk-pop-sec">Ações rápidas:</div>
+    <button class="bulk-pop-item" style="color:var(--danger);" onclick="_doBulkTagClear()">🚫 Remover todas as tags</button>
+  `;
+  const pop = _bulkPopover(html);
+  
+  // Lógica interna do picker (similar a campanhas)
+  window._bulkSelectedTags = window._bulkSelectedTags || [];
+  const renderInternal = () => {
+    const wrap = document.getElementById('bulk-tag-picker'); if(!wrap) return;
+    wrap.innerHTML = tags.map(t=>{
+      const sel = window._bulkSelectedTags.includes(t.id);
+      const p = getPal(t.pi);
+      return `<span onclick="_bulkToggleTag('${esc(t.id)}')" style="
+        padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
+        background:${sel?p.bg:'rgba(3,13,26,.6)'};
+        border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
+        color:${sel?p.c:'var(--txt3)'};
+        transition:all .15s;
+        ${sel?'box-shadow:0 0 6px '+p.b+';':''}"
+      >${esc(t.label)}</span>`;
+    }).join('');
+  };
+  
+  window._bulkToggleTag = (id) => {
+    const idx = window._bulkSelectedTags.indexOf(id);
+    if(idx>=0) window._bulkSelectedTags.splice(idx,1);
+    else window._bulkSelectedTags.push(id);
+    renderInternal();
+  };
+  
+  renderInternal();
+}
+
+function _doBulkTagMulti(mode){
+  const selectedTags = window._bulkSelectedTags || [];
+  if(!selectedTags.length && mode!=='clear'){ showToast('⚠ Selecione ao menos uma tag.'); return; }
+  
+  const n = selectedCards.size;
+  const list = _selectedList();
+  list.forEach(c => {
+    let current = getCardTags(c);
+    if(mode === 'set'){
+      current = [...selectedTags];
+    } else {
+      // add
+      selectedTags.forEach(t => { if(!current.includes(t)) current.push(t); });
+    }
+    c.tags = current;
+    c.tag = current[0] || '';
+    recordHistory(c, (mode==='set'?'substituiu tags por: ':'adicionou tags: ') + selectedTags.map(id=>getTag(id)?.label).join(', '));
+  });
+  
+  window._bulkSelectedTags = [];
+  _bulkFinish(`🏷 Tags atualizadas em ${n} cards.`, true);
+}
+
+function _doBulkTagClear(){
+  _selectedList().forEach(c => {
+    c.tags = [];
+    c.tag = '';
+    recordHistory(c, 'removeu todas as tags');
+  });
+  _bulkFinish(`🚫 Tags removidas de ${selectedCards.size} cards.`, true);
 }
 function _doBulkTag(tagId, mode){
   _selectedList().forEach(c=>{
@@ -3648,9 +3918,14 @@ async function bulkDuplicate(){
 }
 async function bulkArchive(){
   if(!selectedCards.size) return;
-  if(!await uiConfirm('Arquivar '+selectedCards.size+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
+  const n = selectedCards.size;
+  if(!await uiConfirm('Arquivar '+n+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
   _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; recordHistory(c,'arquivou o card'); } });
-  _bulkFinish('📦 '+selectedCards.size+' card(s) arquivados.');
+  // Para arquivar, o card some, então precisamos de renderBoard()
+  const wrap = document.getElementById('board-wrap');
+  const scrollX = wrap ? wrap.scrollLeft : 0;
+  _bulkFinish('📦 ' + n + ' card(s) arquivados.');
+  if(wrap) wrap.scrollLeft = scrollX;
 }
 function clearSelection(){ selectedCards.clear(); renderBoard(); updateBulkBar(); }
 async function bulkDeleteSelected(){
@@ -3748,6 +4023,7 @@ function _flowDoneColIds(){
 function _flowFirstColId(){
   return (columns&&columns[0]&&columns[0].id)||'backlog';
 }
+// Marca a entrada de um card numa coluna (chamado em TODA movimentação).
 function recordMove(card, toCol, atISO){
   if(!card) return;
   const at = atISO || new Date().toISOString();
@@ -3766,6 +4042,7 @@ function recordMove(card, toCol, atISO){
   else if(card.flow.doneAt && from===doneId){ card.flow.doneAt = null; }
   card._lastFlowCol = toCol;
 }
+// Backfill: cards importados (ex.: Trello) ou legados sem c.flow.
 function backfillFlow(card){
   if(!card || card.flow) return;
   const created = card.createdAt ? card.createdAt + (card.createdAt.length<=10?'T12:00:00.000Z':'') : new Date().toISOString();
@@ -3889,6 +4166,8 @@ function toggleHistory(){
   list.style.display=open?'none':'flex';
   if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
 }
+
+// ── Reset de contagem por squad (zera métricas pós-import do Trello) ──
 function resetFlowBaseline(opts){
   opts = opts || {};
   const now = new Date().toISOString();
@@ -3937,9 +4216,57 @@ function fbSaveMsgs(tab){
 }
 
 function fbLoadAll(){
-  // Cards — realtime
+  // ── ORDEM IMPORTA: columns e agil_cfg registrados ANTES de cards ──
+  // Assim, quando o listener de cards disparar o primeiro render, as
+  // colunas e a config da sprint (WIP) já terão boa chance de estar
+  // carregadas — evitando o flash onde "Em Progresso" e o WIP somem.
+
+  // Columns — primeiro
+  fbListen(FB+'/deleted_cols',val=>{
+    if(Array.isArray(val)) _deletedColIds=new Set(val.filter(Boolean));
+  });
+  fbListen(FB+'/columns',val=>{
+    if(!val){
+      if(!columns.length) columns=[...DEFAULT_COLUMNS];
+      renderBoard();
+      return;
+    }
+    const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
+    if(!cleaned.length){
+      if(!columns.length) columns=[...DEFAULT_COLUMNS];
+      renderBoard();
+      return;
+    }
+    // Merge: garante que colunas padrão e locais nunca sumam,
+    // EXCETO as que foram excluídas de propósito (persistidas em _deletedColIds).
+    const cleanedIds = new Set(cleaned.map(c=>c.id));
+    const baseColumns = DEFAULT_COLUMNS
+      .concat(columns)
+      .filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i);
+    const missingFromFirebase = baseColumns.filter(c=>!cleanedIds.has(c.id) && !_deletedColIds.has(c.id));
+    columns = missingFromFirebase.length
+      ? [...cleaned, ...missingFromFirebase]
+      : cleaned;
+    renderBoard();
+  });
+
+  // Agil cfg — segundo (WIP depende disso)
+  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); renderBoard(); }});
+
+  // Tags — terceiro
+  fbListen(FB+'/subtimes',val=>{
+    subteams = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderSubteamEditor();
+    renderBoard();
+  });
+  fbListen(FB+'/tags',val=>{
+    if(!val) return;
+    const incoming = Array.isArray(val) ? val : Object.values(val);
+    if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
+  });
+
+  // Cards — por último, já com columns/agilCfg/tags carregados
   fbListen(FB+'/cards',val=>{
-    // Ignora echo apenas se JÁ fizemos um save nessa sessão E foi há menos de 2s
     if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
     if(val){
       const incoming = Array.isArray(val)?val:Object.values(val);
@@ -3947,11 +4274,13 @@ function fbLoadAll(){
         cards = incoming;
         // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
         const _bf = backfillAllFlow();
+        // Garante que _lastFlowCol esteja consistente com a coluna atual
         cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
         renderBoard();
+        // Persiste o backfill (1x) sem disparar loop de echo
         if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
       }
-      // Board populado — garante overlay fechado
+      // Board populado — garante overlay de seed fechado (dev)
       if(ACTIVE_SQUAD==='dev' && incoming.filter(c=>!c.archived).length > 0){
         document.getElementById('seed-overlay')?.classList.remove('active');
       }
@@ -3962,53 +4291,6 @@ function fbLoadAll(){
       }
     }
   });
-  // Tags
-  fbListen(FB+'/subtimes',val=>{
-    subteams = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
-    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderSubteamEditor();
-    renderBoard();
-  });
-  fbListen(FB+'/tags',val=>{
-    if(!val) return;
-    const incoming = Array.isArray(val) ? val : Object.values(val);
-    if(incoming.length) tags=incoming.filter(Boolean);
-  });
-  // Columns
-  fbListen(FB+'/deleted_cols',val=>{
-    if(Array.isArray(val)) _deletedColIds=new Set(val.filter(Boolean));
-  });
-  fbListen(FB+'/columns',val=>{
-    if(!val){
-      // Firebase sem dados: garante DEFAULT_COLUMNS
-      if(!columns.length) columns=[...DEFAULT_COLUMNS];
-      renderBoard();
-      return;
-    }
-    // Aceita tanto array quanto objeto (Firebase converte arrays esparsas em objetos)
-    const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
-    if(!cleaned.length){
-      if(!columns.length) columns=[...DEFAULT_COLUMNS];
-      renderBoard();
-      return;
-    }
-
-    // Merge: garante que colunas padrao e locais nunca sumam,
-    // mesmo que o Firebase retorne lista parcial/desatualizada.
-    // Fonte de verdade = uniao de DEFAULT_COLUMNS + columns local + Firebase
-    const cleanedIds = new Set(cleaned.map(c=>c.id));
-    const baseColumns = DEFAULT_COLUMNS
-      .concat(columns)
-      .filter((c,i,arr)=>arr.findIndex(x=>x.id===c.id)===i); // dedup por id
-    const missingFromFirebase = baseColumns.filter(c=>!cleanedIds.has(c.id) && !_deletedColIds.has(c.id));
-
-    columns = missingFromFirebase.length
-      ? [...cleaned, ...missingFromFirebase]
-      : cleaned;
-
-    renderBoard();
-  });
-  // Agil cfg — realtime
-  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); }});
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
   // onValue só dispara em writes — sessões longas abertas ANTES de uma
@@ -4020,6 +4302,8 @@ function fbLoadAll(){
       const val=snap.val(); if(!val) return;
       const incoming=(Array.isArray(val)?val:Object.values(val)).filter(Boolean);
       if(!incoming.length) return;
+      // Firebase é a fonte da verdade quando já tem colunas configuradas.
+      // Só re-adiciona DEFAULT_COLUMNS que NÃO foram excluídas de propósito.
       const incomingIds2=new Set(incoming.map(c=>c.id));
       const missing=DEFAULT_COLUMNS.filter(c=>!incomingIds2.has(c.id) && !_deletedColIds.has(c.id));
       const merged=missing.length?[...incoming,...missing]:incoming;
@@ -4105,6 +4389,7 @@ function fbLoadAll(){
     });
     // ⚡ Garante que o usuário logado apareça na lista — EXCETO ADM fantasma.
     // O ADM só aparece pra si mesmo se estiver inscrito neste quadro (toggle Participar).
+    // Membros/PO/org normais continuam aparecendo sempre.
     const cu=window._currentUser;
     if(cu && window._currentUserInit){
       const cuData = val[cu.uid]||{};
@@ -4133,7 +4418,7 @@ function fbLoadAll(){
   });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
-    if(val){ blockerMode=val; applyBlockerMode(); }
+    if(val){ blockerMode=val; applyBlockerMode(); renderBoard(); }
   });
   // Config de fluxo (colunas início/fim/relatório do tempo por tag)
   fbListen(FB+'/config/flow',val=>{
@@ -4232,26 +4517,30 @@ function renderOnline(users){
   bar.innerHTML='';
   if(!users.length) return;
   users.slice(0,6).forEach(u=>{
-    const el=document.createElement('div');
     const st=STATUS_MAP[u.status];
-    el.title=u.nome+(st?(' · '+st.label):'')+' (online)';
-    el.style.cssText='position:relative;width:24px;height:24px;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);';
+    // Wrapper externo (overflow visível) que segura a foto + status sem cortar
+    const wrap=document.createElement('div');
+    wrap.title=u.nome+(st?(' · '+st.label):'')+' (online)';
+    wrap.style.cssText='position:relative;width:24px;height:24px;flex-shrink:0;';
+    // Avatar interno (overflow hidden, recorta a foto no círculo)
+    const el=document.createElement('div');
+    el.style.cssText='width:100%;height:100%;border-radius:50%;border:2px solid var(--teal);overflow:hidden;background:rgba(37,99,201,.5);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--accent);box-sizing:border-box;';
     const _f=safeUrl(u.foto);
     if(_f) el.innerHTML=`<img src="${_f}" style="width:100%;height:100%;object-fit:cover;">`;
     else el.textContent=u.init||'?';
-    // bolinha verde
+    wrap.appendChild(el);
+    // bolinha verde (no wrapper, não no avatar — não estoura)
     const dot=document.createElement('div');
-    dot.style.cssText='position:absolute;bottom:0;right:0;width:7px;height:7px;border-radius:50%;background:var(--teal);border:1px solid var(--deep);';
-    el.appendChild(dot);
-    // emoji de status (canto superior direito, fora da foto)
+    dot.style.cssText='position:absolute;bottom:-1px;right:-1px;width:8px;height:8px;border-radius:50%;background:var(--teal);border:1.5px solid var(--deep);box-sizing:border-box;';
+    wrap.appendChild(dot);
+    // emoji de status (canto superior direito, no wrapper)
     if(st){
       const sb=document.createElement('div');
-      sb.style.cssText='position:absolute;top:-5px;right:-5px;font-size:11px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));';
+      sb.style.cssText='position:absolute;top:-6px;right:-6px;font-size:11px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));';
       sb.textContent=st.emoji;
-      el.style.overflow='visible';
-      el.appendChild(sb);
+      wrap.appendChild(sb);
     }
-    bar.appendChild(el);
+    bar.appendChild(wrap);
   });
   if(users.length>6){ const more=document.createElement('span'); more.style.cssText='font-size:10px;color:var(--teal);'; more.textContent='+'+( users.length-6); bar.appendChild(more); }
 }
@@ -4312,7 +4601,10 @@ function doSignIn(insc=false){
   if(insc) window._pendingInsc=true;
   window._signIn().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; window._pendingInsc=false; });
 }
-function doSignOut(){ if(window._signOut) window._signOut(); }
+function doSignOut(){ 
+  safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
+  if(window._signOut) window._signOut(); 
+}
 
 // ── Lógica de direcionamento pós-login ───────────────────────────────────
 // Chamada após Firebase retornar os squads do usuário.
@@ -4324,14 +4616,6 @@ function resolveSquadAndShow(user, userSquads) {
 
   // ADMs entram direto no squad atual (têm acesso a tudo)
   if (isAdmUser(user)) {
-    // ⚡ Garante que o ADM esteja inscrito no squad atual (evita estado inconsistente)
-    if(!userSquads || userSquads[ACTIVE_SQUAD]!==true){
-      const upd={}; upd['squads/'+ACTIVE_SQUAD]=true;
-      fbUpdate('kanban/usuarios/'+user.uid, upd);
-      if(!user._squadsPatched){ user._squadsPatched=true; }
-    }
-    window._currentUserRole='adm';
-    _applyRoleVisibility();
     showApp(user);
     return;
   }
@@ -4372,42 +4656,6 @@ function showApp(user) {
   document.getElementById('user-name').textContent = user.displayName || user.email;
   const av = document.getElementById('user-avatar');
   if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
-}
-function _devDiag(user){
-  try{
-    let box=document.getElementById('dev-diag');
-    if(!box){
-      box=document.createElement('div'); box.id='dev-diag';
-      box.style.cssText='position:fixed;bottom:8px;left:8px;z-index:999998;background:rgba(6,26,46,.97);border:1px solid #38b6ff;border-radius:8px;color:#cfe8ff;font:11px/1.6 monospace;padding:10px 30px 10px 12px;max-width:380px;box-shadow:0 6px 24px rgba(0,0,0,.5);';
-      const x=document.createElement('button'); x.textContent='✕';
-      x.style.cssText='position:absolute;top:6px;right:6px;background:none;border:none;color:#7aa;cursor:pointer;font-size:13px;';
-      x.onclick=()=>box.remove();
-      box.appendChild(x);
-      document.body.appendChild(box);
-      // 🖱 Rastreador de clique: mostra QUAL elemento recebeu o clique
-      document.addEventListener('click', (e)=>{
-        const t=e.target;
-        const card=t.closest? t.closest('.card') : null;
-        const topEl=document.elementFromPoint(e.clientX, e.clientY);
-        let line=document.getElementById('diag-click');
-        if(!line){ line=document.createElement('div'); line.id='diag-click'; line.style.cssText='margin-top:6px;padding-top:6px;border-top:1px solid rgba(56,182,255,.3);color:#ffd166;'; box.appendChild(line); }
-        line.textContent='🖱 clicou em: <'+(t.tagName||'?').toLowerCase()+(t.className&&typeof t.className==='string'?'.'+t.className.split(' ')[0]:'')+'> | em card: '+(card?('SIM ('+(card.getAttribute('data-id')||'?')+')'):'não')+' | topo real: <'+(topEl?.tagName||'?').toLowerCase()+(topEl?.className&&typeof topEl.className==='string'?'.'+topEl.className.split(' ')[0]:'')+'>';
-      }, true);
-    }
-    const isAdm=isAdmUser(user);
-    fbGet('kanban/usuarios/'+user.uid).then(snap=>{
-      const fb=snap.val();
-      const c=document.createElement('div');
-      c.innerHTML=
-        '<b style="color:#38b6ff;">🔬 Diagnóstico de acesso</b><br>'+
-        'Email: <b>'+esc(user.email||'?')+'</b><br>'+
-        'É ADM: <b style="color:'+(isAdm?'#1de9b6':'#ff6b6b')+';">'+isAdm+'</b> · Papel: <b style="color:'+(window._currentUserRole==='adm'?'#1de9b6':'#ffd166')+';">'+(window._currentUserRole||'?')+'</b><br>'+
-        'Squad: <b>'+esc(ACTIVE_SQUAD)+'</b> · FB squads: '+esc(JSON.stringify(fb?.squads||{}))+'<br>'+
-        'Em members[]: <b>'+(members.some(m=>m.uid===user.uid)?'sim':'NÃO')+'</b> ('+members.length+')<br>'+
-        '<span style="color:#7aa;">👆 Clique num card e veja abaixo o que recebe o clique</span>';
-      box.appendChild(c);
-    });
-  }catch(e){ console.error('diag err',e); }
 }
 
 function showSquadSelectorFiltered(squadIds) {
@@ -4572,6 +4820,8 @@ function _admEstaParticipando(){
   return !!(data.squads && data.squads[ACTIVE_SQUAD]===true);
 }
 function updAdmParticiparBtn(){
+  // Botão antigo da toolbar foi movido para o modal de Equipe.
+  // Mantém compat: se existir, atualiza; senão, atualiza o toggle do modal.
   _renderTeamAdmToggle();
 }
 function _renderTeamAdmToggle(){
@@ -4593,11 +4843,13 @@ async function toggleAdmParticipar(){
   const u=window._currentUser; if(!u||!isAdmUser(u)) return;
   const participando=_admEstaParticipando();
   if(participando){
+    // Sair: remove a inscrição neste squad
     if(!await uiConfirm('Voltar a ser fantasma neste quadro? Você sai da lista de membros mas mantém todo o acesso de ADM.',{title:'Sair do quadro',okText:'Sair'})) return;
     const upd={}; upd['squads/'+ACTIVE_SQUAD]=null;
     fbUpdate('kanban/usuarios/'+u.uid, upd);
     showToast('👻 Você voltou a ser fantasma neste quadro.');
   } else {
+    // Participar: inscreve no squad
     let init=window._currentUserInit;
     if(!init){ init=deriveInit(u.displayName||u.email||''); }
     const upd={init, inscritoEm:new Date().toISOString()};
@@ -4607,6 +4859,7 @@ async function toggleAdmParticipar(){
     showToast('🙋 Você agora participa deste quadro como membro.');
   }
   setTimeout(()=>{ _renderTeamAdmToggle();
+    // recarrega a lista de equipe se o modal estiver aberto
     if(document.getElementById('team-ov')){ document.getElementById('team-ov').remove(); openTeamList(); }
   }, 400);
 }
@@ -4726,17 +4979,28 @@ function renderBoard(){
   else if(raiaMode==='subteam') renderRaiaSubteam(board,activeCards);
   else renderNormal(board,activeCards);
   updateMetrics();
-  // Reaplica wrap height para modo expandido (só em modo normal, não raia)
-  if(!raiaMode) setTimeout(()=>setViewMode(viewMode), 100);
+  // Garante a classe de modo correta após render (síncrono, sem timing frágil)
+  if(!raiaMode) setViewMode(viewMode);
 }
 
 function renderNormal(board,activeCards){
-  board.className='board mode-'+(viewMode||'expanded');
+  // Usa classList ao invés de sobrescrever className inteira (evita oscilação)
+  board.classList.remove('raia-mode','mode-onepage','mode-expanded');
+  board.classList.add('mode-'+(viewMode||'expanded'));
   columns.forEach(col=>{
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
+    
+    // Drag and Drop das Colunas
+    div.setAttribute('draggable', selectMode ? 'false' : 'true');
+    div.ondragstart = e => handleColDragStart(e, col.id);
+    div.ondragend = e => handleColDragEnd(e);
+    div.ondragover = e => handleColDragOver(e, col.id);
+    div.ondragleave = e => handleColDragLeave(e);
+    div.ondrop = e => handleColDrop(e, col.id);
+
     const canCollapse=col.collapsible!==false;
     div.innerHTML=`<div class="col-hd">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
@@ -4929,7 +5193,6 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-
 let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
@@ -5004,13 +5267,11 @@ function toggleRaiaCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
   renderBoard();
-  if(viewMode==='expanded') setTimeout(()=>setViewMode('expanded'),50);
 }
 function toggleCol(id){
   if(collapsedCols.has(id)) collapsedCols.delete(id);
   else collapsedCols.add(id);
   renderBoard();
-  if(viewMode==='expanded') setTimeout(()=>setViewMode('expanded'),50);
 }
 
 function updateMetrics(){
@@ -5128,14 +5389,12 @@ function scheduleAutoSave(){
     const cl=getCL(); const rl=getRiscos();
     const user=window._currentUser?.displayName||'Usuário';
     const c=cards.find(x=>x.id===editingId); if(!c) return;
-    const _prevColAS=c.col; const _newColAS=document.getElementById('m-col').value;
     const _asBefore=_histSnapshot(c); // 📜 snapshot antes do auto-save
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
-    if(_prevColAS!==_newColAS) recordMove(c,_newColAS); // ← métricas de fluxo
     fbSaveAll(); renderBoard();
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
@@ -5306,9 +5565,6 @@ function openCard(id){
   } else {
     _cov?.classList.remove('above-camp');
   }
-  // Abre o modal PRIMEIRO — assim ele aparece mesmo que algum preenchimento falhe
-  document.getElementById('card-ov').classList.add('open');
-  try{
   populateTagSelect(); populateOwnerSelect(); populateColSelect();
   document.getElementById('m-title').value=c.title;
   document.getElementById('m-title-disp').textContent=c.title;
@@ -5345,7 +5601,6 @@ function openCard(id){
     renderCardDepMini(id);
     const _card=cards.find(c=>c.id===id); loadAttachments(_card);
   }, 100);
-  }catch(e){ _surfaceErr('openCard', e); }
 }
 
 function checkEditPermission(){
@@ -5401,7 +5656,7 @@ function saveCard(){
       item.po    = document.getElementById('m-po').value;
       item.desc  = document.getElementById('m-desc').value;
       item.descsExtra = _cleanExtraDescs();
-      item.checklist = getCL().map(c=>({t:c.t, done:false}));
+      item.checklist = getCL().map(c=>({t:c.t, done:false})); // recorrente sempre nasce desmarcado
       item.riscos = getRiscos();
       item.sp = document.getElementById('m-sp').value;
       item.priority = document.getElementById('m-priority').value;
@@ -5415,6 +5670,7 @@ function saveCard(){
     showToast('✅ Item atualizado');
     return;
   }
+  // Validação de campos obrigatórios do modelo (só ao criar card novo)
   if(!editingId && _pendingRequired.length){
     const missing=_missingRequired();
     if(missing.length){
@@ -5507,6 +5763,7 @@ function renderCL(cl){
   cl.forEach((item,i)=>{
     const d=document.createElement('div');
     d.className='cl-item'; d.draggable=true; d.dataset.idx=i;
+    // Drag events
     d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; w._dragIdx=i; d.classList.add('dragging'); });
     d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); w.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
     d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
@@ -5518,10 +5775,13 @@ function renderCL(cl){
       const cur=getCL(); const [moved]=cur.splice(from,1); cur.splice(to,0,moved);
       renderCL(cur); scheduleAutoSave();
     });
+    // Checkbox
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
     cb.addEventListener('change',()=>scheduleAutoSave());
+    // Handle de drag
     const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
     handle.addEventListener('mousedown',()=>d.draggable=true);
+    // Texto editável inline
     const span=document.createElement('span'); span.className='cl-it'; span.textContent=item.t;
     span.title='Clique para editar';
     let _prev='';
@@ -5539,6 +5799,7 @@ function renderCL(cl){
       if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
       if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
     });
+    // Botão deletar
     const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
     del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
     d.append(handle,cb,span,del);
@@ -5644,7 +5905,6 @@ function computeAvisosQuadro(){
   return out.sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || String(b.ts).localeCompare(String(a.ts)));
 }
 function _collectLembretes(){
-  // Usa ?? true/false para fallback caso o element não esteja acessível (ex: iOS Safari)
   const f={
     gestao:  document.getElementById('lf-gestao')?.checked  ?? true,
     po:      document.getElementById('lf-po')?.checked      ?? true,
@@ -5673,7 +5933,6 @@ function toggleLembretes(){
   if(!wasOpen){
     _populateLemTypeSelect();
     renderLembretes();
-    // Só marca como "visto" se a lista realmente tem algo pra mostrar
     const { list } = _collectLembretes();
     if(list.length > 0){
       _lemSeenTs=Date.now();
@@ -6099,8 +6358,11 @@ function openTempoReport(){
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
+  const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
   const cutoff = periodo==='all' ? 0 : Date.now()-parseInt(periodo)*86400000;
-  const porTag={};
+  
+  const porGrupo={};
+
   cards.filter(c=>!c.archived).forEach(c=>{
     const t=_cardTempos(c);
     if(escopo==='done' && !t.done) return;
@@ -6108,12 +6370,21 @@ function _computeTempoData(){
       const ref = c.flow?.doneAt ? new Date(c.flow.doneAt).getTime() : (c.createdAt?new Date(c.createdAt).getTime():0);
       if(ref < cutoff) return;
     }
-    const tagsDoCard=getCardTags(c);
-    const lista = tagsDoCard.length?tagsDoCard:['__sem_tag__'];
+    
+    // Define a chave de agrupamento dependendo da seleção
+    let lista = [];
+    if(agrupamento === 'tag'){
+      const tagsDoCard=getCardTags(c);
+      lista = tagsDoCard.length ? tagsDoCard : ['__sem_tag__'];
+    } else {
+      lista = c.owner ? [c.owner] : ['__sem_dono__'];
+    }
+
     const porCol = (flowConfig.reportCols&&flowConfig.reportCols.length)? _cardTempoPorColuna(c) : null;
-    lista.forEach(tagId=>{
-      if(!porTag[tagId]) porTag[tagId]={count:0, leadSum:0, leadN:0, cycleSum:0, cycleN:0, doneCount:0, stages:{}};
-      const g=porTag[tagId];
+    
+    lista.forEach(groupId=>{
+      if(!porGrupo[groupId]) porGrupo[groupId]={count:0, leadSum:0, leadN:0, cycleSum:0, cycleN:0, doneCount:0, stages:{}};
+      const g=porGrupo[groupId];
       g.count++;
       if(t.done) g.doneCount++;
       if(t.lead!=null){ g.leadSum+=t.lead; g.leadN++; }
@@ -6121,10 +6392,23 @@ function _computeTempoData(){
       if(porCol){ flowConfig.reportCols.forEach(cid=>{ if(porCol[cid]!=null){ g.stages[cid]=(g.stages[cid]||0)+porCol[cid]; } }); }
     });
   });
-  const rows=Object.entries(porTag).map(([tagId,g])=>{
-    const tag = tagId==='__sem_tag__' ? {label:'(sem tag)', pi:-1} : getTag(tagId);
+
+  const rows=Object.entries(porGrupo).map(([groupId,g])=>{
+    let label = groupId;
+    let p = {bg:'rgba(120,120,120,.15)', b:'rgba(120,120,120,.3)', c:'var(--txt3)'}; // default cinza
+
+    if(agrupamento === 'tag'){
+      const tag = groupId==='__sem_tag__' ? {label:'(sem tag)', pi:-1} : getTag(groupId);
+      label = tag?.label || groupId;
+      if(tag && tag.pi >= 0) p = getPal(tag.pi);
+    } else {
+      const membro = members.find(m => m.init === groupId);
+      label = membro ? `${membro.init} · ${membro.name.split(' ')[0]}` : (groupId==='__sem_dono__' ? '(sem responsável)' : groupId);
+      if(groupId!=='__sem_dono__') p = {bg:'rgba(56,182,255,.15)', b:'rgba(56,182,255,.3)', c:'#38b6ff'}; // azul para usuários
+    }
+
     return {
-      tagId, label: tag?.label||tagId, pi: tag?.pi,
+      groupId, label, p,
       count: g.count, doneCount: g.doneCount,
       leadAvg: g.leadN? g.leadSum/g.leadN : null,
       leadTotal: g.leadSum,
@@ -6133,6 +6417,7 @@ function _computeTempoData(){
       stages: g.stages||{},
     };
   }).sort((a,b)=>b.leadTotal-a.leadTotal);
+  
   _tempoData=rows;
   return rows;
 }
@@ -6140,30 +6425,39 @@ function renderTempoReport(){
   const body=document.getElementById('tempo-body'); if(!body) return;
   const allRows=_computeTempoData();
   let rows=allRows;
-  const fTag=document.getElementById('tempo-tag');
-  if(fTag){
-    const prev=fTag.value;
-    const opts=allRows.map(r=>`<option value="${esc(r.tagId)}">${esc(r.label)}</option>`).join('');
-    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+opts;
-    fTag.value=prev;
+  const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
+
+  // Popula o dropdown de filtro secundário (adapta se é tag ou usuário)
+  const fFilter=document.getElementById('tempo-tag');
+  if(fFilter){
+    const prev=fFilter.value;
+    const placeholder = agrupamento === 'tag' ? '🏷 Todas as tags' : '👤 Todos os responsáveis';
+    const opts=allRows.map(r=>`<option value="${esc(r.groupId)}">${esc(r.label)}</option>`).join('');
+    fFilter.innerHTML=`<option value="">${placeholder}</option>`+opts;
+    fFilter.value=prev;
   }
+  
   const totalLeadGeral=allRows.reduce((s,r)=>s+r.leadTotal,0);
-  const tagSel=fTag?.value||'';
-  if(tagSel) rows=allRows.filter(r=>r.tagId===tagSel);
-  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo/tag selecionado.</div>'; return; }
+  const filterSel=fFilter?.value||'';
+  if(filterSel) rows=allRows.filter(r=>r.groupId===filterSel);
+  
+  if(!rows.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:10px 2px;">Nenhum card no período/escopo selecionado.</div>'; return; }
+  
   const totalCards=rows.reduce((s,r)=>s+r.count,0);
   const totalLead=rows.reduce((s,r)=>s+r.leadTotal,0);
-  let html=`<div class="tempo-intro">Quanto tempo o time investiu em cada tipo de demanda (por tag). <b>Lead</b> = da criação até concluir. <b>Cycle</b> = do início do trabalho até concluir.</div>`;
+  
+  const tipoDesc = agrupamento === 'tag' ? 'tipo de demanda (por tag)' : 'membro do time (por responsável)';
+  let html=`<div class="tempo-intro">Tempo investido em cada ${tipoDesc}. <b>Lead</b> = da criação até concluir. <b>Cycle</b> = do início do trabalho até concluir.</div>`;
   html+=`<div class="tempo-cards">`;
+  
   rows.forEach(r=>{
-    const p=r.pi>=0?getPal(r.pi):{bg:'rgba(120,120,120,.15)',b:'rgba(120,120,120,.3)',c:'var(--txt3)'};
     const pctTempo = totalLeadGeral>0? Math.round(r.leadTotal/totalLeadGeral*100) : 0;
     html+=`<div class="tempo-row">
       <div class="tempo-row-hd">
-        <span class="tempo-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(r.label)}</span>
+        <span class="tempo-tag" style="background:${r.p.bg};border-color:${r.p.b};color:${r.p.c}">${esc(r.label)}</span>
         <span class="tempo-pct">${pctTempo}% do tempo</span>
       </div>
-      <div class="tempo-bar"><div class="tempo-bar-fill" style="width:${pctTempo}%;background:${p.c};"></div></div>
+      <div class="tempo-bar"><div class="tempo-bar-fill" style="width:${pctTempo}%;background:${r.p.c};"></div></div>
       <div class="tempo-metrics">
         <div class="tempo-met"><span class="tempo-met-v">${r.count}</span><span class="tempo-met-l">cards${r.doneCount<r.count?' ('+r.doneCount+' concl.)':''}</span></div>
         <div class="tempo-met"><span class="tempo-met-v">${_fmtHoras(r.leadAvg)}</span><span class="tempo-met-l">lead médio</span></div>
@@ -6177,16 +6471,22 @@ function renderTempoReport(){
     </div>`;
   });
   html+=`</div>`;
-  html+=`<div class="tempo-total">${tagSel?'Tag selecionada: ':'Total: '}<b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado${tagSel&&totalLeadGeral>0?' · <b>'+Math.round(totalLead/totalLeadGeral*100)+'%</b> do tempo total':''}</div>`;
+  html+=`<div class="tempo-total">${filterSel?'Item selecionado: ':'Total: '}<b>${totalCards}</b> cards · <b>${_fmtHoras(totalLead)}</b> de lead time somado${filterSel&&totalLeadGeral>0?' · <b>'+Math.round(totalLead/totalLeadGeral*100)+'%</b> do tempo total':''}</div>`;
   body.innerHTML=html;
 }
+
 function exportTempoCSV(){
   let rows=_tempoData||_computeTempoData();
-  const tagSel=document.getElementById('tempo-tag')?.value||'';
-  if(tagSel) rows=rows.filter(r=>r.tagId===tagSel);
+  const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
+  const filterSel=document.getElementById('tempo-tag')?.value||'';
+  if(filterSel) rows=rows.filter(r=>r.groupId===filterSel);
+  
   if(!rows.length){ showToast('Nada para exportar.'); return; }
   const esc2=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-  let csv='Tag;Cards;Concluidos;Lead medio (h);Cycle medio (h);Lead total (h);Cycle total (h)\n';
+  
+  const colNome = agrupamento === 'tag' ? 'Tag' : 'Responsavel';
+  let csv=`${colNome};Cards;Concluidos;Lead medio (h);Cycle medio (h);Lead total (h);Cycle total (h)\n`;
+  
   rows.forEach(r=>{
     csv+=[esc2(r.label), r.count, r.doneCount,
       r.leadAvg!=null?r.leadAvg.toFixed(1):'', r.cycleAvg!=null?r.cycleAvg.toFixed(1):'',
@@ -6194,7 +6494,7 @@ function exportTempoCSV(){
   });
   const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download='tempo-por-tag-'+ACTIVE_SQUAD+'-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.href=url; a.download=`tempo-por-${agrupamento}-${ACTIVE_SQUAD}-`+new Date().toISOString().split('T')[0]+'.csv';
   a.click(); URL.revokeObjectURL(url);
   showToast('⬇ CSV exportado.');
 }
@@ -6655,6 +6955,7 @@ async function _campInsertMention(kind){
   if(kind==='user'){
     const mems = (typeof members!=='undefined'?members:[]).filter(m=>m.init);
     if(!mems.length){ uiAlert('Nenhum membro disponível para mencionar neste squad.'); return; }
+    // monta lista pra escolher
     const opts = mems.map(m=>`<div onclick="_campDoInsertMention('user','${esc(getMemberHandle(m))}')" style="padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'"><span style="width:22px;height:22px;border-radius:999px;background:rgba(56,182,255,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${esc(m.init)}</span>${esc(m.name||m.init)}</div>`).join('');
     _showMentionPicker('Mencionar pessoa', opts);
   } else {
@@ -6859,7 +7160,7 @@ function _filterTimeline(){
       corpo.innerHTML = esc(orig).replace(re, '<mark style="background:rgba(255,209,102,.35);color:var(--txt);border-radius:2px;">$1</mark>');
     });
   } else {
-    // Limpar highlights — restaura o HTML formatado original
+    // Limpar highlights — restaura o HTML formatado original (não texto puro)
     document.querySelectorAll('.camp-entry-corpo[data-orig-html]').forEach(el=>{
       el.innerHTML = el.getAttribute('data-orig-html');
       el.removeAttribute('data-orig-html');
@@ -7031,23 +7332,12 @@ async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card perm
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
 // ═══════════════════════════════════════════════════════
-function openCardFnModal(){
-  document.getElementById('card-fn-ov')?.classList.add('open');
-}
-function toggleCampMetaMobile(){
-  const sb = document.getElementById('camp-sidebar-el');
-  const btn = document.getElementById('camp-meta-toggle-btn');
-  if(!sb || !btn) return;
-  const isOpen = sb.classList.contains('camp-sidebar-open');
-  sb.classList.toggle('camp-sidebar-open', !isOpen);
-  btn.classList.toggle('open', !isOpen);
-}
-
 function openQL(tipo){
   currentQL=tipo;
   if(!qlItems[tipo]) qlItems[tipo]=[];
   const titles={recorrentes:'🔁 Itens recorrentes',modelos:'📋 Cards modelo',agendamentos:'📅 Cards agendados'};
   document.getElementById('ql-title').textContent=titles[tipo];
+  // Popula tag select
   document.getElementById('ql-new-tag').innerHTML=tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
   renderQLBody();
   document.getElementById('ql-ov').classList.add('open');
@@ -7094,12 +7384,38 @@ function renderQLBody(){
       const lbl = jaCriado ? '✅ Criado '+(item.criadoEm||'') : (temData ? _fmtDataAg(item.data) : 'Definir data');
       recBtn=`<button class="btn btn-sm" onclick="openAgendamentoModal(${i})" title="Data de entrada" style="font-size:10px;color:${jaCriado?'var(--txt3)':(temData?'var(--teal)':'var(--txt2)')};border-color:${temData&&!jaCriado?'rgba(29,233,182,.4)':'var(--glass-b)'};">📅 ${esc(lbl)}</button>`;
     }
-    const usarBtn = currentQL==='agendamentos' ? '' : `<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button>`;
+    const usarBtn = currentQL==='agendamentos'
+      ? '' // agendamentos não têm "+ Usar" manual, entram por data
+      : `<button class="btn btn-sm btn-teal" onclick="usarQLItem(${i})">+ Usar</button>`;
     row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(item.title)}</span>${recBtn}${reqBtn}<button class="btn btn-sm" onclick="openQLEdit(${i})" title="Editar conteúdo" style="font-size:10px;">✏️</button>${usarBtn}<button class="icon-btn" onclick="delQLItem(${i})">✕</button>`;
     body.appendChild(row);
   });
 }
 function _fmtDataAg(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); }catch(e){ return d; } }
+
+let _agEditIdx = -1;
+function openAgendamentoModal(i){
+  _agEditIdx = i;
+  const item = (qlItems.agendamentos||[])[i]; if(!item) return;
+  if(item.criado){ showToast('Esse card já entrou no quadro.'); return; }
+  document.getElementById('agcfg-data').value = item.data||'';
+  const colSel = document.getElementById('agcfg-col');
+  colSel.innerHTML = columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  colSel.value = item.col||(columns[0]?.id)||'';
+  document.getElementById('agcfg-ov').classList.add('open');
+}
+function salvarAgendamento(){
+  if(_agEditIdx<0) return;
+  const item = (qlItems.agendamentos||[])[_agEditIdx]; if(!item) return;
+  const data = document.getElementById('agcfg-data').value;
+  if(!data){ showToast('Escolha uma data.'); return; }
+  item.data = data;
+  item.col  = document.getElementById('agcfg-col').value;
+  fbSet(FB+'/ql_items',qlItems);
+  closeOv('agcfg-ov');
+  renderQLBody();
+  showToast('📅 Agendamento salvo para '+_fmtDataAg(data));
+}
 // Campos que podem ser exigidos num modelo
 const REQ_FIELDS=[
   {key:'title', label:'Título'},
@@ -7329,6 +7645,7 @@ function processAgendamentos(){
 function processRelembreteAuto(){
   if(!window._fbReady) return;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
+  // Cards criados automaticamente, ainda não vistos, criados há 1-3 dias
   const pendentes = cards.filter(c=>{
     if(!c._autoCriadoEm || c._autoVisto!==false || c.archived) return false;
     const criadoEm=new Date(c._autoCriadoEm+'T00:00:00'); criadoEm.setHours(0,0,0,0);
@@ -7336,10 +7653,11 @@ function processRelembreteAuto(){
     return dias>=1 && dias<=3;
   });
   if(!pendentes.length) return;
+  // Só relembra uma vez por dia: guarda data do último relembrete por card
   const hojeStr=new Date().toISOString().split('T')[0];
   let lemPropMudou=false;
   pendentes.forEach(card=>{
-    if(card._autoRelembradoEm===hojeStr) return;
+    if(card._autoRelembradoEm===hojeStr) return; // já relembrou hoje
     const dias=Math.round((hoje-new Date(card._autoCriadoEm+'T00:00:00'))/86400000);
     const emoji=card._autoTipo==='agendado'?'📅':'🔁';
     const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
@@ -7350,6 +7668,7 @@ function processRelembreteAuto(){
     card._autoRelembradoEm=hojeStr;
     const idx=cards.findIndex(x=>x.id===card.id);
     if(idx>=0) fbSet(FB+'/cards/'+idx+'/_autoRelembradoEm', hojeStr);
+    // notifica o responsável também
     if(card.owner){
       const uid=getUidByInit(card.owner);
       if(uid) createNotif(uid,'recorrente',emoji+' Card ainda não aberto', card.title, card.id);
@@ -7364,19 +7683,20 @@ function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items',qlIt
 // ── Modal de configuração de recorrência ──
 let _recEditIdx=null;
 let _qlEditIdx = -1;
-let _editingQLItem = null;
+let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente via modal de card
 
 // Edição completa: abre o item como se fosse um card real no quadro
 function openQLEdit(i){
   const tipo = currentQL;
   const item = (qlItems[tipo]||[])[i]; if(!item) return;
   _editingQLItem = { tipo, idx:i };
-  const tags2 = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
+  // Cria um card temporário em memória a partir do item
+  const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const tempId = '__qltmp__'+Date.now();
   const tempCard = {
     id: tempId,
     col: item.col||(columns[0]?.id)||'backlog',
-    tags: tags2, tag:tags2[0]||'',
+    tags, tag:tags[0]||'',
     title: item.title||'',
     desc: item.desc||'', descsExtra: Array.isArray(item.descsExtra)?item.descsExtra.slice():[],
     owner: item.owner||'', due:'', po: item.po||'',
@@ -7387,42 +7707,23 @@ function openQLEdit(i){
     archived:false, created:'(item salvo)', edited:'(item salvo)',
     createdAt:'—', editedAt:'—', _isQLTemp:true,
   };
-  cards.push(tempCard);
+  cards.push(tempCard); // temporário; será removido ao fechar/salvar
   closeOv('ql-ov');
   openCard(tempId);
+  // Ajusta título do modal e esconde coisas que não fazem sentido para um item
   setTimeout(()=>{
+    const lbl = {recorrentes:'🔁 Editar recorrente',agendamentos:'📅 Editar agendamento',modelos:'📋 Editar modelo'}[tipo]||'Editar item';
+    const disp=document.getElementById('m-title-disp'); if(disp) disp.setAttribute('data-qlmode',lbl);
     const btnDel=document.getElementById('btn-del-card'); if(btnDel) btnDel.style.visibility='hidden';
   }, 50);
 }
+
+// Remove card temporário de QL ao fechar o modal sem salvar
 function _cleanupQLTemp(){
   if(_editingQLItem){
     cards = cards.filter(c=>!c._isQLTemp);
     _editingQLItem = null;
   }
-}
-
-let _agEditIdx = -1;
-function openAgendamentoModal(i){
-  _agEditIdx = i;
-  const item = (qlItems.agendamentos||[])[i]; if(!item) return;
-  if(item.criado){ showToast('Esse card já entrou no quadro.'); return; }
-  document.getElementById('agcfg-data').value = item.data||'';
-  const colSel = document.getElementById('agcfg-col');
-  colSel.innerHTML = columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
-  colSel.value = item.col||(columns[0]?.id)||'';
-  document.getElementById('agcfg-ov').classList.add('open');
-}
-function salvarAgendamento(){
-  if(_agEditIdx<0) return;
-  const item = (qlItems.agendamentos||[])[_agEditIdx]; if(!item) return;
-  const data = document.getElementById('agcfg-data').value;
-  if(!data){ showToast('Escolha uma data.'); return; }
-  item.data = data;
-  item.col  = document.getElementById('agcfg-col').value;
-  fbSet(FB+'/ql_items',qlItems);
-  closeOv('agcfg-ov');
-  renderQLBody();
-  showToast('📅 Agendamento salvo para '+_fmtDataAg(data));
 }
 
 function openRecorrenciaModal(i){
@@ -7581,21 +7882,9 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
-function openCfg(tab){
-  // Abre o overlay PRIMEIRO (mesmo que o preenchimento de uma aba falhe)
-  document.getElementById('cfg-ov').classList.add('open');
-  try{ swCfgTab(tab||'agil'); }
-  catch(e){ _surfaceErr('openCfg/swCfgTab', e); }
-}
-function _surfaceErr(where, e){
-  console.error('['+where+']', e);
-  try{
-    const box=document.getElementById('dev-diag');
-    if(box){ const d=document.createElement('div'); d.style.cssText='margin-top:6px;color:#ff6b6b;'; d.textContent='❌ '+where+': '+(e.message||e); box.appendChild(d); }
-  }catch(_){}
-}
+function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
-  const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
@@ -7608,8 +7897,10 @@ function swCfgTab(tab){
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
+  if(tab==='calendario'){ 
+    if(typeof renderCalendarList === 'function') renderCalendarList(); 
+  }
 }
-
 // --- Ágil ---
 function calcSprintEnd(){
   const start=document.getElementById('cfg-sprint-start')?.value;
@@ -7641,6 +7932,7 @@ function saveAgilCfg(){
     const remoteVal = snap.val();
     const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
     const localIds = new Set(columns.map(c=>c.id));
+    // extraRemote = colunas remotas que não estão localmente E que não foram excluídas de propósito
     const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
     const merged = extraRemote.length ? [...columns, ...extraRemote] : columns;
     if(extraRemote.length){
@@ -7648,6 +7940,7 @@ function saveAgilCfg(){
       showToast('ℹ Coluna(s) criada(s) por outro usuário foram preservadas: '+extraRemote.map(c=>c.name).join(', '));
     }
     fbSet(FB+'/columns', merged);
+    // Persiste os IDs de colunas excluídas pra elas não voltarem em outro device/reload
     fbSet(FB+'/deleted_cols', Array.from(_deletedColIds));
     applyAgilCfg();
     renderBoard();
@@ -7689,7 +7982,7 @@ function renderColEditor(){
   });
 }
 function addColumn(){ const name=document.getElementById('new-col-name').value.trim(); if(!name) return; const color=document.getElementById('new-col-color').value; columns.push({id:'col_'+Date.now(),name,color,collapsible:false}); document.getElementById('new-col-name').value=''; renderColEditor(); }
-let _deletedColIds = new Set();
+let _deletedColIds = new Set(); // IDs de colunas excluídas de propósito (não devem voltar no merge)
 async function delColumn(i){ if(columns.length<=1) return; if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return; const oldId=columns[i].id; _deletedColIds.add(oldId); cards.forEach(c=>{ if(c.col===oldId) c.col=columns[0].id; }); columns.splice(i,1); renderColEditor(); }
 function moveCol(i,dir){ const ni=i+dir; if(ni<0||ni>=columns.length) return; [columns[i],columns[ni]]=[columns[ni],columns[i]]; renderColEditor(); }
 
@@ -8024,7 +8317,7 @@ function executeTool(name,input){
       if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
-      recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'—'), '🤖 Agente Ágil'); // 📜
+      recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'—'), '🤖 Agente Ágil');
       renderBoard(); fbSaveAll();
       return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo}`};
     }
@@ -8032,7 +8325,7 @@ function executeTool(name,input){
       const c=cards.find(x=>x.id===input.card_id);
       if(!c||!c.checklist||c.checklist.length<=input.item_index) return{ok:false,msg:'Item não encontrado'};
       c.checklist[input.item_index].done=input.concluido; c.edited=user; c.editedAt=td;
-      { const nd=(c.checklist||[]).filter(i=>i&&i.done).length, nt=(c.checklist||[]).length; recordHistory(c, 'checklist: '+nd+'/'+nt+' concluídos', '🤖 Agente Ágil'); } // 📜
+      { const nd=(c.checklist||[]).filter(i=>i&&i.done).length, nt=(c.checklist||[]).length; recordHistory(c, 'checklist: '+nd+'/'+nt+' concluídos', '🤖 Agente Ágil'); }
       renderBoard(); fbSaveAll();
       return{ok:true,msg:`"${c.checklist[input.item_index].t}" ${input.concluido?'marcado':'desmarcado'}`};
     }
@@ -8091,7 +8384,7 @@ function executeTool(name,input){
         return{ok:false,msg:`Iniciais "${owner}" não correspondem a nenhum membro. Disponíveis: ${members.map(m=>m.init+':'+m.name.split(' ')[0]).join(', ')}`};
       }
       c.owner=owner; c.edited=user; c.editedAt=td;
-      { const m=members.find(x=>x.init===owner); recordHistory(c, 'definiu responsável: '+(m?m.name:(owner||'—')), '🤖 Agente Ágil'); } // 📜
+      { const m=members.find(x=>x.init===owner); recordHistory(c, 'definiu responsável: '+(m?m.name:(owner||'—')), '🤖 Agente Ágil'); }
       renderBoard(); fbSaveAll();
       const memberName=members.find(m=>m.init===owner)?.name||owner;
       return{ok:true,msg:`Responsável de "${c.title}" → ${memberName} (${owner})`};
@@ -8101,7 +8394,7 @@ function executeTool(name,input){
       if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.priority=input.prioridade||''; c.edited=user; c.editedAt=td;
-      recordHistory(c, 'alterou prioridade: '+(input.prioridade||'—'), '🤖 Agente Ágil'); // 📜
+      recordHistory(c, 'alterou prioridade: '+(input.prioridade||'—'), '🤖 Agente Ágil');
       renderBoard(); fbSaveAll();
       const labels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa','':'removida'};
       return{ok:true,msg:`Prioridade de "${c.title}" → ${labels[input.prioridade||'']}`};
@@ -8273,6 +8566,7 @@ function renderMd(txt){
     return '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+esc(url)+'">'+esc(label)+'</a>';
   });
   // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
+  // Evita mexer em URLs que já estão dentro de atributos HTML (href/src/onclick) já gerados.
   txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
     const safe=esc(url);
     return pre + '<a href="'+safe+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+safe+'</a>';
@@ -8449,6 +8743,8 @@ function parseTrelloJSON(raw){
   });
 
   // ── Resolução semântica → id real ──
+  // As keys do LISTA_SEMANTICA usam strings como 'todo','backlog','progress','blocker','done'.
+  // Precisamos convertê-las para o id real das colunas do board.
   const SEMANTIC_TO_REAL = {
     todo:     columns.find(c=>/to.?do|a fazer|backlog.*semana|sprint|próxim/i.test(c.name))?.id || columns[1]?.id || columns[0]?.id,
     backlog:  columns.find(c=>/backlog/i.test(c.name))?.id || columns[0]?.id,
@@ -8456,17 +8752,17 @@ function parseTrelloJSON(raw){
     blocker:  columns.find(c=>/bloqueado|bloqueada|stuck|blocked/i.test(c.name))?.id || null,
     done:     columns.find(c=>/feito|done|conclu|pronto|entregue|finalizado/i.test(c.name))?.id || columns[columns.length-1]?.id,
   };
+  // Aplica resolução no listColMap
   Object.keys(listColMap).forEach(lid=>{
     const sem = listColMap[lid].col;
     const real = SEMANTIC_TO_REAL[sem];
     if(real) listColMap[lid].col = real;
     else if(!columns.find(c=>c.id===sem)){
+      // col semântico não resolveu e não é id válido → usa primeira coluna
       listColMap[lid].col = columns[0]?.id||'backlog';
       listColMap[lid].mapped = false;
     }
   });
-
-  // ── 2. IDENTIFICAÇÃO DE LABELS ESPECIAIS ───────────────────────
   // Labels que indicam ESTADO (não canal/tipo) → viram impedimento ou risco
   const LABEL_BLOCKER_KEYS=['bloqueada','bloqueado','travada','travado','impedida','impedido','stuck','blocked'];
   const LABEL_RISCO_KEYS=['risco','risk','atenção','atencao','alerta'];
@@ -8596,8 +8892,11 @@ function parseTrelloJSON(raw){
     const colInfo=listColMap[card.idList]||{col:columns[0]?.id||'backlog',mapped:false};
 
     // Tag: primeiro label que NÃO seja especial
-    const firstTagLabel=card.idLabels?.find(lid=>labelTagMap[lid]);
-    const tagId=firstTagLabel?labelTagMap[firstTagLabel]:null;
+   // Tags: coleta todas as labels que NÃO sejam especiais
+const cardTags = (card.idLabels || [])
+  .map(lid => labelTagMap[lid])
+  .filter(Boolean);
+const tagId = cardTags[0] || '';
 
     // Responsável: primeiro membro resolvido
     const ownerInit=card.idMembers?.length?resolveOwner(card.idMembers[0]):'';
@@ -8637,11 +8936,12 @@ function parseTrelloJSON(raw){
     // Prazo
     const due=card.due?card.due.split('T')[0]:'';
 
-    return{
-      id:'trello_'+card.id.substring(0,10),
-      col:colInfo.col,
-      tag:tagId||'',
-      title:card.name,
+    return {
+      id: 'trello_' + card.id.substring(0, 10),
+      col: colInfo.col,
+      tag: tagId,
+      tags: cardTags,
+      title: card.name,
       desc,
       owner:ownerInit,
       participants,
@@ -8930,11 +9230,15 @@ const HELP_CONTENT = {
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que aparecem toda sprint. Configure em Recorrentes na toolbar. Ao clicar em Usar, o card é criado pré-preenchido com título e tag.' },
+    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com todas as informações: tag, descrição, Insights do PO, checklist e riscos. Clique no ícone 📋 em qualquer card do board para salvá-lo como modelo. Acesse em Modelos na toolbar.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, etc.). Para excluir um evento, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=midia, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
+    { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
+    { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
+    { icon:'⏱', title:'Relatório Tempo por Tag', text:'Clique em ⏱ Tempo por tag na toolbar para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
@@ -8960,6 +9264,7 @@ const HELP_CONTENT = {
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com seis ações em massa: 📥 Mover para coluna, 👤 Responsável, 🏷 Tag (adicionar ou substituir), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
     { icon:'📱', title:'Arrastar card no celular', text:'No celular, para mover um card entre colunas, segure o dedo nele por um instante até ele "levantar" (vibra e ganha destaque) e então arraste. Um toque rápido ou arrastar direto rola o board normalmente, sem mover cards por engano.' },
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
+    { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
   ],
   agente: [
     { icon:'🤖', title:'O que é o Agente Ágil', text:'É uma IA (Claude Haiku) que analisa e age sobre o board em tempo real. Ele lê o estado atual de todos os cards — título, responsável, prazo, checklist, riscos, OKR — e as configurações da sprint antes de responder. Disponível para PO e Organizadores.' },
@@ -9003,6 +9308,7 @@ const HELP_CONTENT = {
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
+    { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
     { icon:'👥', title:'Equipe do quadro', text:'Clique nos avatares de usuários online (topo direito) para abrir a lista completa da equipe do squad: quem está online, papel de cada um (Membro, Organizador, PO, Admin) e iniciais. Útil para saber quem participa do quadro.' },
   ],
   kudos: [
@@ -9720,6 +10026,7 @@ function insertMention(ta, atPos, curPos, init){
 (()=>{ const old=safeLS.getItem('boardViewMode'); if(old==='expanded') safeLS.setItem('boardViewMode2','expanded'); safeLS.removeItem('boardViewMode'); })();
 let viewMode = 'expanded';
 function setViewMode(mode){
+  // One-page removido — board sempre no modo expandido
   mode = 'expanded';
   viewMode='expanded';
   safeLS.setItem('boardViewMode2','expanded');
@@ -9730,9 +10037,9 @@ function setViewMode(mode){
   }
   const wrap=document.getElementById('board-wrap');
   if(wrap){
-    // Limpa estilos inline da abordagem antiga (que rolava o wrap inteiro)
-    wrap.style.maxHeight=''; wrap.style.overflowY=''; wrap.style.overflowX=''; wrap.style.paddingBottom='';
     wrap.classList.toggle('mode-expanded-wrap', mode==='expanded');
+    // Mede a distância do topo do board até o topo da viewport e ajusta a altura
+    // dinamicamente, pra funcionar mesmo quando a toolbar quebra em 2 linhas.
     if(mode==='expanded'){
       const measure=()=>{
         const top=wrap.getBoundingClientRect().top;
@@ -9747,13 +10054,14 @@ function setViewMode(mode){
       requestAnimationFrame(measure);
     }
   }
+  // A altura das colunas agora é 100% controlada por CSS (.col-body max-height),
+  // sem cálculo de getBoundingClientRect — elimina o bug de timing onde a
+  // 4ª coluna e o WIP sumiam no primeiro carregamento.
 }
 function applyViewMode(){
-  // Delay one frame so board is laid out before height calculation
-  setTimeout(()=>setViewMode(viewMode), 150);
+  setViewMode(viewMode);
 }
 window.addEventListener('resize', ()=>{ if(viewMode==='expanded') setViewMode('expanded'); });
-
 // ── CALENDÁRIO ───────────────────────────────────────────────────
 const EV_COLORS=[
   {id:'blue',   bg:'rgba(45,110,220,.92)',  txt:'#fff'},
@@ -9768,13 +10076,46 @@ let calMonth=new Date().getMonth();
 let calEvents=[];
 let editingEvId=null;
 
+let calViewMode = 'both';
+
+function changeCalView(mode) {
+  calViewMode = mode;
+  document.querySelectorAll('#cal-ov .view-btn').forEach(btn => {
+    if (btn.hasAttribute('data-mode')) {
+      btn.classList.remove('active');
+      if (btn.getAttribute('data-mode') === mode) btn.classList.add('active');
+    }
+  });
+  renderCal();
+}
+
+function populateCalFilters() {
+  const ownerSel = document.getElementById('cal-f-owner');
+  if(ownerSel) {
+    const cardOwners = cards.filter(c => c.owner).map(c => c.owner);
+    const extraOwners = [...new Set(cardOwners)].filter(o => !members.find(m => m.init === o));
+    const allOwnerOptions = members.map(m => `<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`)
+      .concat(extraOwners.map(o => `<option value="${esc(o)}">${esc(o)}</option>`));
+    ownerSel.innerHTML = '<option value="">👤 Usuário</option>' + allOwnerOptions.join('');
+  }
+  const subSel = document.getElementById('cal-f-subteam');
+  if(subSel) {
+    subSel.innerHTML = '<option value="">👥 Subtime</option>' + subteams.map(st => `<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
+  }
+  const tagSel = document.getElementById('cal-f-tag');
+  if(tagSel) {
+    tagSel.innerHTML = '<option value="">🏷️ Tag</option>' + tags.map(t => `<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+  }
+}
+
 function openCal(){
   const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
+  populateCalFilters();
   renderCal();
   document.getElementById('cal-ov').classList.add('open');
-
 }
+
 function calNav(dir){
   calMonth+=dir;
   if(calMonth>11){calMonth=0;calYear++;}
@@ -9783,21 +10124,85 @@ function calNav(dir){
 }
 function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCal(); }
 
-function renderBoardCalLegend(){
-  const el=document.getElementById('board-cal-legend'); if(!el) return;
-  const CAL_LEGEND_COLORS=[
-    {bg:'rgba(45,110,220,.92)',  id:'blue',   label:'Evento geral'},
-    {bg:'rgba(20,200,155,.92)', id:'teal',   label:'Sprint/Time'},
-    {bg:'rgba(245,195,80,.95)',id:'warn',   label:'Prazo'},
-    {bg:'rgba(240,90,90,.92)',id:'danger', label:'Urgente'},
-    {bg:'rgba(40,170,245,.92)', id:'cyan',   label:'Outros'},
-    {bg:'rgba(160,90,230,.92)', id:'purple', label:'Gestão Digital'},
-  ];
-  // Mostra SEMPRE todas as cores como legenda explicativa
-  el.innerHTML='<span style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-right:2px;align-self:center;">Cores:</span>'+
-    CAL_LEGEND_COLORS.map(col=>'<div class="cal-leg-item"><div class="cal-leg-dot" style="background:'+col.bg+';"></div>'+col.label+'</div>').join('');
+function toggleCalLegendPopup(e, type) {
+  e.stopPropagation();
+  const targetId = 'cal-legend-pop-' + type;
+  const otherId = 'cal-legend-pop-' + (type === 'events' ? 'cards' : 'events');
+  
+  const target = document.getElementById(targetId);
+  const other = document.getElementById(otherId);
+  
+  if (other) other.style.display = 'none';
+  
+  if (target) {
+    const isOpen = target.style.display === 'flex';
+    target.style.display = isOpen ? 'none' : 'flex';
+    
+    if (!isOpen) {
+      const close = (event) => {
+        if (!target.contains(event.target)) {
+          target.style.display = 'none';
+          document.removeEventListener('click', close);
+        }
+      };
+      setTimeout(() => document.addEventListener('click', close), 10);
+    }
+  }
 }
-function renderCal(){
+
+function renderBoardCalLegend(){
+  const el = document.getElementById('board-cal-legend'); if(!el) return;
+  
+  // Limpa margens antigas que não são mais necessárias
+  el.style.marginTop = '0';
+  
+  el.innerHTML = `
+    <span style="font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; margin-right: 4px;">Legendas:</span>
+    <div style="position: relative; display: inline-block;">
+     <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'events')">🗓️ Eventos ▾</button>
+      <div id="cal-legend-pop-events" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 220px; flex-direction: column; gap: 8px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
+    </div>
+    <div style="position: relative; display: inline-block;">
+     <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos ▾</button>
+      <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 260px; max-height: 400px; overflow-y: auto; flex-direction: column; gap: 7px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
+    </div>
+  `;
+  
+  // 1. Popula o popup de Eventos Gerais
+  const CAL_LEGEND_COLORS = [
+    {bg:'rgba(45,110,220,.92)',  label:'Evento geral'},
+    {bg:'rgba(20,200,155,.92)', label:'Sprint/Time'},
+    {bg:'rgba(245,195,80,.95)', label:'Prazo'},
+    {bg:'rgba(240,90,90,.92)', label:'Urgente'},
+    {bg:'rgba(40,170,245,.92)',  label:'Outros'},
+    {bg:'rgba(160,90,230,.92)',  label:'Gestão Digital'},
+  ];
+  const popEv = el.querySelector('#cal-legend-pop-events');
+  if(popEv){
+    popEv.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">🗓️ Tipos de Eventos</div>' +
+      CAL_LEGEND_COLORS.map(col => `
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--txt2); padding: 2px 4px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: ${col.bg}; flex-shrink: 0;"></div>
+          <span>${col.label}</span>
+        </div>
+      `).join('');
+  }
+  
+  // 2. Popula o popup de Prazos por Coluna
+  const popCards = el.querySelector('#cal-legend-pop-cards');
+  if(popCards){
+    popCards.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">📎 Prazos por Coluna</div>' +
+      (columns || []).map(col => {
+        const bg = _hexA(col.color || '#38b6ff', 0.15);
+        return `
+          <div style="display: inline-flex; align-items: center; font-size: 11px; color: var(--txt); padding: 4px 10px; background: ${bg}; border-left: 3px solid ${col.color || '#38b6ff'}; border-radius: 5px; font-weight: 500; width: fit-content; white-space: nowrap;">
+            ${esc(col.name)}
+          </div>`;
+      }).join('');
+  }
+}
+
+   function renderCal(){
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   document.getElementById('cal-month-lbl').textContent=MESES[calMonth]+' '+calYear;
   const grid=document.getElementById('cal-grid'); grid.innerHTML='';
@@ -9822,23 +10227,108 @@ const _origRenderCal=renderCal;
 renderCal=function(){ _origRenderCal(); renderBoardCalLegend(); };
 function makeDayEl(date,otherMonth=false,isToday=false){
   const ds=date.toISOString().split('T')[0];
-  const dayEvs=calEvents.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
+  let dayItems = [];
+  
+  const fOwner = document.getElementById('cal-f-owner')?.value || '';
+  const fSubteam = document.getElementById('cal-f-subteam')?.value || '';
+  const fTag = document.getElementById('cal-f-tag')?.value || '';
+  const temFiltroAtivo = fOwner || fSubteam || fTag;
+
+  if((calViewMode === 'both' || calViewMode === 'events') && !temFiltroAtivo){
+    const dayEvs=calEvents.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
+    dayEvs.forEach(ev => dayItems.push({ type: 'event', data: ev }));
+  }
+  
+  if(calViewMode === 'both' || calViewMode === 'cards'){
+    const dayCards=cards.filter(c=>{
+      if (c.archived || c.due !== ds) return false;
+      if (fOwner && c.owner !== fOwner) return false;
+      if (fSubteam && !cardInSubteam(c, fSubteam)) return false;
+      if (fTag && !cardHasTag(c, fTag)) return false;
+      return true;
+    });
+    dayCards.forEach(c => dayItems.push({ type: 'card', data: c }));
+  }
+
   const div=document.createElement('div');
-  div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
+  div.className='cal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayItems.length?' has-events':'');
   const canEdit=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
+  
+  // Renderiza no máximo 2 itens no quadradinho para nunca esmagar o layout
+  const maxVisiveis = 2;
+  const visiveis = dayItems.slice(0, maxVisiveis);
+  const ocultosCount = dayItems.length - maxVisiveis;
+
   div.innerHTML=`<div class="cal-day-num">${date.getDate()}</div>`
-    +dayEvs.slice(0,3).map(ev=>{
-      const evColor=ev._gestao?'purple':(ev.color||'blue');
-      const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
-      const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
-      return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)} — clique para editar">${esc(ev.title)}${delBtn}</div>`;
+    +visiveis.map(item=>{
+      if(item.type === 'event'){
+        const ev = item.data;
+        const evColor=ev._gestao?'purple':(ev.color||'blue');
+        const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
+        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
+        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${esc(ev.title)}${delBtn}</div>`;
+      } else {
+        const c = item.data;
+        const colInfo = columns.find(x => x.id === c.col);
+        const cardColor = colInfo ? colInfo.color : '#38b6ff';
+        const bg = _hexA(cardColor, 0.15);
+        return `<div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
+      }
     }).join('')
-    +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-3} mais</div>`:'')
+    +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
     +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
-  div.onclick=()=>{ const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador'; if(isPO) openEvModal(ds); };
+    
+  // Ao clicar no dia, abre a janela flutuante com a lista completa estilo Google Calendar
+  div.onclick=()=> openCalDayPopover(date, dayItems);
   return div;
 }
+  function openCalDayPopover(date, dayItems) {
+  const ds = date.toISOString().split('T')[0];
+  const opcoes = { weekday: 'long', day: 'numeric', month: 'long' };
+  document.getElementById('cal-day-pop-title').textContent = date.toLocaleDateString('pt-BR', opcoes);
+  
+  const body = document.getElementById('cal-day-pop-body');
+  const ft = document.getElementById('cal-day-pop-ft');
+  if (!body || !ft) return;
 
+  const canEdit = window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
+
+  if (!dayItems.length) {
+    body.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:16px 0;">Nenhum compromisso ou prazo neste dia.</div>';
+  } else {
+    body.innerHTML = dayItems.map(item => {
+      if (item.type === 'event') {
+        const ev = item.data;
+        const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
+        const col = EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0];
+        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
+        return `
+          <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent('${ev.id}')">
+            <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
+            ${delBtn}
+          </div>`;
+      } else {
+        const c = item.data;
+        const colInfo = columns.find(x => x.id === c.col);
+        const cardColor = colInfo ? colInfo.color : '#38b6ff';
+        const bg = _hexA(cardColor, 0.15);
+        return `
+          <div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
+            📎 ${esc(c.title)} <span style="font-size:9.5px;color:var(--txt3);margin-left:4px;">(${esc(colInfo?.name||c.col)})</span>
+          </div>`;
+      }
+    }).join('');
+  }
+
+  if (canEdit) {
+    ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal('${ds}')">+ Novo Evento</button>`;
+    ft.style.display = 'flex';
+  } else {
+    ft.style.display = 'none';
+  }
+
+  document.getElementById('cal-day-pop-ov').classList.add('open');
+}
 function openEvModal(dateStr=''){
   editingEvId=null;
   document.getElementById('ev-modal-title').textContent='Novo Evento';
@@ -9915,15 +10405,23 @@ async function deleteEventById(id){
 }
 
 function loadCalEvents(){
-  // ── Eventos do squad ──────────────────────────────────────────
+  // ── Eventos do squad (e espelho do Google Agenda) ─────────
   fbListen(FB+'/cal_events',val=>{
-    const squadEvs=val?(Array.isArray(val)?val:Object.values(val)):[];
-    const gestaoEvs=calEvents.filter(e=>e._gestao);
-    calEvents=[...squadEvs,...gestaoEvs];
+    const squadEvs = val ? (Array.isArray(val) ? val : Object.values(val)) : [];
+    // Protege os eventos puxados da Gestão e do Google
+    const intocaveis = calEvents.filter(e => e._gestao || e._gcal);
+    calEvents = [...squadEvs, ...intocaveis];
     if(document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
   });
+
+  // ── Carrega os IDs dos Google Agendas ─────────────────────────
+  fbListen(FB+'/config/calendars', val => {
+    window._squadCalendars = val || {};
+    carregarTodasAgendasSquad();
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+  });
+
   // ── Eventos de Gestão Digital (painel) ───────────────────────
-  // Usa onValue direto (não fbListen que usa o path do squad)
   window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
     const val=snap.val();
     const gestaoEvs=val?(Array.isArray(val)?val:Object.values(val)):[];
@@ -9935,6 +10433,132 @@ function loadCalEvents(){
   });
 }
 // ── FIM CALENDÁRIO ────────────────────────────────────────────────
+// ── INTEGRAÇÃO MÚLTIPLA GOOGLE CALENDAR (PLANO B) ──────────────────────────
+window._squadCalendars = {};
+
+function renderCalendarList() {
+  const container = document.getElementById('cfg-calendar-list');
+  if (!container) return;
+
+  const list = Object.values(window._squadCalendars || {});
+  if (!list.length) {
+    container.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:6px 2px;">Nenhuma agenda externa conectada ainda.</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(cal => `
+    <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid var(--glass-b); border-radius:8px;">
+      <span style="font-size:14px;">🗓️</span>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:12px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.label || 'Agenda Externa')}</div>
+        <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
+      </div>
+      <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
+    </div>
+  `).join('');
+}
+
+function addCalendarToList() {
+  const id = document.getElementById('cfg-calendar-id').value.trim();
+  const label = document.getElementById('cfg-calendar-label').value.trim();
+
+  if (!id) { showToast('⚠ Informe o ID da agenda.'); return; }
+  const finalLabel = label || id.split('@')[0] || 'Agenda';
+
+  const key = 'cal_' + id.replace(/[^a-z0-9_-]/gi, '_');
+
+  if (!window._squadCalendars) window._squadCalendars = {};
+  window._squadCalendars[key] = { id, label: finalLabel };
+
+  fbSet(FB+'/config/calendars', window._squadCalendars);
+  document.getElementById('cfg-calendar-id').value = '';
+  document.getElementById('cfg-calendar-label').value = '';
+  
+  renderCalendarList();
+  showToast('✅ Agenda adicionada!');
+  carregarTodasAgendasSquad();
+}
+
+async function removeCalendarFromList(id) {
+  if (!await uiConfirm('Remover a sincronização desta agenda? Os eventos dela sumirão do board.')) return;
+  
+  const key = 'cal_' + id.replace(/[^a-z0-9_-]/gi, '_');
+  if (window._squadCalendars && window._squadCalendars[key]) {
+    delete window._squadCalendars[key];
+    fbSet(FB+'/config/calendars', window._squadCalendars);
+    renderCalendarList();
+    carregarTodasAgendasSquad();
+    showToast('🗑 Agenda removida.');
+  }
+}
+
+async function carregarTodasAgendasSquad() {
+  const token = safeLS.getItem('gcal_token');
+  if (!token) {
+    console.warn("Token do Google Agenda não encontrado. Usuário precisa deslogar/logar.");
+    return;
+  }
+
+  const list = Object.values(window._squadCalendars || {});
+  
+  if (!list.length) {
+    calEvents = calEvents.filter(e => !e._gcal);
+    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+    return;
+  }
+
+  const hoje = new Date();
+  const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
+  
+  let todosEventosGoogle = [];
+
+  try {
+    await Promise.all(list.map(async (cal) => {
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
+      
+      try {
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (data.items) {
+          data.items.forEach(item => {
+            let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
+            let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
+            
+            if (item.end.date && end) {
+              let d = new Date(end + 'T00:00:00');
+              d.setDate(d.getDate() - 1);
+              end = d.toISOString().split('T')[0];
+            }
+
+            todosEventosGoogle.push({
+              id: item.id,
+              title: '🗓️ ' + (item.summary || '(Sem título)'),
+              start: start,
+              end: end || start,
+              desc: item.description || '',
+              link: item.htmlLink || '',
+              color: 'cyan', 
+              _gcal: true 
+            });
+          });
+        }
+      } catch (errInner) {
+        console.error(`Erro ao puxar a agenda [${cal.label}]:`, errInner);
+      }
+    }));
+
+    calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
+    
+    if (document.getElementById('cal-ov')?.classList.contains('open')) {
+      renderCal();
+    }
+
+  } catch (error) {
+    console.error("Erro global no carregamento das agendas do Google:", error);
+  }
+}
+
 
 
 // ── MONITORAMENTO DE ERROS ────────────────────────────────────────
@@ -10027,14 +10651,82 @@ else window.addEventListener('fb-ready',()=>{
 }, {once:true});
 // ── FIM MONITORAMENTO ─────────────────────────────────────────────
 
-// ═══════════════════════════════════════════════════════
-// DRAG AND DROP
-// ═══════════════════════════════════════════════════════
 let _dragCardId = null;
 let _dragSourceCol = null;
 let _ghostEl = null;
 
+// --- D&D DAS COLUNAS ---
+let _dragColId = null;
+
+function handleColDragStart(e, colId) {
+  // Impede que a coluna seja arrastada se o clique começou dentro da área de cards
+  if (e.target.closest('.card') || e.target.closest('.col-body')) return; 
+  _dragColId = colId;
+  e.dataTransfer.effectAllowed = 'move';
+  requestAnimationFrame(() => e.target.classList.add('col-dragging'));
+  e.stopPropagation();
+}
+
+function handleColDragEnd(e) {
+  e.target.classList.remove('col-dragging');
+  document.querySelectorAll('.col').forEach(c => c.classList.remove('col-drag-left', 'col-drag-right'));
+  _dragColId = null;
+  e.stopPropagation();
+}
+
+function handleColDragOver(e, colId) {
+  if (!_dragColId || _dragColId === colId) return; 
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+
+  const targetCol = e.currentTarget;
+  const rect = targetCol.getBoundingClientRect();
+  const mid = rect.left + rect.width / 2;
+
+  document.querySelectorAll('.col').forEach(c => c.classList.remove('col-drag-left', 'col-drag-right'));
+  if (e.clientX < mid) {
+    targetCol.classList.add('col-drag-left');
+  } else {
+    targetCol.classList.add('col-drag-right');
+  }
+}
+
+function handleColDragLeave(e) {
+  if (!_dragColId) return;
+  e.currentTarget.classList.remove('col-drag-left', 'col-drag-right');
+}
+
+function handleColDrop(e, targetColId) {
+  if (!_dragColId) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (_dragColId === targetColId) return;
+
+  const draggedIdx = columns.findIndex(c => c.id === _dragColId);
+  const targetIdx = columns.findIndex(c => c.id === targetColId);
+
+  if (draggedIdx < 0 || targetIdx < 0) return;
+
+  const targetColEl = e.currentTarget;
+  const rect = targetColEl.getBoundingClientRect();
+  const mid = rect.left + rect.width / 2;
+  
+  let insertIdx = targetIdx;
+  if (e.clientX > mid) insertIdx++;
+  if (draggedIdx < insertIdx) insertIdx--;
+
+  const [removed] = columns.splice(draggedIdx, 1);
+  columns.splice(insertIdx, 0, removed);
+
+  saveUndo('reordenar colunas');
+  fbSet(FB+'/columns', columns);
+  renderBoard();
+}
+
+// --- D&D DOS CARDS ---
 function handleDragStart(e, cardId){
+  e.stopPropagation(); // Protege para não arrastar a coluna junto
   _dragCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   _dragSourceCol = card?.col;
@@ -10058,6 +10750,7 @@ function handleDragOver(e, colId){
   e.preventDefault();
   if(!_dragCardId) return;
   const body = e.currentTarget;
+
   // Limpa outros drag-over
   document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
   body.classList.add('drag-over');
@@ -10085,6 +10778,8 @@ function handleDragLeave(e){
 
 function handleDrop(e, colId){
   e.preventDefault();
+  e.stopPropagation(); // Protege a coluna alvo
+  
   const body = e.currentTarget;
   body.classList.remove('drag-over','drag-over-blocked');
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
@@ -10579,6 +11274,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){
+    // Não intercepta Ctrl+Z dentro de campos de texto editáveis
     const tag=document.activeElement?.tagName;
     const isEditing=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement?.contentEditable==='true';
     if(!isEditing){ e.preventDefault(); doUndo(); }
@@ -10666,6 +11362,17 @@ function ctxInsights(){
   qa('daily',q);
 }
 
+function openCardFnModal(){
+  document.getElementById('card-fn-ov')?.classList.add('open');
+}
+function toggleCampMetaMobile(){
+  const sb = document.getElementById('camp-sidebar-el');
+  const btn = document.getElementById('camp-meta-toggle-btn');
+  if(!sb || !btn) return;
+  const isOpen = sb.classList.contains('camp-sidebar-open');
+  sb.classList.toggle('camp-sidebar-open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+}
 function ctxModel(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   if(!qlItems.modelos) qlItems.modelos=[];
@@ -10684,6 +11391,7 @@ function ctxModel(){
 function ctxRecorrente(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
   if(!qlItems.recorrentes) qlItems.recorrentes=[];
+  // Evita duplicar pelo título
   let idx = qlItems.recorrentes.findIndex(r=>r.title===card.title);
   if(idx<0){
     qlItems.recorrentes.push({
@@ -10698,6 +11406,7 @@ function ctxRecorrente(){
     showToast('Já existe um recorrente com esse nome — abrindo config');
   }
   hideCtxMenu();
+  // Abre o modal de configuração de recorrência já apontando para este item
   setTimeout(()=>openRecorrenciaModal(idx), 150);
 }
 
@@ -10763,6 +11472,7 @@ function closeOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
     document.getElementById('card-ov')?.classList.remove('above-camp');
+    // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
       cards = cards.filter(c=>!c._isQLTemp);
       _editingQLItem = null; editingId = null;
@@ -10813,7 +11523,9 @@ _onFbReady(()=>{
   loadCampanhas();
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
+  // Agendamentos: cria cards agendados cuja data chegou
   setTimeout(()=>{ try{ processAgendamentos(); }catch(e){ console.warn('Agendamento:', e); } }, 3700);
+  // Relembrete: avisa sobre cards automáticos não vistos (até 3 dias)
   setTimeout(()=>{ try{ processRelembreteAuto(); }catch(e){ console.warn('Relembrete:', e); } }, 4000);
   // Abrir card específico via URL param ?opencard= (usado pelo multi-squad de campanhas)
   const _openCardParam = _urlParams.get('opencard');
@@ -11694,10 +12406,8 @@ function getServiceInfo(url){
 
 function getFaviconUrl(url){
   try{
-    const u = new URL(url);
-    // Só tenta favicon para https (http gera 404 no serviço do Google e polui o console).
-    if(u.protocol!=='https:') return null;
-    return 'https://www.google.com/s2/favicons?sz=32&domain='+u.hostname;
+    const host = new URL(url).hostname;
+    return 'https://www.google.com/s2/favicons?sz=32&domain='+host;
   } catch(e){ return null; }
 }
 
@@ -11906,20 +12616,21 @@ function removerExterno(key){
 }
 
 function resyncColumnsAndTags(){
-  Promise.all([fbGet(FB+'/columns'), fbGet(FB+'/tags')]).then(([colSnap, tagSnap])=>{
-    let changed=false;
+  Promise.all([fbGet(FB+'/columns'), fbGet(FB+'/tags'), fbGet(FB+'/agil_cfg')]).then(([colSnap, tagSnap, agilSnap])=>{
     const colVal=colSnap.val();
     if(colVal){
       const incoming=(Array.isArray(colVal)?colVal:Object.values(colVal)).filter(Boolean);
-      if(incoming.length){ columns=incoming; changed=true; }
+      if(incoming.length) columns=incoming;
     }
     const tagVal=tagSnap.val();
     if(tagVal){
       const incoming=(Array.isArray(tagVal)?tagVal:Object.values(tagVal)).filter(Boolean);
       if(incoming.length) tags=incoming;
     }
-    if(changed) renderBoard();
-    showToast('✅ Colunas e tags recarregadas!');
+    const agilVal=agilSnap.val();
+    if(agilVal){ agilCfg=agilVal; applyAgilCfg(); }
+    renderBoard();
+    showToast('✅ Board recarregado e sincronizado!');
   }).catch(()=>showToast('❌ Erro ao recarregar.'));
 }
 
@@ -13170,36 +13881,6 @@ async function runDevSeed(){
 
 renderBoard();
 </script>
-<!-- SEED OVERLAY — aparece quando board dev está zerado -->
-<div id="seed-overlay">
-  <div class="seed-panel">
-    <div class="seed-title">🌱 Board de testes vazio</div>
-    <div class="seed-desc">
-      Este é o <strong>Dev Sandbox</strong> — ambiente para testar funcionalidades e se familiarizar com o board antes de usar em produção.<br><br>
-      Clique abaixo para popular com cards de teste cobrindo todas as funcionalidades disponíveis.
-    </div>
-    <ul class="seed-cards">
-      <li>📋 13 cards em todas as colunas (Backlog, A Fazer, Em Progresso, Impedimentos, Concluído)</li>
-      <li>✅ Checklist, ⚠️ Riscos, 🔗 Links, 🎯 OKR, Tags múltiplas</li>
-      <li>💬 Comentários com reações (👍 👀 ❤️ ✅ 🎉) entre os usuários</li>
-      <li>⭐ 4 Estrelas do Mar no cardume, já com reações (👏 ❤️ 🎉 🔥)</li>
-      <li>🟢 5 usuários "online" com status (🎧 Foco, 📞 Reunião, 🍔 Almoço)</li>
-      <li>📌 Lembretes de exemplo (PO direcionado + para a squad)</li>
-      <li>🔗 Dependência entre cards, 🗂 1 arquivado, 🚧 1 bloqueado</li>
-      <li>📅 Eventos no calendário, 🔗 links, 📦 modelos e recorrentes</li>
-      <li>🏃 Sprint 12 configurado com objetivo</li>
-    </ul>
-    <div class="seed-log" id="seed-log"></div>
-    <button class="btn btn-p" onclick="runDevSeed()" id="seed-btn" style="width:100%;justify-content:center;padding:12px;">
-      🚀 Popular board com dados de teste
-    </button>
-    <button class="btn" onclick="document.getElementById('seed-overlay').classList.remove('active')"
-      style="width:100%;justify-content:center;padding:10px;font-size:12px;color:var(--txt3);">
-      Continuar com board vazio
-    </button>
-  </div>
-</div>
-
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
 
@@ -13278,6 +13959,35 @@ renderBoard();
         <button class="btn btn-p" onclick="confirmarTrelloMembers()">✅ Importar com este mapeamento</button>
       </div>
     </div>
+  </div>
+</div>
+<!-- SEED OVERLAY — aparece quando board dev está zerado -->
+<div id="seed-overlay">
+  <div class="seed-panel">
+    <div class="seed-title">🌱 Board de testes vazio</div>
+    <div class="seed-desc">
+      Este é o <strong>Dev Sandbox</strong> — ambiente para testar funcionalidades e se familiarizar com o board antes de usar em produção.<br><br>
+      Clique abaixo para popular com cards de teste cobrindo todas as funcionalidades disponíveis.
+    </div>
+    <ul class="seed-cards">
+      <li>📋 13 cards em todas as colunas (Backlog, A Fazer, Em Progresso, Impedimentos, Concluído)</li>
+      <li>✅ Checklist, ⚠️ Riscos, 🔗 Links, 🎯 OKR, Tags múltiplas</li>
+      <li>💬 Comentários com reações (👍 👀 ❤️ ✅ 🎉) entre os usuários</li>
+      <li>⭐ 4 Estrelas do Mar no cardume, já com reações (👏 ❤️ 🎉 🔥)</li>
+      <li>🟢 5 usuários "online" com status (🎧 Foco, 📞 Reunião, 🍔 Almoço)</li>
+      <li>📌 Lembretes de exemplo (PO direcionado + para a squad)</li>
+      <li>🔗 Dependência entre cards, 🗂 1 arquivado, 🚧 1 bloqueado</li>
+      <li>📅 Eventos no calendário, 🔗 links, 📦 modelos e recorrentes</li>
+      <li>🏃 Sprint 12 configurado com objetivo</li>
+    </ul>
+    <div class="seed-log" id="seed-log"></div>
+    <button class="btn btn-p" onclick="runDevSeed()" id="seed-btn" style="width:100%;justify-content:center;padding:12px;">
+      🚀 Popular board com dados de teste
+    </button>
+    <button class="btn" onclick="document.getElementById('seed-overlay').classList.remove('active')"
+      style="width:100%;justify-content:center;padding:10px;font-size:12px;color:var(--txt3);">
+      Continuar com board vazio
+    </button>
   </div>
 </div>
 </body>
