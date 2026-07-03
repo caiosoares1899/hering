@@ -2618,6 +2618,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="btn btn-teal btn-sm" onclick="addCalendarToList()">+ Adicionar</button>
   </div>
   <p style="font-size:10px;color:var(--txt3);margin-top:6px;line-height:1.5;">Ao adicionar a primeira agenda, o Google vai pedir autorização de leitura do calendário (popup de login).</p>
+
+  <div id="cfg-gcal-restore-wrap" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--glass-b);">
+    <button class="btn btn-sm" onclick="restoreGcalDismissed()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">↩️ Restaurar eventos ocultos</button>
+    <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Eventos de agendas do Google que foram excluídos aqui no board voltam a aparecer na próxima sincronização.</p>
+  </div>
 </div>
 
     <!-- ABA USUARIOS -->
@@ -3409,7 +3414,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.64-dev</div>
+<div class="version">v8.30.65-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10319,7 +10324,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor=ev._gestao?'purple':(ev.color||'blue');
         const col=ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0]);
-        const delBtn=(canEdit && !ev._gestao && !ev._gcal)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
+        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' ' : '';
         return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${horaLbl}${esc(ev.title)}${delBtn}</div>`;
       } else {
@@ -10356,7 +10361,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
         const col = ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0]);
-        const delBtn = (canEdit && !ev._gestao && !ev._gcal) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
+        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
         const meetBtn = ev.meetingLink ? `<a href="${esc(ev.meetingLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião" style="flex-shrink:0;font-size:13px;text-decoration:none;">🎥</a>` : '';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? `<span style="flex-shrink:0;font-size:10px;opacity:.8;font-weight:600;">${new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>` : '';
         return `
@@ -10410,7 +10415,11 @@ function openEvModal(dateStr=''){
 function editEvent(evId){
   const ev=calEvents.find(e=>e.id===evId); if(!ev) return;
   const isGcal=!!ev._gcal;
+  // Editar campos: só faz sentido pra eventos próprios do squad (editar um espelho do
+  // Google seria sobrescrito na próxima sincronização). Excluir é outra permissão — PO/org/adm
+  // podem excluir qualquer evento, inclusive espelhos do Google, mesmo que não editem o conteúdo.
   const isPO=!isGcal && (window._currentUserRole==='po'||window._currentUserRole==='organizador');
+  const canDelete=(window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm') && !ev._gestao;
   editingEvId=evId;
   document.getElementById('ev-modal-title').textContent=isGcal?'🗓️ Evento do Google Agenda':(isPO?'Editar Evento':'Detalhes do Evento');
   document.getElementById('ev-title').value=ev.title;
@@ -10438,7 +10447,7 @@ function editEvent(evId){
   } else if(timeWrap){
     timeWrap.style.display='none';
   }
-  document.getElementById('ev-del-btn').style.display=isPO?'':'none';
+  document.getElementById('ev-del-btn').style.display=canDelete?'':'none';
   const _saveBtn=document.querySelector('#ev-modal-ov button[onclick="saveEvent()"]');
   if(_saveBtn) _saveBtn.style.display=isGcal?'none':'';
   ['ev-title','ev-start','ev-end','ev-desc','ev-link'].forEach(id=>{ document.getElementById(id).readOnly=!isPO; });
@@ -10486,24 +10495,53 @@ function saveEvent(){
 async function deleteEvent(){
   if(!editingEvId) return;
   const _evDel=calEvents.find(e=>e.id===editingEvId);
-  if(_evDel && _evDel._gcal){
-    uiAlert('Este evento vem de uma agenda do Google conectada. Para removê-lo, exclua na própria agenda Google, ou desconecte a agenda em ⚙ Config → Calendário.',{title:'🗓️ Evento do Google Agenda'});
+  if(_evDel && _evDel._gestao){
+    uiAlert('Este evento vem da Gestão Digital (painel) e não pode ser excluído por aqui.',{title:'🏛 Evento de Gestão'});
     return;
   }
-  if(!await uiConfirm('Excluir este evento do calendário?',{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
+  const isGcalDel = _evDel && _evDel._gcal;
+  const confirmMsg = isGcalDel
+    ? 'Excluir "'+(_evDel.title||'')+'"? Ele vem de uma agenda do Google conectada — será ocultado permanentemente aqui no board (não afeta a agenda no Google).'
+    : 'Excluir este evento do calendário?';
+  if(!await uiConfirm(confirmMsg,{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
+  if(isGcalDel) await _dismissGcalEvent(editingEvId);
   calEvents=calEvents.filter(e=>e.id!==editingEvId);
   _persistCalEvents();
   closeEvModal(); renderCal();
   showToast('🗑 Evento excluído');
 }
+// Marca um evento de agenda do Google como "oculto" (persistido no Firebase — não reaparece na próxima sincronização)
+async function _dismissGcalEvent(id){
+  if(!window._gcalDismissedIds) window._gcalDismissedIds = new Set();
+  window._gcalDismissedIds.add(id);
+  const obj = Object.fromEntries([...window._gcalDismissedIds].map(k=>[k,true]));
+  fbSet(FB+'/config/gcal_dismissed', obj);
+  const wrap=document.getElementById('cfg-gcal-restore-wrap');
+  if(wrap) wrap.style.display='';
+}
+async function restoreGcalDismissed(){
+  const n = window._gcalDismissedIds ? window._gcalDismissedIds.size : 0;
+  if(!n){ showToast('Nenhum evento oculto para restaurar.'); return; }
+  if(!await uiConfirm(`Restaurar ${n} evento(s) ocultado(s)? Eles voltam a aparecer na próxima sincronização.`,{title:'↩️ Restaurar eventos'})) return;
+  window._gcalDismissedIds = new Set();
+  fbSet(FB+'/config/gcal_dismissed', {});
+  const wrap=document.getElementById('cfg-gcal-restore-wrap');
+  if(wrap) wrap.style.display='none';
+  showToast('↩️ Eventos restaurados! Recarregando agendas...');
+  carregarTodasAgendasSquad();
+}
 // Exclui evento direto do grid do calendário (botão ✕ no evento)
 async function deleteEventById(id){
   const ev=calEvents.find(e=>e.id===id); if(!ev) return;
-  if(ev._gcal){
-    uiAlert('Este evento vem de uma agenda do Google conectada. Para removê-lo, exclua na própria agenda Google, ou desconecte a agenda em ⚙ Config → Calendário.',{title:'🗓️ Evento do Google Agenda'});
+  if(ev._gestao){
+    uiAlert('Este evento vem da Gestão Digital (painel) e não pode ser excluído por aqui.',{title:'🏛 Evento de Gestão'});
     return;
   }
-  if(!await uiConfirm('Excluir o evento "'+(ev.title||'')+'"?',{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
+  const confirmMsg = ev._gcal
+    ? 'Excluir "'+(ev.title||'')+'"? Ele vem de uma agenda do Google conectada — será ocultado permanentemente aqui no board (não afeta a agenda no Google).'
+    : 'Excluir o evento "'+(ev.title||'')+'"?';
+  if(!await uiConfirm(confirmMsg,{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
+  if(ev._gcal) await _dismissGcalEvent(id);
   calEvents=calEvents.filter(e=>e.id!==id);
   _persistCalEvents();
   renderCal();
@@ -10525,6 +10563,16 @@ function loadCalEvents(){
     window._squadCalendars = val || {};
     carregarTodasAgendasSquad();
     if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+  });
+
+  // ── Eventos de agendas do Google que PO/org/adm ocultaram (exclusão local) ──
+  // Persistido no Firebase pra não reaparecer na próxima sincronização nem em outro device.
+  fbListen(FB+'/config/gcal_dismissed', val => {
+    window._gcalDismissedIds = new Set(val ? Object.keys(val) : []);
+    calEvents = calEvents.filter(e => !e._gcal || !window._gcalDismissedIds.has(e.id));
+    const wrap=document.getElementById('cfg-gcal-restore-wrap');
+    if(wrap) wrap.style.display = window._gcalDismissedIds.size ? '' : 'none';
+    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
   });
 
   // ── Eventos de Gestão Digital (painel) ───────────────────────
@@ -10658,6 +10706,7 @@ function _gcalColorFor(calId){
 }
 async function carregarTodasAgendasSquad() {
   if(!window._gcalErrors) window._gcalErrors = {};
+  if(!window._gcalDismissedIds) window._gcalDismissedIds = new Set();
   const token = safeLS.getItem('gcal_token');
   const temAgendas = Object.keys(window._squadCalendars||{}).length > 0;
   if (!token) {
@@ -10708,6 +10757,7 @@ async function carregarTodasAgendasSquad() {
         if (data.items) {
           delete window._gcalErrors[cal.id];
           data.items.forEach(item => {
+            if (window._gcalDismissedIds.has(item.id)) return; // PO/org/adm excluiu este evento no board
             let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
             let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
             // isAllDay=true quando o evento não tem horário (só data) — comum em feriados, lembretes de dia inteiro
