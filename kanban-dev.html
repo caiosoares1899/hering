@@ -2130,6 +2130,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
+  <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
   <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
@@ -2607,7 +2608,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </p>
 
   <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);">Agendas Conectadas</div>
-  <div id="cfg-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:8px;display:flex;align-items:center;gap:8px;"></div>
+  <div id="cfg-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:4px;display:flex;align-items:center;gap:8px;"></div>
+  <div id="cfg-gcal-cache-info" style="font-size:10px;color:var(--txt3);margin-bottom:6px;"></div>
+  <button id="cfg-gcal-process-btn" onclick="processGcalQueueForAdmin()" style="display:none;margin-bottom:10px;padding:6px 12px;font-size:10.5px;background:rgba(255,209,102,.1);color:var(--warn);border:1px solid rgba(255,209,102,.3);border-radius:7px;cursor:pointer;">🔔 Processar solicitações pendentes</button>
   <div id="cfg-calendar-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px; max-height:180px; overflow-y:auto;">
     </div>
 
@@ -3414,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.65-dev</div>
+<div class="version">v8.30.66-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4773,6 +4776,7 @@ function autoRegistrar(user){
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
       _logAccess(user, newRole);
+      setTimeout(_updateGcalPendingBadge, 1500);
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
@@ -4781,6 +4785,7 @@ function autoRegistrar(user){
       window._currentUserRole=getEffectiveRole(user, existe.role);
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       _logAccess(user, window._currentUserRole);
+      setTimeout(_updateGcalPendingBadge, 1500);
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
       if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
@@ -10558,11 +10563,35 @@ function loadCalEvents(){
     if(document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
   });
 
-  // ── Carrega os IDs dos Google Agendas ─────────────────────────
+  // ── Carrega os IDs dos Google Agendas conectadas (config) — não dispara fetch aqui.
+  // Quem efetivamente busca na API é só o ADM (ver processGcalQueueForAdmin/carregarTodasAgendasSquad).
   fbListen(FB+'/config/calendars', val => {
     window._squadCalendars = val || {};
-    carregarTodasAgendasSquad();
     if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+    _updateGcalPendingBadge();
+  });
+
+  // ── Cache dos eventos já processados pelo ADM — TODO MUNDO lê daqui, sem precisar de token ──
+  fbListen(FB+'/config/gcal_cache', val => {
+    const cacheEvs = val ? Object.values(val) : [];
+    const filtered = cacheEvs.filter(e => !window._gcalDismissedIds || !window._gcalDismissedIds.has(e.id));
+    calEvents = [...calEvents.filter(e => !e._gcal), ...filtered];
+    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+  });
+  fbListen(FB+'/config/gcal_cache_meta', val => {
+    window._gcalCacheMeta = val || null;
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+  });
+
+  // ── Fila global de pedidos de agenda — cada um escuta e filtra os do PRÓPRIO squad,
+  // pra saber quais das suas agendas ainda estão "aguardando aprovação do ADM" ──
+  window._onValue(window._ref(window._db,'kanban/config/gcal_queue'), snap => {
+    const val = snap.val() || {};
+    window._gcalQueuePendingCalIds = new Set(
+      Object.values(val).filter(r=>r.squadId===ACTIVE_SQUAD).map(r=>r.calId)
+    );
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+    _updateGcalPendingBadge();
   });
 
   // ── Eventos de agendas do Google que PO/org/adm ocultaram (exclusão local) ──
@@ -10590,17 +10619,41 @@ function loadCalEvents(){
 // ── INTEGRAÇÃO MÚLTIPLA GOOGLE CALENDAR (PLANO B) ──────────────────────────
 window._squadCalendars = {};
 
+function _relTimeCal(ts){
+  try{
+    const diff = Date.now() - new Date(ts).getTime();
+    const min = Math.round(diff/60000);
+    if(min<1) return 'agora';
+    if(min<60) return min+'min';
+    const h = Math.round(min/60); if(h<24) return h+'h';
+    const dias = Math.round(h/24); if(dias<7) return dias+'d';
+    return new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  }catch(e){ return ''; }
+}
 function renderCalendarList() {
   const container = document.getElementById('cfg-calendar-list');
   if (!container) return;
 
+  const isAdm = isAdmUser(window._currentUser);
   const statusEl = document.getElementById('cfg-gcal-auth-status');
   if (statusEl) {
-    const hasToken = !!safeLS.getItem('gcal_token');
-    statusEl.innerHTML = hasToken
-      ? '<span style="color:var(--teal);">✅ Conta Google autorizada para leitura de agendas</span>'
-      : '<span style="color:var(--txt3);">🔒 Nenhuma autorização ainda — adicione uma agenda para conectar</span>';
+    if(isAdm){
+      const hasToken = !!safeLS.getItem('gcal_token');
+      statusEl.innerHTML = hasToken
+        ? '<span style="color:var(--teal);">✅ Sua conta Google está autorizada (só admin precisa)</span>'
+        : '<span style="color:var(--txt3);">🔒 Você ainda não autorizou — vai pedir ao processar solicitações</span>';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--txt3);">ℹ️ Só o administrador precisa autorizar — as agendas conectadas aparecem pra você automaticamente</span>';
+    }
   }
+  const infoEl = document.getElementById('cfg-gcal-cache-info');
+  if(infoEl){
+    const meta = window._gcalCacheMeta;
+    const quando = meta?.updatedAt ? ('há '+_relTimeCal(meta.updatedAt)) : 'nunca';
+    infoEl.innerHTML = `<span>🕒 Atualizado ${quando}${meta?.updatedBy?' por '+esc(meta.updatedBy):''}</span>`;
+  }
+  const processBtn = document.getElementById('cfg-gcal-process-btn');
+  if(processBtn) processBtn.style.display = isAdm ? '' : 'none';
 
   const list = Object.values(window._squadCalendars || {});
   if (!list.length) {
@@ -10609,15 +10662,22 @@ function renderCalendarList() {
   }
 
   const errs = window._gcalErrors || {};
+  const pendentes = window._gcalQueuePendingCalIds || new Set();
   container.innerHTML = list.map(cal => {
     const err = errs[cal.id];
+    const pending = pendentes.has(cal.id);
+    const icon = pending ? '🕒' : (err ? '⚠️' : '🗓️');
+    const borderCol = pending ? 'rgba(255,209,102,.35)' : (err ? 'rgba(255,107,107,.35)' : 'var(--glass-b)');
+    const statusMsg = pending
+      ? '<div style="font-size:10px; color:var(--warn); margin-top:2px;">Aguardando aprovação do administrador</div>'
+      : (err ? `<div style="font-size:10px; color:var(--danger); margin-top:2px;">${esc(err.msg)}</div>` : '');
     return `
-    <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid ${err?'rgba(255,107,107,.35)':'var(--glass-b)'}; border-radius:8px;">
-      <span style="font-size:14px;">${err?'⚠️':'🗓️'}</span>
+    <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid ${borderCol}; border-radius:8px;">
+      <span style="font-size:14px;">${icon}</span>
       <div style="flex:1; min-width:0;">
         <div style="font-size:12px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.label || 'Agenda Externa')}</div>
         <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
-        ${err?`<div style="font-size:10px; color:var(--danger); margin-top:2px;">${esc(err.msg)}</div>`:''}
+        ${statusMsg}
       </div>
       <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
     </div>
@@ -10630,32 +10690,45 @@ async function addCalendarToList() {
 
   if (!id) { showToast('⚠ Informe o ID da agenda.'); return; }
 
-  // Sem token de calendário ainda? Pede o escopo agora (popup do Google, só desta vez).
-  if (!safeLS.getItem('gcal_token')) {
-    try {
-      showToast('🔐 Conecte sua conta Google para autorizar a leitura de agendas...');
-      await window._requestCalendarScope();
-    } catch(e) {
-      showToast('⚠ Não foi possível autorizar o acesso ao Google Agenda.');
-      return;
-    }
-  }
-
   const finalLabel = label || id.split('@')[0] || 'Agenda';
-
   const key = 'cal_' + id.replace(/[^a-z0-9_-]/gi, '_');
 
   if (!window._squadCalendars) window._squadCalendars = {};
   window._squadCalendars[key] = { id, label: finalLabel };
-
   fbSet(FB+'/config/calendars', window._squadCalendars);
+
+  // Não pede autorização de ninguém aqui — entra numa fila global que só o ADM processa
+  // (ele já autorizou uma vez e busca por todos, sem popup pra quem está pedindo).
+  await _queueGcalRequest(id, finalLabel);
+
   document.getElementById('cfg-calendar-id').value = '';
   document.getElementById('cfg-calendar-label').value = '';
-  
+
   renderCalendarList();
-  showToast('✅ Agenda adicionada!');
-  carregarTodasAgendasSquad();
-  _maybeRequestNotifPermission();
+  showToast('📬 Solicitação enviada! Aguardando aprovação do administrador.');
+}
+
+// Coloca o pedido de conexão de agenda na fila global e avisa os ADMs
+async function _queueGcalRequest(calId, calLabel){
+  const reqId = 'req_'+Date.now()+Math.random().toString(36).slice(2,6);
+  const u = window._currentUser;
+  const reqObj = {
+    squadId: ACTIVE_SQUAD, calId, label: calLabel,
+    requestedByUid: u?.uid||'', requestedByName: u?.displayName||u?.email||'?',
+    requestedAt: new Date().toISOString(),
+  };
+  await window._set(window._ref(window._db,'kanban/config/gcal_queue/'+reqId), reqObj).catch(()=>{});
+  // Notifica todos os ADMs conhecidos (busca uids pelos emails de ADM_EMAILS)
+  try{
+    const snap = await fbGet('kanban/usuarios');
+    const usuarios = snap.val()||{};
+    Object.entries(usuarios).forEach(([uid,udata])=>{
+      if(isAdmUser({email:udata.email, uid})){
+        createNotif(uid, 'gcal_pending', '📅 Nova agenda aguardando aprovação',
+          (reqObj.requestedByName)+' pediu para conectar "'+calLabel+'" ('+_sqLabel(ACTIVE_SQUAD)+')', null);
+      }
+    });
+  }catch(e){ console.warn('Não foi possível notificar ADMs:', e); }
 }
 
 async function removeCalendarFromList(id) {
@@ -10665,6 +10738,16 @@ async function removeCalendarFromList(id) {
   if (window._squadCalendars && window._squadCalendars[key]) {
     delete window._squadCalendars[key];
     fbSet(FB+'/config/calendars', window._squadCalendars);
+    // Limpa pedidos pendentes na fila global referentes a esta agenda (se ainda não processados)
+    try{
+      const snap = await fbGet('kanban/config/gcal_queue');
+      const queue = snap.val()||{};
+      Object.entries(queue).forEach(([reqId,r])=>{
+        if(r.squadId===ACTIVE_SQUAD && r.calId===id){
+          window._set(window._ref(window._db,'kanban/config/gcal_queue/'+reqId), null).catch(()=>{});
+        }
+      });
+    }catch(e){}
     renderCalendarList();
     carregarTodasAgendasSquad();
     showToast('🗑 Agenda removida.');
@@ -10673,7 +10756,7 @@ async function removeCalendarFromList(id) {
 
 function _gcalWarnBanner(show){
   const el=document.getElementById('gcal-token-warn');
-  if(el) el.style.display = show ? 'flex' : 'none';
+  if(el) el.style.display = (show && isAdmUser(window._currentUser)) ? 'flex' : 'none';
 }
 async function reconectarGCal(){
   try{
@@ -10705,119 +10788,155 @@ function _gcalColorFor(calId){
   return GCAL_PALETTE[h % GCAL_PALETTE.length];
 }
 async function carregarTodasAgendasSquad() {
-  if(!window._gcalErrors) window._gcalErrors = {};
-  if(!window._gcalDismissedIds) window._gcalDismissedIds = new Set();
-  const token = safeLS.getItem('gcal_token');
-  const temAgendas = Object.keys(window._squadCalendars||{}).length > 0;
-  if (!token) {
-    if(temAgendas) _gcalWarnBanner(true);
-    return;
-  }
-  const ts = parseInt(safeLS.getItem('gcal_token_ts')||'0');
-  if(temAgendas && ts && (Date.now()-ts) > 55*60*1000){
-    _gcalWarnBanner(true);
-  }
+  // Só o ADM efetivamente busca da API do Google e salva o cache. Membros comuns
+  // só leem o cache via listener (config/gcal_cache) — sem popup, sem token próprio.
+  if(!isAdmUser(window._currentUser)) return;
+  await _fetchAndCacheGcalForSquad(ACTIVE_SQUAD, Object.values(window._squadCalendars||{}));
+}
 
-  const list = Object.values(window._squadCalendars || {});
-  
-  if (!list.length) {
-    calEvents = calEvents.filter(e => !e._gcal);
-    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
-    return;
+// Busca eventos do Google para um squad específico e salva o resultado processado
+// no Firebase (config/gcal_cache daquele squad). Reusado pelo refresh manual (squad atual)
+// e pelo processamento da fila global (percorre vários squads de uma vez).
+async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
+  if(!window._gcalErrors) window._gcalErrors = {};
+  const token = safeLS.getItem('gcal_token');
+  const squadFB = 'kanban/squads/'+squadId+'/dados';
+
+  if (!calendarsList.length) {
+    await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), {}).catch(()=>{});
+    return { ok:true, count:0 };
   }
+  if (!token) { _gcalWarnBanner(true); return { ok:false, reason:'no_token' }; }
+
+  const ts = parseInt(safeLS.getItem('gcal_token_ts')||'0');
+  if (ts && (Date.now()-ts) > 55*60*1000) _gcalWarnBanner(true);
 
   const hoje = new Date();
   const limiteInferior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1).toISOString();
-  
   let todosEventosGoogle = [];
 
-  try {
-    await Promise.all(list.map(async (cal) => {
-      const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
-      
-      try {
-        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-        if(res.status===401){
-          window._gcalAuthFailed = true;
-          window._gcalErrors[cal.id] = { type:'expired', msg:'Sessão do Google expirou' };
-          console.warn(`[GCal] Token expirado para [${cal.label}] (HTTP 401)`);
-          return;
-        }
-        if(res.status===403){
-          let reason='';
-          try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
-          window._gcalErrors[cal.id] = { type:'forbidden', msg: reason.includes('unregistered')
-            ? 'Esta agenda é pública/de sistema e não aceita login de usuário — precisa de API Key própria'
-            : 'Sem permissão de acesso a esta agenda' };
-          console.warn(`[GCal] 403 para [${cal.label}]: ${reason}`);
-          return;
-        }
-        const data = await res.json();
-        
-        if (data.items) {
-          delete window._gcalErrors[cal.id];
-          data.items.forEach(item => {
-            if (window._gcalDismissedIds.has(item.id)) return; // PO/org/adm excluiu este evento no board
-            let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
-            let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
-            // isAllDay=true quando o evento não tem horário (só data) — comum em feriados, lembretes de dia inteiro
-            const isAllDay = !item.start.dateTime;
-            const startDateTime = item.start.dateTime || ''; // ISO completo com hora, só quando não é dia inteiro
-            const endDateTime = item.end.dateTime || '';
-
-            if (item.end.date && end) {
-              let d = new Date(end + 'T00:00:00');
-              d.setDate(d.getDate() - 1);
-              end = d.toISOString().split('T')[0];
-            }
-
-            // Link da reunião (Meet, Zoom, Teams etc.) — separado do link do evento no Google Calendar.
-            // hangoutLink é o atalho direto do Meet; conferenceData cobre outros provedores (Zoom, Teams)
-            // quando anexados manualmente ao evento.
-            let meetingLink = item.hangoutLink || '';
-            if (!meetingLink && item.conferenceData?.entryPoints) {
-              const videoEntry = item.conferenceData.entryPoints.find(e => e.entryPointType === 'video');
-              meetingLink = videoEntry?.uri || '';
-            }
-
-            todosEventosGoogle.push({
-              id: item.id,
-              title: '🗓️ ' + (item.summary || '(Sem título)'),
-              start: start,
-              end: end || start,
-              isAllDay: isAllDay,
-              startDateTime: startDateTime,   // ISO completo com hora — usado p/ notificação de reunião próxima
-              endDateTime: endDateTime,
-              desc: item.description || '',
-              link: item.htmlLink || '',       // link do evento no Google Calendar
-              meetingLink: meetingLink,          // link direto da reunião (Meet/Zoom/Teams)
-              color: 'cyan', // fallback (não usado quando _gcal, ver render)
-              _gcal: true,
-              _calId: cal.id,
-              _calLabel: cal.label,
-            });
-          });
-        }
-      } catch (errInner) {
-        console.error(`Erro ao puxar a agenda [${cal.label}]:`, errInner);
+  await Promise.all(calendarsList.map(async (cal) => {
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
+    try {
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if(res.status===401){
+        window._gcalErrors[cal.id] = { type:'expired', msg:'Sessão do Google expirou' };
+        return;
       }
-    }));
-
-    calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
-
-    const temExpirado = Object.values(window._gcalErrors).some(e=>e.type==='expired');
-    _gcalWarnBanner(temExpirado);
-    window._gcalAuthFailed = false;
-
-    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
-
-    if (document.getElementById('cal-ov')?.classList.contains('open')) {
-      renderCal();
+      if(res.status===403){
+        let reason='';
+        try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+        window._gcalErrors[cal.id] = { type:'forbidden', msg: reason.includes('unregistered')
+          ? 'Esta agenda é pública/de sistema e não aceita login de usuário — precisa de API Key própria'
+          : 'Sem permissão de acesso a esta agenda' };
+        return;
+      }
+      const data = await res.json();
+      if (data.items) {
+        delete window._gcalErrors[cal.id];
+        data.items.forEach(item => {
+          let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
+          let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
+          const isAllDay = !item.start.dateTime;
+          const startDateTime = item.start.dateTime || '';
+          const endDateTime = item.end.dateTime || '';
+          if (item.end.date && end) {
+            let d = new Date(end + 'T00:00:00');
+            d.setDate(d.getDate() - 1);
+            end = d.toISOString().split('T')[0];
+          }
+          let meetingLink = item.hangoutLink || '';
+          if (!meetingLink && item.conferenceData?.entryPoints) {
+            const videoEntry = item.conferenceData.entryPoints.find(e => e.entryPointType === 'video');
+            meetingLink = videoEntry?.uri || '';
+          }
+          todosEventosGoogle.push({
+            id: item.id,
+            title: '🗓️ ' + (item.summary || '(Sem título)'),
+            start, end: end || start, isAllDay, startDateTime, endDateTime,
+            desc: item.description || '',
+            link: item.htmlLink || '',
+            meetingLink,
+            color: 'cyan',
+            _gcal: true,
+            _calId: cal.id,
+            _calLabel: cal.label,
+          });
+        });
+      }
+    } catch (errInner) {
+      console.error(`Erro ao puxar a agenda [${cal.label}]:`, errInner);
     }
+  }));
 
-  } catch (error) {
-    console.error("Erro global no carregamento das agendas do Google:", error);
+  const cacheObj = Object.fromEntries(todosEventosGoogle.map(ev=>[ev.id, ev]));
+  await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), cacheObj).catch(()=>{});
+  await window._set(window._ref(window._db, squadFB+'/config/gcal_cache_meta'), {
+    updatedAt: new Date().toISOString(),
+    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
+  }).catch(()=>{});
+
+  const temExpirado = Object.values(window._gcalErrors).some(e=>e.type==='expired');
+  _gcalWarnBanner(temExpirado);
+  return { ok:true, count: todosEventosGoogle.length };
+}
+
+// Processa a FILA GLOBAL de pedidos de agenda (todos os squads) — só o ADM roda isso,
+// disparado por um clique explícito (o popup de autorização do Google exige gesto do usuário).
+async function processGcalQueueForAdmin(){
+  if(!isAdmUser(window._currentUser)) return;
+  if(!safeLS.getItem('gcal_token')){
+    try{
+      showToast('🔐 Autorizando acesso ao Google Agenda...');
+      await window._requestCalendarScope();
+    }catch(e){
+      showToast('⚠ Não foi possível autorizar. Tente novamente.');
+      return;
+    }
   }
+  const snap = await fbGet('kanban/config/gcal_queue');
+  const queue = snap.val() || {};
+  const reqIds = Object.keys(queue);
+  if(!reqIds.length){ showToast('Nenhuma solicitação pendente.'); return; }
+
+  showToast('🔄 Processando '+reqIds.length+' solicitação(ões) de agenda...');
+
+  // Agrupa por squad — cada squad é processado buscando TODAS as agendas já configuradas
+  // nele (não só as pendentes), garantindo que o cache fique completo e atualizado.
+  const squadIds = [...new Set(Object.values(queue).map(r=>r.squadId))];
+  for(const squadId of squadIds){
+    const cfgSnap = await fbGet('kanban/squads/'+squadId+'/dados/config/calendars');
+    const calendarsList = Object.values(cfgSnap.val()||{});
+    const result = await _fetchAndCacheGcalForSquad(squadId, calendarsList);
+    // Notifica quem pediu (só os pedidos deste squad) e limpa a fila
+    const reqsDoSquad = Object.entries(queue).filter(([_,r])=>r.squadId===squadId);
+    for(const [reqId, req] of reqsDoSquad){
+      if(result.ok && req.requestedByUid){
+        createNotif(req.requestedByUid, 'gcal_approved', '✅ Agenda conectada', req.label+' já está sincronizada no board', null);
+      }
+      await window._set(window._ref(window._db,'kanban/config/gcal_queue/'+reqId), null).catch(()=>{});
+    }
+  }
+  showToast('✅ Solicitações processadas!');
+  _updateGcalPendingBadge();
+  renderCalendarList();
+}
+
+// Badge na toolbar avisando o ADM sobre solicitações pendentes (qualquer squad)
+async function _updateGcalPendingBadge(){
+  const btn = document.getElementById('gcal-pending-badge-btn');
+  if(!btn) return;
+  if(!isAdmUser(window._currentUser)){ btn.style.display='none'; return; }
+  try{
+    const snap = await fbGet('kanban/config/gcal_queue');
+    const n = Object.keys(snap.val()||{}).length;
+    if(n>0){
+      btn.style.display='inline-flex';
+      btn.textContent = '🔔 '+n+' agenda'+(n>1?'s':'')+' pendente'+(n>1?'s':'');
+    } else {
+      btn.style.display='none';
+    }
+  }catch(e){ btn.style.display='none'; }
 }
 
 // ── Notificação de reunião prestes a começar ──────────────────────────
