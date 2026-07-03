@@ -1882,7 +1882,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.48 · painel</div>
+<div class="version">v2.49 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4169,15 +4169,26 @@ async function addPcalAgenda(){
   // sozinho quando o Firebase confirma a escrita acima. Chamar os dois causava fetch concorrente
   // (2 buscas simultâneas na API do Google pra mesma ação).
 }
-function removePcalAgenda(id){
+async function removePcalAgenda(id){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem remover agendas globais.'); return; }
   if(!window._pcalCalendars) return;
   const key=Object.keys(window._pcalCalendars).find(k=>window._pcalCalendars[k].id===id);
   if(key){
     delete window._pcalCalendars[key];
     window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
+    // Purga IMEDIATA dos eventos dessa agenda do cache — não espera o próximo refetch do ADM
+    // (que só roda se o token do Google ainda estiver válido; sem isso os eventos ficariam
+    // "fantasmas" no calendário até alguém atualizar manualmente).
+    try{
+      const snap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache'));
+      const cache = snap.val()||{};
+      const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
+      await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), filtrado);
+    }catch(e){ console.warn('Não foi possível purgar cache imediatamente:', e); }
     renderPcalAgendasList();
-    // idem: listener de 'config/calendars' já refaz o fetch sozinho
+    showToast('🗑 Agenda removida.');
+    // O listener de 'config/calendars' ainda dispara um refetch completo em seguida (se o
+    // ADM tiver token válido), garantindo que o cache fique 100% sincronizado com a API.
   }
 }
 function _pcalGcalWarnBanner(show){
