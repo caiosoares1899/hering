@@ -1517,6 +1517,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </select>
       </div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Quem está usando o quadro e quanto, por squad.</div>
+      <div id="st-uso-erro-permissao" style="display:none;font-size:11px;color:var(--danger);background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px;line-height:1.5;">
+        ⚠ Não consegui ler os dados de acesso de nenhum squad — provavelmente falta a regra <code>access_log</code> nas Rules do Firebase (Realtime Database → Rules), dentro de <code>kanban/squads/$squadId</code>. Sem essa regra, os acessos nunca chegam a ser salvos nem lidos.
+      </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
         <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;">
@@ -1880,7 +1883,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.50 · painel</div>
+<div class="version">v2.51 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4760,13 +4763,19 @@ document.addEventListener('click',e=>{
 });
 
 // ── ADOÇÃO & ATIVIDADE (instrumentação de uso) ──
+// Formata uma data no fuso LOCAL (evita o bug de toISOString() jogar a data pra UTC —
+// alguém que acessa às 21h-23h no Brasil (UTC-3) acabava contado no dia seguinte).
+function _localDateStr(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 async function loadUsoData(){
   const dias = parseInt(document.getElementById('st-uso-periodo')?.value||'30');
   const hoje = new Date();
   const datasRange = [];
   for(let i=dias-1; i>=0; i--){
     const d = new Date(hoje); d.setDate(d.getDate()-i);
-    datasRange.push(d.toISOString().split('T')[0]);
+    datasRange.push(_localDateStr(d));
   }
   const cutoffDate = datasRange[0];
 
@@ -4775,6 +4784,7 @@ async function loadUsoData(){
   datasRange.forEach(d=>{ porDiaSet[d] = new Set(); });
   const porSquad = {}; // squadId -> { pessoas:Set, acessosTotal:0 }
   const todasPessoas = new Set();
+  let errosPermissao = 0;
 
   await Promise.all(KNOWN.map(async sq=>{
     try{
@@ -4791,8 +4801,17 @@ async function loadUsoData(){
           todasPessoas.add(uid);
         });
       });
-    } catch(e){ porSquad[sq] = { pessoas:new Set(), acessos:0 }; }
+    } catch(e){
+      porSquad[sq] = { pessoas:new Set(), acessos:0 };
+      if(String(e?.message||e).toLowerCase().includes('permission')) errosPermissao++;
+      console.warn('[Uso] erro ao ler access_log de', sq, e);
+    }
   }));
+
+  // Se TODOS os squads falharam por permissão, provavelmente falta a regra do Firebase
+  // pra 'access_log' — avisa isso claramente em vez de só mostrar zero silenciosamente.
+  const avisoEl = document.getElementById('st-uso-erro-permissao');
+  if(avisoEl) avisoEl.style.display = (errosPermissao===KNOWN.length && KNOWN.length>0) ? 'block' : 'none';
 
   // Cards criados/editados no período (proxy de atividade)
   let cardsAtividade = 0;
