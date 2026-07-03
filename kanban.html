@@ -2977,6 +2977,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div id="board-cal-legend" style="margin-left:auto; display:flex; gap:6px; align-items:center;"></div>
     </div>
     
+    <div id="gcal-token-warn" style="display:none;align-items:center;gap:10px;padding:9px 16px;background:rgba(255,209,102,.1);border-bottom:1px solid rgba(255,209,102,.3);font-size:11.5px;color:var(--warn);">
+      <span style="flex:1;">⚠ A conexão com o Google Agenda expirou — os eventos das agendas conectadas não estão sendo exibidos.</span>
+      <button class="btn btn-sm" onclick="reconectarGCal()" style="color:var(--warn);border-color:rgba(255,209,102,.4);white-space:nowrap;">🔄 Reconectar</button>
+    </div>
     <div class="cal-body">
       <div class="cal-weekdays">
         <div class="cal-wd">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
@@ -3335,7 +3339,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.60</div>
+<div class="version">v8.30.61</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3372,7 +3376,13 @@ const provider = new GoogleAuthProvider();
 // hd sugerido para facilitar login do time interno
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // SOLICITA PERMISSÃO DE LEITURA DO GOOGLE CALENDAR
-provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+// ⏸ PAUSADO: integração Google Calendar desativada temporariamente no prod.
+// O escopo calendar.readonly exige verificação do app pelo Google — sem ela,
+// TODOS os logins (não só quem usa calendário) caem na tela "Este app está bloqueado".
+// Reativar só depois de: (1) verificar o app no Google Cloud Console, OU
+// (2) mover a feature pra uma tela separada que só pede o escopo sob demanda.
+// provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+const GCAL_FEATURE_ENABLED = false;
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
@@ -3383,6 +3393,7 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   const credential = GoogleAuthProvider.credentialFromResult(r);
   if (credential && credential.accessToken) {
     safeLS.setItem('gcal_token', credential.accessToken);
+    safeLS.setItem('gcal_token_ts', String(Date.now())); // OAuth expira em ~1h
   }
   if(insc) window._pendingInsc=true; 
 });
@@ -10199,7 +10210,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor=ev._gestao?'purple':(ev.color||'blue');
         const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
-        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
+        const delBtn=(canEdit && !ev._gestao && !ev._gcal)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
         return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${esc(ev.title)}${delBtn}</div>`;
       } else {
         const c = item.data;
@@ -10235,7 +10246,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
         const col = EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0];
-        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
+        const delBtn = (canEdit && !ev._gestao && !ev._gcal) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
         return `
           <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent('${ev.id}')">
             <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
@@ -10265,6 +10276,8 @@ function makeDayEl(date,otherMonth=false,isToday=false){
 }
 function openEvModal(dateStr=''){
   editingEvId=null;
+  const _saveBtn=document.querySelector('#ev-modal-ov button[onclick="saveEvent()"]');
+  if(_saveBtn) _saveBtn.style.display='';
   document.getElementById('ev-modal-title').textContent='Novo Evento';
   document.getElementById('ev-title').value='';
   document.getElementById('ev-start').value=dateStr||new Date().toISOString().split('T')[0];
@@ -10278,15 +10291,19 @@ function openEvModal(dateStr=''){
 }
 function editEvent(evId){
   const ev=calEvents.find(e=>e.id===evId); if(!ev) return;
-  const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
+  // Evento espelhado do Google Agenda: sempre somente-leitura (edições seriam sobrescritas pela API)
+  const isGcal=!!ev._gcal;
+  const isPO=!isGcal && (window._currentUserRole==='po'||window._currentUserRole==='organizador');
   editingEvId=evId;
-  document.getElementById('ev-modal-title').textContent=isPO?'Editar Evento':'Detalhes do Evento';
+  document.getElementById('ev-modal-title').textContent=isGcal?'🗓️ Evento do Google Agenda':(isPO?'Editar Evento':'Detalhes do Evento');
   document.getElementById('ev-title').value=ev.title;
   document.getElementById('ev-start').value=ev.start;
   document.getElementById('ev-end').value=ev.end||ev.start;
   document.getElementById('ev-desc').value=ev.desc||'';
   document.getElementById('ev-link').value=ev.link||'';
   document.getElementById('ev-del-btn').style.display=isPO?'':'none';
+  const _saveBtn=document.querySelector('#ev-modal-ov button[onclick="saveEvent()"]');
+  if(_saveBtn) _saveBtn.style.display=isGcal?'none':'';
   ['ev-title','ev-start','ev-end','ev-desc','ev-link'].forEach(id=>{ document.getElementById(id).readOnly=!isPO; });
   renderEvColors(ev.color||'blue');
   document.getElementById('ev-modal-ov').classList.add('open');
@@ -10305,6 +10322,11 @@ function getSelColor(){
   return EV_COLORS[idx]?.id||'blue';
 }
 
+// Persiste apenas eventos próprios do squad — NUNCA espelhos do Google (_gcal) ou da Gestão (_gestao).
+// Salvar espelhos contaminaria o Firebase com cópias que depois duplicam com a versão da API.
+function _persistCalEvents(){
+  fbSet(FB+'/cal_events', calEvents.filter(e=>!e._gcal && !e._gestao));
+}
 function saveEvent(){
   const title=document.getElementById('ev-title').value.trim(); if(!title) return;
   const ev={id:editingEvId||'ev'+Date.now(),title,
@@ -10315,25 +10337,39 @@ function saveEvent(){
     color:getSelColor(),
     createdBy:window._currentUser?.displayName||'?',
     updatedAt:new Date().toISOString()};
-  if(editingEvId){ const idx=calEvents.findIndex(e=>e.id===editingEvId); if(idx>-1) calEvents[idx]=ev; }
+  if(editingEvId){
+    const _orig=calEvents.find(e=>e.id===editingEvId);
+    if(_orig && _orig._gcal){ closeEvModal(); return; } // espelho do Google: não salva
+    const idx=calEvents.findIndex(e=>e.id===editingEvId); if(idx>-1) calEvents[idx]=ev;
+  }
   else calEvents.push(ev);
-  fbSet(FB+'/cal_events',calEvents);
+  _persistCalEvents();
   closeEvModal(); renderCal();
   showToast('✅ Evento salvo!');
 }
 async function deleteEvent(){
-  if(!editingEvId||!await uiConfirm('Excluir este evento do calendário?',{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
+  if(!editingEvId) return;
+  const _evDel=calEvents.find(e=>e.id===editingEvId);
+  if(_evDel && _evDel._gcal){
+    uiAlert('Este evento vem de uma agenda do Google conectada. Para removê-lo, exclua na própria agenda Google, ou desconecte a agenda em ⚙ Config → Calendário.',{title:'🗓️ Evento do Google Agenda'});
+    return;
+  }
+  if(!await uiConfirm('Excluir este evento do calendário?',{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
   calEvents=calEvents.filter(e=>e.id!==editingEvId);
-  fbSet(FB+'/cal_events',calEvents);
+  _persistCalEvents();
   closeEvModal(); renderCal();
   showToast('🗑 Evento excluído');
 }
 // Exclui evento direto do grid do calendário (botão ✕ no evento)
 async function deleteEventById(id){
   const ev=calEvents.find(e=>e.id===id); if(!ev) return;
+  if(ev._gcal){
+    uiAlert('Este evento vem de uma agenda do Google conectada. Para removê-lo, exclua na própria agenda Google, ou desconecte a agenda em ⚙ Config → Calendário.',{title:'🗓️ Evento do Google Agenda'});
+    return;
+  }
   if(!await uiConfirm('Excluir o evento "'+(ev.title||'')+'"?',{title:'Excluir evento',danger:true,okText:'Excluir'})) return;
   calEvents=calEvents.filter(e=>e.id!==id);
-  fbSet(FB+'/cal_events',calEvents);
+  _persistCalEvents();
   renderCal();
   showToast('🗑 Evento excluído');
 }
@@ -10380,16 +10416,20 @@ function renderCalendarList() {
     return;
   }
 
-  container.innerHTML = list.map(cal => `
-    <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid var(--glass-b); border-radius:8px;">
-      <span style="font-size:14px;">🗓️</span>
+  const errs = window._gcalErrors || {};
+  container.innerHTML = list.map(cal => {
+    const err = errs[cal.id];
+    return `
+    <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid ${err?'rgba(255,107,107,.35)':'var(--glass-b)'}; border-radius:8px;">
+      <span style="font-size:14px;">${err?'⚠️':'🗓️'}</span>
       <div style="flex:1; min-width:0;">
         <div style="font-size:12px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.label || 'Agenda Externa')}</div>
         <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
+        ${err?`<div style="font-size:10px; color:var(--danger); margin-top:2px;">${esc(err.msg)}</div>`:''}
       </div>
       <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 function addCalendarToList() {
@@ -10426,11 +10466,37 @@ async function removeCalendarFromList(id) {
   }
 }
 
+function _gcalWarnBanner(show){
+  const el=document.getElementById('gcal-token-warn');
+  if(el) el.style.display = (show && GCAL_FEATURE_ENABLED) ? 'flex' : 'none';
+}
+// Reconecta o Google Agenda: refaz o popup de login (renova o accessToken) e recarrega as agendas
+async function reconectarGCal(){
+  if(!GCAL_FEATURE_ENABLED){ showToast('🛠️ Integração com Google Agendas em manutenção.'); return; }
+  try{
+    await window._signIn();
+    _gcalWarnBanner(false);
+    showToast('🔄 Reconectado! Carregando agendas...');
+    carregarTodasAgendasSquad();
+  }catch(e){
+    showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
+  }
+}
 async function carregarTodasAgendasSquad() {
+  if(!GCAL_FEATURE_ENABLED) return; // ⏸ integração pausada no prod
+  if(!window._gcalErrors) window._gcalErrors = {};
   const token = safeLS.getItem('gcal_token');
+  const temAgendas = Object.keys(window._squadCalendars||{}).length > 0;
   if (!token) {
-    console.warn("Token do Google Agenda não encontrado. Usuário precisa deslogar/logar.");
+    // Sem token mas com agendas configuradas → precisa reconectar
+    if(temAgendas) _gcalWarnBanner(true);
     return;
+  }
+  // Token com mais de 55 min quase certamente expirou (OAuth Google = 1h)
+  const ts = parseInt(safeLS.getItem('gcal_token_ts')||'0');
+  if(temAgendas && ts && (Date.now()-ts) > 55*60*1000){
+    _gcalWarnBanner(true);
+    // Tenta mesmo assim — se a API aceitar, o banner some no sucesso abaixo
   }
 
   const list = Object.values(window._squadCalendars || {});
@@ -10452,9 +10518,29 @@ async function carregarTodasAgendasSquad() {
       
       try {
         const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        if(res.status===401){
+          // Token expirado — reconectar resolve
+          window._gcalAuthFailed = true;
+          window._gcalErrors[cal.id] = { type:'expired', msg:'Sessão do Google expirou' };
+          console.warn(`[GCal] Token expirado para [${cal.label}] (HTTP 401)`);
+          return;
+        }
+        if(res.status===403){
+          // Agenda incompatível com OAuth de usuário (ex: calendários públicos de sistema
+          // como feriados nacionais) — reconectar NÃO resolve, precisa de API Key server-side.
+          let reason='';
+          try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+          window._gcalErrors[cal.id] = { type:'forbidden', msg: reason.includes('unregistered')
+            ? 'Esta agenda é pública/de sistema e não aceita login de usuário — precisa de API Key própria'
+            : 'Sem permissão de acesso a esta agenda' };
+          console.warn(`[GCal] 403 para [${cal.label}]: ${reason}`);
+          return;
+        }
         const data = await res.json();
         
         if (data.items) {
+          delete window._gcalErrors[cal.id];
+          window._gcalAuthOk = true;
           data.items.forEach(item => {
             let start = item.start.date || (item.start.dateTime ? item.start.dateTime.split('T')[0] : '');
             let end = item.end.date || (item.end.dateTime ? item.end.dateTime.split('T')[0] : '');
@@ -10483,7 +10569,15 @@ async function carregarTodasAgendasSquad() {
     }));
 
     calEvents = [...calEvents.filter(e => !e._gcal), ...todosEventosGoogle];
-    
+
+    // Banner de reconectar: só para tokens expirados (403 de agenda incompatível não reconecta)
+    const temExpirado = Object.values(window._gcalErrors).some(e=>e.type==='expired');
+    _gcalWarnBanner(temExpirado);
+    window._gcalAuthFailed = false;
+
+    // Atualiza a lista de agendas na config (mostra erro por agenda, se houver)
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+
     if (document.getElementById('cal-ov')?.classList.contains('open')) {
       renderCal();
     }
