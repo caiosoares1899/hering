@@ -1870,7 +1870,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.46 · painel</div>
+<div class="version">v2.47 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4102,7 +4102,9 @@ async function addPcalAgenda(){
   document.getElementById('pcal-agenda-label').value='';
   showToast('✅ Agenda adicionada para todos os squads!');
   renderPcalAgendasList();
-  carregarPcalAgendasGlobais();
+  // Não chama carregarPcalAgendasGlobais() aqui — o listener de 'config/calendars' já dispara
+  // sozinho quando o Firebase confirma a escrita acima. Chamar os dois causava fetch concorrente
+  // (2 buscas simultâneas na API do Google pra mesma ação).
 }
 function removePcalAgenda(id){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem remover agendas globais.'); return; }
@@ -4112,7 +4114,7 @@ function removePcalAgenda(id){
     delete window._pcalCalendars[key];
     window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
     renderPcalAgendasList();
-    carregarPcalAgendasGlobais();
+    // idem: listener de 'config/calendars' já refaz o fetch sozinho
   }
 }
 function _pcalGcalWarnBanner(show){
@@ -4192,7 +4194,17 @@ async function carregarPcalAgendasGlobais(){
   }));
 
   // Salva o resultado processado no Firebase — todo mundo lê daqui, sem token próprio
-  const cacheObj = Object.fromEntries(todosEventos.map(ev=>[ev.id, ev]));
+  // Deduplica por título+data — algumas agendas públicas do Google (ex: feriados nacionais)
+  // retornam o mesmo feriado mais de uma vez com IDs internos diferentes. Sem isso, duplicava
+  // visualmente no calendário mesmo vindo de uma única chamada à API.
+  const vistos = new Set();
+  const todosEventosDedup = todosEventos.filter(ev=>{
+    const chave = ev.start+'|'+ev.title.trim().toLowerCase();
+    if(vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
+  const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
     updatedAt: new Date().toISOString(),
