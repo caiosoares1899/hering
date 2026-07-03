@@ -277,8 +277,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cfg-input:focus{outline:none;border-color:var(--accent);}
 .cfg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .cfg-ft{padding:10px 16px;border-top:1px solid var(--glass-b);display:flex;gap:8px;justify-content:flex-end;}
-.x-btn{background:none;border:none;color:rgba(200,230,255,.5);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
-.x-btn:hover{color:var(--danger);}
 .save-btn{padding:7px 18px;font-size:12px;background:rgba(37,99,201,.7);color:#fff;
   border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .save-btn:hover{background:rgba(37,99,201,.9);}
@@ -3931,8 +3929,8 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
         // Card com prazo — cor por squad, ícone 📎, clique abre o board do squad
         const col=_squadColorFor(ev._squad);
         return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};opacity:.9;"
-          onclick="event.stopPropagation();window.open(squadBoardUrl('${ev._squad}'),'_blank')"
-          title="${esc(ev.title)} — abrir board ${esc(ev._squad)}">${esc(ev.title)}</div>`;
+          onclick="event.stopPropagation();window.open(squadBoardUrl('${ev._squad}','${ev._cardId||''}'),'_blank')"
+          title="${esc(ev.title)} — abrir card">${esc(ev.title)}</div>`;
       }
       if(ev._gcal){
         const col=_gcalColorFor(ev._calId||ev.id);
@@ -3948,15 +3946,21 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
     }).join('')
     +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);cursor:pointer;" onclick="event.stopPropagation();openPcalDayPopover('${ds}')">+${dayEvs.length-3} mais</div>`:'');
   div.onclick=()=>openPcalDayPopover(ds);
-  div._dayEvs = dayEvs; // guarda a lista completa do dia p/ o popover usar
-  window._pcalAllDaysCache = window._pcalAllDaysCache || {};
-  window._pcalAllDaysCache[ds] = dayEvs;
   return div;
 }
 
 // Popover de dia: lista todos os eventos/prazos daquele dia (aberto por "+N mais" ou clique no dia)
 function openPcalDayPopover(ds){
-  const dayEvs = (window._pcalAllDaysCache && window._pcalAllDaysCache[ds]) || [];
+  // Recalcula na hora (não usa cache de render) — evita mostrar dados de outra aba/squad
+  // que tenha renderizado por último e sobrescrito um cache compartilhado.
+  if(pcalSquadFilter===null) pcalSquadFilter = new Set(SQUADS.map(s=>s.id).concat(['gestao']));
+  const allEvs=getAllPcalEvents().filter(ev=>{
+    if(ev._global) return true;
+    const sq = ev._squad||ev.squad||'geral';
+    if(sq==='geral') return true;
+    return pcalSquadFilter.has(sq);
+  });
+  const dayEvs = allEvs.filter(ev=>ds>=(ev.start||'')&&ds<=(ev.end||ev.start||''));
   const dt = new Date(ds+'T00:00:00');
   const opcoes = { weekday:'long', day:'numeric', month:'long' };
   document.getElementById('pcal-day-pop-title').textContent = dt.toLocaleDateString('pt-BR', opcoes);
@@ -3972,7 +3976,7 @@ function openPcalDayPopover(ds){
       if(ev._type==='prazo'){
         const col=_squadColorFor(ev._squad);
         return `<div style="background:${col.bg};color:${col.txt};padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;"
-          onclick="window.open(squadBoardUrl('${ev._squad}'),'_blank')">
+          onclick="window.open(squadBoardUrl('${ev._squad}','${ev._cardId||''}'),'_blank')">
           <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
         </div>`;
       }
@@ -5046,7 +5050,7 @@ let SQUADS = [
 ];
 // Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
 // URL helper: abre o board de um squad no kanban unificado
-function squadBoardUrl(squadId){ return 'kanban.html?squad=' + squadId; }
+function squadBoardUrl(squadId, cardId){ return 'kanban.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
 
 // Carrega squads criados via painel de setup do Firebase
 function loadExtraSquads(callback){
