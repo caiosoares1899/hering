@@ -1313,17 +1313,33 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="pcal-tab"     id="pcal-tab-gestao"        onclick="setPcalTab('gestao')">🏢 Gestão</div>
       </div>
       <div class="pcal-content on" id="pcal-all">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
           <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
           <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
           <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
           <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
-          <select id="pcal-filter-sel" onchange="renderPcal()" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;font-family:'DM Sans',sans-serif;">
-            <option value="all">Todos os squads</option>
-            <option value="dados">📊 Squad Dados</option>
-            <option value="midia">📱 Marketing de Performance</option>
-          </select>
+          <button class="pcal-nav-btn" id="pcal-prazos-toggle" onclick="togglePcalPrazos()" style="font-size:10px;padding:4px 10px;" title="Mostrar/ocultar cards que finalizam no dia">📎 Prazos</button>
+          <button class="pcal-nav-btn" onclick="togglePcalAgendasCfg()" style="font-size:10px;padding:4px 10px;">⚙ Agendas</button>
           <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
+        </div>
+        <div id="pcal-squad-filter-bar" style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
+        <div id="pcal-agendas-cfg" style="display:none;margin-bottom:14px;padding:12px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;">
+          <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">🌐 Agendas conectadas para todos os squads</div>
+          <div style="font-size:10px;color:var(--txt3);line-height:1.5;margin-bottom:10px;">Feriados nacionais, eventos do Digital ou qualquer agenda pública do Google — aparecem no calendário de todos os squads, não só um.</div>
+          <div id="pcal-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:8px;"></div>
+          <div id="pcal-agendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <input id="pcal-agenda-label" placeholder="Nome (Ex: Feriados Nacionais)" style="flex:1;min-width:140px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(3,13,26,.8);color:var(--txt);">
+            <input id="pcal-agenda-id" type="email" placeholder="ID da agenda (e-mail longo...)" style="flex:2;min-width:200px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(3,13,26,.8);color:var(--txt);">
+            <button onclick="addPcalAgenda()" style="padding:6px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:7px;cursor:pointer;">+ Adicionar</button>
+          </div>
+          <div id="pcal-gcal-restore-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--glass-b);">
+            <button onclick="restorePcalGcalDismissed()" style="padding:5px 12px;font-size:10.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:7px;cursor:pointer;">↩️ Restaurar eventos ocultos</button>
+          </div>
+        </div>
+        <div id="pcal-token-warn" style="display:none;align-items:center;gap:10px;padding:8px 12px;margin-bottom:10px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:8px;font-size:11px;color:var(--warn);">
+          <span style="flex:1;">⚠ A conexão com o Google Agenda expirou.</span>
+          <button onclick="reconectarPcalGCal()" style="padding:4px 10px;font-size:10.5px;background:none;color:var(--warn);border:1px solid rgba(255,209,102,.4);border-radius:6px;cursor:pointer;white-space:nowrap;">🔄 Reconectar</button>
         </div>
         <div class="pcal-weekdays-row">
           <div class="pcal-wd">Dom</div><div class="pcal-wd">Seg</div><div class="pcal-wd">Ter</div>
@@ -1851,7 +1867,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.42 · painel</div>
+<div class="version">v2.43 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1875,6 +1891,19 @@ const db  = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
+// Escopo de calendário isolado do login normal — só pedido quando alguém conecta uma agenda
+// (evita que login geral do painel caia em "app bloqueado" por falta de verificação do app)
+const calProvider = new GoogleAuthProvider();
+calProvider.setCustomParameters({ hd: 'ciahering.com.br' });
+calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
+  const credential = GoogleAuthProvider.credentialFromResult(r);
+  if (credential && credential.accessToken) {
+    localStorage.setItem('gcal_token', credential.accessToken);
+    localStorage.setItem('gcal_token_ts', String(Date.now()));
+  }
+  return credential;
+});
 
 window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update;
 window._signIn=()=>signInWithPopup(auth,provider);
@@ -3600,6 +3629,11 @@ let pcalYear=new Date().getFullYear();
 let pcalMonth=new Date().getMonth();
 let pcalTab='all';
 let pcalEvents=[]; // eventos gerais do painel (gestão + geral)
+let pcalShowPrazos = true; // mostrar cards com prazo no dia
+let pcalSquadFilter = null; // Set de squad ids ativos no filtro (null = todos)
+let pcalGcalEvents = []; // eventos vindos de agendas Google conectadas globalmente (todos os squads)
+window._pcalGcalErrors = {};
+window._pcalGcalDismissedIds = new Set();
 let pcalEditId=null;
 let pcalShowSection=false;
 // Eventos dos boards individuais carregados em squadData já existem
@@ -3658,8 +3692,71 @@ function pcalNav(dir){
 }
 function pcalGoToday(){ pcalYear=new Date().getFullYear(); pcalMonth=new Date().getMonth(); renderPcal(); renderPcalGestao(); }
 
+// Paleta e hash de cor determinística para agendas do Google (mesma lógica do board)
+const GCAL_PALETTE = [
+  { bg:'rgba(56,182,255,.92)',  txt:'#00263a' },
+  { bg:'rgba(29,233,182,.92)',  txt:'#00231b' },
+  { bg:'rgba(244,168,200,.92)', txt:'#3a0018' },
+  { bg:'rgba(255,209,102,.95)', txt:'#3a2c00' },
+  { bg:'rgba(167,139,250,.92)', txt:'#1a0a3a' },
+  { bg:'rgba(255,152,0,.92)',   txt:'#3a1e00' },
+];
+function _gcalColorFor(calId){
+  let h = 0;
+  for (let i = 0; i < calId.length; i++) h = (h * 31 + calId.charCodeAt(i)) >>> 0;
+  return GCAL_PALETTE[h % GCAL_PALETTE.length];
+}
+
+// Renderiza os chips coloridos de filtro por squad (multi-seleção, cada um com sua cor)
+function renderPcalSquadFilterBar(){
+  const el = document.getElementById('pcal-squad-filter-bar');
+  if(!el) return;
+  if(pcalSquadFilter===null) pcalSquadFilter = new Set(SQUADS.map(s=>s.id).concat(['gestao']));
+  const items = [...SQUADS.map(s=>({id:s.id,label:s.label,icon:s.icon})), {id:'gestao',label:'Gestão',icon:'🏢'}];
+  el.innerHTML = items.map(sq=>{
+    const col = PCAL_COLORS.find(c=>c.id===sq.id) || PCAL_COLORS[3];
+    const on = pcalSquadFilter.has(sq.id);
+    return `<button onclick="togglePcalSquadFilter('${sq.id}')" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid ${on?col.bg:'var(--glass-b)'};background:${on?col.bg:'rgba(3,13,26,.5)'};color:${on?col.txt:'var(--txt3)'};transition:all .15s;">
+      ${sq.icon} ${esc(sq.label)}
+    </button>`;
+  }).join('');
+}
+function togglePcalSquadFilter(sqId){
+  if(pcalSquadFilter===null) pcalSquadFilter = new Set(SQUADS.map(s=>s.id).concat(['gestao']));
+  if(pcalSquadFilter.has(sqId)) pcalSquadFilter.delete(sqId);
+  else pcalSquadFilter.add(sqId);
+  renderPcalSquadFilterBar();
+  renderPcal();
+}
+function togglePcalPrazos(){
+  pcalShowPrazos = !pcalShowPrazos;
+  const btn = document.getElementById('pcal-prazos-toggle');
+  if(btn) btn.style.cssText += pcalShowPrazos ? 'color:var(--teal);border-color:rgba(29,233,182,.4);' : '';
+  renderPcal();
+}
+
+// Agrega cards com prazo (due) de todos os squads, respeitando o filtro de squad ativo
+function getAllPcalPrazos(){
+  if(!pcalShowPrazos) return [];
+  const out = [];
+  SQUADS.forEach(sq=>{
+    if(pcalSquadFilter && !pcalSquadFilter.has(sq.id)) return;
+    const cds = squadData[sq.id]?.cards || [];
+    cds.forEach(c=>{
+      if(!c.due || c.archived) return;
+      out.push({
+        id: 'prazo-'+sq.id+'-'+c.id,
+        title: '📎 '+(c.title||'(sem título)'),
+        start: c.due, end: c.due,
+        _squad: sq.id, _type: 'prazo', _cardId: c.id,
+      });
+    });
+  });
+  return out;
+}
+
 function getAllPcalEvents(){
-  // Junta eventos dos boards + eventos do painel
+  // Junta eventos dos boards + eventos do painel + agendas globais do Google + prazos de cards
   const boardEvs=[];
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d?.cal_events) return;
@@ -3667,10 +3764,12 @@ function getAllPcalEvents(){
     evs.forEach(ev=>boardEvs.push({...ev, _squad:sq.id, _source:'board'}));
   });
   const panelEvs=pcalEvents.map(ev=>({...ev, _source:'painel'}));
-  return [...boardEvs,...panelEvs];
+  const gcalEvs=pcalGcalEvents.map(ev=>({...ev, _source:'gcal'}));
+  return [...boardEvs,...panelEvs,...gcalEvs,...getAllPcalPrazos()];
 }
 
 function renderPcal(){
+  renderPcalSquadFilterBar();
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const lbl=document.getElementById('pcal-month-lbl');
   if(lbl) lbl.textContent=MESES[pcalMonth]+' '+pcalYear;
@@ -3681,11 +3780,13 @@ function renderPcal(){
   const last=new Date(pcalYear,pcalMonth+1,0);
   const startDay=first.getDay();
   const prevLast=new Date(pcalYear,pcalMonth,0);
-  // Filtro de squad
-  const filterSq=document.getElementById('pcal-filter-sel')?.value||pcalTab;
+  // Filtro de squad (multi-seleção via chips coloridos) — agendas globais (_global) sempre passam
+  if(pcalSquadFilter===null) pcalSquadFilter = new Set(SQUADS.map(s=>s.id).concat(['gestao']));
   const allEvs=getAllPcalEvents().filter(ev=>{
-    if(filterSq==='all'||filterSq==='geral') return true;
-    return ev._squad===filterSq||ev.squad===filterSq||ev._squad===undefined;
+    if(ev._global) return true; // agenda conectada globalmente — visível em qualquer filtro
+    const sq = ev._squad||ev.squad||'geral';
+    if(sq==='geral') return true;
+    return pcalSquadFilter.has(sq);
   });
   // Dias mês anterior
   for(let i=startDay-1;i>=0;i--)
@@ -3729,25 +3830,50 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
   const div=document.createElement('div');
   div.className='pcal-day'+(otherMonth?' other-month':'')+(isToday?' today':'')+(dayEvs.length?' has-events':'');
   div.innerHTML=`<div class="pcal-day-num">${date.getDate()}</div>`
-    +dayEvs.slice(0,2).map(ev=>{
+    +dayEvs.slice(0,3).map(ev=>{
+      if(ev._type==='prazo'){
+        // Card com prazo — cor por squad, ícone 📎, clique abre o board do squad
+        const col=PCAL_COLORS.find(c=>c.id===ev._squad)||PCAL_COLORS[3];
+        return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};opacity:.9;"
+          onclick="event.stopPropagation();window.open(squadBoardUrl('${ev._squad}'),'_blank')"
+          title="${esc(ev.title)} — abrir board ${esc(ev._squad)}">${esc(ev.title)}</div>`;
+      }
+      if(ev._gcal){
+        const col=_gcalColorFor(ev._calId||ev.id);
+        const del = _isAdmPainel() ? `<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalGcalEvent('${ev.id}')" title="Excluir (oculta permanentemente)">✕</button>` : '';
+        return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
+          title="${esc(ev.title)} (${esc(ev._calLabel||'')})">${esc(ev.title)}${del}</div>`;
+      }
       const squad=ev._squad||ev.squad||'geral';
       const col=PCAL_COLORS.find(c=>c.id===squad)||PCAL_COLORS.find(c=>c.id===ev.color)||PCAL_COLORS[3];
       return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
         onclick="event.stopPropagation();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')"
         title="${ev.title}">${ev.title}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent('${ev.id||''}','${ev._source||'painel'}')" title="Excluir">✕</button></div>`;
     }).join('')
-    +(dayEvs.length>2?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-2} mais</div>`:'');
+    +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);">+${dayEvs.length-3} mais</div>`:'');
   div.onclick=()=>openPevModal(ds);
   return div;
 }
 
 function renderPcalLegend(elId, evs){
   const el=document.getElementById(elId); if(!el) return;
-  const squadsPresentes=new Set(evs.map(ev=>ev._squad||ev.squad||'geral'));
-  el.innerHTML=[...squadsPresentes].map(sq=>{
+  const squadsPresentes=new Set(evs.filter(ev=>!ev._gcal).map(ev=>ev._squad||ev.squad||'geral'));
+  let html = [...squadsPresentes].map(sq=>{
     const col=PCAL_COLORS.find(c=>c.id===sq)||PCAL_COLORS[3];
     return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label||sq}</div>`;
   }).join('');
+  // Agendas do Google conectadas — cor própria por agenda
+  const agendas = Object.values(window._pcalCalendars||{});
+  if(agendas.length){
+    html += agendas.map(cal=>{
+      const col=_gcalColorFor(cal.id);
+      return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>🌐 ${esc(cal.label)}</div>`;
+    }).join('');
+  }
+  if(evs.some(ev=>ev._type==='prazo')){
+    html += `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(255,255,255,.3);"></div>📎 Prazo de card</div>`;
+  }
+  el.innerHTML = html;
 }
 
 // ── MODAL EVENTO PAINEL ──────────────────────────────────────────
@@ -3838,6 +3964,192 @@ function loadPcalEvents(){
       if(_isPtab('pessoas')) renderPcal();
     });
   });
+
+  // Agendas do Google conectadas globalmente (todos os squads)
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'),snap=>{
+    window._pcalCalendars = snap.val() || {};
+    renderPcalAgendasList();
+    carregarPcalAgendasGlobais();
+  });
+  // Eventos ocultados (excluídos) pelo ADM
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed'),snap=>{
+    const val = snap.val();
+    window._pcalGcalDismissedIds = new Set(val ? Object.keys(val) : []);
+    pcalGcalEvents = pcalGcalEvents.filter(e => !window._pcalGcalDismissedIds.has(e.id));
+    const wrap=document.getElementById('pcal-gcal-restore-wrap');
+    if(wrap) wrap.style.display = window._pcalGcalDismissedIds.size ? '' : 'none';
+    if(_isPtab('pessoas')) renderPcal();
+  });
+}
+
+// ── Agendas globais do Google (feriados nacionais, eventos do Digital etc.) ──
+function togglePcalAgendasCfg(){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem gerenciar agendas globais.'); return; }
+  const el=document.getElementById('pcal-agendas-cfg');
+  if(!el) return;
+  const open = el.style.display!=='none';
+  el.style.display = open?'none':'block';
+  if(!open) renderPcalAgendasList();
+}
+function renderPcalAgendasList(){
+  const container=document.getElementById('pcal-agendas-list');
+  if(!container) return;
+  const statusEl=document.getElementById('pcal-gcal-auth-status');
+  if(statusEl){
+    const hasToken=!!localStorage.getItem('gcal_token');
+    statusEl.innerHTML = hasToken
+      ? '<span style="color:var(--teal);">✅ Conta Google autorizada</span>'
+      : '<span style="color:var(--txt3);">🔒 Nenhuma autorização ainda</span>';
+  }
+  const list=Object.values(window._pcalCalendars||{});
+  if(!list.length){
+    container.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhuma agenda global conectada ainda.</div>';
+    return;
+  }
+  const errs=window._pcalGcalErrors||{};
+  container.innerHTML=list.map(cal=>{
+    const col=_gcalColorFor(cal.id);
+    const err=errs[cal.id];
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.6);border:1px solid ${err?'rgba(255,107,107,.35)':'var(--glass-b)'};border-radius:7px;">
+      <div style="width:9px;height:9px;border-radius:3px;background:${col.bg};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cal.label)}</div>
+        ${err?`<div style="font-size:9.5px;color:var(--danger);">${esc(err.msg)}</div>`:''}
+      </div>
+      <button onclick="removePcalAgenda('${esc(cal.id)}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;" title="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+async function addPcalAgenda(){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem adicionar agendas globais.'); return; }
+  const id=document.getElementById('pcal-agenda-id').value.trim();
+  const label=document.getElementById('pcal-agenda-label').value.trim();
+  if(!id){ showToast('⚠ Informe o ID da agenda.'); return; }
+  if(!localStorage.getItem('gcal_token')){
+    try{
+      showToast('🔐 Conecte sua conta Google para autorizar a leitura de agendas...');
+      await window._requestCalendarScope();
+    }catch(e){
+      showToast('⚠ Não foi possível autorizar o acesso ao Google Agenda.');
+      return;
+    }
+  }
+  const finalLabel=label||id.split('@')[0]||'Agenda';
+  const key='cal_'+id.replace(/[^a-z0-9_-]/gi,'_');
+  if(!window._pcalCalendars) window._pcalCalendars={};
+  window._pcalCalendars[key]={id,label:finalLabel};
+  window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
+  document.getElementById('pcal-agenda-id').value='';
+  document.getElementById('pcal-agenda-label').value='';
+  showToast('✅ Agenda adicionada para todos os squads!');
+  renderPcalAgendasList();
+  carregarPcalAgendasGlobais();
+}
+function removePcalAgenda(id){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem remover agendas globais.'); return; }
+  if(!window._pcalCalendars) return;
+  const key=Object.keys(window._pcalCalendars).find(k=>window._pcalCalendars[k].id===id);
+  if(key){
+    delete window._pcalCalendars[key];
+    window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
+    renderPcalAgendasList();
+    carregarPcalAgendasGlobais();
+  }
+}
+function _pcalGcalWarnBanner(show){
+  const el=document.getElementById('pcal-token-warn');
+  if(el) el.style.display = show ? 'flex' : 'none';
+}
+async function reconectarPcalGCal(){
+  try{
+    await window._requestCalendarScope();
+    _pcalGcalWarnBanner(false);
+    showToast('🔄 Reconectado! Carregando agendas...');
+    carregarPcalAgendasGlobais();
+  }catch(e){
+    showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
+  }
+}
+async function carregarPcalAgendasGlobais(){
+  if(!window._pcalGcalErrors) window._pcalGcalErrors={};
+  const token=localStorage.getItem('gcal_token');
+  const list=Object.values(window._pcalCalendars||{});
+  if(!list.length){ pcalGcalEvents=[]; if(_isPtab('pessoas')) renderPcal(); return; }
+  if(!token){ _pcalGcalWarnBanner(true); return; }
+  const ts=parseInt(localStorage.getItem('gcal_token_ts')||'0');
+  if(ts && (Date.now()-ts) > 55*60*1000) _pcalGcalWarnBanner(true);
+
+  const hoje=new Date();
+  const limiteInferior=new Date(hoje.getFullYear(),hoje.getMonth()-1,1).toISOString();
+  let todosEventos=[];
+
+  await Promise.all(list.map(async cal=>{
+    const url=`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${limiteInferior}&singleEvents=true&orderBy=startTime`;
+    try{
+      const res=await fetch(url,{headers:{'Authorization':`Bearer ${token}`}});
+      if(res.status===401){
+        window._pcalGcalErrors[cal.id]={type:'expired',msg:'Sessão do Google expirou'};
+        return;
+      }
+      if(res.status===403){
+        let reason='';
+        try{ const errBody=await res.json(); reason=errBody?.error?.message||''; }catch(_){}
+        window._pcalGcalErrors[cal.id]={type:'forbidden',msg:reason.includes('unregistered')
+          ? 'Agenda pública/de sistema — precisa de API Key própria'
+          : 'Sem permissão de acesso a esta agenda'};
+        return;
+      }
+      const data=await res.json();
+      if(data.items){
+        delete window._pcalGcalErrors[cal.id];
+        data.items.forEach(item=>{
+          if(window._pcalGcalDismissedIds && window._pcalGcalDismissedIds.has(item.id)) return;
+          let start=item.start.date||(item.start.dateTime?item.start.dateTime.split('T')[0]:'');
+          let end=item.end.date||(item.end.dateTime?item.end.dateTime.split('T')[0]:'');
+          if(item.end.date && end){ let d=new Date(end+'T00:00:00'); d.setDate(d.getDate()-1); end=d.toISOString().split('T')[0]; }
+          const isAllDay=!item.start.dateTime;
+          let meetingLink=item.hangoutLink||'';
+          if(!meetingLink && item.conferenceData?.entryPoints){
+            const v=item.conferenceData.entryPoints.find(e=>e.entryPointType==='video');
+            meetingLink=v?.uri||'';
+          }
+          todosEventos.push({
+            id:item.id, title:'🗓️ '+(item.summary||'(Sem título)'),
+            start, end:end||start, isAllDay,
+            startDateTime:item.start.dateTime||'', endDateTime:item.end.dateTime||'',
+            desc:item.description||'', link:item.htmlLink||'', meetingLink,
+            _gcal:true, _global:true, _calId:cal.id, _calLabel:cal.label,
+          });
+        });
+      }
+    }catch(e){ console.warn('[Painel GCal] erro em', cal.label, e); }
+  }));
+
+  pcalGcalEvents = todosEventos;
+  const temExpirado = Object.values(window._pcalGcalErrors).some(e=>e.type==='expired');
+  _pcalGcalWarnBanner(temExpirado);
+  renderPcalAgendasList();
+  if(_isPtab('pessoas')) renderPcal();
+}
+async function deletePcalGcalEvent(id){
+  if(!_isAdmPainel()) return;
+  if(!await uiConfirm('Excluir este evento? Ele vem de uma agenda do Google conectada globalmente — será ocultado permanentemente para todos os squads (não afeta a agenda no Google).')) return;
+  if(!window._pcalGcalDismissedIds) window._pcalGcalDismissedIds=new Set();
+  window._pcalGcalDismissedIds.add(id);
+  const obj=Object.fromEntries([...window._pcalGcalDismissedIds].map(k=>[k,true]));
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed'), obj);
+  pcalGcalEvents=pcalGcalEvents.filter(e=>e.id!==id);
+  renderPcal();
+  showToast('🗑 Evento excluído');
+}
+async function restorePcalGcalDismissed(){
+  const n=window._pcalGcalDismissedIds?window._pcalGcalDismissedIds.size:0;
+  if(!n){ showToast('Nenhum evento oculto para restaurar.'); return; }
+  if(!await uiConfirm(`Restaurar ${n} evento(s) ocultado(s)?`)) return;
+  window._pcalGcalDismissedIds=new Set();
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed'), {});
+  showToast('↩️ Eventos restaurados!');
+  carregarPcalAgendasGlobais();
 }
 
 // Event delegation para botão ⚙ Config dos squad cards
