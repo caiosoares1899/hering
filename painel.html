@@ -1882,7 +1882,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.49 · painel</div>
+<div class="version">v2.50 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3815,6 +3815,55 @@ function getAllPcalEvents(){
   return [...boardEvs,...panelEvs,...gcalEvs,...getAllPcalPrazos()];
 }
 
+// Limpeza defensiva do cache de agendas — roda no CLIENTE toda vez que dados relevantes mudam,
+// então mesmo cache antigo (de antes desses fixes, ou nunca re-sincronizado) fica correto na hora,
+// sem depender de um novo fetch na API do Google.
+// 1) Remove eventos "órfãos": vêm de uma agenda que já foi desconectada mas o registro ficou no cache.
+// 2) Deduplica por título+data (algumas agendas públicas do Google retornam o mesmo feriado 2-3x).
+function _applyGcalCacheCleaning(){
+  const raw = window._pcalGcalCacheRaw || {};
+  let eventos = Object.values(raw);
+
+  // Só filtra órfãos depois que a lista de agendas conectadas (config/calendars) já chegou
+  // pelo menos uma vez. Os listeners do Firebase resolvem em ordem imprevisível — se o CACHE
+  // de eventos chegasse antes da LISTA de agendas, a lista estaria vazia nesse instante e todo
+  // evento pareceria "órfão", apagando tudo até o outro listener corrigir depois. Sem essa
+  // trava, dava exatamente esse sintoma: mês atual em branco até navegar e voltar.
+  if(window._pcalCalendarsLoaded){
+    const calendariosAtivos = new Set(Object.values(window._pcalCalendars||{}).map(c=>c.id));
+    const antesOrfaos = eventos.length;
+    eventos = eventos.filter(ev => !ev._calId || calendariosAtivos.has(ev._calId));
+    var removidosOrfaos = antesOrfaos - eventos.length;
+  } else {
+    var removidosOrfaos = 0;
+  }
+
+  // Deduplica por título+data
+  const vistos = new Set();
+  const antesDedup = eventos.length;
+  eventos = eventos.filter(ev=>{
+    const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+    if(vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
+  const removidosDup = antesDedup - eventos.length;
+
+  // Remove os ocultados manualmente
+  const dismissed = window._pcalGcalDismissedIds || new Set();
+  eventos = eventos.filter(e => !dismissed.has(e.id));
+
+  pcalGcalEvents = eventos;
+  if(_isPtab('pessoas')) renderPcal();
+
+  // Auto-reparo: só regrava no Firebase quando já temos a lista de agendas carregada
+  // (senão arriscamos gravar um cache "limpo" que na verdade só estava com dados parciais).
+  if(_isAdmPainel() && window._pcalCalendarsLoaded && (removidosOrfaos>0 || removidosDup>0)){
+    const cacheLimpo = Object.fromEntries(eventos.map(ev=>[ev.id, ev]));
+    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheLimpo).catch(()=>{});
+  }
+}
+
 function renderPcal(){
   renderPcalSquadFilterBar();
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -4067,15 +4116,15 @@ function loadPcalEvents(){
   // mas só o ADM (que tem token) efetivamente busca na API do Google (ver carregarPcalAgendasGlobais).
   window._onValue(window._ref(window._db,'kanban/painel/config/calendars'),snap=>{
     window._pcalCalendars = snap.val() || {};
+    window._pcalCalendarsLoaded = true;
     renderPcalAgendasList();
     if(_isAdmPainel()) carregarPcalAgendasGlobais(); // só admin efetivamente chama a API do Google
+    _applyGcalCacheCleaning(); // agendas removidas: limpa eventos órfãos que sobraram no cache
   });
   // Cache dos eventos já processados — TODO MUNDO lê daqui, sem precisar de token próprio
   window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'),snap=>{
-    const val = snap.val();
-    pcalGcalEvents = val ? Object.values(val) : [];
-    if(window._pcalGcalDismissedIds) pcalGcalEvents = pcalGcalEvents.filter(e => !window._pcalGcalDismissedIds.has(e.id));
-    if(_isPtab('pessoas')) renderPcal();
+    window._pcalGcalCacheRaw = snap.val() || {};
+    _applyGcalCacheCleaning();
   });
   window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'),snap=>{
     window._pcalGcalCacheMeta = snap.val() || null;
@@ -4085,10 +4134,9 @@ function loadPcalEvents(){
   window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed'),snap=>{
     const val = snap.val();
     window._pcalGcalDismissedIds = new Set(val ? Object.keys(val) : []);
-    pcalGcalEvents = pcalGcalEvents.filter(e => !window._pcalGcalDismissedIds.has(e.id));
     const wrap=document.getElementById('pcal-gcal-restore-wrap');
     if(wrap) wrap.style.display = window._pcalGcalDismissedIds.size ? '' : 'none';
-    if(_isPtab('pessoas')) renderPcal();
+    _applyGcalCacheCleaning();
   });
 }
 
@@ -5074,6 +5122,10 @@ window.addEventListener('fb-ready',()=>{
   loadPresence();
   loadAgentUsage();
   loadPcalEvents();
+  // Rede de segurança: força um re-render ~2s após o boot, caso a primeira pintura da tela
+  // tenha acontecido antes de algum listener do Firebase entregar seus dados (evita a tela
+  // do calendário aparecer "vazia" até o usuário navegar de mês manualmente).
+  setTimeout(()=>{ if(_isPtab('pessoas')) renderPcal(); }, 2000);
   loadErrorLogs();
   loadAdmList();
   loadLembretesGestao();
