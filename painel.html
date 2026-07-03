@@ -343,7 +343,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .pcal-day{min-height:80px;padding:5px;border-radius:var(--r);
   background:rgba(3,13,26,.35);border:1px solid rgba(56,182,255,.07);
-  cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
+  cursor:pointer;transition:border-color .15s,background .15s;position:relative;
+  min-width:0;overflow:hidden;}
 .pcal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
 .pcal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
 .pcal-day.other-month{opacity:.35;pointer-events:none;}
@@ -353,7 +354,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pcal-day.today .pcal-day-num{color:var(--accent);font-weight:800;}
 .pcal-event{font-family:"DM Sans",sans-serif;font-size:10.5px;padding:3px 8px;border-radius:5px;margin-bottom:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;
-  color:#fff;display:block;position:relative;transition:filter .15s,transform .1s;}
+  color:#fff;display:block;position:relative;transition:filter .15s,transform .1s;
+  width:100%;box-sizing:border-box;}
 .pcal-event:hover{filter:brightness(1.12);transform:translateY(-1px);padding-right:18px;}
 .pcal-event .pcal-ev-del{position:absolute;top:50%;right:3px;transform:translateY(-50%);
   background:rgba(0,0,0,.35);border:none;color:#fff;border-radius:3px;
@@ -1868,7 +1870,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.44 · painel</div>
+<div class="version">v2.45 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
