@@ -3402,7 +3402,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.61-dev</div>
+<div class="version">v8.30.62-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10152,12 +10152,11 @@ function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().get
 function toggleCalLegendPopup(e, type) {
   e.stopPropagation();
   const targetId = 'cal-legend-pop-' + type;
-  const otherId = 'cal-legend-pop-' + (type === 'events' ? 'cards' : 'events');
+  const allTypes = ['events', 'cards', 'agendas'];
+  const otherIds = allTypes.filter(t => t !== type).map(t => 'cal-legend-pop-' + t);
   
   const target = document.getElementById(targetId);
-  const other = document.getElementById(otherId);
-  
-  if (other) other.style.display = 'none';
+  otherIds.forEach(id => { const o = document.getElementById(id); if (o) o.style.display = 'none'; });
   
   if (target) {
     const isOpen = target.style.display === 'flex';
@@ -10191,6 +10190,11 @@ function renderBoardCalLegend(){
      <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos ▾</button>
       <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 260px; max-height: 400px; overflow-y: auto; flex-direction: column; gap: 7px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
     </div>
+    ${Object.keys(window._squadCalendars||{}).length ? `
+    <div style="position: relative; display: inline-block;">
+     <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'agendas')">📅 Agendas ▾</button>
+      <div id="cal-legend-pop-agendas" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 220px; max-height: 300px; overflow-y: auto; flex-direction: column; gap: 8px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
+    </div>` : ''}
   `;
   
   // 1. Popula o popup de Eventos Gerais
@@ -10223,6 +10227,24 @@ function renderBoardCalLegend(){
           <div style="display: inline-flex; align-items: center; font-size: 11px; color: var(--txt); padding: 4px 10px; background: ${bg}; border-left: 3px solid ${col.color || '#38b6ff'}; border-radius: 5px; font-weight: 500; width: fit-content; white-space: nowrap;">
             ${esc(col.name)}
           </div>`;
+      }).join('');
+  }
+
+  // 3. Popula o popup de Agendas Conectadas (cores dinâmicas por agenda)
+  const popAgendas = el.querySelector('#cal-legend-pop-agendas');
+  if(popAgendas){
+    const cals = Object.values(window._squadCalendars||{});
+    popAgendas.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">📅 Agendas Conectadas</div>' +
+      cals.map(cal => {
+        const col = _gcalColorFor(cal.id);
+        const err = (window._gcalErrors||{})[cal.id];
+        return `
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--txt2); padding: 2px 4px;">
+            <div style="width: 10px; height: 10px; border-radius: 3px; background: ${col.bg}; flex-shrink: 0;"></div>
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cal.label)}</span>
+            ${err ? '<span title="'+esc(err.msg)+'" style="color:var(--danger);flex-shrink:0;">⚠️</span>' : ''}
+          </div>
+        `;
       }).join('');
   }
 }
@@ -10289,7 +10311,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
       if(item.type === 'event'){
         const ev = item.data;
         const evColor=ev._gestao?'purple':(ev.color||'blue');
-        const col=EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0];
+        const col=ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0]);
         const delBtn=(canEdit && !ev._gestao && !ev._gcal)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
         return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${esc(ev.title)}${delBtn}</div>`;
       } else {
@@ -10325,7 +10347,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
       if (item.type === 'event') {
         const ev = item.data;
         const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
-        const col = EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0];
+        const col = ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0]);
         const delBtn = (canEdit && !ev._gestao && !ev._gcal) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
         return `
           <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent('${ev.id}')">
@@ -10582,6 +10604,21 @@ async function reconectarGCal(){
     }
   }
 }
+// Paleta de cores para diferenciar agendas do Google no calendário
+const GCAL_PALETTE = [
+  { bg:'rgba(56,182,255,.92)',  txt:'#00263a' },  // azul
+  { bg:'rgba(29,233,182,.92)',  txt:'#00231b' },  // teal
+  { bg:'rgba(244,168,200,.92)', txt:'#3a0018' },  // rosa
+  { bg:'rgba(255,209,102,.95)', txt:'#3a2c00' },  // amarelo
+  { bg:'rgba(167,139,250,.92)', txt:'#1a0a3a' },  // roxo
+  { bg:'rgba(255,152,0,.92)',   txt:'#3a1e00' },  // laranja
+];
+// Cor determinística por agenda (mesmo ID sempre gera a mesma cor)
+function _gcalColorFor(calId){
+  let h = 0;
+  for (let i = 0; i < calId.length; i++) h = (h * 31 + calId.charCodeAt(i)) >>> 0;
+  return GCAL_PALETTE[h % GCAL_PALETTE.length];
+}
 async function carregarTodasAgendasSquad() {
   if(!window._gcalErrors) window._gcalErrors = {};
   const token = safeLS.getItem('gcal_token');
@@ -10650,8 +10687,10 @@ async function carregarTodasAgendasSquad() {
               end: end || start,
               desc: item.description || '',
               link: item.htmlLink || '',
-              color: 'cyan', 
-              _gcal: true 
+              color: 'cyan', // fallback (não usado quando _gcal, ver render)
+              _gcal: true,
+              _calId: cal.id,
+              _calLabel: cal.label,
             });
           });
         }
