@@ -3417,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.67-dev</div>
+<div class="version">v8.30.68-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10572,11 +10572,29 @@ function loadCalEvents(){
   });
 
   // ── Cache dos eventos já processados pelo ADM — TODO MUNDO lê daqui, sem precisar de token ──
-  fbListen(FB+'/config/gcal_cache', val => {
-    const cacheEvs = val ? Object.values(val) : [];
-    const filtered = cacheEvs.filter(e => !window._gcalDismissedIds || !window._gcalDismissedIds.has(e.id));
-    calEvents = [...calEvents.filter(e => !e._gcal), ...filtered];
+  // Duas fontes: cache LOCAL do squad (agendas conectadas só nesse squad) + cache GLOBAL do
+  // painel (agendas conectadas pra todos os squads de uma vez, ex: feriados nacionais).
+  // Mantidas em arrays separados e mescladas juntas — se cada listener sobrescrevesse
+  // "todos os _gcal" direto, o último a disparar apagaria os eventos do outro.
+  if(!window._gcalLocalEvents) window._gcalLocalEvents = [];
+  if(!window._gcalGlobalEvents) window._gcalGlobalEvents = [];
+  function _mergeGcalSources(){
+    const dismissed = window._gcalDismissedIds || new Set();
+    const combinados = [...window._gcalLocalEvents, ...window._gcalGlobalEvents]
+      .filter(e => !dismissed.has(e.id));
+    const porId = new Map();
+    combinados.forEach(e => porId.set(e.id, e));
+    calEvents = [...calEvents.filter(e => !e._gcal), ...porId.values()];
     if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+  }
+  fbListen(FB+'/config/gcal_cache', val => {
+    window._gcalLocalEvents = val ? Object.values(val) : [];
+    _mergeGcalSources();
+  });
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => {
+    const val = snap.val();
+    window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
+    _mergeGcalSources();
   });
   fbListen(FB+'/config/gcal_cache_meta', val => {
     window._gcalCacheMeta = val || null;
@@ -10598,10 +10616,9 @@ function loadCalEvents(){
   // Persistido no Firebase pra não reaparecer na próxima sincronização nem em outro device.
   fbListen(FB+'/config/gcal_dismissed', val => {
     window._gcalDismissedIds = new Set(val ? Object.keys(val) : []);
-    calEvents = calEvents.filter(e => !e._gcal || !window._gcalDismissedIds.has(e.id));
     const wrap=document.getElementById('cfg-gcal-restore-wrap');
     if(wrap) wrap.style.display = window._gcalDismissedIds.size ? '' : 'none';
-    if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+    _mergeGcalSources();
   });
 
   // ── Eventos de Gestão Digital (painel) ───────────────────────
@@ -10875,7 +10892,16 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
     }
   }));
 
-  const cacheObj = Object.fromEntries(todosEventosGoogle.map(ev=>[ev.id, ev]));
+  // Deduplica por título+data — algumas agendas públicas (ex: feriados nacionais) retornam
+  // o mesmo evento mais de uma vez com IDs internos diferentes.
+  const _vistosCal = new Set();
+  const todosEventosGoogleDedup = todosEventosGoogle.filter(ev=>{
+    const chave = ev.start+'|'+ev.title.trim().toLowerCase();
+    if(_vistosCal.has(chave)) return false;
+    _vistosCal.add(chave);
+    return true;
+  });
+  const cacheObj = Object.fromEntries(todosEventosGoogleDedup.map(ev=>[ev.id, ev]));
   await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), cacheObj).catch(()=>{});
   await window._set(window._ref(window._db, squadFB+'/config/gcal_cache_meta'), {
     updatedAt: new Date().toISOString(),
