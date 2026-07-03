@@ -3417,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.68-dev</div>
+<div class="version">v8.30.69-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10207,7 +10207,7 @@ function renderBoardCalLegend(){
      <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos ▾</button>
       <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 260px; max-height: 400px; overflow-y: auto; flex-direction: column; gap: 7px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
     </div>
-    ${Object.keys(window._squadCalendars||{}).length ? `
+    ${(Object.keys(window._squadCalendars||{}).length || (window._gcalGlobalEvents||[]).length) ? `
     <div style="position: relative; display: inline-block;">
      <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'agendas')">📅 Agendas ▾</button>
       <div id="cal-legend-pop-agendas" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 220px; max-height: 300px; overflow-y: auto; flex-direction: column; gap: 8px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
@@ -10247,10 +10247,15 @@ function renderBoardCalLegend(){
       }).join('');
   }
 
-  // 3. Popula o popup de Agendas Conectadas (cores dinâmicas por agenda)
+  // 3. Popula o popup de Agendas Conectadas (cores dinâmicas por agenda) — locais do squad + globais do painel
   const popAgendas = el.querySelector('#cal-legend-pop-agendas');
   if(popAgendas){
-    const cals = Object.values(window._squadCalendars||{});
+    const locais = Object.values(window._squadCalendars||{}).map(cal=>({...cal, _isGlobal:false}));
+    const globaisMap = new Map();
+    (window._gcalGlobalEvents||[]).forEach(ev=>{
+      if(ev._calId && !globaisMap.has(ev._calId)) globaisMap.set(ev._calId, {id:ev._calId, label:ev._calLabel||ev._calId, _isGlobal:true});
+    });
+    const cals = [...locais, ...globaisMap.values()];
     popAgendas.innerHTML = '<div style="font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; font-weight: 700; border-bottom: 1px solid var(--glass-b); padding-bottom: 4px;">📅 Agendas Conectadas</div>' +
       cals.map(cal => {
         const col = _gcalColorFor(cal.id);
@@ -10258,7 +10263,7 @@ function renderBoardCalLegend(){
         return `
           <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--txt2); padding: 2px 4px;">
             <div style="width: 10px; height: 10px; border-radius: 3px; background: ${col.bg}; flex-shrink: 0;"></div>
-            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cal.label)}</span>
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cal.label)}${cal._isGlobal?' 🌐':''}</span>
             ${err ? '<span title="'+esc(err.msg)+'" style="color:var(--danger);flex-shrink:0;">⚠️</span>' : ''}
           </div>
         `;
@@ -10765,6 +10770,15 @@ async function removeCalendarFromList(id) {
         }
       });
     }catch(e){}
+    // Purga IMEDIATA dos eventos dessa agenda do cache local do squad — não espera o próximo
+    // refetch (que só um ADM com token válido consegue disparar; sem isso os eventos ficariam
+    // "fantasmas" pra sempre se quem removeu não for ADM).
+    try{
+      const snap2 = await fbGet(FB+'/config/gcal_cache');
+      const cache = snap2.val()||{};
+      const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
+      await window._set(window._ref(window._db, FB+'/config/gcal_cache'), filtrado);
+    }catch(e){ console.warn('Não foi possível purgar cache local imediatamente:', e); }
     renderCalendarList();
     carregarTodasAgendasSquad();
     showToast('🗑 Agenda removida.');
