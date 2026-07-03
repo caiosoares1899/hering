@@ -3417,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.72-dev</div>
+<div class="version">v8.30.73-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3524,9 +3524,15 @@ function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !
 // Estrutura: kanban/squads/{squad}/access_log/{YYYY-MM-DD}/{uid} = {init, ts, role}
 // Um registro por pessoa por dia (sobrescreve se acessar de novo no mesmo dia — não cresce sem limite).
 // Mantém só os últimos 60 dias (limpeza leve roda 1x a cada carregamento, throttled).
+// Data local (evita o bug de toISOString() jogar pra UTC — login à noite no Brasil
+// acabava contado no dia seguinte por causa do fuso -3h)
+function _localDateStrBoard(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
 function _logAccess(user, role){
   if(!user || !user.uid || !window._fbReady) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = _localDateStrBoard(new Date());
   const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
   window._set(window._ref(window._db, path), {
     init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
