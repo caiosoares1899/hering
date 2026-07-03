@@ -3339,7 +3339,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.61</div>
+<div class="version">v8.30.62</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3382,7 +3382,7 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // Reativar só depois de: (1) verificar o app no Google Cloud Console, OU
 // (2) mover a feature pra uma tela separada que só pede o escopo sob demanda.
 // provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-const GCAL_FEATURE_ENABLED = false;
+window.GCAL_FEATURE_ENABLED = false;
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
@@ -10468,11 +10468,11 @@ async function removeCalendarFromList(id) {
 
 function _gcalWarnBanner(show){
   const el=document.getElementById('gcal-token-warn');
-  if(el) el.style.display = (show && GCAL_FEATURE_ENABLED) ? 'flex' : 'none';
+  if(el) el.style.display = (show && window.GCAL_FEATURE_ENABLED) ? 'flex' : 'none';
 }
 // Reconecta o Google Agenda: refaz o popup de login (renova o accessToken) e recarrega as agendas
 async function reconectarGCal(){
-  if(!GCAL_FEATURE_ENABLED){ showToast('🛠️ Integração com Google Agendas em manutenção.'); return; }
+  if(!window.GCAL_FEATURE_ENABLED){ showToast('🛠️ Integração com Google Agendas em manutenção.'); return; }
   try{
     await window._signIn();
     _gcalWarnBanner(false);
@@ -10483,7 +10483,7 @@ async function reconectarGCal(){
   }
 }
 async function carregarTodasAgendasSquad() {
-  if(!GCAL_FEATURE_ENABLED) return; // ⏸ integração pausada no prod
+  if(!window.GCAL_FEATURE_ENABLED) return; // ⏸ integração pausada no prod
   if(!window._gcalErrors) window._gcalErrors = {};
   const token = safeLS.getItem('gcal_token');
   const temAgendas = Object.keys(window._squadCalendars||{}).length > 0;
