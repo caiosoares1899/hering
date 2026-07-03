@@ -1870,7 +1870,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.45 · painel</div>
+<div class="version">v2.46 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3619,12 +3619,38 @@ function checklistPct(c){
 const PCAL_COLORS=[
   {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
   {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Marketing de Performance'},
-  {id:'midiacriativa', bg:'rgba(168,85,247,.8)', txt:'#fff', label:'🎨 Squad Mídia Criativa'},
-  {id:'gestao',  bg:'rgba(150,80,220,.8)',  txt:'#fff', label:'Gestão Digital'},
+  {id:'midiacriativa', bg:'rgba(244,114,182,.8)', txt:'#3a0018', label:'🎨 Squad Mídia Criativa'},
+  {id:'gestao',  bg:'rgba(167,139,250,.8)', txt:'#1a0a3a', label:'Gestão Digital'},
   {id:'geral',   bg:'rgba(255,209,102,.8)', txt:'#333', label:'Geral'},
   {id:'blue',    bg:'rgba(37,99,201,.8)',   txt:'#fff', label:'Azul'},
   {id:'danger',  bg:'rgba(255,107,107,.8)', txt:'#fff', label:'Urgente'},
 ];
+// Paleta ampla usada para squads/agendas que não estão na lista fixa acima —
+// atribuição por hash determinístico, então cada squad novo sempre cai numa cor
+// diferente das outras (nunca repete o mesmo fallback pra tudo que é desconhecido).
+const DYNAMIC_COLOR_PALETTE = [
+  { bg:'rgba(56,182,255,.85)',  txt:'#00263a' },  // azul
+  { bg:'rgba(29,233,182,.85)',  txt:'#00231b' },  // teal
+  { bg:'rgba(244,114,182,.85)', txt:'#3a0018' },  // rosa
+  { bg:'rgba(255,209,102,.85)', txt:'#3a2c00' },  // amarelo
+  { bg:'rgba(167,139,250,.85)', txt:'#1a0a3a' },  // roxo
+  { bg:'rgba(255,152,0,.85)',   txt:'#3a1e00' },  // laranja
+  { bg:'rgba(74,222,128,.85)',  txt:'#062b12' },  // verde
+  { bg:'rgba(96,165,250,.85)',  txt:'#031a3a' },  // azul claro
+  { bg:'rgba(248,113,113,.85)', txt:'#3a0808' },  // vermelho suave
+  { bg:'rgba(217,70,239,.85)',  txt:'#2e0330' },  // magenta
+  { bg:'rgba(45,212,191,.85)',  txt:'#022c27' },  // ciano
+  { bg:'rgba(251,191,36,.85)',  txt:'#3a2600' },  // dourado
+];
+function _squadColorFor(sqId){
+  const fixo = PCAL_COLORS.find(c=>c.id===sqId);
+  if(fixo) return fixo;
+  let h = 0;
+  const s = String(sqId||'');
+  for(let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) >>> 0;
+  const c = DYNAMIC_COLOR_PALETTE[h % DYNAMIC_COLOR_PALETTE.length];
+  return { id:sqId, bg:c.bg, txt:c.txt, label: (SQUADS.find(sq=>sq.id===sqId)?.label) || sqId };
+}
 // Cores dos boards individuais mapeadas pelo squad
 const SQUAD_COLOR_MAP={dados:'dados',midia:'midia'};
 
@@ -3697,12 +3723,18 @@ function pcalGoToday(){ pcalYear=new Date().getFullYear(); pcalMonth=new Date().
 
 // Paleta e hash de cor determinística para agendas do Google (mesma lógica do board)
 const GCAL_PALETTE = [
-  { bg:'rgba(56,182,255,.92)',  txt:'#00263a' },
-  { bg:'rgba(29,233,182,.92)',  txt:'#00231b' },
-  { bg:'rgba(244,168,200,.92)', txt:'#3a0018' },
-  { bg:'rgba(255,209,102,.95)', txt:'#3a2c00' },
-  { bg:'rgba(167,139,250,.92)', txt:'#1a0a3a' },
-  { bg:'rgba(255,152,0,.92)',   txt:'#3a1e00' },
+  { bg:'rgba(56,182,255,.92)',  txt:'#00263a' },  // azul
+  { bg:'rgba(29,233,182,.92)',  txt:'#00231b' },  // teal
+  { bg:'rgba(244,168,200,.92)', txt:'#3a0018' },  // rosa
+  { bg:'rgba(255,209,102,.95)', txt:'#3a2c00' },  // amarelo
+  { bg:'rgba(167,139,250,.92)', txt:'#1a0a3a' },  // roxo
+  { bg:'rgba(255,152,0,.92)',   txt:'#3a1e00' },  // laranja
+  { bg:'rgba(74,222,128,.92)',  txt:'#062b12' },  // verde
+  { bg:'rgba(96,165,250,.92)',  txt:'#031a3a' },  // azul claro
+  { bg:'rgba(248,113,113,.92)', txt:'#3a0808' },  // vermelho suave
+  { bg:'rgba(217,70,239,.92)',  txt:'#2e0330' },  // magenta
+  { bg:'rgba(45,212,191,.92)',  txt:'#022c27' },  // ciano
+  { bg:'rgba(251,191,36,.92)',  txt:'#3a2600' },  // dourado
 ];
 function _gcalColorFor(calId){
   let h = 0;
@@ -3717,7 +3749,7 @@ function renderPcalSquadFilterBar(){
   if(pcalSquadFilter===null) pcalSquadFilter = new Set(SQUADS.map(s=>s.id).concat(['gestao']));
   const items = [...SQUADS.map(s=>({id:s.id,label:s.label,icon:s.icon})), {id:'gestao',label:'Gestão',icon:'🏢'}];
   el.innerHTML = items.map(sq=>{
-    const col = PCAL_COLORS.find(c=>c.id===sq.id) || PCAL_COLORS[3];
+    const col = _squadColorFor(sq.id);
     const on = pcalSquadFilter.has(sq.id);
     return `<button onclick="togglePcalSquadFilter('${sq.id}')" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid ${on?col.bg:'var(--glass-b)'};background:${on?col.bg:'rgba(3,13,26,.5)'};color:${on?col.txt:'var(--txt3)'};transition:all .15s;">
       ${sq.icon} ${esc(sq.label)}
@@ -3836,7 +3868,7 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
     +dayEvs.slice(0,3).map(ev=>{
       if(ev._type==='prazo'){
         // Card com prazo — cor por squad, ícone 📎, clique abre o board do squad
-        const col=PCAL_COLORS.find(c=>c.id===ev._squad)||PCAL_COLORS[3];
+        const col=_squadColorFor(ev._squad);
         return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};opacity:.9;"
           onclick="event.stopPropagation();window.open(squadBoardUrl('${ev._squad}'),'_blank')"
           title="${esc(ev.title)} — abrir board ${esc(ev._squad)}">${esc(ev.title)}</div>`;
@@ -3848,7 +3880,7 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
           title="${esc(ev.title)} (${esc(ev._calLabel||'')})">${esc(ev.title)}${del}</div>`;
       }
       const squad=ev._squad||ev.squad||'geral';
-      const col=PCAL_COLORS.find(c=>c.id===squad)||PCAL_COLORS.find(c=>c.id===ev.color)||PCAL_COLORS[3];
+      const col=_squadColorFor(squad);
       return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
         onclick="event.stopPropagation();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')"
         title="${ev.title}">${ev.title}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent('${ev.id||''}','${ev._source||'painel'}')" title="Excluir">✕</button></div>`;
@@ -3862,7 +3894,7 @@ function renderPcalLegend(elId, evs){
   const el=document.getElementById(elId); if(!el) return;
   const squadsPresentes=new Set(evs.filter(ev=>!ev._gcal).map(ev=>ev._squad||ev.squad||'geral'));
   let html = [...squadsPresentes].map(sq=>{
-    const col=PCAL_COLORS.find(c=>c.id===sq)||PCAL_COLORS[3];
+    const col=_squadColorFor(sq);
     return `<div class="cal-leg-item"><div class="cal-leg-dot" style="background:${col.bg};"></div>${col.label||sq}</div>`;
   }).join('');
   // Agendas do Google conectadas — cor própria por agenda
