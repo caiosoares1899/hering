@@ -1326,7 +1326,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div id="pcal-agendas-cfg" style="display:none;margin-bottom:14px;padding:12px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;">
           <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">🌐 Agendas conectadas para todos os squads</div>
           <div style="font-size:10px;color:var(--txt3);line-height:1.5;margin-bottom:10px;">Feriados nacionais, eventos do Digital ou qualquer agenda pública do Google — aparecem no calendário de todos os squads, não só um.</div>
-          <div id="pcal-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:8px;"></div>
+          <div id="pcal-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:4px;"></div>
+          <div id="pcal-gcal-cache-info" style="font-size:10px;color:var(--txt3);margin-bottom:8px;display:flex;align-items:center;gap:8px;"></div>
           <div id="pcal-agendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <input id="pcal-agenda-label" placeholder="Nome (Ex: Feriados Nacionais)" style="flex:1;min-width:140px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(3,13,26,.8);color:var(--txt);">
@@ -1867,7 +1868,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.43 · painel</div>
+<div class="version">v2.44 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3965,11 +3966,23 @@ function loadPcalEvents(){
     });
   });
 
-  // Agendas do Google conectadas globalmente (todos os squads)
+  // Agendas do Google conectadas globalmente (todos os squads) — a LISTA de agendas é lida por todos,
+  // mas só o ADM (que tem token) efetivamente busca na API do Google (ver carregarPcalAgendasGlobais).
   window._onValue(window._ref(window._db,'kanban/painel/config/calendars'),snap=>{
     window._pcalCalendars = snap.val() || {};
     renderPcalAgendasList();
-    carregarPcalAgendasGlobais();
+    if(_isAdmPainel()) carregarPcalAgendasGlobais(); // só admin efetivamente chama a API do Google
+  });
+  // Cache dos eventos já processados — TODO MUNDO lê daqui, sem precisar de token próprio
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'),snap=>{
+    const val = snap.val();
+    pcalGcalEvents = val ? Object.values(val) : [];
+    if(window._pcalGcalDismissedIds) pcalGcalEvents = pcalGcalEvents.filter(e => !window._pcalGcalDismissedIds.has(e.id));
+    if(_isPtab('pessoas')) renderPcal();
+  });
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'),snap=>{
+    window._pcalGcalCacheMeta = snap.val() || null;
+    renderPcalAgendasList();
   });
   // Eventos ocultados (excluídos) pelo ADM
   window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed'),snap=>{
@@ -3994,12 +4007,24 @@ function togglePcalAgendasCfg(){
 function renderPcalAgendasList(){
   const container=document.getElementById('pcal-agendas-list');
   if(!container) return;
+  const isAdm=_isAdmPainel();
   const statusEl=document.getElementById('pcal-gcal-auth-status');
   if(statusEl){
-    const hasToken=!!localStorage.getItem('gcal_token');
-    statusEl.innerHTML = hasToken
-      ? '<span style="color:var(--teal);">✅ Conta Google autorizada</span>'
-      : '<span style="color:var(--txt3);">🔒 Nenhuma autorização ainda</span>';
+    if(isAdm){
+      const hasToken=!!localStorage.getItem('gcal_token');
+      statusEl.innerHTML = hasToken
+        ? '<span style="color:var(--teal);">✅ Sua conta Google está autorizada (só admin precisa)</span>'
+        : '<span style="color:var(--txt3);">🔒 Nenhuma autorização ainda — só o admin que gerencia precisa conectar</span>';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--txt3);">ℹ️ Só administradores precisam autorizar — os eventos aparecem pra todo mundo automaticamente</span>';
+    }
+  }
+  const infoEl=document.getElementById('pcal-gcal-cache-info');
+  if(infoEl){
+    const meta=window._pcalGcalCacheMeta;
+    const quando = meta?.updatedAt ? 'há '+_relTime(meta.updatedAt) : 'nunca';
+    infoEl.innerHTML = `<span>🕒 Atualizado ${quando}${meta?.updatedBy?' por '+esc(meta.updatedBy):''}</span>`
+      + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '');
   }
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
@@ -4058,7 +4083,7 @@ function removePcalAgenda(id){
 }
 function _pcalGcalWarnBanner(show){
   const el=document.getElementById('pcal-token-warn');
-  if(el) el.style.display = show ? 'flex' : 'none';
+  if(el) el.style.display = (show && _isAdmPainel()) ? 'flex' : 'none';
 }
 async function reconectarPcalGCal(){
   try{
@@ -4070,11 +4095,18 @@ async function reconectarPcalGCal(){
     showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
   }
 }
+// Só o ADM busca da API do Google — o resultado processado fica em cache no Firebase
+// (kanban/painel/config/gcal_cache) e todo mundo lê de lá, sem precisar autorizar nada.
 async function carregarPcalAgendasGlobais(){
+  if(!_isAdmPainel()) return; // membros comuns nunca chamam a API — só leem o cache (ver loadPcalEvents)
   if(!window._pcalGcalErrors) window._pcalGcalErrors={};
   const token=localStorage.getItem('gcal_token');
   const list=Object.values(window._pcalCalendars||{});
-  if(!list.length){ pcalGcalEvents=[]; if(_isPtab('pessoas')) renderPcal(); return; }
+  if(!list.length){
+    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), {});
+    if(_isPtab('pessoas')) renderPcal();
+    return;
+  }
   if(!token){ _pcalGcalWarnBanner(true); return; }
   const ts=parseInt(localStorage.getItem('gcal_token_ts')||'0');
   if(ts && (Date.now()-ts) > 55*60*1000) _pcalGcalWarnBanner(true);
@@ -4125,7 +4157,14 @@ async function carregarPcalAgendasGlobais(){
     }catch(e){ console.warn('[Painel GCal] erro em', cal.label, e); }
   }));
 
-  pcalGcalEvents = todosEventos;
+  // Salva o resultado processado no Firebase — todo mundo lê daqui, sem token próprio
+  const cacheObj = Object.fromEntries(todosEventos.map(ev=>[ev.id, ev]));
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
+    updatedAt: new Date().toISOString(),
+    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
+  });
+
   const temExpirado = Object.values(window._pcalGcalErrors).some(e=>e.type==='expired');
   _pcalGcalWarnBanner(temExpirado);
   renderPcalAgendasList();
