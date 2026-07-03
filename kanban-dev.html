@@ -3417,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.71-dev</div>
+<div class="version">v8.30.72-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10585,14 +10585,35 @@ function loadCalEvents(){
   // "todos os _gcal" direto, o último a disparar apagaria os eventos do outro.
   if(!window._gcalLocalEvents) window._gcalLocalEvents = [];
   if(!window._gcalGlobalEvents) window._gcalGlobalEvents = [];
+  if(!window._pcalValidGlobalIds) window._pcalValidGlobalIds = null;
   function _mergeGcalSources(){
     const dismissed = window._gcalDismissedIds || new Set();
-    const combinados = [...window._gcalLocalEvents, ...window._gcalGlobalEvents]
-      .filter(e => !dismissed.has(e.id));
+    const idsLocaisValidos = new Set(Object.values(window._squadCalendars||{}).map(c=>c.id));
+    let localFiltrado = window._gcalLocalEvents.filter(e => !e._calId || idsLocaisValidos.has(e._calId));
+    let globalFiltrado = window._gcalGlobalEvents;
+    if(window._pcalValidGlobalIds){
+      globalFiltrado = globalFiltrado.filter(e => !e._calId || window._pcalValidGlobalIds.has(e._calId));
+    }
+    const combinados = [...localFiltrado, ...globalFiltrado].filter(e => !dismissed.has(e.id));
     const porId = new Map();
     combinados.forEach(e => porId.set(e.id, e));
-    calEvents = [...calEvents.filter(e => !e._gcal), ...porId.values()];
+    const vistos = new Set();
+    const final = [...porId.values()].filter(ev=>{
+      const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+      if(vistos.has(chave)) return false;
+      vistos.add(chave);
+      return true;
+    });
+    calEvents = [...calEvents.filter(e => !e._gcal), ...final];
     if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+
+    if(isAdmUser(window._currentUser)){
+      const localLimpo = localFiltrado.filter(e=>final.some(f=>f.id===e.id));
+      if(localLimpo.length !== window._gcalLocalEvents.length){
+        const cacheObj = Object.fromEntries(localLimpo.map(ev=>[ev.id, ev]));
+        window._set(window._ref(window._db, FB+'/config/gcal_cache'), cacheObj).catch(()=>{});
+      }
+    }
   }
   fbListen(FB+'/config/gcal_cache', val => {
     window._gcalLocalEvents = val ? Object.values(val) : [];
@@ -10601,6 +10622,11 @@ function loadCalEvents(){
   window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => {
     const val = snap.val();
     window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
+    _mergeGcalSources();
+  });
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => {
+    const val = snap.val();
+    window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
     _mergeGcalSources();
   });
   fbListen(FB+'/config/gcal_cache_meta', val => {
