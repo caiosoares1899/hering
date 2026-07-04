@@ -1976,7 +1976,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.55 · painel</div>
+<div class="version">v2.56 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6632,7 +6632,7 @@ function buildGlobalPayload(){
     };
   });
   return {
-    version:     '8.2.0',
+    version:     document.querySelector('.version')?.textContent?.trim() || '',
     source:      'painel',
     exportedAt:  new Date().toISOString(),
     exportedBy:  window._currentUser?.displayName || window._currentUser?.email || 'painel',
@@ -6662,27 +6662,32 @@ function exportAllSquadsJSON(){
 
 function exportEachSquadJSON(){
   const date = new Date().toISOString().split('T')[0];
-  SQUADS.forEach(sq=>{
-    const d = squadData[sq.id]||{};
-    const payload = {
-      version:    '8.2.0',
-      source:     'painel',
-      exportedAt: new Date().toISOString(),
-      squad:      sq.id,
-      cards:      d.cards    || [],
-      columns:    d.columns  || [],
-      tags:       d.tags     || [],
-      agilCfg:    d.agilCfg  || {},
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'mare-digital-' + sq.id + '-' + date + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
+  // Navegadores bloqueiam múltiplos downloads disparados em sequência síncrona
+  // (a.click() em loop) — a partir do 2º arquivo, geralmente barra silenciosamente.
+  // Escalonar com um pequeno delay entre cada um evita o bloqueio.
+  SQUADS.forEach((sq, i)=>{
+    setTimeout(()=>{
+      const d = squadData[sq.id]||{};
+      const payload = {
+        version:    document.querySelector('.version')?.textContent?.trim() || '',
+        source:     'painel',
+        exportedAt: new Date().toISOString(),
+        squad:      sq.id,
+        cards:      d.cards    || [],
+        columns:    d.columns  || [],
+        tags:       d.tags     || [],
+        agilCfg:    d.agilCfg  || {},
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'mare-digital-' + sq.id + '-' + date + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      if(i===SQUADS.length-1) showToast('✅ ' + SQUADS.length + ' arquivos baixados (um por squad)');
+    }, i * 400); // 400ms entre cada download — suficiente pra não disparar o bloqueio
   });
-  showToast('✅ ' + SQUADS.length + ' arquivos baixados (um por squad)');
 }
 
 function copyAllSquadsJSON(){
@@ -6714,8 +6719,8 @@ function renderGlobalBackupStats(){
       <span style="font-size:10px;color:rgba(150,200,240,.4);">${(d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'sem sprint')}</span>
     </div>`;
   }).join('') + (()=>{
-    const lastManual = localStorage.getItem('gb_last_manual');
-    const lastAuto   = localStorage.getItem('gb_last_auto');
+    const lastManual = localStorage.getItem('gb_last_manual'); // só UI local, não é o mecanismo automático
+    const lastAuto   = _gbCfgCache.lastRun;
     const total = SQUADS.reduce((a,sq)=>a+(squadData[sq.id]?.cards?.filter(c=>!c.archived)?.length||0),0);
     return `<div style="font-size:11px;color:rgba(150,200,240,.5);padding:4px 0;">
       Total: <strong style="color:rgba(200,230,255,.7);">${total} cards ativos</strong> em ${SQUADS.length} squads
@@ -6725,6 +6730,18 @@ function renderGlobalBackupStats(){
   })();
 }
 
+// Config e histórico do backup automático global — Firebase, não mais
+// localStorage (mesmo motivo do board: era por navegador/dispositivo).
+let _gbCfgCache = {};
+window._onValue(window._ref(window._db,'kanban/painel/config/backup_cfg'), snap=>{
+  _gbCfgCache = snap.val() || {};
+  updateGlobalBackupStatus();
+  const lastEl = document.getElementById('gb-last-backup');
+  if(lastEl && _gbCfgCache.lastRun){
+    lastEl.textContent = '⏱ Último automático: '+new Date(_gbCfgCache.lastRun).toLocaleString('pt-BR');
+  }
+});
+
 // ── Config EmailJS global ─────────────────────────────────────────────────
 function saveGlobalBackupCfg(){
   const cfg = {
@@ -6732,14 +6749,15 @@ function saveGlobalBackupCfg(){
     service:  document.getElementById('gb-service')?.value  ||'',
     template: document.getElementById('gb-template')?.value ||'',
     pubkey:   document.getElementById('gb-pubkey')?.value   ||'',
+    lastRun:  _gbCfgCache.lastRun || null,
   };
-  localStorage.setItem('gb_backup_cfg', JSON.stringify(cfg));
+  _gbCfgCache = cfg;
+  window._set(window._ref(window._db,'kanban/painel/config/backup_cfg'), cfg).catch(()=>{});
   updateGlobalBackupStatus();
 }
 
 function loadGlobalBackupCfg(){
-  const raw = localStorage.getItem('gb_backup_cfg');
-  const cfg = raw ? JSON.parse(raw) : {};
+  const cfg = _gbCfgCache;
   const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
   set('gb-email',    cfg.email);
   set('gb-service',  cfg.service);
@@ -6747,23 +6765,20 @@ function loadGlobalBackupCfg(){
   set('gb-pubkey',   cfg.pubkey);
   updateGlobalBackupStatus();
   const lastEl = document.getElementById('gb-last-backup');
-  const lastAuto = localStorage.getItem('gb_last_auto');
-  if(lastEl && lastAuto)
-    lastEl.textContent = '⏱ Último automático: '+new Date(lastAuto).toLocaleString('pt-BR');
+  if(lastEl && cfg.lastRun)
+    lastEl.textContent = '⏱ Último automático: '+new Date(cfg.lastRun).toLocaleString('pt-BR');
 }
 
 function updateGlobalBackupStatus(){
   const el = document.getElementById('gb-auto-status'); if(!el) return;
-  const raw = localStorage.getItem('gb_backup_cfg');
-  const cfg = raw ? JSON.parse(raw) : {};
+  const cfg = _gbCfgCache;
   const ok  = cfg.email && cfg.service && cfg.template && cfg.pubkey;
   el.textContent = ok ? '✅ Configurado — envia todo domingo' : '⚠ Preencha os campos para ativar';
   el.style.color = ok ? '#1de9b6' : '#ffd166';
 }
 
 async function sendGlobalBackupEmail(isTest=false){
-  const raw = localStorage.getItem('gb_backup_cfg');
-  const cfg = raw ? JSON.parse(raw) : {};
+  const cfg = _gbCfgCache;
   if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey){
     showToast('⚠ Configure email e EmailJS no modal de Backup');
     return false;
@@ -6795,7 +6810,8 @@ async function sendGlobalBackupEmail(isTest=false){
       is_test:      isTest ? '(TESTE)' : '',
     });
     const now = new Date().toISOString();
-    localStorage.setItem('gb_last_auto', now);
+    _gbCfgCache.lastRun = now;
+    window._set(window._ref(window._db,'kanban/painel/config/backup_cfg/lastRun'), now).catch(()=>{});
     showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
     const lastEl = document.getElementById('gb-last-backup');
     if(lastEl) lastEl.textContent = '⏱ Último automático: '+new Date(now).toLocaleString('pt-BR');
@@ -6810,35 +6826,23 @@ async function sendGlobalBackupEmail(isTest=false){
 function testGlobalBackupEmail(){ sendGlobalBackupEmail(true); }
 
 // ── Agendador semanal (domingo 00:05) ────────────────────────────────────
-(function scheduleGlobalWeeklyBackup(){
-  function msUntilNextSunday(){
-    const now = new Date();
-    const daysUntilSun = now.getDay() === 0 ? 7 : 7 - now.getDay();
-    const next = new Date(now);
-    next.setDate(now.getDate() + daysUntilSun);
-    next.setHours(0, 5, 0, 0);
-    return next.getTime() - now.getTime();
-  }
-
-  function doWeekly(){
-    const raw = localStorage.getItem('gb_backup_cfg');
-    const cfg = raw ? JSON.parse(raw) : {};
-    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
-    const lastAuto = localStorage.getItem('gb_last_auto');
-    if(lastAuto){
-      const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
-      if(daysSince < 6) return;
-    }
+// ── Backup automático global: checagem "está atrasado?" ao carregar ─────
+// Mesmo raciocínio do board — setTimeout de 7 dias nunca disparava de
+// verdade (exigia a aba do painel aberta ininterruptamente por uma semana).
+// Agora: sempre que alguém abre o painel e já se passou 7+ dias desde o
+// último backup (registro compartilhado no Firebase), roda na hora.
+function checkOverdueGlobalBackup(){
+  const cfg = _gbCfgCache;
+  if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
+  const diasDesde = cfg.lastRun ? (Date.now() - new Date(cfg.lastRun).getTime())/86400000 : Infinity;
+  if(diasDesde >= 7){
+    console.log('[Backup Global] Atrasado ('+Math.floor(diasDesde)+' dias) — rodando agora.');
     sendGlobalBackupEmail(false);
   }
-
-  const ms = msUntilNextSunday();
-  console.log('[Backup Global] Próximo envio automático em ' + Math.round(ms/3600000) + 'h');
-  setTimeout(()=>{
-    doWeekly();
-    setInterval(doWeekly, 7 * 24 * 60 * 60 * 1000);
-  }, ms);
-})();
+}
+window.addEventListener('auth-change', e=>{
+  if(e.detail) setTimeout(checkOverdueGlobalBackup, 5000);
+}, {once:true});
 
 // ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
 
