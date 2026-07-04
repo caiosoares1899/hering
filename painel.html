@@ -1460,6 +1460,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
       <div id="err-list"><div style="font-size:11px;color:var(--txt3);">Carregando erros...</div></div>
     </div>
+
+    <!-- ═══ MENSAGENS DOS BOARDS (Fale com o ADM) ═══ -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-top:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📨 Mensagens dos Boards</div>
+        <span class="badge" id="fb-open-count" style="background:rgba(56,182,255,.2);color:var(--blue);border:1px solid rgba(56,182,255,.3);">0 novas</span>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="err-filter-btn active" onclick="setFbFilter('all')" id="fbf-all">Todas</button>
+          <button class="err-filter-btn" onclick="setFbFilter('novo')" id="fbf-novo">🔴 Novas</button>
+          <button class="err-filter-btn" onclick="setFbFilter('resolvido')" id="fbf-resolvido">✅ Resolvidas</button>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Reports, sugestões e dúvidas enviadas pelos boards, via 📢 Mural → Fale com o ADM.</div>
+      <div id="fb-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+    </div>
   </div><!-- /ppane-monitor -->
 
   <div class="ptab-pane" id="ppane-status">
@@ -1954,7 +1969,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.53 · painel</div>
+<div class="version">v2.54 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3765,7 +3780,7 @@ function swPtab(tab){
   // side-effects por aba
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); }
-  if(tab==='monitor'){ renderErrors(); renderErrChart(); }
+  if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
@@ -4978,6 +4993,74 @@ function _sanitizeComunicadoHtml(html){
     if(el.tagName==='A'){ el.setAttribute('target','_blank'); el.setAttribute('rel','noopener noreferrer'); }
   });
   return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MENSAGENS DOS BOARDS (Fale com o ADM) — leitura e triagem pelo ADM
+// ══════════════════════════════════════════════════════════════════════
+const FB_TIPOS = { bug:'🐛', sugestao:'💡', duvida:'❓', outro:'💬' };
+let _fbCache = {};
+let _fbFilter = 'all';
+
+function loadFeedback(){
+  if(window._fbListenerOn) return; // evita listener duplicado a cada troca de aba
+  window._fbListenerOn = true;
+  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{
+    _fbCache = snap.val() || {};
+    renderFbLista();
+  });
+}
+function setFbFilter(f){
+  _fbFilter = f;
+  ['all','novo','resolvido'].forEach(x=>{
+    const btn = document.getElementById('fbf-'+x);
+    if(btn) btn.classList.toggle('active', x===f);
+  });
+  renderFbLista();
+}
+function renderFbLista(){
+  const el = document.getElementById('fb-lista');
+  if(!el) return;
+  let items = Object.entries(_fbCache).map(([id,f])=>({...f,id}))
+    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+
+  const countNovo = items.filter(f=>f.status==='novo').length;
+  const badge = document.getElementById('fb-open-count');
+  if(badge) badge.textContent = countNovo+' nova'+(countNovo!==1?'s':'');
+
+  if(_fbFilter!=='all') items = items.filter(f=>f.status===_fbFilter);
+
+  if(!items.length){
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhuma mensagem por aqui.</div>';
+    return;
+  }
+  el.innerHTML = items.map(f=>{
+    const icone = FB_TIPOS[f.tipo]||'💬';
+    const isNovo = f.status==='novo';
+    const quando = f.criadoEm ? new Date(f.criadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div style="padding:11px 12px;margin-bottom:8px;border-radius:9px;background:rgba(3,13,26,.5);border:1px solid ${isNovo?'rgba(56,182,255,.3)':'var(--glass-b)'};">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap;">
+        <span>${icone}</span>
+        <span style="font-size:11.5px;font-weight:600;color:var(--txt);">${esc(f.nome||'Anônimo')}</span>
+        <span style="font-size:10px;color:var(--txt3);">· ${esc(_sqLabel(f.squad)||f.squad||'?')} · ${esc(f.role||'')}${f.versao?' · '+esc(f.versao):''}</span>
+        <span style="font-size:10px;color:var(--txt3);margin-left:auto;">${quando}</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;white-space:pre-wrap;">${esc(f.texto||'')}</div>
+      <div style="display:flex;gap:6px;">
+        ${isNovo
+          ? `<button onclick="_fbSetStatus('${f.id}','resolvido')" style="padding:4px 10px;font-size:10px;background:rgba(29,233,182,.12);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">✅ Marcar resolvida</button>`
+          : `<button onclick="_fbSetStatus('${f.id}','novo')" style="padding:4px 10px;font-size:10px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;">↩️ Reabrir</button>`}
+        <button onclick="_fbDelete('${f.id}')" style="padding:4px 10px;font-size:10px;background:none;color:var(--danger);border:1px solid rgba(255,107,107,.3);border-radius:6px;cursor:pointer;">🗑 Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _fbSetStatus(id, status){
+  window._set(window._ref(window._db,'kanban/feedback/'+id+'/status'), status).catch(()=>{});
+}
+async function _fbDelete(id){
+  if(!await uiConfirm('Excluir esta mensagem?',{title:'Excluir'})) return;
+  window._set(window._ref(window._db,'kanban/feedback/'+id), null).catch(()=>{});
 }
 
 async function loadUsoData(){
