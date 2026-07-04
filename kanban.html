@@ -3362,7 +3362,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.71</div>
+<div class="version">v8.30.74</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3469,9 +3469,15 @@ function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !
 // Estrutura: kanban/squads/{squad}/access_log/{YYYY-MM-DD}/{uid} = {init, ts, role}
 // Um registro por pessoa por dia (sobrescreve se acessar de novo no mesmo dia — não cresce sem limite).
 // Mantém só os últimos 60 dias (limpeza leve roda 1x a cada carregamento, throttled).
+// Data local (evita o bug de toISOString() jogar pra UTC — login à noite no Brasil
+// acabava contado no dia seguinte por causa do fuso -3h)
+function _localDateStrBoard(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
 function _logAccess(user, role){
   if(!user || !user.uid || !window._fbReady) return;
-  const today = new Date().toISOString().split('T')[0];
+  const today = _localDateStrBoard(new Date());
   const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
   window._set(window._ref(window._db, path), {
     init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
@@ -10523,15 +10529,46 @@ function loadCalEvents(){
   // "todos os _gcal" direto, o último a disparar apagaria os eventos do outro.
   if(!window._gcalLocalEvents) window._gcalLocalEvents = [];
   if(!window._gcalGlobalEvents) window._gcalGlobalEvents = [];
+  if(!window._pcalValidGlobalIds) window._pcalValidGlobalIds = null; // null = ainda não sabemos, não filtra órfão global
   function _mergeGcalSources(){
     const dismissed = window._gcalDismissedIds || new Set();
-    const combinados = [...window._gcalLocalEvents, ...window._gcalGlobalEvents]
-      .filter(e => !dismissed.has(e.id));
-    // Dedup por id (caso a mesma agenda tenha sido conectada tanto local quanto globalmente)
+    // Limpeza defensiva: remove eventos "órfãos" — de uma agenda que já foi desconectada mas
+    // o registro sobrou no cache (acontece se quem removeu não pôde disparar um refetch completo
+    // na hora, ex: sem token válido). Roda toda vez que qualquer dado muda, sem depender de fetch novo.
+    const idsLocaisValidos = new Set(Object.values(window._squadCalendars||{}).map(c=>c.id));
+    let localFiltrado = window._gcalLocalEvents.filter(e => !e._calId || idsLocaisValidos.has(e._calId));
+    let globalFiltrado = window._gcalGlobalEvents;
+    if(window._pcalValidGlobalIds){ // só filtra órfão global se já carregamos a lista válida
+      globalFiltrado = globalFiltrado.filter(e => !e._calId || window._pcalValidGlobalIds.has(e._calId));
+    }
+    const combinados = [...localFiltrado, ...globalFiltrado].filter(e => !dismissed.has(e.id));
+    // Dedup por id
     const porId = new Map();
     combinados.forEach(e => porId.set(e.id, e));
-    calEvents = [...calEvents.filter(e => !e._gcal), ...porId.values()];
+    // Dedup por título+data — algumas agendas públicas (ex: feriados nacionais) retornam o
+    // mesmo evento mais de uma vez com IDs internos diferentes; sem isso, aparece triplicado.
+    const vistos = new Set();
+    const final = [...porId.values()].filter(ev=>{
+      const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+      if(vistos.has(chave)) return false;
+      vistos.add(chave);
+      return true;
+    });
+    calEvents = [...calEvents.filter(e => !e._gcal), ...final];
     if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
+
+    // Auto-reparo: se o ADM percebeu sujeira no cache LOCAL deste squad (órfãos/duplicatas),
+    // regrava a versão limpa no Firebase — assim quem abrir depois já recebe corrigido.
+    if(isAdmUser(window._currentUser)){
+      const localLimpo = localFiltrado.filter(e=>{
+        const chave = e.start+'|'+(e.title||'').trim().toLowerCase();
+        return final.some(f=>f.id===e.id); // só mantém o que sobreviveu ao dedup
+      });
+      if(localLimpo.length !== window._gcalLocalEvents.length){
+        const cacheObj = Object.fromEntries(localLimpo.map(ev=>[ev.id, ev]));
+        window._set(window._ref(window._db, FB+'/config/gcal_cache'), cacheObj).catch(()=>{});
+      }
+    }
   }
   fbListen(FB+'/config/gcal_cache', val => {
     window._gcalLocalEvents = val ? Object.values(val) : [];
@@ -10540,6 +10577,13 @@ function loadCalEvents(){
   window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => {
     const val = snap.val();
     window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
+    _mergeGcalSources();
+  });
+  // Lista de agendas globais atualmente conectadas (só pra saber quais IDs são "válidos" e
+  // filtrar órfãos do cache global — não faz fetch nenhum, só lê a config).
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => {
+    const val = snap.val();
+    window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
     _mergeGcalSources();
   });
   fbListen(FB+'/config/gcal_cache_meta', val => {
@@ -13348,6 +13392,21 @@ window.addEventListener('auth-change', e=>{
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
 renderBoard();
+
+// Abre um card automaticamente se veio via link direto (?card=ID) — usado pelo painel
+// pra linkar direto num card específico em vez de só abrir o board na home.
+(function _openCardFromUrl(){
+  const cardId = _urlParams.get('card');
+  if(!cardId) return;
+  let tentativas = 0;
+  const tentar = () => {
+    tentativas++;
+    const existe = cards.find(c=>c.id===cardId);
+    if(existe){ openCard(cardId); return; }
+    if(tentativas < 15) setTimeout(tentar, 400); // espera os cards carregarem do Firebase
+  };
+  setTimeout(tentar, 600);
+})();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
