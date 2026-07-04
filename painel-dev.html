@@ -1985,7 +1985,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.59 · painel-dev</div>
+<div class="version">v2.60 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4836,7 +4836,10 @@ function renderPainelNotifs(){
     const icon = n._kind==='lembrete' ? '✎' : '🔔';
     const quando = n.ts ? _relTime(n.ts) : '';
     const dotRead = (n._kind==='notif' && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
-    const openAttr = (n.cardId && n.squad) ? `onclick="window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
+    // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
+    const openAttr = n.link
+      ? `onclick="swPtab('${n.link}');togglePainelNotif(event);" style="cursor:pointer;"`
+      : (n.cardId && n.squad) ? `onclick="window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(10,30,55,.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(10,30,55,.4)\'"':''}>
       <span style="font-size:13px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
@@ -4898,7 +4901,7 @@ function loadComunicados(){
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
-  _seedComunicadoRascunhos();
+  // Seed chamado via auth-change (não aqui) — garante que _currentUser já está disponível
 }
 
 // ── Rascunhos 🤖 semeados pelo código ────────────────────────────────────
@@ -4920,20 +4923,43 @@ const COMUNICADO_RASCUNHOS_SEED = [
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
+  const novos = [];
   for(const seed of COMUNICADO_RASCUNHOS_SEED){
     try{
       const snap = await window._get(window._ref(window._db,'kanban/comunicados/'+seed.id));
-      if(snap.exists()) continue; // já existe (revisado, publicado ou intacto) — não recria
+      if(snap.exists()) continue; // já existe — não recria
       await window._set(window._ref(window._db,'kanban/comunicados/'+seed.id), {
         titulo: seed.titulo, corpo: seed.corpo, tipo: seed.tipo, squad: seed.squad,
-        prioridade: 'mural', // sugestão padrão — ADM promove pra popup se achar que merece
+        prioridade: 'mural',
         insistente: false,
-        ativo: false,     // rascunho nunca aparece pro board até ser publicado
+        ativo: false,
         rascunho: true,
         criadoEm: new Date().toISOString(),
         expiraEm: null,
       });
+      novos.push(seed);
     }catch(e){ console.warn('[Rascunho seed] erro em', seed.id, e); }
+  }
+  // Notifica o ADM no sino do painel pra cada rascunho novo criado
+  if(novos.length > 0 && window._currentUser?.uid){
+    const uid = window._currentUser.uid;
+    for(const seed of novos){
+      const nid = 'rascunho_'+seed.id;
+      const jaNotif = await window._get(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid)).catch(()=>null);
+      if(jaNotif?.exists()) continue; // já notificou antes — não duplicar
+      window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
+        id: nid,
+        type: 'rascunho',
+        title: '🤖 Novo rascunho aguardando revisão',
+        sub: seed.titulo,
+        read: false,
+        ts: new Date().toISOString(),
+        squad: 'painel',
+        link: 'pessoas', // aba do painel onde está o rascunho
+      }).catch(()=>{});
+    }
+    if(novos.length === 1) showToast('🤖 Novo rascunho de comunicado aguardando revisão → aba Pessoas');
+    else showToast('🤖 '+novos.length+' rascunhos de comunicados aguardando revisão → aba Pessoas');
   }
 }
 function renderComunicadosLista(){
@@ -5558,6 +5584,8 @@ window.addEventListener('auth-change',e=>{
     document.getElementById('user-name').textContent=user.displayName||user.email;
     const av=document.getElementById('user-avatar');
     if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
+    // Seed de rascunhos: roda após login (usuário confirmado como ADM disponível)
+    setTimeout(_seedComunicadoRascunhos, 2000);
   } else {
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
