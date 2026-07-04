@@ -1312,6 +1312,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
       </div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
+
+      <!-- Rascunhos 🤖 aguardando revisão — criados automaticamente ao final de sessões de dev -->
+      <div id="comunicados-rascunhos-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:10px;color:#ffd166;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:8px;">🤖 Rascunhos aguardando sua revisão</div>
+        <div id="comunicados-rascunhos"></div>
+      </div>
+
       <div id="comunicados-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
     </div>
 
@@ -1618,12 +1625,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <select class="pev-input" id="cc-squad"></select>
           </div>
         </div>
+        <div class="pev-field">
+          <label class="pev-label">Onde aparece</label>
+          <select class="pev-input" id="cc-prioridade" onchange="_ccTogglePrioridadeUI()">
+            <option value="popup">🔔 Popup — interrompe ao abrir o board (também fica no mural)</option>
+            <option value="mural">📌 Só no mural — não interrompe, a pessoa vê quando quiser</option>
+          </select>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="pev-field">
             <label class="pev-label">Expira em (opcional)</label>
             <input class="pev-input" id="cc-expira" type="date">
           </div>
-          <div class="pev-field">
+          <div class="pev-field" id="cc-insistente-wrap">
             <label class="pev-label">Comportamento</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:7px 0;">
               <input type="checkbox" id="cc-insistente"> Insistente (reaparece até expirar)
@@ -1631,7 +1645,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           </div>
         </div>
         <div style="font-size:10px;color:var(--txt3);line-height:1.5;background:rgba(3,13,26,.4);border-radius:7px;padding:8px 10px;">
-          💡 <b>Insistente OFF</b>: aparece uma vez, some depois que a pessoa clica "Entendi". <b>Insistente ON</b>: reaparece a cada abertura do board até você desativar ou a data de expiração passar.
+          💡 <b>Popup</b> interrompe ao abrir/recarregar o board — depois que a pessoa clica "Entendi" some do popup, mas continua disponível no mural pra reconsulta. <b>Só no mural</b> nunca interrompe ninguém — fica direto no botão 📢 pra quem quiser ler. <b>Insistente</b> só se aplica ao popup: reaparece a cada abertura até expirar ou você desativar.
         </div>
       </div>
       <div class="pev-ft">
@@ -1971,7 +1985,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.54 · painel-dev</div>
+<div class="version">v2.59 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2304,7 +2318,6 @@ const _pTag = (tid) => {
 
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
-    // painel-dev: filtra campanhas que pertencem a pelo menos uma squad de teste
     const _devIds = new Set(SQUADS.map(s=>s.id));
     const _all = snap.val()||{};
     _campanhas = Object.fromEntries(
@@ -4200,7 +4213,6 @@ function deletePevEvent(){
 
 function loadPcalEvents(){
   // Eventos do painel (gestão + geral)
-  // painel-dev: cal_events isolado de prod
   window._onValue(window._ref(window._db,'kanban/painel/cal_events_dev'),snap=>{
     const val=snap.val();
     pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
@@ -4886,32 +4898,124 @@ function loadComunicados(){
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
+  _seedComunicadoRascunhos();
+}
+
+// ── Rascunhos 🤖 semeados pelo código ────────────────────────────────────
+// Como o assistente não tem acesso direto de escrita ao Firebase ao vivo, os
+// rascunhos de "avise sobre a novidade X" são embutidos no próprio código a
+// cada sessão de desenvolvimento, e só viram registros reais no Firebase
+// quando o ADM (você) abre o painel autenticado — o navegador dele é quem
+// efetivamente escreve. Cada rascunho tem um ID fixo e estável: se você já
+// revisou/publicou ou descartou, ele nunca é recriado (checa se o ID já
+// existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
+const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_teste_comunicados_dev_2026_07',
+    titulo: '🧪 Teste: sistema de comunicados funcionando',
+    corpo: '<p>Este é um rascunho de <b>teste</b>, criado no ambiente dev pra validar o fluxo completo: da criação automática até aparecer no board.</p><p>Se você está vendo isso na seção "🤖 Rascunhos aguardando sua revisão", a primeira parte já funcionou. Clique em <b>"Revisar e publicar"</b> pra abrir o editor (ajuste o texto, tipo, squad-alvo ou prioridade se quiser) e depois confirme em <b>Publicar</b>.</p><p>Depois de publicado, abra o board de teste (<code>kanban-dev.html?squad=dev</code> ou <code>?squad=omnichannel</code>) pra ver o popup ou o item no mural 📢, dependendo da prioridade escolhida.</p><p>Pode excluir este teste quando terminar de validar — é só clicar no 🗑 na lista de comunicados publicados.</p>',
+    tipo: 'novidade',
+    squad: '*', // aparece em qualquer squad de teste (dev ou omnichannel)
+  },
+];
+async function _seedComunicadoRascunhos(){
+  if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
+  for(const seed of COMUNICADO_RASCUNHOS_SEED){
+    try{
+      const snap = await window._get(window._ref(window._db,'kanban/comunicados/'+seed.id));
+      if(snap.exists()) continue; // já existe (revisado, publicado ou intacto) — não recria
+      await window._set(window._ref(window._db,'kanban/comunicados/'+seed.id), {
+        titulo: seed.titulo, corpo: seed.corpo, tipo: seed.tipo, squad: seed.squad,
+        prioridade: 'mural', // sugestão padrão — ADM promove pra popup se achar que merece
+        insistente: false,
+        ativo: false,     // rascunho nunca aparece pro board até ser publicado
+        rascunho: true,
+        criadoEm: new Date().toISOString(),
+        expiraEm: null,
+      });
+    }catch(e){ console.warn('[Rascunho seed] erro em', seed.id, e); }
+  }
 }
 function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
-  const items = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
+  const todos = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
     .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-  if(!items.length){
+
+  // Rascunhos 🤖: criados automaticamente ao final de sessões de dev, aguardando revisão.
+  // Nunca aparecem nos boards (rascunho implica ativo:false) — ficam numa seção separada.
+  const rascunhos = todos.filter(c=>c.rascunho);
+  const publicados = todos.filter(c=>!c.rascunho && !c.descartado);
+  renderRascunhosComunicado(rascunhos);
+
+  if(!publicados.length){
     el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum comunicado criado ainda.</div>';
     return;
   }
   const agora = new Date().toISOString();
-  el.innerHTML = items.map(c=>{
+  el.innerHTML = publicados.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const expirado = c.expiraEm && c.expiraEm < agora;
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
     const status = !c.ativo ? '<span style="color:var(--txt3);">desativado</span>'
       : expirado ? '<span style="color:var(--txt3);">expirado</span>'
       : '<span style="color:var(--teal);">ativo</span>';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
-      <span style="font-size:15px;">${tipo.icon}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
-        <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status}${c.insistente?' · insistente':''}${c.prioridade==='popup'?' · popup':''}</div>
+    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
+        <span style="font-size:15px;">${tipo.icon}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
+          <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status} · ${ondeAparece}${c.insistente?' · insistente':''}</div>
+        </div>
+      </div>
+      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+// Rascunhos escritos automaticamente ao final de sessões de desenvolvimento —
+// nunca publicados sem revisão explícita do ADM.
+function renderRascunhosComunicado(rascunhos){
+  const wrap = document.getElementById('comunicados-rascunhos-wrap');
+  const el = document.getElementById('comunicados-rascunhos');
+  if(!wrap || !el) return;
+  if(!rascunhos.length){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  el.innerHTML = rascunhos.map(c=>{
+    const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
+    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const ondeAparece = c.prioridade==='mural' ? '📌 só mural (sugerido)' : '🔔 popup (sugerido)';
+    return `<div style="padding:10px 11px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:9px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <span style="font-size:15px;">${tipo.icon}</span>
+        <div style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--txt);">${esc(c.titulo||'(sem título)')}</div>
+      </div>
+      <div style="font-size:10.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;max-height:60px;overflow:hidden;">${(c.corpo||'').replace(/<[^>]+>/g,' ').trim().slice(0,180)}${(c.corpo||'').length>180?'…':''}</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">${alvo} · ${ondeAparece}</div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="openComunicadoCompose('${c.id}')" style="flex:1;padding:6px;font-size:11px;background:rgba(255,209,102,.15);color:#ffd166;border:1px solid rgba(255,209,102,.35);border-radius:7px;cursor:pointer;font-weight:600;">👀 Revisar e publicar</button>
+        <button onclick="descartarRascunhoComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" style="padding:6px 12px;font-size:11px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:7px;cursor:pointer;">Descartar</button>
       </div>
     </div>`;
   }).join('');
+}
+async function descartarRascunhoComunicado(id, titulo){
+  if(!await uiConfirm('Descartar o rascunho "'+titulo+'"? Não pode ser desfeito.',{title:'Descartar rascunho'})) return;
+  // Não apaga de verdade — só marca como descartado. Se apagássemos o registro
+  // inteiro, o seed automático (que checa "snap.exists()") recriaria o mesmo
+  // rascunho na próxima vez que o painel carregasse, já que pra ele pareceria
+  // que o rascunho nunca tinha existido.
+  window._set(window._ref(window._db,'kanban/comunicados/'+id), {rascunho:false, ativo:false, descartado:true})
+    .then(()=>showToast('🗑 Rascunho descartado.'));
+}
+// Exclusão direta na lista, sem precisar abrir o modal de edição
+async function deleteComunicadoDireto(id, titulo){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem excluir comunicados.'); return; }
+  if(!await uiConfirm('Excluir o comunicado "'+titulo+'"? Ele deixa de aparecer nos boards imediatamente.',{title:'Excluir comunicado'})) return;
+  window._set(window._ref(window._db,'kanban/comunicados/'+id), null)
+    .then(()=>showToast('🗑 Comunicado excluído.'))
+    .catch(e=>showToast('⚠ Erro ao excluir: '+(e?.message||e)));
 }
 
 function _ccPopulaSquadSelect(){
@@ -4937,11 +5041,12 @@ function openComunicadoCompose(id){
   const delBtn = document.getElementById('cc-del-btn');
   if(_editingComunicadoId && _comunicadosCache[_editingComunicadoId]){
     const c = _comunicadosCache[_editingComunicadoId];
-    document.getElementById('comunicado-compose-title').textContent = 'Editar Comunicado';
+    document.getElementById('comunicado-compose-title').textContent = c.rascunho ? '🤖 Revisar Rascunho' : 'Editar Comunicado';
     document.getElementById('cc-titulo').value = c.titulo||'';
     document.getElementById('cc-corpo').innerHTML = c.corpo||'';
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
     document.getElementById('cc-squad').value = c.squad||'*';
+    document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : 'popup';
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
     document.getElementById('cc-insistente').checked = !!c.insistente;
     if(delBtn) delBtn.style.display = '';
@@ -4951,11 +5056,22 @@ function openComunicadoCompose(id){
     document.getElementById('cc-corpo').innerHTML = '';
     document.getElementById('cc-tipo').value = 'novidade';
     document.getElementById('cc-squad').value = '*';
+    document.getElementById('cc-prioridade').value = 'popup';
     document.getElementById('cc-expira').value = '';
     document.getElementById('cc-insistente').checked = false;
     if(delBtn) delBtn.style.display = 'none';
   }
+  _ccTogglePrioridadeUI();
   document.getElementById('comunicado-compose-ov').classList.add('open');
+}
+// Insistente só faz sentido pra popup — desabilita quando for só mural
+function _ccTogglePrioridadeUI(){
+  const isMural = document.getElementById('cc-prioridade').value === 'mural';
+  const wrap = document.getElementById('cc-insistente-wrap');
+  const chk = document.getElementById('cc-insistente');
+  if(!wrap || !chk) return;
+  if(isMural){ chk.checked = false; chk.disabled = true; wrap.style.opacity = '.45'; }
+  else { chk.disabled = false; wrap.style.opacity = '1'; }
 }
 function closeComunicadoCompose(){
   document.getElementById('comunicado-compose-ov')?.classList.remove('open');
@@ -4969,18 +5085,21 @@ function saveComunicado(){
   const expiraRaw = document.getElementById('cc-expira').value;
   const id = _editingComunicadoId || ('com_'+Date.now()+Math.random().toString(36).slice(2,6));
   const existente = _comunicadosCache[id] || {};
+  const eraRascunho = !!existente.rascunho;
+  const prioridade = document.getElementById('cc-prioridade').value;
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
     squad: document.getElementById('cc-squad').value,
-    prioridade: 'popup',
-    insistente: document.getElementById('cc-insistente').checked,
-    ativo: existente.ativo!==undefined ? existente.ativo : true,
+    prioridade,
+    insistente: prioridade==='popup' ? document.getElementById('cc-insistente').checked : false,
+    ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
+    rascunho: false, // clicar em Publicar sempre tira do estado de rascunho
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
   };
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
-    .then(()=>{ showToast('✅ Comunicado publicado!'); closeComunicadoCompose(); })
+    .then(()=>{ showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!'); closeComunicadoCompose(); })
     .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
 }
 async function deleteComunicado(){
@@ -5278,7 +5397,6 @@ function loadPcfgUsers(){
   const list=document.getElementById('pcfg-users-list'); if(!list) return;
   list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    // painel-dev: só membros de squads de teste
     const _dIds = new Set(SQUADS.map(s=>s.id));
     const val=Object.fromEntries(Object.entries(snap.val()||{}).filter(([_,u])=>u&&u.squads&&Object.keys(u.squads).some(s=>_dIds.has(s))));
     const membersArr=Object.entries(val).filter(([uid,u])=>{
@@ -5470,7 +5588,6 @@ window.addEventListener('fb-ready',()=>{
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
-  // painel-dev: lembretes isolados de prod
   window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'),snap=>{
     const val=snap.val();
     lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
@@ -5483,7 +5600,6 @@ function loadLembretesGestao(){
 // ══════════════════════════════════════════════════════════════
 let kudosGeral = [];
 function loadKudosGeral(){
-  // painel-dev: kudos isolado de prod
   window._onValue(window._ref(window._db,'kanban/painel/kudos_dev'),snap=>{
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
@@ -6619,7 +6735,7 @@ function buildGlobalPayload(){
     };
   });
   return {
-    version:     '8.2.0',
+    version:     document.querySelector('.version')?.textContent?.trim() || '',
     source:      'painel',
     exportedAt:  new Date().toISOString(),
     exportedBy:  window._currentUser?.displayName || window._currentUser?.email || 'painel',
@@ -6649,27 +6765,32 @@ function exportAllSquadsJSON(){
 
 function exportEachSquadJSON(){
   const date = new Date().toISOString().split('T')[0];
-  SQUADS.forEach(sq=>{
-    const d = squadData[sq.id]||{};
-    const payload = {
-      version:    '8.2.0',
-      source:     'painel',
-      exportedAt: new Date().toISOString(),
-      squad:      sq.id,
-      cards:      d.cards    || [],
-      columns:    d.columns  || [],
-      tags:       d.tags     || [],
-      agilCfg:    d.agilCfg  || {},
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'mare-digital-' + sq.id + '-' + date + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
+  // Navegadores bloqueiam múltiplos downloads disparados em sequência síncrona
+  // (a.click() em loop) — a partir do 2º arquivo, geralmente barra silenciosamente.
+  // Escalonar com um pequeno delay entre cada um evita o bloqueio.
+  SQUADS.forEach((sq, i)=>{
+    setTimeout(()=>{
+      const d = squadData[sq.id]||{};
+      const payload = {
+        version:    document.querySelector('.version')?.textContent?.trim() || '',
+        source:     'painel',
+        exportedAt: new Date().toISOString(),
+        squad:      sq.id,
+        cards:      d.cards    || [],
+        columns:    d.columns  || [],
+        tags:       d.tags     || [],
+        agilCfg:    d.agilCfg  || {},
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'mare-digital-' + sq.id + '-' + date + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      if(i===SQUADS.length-1) showToast('✅ ' + SQUADS.length + ' arquivos baixados (um por squad)');
+    }, i * 400); // 400ms entre cada download — suficiente pra não disparar o bloqueio
   });
-  showToast('✅ ' + SQUADS.length + ' arquivos baixados (um por squad)');
 }
 
 function copyAllSquadsJSON(){
@@ -6701,8 +6822,8 @@ function renderGlobalBackupStats(){
       <span style="font-size:10px;color:rgba(150,200,240,.4);">${(d.agilCfg?.sprintNum?'Sprint '+d.agilCfg.sprintNum:'sem sprint')}</span>
     </div>`;
   }).join('') + (()=>{
-    const lastManual = localStorage.getItem('gb_last_manual');
-    const lastAuto   = localStorage.getItem('gb_last_auto');
+    const lastManual = localStorage.getItem('gb_last_manual'); // só UI local, não é o mecanismo automático
+    const lastAuto   = _gbCfgCache.lastRun;
     const total = SQUADS.reduce((a,sq)=>a+(squadData[sq.id]?.cards?.filter(c=>!c.archived)?.length||0),0);
     return `<div style="font-size:11px;color:rgba(150,200,240,.5);padding:4px 0;">
       Total: <strong style="color:rgba(200,230,255,.7);">${total} cards ativos</strong> em ${SQUADS.length} squads
@@ -6712,6 +6833,18 @@ function renderGlobalBackupStats(){
   })();
 }
 
+// Config e histórico do backup automático global — Firebase, não mais
+// localStorage (mesmo motivo do board: era por navegador/dispositivo).
+let _gbCfgCache = {};
+window._onValue(window._ref(window._db,'kanban/painel/config/backup_cfg_dev'), snap=>{
+  _gbCfgCache = snap.val() || {};
+  updateGlobalBackupStatus();
+  const lastEl = document.getElementById('gb-last-backup');
+  if(lastEl && _gbCfgCache.lastRun){
+    lastEl.textContent = '⏱ Último automático: '+new Date(_gbCfgCache.lastRun).toLocaleString('pt-BR');
+  }
+});
+
 // ── Config EmailJS global ─────────────────────────────────────────────────
 function saveGlobalBackupCfg(){
   const cfg = {
@@ -6719,14 +6852,15 @@ function saveGlobalBackupCfg(){
     service:  document.getElementById('gb-service')?.value  ||'',
     template: document.getElementById('gb-template')?.value ||'',
     pubkey:   document.getElementById('gb-pubkey')?.value   ||'',
+    lastRun:  _gbCfgCache.lastRun || null,
   };
-  localStorage.setItem('gb_backup_cfg', JSON.stringify(cfg));
+  _gbCfgCache = cfg;
+  window._set(window._ref(window._db,'kanban/painel/config/backup_cfg_dev'), cfg).catch(()=>{});
   updateGlobalBackupStatus();
 }
 
 function loadGlobalBackupCfg(){
-  const raw = localStorage.getItem('gb_backup_cfg');
-  const cfg = raw ? JSON.parse(raw) : {};
+  const cfg = _gbCfgCache;
   const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
   set('gb-email',    cfg.email);
   set('gb-service',  cfg.service);
@@ -6734,35 +6868,39 @@ function loadGlobalBackupCfg(){
   set('gb-pubkey',   cfg.pubkey);
   updateGlobalBackupStatus();
   const lastEl = document.getElementById('gb-last-backup');
-  const lastAuto = localStorage.getItem('gb_last_auto');
-  if(lastEl && lastAuto)
-    lastEl.textContent = '⏱ Último automático: '+new Date(lastAuto).toLocaleString('pt-BR');
+  if(lastEl && cfg.lastRun)
+    lastEl.textContent = '⏱ Último automático: '+new Date(cfg.lastRun).toLocaleString('pt-BR');
 }
 
 function updateGlobalBackupStatus(){
   const el = document.getElementById('gb-auto-status'); if(!el) return;
-  const raw = localStorage.getItem('gb_backup_cfg');
-  const cfg = raw ? JSON.parse(raw) : {};
+  const cfg = _gbCfgCache;
   const ok  = cfg.email && cfg.service && cfg.template && cfg.pubkey;
   el.textContent = ok ? '✅ Configurado — envia todo domingo' : '⚠ Preencha os campos para ativar';
   el.style.color = ok ? '#1de9b6' : '#ffd166';
 }
 
 async function sendGlobalBackupEmail(isTest=false){
-  const raw = localStorage.getItem('gb_backup_cfg');
-  const cfg = raw ? JSON.parse(raw) : {};
+  const cfg = _gbCfgCache;
   if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey){
     showToast('⚠ Configure email e EmailJS no modal de Backup');
     return false;
   }
   // Carrega EmailJS SDK se necessário
   if(!window.emailjs){
-    await new Promise((res,rej)=>{
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
+    try{
+      await new Promise((res,rej)=>{
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = res;
+        s.onerror = ()=>rej(new Error('Não foi possível carregar o SDK do EmailJS (CDN indisponível ou bloqueado).'));
+        document.head.appendChild(s);
+      });
+    }catch(e){
+      showToast('❌ '+e.message);
+      return false;
+    }
     emailjs.init(cfg.pubkey);
   }
   const payload = buildGlobalPayload();
@@ -6782,7 +6920,8 @@ async function sendGlobalBackupEmail(isTest=false){
       is_test:      isTest ? '(TESTE)' : '',
     });
     const now = new Date().toISOString();
-    localStorage.setItem('gb_last_auto', now);
+    _gbCfgCache.lastRun = now;
+    window._set(window._ref(window._db,'kanban/painel/config/backup_cfg_dev/lastRun'), now).catch(()=>{});
     showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
     const lastEl = document.getElementById('gb-last-backup');
     if(lastEl) lastEl.textContent = '⏱ Último automático: '+new Date(now).toLocaleString('pt-BR');
@@ -6797,35 +6936,23 @@ async function sendGlobalBackupEmail(isTest=false){
 function testGlobalBackupEmail(){ sendGlobalBackupEmail(true); }
 
 // ── Agendador semanal (domingo 00:05) ────────────────────────────────────
-(function scheduleGlobalWeeklyBackup(){
-  function msUntilNextSunday(){
-    const now = new Date();
-    const daysUntilSun = now.getDay() === 0 ? 7 : 7 - now.getDay();
-    const next = new Date(now);
-    next.setDate(now.getDate() + daysUntilSun);
-    next.setHours(0, 5, 0, 0);
-    return next.getTime() - now.getTime();
-  }
-
-  function doWeekly(){
-    const raw = localStorage.getItem('gb_backup_cfg');
-    const cfg = raw ? JSON.parse(raw) : {};
-    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
-    const lastAuto = localStorage.getItem('gb_last_auto');
-    if(lastAuto){
-      const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
-      if(daysSince < 6) return;
-    }
+// ── Backup automático global: checagem "está atrasado?" ao carregar ─────
+// Mesmo raciocínio do board — setTimeout de 7 dias nunca disparava de
+// verdade (exigia a aba do painel aberta ininterruptamente por uma semana).
+// Agora: sempre que alguém abre o painel e já se passou 7+ dias desde o
+// último backup (registro compartilhado no Firebase), roda na hora.
+function checkOverdueGlobalBackup(){
+  const cfg = _gbCfgCache;
+  if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
+  const diasDesde = cfg.lastRun ? (Date.now() - new Date(cfg.lastRun).getTime())/86400000 : Infinity;
+  if(diasDesde >= 7){
+    console.log('[Backup Global] Atrasado ('+Math.floor(diasDesde)+' dias) — rodando agora.');
     sendGlobalBackupEmail(false);
   }
-
-  const ms = msUntilNextSunday();
-  console.log('[Backup Global] Próximo envio automático em ' + Math.round(ms/3600000) + 'h');
-  setTimeout(()=>{
-    doWeekly();
-    setInterval(doWeekly, 7 * 24 * 60 * 60 * 1000);
-  }, ms);
-})();
+}
+window.addEventListener('auth-change', e=>{
+  if(e.detail) setTimeout(checkOverdueGlobalBackup, 5000);
+}, {once:true});
 
 // ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
 
