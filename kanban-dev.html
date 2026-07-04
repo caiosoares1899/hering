@@ -3420,7 +3420,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.75-dev</div>
+<div class="version">v8.30.76-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3582,6 +3582,9 @@ const SQUAD_META_DEFAULT = {
   midia:         { label: 'Squad Marketing de Performance', subtitle: 'Performance Marketing',    agentRole: 'mídia', emoji: '📱' },
   midiacriativa: { label: 'Squad Mídia Criativa',     subtitle: 'Criação & Conteúdo',       agentRole: 'criativo', emoji: '🎨' },
   dev:           { label: '🧪 Dev Sandbox',           subtitle: 'Ambiente de testes',       agentRole: 'engenheiro', emoji: '🧪' },
+  // Squad FICTÍCIA de testes — usada só pra exercitar interações multi-squad (menções, campanhas
+  // compartilhadas, comunicados segmentados) SEM tocar em dados reais da squad Mídia/Marketing.
+  omnichannel:   { label: '🧪 Squad Omnichannel',     subtitle: 'Ambiente de testes (multi-squad)', agentRole: 'omnichannel', emoji: '🛍️' },
 };
 
 // Squads ativos — começa com o default, pode ser estendido pelo Firebase
@@ -13503,7 +13506,7 @@ async function runDevSeed(){
       nome: 'Ana Beatriz Costa', email: 'ana.costa@ciahering.com.br',
       init: 'ABC', foto: '', role: 'po',
       inscrito: true, inscritoEm: now,
-      squads: { dev: true }, squads_roles: { dev: 'po' },
+      squads: { dev: true, omnichannel: true }, squads_roles: { dev: 'po', omnichannel: 'po' },
     },
     'uid-test-002': {
       nome: 'Rafael Mendes', email: 'rafael.mendes@ciahering.com.br',
@@ -13515,13 +13518,13 @@ async function runDevSeed(){
       nome: 'Juliana Ferreira', email: 'juliana.ferreira@ciahering.com.br',
       init: 'JF', foto: '', role: 'membro',
       inscrito: true, inscritoEm: now,
-      squads: { dev: true }, squads_roles: { dev: 'membro' },
+      squads: { dev: true, omnichannel: true }, squads_roles: { dev: 'membro', omnichannel: 'organizador' },
     },
     'uid-test-004': {
       nome: 'Lucas Oliveira', email: 'lucas.oliveira@ciahering.com.br',
       init: 'LO', foto: '', role: 'membro',
       inscrito: true, inscritoEm: now,
-      squads: { dev: true }, squads_roles: { dev: 'membro' },
+      squads: { dev: true, omnichannel: true }, squads_roles: { dev: 'membro', omnichannel: 'membro' },
     },
     'uid-test-005': {
       nome: 'Mariana Santos', email: 'mariana.santos@ciahering.com.br',
@@ -14205,27 +14208,28 @@ async function runDevSeed(){
       seedLog('✅ 2 campanhas de exemplo criadas (Dia dos Pais + Inverno 2026)','ok');
     }catch(e){ seedLog('⚠ campanhas não gravadas: '+e.message,'err'); }
 
-    // ── SQUAD MIDIA — Marketing de Performance ───────────────────────
+    // ── SQUAD OMNICHANNEL (fictícia, isolada) — testes multi-squad ────
+    // NUNCA escreve na squad real de Marketing de Performance ('midia').
     try{
-      const FBM = 'kanban/squads/midia/dados';
-      const midiaCols = [
+      const FBO = 'kanban/squads/omnichannel/dados';
+      const omniCols = [
         {id:'backlog',  name:'Backlog',       color:'#64748b'},
         {id:'progress', name:'Em andamento',  color:'#38b6ff'},
         {id:'review',   name:'Em revisão',    color:'#ffd166'},
         {id:'blocker',  name:'Impedimento',   color:'#ff6b6b'},
         {id:'done',     name:'Concluído',     color:'#1de9b6'},
       ];
-      const midiaTags = [
+      const omniTags = [
         {id:'paid',        label:'Mídia Paga',    pi:0},
         {id:'email',       label:'E-mail',        pi:1},
         {id:'analytics',   label:'Analytics',     pi:2},
         {id:'tag-diapais', label:'Dia dos Pais',  pi:3},
         {id:'tag-inverno', label:'Inverno 2026',  pi:4},
       ];
-      const midiaCards = [
+      const omniCards = [
         // ── DIA DOS PAIS — Mkt Performance ──
         {
-          id:'midia-dp-001', col:'done', title:'Configurar campanhas Meta Ads — Dia dos Pais',
+          id:'omni-dp-001', col:'done', title:'Configurar campanhas Meta Ads — Dia dos Pais',
           desc:'Estruturar campanhas no Meta Ads Manager com segmentação por idade (35-65), interesses em paternidade e comportamento de compra.',
           po:'Budget aprovado: R$28k. Público principal: filhos adultos 25-40 comprando para os pais.',
           tags:['paid','tag-diapais'], priority:'high', owner:'TM', effort:5, isOKR:true,
@@ -14239,7 +14243,7 @@ async function runDevSeed(){
           comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-dp-002', col:'done', title:'Configurar campanhas Google Ads — Dia dos Pais',
+          id:'omni-dp-002', col:'done', title:'Configurar campanhas Google Ads — Dia dos Pais',
           desc:'Search + Shopping + Display para capturar intenção de compra de presentes para o dia dos pais.',
           tags:['paid','tag-diapais'], priority:'high', owner:'LO', effort:5, isOKR:false,
           due: d(-13), checklist:[
@@ -14250,7 +14254,7 @@ async function runDevSeed(){
           ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-dp-003', col:'progress', title:'Otimização contínua — Dia dos Pais',
+          id:'omni-dp-003', col:'progress', title:'Otimização contínua — Dia dos Pais',
           desc:'Monitoramento diário e otimização das campanhas ativas. Ajuste de lances, pausar criativos com baixo CTR, escalar os que performam.',
           po:'Meta de ROAS 4x. Atualmente em 4.2x ✅. Manter até o dia 10/08.',
           tags:['paid','tag-diapais'], priority:'high', owner:'TM', effort:3, isOKR:false,
@@ -14263,7 +14267,7 @@ async function runDevSeed(){
           comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-dp-004', col:'done', title:'Disparar e-mail marketing — Dia dos Pais',
+          id:'omni-dp-004', col:'done', title:'Disparar e-mail marketing — Dia dos Pais',
           desc:'Segmentar base e disparar sequência de e-mails: teaser (D-14), lançamento (D-7), urgência (D-3), last call (D-1).',
           tags:['email','tag-diapais'], priority:'medium', owner:'RV', effort:4, isOKR:false,
           due: d(-8), checklist:[
@@ -14275,7 +14279,7 @@ async function runDevSeed(){
           ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-dp-005', col:'blocker', title:'Acesso ao GA4 com eventos customizados não está funcionando',
+          id:'omni-dp-005', col:'blocker', title:'Acesso ao GA4 com eventos customizados não está funcionando',
           desc:'Os eventos de conversão configurados no GTM não estão disparando no GA4. Dados de conversão da landing page estão zerados.',
           impedimento:'TI bloqueou publicação do container GTM por processo de aprovação de segurança. Aguardando liberação — aberto ticket #4521.',
           tags:['analytics','tag-diapais'], priority:'high', owner:'LO', effort:2, isOKR:false,
@@ -14289,7 +14293,7 @@ async function runDevSeed(){
 
         // ── INVERNO 2026 — Mkt Performance ──
         {
-          id:'midia-inv-001', col:'done', title:'Planejar estratégia de mídia — Inverno 2026',
+          id:'omni-inv-001', col:'done', title:'Planejar estratégia de mídia — Inverno 2026',
           desc:'Definir mix de canais, budget por canal, cronograma de veiculação e KPIs da coleção de inverno.',
           po:'Budget total: R$80k. Distribuição: 50% Meta, 30% Google, 20% TikTok (novo canal).',
           tags:['paid','tag-inverno'], priority:'high', owner:'TM', effort:4, isOKR:true,
@@ -14298,11 +14302,11 @@ async function runDevSeed(){
             {id:'mc23',text:'Definir budget por canal',done:true},
             {id:'mc24',text:'Montar cronograma de veiculação',done:true},
             {id:'mc25',text:'Alinhar KPIs com Rafael',done:true},
-          ], riscos:[], links:[{url:'https://docs.google.com/plan-midia-inv26',label:'Plano de mídia Inverno 2026'}],
+          ], riscos:[], links:[{url:'https://docs.google.com/plan-omni-inv26',label:'Plano de mídia Inverno 2026 (Omnichannel)'}],
           comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-inv-002', col:'progress', title:'Configurar campanhas Meta Ads — Inverno 2026',
+          id:'omni-inv-002', col:'progress', title:'Configurar campanhas Meta Ads — Inverno 2026',
           desc:'Estruturar campanhas de awareness e conversão para a coleção de inverno. Foco em casacos e malhas como carros-chefe.',
           po:'Público-alvo ampliado vs. Dia dos Pais: mulheres 25-55 e homens 30-55 interessados em moda.',
           tags:['paid','tag-inverno'], priority:'high', owner:'TM', effort:6, isOKR:false,
@@ -14317,7 +14321,7 @@ async function runDevSeed(){
           links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-inv-003', col:'backlog', title:'Configurar TikTok Ads — Inverno 2026',
+          id:'omni-inv-003', col:'backlog', title:'Configurar TikTok Ads — Inverno 2026',
           desc:'Primeiro uso do TikTok Ads na Hering. Criar conta, configurar pixel, estruturar campanha de awareness com criativos em vídeo vertical.',
           tags:['paid','tag-inverno'], priority:'medium', owner:'RV', effort:8, isOKR:false,
           due: d(8), checklist:[
@@ -14330,7 +14334,7 @@ async function runDevSeed(){
           links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
         },
         {
-          id:'midia-inv-004', col:'backlog', title:'Sequência de e-mail marketing — Inverno 2026',
+          id:'omni-inv-004', col:'backlog', title:'Sequência de e-mail marketing — Inverno 2026',
           desc:'Planejar e disparar sequência de e-mails para lançamento e sustentação da coleção de inverno.',
           tags:['email','tag-inverno'], priority:'medium', owner:'RV', effort:5, isOKR:false,
           due: d(12), checklist:[
@@ -14342,59 +14346,59 @@ async function runDevSeed(){
         },
       ];
 
-      // Salvar dados do squad midia
-      await window._set(window._ref(window._db, FBM+'/columns'), midiaCols);
-      await window._set(window._ref(window._db, FBM+'/tags'),    midiaTags);
-      await window._set(window._ref(window._db, FBM+'/cards'),   midiaCards);
-      seedLog('✅ Squad Mídia (Marketing de Performance) populado: 5 colunas, 5 tags, 9 cards','ok');
-    }catch(e){ seedLog('⚠ Squad Mídia não gravado: '+e.message,'err'); }
+      // Salvar dados do squad omnichannel (fictícia)
+      await window._set(window._ref(window._db, FBO+'/columns'), omniCols);
+      await window._set(window._ref(window._db, FBO+'/tags'),    omniTags);
+      await window._set(window._ref(window._db, FBO+'/cards'),   omniCards);
+      seedLog('✅ Squad Omnichannel (fictícia) populada: 5 colunas, 5 tags, 9 cards','ok');
+    }catch(e){ seedLog('⚠ Squad Omnichannel não gravada: '+e.message,'err'); }
 
     // ── Marcar campanhas como multi-squad ────────────────────────────
     try{
       const campBase = 'kanban/campanhas';
-      // Inverno 2026: multi-squad entre dev e midia
+      // Inverno 2026: multi-squad entre dev e omnichannel (fictícios, isolados)
       await window._set(window._ref(window._db, campBase+'/col-seed-invernodev/multiSquad'), true);
-      await window._set(window._ref(window._db, campBase+'/col-seed-invernodev/squads'), ['dev','midia']);
-      // Criar cópia da campanha Inverno 2026 para o squad midia
+      await window._set(window._ref(window._db, campBase+'/col-seed-invernodev/squads'), ['dev','omnichannel']);
+      // Criar cópia da campanha Inverno 2026 para o squad omnichannel
       const ts = new Date().toISOString();
-      await window._set(window._ref(window._db, campBase+'/col-seed-inverno-midia'), {
-        id:'col-seed-inverno-midia', tipo:'colecao', nome:'Inverno 2026', mote:'O frio que aquece',
+      await window._set(window._ref(window._db, campBase+'/col-seed-inverno-omni'), {
+        id:'col-seed-inverno-omni', tipo:'colecao', nome:'Inverno 2026', mote:'O frio que aquece',
         tag:'tag-inverno', tags:['tag-inverno'],
         dataInicio: d(-5), dataFim: d(60), status:'ativa',
-        tema:'inverno', squads:['midia','dev'], multiSquad:true, mostrarArquivados:'ativos',
+        tema:'inverno', squads:['omnichannel','dev'], multiSquad:true, mostrarArquivados:'ativos',
         kvs:[{url:'https://drive.google.com/kv-inverno',label:'KV Principal — Inverno 2026 (aprovado)'},{url:'https://drive.google.com/kv-inverno-stories',label:'KV Stories — variação vertical'}],
-        lista:[{url:'https://docs.google.com/lista-midia-inv26',label:'Plano de mídia Inverno 2026 — v2 aprovado'}],
-        criadoEm:ts, criadoPor:'Thais Matoso', atualizadoEm:ts,
+        lista:[{url:'https://docs.google.com/lista-omni-inv26',label:'Plano de mídia Inverno 2026 (Omnichannel) — v2 aprovado'}],
+        criadoEm:ts, criadoPor:'Juliana Ferreira', atualizadoEm:ts,
         entradas:{
-          'e-midia-inv-001':{ id:'e-midia-inv-001', tipo:'resultado', titulo:'Performance semana 1 — pré-lançamento',
+          'e-omni-inv-001':{ id:'e-omni-inv-001', tipo:'resultado', titulo:'Performance semana 1 — pré-lançamento',
             corpo:'Resultados do e-mail de pré-lançamento:\n\n• Taxa de abertura: 28.4% (média histórica: 22%)\n• CTR: 4.1%\n• Cliques para a landing page: 3.847\n\nEngajamento acima do esperado. Lista bem segmentada.',
-            links:[], autor:'Thais Matoso', autorUid:'uid-test-003', ts:new Date(Date.now()-2*86400000).toISOString() },
-          'e-midia-inv-002':{ id:'e-midia-inv-002', tipo:'problema', titulo:'KV bloqueando ativação das campanhas pagas',
+            links:[], autor:'Juliana Ferreira', autorUid:'uid-test-003', ts:new Date(Date.now()-2*86400000).toISOString() },
+          'e-omni-inv-002':{ id:'e-omni-inv-002', tipo:'problema', titulo:'KV bloqueando ativação das campanhas pagas',
             corpo:'Campanhas de Meta e Google estão estruturadas e prontas para ir ao ar mas não podemos ativar sem o KV aprovado.\n\nImpacto estimado: cada dia de atraso = ~R$2.6k de budget não utilizado no período de maior relevância.\n\nPrioridade: pressionar aprovação com Diretoria.',
-            links:[], autor:'Thais Matoso', autorUid:'uid-test-003', ts:new Date(Date.now()-1*86400000).toISOString() },
+            links:[], autor:'Juliana Ferreira', autorUid:'uid-test-003', ts:new Date(Date.now()-1*86400000).toISOString() },
         },
       });
       // Dia dos Pais também multi-squad
       await window._set(window._ref(window._db, campBase+'/camp-seed-diapaisdev/multiSquad'), true);
-      await window._set(window._ref(window._db, campBase+'/camp-seed-diapaisdev/squads'), ['dev','midia']);
-      await window._set(window._ref(window._db, campBase+'/camp-seed-diapais-midia'), {
-        id:'camp-seed-diapais-midia', tipo:'campanha', nome:'Dia dos Pais 2026', mote:'Para quem nunca esquece',
+      await window._set(window._ref(window._db, campBase+'/camp-seed-diapaisdev/squads'), ['dev','omnichannel']);
+      await window._set(window._ref(window._db, campBase+'/camp-seed-diapais-omni'), {
+        id:'camp-seed-diapais-omni', tipo:'campanha', nome:'Dia dos Pais 2026', mote:'Para quem nunca esquece',
         tag:'tag-diapais', tags:['tag-diapais'],
         dataInicio: d(-20), dataFim: d(12), status:'ativa',
-        tema:'outono', squads:['midia','dev'], multiSquad:true, mostrarArquivados:'ativos',
-        lista:[{url:'https://docs.google.com/plan-midia-dp26',label:'Plano de mídia Dia dos Pais 2026'}],
-        criadoEm:ts, criadoPor:'Thais Matoso', atualizadoEm:ts,
+        tema:'outono', squads:['omnichannel','dev'], multiSquad:true, mostrarArquivados:'ativos',
+        lista:[{url:'https://docs.google.com/plan-omni-dp26',label:'Plano de mídia Dia dos Pais 2026 (Omnichannel)'}],
+        criadoEm:ts, criadoPor:'Juliana Ferreira', atualizadoEm:ts,
         entradas:{
-          'e-midia-dp-001':{ id:'e-midia-dp-001', tipo:'resultado', titulo:'ROAS semana 1 — acima da meta',
+          'e-omni-dp-001':{ id:'e-omni-dp-001', tipo:'resultado', titulo:'ROAS semana 1 — acima da meta',
             corpo:'Resultados acumulados semana 1:\n\n• ROAS Meta Ads: 4.8x (meta: 4x) ✅\n• ROAS Google Ads: 3.9x (meta: 3.5x) ✅\n• CPC médio Meta: R$1.87\n• CTR Search Google: 6.2%\n• Melhor criativo: vídeo "kit completo" (15s) com 3.2% CTR',
             links:[{url:'https://datastudio.google.com',label:'Dashboard performance Dia dos Pais'}],
-            autor:'Thais Matoso', autorUid:'uid-test-003', ts:new Date(Date.now()-3*86400000).toISOString() },
-          'e-midia-dp-002':{ id:'e-midia-dp-002', tipo:'aprendizado', titulo:'Vídeo curto supera imagem estática em 2.4x',
+            autor:'Juliana Ferreira', autorUid:'uid-test-003', ts:new Date(Date.now()-3*86400000).toISOString() },
+          'e-omni-dp-002':{ id:'e-omni-dp-002', tipo:'aprendizado', titulo:'Vídeo curto supera imagem estática em 2.4x',
             corpo:'Comparando performance por formato de criativo:\n\n• Vídeo 15s: CTR 3.2%, CPM R$18\n• Carrossel: CTR 1.9%, CPM R$15\n• Imagem estática: CTR 1.3%, CPM R$12\n\nCusto por conversão do vídeo é 40% menor apesar do CPM mais alto. Para a próxima campanha: priorizar vídeos curtos mesmo com produção mais cara.',
             links:[], autor:'Lucas Oliveira', autorUid:'uid-test-004', ts:new Date().toISOString() },
         },
       });
-      seedLog('✅ Campanhas configuradas como multi-squad (dev + midia)','ok');
+      seedLog('✅ Campanhas configuradas como multi-squad (dev + omnichannel)','ok');
     }catch(e){ seedLog('⚠ Multi-squad não configurado: '+e.message,'err'); }
 
     seedLog('🎉 Pronto! Carregando board em 2s...','ok');
