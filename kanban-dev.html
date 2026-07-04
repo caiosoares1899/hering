@@ -3444,7 +3444,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.79-dev</div>
+<div class="version">v8.30.80-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14265,6 +14265,27 @@ async function runDevSeed(){
         return d.toISOString();
       };
 
+      // Constrói o objeto flow no formato REAL que o relatório consome:
+      // flow = { enteredAt:{colId:iso}, log:[{from,to,at}], firstStartAt, doneAt }
+      // Recebe uma sequência [[colId, diasAtras, hora], ...] em ordem cronológica.
+      // As CHAVES de enteredAt são IDs de coluna (limpos); os timestamps são VALORES.
+      // Isso evita o erro do Firebase (timestamps ISO têm '.' nos ms, proibido em chaves).
+      const mkFlow = (seq, startColIds, doneColId) => {
+        const flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null };
+        let prev = null;
+        seq.forEach(([col, days, hour=9])=>{
+          const at = dts(days, hour);
+          flow.enteredAt[col] = at;
+          flow.log.push({ from: prev||'—', to: col, at });
+          if(startColIds.includes(col) && !flow.firstStartAt) flow.firstStartAt = at;
+          if(col===doneColId) flow.doneAt = at;
+          prev = col;
+        });
+        return flow;
+      };
+      const OMNI_START = ['omni-progress'];
+      const OMNI_DONE  = 'omni-done';
+
       const omniCols = [
         {id:'omni-backlog',  name:'Backlog',       color:'#64748b', startCol:true},
         {id:'omni-todo',     name:'A fazer',       color:'#7c3aed'},
@@ -14293,35 +14314,35 @@ async function runDevSeed(){
         { id:'omni-h-001', col:'omni-done', title:'Migração ESP — diagnóstico e escopo',
           tags:['omni-email'], owner:'JF', effort:3, priority:'high', isOKR:false,
           createdAt:dts(-90,9), updatedAt:dts(-75,17), archivedAt:null, archived:false,
-          _colHistory:{[dts(-90,9)]:'omni-backlog',[dts(-88,9)]:'omni-todo',[dts(-87,10)]:'omni-progress',[dts(-78,14)]:'omni-review',[dts(-75,17)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-90,9],['omni-todo',-88,9],['omni-progress',-87,10],['omni-review',-78,14],['omni-done',-75,17]], OMNI_START, OMNI_DONE),
           desc:'Mapear contratos, integrações e limitações do ESP atual (RD Station). Identificar gaps para suporte ao plano omnichannel.',
           checklist:[{id:'h01a',text:'Entrevistar time de CRM',done:true},{id:'h01b',text:'Mapear automações ativas',done:true},{id:'h01c',text:'Criar documento de requisitos',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-002', col:'omni-done', title:'Setup tracking unificado GA4 + Meta',
           tags:['omni-analytics','omni-paid'], owner:'LO', effort:5, priority:'high', isOKR:true,
           createdAt:dts(-88,9), updatedAt:dts(-72,11), archived:false,
-          _colHistory:{[dts(-88,9)]:'omni-backlog',[dts(-85,9)]:'omni-todo',[dts(-84,10)]:'omni-progress',[dts(-74,16)]:'omni-review',[dts(-72,11)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-88,9],['omni-todo',-85,9],['omni-progress',-84,10],['omni-review',-74,16],['omni-done',-72,11]], OMNI_START, OMNI_DONE),
           desc:'Implementar camada de dados unificada entre GA4 e Meta Pixel para eliminar dupla-contagem de conversões.',
           checklist:[{id:'h02a',text:'GTM container configurado',done:true},{id:'h02b',text:'Eventos de e-commerce mapeados',done:true},{id:'h02c',text:'Validação com Google Tag Assistant',done:true},{id:'h02d',text:'Relatório de consistência pós-implementação',done:true}],
           comments:{},riscos:[],links:[{url:'https://tagmanager.google.com',label:'GTM — Container Hering'}] },
         { id:'omni-h-003', col:'omni-done', title:'Segmentação RFM — base ativa',
           tags:['omni-crm','omni-analytics'], owner:'ABC', effort:8, priority:'medium', isOKR:false,
           createdAt:dts(-85,10), updatedAt:dts(-68,15), archived:false,
-          _colHistory:{[dts(-85,10)]:'omni-backlog',[dts(-82,9)]:'omni-todo',[dts(-80,10)]:'omni-progress',[dts(-70,14)]:'omni-review',[dts(-68,15)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-85,10],['omni-todo',-82,9],['omni-progress',-80,10],['omni-review',-70,14],['omni-done',-68,15]], OMNI_START, OMNI_DONE),
           desc:'Aplicar modelo RFM (Recência, Frequência, Valor monetário) na base de clientes ativos para segmentar campanhas de CRM.',
           checklist:[{id:'h03a',text:'Extrair base de clientes dos últimos 12 meses',done:true},{id:'h03b',text:'Aplicar scoring RFM',done:true},{id:'h03c',text:'Criar 5 segmentos (Champions, Loyal, At Risk, Lost, New)',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-004', col:'omni-done', title:'Campanha reativação — segmento "At Risk"',
           tags:['omni-email','omni-crm'], owner:'JF', effort:3, priority:'medium', isOKR:false,
           createdAt:dts(-80,9), updatedAt:dts(-65,16), archived:false,
-          _colHistory:{[dts(-80,9)]:'omni-backlog',[dts(-77,9)]:'omni-todo',[dts(-75,10)]:'omni-progress',[dts(-66,14)]:'omni-review',[dts(-65,16)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-80,9],['omni-todo',-77,9],['omni-progress',-75,10],['omni-review',-66,14],['omni-done',-65,16]], OMNI_START, OMNI_DONE),
           desc:'Disparar sequência de 3 e-mails para reativar clientes classificados como "At Risk" no RFM.',
           checklist:[{id:'h04a',text:'E-mail 1: oferta especial 15%',done:true},{id:'h04b',text:'E-mail 2: conteúdo inspiracional',done:true},{id:'h04c',text:'E-mail 3: urgência + frete grátis',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-005', col:'omni-done', title:'Auditoria SEO — páginas de categoria',
           tags:['omni-seo'], owner:'RM', effort:5, priority:'low', isOKR:false,
           createdAt:dts(-87,9), updatedAt:dts(-63,10), archived:false,
-          _colHistory:{[dts(-87,9)]:'omni-backlog',[dts(-79,9)]:'omni-todo',[dts(-76,10)]:'omni-progress',[dts(-64,16)]:'omni-review',[dts(-63,10)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-87,9],['omni-todo',-79,9],['omni-progress',-76,10],['omni-review',-64,16],['omni-done',-63,10]], OMNI_START, OMNI_DONE),
           desc:'Auditoria técnica e de conteúdo das páginas de categoria (tops 20 por tráfego orgânico).',
           checklist:[{id:'h05a',text:'Crawl com Screaming Frog',done:true},{id:'h05b',text:'Análise de intenção de busca',done:true},{id:'h05c',text:'Plano de otimização priorizado',done:true}],
           comments:{},riscos:[],links:[] },
@@ -14332,42 +14353,42 @@ async function runDevSeed(){
         { id:'omni-h-006', col:'omni-done', title:'Implementar relatório omnichannel unificado',
           tags:['omni-analytics'], owner:'LO', effort:8, priority:'high', isOKR:true,
           createdAt:dts(-60,9), updatedAt:dts(-45,16), archived:false,
-          _colHistory:{[dts(-60,9)]:'omni-backlog',[dts(-58,9)]:'omni-todo',[dts(-55,10)]:'omni-progress',[dts(-46,14)]:'omni-review',[dts(-45,16)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-60,9],['omni-todo',-58,9],['omni-progress',-55,10],['omni-review',-46,14],['omni-done',-45,16]], OMNI_START, OMNI_DONE),
           desc:'Dashboard unificado que agrega canais paid, orgânico, e-mail e CRM em visão única de atribuição.',
           checklist:[{id:'h06a',text:'Definir modelo de atribuição',done:true},{id:'h06b',text:'Integrar fontes no Looker Studio',done:true},{id:'h06c',text:'Criar 4 dashboards por canal',done:true},{id:'h06d',text:'Treinamento time',done:true}],
           comments:{},riscos:[],links:[{url:'https://datastudio.google.com',label:'Dashboard Omnichannel — Looker Studio'}] },
         { id:'omni-h-007', col:'omni-done', title:'Automação abandono de carrinho — fluxo 3 passos',
           tags:['omni-email','omni-crm'], owner:'JF', effort:5, priority:'high', isOKR:false,
           createdAt:dts(-58,10), updatedAt:dts(-40,11), archived:false,
-          _colHistory:{[dts(-58,10)]:'omni-backlog',[dts(-55,9)]:'omni-todo',[dts(-53,10)]:'omni-progress',[dts(-41,15)]:'omni-review',[dts(-40,11)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-58,10],['omni-todo',-55,9],['omni-progress',-53,10],['omni-review',-41,15],['omni-done',-40,11]], OMNI_START, OMNI_DONE),
           desc:'Automação de e-mail para recuperação de carrinhos abandonados: 1h, 24h e 72h após abandono.',
           checklist:[{id:'h07a',text:'Mapear triggers no ESP',done:true},{id:'h07b',text:'Criar 3 templates (urgência crescente)',done:true},{id:'h07c',text:'Teste A/B no assunto do e-mail 1',done:true},{id:'h07d',text:'Monitorar taxa de recuperação por 2 semanas',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-008', col:'omni-done', title:'Campanha Google Ads — foco em SEMrush gaps',
           tags:['omni-paid','omni-seo'], owner:'RM', effort:3, priority:'medium', isOKR:false,
           createdAt:dts(-55,9), updatedAt:dts(-38,14), archived:false,
-          _colHistory:{[dts(-55,9)]:'omni-backlog',[dts(-52,9)]:'omni-todo',[dts(-50,10)]:'omni-progress',[dts(-39,15)]:'omni-review',[dts(-38,14)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-55,9],['omni-todo',-52,9],['omni-progress',-50,10],['omni-review',-39,15],['omni-done',-38,14]], OMNI_START, OMNI_DONE),
           desc:'Criar campanhas Search para termos com alta intenção onde SEO ainda não tem posição top-3.',
           checklist:[{id:'h08a',text:'Exportar gaps do SEMrush',done:true},{id:'h08b',text:'Criar grupos de anúncio por intenção',done:true},{id:'h08c',text:'Otimizar por quality score',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-009', col:'omni-done', title:'Otimização on-page — top 20 categorias',
           tags:['omni-seo'], owner:'RM', effort:8, priority:'medium', isOKR:false,
           createdAt:dts(-58,9), updatedAt:dts(-35,10), archived:false,
-          _colHistory:{[dts(-58,9)]:'omni-backlog',[dts(-50,9)]:'omni-todo',[dts(-46,10)]:'omni-progress',[dts(-36,14)]:'omni-review',[dts(-35,10)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-58,9],['omni-todo',-50,9],['omni-progress',-46,10],['omni-review',-36,14],['omni-done',-35,10]], OMNI_START, OMNI_DONE),
           desc:'Aplicar otimizações on-page nas 20 páginas de categoria com maior potencial de crescimento orgânico.',
           checklist:[{id:'h09a',text:'Otimizar title tags e meta descriptions',done:true},{id:'h09b',text:'Adicionar schema markup de produto',done:true},{id:'h09c',text:'Melhorar heading structure',done:true},{id:'h09d',text:'Adicionar conteúdo editorial em categorias-chave',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-010', col:'omni-done', title:'Programa de fidelidade — definição de regras',
           tags:['omni-crm'], owner:'ABC', effort:13, priority:'high', isOKR:true,
           createdAt:dts(-62,9), updatedAt:dts(-33,15), archived:false,
-          _colHistory:{[dts(-62,9)]:'omni-backlog',[dts(-55,9)]:'omni-todo',[dts(-50,10)]:'omni-progress',[dts(-35,14)]:'omni-review',[dts(-33,15)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-62,9],['omni-todo',-55,9],['omni-progress',-50,10],['omni-review',-35,14],['omni-done',-33,15]], OMNI_START, OMNI_DONE),
           desc:'Definir mecânica e regras de negócio do programa de fidelidade omnichannel: pontuação, resgate, tiers.',
           checklist:[{id:'h10a',text:'Benchmarking programas concorrentes',done:true},{id:'h10b',text:'Definir estrutura de tiers (Bronze/Prata/Ouro)',done:true},{id:'h10c',text:'Regras de pontuação por canal',done:true},{id:'h10d',text:'Política de expiração de pontos',done:true},{id:'h10e',text:'Apresentação aprovada com diretoria',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-011', col:'omni-done', title:'Integração CRM ↔ plataforma e-commerce',
           tags:['omni-crm','omni-analytics'], owner:'LO', effort:8, priority:'high', isOKR:false,
           createdAt:dts(-50,9), updatedAt:dts(-32,16), archived:false,
-          _colHistory:{[dts(-50,9)]:'omni-backlog',[dts(-47,9)]:'omni-todo',[dts(-44,10)]:'omni-progress',[dts(-33,15)]:'omni-review',[dts(-32,16)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-50,9],['omni-todo',-47,9],['omni-progress',-44,10],['omni-review',-33,15],['omni-done',-32,16]], OMNI_START, OMNI_DONE),
           desc:'Sincronização bidirecional de clientes e pedidos entre RD Station CRM e plataforma Hering.com.',
           checklist:[{id:'h11a',text:'Mapeamento de campos',done:true},{id:'h11b',text:'Implementar webhook de pedido',done:true},{id:'h11c',text:'Sincronização histórico de compras',done:true},{id:'h11d',text:'Testes de consistência',done:true}],
           comments:{},riscos:[],links:[] },
@@ -14378,42 +14399,42 @@ async function runDevSeed(){
         { id:'omni-h-012', col:'omni-done', title:'Dia dos Pais — configurar campanhas Meta Ads',
           tags:['omni-paid','omni-dp'], owner:'JF', effort:5, priority:'high', isOKR:true,
           createdAt:dts(-20,9), updatedAt:dts(-10,16), archived:false,
-          _colHistory:{[dts(-20,9)]:'omni-backlog',[dts(-18,9)]:'omni-todo',[dts(-16,10)]:'omni-progress',[dts(-11,14)]:'omni-review',[dts(-10,16)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-20,9],['omni-todo',-18,9],['omni-progress',-16,10],['omni-review',-11,14],['omni-done',-10,16]], OMNI_START, OMNI_DONE),
           desc:'Estruturar campanhas Meta Ads para Dia dos Pais: awareness, consideração e conversão.',
           checklist:[{id:'h12a',text:'Criar campanhas no Meta Ads Manager',done:true},{id:'h12b',text:'Configurar públicos e lookalikes',done:true},{id:'h12c',text:'Subir criativos aprovados',done:true},{id:'h12d',text:'Monitorar primeiras 48h',done:true}],
           comments:{},riscos:[],links:[{url:'https://business.facebook.com',label:'Meta Ads — Dia dos Pais'}] },
         { id:'omni-h-013', col:'omni-done', title:'Dia dos Pais — campanhas Google Ads',
           tags:['omni-paid','omni-dp'], owner:'LO', effort:5, priority:'high', isOKR:false,
           createdAt:dts(-19,9), updatedAt:dts(-9,11), archived:false,
-          _colHistory:{[dts(-19,9)]:'omni-backlog',[dts(-17,9)]:'omni-todo',[dts(-15,10)]:'omni-progress',[dts(-10,15)]:'omni-review',[dts(-9,11)]:'omni-done'},
+          flow: mkFlow([['omni-backlog',-19,9],['omni-todo',-17,9],['omni-progress',-15,10],['omni-review',-10,15],['omni-done',-9,11]], OMNI_START, OMNI_DONE),
           desc:'Search + Shopping + Display para Dia dos Pais.',
           checklist:[{id:'h13a',text:'Search — palavras de presente pai',done:true},{id:'h13b',text:'Shopping — feed de produtos',done:true},{id:'h13c',text:'Display Remarketing',done:true}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-014', col:'omni-progress', title:'Otimização contínua Dia dos Pais',
           tags:['omni-paid','omni-dp'], owner:'RM', effort:3, priority:'high', isOKR:false,
           createdAt:dts(-10,9), updatedAt:dts(-1,14), archived:false,
-          _colHistory:{[dts(-10,9)]:'omni-backlog',[dts(-8,9)]:'omni-todo',[dts(-7,10)]:'omni-progress'},
+          flow: mkFlow([['omni-backlog',-10,9],['omni-todo',-8,9],['omni-progress',-7,10]], OMNI_START, OMNI_DONE),
           desc:'Otimização diária das campanhas ativas: pausar criativos com baixo CTR, redistribuir budget.',
           checklist:[{id:'h14a',text:'Análise diária de performance',done:true},{id:'h14b',text:'A/B de criativos',done:false},{id:'h14c',text:'Relatório final de campanha',done:false}],
           comments:{},riscos:[{nivel:'medio',texto:'CPC subindo 18% na última semana — possível saturação de público'}],links:[] },
         { id:'omni-h-015', col:'omni-todo', title:'Planejamento Inverno 2026 — estratégia de canais',
           tags:['omni-inv','omni-paid','omni-email'], owner:'ABC', effort:8, priority:'medium', isOKR:true,
           createdAt:dts(-8,9), updatedAt:dts(-8,9), archived:false,
-          _colHistory:{[dts(-8,9)]:'omni-backlog',[dts(-5,9)]:'omni-todo'},
+          flow: mkFlow([['omni-backlog',-8,9],['omni-todo',-5,9]], OMNI_START, OMNI_DONE),
           desc:'Definir mix de canais e budget para coleção Inverno 2026: paid social, search, e-mail e SEO.',
           checklist:[{id:'h15a',text:'Analisar performance do Inverno 2025',done:true},{id:'h15b',text:'Proposta de budget por canal',done:false},{id:'h15c',text:'Validação com gestão',done:false},{id:'h15d',text:'Calendário de ativações',done:false}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-016', col:'omni-backlog', title:'SEO Inverno 2026 — landing pages de coleção',
           tags:['omni-seo','omni-inv'], owner:'RM', effort:5, priority:'medium', isOKR:false,
           createdAt:dts(-5,9), updatedAt:dts(-5,9), archived:false,
-          _colHistory:{[dts(-5,9)]:'omni-backlog'},
+          flow: mkFlow([['omni-backlog',-5,9]], OMNI_START, OMNI_DONE),
           desc:'Criar e otimizar landing pages específicas da coleção Inverno 2026 para captura orgânica.',
           checklist:[{id:'h16a',text:'Pesquisa de palavras-chave temáticas',done:false},{id:'h16b',text:'Estrutura de URLs',done:false},{id:'h16c',text:'Conteúdo editorial + schema',done:false}],
           comments:{},riscos:[],links:[] },
         { id:'omni-h-017', col:'omni-backlog', title:'Lançar programa de fidelidade — MVP',
           tags:['omni-crm'], owner:'ABC', effort:13, priority:'high', isOKR:true,
           createdAt:dts(-3,9), updatedAt:dts(-3,9), archived:false,
-          _colHistory:{[dts(-3,9)]:'omni-backlog'},
+          flow: mkFlow([['omni-backlog',-3,9]], OMNI_START, OMNI_DONE),
           desc:'MVP do programa de fidelidade: apenas tier Bronze e Prata, com pontuação por compra e resgate em cupom.',
           checklist:[{id:'h17a',text:'Configurar regras no CRM',done:false},{id:'h17b',text:'Comunicação de lançamento para base',done:false},{id:'h17c',text:'Treinamento SAC',done:false},{id:'h17d',text:'Go-live e monitoramento',done:false}],
           comments:{},riscos:[{nivel:'alto',texto:'Dependência de development externo — prazo apertado para lançamento antes do Inverno'}],links:[] },
