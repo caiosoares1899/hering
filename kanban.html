@@ -13703,5 +13703,53 @@ renderBoard();
     </div>
   </div>
 </div>
+
+<!-- ══ POPUP DE COMUNICADO (ADM → usuários) ══ -->
+<div class="ov" id="comunicado-ov" style="z-index:200;">
+  <div class="panel" style="max-width:440px;width:100%;">
+    <div class="panel-hd" id="comunicado-hd" style="gap:8px;">
+      <div class="panel-title" id="comunicado-tipo-badge" style="display:flex;align-items:center;gap:8px;">📢 Comunicado</div>
+      <button class="x-btn" onclick="dismissComunicado()">✕</button>
+    </div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px;max-height:70vh;overflow-y:auto;">
+      <div id="comunicado-titulo" style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Syne',sans-serif;line-height:1.3;"></div>
+      <div id="comunicado-corpo" style="font-size:13px;color:var(--txt2);line-height:1.6;"></div>
+      <div id="comunicado-data" style="font-size:10.5px;color:var(--txt3);"></div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;">
+      <button class="btn btn-p" onclick="dismissComunicado()" style="padding:8px 24px;">Entendi 👍</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MURAL (histórico de avisos + fale com o ADM) ══ -->
+<div class="ov" id="mural-ov" style="z-index:195;">
+  <div class="panel" style="max-width:480px;width:100%;max-height:80vh;">
+    <div class="panel-hd">
+      <div class="panel-title">📢 Mural</div>
+      <button class="x-btn" onclick="closeOv('mural-ov')">✕</button>
+    </div>
+    <div style="display:flex;border-bottom:1px solid var(--glass-b);padding:0 16px;">
+      <button class="mural-tab on" id="mural-tab-avisos" onclick="_swMuralTab('avisos')" style="padding:10px 14px;font-size:12px;background:none;border:none;color:var(--txt);border-bottom:2px solid var(--teal);cursor:pointer;font-weight:600;">Avisos</button>
+      <button class="mural-tab" id="mural-tab-fale" onclick="_swMuralTab('fale')" style="padding:10px 14px;font-size:12px;background:none;border:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;">✍️ Fale com o ADM</button>
+    </div>
+    <div id="mural-pane-avisos" style="padding:14px 16px;overflow-y:auto;max-height:60vh;">
+      <div id="mural-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+    </div>
+    <div id="mural-pane-fale" style="display:none;padding:16px;overflow-y:auto;max-height:60vh;">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.5;">Reporte um problema, sugira uma melhoria, ou tire uma dúvida. Vai direto pro administrador — anexamos automaticamente seu squad e a versão do board.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <select id="fb-tipo" style="padding:8px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);">
+          <option value="bug">🐛 Reportar problema</option>
+          <option value="sugestao">💡 Sugestão de melhoria</option>
+          <option value="duvida">❓ Dúvida</option>
+          <option value="outro">💬 Outro</option>
+        </select>
+        <textarea id="fb-texto" rows="5" placeholder="Escreva aqui..." style="padding:9px 11px;font-size:12.5px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);resize:vertical;font-family:'DM Sans',sans-serif;"></textarea>
+        <button class="btn btn-p" onclick="enviarFeedback()" style="padding:9px;justify-content:center;">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
