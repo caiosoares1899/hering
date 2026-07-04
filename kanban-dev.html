@@ -2076,6 +2076,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
   </button>
+  <button class="notif-btn" id="mural-btn" onclick="openMural()" title="Mural — avisos e fale com o ADM">
+    📢<span class="notif-badge" id="mural-badge" style="display:none;">0</span>
+  </button>
   <button class="notif-btn kudos-hdr-btn" id="kudos-hdr-btn" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time">
     🎉<span class="notif-badge" id="kudos-badge" style="background:#ffd166;color:#1a1208;display:none;">0</span>
   </button>
@@ -3417,7 +3420,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.74-dev</div>
+<div class="version">v8.30.75-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14486,13 +14489,139 @@ function dismissComunicado(){
   }
   document.getElementById('comunicado-ov').classList.remove('open');
   setTimeout(_talvezMostrarComunicado, 400);
+  _updateMuralBadge();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MURAL — histórico completo de comunicados (Fase 2) + Fale com o ADM (Fase 3)
+// ══════════════════════════════════════════════════════════════════════
+let _muralTodos = [];
+
+function _initMural(){
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    const val = snap.val() || {};
+    _muralTodos = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
+      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    _updateMuralBadge();
+    if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
+  });
+}
+
+function _updateMuralBadge(){
+  const badge = document.getElementById('mural-badge');
+  if(!badge) return;
+  const agora = new Date().toISOString();
+  const naoLidos = _muralTodos.filter(c=>{
+    if(!c.ativo) return false;
+    if(c.expiraEm && c.expiraEm < agora) return false;
+    return !_lsGet('comunicado_visto_'+c.id);
+  }).length;
+  if(naoLidos>0){ badge.style.display='flex'; badge.textContent = naoLidos>9?'9+':naoLidos; }
+  else badge.style.display='none';
+}
+
+function openMural(){
+  document.getElementById('mural-ov').classList.add('open');
+  _swMuralTab('avisos');
+  renderMuralLista();
+}
+
+function _swMuralTab(tab){
+  const isAvisos = tab==='avisos';
+  document.getElementById('mural-pane-avisos').style.display = isAvisos?'':'none';
+  document.getElementById('mural-pane-fale').style.display = isAvisos?'none':'';
+  const tAv = document.getElementById('mural-tab-avisos'), tFa = document.getElementById('mural-tab-fale');
+  tAv.style.color = isAvisos?'var(--txt)':'var(--txt3)';
+  tAv.style.borderBottomColor = isAvisos?'var(--teal)':'transparent';
+  tFa.style.color = !isAvisos?'var(--txt)':'var(--txt3)';
+  tFa.style.borderBottomColor = !isAvisos?'var(--teal)':'transparent';
+}
+
+function renderMuralLista(){
+  const el = document.getElementById('mural-lista');
+  if(!el) return;
+  const agora = new Date().toISOString();
+  const visiveis = _muralTodos.filter(c=>c.ativo);
+  if(!visiveis.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Nenhum comunicado por aqui ainda.</div>';
+    return;
+  }
+  el.innerHTML = visiveis.map(c=>{
+    const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
+    const expirado = c.expiraEm && c.expiraEm < agora;
+    const naoLido = !expirado && !_lsGet('comunicado_visto_'+c.id);
+    const data = c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
+    return `<div onclick="_abrirComunicadoDoMural('${c.id}')" style="padding:11px 12px;margin-bottom:8px;border-radius:9px;cursor:pointer;background:${naoLido?tipo.bg:'rgba(3,13,26,.4)'};border:1px solid ${naoLido?'rgba(255,255,255,.08)':'var(--glass-b)'};opacity:${expirado?0.55:1};">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+        <span>${tipo.icon}</span>
+        <span style="font-size:12.5px;font-weight:600;color:var(--txt);flex:1;">${esc(c.titulo||'')}</span>
+        ${naoLido?'<span style="width:7px;height:7px;border-radius:50%;background:'+tipo.cor+';flex-shrink:0;"></span>':''}
+      </div>
+      <div style="font-size:11px;color:var(--txt3);">${data}${expirado?' · expirado':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function _abrirComunicadoDoMural(id){
+  const c = _muralTodos.find(x=>x.id===id);
+  if(!c) return;
+  closeOv('mural-ov');
+  _comunicadoNaTela = c;
+  const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
+  document.getElementById('comunicado-tipo-badge').innerHTML = tipo.icon+' '+tipo.label;
+  document.getElementById('comunicado-hd').style.background = tipo.bg;
+  document.getElementById('comunicado-titulo').textContent = c.titulo||'';
+  document.getElementById('comunicado-corpo').innerHTML = c.corpo||'';
+  const dataEl = document.getElementById('comunicado-data');
+  dataEl.textContent = c.criadoEm ? 'Publicado em '+new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : '';
+  document.getElementById('comunicado-ov').classList.add('open');
+  _lsSet('comunicado_visto_'+c.id, '1');
+  _updateMuralBadge();
+}
+
+async function enviarFeedback(){
+  const tipo = document.getElementById('fb-tipo').value;
+  const texto = document.getElementById('fb-texto').value.trim();
+  if(!texto){ showToast('⚠ Escreva sua mensagem antes de enviar.'); return; }
+
+  const u = window._currentUser;
+  const id = 'fb_'+Date.now()+Math.random().toString(36).slice(2,6);
+  const payload = {
+    tipo, texto,
+    squad: ACTIVE_SQUAD,
+    role: window._currentUserRole || 'membro',
+    versao: document.querySelector('.version')?.textContent?.trim() || '',
+    uid: u?.uid || '', nome: u?.displayName || u?.email || 'Anônimo',
+    criadoEm: new Date().toISOString(),
+    status: 'novo',
+  };
+
+  try{
+    await window._set(window._ref(window._db,'kanban/feedback/'+id), payload);
+    const snap = await fbGet('kanban/usuarios');
+    const usuarios = snap.val()||{};
+    Object.entries(usuarios).forEach(([uid,udata])=>{
+      if(isAdmUser({email:udata.email, uid})){
+        const icones = {bug:'🐛',sugestao:'💡',duvida:'❓',outro:'💬'};
+        createNotif(uid, 'feedback', (icones[tipo]||'💬')+' Nova mensagem de '+payload.nome,
+          texto.slice(0,80)+(texto.length>80?'…':''), null);
+      }
+    });
+    document.getElementById('fb-texto').value = '';
+    showToast('✅ Mensagem enviada! Obrigado pelo retorno.');
+    closeOv('mural-ov');
+  }catch(e){
+    showToast('⚠ Erro ao enviar: '+(e?.message||e));
+  }
 }
 
 function _lsGet(k){ try{ return (typeof safeLS!=='undefined'?safeLS:localStorage).getItem(k); }catch(e){ return null; } }
 function _lsSet(k,v){ try{ (typeof safeLS!=='undefined'?safeLS:localStorage).setItem(k,v); }catch(e){} }
 
 window.addEventListener('auth-change', e=>{
-  if(e.detail){ setTimeout(_initComunicados, 2000); }
+  if(e.detail){ setTimeout(_initComunicados, 2000); setTimeout(_initMural, 2000); }
 }, {once:true});
 
 renderBoard();
@@ -14636,6 +14765,38 @@ renderBoard();
     </div>
     <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;">
       <button class="btn btn-p" onclick="dismissComunicado()" style="padding:8px 24px;">Entendi 👍</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MURAL (histórico de avisos + fale com o ADM) ══ -->
+<div class="ov" id="mural-ov" style="z-index:195;">
+  <div class="panel" style="max-width:480px;width:100%;max-height:80vh;">
+    <div class="panel-hd">
+      <div class="panel-title">📢 Mural</div>
+      <button class="x-btn" onclick="closeOv('mural-ov')">✕</button>
+    </div>
+    <div style="display:flex;border-bottom:1px solid var(--glass-b);padding:0 16px;">
+      <button class="mural-tab on" id="mural-tab-avisos" onclick="_swMuralTab('avisos')" style="padding:10px 14px;font-size:12px;background:none;border:none;color:var(--txt);border-bottom:2px solid var(--teal);cursor:pointer;font-weight:600;">Avisos</button>
+      <button class="mural-tab" id="mural-tab-fale" onclick="_swMuralTab('fale')" style="padding:10px 14px;font-size:12px;background:none;border:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;">✍️ Fale com o ADM</button>
+    </div>
+
+    <div id="mural-pane-avisos" style="padding:14px 16px;overflow-y:auto;max-height:60vh;">
+      <div id="mural-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+    </div>
+
+    <div id="mural-pane-fale" style="display:none;padding:16px;overflow-y:auto;max-height:60vh;">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.5;">Reporte um problema, sugira uma melhoria, ou tire uma dúvida. Vai direto pro administrador — anexamos automaticamente seu squad e a versão do board.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <select id="fb-tipo" style="padding:8px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);">
+          <option value="bug">🐛 Reportar problema</option>
+          <option value="sugestao">💡 Sugestão de melhoria</option>
+          <option value="duvida">❓ Dúvida</option>
+          <option value="outro">💬 Outro</option>
+        </select>
+        <textarea id="fb-texto" rows="5" placeholder="Escreva aqui..." style="padding:9px 11px;font-size:12.5px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);resize:vertical;font-family:'DM Sans',sans-serif;"></textarea>
+        <button class="btn btn-p" onclick="enviarFeedback()" style="padding:9px;justify-content:center;">Enviar</button>
+      </div>
     </div>
   </div>
 </div>
