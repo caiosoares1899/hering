@@ -3444,7 +3444,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.81-dev</div>
+<div class="version">v8.30.82-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13268,14 +13268,17 @@ function previewBackupStats(){
 }
 
 let _backupCfgCache = {};
-window._onValue(window._ref(window._db, FB+'/config/backup_cfg'), snap=>{
-  _backupCfgCache = snap.val() || {};
-  updateBackupAutoStatus();
-  const lastEl = document.getElementById('backup-last');
-  if(lastEl && _backupCfgCache.lastRun){
-    lastEl.textContent = '⏱ Último backup automático: '+new Date(_backupCfgCache.lastRun).toLocaleString('pt-BR');
-  }
-});
+function _initBackupCfgListener(){
+  window._onValue(window._ref(window._db, FB+'/config/backup_cfg'), snap=>{
+    _backupCfgCache = snap.val() || {};
+    updateBackupAutoStatus();
+    const lastEl = document.getElementById('backup-last');
+    if(lastEl && _backupCfgCache.lastRun){
+      lastEl.textContent = '⏱ Último backup automático: '+new Date(_backupCfgCache.lastRun).toLocaleString('pt-BR');
+    }
+  });
+}
+window.addEventListener('fb-ready', _initBackupCfgListener, {once:true});
 
 function saveBackupConfig(){
   const cfg = {
