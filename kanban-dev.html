@@ -1353,6 +1353,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     max-width:100px;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap;display:block;
   }
+  .hd-btns > .btn-p.btn-sm{display:none;}
+  .hd-btns{gap:5px;justify-content:flex-end;}
 
   /* ── TOOLBAR: scroll horizontal ──────────────────────── */
   .toolbar{
@@ -1446,9 +1448,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .frow{gap:6px;}
   .frow .field{min-width:0;}
 
-  /* Campos: tamanho toque */
-  .fi,.fi-ta{font-size:14px;padding:8px 10px;}
-  select.fi{font-size:14px;}
+  /* Campos: 16px em inputs editáveis evita o zoom automático do iOS ao focar */
+  .fi,.fi-ta{font-size:16px;padding:9px 11px;}
+  select.fi{font-size:16px;}
 
   /* Labels menores */
   .fl{font-size:9px;}
@@ -1468,14 +1470,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   /* ── EOC FIELDS ──────────────────────────────────────── */
   .eoc-display{min-height:48px;font-size:13px;}
-  .eoc-textarea{font-size:14px;min-height:80px;}
+  .eoc-textarea{font-size:16px;min-height:80px;}
   .eoc-actions{gap:8px;}
   .eoc-save,.eoc-cancel{min-height:36px;padding:6px 14px;font-size:12px;}
   .eoc-hint{display:none;}
 
   /* ── COMENTÁRIOS ─────────────────────────────────────── */
   .comment-inp-avatar{width:32px;height:32px;flex-shrink:0;}
-  .comment-inp{font-size:14px;}
+  .comment-inp{font-size:16px;}
   .comment-send-btn{min-height:36px;font-size:12px;}
   .comment-item{gap:8px;}
   .comment-avatar{width:30px;height:30px;}
@@ -1483,7 +1485,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   /* ── ANEXOS ──────────────────────────────────────────── */
   .attach-add-btn{min-height:34px;padding:4px 12px;}
-  .attach-inp{font-size:14px;padding:8px 10px;}
+  .attach-inp{font-size:16px;padding:9px 11px;}
   .attach-save-btn{min-height:36px;}
 
   /* ── PARTICIPANTES ───────────────────────────────────── */
@@ -1505,6 +1507,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   /* ── FAB → bottom nav ────────────────────────────────── */
   .fab{display:none!important;}
+
+  /* ── MURAL / COMUNICADO (novos overlays) ─────────────── */
+  .notif-btn{min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .notif-badge{font-size:9px;min-width:15px;height:15px;line-height:15px;}
+  #mural-ov .panel{max-height:88vh;}
+  .mural-tab{flex:1;min-height:44px;font-size:13px!important;}
+  #mural-pane-avisos,#mural-pane-fale{max-height:64vh!important;}
+  #mural-lista > div{padding:13px 12px!important;}
+  #fb-tipo,#fb-texto{font-size:16px!important;}
+  #fb-texto{min-height:120px;}
+  #comunicado-ov .panel{max-height:90vh;}
+  #comunicado-titulo{font-size:17px!important;}
+  #comunicado-corpo{font-size:14px!important;}
+  #comunicado-corpo a{word-break:break-word;}
+  .pev-modal,.pcal-day-pop{max-width:100%!important;}
 }
 
 /* Telas muito pequenas (<380px) */
@@ -1525,6 +1542,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     }
     .app{
       padding-top:max(.6rem,env(safe-area-inset-top));
+    }
+    .panel .cfg-ft,.panel .pev-ft,.card-panel,.modal-body{
+      padding-bottom:max(12px,env(safe-area-inset-bottom));
+    }
+    #comunicado-ov .panel > div:last-child,
+    #mural-pane-fale{
+      padding-bottom:max(16px,env(safe-area-inset-bottom));
     }
   }
 }
@@ -3420,7 +3444,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.78-dev</div>
+<div class="version">v8.30.79-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
