@@ -1983,7 +1983,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.58 · painel</div>
+<div class="version">v2.59 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6881,12 +6881,19 @@ async function sendGlobalBackupEmail(isTest=false){
   }
   // Carrega EmailJS SDK se necessário
   if(!window.emailjs){
-    await new Promise((res,rej)=>{
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
+    try{
+      await new Promise((res,rej)=>{
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = res;
+        s.onerror = ()=>rej(new Error('Não foi possível carregar o SDK do EmailJS (CDN indisponível ou bloqueado).'));
+        document.head.appendChild(s);
+      });
+    }catch(e){
+      showToast('❌ '+e.message);
+      return false;
+    }
     emailjs.init(cfg.pubkey);
   }
   const payload = buildGlobalPayload();
