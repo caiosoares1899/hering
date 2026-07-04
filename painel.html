@@ -1552,7 +1552,78 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Adoção por squad</div>
       <div id="st-uso-squads"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
     </div>
+
+    <!-- ═══ COMUNICADOS (ADM → boards) ═══ -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📢 Comunicados</div>
+        <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
+      <div id="comunicados-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+    </div>
+
   </div><!-- /ppane-status -->
+
+  <!-- ═══ MODAL: COMPOR COMUNICADO ═══ -->
+  <div class="pev-modal-ov" id="comunicado-compose-ov">
+    <div class="pev-modal" style="max-width:520px;">
+      <div class="pev-hd">
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;" id="comunicado-compose-title">Novo Comunicado</div>
+        <button class="x-btn" onclick="closeComunicadoCompose()">✕</button>
+      </div>
+      <div class="pev-body">
+        <div class="pev-field">
+          <label class="pev-label">Título</label>
+          <input class="pev-input" id="cc-titulo" placeholder="Ex: Nova função de calendário!">
+        </div>
+        <div class="pev-field">
+          <label class="pev-label">Mensagem</label>
+          <div id="cc-corpo-toolbar" style="display:flex;gap:4px;margin-bottom:4px;">
+            <button type="button" onclick="_ccFormat('bold')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(3,13,26,.6);color:var(--txt);border-radius:5px;cursor:pointer;font-weight:700;">B</button>
+            <button type="button" onclick="_ccFormat('italic')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(3,13,26,.6);color:var(--txt);border-radius:5px;cursor:pointer;font-style:italic;">I</button>
+            <button type="button" onclick="_ccFormat('createLink')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(3,13,26,.6);color:var(--txt);border-radius:5px;cursor:pointer;">🔗</button>
+          </div>
+          <div id="cc-corpo" contenteditable="true" style="min-height:80px;padding:8px 10px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-size:13px;line-height:1.5;overflow-y:auto;max-height:200px;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="pev-field">
+            <label class="pev-label">Tipo</label>
+            <select class="pev-input" id="cc-tipo">
+              <option value="novidade">🎉 Novidade</option>
+              <option value="aviso">⚠️ Aviso</option>
+              <option value="dica">💡 Dica</option>
+              <option value="urgente">🚨 Urgente</option>
+            </select>
+          </div>
+          <div class="pev-field">
+            <label class="pev-label">Para qual squad</label>
+            <select class="pev-input" id="cc-squad"></select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="pev-field">
+            <label class="pev-label">Expira em (opcional)</label>
+            <input class="pev-input" id="cc-expira" type="date">
+          </div>
+          <div class="pev-field">
+            <label class="pev-label">Comportamento</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:7px 0;">
+              <input type="checkbox" id="cc-insistente"> Insistente (reaparece até expirar)
+            </label>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--txt3);line-height:1.5;background:rgba(3,13,26,.4);border-radius:7px;padding:8px 10px;">
+          💡 <b>Insistente OFF</b>: aparece uma vez, some depois que a pessoa clica "Entendi". <b>Insistente ON</b>: reaparece a cada abertura do board até você desativar ou a data de expiração passar.
+        </div>
+      </div>
+      <div class="pev-ft">
+        <button id="cc-del-btn" onclick="deleteComunicado()" style="color:var(--danger);border:1px solid rgba(255,107,107,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;margin-right:auto;display:none;">🗑 Excluir</button>
+        <button onclick="closeComunicadoCompose()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+        <button onclick="saveComunicado()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Publicar</button>
+      </div>
+    </div>
+  </div>
 
 
 <!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
@@ -1883,7 +1954,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.51 · painel</div>
+<div class="version">v2.52 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3695,7 +3766,7 @@ function swPtab(tab){
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); }
-  if(tab==='status'){ loadStatusData(); loadUsoData(); }
+  if(tab==='status'){ loadStatusData(); loadUsoData(); loadComunicados(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
 }
@@ -4769,6 +4840,144 @@ function _localDateStr(d){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
+// ══════════════════════════════════════════════════════════════════════
+// COMUNICADOS — composição pelo ADM (aparecem como popup nos boards)
+// ══════════════════════════════════════════════════════════════════════
+const COMUNICADO_TIPOS_P = {
+  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6' },
+  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166' },
+  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff' },
+  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b' },
+};
+let _comunicadosCache = {};
+let _editingComunicadoId = null;
+
+function loadComunicados(){
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    _comunicadosCache = snap.val() || {};
+    renderComunicadosLista();
+  });
+}
+function renderComunicadosLista(){
+  const el = document.getElementById('comunicados-lista');
+  if(!el) return;
+  const items = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
+    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+  if(!items.length){
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum comunicado criado ainda.</div>';
+    return;
+  }
+  const agora = new Date().toISOString();
+  el.innerHTML = items.map(c=>{
+    const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
+    const expirado = c.expiraEm && c.expiraEm < agora;
+    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const status = !c.ativo ? '<span style="color:var(--txt3);">desativado</span>'
+      : expirado ? '<span style="color:var(--txt3);">expirado</span>'
+      : '<span style="color:var(--teal);">ativo</span>';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
+      <span style="font-size:15px;">${tipo.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
+        <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status}${c.insistente?' · insistente':''}${c.prioridade==='popup'?' · popup':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _ccPopulaSquadSelect(){
+  const sel = document.getElementById('cc-squad');
+  if(!sel) return;
+  sel.innerHTML = '<option value="*">Todos os squads</option>' +
+    SQUADS.map(s=>`<option value="${s.id}">${s.icon} ${esc(s.label)}</option>`).join('');
+}
+function _ccFormat(cmd){
+  const editor = document.getElementById('cc-corpo');
+  if(editor) editor.focus();
+  if(cmd==='createLink'){
+    const url = prompt('URL do link:');
+    if(url) document.execCommand('createLink', false, url);
+  } else {
+    document.execCommand(cmd, false, null);
+  }
+}
+function openComunicadoCompose(id){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem criar comunicados.'); return; }
+  _ccPopulaSquadSelect();
+  _editingComunicadoId = (typeof id==='string') ? id : null;
+  const delBtn = document.getElementById('cc-del-btn');
+  if(_editingComunicadoId && _comunicadosCache[_editingComunicadoId]){
+    const c = _comunicadosCache[_editingComunicadoId];
+    document.getElementById('comunicado-compose-title').textContent = 'Editar Comunicado';
+    document.getElementById('cc-titulo').value = c.titulo||'';
+    document.getElementById('cc-corpo').innerHTML = c.corpo||'';
+    document.getElementById('cc-tipo').value = c.tipo||'novidade';
+    document.getElementById('cc-squad').value = c.squad||'*';
+    document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
+    document.getElementById('cc-insistente').checked = !!c.insistente;
+    if(delBtn) delBtn.style.display = '';
+  } else {
+    document.getElementById('comunicado-compose-title').textContent = 'Novo Comunicado';
+    document.getElementById('cc-titulo').value = '';
+    document.getElementById('cc-corpo').innerHTML = '';
+    document.getElementById('cc-tipo').value = 'novidade';
+    document.getElementById('cc-squad').value = '*';
+    document.getElementById('cc-expira').value = '';
+    document.getElementById('cc-insistente').checked = false;
+    if(delBtn) delBtn.style.display = 'none';
+  }
+  document.getElementById('comunicado-compose-ov').classList.add('open');
+}
+function closeComunicadoCompose(){
+  document.getElementById('comunicado-compose-ov')?.classList.remove('open');
+  _editingComunicadoId = null;
+}
+function saveComunicado(){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
+  const titulo = document.getElementById('cc-titulo').value.trim();
+  const corpo = _sanitizeComunicadoHtml(document.getElementById('cc-corpo').innerHTML);
+  if(!titulo){ showToast('⚠ Informe um título.'); return; }
+  const expiraRaw = document.getElementById('cc-expira').value;
+  const id = _editingComunicadoId || ('com_'+Date.now()+Math.random().toString(36).slice(2,6));
+  const existente = _comunicadosCache[id] || {};
+  const obj = {
+    titulo, corpo,
+    tipo: document.getElementById('cc-tipo').value,
+    squad: document.getElementById('cc-squad').value,
+    prioridade: 'popup',
+    insistente: document.getElementById('cc-insistente').checked,
+    ativo: existente.ativo!==undefined ? existente.ativo : true,
+    criadoEm: existente.criadoEm || new Date().toISOString(),
+    expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
+  };
+  window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
+    .then(()=>{ showToast('✅ Comunicado publicado!'); closeComunicadoCompose(); })
+    .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
+}
+async function deleteComunicado(){
+  if(!_editingComunicadoId) return;
+  if(!await uiConfirm('Excluir este comunicado? Ele deixa de aparecer nos boards.',{title:'Excluir comunicado'})) return;
+  window._set(window._ref(window._db,'kanban/comunicados/'+_editingComunicadoId), null)
+    .then(()=>{ showToast('🗑 Comunicado excluído.'); closeComunicadoCompose(); });
+}
+// Sanitização básica do HTML do corpo — permite só tags de formatação simples, remove scripts/handlers
+function _sanitizeComunicadoHtml(html){
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  div.querySelectorAll('script,style,iframe,object,embed').forEach(n=>n.remove());
+  div.querySelectorAll('*').forEach(el=>{
+    [...el.attributes].forEach(attr=>{
+      const n = attr.name.toLowerCase();
+      // Remove qualquer handler on* e atributos perigosos; mantém href de links
+      if(n.startsWith('on') || n==='style' || n==='class' || n==='id') el.removeAttribute(attr.name);
+      if(n==='href' && /^\s*javascript:/i.test(attr.value)) el.removeAttribute(attr.name);
+    });
+    // Força links a abrirem em nova aba com segurança
+    if(el.tagName==='A'){ el.setAttribute('target','_blank'); el.setAttribute('rel','noopener noreferrer'); }
+  });
+  return div.innerHTML;
+}
+
 async function loadUsoData(){
   const dias = parseInt(document.getElementById('st-uso-periodo')?.value||'30');
   const hoje = new Date();
