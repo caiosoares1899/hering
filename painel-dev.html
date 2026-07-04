@@ -2304,7 +2304,16 @@ const _pTag = (tid) => {
 
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
-    _campanhas = snap.val()||{};
+    // painel-dev: filtra campanhas que pertencem a pelo menos uma squad de teste
+    const _devIds = new Set(SQUADS.map(s=>s.id));
+    const _all = snap.val()||{};
+    _campanhas = Object.fromEntries(
+      Object.entries(_all).filter(([_,camp])=>{
+        if(!camp) return false;
+        const sq = Array.isArray(camp.squads) ? camp.squads : [camp.squad||''];
+        return sq.some(s=>_devIds.has(s));
+      })
+    );
     // atualiza detalhe se estiver aberto
     if(_campAtual && document.getElementById('camp-view-detalhe')?.style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
@@ -3570,7 +3579,7 @@ function addLembretePainel(){
   const arr=[...lembretesGestao];
   arr.push({ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
     tipo:'gestao', text, autor:u?.displayName||u?.email||'Gestão', autorUid:u?.uid||'', ts:new Date().toISOString() });
-  window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), arr)
+  window._set(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'), arr)
     .then(()=>{ lembretesGestao=arr; showToast('🏛️ Aviso de gestão publicado em todos os quadros'); renderLembretesPainel(); })
     .catch(e=>showToast('❌ Erro: '+e.message));
   document.getElementById('lemp-text').value='';
@@ -3582,7 +3591,7 @@ function delLembretePainel(sqId, id){
   // sqId === '__gestao__' para avisos globais
   if(sqId==='__gestao__'){
     const arr=lembretesGestao.filter(l=>l.id!==id);
-    window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), arr)
+    window._set(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'), arr)
       .then(()=>{ lembretesGestao=arr; renderLembretesPainel(); })
       .catch(e=>showToast('❌ Erro: '+e.message));
     return;
@@ -3949,7 +3958,7 @@ function _applyGcalCacheCleaning(){
   // (senão arriscamos gravar um cache "limpo" que na verdade só estava com dados parciais).
   if(_isAdmPainel() && window._pcalCalendarsLoaded && (removidosOrfaos>0 || removidosDup>0)){
     const cacheLimpo = Object.fromEntries(eventos.map(ev=>[ev.id, ev]));
-    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheLimpo).catch(()=>{});
+    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), cacheLimpo).catch(()=>{});
   }
 }
 
@@ -4177,21 +4186,22 @@ function savePevEvent(){
   };
   if(pcalEditId){ const idx=pcalEvents.findIndex(e=>e.id===pcalEditId); if(idx>-1) pcalEvents[idx]=ev; }
   else pcalEvents.push(ev);
-  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
+  window._set(window._ref(window._db,'kanban/painel/cal_events_dev'),pcalEvents)
     .then(()=>{ showToast('✅ Evento salvo!'); closePevModal(); renderPcal(); renderPcalGestao(); })
     .catch(e=>showToast('❌ '+e.message));
 }
 function deletePevEvent(){
   if(!pcalEditId||!confirm('Excluir este evento?')) return;
   pcalEvents=pcalEvents.filter(e=>e.id!==pcalEditId);
-  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
+  window._set(window._ref(window._db,'kanban/painel/cal_events_dev'),pcalEvents)
     .then(()=>{ showToast('🗑 Evento excluído'); closePevModal(); renderPcal(); renderPcalGestao(); });
 }
 
 
 function loadPcalEvents(){
   // Eventos do painel (gestão + geral)
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+  // painel-dev: cal_events isolado de prod
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events_dev'),snap=>{
     const val=snap.val();
     pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
     if(_isPtab('pessoas')){ renderPcal(); renderPcalGestao(); }
@@ -4209,7 +4219,7 @@ function loadPcalEvents(){
 
   // Agendas do Google conectadas globalmente (todos os squads) — a LISTA de agendas é lida por todos,
   // mas só o ADM (que tem token) efetivamente busca na API do Google (ver carregarPcalAgendasGlobais).
-  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars_dev'),snap=>{
     window._pcalCalendars = snap.val() || {};
     window._pcalCalendarsLoaded = true;
     renderPcalAgendasList();
@@ -4217,16 +4227,16 @@ function loadPcalEvents(){
     _applyGcalCacheCleaning(); // agendas removidas: limpa eventos órfãos que sobraram no cache
   });
   // Cache dos eventos já processados — TODO MUNDO lê daqui, sem precisar de token próprio
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'),snap=>{
     window._pcalGcalCacheRaw = snap.val() || {};
     _applyGcalCacheCleaning();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta_dev'),snap=>{
     window._pcalGcalCacheMeta = snap.val() || null;
     renderPcalAgendasList();
   });
   // Eventos ocultados (excluídos) pelo ADM
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed_dev'),snap=>{
     const val = snap.val();
     window._pcalGcalDismissedIds = new Set(val ? Object.keys(val) : []);
     const wrap=document.getElementById('pcal-gcal-restore-wrap');
@@ -4303,7 +4313,7 @@ async function addPcalAgenda(){
   const key='cal_'+id.replace(/[^a-z0-9_-]/gi,'_');
   if(!window._pcalCalendars) window._pcalCalendars={};
   window._pcalCalendars[key]={id,label:finalLabel};
-  window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
+  window._set(window._ref(window._db,'kanban/painel/config/calendars_dev'), window._pcalCalendars);
   document.getElementById('pcal-agenda-id').value='';
   document.getElementById('pcal-agenda-label').value='';
   showToast('✅ Agenda adicionada para todos os squads!');
@@ -4318,15 +4328,15 @@ async function removePcalAgenda(id){
   const key=Object.keys(window._pcalCalendars).find(k=>window._pcalCalendars[k].id===id);
   if(key){
     delete window._pcalCalendars[key];
-    window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
+    window._set(window._ref(window._db,'kanban/painel/config/calendars_dev'), window._pcalCalendars);
     // Purga IMEDIATA dos eventos dessa agenda do cache — não espera o próximo refetch do ADM
     // (que só roda se o token do Google ainda estiver válido; sem isso os eventos ficariam
     // "fantasmas" no calendário até alguém atualizar manualmente).
     try{
-      const snap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache'));
+      const snap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'));
       const cache = snap.val()||{};
       const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
-      await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), filtrado);
+      await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), filtrado);
     }catch(e){ console.warn('Não foi possível purgar cache imediatamente:', e); }
     renderPcalAgendasList();
     showToast('🗑 Agenda removida.');
@@ -4356,7 +4366,7 @@ async function carregarPcalAgendasGlobais(){
   const token=localStorage.getItem('gcal_token');
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
-    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), {});
+    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), {});
     if(_isPtab('pessoas')) renderPcal();
     return;
   }
@@ -4422,8 +4432,8 @@ async function carregarPcalAgendasGlobais(){
     return true;
   });
   const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), cacheObj);
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta_dev'), {
     updatedAt: new Date().toISOString(),
     updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
   });
@@ -4439,7 +4449,7 @@ async function deletePcalGcalEvent(id){
   if(!window._pcalGcalDismissedIds) window._pcalGcalDismissedIds=new Set();
   window._pcalGcalDismissedIds.add(id);
   const obj=Object.fromEntries([...window._pcalGcalDismissedIds].map(k=>[k,true]));
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed'), obj);
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed_dev'), obj);
   pcalGcalEvents=pcalGcalEvents.filter(e=>e.id!==id);
   renderPcal();
   showToast('🗑 Evento excluído');
@@ -4449,7 +4459,7 @@ async function restorePcalGcalDismissed(){
   if(!n){ showToast('Nenhum evento oculto para restaurar.'); return; }
   if(!await uiConfirm(`Restaurar ${n} evento(s) ocultado(s)?`)) return;
   window._pcalGcalDismissedIds=new Set();
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed'), {});
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed_dev'), {});
   showToast('↩️ Eventos restaurados!');
   carregarPcalAgendasGlobais();
 }
@@ -5268,7 +5278,9 @@ function loadPcfgUsers(){
   const list=document.getElementById('pcfg-users-list'); if(!list) return;
   list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const val=snap.val()||{};
+    // painel-dev: só membros de squads de teste
+    const _dIds = new Set(SQUADS.map(s=>s.id));
+    const val=Object.fromEntries(Object.entries(snap.val()||{}).filter(([_,u])=>u&&u.squads&&Object.keys(u.squads).some(s=>_dIds.has(s))));
     const membersArr=Object.entries(val).filter(([uid,u])=>{
       if(u.squads) return u.squads[cfgSquadId]===true;
       return u.inscrito===true||u.inscrito==='true';
@@ -5458,7 +5470,8 @@ window.addEventListener('fb-ready',()=>{
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
-  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+  // painel-dev: lembretes isolados de prod
+  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'),snap=>{
     const val=snap.val();
     lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     if(typeof renderLembretesPainel==='function') renderLembretesPainel();
@@ -5470,7 +5483,8 @@ function loadLembretesGestao(){
 // ══════════════════════════════════════════════════════════════
 let kudosGeral = [];
 function loadKudosGeral(){
-  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{
+  // painel-dev: kudos isolado de prod
+  window._onValue(window._ref(window._db,'kanban/painel/kudos_dev'),snap=>{
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     renderKudosPainel();
@@ -5542,7 +5556,7 @@ function addKudosPainel(){
     fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:'', fromFoto:u.photoURL||'',
     toInit:toU.init||'', toNome:toU.nome||'', texto, scope:'geral', ts:new Date().toISOString() };
   const arr=[...kudosGeral, obj];
-  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
+  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), arr)
     .then(()=>{ kudosGeral=arr; showToast('⭐ Estrela geral enviada!'); renderKudosPainel();
       // notifica o agraciado
       if(toUid && toUid!==u.uid){
@@ -5558,7 +5572,7 @@ function addKudosPainel(){
 }
 function delKudosPainel(id){
   const arr=kudosGeral.filter(k=>k.id!==id);
-  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
+  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), arr)
     .then(()=>{ kudosGeral=arr; renderKudosPainel(); }).catch(()=>{});
 }
 // ── Reações aos kudos no painel ──
@@ -5583,7 +5597,7 @@ function toggleKudospReaction(id, emoji){
   if(!k.reactions) k.reactions={};
   if(k.reactions[uid]===emoji) delete k.reactions[uid];
   else k.reactions[uid]=emoji;
-  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
+  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), kudosGeral).catch(()=>{});
   renderKudosPainel();
 }
 
