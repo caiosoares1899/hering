@@ -3420,7 +3420,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.76-dev</div>
+<div class="version">v8.30.77-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9344,6 +9344,7 @@ const HELP_CONTENT = {
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
+    { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Worker é o proxy Cloudflare que conecta o Agente Ágil à API da Anthropic. O Firebase armazena todos os dados em tempo real. Raramente precisam ser alterados após o setup inicial.' },
   ],
   agil: [
@@ -9358,6 +9359,8 @@ const HELP_CONTENT = {
     { icon:'🏊', title:'Papéis no board', text:'Convidado: só leitura. Membro: cria e edita cards. Organizador: gerencia colunas e tags. PO: acesso total incluindo Agente Ágil, automações e configurações. ADM: acesso irrestrito a todos os squads.' },
   ],
   comunicacao: [
+    { icon:'📢', title:'Mural — avisos do ADM', text:'Clique em 📢 no header (ao lado do sino 🔔) para abrir o Mural. Na aba Avisos você vê todos os comunicados publicados pelo administrador — novidades, dicas, avisos e alertas urgentes. Cada tipo tem cor e ícone próprios. Itens que você ainda não leu aparecem com uma bolinha colorida. Clicar num item abre o comunicado completo. Comunicados importantes podem aparecer automaticamente como popup ao abrir ou recarregar o board — basta clicar "Entendi 👍" para não ver de novo.' },
+    { icon:'✍️', title:'Fale com o ADM', text:'Dentro do 📢 Mural, clique na aba "✍️ Fale com o ADM" para enviar uma mensagem diretamente ao administrador. Escolha o tipo (🐛 problema, 💡 sugestão, ❓ dúvida, 💬 outro), escreva o texto e envie. O ADM é notificado no sino 🔔. O sistema anexa automaticamente seu squad, papel e a versão do board.' },
     { icon:'📌', title:'Quadro de lembretes', text:'Abra a aba 📌 Lembretes na lateral direita. São post-its coloridos por tipo: 🏛️ Gestão (avisos globais, aparecem em todos os quadros), 📋 PO/Org (avisos da squad, podem ser direcionados), ✏️ Próprios (privados, só você vê) e 🌊 Quadro (alertas automáticos dos cards). Os filtros no topo ligam/desligam cada tipo; o de Quadro vem desligado por padrão.' },
     { icon:'✓', title:'Resolver vs. excluir lembrete', text:'O ✓ RESOLVE o lembrete só pra você — some da sua tela mas continua visível para os outros que ainda precisam vê-lo. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Em lembretes próprios, o ✓ conclui e remove de vez, já que são privados.' },
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
