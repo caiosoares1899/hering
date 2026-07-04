@@ -1983,7 +1983,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.57 · painel</div>
+<div class="version">v2.58 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4888,6 +4888,50 @@ function loadComunicados(){
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
+  _seedComunicadoRascunhos();
+}
+
+// ── Rascunhos 🤖 semeados pelo código ────────────────────────────────────
+// Como o assistente não tem acesso direto de escrita ao Firebase ao vivo, os
+// rascunhos de "avise sobre a novidade X" são embutidos no próprio código a
+// cada sessão de desenvolvimento, e só viram registros reais no Firebase
+// quando o ADM (você) abre o painel autenticado — o navegador dele é quem
+// efetivamente escreve. Cada rascunho tem um ID fixo e estável: se você já
+// revisou/publicou ou descartou, ele nunca é recriado (checa se o ID já
+// existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
+const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_backup_automatico_2026_07',
+    titulo: '🔧 Backup automático agora funciona de verdade',
+    corpo: '<p>Encontramos e corrigimos um problema sério: o backup semanal automático (board e painel) dependia de manter uma aba do navegador aberta ininterruptamente por até 7 dias — o que na prática nunca acontecia.</p><p>Agora a checagem roda toda vez que alguém abre o board ou o painel: se já passaram 7+ dias desde o último backup, ele dispara na hora. A configuração (email, chaves do EmailJS) também deixou de ficar presa a um navegador específico — agora fica salva no Firebase, compartilhada entre qualquer dispositivo.</p><p><b>Ação sugerida:</b> se você já tinha configurado o backup antes, abra a aba Backup (no board e no painel) e reconfigure uma vez — a config antiga estava só no seu navegador local e não migra sozinha.</p>',
+    tipo: 'aviso',
+    squad: '*',
+  },
+  {
+    id: 'seed_rascunhos_comunicados_2026_07',
+    titulo: '🤖 Novidades agora chegam como rascunho pra você revisar',
+    corpo: '<p>A partir de agora, sempre que uma funcionalidade relevante for concluída, um rascunho de comunicado é preparado automaticamente — mas <b>nunca publicado sem sua revisão</b>.</p><p>Você vai encontrá-los na aba Pessoas → 📢 Comunicados, numa seção separada "🤖 Rascunhos aguardando sua revisão". De lá, é só clicar em "Revisar e publicar" pra abrir o editor já preenchido (ajuste o que quiser) ou "Descartar" se não fizer sentido avisar o time.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+];
+async function _seedComunicadoRascunhos(){
+  if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
+  for(const seed of COMUNICADO_RASCUNHOS_SEED){
+    try{
+      const snap = await window._get(window._ref(window._db,'kanban/comunicados/'+seed.id));
+      if(snap.exists()) continue; // já existe (revisado, publicado ou intacto) — não recria
+      await window._set(window._ref(window._db,'kanban/comunicados/'+seed.id), {
+        titulo: seed.titulo, corpo: seed.corpo, tipo: seed.tipo, squad: seed.squad,
+        prioridade: 'mural', // sugestão padrão — ADM promove pra popup se achar que merece
+        insistente: false,
+        ativo: false,     // rascunho nunca aparece pro board até ser publicado
+        rascunho: true,
+        criadoEm: new Date().toISOString(),
+        expiraEm: null,
+      });
+    }catch(e){ console.warn('[Rascunho seed] erro em', seed.id, e); }
+  }
 }
 function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
@@ -4898,7 +4942,7 @@ function renderComunicadosLista(){
   // Rascunhos 🤖: criados automaticamente ao final de sessões de dev, aguardando revisão.
   // Nunca aparecem nos boards (rascunho implica ativo:false) — ficam numa seção separada.
   const rascunhos = todos.filter(c=>c.rascunho);
-  const publicados = todos.filter(c=>!c.rascunho);
+  const publicados = todos.filter(c=>!c.rascunho && !c.descartado);
   renderRascunhosComunicado(rascunhos);
 
   if(!publicados.length){
@@ -4955,7 +4999,11 @@ function renderRascunhosComunicado(rascunhos){
 }
 async function descartarRascunhoComunicado(id, titulo){
   if(!await uiConfirm('Descartar o rascunho "'+titulo+'"? Não pode ser desfeito.',{title:'Descartar rascunho'})) return;
-  window._set(window._ref(window._db,'kanban/comunicados/'+id), null)
+  // Não apaga de verdade — só marca como descartado. Se apagássemos o registro
+  // inteiro, o seed automático (que checa "snap.exists()") recriaria o mesmo
+  // rascunho na próxima vez que o painel carregasse, já que pra ele pareceria
+  // que o rascunho nunca tinha existido.
+  window._set(window._ref(window._db,'kanban/comunicados/'+id), {rascunho:false, ativo:false, descartado:true})
     .then(()=>showToast('🗑 Rascunho descartado.'));
 }
 // Exclusão direta na lista, sem precisar abrir o modal de edição
