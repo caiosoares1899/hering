@@ -1310,6 +1310,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
       </div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
+
+      <!-- Rascunhos 🤖 aguardando revisão — criados automaticamente ao final de sessões de dev -->
+      <div id="comunicados-rascunhos-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:10px;color:#ffd166;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:8px;">🤖 Rascunhos aguardando sua revisão</div>
+        <div id="comunicados-rascunhos"></div>
+      </div>
+
       <div id="comunicados-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
     </div>
 
@@ -1976,7 +1983,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.56 · painel</div>
+<div class="version">v2.57 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4885,14 +4892,21 @@ function loadComunicados(){
 function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
-  const items = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
+  const todos = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
     .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-  if(!items.length){
+
+  // Rascunhos 🤖: criados automaticamente ao final de sessões de dev, aguardando revisão.
+  // Nunca aparecem nos boards (rascunho implica ativo:false) — ficam numa seção separada.
+  const rascunhos = todos.filter(c=>c.rascunho);
+  const publicados = todos.filter(c=>!c.rascunho);
+  renderRascunhosComunicado(rascunhos);
+
+  if(!publicados.length){
     el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum comunicado criado ainda.</div>';
     return;
   }
   const agora = new Date().toISOString();
-  el.innerHTML = items.map(c=>{
+  el.innerHTML = publicados.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const expirado = c.expiraEm && c.expiraEm < agora;
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
@@ -4911,6 +4925,38 @@ function renderComunicadosLista(){
       <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
     </div>`;
   }).join('');
+}
+
+// Rascunhos escritos automaticamente ao final de sessões de desenvolvimento —
+// nunca publicados sem revisão explícita do ADM.
+function renderRascunhosComunicado(rascunhos){
+  const wrap = document.getElementById('comunicados-rascunhos-wrap');
+  const el = document.getElementById('comunicados-rascunhos');
+  if(!wrap || !el) return;
+  if(!rascunhos.length){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  el.innerHTML = rascunhos.map(c=>{
+    const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
+    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const ondeAparece = c.prioridade==='mural' ? '📌 só mural (sugerido)' : '🔔 popup (sugerido)';
+    return `<div style="padding:10px 11px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:9px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+        <span style="font-size:15px;">${tipo.icon}</span>
+        <div style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--txt);">${esc(c.titulo||'(sem título)')}</div>
+      </div>
+      <div style="font-size:10.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;max-height:60px;overflow:hidden;">${(c.corpo||'').replace(/<[^>]+>/g,' ').trim().slice(0,180)}${(c.corpo||'').length>180?'…':''}</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">${alvo} · ${ondeAparece}</div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="openComunicadoCompose('${c.id}')" style="flex:1;padding:6px;font-size:11px;background:rgba(255,209,102,.15);color:#ffd166;border:1px solid rgba(255,209,102,.35);border-radius:7px;cursor:pointer;font-weight:600;">👀 Revisar e publicar</button>
+        <button onclick="descartarRascunhoComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" style="padding:6px 12px;font-size:11px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:7px;cursor:pointer;">Descartar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function descartarRascunhoComunicado(id, titulo){
+  if(!await uiConfirm('Descartar o rascunho "'+titulo+'"? Não pode ser desfeito.',{title:'Descartar rascunho'})) return;
+  window._set(window._ref(window._db,'kanban/comunicados/'+id), null)
+    .then(()=>showToast('🗑 Rascunho descartado.'));
 }
 // Exclusão direta na lista, sem precisar abrir o modal de edição
 async function deleteComunicadoDireto(id, titulo){
@@ -4944,7 +4990,7 @@ function openComunicadoCompose(id){
   const delBtn = document.getElementById('cc-del-btn');
   if(_editingComunicadoId && _comunicadosCache[_editingComunicadoId]){
     const c = _comunicadosCache[_editingComunicadoId];
-    document.getElementById('comunicado-compose-title').textContent = 'Editar Comunicado';
+    document.getElementById('comunicado-compose-title').textContent = c.rascunho ? '🤖 Revisar Rascunho' : 'Editar Comunicado';
     document.getElementById('cc-titulo').value = c.titulo||'';
     document.getElementById('cc-corpo').innerHTML = c.corpo||'';
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
@@ -4988,6 +5034,7 @@ function saveComunicado(){
   const expiraRaw = document.getElementById('cc-expira').value;
   const id = _editingComunicadoId || ('com_'+Date.now()+Math.random().toString(36).slice(2,6));
   const existente = _comunicadosCache[id] || {};
+  const eraRascunho = !!existente.rascunho;
   const prioridade = document.getElementById('cc-prioridade').value;
   const obj = {
     titulo, corpo,
@@ -4995,12 +5042,13 @@ function saveComunicado(){
     squad: document.getElementById('cc-squad').value,
     prioridade,
     insistente: prioridade==='popup' ? document.getElementById('cc-insistente').checked : false,
-    ativo: existente.ativo!==undefined ? existente.ativo : true,
+    ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
+    rascunho: false, // clicar em Publicar sempre tira do estado de rascunho
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
   };
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
-    .then(()=>{ showToast('✅ Comunicado publicado!'); closeComunicadoCompose(); })
+    .then(()=>{ showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!'); closeComunicadoCompose(); })
     .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
 }
 async function deleteComunicado(){
