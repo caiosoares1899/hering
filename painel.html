@@ -1303,6 +1303,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <!-- ═══ ABA: PESSOAS ═══ -->
   <div class="ptab-pane" id="ppane-pessoas">
 
+    <!-- ═══ COMUNICADOS (ADM → boards) ═══ -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📢 Comunicados</div>
+        <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
+      <div id="comunicados-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+    </div>
+
     <div id="pcal-section" style="margin-bottom:20px;">
       <div class="sec-title">📅 Calendário dos squads</div>
       <div class="pcal-tabs" id="pcal-tabs-bar">
@@ -1551,16 +1561,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
       <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Adoção por squad</div>
       <div id="st-uso-squads"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
-    </div>
-
-    <!-- ═══ COMUNICADOS (ADM → boards) ═══ -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📢 Comunicados</div>
-        <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
-      </div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Avisos que aparecem como popup nos boards. Fase 1: popup ao abrir/recarregar o board.</div>
-      <div id="comunicados-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
     </div>
 
   </div><!-- /ppane-status -->
@@ -1954,7 +1954,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.52 · painel</div>
+<div class="version">v2.53 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3764,9 +3764,9 @@ function swPtab(tab){
   if(pane) pane.classList.add('on');
   // side-effects por aba
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
-  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); }
+  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); }
-  if(tab==='status'){ loadStatusData(); loadUsoData(); loadComunicados(); }
+  if(tab==='status'){ loadStatusData(); loadUsoData(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
 }
@@ -4853,6 +4853,8 @@ let _comunicadosCache = {};
 let _editingComunicadoId = null;
 
 function loadComunicados(){
+  if(window._comunicadosListenerOn) return; // evita registrar o listener de novo a cada troca de aba
+  window._comunicadosListenerOn = true;
   window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
