@@ -3405,7 +3405,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.81</div>
+<div class="version">v8.30.82</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13223,14 +13223,20 @@ function previewBackupStats(){
 // e o "último backup" também era por dispositivo, então o agendamento nunca
 // tinha visibilidade real de quando o último backup de fato rodou.
 let _backupCfgCache = {};
-window._onValue(window._ref(window._db, FB+'/config/backup_cfg'), snap=>{
-  _backupCfgCache = snap.val() || {};
-  updateBackupAutoStatus();
-  const lastEl = document.getElementById('backup-last');
-  if(lastEl && _backupCfgCache.lastRun){
-    lastEl.textContent = '⏱ Último backup automático: '+new Date(_backupCfgCache.lastRun).toLocaleString('pt-BR');
-  }
-});
+// O _onValue precisa esperar o módulo Firebase estar pronto —
+// chamá-lo no escopo global causa "window._ref is not a function"
+// porque o módulo ES ainda não exportou as funções nesse momento.
+function _initBackupCfgListener(){
+  window._onValue(window._ref(window._db, FB+'/config/backup_cfg'), snap=>{
+    _backupCfgCache = snap.val() || {};
+    updateBackupAutoStatus();
+    const lastEl = document.getElementById('backup-last');
+    if(lastEl && _backupCfgCache.lastRun){
+      lastEl.textContent = '⏱ Último backup automático: '+new Date(_backupCfgCache.lastRun).toLocaleString('pt-BR');
+    }
+  });
+}
+window.addEventListener('fb-ready', _initBackupCfgListener, {once:true});
 
 function saveBackupConfig(){
   const cfg = {
