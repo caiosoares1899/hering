@@ -3420,7 +3420,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.77-dev</div>
+<div class="version">v8.30.78-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13487,8 +13487,9 @@ function _forceReload(){
 }
 
 async function reSeedDev(){
-  if(ACTIVE_SQUAD!=='dev'){ await uiAlert('A re-população de dados de teste só está disponível no Dev Sandbox.'); return; }
-  const ok=await uiConfirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes (cards, kudos, lembretes, reações e status).\n\nOs dados atuais do dev serão substituídos. Continuar?');
+  const isTestSquad = ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='omnichannel';
+  if(!isTestSquad){ await uiAlert('A re-população de dados de teste só está disponível nos boards de teste (dev e omnichannel).'); return; }
+  const ok=await uiConfirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes.\n\nOs dados atuais serão substituídos. Continuar?');
   if(!ok) return;
   // mostra o overlay de seed (que tem o seed-btn e o log) e roda
   const ov=document.getElementById('seed-overlay');
@@ -14099,6 +14100,15 @@ async function runDevSeed(){
     }
     seedLog('✅ '+_uOk+'/6 usuários fictícios criados (kanban/usuarios)','ok');
 
+    // Quando rodando na omnichannel, pula o seed do dev e vai direto pro bloco da omnichannel
+    if(ACTIVE_SQUAD==='omnichannel'){
+      seedLog('🛍️ Squad Omnichannel detectado — pulando seed do Dev e populando omnichannel...','inf');
+      // Scroll down para o bloco omnichannel (que vem logo abaixo)
+      // O bloco omnichannel escreve direto via FBO, então continuamos o fluxo normalmente
+      // mas pulamos as escritas específicas do dev abaixo
+    } else {
+    // ── Dados do Dev Sandbox (só quando ACTIVE_SQUAD==='dev') ──────────
+
     await window._set(window._ref(window._db, FB+'/columns'), seedColumns);
     seedLog('✅ 5 colunas criadas','ok');
 
@@ -14211,151 +14221,201 @@ async function runDevSeed(){
       seedLog('✅ 2 campanhas de exemplo criadas (Dia dos Pais + Inverno 2026)','ok');
     }catch(e){ seedLog('⚠ campanhas não gravadas: '+e.message,'err'); }
 
+    } // ── FIM bloco else (dev) ──────────────────────────────────────────
+
     // ── SQUAD OMNICHANNEL (fictícia, isolada) — testes multi-squad ────
+    // Popula quando: (a) rodando do squad omnichannel OU (b) rodando do dev (cross-squad).
     // NUNCA escreve na squad real de Marketing de Performance ('midia').
+    if(ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='omnichannel'){
     try{
       const FBO = 'kanban/squads/omnichannel/dados';
+      const ts = new Date().toISOString();
+
+      // Helper de data: positivo = futuro, negativo = passado (dias a partir de hoje)
+      // Helper especial para histórico trimestral: dias desde hoje negativos
+      const dp = (days) => new Date(Date.now()+days*86400000).toISOString().split('T')[0];
+      // Timestamp completo com hora (para relatório de tempo)
+      const dts = (days, hour=9) => {
+        const d = new Date(Date.now()+days*86400000);
+        d.setHours(hour,0,0,0);
+        return d.toISOString();
+      };
+
       const omniCols = [
-        {id:'backlog',  name:'Backlog',       color:'#64748b'},
-        {id:'progress', name:'Em andamento',  color:'#38b6ff'},
-        {id:'review',   name:'Em revisão',    color:'#ffd166'},
-        {id:'blocker',  name:'Impedimento',   color:'#ff6b6b'},
-        {id:'done',     name:'Concluído',     color:'#1de9b6'},
+        {id:'omni-backlog',  name:'Backlog',       color:'#64748b', startCol:true},
+        {id:'omni-todo',     name:'A fazer',       color:'#7c3aed'},
+        {id:'omni-progress', name:'Em andamento',  color:'#38b6ff', wipLimit:3},
+        {id:'omni-review',   name:'Em revisão',    color:'#ffd166'},
+        {id:'omni-blocker',  name:'Impedimento',   color:'#ff6b6b'},
+        {id:'omni-done',     name:'Concluído',     color:'#1de9b6', doneCol:true},
       ];
       const omniTags = [
-        {id:'paid',        label:'Mídia Paga',    pi:0},
-        {id:'email',       label:'E-mail',        pi:1},
-        {id:'analytics',   label:'Analytics',     pi:2},
-        {id:'tag-diapais', label:'Dia dos Pais',  pi:3},
-        {id:'tag-inverno', label:'Inverno 2026',  pi:4},
-      ];
-      const omniCards = [
-        // ── DIA DOS PAIS — Mkt Performance ──
-        {
-          id:'omni-dp-001', col:'done', title:'Configurar campanhas Meta Ads — Dia dos Pais',
-          desc:'Estruturar campanhas no Meta Ads Manager com segmentação por idade (35-65), interesses em paternidade e comportamento de compra.',
-          po:'Budget aprovado: R$28k. Público principal: filhos adultos 25-40 comprando para os pais.',
-          tags:['paid','tag-diapais'], priority:'high', owner:'TM', effort:5, isOKR:true,
-          due: d(-14), checklist:[
-            {id:'mc01',text:'Criar estrutura de campanhas (awareness/consideração/conversão)',done:true},
-            {id:'mc02',text:'Configurar públicos personalizados e lookalikes',done:true},
-            {id:'mc03',text:'Subir criativos aprovados (feed + stories + reels)',done:true},
-            {id:'mc04',text:'Configurar pixel e eventos de conversão',done:true},
-            {id:'mc05',text:'Ativar e monitorar primeiras 48h',done:true},
-          ], riscos:[], links:[{url:'https://business.facebook.com',label:'Meta Ads Manager — Dia dos Pais'}],
-          comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-dp-002', col:'done', title:'Configurar campanhas Google Ads — Dia dos Pais',
-          desc:'Search + Shopping + Display para capturar intenção de compra de presentes para o dia dos pais.',
-          tags:['paid','tag-diapais'], priority:'high', owner:'LO', effort:5, isOKR:false,
-          due: d(-13), checklist:[
-            {id:'mc06',text:'Campanhas de Search (palavras-chave presentes pai)',done:true},
-            {id:'mc07',text:'Campanhas de Shopping (feed de produtos)',done:true},
-            {id:'mc08',text:'Remarketing Display para visitantes da LP',done:true},
-            {id:'mc09',text:'Extensões de anúncio configuradas',done:true},
-          ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-dp-003', col:'progress', title:'Otimização contínua — Dia dos Pais',
-          desc:'Monitoramento diário e otimização das campanhas ativas. Ajuste de lances, pausar criativos com baixo CTR, escalar os que performam.',
-          po:'Meta de ROAS 4x. Atualmente em 4.2x ✅. Manter até o dia 10/08.',
-          tags:['paid','tag-diapais'], priority:'high', owner:'TM', effort:3, isOKR:false,
-          due: d(10), checklist:[
-            {id:'mc10',text:'Revisão diária de performance',done:false},
-            {id:'mc11',text:'A/B test de títulos nos anúncios de Search',done:true},
-            {id:'mc12',text:'Aumentar budget nos criativos de kit curado',done:true},
-            {id:'mc13',text:'Relatório semanal para Rafael',done:false},
-          ], riscos:[], links:[{url:'https://datastudio.google.com',label:'Dashboard campanhas Dia dos Pais'}],
-          comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-dp-004', col:'done', title:'Disparar e-mail marketing — Dia dos Pais',
-          desc:'Segmentar base e disparar sequência de e-mails: teaser (D-14), lançamento (D-7), urgência (D-3), last call (D-1).',
-          tags:['email','tag-diapais'], priority:'medium', owner:'RV', effort:4, isOKR:false,
-          due: d(-8), checklist:[
-            {id:'mc14',text:'Segmentar base (comprou no ano passado + interesados em moda masc)',done:true},
-            {id:'mc15',text:'Teaser disparado (D-14)',done:true},
-            {id:'mc16',text:'E-mail de lançamento (D-7)',done:true},
-            {id:'mc17',text:'Urgência (D-3)',done:false},
-            {id:'mc18',text:'Last call (D-1)',done:false},
-          ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-dp-005', col:'blocker', title:'Acesso ao GA4 com eventos customizados não está funcionando',
-          desc:'Os eventos de conversão configurados no GTM não estão disparando no GA4. Dados de conversão da landing page estão zerados.',
-          impedimento:'TI bloqueou publicação do container GTM por processo de aprovação de segurança. Aguardando liberação — aberto ticket #4521.',
-          tags:['analytics','tag-diapais'], priority:'high', owner:'LO', effort:2, isOKR:false,
-          due: d(2), checklist:[
-            {id:'mc19',text:'Mapear eventos no GTM',done:true},
-            {id:'mc20',text:'Publicar container (bloqueado)',done:false},
-            {id:'mc21',text:'Validar no GA4 debug mode',done:false},
-          ], riscos:['Sem dados de conversão, otimização das campanhas fica prejudicada'],
-          links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-
-        // ── INVERNO 2026 — Mkt Performance ──
-        {
-          id:'omni-inv-001', col:'done', title:'Planejar estratégia de mídia — Inverno 2026',
-          desc:'Definir mix de canais, budget por canal, cronograma de veiculação e KPIs da coleção de inverno.',
-          po:'Budget total: R$80k. Distribuição: 50% Meta, 30% Google, 20% TikTok (novo canal).',
-          tags:['paid','tag-inverno'], priority:'high', owner:'TM', effort:4, isOKR:true,
-          due: d(-3), checklist:[
-            {id:'mc22',text:'Reunião de planejamento com comercial e criação',done:true},
-            {id:'mc23',text:'Definir budget por canal',done:true},
-            {id:'mc24',text:'Montar cronograma de veiculação',done:true},
-            {id:'mc25',text:'Alinhar KPIs com Rafael',done:true},
-          ], riscos:[], links:[{url:'https://docs.google.com/plan-omni-inv26',label:'Plano de mídia Inverno 2026 (Omnichannel)'}],
-          comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-inv-002', col:'progress', title:'Configurar campanhas Meta Ads — Inverno 2026',
-          desc:'Estruturar campanhas de awareness e conversão para a coleção de inverno. Foco em casacos e malhas como carros-chefe.',
-          po:'Público-alvo ampliado vs. Dia dos Pais: mulheres 25-55 e homens 30-55 interessados em moda.',
-          tags:['paid','tag-inverno'], priority:'high', owner:'TM', effort:6, isOKR:false,
-          due: d(5), checklist:[
-            {id:'mc26',text:'Criar estrutura de campanhas',done:true},
-            {id:'mc27',text:'Configurar públicos (interesses moda + lookalikes clientes)',done:true},
-            {id:'mc28',text:'Subir criativos — aguardando KV aprovado',done:false},
-            {id:'mc29',text:'Configurar catálogo de produtos de inverno',done:false},
-            {id:'mc30',text:'Ativar e monitorar',done:false},
-          ], riscos:['Criativos dependem do KV aprovado pela Diretora de Mkt (ainda pendente)'],
-          impedimento:'KV principal ainda não aprovado. Campanhas estruturadas mas não ativadas.',
-          links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-inv-003', col:'backlog', title:'Configurar TikTok Ads — Inverno 2026',
-          desc:'Primeiro uso do TikTok Ads na Hering. Criar conta, configurar pixel, estruturar campanha de awareness com criativos em vídeo vertical.',
-          tags:['paid','tag-inverno'], priority:'medium', owner:'RV', effort:8, isOKR:false,
-          due: d(8), checklist:[
-            {id:'mc31',text:'Criar conta Business no TikTok',done:false},
-            {id:'mc32',text:'Instalar e validar TikTok Pixel',done:false},
-            {id:'mc33',text:'Briefar criação para vídeos verticais (15s e 30s)',done:false},
-            {id:'mc34',text:'Estruturar campanhas e subir criativos',done:false},
-            {id:'mc35',text:'Monitorar primeiros 7 dias e otimizar',done:false},
-          ], riscos:['Canal novo — curva de aprendizado esperada nas primeiras semanas'],
-          links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
-        {
-          id:'omni-inv-004', col:'backlog', title:'Sequência de e-mail marketing — Inverno 2026',
-          desc:'Planejar e disparar sequência de e-mails para lançamento e sustentação da coleção de inverno.',
-          tags:['email','tag-inverno'], priority:'medium', owner:'RV', effort:5, isOKR:false,
-          due: d(12), checklist:[
-            {id:'mc36',text:'Definir segmentação da base',done:false},
-            {id:'mc37',text:'Criar templates com tema visual inverno',done:false},
-            {id:'mc38',text:'Disparar e-mail de pré-lançamento',done:false},
-            {id:'mc39',text:'E-mail de lançamento com catálogo completo',done:false},
-          ], riscos:[], links:[], comments:{}, archived:false, createdAt:now, updatedAt:now,
-        },
+        {id:'omni-paid',      label:'Mídia Paga',       pi:0, color:'#38b6ff'},
+        {id:'omni-email',     label:'E-mail Mktg',      pi:1, color:'#7c3aed'},
+        {id:'omni-seo',       label:'SEO/Orgânico',     pi:2, color:'#1de9b6'},
+        {id:'omni-analytics', label:'Analytics',        pi:3, color:'#ffd166'},
+        {id:'omni-crm',       label:'CRM/Fidelidade',   pi:4, color:'#f97316'},
+        {id:'omni-dp',        label:'Dia dos Pais',     pi:5, color:'#e879f9'},
+        {id:'omni-inv',       label:'Inverno 2026',     pi:6, color:'#60a5fa'},
       ];
 
-      // Salvar dados do squad omnichannel (fictícia)
+      // ── HISTÓRICO TRIMESTRAL (cards concluídos com timestamps reais de fluxo) ──
+      // Simula um trimestre (≈90 dias) de trabalho — cobre 3 sprints completas.
+      // Cada card tem createdAt (criação), colHistory (quando entrou em cada coluna)
+      // e updatedAt (conclusão) — assim o relatório de tempo/tag funciona de verdade.
+
+      // Sprint 9 — 2 meses atrás (concluída há 60 dias)
+      const sp9cards = [
+        { id:'omni-h-001', col:'omni-done', title:'Migração ESP — diagnóstico e escopo',
+          tags:['omni-email'], owner:'JF', effort:3, priority:'high', isOKR:false,
+          createdAt:dts(-90,9), updatedAt:dts(-75,17), archivedAt:null, archived:false,
+          _colHistory:{[dts(-90,9)]:'omni-backlog',[dts(-88,9)]:'omni-todo',[dts(-87,10)]:'omni-progress',[dts(-78,14)]:'omni-review',[dts(-75,17)]:'omni-done'},
+          desc:'Mapear contratos, integrações e limitações do ESP atual (RD Station). Identificar gaps para suporte ao plano omnichannel.',
+          checklist:[{id:'h01a',text:'Entrevistar time de CRM',done:true},{id:'h01b',text:'Mapear automações ativas',done:true},{id:'h01c',text:'Criar documento de requisitos',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-002', col:'omni-done', title:'Setup tracking unificado GA4 + Meta',
+          tags:['omni-analytics','omni-paid'], owner:'LO', effort:5, priority:'high', isOKR:true,
+          createdAt:dts(-88,9), updatedAt:dts(-72,11), archived:false,
+          _colHistory:{[dts(-88,9)]:'omni-backlog',[dts(-85,9)]:'omni-todo',[dts(-84,10)]:'omni-progress',[dts(-74,16)]:'omni-review',[dts(-72,11)]:'omni-done'},
+          desc:'Implementar camada de dados unificada entre GA4 e Meta Pixel para eliminar dupla-contagem de conversões.',
+          checklist:[{id:'h02a',text:'GTM container configurado',done:true},{id:'h02b',text:'Eventos de e-commerce mapeados',done:true},{id:'h02c',text:'Validação com Google Tag Assistant',done:true},{id:'h02d',text:'Relatório de consistência pós-implementação',done:true}],
+          comments:{},riscos:[],links:[{url:'https://tagmanager.google.com',label:'GTM — Container Hering'}] },
+        { id:'omni-h-003', col:'omni-done', title:'Segmentação RFM — base ativa',
+          tags:['omni-crm','omni-analytics'], owner:'ABC', effort:8, priority:'medium', isOKR:false,
+          createdAt:dts(-85,10), updatedAt:dts(-68,15), archived:false,
+          _colHistory:{[dts(-85,10)]:'omni-backlog',[dts(-82,9)]:'omni-todo',[dts(-80,10)]:'omni-progress',[dts(-70,14)]:'omni-review',[dts(-68,15)]:'omni-done'},
+          desc:'Aplicar modelo RFM (Recência, Frequência, Valor monetário) na base de clientes ativos para segmentar campanhas de CRM.',
+          checklist:[{id:'h03a',text:'Extrair base de clientes dos últimos 12 meses',done:true},{id:'h03b',text:'Aplicar scoring RFM',done:true},{id:'h03c',text:'Criar 5 segmentos (Champions, Loyal, At Risk, Lost, New)',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-004', col:'omni-done', title:'Campanha reativação — segmento "At Risk"',
+          tags:['omni-email','omni-crm'], owner:'JF', effort:3, priority:'medium', isOKR:false,
+          createdAt:dts(-80,9), updatedAt:dts(-65,16), archived:false,
+          _colHistory:{[dts(-80,9)]:'omni-backlog',[dts(-77,9)]:'omni-todo',[dts(-75,10)]:'omni-progress',[dts(-66,14)]:'omni-review',[dts(-65,16)]:'omni-done'},
+          desc:'Disparar sequência de 3 e-mails para reativar clientes classificados como "At Risk" no RFM.',
+          checklist:[{id:'h04a',text:'E-mail 1: oferta especial 15%',done:true},{id:'h04b',text:'E-mail 2: conteúdo inspiracional',done:true},{id:'h04c',text:'E-mail 3: urgência + frete grátis',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-005', col:'omni-done', title:'Auditoria SEO — páginas de categoria',
+          tags:['omni-seo'], owner:'RM', effort:5, priority:'low', isOKR:false,
+          createdAt:dts(-87,9), updatedAt:dts(-63,10), archived:false,
+          _colHistory:{[dts(-87,9)]:'omni-backlog',[dts(-79,9)]:'omni-todo',[dts(-76,10)]:'omni-progress',[dts(-64,16)]:'omni-review',[dts(-63,10)]:'omni-done'},
+          desc:'Auditoria técnica e de conteúdo das páginas de categoria (tops 20 por tráfego orgânico).',
+          checklist:[{id:'h05a',text:'Crawl com Screaming Frog',done:true},{id:'h05b',text:'Análise de intenção de busca',done:true},{id:'h05c',text:'Plano de otimização priorizado',done:true}],
+          comments:{},riscos:[],links:[] },
+      ];
+
+      // Sprint 10 — 1 mês atrás (concluída há 30 dias)
+      const sp10cards = [
+        { id:'omni-h-006', col:'omni-done', title:'Implementar relatório omnichannel unificado',
+          tags:['omni-analytics'], owner:'LO', effort:8, priority:'high', isOKR:true,
+          createdAt:dts(-60,9), updatedAt:dts(-45,16), archived:false,
+          _colHistory:{[dts(-60,9)]:'omni-backlog',[dts(-58,9)]:'omni-todo',[dts(-55,10)]:'omni-progress',[dts(-46,14)]:'omni-review',[dts(-45,16)]:'omni-done'},
+          desc:'Dashboard unificado que agrega canais paid, orgânico, e-mail e CRM em visão única de atribuição.',
+          checklist:[{id:'h06a',text:'Definir modelo de atribuição',done:true},{id:'h06b',text:'Integrar fontes no Looker Studio',done:true},{id:'h06c',text:'Criar 4 dashboards por canal',done:true},{id:'h06d',text:'Treinamento time',done:true}],
+          comments:{},riscos:[],links:[{url:'https://datastudio.google.com',label:'Dashboard Omnichannel — Looker Studio'}] },
+        { id:'omni-h-007', col:'omni-done', title:'Automação abandono de carrinho — fluxo 3 passos',
+          tags:['omni-email','omni-crm'], owner:'JF', effort:5, priority:'high', isOKR:false,
+          createdAt:dts(-58,10), updatedAt:dts(-40,11), archived:false,
+          _colHistory:{[dts(-58,10)]:'omni-backlog',[dts(-55,9)]:'omni-todo',[dts(-53,10)]:'omni-progress',[dts(-41,15)]:'omni-review',[dts(-40,11)]:'omni-done'},
+          desc:'Automação de e-mail para recuperação de carrinhos abandonados: 1h, 24h e 72h após abandono.',
+          checklist:[{id:'h07a',text:'Mapear triggers no ESP',done:true},{id:'h07b',text:'Criar 3 templates (urgência crescente)',done:true},{id:'h07c',text:'Teste A/B no assunto do e-mail 1',done:true},{id:'h07d',text:'Monitorar taxa de recuperação por 2 semanas',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-008', col:'omni-done', title:'Campanha Google Ads — foco em SEMrush gaps',
+          tags:['omni-paid','omni-seo'], owner:'RM', effort:3, priority:'medium', isOKR:false,
+          createdAt:dts(-55,9), updatedAt:dts(-38,14), archived:false,
+          _colHistory:{[dts(-55,9)]:'omni-backlog',[dts(-52,9)]:'omni-todo',[dts(-50,10)]:'omni-progress',[dts(-39,15)]:'omni-review',[dts(-38,14)]:'omni-done'},
+          desc:'Criar campanhas Search para termos com alta intenção onde SEO ainda não tem posição top-3.',
+          checklist:[{id:'h08a',text:'Exportar gaps do SEMrush',done:true},{id:'h08b',text:'Criar grupos de anúncio por intenção',done:true},{id:'h08c',text:'Otimizar por quality score',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-009', col:'omni-done', title:'Otimização on-page — top 20 categorias',
+          tags:['omni-seo'], owner:'RM', effort:8, priority:'medium', isOKR:false,
+          createdAt:dts(-58,9), updatedAt:dts(-35,10), archived:false,
+          _colHistory:{[dts(-58,9)]:'omni-backlog',[dts(-50,9)]:'omni-todo',[dts(-46,10)]:'omni-progress',[dts(-36,14)]:'omni-review',[dts(-35,10)]:'omni-done'},
+          desc:'Aplicar otimizações on-page nas 20 páginas de categoria com maior potencial de crescimento orgânico.',
+          checklist:[{id:'h09a',text:'Otimizar title tags e meta descriptions',done:true},{id:'h09b',text:'Adicionar schema markup de produto',done:true},{id:'h09c',text:'Melhorar heading structure',done:true},{id:'h09d',text:'Adicionar conteúdo editorial em categorias-chave',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-010', col:'omni-done', title:'Programa de fidelidade — definição de regras',
+          tags:['omni-crm'], owner:'ABC', effort:13, priority:'high', isOKR:true,
+          createdAt:dts(-62,9), updatedAt:dts(-33,15), archived:false,
+          _colHistory:{[dts(-62,9)]:'omni-backlog',[dts(-55,9)]:'omni-todo',[dts(-50,10)]:'omni-progress',[dts(-35,14)]:'omni-review',[dts(-33,15)]:'omni-done'},
+          desc:'Definir mecânica e regras de negócio do programa de fidelidade omnichannel: pontuação, resgate, tiers.',
+          checklist:[{id:'h10a',text:'Benchmarking programas concorrentes',done:true},{id:'h10b',text:'Definir estrutura de tiers (Bronze/Prata/Ouro)',done:true},{id:'h10c',text:'Regras de pontuação por canal',done:true},{id:'h10d',text:'Política de expiração de pontos',done:true},{id:'h10e',text:'Apresentação aprovada com diretoria',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-011', col:'omni-done', title:'Integração CRM ↔ plataforma e-commerce',
+          tags:['omni-crm','omni-analytics'], owner:'LO', effort:8, priority:'high', isOKR:false,
+          createdAt:dts(-50,9), updatedAt:dts(-32,16), archived:false,
+          _colHistory:{[dts(-50,9)]:'omni-backlog',[dts(-47,9)]:'omni-todo',[dts(-44,10)]:'omni-progress',[dts(-33,15)]:'omni-review',[dts(-32,16)]:'omni-done'},
+          desc:'Sincronização bidirecional de clientes e pedidos entre RD Station CRM e plataforma Hering.com.',
+          checklist:[{id:'h11a',text:'Mapeamento de campos',done:true},{id:'h11b',text:'Implementar webhook de pedido',done:true},{id:'h11c',text:'Sincronização histórico de compras',done:true},{id:'h11d',text:'Testes de consistência',done:true}],
+          comments:{},riscos:[],links:[] },
+      ];
+
+      // Sprint 11 — atual (em andamento, ~últimas 2 semanas)
+      const sp11cards = [
+        { id:'omni-h-012', col:'omni-done', title:'Dia dos Pais — configurar campanhas Meta Ads',
+          tags:['omni-paid','omni-dp'], owner:'JF', effort:5, priority:'high', isOKR:true,
+          createdAt:dts(-20,9), updatedAt:dts(-10,16), archived:false,
+          _colHistory:{[dts(-20,9)]:'omni-backlog',[dts(-18,9)]:'omni-todo',[dts(-16,10)]:'omni-progress',[dts(-11,14)]:'omni-review',[dts(-10,16)]:'omni-done'},
+          desc:'Estruturar campanhas Meta Ads para Dia dos Pais: awareness, consideração e conversão.',
+          checklist:[{id:'h12a',text:'Criar campanhas no Meta Ads Manager',done:true},{id:'h12b',text:'Configurar públicos e lookalikes',done:true},{id:'h12c',text:'Subir criativos aprovados',done:true},{id:'h12d',text:'Monitorar primeiras 48h',done:true}],
+          comments:{},riscos:[],links:[{url:'https://business.facebook.com',label:'Meta Ads — Dia dos Pais'}] },
+        { id:'omni-h-013', col:'omni-done', title:'Dia dos Pais — campanhas Google Ads',
+          tags:['omni-paid','omni-dp'], owner:'LO', effort:5, priority:'high', isOKR:false,
+          createdAt:dts(-19,9), updatedAt:dts(-9,11), archived:false,
+          _colHistory:{[dts(-19,9)]:'omni-backlog',[dts(-17,9)]:'omni-todo',[dts(-15,10)]:'omni-progress',[dts(-10,15)]:'omni-review',[dts(-9,11)]:'omni-done'},
+          desc:'Search + Shopping + Display para Dia dos Pais.',
+          checklist:[{id:'h13a',text:'Search — palavras de presente pai',done:true},{id:'h13b',text:'Shopping — feed de produtos',done:true},{id:'h13c',text:'Display Remarketing',done:true}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-014', col:'omni-progress', title:'Otimização contínua Dia dos Pais',
+          tags:['omni-paid','omni-dp'], owner:'RM', effort:3, priority:'high', isOKR:false,
+          createdAt:dts(-10,9), updatedAt:dts(-1,14), archived:false,
+          _colHistory:{[dts(-10,9)]:'omni-backlog',[dts(-8,9)]:'omni-todo',[dts(-7,10)]:'omni-progress'},
+          desc:'Otimização diária das campanhas ativas: pausar criativos com baixo CTR, redistribuir budget.',
+          checklist:[{id:'h14a',text:'Análise diária de performance',done:true},{id:'h14b',text:'A/B de criativos',done:false},{id:'h14c',text:'Relatório final de campanha',done:false}],
+          comments:{},riscos:[{nivel:'medio',texto:'CPC subindo 18% na última semana — possível saturação de público'}],links:[] },
+        { id:'omni-h-015', col:'omni-todo', title:'Planejamento Inverno 2026 — estratégia de canais',
+          tags:['omni-inv','omni-paid','omni-email'], owner:'ABC', effort:8, priority:'medium', isOKR:true,
+          createdAt:dts(-8,9), updatedAt:dts(-8,9), archived:false,
+          _colHistory:{[dts(-8,9)]:'omni-backlog',[dts(-5,9)]:'omni-todo'},
+          desc:'Definir mix de canais e budget para coleção Inverno 2026: paid social, search, e-mail e SEO.',
+          checklist:[{id:'h15a',text:'Analisar performance do Inverno 2025',done:true},{id:'h15b',text:'Proposta de budget por canal',done:false},{id:'h15c',text:'Validação com gestão',done:false},{id:'h15d',text:'Calendário de ativações',done:false}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-016', col:'omni-backlog', title:'SEO Inverno 2026 — landing pages de coleção',
+          tags:['omni-seo','omni-inv'], owner:'RM', effort:5, priority:'medium', isOKR:false,
+          createdAt:dts(-5,9), updatedAt:dts(-5,9), archived:false,
+          _colHistory:{[dts(-5,9)]:'omni-backlog'},
+          desc:'Criar e otimizar landing pages específicas da coleção Inverno 2026 para captura orgânica.',
+          checklist:[{id:'h16a',text:'Pesquisa de palavras-chave temáticas',done:false},{id:'h16b',text:'Estrutura de URLs',done:false},{id:'h16c',text:'Conteúdo editorial + schema',done:false}],
+          comments:{},riscos:[],links:[] },
+        { id:'omni-h-017', col:'omni-backlog', title:'Lançar programa de fidelidade — MVP',
+          tags:['omni-crm'], owner:'ABC', effort:13, priority:'high', isOKR:true,
+          createdAt:dts(-3,9), updatedAt:dts(-3,9), archived:false,
+          _colHistory:{[dts(-3,9)]:'omni-backlog'},
+          desc:'MVP do programa de fidelidade: apenas tier Bronze e Prata, com pontuação por compra e resgate em cupom.',
+          checklist:[{id:'h17a',text:'Configurar regras no CRM',done:false},{id:'h17b',text:'Comunicação de lançamento para base',done:false},{id:'h17c',text:'Treinamento SAC',done:false},{id:'h17d',text:'Go-live e monitoramento',done:false}],
+          comments:{},riscos:[{nivel:'alto',texto:'Dependência de development externo — prazo apertado para lançamento antes do Inverno'}],links:[] },
+      ];
+
+      // Todos os cards: histórico + sprint atual
+      const omniCards = [...sp9cards, ...sp10cards, ...sp11cards];
+
+      // Config ágil da sprint atual (sprint 11)
+      const omniAgilCfg = {
+        sprint:11, duracao:14,
+        startDate: dp(-14), endDate: dp(0),
+        objetivo:'Fechar Dia dos Pais com ROAS>4x e iniciar planejamento do Inverno 2026 com estratégia de canais aprovada.',
+        wipLimit:3, capacidade:40,
+        startCols:['omni-todo','omni-backlog'],
+        doneCols:['omni-done'],
+        reportCols:['omni-done'],
+      };
+
       await window._set(window._ref(window._db, FBO+'/columns'), omniCols);
       await window._set(window._ref(window._db, FBO+'/tags'),    omniTags);
       await window._set(window._ref(window._db, FBO+'/cards'),   omniCards);
-      seedLog('✅ Squad Omnichannel (fictícia) populada: 5 colunas, 5 tags, 9 cards','ok');
+      await window._set(window._ref(window._db, FBO+'/agil_cfg'), omniAgilCfg);
+      seedLog('✅ Squad Omnichannel populada: 6 colunas, 7 tags, '+omniCards.length+' cards ('+sp9cards.length+' histórico Sprint 9 + '+sp10cards.length+' Sprint 10 + '+sp11cards.length+' Sprint 11 atual)','ok');
     }catch(e){ seedLog('⚠ Squad Omnichannel não gravada: '+e.message,'err'); }
-
+    } // fim if(ACTIVE_SQUAD==='dev'||'omnichannel')
     // ── Marcar campanhas como multi-squad ────────────────────────────
     try{
       const campBase = 'kanban/campanhas';
