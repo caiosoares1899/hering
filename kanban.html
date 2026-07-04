@@ -2027,6 +2027,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
   </button>
+  <button class="notif-btn" id="mural-btn" onclick="openMural()" title="Mural — avisos e fale com o ADM">
+    📢<span class="notif-badge" id="mural-badge" style="display:none;">0</span>
+  </button>
   <button class="notif-btn kudos-hdr-btn" id="kudos-hdr-btn" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time">
     🎉<span class="notif-badge" id="kudos-badge" style="background:#ffd166;color:#1a1208;display:none;">0</span>
   </button>
@@ -3362,7 +3365,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.74</div>
+<div class="version">v8.30.77</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3525,6 +3528,7 @@ const SQUAD_META_DEFAULT = {
   dados:         { label: 'Squad Dados 📊',          subtitle: 'Time de Dados',            agentRole: 'dados' },
   midia:         { label: 'Squad Marketing de Performance', subtitle: 'Performance Marketing',    agentRole: 'mídia', emoji: '📱' },
   midiacriativa: { label: 'Squad Mídia Criativa',     subtitle: 'Criação & Conteúdo',       agentRole: 'criativo', emoji: '🎨' },
+  dev:           { label: '🧪 Dev Sandbox',           subtitle: 'Ambiente de testes',       agentRole: 'engenheiro', emoji: '🧪' },
 };
 
 // Squads ativos — começa com o default, pode ser estendido pelo Firebase
@@ -10196,7 +10200,6 @@ function renderBoardCalLegend(){
   const popAgendas = el.querySelector('#cal-legend-pop-agendas');
   if(popAgendas){
     const locais = Object.values(window._squadCalendars||{}).map(cal=>({...cal, _isGlobal:false}));
-    // Deriva a lista de agendas globais a partir dos eventos já mesclados (não temos a lista de config aqui, só o resultado)
     const globaisMap = new Map();
     (window._gcalGlobalEvents||[]).forEach(ev=>{
       if(ev._calId && !globaisMap.has(ev._calId)) globaisMap.set(ev._calId, {id:ev._calId, label:ev._calLabel||ev._calId, _isGlobal:true});
@@ -10529,24 +10532,18 @@ function loadCalEvents(){
   // "todos os _gcal" direto, o último a disparar apagaria os eventos do outro.
   if(!window._gcalLocalEvents) window._gcalLocalEvents = [];
   if(!window._gcalGlobalEvents) window._gcalGlobalEvents = [];
-  if(!window._pcalValidGlobalIds) window._pcalValidGlobalIds = null; // null = ainda não sabemos, não filtra órfão global
+  if(!window._pcalValidGlobalIds) window._pcalValidGlobalIds = null;
   function _mergeGcalSources(){
     const dismissed = window._gcalDismissedIds || new Set();
-    // Limpeza defensiva: remove eventos "órfãos" — de uma agenda que já foi desconectada mas
-    // o registro sobrou no cache (acontece se quem removeu não pôde disparar um refetch completo
-    // na hora, ex: sem token válido). Roda toda vez que qualquer dado muda, sem depender de fetch novo.
     const idsLocaisValidos = new Set(Object.values(window._squadCalendars||{}).map(c=>c.id));
     let localFiltrado = window._gcalLocalEvents.filter(e => !e._calId || idsLocaisValidos.has(e._calId));
     let globalFiltrado = window._gcalGlobalEvents;
-    if(window._pcalValidGlobalIds){ // só filtra órfão global se já carregamos a lista válida
+    if(window._pcalValidGlobalIds){
       globalFiltrado = globalFiltrado.filter(e => !e._calId || window._pcalValidGlobalIds.has(e._calId));
     }
     const combinados = [...localFiltrado, ...globalFiltrado].filter(e => !dismissed.has(e.id));
-    // Dedup por id
     const porId = new Map();
     combinados.forEach(e => porId.set(e.id, e));
-    // Dedup por título+data — algumas agendas públicas (ex: feriados nacionais) retornam o
-    // mesmo evento mais de uma vez com IDs internos diferentes; sem isso, aparece triplicado.
     const vistos = new Set();
     const final = [...porId.values()].filter(ev=>{
       const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
@@ -10557,13 +10554,8 @@ function loadCalEvents(){
     calEvents = [...calEvents.filter(e => !e._gcal), ...final];
     if (document.getElementById('cal-ov')?.classList.contains('open')) renderCal();
 
-    // Auto-reparo: se o ADM percebeu sujeira no cache LOCAL deste squad (órfãos/duplicatas),
-    // regrava a versão limpa no Firebase — assim quem abrir depois já recebe corrigido.
     if(isAdmUser(window._currentUser)){
-      const localLimpo = localFiltrado.filter(e=>{
-        const chave = e.start+'|'+(e.title||'').trim().toLowerCase();
-        return final.some(f=>f.id===e.id); // só mantém o que sobreviveu ao dedup
-      });
+      const localLimpo = localFiltrado.filter(e=>final.some(f=>f.id===e.id));
       if(localLimpo.length !== window._gcalLocalEvents.length){
         const cacheObj = Object.fromEntries(localLimpo.map(ev=>[ev.id, ev]));
         window._set(window._ref(window._db, FB+'/config/gcal_cache'), cacheObj).catch(()=>{});
@@ -10579,8 +10571,6 @@ function loadCalEvents(){
     window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
     _mergeGcalSources();
   });
-  // Lista de agendas globais atualmente conectadas (só pra saber quais IDs são "válidos" e
-  // filtrar órfãos do cache global — não faz fetch nenhum, só lê a config).
   window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => {
     const val = snap.val();
     window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
@@ -12869,6 +12859,16 @@ const KNOWN_SERVICES = [
 ];
 
 function getServiceInfo(url){
+  // Refina o reconhecimento de links do Google Drive pelo formato da URL.
+  if(/drive\.google\.com|docs\.google\.com/i.test(url)){
+    if(/\/document\//i.test(url))      return { icon:'📄', label:'Google Docs',   color:'#4285F4' };
+    if(/\/spreadsheets\//i.test(url))  return { icon:'📊', label:'Google Sheets', color:'#0F9D58' };
+    if(/\/presentation\//i.test(url))  return { icon:'📽', label:'Google Slides', color:'#F4B400' };
+    if(/\/forms\//i.test(url))         return { icon:'📝', label:'Google Forms',  color:'#7248B9' };
+    if(/\/folders\//i.test(url))       return { icon:'📁', label:'Pasta do Drive', color:'#4285F4' };
+    if(/\/file\//i.test(url))          return { icon:'📎', label:'Arquivo do Drive', color:'#4285F4' };
+    return { icon:'📁', label:'Google Drive', color:'#4285F4' };
+  }
   for(const s of KNOWN_SERVICES){
     if(s.pattern.test(url)) return s;
   }
@@ -13391,6 +13391,218 @@ window.addEventListener('auth-change', e=>{
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
+// ══════════════════════════════════════════════════════════════════════
+// COMUNICADOS (ADM → usuários) — popup de aviso importante
+// Fase 1: só o popup. Dado em kanban/comunicados/{id}. "Lido" via localStorage.
+// ══════════════════════════════════════════════════════════════════════
+const COMUNICADO_TIPOS = {
+  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6', bg:'rgba(29,233,182,.12)' },
+  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166', bg:'rgba(255,209,102,.12)' },
+  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff', bg:'rgba(56,182,255,.12)' },
+  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b', bg:'rgba(255,107,107,.12)' },
+};
+let _comunicadosAtivos = [];
+let _comunicadoNaTela = null;
+
+function _initComunicados(){
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    const val = snap.val() || {};
+    const agora = new Date().toISOString();
+    _comunicadosAtivos = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .filter(c=>{
+        if(!c.ativo) return false;
+        if(c.prioridade!=='popup') return false;
+        if(c.squad && c.squad!=='*' && c.squad!==ACTIVE_SQUAD) return false;
+        if(c.expiraEm && c.expiraEm < agora) return false;
+        return true;
+      })
+      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    _talvezMostrarComunicado();
+  });
+}
+
+function _talvezMostrarComunicado(){
+  if(_comunicadoNaTela) return;
+  if(!window._currentUser) return;
+  if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
+  const pendente = _comunicadosAtivos.find(c=>{
+    if(c.insistente) return true;
+    return !_lsGet('comunicado_visto_'+c.id);
+  });
+  if(pendente) _mostrarComunicado(pendente);
+}
+
+function _algumOverlayCriticoAberto(){
+  const criticos = ['login-ov','m-ov','insc-ov','trello-members-ov'];
+  for(const id of criticos){
+    const el = document.getElementById(id);
+    if(el && el.classList.contains('open')) return true;
+  }
+  // No dev, o overlay de seed também não deve competir
+  const seed = document.getElementById('seed-overlay');
+  if(seed && seed.classList.contains('active')) return true;
+  return false;
+}
+
+function _mostrarComunicado(c){
+  _comunicadoNaTela = c;
+  const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
+  const badge = document.getElementById('comunicado-tipo-badge');
+  if(badge){ badge.innerHTML = tipo.icon+' '+tipo.label; badge.style.color = tipo.cor; }
+  const hd = document.getElementById('comunicado-hd');
+  if(hd) hd.style.background = tipo.bg;
+  document.getElementById('comunicado-titulo').textContent = c.titulo||'';
+  document.getElementById('comunicado-corpo').innerHTML = c.corpo||'';
+  const dataEl = document.getElementById('comunicado-data');
+  if(dataEl && c.criadoEm){
+    dataEl.textContent = 'Publicado em '+new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  }
+  document.getElementById('comunicado-ov').classList.add('open');
+}
+
+function dismissComunicado(){
+  if(_comunicadoNaTela){
+    _lsSet('comunicado_visto_'+_comunicadoNaTela.id, '1');
+    _comunicadoNaTela = null;
+  }
+  document.getElementById('comunicado-ov').classList.remove('open');
+  setTimeout(_talvezMostrarComunicado, 400);
+  _updateMuralBadge();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MURAL — histórico completo de comunicados (Fase 2) + Fale com o ADM (Fase 3)
+// ══════════════════════════════════════════════════════════════════════
+let _muralTodos = [];
+
+function _initMural(){
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    const val = snap.val() || {};
+    _muralTodos = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
+      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    _updateMuralBadge();
+    if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
+  });
+}
+
+function _updateMuralBadge(){
+  const badge = document.getElementById('mural-badge');
+  if(!badge) return;
+  const agora = new Date().toISOString();
+  const naoLidos = _muralTodos.filter(c=>{
+    if(!c.ativo) return false;
+    if(c.expiraEm && c.expiraEm < agora) return false;
+    return !_lsGet('comunicado_visto_'+c.id);
+  }).length;
+  if(naoLidos>0){ badge.style.display='flex'; badge.textContent = naoLidos>9?'9+':naoLidos; }
+  else badge.style.display='none';
+}
+
+function openMural(){
+  document.getElementById('mural-ov').classList.add('open');
+  _swMuralTab('avisos');
+  renderMuralLista();
+}
+
+function _swMuralTab(tab){
+  const isAvisos = tab==='avisos';
+  document.getElementById('mural-pane-avisos').style.display = isAvisos?'':'none';
+  document.getElementById('mural-pane-fale').style.display = isAvisos?'none':'';
+  const tAv = document.getElementById('mural-tab-avisos'), tFa = document.getElementById('mural-tab-fale');
+  tAv.style.color = isAvisos?'var(--txt)':'var(--txt3)';
+  tAv.style.borderBottomColor = isAvisos?'var(--teal)':'transparent';
+  tFa.style.color = !isAvisos?'var(--txt)':'var(--txt3)';
+  tFa.style.borderBottomColor = !isAvisos?'var(--teal)':'transparent';
+}
+
+function renderMuralLista(){
+  const el = document.getElementById('mural-lista');
+  if(!el) return;
+  const agora = new Date().toISOString();
+  const visiveis = _muralTodos.filter(c=>c.ativo);
+  if(!visiveis.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Nenhum comunicado por aqui ainda.</div>';
+    return;
+  }
+  el.innerHTML = visiveis.map(c=>{
+    const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
+    const expirado = c.expiraEm && c.expiraEm < agora;
+    const naoLido = !expirado && !_lsGet('comunicado_visto_'+c.id);
+    const data = c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
+    return `<div onclick="_abrirComunicadoDoMural('${c.id}')" style="padding:11px 12px;margin-bottom:8px;border-radius:9px;cursor:pointer;background:${naoLido?tipo.bg:'rgba(3,13,26,.4)'};border:1px solid ${naoLido?'rgba(255,255,255,.08)':'var(--glass-b)'};opacity:${expirado?0.55:1};">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+        <span>${tipo.icon}</span>
+        <span style="font-size:12.5px;font-weight:600;color:var(--txt);flex:1;">${esc(c.titulo||'')}</span>
+        ${naoLido?'<span style="width:7px;height:7px;border-radius:50%;background:'+tipo.cor+';flex-shrink:0;"></span>':''}
+      </div>
+      <div style="font-size:11px;color:var(--txt3);">${data}${expirado?' · expirado':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function _abrirComunicadoDoMural(id){
+  const c = _muralTodos.find(x=>x.id===id);
+  if(!c) return;
+  closeOv('mural-ov');
+  _comunicadoNaTela = c;
+  const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
+  document.getElementById('comunicado-tipo-badge').innerHTML = tipo.icon+' '+tipo.label;
+  document.getElementById('comunicado-hd').style.background = tipo.bg;
+  document.getElementById('comunicado-titulo').textContent = c.titulo||'';
+  document.getElementById('comunicado-corpo').innerHTML = c.corpo||'';
+  const dataEl = document.getElementById('comunicado-data');
+  dataEl.textContent = c.criadoEm ? 'Publicado em '+new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}) : '';
+  document.getElementById('comunicado-ov').classList.add('open');
+  _lsSet('comunicado_visto_'+c.id, '1');
+  _updateMuralBadge();
+}
+
+async function enviarFeedback(){
+  const tipo = document.getElementById('fb-tipo').value;
+  const texto = document.getElementById('fb-texto').value.trim();
+  if(!texto){ showToast('⚠ Escreva sua mensagem antes de enviar.'); return; }
+
+  const u = window._currentUser;
+  const id = 'fb_'+Date.now()+Math.random().toString(36).slice(2,6);
+  const payload = {
+    tipo, texto,
+    squad: ACTIVE_SQUAD,
+    role: window._currentUserRole || 'membro',
+    versao: document.querySelector('.version')?.textContent?.trim() || '',
+    uid: u?.uid || '', nome: u?.displayName || u?.email || 'Anônimo',
+    criadoEm: new Date().toISOString(),
+    status: 'novo',
+  };
+
+  try{
+    await window._set(window._ref(window._db,'kanban/feedback/'+id), payload);
+    const snap = await fbGet('kanban/usuarios');
+    const usuarios = snap.val()||{};
+    Object.entries(usuarios).forEach(([uid,udata])=>{
+      if(isAdmUser({email:udata.email, uid})){
+        const icones = {bug:'🐛',sugestao:'💡',duvida:'❓',outro:'💬'};
+        createNotif(uid, 'feedback', (icones[tipo]||'💬')+' Nova mensagem de '+payload.nome,
+          texto.slice(0,80)+(texto.length>80?'…':''), null);
+      }
+    });
+    document.getElementById('fb-texto').value = '';
+    showToast('✅ Mensagem enviada! Obrigado pelo retorno.');
+    closeOv('mural-ov');
+  }catch(e){
+    showToast('⚠ Erro ao enviar: '+(e?.message||e));
+  }
+}
+
+function _lsGet(k){ try{ return (typeof safeLS!=='undefined'?safeLS:localStorage).getItem(k); }catch(e){ return null; } }
+function _lsSet(k,v){ try{ (typeof safeLS!=='undefined'?safeLS:localStorage).setItem(k,v); }catch(e){} }
+
+window.addEventListener('auth-change', e=>{
+  if(e.detail){ setTimeout(_initComunicados, 2000); setTimeout(_initMural, 2000); }
+}, {once:true});
+
 renderBoard();
 
 // Abre um card automaticamente se veio via link direto (?card=ID) — usado pelo painel
@@ -13403,7 +13615,7 @@ renderBoard();
     tentativas++;
     const existe = cards.find(c=>c.id===cardId);
     if(existe){ openCard(cardId); return; }
-    if(tentativas < 15) setTimeout(tentar, 400); // espera os cards carregarem do Firebase
+    if(tentativas < 15) setTimeout(tentar, 400);
   };
   setTimeout(tentar, 600);
 })();
