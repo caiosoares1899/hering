@@ -1616,12 +1616,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <select class="pev-input" id="cc-squad"></select>
           </div>
         </div>
+        <div class="pev-field">
+          <label class="pev-label">Onde aparece</label>
+          <select class="pev-input" id="cc-prioridade" onchange="_ccTogglePrioridadeUI()">
+            <option value="popup">🔔 Popup — interrompe ao abrir o board (também fica no mural)</option>
+            <option value="mural">📌 Só no mural — não interrompe, a pessoa vê quando quiser</option>
+          </select>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="pev-field">
             <label class="pev-label">Expira em (opcional)</label>
             <input class="pev-input" id="cc-expira" type="date">
           </div>
-          <div class="pev-field">
+          <div class="pev-field" id="cc-insistente-wrap">
             <label class="pev-label">Comportamento</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:7px 0;">
               <input type="checkbox" id="cc-insistente"> Insistente (reaparece até expirar)
@@ -1629,7 +1636,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           </div>
         </div>
         <div style="font-size:10px;color:var(--txt3);line-height:1.5;background:rgba(3,13,26,.4);border-radius:7px;padding:8px 10px;">
-          💡 <b>Insistente OFF</b>: aparece uma vez, some depois que a pessoa clica "Entendi". <b>Insistente ON</b>: reaparece a cada abertura do board até você desativar ou a data de expiração passar.
+          💡 <b>Popup</b> interrompe ao abrir/recarregar o board — depois que a pessoa clica "Entendi" some do popup, mas continua disponível no mural pra reconsulta. <b>Só no mural</b> nunca interrompe ninguém — fica direto no botão 📢 pra quem quiser ler. <b>Insistente</b> só se aplica ao popup: reaparece a cada abertura até expirar ou você desativar.
         </div>
       </div>
       <div class="pev-ft">
@@ -1969,7 +1976,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.54 · painel</div>
+<div class="version">v2.55 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4892,14 +4899,26 @@ function renderComunicadosLista(){
     const status = !c.ativo ? '<span style="color:var(--txt3);">desativado</span>'
       : expirado ? '<span style="color:var(--txt3);">expirado</span>'
       : '<span style="color:var(--teal);">ativo</span>';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
-      <span style="font-size:15px;">${tipo.icon}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
-        <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status}${c.insistente?' · insistente':''}${c.prioridade==='popup'?' · popup':''}</div>
+    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
+        <span style="font-size:15px;">${tipo.icon}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
+          <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status} · ${ondeAparece}${c.insistente?' · insistente':''}</div>
+        </div>
       </div>
+      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
     </div>`;
   }).join('');
+}
+// Exclusão direta na lista, sem precisar abrir o modal de edição
+async function deleteComunicadoDireto(id, titulo){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem excluir comunicados.'); return; }
+  if(!await uiConfirm('Excluir o comunicado "'+titulo+'"? Ele deixa de aparecer nos boards imediatamente.',{title:'Excluir comunicado'})) return;
+  window._set(window._ref(window._db,'kanban/comunicados/'+id), null)
+    .then(()=>showToast('🗑 Comunicado excluído.'))
+    .catch(e=>showToast('⚠ Erro ao excluir: '+(e?.message||e)));
 }
 
 function _ccPopulaSquadSelect(){
@@ -4930,6 +4949,7 @@ function openComunicadoCompose(id){
     document.getElementById('cc-corpo').innerHTML = c.corpo||'';
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
     document.getElementById('cc-squad').value = c.squad||'*';
+    document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : 'popup';
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
     document.getElementById('cc-insistente').checked = !!c.insistente;
     if(delBtn) delBtn.style.display = '';
@@ -4939,11 +4959,22 @@ function openComunicadoCompose(id){
     document.getElementById('cc-corpo').innerHTML = '';
     document.getElementById('cc-tipo').value = 'novidade';
     document.getElementById('cc-squad').value = '*';
+    document.getElementById('cc-prioridade').value = 'popup';
     document.getElementById('cc-expira').value = '';
     document.getElementById('cc-insistente').checked = false;
     if(delBtn) delBtn.style.display = 'none';
   }
+  _ccTogglePrioridadeUI();
   document.getElementById('comunicado-compose-ov').classList.add('open');
+}
+// Insistente só faz sentido pra popup — desabilita quando for só mural
+function _ccTogglePrioridadeUI(){
+  const isMural = document.getElementById('cc-prioridade').value === 'mural';
+  const wrap = document.getElementById('cc-insistente-wrap');
+  const chk = document.getElementById('cc-insistente');
+  if(!wrap || !chk) return;
+  if(isMural){ chk.checked = false; chk.disabled = true; wrap.style.opacity = '.45'; }
+  else { chk.disabled = false; wrap.style.opacity = '1'; }
 }
 function closeComunicadoCompose(){
   document.getElementById('comunicado-compose-ov')?.classList.remove('open');
@@ -4957,12 +4988,13 @@ function saveComunicado(){
   const expiraRaw = document.getElementById('cc-expira').value;
   const id = _editingComunicadoId || ('com_'+Date.now()+Math.random().toString(36).slice(2,6));
   const existente = _comunicadosCache[id] || {};
+  const prioridade = document.getElementById('cc-prioridade').value;
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
     squad: document.getElementById('cc-squad').value,
-    prioridade: 'popup',
-    insistente: document.getElementById('cc-insistente').checked,
+    prioridade,
+    insistente: prioridade==='popup' ? document.getElementById('cc-insistente').checked : false,
     ativo: existente.ativo!==undefined ? existente.ativo : true,
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
