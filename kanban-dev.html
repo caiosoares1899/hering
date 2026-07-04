@@ -3417,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.73-dev</div>
+<div class="version">v8.30.74-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12918,6 +12918,16 @@ const KNOWN_SERVICES = [
 ];
 
 function getServiceInfo(url){
+  // Refina o reconhecimento de links do Google Drive pelo formato da URL.
+  if(/drive\.google\.com|docs\.google\.com/i.test(url)){
+    if(/\/document\//i.test(url))      return { icon:'📄', label:'Google Docs',   color:'#4285F4' };
+    if(/\/spreadsheets\//i.test(url))  return { icon:'📊', label:'Google Sheets', color:'#0F9D58' };
+    if(/\/presentation\//i.test(url))  return { icon:'📽', label:'Google Slides', color:'#F4B400' };
+    if(/\/forms\//i.test(url))         return { icon:'📝', label:'Google Forms',  color:'#7248B9' };
+    if(/\/folders\//i.test(url))       return { icon:'📁', label:'Pasta do Drive', color:'#4285F4' };
+    if(/\/file\//i.test(url))          return { icon:'📎', label:'Arquivo do Drive', color:'#4285F4' };
+    return { icon:'📁', label:'Google Drive', color:'#4285F4' };
+  }
   for(const s of KNOWN_SERVICES){
     if(s.pattern.test(url)) return s;
   }
@@ -14399,6 +14409,92 @@ async function runDevSeed(){
 
 // ── FIM DEV SEED ──────────────────────────────────────────────────────────
 
+// ══════════════════════════════════════════════════════════════════════
+// COMUNICADOS (ADM → usuários) — popup de aviso importante
+// Fase 1: só o popup. Dado em kanban/comunicados/{id}. "Lido" via localStorage.
+// ══════════════════════════════════════════════════════════════════════
+const COMUNICADO_TIPOS = {
+  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6', bg:'rgba(29,233,182,.12)' },
+  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166', bg:'rgba(255,209,102,.12)' },
+  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff', bg:'rgba(56,182,255,.12)' },
+  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b', bg:'rgba(255,107,107,.12)' },
+};
+let _comunicadosAtivos = [];
+let _comunicadoNaTela = null;
+
+function _initComunicados(){
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    const val = snap.val() || {};
+    const agora = new Date().toISOString();
+    _comunicadosAtivos = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .filter(c=>{
+        if(!c.ativo) return false;
+        if(c.prioridade!=='popup') return false;
+        if(c.squad && c.squad!=='*' && c.squad!==ACTIVE_SQUAD) return false;
+        if(c.expiraEm && c.expiraEm < agora) return false;
+        return true;
+      })
+      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    _talvezMostrarComunicado();
+  });
+}
+
+function _talvezMostrarComunicado(){
+  if(_comunicadoNaTela) return;
+  if(!window._currentUser) return;
+  if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
+  const pendente = _comunicadosAtivos.find(c=>{
+    if(c.insistente) return true;
+    return !_lsGet('comunicado_visto_'+c.id);
+  });
+  if(pendente) _mostrarComunicado(pendente);
+}
+
+function _algumOverlayCriticoAberto(){
+  const criticos = ['login-ov','m-ov','insc-ov','trello-members-ov'];
+  for(const id of criticos){
+    const el = document.getElementById(id);
+    if(el && el.classList.contains('open')) return true;
+  }
+  // No dev, o overlay de seed também não deve competir
+  const seed = document.getElementById('seed-overlay');
+  if(seed && seed.classList.contains('active')) return true;
+  return false;
+}
+
+function _mostrarComunicado(c){
+  _comunicadoNaTela = c;
+  const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
+  const badge = document.getElementById('comunicado-tipo-badge');
+  if(badge){ badge.innerHTML = tipo.icon+' '+tipo.label; badge.style.color = tipo.cor; }
+  const hd = document.getElementById('comunicado-hd');
+  if(hd) hd.style.background = tipo.bg;
+  document.getElementById('comunicado-titulo').textContent = c.titulo||'';
+  document.getElementById('comunicado-corpo').innerHTML = c.corpo||'';
+  const dataEl = document.getElementById('comunicado-data');
+  if(dataEl && c.criadoEm){
+    dataEl.textContent = 'Publicado em '+new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  }
+  document.getElementById('comunicado-ov').classList.add('open');
+}
+
+function dismissComunicado(){
+  if(_comunicadoNaTela){
+    _lsSet('comunicado_visto_'+_comunicadoNaTela.id, '1');
+    _comunicadoNaTela = null;
+  }
+  document.getElementById('comunicado-ov').classList.remove('open');
+  setTimeout(_talvezMostrarComunicado, 400);
+}
+
+function _lsGet(k){ try{ return (typeof safeLS!=='undefined'?safeLS:localStorage).getItem(k); }catch(e){ return null; } }
+function _lsSet(k,v){ try{ (typeof safeLS!=='undefined'?safeLS:localStorage).setItem(k,v); }catch(e){} }
+
+window.addEventListener('auth-change', e=>{
+  if(e.detail){ setTimeout(_initComunicados, 2000); }
+}, {once:true});
+
 renderBoard();
 
 // Abre um card automaticamente se veio via link direto (?card=ID) — usado pelo painel
@@ -14523,6 +14619,24 @@ renderBoard();
       style="width:100%;justify-content:center;padding:10px;font-size:12px;color:var(--txt3);">
       Continuar com board vazio
     </button>
+  </div>
+</div>
+
+<!-- ══ POPUP DE COMUNICADO (ADM → usuários) ══ -->
+<div class="ov" id="comunicado-ov" style="z-index:200;">
+  <div class="panel" style="max-width:440px;width:100%;">
+    <div class="panel-hd" id="comunicado-hd" style="gap:8px;">
+      <div class="panel-title" id="comunicado-tipo-badge" style="display:flex;align-items:center;gap:8px;">📢 Comunicado</div>
+      <button class="x-btn" onclick="dismissComunicado()">✕</button>
+    </div>
+    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px;max-height:70vh;overflow-y:auto;">
+      <div id="comunicado-titulo" style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Syne',sans-serif;line-height:1.3;"></div>
+      <div id="comunicado-corpo" style="font-size:13px;color:var(--txt2);line-height:1.6;"></div>
+      <div id="comunicado-data" style="font-size:10.5px;color:var(--txt3);"></div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;">
+      <button class="btn btn-p" onclick="dismissComunicado()" style="padding:8px 24px;">Entendi 👍</button>
+    </div>
   </div>
 </div>
 </body>
