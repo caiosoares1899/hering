@@ -3444,7 +3444,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.80-dev</div>
+<div class="version">v8.30.81-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13203,7 +13203,7 @@ function resyncColumnsAndTags(){
 
 function buildBackupPayload(){
   return {
-    version: '8.2.1',
+    version: document.querySelector('.version')?.textContent?.trim() || '',
     squad: ACTIVE_SQUAD,
     exportedAt: new Date().toISOString(),
     exportedBy: window._currentUser?.displayName||window._currentUser?.email||'anônimo',
@@ -13267,20 +13267,31 @@ function previewBackupStats(){
   el.style.display = 'block';
 }
 
+let _backupCfgCache = {};
+window._onValue(window._ref(window._db, FB+'/config/backup_cfg'), snap=>{
+  _backupCfgCache = snap.val() || {};
+  updateBackupAutoStatus();
+  const lastEl = document.getElementById('backup-last');
+  if(lastEl && _backupCfgCache.lastRun){
+    lastEl.textContent = '⏱ Último backup automático: '+new Date(_backupCfgCache.lastRun).toLocaleString('pt-BR');
+  }
+});
+
 function saveBackupConfig(){
   const cfg = {
     email:    document.getElementById('backup-email')?.value||'',
     service:  document.getElementById('emailjs-service')?.value||'',
     template: document.getElementById('emailjs-template')?.value||'',
     pubkey:   document.getElementById('emailjs-pubkey')?.value||'',
+    lastRun:  _backupCfgCache.lastRun || null,
   };
-  safeLS.setItem('backup_cfg_'+ACTIVE_SQUAD, JSON.stringify(cfg));
+  _backupCfgCache = cfg;
+  window._set(window._ref(window._db, FB+'/config/backup_cfg'), cfg).catch(()=>{});
   updateBackupAutoStatus();
 }
 
 function loadBackupCfg(){
-  const raw = safeLS.getItem('backup_cfg_'+ACTIVE_SQUAD);
-  return raw ? JSON.parse(raw) : {};
+  return _backupCfgCache;
 }
 
 function loadBackupTab(){
@@ -13294,11 +13305,9 @@ function loadBackupTab(){
   if(templateEl) templateEl.value = cfg.template||'';
   if(pubkeyEl)   pubkeyEl.value   = cfg.pubkey||'';
   updateBackupAutoStatus();
-  // Mostra último backup automático
   const lastEl = document.getElementById('backup-last');
-  const lastAuto = safeLS.getItem('backup_auto_last_'+ACTIVE_SQUAD);
-  if(lastEl && lastAuto){
-    lastEl.textContent = '⏱ Último backup automático: '+new Date(lastAuto).toLocaleString('pt-BR');
+  if(lastEl && cfg.lastRun){
+    lastEl.textContent = '⏱ Último backup automático: '+new Date(cfg.lastRun).toLocaleString('pt-BR');
   }
   renderBackupHistory();
 }
@@ -13352,7 +13361,8 @@ async function sendBackupEmail(isTest=false){
       is_test:  isTest ? '(TESTE)' : '',
     });
     const now = new Date().toISOString();
-    safeLS.setItem('backup_auto_last_'+ACTIVE_SQUAD, now);
+    _backupCfgCache.lastRun = now;
+    window._set(window._ref(window._db, FB+'/config/backup_cfg/lastRun'), now).catch(()=>{});
     // Salva snapshot no Firebase
     saveSnapshotToFirebase(payload, isTest?'teste':'auto');
     showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
@@ -13443,42 +13453,18 @@ function downloadSnapshotFromFirebase(date){
     .catch(()=>showToast('❌ Erro ao baixar snapshot'));
 }
 
-// ── Agendador semanal (domingo à meia-noite) ─────────────────────────────
-function scheduleWeeklyBackup(){
-  function msUntilNextSunday(){
-    const now = new Date();
-    const day = now.getDay(); // 0=dom
-    const daysUntilSun = day === 0 ? 7 : 7 - day; // próximo domingo (não hoje)
-    const next = new Date(now);
-    next.setDate(now.getDate() + daysUntilSun);
-    next.setHours(0, 5, 0, 0); // 00:05 pra dar margem
-    return next.getTime() - now.getTime();
-  }
-
-  function doWeeklyBackup(){
-    const cfg = loadBackupCfg();
-    if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
-    // Não envia se já enviou essa semana
-    const lastAuto = safeLS.getItem('backup_auto_last_'+ACTIVE_SQUAD);
-    if(lastAuto){
-      const daysSince = (Date.now() - new Date(lastAuto).getTime()) / 86400000;
-      if(daysSince < 6) return; // enviou há menos de 6 dias
-    }
+// ── Backup automático semanal: checagem "está atrasado?" ao carregar ────
+function checkOverdueBackup(){
+  const cfg = loadBackupCfg();
+  if(!cfg.email||!cfg.service||!cfg.template||!cfg.pubkey) return;
+  const diasDesde = cfg.lastRun ? (Date.now() - new Date(cfg.lastRun).getTime())/86400000 : Infinity;
+  if(diasDesde >= 7){
+    console.log('[Backup] Atrasado ('+Math.floor(diasDesde)+' dias) — rodando agora.');
     sendBackupEmail(false);
   }
-
-  const ms = msUntilNextSunday();
-  console.log('[Backup] Próximo backup automático em '+Math.round(ms/3600000)+'h');
-  setTimeout(()=>{
-    doWeeklyBackup();
-    // Reagenda semanalmente
-    setInterval(doWeeklyBackup, 7 * 24 * 60 * 60 * 1000);
-  }, ms);
 }
-
-// Inicia o agendador quando o usuário estiver logado
 window.addEventListener('auth-change', e=>{
-  if(e.detail) setTimeout(scheduleWeeklyBackup, 3000);
+  if(e.detail) setTimeout(checkOverdueBackup, 5000);
 }, {once:true});
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
