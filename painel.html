@@ -1983,7 +1983,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.60 · painel</div>
+<div class="version">v2.61 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3921,6 +3921,30 @@ function getAllPcalEvents(){
 // sem depender de um novo fetch na API do Google.
 // 1) Remove eventos "órfãos": vêm de uma agenda que já foi desconectada mas o registro ficou no cache.
 // 2) Deduplica por título+data (algumas agendas públicas do Google retornam o mesmo feriado 2-3x).
+// Limpeza forçada do cache pelo ADM — remove duplicatas do Firebase na hora,
+// sem precisar rebuscar na API do Google (útil quando o cache antigo já tinha
+// triplicatas salvas antes dos fixes de dedup entrarem).
+async function _forcarLimpezaCacheGcal(){
+  if(!_isAdmPainel()) return;
+  const raw = window._pcalGcalCacheRaw || {};
+  const eventos = Object.values(raw);
+  const vistos = new Set();
+  const limpo = eventos.filter(ev=>{
+    const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+    if(vistos.has(chave)) return false;
+    vistos.add(chave);
+    return true;
+  });
+  const removidos = eventos.length - limpo.length;
+  if(removidos === 0){
+    showToast('✅ Cache já está limpo — nenhuma duplicata encontrada.');
+    return;
+  }
+  const cacheObj = Object.fromEntries(limpo.map(ev=>[ev.id, ev]));
+  await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj).catch(()=>{});
+  showToast('🧹 Cache limpo: '+removidos+' duplicata'+(removidos>1?'s':'')+' removida'+(removidos>1?'s':'')+' do Firebase.');
+}
+
 function _applyGcalCacheCleaning(){
   const raw = window._pcalGcalCacheRaw || {};
   let eventos = Object.values(raw);
@@ -4276,7 +4300,8 @@ function renderPcalAgendasList(){
     const meta=window._pcalGcalCacheMeta;
     const quando = meta?.updatedAt ? 'há '+_relTime(meta.updatedAt) : 'nunca';
     infoEl.innerHTML = `<span>🕒 Atualizado ${quando}${meta?.updatedBy?' por '+esc(meta.updatedBy):''}</span>`
-      + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '');
+      + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '')
+      + (isAdm ? `<button onclick="_forcarLimpezaCacheGcal()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;" title="Remove duplicatas do cache sem rebuscar na API">🧹 Limpar duplicatas</button>` : '');
   }
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
