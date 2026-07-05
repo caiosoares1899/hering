@@ -1985,7 +1985,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.61 · painel-dev</div>
+<div class="version">v2.62 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4919,6 +4919,30 @@ const COMUNICADO_RASCUNHOS_SEED = [
     corpo: '<p>Este é um rascunho de <b>teste</b>, criado no ambiente dev pra validar o fluxo completo: da criação automática até aparecer no board.</p><p>Se você está vendo isso na seção "🤖 Rascunhos aguardando sua revisão", a primeira parte já funcionou. Clique em <b>"Revisar e publicar"</b> pra abrir o editor (ajuste o texto, tipo, squad-alvo ou prioridade se quiser) e depois confirme em <b>Publicar</b>.</p><p>Depois de publicado, abra o board de teste (<code>kanban-dev.html?squad=dev</code> ou <code>?squad=omnichannel</code>) pra ver o popup ou o item no mural 📢, dependendo da prioridade escolhida.</p><p>Pode excluir este teste quando terminar de validar — é só clicar no 🗑 na lista de comunicados publicados.</p>',
     tipo: 'novidade',
     squad: '*', // aparece em qualquer squad de teste (dev ou omnichannel)
+  },
+  {
+    id: 'seed_novidades_semana_2026_07_07',
+    titulo: '🚀 Novidades do Maré Digital — semana de 04–05/jul',
+    corpo: `<p>Fizemos várias melhorias no board e no painel essa semana. Aqui o resumo do que chegou pra vocês:</p>
+
+<p><b>❓ Ajuda contextual em todo o board</b><br>
+Agora tem um botão <b>?</b> discreto em vários pontos do board — Calendário, Agendas, Relatório de Tempo, WIP, Mural, Impedimento, Recorrentes, Modelos e Estrelas. Passe o mouse pra ver uma explicação rápida da funcionalidade, com link pra ir direto no Help Content completo.</p>
+
+<p><b>🔍 Busca no Help (Ctrl+K)</b><br>
+A Central de Ajuda ganhou campo de busca. Use <b>Ctrl+K</b> (ou Cmd+K no Mac) pra abrir e já digitar o que procura — a busca funciona em todas as seções ao mesmo tempo, com destaque do termo encontrado.</p>
+
+<p><b>📢 Sistema de Comunicados (Mural)</b><br>
+Clique no botão 📢 no header do board pra ver avisos do ADM e novidades. Tem também a aba <b>"Fale com o ADM"</b> — use pra reportar problemas, dar sugestões ou tirar dúvidas sem precisar de mensagem no WhatsApp.</p>
+
+<p><b>🔔 Sino mais esperto</b><br>
+O sininho agora treme a cada 30 minutos enquanto você tiver notificações não lidas. E se você abrir o board num dia diferente com notificações pendentes, aparece um lembrete. O botão <b>"Limpar antigas"</b> também foi corrigido — agora remove todas as já lidas de uma vez.</p>
+
+<p><b>💾 Backup automático de verdade</b><br>
+O backup semanal agora funciona de fato — ele rodava só se a aba ficasse aberta por 7 dias, o que nunca acontecia. Agora verifica na abertura e roda se estiver atrasado, de qualquer dispositivo. Se você já tinha configurado, vale reconfigurar uma vez em <b>Config → Backup</b>.</p>
+
+<p>Qualquer dúvida ou problema, use o <b>Fale com o ADM</b> no Mural 📢 ou chama direto!</p>`,
+    tipo: 'novidade',
+    squad: '*',
   },
 ];
 async function _seedComunicadoRascunhos(){
