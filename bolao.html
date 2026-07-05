@@ -130,18 +130,18 @@ const MATCHES = [
   {"id":"m086","fase":"Rodada de 32","home":"Austrália","away":"Egito","time":"2026-07-03T15:00:00-03:00","venue":"—"},
   {"id":"m087","fase":"Rodada de 32","home":"Argentina","away":"Cabo Verde","time":"2026-07-03T19:00:00-03:00","venue":"—"},
   {"id":"m088","fase":"Rodada de 32","home":"Colômbia","away":"Gana","time":"2026-07-03T22:30:00-03:00","venue":"—"},
-  {"id":"m089","fase":"Oitavas de Final","home":"Venc. m74","away":"Venc. m77","time":"2026-07-04T16:00:00-03:00","venue":"Filadélfia"},
-  {"id":"m090","fase":"Oitavas de Final","home":"Venc. m73","away":"Venc. m75","time":"2026-07-04T20:00:00-03:00","venue":"Houston"},
-  {"id":"m091","fase":"Oitavas de Final","home":"Venc. m76","away":"Venc. m78","time":"2026-07-05T16:00:00-03:00","venue":"Nova York/Nova Jersey"},
-  {"id":"m092","fase":"Oitavas de Final","home":"Venc. m79","away":"Venc. m80","time":"2026-07-05T20:00:00-03:00","venue":"Cidade do México"},
-  {"id":"m093","fase":"Oitavas de Final","home":"Venc. m83","away":"Venc. m84","time":"2026-07-06T16:00:00-03:00","venue":"Dallas"},
-  {"id":"m094","fase":"Oitavas de Final","home":"Venc. m81","away":"Venc. m82","time":"2026-07-06T20:00:00-03:00","venue":"Seattle"},
-  {"id":"m095","fase":"Oitavas de Final","home":"Venc. m86","away":"Venc. m88","time":"2026-07-07T16:00:00-03:00","venue":"Atlanta"},
-  {"id":"m096","fase":"Oitavas de Final","home":"Venc. m85","away":"Venc. m87","time":"2026-07-07T20:00:00-03:00","venue":"Vancouver"},
-  {"id":"m097","fase":"Quartas de Final","home":"Venc. m89","away":"Venc. m90","time":"2026-07-09T16:00:00-03:00","venue":"Boston"},
-  {"id":"m098","fase":"Quartas de Final","home":"Venc. m91","away":"Venc. m92","time":"2026-07-10T16:00:00-03:00","venue":"Los Angeles"},
-  {"id":"m099","fase":"Quartas de Final","home":"Venc. m93","away":"Venc. m94","time":"2026-07-11T16:00:00-03:00","venue":"Miami"},
-  {"id":"m100","fase":"Quartas de Final","home":"Venc. m95","away":"Venc. m96","time":"2026-07-11T20:00:00-03:00","venue":"Kansas City"},
+  {"id":"m089","fase":"Oitavas de Final","home":"Canadá","away":"Marrocos","time":"2026-07-04T16:00:00-03:00","venue":"—"},
+  {"id":"m090","fase":"Oitavas de Final","home":"Paraguai","away":"França","time":"2026-07-04T20:00:00-03:00","venue":"—"},
+  {"id":"m091","fase":"Oitavas de Final","home":"Brasil","away":"Noruega","time":"2026-07-05T17:00:00-03:00","venue":"—"},
+  {"id":"m092","fase":"Oitavas de Final","home":"México","away":"Inglaterra","time":"2026-07-05T21:00:00-03:00","venue":"—"},
+  {"id":"m093","fase":"Oitavas de Final","home":"Portugal","away":"Espanha","time":"2026-07-06T16:00:00-03:00","venue":"—"},
+  {"id":"m094","fase":"Oitavas de Final","home":"Estados Unidos","away":"Bélgica","time":"2026-07-06T21:00:00-03:00","venue":"—"},
+  {"id":"m095","fase":"Oitavas de Final","home":"Argentina","away":"Egito","time":"2026-07-07T13:00:00-03:00","venue":"—"},
+  {"id":"m096","fase":"Oitavas de Final","home":"Suíça","away":"Colômbia","time":"2026-07-07T17:00:00-03:00","venue":"—"},
+  {"id":"m097","fase":"Quartas de Final","home":"França","away":"Marrocos","time":"2026-07-09T16:00:00-03:00","venue":"—"},
+  {"id":"m098","fase":"Quartas de Final","home":"Venc. m091","away":"Venc. m092","time":"2026-07-09T20:00:00-03:00","venue":"—"},
+  {"id":"m099","fase":"Quartas de Final","home":"Venc. m093","away":"Venc. m094","time":"2026-07-10T16:00:00-03:00","venue":"—"},
+  {"id":"m100","fase":"Quartas de Final","home":"Venc. m095","away":"Venc. m096","time":"2026-07-11T16:00:00-03:00","venue":"—"},
   {"id":"m101","fase":"Semifinal","home":"Venc. m97","away":"Venc. m98","time":"2026-07-14T16:00:00-03:00","venue":"Dallas"},
   {"id":"m102","fase":"Semifinal","home":"Venc. m99","away":"Venc. m100","time":"2026-07-15T16:00:00-03:00","venue":"Atlanta"},
   {"id":"m103","fase":"3º Lugar","home":"Perd. m101","away":"Perd. m102","time":"2026-07-18T16:00:00-03:00","venue":"Miami"},
@@ -1833,7 +1833,7 @@ input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 </div>
 
 <div id="toast-container"></div>
-<div class="version">v4.0 · Rodada de 32 oficial</div>
+<div class="version">v4.1 · Oitavas + Quartas França×Marrocos</div>
 
 <script>
 // ─── FLAGS TICKER ─────────────────────────────────────────────────────────────
@@ -2013,11 +2013,11 @@ window.addEventListener("DOMContentLoaded", () => {
     ["m083","Espanha","Áustria"],["m084","Portugal","Croácia"],
     ["m085","Suíça","Argélia"],["m086","Austrália","Egito"],
     ["m087","Argentina","Cabo Verde"],["m088","Colômbia","Gana"],
-    ["m089","Venc. m76","Venc. m75"],["m090","Venc. m74","Venc. m73"],
-    ["m091","Venc. m80","Venc. m78"],["m092","Venc. m77","Venc. m79"],
-    ["m093","Venc. m81","Venc. m85"],["m094","Venc. m84","Venc. m82"],
-    ["m095","Venc. m87","Venc. m88"],["m096","Venc. m83","Venc. m86"],
-    ["m097","Venc. m89","Venc. m90"],["m098","Venc. m91","Venc. m92"],
+    ["m089","Canadá","Marrocos"],["m090","Paraguai","França"],
+    ["m091","Brasil","Noruega"],["m092","México","Inglaterra"],
+    ["m093","Portugal","Espanha"],["m094","Estados Unidos","Bélgica"],
+    ["m095","Argentina","Egito"],["m096","Suíça","Colômbia"],
+    ["m097","França","Marrocos"],["m098","Venc. m91","Venc. m92"],
     ["m099","Venc. m93","Venc. m94"],["m100","Venc. m95","Venc. m96"],
     ["m101","Venc. m97","Venc. m98"],["m102","Venc. m99","Venc. m100"],
     ["m103","Perd. m101","Perd. m102"],["m104","Venc. m101","Venc. m102"]
