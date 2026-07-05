@@ -696,11 +696,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   position:sticky;top:0;background:rgba(6,26,46,.98);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
 .cal-hd-l{display:flex;align-items:center;gap:10px;}
 .cal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
-.cal-nav{display:flex;align-items:center;gap:6px;}
+.cal-nav{display:flex;align-items:center;gap:10px;justify-content:center;flex:1;}
 .cal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
-  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
-.cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
-.cal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:140px;text-align:center;}
+  border-radius:8px;color:var(--txt2);cursor:pointer;padding:7px 14px;font-size:16px;transition:all .15s;}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);background:rgba(29,233,182,.08);}
+.cal-month-lbl{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;min-width:180px;text-align:center;color:var(--txt);}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
 .cal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
@@ -3489,7 +3489,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.87-dev</div>
+<div class="version">v8.30.88-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10807,8 +10807,9 @@ function loadCalEvents(){
     const porId = new Map();
     combinados.forEach(e => porId.set(e.id, e));
     const vistos = new Set();
+    const _norm = s => (s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
     const final = [...porId.values()].filter(ev=>{
-      const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+      const chave = (ev.start||'').split('T')[0]+'|'+_norm(ev.title);
       if(vistos.has(chave)) return false;
       vistos.add(chave);
       return true;
@@ -13641,6 +13642,31 @@ window.addEventListener('auth-change', e=>{
 }, {once:true});
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
+
+// ── Sino: tremer a cada 30min se houver notificações não lidas ────────────
+(function _initNotifReminder(){
+  function _ringIfUnread(){
+    const btn = document.getElementById('notif-btn');
+    if(!btn || !btn.classList.contains('has-unread')) return;
+    btn.classList.add('ring');
+    setTimeout(()=>btn.classList.remove('ring'), 600);
+  }
+  function _checkDayReminder(){
+    const btn = document.getElementById('notif-btn');
+    if(!btn || !btn.classList.contains('has-unread')) return;
+    const today = new Date().toISOString().split('T')[0];
+    const visto = safeLS.getItem('notif_reminder_day');
+    if(visto === today) return;
+    safeLS.setItem('notif_reminder_day', today);
+    showToast('🔔 Você tem notificações não lidas — clique no sino para ver.');
+  }
+  window.addEventListener('auth-change', e=>{
+    if(!e.detail) return;
+    setInterval(_ringIfUnread, 30 * 60 * 1000);
+    setInterval(_checkDayReminder, 60 * 60 * 1000);
+    setTimeout(_checkDayReminder, 8000);
+  }, {once:true});
+})();
 
 // Seed overlay é ativado diretamente pelo fbListen de cards (acima)
 
