@@ -2002,43 +2002,38 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .seed-log-line{padding:1px 0;}
 .seed-log .ok{color:#1de9b6;}.seed-log .err{color:#ff6b6b;}.seed-log .inf{color:#38b6ff;}
 /* ── Balão de ajuda contextual (?-btn) ──────────────────────────── */
-.help-tip{position:relative;display:inline-flex;flex-shrink:0;}
+.help-tip{position:relative;display:inline-flex;flex-shrink:0;vertical-align:middle;}
 .help-tip-btn{
   display:inline-flex;align-items:center;justify-content:center;
   width:16px;height:16px;border-radius:999px;
   background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);
   color:rgba(56,182,255,.7);font-size:9px;font-weight:700;
   cursor:pointer;flex-shrink:0;font-family:'DM Sans',sans-serif;
-  line-height:1;
+  line-height:1;position:relative;z-index:1;
 }
 .help-tip-btn:hover{background:rgba(56,182,255,.22);color:var(--txt);}
 .help-tip-balloon{
-  display:none;position:absolute;bottom:calc(100% + 8px);left:50%;
-  transform:translateX(-50%);
-  background:rgba(6,24,44,.98);border:1px solid rgba(56,182,255,.25);
-  border-radius:10px;padding:10px 12px;min-width:220px;max-width:280px;
+  display:none;
+  position:fixed; /* fixed em vez de absolute — nunca sai da viewport */
+  background:rgba(6,24,44,.98);border:1px solid rgba(56,182,255,.3);
+  border-radius:10px;padding:11px 13px;
+  width:240px;max-width:calc(100vw - 24px);
   font-size:11px;color:var(--txt2);line-height:1.55;
-  box-shadow:0 8px 24px rgba(0,0,0,.7);z-index:9999;text-align:left;
+  box-shadow:0 8px 32px rgba(0,0,0,.8);z-index:99999;text-align:left;
   pointer-events:none;
-}
-.help-tip-balloon::after{
-  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  border:5px solid transparent;border-top-color:rgba(56,182,255,.25);
+  /* posição calculada via JS no hover */
 }
 .help-tip-balloon a{color:var(--teal);text-decoration:none;font-weight:600;pointer-events:all;}
 .help-tip-balloon a:hover{text-decoration:underline;}
-.help-tip:hover .help-tip-balloon{display:block;}
-/* Versão amarela (kudos) — abre pra baixo pois fica no header de um painel lateral */
+/* Ativação: JS posiciona, CSS só exibe */
+.help-tip:hover .help-tip-balloon,
+.help-tip:focus-within .help-tip-balloon{display:block;}
+/* Versão amarela (kudos) */
 .help-tip.kudos .help-tip-btn{background:rgba(255,209,102,.15);border-color:rgba(255,209,102,.3);color:rgba(255,209,102,.8);}
-.help-tip.kudos .help-tip-balloon{border-color:rgba(255,209,102,.25);bottom:auto;top:calc(100% + 6px);left:auto;right:0;transform:none;}
-.help-tip.kudos .help-tip-balloon::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:rgba(255,209,102,.25);}
+.help-tip.kudos .help-tip-balloon{border-color:rgba(255,209,102,.35);}
 /* Versão vermelha (impedimento) */
 .help-tip.danger .help-tip-btn{background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.3);color:rgba(255,107,107,.8);width:14px;height:14px;font-size:8px;}
-.help-tip.danger .help-tip-balloon{border-color:rgba(255,107,107,.25);}
-.help-tip.danger .help-tip-balloon::after{border-top-color:rgba(255,107,107,.25);}
-/* Balão à esquerda (quando botão está no canto direito) */
-.help-tip.left .help-tip-balloon{left:auto;right:0;transform:none;}
-.help-tip.left .help-tip-balloon::after{left:auto;right:12px;transform:none;}
+.help-tip.danger .help-tip-balloon{border-color:rgba(255,107,107,.35);}
 </style>
 </head>
 <body>
@@ -3494,7 +3489,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.86-dev</div>
+<div class="version">v8.30.87-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9555,14 +9550,40 @@ document.addEventListener('keydown', e=>{
   }
 });
 
-// helpTip — gera um balão de ajuda contextual (hover CSS puro, sem JS extra).
-// tip: texto curto no balão; term: abre o help na busca ao clicar "Saiba mais →"
-// variant: '' | 'kudos' | 'danger' | 'left'
+// helpTip — gera um balão de ajuda contextual (position:fixed via JS).
+// O balão usa position:fixed calculado no hover pra nunca sair da viewport,
+// independente do contexto do container pai.
 function helpTip(tip, term, variant){
   const v = variant ? ' '+variant : '';
   const link = term ? `<br><a href="#" onclick="event.preventDefault();openHelp(null,'${term.replace(/'/g,"\\'")}')">Saiba mais →</a>` : '';
   return `<span class="help-tip${v}" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">${tip}${link}</span></span>`;
 }
+
+// Posiciona o balão usando position:fixed calculado na hora do hover —
+// assim nunca sai da viewport mesmo quando o ? está em containers laterais,
+// painéis sobrepostos ou outros contextos de overflow:hidden.
+document.addEventListener('mouseover', e=>{
+  const btn = e.target.closest('.help-tip-btn');
+  if(!btn) return;
+  const balloon = btn.closest('.help-tip')?.querySelector('.help-tip-balloon');
+  if(!balloon) return;
+  const r = btn.getBoundingClientRect();
+  const bw = 240;
+  // Centraliza no botão, clampado pra não sair da tela
+  let left = r.left + r.width/2 - bw/2;
+  left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+  balloon.style.left = left+'px';
+  balloon.style.width = bw+'px';
+  balloon.style.right = 'auto';
+  // Prefere abrir acima; vai abaixo se não houver espaço
+  const bh = balloon.offsetHeight || 110;
+  if(r.top - bh - 10 >= 8){
+    balloon.style.top = (r.top - bh - 8)+'px';
+  } else {
+    balloon.style.top = (r.bottom + 8)+'px';
+  }
+  balloon.style.bottom = 'auto';
+});
 // ═══════════════════════════════════════════════════════
 
 
