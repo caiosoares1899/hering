@@ -3489,7 +3489,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.89-dev</div>
+<div class="version">v8.30.90-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9880,8 +9880,9 @@ function loadNotifs(){
     const now = Date.now();
     const TTL = NOTIF_TTL_DAYS * 86400000;
     // Remove expiradas
+    const PAINEL_ONLY_TYPES = new Set(['rascunho']);
     const active = Object.entries(val)
-      .filter(([id,n])=> now - new Date(n.ts).getTime() < TTL)
+      .filter(([id,n])=> now - new Date(n.ts).getTime() < TTL && !PAINEL_ONLY_TYPES.has(n.type))
       .map(([id,n])=>({...n,id}))
       .sort((a,b)=>b.ts.localeCompare(a.ts));
     // Limpa expiradas do Firebase
