@@ -1994,6 +1994,44 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border:1px solid var(--sqb,rgba(56,182,255,.3));color:var(--sqc,#38b6ff);
   background:var(--sqbg,rgba(56,182,255,.08));flex-shrink:0;
 }
+/* ── Balão de ajuda contextual (?-btn) ──────────────────────────── */
+.help-tip{position:relative;display:inline-flex;flex-shrink:0;}
+.help-tip-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:999px;
+  background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);
+  color:rgba(56,182,255,.7);font-size:9px;font-weight:700;
+  cursor:pointer;flex-shrink:0;font-family:'DM Sans',sans-serif;
+  line-height:1;
+}
+.help-tip-btn:hover{background:rgba(56,182,255,.22);color:var(--txt);}
+.help-tip-balloon{
+  display:none;position:absolute;bottom:calc(100% + 8px);left:50%;
+  transform:translateX(-50%);
+  background:rgba(6,24,44,.98);border:1px solid rgba(56,182,255,.25);
+  border-radius:10px;padding:10px 12px;min-width:220px;max-width:280px;
+  font-size:11px;color:var(--txt2);line-height:1.55;
+  box-shadow:0 8px 24px rgba(0,0,0,.7);z-index:9999;text-align:left;
+  pointer-events:none;
+}
+.help-tip-balloon::after{
+  content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:rgba(56,182,255,.25);
+}
+.help-tip-balloon a{color:var(--teal);text-decoration:none;font-weight:600;pointer-events:all;}
+.help-tip-balloon a:hover{text-decoration:underline;}
+.help-tip:hover .help-tip-balloon{display:block;}
+/* Versão amarela (kudos) */
+.help-tip.kudos .help-tip-btn{background:rgba(255,209,102,.15);border-color:rgba(255,209,102,.3);color:rgba(255,209,102,.8);}
+.help-tip.kudos .help-tip-balloon{border-color:rgba(255,209,102,.25);}
+.help-tip.kudos .help-tip-balloon::after{border-top-color:rgba(255,209,102,.25);}
+/* Versão vermelha (impedimento) */
+.help-tip.danger .help-tip-btn{background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.3);color:rgba(255,107,107,.8);width:14px;height:14px;font-size:8px;}
+.help-tip.danger .help-tip-balloon{border-color:rgba(255,107,107,.25);}
+.help-tip.danger .help-tip-balloon::after{border-top-color:rgba(255,107,107,.25);}
+/* Balão à esquerda (quando botão está no canto direito) */
+.help-tip.left .help-tip-balloon{left:auto;right:0;transform:none;}
+.help-tip.left .help-tip-balloon::after{left:auto;right:12px;transform:none;}
 </style>
 </head>
 <body>
@@ -2125,7 +2163,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><button onclick="openHelp('config','relatório tempo')" title="Ajuda: Relatório de Tempo" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
@@ -2187,7 +2225,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- ═══ ESTRELAS DO MAR (Kudos) ═══ -->
 <div class="lem-drawer kudos-drawer" id="kudos-drawer">
   <div class="lem-hd">
-    <div class="lem-hd-title" style="display:flex;align-items:center;gap:6px;">⭐ Estrelas do Mar<button onclick="openHelp('kudos','estrelas do mar')" title="Ajuda: Estrelas do Mar" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(255,209,102,.15);border:1px solid rgba(255,209,102,.3);color:rgba(255,209,102,.8);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
+    <div class="lem-hd-title" style="display:flex;align-items:center;gap:6px;">⭐ Estrelas do Mar<span class="help-tip kudos" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Reconheça publicamente quem fez algo incrível. A estrela aparece pro time inteiro — nada melhor do que ter o bom trabalho visto!<br><a href="#" onclick="event.preventDefault();openHelp(null,'estrelas do mar')">Saiba mais →</a></span></span></div>
     <button class="x-btn" onclick="toggleKudos()">✕</button>
   </div>
   <div class="kudos-scope-tabs">
@@ -2472,7 +2510,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- Impedimento (oculto por padrão) -->
     <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
-      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">🚧 Impedimento<button onclick="openHelp('cards','impedimento')" title="Ajuda: Impedimentos" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.8);font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
+      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">🚧 Impedimento<span class="help-tip danger" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Descreva o que está travando o card. O bloqueio fica visível pra todos e gera um aviso automático nos lembretes do board.<br><a href="#" onclick="event.preventDefault();openHelp(null,'impedimento')">Saiba mais →</a></span></span></div>
       <textarea class="fi fi-ta" id="m-blocker-reason" rows="2" placeholder="Descreva o impedimento..." style="border-color:rgba(255,107,107,.3);" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveCard();}"></textarea>
       <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-p btn-sm" onclick="saveCard()">✓ Salvar impedimento</button>
@@ -2552,7 +2590,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="field"><label class="fl">Início</label><input class="fi" id="cfg-sprint-start" type="date" oninput="calcSprintEnd()"></div>
         <div class="field"><label class="fl">Fim (calculado)</label><input class="fi" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
       </div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:5px;" class="cfg-sec-title">WIP & Capacidade<button onclick="closeOv('cfg-ov');openHelp('board','wip')" title="Ajuda: WIP Limit" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:5px;" class="cfg-sec-title">WIP & Capacidade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP (Work in Progress) limita quantos cards podem estar em andamento ao mesmo tempo — reduz multitarefa e aumenta o foco do time.<br><a href="#" onclick="event.preventDefault();openHelp(null,'wip')">Saiba mais →</a></span></span></div>
       <div class="frow">
         <div class="field"><label class="fl">Limite de WIP</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
         <div class="field"><label class="fl">Capacidade (%)</label><input class="fi" id="cfg-capacity" type="number" min="0" max="100"></div>
@@ -2595,7 +2633,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <strong>Como funciona:</strong> Cole o ID de cada calendário do Google desejado. Certifique-se de que a agenda esteja configurada como <strong>"Disponibilizar ao público"</strong> (ou aberta para a organização) nas configurações do Google Calendar.
   </p>
 
-  <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);display:flex;align-items:center;gap:5px;">Agendas Conectadas<button onclick="closeOv('cfg-ov');openHelp('config','agenda do google')" title="Ajuda: Agendas do Google" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
+  <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);display:flex;align-items:center;gap:5px;">Agendas Conectadas<span class="help-tip left" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Conecte agendas do Google (feriados, rituais) — aparecem no calendário de todos os squads automaticamente. Só o ADM precisa autorizar.<br><a href="#" onclick="event.preventDefault();openHelp(null,'agenda do google')">Saiba mais →</a></span></span></div>
   <div id="cfg-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:4px;display:flex;align-items:center;gap:8px;"></div>
   <div id="cfg-gcal-cache-info" style="font-size:10px;color:var(--txt3);margin-bottom:6px;"></div>
   <button id="cfg-gcal-process-btn" onclick="processGcalQueueForAdmin()" style="display:none;margin-bottom:10px;padding:6px 12px;font-size:10.5px;background:rgba(255,209,102,.1);color:var(--warn);border:1px solid rgba(255,209,102,.3);border-radius:7px;cursor:pointer;">🔔 Processar solicitações pendentes</button>
@@ -3009,7 +3047,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    <div class="cal-hd" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
       
       <div style="display:flex; align-items:center; gap:16px;">
-        <div class="cal-title" style="display:flex;align-items:center;gap:6px;">📅 Calendários<button onclick="event.stopPropagation();closeOv('cal-ov');openHelp('config','calendário')" title="Ajuda: Calendário" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
+        <div class="cal-title" style="display:flex;align-items:center;gap:6px;">📅 Calendários<span class="help-tip left" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Visualize eventos, prazos de cards e agendas do Google. Crie eventos pra avisar o time.<br><a href="#" onclick="event.preventDefault();openHelp(null,'calendário')">Saiba mais →</a></span></span></div>
         <div style="display:flex; gap:6px;">
           <button class="view-btn active" data-mode="both" onclick="changeCalView('both')">Tudo</button>
           <button class="view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
@@ -3417,7 +3455,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.84</div>
+<div class="version">v8.30.85</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6569,7 +6607,19 @@ function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'
 // ── Carregar ──────────────────────────────────────────────────────
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
-    _campanhas = snap.val()||{};
+    const raw = snap.val()||{};
+    // Filtra campanhas que não pertencem ao squad ativo nem a squads reais —
+    // evita que campanhas criadas em squads fictícios (dev, omnichannel) apareçam
+    // no board de produção, já que todos lêem o mesmo nó kanban/campanhas.
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    _campanhas = Object.fromEntries(
+      Object.entries(raw).filter(([_,c])=>{
+        const sq = c.squads||[];
+        // Exclui campanhas cujos squads são TODOS fictícios
+        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s))) return false;
+        return true;
+      })
+    );
     // se o detalhe estiver aberto, atualiza
     if(_campAtual && document.getElementById('camp-view-detalhe').style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
@@ -7380,9 +7430,14 @@ function openQL(tipo){
   const helpTerms={recorrentes:'recorrente',modelos:'modelo',agendamentos:'agendamento'};
   const titleEl = document.getElementById('ql-title');
   titleEl.style.display='flex'; titleEl.style.alignItems='center'; titleEl.style.gap='6px';
+  const tipTexts = {
+    recorrentes: 'Cards que se repetem a cada sprint — entregas fixas e rituais. Clique em "✅ Usar" pra criar um no Backlog.',
+    modelos:     'Templates com tudo pré-preenchido. Crie a partir de um card existente (📋 no rodapé) ou do zero aqui.',
+    agendamentos:'Cards agendados pra entrar automaticamente numa data específica.'
+  };
   titleEl.innerHTML = titles[tipo]
     + (helpTerms[tipo]
-      ? `<button onclick="closeOv('ql-ov');openHelp(null,'${helpTerms[tipo]}')" title="Ajuda sobre este recurso" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button>`
+      ? helpTip(tipTexts[tipo]||'', helpTerms[tipo])
       : '');
   // Popula tag select
   document.getElementById('ql-new-tag').innerHTML=tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
@@ -9455,10 +9510,13 @@ document.addEventListener('keydown', e=>{
   }
 });
 
-// Botão ❓ contextual — renderiza um botão discreto que abre o help numa busca específica
-function helpBtn(term, title){
-  title = title || 'Ajuda sobre: '+term;
-  return `<button onclick="event.stopPropagation();openHelp(null,'${term.replace(/'/g,"\\'")}');" title="${esc(title)}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;margin-left:5px;vertical-align:middle;flex-shrink:0;">?</button>`;
+// helpTip — gera um balão de ajuda contextual (hover CSS puro, sem JS extra).
+// tip: texto curto no balão; term: abre o help na busca ao clicar "Saiba mais →"
+// variant: '' | 'kudos' | 'danger' | 'left'
+function helpTip(tip, term, variant){
+  const v = variant ? ' '+variant : '';
+  const link = term ? `<br><a href="#" onclick="event.preventDefault();openHelp(null,'${term.replace(/'/g,"\\'")}')">Saiba mais →</a>` : '';
+  return `<span class="help-tip${v}" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">${tip}${link}</span></span>`;
 }
 // ═══════════════════════════════════════════════════════
 
@@ -9769,7 +9827,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${n.title}</div>
@@ -9806,14 +9864,18 @@ function markAllRead(){
 function clearOldNotifs(){
   const user=window._currentUser; if(!user) return;
   const cutoff=Date.now()-86400000; // mais de 1 dia
+  let count=0;
   document.querySelectorAll('.notif-item').forEach(el=>{
-    const time=el.querySelector('.notif-time')?.dataset?.ts;
-    if(time && new Date(time).getTime()<cutoff){
-      const onclick=el.getAttribute('onclick')||'';
-      const m=onclick.match(/'([^']+)'/);
-      if(m) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+m[1]),null).catch(()=>{});
+    const ts   = el.dataset.ts;
+    const nid  = el.dataset.notifId;
+    if(!ts || !nid) return;
+    if(new Date(ts).getTime() < cutoff){
+      window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+nid),null).catch(()=>{});
+      count++;
     }
   });
+  if(count===0) showToast('Nenhuma notificação com mais de 1 dia.');
+  else showToast('🧹 '+count+' notificação'+(count>1?'ões':'')+' antiga'+(count>1?'s':'')+' removida'+(count>1?'s':'')+'.');
 }
 
 function dismissNotif(notifId){
@@ -13879,7 +13941,7 @@ renderBoard();
 <div class="ov" id="mural-ov" style="z-index:195;">
   <div class="panel" style="max-width:480px;width:100%;max-height:80vh;">
     <div class="panel-hd">
-      <div class="panel-title" style="display:flex;align-items:center;gap:6px;">📢 Mural<button onclick="closeOv('mural-ov');openHelp('comunicacao','mural')" title="Ajuda: Mural e comunicados" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
+      <div class="panel-title" style="display:flex;align-items:center;gap:6px;">📢 Mural<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Avisos do ADM ficam aqui. Use "Fale com o ADM" pra enviar reports, sugestões ou dúvidas — chegam direto no sino do gestor.<br><a href="#" onclick="event.preventDefault();openHelp(null,'mural')">Saiba mais →</a></span></span></div>
       <button class="x-btn" onclick="closeOv('mural-ov')">✕</button>
     </div>
     <div style="display:flex;border-bottom:1px solid var(--glass-b);padding:0 16px;">
