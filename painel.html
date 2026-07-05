@@ -1983,7 +1983,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.61 · painel</div>
+<div class="version">v2.62 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2316,7 +2316,17 @@ const _pTag = (tid) => {
 
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
-    _campanhas = snap.val()||{};
+    const raw = snap.val()||{};
+    // Exclui campanhas cujos squads são todos fictícios (dev, omnichannel)
+    // — evita que dados de teste apareçam no painel de produção
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    _campanhas = Object.fromEntries(
+      Object.entries(raw).filter(([_,c])=>{
+        const sq = c.squads||[];
+        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s))) return false;
+        return true;
+      })
+    );
     // atualiza detalhe se estiver aberto
     if(_campAtual && document.getElementById('camp-view-detalhe')?.style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
@@ -3926,7 +3936,15 @@ function getAllPcalEvents(){
 // triplicatas salvas antes dos fixes de dedup entrarem).
 async function _forcarLimpezaCacheGcal(){
   if(!_isAdmPainel()) return;
-  const raw = window._pcalGcalCacheRaw || {};
+  showToast('🔄 Lendo cache do Firebase…');
+  // Lê DIRETO do Firebase (não usa _pcalGcalCacheRaw que já passou pela limpeza em memória)
+  let rawSnap;
+  try {
+    rawSnap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache'));
+  } catch(e) {
+    showToast('❌ Erro ao ler cache: '+(e?.message||e)); return;
+  }
+  const raw = rawSnap.val() || {};
   const eventos = Object.values(raw);
   const vistos = new Set();
   const limpo = eventos.filter(ev=>{
@@ -3937,12 +3955,14 @@ async function _forcarLimpezaCacheGcal(){
   });
   const removidos = eventos.length - limpo.length;
   if(removidos === 0){
-    showToast('✅ Cache já está limpo — nenhuma duplicata encontrada.');
+    showToast('✅ Cache já está limpo no Firebase — nenhuma duplicata encontrada ('+eventos.length+' eventos).');
     return;
   }
   const cacheObj = Object.fromEntries(limpo.map(ev=>[ev.id, ev]));
-  await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj).catch(()=>{});
-  showToast('🧹 Cache limpo: '+removidos+' duplicata'+(removidos>1?'s':'')+' removida'+(removidos>1?'s':'')+' do Firebase.');
+  await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj).catch(e=>{
+    showToast('❌ Erro ao gravar: '+(e?.message||e)); return;
+  });
+  showToast('🧹 '+removidos+' duplicata'+(removidos>1?'s':'')+' removida'+(removidos>1?'s':'')+' do Firebase. Calendário atualizado.');
 }
 
 function _applyGcalCacheCleaning(){
