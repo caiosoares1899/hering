@@ -2028,10 +2028,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .help-tip-balloon a{color:var(--teal);text-decoration:none;font-weight:600;pointer-events:all;}
 .help-tip-balloon a:hover{text-decoration:underline;}
 .help-tip:hover .help-tip-balloon{display:block;}
-/* Versão amarela (kudos) */
+/* Versão amarela (kudos) — abre pra baixo pois fica no header de um painel lateral */
 .help-tip.kudos .help-tip-btn{background:rgba(255,209,102,.15);border-color:rgba(255,209,102,.3);color:rgba(255,209,102,.8);}
-.help-tip.kudos .help-tip-balloon{border-color:rgba(255,209,102,.25);}
-.help-tip.kudos .help-tip-balloon::after{border-top-color:rgba(255,209,102,.25);}
+.help-tip.kudos .help-tip-balloon{border-color:rgba(255,209,102,.25);bottom:auto;top:calc(100% + 6px);left:auto;right:0;transform:none;}
+.help-tip.kudos .help-tip-balloon::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:rgba(255,209,102,.25);}
 /* Versão vermelha (impedimento) */
 .help-tip.danger .help-tip-btn{background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.3);color:rgba(255,107,107,.8);width:14px;height:14px;font-size:8px;}
 .help-tip.danger .help-tip-balloon{border-color:rgba(255,107,107,.25);}
@@ -3494,7 +3494,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.85-dev</div>
+<div class="version">v8.30.86-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9908,18 +9908,15 @@ function markAllRead(){
 
 function clearOldNotifs(){
   const user=window._currentUser; if(!user) return;
-  const cutoff=Date.now()-86400000;
   let count=0;
-  document.querySelectorAll('.notif-item').forEach(el=>{
-    const ts=el.dataset.ts; const nid=el.dataset.notifId;
-    if(!ts||!nid) return;
-    if(new Date(ts).getTime()<cutoff){
-      window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+nid),null).catch(()=>{});
-      count++;
-    }
+  document.querySelectorAll('.notif-item:not(.unread)').forEach(el=>{
+    const nid = el.dataset.notifId;
+    if(!nid) return;
+    window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+nid),null).catch(()=>{});
+    count++;
   });
-  if(count===0) showToast('Nenhuma notificação com mais de 1 dia.');
-  else showToast('🧹 '+count+' notificação'+(count>1?'ões':'')+' antiga'+(count>1?'s':'')+' removida'+(count>1?'s':'')+'.');
+  if(count===0) showToast('Nenhuma notificação lida para remover.');
+  else showToast('🧹 '+count+' notificação'+(count>1?'ões':'')+' lida'+(count>1?'s':'')+' removida'+(count>1?'s':'')+'.');
 }
 
 function dismissNotif(notifId){
