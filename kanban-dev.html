@@ -3489,7 +3489,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.88-dev</div>
+<div class="version">v8.30.89-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4777,6 +4777,26 @@ function showApp(user) {
   document.getElementById('user-name').textContent = user.displayName || user.email;
   const av = document.getElementById('user-avatar');
   if (user.photoURL) { av.src = user.photoURL; av.style.display = 'block'; }
+  const bvKey = 'bvmd_'+user.uid;
+  if(!safeLS.getItem(bvKey)){
+    safeLS.setItem(bvKey, '1');
+    setTimeout(()=>_showBoasVindas(user), 1500);
+  }
+}
+function _showBoasVindas(user){
+  const nome = (user.displayName||user.email||'').split(' ')[0];
+  const el = document.getElementById('boasvindas-ov');
+  if(!el) return;
+  const nomeEl = document.getElementById('boasvindas-nome');
+  if(nomeEl) nomeEl.textContent = nome ? 'Olá, '+nome+'! 👋' : 'Bem-vindo(a)! 👋';
+  el.classList.add('open');
+}
+function closeBoasVindas(){
+  document.getElementById('boasvindas-ov')?.classList.remove('open');
+}
+function boasVindasOpenHelp(){
+  closeBoasVindas();
+  setTimeout(()=>openHelp(), 200);
 }
 
 function showSquadSelectorFiltered(squadIds) {
@@ -15093,6 +15113,32 @@ renderBoard();
         </select>
         <textarea id="fb-texto" rows="5" placeholder="Escreva aqui..." style="padding:9px 11px;font-size:12.5px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);resize:vertical;font-family:'DM Sans',sans-serif;"></textarea>
         <button class="btn btn-p" onclick="enviarFeedback()" style="padding:9px;justify-content:center;">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══ POPUP DE BOAS-VINDAS ══ -->
+<div class="ov" id="boasvindas-ov" style="z-index:210;">
+  <div class="panel" style="max-width:460px;width:94%;border:1px solid rgba(29,233,182,.25);">
+    <div style="padding:28px 26px 0;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">🐟</div>
+      <div id="boasvindas-nome" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--txt);margin-bottom:6px;">Bem-vindo(a)! 👋</div>
+      <div style="font-size:13px;color:var(--teal);font-weight:600;margin-bottom:18px;">Maré Digital · Kanban do time</div>
+    </div>
+    <div style="padding:0 26px 22px;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:10px;padding:13px 14px;font-size:12px;color:var(--txt2);line-height:1.65;">
+        <p style="margin:0 0 8px;">Este é o <b>board ágil do seu squad</b> — aqui você acompanha as tarefas da sprint, registra impedimentos, vê prazos de campanhas e se comunica com o time.</p>
+        <ul style="margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
+          <li><b>Cards</b> — clique pra abrir, arraste pra mover entre colunas</li>
+          <li><b>📅 Calendários</b> — prazos, eventos e agendas do Google</li>
+          <li><b>📢 Mural</b> — avisos do ADM e canal pra falar com a gestão</li>
+          <li><b>🔔 Sino</b> — notificações de menções e movimentos</li>
+          <li><b>❓ Central de Ajuda</b> — <kbd style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;font-size:10px;">Ctrl+K</kbd> abre a busca</li>
+        </ul>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="boasVindasOpenHelp()" style="flex:1;padding:11px;font-size:12px;font-weight:600;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:9px;cursor:pointer;">❓ Ver Central de Ajuda</button>
+        <button onclick="closeBoasVindas()" class="btn btn-p" style="flex:1;padding:11px;font-size:12px;justify-content:center;">Entendi, vamos lá! →</button>
       </div>
     </div>
   </div>
