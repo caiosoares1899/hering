@@ -696,11 +696,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   position:sticky;top:0;background:rgba(6,26,46,.98);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
 .cal-hd-l{display:flex;align-items:center;gap:10px;}
 .cal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
-.cal-nav{display:flex;align-items:center;gap:6px;}
+.cal-nav{display:flex;align-items:center;gap:10px;justify-content:center;flex:1;}
 .cal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
-  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
-.cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
-.cal-month-lbl{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;min-width:140px;text-align:center;}
+  border-radius:8px;color:var(--txt2);cursor:pointer;padding:7px 14px;font-size:16px;transition:all .15s;}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--txt);background:rgba(29,233,182,.08);}
+.cal-month-lbl{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;min-width:180px;text-align:center;color:var(--txt);}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
 .cal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
@@ -2007,14 +2007,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .help-tip-btn:hover{background:rgba(56,182,255,.22);color:var(--txt);}
 .help-tip-balloon{
   display:none;
-  position:fixed; /* fixed em vez de absolute — nunca sai da viewport */
+  position:fixed;
   background:rgba(6,24,44,.98);border:1px solid rgba(56,182,255,.3);
   border-radius:10px;padding:11px 13px;
   width:240px;max-width:calc(100vw - 24px);
-  font-size:11px;color:var(--txt2);line-height:1.55;
+  font-size:11px;font-family:'DM Sans',sans-serif;color:var(--txt2);line-height:1.6;
   box-shadow:0 8px 32px rgba(0,0,0,.8);z-index:99999;text-align:left;
   pointer-events:none;
-  /* posição calculada via JS no hover */
 }
 .help-tip-balloon a{color:var(--teal);text-decoration:none;font-weight:600;pointer-events:all;}
 .help-tip-balloon a:hover{text-decoration:underline;}
@@ -2158,7 +2157,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span>
+  <span style="display:inline-flex;align-items:center;gap:3px;"><button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span></span>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
@@ -3450,7 +3449,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.87</div>
+<div class="version">v8.30.88</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10764,8 +10763,9 @@ function loadCalEvents(){
     const porId = new Map();
     combinados.forEach(e => porId.set(e.id, e));
     const vistos = new Set();
+    const _norm = s => (s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
     const final = [...porId.values()].filter(ev=>{
-      const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+      const chave = (ev.start||'').split('T')[0]+'|'+_norm(ev.title);
       if(vistos.has(chave)) return false;
       vistos.add(chave);
       return true;
@@ -13627,6 +13627,32 @@ window.addEventListener('auth-change', e=>{
 }, {once:true});
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
+
+// ── Sino: tremer a cada 30min se houver notificações não lidas ────────────
+// + toast "você tem notificações não lidas" na próxima abertura do board
+(function _initNotifReminder(){
+  function _ringIfUnread(){
+    const btn = document.getElementById('notif-btn');
+    if(!btn || !btn.classList.contains('has-unread')) return;
+    btn.classList.add('ring');
+    setTimeout(()=>btn.classList.remove('ring'), 600);
+  }
+  function _checkDayReminder(){
+    const btn = document.getElementById('notif-btn');
+    if(!btn || !btn.classList.contains('has-unread')) return;
+    const today = new Date().toISOString().split('T')[0];
+    const visto = safeLS.getItem('notif_reminder_day');
+    if(visto === today) return; // já lembrou hoje
+    safeLS.setItem('notif_reminder_day', today);
+    showToast('🔔 Você tem notificações não lidas — clique no sino para ver.');
+  }
+  window.addEventListener('auth-change', e=>{
+    if(!e.detail) return;
+    setInterval(_ringIfUnread, 30 * 60 * 1000);    // tremer a cada 30min
+    setInterval(_checkDayReminder, 60 * 60 * 1000); // checar nova dia a cada 1h
+    setTimeout(_checkDayReminder, 8000);            // checar logo após login
+  }, {once:true});
+})();
 
 // ══════════════════════════════════════════════════════════════════════
 // COMUNICADOS (ADM → usuários) — popup de aviso importante
