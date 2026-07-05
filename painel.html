@@ -1983,7 +1983,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.62 · painel</div>
+<div class="version">v2.63 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6896,14 +6896,17 @@ function renderGlobalBackupStats(){
 // Config e histórico do backup automático global — Firebase, não mais
 // localStorage (mesmo motivo do board: era por navegador/dispositivo).
 let _gbCfgCache = {};
-window._onValue(window._ref(window._db,'kanban/painel/config/backup_cfg'), snap=>{
-  _gbCfgCache = snap.val() || {};
-  updateGlobalBackupStatus();
-  const lastEl = document.getElementById('gb-last-backup');
-  if(lastEl && _gbCfgCache.lastRun){
-    lastEl.textContent = '⏱ Último automático: '+new Date(_gbCfgCache.lastRun).toLocaleString('pt-BR');
-  }
-});
+function _initGbCfgListener(){
+  window._onValue(window._ref(window._db,'kanban/painel/config/backup_cfg'), snap=>{
+    _gbCfgCache = snap.val() || {};
+    updateGlobalBackupStatus();
+    const lastEl = document.getElementById('gb-last-backup');
+    if(lastEl && _gbCfgCache.lastRun){
+      lastEl.textContent = '⏱ Último automático: '+new Date(_gbCfgCache.lastRun).toLocaleString('pt-BR');
+    }
+  });
+}
+window.addEventListener('fb-ready', _initGbCfgListener, {once:true});
 
 // ── Config EmailJS global ─────────────────────────────────────────────────
 function saveGlobalBackupCfg(){
