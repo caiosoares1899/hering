@@ -1985,7 +1985,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.63 · painel-dev</div>
+<div class="version">v2.64 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4866,8 +4866,21 @@ function _relTime(ts){
 
 function togglePainelNotif(e){
   e?.stopPropagation();
-  const drop=document.getElementById('painel-notif-drop');
-  if(drop) drop.style.display = drop.style.display==='none' ? 'flex' : 'none';
+  const drop = document.getElementById('painel-notif-drop');
+  if(!drop) return;
+  const isOpen = drop.style.display !== 'none';
+  if(isOpen){ drop.style.display='none'; return; }
+  const btn = document.getElementById('painel-notif-btn');
+  const r = btn ? btn.getBoundingClientRect() : {bottom:60,right:60};
+  const w = Math.min(380, window.innerWidth - 16);
+  let left = r.right - w;
+  left = Math.max(8, left);
+  drop.style.position = 'fixed';
+  drop.style.top  = (r.bottom + 6) + 'px';
+  drop.style.left = left + 'px';
+  drop.style.width = w + 'px';
+  drop.style.right = 'auto';
+  drop.style.display = 'flex';
 }
 document.addEventListener('click',e=>{
   if(!e.target.closest('#painel-notif-btn') && !e.target.closest('#painel-notif-drop')){
