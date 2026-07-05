@@ -1985,7 +1985,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.60 · painel-dev</div>
+<div class="version">v2.61 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2268,7 +2268,7 @@ let _campEditTags  = [];       // tags selecionadas no edit modal
 let _campComposerLinks = [];   // links do composer ativo
 
 // Caminho Firebase: global (cross-squad configurado no painel)
-function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'/'+sub:'')); }
+function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas_dev'+(sub?'/'+sub:'')); }
 
 // closeOv — fecha overlay (e limpa above-camp do card-ov se houver)
 function closeOv(id){
@@ -3195,7 +3195,7 @@ let _pmsTab = 'auto';
 let _gruposCamp = {}; // grupos manuais carregados
 
 function loadGruposCamp(){
-  window._onValue(window._ref(window._db,'kanban/painel/grupos_campanha'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/grupos_campanha_dev'), snap=>{
     _gruposCamp = snap.val()||{};
     renderPainelCamp();
   });
@@ -3330,8 +3330,8 @@ async function painelCampActivateAll(){
   if(!updates.length){ showToast('Nenhuma alteração detectada.'); return; }
   try{
     for(const u of updates){
-      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/multiSquad'), u.multiSquad);
-      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/squads'), u.squads);
+      await window._set(window._ref(window._db,'kanban/campanhas_dev/'+u.id+'/multiSquad'), u.multiSquad);
+      await window._set(window._ref(window._db,'kanban/campanhas_dev/'+u.id+'/squads'), u.squads);
     }
     showToast('✅ '+updates.length+' campanha(s) atualizada(s)!');
     document.getElementById('painel-camp-ms-ov').classList.remove('open');
@@ -4724,7 +4724,7 @@ async function loadStatusData(){
   // Campanhas e grupos (globais)
   let campBytes=0;
   try{
-    const cs=await window._get(window._ref(window._db,'kanban/campanhas'));
+    const cs=await window._get(window._ref(window._db,'kanban/campanhas_dev'));
     campBytes=new Blob([JSON.stringify(cs.val()||{})]).size;
     totalBytes+=campBytes;
   }catch(e){}
@@ -5162,7 +5162,7 @@ let _fbFilter = 'all';
 function loadFeedback(){
   if(window._fbListenerOn) return; // evita listener duplicado a cada troca de aba
   window._fbListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/feedback_dev'), snap=>{
     _fbCache = snap.val() || {};
     renderFbLista();
   });
