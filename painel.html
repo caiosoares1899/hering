@@ -333,9 +333,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pcal-tab:hover:not(.on){color:var(--txt);}
 .pcal-content{display:none;}.pcal-content.on{display:block;}
 .pcal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
-  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
-.pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
-.pcal-month-lbl{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;min-width:140px;text-align:center;}
+  border-radius:8px;color:var(--txt2);cursor:pointer;padding:7px 16px;font-size:15px;transition:all .15s;}
+.pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);background:rgba(29,233,182,.08);}
+.pcal-month-lbl{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;min-width:200px;text-align:center;color:var(--txt);}
 .pcal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
 .pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -713,8 +713,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .pcal-day{ min-height:52px; padding:3px; }
   .pcal-day-num{ font-size:10px; margin-bottom:2px; }
   .pcal-event{ font-size:9px; padding:2px 4px; border-radius:3px; }
-  .pcal-month-lbl{ font-size:12px; min-width:110px; }
-  .pcal-nav-btn{ padding:3px 8px; font-size:11px; }
+  .pcal-month-lbl{ font-size:15px; min-width:130px; }
+  .pcal-nav-btn{ padding:5px 10px; font-size:13px; }
   .pcal-wd{ font-size:8px; padding:2px 0; }
 
   /* ── Lembretes & Kudos: 1 coluna ── */
@@ -1330,14 +1330,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="pcal-tab"     id="pcal-tab-gestao"        onclick="setPcalTab('gestao')">🏢 Gestão</div>
       </div>
       <div class="pcal-content on" id="pcal-all">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-          <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
-          <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
-          <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
-          <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
-          <button class="pcal-nav-btn" id="pcal-prazos-toggle" onclick="togglePcalPrazos()" style="font-size:10px;padding:4px 10px;" title="Mostrar/ocultar cards que finalizam no dia">📎 Prazos</button>
-          <button class="pcal-nav-btn" onclick="togglePcalAgendasCfg()" style="font-size:10px;padding:4px 10px;">⚙ Agendas</button>
-          <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
+        <!-- Nav de meses: centralizado -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:11px;padding:5px 10px;">Hoje</button>
+            <button class="pcal-nav-btn" id="pcal-prazos-toggle" onclick="togglePcalPrazos()" style="font-size:11px;padding:5px 10px;" title="Mostrar/ocultar prazos">📎 Prazos</button>
+            <button class="pcal-nav-btn" onclick="togglePcalAgendasCfg()" style="font-size:11px;padding:5px 10px;">⚙ Agendas</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="pcal-nav-btn" onclick="pcalNav(-1)" style="font-size:18px;padding:6px 14px;">◀</button>
+            <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
+            <button class="pcal-nav-btn" onclick="pcalNav(1)" style="font-size:18px;padding:6px 14px;">▶</button>
+          </div>
+          <div>
+            <button onclick="openPevModal()" style="padding:6px 16px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Evento</button>
+          </div>
         </div>
         <div id="pcal-squad-filter-bar" style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
         <div id="pcal-agendas-cfg" style="display:none;margin-bottom:14px;padding:12px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;">
@@ -1983,7 +1990,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.63 · painel</div>
+<div class="version">v2.64 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3948,7 +3955,8 @@ async function _forcarLimpezaCacheGcal(){
   const eventos = Object.values(raw);
   const vistos = new Set();
   const limpo = eventos.filter(ev=>{
-    const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+    const _normStr = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    const chave = (ev.start||'').split('T')[0]+'|'+_normStr(ev.title);
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;
@@ -3987,7 +3995,8 @@ function _applyGcalCacheCleaning(){
   const vistos = new Set();
   const antesDedup = eventos.length;
   eventos = eventos.filter(ev=>{
-    const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+    const _normStr = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    const chave = (ev.start||'').split('T')[0]+'|'+_normStr(ev.title);
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;
@@ -4473,7 +4482,8 @@ async function carregarPcalAgendasGlobais(){
   // visualmente no calendário mesmo vindo de uma única chamada à API.
   const vistos = new Set();
   const todosEventosDedup = todosEventos.filter(ev=>{
-    const chave = ev.start+'|'+ev.title.trim().toLowerCase();
+    const _normStr2 = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    const chave = (ev.start||'').split('T')[0]+'|'+_normStr2(ev.title);
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;
