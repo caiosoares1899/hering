@@ -2125,7 +2125,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><button onclick="openHelp('config','relatório tempo')" title="Ajuda: Relatório de Tempo" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
@@ -2472,7 +2472,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <!-- Impedimento (oculto por padrão) -->
     <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
-      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">🚧 Impedimento</div>
+      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">🚧 Impedimento<button onclick="openHelp('cards','impedimento')" title="Ajuda: Impedimentos" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.3);color:rgba(255,107,107,.8);font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
       <textarea class="fi fi-ta" id="m-blocker-reason" rows="2" placeholder="Descreva o impedimento..." style="border-color:rgba(255,107,107,.3);" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveCard();}"></textarea>
       <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-p btn-sm" onclick="saveCard()">✓ Salvar impedimento</button>
@@ -2552,7 +2552,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="field"><label class="fl">Início</label><input class="fi" id="cfg-sprint-start" type="date" oninput="calcSprintEnd()"></div>
         <div class="field"><label class="fl">Fim (calculado)</label><input class="fi" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
       </div>
-      <div style="margin-top:10px;" class="cfg-sec-title">WIP & Capacidade</div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:5px;" class="cfg-sec-title">WIP & Capacidade<button onclick="closeOv('cfg-ov');openHelp('board','wip')" title="Ajuda: WIP Limit" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
       <div class="frow">
         <div class="field"><label class="fl">Limite de WIP</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
         <div class="field"><label class="fl">Capacidade (%)</label><input class="fi" id="cfg-capacity" type="number" min="0" max="100"></div>
@@ -2595,7 +2595,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <strong>Como funciona:</strong> Cole o ID de cada calendário do Google desejado. Certifique-se de que a agenda esteja configurada como <strong>"Disponibilizar ao público"</strong> (ou aberta para a organização) nas configurações do Google Calendar.
   </p>
 
-  <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);">Agendas Conectadas</div>
+  <div class="cfg-sec-title" style="margin-top:16px; font-size:9px; border-bottom:1px solid rgba(56,182,255,0.1);display:flex;align-items:center;gap:5px;">Agendas Conectadas<button onclick="closeOv('cfg-ov');openHelp('config','agenda do google')" title="Ajuda: Agendas do Google" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
   <div id="cfg-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:4px;display:flex;align-items:center;gap:8px;"></div>
   <div id="cfg-gcal-cache-info" style="font-size:10px;color:var(--txt3);margin-bottom:6px;"></div>
   <button id="cfg-gcal-process-btn" onclick="processGcalQueueForAdmin()" style="display:none;margin-bottom:10px;padding:6px 12px;font-size:10.5px;background:rgba(255,209,102,.1);color:var(--warn);border:1px solid rgba(255,209,102,.3);border-radius:7px;cursor:pointer;">🔔 Processar solicitações pendentes</button>
@@ -2976,7 +2976,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="panel-title">❓ Central de Ajuda · Kanban Hering</div>
     <button class="x-btn" onclick="closeOv('help-ov')">✕</button>
   </div>
-  <div class="ag-tabs" id="help-tabs">
+  <!-- Campo de busca -->
+  <div style="padding:10px 16px 0;flex-shrink:0;">
+    <div style="position:relative;">
+      <input id="help-search" type="text" placeholder="🔍 Buscar… (Ctrl+K)" autocomplete="off"
+        oninput="renderHelp()"
+        onkeydown="if(event.key==='Escape'){document.getElementById('help-search').value='';renderHelp();}"
+        style="width:100%;padding:8px 32px 8px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+      <button onclick="document.getElementById('help-search').value='';renderHelp();" id="help-search-clear"
+        style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0;line-height:1;">✕</button>
+    </div>
+    <div id="help-search-count" style="font-size:10px;color:var(--txt3);margin-top:4px;min-height:14px;"></div>
+  </div>
+  <div class="ag-tabs" id="help-tabs" style="flex-shrink:0;">
     <div class="ag-tab on" onclick="swHelpTab('board')">Board</div>
     <div class="ag-tab" onclick="swHelpTab('cards')">Cards</div>
     <div class="ag-tab" onclick="swHelpTab('agente')">Agente Ágil</div>
@@ -2997,7 +3009,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    <div class="cal-hd" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
       
       <div style="display:flex; align-items:center; gap:16px;">
-        <div class="cal-title">📅 Calendários</div>
+        <div class="cal-title" style="display:flex;align-items:center;gap:6px;">📅 Calendários<button onclick="event.stopPropagation();closeOv('cal-ov');openHelp('config','calendário')" title="Ajuda: Calendário" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
         <div style="display:flex; gap:6px;">
           <button class="view-btn active" data-mode="both" onclick="changeCalView('both')">Tudo</button>
           <button class="view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
@@ -3405,7 +3417,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.82</div>
+<div class="version">v8.30.83</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9352,18 +9364,95 @@ const HELP_CONTENT = {
     { icon:'📜', title:'Regras de convivência', text:'As Estrelas são públicas e permanentes (até serem removidas). Use para reconhecer de verdade, não para brincadeiras internas que excluam outros. Reconheça pessoas, não a si mesmo. Quem enviou e os admins podem remover uma Estrela se necessário. Mantenha o respeito: é um espaço de cultura positiva.' },
   ],
 }
-function openHelp(tab){ swHelpTab(tab||'board'); document.getElementById('help-ov').classList.add('open'); }
+let _helpTab = 'board';
+
+// Abre o help — tab opcional + termo de busca opcional (usado pelos botões ❓ contextuais)
+function openHelp(tab, searchTerm){
+  const el = document.getElementById('help-ov');
+  el.classList.add('open');
+  const inp = document.getElementById('help-search');
+  if(searchTerm){ inp.value = searchTerm; }
+  else { inp.value = ''; }
+  swHelpTab(tab || _helpTab || 'board');
+  setTimeout(()=>{
+    if(searchTerm) renderHelp(); // já aplica busca
+    else inp.focus();
+  }, 80);
+}
+
 function swHelpTab(tab){
-  const TABS=['board','cards','agente','config','comunicacao','kudos','agil'];
-  document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
-  const body=document.getElementById('help-body');
-  const items=HELP_CONTENT[tab]||[];
-  body.innerHTML=items.map(item=>`
+  _helpTab = tab;
+  const TABS = ['board','cards','agente','config','comunicacao','kudos','agil'];
+  document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i) => t.classList.toggle('on', TABS[i]===tab));
+  renderHelp();
+}
+
+// Renderiza com busca + highlight. Se houver termo, ignora a tab e busca em todas.
+function renderHelp(){
+  const query = (document.getElementById('help-search')?.value || '').trim().toLowerCase();
+  const clearBtn = document.getElementById('help-search-clear');
+  const countEl  = document.getElementById('help-search-count');
+  const tabs      = document.getElementById('help-tabs');
+  if(clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+
+  let items = [];
+  let searching = !!query;
+
+  if(searching){
+    // Busca em todas as seções
+    if(tabs) tabs.style.opacity = '.45';
+    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','agil'];
+    ALL_TABS.forEach(t => { (HELP_CONTENT[t]||[]).forEach(item => items.push({...item, _tab:t})); });
+    items = items.filter(item =>
+      item.title.toLowerCase().includes(query) ||
+      item.text.toLowerCase().includes(query)
+    );
+    if(countEl) countEl.textContent = items.length ? items.length+' resultado'+(items.length>1?'s':'') : '—  Nenhum resultado';
+  } else {
+    if(tabs) tabs.style.opacity = '1';
+    items = (HELP_CONTENT[_helpTab] || []);
+    if(countEl) countEl.textContent = '';
+  }
+
+  const hl = (str) => {
+    if(!query) return str;
+    const re = new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+    return str.replace(re, '<mark style="background:rgba(255,209,102,.35);color:var(--txt);border-radius:2px;padding:0 2px;">$1</mark>');
+  };
+
+  const body = document.getElementById('help-body');
+  if(!items.length && searching){
+    body.innerHTML = `<div style="text-align:center;padding:32px 16px;color:var(--txt3);font-size:13px;">
+      Nenhum resultado para "<b>${esc(query)}</b>"<br><span style="font-size:11px;margin-top:6px;display:block;">Tente palavras-chave diferentes, como "agenda", "card", "backup"…</span>
+    </div>`;
+    return;
+  }
+
+  body.innerHTML = items.map(item => `
     <div style="background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);padding:13px 14px;">
-      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:6px;">${item.icon} ${item.title}</div>
-      <div style="font-size:12px;color:var(--txt2);line-height:1.7;white-space:pre-line;">${item.text}</div>
+      ${searching && item._tab ? `<div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-weight:600;">${{board:'Board',cards:'Cards',agente:'Agente Ágil',config:'Configurações',comunicacao:'Comunicação',kudos:'Estrelas',agil:'Conceitos Ágeis'}[item._tab]||item._tab}</div>` : ''}
+      <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:6px;">${hl(item.icon+' '+item.title)}</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.7;white-space:pre-line;">${hl(item.text)}</div>
     </div>
   `).join('');
+}
+
+// Ctrl+K / Cmd+K abre o help com foco na busca; dentro do help, ESC fecha
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key==='k'){
+    e.preventDefault();
+    if(document.getElementById('help-ov')?.classList.contains('open')){
+      document.getElementById('help-search')?.focus();
+    } else {
+      openHelp();
+    }
+  }
+});
+
+// Botão ❓ contextual — renderiza um botão discreto que abre o help numa busca específica
+function helpBtn(term, title){
+  title = title || 'Ajuda sobre: '+term;
+  return `<button onclick="event.stopPropagation();openHelp(null,'${term.replace(/'/g,"\\'")}');" title="${esc(title)}" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;margin-left:5px;vertical-align:middle;flex-shrink:0;">?</button>`;
 }
 // ═══════════════════════════════════════════════════════
 
@@ -13784,7 +13873,7 @@ renderBoard();
 <div class="ov" id="mural-ov" style="z-index:195;">
   <div class="panel" style="max-width:480px;width:100%;max-height:80vh;">
     <div class="panel-hd">
-      <div class="panel-title">📢 Mural</div>
+      <div class="panel-title" style="display:flex;align-items:center;gap:6px;">📢 Mural<button onclick="closeOv('mural-ov');openHelp('comunicacao','mural')" title="Ajuda: Mural e comunicados" style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:999px;background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.25);color:rgba(56,182,255,.7);font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;">?</button></div>
       <button class="x-btn" onclick="closeOv('mural-ov')">✕</button>
     </div>
     <div style="display:flex;border-bottom:1px solid var(--glass-b);padding:0 16px;">
