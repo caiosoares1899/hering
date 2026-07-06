@@ -3489,7 +3489,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.90-dev</div>
+<div class="version">v8.30.91-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4461,7 +4461,7 @@ function fbLoadAll(){
   });
   // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
   if(window._fbReady){
-    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'),snap=>{
       const val=snap.val();
       lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
       updLemBadge();
@@ -6009,8 +6009,15 @@ function _listenLembretesDismiss(){
 function dismissLembrete(id){
   if(!id) return;
   if(!lembretesDismiss.includes(id)) lembretesDismiss.push(id);
-  const p=_lemDismissPath(); if(p) fbSet(p, lembretesDismiss);
   renderLembretes();
+  const p=_lemDismissPath(); if(!p || !window._fbReady) return;
+  window._get(window._ref(window._db,p)).then(snap=>{
+    const val=snap.val();
+    const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
+    if(!arr.includes(id)) arr.push(id);
+    lembretesDismiss=arr;
+    window._set(window._ref(window._db,p), arr).catch(()=>{});
+  }).catch(()=>{});
 }
 // Verdadeiro se o usuário atual está no card (responsável ou participante)
 function _euEstouNoCard(c){
@@ -6184,18 +6191,51 @@ function addLembrete(){
   toast('📌 Lembrete fixado');
 }
 function delLembrete(tipo, id){
+  // Lê o estado ATUAL do Firebase antes de escrever — evita que o array em
+  // memória (que pode estar levemente desatualizado por causa do listener
+  // em tempo real) sobrescreva o Firebase e "ressuscite" um lembrete que
+  // acabou de ser excluído por outra pessoa ou aba (bug dos "fantasmas").
   if(tipo==='proprio'){
+    const p=_lemPropPath();
     lembretesProprios=lembretesProprios.filter(l=>l.id!==id);
-    const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+    renderLembretes(); updLemBadge();
+    if(!p || !window._fbReady) return;
+    window._get(window._ref(window._db,p)).then(snap=>{
+      const val=snap.val();
+      const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
+      const filtrado=arr.filter(l=>l.id!==id);
+      lembretesProprios=filtrado;
+      window._set(window._ref(window._db,p), filtrado).catch(()=>{});
+    }).catch(()=>{});
+    return;
   } else if(tipo==='gestao'){
     lembretesGestao=lembretesGestao.filter(l=>l.id!==id);
-    if(window._fbReady) window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), lembretesGestao).catch(()=>{});
+    renderLembretes(); updLemBadge();
+    if(!window._fbReady) return;
+    const ref=window._ref(window._db,'kanban/painel/lembretes_gestao_dev');
+    window._get(ref).then(snap=>{
+      const val=snap.val();
+      const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
+      const filtrado=arr.filter(l=>l.id!==id);
+      lembretesGestao=filtrado;
+      window._set(ref, filtrado).catch(()=>{});
+      renderLembretes(); updLemBadge();
+    }).catch(()=>{});
+    return;
   } else {
     lembretes=lembretes.filter(l=>l.id!==id);
-    fbSet(FB+'/lembretes', lembretes);
+    renderLembretes(); updLemBadge();
+    if(!window._fbReady) return;
+    window._get(fb(FB+'/lembretes')).then(snap=>{
+      const val=snap.val();
+      const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
+      const filtrado=arr.filter(l=>l.id!==id);
+      lembretes=filtrado;
+      fbSet(FB+'/lembretes', filtrado);
+      renderLembretes(); updLemBadge();
+    }).catch(()=>{});
+    return;
   }
-  renderLembretes();
-  updLemBadge();
 }
 function updLemBadge(){
   const badge=document.getElementById('lem-badge'); if(!badge) return;
