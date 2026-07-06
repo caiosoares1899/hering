@@ -1985,7 +1985,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.64 · painel-dev</div>
+<div class="version">v2.65 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4783,10 +4783,12 @@ let _painelNotifListeners = false;
 
 function loadPainelNotifs(){
   const user = window._currentUser; if(!user) return;
-  // Sininho é para o ADM logado — esconde para não-ADM
   const btn = document.getElementById('painel-notif-btn');
   if(btn) btn.style.display = _isAdmPainel() ? 'inline-flex' : 'none';
   if(!_isAdmPainel()) return;
+  if(_painelNotifListeners) return;
+  _painelNotifListeners = true;
+  renderPainelNotifs();
   // 1) Notificações do usuário (já são unificadas por uid, independente de squad)
   window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), snap=>{
     const val = snap.val()||{};
@@ -5623,6 +5625,7 @@ window.addEventListener('auth-change',e=>{
     if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
     // Seed de rascunhos: roda após login (usuário confirmado como ADM disponível)
     setTimeout(_seedComunicadoRascunhos, 2000);
+    loadPainelNotifs();
   } else {
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
