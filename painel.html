@@ -1990,7 +1990,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.66 · painel</div>
+<div class="version">v2.67 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4832,6 +4832,11 @@ function loadPainelNotifs(){
   const btn = document.getElementById('painel-notif-btn');
   if(btn) btn.style.display = _isAdmPainel() ? 'inline-flex' : 'none';
   if(!_isAdmPainel()) return;
+  if(_painelNotifListeners) return; // evita registrar os listeners mais de uma vez
+  _painelNotifListeners = true;
+  // Limpa o "Carregando..." de cara — se não houver nada, renderPainelNotifs
+  // vai mostrar o estado vazio; se houver, os listeners preenchem em seguida
+  renderPainelNotifs();
   // 1) Notificações do usuário (já são unificadas por uid, independente de squad)
   window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), snap=>{
     const val = snap.val()||{};
@@ -5667,6 +5672,9 @@ window.addEventListener('auth-change',e=>{
     const av=document.getElementById('user-avatar');
     if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
     setTimeout(_seedComunicadoRascunhos, 2000);
+    // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
+    // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
+    loadPainelNotifs();
   } else {
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
