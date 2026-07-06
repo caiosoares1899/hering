@@ -1990,7 +1990,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.67 · painel</div>
+<div class="version">v2.68 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3943,34 +3943,74 @@ function getAllPcalEvents(){
 // triplicatas salvas antes dos fixes de dedup entrarem).
 async function _forcarLimpezaCacheGcal(){
   if(!_isAdmPainel()) return;
-  showToast('🔄 Lendo cache do Firebase…');
-  // Lê DIRETO do Firebase (não usa _pcalGcalCacheRaw que já passou pela limpeza em memória)
-  let rawSnap;
-  try {
-    rawSnap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache'));
-  } catch(e) {
-    showToast('❌ Erro ao ler cache: '+(e?.message||e)); return;
+  showToast('🔄 Varrendo todos os caches de eventos…');
+  const _normStr = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+  const _dedupKey = ev => (ev.start||ev.date||'').split('T')[0]+'|'+_normStr(ev.title);
+
+  let totalRemovido = 0;
+  const relatorio = [];
+
+  // Helper: lê um path, deduplica, regrava se necessário
+  async function limpaPath(path, formato){
+    let snap;
+    try { snap = await window._get(window._ref(window._db, path)); }
+    catch(e){ return; } // sem permissão ou path inexistente — ignora
+    const val = snap.val();
+    if(!val) return;
+
+    if(formato === 'obj'){
+      // { id: evento } — gcal_cache
+      const eventos = Object.entries(val); // [id, ev]
+      const vistos = new Set();
+      const limpo = {};
+      let removidos = 0;
+      eventos.forEach(([id, ev])=>{
+        if(!ev){ return; }
+        const chave = _dedupKey(ev);
+        if(vistos.has(chave)){ removidos++; return; }
+        vistos.add(chave);
+        limpo[id] = ev;
+      });
+      if(removidos > 0){
+        await window._set(window._ref(window._db, path), limpo).catch(()=>{});
+        totalRemovido += removidos;
+        relatorio.push(removidos+'× em '+path.split('/').slice(-2).join('/'));
+      }
+    } else {
+      // array — cal_events
+      const arr = Array.isArray(val) ? val : Object.values(val);
+      const vistos = new Set();
+      const limpo = [];
+      let removidos = 0;
+      arr.forEach(ev=>{
+        if(!ev){ return; }
+        const chave = _dedupKey(ev);
+        if(vistos.has(chave)){ removidos++; return; }
+        vistos.add(chave);
+        limpo.push(ev);
+      });
+      if(removidos > 0){
+        await window._set(window._ref(window._db, path), limpo).catch(()=>{});
+        totalRemovido += removidos;
+        relatorio.push(removidos+'× em '+path.split('/').slice(-2).join('/'));
+      }
+    }
   }
-  const raw = rawSnap.val() || {};
-  const eventos = Object.values(raw);
-  const vistos = new Set();
-  const limpo = eventos.filter(ev=>{
-    const _normStr = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
-    const chave = (ev.start||'').split('T')[0]+'|'+_normStr(ev.title);
-    if(vistos.has(chave)) return false;
-    vistos.add(chave);
-    return true;
-  });
-  const removidos = eventos.length - limpo.length;
-  if(removidos === 0){
-    showToast('✅ Cache já está limpo no Firebase — nenhuma duplicata encontrada ('+eventos.length+' eventos).');
-    return;
+
+  // 1) Cache global de agendas do Google
+  await limpaPath('kanban/painel/config/gcal_cache', 'obj');
+  // 2) Eventos manuais do painel
+  await limpaPath('kanban/painel/cal_events', 'arr');
+  // 3) Eventos de cada squad (feriados podem ter sido gravados por squad)
+  for(const sq of SQUADS){
+    await limpaPath('kanban/squads/'+sq.id+'/dados/cal_events', 'arr');
   }
-  const cacheObj = Object.fromEntries(limpo.map(ev=>[ev.id, ev]));
-  await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj).catch(e=>{
-    showToast('❌ Erro ao gravar: '+(e?.message||e)); return;
-  });
-  showToast('🧹 '+removidos+' duplicata'+(removidos>1?'s':'')+' removida'+(removidos>1?'s':'')+' do Firebase. Calendário atualizado.');
+
+  if(totalRemovido === 0){
+    showToast('✅ Nenhuma duplicata encontrada em nenhum cache.');
+  } else {
+    showToast('🧹 '+totalRemovido+' duplicata'+(totalRemovido>1?'s':'')+' removida'+(totalRemovido>1?'s':'')+': '+relatorio.join(', '));
+  }
 }
 
 function _applyGcalCacheCleaning(){
