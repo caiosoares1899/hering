@@ -333,9 +333,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pcal-tab:hover:not(.on){color:var(--txt);}
 .pcal-content{display:none;}.pcal-content.on{display:block;}
 .pcal-nav-btn{background:var(--glass);border:1px solid var(--glass-b);
-  border-radius:6px;color:var(--txt2);cursor:pointer;padding:4px 10px;font-size:13px;}
-.pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);}
-.pcal-month-lbl{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;min-width:140px;text-align:center;}
+  border-radius:8px;color:var(--txt2);cursor:pointer;padding:7px 16px;font-size:15px;transition:all .15s;}
+.pcal-nav-btn:hover{border-color:var(--accent);color:var(--txt);background:rgba(29,233,182,.08);}
+.pcal-month-lbl{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;min-width:200px;text-align:center;color:var(--txt);}
 .pcal-wd{font-size:10px;color:var(--txt3);font-weight:700;text-align:center;
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
 .pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
@@ -713,8 +713,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .pcal-day{ min-height:52px; padding:3px; }
   .pcal-day-num{ font-size:10px; margin-bottom:2px; }
   .pcal-event{ font-size:9px; padding:2px 4px; border-radius:3px; }
-  .pcal-month-lbl{ font-size:12px; min-width:110px; }
-  .pcal-nav-btn{ padding:3px 8px; font-size:11px; }
+  .pcal-month-lbl{ font-size:15px; min-width:130px; }
+  .pcal-nav-btn{ padding:5px 10px; font-size:13px; }
   .pcal-wd{ font-size:8px; padding:2px 0; }
 
   /* ── Lembretes & Kudos: 1 coluna ── */
@@ -1332,14 +1332,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="pcal-tab"     id="pcal-tab-gestao"        onclick="setPcalTab('gestao')">🏢 Gestão</div>
       </div>
       <div class="pcal-content on" id="pcal-all">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-          <button class="pcal-nav-btn" onclick="pcalNav(-1)">◀</button>
-          <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
-          <button class="pcal-nav-btn" onclick="pcalNav(1)">▶</button>
-          <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:10px;padding:4px 8px;">Hoje</button>
-          <button class="pcal-nav-btn" id="pcal-prazos-toggle" onclick="togglePcalPrazos()" style="font-size:10px;padding:4px 10px;" title="Mostrar/ocultar cards que finalizam no dia">📎 Prazos</button>
-          <button class="pcal-nav-btn" onclick="togglePcalAgendasCfg()" style="font-size:10px;padding:4px 10px;">⚙ Agendas</button>
-          <button onclick="openPevModal()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;margin-left:auto;">+ Evento</button>
+        <!-- Nav de meses: centralizado -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="pcal-nav-btn" onclick="pcalGoToday()" style="font-size:11px;padding:5px 10px;">Hoje</button>
+            <button class="pcal-nav-btn" id="pcal-prazos-toggle" onclick="togglePcalPrazos()" style="font-size:11px;padding:5px 10px;" title="Mostrar/ocultar prazos">📎 Prazos</button>
+            <button class="pcal-nav-btn" onclick="togglePcalAgendasCfg()" style="font-size:11px;padding:5px 10px;">⚙ Agendas</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="pcal-nav-btn" onclick="pcalNav(-1)" style="font-size:18px;padding:6px 14px;">◀</button>
+            <div class="pcal-month-lbl" id="pcal-month-lbl">Carregando...</div>
+            <button class="pcal-nav-btn" onclick="pcalNav(1)" style="font-size:18px;padding:6px 14px;">▶</button>
+          </div>
+          <div>
+            <button onclick="openPevModal()" style="padding:6px 16px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Evento</button>
+          </div>
         </div>
         <div id="pcal-squad-filter-bar" style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
         <div id="pcal-agendas-cfg" style="display:none;margin-bottom:14px;padding:12px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;">
@@ -1985,7 +1992,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.65 · painel-dev</div>
+<div class="version">v2.66 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2196,7 +2203,7 @@ function _pGetCardTags(card){
 }
 function _pOpenCard(cardId, sqId){
   // abre board desse squad numa nova aba com o card já aberto
-  window.open('kanban.html?squad='+sqId+'&opencard='+cardId,'_blank');
+  window.open('kanban-dev.html?squad='+sqId+'&opencard='+cardId,'_blank');
 }
 function _pSafeUrl(u){ try{ return new URL(String(u)).href; }catch(e){ return '#'; } }
 
@@ -2318,15 +2325,7 @@ const _pTag = (tid) => {
 
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
-    const _devIds = new Set(SQUADS.map(s=>s.id));
-    const _all = snap.val()||{};
-    _campanhas = Object.fromEntries(
-      Object.entries(_all).filter(([_,camp])=>{
-        if(!camp) return false;
-        const sq = Array.isArray(camp.squads) ? camp.squads : [camp.squad||''];
-        return sq.some(s=>_devIds.has(s));
-      })
-    );
+    _campanhas = snap.val()||{};
     // atualiza detalhe se estiver aberto
     if(_campAtual && document.getElementById('camp-view-detalhe')?.style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
@@ -3931,6 +3930,81 @@ function getAllPcalEvents(){
 // sem depender de um novo fetch na API do Google.
 // 1) Remove eventos "órfãos": vêm de uma agenda que já foi desconectada mas o registro ficou no cache.
 // 2) Deduplica por título+data (algumas agendas públicas do Google retornam o mesmo feriado 2-3x).
+// Limpeza forçada do cache pelo ADM — remove duplicatas do Firebase na hora,
+// sem precisar rebuscar na API do Google (útil quando o cache antigo já tinha
+// triplicatas salvas antes dos fixes de dedup entrarem).
+async function _forcarLimpezaCacheGcal(){
+  if(!_isAdmPainel()) return;
+  showToast('🔄 Varrendo todos os caches de eventos…');
+  const _normStr = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+  const _dedupKey = ev => (ev.start||ev.date||'').split('T')[0]+'|'+_normStr(ev.title);
+
+  let totalRemovido = 0;
+  const relatorio = [];
+
+  // Helper: lê um path, deduplica, regrava se necessário
+  async function limpaPath(path, formato){
+    let snap;
+    try { snap = await window._get(window._ref(window._db, path)); }
+    catch(e){ return; } // sem permissão ou path inexistente — ignora
+    const val = snap.val();
+    if(!val) return;
+
+    if(formato === 'obj'){
+      // { id: evento } — gcal_cache
+      const eventos = Object.entries(val); // [id, ev]
+      const vistos = new Set();
+      const limpo = {};
+      let removidos = 0;
+      eventos.forEach(([id, ev])=>{
+        if(!ev){ return; }
+        const chave = _dedupKey(ev);
+        if(vistos.has(chave)){ removidos++; return; }
+        vistos.add(chave);
+        limpo[id] = ev;
+      });
+      if(removidos > 0){
+        await window._set(window._ref(window._db, path), limpo).catch(()=>{});
+        totalRemovido += removidos;
+        relatorio.push(removidos+'× em '+path.split('/').slice(-2).join('/'));
+      }
+    } else {
+      // array — cal_events
+      const arr = Array.isArray(val) ? val : Object.values(val);
+      const vistos = new Set();
+      const limpo = [];
+      let removidos = 0;
+      arr.forEach(ev=>{
+        if(!ev){ return; }
+        const chave = _dedupKey(ev);
+        if(vistos.has(chave)){ removidos++; return; }
+        vistos.add(chave);
+        limpo.push(ev);
+      });
+      if(removidos > 0){
+        await window._set(window._ref(window._db, path), limpo).catch(()=>{});
+        totalRemovido += removidos;
+        relatorio.push(removidos+'× em '+path.split('/').slice(-2).join('/'));
+      }
+    }
+  }
+
+  // 1) Cache global de agendas do Google
+  await limpaPath('kanban/painel/config/gcal_cache_dev', 'obj');
+  // 2) Eventos manuais do painel
+  await limpaPath('kanban/painel/cal_events_dev', 'arr');
+  // 3) Eventos de cada squad (feriados podem ter sido gravados por squad)
+  for(const sq of SQUADS){
+    await limpaPath('kanban/squads/'+sq.id+'/dados/cal_events', 'arr');
+  }
+
+  if(totalRemovido === 0){
+    showToast('✅ Nenhuma duplicata encontrada em nenhum cache.');
+  } else {
+    showToast('🧹 '+totalRemovido+' duplicata'+(totalRemovido>1?'s':'')+' removida'+(totalRemovido>1?'s':'')+': '+relatorio.join(', '));
+  }
+}
+
 function _applyGcalCacheCleaning(){
   const raw = window._pcalGcalCacheRaw || {};
   let eventos = Object.values(raw);
@@ -3953,7 +4027,8 @@ function _applyGcalCacheCleaning(){
   const vistos = new Set();
   const antesDedup = eventos.length;
   eventos = eventos.filter(ev=>{
-    const chave = ev.start+'|'+(ev.title||'').trim().toLowerCase();
+    const _normStr = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    const chave = (ev.start||'').split('T')[0]+'|'+_normStr(ev.title);
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;
@@ -4286,7 +4361,8 @@ function renderPcalAgendasList(){
     const meta=window._pcalGcalCacheMeta;
     const quando = meta?.updatedAt ? 'há '+_relTime(meta.updatedAt) : 'nunca';
     infoEl.innerHTML = `<span>🕒 Atualizado ${quando}${meta?.updatedBy?' por '+esc(meta.updatedBy):''}</span>`
-      + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '');
+      + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '')
+      + (isAdm ? `<button onclick="_forcarLimpezaCacheGcal()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;" title="Remove duplicatas do cache sem rebuscar na API">🧹 Limpar duplicatas</button>` : '');
   }
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
@@ -4438,7 +4514,8 @@ async function carregarPcalAgendasGlobais(){
   // visualmente no calendário mesmo vindo de uma única chamada à API.
   const vistos = new Set();
   const todosEventosDedup = todosEventos.filter(ev=>{
-    const chave = ev.start+'|'+ev.title.trim().toLowerCase();
+    const _normStr2 = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    const chave = (ev.start||'').split('T')[0]+'|'+_normStr2(ev.title);
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;
@@ -4783,11 +4860,14 @@ let _painelNotifListeners = false;
 
 function loadPainelNotifs(){
   const user = window._currentUser; if(!user) return;
+  // Sininho é para o ADM logado — esconde para não-ADM
   const btn = document.getElementById('painel-notif-btn');
   if(btn) btn.style.display = _isAdmPainel() ? 'inline-flex' : 'none';
   if(!_isAdmPainel()) return;
-  if(_painelNotifListeners) return;
+  if(_painelNotifListeners) return; // evita registrar os listeners mais de uma vez
   _painelNotifListeners = true;
+  // Limpa o "Carregando..." de cara — se não houver nada, renderPainelNotifs
+  // vai mostrar o estado vazio; se houver, os listeners preenchem em seguida
   renderPainelNotifs();
   // 1) Notificações do usuário (já são unificadas por uid, independente de squad)
   window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), snap=>{
@@ -4841,7 +4921,7 @@ function renderPainelNotifs(){
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
     const openAttr = n.link
       ? `onclick="swPtab('${n.link}');togglePainelNotif(event);" style="cursor:pointer;"`
-      : (n.cardId && n.squad) ? `onclick="window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
+      : (n.cardId && n.squad) ? `onclick="window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(10,30,55,.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(10,30,55,.4)\'"':''}>
       <span style="font-size:13px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
@@ -4872,6 +4952,8 @@ function togglePainelNotif(e){
   if(!drop) return;
   const isOpen = drop.style.display !== 'none';
   if(isOpen){ drop.style.display='none'; return; }
+  // Posiciona com fixed calculado no clique — evita sair da tela
+  // independente de overflow ou posicionamento do container pai
   const btn = document.getElementById('painel-notif-btn');
   const r = btn ? btn.getBoundingClientRect() : {bottom:60,right:60};
   const w = Math.min(380, window.innerWidth - 16);
@@ -4916,7 +4998,7 @@ function loadComunicados(){
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
-  // Seed chamado via auth-change (não aqui) — garante que _currentUser já está disponível
+  // Seed chamado via auth-change — garante que _currentUser já está disponível
 }
 
 // ── Rascunhos 🤖 semeados pelo código ────────────────────────────────────
@@ -4931,31 +5013,7 @@ const COMUNICADO_RASCUNHOS_SEED = [
   {
     id: 'seed_teste_comunicados_dev_2026_07',
     titulo: '🧪 Teste: sistema de comunicados funcionando',
-    corpo: '<p>Este é um rascunho de <b>teste</b>, criado no ambiente dev pra validar o fluxo completo: da criação automática até aparecer no board.</p><p>Se você está vendo isso na seção "🤖 Rascunhos aguardando sua revisão", a primeira parte já funcionou. Clique em <b>"Revisar e publicar"</b> pra abrir o editor (ajuste o texto, tipo, squad-alvo ou prioridade se quiser) e depois confirme em <b>Publicar</b>.</p><p>Depois de publicado, abra o board de teste (<code>kanban-dev.html?squad=dev</code> ou <code>?squad=omnichannel</code>) pra ver o popup ou o item no mural 📢, dependendo da prioridade escolhida.</p><p>Pode excluir este teste quando terminar de validar — é só clicar no 🗑 na lista de comunicados publicados.</p>',
-    tipo: 'novidade',
-    squad: '*', // aparece em qualquer squad de teste (dev ou omnichannel)
-  },
-  {
-    id: 'seed_novidades_semana_2026_07_07',
-    titulo: '🚀 Novidades do Maré Digital — semana de 04–05/jul',
-    corpo: `<p>Fizemos várias melhorias no board e no painel essa semana. Aqui o resumo do que chegou pra vocês:</p>
-
-<p><b>❓ Ajuda contextual em todo o board</b><br>
-Agora tem um botão <b>?</b> discreto em vários pontos do board — Calendário, Agendas, Relatório de Tempo, WIP, Mural, Impedimento, Recorrentes, Modelos e Estrelas. Passe o mouse pra ver uma explicação rápida da funcionalidade, com link pra ir direto no Help Content completo.</p>
-
-<p><b>🔍 Busca no Help (Ctrl+K)</b><br>
-A Central de Ajuda ganhou campo de busca. Use <b>Ctrl+K</b> (ou Cmd+K no Mac) pra abrir e já digitar o que procura — a busca funciona em todas as seções ao mesmo tempo, com destaque do termo encontrado.</p>
-
-<p><b>📢 Sistema de Comunicados (Mural)</b><br>
-Clique no botão 📢 no header do board pra ver avisos do ADM e novidades. Tem também a aba <b>"Fale com o ADM"</b> — use pra reportar problemas, dar sugestões ou tirar dúvidas sem precisar de mensagem no WhatsApp.</p>
-
-<p><b>🔔 Sino mais esperto</b><br>
-O sininho agora treme a cada 30 minutos enquanto você tiver notificações não lidas. E se você abrir o board num dia diferente com notificações pendentes, aparece um lembrete. O botão <b>"Limpar antigas"</b> também foi corrigido — agora remove todas as já lidas de uma vez.</p>
-
-<p><b>💾 Backup automático de verdade</b><br>
-O backup semanal agora funciona de fato — ele rodava só se a aba ficasse aberta por 7 dias, o que nunca acontecia. Agora verifica na abertura e roda se estiver atrasado, de qualquer dispositivo. Se você já tinha configurado, vale reconfigurar uma vez em <b>Config → Backup</b>.</p>
-
-<p>Qualquer dúvida ou problema, use o <b>Fale com o ADM</b> no Mural 📢 ou chama direto!</p>`,
+    corpo: '<p>Este é um rascunho de <b>teste</b> do ambiente dev. Clique em "Revisar e publicar" pra testar o fluxo completo.</p>',
     tipo: 'novidade',
     squad: '*',
   },
@@ -4979,22 +5037,17 @@ async function _seedComunicadoRascunhos(){
       novos.push(seed);
     }catch(e){ console.warn('[Rascunho seed] erro em', seed.id, e); }
   }
-  // Notifica o ADM no sino do painel pra cada rascunho novo criado
   if(novos.length > 0 && window._currentUser?.uid){
     const uid = window._currentUser.uid;
     for(const seed of novos){
       const nid = 'rascunho_'+seed.id;
       const jaNotif = await window._get(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid)).catch(()=>null);
-      if(jaNotif?.exists()) continue; // já notificou antes — não duplicar
+      if(jaNotif?.exists()) continue;
       window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
-        id: nid,
-        type: 'rascunho',
+        id: nid, type: 'rascunho',
         title: '🤖 Novo rascunho aguardando revisão',
-        sub: seed.titulo,
-        read: false,
-        ts: new Date().toISOString(),
-        squad: 'painel',
-        link: 'pessoas', // aba do painel onde está o rascunho
+        sub: seed.titulo, read: false,
+        ts: new Date().toISOString(), squad: 'painel', link: 'pessoas',
       }).catch(()=>{});
     }
     if(novos.length === 1) showToast('🤖 Novo rascunho de comunicado aguardando revisão → aba Pessoas');
@@ -5462,8 +5515,7 @@ function loadPcfgUsers(){
   const list=document.getElementById('pcfg-users-list'); if(!list) return;
   list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
-    const _dIds = new Set(SQUADS.map(s=>s.id));
-    const val=Object.fromEntries(Object.entries(snap.val()||{}).filter(([_,u])=>u&&u.squads&&Object.keys(u.squads).some(s=>_dIds.has(s))));
+    const val=snap.val()||{};
     const membersArr=Object.entries(val).filter(([uid,u])=>{
       if(u.squads) return u.squads[cfgSquadId]===true;
       return u.inscrito===true||u.inscrito==='true';
@@ -5554,7 +5606,6 @@ function toggleSqCol(sqId, colId){
 
 // Squads base — sempre presentes
 // ── PAINEL DEV: só exibe squads fictícias de teste ──────────────────────────
-// Nunca aponta para dados reais de produção.
 let SQUADS = [
   {id:'dev',         label:'Dev Sandbox',       icon:'🧪', color:'#38b6ff', wipLimit:3},
   {id:'omnichannel', label:'Squad Omnichannel',  icon:'🛍️', color:'#f97316', wipLimit:3},
@@ -5563,10 +5614,10 @@ let SQUADS = [
 // URL helper: abre o board de um squad no kanban unificado
 function squadBoardUrl(squadId, cardId){ return 'kanban-dev.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
 
-// Painel-dev: squads fixas (dev + omnichannel), não carrega do squads_meta de produção
+// Painel-dev: squads fixas, não carrega squads_meta de produção
 function loadExtraSquads(callback){
   if(callback) callback();
-  return; // squads fixas acima — não puxa squads_meta de prod
+  return;
   let firstRun=true; // eslint-disable-line
   window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{
     const val=snap.val()||{};
@@ -5623,8 +5674,9 @@ window.addEventListener('auth-change',e=>{
     document.getElementById('user-name').textContent=user.displayName||user.email;
     const av=document.getElementById('user-avatar');
     if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
-    // Seed de rascunhos: roda após login (usuário confirmado como ADM disponível)
     setTimeout(_seedComunicadoRascunhos, 2000);
+    // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
+    // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
     loadPainelNotifs();
   } else {
     document.getElementById('login-ov').style.display='flex';
@@ -6992,7 +7044,7 @@ async function sendGlobalBackupEmail(isTest=false){
     });
     const now = new Date().toISOString();
     _gbCfgCache.lastRun = now;
-    window._set(window._ref(window._db,'kanban/painel/config/backup_cfg_dev/lastRun'), now).catch(()=>{});
+    window._set(window._ref(window._db,'kanban/painel/config/backup_cfg/lastRun'), now).catch(()=>{});
     showToast('✅ Backup '+(isTest?'de teste ':'')+' enviado para '+cfg.email);
     const lastEl = document.getElementById('gb-last-backup');
     if(lastEl) lastEl.textContent = '⏱ Último automático: '+new Date(now).toLocaleString('pt-BR');
