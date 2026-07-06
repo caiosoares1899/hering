@@ -1549,51 +1549,63 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div id="st-squad-list"><div style="font-size:11px;color:var(--txt3);">Clique em 🔄 Atualizar para medir.</div></div>
     </div>
 
-    <!-- Adoção & Atividade -->
+    <!-- Adoção & Atividade (Engajamento Real) -->
     <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">👥 Adoção & Atividade</div>
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">👥 Engajamento & Uso Efetivo</div>
         <select id="st-uso-periodo" class="camp-filter-sel" onchange="loadUsoData()" style="font-size:11px;">
           <option value="7">Últimos 7 dias</option>
           <option value="14">Últimos 14 dias</option>
           <option value="30" selected>Últimos 30 dias</option>
         </select>
       </div>
-      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Quem está usando o quadro e quanto, por squad.</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Análise de quem realmente colabora vs. quem apenas visualiza o board.</div>
+      
       <div id="st-uso-erro-permissao" style="display:none;font-size:11px;color:var(--danger);background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px;line-height:1.5;">
-        ⚠ Não consegui ler os dados de acesso de nenhum squad — provavelmente falta a regra <code>access_log</code> nas Rules do Firebase (Realtime Database → Rules), dentro de <code>kanban/squads/$squadId</code>. Sem essa regra, os acessos nunca chegam a ser salvos nem lidos.
+        ⚠ Falta regra <code>access_log</code> no Firebase para medir acessos.
       </div>
 
+      <!-- Métricas Principais -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;">
-          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Pessoas únicas</div>
-          <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-pessoas">—</div>
-          <div style="font-size:9px;color:var(--txt3);">no período</div>
+        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--teal);">
+          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Taxa de Atividade</div>
+          <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-taxa-atividade">—</div>
+          <div style="font-size:9px;color:var(--txt3);">usuários ativos/total</div>
         </div>
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;">
-          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Acessos/dia (média)</div>
-          <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-media">—</div>
-          <div style="font-size:9px;color:var(--txt3);">pessoas por dia</div>
+        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--accent);">
+          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Stickiness (Hábito)</div>
+          <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-stickiness">—</div>
+          <div style="font-size:9px;color:var(--txt3);">frequência de retorno</div>
         </div>
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;">
-          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Squad mais ativo</div>
-          <div style="font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-top">—</div>
-          <div style="font-size:9px;color:var(--txt3);" id="st-uso-top-sub">—</div>
+        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--warn);">
+          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Ações por Usuário</div>
+          <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-acoes-media">—</div>
+          <div style="font-size:9px;color:var(--txt3);">média de edições</div>
         </div>
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;">
-          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Cards criados/editados</div>
-          <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-cards">—</div>
-          <div style="font-size:9px;color:var(--txt3);">no período</div>
+        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--cyan);">
+          <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Saúde do Board</div>
+          <div style="font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-saude">—</div>
+          <div style="font-size:9px;color:var(--txt3);" id="st-uso-saude-sub">calculando...</div>
         </div>
       </div>
 
-      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Pessoas distintas por dia (todos os squads)</div>
-      <div id="st-uso-chart" style="display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:18px;">
+      <!-- Gráfico Empilhado: Ações vs Visualizações -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Intensidade de Trabalho por Dia</div>
+        <div style="display:flex;gap:10px;">
+          <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--txt3);"><span style="width:8px;height:8px;background:var(--teal);border-radius:2px;"></span> Ações</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--txt3);"><span style="width:8px;height:8px;background:rgba(56,182,255,0.2);border-radius:2px;"></span> Só Visualizou</div>
+        </div>
+      </div>
+      <div id="st-uso-chart" style="display:flex;align-items:flex-end;gap:3px;height:100px;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid rgba(56,182,255,0.05);">
         <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
       </div>
 
-      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Adoção por squad</div>
-      <div id="st-uso-squads"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+      <!-- Ranking de Squads com Saúde -->
+      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Saúde e Engajamento por Squad</div>
+      <div id="st-uso-squads" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:12px;">
+        <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+      </div>
     </div>
 
   </div><!-- /ppane-status -->
@@ -5410,94 +5422,137 @@ async function loadUsoData(){
   const cutoffDate = datasRange[0];
 
   const KNOWN = SQUADS.map(s=>s.id);
-  const porDiaSet = {}; // dia -> Set(uid) agregando todos os squads
-  datasRange.forEach(d=>{ porDiaSet[d] = new Set(); });
-  const porSquad = {}; // squadId -> { pessoas:Set, acessosTotal:0 }
-  const todasPessoas = new Set();
+  const porDiaAcoes = {}; // dia -> Set(uid) de quem FEZ algo
+  const porDiaAcessos = {}; // dia -> Set(uid) de quem só ABRIU
+  datasRange.forEach(d=>{ porDiaAcoes[d] = new Set(); porDiaAcessos[d] = new Set(); });
+  
+  const porSquad = {}; // squadId -> { pessoasAtivas:Set, pessoasTotal:Set, acoes:0, acessos:0 }
+  const todasPessoasTotal = new Set();
+  const todasPessoasAtivas = new Set();
   let errosPermissao = 0;
 
+  // 1. Mapear Ações Reais (Edições de Cards)
+  KNOWN.forEach(sq=>{
+    porSquad[sq] = { pessoasAtivas:new Set(), pessoasTotal:new Set(), acoes:0, acessos:0, diasAtivos:{} };
+    const cds = squadData[sq]?.cards||[];
+    cds.forEach(c=>{
+      const d = (c.editedAt||c.createdAt||"").split('T')[0];
+      if(d && d >= cutoffDate && datasRange.includes(d)){
+        const uid = c.updatedBy || c.createdBy;
+        if(uid){
+          porDiaAcoes[d].add(uid);
+          porSquad[sq].pessoasAtivas.add(uid);
+          porSquad[sq].pessoasTotal.add(uid);
+          porSquad[sq].acoes++;
+          todasPessoasAtivas.add(uid);
+          todasPessoasTotal.add(uid);
+          if(!porSquad[sq].diasAtivos[uid]) porSquad[sq].diasAtivos[uid] = new Set();
+          porSquad[sq].diasAtivos[uid].add(d);
+        }
+      }
+    });
+  });
+
+  // 2. Mapear Acessos (Log de visualização)
   await Promise.all(KNOWN.map(async sq=>{
     try{
       const snap = await window._get(window._ref(window._db,'kanban/squads/'+sq+'/access_log'));
       const val = snap.val()||{};
-      porSquad[sq] = { pessoas:new Set(), acessos:0 };
       Object.entries(val).forEach(([dia, users])=>{
-        if(dia < cutoffDate) return; // fora do período
+        if(dia < cutoffDate || !datasRange.includes(dia)) return;
         const uids = Object.keys(users||{});
         uids.forEach(uid=>{
-          if(porDiaSet[dia]) porDiaSet[dia].add(uid);
-          porSquad[sq].pessoas.add(uid);
+          porSquad[sq].pessoasTotal.add(uid);
           porSquad[sq].acessos++;
-          todasPessoas.add(uid);
+          todasPessoasTotal.add(uid);
+          // Se ele acessou mas não está no set de ações do dia, é um "Só Visualizou"
+          if(!porDiaAcoes[dia].has(uid)) porDiaAcessos[dia].add(uid);
+          
+          if(!porSquad[sq].diasAtivos[uid]) porSquad[sq].diasAtivos[uid] = new Set();
+          porSquad[sq].diasAtivos[uid].add(dia);
         });
       });
     } catch(e){
-      porSquad[sq] = { pessoas:new Set(), acessos:0 };
       if(String(e?.message||e).toLowerCase().includes('permission')) errosPermissao++;
-      console.warn('[Uso] erro ao ler access_log de', sq, e);
     }
   }));
 
-  // Se TODOS os squads falharam por permissão, provavelmente falta a regra do Firebase
-  // pra 'access_log' — avisa isso claramente em vez de só mostrar zero silenciosamente.
-  const avisoEl = document.getElementById('st-uso-erro-permissao');
-  if(avisoEl) avisoEl.style.display = (errosPermissao===KNOWN.length && KNOWN.length>0) ? 'block' : 'none';
-
-  // Cards criados/editados no período (proxy de atividade)
-  let cardsAtividade = 0;
-  KNOWN.forEach(sq=>{
-    const cds = squadData[sq]?.cards||[];
-    cds.forEach(c=>{
-      const d = c.editedAt||c.createdAt;
-      if(d && d>=cutoffDate) cardsAtividade++;
+  // 3. Cálculos de Engajamento
+  const totalPessoas = todasPessoasTotal.size || 1;
+  const taxaAtividade = ((todasPessoasAtivas.size / totalPessoas) * 100).toFixed(0);
+  
+  // Stickiness (DAU/MAU simplificado: média de dias ativos por pessoa no período)
+  let somaDiasAtivos = 0;
+  let totalMembros = 0;
+  Object.values(porSquad).forEach(sq=>{
+    Object.values(sq.diasAtivos).forEach(diasSet=>{
+      somaDiasAtivos += diasSet.size;
+      totalMembros++;
     });
   });
+  const stickiness = totalMembros > 0 ? ((somaDiasAtivos / (totalMembros * dias)) * 100).toFixed(0) : 0;
+  const acoesMedia = totalMembros > 0 ? (Object.values(porSquad).reduce((s,q)=>s+q.acoes,0) / totalMembros).toFixed(1) : 0;
 
-  // Resumo
-  const totalPessoas = todasPessoas.size;
-  const mediaDia = (Object.values(porDiaSet).reduce((s,set)=>s+set.size,0) / dias).toFixed(1);
-  let topSquad = null, topCount = -1;
-  Object.entries(porSquad).forEach(([sq,d])=>{ if(d.pessoas.size>topCount){ topCount=d.pessoas.size; topSquad=sq; } });
+  // Saúde Geral
+  let saudeTxt = "Latente", saudeCor = "var(--warn)";
+  if(taxaAtividade > 60 && stickiness > 30) { saudeTxt = "Ativo 🔥"; saudeCor = "var(--teal)"; }
+  else if(taxaAtividade < 30) { saudeTxt = "Estagnado 🧊"; saudeCor = "var(--danger)"; }
 
-  const elP=document.getElementById('st-uso-pessoas'); if(elP) elP.textContent = totalPessoas;
-  const elM=document.getElementById('st-uso-media'); if(elM) elM.textContent = mediaDia;
-  const elT=document.getElementById('st-uso-top'); if(elT) elT.textContent = topSquad?_sqLabel(topSquad):'—';
-  const elTs=document.getElementById('st-uso-top-sub'); if(elTs) elTs.textContent = topCount>=0?(topCount+' pessoa'+(topCount!==1?'s':'')):'—';
-  const elC=document.getElementById('st-uso-cards'); if(elC) elC.textContent = cardsAtividade;
+  // Atualizar UI - Cards
+  const elTaxa = document.getElementById('st-uso-taxa-atividade'); if(elTaxa) elTaxa.textContent = taxaAtividade + '%';
+  const elStick = document.getElementById('st-uso-stickiness'); if(elStick) elStick.textContent = stickiness + '%';
+  const elAcoes = document.getElementById('st-uso-acoes-media'); if(elAcoes) elAcoes.textContent = acoesMedia;
+  const elSaude = document.getElementById('st-uso-saude'); if(elSaude) { elSaude.textContent = saudeTxt; elSaude.style.color = saudeCor; }
+  const elSaudeSub = document.getElementById('st-uso-saude-sub'); if(elSaudeSub) elSaudeSub.textContent = `${todasPessoasAtivas.size} de ${todasPessoasTotal.size} pessoas`;
 
-  // Gráfico de barras: pessoas distintas por dia
+  // 4. Gráfico Empilhado
   const chartEl = document.getElementById('st-uso-chart');
   if(chartEl){
-    const maxV = Math.max(...datasRange.map(d=>porDiaSet[d].size), 1);
+    const maxV = Math.max(...datasRange.map(d=>porDiaAcoes[d].size + porDiaAcessos[d].size), 1);
     chartEl.innerHTML = datasRange.map(d=>{
-      const v = porDiaSet[d].size;
-      const h = Math.max(2, (v/maxV)*100);
+      const vAcoes = porDiaAcoes[d].size;
+      const vAcessos = porDiaAcessos[d].size;
+      const hAcoes = (vAcoes / maxV) * 100;
+      const hAcessos = (vAcessos / maxV) * 100;
       const diaLbl = new Date(d+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;" title="${diaLbl}: ${v} pessoa${v!==1?'s':''}">
-        <div style="width:100%;max-width:14px;height:${h}%;background:${v>0?'var(--teal)':'rgba(255,255,255,.08)'};border-radius:3px 3px 0 0;min-height:2px;"></div>
+      
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;" title="${diaLbl}: ${vAcoes} agindo, ${vAcessos} vendo">
+        <div style="width:100%;max-width:12px;height:${hAcoes}%;background:var(--teal);border-radius:2px 2px 0 0;z-index:2;"></div>
+        <div style="width:100%;max-width:12px;height:${hAcessos}%;background:rgba(56,182,255,0.2);margin-top:-2px;border-radius:2px 2px 0 0;"></div>
+        <div style="font-size:8px;color:var(--txt3);position:absolute;bottom:-15px;transform:scale(0.8);">${diaLbl.split('/')[0]}</div>
       </div>`;
     }).join('');
   }
 
-  // Lista por squad
+  // 5. Ranking por Squad (Cards de Saúde)
   const squadsEl = document.getElementById('st-uso-squads');
   if(squadsEl){
-    const rows = KNOWN.map(sq=>({sq, ...porSquad[sq]})).sort((a,b)=>b.pessoas.size-a.pessoas.size);
-    const maxP = Math.max(...rows.map(r=>r.pessoas.size), 1);
+    const rows = KNOWN.map(sq=>({id:sq, ...porSquad[sq]})).sort((a,b)=>b.acoes-a.acoes);
     squadsEl.innerHTML = rows.map(r=>{
-      const sc = _painelSqColor(r.sq);
-      const w = Math.max(2,(r.pessoas.size/maxP)*100);
-      return `<div style="margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:3px;">
-          <span style="color:${sc.text};font-weight:600;">${esc(_sqLabel(r.sq))}</span>
-          <span style="color:var(--txt3);">${r.pessoas.size} pessoa${r.pessoas.size!==1?'s':''} · ${r.acessos} acesso${r.acessos!==1?'s':''}</span>
+      const sc = _painelSqColor(r.id);
+      const tx = r.pessoasTotal.size > 0 ? ((r.pessoasAtivas.size / r.pessoasTotal.size) * 100).toFixed(0) : 0;
+      let sCor = "rgba(255,255,255,0.05)";
+      if(tx > 70) sCor = "rgba(29,233,182,0.1)";
+      else if(tx < 30) sCor = "rgba(255,107,107,0.1)";
+
+      return `<div style="background:${sCor};border:1px solid var(--glass-b);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="color:${sc.text};font-weight:700;font-size:12px;">${esc(_sqLabel(r.id))}</span>
+          <span style="font-size:10px;padding:2px 6px;border-radius:999px;background:rgba(0,0,0,0.2);color:var(--txt2);">${tx}% ativo</span>
         </div>
-        <div style="height:7px;background:rgba(3,13,26,.8);border-radius:999px;overflow:hidden;">
-          <div style="height:100%;width:${w}%;background:${sc.text};border-radius:999px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+          <div style="font-size:9px;color:var(--txt3);">Ações: <b style="color:var(--txt);">${r.acoes}</b></div>
+          <div style="font-size:9px;color:var(--txt3);">Membros: <b style="color:var(--txt);">${r.pessoasTotal.size}</b></div>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:999px;overflow:hidden;">
+          <div style="height:100%;width:${tx}%;background:${sc.text};"></div>
         </div>
       </div>`;
     }).join('');
   }
+
+  const avisoEl = document.getElementById('st-uso-erro-permissao');
+  if(avisoEl) avisoEl.style.display = (errosPermissao===KNOWN.length && KNOWN.length>0) ? 'block' : 'none';
 }
 
 function loadErrorLogs(){
