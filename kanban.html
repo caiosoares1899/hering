@@ -3877,7 +3877,13 @@ function bulkMove(){
 function _doBulkMove(colId){
   const col=columns.find(c=>c.id===colId);
   const n = selectedCards.size;
-  _selectedList().forEach(c=>{ if(c.col!==colId){ recordMove(c,colId); c.col=colId; recordHistory(c,'moveu para '+(col?.name||colId)); } });
+  _selectedList().forEach(c=>{ if(c.col!==colId){ 
+    recordMove(c,colId); 
+    c.col=colId; 
+    c.updatedAt=new Date().toISOString(); 
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    recordHistory(c,'moveu para '+(col?.name||colId)); 
+  } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
   // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
   const wrap = document.getElementById('board-wrap');
@@ -3893,7 +3899,12 @@ function bulkAssign(){
 function _doBulkAssign(init){
   const m=members.find(x=>x.init===init);
   const n = selectedCards.size;
-  _selectedList().forEach(c=>{ c.owner=init; recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável'); });
+  _selectedList().forEach(c=>{ 
+    c.owner=init; 
+    c.updatedAt=new Date().toISOString(); 
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável'); 
+  });
   _bulkFinish('👤 ' + n + ' card(s) ' + (init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável') + '.', true);
 }
 function bulkTag(){
@@ -5500,7 +5511,9 @@ function scheduleAutoSave(){
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
-      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
+      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
+      updatedAt:new Date().toISOString(),
+      updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
     fbSaveAll(); renderBoard();
     // feedback sutil
@@ -5768,6 +5781,8 @@ function saveCard(){
       item.sp = document.getElementById('m-sp').value;
       item.priority = document.getElementById('m-priority').value;
       item.participants = getParticipants();
+      item.updatedAt = new Date().toISOString();
+      item.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
       fbSet(FB+'/ql_items',qlItems);
     }
     cards = cards.filter(c=>!c._isQLTemp);
@@ -5806,14 +5821,18 @@ function saveCard(){
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
-      edited:user,editedAt:td});
+      edited:user,editedAt:td,
+      updatedAt:new Date().toISOString(),
+      updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
+      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td,
+      updatedAt:new Date().toISOString(),
+      updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
@@ -11552,6 +11571,8 @@ function handleDrop(e, colId){
   card.col = colId;
   card.edited = window._currentUser?.displayName||'Usuário';
   card.editedAt = new Date().toISOString().split('T')[0];
+  card.updatedAt = new Date().toISOString();
+  card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   if(prevColDrop!==colId){ const _cn=columns.find(x=>x.id===colId); recordHistory(card, 'moveu para '+(_cn?_cn.name:colId)); } // 📜
   recordMove(card, colId); // ← registra transição p/ métricas de fluxo
   card._savePending = true; // flag: ignora echo do Firebase durante o save
@@ -12076,6 +12097,8 @@ function ctxMove(colId){
   const ant=card.col; card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
+  card.updatedAt = new Date().toISOString();
+  card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
   // Notificações
   const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
@@ -12092,6 +12115,8 @@ function ctxSetPriority(p){
   card.priority=p;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
+  card.updatedAt = new Date().toISOString();
+  card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveAll();
   showToast(p ? `Prioridade ${p} definida` : 'Prioridade removida');
   hideCtxMenu();
@@ -12104,6 +12129,8 @@ function ctxAssignMe(){
   card.owner=init;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
+  card.updatedAt = new Date().toISOString();
+  card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveAll();
   showToast(`Card atribuído a ${window._currentUser?.displayName||init}`);
   hideCtxMenu();
