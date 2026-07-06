@@ -3493,7 +3493,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.93-dev</div>
+<div class="version">v8.30.94-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3650,13 +3650,11 @@ const ACTIVE_SQUAD = (_urlParams.get('squad') || 'dev').replace(/[^a-z0-9_-]/gi,
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
 // Squads criados via painel são carregados do Firebase em loadSquadsFromFirebase().
 // Apenas dados e midia existem por padrão.
+// kanban-dev.html: SÓ squads fictícios de teste. Squads reais (dados, midia,
+// midiacriativa, app) NUNCA aparecem aqui — mesmo que existam no Firebase
+// squads_meta compartilhado, são filtrados em loadSquadsFromFirebase() abaixo.
 const SQUAD_META_DEFAULT = {
-  dados:         { label: 'Squad Dados 📊',          subtitle: 'Time de Dados',            agentRole: 'dados' },
-  midia:         { label: 'Squad Marketing de Performance', subtitle: 'Performance Marketing',    agentRole: 'mídia', emoji: '📱' },
-  midiacriativa: { label: 'Squad Mídia Criativa',     subtitle: 'Criação & Conteúdo',       agentRole: 'criativo', emoji: '🎨' },
   dev:           { label: '🧪 Dev Sandbox',           subtitle: 'Ambiente de testes',       agentRole: 'engenheiro', emoji: '🧪' },
-  // Squad FICTÍCIA de testes — usada só pra exercitar interações multi-squad (menções, campanhas
-  // compartilhadas, comunicados segmentados) SEM tocar em dados reais da squad Mídia/Marketing.
   omnichannel:   { label: '🧪 Squad Omnichannel',     subtitle: 'Ambiente de testes (multi-squad)', agentRole: 'omnichannel', emoji: '🛍️' },
 };
 
@@ -3683,7 +3681,11 @@ function loadSquadsFromFirebase(callback) {
   if (!window._fbReady) { if (callback) callback(); return; }
   window._get(window._ref(window._db, 'kanban/squads_meta')).then(snap => {
     const val = snap.val() || {};
+    // squads_meta é compartilhado com o prod — o dev só deve exibir os
+    // squads fictícios de teste, nunca squads reais cadastrados por lá.
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
     Object.entries(val).forEach(([id, meta]) => {
+      if (!SQUADS_FICTICIOS.has(id)) return;
       if (meta && meta.label) {
         SQUAD_META_LIVE[id] = {
           label:     meta.label,
