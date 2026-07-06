@@ -335,7 +335,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .panel-ft{padding:9px 16px;border-top:1px solid var(--glass-b);display:flex;gap:7px;background:rgba(6,26,46,.97);}
 /* agent */
 .ag-panel{max-width:780px;max-height:88vh;display:flex;flex-direction:column;}
-.ag-tabs{display:flex;border-bottom:1px solid var(--glass-b);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.ag-tabs{display:flex;border-bottom:1px solid var(--glass-b);overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(56,182,255,.25) transparent;}
+.ag-tabs::-webkit-scrollbar{height:4px;}
+.ag-tabs::-webkit-scrollbar-track{background:transparent;}
+.ag-tabs::-webkit-scrollbar-thumb{background:rgba(56,182,255,.25);border-radius:4px;}
+.ag-tabs::-webkit-scrollbar-thumb:hover{background:rgba(56,182,255,.4);}
 .ag-tabs::-webkit-scrollbar{display:none;}
 .ag-tab{padding:8px 12px;font-size:11px;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
 .ag-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
@@ -344,7 +348,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 #cfg-tabs::-webkit-scrollbar,#help-tabs::-webkit-scrollbar{height:6px;}
 #cfg-tabs::-webkit-scrollbar-thumb,#help-tabs::-webkit-scrollbar-thumb{background:rgba(56,182,255,.4);border-radius:3px;}
 #cfg-tabs::-webkit-scrollbar-track,#help-tabs::-webkit-scrollbar-track{background:transparent;}
-#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:8px 14px;font-size:12px;line-height:1.2;border-radius:8px;border-bottom:none;margin-bottom:0;color:var(--txt2);background:transparent;flex-shrink:0;white-space:nowrap;}
+#cfg-tabs .ag-tab,#help-tabs .ag-tab{padding:8px 15px;font-size:12px;line-height:1.2;border-radius:8px;border-bottom:none;margin-bottom:0;margin-right:2px;color:var(--txt2);background:transparent;flex-shrink:0;white-space:nowrap;}
 #cfg-tabs .ag-tab:hover,#help-tabs .ag-tab:hover{background:rgba(56,182,255,.08);color:var(--txt);}
 #cfg-tabs .ag-tab.on,#help-tabs .ag-tab.on{background:rgba(56,182,255,.16);color:var(--accent);border-bottom:none;font-weight:700;}
 .ag-body{padding:12px 14px;overflow-y:auto;flex:1;}
@@ -372,7 +376,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .retro-i{font-size:11px;color:var(--txt);padding:3px 0;border-bottom:1px solid rgba(56,182,255,.07);line-height:1.5;}
 .retro-i:last-child{border:none;}
 /* config */
-.cfg-panel{max-width:640px;width:92vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.cfg-panel{max-width:820px;width:94vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
 .cfg-panel .panel-hd{flex-shrink:0;}
 .cfg-panel #cfg-tabs{flex-shrink:0;}
 .cfg-panel .tab-c{overflow-y:auto;flex:1;}
@@ -2565,16 +2569,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
   <div class="cfg-body">
 
-    <!-- ZERAR BOARD -->
-    <div style="margin:0 0 10px;padding:10px 12px;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);">
-      <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">⚠ Zona de perigo</div>
-      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="zerarBoard()">🗑 Excluir todos os cards</button>
-      <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Remove todos os cards ativos e arquivados permanentemente.</p>
-    </div>
-      <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Sobrescreve o board com os dados de demonstração mais recentes (cards, ⭐ kudos, 📌 lembretes, reações e status). Use após atualizar o sistema.</p>
-    </div>
     <!-- ABA ÁGIL -->
     <div class="tab-c on" id="cfgtab-agil">
+      <!-- ZERAR BOARD -->
+      <div style="margin:0 0 14px;padding:10px 12px;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);">
+        <div style="font-size:10px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">⚠ Zona de perigo</div>
+        <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="zerarBoard()">🗑 Excluir todos os cards</button>
+        <p style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.4;">Remove todos os cards ativos e arquivados permanentemente.</p>
+      </div>
       <div class="cfg-sec-title">Sprint</div>
       <div class="frow">
         <div class="field"><label class="fl">Número da sprint</label><input class="fi" id="cfg-sprint-num" type="number" min="1"></div>
@@ -3449,7 +3451,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.92</div>
+<div class="version">v8.30.93</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
