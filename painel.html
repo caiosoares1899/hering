@@ -5450,8 +5450,8 @@ async function loadUsoData(){
 
       if(d && d >= cutoffDate && datasRange.includes(d)){
         // Tentamos capturar quem fez a ação (nome ou UID)
-        const uid = c.updatedBy || c.createdBy || c.lastModifiedBy;
-        if(uid && uid !== '?'){
+        const uid = c.updatedBy || c.edited || c.createdBy || c.lastModifiedBy;
+        if(uid && uid !== '?' && uid !== 'Usuário'){
           porDiaAcoes[d].add(uid);
           porSquad[sq].pessoasAtivas.add(uid);
           porSquad[sq].pessoasTotal.add(uid);
