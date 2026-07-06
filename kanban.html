@@ -3451,7 +3451,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.95</div>
+<div class="version">v8.30.94</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9603,15 +9603,10 @@ function renderHelp(){
   `).join('');
 }
 
-// Ctrl+K / Cmd+K abre o help com foco na busca; dentro do help, ESC fecha
+// Dentro do help, ESC fecha (Ctrl+K removido daqui para priorizar a busca global)
 document.addEventListener('keydown', e=>{
-  if((e.ctrlKey||e.metaKey) && e.key==='k'){
-    e.preventDefault();
-    if(document.getElementById('help-ov')?.classList.contains('open')){
-      document.getElementById('help-search')?.focus();
-    } else {
-      openHelp();
-    }
+  if(e.key==='Escape' && document.getElementById('help-ov')?.classList.contains('open')){
+    closeHelp();
   }
 });
 
