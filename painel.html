@@ -5435,11 +5435,23 @@ async function loadUsoData(){
   KNOWN.forEach(sq=>{
     porSquad[sq] = { pessoasAtivas:new Set(), pessoasTotal:new Set(), acoes:0, acessos:0, diasAtivos:{} };
     const cds = squadData[sq]?.cards||[];
+    
     cds.forEach(c=>{
-      const d = (c.editedAt||c.createdAt||"").split('T')[0];
+      // Tentamos capturar a data de edição de várias formas comuns (ISO string, timestamp, etc)
+      let rawDate = c.updatedAt || c.editedAt || c.createdAt;
+      if(!rawDate) return;
+      
+      // Converte para YYYY-MM-DD
+      let d = "";
+      try {
+        if(typeof rawDate === 'number') d = new Date(rawDate).toISOString().split('T')[0];
+        else if(typeof rawDate === 'string') d = rawDate.split('T')[0];
+      } catch(e) { return; }
+
       if(d && d >= cutoffDate && datasRange.includes(d)){
-        const uid = c.updatedBy || c.createdBy;
-        if(uid){
+        // Tentamos capturar quem fez a ação (nome ou UID)
+        const uid = c.updatedBy || c.createdBy || c.lastModifiedBy;
+        if(uid && uid !== '?'){
           porDiaAcoes[d].add(uid);
           porSquad[sq].pessoasAtivas.add(uid);
           porSquad[sq].pessoasTotal.add(uid);
