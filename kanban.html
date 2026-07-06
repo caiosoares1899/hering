@@ -3451,7 +3451,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.94</div>
+<div class="version">v8.30.95</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4372,10 +4372,14 @@ function fbLoadAll(){
       const incoming = Array.isArray(val)?val:Object.values(val);
       if(JSON.stringify(incoming) !== JSON.stringify(cards)){
         cards = incoming;
-        // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
-        const _bf = backfillAllFlow();
-        // Garante que _lastFlowCol esteja consistente com a coluna atual
-        cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
+        // OTIMIZAÇÃO: Backfill apenas em cards ATIVOS no carregamento inicial.
+        // Cards arquivados serão processados apenas se/quando o modal de arquivados for aberto.
+        let _bf = 0;
+        (cards||[]).forEach(c=>{ 
+          if(c && !c.archived && !c.flow){ backfillFlow(c); _bf++; } 
+          if(c && !c.archived && c._lastFlowCol==null) c._lastFlowCol=c.col;
+        });
+        
         renderBoard();
         // Persiste o backfill (1x) sem disparar loop de echo
         if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
@@ -7473,6 +7477,20 @@ function _renderCampCardsGrid(){
 
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
+  
+  // OTIMIZAÇÃO: Processa o backfill de fluxo dos arquivados apenas AGORA, sob demanda.
+  let _bfNeeded = false;
+  cards.forEach(c => {
+    if(c && c.archived){
+      if(!c.flow){ backfillFlow(c); _bfNeeded = true; }
+      if(c._lastFlowCol == null) c._lastFlowCol = c.col;
+    }
+  });
+  if(_bfNeeded && window._fbReady){ 
+    _lastLocalSave=Date.now(); 
+    window._set(fb(FB+'/cards'), cards).catch(()=>{}); 
+  }
+
   let archived=cards.filter(c=>c.archived);
   // Popula dropdowns de filtro preservando a seleção atual
   const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner');
