@@ -3451,7 +3451,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.93</div>
+<div class="version">v8.30.94</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3614,7 +3614,9 @@ const SQUAD_META_DEFAULT = {
   dados:         { label: 'Squad Dados 📊',          subtitle: 'Time de Dados',            agentRole: 'dados' },
   midia:         { label: 'Squad Marketing de Performance', subtitle: 'Performance Marketing',    agentRole: 'mídia', emoji: '📱' },
   midiacriativa: { label: 'Squad Mídia Criativa',     subtitle: 'Criação & Conteúdo',       agentRole: 'criativo', emoji: '🎨' },
-  dev:           { label: '🧪 Dev Sandbox',           subtitle: 'Ambiente de testes',       agentRole: 'engenheiro', emoji: '🧪' },
+  // 'dev' e 'omnichannel' são squads FICTÍCIOS de teste — vivem só em kanban-dev.html,
+  // nunca aqui no prod. Se aparecerem via squads_meta (Firebase compartilhado), são
+  // filtrados em loadSquadsFromFirebase().
 };
 
 // Squads ativos — começa com o default, pode ser estendido pelo Firebase
@@ -3640,7 +3642,12 @@ function loadSquadsFromFirebase(callback) {
   if (!window._fbReady) { if (callback) callback(); return; }
   window._get(window._ref(window._db, 'kanban/squads_meta')).then(snap => {
     const val = snap.val() || {};
+    // squads_meta é um nó do Firebase compartilhado entre prod e dev —
+    // squads fictícios (dev/omnichannel) cadastrados pelo painel-dev não
+    // devem vazar pra tela de seleção do board de produção.
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
     Object.entries(val).forEach(([id, meta]) => {
+      if (SQUADS_FICTICIOS.has(id)) return;
       if (meta && meta.label) {
         SQUAD_META_LIVE[id] = {
           label:     meta.label,
