@@ -1024,7 +1024,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .comment-meta strong{color:var(--txt2);font-weight:600;}
 .comment-text{font-size:12px;color:var(--txt);background:rgba(6,20,44,.8);
   border:1px solid rgba(56,182,255,.1);border-radius:8px;padding:7px 10px;
-  line-height:1.55;word-break:break-word;}
+  line-height:1.55;word-break:break-word;white-space:pre-wrap;}
 .comment-text a.card-mention{color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:600;}
 .comment-text a.user-mention{color:var(--teal);text-decoration:underline;cursor:pointer;}
 .comment-actions{display:flex;gap:6px;margin-top:7px;}
@@ -3516,7 +3516,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.101</div>
+<div class="version">v8.30.102</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12892,19 +12892,27 @@ function renderCommentList(comments){
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMentionText(esc(c.text||''));
     const canDel=c.uid===window._currentUser?.uid||window._currentUserRole==='adm';
+    const canEdit=c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão o ADM também pode
+    const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
     item.innerHTML=
       '<div class="comment-avatar">'+avatarHtml+'</div>'+
       '<div class="comment-bubble">'+
-        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong> · '+dt+'</div>'+
-        '<div class="comment-text">'+textHtml+'</div>'+
+        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong> · '+dt+editedTag+'</div>'+
+        '<div class="comment-text" id="ctext-'+esc(c.id)+'">'+textHtml+'</div>'+
         _renderReactions(c)+
         '<div class="comment-actions">'+
           '<button class="cmt-act-btn cmt-react" title="Reagir">😊 <span>Reagir</span>'+
             '<span class="rx-picker">'+_reactPicker(c)+'</span>'+
           '</button>'+
+          (canEdit?'<button class="cmt-act-btn cmt-edit" title="Editar comentário">✏️ <span>Editar</span></button>':'')+
           (canDel?'<button class="cmt-act-btn cmt-del" title="Excluir comentário">🗑 <span>Excluir</span></button>':'')+
         '</div>'+
       '</div>';
+    // Wire editar
+    if(canEdit){
+      const editBtn=item.querySelector('.cmt-edit');
+      if(editBtn) editBtn.onclick=()=>startEditComment(c.id);
+    }
     // Wire reagir picker toggle
     const reactBtn=item.querySelector('.cmt-react');
     if(reactBtn) reactBtn.onclick=(ev)=>{ ev.stopPropagation(); reactBtn.querySelector('.rx-picker').classList.toggle('open'); };
@@ -12974,6 +12982,46 @@ function deleteComment(cid){
   delete cardObj.comments[cid];
   fbSaveAll();
   loadComments(_commentCardId);
+}
+
+// ── Edição de comentário (só o autor pode editar) ───────────────────────
+// Troca o texto exibido por um textarea inline, preservando o resto do
+// bubble (avatar, reações). Ctrl+Enter salva, Esc cancela.
+function startEditComment(cid){
+  const el = document.getElementById('ctext-'+cid);
+  if(!el) return;
+  const cardObj=cards.find(c=>c.id===_commentCardId);
+  const comment = cardObj?.comments?.[cid];
+  if(!comment) return;
+  el.innerHTML = `
+    <textarea class="eoc-textarea" id="cedit-ta-${cid}" style="min-height:50px;"
+      onkeydown="if(event.key==='Escape'){event.preventDefault();cancelEditComment('${cid}');}
+        else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveEditComment('${cid}');}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(comment.text||'')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="eoc-save" onclick="saveEditComment('${cid}')">Salvar</button>
+      <button class="eoc-cancel" onclick="cancelEditComment('${cid}')">Cancelar</button>
+      <span class="eoc-hint">Ctrl+Enter salva · Esc cancela</span>
+    </div>`;
+  const ta = document.getElementById('cedit-ta-'+cid);
+  if(ta){ ta.focus(); ta.selectionStart = ta.selectionEnd = ta.value.length; ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
+}
+
+function saveEditComment(cid){
+  const ta = document.getElementById('cedit-ta-'+cid); if(!ta) return;
+  const newText = ta.value.trim();
+  if(!newText){ showToast('Comentário não pode ficar vazio.'); return; }
+  const cardObj=cards.find(c=>c.id===_commentCardId);
+  const comment = cardObj?.comments?.[cid];
+  if(!comment) return;
+  comment.text = newText;
+  comment.editedAt = new Date().toISOString();
+  fbSaveAll();
+  loadComments(_commentCardId);
+}
+
+function cancelEditComment(cid){
+  loadComments(_commentCardId); // recarrega do estado salvo, descartando a edição
 }
 
 // ── Reações rápidas em comentários ──
