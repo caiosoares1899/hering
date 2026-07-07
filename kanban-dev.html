@@ -2214,7 +2214,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </button>
       <button onclick="setColSortMode('doneAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-        ✅ Data de finalização
+        📅 Prazo (data prevista)
       </button>
     </div>
   </div>
@@ -3581,7 +3581,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.104-dev</div>
+<div class="version">v8.30.105-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4440,7 +4440,7 @@ function fbSaveMsgs(tab){
 
 function fbLoadAll(){
   (function _initSortLabel(){
-    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Data de finalização'};
+    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo'};
     const lbl = document.getElementById('btn-sort-lbl');
     if(lbl) lbl.textContent = labels[colSortMode] || 'Prioridade';
     const btn = document.getElementById('btn-sort');
@@ -5233,10 +5233,12 @@ function _sortCards(arr, colId){
     return arr.slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   }
   if(mode==='doneAt'){
+    // "Prazo" = card.due (data prevista), não flow.doneAt (data real de
+    // conclusão, só existe em cards já na coluna Done — inútil nas outras).
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     return arr.slice().sort((a,b)=>{
-      const da=a.flow?.doneAt, db=b.flow?.doneAt;
-      if(da && db) return String(db).localeCompare(String(da));
+      const da=a.due, db=b.due;
+      if(da && db) return da.localeCompare(db);
       if(da && !db) return -1;
       if(!da && db) return 1;
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
@@ -5573,7 +5575,7 @@ function cycleColSort(colId){
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
-  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Data de finalização'};
+  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo'};
   const lbl = document.getElementById('btn-sort-lbl');
   if(lbl) lbl.textContent = labels[mode] || 'Prioridade';
   const btn = document.getElementById('btn-sort');
@@ -9634,7 +9636,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n✅ Data de finalização — cards concluídos mais recentemente primeiro; quem ainda não foi concluído fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → finalização → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\nÉ tudo preferência pessoal de visualização — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
+    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\nÉ tudo preferência pessoal de visualização — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
