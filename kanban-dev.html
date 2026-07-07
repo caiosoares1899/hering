@@ -2557,6 +2557,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <div class="eoc-display is-empty" id="m-comment-display"
               data-placeholder="Escrever um comentário..."
               onclick="eocEdit('comment-eoc')"></div>
+            <div class="fmt-toolbar" data-for="m-comment-inp">
+              <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','bold')" title="Negrito"><b>B</b></button>
+              <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','italic')" title="Itálico"><i>I</i></button>
+              <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','underline')" title="Sublinhado"><u>U</u></button>
+              <span class="fmt-colors">
+                <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','color','#ff6b6b')" title="Vermelho"></button>
+                <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','color','#ffd166')" title="Amarelo"></button>
+                <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','color','#1de9b6')" title="Verde"></button>
+                <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','color','#38b6ff')" title="Azul"></button>
+              </span>
+              <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','link')" title="Link">🔗</button>
+            </div>
             <div style="position:relative;">
               <textarea class="eoc-textarea" id="m-comment-inp"
                 oninput="autoResizeCommentInp(this);handleCommentMentions(this)"
@@ -3569,7 +3581,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.103-dev</div>
+<div class="version">v8.30.104-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9649,7 +9661,7 @@ const HELP_CONTENT = {
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
     { icon:'@', title:'Menções', text:'No campo de descrição, comentário ou nas Campanhas, digite @ para mencionar um membro do time (a pessoa recebe notificação no sino 🔔), ou @card: para vincular outro card (abre um seletor de busca). Funciona tanto na edição de card quanto no composer de registro das Campanhas & Coleções.' },
-    { icon:'🔤', title:'Texto rico na descrição', text:'Ao editar a descrição (principal ou adicionais), use a barra de ferramentas para deixar texto em negrito, itálico, sublinhado ou colorido. Selecione um trecho e clique no botão, ou clique sem selecionar para inserir um modelo. Por baixo usa markdown: **negrito**, *itálico*, __sublinhado__.' },
+    { icon:'🔤', title:'Texto rico na descrição e nos comentários', text:'Ao editar a descrição (principal ou adicionais) ou escrever um comentário, use a barra de ferramentas para deixar texto em negrito, itálico, sublinhado ou colorido. Selecione um trecho e clique no botão, ou clique sem selecionar para inserir um modelo. Por baixo usa markdown: **negrito**, *itálico*, __sublinhado__ — funciona igual nos dois lugares, incluindo ao editar um comentário já enviado.' },
     { icon:'🔗', title:'Links nas descrições', text:'Cole qualquer URL e ela vira um link clicável automaticamente. Para um link com nome bonito (estilo Word), clique no botão 🔗 da barra de ferramentas, informe a URL e o texto a exibir — ex.: mostrar "Board do Bolão" em vez do endereço completo.' },
     { icon:'📝', title:'Descrições adicionais', text:'Além da descrição principal do PO, cada time ou pessoa pode adicionar a sua própria visão no card (Brief do Design, Specs do Dev, etc.). Clique em "+ Nova descrição", escreva e salve. Depois de salva, ela fica em modo leitura com o rótulo, o autor e a data; o lápis ✏️ reabre para editar.' },
     { icon:'🏷', title:'Múltiplas tags por card', text:'Um card pode ter mais de uma tag ao mesmo tempo. Adicione quantas precisar no campo Tags. Na raia por tag, cards com várias tags aparecem em cada linha correspondente.' },
@@ -12867,7 +12879,7 @@ function renderCommentList(comments){
       ? '<img src="'+esc(c.foto)+'" style="width:100%;height:100%;object-fit:cover;">'
       : '<span>'+esc((c.init||c.author||'?').substring(0,2).toUpperCase())+'</span>';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
-    const textHtml=renderMentionText(esc(c.text||''));
+    const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
     const canDel=c.uid===window._currentUser?.uid||window._currentUserRole==='adm';
     const canEdit=c.uid===window._currentUser?.uid;
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
@@ -12967,7 +12979,19 @@ function startEditComment(cid){
   const comment = cardObj?.comments?.[cid];
   if(!comment) return;
   el.innerHTML = `
-    <textarea id="cedit-ta-${cid}" class="cmt-edit-textarea"
+    <div class="fmt-toolbar" style="display:flex;">
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','bold')" title="Negrito"><b>B</b></button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','italic')" title="Itálico"><i>I</i></button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','underline')" title="Sublinhado"><u>U</u></button>
+      <span class="fmt-colors">
+        <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','color','#ff6b6b')" title="Vermelho"></button>
+        <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','color','#ffd166')" title="Amarelo"></button>
+        <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','color','#1de9b6')" title="Verde"></button>
+        <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','color','#38b6ff')" title="Azul"></button>
+      </span>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','link')" title="Link">🔗</button>
+    </div>
+    <textarea id="cedit-ta-${cid}" class="cmt-edit-textarea" style="border-radius:0 0 8px 8px;"
       onkeydown="if(event.key==='Escape'){event.preventDefault();cancelEditComment('${cid}');}
         else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveEditComment('${cid}');}"
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(comment.text||'')}</textarea>
