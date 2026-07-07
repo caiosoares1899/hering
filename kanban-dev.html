@@ -2364,6 +2364,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </div>
       </div>
     </div>
+    <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:2px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    </button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
@@ -3493,7 +3496,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.94-dev</div>
+<div class="version">v8.30.96-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3554,8 +3557,14 @@ window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
 
-// Expõe para os botões do HTML poderem chamar
-window.doSignIn = (insc) => window._signIn(insc);
+// NOTA: doSignIn() já é definida no bloco de script normal mais abaixo (com
+// tratamento de erro adequado — trata popup fechado/bloqueado sem gerar log de
+// erro no Firebase). Não reatribuir window.doSignIn aqui: como este bloco é um
+// módulo ES (sempre deferred, roda DEPOIS de scripts normais mesmo aparecendo
+// antes no HTML), uma atribuição aqui sobrescreveria a versão com tratamento de
+// erro pela sem tratamento, causando o erro "auth/popup-closed-by-user" vazar
+// pro window.onunhandledrejection e ser logado como erro do sistema toda vez
+// que alguém fecha o popup de login.
 // Pede o escopo de calendário sob demanda (só quando a pessoa conecta uma agenda) —
 // isolado do login normal pra não bloquear todo mundo se o app não estiver verificado.
 window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
@@ -4727,7 +4736,15 @@ function doSignIn(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
   if(!window._signIn){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
   if(insc) window._pendingInsc=true;
-  window._signIn().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; window._pendingInsc=false; });
+  window._signIn().catch(e=>{
+    window._pendingInsc=false;
+    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      err.textContent='Login cancelado. Clique em Entrar para tentar novamente.';
+    } else {
+      err.textContent='Erro: '+(e?.message||e);
+    }
+    err.style.display='block';
+  });
 }
 function doSignOut(){ 
   safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
@@ -9441,6 +9458,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card' },
+    { icon:'🔗', title:'Compartilhar link do card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Milanote, Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
@@ -9605,17 +9623,9 @@ function renderHelp(){
   `).join('');
 }
 
-// Ctrl+K / Cmd+K abre o help com foco na busca; dentro do help, ESC fecha
-document.addEventListener('keydown', e=>{
-  if((e.ctrlKey||e.metaKey) && e.key==='k'){
-    e.preventDefault();
-    if(document.getElementById('help-ov')?.classList.contains('open')){
-      document.getElementById('help-search')?.focus();
-    } else {
-      openHelp();
-    }
-  }
-});
+// Ctrl+K abre a busca global de cards (ver openSearch() mais abaixo) —
+// removido daqui o listener duplicado que também abria o Help no mesmo atalho,
+// já que os dois competiam pelo mesmo evento de forma imprevisível.
 
 // helpTip — gera um balão de ajuda contextual (position:fixed via JS).
 // O balão usa position:fixed calculado no hover pra nunca sair da viewport,
@@ -11425,6 +11435,8 @@ window.onunhandledrejection = function(e){
   if(_errCount>10) return;
   const msg=e.reason?.message||String(e.reason)||'Promise rejeitada';
   if(msg.includes('error_logs')||msg.includes('error_stats')) return; // ignora erros de log
+  const code = e.reason?.code || '';
+  if(code==='auth/popup-closed-by-user' || code==='auth/popup-blocked' || code==='auth/cancelled-popup-request') return;
   logError(msg,'promise',0,0,e.reason);
 };
 
@@ -12260,6 +12272,30 @@ async function salvarComoModelo(id){
   const btn=event.target; const orig=btn.textContent;
   btn.textContent='✅'; setTimeout(()=>btn.textContent=orig,1500);
 }
+// Gera o link direto pra este card (mesmo mecanismo do ?opencard= usado pelo
+// multi-squad de campanhas) e copia pra área de transferência.
+async function shareCardLink(){
+  if(!editingId) return;
+  const url = window.location.origin + window.location.pathname
+    + '?squad=' + encodeURIComponent(ACTIVE_SQUAD)
+    + '&opencard=' + encodeURIComponent(editingId);
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('🔗 Link do card copiado! Já pode colar (Ctrl+V).');
+  } catch(e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('🔗 Link do card copiado! Já pode colar (Ctrl+V).');
+    } catch(e2) {
+      showToast('⚠ Não foi possível copiar automaticamente. Link: ' + url);
+    }
+  }
+}
+
 function closeOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
