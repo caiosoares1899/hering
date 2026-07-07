@@ -8405,16 +8405,49 @@ async function removerMembro(uid, nome){
 
 // --- Tags ---
 function renderTagEditor(){
-  document.getElementById('tag-editor').innerHTML=tags.map((t,i)=>{
+  const container = document.getElementById('tag-editor');
+  if(!container) return;
+  
+  // Se não houver tags, limpa e sai
+  if(!tags.length){
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--txt3);font-size:12px;">Nenhuma tag cadastrada.</div>';
+    return;
+  }
+
+  // Renderiza preservando o estado dos inputs se possível
+  container.innerHTML=tags.map((t,i)=>{
     const p=getPal(t.pi);
     const swatches=PALETTE.map((pp,pi)=>`<div class="swatch${t.pi===pi?' sel':''}" style="background:${pp.h}" onclick="setTagColor(${i},${pi})"></div>`).join('');
-    return `<div class="tag-row"><span class="tag-preview" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><input class="tag-name-inp" value="${esc(t.label)}" oninput="tags[${i}].label=this.value;renderTagEditor()"><div class="color-row">${swatches}</div><button class="icon-btn" onclick="delTag(${i})">✕</button></div>`;
+    return `
+      <div class="tag-row" data-idx="${i}">
+        <span class="tag-preview" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>
+        <input class="tag-name-inp" value="${esc(t.label)}" oninput="updateTagName(${i}, this.value)">
+        <div class="color-row">${swatches}</div>
+        <button class="icon-btn" onclick="delTag(${i})" title="Excluir tag">✕</button>
+      </div>`;
   }).join('');
+}
+
+function updateTagName(i, val){
+  if(tags[i]) {
+    tags[i].label = val;
+    // Atualiza apenas o preview visual da linha atual para não perder o foco/scroll
+    const row = document.querySelector(`.tag-row[data-idx="${i}"]`);
+    if(row){
+      const preview = row.querySelector('.tag-preview');
+      if(preview) preview.textContent = val;
+    }
+  }
 }
 function setTagColor(i,pi){ tags[i].pi=pi; renderTagEditor(); }
 function delTag(i){ if(tags.length<=1) return; tags.splice(i,1); renderTagEditor(); }
 function addTag(){ const n=document.getElementById('new-tag-name').value.trim(); if(!n) return; tags.push({id:'tag_'+Date.now(),label:n,pi:0}); document.getElementById('new-tag-name').value=''; renderTagEditor(); }
-function saveTags(){ fbSet(FB+'/tags',tags); renderBoard(); closeOv('cfg-ov'); }
+function saveTags(){ 
+  fbSet(FB+'/tags',tags); 
+  renderBoard(); 
+  if(typeof showToast === 'function') showToast('✅ Tags salvas com sucesso!');
+  closeOv('cfg-ov'); 
+}
 
 // ═══ SUBTIMES ═══
 // ═══════════════════════════════════════════════════════
