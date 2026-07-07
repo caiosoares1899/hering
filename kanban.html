@@ -3013,7 +3013,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <!-- Campo de busca -->
   <div style="padding:10px 16px 0;flex-shrink:0;">
     <div style="position:relative;">
-      <input id="help-search" type="text" placeholder="🔍 Buscar…" autocomplete="off"
+      <input id="help-search" type="text" placeholder="🔍 Buscar… (Ctrl+K)" autocomplete="off"
         oninput="renderHelp()"
         onkeydown="if(event.key==='Escape'){document.getElementById('help-search').value='';renderHelp();}"
         style="width:100%;padding:8px 32px 8px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;box-sizing:border-box;">
@@ -3451,7 +3451,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.94</div>
+<div class="version">v8.30.95</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3512,8 +3512,14 @@ window._signOut=()=>signOut(auth);
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
 
-// Expõe para os botões do HTML poderem chamar
-window.doSignIn = (insc) => window._signIn(insc);
+// NOTA: doSignIn() já é definida no bloco de script normal mais abaixo (com
+// tratamento de erro adequado — trata popup fechado/bloqueado sem gerar log de
+// erro no Firebase). Não reatribuir window.doSignIn aqui: como este bloco é um
+// módulo ES (sempre deferred, roda DEPOIS de scripts normais mesmo aparecendo
+// antes no HTML), uma atribuição aqui sobrescreveria a versão com tratamento de
+// erro pela sem tratamento, causando o erro "auth/popup-closed-by-user" vazar
+// pro window.onunhandledrejection e ser logado como erro do sistema toda vez
+// que alguém fecha o popup de login.
 // Pede o escopo de calendário sob demanda (só quando a pessoa conecta uma agenda) —
 // isolado do login normal pra não bloquear todo mundo se o app não estiver verificado.
 window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
@@ -3877,12 +3883,12 @@ function bulkMove(){
 function _doBulkMove(colId){
   const col=columns.find(c=>c.id===colId);
   const n = selectedCards.size;
-  _selectedList().forEach(c=>{ if(c.col!==colId){ 
-    recordMove(c,colId); 
-    c.col=colId; 
-    c.updatedAt=new Date().toISOString(); 
+  _selectedList().forEach(c=>{ if(c.col!==colId){
+    recordMove(c,colId);
+    c.col=colId;
+    c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    recordHistory(c,'moveu para '+(col?.name||colId)); 
+    recordHistory(c,'moveu para '+(col?.name||colId));
   } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
   // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
@@ -3899,11 +3905,11 @@ function bulkAssign(){
 function _doBulkAssign(init){
   const m=members.find(x=>x.init===init);
   const n = selectedCards.size;
-  _selectedList().forEach(c=>{ 
-    c.owner=init; 
-    c.updatedAt=new Date().toISOString(); 
+  _selectedList().forEach(c=>{
+    c.owner=init;
+    c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável'); 
+    recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável');
   });
   _bulkFinish('👤 ' + n + ' card(s) ' + (init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável') + '.', true);
 }
@@ -4372,14 +4378,10 @@ function fbLoadAll(){
       const incoming = Array.isArray(val)?val:Object.values(val);
       if(JSON.stringify(incoming) !== JSON.stringify(cards)){
         cards = incoming;
-        // OTIMIZAÇÃO: Backfill apenas em cards ATIVOS no carregamento inicial.
-        // Cards arquivados serão processados apenas se/quando o modal de arquivados for aberto.
-        let _bf = 0;
-        (cards||[]).forEach(c=>{ 
-          if(c && !c.archived && !c.flow){ backfillFlow(c); _bf++; } 
-          if(c && !c.archived && c._lastFlowCol==null) c._lastFlowCol=c.col;
-        });
-        
+        // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
+        const _bf = backfillAllFlow();
+        // Garante que _lastFlowCol esteja consistente com a coluna atual
+        cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
         renderBoard();
         // Persiste o backfill (1x) sem disparar loop de echo
         if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
@@ -4697,7 +4699,17 @@ function doSignIn(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
   if(!window._signIn){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
   if(insc) window._pendingInsc=true;
-  window._signIn().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; window._pendingInsc=false; });
+  window._signIn().catch(e=>{
+    window._pendingInsc=false;
+    // Popup fechado/bloqueado é comportamento normal do usuário, não um erro do sistema —
+    // não deveria assustar com a mensagem técnica crua do Firebase.
+    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      err.textContent='Login cancelado. Clique em Entrar para tentar novamente.';
+    } else {
+      err.textContent='Erro: '+(e?.message||e);
+    }
+    err.style.display='block';
+  });
 }
 function doSignOut(){ 
   safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
@@ -7477,20 +7489,6 @@ function _renderCampCardsGrid(){
 
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
-  
-  // OTIMIZAÇÃO: Processa o backfill de fluxo dos arquivados apenas AGORA, sob demanda.
-  let _bfNeeded = false;
-  cards.forEach(c => {
-    if(c && c.archived){
-      if(!c.flow){ backfillFlow(c); _bfNeeded = true; }
-      if(c._lastFlowCol == null) c._lastFlowCol = c.col;
-    }
-  });
-  if(_bfNeeded && window._fbReady){ 
-    _lastLocalSave=Date.now(); 
-    window._set(fb(FB+'/cards'), cards).catch(()=>{}); 
-  }
-
   let archived=cards.filter(c=>c.archived);
   // Popula dropdowns de filtro preservando a seleção atual
   const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner');
@@ -9603,12 +9601,9 @@ function renderHelp(){
   `).join('');
 }
 
-// Dentro do help, ESC fecha (Ctrl+K removido daqui para priorizar a busca global)
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape' && document.getElementById('help-ov')?.classList.contains('open')){
-    closeHelp();
-  }
-});
+// Ctrl+K abre a busca global de cards (ver openSearch() mais abaixo) —
+// removido daqui o listener duplicado que também abria o Help no mesmo atalho,
+// já que os dois competiam pelo mesmo evento de forma imprevisível.
 
 // helpTip — gera um balão de ajuda contextual (position:fixed via JS).
 // O balão usa position:fixed calculado no hover pra nunca sair da viewport,
@@ -11421,6 +11416,10 @@ window.onunhandledrejection = function(e){
   if(_errCount>10) return;
   const msg=e.reason?.message||String(e.reason)||'Promise rejeitada';
   if(msg.includes('error_logs')||msg.includes('error_stats')) return; // ignora erros de log
+  // Rede de segurança: popup de login fechado/bloqueado pelo usuário é comportamento
+  // normal, não um erro do sistema — nunca deveria virar entrada no painel de erros.
+  const code = e.reason?.code || '';
+  if(code==='auth/popup-closed-by-user' || code==='auth/popup-blocked' || code==='auth/cancelled-popup-request') return;
   logError(msg,'promise',0,0,e.reason);
 };
 
@@ -11695,6 +11694,8 @@ function addTouchDnD(el, cardId){
     const ant=card.col; card.col=colId;
     card.edited=window._currentUser?.displayName||'Usuário';
     card.editedAt=new Date().toISOString().split('T')[0];
+    card.updatedAt = new Date().toISOString();
+    card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
     showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
   });
