@@ -151,6 +151,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
 .btn-p:hover{background:rgba(37,99,201,.88);}
 .btn-teal{background:rgba(29,233,182,.15);border-color:rgba(29,233,182,.35);color:var(--teal);}
+.btn-milanote{background:#2b2b2b;color:#e8e8e8;border-color:#444;transition:all .15s;}
+.btn-milanote:hover{background:#1a1a1a;transform:translateY(-1px);}
 .btn-sm{padding:3px 9px;font-size:11px;}
 
 /* toolbar */
@@ -2302,33 +2304,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button onclick="unlinkDependsOn()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:auto;" title="Remover dependência">✕</button>
   </div>
   <div class="panel-hd">
-    <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-      <div class="panel-title" id="m-title-disp" style="flex:1;">Card</div>
-      <div style="position:relative;" id="m-depends-wrap">
-        <button id="m-depends-btn" class="parent-btn" onclick="toggleDepsMenu()" title="Dependências">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
-          <span id="m-depends-lbl">Dependência</span>
-        </button>
-        <div id="m-deps-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;
-          background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-          box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
-          <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
-            onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-            🔗 Definir dependência
-          </button>
-          <button onclick="openCardDepMapModal();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
-            onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-            ⛓ Ver dependências deste card
-          </button>
-          <div style="height:1px;background:rgba(56,182,255,.1);margin:0 10px;"></div>
-          <button onclick="unlinkDependsOn();closeDepsMenu();" id="m-deps-unlink-btn" style="display:none;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:rgba(255,107,107,.7);font-size:12px;cursor:pointer;text-align:left;"
-            onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='none'">
-            ✕ Remover dependência
-          </button>
-        </div>
-      </div>
-    </div>
-    <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:2px;">
+    <div class="panel-title" id="m-title-disp" style="flex:1;min-width:0;">Card</div>
+    <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
+    <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
@@ -2543,6 +2521,33 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="btn btn-sm" id="btn-dup-card" onclick="duplicarCard()" title="Duplicar este card">⧉ Duplicar</button>
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
     <button class="btn btn-sm btn-teal" onclick="archiveCard()">📦 Arquivar</button>
+    <div style="position:relative;" id="m-depends-wrap">
+      <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
+        <span id="m-depends-lbl">Dependência</span>
+      </button>
+      <div id="m-deps-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+        background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
+        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:200px;z-index:500;overflow:hidden;">
+        <button onclick="openDependsPicker();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+          onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+          🔗 Definir dependência
+        </button>
+        <button onclick="openCardDepMapModal();closeDepsMenu();" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+          onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+          ⛓ Ver dependências deste card
+        </button>
+        <div style="height:1px;background:rgba(56,182,255,.1);margin:0 10px;"></div>
+        <button onclick="unlinkDependsOn();closeDepsMenu();" id="m-deps-unlink-btn" style="display:none;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:rgba(255,107,107,.7);font-size:12px;cursor:pointer;text-align:left;"
+          onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='none'">
+          ✕ Remover dependência
+        </button>
+      </div>
+    </div>
+    <button class="btn btn-sm btn-milanote" onclick="exportToMilanote()" title="Formata o card e copia pro clipboard — cole no Milanote" style="display:inline-flex;align-items:center;gap:6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v10m-12-12v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4"/></svg>
+      Milanote
+    </button>
     <div style="flex:1;"></div>
     <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
     <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
@@ -3454,7 +3459,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.96</div>
+<div class="version">v8.30.97</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9440,7 +9445,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card' },
-    { icon:'🔗', title:'Compartilhar link do card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Milanote, Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.' },
+    { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Exportar para o Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele formata o card inteiro — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — num texto que o Milanote reconhece ao colar, criando uma nota já organizada. Ótimo pro time de Criação levar o card pro board visual sem digitar nada de novo.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
@@ -12269,30 +12274,62 @@ async function salvarComoModelo(id){
   const btn=event.target; const orig=btn.textContent;
   btn.textContent='✅'; setTimeout(()=>btn.textContent=orig,1500);
 }
-// Gera o link direto pra este card (mesmo mecanismo do ?opencard= usado pelo
-// multi-squad de campanhas) e copia pra área de transferência. Útil pra colar
-// em Milanote, Slack, docs etc — o time de Criação usa bastante isso.
-async function shareCardLink(){
-  if(!editingId) return;
-  const url = window.location.origin + window.location.pathname
+// Gera a URL direta pra este card (mesmo mecanismo do ?opencard= usado pelo
+// multi-squad de campanhas) — reaproveitada por shareCardLink e exportToMilanote.
+function _cardShareUrl(){
+  if(!editingId) return null;
+  return window.location.origin + window.location.pathname
     + '?squad=' + encodeURIComponent(ACTIVE_SQUAD)
     + '&opencard=' + encodeURIComponent(editingId);
+}
+
+// Copia texto pro clipboard com fallback pra contextos sem permissão
+// (ex: http sem HTTPS, iframe restrito). Mostra o toast de sucesso passado.
+async function _copyToClipboard(text, successMsg){
   try {
-    await navigator.clipboard.writeText(url);
-    showToast('🔗 Link do card copiado! Já pode colar (Ctrl+V).');
+    await navigator.clipboard.writeText(text);
+    showToast(successMsg);
   } catch(e) {
-    // Fallback pra contextos sem permissão de clipboard (ex: http sem HTTPS, iframe restrito)
     try {
       const ta = document.createElement('textarea');
-      ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
       document.body.appendChild(ta); ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      showToast('🔗 Link do card copiado! Já pode colar (Ctrl+V).');
+      showToast(successMsg);
     } catch(e2) {
-      showToast('⚠ Não foi possível copiar automaticamente. Link: ' + url);
+      showToast('⚠ Não foi possível copiar automaticamente.');
     }
   }
+}
+
+// Copia o link direto pra este card. Útil pra colar em Milanote, Slack, docs etc.
+async function shareCardLink(){
+  const url = _cardShareUrl();
+  if(!url) return;
+  await _copyToClipboard(url, '🔗 Link do card copiado! Já pode colar (Ctrl+V).');
+}
+
+// Formata o card como texto rico (estilo Markdown) que o parser de clipboard
+// do Milanote reconhece — título com #, campos em negrito, link de volta pro
+// Kanban. Ideia trazida por sugestão do Manus, adaptada pra reusar a mesma URL
+// (com squad) já usada em shareCardLink, em vez de gerar um link novo.
+async function exportToMilanote(){
+  const card = cards.find(x=>x.id===editingId); if(!card) return;
+  const url = _cardShareUrl();
+  const tagLabels = getCardTags(card).map(id=>getTag(id)?.label).filter(Boolean).join(', ');
+  const content = `# ${card.title}
+---
+👤 Responsável: ${card.owner || 'Sem atribuição'}
+📅 Prazo: ${card.due || 'Sem prazo'}
+🏷️ Tags: ${tagLabels || 'Sem tag'}
+
+🔗 Link para o Kanban: ${url}
+
+---
+Descrição:
+${card.desc || 'Sem descrição.'}`.trim();
+  await _copyToClipboard(content, '📋 Formatado para o Milanote! Agora é só dar Ctrl+V lá.');
 }
 
 function closeOv(id){
