@@ -1113,6 +1113,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .eoc-cancel:hover{color:var(--txt);}
 .eoc-hint{font-size:10px;color:var(--txt3);margin-left:4px;}
 
+/* Textarea de edição de comentário — visual igual ao .eoc-textarea, mas
+   sempre visível (não depende do toggle .eoc-editing do campo de novo comentário) */
+.cmt-edit-textarea{
+  display:block;width:100%;background:rgba(3,13,26,.85);
+  border:1px solid rgba(56,182,255,.3);border-radius:8px;
+  padding:8px 10px;font-size:12px;color:var(--txt);
+  font-family:"DM Sans",sans-serif;resize:none;min-height:56px;
+  outline:none;box-sizing:border-box;line-height:1.6;
+}
+.cmt-edit-textarea:focus{border-color:rgba(56,182,255,.5);}
+
 /* Comment eoc variant (smaller) */
 .eoc-comment .eoc-display{min-height:28px;font-size:12px;}
 .eoc-comment .eoc-textarea{min-height:56px;resize:none;}
@@ -3558,7 +3569,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.102-dev</div>
+<div class="version">v8.30.103-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12956,11 +12967,11 @@ function startEditComment(cid){
   const comment = cardObj?.comments?.[cid];
   if(!comment) return;
   el.innerHTML = `
-    <textarea class="eoc-textarea" id="cedit-ta-${cid}" style="min-height:50px;"
+    <textarea id="cedit-ta-${cid}" class="cmt-edit-textarea"
       onkeydown="if(event.key==='Escape'){event.preventDefault();cancelEditComment('${cid}');}
         else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveEditComment('${cid}');}"
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(comment.text||'')}</textarea>
-    <div style="display:flex;gap:8px;margin-top:6px;">
+    <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
       <button class="eoc-save" onclick="saveEditComment('${cid}')">Salvar</button>
       <button class="eoc-cancel" onclick="cancelEditComment('${cid}')">Cancelar</button>
       <span class="eoc-hint">Ctrl+Enter salva · Esc cancela</span>
