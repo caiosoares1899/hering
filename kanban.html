@@ -2563,10 +2563,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </button>
       </div>
     </div>
-    <button class="btn btn-sm btn-milanote" onclick="exportToMilanote()" title="Formata o card e copia pro clipboard — cole no Milanote" style="display:inline-flex;align-items:center;gap:6px;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v10m-12-12v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4"/></svg>
-      Milanote
-    </button>
+    <div style="position:relative;" id="m-milanote-menu-wrap">
+      <button class="btn btn-sm btn-milanote" onclick="toggleMilanoteMenu()" title="Copiar pro Milanote" style="display:inline-flex;align-items:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v10m-12-12v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4"/></svg>
+        Milanote
+      </button>
+      <div id="m-milanote-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+        background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
+        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;z-index:500;overflow:hidden;">
+        <button onclick="exportToMilanote();closeMilanoteMenu();" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+          onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+          <span>📝 Copiar resumo completo</span>
+          <span style="font-size:10px;color:var(--txt3);">Título, responsável, prazo, tags e descrição</span>
+        </button>
+        <div style="height:1px;background:rgba(56,182,255,.1);margin:0 10px;"></div>
+        <button onclick="copyMilanoteUrlOnly();closeMilanoteMenu();" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+          onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+          <span>🔗 Copiar só o link</span>
+          <span style="font-size:10px;color:var(--txt3);">Cole sozinho — o Milanote pode gerar um cartão com preview</span>
+        </button>
+      </div>
+    </div>
     <div style="flex:1;"></div>
     <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
     <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
@@ -3478,7 +3495,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.98</div>
+<div class="version">v8.30.99</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12353,6 +12370,28 @@ ${card.desc || 'Sem descrição.'}
 ${url}`.trim();
   await _copyToClipboard(content, '📋 Copiado! Agora é só dar Ctrl+V no Milanote.');
 }
+
+// Copia SÓ a URL, sem nenhum texto ao redor. Muitas ferramentas (Milanote,
+// Notion, Trello) reconhecem uma URL colada sozinha e geram automaticamente
+// um cartão com preview (título/favicon da página) — testar e comparar com
+// o resumo completo pra ver qual fica melhor no board de vocês.
+async function copyMilanoteUrlOnly(){
+  const url = _cardShareUrl(); if(!url) return;
+  await _copyToClipboard(url, '🔗 Link copiado! Cole sozinho no Milanote pra ver se ele gera um cartão com preview.');
+}
+
+function toggleMilanoteMenu(){
+  const menu = document.getElementById('m-milanote-menu');
+  if(!menu) return;
+  menu.style.display = menu.style.display==='none' ? 'block' : 'none';
+}
+function closeMilanoteMenu(){
+  const menu = document.getElementById('m-milanote-menu');
+  if(menu) menu.style.display = 'none';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#m-milanote-menu-wrap')) closeMilanoteMenu();
+});
 
 function closeOv(id){
   document.getElementById(id)?.classList.remove('open');
