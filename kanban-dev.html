@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{ icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n📌 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 📌 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2478,6 +2478,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
     </div>
 
+    <!-- Peça vinculada no Milanote (campo dedicado, separado dos links genéricos) -->
+    <div class="attach-wrap" id="m-milanote-wrap" style="border-color:rgba(232,70,70,.25);">
+      <div class="attach-hd">
+        <span class="attach-lbl">📌 Peça no Milanote</span>
+      </div>
+      <div id="m-milanote-view" style="display:none;padding:8px 0;">
+        <a id="m-milanote-link" href="#" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(232,70,70,.1);border:1px solid rgba(232,70,70,.3);border-radius:8px;color:#ff8080;text-decoration:none;font-size:12px;font-weight:600;">
+          🎨 Abrir peça no Milanote →
+        </a>
+        <button onclick="removeMilanoteLink()" title="Desvincular" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:8px;text-decoration:underline;">Desvincular</button>
+      </div>
+      <div id="m-milanote-inp-row" class="attach-inp-row">
+        <input class="attach-inp" id="m-milanote-url" type="url" placeholder="Cole o link da peça/board no Milanote..."
+          onkeydown="if(event.key==='Enter'){event.preventDefault();saveMilanoteLink();}">
+        <button class="attach-save-btn" onclick="saveMilanoteLink()">Vincular</button>
+      </div>
+    </div>
+
     <!-- Anexos e Links Externos -->
     <div class="attach-wrap" id="m-attach-wrap">
       <div class="attach-hd">
@@ -3501,7 +3520,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.97-dev</div>
+<div class="version">v8.30.98-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5130,7 +5149,8 @@ function makeCardEl(card){
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -12312,24 +12332,26 @@ async function shareCardLink(){
   await _copyToClipboard(url, '🔗 Link do card copiado! Já pode colar (Ctrl+V).');
 }
 
-// Formata o card como texto rico (estilo Markdown) que o parser de clipboard
-// do Milanote reconhece — título com #, campos em negrito, link de volta pro Kanban.
+// Formata o card como texto simples e legível — testamos e o Milanote NÃO
+// interpreta sintaxe markdown (#, **negrito**, ---), cola tudo cru com os
+// símbolos aparecendo literalmente. Por isso usamos só quebras de linha reais
+// e emojis como marcadores visuais.
 async function exportToMilanote(){
   const card = cards.find(x=>x.id===editingId); if(!card) return;
   const url = _cardShareUrl();
   const tagLabels = getCardTags(card).map(id=>getTag(id)?.label).filter(Boolean).join(', ');
-  const content = `# ${card.title}
----
+  const content = `${card.title}
+
 👤 Responsável: ${card.owner || 'Sem atribuição'}
 📅 Prazo: ${card.due || 'Sem prazo'}
 🏷️ Tags: ${tagLabels || 'Sem tag'}
 
-🔗 Link para o Kanban: ${url}
+📝 Descrição:
+${card.desc || 'Sem descrição.'}
 
----
-Descrição:
-${card.desc || 'Sem descrição.'}`.trim();
-  await _copyToClipboard(content, '📋 Formatado para o Milanote! Agora é só dar Ctrl+V lá.');
+🔗 Link para o Kanban:
+${url}`.trim();
+  await _copyToClipboard(content, '📋 Copiado! Agora é só dar Ctrl+V no Milanote.');
 }
 
 function closeOv(id){
@@ -13399,6 +13421,53 @@ function loadAttachments(card){
   // Reset add row
   const row=document.getElementById('m-attach-inp-row');
   if(row) row.style.display='none';
+  renderMilanoteLink(card);
+}
+
+function renderMilanoteLink(card){
+  const view = document.getElementById('m-milanote-view');
+  const inpRow = document.getElementById('m-milanote-inp-row');
+  const link = document.getElementById('m-milanote-link');
+  if(!view || !inpRow) return;
+  if(card?.milanoteLink){
+    view.style.display = 'flex';
+    view.style.alignItems = 'center';
+    inpRow.style.display = 'none';
+    if(link) link.href = card.milanoteLink;
+  } else {
+    view.style.display = 'none';
+    inpRow.style.display = 'flex';
+    const inp = document.getElementById('m-milanote-url');
+    if(inp) inp.value = '';
+  }
+}
+
+function saveMilanoteLink(){
+  const inp = document.getElementById('m-milanote-url'); if(!inp) return;
+  let url = inp.value.trim();
+  if(!url) return;
+  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(!card) return;
+  card.milanoteLink = url;
+  card.updatedAt = new Date().toISOString();
+  card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+  fbSaveAll();
+  renderMilanoteLink(card);
+  renderBoard();
+  showToast('📌 Peça do Milanote vinculada!');
+}
+
+function removeMilanoteLink(){
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(!card) return;
+  delete card.milanoteLink;
+  card.updatedAt = new Date().toISOString();
+  card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+  fbSaveAll();
+  renderMilanoteLink(card);
+  renderBoard();
+  showToast('Peça desvinculada.');
 }
 
 // ── CONVITE POR EMAIL (PO pode adicionar usuário ao squad) ──────────────────
