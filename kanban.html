@@ -2152,6 +2152,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 <div class="toolbar">
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
+  <div style="position:relative;" id="sort-menu-wrap">
+    <button class="btn btn-sm" onclick="toggleSortMenu()" id="btn-sort" title="Ordenar cards dentro de cada coluna">↕ <span id="btn-sort-lbl">Prioridade</span></button>
+    <div id="sort-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
+      background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
+      box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:220px;z-index:500;overflow:hidden;">
+      <button onclick="setColSortMode('priority')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔥 Prioridade <span style="font-size:10px;color:var(--txt3);margin-left:auto;">padrão</span>
+      </button>
+      <button onclick="setColSortMode('createdAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🕐 Data de criação
+      </button>
+      <button onclick="setColSortMode('doneAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        ✅ Data de finalização
+      </button>
+    </div>
+  </div>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
   <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
@@ -3495,7 +3514,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.99</div>
+<div class="version">v8.30.100</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3820,6 +3839,9 @@ let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
 let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
+// Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
+// não é dado do board (cada pessoa pode preferir ver diferente).
+let colSortMode = safeLS.getItem('col_sort_'+ACTIVE_SQUAD) || 'priority';
 let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
 // ═══ SELEÇÃO MÚLTIPLA / EXCLUSÃO EM MASSA ═══
 let selectMode=false;
@@ -4366,6 +4388,19 @@ function fbSaveMsgs(tab){
 }
 
 function fbLoadAll(){
+  // Sincroniza o botão de ordenação com a preferência já salva (localStorage)
+  // antes do primeiro renderBoard(), pra não mostrar "Prioridade" por engano
+  // quando a pessoa já tinha escolhido outro modo numa sessão anterior.
+  (function _initSortLabel(){
+    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Data de finalização'};
+    const lbl = document.getElementById('btn-sort-lbl');
+    if(lbl) lbl.textContent = labels[colSortMode] || 'Prioridade';
+    const btn = document.getElementById('btn-sort');
+    if(btn && colSortMode!=='priority'){
+      btn.style.borderColor = 'var(--teal)';
+      btn.style.color = 'var(--teal)';
+    }
+  })();
   // ── ORDEM IMPORTA: columns e agil_cfg registrados ANTES de cards ──
   // Assim, quando o listener de cards disparar o primeiro render, as
   // colunas e a config da sprint (WIP) já terão boa chance de estar
@@ -5141,6 +5176,30 @@ function makeCardEl(card){
   return div;
 }
 
+// Ordena os cards de uma coluna conforme colSortMode — usado em renderNormal
+// e em todas as visões de raia (owner/tag/subteam), pra manter consistência
+// independente do modo de visualização escolhido.
+function _sortCards(arr){
+  if(colSortMode==='createdAt'){
+    return arr.slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  }
+  if(colSortMode==='doneAt'){
+    // Cards sem doneAt (ainda não concluídos) vão pro final, mantendo entre
+    // si a ordem por prioridade como critério secundário.
+    const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
+    return arr.slice().sort((a,b)=>{
+      const da=a.flow?.doneAt, db=b.flow?.doneAt;
+      if(da && db) return String(db).localeCompare(String(da)); // mais recente primeiro
+      if(da && !db) return -1;
+      if(!da && db) return 1;
+      return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
+    });
+  }
+  // 'priority' (padrão)
+  const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
+  return arr.slice().sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
+}
+
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
   // Snapshot diário: só agenda o timer se ainda não fez hoje (evita timers acumulados a cada render)
@@ -5167,8 +5226,7 @@ function renderNormal(board,activeCards){
   board.classList.remove('raia-mode','mode-onepage','mode-expanded');
   board.classList.add('mode-'+(viewMode||'expanded'));
   columns.forEach(col=>{
-    const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
-    const colCards=activeCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
+    const colCards=_sortCards(activeCards.filter(c=>c.col===col.id));
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
     
@@ -5246,8 +5304,7 @@ function renderRaiaOwner(board,activeCards){
     board.appendChild(row);
     const raiaBoard=row.querySelector('.raia-cols');
     columns.forEach(col=>{
-      const PRIO2={'critical':0,'high':1,'medium':2,'low':3,'':4};
-      const colCards=ownerCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO2[a.priority||'']??4)-(PRIO2[b.priority||'']??4));
+      const colCards=_sortCards(ownerCards.filter(c=>c.col===col.id));
       const safeId=owner||'none';
       const div=document.createElement('div'); div.className='col'; div.style.minWidth='160px';
       const rColId='raia-'+safeId+'-'+col.id;
@@ -5294,8 +5351,7 @@ function renderRaiaTag(board,activeCards){
     board.appendChild(row);
     const raiaBoard=row.querySelector('.raia-cols');
     columns.forEach(col=>{
-      const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
-      const colCards=tagCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
+      const colCards=_sortCards(tagCards.filter(c=>c.col===col.id));
       const tColId='raia-tag-'+tagId+'-'+col.id;
       const tCollapsed=collapsedCols.has(tColId);
       const div=document.createElement('div');
@@ -5347,8 +5403,7 @@ function renderRaiaSubteam(board,activeCards){
     board.appendChild(row);
     const raiaBoard=row.querySelector('.raia-cols');
     columns.forEach(col=>{
-      const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
-      const colCards=subCards.filter(c=>c.col===col.id).sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
+      const colCards=_sortCards(subCards.filter(c=>c.col===col.id));
       const sColId='raia-sub-'+subId+'-'+col.id;
       const sCollapsed=collapsedCols.has(sColId);
       const div=document.createElement('div');
@@ -5439,6 +5494,35 @@ function toggleRaia(){
   btn.textContent=labels[raiaMode];
   btn.style.borderColor=raiaMode?'var(--teal)':'';
   btn.style.color=raiaMode?'var(--teal)':'';
+  renderBoard();
+}
+
+// Ordenação de cards dentro de cada coluna — preferência pessoal, salva por
+// squad no localStorage (cada pessoa pode preferir ver o board diferente).
+function toggleSortMenu(){
+  const menu = document.getElementById('sort-menu');
+  if(!menu) return;
+  menu.style.display = menu.style.display==='none' ? 'block' : 'none';
+}
+function closeSortMenu(){
+  const menu = document.getElementById('sort-menu');
+  if(menu) menu.style.display = 'none';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#sort-menu-wrap')) closeSortMenu();
+});
+function setColSortMode(mode){
+  colSortMode = mode;
+  safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
+  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Data de finalização'};
+  const lbl = document.getElementById('btn-sort-lbl');
+  if(lbl) lbl.textContent = labels[mode] || 'Prioridade';
+  const btn = document.getElementById('btn-sort');
+  if(btn){
+    btn.style.borderColor = mode!=='priority' ? 'var(--teal)' : '';
+    btn.style.color = mode!=='priority' ? 'var(--teal)' : '';
+  }
+  closeSortMenu();
   renderBoard();
 }
 
@@ -8407,7 +8491,7 @@ async function removerMembro(uid, nome){
 function renderTagEditor(){
   const container = document.getElementById('tag-editor');
   if(!container) return;
-  
+
   // Se não houver tags, limpa e sai
   if(!tags.length){
     container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--txt3);font-size:12px;">Nenhuma tag cadastrada.</div>';
@@ -8428,10 +8512,12 @@ function renderTagEditor(){
   }).join('');
 }
 
+// Atualiza só o dado + o preview visual DAQUELA linha — evita reconstruir a
+// lista inteira a cada tecla digitada, o que fazia o cursor perder o foco
+// no meio da digitação (bug clássico de oninput chamando um render completo).
 function updateTagName(i, val){
   if(tags[i]) {
     tags[i].label = val;
-    // Atualiza apenas o preview visual da linha atual para não perder o foco/scroll
     const row = document.querySelector(`.tag-row[data-idx="${i}"]`);
     if(row){
       const preview = row.querySelector('.tag-preview');
@@ -8442,11 +8528,11 @@ function updateTagName(i, val){
 function setTagColor(i,pi){ tags[i].pi=pi; renderTagEditor(); }
 function delTag(i){ if(tags.length<=1) return; tags.splice(i,1); renderTagEditor(); }
 function addTag(){ const n=document.getElementById('new-tag-name').value.trim(); if(!n) return; tags.push({id:'tag_'+Date.now(),label:n,pi:0}); document.getElementById('new-tag-name').value=''; renderTagEditor(); }
-function saveTags(){ 
-  fbSet(FB+'/tags',tags); 
-  renderBoard(); 
+function saveTags(){
+  fbSet(FB+'/tags',tags);
+  renderBoard();
   if(typeof showToast === 'function') showToast('✅ Tags salvas com sucesso!');
-  closeOv('cfg-ov'); 
+  closeOv('cfg-ov');
 }
 
 // ═══ SUBTIMES ═══
@@ -9509,6 +9595,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
+    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards dentro de cada coluna. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n✅ Data de finalização — cards concluídos mais recentemente primeiro; quem ainda não foi concluído fica no final, ordenado por prioridade.\n\nÉ uma preferência pessoal de visualização — fica salva no seu navegador e não muda a ordem que os outros veem.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
