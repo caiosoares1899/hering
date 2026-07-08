@@ -2381,7 +2381,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           </div>
         </div>
         <div class="card-attr-row">
-          <div class="field" style="flex:1;"><label class="fl">Prioridade</label>
+          <div class="field"><label class="fl">Story Points</label>
+            <input class="fi" id="m-sp" type="number" min="0" max="100" placeholder="0" oninput="scheduleAutoSave()">
+          </div>
+          <div class="field"><label class="fl">Prioridade</label>
             <select class="fi" id="m-priority" onchange="scheduleAutoSave()">
               <option value="">— sem prioridade —</option>
               <option value="low">🟢 Baixa</option>
@@ -2928,7 +2931,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
         <button class="btn btn-p btn-sm" id="btn-confirm-import" onclick="confirmTrelloImport()" disabled style="opacity:.4;cursor:not-allowed;">📥 Importar</button>
-        <button class="btn btn-sm" onclick="archiveOldCards()" style="border-color:var(--warn);color:var(--warn);margin-left:8px;" title="Arquiva cards com mais de 1 ano de criação">📦 Arquivar cards antigos (>1 ano)</button>
       </div>
     </div>
 
@@ -4273,7 +4275,7 @@ const HIST_CAP = 50; // mantém só as últimas N entradas por card (storage)
 const HIST_FIELDS = {
   title:'título', col:'coluna', owner:'responsável', due:'prazo',
   priority:'prioridade', tag:'tag', desc:'descrição', po:'Insights do PO',
-   blocker:'impedimento', archived:'arquivamento', isOKR:'OKR',
+  sp:'story points', blocker:'impedimento', archived:'arquivamento', isOKR:'OKR',
 };
 function _histWho(){ return window._currentUser?.displayName || window._currentUser?.email || 'Usuário'; }
 // Resolve valor "humano" de um campo (coluna/owner viram nomes)
@@ -5194,7 +5196,7 @@ function makeCardEl(card){
     addTouchDnD(div,card.id);
   }
   div.ondblclick=e=>{e.stopPropagation();};
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
@@ -5684,7 +5686,7 @@ function maybeSnapshot(){
       acc[col.id]=cards.filter(c=>c.col===col.id&&!c.archived).length;
       return acc;
     },{}),
-    
+    sp_done:cards.filter(c=>c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0),
   };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/snapshots/'+today, snapshot);
   safeLS.setItem(key,'1');
@@ -5896,7 +5898,7 @@ function openCard(id){
   _editingDescIdx=new Set(); editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
   document.getElementById('m-po').value=c.po||'';
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
-  
+  document.getElementById('m-sp').value=c.sp||'';
   document.getElementById('m-priority').value=c.priority||'';
   renderParticipants(c.participants||[]);
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
@@ -5978,7 +5980,7 @@ function saveCard(){
       item.descsExtra = _cleanExtraDescs();
       item.checklist = getCL().map(c=>({t:c.t, done:false})); // recorrente sempre nasce desmarcado
       item.riscos = getRiscos();
-      
+      item.sp = document.getElementById('m-sp').value;
       item.priority = document.getElementById('m-priority').value;
       item.participants = getParticipants();
       item.updatedAt = new Date().toISOString();
@@ -7917,7 +7919,7 @@ function _criarCardRecorrente(item){
     due:'', po:item.po||'',
     checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
-     priority:item.priority||'medium',
+    sp:item.sp||'', priority:item.priority||'medium',
     participants:Array.isArray(item.participants)?item.participants.slice():[],
     archived:false, created:'🔁 Recorrência', edited:'🔁 Recorrência', createdAt:td, editedAt:td,
     _recorrente:true,
@@ -7984,7 +7986,7 @@ function _criarCardAgendado(item){
     owner:item.owner||'', due:item.dueCard||'', po:item.po||'',
     checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
-     priority:item.priority||'medium',
+    sp:item.sp||'', priority:item.priority||'medium',
     participants:Array.isArray(item.participants)?item.participants.slice():[],
     archived:false, created:'📅 Agendamento', edited:'📅 Agendamento', createdAt:td, editedAt:td,
     _autoCriadoEm:td, _autoVisto:false, _autoTipo:'agendado',
@@ -8091,7 +8093,7 @@ function openQLEdit(i){
     owner: item.owner||'', due:'', po: item.po||'',
     checklist: Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos: Array.isArray(item.riscos)?JSON.parse(JSON.stringify(item.riscos)):[],
-     priority: item.priority||'medium',
+    sp: item.sp||'', priority: item.priority||'medium',
     participants: Array.isArray(item.participants)?item.participants.slice():[],
     archived:false, created:'(item salvo)', edited:'(item salvo)',
     createdAt:'—', editedAt:'—', _isQLTemp:true,
@@ -14168,77 +14170,6 @@ window.addEventListener('auth-change', e=>{
   if(e.detail) setTimeout(checkOverdueBackup, 5000);
 }, {once:true});
 
-
-
-let _lastArchivedBatch = [];
-
-async function archiveOldCards() {
-  const umAnoAtras = new Date();
-  umAnoAtras.setFullYear(umAnoAtras.getFullYear() - 1);
-  const dataCorte = umAnoAtras.toISOString().split('T')[0];
-  
-  const cardsParaArquivar = cards.filter(c => !c.archived && (c.createdAt || c.editedAt || '0000-00-00') < dataCorte);
-  
-  if (cardsParaArquivar.length === 0) {
-    uiAlert('Nenhum card ativo com mais de 1 ano de criação encontrado.', {title: 'Arquivamento Automático'});
-    return;
-  }
-
-  // Criar uma lista legível dos cards
-  const listaCards = cardsParaArquivar.map(c => '• ' + c.title + ' (' + (c.createdAt || 'data ignorada') + ')').slice(0, 15).join('\n');
-  const excesso = cardsParaArquivar.length > 15 ? "\n... e mais " + (cardsParaArquivar.length - 15) + " cards." : "";
-
-  const confirm = await uiConfirm("Encontrei " + cardsParaArquivar.length + " cards com mais de 1 ano de existência:\n\n" + listaCards + excesso + "\n\nDeseja arquivá-los agora?", {
-    title: '📦 Arquivar cards antigos',
-    okText: 'Arquivar agora',
-    danger: true
-  });
-  
-  if (!confirm) return;
-  
-  _lastArchivedBatch = cardsParaArquivar.map(c => c.id);
-  let count = 0;
-  cardsParaArquivar.forEach(c => {
-    c.archived = true;
-    c.archivedAt = new Date().toISOString();
-    count++;
-  });
-  
-  if (count > 0) {
-    if (window.fbSet) {
-      fbSet(FB + '/cards', cards);
-    }
-    renderBoard();
-    showToast(`✅ ${count} cards arquivados! <button onclick="undoLastArchive()" style="background:none;border:none;color:var(--cyan);text-decoration:underline;cursor:pointer;font-size:11px;margin-left:10px;">Desfazer</button>`, 8000);
-  }
-}
-
-async function undoLastArchive() {
-  if (!_lastArchivedBatch || _lastArchivedBatch.length === 0) {
-    showToast('⚠ Nada para desfazer.');
-    return;
-  }
-  
-  let count = 0;
-  cards.forEach(c => {
-    if (_lastArchivedBatch.includes(c.id)) {
-      c.archived = false;
-      delete c.archivedAt;
-      count++;
-    }
-  });
-  
-  if (count > 0) {
-    _lastArchivedBatch = [];
-    if (window.fbSet) {
-      fbSet(FB + '/cards', cards);
-    }
-    renderBoard();
-    showToast(`↩ ${count} cards restaurados com sucesso!`);
-  }
-}
-
- 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
 // ── Sino: tremer a cada 30min se houver notificações não lidas ────────────
