@@ -112,27 +112,33 @@
 .cfg-panel::-webkit-scrollbar,
 .ag-body::-webkit-scrollbar,
 .ql-panel::-webkit-scrollbar,
-.msgs::-webkit-scrollbar { width: 4px; }
+.msgs::-webkit-scrollbar,
+.dashboard-container::-webkit-scrollbar { width: 4px; } /* Adicionado aqui */
+
 .card-panel::-webkit-scrollbar-thumb,
 .cfg-panel::-webkit-scrollbar-thumb,
 .ag-body::-webkit-scrollbar-thumb,
 .ql-panel::-webkit-scrollbar-thumb,
-.msgs::-webkit-scrollbar-thumb {
+.msgs::-webkit-scrollbar-thumb,
+.dashboard-container::-webkit-scrollbar-thumb { /* Adicionado aqui */
   background: rgba(56,182,255,.18);
   border-radius: 999px;
 }
 
-  /* --- ESTRUTURA DO DASHBOARD --- */
+/* --- ESTRUTURA DO DASHBOARD (CORRIGIDA) --- */
 .dashboard-container {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 0 20px;
+  width: 100%; /* Usa todo o espaço horizontal da caixa original */
+  height: 100%; /* Usa todo o espaço vertical disponível */
+  overflow-y: auto; /* A mágica que devolve a barra de rolagem! */
+  padding: 10px 0; /* Um pequeno respiro no topo/fundo */
+  box-sizing: border-box; /* Impede que o padding quebre a largura */
 }
 
 .panel {
-  background-color: #0b1a28;
-  border-radius: 8px;
-  padding: 24px;
+  /* Removemos o background-color e o border-radius para matar a "caixa dupla" */
+  padding: 0 20px; /* Mantém o conteúdo levemente afastado das laterais */
+  width: 100%;
+  box-sizing: border-box;
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
@@ -3560,7 +3566,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.109</div>
+<div class="version">v8.30.110</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
