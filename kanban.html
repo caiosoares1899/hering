@@ -125,30 +125,22 @@
   border-radius: 999px;
 }
 
-/* --- ESTRUTURA DO DASHBOARD (CORRIGIDA E CENTRALIZADA COM FLEXBOX) --- */
+/* --- ESTRUTURA DO DASHBOARD --- */
 .dashboard-container {
-  width: 100%; /* Usa todo o espaço horizontal disponível */
-  height: 100%; /* Usa todo o espaço vertical disponível */
-  overflow-y: auto; /* Mantém a barra de rolagem */
-  box-sizing: border-box; /* Impede que o padding quebre a largura */
-  
-  /* --- MÁGICA FLEXBOX PARA CENTRALIZAR --- */
-  display: flex; /* Define o container como flexível */
-  justify-content: center; /* Centraliza horizontalmente */
-  padding: 40px 0; /* Dá um respiro limpo no topo/fundo, não margin auto */
+  width: 100%;
+  height: 100%;
+  overflow-y: auto; /* Garante que a barra de rolagem funcione */
+  padding: 24px; /* Dá um respiro geral para o conteúdo não grudar nas bordas do sistema */
+  box-sizing: border-box; /* O padding não quebra a largura total */
 }
 
 .panel {
-  /* O painel real agora pode ter uma largura máxima e se centralizar */
-  background-color: #0b1a28; /* Devolvemos o fundo escuro do seu layout */
-  border-radius: 8px; /* Devolvemos os cantos arredondados */
-  padding: 24px; /* Respiro interno para o conteúdo */
+  width: 100%;
+  max-width: 1200px; /* Evita que o painel fique gigante em monitores ultrawide */
+  margin: 0 auto; /* O segredo: '0' em cima/embaixo, 'auto' nas laterais para centralizar perfeitamente */
   
-  /* Definimos limites razoáveis para que não estique infinitamente */
-  width: 90%; /* Ocupa 90% da largura, deixando uma margem lateral */
-  max-width: 1200px; /* Mas não passa de 1200px de largura total */
-  
-  box-sizing: border-box; /* Impede que o padding quebre a largura */
+  /* IMPORTANTE: Removemos background, border-radius e display: flex daqui 
+     para parar de brigar com a interface nativa do seu sistema */
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
@@ -3340,18 +3332,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   
 <main class="dashboard-container">
-  
   <div class="panel">
-<div class="panel-title">
-  ⏱ Relatório de Tempo
-  <span class="help-tip" role="note">
-    <button class="help-tip-btn" aria-label="Ajuda">?</button>
-    <span class="help-tip-balloon">
-      Mede quanto tempo os cards levam por tag — <b>Lead Time</b> (criação → concluído) e <b>Cycle Time</b> (início real → concluído).<br>
-      <a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a>
-    </span>
-  </span>
-</div>
+    <div class="panel-title">
+      ⏱ Relatório de Tempo
+      <span class="help-tip" role="note">
+        <button class="help-tip-btn" aria-label="Ajuda">?</button>
+        <span class="help-tip-balloon">
+          Mede quanto tempo os cards levam por tag — <b>Lead Time</b> (criação → concluído) e <b>Cycle Time</b> (início real → concluído).<br>
+          <a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a>
+        </span>
+      </span>
+    </div>
+    
+    </div>
+</main>
   <div class="tempo-filter-bar">
     <select id="tempo-agrupamento" class="ql-filter-sel" onchange="renderTempoReport()" style="border-color:var(--accent); color:var(--accent);">
       <option value="tag">🏷️ Agrupar por Tag</option>
@@ -3576,7 +3570,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.110</div>
+<div class="version">v8.30.111</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
