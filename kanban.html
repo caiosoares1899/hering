@@ -3539,7 +3539,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.106</div>
+<div class="version">v8.30.107</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5504,7 +5504,14 @@ function clearFilters(){
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
-  if(!ignoreOwner&&activeFilters.owner&&card.owner!==activeFilters.owner) return false;
+  if(!ignoreOwner&&activeFilters.owner){
+    // Filtro "por usuário" deve pegar tanto o responsável quanto os
+    // participantes do card — antes só olhava card.owner, deixando cards
+    // onde a pessoa era só participante (não responsável) de fora do filtro.
+    const cardParticipants = card.participants||card.participantes||[];
+    const isInvolved = card.owner===activeFilters.owner || cardParticipants.includes(activeFilters.owner);
+    if(!isInvolved) return false;
+  }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
