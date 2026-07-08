@@ -112,37 +112,15 @@
 .cfg-panel::-webkit-scrollbar,
 .ag-body::-webkit-scrollbar,
 .ql-panel::-webkit-scrollbar,
-.msgs::-webkit-scrollbar,
-.dashboard-container::-webkit-scrollbar { width: 4px; } /* Adicionado aqui */
-
+.msgs::-webkit-scrollbar { width: 4px; }
 .card-panel::-webkit-scrollbar-thumb,
 .cfg-panel::-webkit-scrollbar-thumb,
 .ag-body::-webkit-scrollbar-thumb,
 .ql-panel::-webkit-scrollbar-thumb,
-.msgs::-webkit-scrollbar-thumb,
-.dashboard-container::-webkit-scrollbar-thumb { /* Adicionado aqui */
+.msgs::-webkit-scrollbar-thumb {
   background: rgba(56,182,255,.18);
   border-radius: 999px;
 }
-
-/* --- ESTRUTURA DO DASHBOARD --- */
-.dashboard-container {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto; /* Garante que a barra de rolagem funcione */
-  padding: 24px; /* Dá um respiro geral para o conteúdo não grudar nas bordas do sistema */
-  box-sizing: border-box; /* O padding não quebra a largura total */
-}
-
-.panel {
-  width: 100%;
-  max-width: 1200px; /* Evita que o painel fique gigante em monitores ultrawide */
-  margin: 0 auto; /* O segredo: '0' em cima/embaixo, 'auto' nas laterais para centralizar perfeitamente */
-  
-  /* IMPORTANTE: Removemos background, border-radius e display: flex daqui 
-     para parar de brigar com a interface nativa do seu sistema */
-}
-  
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
 :root{
@@ -2217,7 +2195,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <span style="display:inline-flex;align-items:center;gap:3px;"><button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
+  <span style="display:inline-flex;align-items:center;gap:3px;"><button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span></span>
+  <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
 </div>
@@ -2692,8 +2671,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="field"><label class="fl">Início</label><input class="fi" id="cfg-sprint-start" type="date" oninput="calcSprintEnd()"></div>
         <div class="field"><label class="fl">Fim (calculado)</label><input class="fi" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
       </div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:5px;" class="cfg-sec-title">WIP & Capacidade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP (Work in 
-        Progress) limita quantos cards podem estar em andamento ao mesmo tempo — reduz multitarefa e aumenta o foco do time.<br><a href="#" onclick="event.preventDefault();openHelp(null,'wip')">Saiba mais →</a></span></span></div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:5px;" class="cfg-sec-title">WIP & Capacidade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP (Work in Progress) limita quantos cards podem estar em andamento ao mesmo tempo — reduz multitarefa e aumenta o foco do time.<br><a href="#" onclick="event.preventDefault();openHelp(null,'wip')">Saiba mais →</a></span></span></div>
       <div class="frow">
         <div class="field"><label class="fl">Limite de WIP</label><input class="fi" id="cfg-wip" type="number" min="1"></div>
         <div class="field"><label class="fl">Capacidade (%)</label><input class="fi" id="cfg-capacity" type="number" min="0" max="100"></div>
@@ -3328,24 +3306,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<main id="tempo-ov" class="dashboard-container">
-  <div class="panel">
-    <div class="panel-title">
-      ⏱ Relatório de Tempo
-      <span class="help-tip" role="note">
-        <button class="help-tip-btn" aria-label="Ajuda">?</button>
-        <span class="help-tip-balloon">
-          Mede quanto tempo os cards levam por tag — <b>Lead Time</b> (criação → concluído) e <b>Cycle Time</b> (início real → concluído).<br>
-          <a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a>
-        </span>
-      </span>
-    </div>
-    
-    </div>
-</main>
-    
-    </div>
-</main>
+<!-- RELATÓRIO DE TEMPO POR TAG -->
+<div class="ov" id="tempo-ov">
+<div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">⏱ Relatório de Tempo</div>
+    <button class="x-btn" onclick="closeOv('tempo-ov')">✕</button>
+  </div>
   <div class="tempo-filter-bar">
     <select id="tempo-agrupamento" class="ql-filter-sel" onchange="renderTempoReport()" style="border-color:var(--accent); color:var(--accent);">
       <option value="tag">🏷️ Agrupar por Tag</option>
@@ -3570,7 +3537,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.111</div>
+<div class="version">v8.30.108</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
