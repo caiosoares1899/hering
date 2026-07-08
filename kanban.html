@@ -125,25 +125,33 @@
   border-radius: 999px;
 }
 
-/* --- APENAS O TÍTULO --- */
-.relatorio-titulo-custom {
-  display: flex;
-  align-items: center;
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
+/* --- TÍTULO BLINDADO CONTRA O SISTEMA --- */
+.titulo-relatorio-blindado {
+  display: flex !important;
+  align-items: center !important;
   
-  /* Aqui está a mágica: 24px de respiro no topo e na esquerda, 16px embaixo */
-  padding: 24px 24px 16px 24px; 
-  margin: 0;
+  /* Respiro: 24px em cima, 24px nas laterais, 16px embaixo (para não colar nos filtros) */
+  padding: 24px 24px 16px 24px !important; 
+  margin: 0 !important;
   
-  /* Garantindo que não tenha borda nem fundo */
-  border: none;
-  background: transparent;
+  /* Aniquilando qualquer caixa que o sistema tente criar */
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  
+  /* Estilo do texto */
+  color: white !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-.relatorio-titulo-custom .help-tip {
-  margin-left: 10px;
+.titulo-relatorio-blindado .help-tip {
+  margin-left: 10px !important;
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
@@ -3334,7 +3342,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   
-<div class="relatorio-titulo-custom">
+<div class="titulo-relatorio-blindado">
   ⏱ Relatório de Tempo
   <span class="help-tip" role="note">
     <button class="help-tip-btn" aria-label="Ajuda">?</button>
