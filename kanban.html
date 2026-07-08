@@ -129,39 +129,41 @@
 .dashboard-container {
   width: 100%;
   height: 100%;
-  overflow-y: auto; /* Garante que a barra de rolagem funcione */
-  padding: 24px; /* Respiro geral do contêiner */
+  /* Mudamos para visible para evitar a barra de rolagem dupla (a sua e a do sistema) */
+  overflow: visible !important; 
   box-sizing: border-box;
 }
 
 .panel {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto; /* Centralização horizontal nativa */
-  
-  /* IMPORTANTE: Mantemos sem background ou bordas para usar o nativo do sistema */
+  margin: 0 auto;
+  /* Aniquilando qualquer moldura ou fundo que o sistema tente empurrar aqui */
+  border: none !important; 
+  background: transparent !important; 
+  box-shadow: none !important;
 }
 
-/* --- ESTILO DO TÍTULO (SEm MOLDURA) --- */
-.panel .panel-title {
+/* --- ESTILO DO TÍTULO TOTALMENTE LIMPO --- */
+.panel-title {
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* Alinha à esquerda */
-  padding: 10px 0 20px 0; /* Respiro: 10px topo, 0 laterais, 20px fundo para separar dos filtros */
-  margin: 0; /* Remove margens externas */
+  justify-content: flex-start;
+  padding: 0 0 24px 0; /* Apenas espaço embaixo para separar dos filtros */
+  margin: 0;
   
-  /* Removemos qualquer background-color, border ou border-radius daqui */
-  background: transparent;
-  border: none;
+  /* A MARRETA: Isso arranca a moldura e a rolagem minúscula */
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important; 
   
-  /* Garante que o texto e ícone fiquem visíveis no fundo escuro */
   color: white; 
-  font-size: 20px; /* Ajuste para o tamanho desejado */
+  font-size: 20px;
   font-weight: bold;
 }
 
-/* Ajuste rápido para o ícone de interrogação não colar no texto */
-.panel .panel-title .help-tip {
+.help-tip {
   margin-left: 8px;
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
