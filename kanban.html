@@ -125,29 +125,22 @@
   border-radius: 999px;
 }
 
-/* --- TIRANDO A MOLDURA APENAS DO TÍTULO DO RELATÓRIO --- */
-.dashboard-container .panel-title {
-  /* Aniquila a moldura nativa do sistema */
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  
-  /* Ajusta o espaçamento para ficar alinhado */
-  padding: 0 0 20px 0 !important; 
-  margin: 0 !important;
-  
-  /* Mantém o visual do texto */
-  display: flex;
-  align-items: center;
-  color: white;
-  font-size: 20px;
-  font-weight: bold;
+/* --- ESTRUTURA DO DASHBOARD --- */
+.dashboard-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto; /* Garante que a barra de rolagem funcione */
+  padding: 24px; /* Dá um respiro geral para o conteúdo não grudar nas bordas do sistema */
+  box-sizing: border-box; /* O padding não quebra a largura total */
 }
 
-/* Dá um espacinho pro botão de interrogação não grudar no texto */
-.dashboard-container .panel-title .help-tip {
-  margin-left: 8px;
+.panel {
+  width: 100%;
+  max-width: 1200px; /* Evita que o painel fique gigante em monitores ultrawide */
+  margin: 0 auto; /* O segredo: '0' em cima/embaixo, 'auto' nas laterais para centralizar perfeitamente */
+  
+  /* IMPORTANTE: Removemos background, border-radius e display: flex daqui 
+     para parar de brigar com a interface nativa do seu sistema */
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
@@ -3334,38 +3327,20 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
-<!-- RELATÓRIO DE TEMPO POR TAG -->
-<div class="ov" id="tempo-ov">
-<div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
-  
 <main class="dashboard-container">
-
   <div class="panel">
-
     <div class="panel-title">
-
       ⏱ Relatório de Tempo
-
       <span class="help-tip" role="note">
-
         <button class="help-tip-btn" aria-label="Ajuda">?</button>
-
         <span class="help-tip-balloon">
-
           Mede quanto tempo os cards levam por tag — <b>Lead Time</b> (criação → concluído) e <b>Cycle Time</b> (início real → concluído).<br>
-
           <a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a>
-
         </span>
-
       </span>
-
     </div>
-
     
-
     </div>
-
 </main>
     
     </div>
