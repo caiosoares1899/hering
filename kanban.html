@@ -130,17 +130,39 @@
   width: 100%;
   height: 100%;
   overflow-y: auto; /* Garante que a barra de rolagem funcione */
-  padding: 24px; /* Dá um respiro geral para o conteúdo não grudar nas bordas do sistema */
-  box-sizing: border-box; /* O padding não quebra a largura total */
+  padding: 24px; /* Respiro geral do contêiner */
+  box-sizing: border-box;
 }
 
 .panel {
   width: 100%;
-  max-width: 1200px; /* Evita que o painel fique gigante em monitores ultrawide */
-  margin: 0 auto; /* O segredo: '0' em cima/embaixo, 'auto' nas laterais para centralizar perfeitamente */
+  max-width: 1200px;
+  margin: 0 auto; /* Centralização horizontal nativa */
   
-  /* IMPORTANTE: Removemos background, border-radius e display: flex daqui 
-     para parar de brigar com a interface nativa do seu sistema */
+  /* IMPORTANTE: Mantemos sem background ou bordas para usar o nativo do sistema */
+}
+
+/* --- ESTILO DO TÍTULO (SEm MOLDURA) --- */
+.panel .panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Alinha à esquerda */
+  padding: 10px 0 20px 0; /* Respiro: 10px topo, 0 laterais, 20px fundo para separar dos filtros */
+  margin: 0; /* Remove margens externas */
+  
+  /* Removemos qualquer background-color, border ou border-radius daqui */
+  background: transparent;
+  border: none;
+  
+  /* Garante que o texto e ícone fiquem visíveis no fundo escuro */
+  color: white; 
+  font-size: 20px; /* Ajuste para o tamanho desejado */
+  font-weight: bold;
+}
+
+/* Ajuste rápido para o ícone de interrogação não colar no texto */
+.panel .panel-title .help-tip {
+  margin-left: 8px;
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
