@@ -3581,7 +3581,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.107-dev</div>
+<div class="version">v8.30.108-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12553,14 +12553,37 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
     `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
     `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
   ];
+  // Calcula a faixa segura (abaixo do header/toolbar) pra evitar peixes
+  // nascendo "atrás" das áreas transparentes do cabeçalho.
+  function _calcSafeTop(){
+    const el = document.querySelector('.toolbar');
+    const measured = el ? Math.round(el.getBoundingClientRect().bottom) : 0;
+    return measured > 50 ? measured + 20 : 130;
+  }
+  let _safeTop = _calcSafeTop(); // primeira tentativa — provavelmente cai no fallback,
+                                  // já que #app-root ainda está display:none aqui
+                                  // (este script roda antes do login completar).
   for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl';
-    // Nasce abaixo do header/toolbar (~130px) até quase o fim da tela — antes
-    // usava 5%~85% da viewport inteira, o que fazia vários peixes nascerem
-    // bem na faixa do cabeçalho, aparecendo "por trás" da área transparente
-    // dele (padding do .app, gaps entre botões).
-    f.style.top='calc(130px + '+(Math.random()*70)+'%)';
+    f.style.top='calc('+_safeTop+'px + '+(Math.random()*70)+'%)';
     f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
   for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
+  // Reajusta a posição dos peixes já criados assim que o app ficar
+  // REALMENTE visível (login completo) — só nesse momento a medição do
+  // header/toolbar é confiável. Preserva a posição relativa de cada peixe
+  // dentro da faixa (não teleporta tudo pro mesmo lugar).
+  window.addEventListener('auth-change', function _fixFishTop(){
+    requestAnimationFrame(()=>{
+      const newSafeTop = _calcSafeTop();
+      if(newSafeTop === _safeTop) return; // já estava certo, nada a fazer
+      fw.querySelectorAll('.fish-ltr, .fish-rtl').forEach(f=>{
+        // Extrai o offset percentual original pra preservar a distribuição
+        const m = f.style.top.match(/\+\s*([\d.]+)%/);
+        const pct = m ? m[1] : (Math.random()*70).toFixed(2);
+        f.style.top = 'calc('+newSafeTop+'px + '+pct+'%)';
+      });
+      _safeTop = newSafeTop;
+    });
+  }, {once:true});
 })();
 
 // Init
