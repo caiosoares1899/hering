@@ -129,8 +129,8 @@
 .dashboard-container {
   width: 100%;
   height: 100%;
-  /* Mudamos para visible para evitar a barra de rolagem dupla (a sua e a do sistema) */
-  overflow: visible !important; 
+  overflow-y: auto; /* Mantém o scroll saudável da página */
+  padding: 24px;
   box-sizing: border-box;
 }
 
@@ -138,9 +138,14 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  /* Aniquilando qualquer moldura ou fundo que o sistema tente empurrar aqui */
+  
+  /* --- AQUI ESTÁ O RESGATE DO FUNDO AZUL --- */
+  background-color: #0b1a28 !important; /* Cor do fundo restaurada */
+  border-radius: 8px !important; /* Cantinhos arredondados de volta */
+  padding: 24px; /* Respiro interno para o conteúdo não colar na borda azul */
+  
+  /* --- MANTENDO A BORDA FEIA AFASTADA --- */
   border: none !important; 
-  background: transparent !important; 
   box-shadow: none !important;
 }
 
@@ -149,14 +154,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 0 24px 0; /* Apenas espaço embaixo para separar dos filtros */
+  padding: 0 0 24px 0; 
   margin: 0;
   
-  /* A MARRETA: Isso arranca a moldura e a rolagem minúscula */
+  /* O título continua sem moldura e integrado ao fundo azul do .panel */
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  overflow: visible !important; 
   
   color: white; 
   font-size: 20px;
@@ -165,6 +169,7 @@
 
 .help-tip {
   margin-left: 8px;
+}
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
