@@ -125,34 +125,39 @@
   border-radius: 999px;
 }
 
-/* --- TÍTULO BLINDADO CONTRA O SISTEMA --- */
-.titulo-relatorio-blindado {
-  display: flex !important;
-  align-items: center !important;
-  
-  /* Respiro: 24px em cima, 24px nas laterais, 16px embaixo (para não colar nos filtros) */
-  padding: 24px 24px 16px 24px !important; 
-  margin: 0 !important;
-  
-  /* Aniquilando qualquer caixa que o sistema tente criar */
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-  
-  /* Estilo do texto */
-  color: white !important;
-  font-size: 20px !important;
-  font-weight: bold !important;
-  
-  width: 100% !important;
-  box-sizing: border-box !important;
+/* --- ESTRUTURA DO DASHBOARD --- */
+
+.dashboard-container {
+
+  width: 100%;
+
+  height: 100%;
+
+  overflow-y: auto; /* Garante que a barra de rolagem funcione */
+
+  padding: 24px; /* Dá um respiro geral para o conteúdo não grudar nas bordas do sistema */
+
+  box-sizing: border-box; /* O padding não quebra a largura total */
+
 }
 
-.titulo-relatorio-blindado .help-tip {
-  margin-left: 10px !important;
-}
+
+
+.panel {
+
+  width: 100%;
+
+  max-width: 1200px; /* Evita que o painel fique gigante em monitores ultrawide */
+
+  margin: 0 auto; /* O segredo: '0' em cima/embaixo, 'auto' nas laterais para centralizar perfeitamente */
+
+  
+
+  /* IMPORTANTE: Removemos background, border-radius e display: flex daqui 
+
+     para parar de brigar com a interface nativa do seu sistema */
+
+} 
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
 :root{
@@ -3342,16 +3347,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   
-<div style="background: transparent !important; background-color: transparent !important; border: none !important; box-shadow: none !important; outline: none !important; padding: 10px 0 20px 0 !important; margin: 0 !important; display: flex !important; align-items: center !important; color: white !important; font-size: 20px !important; font-weight: bold !important; width: 100% !important;">
-  ⏱ Relatório de Tempo
-  <span class="help-tip" role="note" style="margin-left: 8px !important;">
-    <button class="help-tip-btn" aria-label="Ajuda">?</button>
-    <span class="help-tip-balloon">
-      Mede quanto tempo os cards levam por tag — <b>Lead Time</b> (criação → concluído) e <b>Cycle Time</b> (início real → concluído).<br>
-      <a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a>
-    </span>
-  </span>
-</div>
+<main class="dashboard-container">
+
+  <div class="panel">
+
+    <div class="panel-title">
+
+      ⏱ Relatório de Tempo
+
+      <span class="help-tip" role="note">
+
+        <button class="help-tip-btn" aria-label="Ajuda">?</button>
+
+        <span class="help-tip-balloon">
+
+          Mede quanto tempo os cards levam por tag — <b>Lead Time</b> (criação → concluído) e <b>Cycle Time</b> (início real → concluído).<br>
+
+          <a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a>
+
+        </span>
+
+      </span>
+
+    </div>
+
+    
+
+    </div>
+
+</main>
     
     </div>
 </main>
