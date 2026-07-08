@@ -14185,16 +14185,10 @@ async function archiveOldCards() {
   }
 
   // Criar uma lista legível dos cards
-  const listaCards = cardsParaArquivar.map(c => `• ${c.title} (${c.createdAt || 'data ignorada'})`).slice(0, 15).join('
-');
-  const excesso = cardsParaArquivar.length > 15 ? `
-... e mais ${cardsParaArquivar.length - 15} cards.` : '';
+  const listaCards = cardsParaArquivar.map(c => '• ' + c.title + ' (' + (c.createdAt || 'data ignorada') + ')').slice(0, 15).join('\n');
+  const excesso = cardsParaArquivar.length > 15 ? "\n... e mais " + (cardsParaArquivar.length - 15) + " cards." : "";
 
-  const confirm = await uiConfirm(`Encontrei ${cardsParaArquivar.length} cards com mais de 1 ano de existência:
-
-${listaCards}${excesso}
-
-Deseja arquivá-los agora?`, {
+  const confirm = await uiConfirm("Encontrei " + cardsParaArquivar.length + " cards com mais de 1 ano de existência:\n\n" + listaCards + excesso + "\n\nDeseja arquivá-los agora?", {
     title: '📦 Arquivar cards antigos',
     okText: 'Arquivar agora',
     danger: true
