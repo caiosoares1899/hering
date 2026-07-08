@@ -125,39 +125,30 @@
   border-radius: 999px;
 }
 
-/* --- ESTRUTURA DO DASHBOARD --- */
-
-.dashboard-container {
-
-  width: 100%;
-
-  height: 100%;
-
-  overflow-y: auto; /* Garante que a barra de rolagem funcione */
-
-  padding: 24px; /* Dá um respiro geral para o conteúdo não grudar nas bordas do sistema */
-
-  box-sizing: border-box; /* O padding não quebra a largura total */
-
+/* --- TIRANDO A MOLDURA APENAS DO TÍTULO DO RELATÓRIO --- */
+.dashboard-container .panel-title {
+  /* Aniquila a moldura nativa do sistema */
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  
+  /* Ajusta o espaçamento para ficar alinhado */
+  padding: 0 0 20px 0 !important; 
+  margin: 0 !important;
+  
+  /* Mantém o visual do texto */
+  display: flex;
+  align-items: center;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
 }
 
-
-
-.panel {
-
-  width: 100%;
-
-  max-width: 1200px; /* Evita que o painel fique gigante em monitores ultrawide */
-
-  margin: 0 auto; /* O segredo: '0' em cima/embaixo, 'auto' nas laterais para centralizar perfeitamente */
-
-  
-
-  /* IMPORTANTE: Removemos background, border-radius e display: flex daqui 
-
-     para parar de brigar com a interface nativa do seu sistema */
-
-} 
+/* Dá um espacinho pro botão de interrogação não grudar no texto */
+.dashboard-container .panel-title .help-tip {
+  margin-left: 8px;
+}
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
 :root{
