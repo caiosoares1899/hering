@@ -125,20 +125,30 @@
   border-radius: 999px;
 }
 
-/* --- ESTRUTURA DO DASHBOARD (CORRIGIDA) --- */
+/* --- ESTRUTURA DO DASHBOARD (CORRIGIDA E CENTRALIZADA COM FLEXBOX) --- */
 .dashboard-container {
-  width: 100%; /* Usa todo o espaço horizontal da caixa original */
+  width: 100%; /* Usa todo o espaço horizontal disponível */
   height: 100%; /* Usa todo o espaço vertical disponível */
-  overflow-y: auto; /* A mágica que devolve a barra de rolagem! */
-  padding: 10px 0; /* Um pequeno respiro no topo/fundo */
+  overflow-y: auto; /* Mantém a barra de rolagem */
   box-sizing: border-box; /* Impede que o padding quebre a largura */
+  
+  /* --- MÁGICA FLEXBOX PARA CENTRALIZAR --- */
+  display: flex; /* Define o container como flexível */
+  justify-content: center; /* Centraliza horizontalmente */
+  padding: 40px 0; /* Dá um respiro limpo no topo/fundo, não margin auto */
 }
 
 .panel {
-  /* Removemos o background-color e o border-radius para matar a "caixa dupla" */
-  padding: 0 20px; /* Mantém o conteúdo levemente afastado das laterais */
-  width: 100%;
-  box-sizing: border-box;
+  /* O painel real agora pode ter uma largura máxima e se centralizar */
+  background-color: #0b1a28; /* Devolvemos o fundo escuro do seu layout */
+  border-radius: 8px; /* Devolvemos os cantos arredondados */
+  padding: 24px; /* Respiro interno para o conteúdo */
+  
+  /* Definimos limites razoáveis para que não estique infinitamente */
+  width: 90%; /* Ocupa 90% da largura, deixando uma margem lateral */
+  max-width: 1200px; /* Mas não passa de 1200px de largura total */
+  
+  box-sizing: border-box; /* Impede que o padding quebre a largura */
 }
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
