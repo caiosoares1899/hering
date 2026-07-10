@@ -2678,16 +2678,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="panel cfg-panel">
   <div class="panel-hd"><div class="panel-title">⚙ Configurações</div><button class="x-btn" onclick="closeOv('cfg-ov')">✕</button></div>
   <div class="ag-tabs" id="cfg-tabs">
-    <div class="ag-tab on" onclick="swCfgTab('agil')">Ágil</div>
-    <div class="ag-tab" onclick="swCfgTab('usuarios')">Usuários</div>
+    <div class="ag-tab on" onclick="swCfgTab('agil')">🚀 Ágil</div>
+    <div class="ag-tab" onclick="swCfgTab('usuarios')">👤 Usuários</div>
     <div class="ag-tab" onclick="swCfgTab('lembretes')">📌 Lembretes</div>
-    <div class="ag-tab" onclick="swCfgTab('tags')">Tags</div>
+    <div class="ag-tab" onclick="swCfgTab('tags')">🏷️ Tags</div>
     <div class="ag-tab" onclick="swCfgTab('subtimes')">👥 Subtimes</div>
-    <div class="ag-tab" onclick="swCfgTab('fluxo')">⚙ Fluxo</div>
+    <div class="ag-tab" onclick="swCfgTab('fluxo')">⚙️ Fluxo</div>
     <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
-    <div class="ag-tab" onclick="swCfgTab('worker')">Worker</div>
-    <div class="ag-tab" onclick="swCfgTab('firebase')">Firebase</div>
+    <div class="ag-tab" onclick="swCfgTab('worker')">🛠️ Worker</div>
+    <div class="ag-tab" onclick="swCfgTab('firebase')">🔥 Firebase</div>
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
   </div>
@@ -3581,7 +3581,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.108-dev</div>
+<div class="version">v8.30.109-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5519,7 +5519,11 @@ function clearFilters(){
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
-  if(!ignoreOwner&&activeFilters.owner&&card.owner!==activeFilters.owner) return false;
+  if(!ignoreOwner&&activeFilters.owner){
+    const cardParticipants = card.participants||card.participantes||[];
+    const isInvolved = card.owner===activeFilters.owner || cardParticipants.includes(activeFilters.owner);
+    if(!isInvolved) return false;
+  }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&card.col!=='blocker') return false;
