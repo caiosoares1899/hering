@@ -202,6 +202,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-sort-btn{transition:color .15s;}
 .col-sort-btn:hover{color:var(--teal)!important;}
+.col-cfg-btn{transition:color .15s,transform .15s;}
+.col-cfg-btn:hover{color:var(--teal)!important;transform:rotate(45deg);}
 .col-manual-badge{background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.35);border-radius:999px;color:var(--warn);font-size:9px;font-weight:700;padding:2px 8px;cursor:pointer;white-space:nowrap;transition:background .12s;}
 .col-manual-badge:hover{background:rgba(255,209,102,.22);}
 .col-collapse-btn:hover{color:var(--txt);}
@@ -3147,6 +3149,47 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+<!-- CONFIG DA COLUNA (nome, cor, WIP, visualização, posição na prioridade) -->
+<div class="ov" id="colcfg-ov">
+<div class="panel ql-panel" style="max-width:420px;">
+  <div class="panel-hd"><div class="panel-title">⚙ <span id="colcfg-title">Configurar coluna</span></div><button class="x-btn" onclick="closeOv('colcfg-ov')">✕</button></div>
+  <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;max-height:70vh;overflow-y:auto;">
+    <div class="field"><label class="fl">Nome</label>
+      <input class="fi" id="colcfg-name" oninput="_colCfgSetField('name', this.value)">
+    </div>
+    <div class="card-attr-row">
+      <div class="field"><label class="fl">Cor</label>
+        <input type="color" id="colcfg-color" onchange="_colCfgSetField('color', this.value)" style="width:100%;height:34px;border:none;background:none;cursor:pointer;">
+      </div>
+      <div class="field" id="colcfg-wip-field">
+        <label class="fl">Limite de WIP</label>
+        <input class="fi" id="colcfg-wip" type="number" min="0" placeholder="Sem limite" oninput="_colCfgSetField('wip', this.value?parseInt(this.value):null)">
+      </div>
+    </div>
+    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;">
+      <input type="checkbox" id="colcfg-collapsible" onchange="_colCfgSetField('collapsible', this.checked)"> Permite minimizar
+    </label>
+    <div class="field">
+      <label class="fl">Visualização (ordem dos cards nesta coluna)</label>
+      <select class="fi" id="colcfg-sort" onchange="setColSortOverride(_colCfgId, this.value)">
+        <option value="">Usar padrão do board</option>
+        <option value="priority">🔥 Prioridade</option>
+        <option value="createdAt">🕐 Data de criação</option>
+        <option value="doneAt">📅 Prazo</option>
+      </select>
+    </div>
+    <div>
+      <label class="fl">Posição dentro da prioridade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Arraste os cards dentro de cada prioridade pra decidir a ordem entre eles — igual reordenar itens de um checklist. Só afeta o desempate dentro da mesma prioridade.</span></span></label>
+      <div id="colcfg-subprio-wrap" style="margin-top:6px;"></div>
+    </div>
+  </div>
+  <div style="padding:10px 14px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:8px;">
+    <button class="btn btn-sm" onclick="closeOv('colcfg-ov')">Fechar</button>
+    <button class="btn btn-p btn-sm" id="colcfg-save-btn" onclick="saveColCfg()">✓ Salvar</button>
+  </div>
+</div>
+</div>
+
 <!-- AJUDA -->
 <div class="ov" id="help-ov">
 <div class="panel help-panel" style="max-width:640px;width:92vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -3595,7 +3638,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.111-dev</div>
+<div class="version">v8.30.112-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5297,6 +5340,7 @@ function renderNormal(board,activeCards){
   board.classList.add('mode-'+(viewMode||'expanded'));
   columns.forEach(col=>{
     const colCards=_sortCards(activeCards.filter(c=>c.col===col.id), col.id);
+    const wipLim = _colWipLimit(col);
     const activeSortMode = colSortOverrides[col.id] || colSortMode;
     const hasManualOrder = activeSortMode==='priority' && colCards.some(c=>typeof c.subPrio==='number');
     const isCollapsed=collapsedCols.has(col.id);
@@ -5315,11 +5359,11 @@ function renderNormal(board,activeCards){
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
         ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn('${col.id}')" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
-        <span class="col-cnt" id="cnt-${col.id}" style="${col.id==='progress'&&agilCfg.wip&&colCards.length>parseInt(agilCfg.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
-          ${col.id==='progress'&&agilCfg.wip ? colCards.length+'/'+agilCfg.wip : colCards.length}
+        <span class="col-cnt" id="cnt-${col.id}" style="${wipLim&&colCards.length>wipLim?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
+          ${wipLim ? colCards.length+'/'+wipLim : colCards.length}
         </span>
         ${hasManualOrder?`<button class="col-manual-badge" onclick="event.stopPropagation();resetColSubPrio('${col.id}')" title="Esta coluna tem cards com posição manual dentro da prioridade. Clique pra voltar à ordem padrão.">🔀 manual</button>`:''}
-        <button class="col-sort-btn" onclick="cycleColSort('${col.id}')" title="Ordenação desta coluna: ${({priority:'Prioridade',createdAt:'Data de criação',doneAt:'Data de finalização'})[colSortOverrides[col.id]||colSortMode]}${colSortOverrides[col.id]?' (individual)':''}" style="background:none;border:none;cursor:pointer;font-size:11px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">↕</button>
+        <button class="col-cfg-btn" onclick="openColCfg('${col.id}')" title="Configurar esta coluna: nome, cor, WIP, visualização e posição na prioridade" style="background:none;border:none;cursor:pointer;font-size:12px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">⚙</button>
         ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
     </div>
@@ -6009,6 +6053,112 @@ async function resetColSubPrio(colId){
   let mudou=false;
   cards.filter(c=>c.col===colId).forEach(c=>{ if(typeof c.subPrio==='number'){ delete c.subPrio; mudou=true; } });
   if(mudou){ fbSaveAll(); renderBoard(); showToast('↩ Ordem manual removida.'); }
+}
+
+// ── Configuração da coluna (⚙ no cabeçalho) ─────────────────────────────
+// Nome/cor/WIP/minimizável: só PO/Organizador/ADM editam (mudança estrutural do
+// board). Visualização e posição na prioridade: qualquer papel (Membro/Convidado
+// incluídos), já que isso é fluxo de trabalho do dia a dia, não estrutura do board.
+function _isPOorOrg(){ return ['po','organizador','adm'].includes(window._currentUserRole); }
+let _colCfgId=null;
+const PRIO_TIERS=[{key:'critical',label:'🔥 Crítica'},{key:'high',label:'🔴 Alta'},{key:'medium',label:'🟡 Média'},{key:'low',label:'🟢 Baixa'}];
+
+function openColCfg(colId){
+  _colCfgId=colId;
+  const col=columns.find(c=>c.id===colId); if(!col) return;
+  document.getElementById('colcfg-title').textContent=col.name;
+  document.getElementById('colcfg-name').value=col.name;
+  document.getElementById('colcfg-color').value=col.color||'#38b6ff';
+  document.getElementById('colcfg-collapsible').checked = col.collapsible!==false;
+  document.getElementById('colcfg-wip').value = (typeof col.wip==='number') ? col.wip : '';
+  document.getElementById('colcfg-sort').value = colSortOverrides[colId] || '';
+  const podeEstrutural=_isPOorOrg();
+  ['colcfg-name','colcfg-color','colcfg-collapsible','colcfg-wip'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!podeEstrutural; });
+  document.getElementById('colcfg-wip-field').style.display = podeEstrutural?'':'none';
+  document.getElementById('colcfg-save-btn').style.display = podeEstrutural?'':'none';
+  renderColCfgSubPrio(colId);
+  document.getElementById('colcfg-ov').classList.add('open');
+}
+function _colCfgSetField(field,val){
+  if(!_colCfgId || !_isPOorOrg()) return;
+  const col=columns.find(c=>c.id===_colCfgId); if(!col) return;
+  if(field==='wip' && (val===null || val<=0)) delete col.wip; else col[field]=val;
+  if(field==='name') document.getElementById('colcfg-title').textContent=val;
+  renderBoard();
+}
+function setColSortOverride(colId, mode){
+  if(!colId) return;
+  if(!mode) delete colSortOverrides[colId]; else colSortOverrides[colId]=mode;
+  safeLS.setItem('col_sort_ov_'+ACTIVE_SQUAD, JSON.stringify(colSortOverrides));
+  renderBoard();
+}
+function renderColCfgSubPrio(colId){
+  const wrap=document.getElementById('colcfg-subprio-wrap'); if(!wrap) return;
+  const tiersComCards = PRIO_TIERS.filter(t=>_prioTierCards(colId,t.key).length);
+  if(!tiersComCards.length){
+    wrap.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum card com prioridade definida nesta coluna ainda.</div>';
+    return;
+  }
+  wrap.innerHTML = tiersComCards.map(t=>{
+    const n=_prioTierCards(colId,t.key).length;
+    return `<div style="margin-bottom:10px;">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${t.label} <span style="color:var(--txt3);">(${n})</span></div>
+      <div class="cl-items" id="colcfg-tier-${t.key}"></div>
+    </div>`;
+  }).join('');
+  tiersComCards.forEach(t=>_renderSubPrioDragList('colcfg-tier-'+t.key, colId, t.key));
+}
+function _renderSubPrioDragList(listElId, colId, tierKey){
+  const w=document.getElementById(listElId); if(!w) return; w.innerHTML='';
+  const tier=_prioTierCards(colId, tierKey);
+  tier.forEach((card,i)=>{
+    const d=document.createElement('div'); d.className='cl-item'; d.dataset.idx=i;
+    d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; w._dragIdx=i; d.classList.add('dragging'); });
+    d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); w.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
+    d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
+    d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+    d.addEventListener('drop',e=>{
+      e.preventDefault(); d.classList.remove('drag-over');
+      const from=w._dragIdx; const to=i; if(from===to||from==null) return;
+      const ordered=_prioTierCards(colId, tierKey);
+      const [moved]=ordered.splice(from,1); ordered.splice(to,0,moved);
+      ordered.forEach((cc,idx)=>{ cc.subPrio=idx; });
+      fbSaveAll();
+      renderColCfgSubPrio(colId);
+      renderBoard();
+    });
+    const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
+    handle.addEventListener('mousedown',()=>{ d.draggable=(tier.length>1); });
+    handle.addEventListener('touchstart',()=>{ d.draggable=(tier.length>1); },{passive:true});
+    const span=document.createElement('span'); span.className='cl-it'; span.textContent=card.title;
+    d.append(handle,span);
+    w.appendChild(d);
+  });
+}
+async function saveColCfg(){
+  if(_isPOorOrg()) await _persistColumns();
+  closeOv('colcfg-ov');
+  showToast('✅ Coluna atualizada!');
+}
+// Persiste só a lista de colunas (nome/cor/wip/ordem) — igual ao merge-safe de
+// saveAgilCfg(), mas sem depender dos campos da aba Config → Ágil.
+function _persistColumns(){
+  return fbGet(FB+'/columns').then(snap=>{
+    const remoteVal = snap.val();
+    const remote = remoteVal ? (Array.isArray(remoteVal)?remoteVal:Object.values(remoteVal)).filter(Boolean) : [];
+    const localIds = new Set(columns.map(c=>c.id));
+    const extraRemote = remote.filter(c=>c && !localIds.has(c.id) && !_deletedColIds.has(c.id));
+    const merged = extraRemote.length ? [...columns, ...extraRemote] : columns;
+    if(extraRemote.length) columns = merged;
+    return fbSet(FB+'/columns', merged);
+  }).catch(()=>fbSet(FB+'/columns', columns));
+}
+// WIP efetivo de uma coluna: usa col.wip se definido; senão, mantém compat com a
+// configuração antiga (Config → Ágil) só pra a coluna "progress".
+function _colWipLimit(col){
+  if(typeof col.wip==='number' && col.wip>0) return col.wip;
+  if(col.id==='progress' && agilCfg.wip) return parseInt(agilCfg.wip)||null;
+  return null;
 }
 
 function checkEditPermission(){
