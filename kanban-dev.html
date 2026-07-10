@@ -202,6 +202,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-collapse-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;}
 .col-sort-btn{transition:color .15s;}
 .col-sort-btn:hover{color:var(--teal)!important;}
+.col-manual-badge{background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.35);border-radius:999px;color:var(--warn);font-size:9px;font-weight:700;padding:2px 8px;cursor:pointer;white-space:nowrap;transition:background .12s;}
+.col-manual-badge:hover{background:rgba(255,209,102,.22);}
 .col-collapse-btn:hover{color:var(--txt);}
 .col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;}
 
@@ -2425,13 +2427,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <input class="fi" id="m-sp" type="number" min="0" max="100" placeholder="0" oninput="scheduleAutoSave()">
           </div>
           <div class="field"><label class="fl">Prioridade</label>
-            <select class="fi" id="m-priority" onchange="scheduleAutoSave()">
+            <select class="fi" id="m-priority" onchange="scheduleAutoSave();renderSubPrioRow();">
               <option value="">— sem prioridade —</option>
               <option value="low">🟢 Baixa</option>
               <option value="medium">🟡 Média</option>
               <option value="high">🔴 Alta</option>
               <option value="critical">🔥 Crítica</option>
             </select>
+          </div>
+        </div>
+        <div class="field" id="m-subprio-row" style="display:none;">
+          <label class="fl">Posição na prioridade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dentro dessa prioridade (ex.: entre todos os cards "Alta" da coluna), decide qual aparece primeiro. Cards sem posição definida ficam depois dos que já têm uma, na ordem de criação.</span></span></label>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" onclick="moveCardSubPrio(-1)" title="Subir dentro da prioridade">⬆ Subir</button>
+            <button type="button" class="btn btn-sm" onclick="moveCardSubPrio(1)" title="Descer dentro da prioridade">⬇ Descer</button>
+            <span id="m-subprio-lbl" style="font-size:10.5px;color:var(--txt3);"></span>
           </div>
         </div>
         <div class="field">
@@ -3585,7 +3595,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.110-dev</div>
+<div class="version">v8.30.111-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5249,7 +5259,15 @@ function _sortCards(arr, colId){
     });
   }
   const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
-  return arr.slice().sort((a,b)=>(PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4));
+  return arr.slice().sort((a,b)=>{
+    const pa=PRIO[a.priority||'']??4, pb=PRIO[b.priority||'']??4;
+    if(pa!==pb) return pa-pb;
+    // Desempate dentro da mesma prioridade: posição manual (subPrio), se definida.
+    // Cards sem subPrio ficam depois dos que já têm, mantendo a ordem original entre si.
+    const sa=(typeof a.subPrio==='number')?a.subPrio:Infinity;
+    const sb=(typeof b.subPrio==='number')?b.subPrio:Infinity;
+    return sa-sb;
+  });
 }
 
 function renderBoard(){
@@ -5279,6 +5297,8 @@ function renderNormal(board,activeCards){
   board.classList.add('mode-'+(viewMode||'expanded'));
   columns.forEach(col=>{
     const colCards=_sortCards(activeCards.filter(c=>c.col===col.id), col.id);
+    const activeSortMode = colSortOverrides[col.id] || colSortMode;
+    const hasManualOrder = activeSortMode==='priority' && colCards.some(c=>typeof c.subPrio==='number');
     const isCollapsed=collapsedCols.has(col.id);
     const div=document.createElement('div'); div.className='col'+(isCollapsed?' collapsed':''); div.id='col-'+col.id;
     
@@ -5298,6 +5318,7 @@ function renderNormal(board,activeCards){
         <span class="col-cnt" id="cnt-${col.id}" style="${col.id==='progress'&&agilCfg.wip&&colCards.length>parseInt(agilCfg.wip||3)?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
           ${col.id==='progress'&&agilCfg.wip ? colCards.length+'/'+agilCfg.wip : colCards.length}
         </span>
+        ${hasManualOrder?`<button class="col-manual-badge" onclick="event.stopPropagation();resetColSubPrio('${col.id}')" title="Esta coluna tem cards com posição manual dentro da prioridade. Clique pra voltar à ordem padrão.">🔀 manual</button>`:''}
         <button class="col-sort-btn" onclick="cycleColSort('${col.id}')" title="Ordenação desta coluna: ${({priority:'Prioridade',createdAt:'Data de criação',doneAt:'Data de finalização'})[colSortOverrides[col.id]||colSortMode]}${colSortOverrides[col.id]?' (individual)':''}" style="background:none;border:none;cursor:pointer;font-size:11px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">↕</button>
         ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
@@ -5743,7 +5764,7 @@ let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
-  const canEdit = window._currentUserRole && window._currentUserRole!=='convidado';
+  const canEdit = !!window._currentUserRole; // Convidado tem as mesmas permissões de edição que Membro
   if(!editingDescs.length){
     box.innerHTML='<div style="font-size:10.5px;color:var(--txt3);padding:4px 2px;">Nenhuma descrição adicional. Clique em "+ Nova descrição" para outro time registrar a visão dele.</div>';
   } else {
@@ -5807,7 +5828,6 @@ function _touchDesc(i){
   scheduleAutoSave();
 }
 function addExtraDesc(){
-  if(window._currentUserRole==='convidado'){ showToast('🔒 Convidados não podem editar.'); return; }
   editingDescs.push({id:'d'+Date.now(), label:'', text:'', author:'', authorInit:'', at:null, editedAt:null});
   _editingDescIdx.add(editingDescs.length-1); // nova já entra editável
   renderExtraDescs();
@@ -5910,6 +5930,7 @@ function openCard(id){
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
   document.getElementById('m-sp').value=c.sp||'';
   document.getElementById('m-priority').value=c.priority||'';
+  renderSubPrioRow();
   renderParticipants(c.participants||[]);
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
   renderHistory(c); // 📜 popula o histórico do card
@@ -5935,12 +5956,67 @@ function openCard(id){
   }, 100);
 }
 
-function checkEditPermission(){
-  const role=window._currentUserRole||'convidado';
-  if(role==='convidado'||role===''){
-    showToast('⛔ Você é convidado. Peça ao PO para ser adicionado ao squad.');
-    return false;
+// ── Posição dentro da prioridade ("semiprioridade") ────────────────────────
+// Cards com a mesma prioridade (Alta, Média...) numa coluna podem ter uma ordem
+// manual entre si via card.subPrio (número, menor = aparece primeiro). Cards sem
+// subPrio ficam sempre depois dos que já têm um valor definido, na ordem original.
+function renderSubPrioRow(){
+  const row=document.getElementById('m-subprio-row');
+  if(!row) return;
+  const prio=document.getElementById('m-priority')?.value;
+  const c = editingId ? cards.find(x=>x.id===editingId) : null;
+  if(!c || !prio){
+    row.style.display='none';
+    return;
   }
+  row.style.display='';
+  const tier=_prioTierCards(c.col, prio);
+  const idx=tier.findIndex(x=>x.id===c.id);
+  const lbl=document.getElementById('m-subprio-lbl');
+  if(lbl) lbl.textContent = tier.length>1 ? `${idx+1}ª de ${tier.length} nessa prioridade` : 'Só um card nessa prioridade aqui';
+}
+// Retorna os cards da mesma coluna+prioridade, na ordem atual (com/sem subPrio definido)
+function _prioTierCards(colId, prio){
+  return cards.filter(x=>x.col===colId && (x.priority||'')===prio)
+    .sort((a,b)=>{
+      const sa=(typeof a.subPrio==='number')?a.subPrio:Infinity;
+      const sb=(typeof b.subPrio==='number')?b.subPrio:Infinity;
+      if(sa!==sb) return sa-sb;
+      return cards.indexOf(a)-cards.indexOf(b);
+    });
+}
+function moveCardSubPrio(dir){
+  if(!editingId) return;
+  const c=cards.find(x=>x.id===editingId);
+  if(!c || !c.priority) return;
+  const tier=_prioTierCards(c.col, c.priority);
+  // Garante posição sequencial pra todo o grupo antes de trocar (cards "soltos" ganham um valor agora)
+  tier.forEach((cc,i)=>{ if(typeof cc.subPrio!=='number') cc.subPrio=i; });
+  tier.sort((a,b)=>a.subPrio-b.subPrio);
+  const idx=tier.findIndex(x=>x.id===c.id);
+  const swapIdx=idx+dir;
+  if(swapIdx<0 || swapIdx>=tier.length) return; // já está no topo/fundo dessa prioridade
+  const tmp=tier[idx].subPrio; tier[idx].subPrio=tier[swapIdx].subPrio; tier[swapIdx].subPrio=tmp;
+  c.edited=window._currentUser?.displayName||'Usuário';
+  c.editedAt=new Date().toISOString().split('T')[0];
+  fbSaveAll();
+  renderSubPrioRow();
+  renderBoard();
+}
+// Limpa a posição manual de todos os cards de uma coluna — volta pra ordem padrão
+async function resetColSubPrio(colId){
+  if(!await uiConfirm('Remover a ordem manual desta coluna? Os cards voltam pra ordem padrão (prioridade + criação).')) return;
+  let mudou=false;
+  cards.filter(c=>c.col===colId).forEach(c=>{ if(typeof c.subPrio==='number'){ delete c.subPrio; mudou=true; } });
+  if(mudou){ fbSaveAll(); renderBoard(); showToast('↩ Ordem manual removida.'); }
+}
+
+function checkEditPermission(){
+  // Convidado agora tem as mesmas permissões de edição que Membro (mover/criar/editar
+  // cards) — só muda o rótulo do papel e quem pode removê-lo da lista (isso continua
+  // exclusivo do PO/ADM em removerMembro()). Mantemos a função por compatibilidade
+  // com quem já chama checkEditPermission() e como trava única caso um papel mais
+  // restritivo seja criado no futuro.
   return true;
 }
 
@@ -5964,6 +6040,7 @@ function openNewCard(col){
   document.getElementById('m-meta-e').textContent='';
   document.getElementById('m-sp').value='';
   document.getElementById('m-priority').value='';
+  renderSubPrioRow();
   renderParticipants([]);
   document.getElementById('btn-del-card').style.visibility='hidden';
   const bRow=document.getElementById('m-blocker-row');
@@ -9644,7 +9721,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\nÉ tudo preferência pessoal de visualização — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
+    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o card e use "Posição na prioridade" (⬆/⬇) pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
@@ -9705,7 +9782,7 @@ const HELP_CONTENT = {
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
     { icon:'⚡', title:'Automações', text:'Em Config → Auto, crie regras que disparam ações automaticamente. Exemplos: quando card mover para Impedimentos, notificar PO. Quando WIP exceder o limite, bloquear criação em Progresso.' },
-    { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado (só leitura), Membro, Organizador ou PO. Convidados não podem criar ou editar cards.' },
+    { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
@@ -9722,7 +9799,7 @@ const HELP_CONTENT = {
     { icon:'🎯', title:'Objetivo da sprint', text:'Uma frase que resume o valor entregue nessa sprint. Deve ser específico, mensurável e acordado com stakeholders. Aparece no topo do board e no contexto do Agente Ágil.' },
     { icon:'🔁', title:'Retrospectiva', text:'Cerimônia ao fim de cada sprint para inspecionar o processo. Use a aba Retrospectiva do Agente Ágil para estruturar pontos de melhoria e transformá-los em ações.' },
     { icon:'👤', title:'Product Owner (PO)', text:'Responsável por maximizar o valor entregue pelo time. No Maré Digital, o PO gerencia configurações, acessa o Agente Ágil e usa o campo Insights do PO em cada card para descrever objetivo e critério de aceite (formato SMART).' },
-    { icon:'🏊', title:'Papéis no board', text:'Convidado: só leitura. Membro: cria e edita cards. Organizador: gerencia colunas e tags. PO: acesso total incluindo Agente Ágil, automações e configurações. ADM: acesso irrestrito a todos os squads.' },
+    { icon:'🏊', title:'Papéis no board', text:'Convidado e Membro: cria, edita e move cards, posta lembretes e kudos (Convidado é só um rótulo diferente, pra sinalizar gente de fora — ex. freelancer — e é o único papel que pode ser removido da lista pelo PO). Organizador: gerencia colunas e tags. PO: acesso total incluindo Agente Ágil, automações e configurações. ADM: acesso irrestrito a todos os squads.' },
   ],
   comunicacao: [
     { icon:'📢', title:'Mural — avisos do ADM', text:'Clique em 📢 no header (ao lado do sino 🔔) para abrir o Mural. Na aba Avisos você vê todos os comunicados publicados pelo administrador — novidades, dicas, avisos e alertas urgentes. Cada tipo tem cor e ícone próprios. Itens que você ainda não leu aparecem com uma bolinha colorida. Clicar num item abre o comunicado completo. Comunicados importantes podem aparecer automaticamente como popup ao abrir ou recarregar o board — basta clicar "Entendi 👍" para não ver de novo.' },
