@@ -158,8 +158,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* toolbar */
 .toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;position:relative;z-index:2;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
-/* sprint goal bar */
-.goal-bar{background:rgba(37,99,201,.12);border:1px solid rgba(37,99,201,.25);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;}
+/* sprint goal bar — fundo opaco (era 12% de opacidade e deixava as bolhas/peixes
+   do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
+.goal-bar{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;position:relative;z-index:2;}
 .goal-bar.show{display:flex;}
 /* board */
 .board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;-webkit-overflow-scrolling:touch;}
@@ -954,6 +955,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* ── ANEXOS E LINKS ─────────────────────────────────────── */
 .attach-wrap{margin-top:2px;}
+/* Respiro extra entre o bloco de Milanote e o de Anexos/Links — sem isso o botão
+   "Vincular" do Milanote fica colado no "+ Adicionar" dos anexos. */
+#m-attach-wrap{margin-top:18px;}
 .attach-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .attach-lbl{font-size:10px;font-weight:700;text-transform:uppercase;
   letter-spacing:.06em;color:var(--txt2);}
@@ -3581,7 +3585,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.109-dev</div>
+<div class="version">v8.30.110-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
