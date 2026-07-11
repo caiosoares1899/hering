@@ -3674,7 +3674,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.113-dev</div>
+<div class="version">v8.30.114-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15545,11 +15545,18 @@ function _initComunicados(){
 }
 
 function _talvezMostrarComunicado(){
-  // Popup automático desativado a pedido: o mural agora funciona como notificação —
-  // o botão 📢 mostra um badge quando tem novidade (igual ao sino 🔔) e a pessoa
-  // decide quando abrir, em vez do aviso interromper sozinho ao entrar no board.
-  // Mantido como no-op (não removido) pra poder reativar rápido se precisar de novo.
-  return;
+  // Popup automático continua existindo pra avisos marcados como "🔔 Popup" na
+  // composição (Config → Comunicados) — importante pra coisas urgentes que
+  // precisam de atenção na hora. Avisos marcados como "📌 Só no mural" nunca
+  // interrompem: ficam só no badge do botão 📢, como uma notificação normal.
+  if(_comunicadoNaTela) return;
+  if(!window._currentUser) return;
+  if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
+  const pendente = _comunicadosAtivos.find(c=>{
+    if(c.insistente) return true;
+    return !_lsGet('comunicado_visto_'+c.id);
+  });
+  if(pendente) _mostrarComunicado(pendente);
 }
 
 function _algumOverlayCriticoAberto(){
