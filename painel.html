@@ -2015,7 +2015,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.72 · painel</div>
+<div class="version">v2.73 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4039,32 +4039,66 @@ async function _forcarLimpezaCacheGcal(){
 }
 
 // ── MIGRAÇÃO SQUAD 'midia' → 'prf' (Marketing de Performance) ──────────
-// Roda uma vez, disparada manualmente pelo ADM. Move (não duplica) todo o
-// node kanban/squads/midia (cards, colunas, campanhas, kudos, error_logs,
-// snapshots, presence, agent_usage...) pro novo ID 'prf', e atualiza as
-// flags de squad de cada usuário. Depois disso, ?squad=midia redireciona
-// sozinho pra ?squad=prf (ver redirect legado no kanban.html/kanban-dev.html).
+// Roda uma vez, disparada manualmente pelo ADM. Move (não duplica) os dados
+// do squad 'midia' pro novo ID 'prf', e atualiza as flags de squad de cada
+// usuário. Depois disso, ?squad=midia redireciona sozinho pra ?squad=prf
+// (ver redirect legado no kanban.html/kanban-dev.html).
+//
+// IMPORTANTE: as regras de segurança do Firebase liberam leitura/escrita
+// nos SUB-caminhos de kanban/squads/{id} (dados, presence, agent_usage,
+// error_logs, error_stats, snapshots, access_log) — não no node pai
+// kanban/squads/{id} inteiro. Ler o node pai direto (kanban/squads/midia)
+// dá "Permission denied" mesmo pro ADM. Por isso a migração roda
+// sub-caminho por sub-caminho, igual o padrão já usado em limpaPath()
+// (_forcarLimpezaCacheGcal). Cada um é isolado num try/catch pra um
+// sub-caminho sem dado (ou sem permissão) não travar os outros.
+const _MIGRACAO_SUBPATHS = ['dados','presence','agent_usage','error_logs','error_stats','snapshots','access_log'];
 async function _migrarSquadMidiaParaPrf(){
   if(!_isAdmPainel()) return;
-  if(!await uiConfirm('Migrar TODOS os dados do squad "midia" (Marketing de Performance) pro novo ID "prf"? Isso copia cards, colunas, campanhas, kudos, error logs etc. e depois apaga o node antigo. Rode só uma vez.',{okText:'Migrar'})) return;
+  if(!await uiConfirm('Migrar os dados do squad "midia" (Marketing de Performance) pro novo ID "prf"? Isso copia cards, colunas, campanhas, kudos, error logs etc. (sub-caminho por sub-caminho) e depois apaga o antigo. Rode só uma vez.',{okText:'Migrar'})) return;
   showToast('🔄 Migrando squad midia → prf…');
-  try{
-    const snap = await window._get(window._ref(window._db,'kanban/squads/midia'));
-    const val = snap.val();
-    if(!val){ showToast('⚠️ kanban/squads/midia está vazio — migração já foi feita ou nunca existiu dado aqui.'); return; }
 
-    const snapPrf = await window._get(window._ref(window._db,'kanban/squads/prf'));
-    if(snapPrf.val()){
-      if(!await uiConfirm('kanban/squads/prf JÁ TEM dados! Sobrescrever mesmo assim?',{danger:true,okText:'Sobrescrever'})) return;
+  let algumEncontrado=false;
+  let algumErro=false;
+  const relatorio=[];
+
+  for(const sub of _MIGRACAO_SUBPATHS){
+    const pathOld='kanban/squads/midia/'+sub;
+    const pathNew='kanban/squads/prf/'+sub;
+    try{
+      const snap = await window._get(window._ref(window._db, pathOld));
+      const val = snap.val();
+      if(val==null) continue; // sub-caminho vazio — nada a migrar aqui
+      algumEncontrado=true;
+
+      const snapNew = await window._get(window._ref(window._db, pathNew));
+      if(snapNew.val()!=null){
+        if(!await uiConfirm('kanban/squads/prf/'+sub+' JÁ TEM dados! Sobrescrever mesmo assim?',{danger:true,okText:'Sobrescrever'})){
+          relatorio.push('⏭ '+sub+' (pulado)');
+          continue;
+        }
+      }
+
+      await window._set(window._ref(window._db, pathNew), val);
+      await window._set(window._ref(window._db, pathOld), null);
+      relatorio.push('✅ '+sub);
+    } catch(e){
+      algumErro=true;
+      relatorio.push('❌ '+sub+': '+(e.message||e));
+      console.error('Erro migrando '+pathOld+':', e);
     }
+  }
 
-    await window._set(window._ref(window._db,'kanban/squads/prf'), val);
-    await window._set(window._ref(window._db,'kanban/squads/midia'), null);
+  if(!algumEncontrado && !algumErro){
+    showToast('⚠️ Nenhum dado encontrado em kanban/squads/midia/* — migração já foi feita ou nunca existiu dado aqui.');
+    return;
+  }
 
-    // Migra flags de squad + role de cada usuário
+  // Migra flags de squad + role de cada usuário
+  let migradosUsr = 0;
+  try{
     const usnap = await window._get(window._ref(window._db,'kanban/usuarios'));
     const usuarios = usnap.val()||{};
-    let migradosUsr = 0;
     for(const [uid,u] of Object.entries(usuarios)){
       const upd = {};
       if(u.squads && u.squads.midia){ upd['squads/prf']=true; upd['squads/midia']=null; }
@@ -4074,11 +4108,17 @@ async function _migrarSquadMidiaParaPrf(){
         migradosUsr++;
       }
     }
-
-    showToast('✅ Squad migrado: midia → prf ('+migradosUsr+' usuário(s) realocado(s)). Recarregue a página.');
   } catch(e){
-    console.error('Erro na migração midia→prf:', e);
-    showToast('❌ Erro na migração: '+(e.message||e));
+    algumErro=true;
+    relatorio.push('❌ usuários: '+(e.message||e));
+    console.error('Erro migrando flags de usuários midia→prf:', e);
+  }
+
+  const resumo = relatorio.join(', ')+' · '+migradosUsr+' usuário(s) realocado(s).';
+  if(algumErro){
+    showToast('⚠️ Migração parcial — '+resumo+' Veja o console para detalhes.');
+  } else {
+    showToast('✅ Squad migrado: midia → prf — '+resumo+' Recarregue a página.');
   }
 }
 
