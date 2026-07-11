@@ -2015,7 +2015,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.74 · painel</div>
+<div class="version">v2.75 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4126,6 +4126,41 @@ async function _migrarSquadMidiaParaPrf(){
   }
 }
 
+// ── LIMPEZA: campanhas de teste que vazaram pro node de produção ────────
+// Até essa correção, kanban-dev.html usava o MESMO node global do prod
+// (kanban/campanhas) pras campanhas do squad de teste. O board de dev tinha
+// um filtro que ESCONDIA da tela qualquer campanha 100% de squad fictício
+// (dev/omnichannel) — então parecia isolado, mas os dados de teste (Dia dos
+// Pais, Inverno, Black Friday do seed) continuavam gravados junto com os
+// dados reais no Firebase. Agora kanban-dev.html grava em kanban/campanhas_dev
+// (node isolado de verdade). Esta função é um reparo único: acha e remove do
+// node de produção qualquer campanha que sobrou de squad 100% fictício.
+async function _limparCampanhasTesteDoProd(){
+  if(!_isAdmPainel()) return;
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/campanhas'));
+    const raw = snap.val()||{};
+    const FICTICIOS = new Set(['dev','omnichannel']);
+    const achadas = Object.entries(raw).filter(([id,c])=>{
+      const sq = c.squads||[];
+      return sq.length>0 && sq.every(s=>FICTICIOS.has(s));
+    });
+    if(!achadas.length){
+      uiAlert('✅ Nenhuma campanha de teste encontrada em kanban/campanhas — já está limpo.');
+      return;
+    }
+    const nomes = achadas.map(([id,c])=>c.nome||id).join('\n');
+    if(!await uiConfirm('Encontrei '+achadas.length+' campanha(s) de teste (squad fictício) misturada(s) nos dados de produção:\n\n'+nomes+'\n\nRemover essas do kanban/campanhas? (o dev já usa um node isolado, kanban/campanhas_dev, então nada se perde)',{danger:true,okText:'Remover'})) return;
+    for(const [id] of achadas){
+      await window._set(window._ref(window._db,'kanban/campanhas/'+id), null).catch(()=>{});
+    }
+    uiAlert('🧹 '+achadas.length+' campanha(s) de teste removida(s) de kanban/campanhas.');
+  } catch(e){
+    console.error('Erro limpando campanhas de teste do prod:', e);
+    uiAlert('❌ Erro: '+(e.message||e));
+  }
+}
+
 function _applyGcalCacheCleaning(){
   const raw = window._pcalGcalCacheRaw || {};
   let eventos = Object.values(raw);
@@ -4484,7 +4519,8 @@ function renderPcalAgendasList(){
     infoEl.innerHTML = `<span>🕒 Atualizado ${quando}${meta?.updatedBy?' por '+esc(meta.updatedBy):''}</span>`
       + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '')
       + (isAdm ? `<button onclick="_forcarLimpezaCacheGcal()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;" title="Remove duplicatas do cache sem rebuscar na API">🧹 Limpar duplicatas</button>` : '')
-      + (isAdm ? `<button onclick="_migrarSquadMidiaParaPrf()" style="padding:2px 9px;font-size:9.5px;background:none;color:#ff9f0a;border:1px solid rgba(255,159,10,.35);border-radius:6px;cursor:pointer;" title="Migração única: move os dados do squad 'midia' pro novo ID 'prf'">🔀 Migrar midia→prf</button>` : '');
+      + (isAdm ? `<button onclick="_migrarSquadMidiaParaPrf()" style="padding:2px 9px;font-size:9.5px;background:none;color:#ff9f0a;border:1px solid rgba(255,159,10,.35);border-radius:6px;cursor:pointer;" title="Migração única: move os dados do squad 'midia' pro novo ID 'prf'">🔀 Migrar midia→prf</button>` : '')
+      + (isAdm ? `<button onclick="_limparCampanhasTesteDoProd()" style="padding:2px 9px;font-size:9.5px;background:none;color:#ff6b6b;border:1px solid rgba(255,107,107,.35);border-radius:6px;cursor:pointer;" title="Remove campanhas de squad fictício (dev/omnichannel) que vazaram pro node de produção">🧹 Limpar campanhas de teste</button>` : '');
   }
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
