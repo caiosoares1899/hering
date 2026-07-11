@@ -2008,7 +2008,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-squad-chk { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
 /* Cores por squad */
 .camp-sq-dados         { --sqc:#38b6ff; --sqb:rgba(56,182,255,.35);  --sqbg:rgba(56,182,255,.1);  }
-.camp-sq-midia         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
+.camp-sq-prf         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
 .camp-sq-midiacriativa { --sqc:#f4a8c8; --sqb:rgba(244,168,200,.35); --sqbg:rgba(244,168,200,.1); }
 .camp-sq-dev           { --sqc:#a78bfa; --sqb:rgba(167,139,250,.35); --sqbg:rgba(167,139,250,.1); }
 /* Badge multi-squad */
@@ -2273,7 +2273,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
+  <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
@@ -3026,6 +3027,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
         <button class="btn btn-p btn-sm" id="btn-confirm-import" onclick="confirmTrelloImport()" disabled style="opacity:.4;cursor:not-allowed;">📥 Importar</button>
       </div>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--glass-b);">
+        <div class="cfg-sec-title" style="font-size:12px;">🔍 Diagnóstico</div>
+        <p style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:8px;">Cards importados do Trello antes desta correção podem ter ficado com "tags fantasma" (um ID de tag que não existe mais na configuração — aparece como texto cru no Relatório de Tempo). Clique abaixo para detectar e reparar automaticamente.</p>
+        <button class="btn btn-sm" onclick="_repararTagsFantasmas()" style="color:var(--warn);border-color:rgba(255,209,102,.35);">🔧 Detectar e reparar tags fantasma</button>
+      </div>
     </div>
 
     <!-- ABA WORKER -->
@@ -3447,7 +3454,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
-    <div class="panel-title">⏱ Relatório de Tempo</div>
+    <div class="panel-title" style="display:flex;align-items:center;gap:6px;">⏱ Relatório de Tempo <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span></div>
     <button class="x-btn" onclick="closeOv('tempo-ov')">✕</button>
   </div>
   <div class="tempo-filter-bar">
@@ -3473,6 +3480,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- RELATÓRIO DE TEMPO - fim -->
+
+<!-- DADOS DO BOARD (mini painel pros PO's) -->
+<div class="ov" id="boarddata-ov">
+<div class="panel" style="max-width:520px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">📊 Dados do Board</div>
+    <button class="x-btn" onclick="closeOv('boarddata-ov')">✕</button>
+  </div>
+  <div style="padding:6px 16px 16px;overflow-y:auto;flex:1;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
+    <div class="met-g" id="boarddata-met-grid"></div>
+  </div>
+</div>
+</div>
+<!-- DADOS DO BOARD - fim -->
 <!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
 <div class="ov" id="camp-ov">
 <div class="camp-panel camp-tema-neutro" id="camp-panel">
@@ -3674,7 +3696,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.114-dev</div>
+<div class="version">v8.30.115-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3831,13 +3853,19 @@ if((_urlParams.get('squad')||'') === 'criacao'){
   _u.searchParams.set('squad','midiacriativa');
   window.location.replace(_u.toString());
 }
+// Redireciona squad legado 'midia' (Marketing de Performance) para 'prf'
+if((_urlParams.get('squad')||'') === 'midia'){
+  var _u2 = new URL(window.location.href);
+  _u2.searchParams.set('squad','prf');
+  window.location.replace(_u2.toString());
+}
 const ACTIVE_SQUAD = (_urlParams.get('squad') || 'dev').replace(/[^a-z0-9_-]/gi,'');
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
 // Squads criados via painel são carregados do Firebase em loadSquadsFromFirebase().
-// Apenas dados e midia existem por padrão.
-// kanban-dev.html: SÓ squads fictícios de teste. Squads reais (dados, midia,
+// Apenas dados e prf existem por padrão.
+// kanban-dev.html: SÓ squads fictícios de teste. Squads reais (dados, prf,
 // midiacriativa, app) NUNCA aparecem aqui — mesmo que existam no Firebase
 // squads_meta compartilhado, são filtrados em loadSquadsFromFirebase() abaixo.
 const SQUAD_META_DEFAULT = {
@@ -5114,6 +5142,11 @@ function autoRegistrar(user){
         const criaMigUpd={'squads/midiacriativa':true,'squads/criacao':null};
         fbUpdate('kanban/usuarios/'+user.uid, criaMigUpd);
       }
+      // Migra squad 'midia' → 'prf' (Marketing de Performance) nos dados do usuário
+      if(existe.squads&&existe.squads['midia']&&!existe.squads['prf']){
+        const midiaMigUpd={'squads/prf':true,'squads/midia':null};
+        fbUpdate('kanban/usuarios/'+user.uid, midiaMigUpd);
+      }
       // Atualiza visibilidade do FAB do agente
       const fabBtn=document.querySelector('.fab-btn');
       const mnavAgent=document.getElementById('mnav-agent');
@@ -5718,7 +5751,29 @@ function updateMetrics(){
     <div class="met"><div class="met-lbl">Throughput</div><div class="met-val">${done}</div><div class="met-sub">concluídos</div></div>
     <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':''}"">${bl}</div><div class="met-sub">${bl?'atenção':' ok'}</div></div>
     <div class="met"><div class="met-lbl">Capacidade</div><div class="met-val">${agilCfg.capacity||'—'}%</div><div class="met-sub">configurado</div></div>`;
+  renderBoardDataGrid();
 }
+
+function renderBoardDataGrid(){
+  const g=document.getElementById('boarddata-met-grid'); if(!g) return;
+  const activeCards=cards.filter(c=>!c.archived);
+  const wip=activeCards.filter(c=>c.col==='progress').length;
+  const bl=activeCards.filter(c=>c.col==='blocker').length;
+  const done=activeCards.filter(c=>c.col==='done').length;
+  const wipLimit=parseInt(agilCfg.wip||3);
+  const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
+  const naoConcluidos=activeCards.filter(c=>c.col!=='done');
+  const totalAtivos=naoConcluidos.length;
+  const semDono=naoConcluidos.filter(c=>!c.owner).length;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const vencidos=naoConcluidos.filter(c=>{
+    if(!c.due) return false;
+    const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
+    return d<hoje;
+  }).length;
+  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${'não concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div>`;
+}
+
 
 
 
@@ -7002,6 +7057,10 @@ function openTempoReport(){
   document.getElementById('tempo-ov').classList.add('open');
   renderTempoReport();
 }
+function openBoardData(){
+  renderBoardDataGrid();
+  document.getElementById('boarddata-ov').classList.add('open');
+}
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
@@ -7534,13 +7593,13 @@ function setCampSqFilter(sq){
 
 const SQUAD_COLORS = {
   dados:         {bg:'rgba(56,182,255,.1)',  border:'rgba(56,182,255,.35)',  text:'#38b6ff'},
-  midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
+  prf:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
   midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
   dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
   gestao:        {bg:'rgba(150,80,220,.1)',  border:'rgba(150,80,220,.35)',  text:'#c084fc'},
 };
 function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
-const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
+const _SQ_LABELS = { dados:'Dados', prf:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
 function _sqLabel(sqId){
   // Tenta SQUADS (config dinâmica), senão usa mapa fixo, senão o próprio id
   const info = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sqId);
@@ -7563,7 +7622,7 @@ function _renderEntrada(e, campId){
     const _SQUADS_ALL = typeof SQUADS!=='undefined' ? SQUADS : [];
     const sqInfo  = _SQUADS_ALL.find(s=>s.id===e._squad);
     const _SQ_FALLBACK = {
-      dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',gestao:'🏛',
+      dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪',gestao:'🏛',
       cx:'💬',marketplace:'🛒',ecommerce:'🛍',logistica:'🚚',
     };
     const sqEmoji = sqInfo?.icon || _SQ_FALLBACK[e._squad] || '🐟';
@@ -7915,7 +7974,7 @@ function _renderCampCardsGrid(){
   if(fCol!=='all')   list = list.filter(c=>c.col===fCol);
   const body = document.getElementById('camp-cards-grid-body');
   if(!list.length){ body.innerHTML='<div class="camp-grid-empty">Nenhum card com esse filtro.</div>'; return; }
-  const _SQ_FB={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+  const _SQ_FB={dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪'};
   const activeSquad = ctx.activeSquad;
   body.innerHTML = list.map(card=>{
     const sq_  = card._squad||activeSquad;
@@ -7923,7 +7982,7 @@ function _renderCampCardsGrid(){
     const col  = cols.find(cl=>cl.id===card.col);
     const colColor = col?.color||'#38b6ff';
     const sqc = _sqColor(sq_);
-    const _SQ_LBL={dados:'Dados',midia:'Mkt Performance',midiacriativa:'Mídia Criativa',dev:'Dev'};
+    const _SQ_LBL={dados:'Dados',prf:'Mkt Performance',midiacriativa:'Mídia Criativa',dev:'Dev'};
     const _sqI = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sq_);
     const sqLabel = _sqI?.label||_SQ_LBL[sq_]||sq_;
     const sqEmoji = _sqI?.icon||_SQ_FB[sq_]||'🐟';
@@ -8858,6 +8917,46 @@ function saveTags(){
   if(typeof showToast === 'function') showToast('✅ Tags salvas com sucesso!');
   closeOv('cfg-ov');
 }
+// ── REPARO: TAGS FANTASMA (bug do import do Trello) ─────────────────
+// Causa raiz: doTrelloImport() criava tags novas só na memória (array
+// `tags`) e chamava fbSaveAll(), que SÓ salva `cards` — nunca `tags`
+// (tags têm save dedicado em saveTags(), por causa de race condition).
+// Resultado: os cards importados ficavam com c.tags apontando pra um
+// ID que nunca foi de fato salvo no Firebase. No primeiro reload, esse
+// ID some da lista de tags e vira uma "tag fantasma" — aparece como um
+// texto cru (ex.: "tag_revisao_a1b2") no Relatório de Tempo, e some
+// silenciosamente do card no board (getTag() retorna null).
+// Já corrigido na raiz (doTrelloImport agora persiste tags também).
+// Esta função repara o que já ficou órfão: escaneia todos os cards,
+// acha IDs de tag que não existem mais em `tags`, e recria uma tag de
+// verdade pra cada um (com um rótulo legível a partir do próprio ID).
+function _repararTagsFantasmas(){
+  const encontrados = new Map(); // tagId órfão -> quantos cards usam
+  cards.forEach(c=>{
+    getCardTags(c).forEach(tid=>{
+      if(!getTag(tid)) encontrados.set(tid, (encontrados.get(tid)||0)+1);
+    });
+  });
+  if(!encontrados.size){
+    uiAlert('✅ Nenhuma tag fantasma encontrada — todas as tags usadas pelos cards existem na configuração.');
+    return;
+  }
+  const PALETTE_CYCLE=[0,1,2,3,4,5];
+  let idx=0;
+  const criadas=[];
+  encontrados.forEach((n,tid)=>{
+    // Deriva um rótulo legível do próprio ID (ex.: "tag_revisao_a1b2" -> "Revisao")
+    let label=tid.replace(/^tag_/,'').replace(/_[a-z0-9]{4}$/,'').replace(/_/g,' ').trim();
+    label=label? label.charAt(0).toUpperCase()+label.slice(1) : tid;
+    const pi=PALETTE_CYCLE[idx++ % PALETTE_CYCLE.length];
+    tags.push({id:tid, label, pi});
+    criadas.push(`${label} (${n} card${n>1?'s':''})`);
+  });
+  fbSet(FB+'/tags', tags);
+  renderBoard();
+  uiAlert('🔧 '+criadas.length+' tag(s) fantasma reparada(s):\n\n'+criadas.join('\n')+'\n\nAs tags foram recriadas com nomes derivados do ID interno — se quiser, renomeie em Config → Tags pra algo mais amigável.');
+}
+
 
 // ═══ SUBTIMES ═══
 // ═══════════════════════════════════════════════════════
@@ -9893,14 +9992,19 @@ async function doTrelloImport(){
     cards=[];
   }
   // Cria tags novas que vieram do Trello
+  let _novasTagsCriadas=false;
   if(_trelloParsed.newTags?.length>0){
     _trelloParsed.newTags.forEach(nt=>{
-      if(!tags.find(t=>t.id===nt.id)) tags.push(nt);
+      if(!tags.find(t=>t.id===nt.id)){ tags.push(nt); _novasTagsCriadas=true; }
     });
   }
   // Remove metadados internos antes de salvar
   const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListId,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
   cards.push(...cleanCards);
+  // BUGFIX: fbSaveAll() só salva `cards` (nunca `tags` — ver comentário em fbSaveAll).
+  // Sem isto, tags novas do import ficavam só na memória e viravam "tags fantasma"
+  // (referenciadas pelos cards, mas inexistentes no Firebase) no primeiro reload.
+  if(_novasTagsCriadas) fbSet(FB+'/tags', tags);
   fbSaveAll(); renderBoard();
   // Limpa e fecha
   document.getElementById('trello-json').value='';
@@ -9937,7 +10041,7 @@ const HELP_CONTENT = {
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
-    { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=midia, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
+    { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Clique em ⏱ Tempo por tag na toolbar para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
@@ -15233,12 +15337,30 @@ async function runDevSeed(){
       await window._set(window._ref(window._db, campBase+'/'+campId2), colecaoInv);
       seedLog('✅ 2 campanhas de exemplo criadas (Dia dos Pais + Inverno 2026)','ok');
     }catch(e){ seedLog('⚠ campanhas não gravadas: '+e.message,'err'); }
+    try{
+      const campBase = 'kanban/campanhas';
+      const ts3b = new Date().toISOString();
+      const campanhaBF = {
+        id: 'camp-seed-blackfridaydev', tipo:'campanha', nome:'Black Friday 2026', mote:'O maior desconto do ano',
+        tag:'feat', dataInicio: d(55), dataFim: d(70), status:'planejamento',
+        tema:'neutro', squads:['dev'], mostrarArquivados:'ativos',
+        criadoEm: ts3b, criadoPor:'Rafael Mendes', atualizadoEm: ts3b,
+        entradas:{
+          'e-bf-001':{ id:'e-bf-001', tipo:'estrategia', titulo:'Briefing inicial em construção',
+            corpo:'Primeira reunião de planejamento realizada. Definido o guarda-chuva de mecânicas (cupom progressivo x desconto direto) — decisão final depende do resultado do teste A/B da campanha de Inverno.\n\nPróximos passos: alinhar budget de mídia com o time de performance e validar categorias prioritárias com o comercial.',
+            links:[],
+            autor:'Rafael Mendes', autorUid:'uid-test-002', ts: ts3b },
+        }
+      };
+      await window._set(window._ref(window._db, campBase+'/camp-seed-blackfridaydev'), campanhaBF);
+      seedLog('✅ 1 campanha em planejamento criada (Black Friday 2026)','ok');
+    }catch(e2){ seedLog('⚠ campanha extra não gravada: '+e2.message,'err'); }
 
     } // ── FIM bloco else (dev) ──────────────────────────────────────────
 
     // ── SQUAD OMNICHANNEL (fictícia, isolada) — testes multi-squad ────
     // Popula quando: (a) rodando do squad omnichannel OU (b) rodando do dev (cross-squad).
-    // NUNCA escreve na squad real de Marketing de Performance ('midia').
+    // NUNCA escreve na squad real de Marketing de Performance ('prf').
     if(ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='omnichannel'){
     try{
       const FBO = 'kanban/squads/omnichannel/dados';
