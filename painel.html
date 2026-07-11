@@ -64,6 +64,25 @@
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
 }
+/* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
+.dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
+.dp-btn:hover{color:var(--accent);border-color:var(--accent);}
+.dp-pop{position:fixed;z-index:9999;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:10px;padding:10px;box-shadow:0 10px 28px rgba(0,0,0,.55);width:224px;font-family:'DM Sans',sans-serif;}
+.dp-pop-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dp-pop-hd button{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:14px;padding:2px 8px;border-radius:5px;}
+.dp-pop-hd button:hover{color:var(--accent);background:rgba(56,182,255,.1);}
+.dp-pop-title{font-size:11.5px;font-weight:700;color:var(--txt);text-transform:capitalize;}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-dow{font-size:9px;color:var(--txt3);text-align:center;padding:2px 0;}
+.dp-day{font-size:11px;text-align:center;padding:5px 0;border-radius:5px;cursor:pointer;color:var(--txt);}
+.dp-day:hover{background:rgba(56,182,255,.15);}
+.dp-day.dp-other{color:var(--txt3);opacity:.35;}
+.dp-day.dp-today{border:1px solid var(--teal);}
+.dp-day.dp-sel{background:var(--accent);color:#04141f;font-weight:700;}
+.dp-foot{display:flex;justify-content:space-between;margin-top:8px;padding-top:7px;border-top:1px solid var(--glass-b);}
+.dp-foot button{background:none;border:none;color:var(--teal);font-size:10.5px;cursor:pointer;padding:3px 4px;}
+.dp-foot button:hover{text-decoration:underline;}
+
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -1664,7 +1683,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="pev-field">
             <label class="pev-label">Expira em (opcional)</label>
-            <input class="pev-input" id="cc-expira" type="date">
+            <input class="pev-input" id="cc-expira" type="date"> <button type="button" class="dp-btn" onclick="_dpOpen('cc-expira',this)" title="Escolher no calendário">📅</button>
           </div>
           <div class="pev-field" id="cc-insistente-wrap">
             <label class="pev-label">Comportamento</label>
@@ -1782,11 +1801,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="camp-field">
         <label class="camp-label">Data início</label>
-        <input class="camp-inp" type="date" id="camp-edit-inicio">
+        <input class="camp-inp" type="date" id="camp-edit-inicio"> <button type="button" class="dp-btn" onclick="_dpOpen('camp-edit-inicio',this)" title="Escolher no calendário">📅</button>
       </div>
       <div class="camp-field">
         <label class="camp-label">Data fim</label>
-        <input class="camp-inp" type="date" id="camp-edit-fim">
+        <input class="camp-inp" type="date" id="camp-edit-fim"> <button type="button" class="dp-btn" onclick="_dpOpen('camp-edit-fim',this)" title="Escolher no calendário">📅</button>
       </div>
     </div>
     <div class="camp-field">
@@ -1864,8 +1883,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <input class="pev-input" id="pev-title" placeholder="Nome do evento...">
       </div>
       <div class="pev-row">
-        <div class="pev-field"><label class="pev-label">Data início</label><input class="pev-input" id="pev-start" type="date"></div>
-        <div class="pev-field"><label class="pev-label">Data fim</label><input class="pev-input" id="pev-end" type="date"></div>
+        <div class="pev-field"><label class="pev-label">Data início</label><input class="pev-input" id="pev-start" type="date"> <button type="button" class="dp-btn" onclick="_dpOpen('pev-start',this)" title="Escolher no calendário">📅</button></div>
+        <div class="pev-field"><label class="pev-label">Data fim</label><input class="pev-input" id="pev-end" type="date"> <button type="button" class="dp-btn" onclick="_dpOpen('pev-end',this)" title="Escolher no calendário">📅</button></div>
       </div>
       <div class="pev-field">
         <label class="pev-label">Squad / Origem</label>
@@ -1958,7 +1977,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <div class="cfg-field"><label class="cfg-label">Duração (dias)</label><input class="cfg-input" id="cfg-sprint-days" type="number" min="1" max="60" oninput="calcCfgEnd()"></div>
         </div>
         <div class="cfg-row">
-          <div class="cfg-field"><label class="cfg-label">Início</label><input class="cfg-input" id="cfg-sprint-start" type="date" oninput="calcCfgEnd()"></div>
+          <div class="cfg-field"><label class="cfg-label">Início</label><input class="cfg-input" id="cfg-sprint-start" type="date" oninput="calcCfgEnd()"> <button type="button" class="dp-btn" onclick="_dpOpen('cfg-sprint-start',this)" title="Escolher no calendário">📅</button></div>
           <div class="cfg-field"><label class="cfg-label">Fim (calculado)</label><input class="cfg-input" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
         </div>
         <div class="cfg-field"><label class="cfg-label">Objetivo da sprint</label><textarea class="cfg-input" id="cfg-goal" rows="2" style="resize:vertical;min-height:50px;line-height:1.5;"></textarea></div>
@@ -2015,7 +2034,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.75 · painel</div>
+<div class="version">v2.76 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2333,6 +2352,95 @@ function _uiModalPainel({message, kind, defaultValue, placeholder, okText, dange
 }
 function uiAlert(message, opts={}){ return _uiModalPainel({message, kind:'alert', ...opts}); }
 function uiConfirm(message, opts={}){ return _uiModalPainel({message, kind:'confirm', ...opts}); }
+// ── DATE PICKER: calendário custom com navegação por mês ────────────────
+// Complementa os <input type="date"> nativos (que continuam funcionando
+// normalmente pra quem prefere digitar) com um botão 📅 que abre um
+// mini-calendário no tema do app — clica no dia e já preenche o campo.
+let _dpState = null;
+function _dpOpen(inputId, btnEl){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  if(_dpState && _dpState.inputId===inputId){ _dpClose(); return; }
+  _dpClose();
+  const base = inp.value ? new Date(inp.value+'T12:00:00') : new Date();
+  _dpState = { inputId, y: base.getFullYear(), m: base.getMonth() };
+  const pop = document.createElement('div');
+  pop.className = 'dp-pop';
+  pop.id = '_dp-pop';
+  document.body.appendChild(pop);
+  const rect = (btnEl||inp).getBoundingClientRect();
+  let top = rect.bottom + 6, left = rect.left;
+  if(left + 230 > window.innerWidth) left = Math.max(6, window.innerWidth - 234);
+  if(top + 280 > window.innerHeight) top = Math.max(6, rect.top - 286);
+  pop.style.top = top+'px'; pop.style.left = left+'px';
+  _dpRender();
+  setTimeout(()=>document.addEventListener('mousedown', _dpOutside), 0);
+}
+function _dpOutside(e){
+  const pop = document.getElementById('_dp-pop');
+  if(pop && !pop.contains(e.target)) _dpClose();
+}
+function _dpClose(){
+  const pop = document.getElementById('_dp-pop');
+  if(pop) pop.remove();
+  document.removeEventListener('mousedown', _dpOutside);
+  _dpState = null;
+}
+function _dpNav(delta){
+  _dpState.m += delta;
+  if(_dpState.m<0){ _dpState.m=11; _dpState.y--; }
+  if(_dpState.m>11){ _dpState.m=0; _dpState.y++; }
+  _dpRender();
+}
+function _dpToday(){
+  const t = new Date();
+  _dpState.y = t.getFullYear(); _dpState.m = t.getMonth();
+  _dpRender();
+}
+function _dpPick(dateStr){
+  const inp = document.getElementById(_dpState.inputId);
+  if(inp){
+    inp.value = dateStr;
+    inp.dispatchEvent(new Event('input', {bubbles:true}));
+    inp.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+  _dpClose();
+}
+function _dpRender(){
+  const pop = document.getElementById('_dp-pop'); if(!pop||!_dpState) return;
+  const {y,m,inputId} = _dpState;
+  const inp = document.getElementById(inputId);
+  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const DOW=['D','S','T','Q','Q','S','S'];
+  const first = new Date(y,m,1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const daysInPrev = new Date(y,m,0).getDate();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const selStr = inp?.value || '';
+  let cells = '';
+  for(let i=0;i<startDow;i++){ const d=daysInPrev-startDow+1+i; cells+=`<div class="dp-day dp-other">${d}</div>`; }
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    let cls='dp-day'; if(ds===todayStr) cls+=' dp-today'; if(ds===selStr) cls+=' dp-sel';
+    cells += `<div class="${cls}" onclick="_dpPick('${ds}')">${d}</div>`;
+  }
+  const totalCells = startDow+daysInMonth;
+  const trailing = (7-(totalCells%7))%7;
+  for(let d=1; d<=trailing; d++){ cells+=`<div class="dp-day dp-other">${d}</div>`; }
+  pop.innerHTML = `
+    <div class="dp-pop-hd">
+      <button onclick="_dpNav(-1)" type="button">◀</button>
+      <span class="dp-pop-title">${MESES[m]} ${y}</span>
+      <button onclick="_dpNav(1)" type="button">▶</button>
+    </div>
+    <div class="dp-grid">${DOW.map(d=>`<div class="dp-dow">${d}</div>`).join('')}${cells}</div>
+    <div class="dp-foot">
+      <button onclick="_dpPick('')" type="button">✕ Limpar</button>
+      <button onclick="_dpToday()" type="button">Hoje</button>
+    </div>`;
+}
+
 function uiPrompt(message, defaultValue='', opts={}){ return _uiModalPainel({message, kind:'prompt', defaultValue, ...opts}); }
 
 // ── Carregar ──────────────────────────────────────────────────────
