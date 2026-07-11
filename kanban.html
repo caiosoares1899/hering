@@ -2967,6 +2967,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           </div>
         </div>
       </div>
+
+      <div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-top:4px;">
+        <div class="cfg-sec-title" style="margin-bottom:6px;">🗄 Arquivamento automático por idade</div>
+        <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">Cards muito antigos e parados somem sozinhos do board ativo (continuam salvos em Arquivados, dá pra restaurar a qualquer hora). Só arquiva se as DUAS condições forem verdadeiras: idade mínima E tempo parado sem edição.</p>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);margin-bottom:10px;cursor:pointer;">
+          <input type="checkbox" id="archcfg-enabled" style="accent-color:var(--teal);"> Ativar arquivamento automático pra este squad
+        </label>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
+          <div class="field" style="max-width:150px;">
+            <label class="fl">Idade mínima (dias)</label>
+            <input class="fi" type="number" id="archcfg-days" min="30" value="365">
+          </div>
+          <div class="field" style="max-width:150px;">
+            <label class="fl">Sem edição há (dias)</label>
+            <input class="fi" type="number" id="archcfg-inactive" min="0" value="90">
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-p btn-sm" onclick="saveArchiveCfg()">💾 Salvar regra</button>
+        </div>
+      </div>
     </div>
 
 
@@ -3010,6 +3031,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="cfg-sec-title" style="font-size:12px;">🔍 Diagnóstico</div>
         <p style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:8px;">Cards importados do Trello antes desta correção podem ter ficado com "tags fantasma" (um ID de tag que não existe mais na configuração — aparece como texto cru no Relatório de Tempo). Clique abaixo para detectar e reparar automaticamente.</p>
         <button class="btn btn-sm" onclick="_repararTagsFantasmas()" style="color:var(--warn);border-color:rgba(255,209,102,.35);">🔧 Detectar e reparar tags fantasma</button>
+        <button class="btn btn-sm" onclick="_recalcularDatasTrello()" style="color:var(--accent);border-color:rgba(56,182,255,.35);margin-left:6px;margin-top:6px;">🕐 Corrigir datas de criação (Trello)</button>
       </div>
     </div>
 
@@ -3403,6 +3425,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openQL('modelos')">📋 <span>Modelos</span></button>
     <div style="height:1px;background:var(--glass-b);margin:4px 8px;"></div>
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openArquivados()">📦 <span>Arquivados</span></button>
+    <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openCleanupOld()">🧹 <span>Cards antigos</span></button>
   </div>
 </div>
 </div>
@@ -3656,7 +3679,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
     <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
   </div>
+  <div id="arch-purge-bar" style="display:none;padding:8px 14px;background:rgba(255,107,107,.06);border-bottom:1px solid rgba(255,107,107,.15);align-items:center;gap:8px;flex-wrap:wrap;">
+    <span style="font-size:10.5px;color:var(--danger);">🗑 Excluir definitivamente arquivados há mais de</span>
+    <input type="number" id="arch-purge-years" value="2" min="1" step="0.5" style="width:54px;" class="ql-filter-inp">
+    <span style="font-size:10.5px;color:var(--danger);">ano(s)</span>
+    <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="purgeOldArchived()">Excluir</button>
+  </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;" id="arch-body"></div>
+</div>
+</div>
+
+<!-- CARDS ANTIGOS (limpeza em massa por idade) -->
+<div class="ov" id="cleanup-ov">
+<div class="panel ql-panel">
+  <div class="panel-hd"><div class="panel-title">🧹 Cards antigos</div><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button></div>
+  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+      Ativos há mais de
+      <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
+      dias
+    </label>
+    <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
+    <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
+    <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
+  </div>
+  <div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
+  <div style="padding:8px 14px 12px;display:flex;flex-direction:column;gap:7px;" id="cleanup-body"></div>
+  <div style="padding:0 14px 14px;display:flex;justify-content:flex-end;">
+    <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+  </div>
 </div>
 </div>
 
@@ -3682,7 +3733,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.118</div>
+<div class="version">v8.30.119</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4270,7 +4321,7 @@ async function bulkArchive(){
   if(!selectedCards.size) return;
   const n = selectedCards.size;
   if(!await uiConfirm('Arquivar '+n+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
-  _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; recordHistory(c,'arquivou o card'); } });
+  _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivou o card'); } });
   // Para arquivar, o card some, então precisamos de renderBoard()
   const wrap = document.getElementById('board-wrap');
   const scrollX = wrap ? wrap.scrollLeft : 0;
@@ -4319,6 +4370,7 @@ let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanb
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
 let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts visto (p/ badge de não-lidos), persistido
 let agilCfg={};
+let archiveCfg={};
 
 // ═══════════════════════════════════════════════════════
 // FIREBASE HELPERS
@@ -4615,6 +4667,7 @@ function fbLoadAll(){
 
   // Agil cfg — segundo (WIP depende disso)
   fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); renderBoard(); }});
+  fbListen(FB+'/archive_cfg',val=>{ if(val) archiveCfg=val; });
 
   // Tags — terceiro
   fbListen(FB+'/subtimes',val=>{
@@ -5399,6 +5452,7 @@ function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
   // Snapshot diário: só agenda o timer se ainda não fez hoje (evita timers acumulados a cada render)
   if(cards.length>0 && !_snapshotDoneToday()) setTimeout(maybeSnapshot,2000);
+  if(cards.length>0 && !_autoArchiveDoneToday()) setTimeout(maybeAutoArchiveOldCards,3000);
   // Aplica modo de visualização
   board.classList.remove('mode-onepage','mode-expanded');
   board.classList.add('mode-'+(viewMode||'expanded'));
@@ -5881,6 +5935,62 @@ function maybeSnapshot(){
   safeLS.setItem(key,'1');
 }
 // ── FIM SNAPSHOTS ────────────────────────────────────────────────────
+
+// ── AUTO-ARQUIVAMENTO POR IDADE ──────────────────────────────────────
+// Regra padrão opcional (por squad): cards com X dias de criação E sem
+// atividade (edição) há Y dias somem sozinhos do board ativo. Continuam
+// salvos em Arquivados, dá pra restaurar. Checa 1x/dia por navegador,
+// igual ao snapshot diário (idempotente: card já arquivado é ignorado).
+function _autoArchiveDoneToday(){
+  const today=new Date().toISOString().split('T')[0];
+  return !!safeLS.getItem('autoarchive_'+ACTIVE_SQUAD+'_'+today);
+}
+function maybeAutoArchiveOldCards(){
+  const today=new Date().toISOString().split('T')[0];
+  const key='autoarchive_'+ACTIVE_SQUAD+'_'+today;
+  if(safeLS.getItem(key)) return;
+  safeLS.setItem(key,'1');
+  const cfg=archiveCfg||{};
+  if(!cfg.enabled) return;
+  const days=parseInt(cfg.days||365);
+  const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
+  const now=Date.now();
+  let n=0;
+  cards.forEach(c=>{
+    if(c.archived || !c.createdAt) return;
+    const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
+    const created=new Date(createdS).getTime();
+    if(isNaN(created)) return;
+    const editRaw=c.editedAt||c.createdAt;
+    const editedS=editRaw.length<=10?editRaw+'T12:00:00':editRaw;
+    let lastEdit=new Date(editedS).getTime();
+    if(isNaN(lastEdit)) lastEdit=created;
+    const ageDays=(now-created)/86400000;
+    const idleDays=(now-lastEdit)/86400000;
+    if(ageDays>=days && idleDays>=inactDays){
+      c.archived=true; c.archivedAt=new Date().toISOString();
+      recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
+      n++;
+    }
+  });
+  if(n>0){ fbSaveAll(); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
+}
+function fillArchiveCfgTab(){
+  const c=archiveCfg||{};
+  const chk=document.getElementById('archcfg-enabled'); if(chk) chk.checked=!!c.enabled;
+  const d=document.getElementById('archcfg-days'); if(d) d.value=c.days||365;
+  const i=document.getElementById('archcfg-inactive'); if(i) i.value=(c.inactivityDays!=null?c.inactivityDays:90);
+}
+function saveArchiveCfg(){
+  archiveCfg={
+    enabled: !!document.getElementById('archcfg-enabled')?.checked,
+    days: parseInt(document.getElementById('archcfg-days')?.value||'365'),
+    inactivityDays: parseInt(document.getElementById('archcfg-inactive')?.value||'90'),
+  };
+  fbSet(FB+'/archive_cfg', archiveCfg);
+  showToast('🗄 Regra de arquivamento automático salva.');
+}
+// ── FIM AUTO-ARQUIVAMENTO ────────────────────────────────────────────
 
 // ── SQUAD UI (sem seletor) ─────────────────────────────────────────
 function initSquadUI(){ /* squad fixo, nada a inicializar */ }
@@ -6409,7 +6519,7 @@ async function deleteCard(){
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
-  c.archived=true; fbSaveAll(); renderBoard(); closeOv('card-ov');
+  c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveAll(); renderBoard(); closeOv('card-ov');
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
 function _duplicarCardObj(card){
@@ -8188,6 +8298,7 @@ function _renderCampCardsGrid(){
 
 function openArquivados(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
+  const purgeBar=document.getElementById('arch-purge-bar'); if(purgeBar) purgeBar.style.display=(typeof canBulkDelete==='function' && canBulkDelete())?'flex':'none';
   let archived=cards.filter(c=>c.archived);
   // Popula dropdowns de filtro preservando a seleção atual
   const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner');
@@ -8219,7 +8330,77 @@ function openArquivados(){
   });
   document.getElementById('arch-ov').classList.add('open');
 }
-function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; fbSaveAll(); renderBoard(); openArquivados(); }
+function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveAll(); renderBoard(); openArquivados(); }
+
+// ── LIMPEZA DE CARDS ANTIGOS (arquivamento em massa por idade) ──────
+function _cardAgeDays(c){
+  if(!c.createdAt) return null;
+  const s=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
+  const t=new Date(s).getTime();
+  if(isNaN(t)) return null;
+  return Math.floor((Date.now()-t)/86400000);
+}
+function openCleanupOld(){
+  renderCleanupList();
+  document.getElementById('cleanup-ov').classList.add('open');
+}
+function renderCleanupList(){
+  const days=parseInt(document.getElementById('cleanup-days')?.value||'365');
+  const body=document.getElementById('cleanup-body'); if(!body) return;
+  const old=cards.filter(c=>{
+    if(c.archived) return false;
+    const age=_cardAgeDays(c);
+    return age!==null && age>=days;
+  }).sort((a,b)=>_cardAgeDays(b)-_cardAgeDays(a));
+  const summary=document.getElementById('cleanup-summary');
+  if(summary) summary.textContent = old.length ? old.length+' card(s) ativo(s) há mais de '+days+' dias.' : 'Nenhum card ativo passou de '+days+' dias ainda. 🎉';
+  body.innerHTML = old.map(c=>{
+    const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t.pi);
+    const age=_cardAgeDays(c);
+    const anos=Math.floor(age/365), meses=Math.floor((age%365)/30);
+    const ageLabel = anos>0 ? (anos+'a '+meses+'m') : meses+'m';
+    const col=columns.find(x=>x.id===c.col);
+    return `<div class="ql-item">
+      <input type="checkbox" class="cleanup-chk" data-id="${esc(c.id)}" checked style="accent-color:var(--teal);margin-right:2px;">
+      <span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>
+      <span class="ql-item-title">${esc(c.title)}</span>
+      <span style="font-size:10px;color:var(--txt3);white-space:nowrap;">${ageLabel} · ${esc(col?.name||'?')}</span>
+    </div>`;
+  }).join('');
+}
+function _cleanupSelectAll(v){ document.querySelectorAll('.cleanup-chk').forEach(cb=>cb.checked=v); }
+async function bulkArchiveOldCards(){
+  const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Arquivar '+ids.length+' card(s) antigo(s)? Eles somem do board ativo mas continuam salvos — dá pra restaurar em Arquivados.',{title:'Arquivar cards antigos',okText:'Arquivar'})) return;
+  const idSet=new Set(ids); let n=0;
+  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); n++; } });
+  fbSaveAll(); renderBoard();
+  showToast('📦 '+n+' card(s) arquivado(s).');
+  renderCleanupList();
+}
+async function purgeOldArchived(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Sem permissão.'); return; }
+  const years=parseFloat(document.getElementById('arch-purge-years')?.value||'2');
+  const cutoffMs=Date.now()-years*365*86400000;
+  const alvo=cards.filter(c=>{
+    if(!c.archived) return false;
+    const ref=c.archivedAt||c.editedAt||c.createdAt;
+    if(!ref) return false;
+    const s=ref.length<=10?ref+'T12:00:00':ref;
+    const t=new Date(s).getTime();
+    return !isNaN(t) && t<=cutoffMs;
+  });
+  if(!alvo.length){ showToast('Nenhum card arquivado passa desse tempo ainda.'); return; }
+  const digitado=await uiPrompt('Isso vai excluir PERMANENTEMENTE '+alvo.length+' card(s) arquivado(s) há mais de '+years+' ano(s). Não dá pra desfazer.\n\nPra confirmar, digite EXCLUIR:', '', {title:'Excluir arquivados antigos',danger:true,okText:'Excluir'});
+  if((digitado||'').trim().toUpperCase()!=='EXCLUIR'){ if(digitado!==null) showToast('Cancelado — texto não confere.'); return; }
+  const ids=new Set(alvo.map(c=>c.id));
+  cards=cards.filter(c=>!ids.has(c.id));
+  fbSaveAll();
+  showToast('🗑 '+alvo.length+' card(s) excluído(s) permanentemente.');
+  openArquivados();
+}
+// ── FIM LIMPEZA DE CARDS ANTIGOS ─────────────────────────────────────
 async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
@@ -8791,7 +8972,7 @@ function swCfgTab(tab){
  const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
-  if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); }
+  if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); }
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
@@ -9684,6 +9865,22 @@ function uiPrompt(message, defaultValue='', opts={}){ return _uiModal({message, 
 // ═══════════════════════════════════════════════════════
 let _trelloParsed = null;
 function openTrelloImport(){ openCfg('importar'); }
+// Decodifica a data REAL de criacao no Trello a partir do ID do card.
+// IDs do Trello sao ObjectId do Mongo: os 8 primeiros hex chars sao um
+// timestamp Unix (segundos). Funciona tanto com o ID completo (24 chars,
+// direto do JSON do Trello) quanto com o ID truncado que a gente guarda
+// ('trello_' + 10 primeiros chars) -- os primeiros 8 chars do timestamp
+// sempre estao presentes nos dois casos.
+function _trelloRealCreatedAt(rawId){
+  if(!rawId) return null;
+  const hex=String(rawId).replace(/^trello_/,'').substring(0,8);
+  if(hex.length<8 || !/^[0-9a-f]{8}$/i.test(hex)) return null;
+  const ts=parseInt(hex,16)*1000;
+  if(!ts || isNaN(ts)) return null;
+  const d=new Date(ts);
+  if(d.getFullYear()<2010 || d.getFullYear()>2035) return null; // sanidade
+  return d.toISOString().split('T')[0];
+}
 
 function parseTrelloJSON(raw){
   const data=JSON.parse(raw);
@@ -9940,7 +10137,7 @@ const tagId = cardTags[0] || '';
       blockerReason,
       created:'Trello Import',
       edited:'Trello Import',
-      createdAt:today,
+      createdAt:(_trelloRealCreatedAt(card.id)||today),
       editedAt:today,
       _trelloList:listMap[card.idList]?.name||'?',
       _trelloListId:card.idList,  // id da lista — usado pelo mapeamento manual
@@ -9983,6 +10180,18 @@ const tagId = cardTags[0] || '';
     _memberMap:memberMap,         // { trelloId → {fullName, username, initials} }
     _memberResolutions:memberResolutions, // { trelloId → boardInit }
   };
+}
+async function _recalcularDatasTrello(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode fazer isso.'); return; }
+  const alvo=cards.filter(c=>c.id && c.id.startsWith('trello_'));
+  const mudancas=alvo.map(c=>({c,nova:_trelloRealCreatedAt(c.id)})).filter(x=>x.nova && x.nova!==x.c.createdAt);
+  if(!mudancas.length){ showToast('Nenhum card do Trello com data pra corrigir (ou já estão certas).'); return; }
+  const datas=mudancas.map(x=>x.nova).sort();
+  const maisAntiga=datas[0].split('-').reverse().join('/');
+  if(!await uiConfirm(mudancas.length+' card(s) importado(s) do Trello terão a data de criação corrigida pra data real (a mais antiga encontrada: '+maisAntiga+'). Isso só corrige a data — não move, arquiva nem exclui nada. Confirma?',{title:'Corrigir datas do Trello',okText:'Corrigir'})) return;
+  mudancas.forEach(({c,nova})=>{ c.createdAt=nova; recordHistory(c,'data de criação corrigida (import Trello)'); });
+  fbSaveAll(); renderBoard();
+  showToast('🕐 '+mudancas.length+' card(s) com data corrigida.');
 }
 function previewTrelloImport(){
   const raw=document.getElementById('trello-json').value.trim();
@@ -13027,7 +13236,7 @@ function ctxRecorrente(){
 function ctxArchive(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   saveUndo('arquivar card');
-  card.archived=true; renderBoard(); fbSaveAll();
+  card.archived=true; card.archivedAt=new Date().toISOString(); renderBoard(); fbSaveAll();
   showToast(`"${card.title.substring(0,25)}" arquivado`);
   hideCtxMenu();
 }
