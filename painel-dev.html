@@ -1324,6 +1324,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
 
       <div id="comunicados-lista"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+
+      <!-- Arquivados 🗄 — desativados sem excluir, podem ser reativados depois -->
+      <div id="comunicados-arquivados-wrap" style="display:none;margin-top:14px;">
+        <button onclick="_toggleArquivadosComunicado()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;cursor:pointer;padding:4px 0;margin-bottom:8px;">
+          <span id="comunicados-arquivados-caret">▶</span> 🗄 Avisos arquivados (<span id="comunicados-arquivados-count">0</span>)
+        </button>
+        <div id="comunicados-arquivados" style="display:none;"></div>
+      </div>
     </div>
 
     <div id="pcal-section" style="margin-bottom:20px;">
@@ -1672,6 +1680,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         </div>
       </div>
       <div class="pev-ft">
+        <button id="cc-arch-btn" onclick="_ccToggleArquivar()" style="color:var(--cyan);border:1px solid rgba(56,182,255,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;display:none;">🗄 Arquivar</button>
         <button id="cc-del-btn" onclick="deleteComunicado()" style="color:var(--danger);border:1px solid rgba(255,107,107,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;margin-right:auto;display:none;">🗑 Excluir</button>
         <button onclick="closeComunicadoCompose()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
         <button onclick="saveComunicado()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Publicar</button>
@@ -2008,7 +2017,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.68 · painel-dev</div>
+<div class="version">v2.69 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5122,14 +5131,19 @@ function renderComunicadosLista(){
   // Nunca aparecem nos boards (rascunho implica ativo:false) — ficam numa seção separada.
   const rascunhos = todos.filter(c=>c.rascunho);
   const publicados = todos.filter(c=>!c.rascunho && !c.descartado);
+  // Arquivados: publicados desativados manualmente (ativo:false) — não aparecem nos
+  // boards, mas continuam salvos pra reativar quando quiser, numa seção separada.
+  const ativosPub = publicados.filter(c=>c.ativo!==false);
+  const arquivados = publicados.filter(c=>c.ativo===false);
   renderRascunhosComunicado(rascunhos);
+  renderArquivadosComunicado(arquivados);
 
-  if(!publicados.length){
-    el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum comunicado criado ainda.</div>';
+  if(!ativosPub.length){
+    el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum comunicado ativo no momento.</div>';
     return;
   }
   const agora = new Date().toISOString();
-  el.innerHTML = publicados.map(c=>{
+  el.innerHTML = ativosPub.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const expirado = c.expiraEm && c.expiraEm < agora;
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
@@ -5145,9 +5159,73 @@ function renderComunicadosLista(){
           <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status} · ${ondeAparece}${c.insistente?' · insistente':''}</div>
         </div>
       </div>
-      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
+      <button onclick="event.stopPropagation();arquivarComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Arquivar (desativa sem excluir — pode reativar depois)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--txt3)'">🗄</button>
+      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir definitivamente" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
     </div>`;
   }).join('');
+}
+
+// Arquivados 🗄 — desativados manualmente pelo ADM, sem excluir. Ficam numa seção
+// separada e recolhida (só título + contador) pra não poluir a lista ativa; o ADM
+// pode reativar a qualquer momento, o que volta a mostrá-los nos boards.
+function _toggleArquivadosComunicado(){
+  const el = document.getElementById('comunicados-arquivados');
+  const caret = document.getElementById('comunicados-arquivados-caret');
+  if(!el) return;
+  const abrir = el.style.display === 'none';
+  el.style.display = abrir ? '' : 'none';
+  if(caret) caret.textContent = abrir ? '▼' : '▶';
+}
+function renderArquivadosComunicado(arquivados){
+  const wrap = document.getElementById('comunicados-arquivados-wrap');
+  const el = document.getElementById('comunicados-arquivados');
+  const countEl = document.getElementById('comunicados-arquivados-count');
+  if(!wrap || !el) return;
+  if(countEl) countEl.textContent = arquivados.length;
+  if(!arquivados.length){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  el.innerHTML = arquivados.map(c=>{
+    const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
+    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
+        <span style="font-size:15px;filter:grayscale(1);">${tipo.icon}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
+          <div style="font-size:10px;color:var(--txt3);">${alvo} · ${ondeAparece} · arquivado</div>
+        </div>
+      </div>
+      <button onclick="event.stopPropagation();reativarComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Reativar" style="background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);cursor:pointer;font-size:11px;padding:5px 10px;border-radius:7px;flex-shrink:0;font-weight:600;">↩ Reativar</button>
+      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir definitivamente" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
+    </div>`;
+  }).join('');
+}
+async function arquivarComunicado(id, titulo){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem arquivar comunicados.'); return false; }
+  if(!await uiConfirm('Arquivar o comunicado "'+titulo+'"? Ele para de aparecer nos boards, mas fica salvo pra reativar depois.',{title:'Arquivar comunicado'})) return false;
+  try{
+    await window._set(window._ref(window._db,'kanban/comunicados/'+id+'/ativo'), false);
+    showToast('🗄 Comunicado arquivado.');
+    return true;
+  }catch(e){ showToast('⚠ Erro ao arquivar: '+(e?.message||e)); return false; }
+}
+async function reativarComunicado(id, titulo){
+  if(!_isAdmPainel()){ showToast('⚠ Só administradores podem reativar comunicados.'); return false; }
+  try{
+    await window._set(window._ref(window._db,'kanban/comunicados/'+id+'/ativo'), true);
+    showToast('✅ Comunicado reativado! Volta a aparecer nos boards.');
+    return true;
+  }catch(e){ showToast('⚠ Erro ao reativar: '+(e?.message||e)); return false; }
+}
+async function _ccToggleArquivar(){
+  if(!_editingComunicadoId) return;
+  const c = _comunicadosCache[_editingComunicadoId];
+  if(!c) return;
+  const ok = c.ativo===false
+    ? await reativarComunicado(_editingComunicadoId, c.titulo||'')
+    : await arquivarComunicado(_editingComunicadoId, c.titulo||'');
+  if(ok) closeComunicadoCompose();
 }
 
 // Rascunhos escritos automaticamente ao final de sessões de desenvolvimento —
@@ -5226,6 +5304,11 @@ function openComunicadoCompose(id){
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
     document.getElementById('cc-insistente').checked = !!c.insistente;
     if(delBtn) delBtn.style.display = '';
+    const archBtn = document.getElementById('cc-arch-btn');
+    if(archBtn){
+      if(c.rascunho){ archBtn.style.display = 'none'; }
+      else{ archBtn.style.display = ''; archBtn.textContent = c.ativo===false ? '↩ Reativar' : '🗄 Arquivar'; }
+    }
   } else {
     document.getElementById('comunicado-compose-title').textContent = 'Novo Comunicado';
     document.getElementById('cc-titulo').value = '';
@@ -5236,6 +5319,8 @@ function openComunicadoCompose(id){
     document.getElementById('cc-expira').value = '';
     document.getElementById('cc-insistente').checked = false;
     if(delBtn) delBtn.style.display = 'none';
+    const archBtnNew = document.getElementById('cc-arch-btn');
+    if(archBtnNew) archBtnNew.style.display = 'none';
   }
   _ccTogglePrioridadeUI();
   document.getElementById('comunicado-compose-ov').classList.add('open');
