@@ -3696,7 +3696,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.116-dev</div>
+<div class="version">v8.30.117-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7229,16 +7229,28 @@ let _campEditTags  = [];       // tags selecionadas no edit modal
 let _campComposerLinks = [];   // links do composer ativo
 
 // Caminho Firebase: global (cross-squad configurado no painel)
-function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas_dev'+(sub?'/'+sub:'')); }
+function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'/'+sub:'')); }
 
 // ── Carregar ──────────────────────────────────────────────────────
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
     const raw = snap.val()||{};
-    // kanban-dev.html usa kanban/campanhas_dev — um node isolado do prod, então
-    // não precisa (e não deve) filtrar por squad fictício aqui: tudo que está
-    // nesse node já é do ambiente de teste por construção.
-    _campanhas = raw;
+    // kanban-dev.html e kanban.html compartilham o MESMO node global
+    // kanban/campanhas no Firebase (não há como isolar por caminho separado
+    // sem acesso pra criar regra de segurança nova). Isolamento aqui é por
+    // FILTRO: o board de dev só mostra campanhas de squad fictício
+    // (dev/omnichannel) ou sem squad definido — campanhas reais do prod
+    // (squads:['dados'], ['prf']...) ficam de fora da tela do dev. É o
+    // espelho do filtro que o kanban.html (prod) já tinha, que esconde as
+    // campanhas fictícias de lá.
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    _campanhas = Object.fromEntries(
+      Object.entries(raw).filter(([_,c])=>{
+        const sq = c.squads||[];
+        if(sq.length===0) return true;
+        return sq.some(s=>SQUADS_FICTICIOS.has(s));
+      })
+    );
     // se o detalhe estiver aberto, atualiza
     if(_campAtual && document.getElementById('camp-view-detalhe').style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
@@ -15275,7 +15287,7 @@ async function runDevSeed(){
 
     // ── CAMPANHAS & COLEÇÕES de exemplo ──────────────────────────────
     try{
-      const campBase = 'kanban/campanhas_dev';
+      const campBase = 'kanban/campanhas';
       const campId1  = 'camp-seed-diapaisdev';
       const campId2  = 'col-seed-invernodev';
       const ts1 = new Date(Date.now()-10*86400000).toISOString();
@@ -15334,7 +15346,7 @@ async function runDevSeed(){
       seedLog('✅ 2 campanhas de exemplo criadas (Dia dos Pais + Inverno 2026)','ok');
     }catch(e){ seedLog('⚠ campanhas não gravadas: '+e.message,'err'); }
     try{
-      const campBase = 'kanban/campanhas_dev';
+      const campBase = 'kanban/campanhas';
       const ts3b = new Date().toISOString();
       const campanhaBF = {
         id: 'camp-seed-blackfridaydev', tipo:'campanha', nome:'Black Friday 2026', mote:'O maior desconto do ano',
@@ -15570,7 +15582,7 @@ async function runDevSeed(){
     } // fim if(ACTIVE_SQUAD==='dev'||'omnichannel')
     // ── Marcar campanhas como multi-squad ────────────────────────────
     try{
-      const campBase = 'kanban/campanhas_dev';
+      const campBase = 'kanban/campanhas';
       // Inverno 2026: multi-squad entre dev e omnichannel (fictícios, isolados)
       await window._set(window._ref(window._db, campBase+'/col-seed-invernodev/multiSquad'), true);
       await window._set(window._ref(window._db, campBase+'/col-seed-invernodev/squads'), ['dev','omnichannel']);
