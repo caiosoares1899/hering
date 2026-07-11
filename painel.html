@@ -1028,7 +1028,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-squad-chk { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
 /* Cores por squad */
 .camp-sq-dados         { --sqc:#38b6ff; --sqb:rgba(56,182,255,.35);  --sqbg:rgba(56,182,255,.1);  }
-.camp-sq-midia         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
+.camp-sq-prf         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
 .camp-sq-midiacriativa { --sqc:#f4a8c8; --sqb:rgba(244,168,200,.35); --sqbg:rgba(244,168,200,.1); }
 .camp-sq-dev           { --sqc:#a78bfa; --sqb:rgba(167,139,250,.35); --sqbg:rgba(167,139,250,.1); }
 /* Badge multi-squad */
@@ -1147,7 +1147,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="filter-bar">
       <button class="filter-btn active" id="fb-all"           onclick="setFilter('all')">🏠 Todos</button>
       <button class="filter-btn"        id="fb-dados"         onclick="setFilter('dados')">📊 Dados</button>
-      <button class="filter-btn"        id="fb-midia"         onclick="setFilter('midia')">📱 Marketing de Performance</button>
+      <button class="filter-btn"        id="fb-prf"         onclick="setFilter('prf')">📱 Marketing de Performance</button>
       <button class="filter-btn"        id="fb-midiacriativa" onclick="setFilter('midiacriativa')">🎨 Mídia Criativa</button>
     </div>
 
@@ -1296,7 +1296,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
     <div class="grid-2" style="margin-bottom:20px;">
       <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
-      <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-midia" class="col-bar"></div></div>
+      <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-prf" class="col-bar"></div></div>
     </div>
 
     <div class="sec-title">📋 Distribuição por coluna</div>
@@ -1337,7 +1337,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="pcal-tabs" id="pcal-tabs-bar">
         <div class="pcal-tab on"  id="pcal-tab-all"          onclick="setPcalTab('all')">🌐 Todos</div>
         <div class="pcal-tab"     id="pcal-tab-dados"         onclick="setPcalTab('dados')">📊 Dados</div>
-        <div class="pcal-tab"     id="pcal-tab-midia"         onclick="setPcalTab('midia')">📱 Marketing de Performance</div>
+        <div class="pcal-tab"     id="pcal-tab-prf"         onclick="setPcalTab('prf')">📱 Marketing de Performance</div>
         <div class="pcal-tab"     id="pcal-tab-midiacriativa" onclick="setPcalTab('midiacriativa')">🎨 Mídia Criativa</div>
         <div class="pcal-tab"     id="pcal-tab-gestao"        onclick="setPcalTab('gestao')">🏢 Gestão</div>
       </div>
@@ -1435,7 +1435,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="grid-3" style="margin-bottom:12px;">
       <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">todos os squads</div></div>
       <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
-      <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="au-midia">—</div><div class="met-sub">consultas</div></div>
+      <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="au-prf">—</div><div class="met-sub">consultas</div></div>
     </div>
     <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
 
@@ -1453,7 +1453,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="err-stats-grid">
         <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
         <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
-        <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="es-midia">—</div><div class="met-sub">total</div></div>
+        <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="es-prf">—</div><div class="met-sub">total</div></div>
         <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
       </div>
       <div class="card" style="margin-bottom:14px;">
@@ -1465,7 +1465,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <span class="err-filter-label">Squad</span>
           <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"          id="ef-squad-all">Todos</button>
           <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')"        id="ef-squad-dados">📊 Dados</button>
-          <button class="err-filter-btn"        onclick="setErrFilter('squad','midia')"        id="ef-squad-midia">📱 Mkt Perf</button>
+          <button class="err-filter-btn"        onclick="setErrFilter('squad','prf')"        id="ef-squad-prf">📱 Mkt Perf</button>
           <button class="err-filter-btn"        onclick="setErrFilter('squad','midiacriativa')" id="ef-squad-midiacriativa">🎨 Criativa</button>
         </div>
         <div class="err-filter-row">
@@ -1872,7 +1872,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <select class="pev-input" id="pev-squad">
           <option value="gestao">🏢 Gestão Digital Hering</option>
           <option value="dados">📊 Squad Dados</option>
-          <option value="midia">📱 Marketing de Performance</option>
+          <option value="prf">📱 Marketing de Performance</option>
           <option value="midiacriativa">🎨 Squad Mídia Criativa</option>
           <option value="geral">🌐 Geral (todos)</option>
         </select>
@@ -2015,7 +2015,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.71 · painel</div>
+<div class="version">v2.72 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2233,13 +2233,13 @@ function _pSafeUrl(u){ try{ return new URL(String(u)).href; }catch(e){ return '#
 // ── Cores por squad (painel) ──
 const _SQUAD_COLORS_CAMP = {
   dados:         {bg:'rgba(56,182,255,.1)',  border:'rgba(56,182,255,.35)',  text:'#38b6ff'},
-  midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
+  prf:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
   midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
   dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
   gestao:        {bg:'rgba(150,80,220,.1)',  border:'rgba(150,80,220,.35)',  text:'#c084fc'},
 };
 function _sqColor(sqId){ return _SQUAD_COLORS_CAMP[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
-const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
+const _SQ_LABELS = { dados:'Dados', prf:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
 function _sqLabel(sqId){
   const info = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sqId);
   if(info?.label) return info.label.replace(/^Squad\s+/,'');
@@ -2548,7 +2548,7 @@ function renderCampDetalhe(c){
   const sqBadgesHd = msSquads.map(sq=>{
     const sqc=_sqColor(sq);
     const sqInfo=SQUADS.find(s=>s.id===sq);
-    const _SQ_FB={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+    const _SQ_FB={dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪'};
     return `<span style="color:${sqc.text};font-size:11px;">${sqInfo?.icon||_SQ_FB[sq]||'🐟'} ${sqInfo?.label||sq}</span>`;
   }).join(' &nbsp;');
 
@@ -2711,7 +2711,7 @@ function _renderEntrada(e, campId){
   if(isMulti){
     const sqc     = _sqColor(e._squad);
     const sqInfo  = SQUADS.find(s=>s.id===e._squad);
-    const _SQ_FALLBACK = {dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',cx:'💬',marketplace:'🛒'};
+    const _SQ_FALLBACK = {dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪',cx:'💬',marketplace:'🛒'};
     const sqEmoji = sqInfo?.icon||_SQ_FALLBACK[e._squad]||'🐟';
     const sqLabel = sqInfo?.label||e._squad;
     sqHeader = `<div class="camp-entry-sq-hd">
@@ -2923,7 +2923,7 @@ function _renderCampCardsGrid(){
   const body = document.getElementById('camp-cards-grid-body');
   if(!list.length){ body.innerHTML='<div class="camp-grid-empty">Nenhum card com esse filtro.</div>'; return; }
 
-  const _SQ_FB={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+  const _SQ_FB={dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪'};
   body.innerHTML = list.map(card=>{
     const sq_  = card._squad||'dados';
     const cols = ctx.getCols ? ctx.getCols(sq_) : [];
@@ -3053,7 +3053,7 @@ const PAINEL_CAMP_TEMAS = {
 };
 const PAINEL_SQ_COLORS = {
   dados:         {bg:'rgba(56,182,255,.12)', border:'rgba(56,182,255,.4)',  text:'#38b6ff'},
-  midia:         {bg:'rgba(29,233,182,.12)', border:'rgba(29,233,182,.4)',  text:'#1de9b6'},
+  prf:         {bg:'rgba(29,233,182,.12)', border:'rgba(29,233,182,.4)',  text:'#1de9b6'},
   midiacriativa: {bg:'rgba(244,168,200,.12)',border:'rgba(244,168,200,.4)', text:'#f4a8c8'},
   dev:           {bg:'rgba(167,139,250,.12)',border:'rgba(167,139,250,.4)', text:'#a78bfa'},
 };
@@ -3184,7 +3184,7 @@ function renderPainelCamp(){
   el.innerHTML = Object.entries(_bySquad).map(([sq,camps])=>{
     const sqcol=_painelSqColor(sq);
     const sqInfo2=SQUADS.find(s=>s.id===sq);
-    const _SQ_FB3={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+    const _SQ_FB3={dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪'};
     const sqEmoji2=sqInfo2?.icon||_SQ_FB3[sq]||'🐟';
     const sqLabel2=sqInfo2?.label||sq;
     const campList=camps.map(c=>{
@@ -3659,7 +3659,7 @@ function loadAgentUsage(){
       window['_aguse_'+sq.id]=val;
       // Total combinado
       const t1=window._aguse_dados?.total||0;
-      const t2=window._aguse_midia?.total||0;
+      const t2=window._aguse_prf?.total||0;
       const totalEl=document.getElementById('au-total'); if(totalEl) totalEl.textContent=t1+t2;
       // Últimas 5 entradas combinadas
       renderAgentLogs();
@@ -3773,7 +3773,7 @@ function checklistPct(c){
 // ── CALENDÁRIO DO PAINEL ─────────────────────────────────────────
 const PCAL_COLORS=[
   {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
-  {id:'midia',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Marketing de Performance'},
+  {id:'prf',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Marketing de Performance'},
   {id:'midiacriativa', bg:'rgba(244,114,182,.8)', txt:'#3a0018', label:'🎨 Squad Mídia Criativa'},
   {id:'gestao',  bg:'rgba(167,139,250,.8)', txt:'#1a0a3a', label:'Gestão Digital'},
   {id:'geral',   bg:'rgba(255,209,102,.8)', txt:'#333', label:'Geral'},
@@ -3807,7 +3807,7 @@ function _squadColorFor(sqId){
   return { id:sqId, bg:c.bg, txt:c.txt, label: (SQUADS.find(sq=>sq.id===sqId)?.label) || sqId };
 }
 // Cores dos boards individuais mapeadas pelo squad
-const SQUAD_COLOR_MAP={dados:'dados',midia:'midia'};
+const SQUAD_COLOR_MAP={dados:'dados',prf:'prf'};
 
 let pcalYear=new Date().getFullYear();
 let pcalMonth=new Date().getMonth();
@@ -3855,7 +3855,7 @@ function setPcalTab(tab){
   document.querySelectorAll('.pcal-tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('pcal-tab-'+tab)?.classList.add('on');
   document.querySelectorAll('.pcal-content').forEach(c=>c.classList.remove('on'));
-  // Tabs all/dados/midia usam o mesmo grid
+  // Tabs all/dados/prf usam o mesmo grid
   if(tab==='gestao'){
     document.getElementById('pcal-gestao').classList.add('on');
     renderPcalGestao();
@@ -4035,6 +4035,50 @@ async function _forcarLimpezaCacheGcal(){
     showToast('✅ Nenhuma duplicata encontrada em nenhum cache.');
   } else {
     showToast('🧹 '+totalRemovido+' duplicata'+(totalRemovido>1?'s':'')+' removida'+(totalRemovido>1?'s':'')+': '+relatorio.join(', '));
+  }
+}
+
+// ── MIGRAÇÃO SQUAD 'midia' → 'prf' (Marketing de Performance) ──────────
+// Roda uma vez, disparada manualmente pelo ADM. Move (não duplica) todo o
+// node kanban/squads/midia (cards, colunas, campanhas, kudos, error_logs,
+// snapshots, presence, agent_usage...) pro novo ID 'prf', e atualiza as
+// flags de squad de cada usuário. Depois disso, ?squad=midia redireciona
+// sozinho pra ?squad=prf (ver redirect legado no kanban.html/kanban-dev.html).
+async function _migrarSquadMidiaParaPrf(){
+  if(!_isAdmPainel()) return;
+  if(!await uiConfirm('Migrar TODOS os dados do squad "midia" (Marketing de Performance) pro novo ID "prf"? Isso copia cards, colunas, campanhas, kudos, error logs etc. e depois apaga o node antigo. Rode só uma vez.',{okText:'Migrar'})) return;
+  showToast('🔄 Migrando squad midia → prf…');
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/squads/midia'));
+    const val = snap.val();
+    if(!val){ showToast('⚠️ kanban/squads/midia está vazio — migração já foi feita ou nunca existiu dado aqui.'); return; }
+
+    const snapPrf = await window._get(window._ref(window._db,'kanban/squads/prf'));
+    if(snapPrf.val()){
+      if(!await uiConfirm('kanban/squads/prf JÁ TEM dados! Sobrescrever mesmo assim?',{danger:true,okText:'Sobrescrever'})) return;
+    }
+
+    await window._set(window._ref(window._db,'kanban/squads/prf'), val);
+    await window._set(window._ref(window._db,'kanban/squads/midia'), null);
+
+    // Migra flags de squad + role de cada usuário
+    const usnap = await window._get(window._ref(window._db,'kanban/usuarios'));
+    const usuarios = usnap.val()||{};
+    let migradosUsr = 0;
+    for(const [uid,u] of Object.entries(usuarios)){
+      const upd = {};
+      if(u.squads && u.squads.midia){ upd['squads/prf']=true; upd['squads/midia']=null; }
+      if(u.squads_roles && u.squads_roles.midia){ upd['squads_roles/prf']=u.squads_roles.midia; upd['squads_roles/midia']=null; }
+      if(Object.keys(upd).length){
+        await window._update(window._ref(window._db,'kanban/usuarios/'+uid), upd).catch(()=>{});
+        migradosUsr++;
+      }
+    }
+
+    showToast('✅ Squad migrado: midia → prf ('+migradosUsr+' usuário(s) realocado(s)). Recarregue a página.');
+  } catch(e){
+    console.error('Erro na migração midia→prf:', e);
+    showToast('❌ Erro na migração: '+(e.message||e));
   }
 }
 
@@ -4395,7 +4439,8 @@ function renderPcalAgendasList(){
     const quando = meta?.updatedAt ? 'há '+_relTime(meta.updatedAt) : 'nunca';
     infoEl.innerHTML = `<span>🕒 Atualizado ${quando}${meta?.updatedBy?' por '+esc(meta.updatedBy):''}</span>`
       + (isAdm ? `<button onclick="carregarPcalAgendasGlobais()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">🔄 Atualizar agora</button>` : '')
-      + (isAdm ? `<button onclick="_forcarLimpezaCacheGcal()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;" title="Remove duplicatas do cache sem rebuscar na API">🧹 Limpar duplicatas</button>` : '');
+      + (isAdm ? `<button onclick="_forcarLimpezaCacheGcal()" style="padding:2px 9px;font-size:9.5px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;" title="Remove duplicatas do cache sem rebuscar na API">🧹 Limpar duplicatas</button>` : '')
+      + (isAdm ? `<button onclick="_migrarSquadMidiaParaPrf()" style="padding:2px 9px;font-size:9.5px;background:none;color:#ff9f0a;border:1px solid rgba(255,159,10,.35);border-radius:6px;cursor:pointer;" title="Migração única: move os dados do squad 'midia' pro novo ID 'prf'">🔀 Migrar midia→prf</button>` : '');
   }
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
@@ -4616,7 +4661,7 @@ function setErrFilter(type, val){
   if(type==='status') errFilterStatus=val;
   // Atualiza botões
   if(type==='squad'){
-    ['all','dados','midia'].forEach(v=>document.getElementById('ef-squad-'+v)?.classList.toggle('active',v===val));
+    ['all','dados','prf'].forEach(v=>document.getElementById('ef-squad-'+v)?.classList.toggle('active',v===val));
   }
   if(type==='cat'){
     ['all','firebase','agente','ui','importacao'].forEach(v=>document.getElementById('ef-cat-'+v)?.classList.toggle('active',v===val));
@@ -4641,7 +4686,7 @@ function renderErrors(){
   const open=allErrors.filter(e=>e.entry.status==='novo').length;
   const resolved=allErrors.filter(e=>e.entry.status==='resolvido').length;
   const dados=allErrors.filter(e=>e.squad==='dados').length;
-  const midia=allErrors.filter(e=>e.squad==='midia').length;
+  const prf=allErrors.filter(e=>e.squad==='prf').length;
   const last24h=allErrors.filter(e=>{
     const ts=new Date(e.entry.ts); const now=new Date();
     return (now-ts)<86400000;
@@ -4651,7 +4696,7 @@ function renderErrors(){
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('es-open',last24h);
   set('es-dados',dados);
-  set('es-midia',midia);
+  set('es-prf',prf);
   set('es-resolved',resolved);
   set('err-open-count',open+' abertos');
   document.getElementById('err-open-count').style.background=open?'rgba(255,107,107,.2)':'rgba(29,233,182,.1)';
@@ -5823,7 +5868,7 @@ function addGuestByEmail(){
 
 
 // ── FILTRO DE COLUNAS POR SQUAD ──────────────────────────────────
-// hiddenColsBySq: { dados: Set(['done',...]), midia: Set([...]) }
+// hiddenColsBySq: { dados: Set(['done',...]), prf: Set([...]) }
 let hiddenColsBySq = {};
 function initHiddenCols(){
   SQUADS.forEach(sq=>{
@@ -5846,7 +5891,7 @@ function toggleSqCol(sqId, colId){
 // Squads base — sempre presentes
 let SQUADS = [
   {id:'dados',         label:'Squad Dados',               icon:'📊', color:'#38b6ff', wipLimit:3},
-  {id:'midia',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
+  {id:'prf',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
   {id:'midiacriativa', label:'Squad Mídia Criativa',       icon:'🎨', color:'#a855f7', wipLimit:3},
 ];
 // Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
@@ -5887,8 +5932,8 @@ const COL_COLORS = {backlog:'#888',todo:'#38b6ff',progress:'#1de9b6',blocker:'#f
 // Estado carregado
 let squadData = {};
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
-function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); } // {dados:{cards,columns,agilCfg}, midia:{...}}
-let snapshots = {};  // {dados:{date:snap,...}, midia:{...}}
+function isAdmUser(user){ return user && ADM_EMAILS.includes(user.email); } // {dados:{cards,columns,agilCfg}, prf:{...}}
+let snapshots = {};  // {dados:{date:snap,...}, prf:{...}}
 let lembretesGestao = [];  // GESTÃO global (kanban/painel/lembretes_gestao)
 
 function doSignIn(){
@@ -6150,7 +6195,7 @@ function renderGlobalUsers(){
       const chip = document.createElement('label');
       chip.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'+
         (inSquad
-          ? 'background:rgba('+(sq.id==='dados'?'56,182,255':sq.id==='midia'?'29,233,182':'168,85,247')+',.15);border:1px solid rgba('+(sq.id==='dados'?'56,182,255':sq.id==='midia'?'29,233,182':'168,85,247')+',.35);color:var(--txt);'
+          ? 'background:rgba('+(sq.id==='dados'?'56,182,255':sq.id==='prf'?'29,233,182':'168,85,247')+',.15);border:1px solid rgba('+(sq.id==='dados'?'56,182,255':sq.id==='prf'?'29,233,182':'168,85,247')+',.35);color:var(--txt);'
           : 'background:rgba(255,255,255,.03);border:1px solid var(--glass-b);color:var(--txt3);');
 
       const cb = document.createElement('input');
@@ -6991,9 +7036,9 @@ async function saveNewBoard(){
   }
 }
 
-const PROTECTED_SQUADS = ['dados','midia','midiacriativa'];
+const PROTECTED_SQUADS = ['dados','prf','midiacriativa'];
 async function bsDeleteBoard(id, label){
-  if((typeof PROTECTED_SQUADS!=='undefined'?PROTECTED_SQUADS:['dados','midia','midiacriativa']).includes(id)){
+  if((typeof PROTECTED_SQUADS!=='undefined'?PROTECTED_SQUADS:['dados','prf','midiacriativa']).includes(id)){
     uiAlert('Este board é nativo e não pode ser excluído.');
     return;
   }
