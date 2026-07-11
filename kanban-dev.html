@@ -980,7 +980,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .attach-favicon-fallback{width:20px;height:20px;border-radius:4px;flex-shrink:0;
   background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.2);
   display:flex;align-items:center;justify-content:center;font-size:11px;}
-.attach-info{flex:1;min-width:0;}
+.attach-info{flex:1;min-width:0;text-decoration:none;color:inherit;cursor:pointer;display:block;}
+.attach-info:hover .attach-title{text-decoration:underline;color:var(--accent);}
 .attach-title{font-size:12px;color:var(--txt);font-weight:500;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .attach-url{font-size:10px;color:var(--txt3);
@@ -999,6 +1000,41 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .attach-save-btn{background:var(--accent);border:none;border-radius:7px;
   color:#fff;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;}
 .attach-empty{font-size:11px;color:var(--txt3);padding:4px 0;}
+/* ── MURAL ESTILO CORTIÇA (post-its pendurados por pins) ─────────────── */
+#mural-pane-avisos{
+  background:
+    radial-gradient(circle at 18% 28%, rgba(0,0,0,.08) 0, transparent 2.5%),
+    radial-gradient(circle at 62% 72%, rgba(0,0,0,.08) 0, transparent 2.5%),
+    radial-gradient(circle at 85% 15%, rgba(0,0,0,.06) 0, transparent 2%),
+    radial-gradient(circle at 40% 85%, rgba(0,0,0,.06) 0, transparent 2%),
+    linear-gradient(135deg, #c9a876 0%, #b8935f 45%, #a67f4e 100%);
+  border-radius:10px;
+  padding:16px 14px !important;
+}
+.mural-board{display:flex;flex-wrap:wrap;gap:18px 14px;justify-content:flex-start;padding:6px 4px;}
+.mural-note{
+  position:relative;width:130px;min-height:112px;padding:18px 10px 10px;
+  border-radius:2px;cursor:pointer;
+  box-shadow:2px 5px 10px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.35) inset;
+  transition:transform .15s ease;
+  display:flex;flex-direction:column;
+  font-family:'Syne',sans-serif;
+}
+.mural-note:hover{transform:scale(1.06) rotate(0deg) !important;z-index:5;box-shadow:3px 8px 16px rgba(0,0,0,.35);}
+.mural-note .mn-pin{
+  position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+  width:14px;height:14px;border-radius:50%;
+  box-shadow:0 2px 4px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.6);
+  border:1px solid rgba(0,0,0,.15);
+}
+.mural-note .mn-icon{font-size:16px;margin-bottom:5px;}
+.mural-note .mn-title{font-size:12px;font-weight:700;color:#2b2b2b;line-height:1.32;margin-bottom:8px;word-break:break-word;}
+.mural-note .mn-date{font-size:9.5px;color:rgba(43,43,43,.62);margin-top:auto;font-family:'DM Sans',sans-serif;}
+.mural-note .mn-dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:#ff4757;box-shadow:0 0 0 2px rgba(255,255,255,.65);}
+.mural-note.mn-expired{opacity:.5;}
+@media(max-width:520px){
+  .mural-note{width:calc(50% - 7px);}
+}
 .comments-wrap{margin-top:4px;}
 .comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
@@ -2267,7 +2303,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- FAB -->
 <div class="fab" id="fab" style="display:none;">
   <button class="fab-cfg" onclick="openCfg()" id="fab-cfg-btn">⚙ Configurações</button>
-  <button class="fab-btn" onclick="openAgent()">🤖 Agente Ágil</button>
+  <button class="fab-btn" onclick="openAgent()" style="display:none;">🤖 Agente Ágil</button>
 </div>
 
 <!-- ═══ QUADRO DE LEMBRETES ═══ -->
@@ -3638,7 +3674,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.112-dev</div>
+<div class="version">v8.30.113-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6872,6 +6908,18 @@ function addKudos(){
   if(toUid && toUid!==u.uid){
     createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
   }
+  // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
+  fbGet('kanban/usuarios').then(snap=>{
+    const usuarios = snap.val()||{};
+    Object.entries(usuarios).forEach(([uid,udata])=>{
+      if(uid===u.uid || uid===toUid) return; // não duplica pro remetente nem pro agraciado
+      const role=(udata.squads_roles&&udata.squads_roles[ACTIVE_SQUAD])||udata.role||'membro';
+      if(isAdmUser({email:udata.email, uid}) || role==='po'){
+        createNotif(uid,'kudos_monitor','⭐ Nova Estrela do Mar emitida',
+          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null);
+      }
+    });
+  }).catch(e=>console.warn('Não foi possível notificar ADMs/POs sobre kudos:', e));
   document.getElementById('kudos-text').value='';
   document.getElementById('kudos-para').value='';
   updKudosBtn();
@@ -9154,7 +9202,12 @@ Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais)
 Usuário logado agora: ${window._currentUser?.displayName||'desconhecido'} (iniciais: ${window._currentUserInit||'?'}) — quando alguém disser "eu", "mim", "me atribua" ou mencionar seu próprio nome, use estas iniciais.`;
 }
 
+// Chave única de desativação: bloqueia TODOS os pontos de entrada do Agente Ágil
+// (FAB, menu de contexto do card, automações "Notificar Agente Ágil") sem apagar
+// nenhum código — é só reativar (true) quando quiser voltar a usar.
+const AGENTE_AGIL_ATIVO = false;
 function openAgent(){
+  if(!AGENTE_AGIL_ATIVO){ showToast('🤖 O Agente Ágil está temporariamente desativado.'); return; }
   const role=window._currentUserRole||'membro';
   if(role!=='po'&&role!=='organizador'&&role!=='adm'){
     showToast('🔒 Agente Ágil disponível apenas para PO, Organizadores e Administradores');
@@ -10298,6 +10351,7 @@ const NOTIF_ICONS = {
   mention:    '💬',
   assigned:   '👤',
   kudos:      '⭐',
+  kudos_monitor: '👀',
   unblocked:  '✅',
   due_today:  '📅',
   due_soon:   '⏰',
@@ -11413,15 +11467,15 @@ function renderCalendarList() {
   const processBtn = document.getElementById('cfg-gcal-process-btn');
   if(processBtn) processBtn.style.display = isAdm ? '' : 'none';
 
-  const list = Object.values(window._squadCalendars || {});
-  if (!list.length) {
+  const entries = Object.entries(window._squadCalendars || {});
+  if (!entries.length) {
     container.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:6px 2px;">Nenhuma agenda externa conectada ainda.</div>';
     return;
   }
 
   const errs = window._gcalErrors || {};
   const pendentes = window._gcalQueuePendingCalIds || new Set();
-  container.innerHTML = list.map(cal => {
+  container.innerHTML = entries.map(([key, cal]) => {
     const err = errs[cal.id];
     const pending = pendentes.has(cal.id);
     const icon = pending ? '🕒' : (err ? '⚠️' : '🗓️');
@@ -11429,6 +11483,7 @@ function renderCalendarList() {
     const statusMsg = pending
       ? '<div style="font-size:10px; color:var(--warn); margin-top:2px;">Aguardando aprovação do administrador</div>'
       : (err ? `<div style="font-size:10px; color:var(--danger); margin-top:2px;">${esc(err.msg)}</div>` : '');
+    const corAtual = cal.color || _rgbaToHex(_gcalColorFor(cal.id).bg);
     return `
     <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid ${borderCol}; border-radius:8px;">
       <span style="font-size:14px;">${icon}</span>
@@ -11437,9 +11492,18 @@ function renderCalendarList() {
         <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
         ${statusMsg}
       </div>
+      <input type="color" value="${corAtual}" onchange="setCalendarColor('${esc(key)}', this.value)" title="Escolher a cor desta agenda no calendário" style="width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;flex-shrink:0;">
       <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
     </div>
   `; }).join('');
+}
+function setCalendarColor(key, hex){
+  if(!window._squadCalendars || !window._squadCalendars[key]) return;
+  window._squadCalendars[key].color = hex;
+  fbSet(FB+'/config/calendars', window._squadCalendars);
+  renderCalendarList();
+  if(typeof renderCal==='function') renderCal();
+  showToast('🎨 Cor da agenda atualizada!');
 }
 
 async function addCalendarToList() {
@@ -11554,11 +11618,31 @@ const GCAL_PALETTE = [
   { bg:'rgba(45,212,191,.92)',  txt:'#022c27' },  // ciano
   { bg:'rgba(251,191,36,.92)',  txt:'#3a2600' },  // dourado
 ];
-// Cor determinística por agenda (mesmo ID sempre gera a mesma cor)
+// Cor por agenda: usa a cor escolhida manualmente (Config → Calendário), se
+// houver; senão cai na cor determinística automática (mesmo ID sempre gera a
+// mesma cor da paleta).
 function _gcalColorFor(calId){
+  const custom = Object.values(window._squadCalendars||{}).find(c=>c.id===calId)?.color;
+  if(custom) return { bg: _hexA(custom, .92), txt: _readableTextFor(custom) };
   let h = 0;
   for (let i = 0; i < calId.length; i++) h = (h * 31 + calId.charCodeAt(i)) >>> 0;
   return GCAL_PALETTE[h % GCAL_PALETTE.length];
+}
+// Converte rgba(...) da paleta automática pra hex, pro valor default do <input type=color>
+function _rgbaToHex(rgba){
+  const m = String(rgba).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if(!m) return '#38b6ff';
+  return '#'+[1,2,3].map(i=>parseInt(m[i]).toString(16).padStart(2,'0')).join('');
+}
+// Escolhe texto preto ou branco pra ficar legível em cima da cor escolhida pelo usuário
+function _readableTextFor(hex){
+  try{
+    const h=hex.replace('#','');
+    const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
+    const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    const lum=(0.299*r+0.587*g+0.114*b)/255;
+    return lum>0.6 ? '#1a1a1a' : '#ffffff';
+  }catch(e){ return '#1a1a1a'; }
 }
 async function carregarTodasAgendasSquad() {
   // Só o ADM efetivamente busca da API do Google e salva o cache. Membros comuns
@@ -13855,7 +13939,11 @@ function renderAttachList(links){
   }
   links.forEach(lnk=>{
     const svc = getServiceInfo(lnk.url);
-    const faviconUrl = getFaviconUrl(lnk.url);
+    // Links do Google Docs/Sheets/Slides/Drive usam o favicon genérico do domínio
+    // (docs.google.com), que é igual pra todos os tipos — por isso sempre mostra o
+    // emoji já diferenciado (svc.icon) pra esses casos, em vez do favicon.
+    const isGoogleDoc = /drive\.google\.com|docs\.google\.com/i.test(lnk.url);
+    const faviconUrl = isGoogleDoc ? null : getFaviconUrl(lnk.url);
     const item = document.createElement('div');
     item.className = 'attach-item';
 
@@ -13884,8 +13972,12 @@ function renderAttachList(links){
       displayUrl = u.hostname.replace(/^www\./, '') + u.pathname.substring(0,30) + (u.pathname.length>30?'…':'');
     } catch(e){ displayUrl = lnk.url.substring(0,40); }
 
-    const info = document.createElement('div');
+    const info = document.createElement('a');
     info.className = 'attach-info';
+    info.href = lnk.url;
+    info.target = '_blank';
+    info.rel = 'noopener noreferrer';
+    info.title = 'Abrir ' + (lnk.title||displayUrl);
     const titleEl = document.createElement('div');
     titleEl.className = 'attach-title';
     titleEl.textContent = lnk.title||displayUrl;
@@ -15426,10 +15518,10 @@ async function runDevSeed(){
 // Fase 1: só o popup. Dado em kanban/comunicados/{id}. "Lido" via localStorage.
 // ══════════════════════════════════════════════════════════════════════
 const COMUNICADO_TIPOS = {
-  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6', bg:'rgba(29,233,182,.12)' },
-  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166', bg:'rgba(255,209,102,.12)' },
-  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff', bg:'rgba(56,182,255,.12)' },
-  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b', bg:'rgba(255,107,107,.12)' },
+  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6', bg:'rgba(29,233,182,.12)', paper:'#c9f7e8', pin:'#0bb98a' },
+  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166', bg:'rgba(255,209,102,.12)', paper:'#fff3b0', pin:'#e8a33d' },
+  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff', bg:'rgba(56,182,255,.12)', paper:'#cfe8ff', pin:'#2b8fd6' },
+  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b', bg:'rgba(255,107,107,.12)', paper:'#ffd1d1', pin:'#e03e3e' },
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
@@ -15453,14 +15545,11 @@ function _initComunicados(){
 }
 
 function _talvezMostrarComunicado(){
-  if(_comunicadoNaTela) return;
-  if(!window._currentUser) return;
-  if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
-  const pendente = _comunicadosAtivos.find(c=>{
-    if(c.insistente) return true;
-    return !_lsGet('comunicado_visto_'+c.id);
-  });
-  if(pendente) _mostrarComunicado(pendente);
+  // Popup automático desativado a pedido: o mural agora funciona como notificação —
+  // o botão 📢 mostra um badge quando tem novidade (igual ao sino 🔔) e a pessoa
+  // decide quando abrir, em vez do aviso interromper sozinho ao entrar no board.
+  // Mantido como no-op (não removido) pra poder reativar rápido se precisar de novo.
+  return;
 }
 
 function _algumOverlayCriticoAberto(){
@@ -15557,20 +15646,23 @@ function renderMuralLista(){
     el.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Nenhum comunicado por aqui ainda.</div>';
     return;
   }
-  el.innerHTML = visiveis.map(c=>{
+  el.innerHTML = '<div class="mural-board">' + visiveis.map(c=>{
     const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
     const expirado = c.expiraEm && c.expiraEm < agora;
     const naoLido = !expirado && !_lsGet('comunicado_visto_'+c.id);
     const data = c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
-    return `<div onclick="_abrirComunicadoDoMural('${c.id}')" style="padding:11px 12px;margin-bottom:8px;border-radius:9px;cursor:pointer;background:${naoLido?tipo.bg:'rgba(3,13,26,.4)'};border:1px solid ${naoLido?'rgba(255,255,255,.08)':'var(--glass-b)'};opacity:${expirado?0.55:1};">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-        <span>${tipo.icon}</span>
-        <span style="font-size:12.5px;font-weight:600;color:var(--txt);flex:1;">${esc(c.titulo||'')}</span>
-        ${naoLido?'<span style="width:7px;height:7px;border-radius:50%;background:'+tipo.cor+';flex-shrink:0;"></span>':''}
-      </div>
-      <div style="font-size:11px;color:var(--txt3);">${data}${expirado?' · expirado':''}</div>
+    // Rotação leve e estável por id (não recalcula/"pisca" a cada render) — dá o
+    // efeito de post-it colado à mão, sem ficar torto igual a cada atualização.
+    const seed = (c.id||'').split('').reduce((a,ch)=>a+ch.charCodeAt(0),0);
+    const rot = (seed % 9) - 4;
+    return `<div class="mural-note${expirado?' mn-expired':''}" style="background:${tipo.paper};transform:rotate(${rot}deg);" onclick="_abrirComunicadoDoMural('${c.id}')">
+      <span class="mn-pin" style="background:${tipo.pin};"></span>
+      ${naoLido?'<span class="mn-dot"></span>':''}
+      <div class="mn-icon">${tipo.icon}</div>
+      <div class="mn-title">${esc(c.titulo||'')}</div>
+      <div class="mn-date">${data}${expirado?' · expirado':''}</div>
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 }
 
 function _abrirComunicadoDoMural(id){
