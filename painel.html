@@ -1674,6 +1674,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           </div>
         </div>
         <div class="pev-field">
+          <label class="pev-label">Quem recebe</label>
+          <select class="pev-input" id="cc-publico">
+            <option value="todos">👥 Todos</option>
+            <option value="po">📋 Só PO's, Organizadores e ADM</option>
+          </select>
+        </div>
+        <div class="pev-field">
           <label class="pev-label">Onde aparece</label>
           <select class="pev-input" id="cc-prioridade" onchange="_ccTogglePrioridadeUI()">
             <option value="popup">🔔 Popup — interrompe ao abrir o board (também fica no mural)</option>
@@ -2034,7 +2041,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.76 · painel</div>
+<div class="version">v2.77 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5574,6 +5581,7 @@ function openComunicadoCompose(id){
     document.getElementById('cc-corpo').innerHTML = c.corpo||'';
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
     document.getElementById('cc-squad').value = c.squad||'*';
+    document.getElementById('cc-publico').value = c.publico||'todos';
     document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : 'popup';
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
     document.getElementById('cc-insistente').checked = !!c.insistente;
@@ -5589,6 +5597,7 @@ function openComunicadoCompose(id){
     document.getElementById('cc-corpo').innerHTML = '';
     document.getElementById('cc-tipo').value = 'novidade';
     document.getElementById('cc-squad').value = '*';
+    document.getElementById('cc-publico').value = 'todos';
     document.getElementById('cc-prioridade').value = 'popup';
     document.getElementById('cc-expira').value = '';
     document.getElementById('cc-insistente').checked = false;
@@ -5626,6 +5635,7 @@ function saveComunicado(){
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
     squad: document.getElementById('cc-squad').value,
+    publico: document.getElementById('cc-publico').value,
     prioridade,
     insistente: prioridade==='popup' ? document.getElementById('cc-insistente').checked : false,
     ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
