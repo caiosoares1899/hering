@@ -302,6 +302,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
 .panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
+/* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
+.dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
+.dp-btn:hover{color:var(--accent);border-color:var(--accent);}
+.dp-pop{position:fixed;z-index:9999;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:10px;padding:10px;box-shadow:0 10px 28px rgba(0,0,0,.55);width:224px;font-family:'DM Sans',sans-serif;}
+.dp-pop-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dp-pop-hd button{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:14px;padding:2px 8px;border-radius:5px;}
+.dp-pop-hd button:hover{color:var(--accent);background:rgba(56,182,255,.1);}
+.dp-pop-title{font-size:11.5px;font-weight:700;color:var(--txt);text-transform:capitalize;}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-dow{font-size:9px;color:var(--txt3);text-align:center;padding:2px 0;}
+.dp-day{font-size:11px;text-align:center;padding:5px 0;border-radius:5px;cursor:pointer;color:var(--txt);}
+.dp-day:hover{background:rgba(56,182,255,.15);}
+.dp-day.dp-other{color:var(--txt3);opacity:.35;}
+.dp-day.dp-today{border:1px solid var(--teal);}
+.dp-day.dp-sel{background:var(--accent);color:#04141f;font-weight:700;}
+.dp-foot{display:flex;justify-content:space-between;margin-top:8px;padding-top:7px;border-top:1px solid var(--glass-b);}
+.dp-foot button{background:none;border:none;color:var(--teal);font-size:10.5px;cursor:pointer;padding:3px 4px;}
+.dp-foot button:hover{text-decoration:underline;}
+
 .panel-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(6,26,46,.97);border-radius:var(--r2) var(--r2) 0 0;z-index:1;}
 .panel-title{font-family:"Syne",sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;}
 .x-btn{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:18px;padding:3px;line-height:1;}
@@ -330,6 +349,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cl-drag-handle{color:rgba(150,200,240,.25);font-size:12px;cursor:grab;padding:0 2px;user-select:none;flex-shrink:0;}
 .cl-drag-handle:hover{color:rgba(150,200,240,.6);}
 .cl-it{flex:1;cursor:text;word-break:break-word;min-width:0;border-radius:4px;padding:2px 4px;}
+.cl-it.cl-it-done{text-decoration:line-through;opacity:.5;}
 .cl-it:hover{background:rgba(56,182,255,.1);}
 .cl-it[contenteditable=true]{outline:1px solid rgba(56,182,255,.4);background:rgba(3,13,26,.6);padding:2px 6px;cursor:text;}
 .cl-item input[type=checkbox]{accent-color:var(--teal);}
@@ -2458,7 +2478,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
             <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
           </div>
           <div class="field"><label class="fl">Prazo</label>
-            <input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()">
+            <input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
           </div>
         </div>
         <div class="card-attr-row">
@@ -2766,7 +2786,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="field"><label class="fl">Duração (dias)</label><input class="fi" id="cfg-sprint-days" type="number" min="1" max="60" oninput="calcSprintEnd()"></div>
       </div>
       <div class="frow" style="margin-top:6px;">
-        <div class="field"><label class="fl">Início</label><input class="fi" id="cfg-sprint-start" type="date" oninput="calcSprintEnd()"></div>
+        <div class="field"><label class="fl">Início</label><input class="fi" id="cfg-sprint-start" type="date" oninput="calcSprintEnd()"> <button type="button" class="dp-btn" onclick="_dpOpen('cfg-sprint-start',this)" title="Escolher no calendário">📅</button></div>
         <div class="field"><label class="fl">Fim (calculado)</label><input class="fi" id="cfg-sprint-end" type="date" readonly style="opacity:.6;"></div>
       </div>
       <div style="margin-top:10px;display:flex;align-items:center;gap:5px;" class="cfg-sec-title">WIP & Capacidade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP limita quantos cards podem estar em andamento — reduz multitarefa e aumenta o foco do time.<br><a href="#" onclick="event.preventDefault();openHelp(null,'wip')">Saiba mais →</a></span></span></div>
@@ -3335,8 +3355,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="ev-modal-body">
       <div class="ev-field"><label class="ev-label">Título</label><input class="ev-input" id="ev-title" placeholder="Nome do evento..."></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="ev-field"><label class="ev-label">Data início</label><input class="ev-input" id="ev-start" type="date"></div>
-        <div class="ev-field"><label class="ev-label">Data fim</label><input class="ev-input" id="ev-end" type="date"></div>
+        <div class="ev-field"><label class="ev-label">Data início</label><input class="ev-input" id="ev-start" type="date"> <button type="button" class="dp-btn" onclick="_dpOpen('ev-start',this)" title="Escolher no calendário">📅</button></div>
+        <div class="ev-field"><label class="ev-label">Data fim</label><input class="ev-input" id="ev-end" type="date"> <button type="button" class="dp-btn" onclick="_dpOpen('ev-end',this)" title="Escolher no calendário">📅</button></div>
       </div>
       <div class="ev-field" id="ev-time-wrap" style="display:none;">
         <label class="ev-label">Horário</label>
@@ -3438,7 +3458,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <div style="padding:16px;">
     <div class="rec-field">
       <label class="rec-lbl">Data de entrada no quadro</label>
-      <input type="date" id="agcfg-data" class="rec-input" style="width:100%;box-sizing:border-box;">
+      <input type="date" id="agcfg-data" class="rec-input" style="width:100%;box-sizing:border-box;"> <button type="button" class="dp-btn" onclick="_dpOpen('agcfg-data',this)" title="Escolher no calendário">📅</button>
       <div style="font-size:10px;color:var(--txt3);margin-top:6px;line-height:1.5;">Quando essa data chegar, o card entra automaticamente no quadro com notificação e lembrete. Se a pessoa não abrir, ele relembra por até 3 dias.</div>
     </div>
     <div class="rec-field" style="margin-top:10px;">
@@ -3483,14 +3503,22 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 <!-- DADOS DO BOARD (mini painel pros PO's) -->
 <div class="ov" id="boarddata-ov">
-<div class="panel" style="max-width:520px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+<div class="panel" style="width:min(860px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
     <div class="panel-title">📊 Dados do Board</div>
     <button class="x-btn" onclick="closeOv('boarddata-ov')">✕</button>
   </div>
-  <div style="padding:6px 16px 16px;overflow-y:auto;flex:1;">
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
-    <div class="met-g" id="boarddata-met-grid"></div>
+  <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
+    <div class="met-g" id="boarddata-met-grid" style="grid-template-columns:repeat(auto-fit,minmax(148px,1fr));"></div>
+    <div style="margin-top:22px;">
+      <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cards ativos por coluna</div>
+      <div id="boarddata-bar-chart"></div>
+    </div>
+    <div style="margin-top:22px;">
+      <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📈 Tendência — últimos 14 dias</div>
+      <div id="boarddata-trend"><div style="font-size:10.5px;color:var(--txt3);">Carregando…</div></div>
+    </div>
   </div>
 </div>
 </div>
@@ -3592,11 +3620,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="camp-field">
         <label class="camp-label">Data início</label>
-        <input class="camp-inp" type="date" id="camp-edit-inicio">
+        <input class="camp-inp" type="date" id="camp-edit-inicio"> <button type="button" class="dp-btn" onclick="_dpOpen('camp-edit-inicio',this)" title="Escolher no calendário">📅</button>
       </div>
       <div class="camp-field">
         <label class="camp-label">Data fim</label>
-        <input class="camp-inp" type="date" id="camp-edit-fim">
+        <input class="camp-inp" type="date" id="camp-edit-fim"> <button type="button" class="dp-btn" onclick="_dpOpen('camp-edit-fim',this)" title="Escolher no calendário">📅</button>
       </div>
     </div>
     <div class="camp-field">
@@ -3696,7 +3724,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.117-dev</div>
+<div class="version">v8.30.118-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5756,6 +5784,7 @@ function updateMetrics(){
 
 function renderBoardDataGrid(){
   const g=document.getElementById('boarddata-met-grid'); if(!g) return;
+  if(document.getElementById('boarddata-ov')?.classList.contains('open')) _boardDataBarChart();
   const activeCards=cards.filter(c=>!c.archived);
   const wip=activeCards.filter(c=>c.col==='progress').length;
   const bl=activeCards.filter(c=>c.col==='blocker').length;
@@ -6427,12 +6456,12 @@ function renderCL(cl){
     });
     // Checkbox
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
-    cb.addEventListener('change',()=>scheduleAutoSave());
     // Handle de drag
     const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
     handle.addEventListener('mousedown',()=>d.draggable=true);
     // Texto editável inline
-    const span=document.createElement('span'); span.className='cl-it'; span.textContent=item.t;
+    const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
+    cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); scheduleAutoSave(); });
     span.title='Clique para editar';
     let _prev='';
     span.addEventListener('click',()=>{
@@ -7047,6 +7076,95 @@ function _cardTempoPorColuna(c){
   return out;
 }
 function _fmtHoras(h){
+// ── DATE PICKER: calendário custom com navegação por mês ────────────────
+// Complementa os <input type="date"> nativos (que continuam funcionando
+// normalmente pra quem prefere digitar) com um botão 📅 que abre um
+// mini-calendário no tema do app — clica no dia e já preenche o campo.
+let _dpState = null;
+function _dpOpen(inputId, btnEl){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  if(_dpState && _dpState.inputId===inputId){ _dpClose(); return; }
+  _dpClose();
+  const base = inp.value ? new Date(inp.value+'T12:00:00') : new Date();
+  _dpState = { inputId, y: base.getFullYear(), m: base.getMonth() };
+  const pop = document.createElement('div');
+  pop.className = 'dp-pop';
+  pop.id = '_dp-pop';
+  document.body.appendChild(pop);
+  const rect = (btnEl||inp).getBoundingClientRect();
+  let top = rect.bottom + 6, left = rect.left;
+  if(left + 230 > window.innerWidth) left = Math.max(6, window.innerWidth - 234);
+  if(top + 280 > window.innerHeight) top = Math.max(6, rect.top - 286);
+  pop.style.top = top+'px'; pop.style.left = left+'px';
+  _dpRender();
+  setTimeout(()=>document.addEventListener('mousedown', _dpOutside), 0);
+}
+function _dpOutside(e){
+  const pop = document.getElementById('_dp-pop');
+  if(pop && !pop.contains(e.target)) _dpClose();
+}
+function _dpClose(){
+  const pop = document.getElementById('_dp-pop');
+  if(pop) pop.remove();
+  document.removeEventListener('mousedown', _dpOutside);
+  _dpState = null;
+}
+function _dpNav(delta){
+  _dpState.m += delta;
+  if(_dpState.m<0){ _dpState.m=11; _dpState.y--; }
+  if(_dpState.m>11){ _dpState.m=0; _dpState.y++; }
+  _dpRender();
+}
+function _dpToday(){
+  const t = new Date();
+  _dpState.y = t.getFullYear(); _dpState.m = t.getMonth();
+  _dpRender();
+}
+function _dpPick(dateStr){
+  const inp = document.getElementById(_dpState.inputId);
+  if(inp){
+    inp.value = dateStr;
+    inp.dispatchEvent(new Event('input', {bubbles:true}));
+    inp.dispatchEvent(new Event('change', {bubbles:true}));
+  }
+  _dpClose();
+}
+function _dpRender(){
+  const pop = document.getElementById('_dp-pop'); if(!pop||!_dpState) return;
+  const {y,m,inputId} = _dpState;
+  const inp = document.getElementById(inputId);
+  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const DOW=['D','S','T','Q','Q','S','S'];
+  const first = new Date(y,m,1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const daysInPrev = new Date(y,m,0).getDate();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const selStr = inp?.value || '';
+  let cells = '';
+  for(let i=0;i<startDow;i++){ const d=daysInPrev-startDow+1+i; cells+=`<div class="dp-day dp-other">${d}</div>`; }
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    let cls='dp-day'; if(ds===todayStr) cls+=' dp-today'; if(ds===selStr) cls+=' dp-sel';
+    cells += `<div class="${cls}" onclick="_dpPick('${ds}')">${d}</div>`;
+  }
+  const totalCells = startDow+daysInMonth;
+  const trailing = (7-(totalCells%7))%7;
+  for(let d=1; d<=trailing; d++){ cells+=`<div class="dp-day dp-other">${d}</div>`; }
+  pop.innerHTML = `
+    <div class="dp-pop-hd">
+      <button onclick="_dpNav(-1)" type="button">◀</button>
+      <span class="dp-pop-title">${MESES[m]} ${y}</span>
+      <button onclick="_dpNav(1)" type="button">▶</button>
+    </div>
+    <div class="dp-grid">${DOW.map(d=>`<div class="dp-dow">${d}</div>`).join('')}${cells}</div>
+    <div class="dp-foot">
+      <button onclick="_dpPick('')" type="button">✕ Limpar</button>
+      <button onclick="_dpToday()" type="button">Hoje</button>
+    </div>`;
+}
+
   if(h==null) return '—';
   if(h<1) return '<1h';
   if(h<24) return Math.round(h)+'h';
@@ -7059,7 +7177,64 @@ function openTempoReport(){
 }
 function openBoardData(){
   renderBoardDataGrid();
+  _boardDataBarChart();
+  _boardDataTrendChart();
   document.getElementById('boarddata-ov').classList.add('open');
+}
+
+function _boardDataBarChart(){
+  const el = document.getElementById('boarddata-bar-chart'); if(!el) return;
+  const activeCards = cards.filter(c=>!c.archived);
+  const data = columns.map(col=>({
+    label: col.name||col.id, color: col.color||'#38b6ff',
+    count: activeCards.filter(c=>c.col===col.id).length
+  }));
+  const max = Math.max(1, ...data.map(d=>d.count));
+  const W = Math.max(320, data.length*72), H = 150, barW = Math.min(56, (W-20)/Math.max(1,data.length) - 12);
+  let x = 14, bars = '';
+  data.forEach(d=>{
+    const h = Math.round((d.count/max) * (H-46));
+    const y = H-30-h;
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h,d.count>0?2:0)}" rx="4" fill="${d.color}" opacity=".85"/>
+      <text x="${x+barW/2}" y="${y-6}" text-anchor="middle" font-size="11" fill="var(--txt)" font-weight="700">${d.count}</text>
+      <text x="${x+barW/2}" y="${H-14}" text-anchor="middle" font-size="9" fill="var(--txt3)">${esc((d.label||'').substring(0,9))}</text>`;
+    x += barW+16;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">${bars}</svg>`;
+}
+
+async function _boardDataTrendChart(){
+  const el = document.getElementById('boarddata-trend'); if(!el) return;
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/snapshots'));
+    const val = snap.val()||{};
+    const dias = Object.keys(val).sort().slice(-14);
+    if(dias.length<2){
+      el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Ainda sem histórico suficiente pra tendência — o board gera 1 snapshot por dia sozinho, volte em alguns dias.</div>';
+      return;
+    }
+    const wipVals = dias.map(d=>val[d]?.wip||0);
+    const doneVals = dias.map(d=>val[d]?.done||0);
+    const maxV = Math.max(1,...wipVals,...doneVals);
+    const W=Math.max(320,dias.length*40), H=150, padL=8, padR=8, padT=14, padB=22;
+    const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
+    const toY = v => padT + (H-padT-padB) - (v/maxV)*(H-padT-padB);
+    const ptsWip = wipVals.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+    const ptsDone = doneVals.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
+    const everyN = Math.max(1, Math.ceil(dias.length/6));
+    const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">
+      <polyline points="${ptsDone}" fill="none" stroke="var(--teal)" stroke-width="2"/>
+      <polyline points="${ptsWip}" fill="none" stroke="var(--warn)" stroke-width="2"/>
+      ${labels}
+    </svg>
+    <div style="display:flex;gap:16px;font-size:10px;color:var(--txt2);margin-top:6px;">
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--warn);border-radius:2px;margin-right:4px;"></span>WIP no dia</span>
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--teal);border-radius:2px;margin-right:4px;"></span>Concluídos (acumulado)</span>
+    </div>`;
+  }catch(e){
+    el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Não foi possível carregar o histórico agora.</div>';
+  }
 }
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
