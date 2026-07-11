@@ -3737,7 +3737,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.120</div>
+<div class="version">v8.30.121</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4080,6 +4080,8 @@ let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
 let selectMode=false;
 let selectedCards=new Set();
 function canBulkDelete(){ const r=window._currentUserRole; return r==='adm'||r==='po'||r==='organizador'; }
+// Mesmo conjunto de papéis, usado p/ legibilidade em contextos não relacionados a exclusão (ex.: comunicados só p/ PO)
+function _isPOOuMais(){ return canBulkDelete(); }
 function toggleSelectMode(){
   if(!selectMode && !canBulkDelete()){ showToast('🔒 Seleção múltipla disponível para ADM, PO e Organizadores.'); return; }
   selectMode=!selectMode;
@@ -8345,6 +8347,7 @@ function _cardAgeDays(c){
   return Math.floor((Date.now()-t)/86400000);
 }
 function openCleanupOld(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Arquivamento em massa disponível para ADM, PO e Organizadores.'); return; }
   const sel=document.getElementById('cleanup-col');
   if(sel){
     const prev=sel.value;
@@ -15045,6 +15048,7 @@ function _initComunicados(){
         if(c.prioridade!=='popup') return false;
         if(c.squad && c.squad!=='*' && c.squad!==ACTIVE_SQUAD) return false;
         if(c.expiraEm && c.expiraEm < agora) return false;
+        if(c.publico==='po' && !_isPOOuMais()) return false;
         return true;
       })
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
@@ -15116,6 +15120,7 @@ function _initMural(){
     _muralTodos = Object.entries(val)
       .map(([id,c])=>({...c, id}))
       .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
+      .filter(c=>c.publico!=='po' || _isPOOuMais())
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _updateMuralBadge();
     if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
