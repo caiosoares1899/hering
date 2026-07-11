@@ -2017,7 +2017,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.71 · painel-dev</div>
+<div class="version">v2.72 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4037,14 +4037,18 @@ async function _forcarLimpezaCacheGcal(){
 // (ver redirect legado no kanban.html/kanban-dev.html).
 //
 // IMPORTANTE: as regras de segurança do Firebase liberam leitura/escrita
-// nos SUB-caminhos de kanban/squads/{id} (dados, presence, agent_usage,
-// error_logs, error_stats, snapshots, access_log) — não no node pai
-// kanban/squads/{id} inteiro. Ler o node pai direto (kanban/squads/midia)
-// dá "Permission denied" mesmo pro ADM. Por isso a migração roda
-// sub-caminho por sub-caminho, igual o padrão já usado em limpaPath()
-// (_forcarLimpezaCacheGcal). Cada um é isolado num try/catch pra um
-// sub-caminho sem dado (ou sem permissão) não travar os outros.
-const _MIGRACAO_SUBPATHS = ['dados','presence','agent_usage','error_logs','error_stats','snapshots','access_log'];
+// nos SUB-caminhos de kanban/squads/{id} (dados, agent_usage, error_logs,
+// error_stats, snapshots...) — não no node pai kanban/squads/{id} inteiro.
+// Ler o node pai direto (kanban/squads/midia) dá "Permission denied" mesmo
+// pro ADM. Por isso a migração roda sub-caminho por sub-caminho, igual o
+// padrão já usado em limpaPath() (_forcarLimpezaCacheGcal). Cada um é
+// isolado num try/catch pra um sub-caminho sem dado (ou sem permissão)
+// não travar os outros.
+// 'presence' e 'access_log' ficam de fora de propósito: são dados efêmeros
+// por usuário (quem tá online agora, log de acesso do dia) com regra de
+// escrita restrita ao próprio uid — não fazem falta no squad novo, se
+// recriam sozinhos conforme o time usa o board em ?squad=prf.
+const _MIGRACAO_SUBPATHS = ['dados','agent_usage','error_logs','error_stats','snapshots'];
 async function _migrarSquadMidiaParaPrf(){
   if(!_isAdmPainel()) return;
   if(!await uiConfirm('Migrar os dados do squad "midia" (Marketing de Performance) pro novo ID "prf"? Isso copia cards, colunas, campanhas, kudos, error logs etc. (sub-caminho por sub-caminho) e depois apaga o antigo. Rode só uma vez.',{okText:'Migrar'})) return;
