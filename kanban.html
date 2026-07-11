@@ -980,7 +980,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .attach-favicon-fallback{width:20px;height:20px;border-radius:4px;flex-shrink:0;
   background:rgba(56,182,255,.12);border:1px solid rgba(56,182,255,.2);
   display:flex;align-items:center;justify-content:center;font-size:11px;}
-.attach-info{flex:1;min-width:0;}
+.attach-info{flex:1;min-width:0;text-decoration:none;color:inherit;cursor:pointer;display:block;}
+.attach-info:hover .attach-title{text-decoration:underline;color:var(--accent);}
 .attach-title{font-size:12px;color:var(--txt);font-weight:500;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .attach-url{font-size:10px;color:var(--txt3);
@@ -999,6 +1000,41 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .attach-save-btn{background:var(--accent);border:none;border-radius:7px;
   color:#fff;font-size:11px;font-weight:700;padding:6px 12px;cursor:pointer;}
 .attach-empty{font-size:11px;color:var(--txt3);padding:4px 0;}
+/* ── MURAL ESTILO CORTIÇA (post-its pendurados por pins) ─────────────── */
+#mural-pane-avisos{
+  background:
+    radial-gradient(circle at 18% 28%, rgba(0,0,0,.08) 0, transparent 2.5%),
+    radial-gradient(circle at 62% 72%, rgba(0,0,0,.08) 0, transparent 2.5%),
+    radial-gradient(circle at 85% 15%, rgba(0,0,0,.06) 0, transparent 2%),
+    radial-gradient(circle at 40% 85%, rgba(0,0,0,.06) 0, transparent 2%),
+    linear-gradient(135deg, #c9a876 0%, #b8935f 45%, #a67f4e 100%);
+  border-radius:10px;
+  padding:16px 14px !important;
+}
+.mural-board{display:flex;flex-wrap:wrap;gap:18px 14px;justify-content:flex-start;padding:6px 4px;}
+.mural-note{
+  position:relative;width:130px;min-height:112px;padding:18px 10px 10px;
+  border-radius:2px;cursor:pointer;
+  box-shadow:2px 5px 10px rgba(0,0,0,.28), 0 1px 0 rgba(255,255,255,.35) inset;
+  transition:transform .15s ease;
+  display:flex;flex-direction:column;
+  font-family:'Syne',sans-serif;
+}
+.mural-note:hover{transform:scale(1.06) rotate(0deg) !important;z-index:5;box-shadow:3px 8px 16px rgba(0,0,0,.35);}
+.mural-note .mn-pin{
+  position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+  width:14px;height:14px;border-radius:50%;
+  box-shadow:0 2px 4px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.6);
+  border:1px solid rgba(0,0,0,.15);
+}
+.mural-note .mn-icon{font-size:16px;margin-bottom:5px;}
+.mural-note .mn-title{font-size:12px;font-weight:700;color:#2b2b2b;line-height:1.32;margin-bottom:8px;word-break:break-word;}
+.mural-note .mn-date{font-size:9.5px;color:rgba(43,43,43,.62);margin-top:auto;font-family:'DM Sans',sans-serif;}
+.mural-note .mn-dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:#ff4757;box-shadow:0 0 0 2px rgba(255,255,255,.65);}
+.mural-note.mn-expired{opacity:.5;}
+@media(max-width:520px){
+  .mural-note{width:calc(50% - 7px);}
+}
 .comments-wrap{margin-top:4px;}
 .comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
@@ -1988,7 +2024,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .camp-squad-chk { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
 /* Cores por squad */
 .camp-sq-dados         { --sqc:#38b6ff; --sqb:rgba(56,182,255,.35);  --sqbg:rgba(56,182,255,.1);  }
-.camp-sq-midia         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
+.camp-sq-prf         { --sqc:#1de9b6; --sqb:rgba(29,233,182,.35);  --sqbg:rgba(29,233,182,.1);  }
 .camp-sq-midiacriativa { --sqc:#f4a8c8; --sqb:rgba(244,168,200,.35); --sqbg:rgba(244,168,200,.1); }
 .camp-sq-dev           { --sqc:#a78bfa; --sqb:rgba(167,139,250,.35); --sqbg:rgba(167,139,250,.1); }
 /* Badge multi-squad */
@@ -2203,7 +2239,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <span style="display:inline-flex;align-items:center;gap:3px;"><button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button><span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span></span>
+  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
+  <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <div class="tb-sep"></div>
@@ -2231,7 +2268,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- FAB -->
 <div class="fab" id="fab" style="display:none;">
   <button class="fab-cfg" onclick="openCfg()" id="fab-cfg-btn">⚙ Configurações</button>
-  <button class="fab-btn" onclick="openAgent()">🤖 Agente Ágil</button>
+  <button class="fab-btn" onclick="openAgent()" style="display:none;">🤖 Agente Ágil</button>
 </div>
 
 <!-- ═══ QUADRO DE LEMBRETES ═══ -->
@@ -2948,6 +2985,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
         <button class="btn btn-p btn-sm" id="btn-confirm-import" onclick="confirmTrelloImport()" disabled style="opacity:.4;cursor:not-allowed;">📥 Importar</button>
       </div>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--glass-b);">
+        <div class="cfg-sec-title" style="font-size:12px;">🔍 Diagnóstico</div>
+        <p style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:8px;">Cards importados do Trello antes desta correção podem ter ficado com "tags fantasma" (um ID de tag que não existe mais na configuração — aparece como texto cru no Relatório de Tempo). Clique abaixo para detectar e reparar automaticamente.</p>
+        <button class="btn btn-sm" onclick="_repararTagsFantasmas()" style="color:var(--warn);border-color:rgba(255,209,102,.35);">🔧 Detectar e reparar tags fantasma</button>
+      </div>
     </div>
 
     <!-- ABA WORKER -->
@@ -3369,7 +3412,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <div class="ov" id="tempo-ov">
 <div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
-    <div class="panel-title">⏱ Relatório de Tempo</div>
+    <div class="panel-title" style="display:flex;align-items:center;gap:6px;">⏱ Relatório de Tempo <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Mede quanto tempo os cards levam por tag — lead time (criação → concluído) e cycle time (início real → concluído).<br><a href="#" onclick="event.preventDefault();openHelp(null,'relatório de tempo')">Saiba mais →</a></span></span></div>
     <button class="x-btn" onclick="closeOv('tempo-ov')">✕</button>
   </div>
   <div class="tempo-filter-bar">
@@ -3395,6 +3438,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- RELATÓRIO DE TEMPO - fim -->
+
+<!-- DADOS DO BOARD (mini painel pros PO's) -->
+<div class="ov" id="boarddata-ov">
+<div class="panel" style="max-width:520px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">📊 Dados do Board</div>
+    <button class="x-btn" onclick="closeOv('boarddata-ov')">✕</button>
+  </div>
+  <div style="padding:6px 16px 16px;overflow-y:auto;flex:1;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
+    <div class="met-g" id="boarddata-met-grid"></div>
+  </div>
+</div>
+</div>
+<!-- DADOS DO BOARD - fim -->
 <!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
 <div class="ov" id="camp-ov">
 <div class="camp-panel camp-tema-neutro" id="camp-panel">
@@ -3596,7 +3654,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.112</div>
+<div class="version">v8.30.115</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3753,6 +3811,12 @@ if((_urlParams.get('squad')||'') === 'criacao'){
   _u.searchParams.set('squad','midiacriativa');
   window.location.replace(_u.toString());
 }
+// Redireciona squad legado 'midia' (Marketing de Performance) para 'prf'
+if((_urlParams.get('squad')||'') === 'midia'){
+  var _u2 = new URL(window.location.href);
+  _u2.searchParams.set('squad','prf');
+  window.location.replace(_u2.toString());
+}
 const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,'')==='criacao'
   ? 'midiacriativa'
   : (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,''));
@@ -3760,10 +3824,10 @@ const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
 // Squads criados via painel são carregados do Firebase em loadSquadsFromFirebase().
-// Apenas dados e midia existem por padrão.
+// Apenas dados e prf existem por padrão.
 const SQUAD_META_DEFAULT = {
   dados:         { label: 'Squad Dados 📊',          subtitle: 'Time de Dados',            agentRole: 'dados' },
-  midia:         { label: 'Squad Marketing de Performance', subtitle: 'Performance Marketing',    agentRole: 'mídia', emoji: '📱' },
+  prf:         { label: 'Squad Marketing de Performance', subtitle: 'Performance Marketing',    agentRole: 'mídia', emoji: '📱' },
   midiacriativa: { label: 'Squad Mídia Criativa',     subtitle: 'Criação & Conteúdo',       agentRole: 'criativo', emoji: '🎨' },
   // 'dev' e 'omnichannel' são squads FICTÍCIOS de teste — vivem só em kanban-dev.html,
   // nunca aqui no prod. Se aparecerem via squads_meta (Firebase compartilhado), são
@@ -5056,6 +5120,11 @@ function autoRegistrar(user){
         const criaMigUpd={'squads/midiacriativa':true,'squads/criacao':null};
         fbUpdate('kanban/usuarios/'+user.uid, criaMigUpd);
       }
+      // Migra squad 'midia' → 'prf' (Marketing de Performance) nos dados do usuário
+      if(existe.squads&&existe.squads['midia']&&!existe.squads['prf']){
+        const midiaMigUpd={'squads/prf':true,'squads/midia':null};
+        fbUpdate('kanban/usuarios/'+user.uid, midiaMigUpd);
+      }
       // Atualiza visibilidade do FAB do agente
       const fabBtn=document.querySelector('.fab-btn');
       const mnavAgent=document.getElementById('mnav-agent');
@@ -5674,7 +5743,29 @@ function updateMetrics(){
     <div class="met"><div class="met-lbl">Throughput</div><div class="met-val">${done}</div><div class="met-sub">concluídos</div></div>
     <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" style="color:${bl?'var(--danger)':''}"">${bl}</div><div class="met-sub">${bl?'atenção':' ok'}</div></div>
     <div class="met"><div class="met-lbl">Capacidade</div><div class="met-val">${agilCfg.capacity||'—'}%</div><div class="met-sub">configurado</div></div>`;
+  renderBoardDataGrid();
 }
+
+function renderBoardDataGrid(){
+  const g=document.getElementById('boarddata-met-grid'); if(!g) return;
+  const activeCards=cards.filter(c=>!c.archived);
+  const wip=activeCards.filter(c=>c.col==='progress').length;
+  const bl=activeCards.filter(c=>c.col==='blocker').length;
+  const done=activeCards.filter(c=>c.col==='done').length;
+  const wipLimit=parseInt(agilCfg.wip||3);
+  const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
+  const naoConcluidos=activeCards.filter(c=>c.col!=='done');
+  const totalAtivos=naoConcluidos.length;
+  const semDono=naoConcluidos.filter(c=>!c.owner).length;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const vencidos=naoConcluidos.filter(c=>{
+    if(!c.due) return false;
+    const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
+    return d<hoje;
+  }).length;
+  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${'não concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div>`;
+}
+
 
 
 
@@ -6872,6 +6963,18 @@ function addKudos(){
   if(toUid && toUid!==u.uid){
     createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
   }
+  // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
+  fbGet('kanban/usuarios').then(snap=>{
+    const usuarios = snap.val()||{};
+    Object.entries(usuarios).forEach(([uid,udata])=>{
+      if(uid===u.uid || uid===toUid) return; // não duplica pro remetente nem pro agraciado
+      const role=(udata.squads_roles&&udata.squads_roles[ACTIVE_SQUAD])||udata.role||'membro';
+      if(isAdmUser({email:udata.email, uid}) || role==='po'){
+        createNotif(uid,'kudos_monitor','⭐ Nova Estrela do Mar emitida',
+          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null);
+      }
+    });
+  }).catch(e=>console.warn('Não foi possível notificar ADMs/POs sobre kudos:', e));
   document.getElementById('kudos-text').value='';
   document.getElementById('kudos-para').value='';
   updKudosBtn();
@@ -6953,6 +7056,10 @@ function _fmtHoras(h){
 function openTempoReport(){
   document.getElementById('tempo-ov').classList.add('open');
   renderTempoReport();
+}
+function openBoardData(){
+  renderBoardDataGrid();
+  document.getElementById('boarddata-ov').classList.add('open');
 }
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
@@ -7490,13 +7597,13 @@ function setCampSqFilter(sq){
 
 const SQUAD_COLORS = {
   dados:         {bg:'rgba(56,182,255,.1)',  border:'rgba(56,182,255,.35)',  text:'#38b6ff'},
-  midia:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
+  prf:         {bg:'rgba(29,233,182,.1)',  border:'rgba(29,233,182,.35)',  text:'#1de9b6'},
   midiacriativa: {bg:'rgba(244,168,200,.1)', border:'rgba(244,168,200,.35)', text:'#f4a8c8'},
   dev:           {bg:'rgba(167,139,250,.1)', border:'rgba(167,139,250,.35)', text:'#a78bfa'},
   gestao:        {bg:'rgba(150,80,220,.1)',  border:'rgba(150,80,220,.35)',  text:'#c084fc'},
 };
 function _sqColor(sqId){ return SQUAD_COLORS[sqId]||{bg:'rgba(56,182,255,.08)',border:'rgba(56,182,255,.2)',text:'var(--txt2)'}; }
-const _SQ_LABELS = { dados:'Dados', midia:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
+const _SQ_LABELS = { dados:'Dados', prf:'Marketing de Performance', midiacriativa:'Mídia Criativa', dev:'Dev', gestao:'Gestão' };
 function _sqLabel(sqId){
   // Tenta SQUADS (config dinâmica), senão usa mapa fixo, senão o próprio id
   const info = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sqId);
@@ -7519,7 +7626,7 @@ function _renderEntrada(e, campId){
     const _SQUADS_ALL = typeof SQUADS!=='undefined' ? SQUADS : [];
     const sqInfo  = _SQUADS_ALL.find(s=>s.id===e._squad);
     const _SQ_FALLBACK = {
-      dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪',gestao:'🏛',
+      dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪',gestao:'🏛',
       cx:'💬',marketplace:'🛒',ecommerce:'🛍',logistica:'🚚',
     };
     const sqEmoji = sqInfo?.icon || _SQ_FALLBACK[e._squad] || '🐟';
@@ -7871,7 +7978,7 @@ function _renderCampCardsGrid(){
   if(fCol!=='all')   list = list.filter(c=>c.col===fCol);
   const body = document.getElementById('camp-cards-grid-body');
   if(!list.length){ body.innerHTML='<div class="camp-grid-empty">Nenhum card com esse filtro.</div>'; return; }
-  const _SQ_FB={dados:'📊',midia:'📱',midiacriativa:'🎨',dev:'🧪'};
+  const _SQ_FB={dados:'📊',prf:'📱',midiacriativa:'🎨',dev:'🧪'};
   const activeSquad = ctx.activeSquad;
   body.innerHTML = list.map(card=>{
     const sq_  = card._squad||activeSquad;
@@ -7879,7 +7986,7 @@ function _renderCampCardsGrid(){
     const col  = cols.find(cl=>cl.id===card.col);
     const colColor = col?.color||'#38b6ff';
     const sqc = _sqColor(sq_);
-    const _SQ_LBL={dados:'Dados',midia:'Mkt Performance',midiacriativa:'Mídia Criativa',dev:'Dev'};
+    const _SQ_LBL={dados:'Dados',prf:'Mkt Performance',midiacriativa:'Mídia Criativa',dev:'Dev'};
     const _sqI = (typeof SQUADS!=='undefined'?SQUADS:[]).find(s=>s.id===sq_);
     const sqLabel = _sqI?.label||_SQ_LBL[sq_]||sq_;
     const sqEmoji = _sqI?.icon||_SQ_FB[sq_]||'🐟';
@@ -8822,6 +8929,46 @@ function saveTags(){
   if(typeof showToast === 'function') showToast('✅ Tags salvas com sucesso!');
   closeOv('cfg-ov');
 }
+// ── REPARO: TAGS FANTASMA (bug do import do Trello) ─────────────────
+// Causa raiz: doTrelloImport() criava tags novas só na memória (array
+// `tags`) e chamava fbSaveAll(), que SÓ salva `cards` — nunca `tags`
+// (tags têm save dedicado em saveTags(), por causa de race condition).
+// Resultado: os cards importados ficavam com c.tags apontando pra um
+// ID que nunca foi de fato salvo no Firebase. No primeiro reload, esse
+// ID some da lista de tags e vira uma "tag fantasma" — aparece como um
+// texto cru (ex.: "tag_revisao_a1b2") no Relatório de Tempo, e some
+// silenciosamente do card no board (getTag() retorna null).
+// Já corrigido na raiz (doTrelloImport agora persiste tags também).
+// Esta função repara o que já ficou órfão: escaneia todos os cards,
+// acha IDs de tag que não existem mais em `tags`, e recria uma tag de
+// verdade pra cada um (com um rótulo legível a partir do próprio ID).
+function _repararTagsFantasmas(){
+  const encontrados = new Map(); // tagId órfão -> quantos cards usam
+  cards.forEach(c=>{
+    getCardTags(c).forEach(tid=>{
+      if(!getTag(tid)) encontrados.set(tid, (encontrados.get(tid)||0)+1);
+    });
+  });
+  if(!encontrados.size){
+    uiAlert('✅ Nenhuma tag fantasma encontrada — todas as tags usadas pelos cards existem na configuração.');
+    return;
+  }
+  const PALETTE_CYCLE=[0,1,2,3,4,5];
+  let idx=0;
+  const criadas=[];
+  encontrados.forEach((n,tid)=>{
+    // Deriva um rótulo legível do próprio ID (ex.: "tag_revisao_a1b2" -> "Revisao")
+    let label=tid.replace(/^tag_/,'').replace(/_[a-z0-9]{4}$/,'').replace(/_/g,' ').trim();
+    label=label? label.charAt(0).toUpperCase()+label.slice(1) : tid;
+    const pi=PALETTE_CYCLE[idx++ % PALETTE_CYCLE.length];
+    tags.push({id:tid, label, pi});
+    criadas.push(`${label} (${n} card${n>1?'s':''})`);
+  });
+  fbSet(FB+'/tags', tags);
+  renderBoard();
+  uiAlert('🔧 '+criadas.length+' tag(s) fantasma reparada(s):\n\n'+criadas.join('\n')+'\n\nAs tags foram recriadas com nomes derivados do ID interno — se quiser, renomeie em Config → Tags pra algo mais amigável.');
+}
+
 
 // ═══ SUBTIMES ═══
 // ═══════════════════════════════════════════════════════
@@ -9166,7 +9313,12 @@ Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais)
 Usuário logado agora: ${window._currentUser?.displayName||'desconhecido'} (iniciais: ${window._currentUserInit||'?'}) — quando alguém disser "eu", "mim", "me atribua" ou mencionar seu próprio nome, use estas iniciais.`;
 }
 
+// Chave única de desativação: bloqueia TODOS os pontos de entrada do Agente Ágil
+// (FAB, menu de contexto do card, automações "Notificar Agente Ágil") sem apagar
+// nenhum código — é só reativar (true) quando quiser voltar a usar.
+const AGENTE_AGIL_ATIVO = false;
 function openAgent(){
+  if(!AGENTE_AGIL_ATIVO){ showToast('🤖 O Agente Ágil está temporariamente desativado.'); return; }
   const role=window._currentUserRole||'membro';
   if(role!=='po'&&role!=='organizador'&&role!=='adm'){
     showToast('🔒 Agente Ágil disponível apenas para PO, Organizadores e Administradores');
@@ -9852,14 +10004,19 @@ async function doTrelloImport(){
     cards=[];
   }
   // Cria tags novas que vieram do Trello
+  let _novasTagsCriadas=false;
   if(_trelloParsed.newTags?.length>0){
     _trelloParsed.newTags.forEach(nt=>{
-      if(!tags.find(t=>t.id===nt.id)) tags.push(nt);
+      if(!tags.find(t=>t.id===nt.id)){ tags.push(nt); _novasTagsCriadas=true; }
     });
   }
   // Remove metadados internos antes de salvar
   const cleanCards=_trelloParsed.cards.map(({_trelloList,_trelloListId,_trelloListName,_mapped,_trelloMemberIds,...card})=>card);
   cards.push(...cleanCards);
+  // BUGFIX: fbSaveAll() só salva `cards` (nunca `tags` — ver comentário em fbSaveAll).
+  // Sem isto, tags novas do import ficavam só na memória e viravam "tags fantasma"
+  // (referenciadas pelos cards, mas inexistentes no Firebase) no primeiro reload.
+  if(_novasTagsCriadas) fbSet(FB+'/tags', tags);
   fbSaveAll(); renderBoard();
   // Limpa e fecha
   document.getElementById('trello-json').value='';
@@ -9896,7 +10053,7 @@ const HELP_CONTENT = {
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
-    { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=midia, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
+    { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Clique em ⏱ Tempo por tag na toolbar para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
@@ -10310,6 +10467,7 @@ const NOTIF_ICONS = {
   mention:    '💬',
   assigned:   '👤',
   kudos:      '⭐',
+  kudos_monitor: '👀',
   unblocked:  '✅',
   due_today:  '📅',
   due_soon:   '⏰',
@@ -11428,15 +11586,15 @@ function renderCalendarList() {
   const processBtn = document.getElementById('cfg-gcal-process-btn');
   if(processBtn) processBtn.style.display = isAdm ? '' : 'none';
 
-  const list = Object.values(window._squadCalendars || {});
-  if (!list.length) {
+  const entries = Object.entries(window._squadCalendars || {});
+  if (!entries.length) {
     container.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:6px 2px;">Nenhuma agenda externa conectada ainda.</div>';
     return;
   }
 
   const errs = window._gcalErrors || {};
   const pendentes = window._gcalQueuePendingCalIds || new Set();
-  container.innerHTML = list.map(cal => {
+  container.innerHTML = entries.map(([key, cal]) => {
     const err = errs[cal.id];
     const pending = pendentes.has(cal.id);
     const icon = pending ? '🕒' : (err ? '⚠️' : '🗓️');
@@ -11444,6 +11602,7 @@ function renderCalendarList() {
     const statusMsg = pending
       ? '<div style="font-size:10px; color:var(--warn); margin-top:2px;">Aguardando aprovação do administrador</div>'
       : (err ? `<div style="font-size:10px; color:var(--danger); margin-top:2px;">${esc(err.msg)}</div>` : '');
+    const corAtual = cal.color || _rgbaToHex(_gcalColorFor(cal.id).bg);
     return `
     <div style="display:flex; align-items:center; gap:10px; padding:7px 10px; background:rgba(3,13,26,0.6); border:1px solid ${borderCol}; border-radius:8px;">
       <span style="font-size:14px;">${icon}</span>
@@ -11452,9 +11611,18 @@ function renderCalendarList() {
         <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
         ${statusMsg}
       </div>
+      <input type="color" value="${corAtual}" onchange="setCalendarColor('${esc(key)}', this.value)" title="Escolher a cor desta agenda no calendário" style="width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;flex-shrink:0;">
       <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
     </div>
   `; }).join('');
+}
+function setCalendarColor(key, hex){
+  if(!window._squadCalendars || !window._squadCalendars[key]) return;
+  window._squadCalendars[key].color = hex;
+  fbSet(FB+'/config/calendars', window._squadCalendars);
+  renderCalendarList();
+  if(typeof renderCal==='function') renderCal();
+  showToast('🎨 Cor da agenda atualizada!');
 }
 
 async function addCalendarToList() {
@@ -11569,11 +11737,31 @@ const GCAL_PALETTE = [
   { bg:'rgba(45,212,191,.92)',  txt:'#022c27' },  // ciano
   { bg:'rgba(251,191,36,.92)',  txt:'#3a2600' },  // dourado
 ];
-// Cor determinística por agenda (mesmo ID sempre gera a mesma cor)
+// Cor por agenda: usa a cor escolhida manualmente (Config → Calendário), se
+// houver; senão cai na cor determinística automática (mesmo ID sempre gera a
+// mesma cor da paleta).
 function _gcalColorFor(calId){
+  const custom = Object.values(window._squadCalendars||{}).find(c=>c.id===calId)?.color;
+  if(custom) return { bg: _hexA(custom, .92), txt: _readableTextFor(custom) };
   let h = 0;
   for (let i = 0; i < calId.length; i++) h = (h * 31 + calId.charCodeAt(i)) >>> 0;
   return GCAL_PALETTE[h % GCAL_PALETTE.length];
+}
+// Converte rgba(...) da paleta automática pra hex, pro valor default do <input type=color>
+function _rgbaToHex(rgba){
+  const m = String(rgba).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if(!m) return '#38b6ff';
+  return '#'+[1,2,3].map(i=>parseInt(m[i]).toString(16).padStart(2,'0')).join('');
+}
+// Escolhe texto preto ou branco pra ficar legível em cima da cor escolhida pelo usuário
+function _readableTextFor(hex){
+  try{
+    const h=hex.replace('#','');
+    const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
+    const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    const lum=(0.299*r+0.587*g+0.114*b)/255;
+    return lum>0.6 ? '#1a1a1a' : '#ffffff';
+  }catch(e){ return '#1a1a1a'; }
 }
 async function carregarTodasAgendasSquad() {
   // Só o ADM efetivamente busca da API do Google e salva o cache. Membros comuns
@@ -13872,7 +14060,11 @@ function renderAttachList(links){
   }
   links.forEach(lnk=>{
     const svc = getServiceInfo(lnk.url);
-    const faviconUrl = getFaviconUrl(lnk.url);
+    // Links do Google Docs/Sheets/Slides/Drive usam o favicon genérico do domínio
+    // (docs.google.com), que é igual pra todos os tipos — por isso sempre mostra o
+    // emoji já diferenciado (svc.icon) pra esses casos, em vez do favicon.
+    const isGoogleDoc = /drive\.google\.com|docs\.google\.com/i.test(lnk.url);
+    const faviconUrl = isGoogleDoc ? null : getFaviconUrl(lnk.url);
     const item = document.createElement('div');
     item.className = 'attach-item';
 
@@ -13901,8 +14093,12 @@ function renderAttachList(links){
       displayUrl = u.hostname.replace(/^www\./, '') + u.pathname.substring(0,30) + (u.pathname.length>30?'…':'');
     } catch(e){ displayUrl = lnk.url.substring(0,40); }
 
-    const info = document.createElement('div');
+    const info = document.createElement('a');
     info.className = 'attach-info';
+    info.href = lnk.url;
+    info.target = '_blank';
+    info.rel = 'noopener noreferrer';
+    info.title = 'Abrir ' + (lnk.title||displayUrl);
     const titleEl = document.createElement('div');
     titleEl.className = 'attach-title';
     titleEl.textContent = lnk.title||displayUrl;
@@ -14434,10 +14630,10 @@ window.addEventListener('auth-change', e=>{
 // Fase 1: só o popup. Dado em kanban/comunicados/{id}. "Lido" via localStorage.
 // ══════════════════════════════════════════════════════════════════════
 const COMUNICADO_TIPOS = {
-  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6', bg:'rgba(29,233,182,.12)' },
-  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166', bg:'rgba(255,209,102,.12)' },
-  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff', bg:'rgba(56,182,255,.12)' },
-  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b', bg:'rgba(255,107,107,.12)' },
+  novidade: { icon:'🎉', label:'Novidade',  cor:'#1de9b6', bg:'rgba(29,233,182,.12)', paper:'#c9f7e8', pin:'#0bb98a' },
+  aviso:    { icon:'⚠️', label:'Aviso',     cor:'#ffd166', bg:'rgba(255,209,102,.12)', paper:'#fff3b0', pin:'#e8a33d' },
+  dica:     { icon:'💡', label:'Dica',      cor:'#38b6ff', bg:'rgba(56,182,255,.12)', paper:'#cfe8ff', pin:'#2b8fd6' },
+  urgente:  { icon:'🚨', label:'Urgente',   cor:'#ff6b6b', bg:'rgba(255,107,107,.12)', paper:'#ffd1d1', pin:'#e03e3e' },
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
@@ -14461,6 +14657,10 @@ function _initComunicados(){
 }
 
 function _talvezMostrarComunicado(){
+  // Popup automático continua existindo pra avisos marcados como "🔔 Popup" na
+  // composição (Config → Comunicados) — importante pra coisas urgentes que
+  // precisam de atenção na hora. Avisos marcados como "📌 Só no mural" nunca
+  // interrompem: ficam só no badge do botão 📢, como uma notificação normal.
   if(_comunicadoNaTela) return;
   if(!window._currentUser) return;
   if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
@@ -14565,20 +14765,23 @@ function renderMuralLista(){
     el.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:20px 0;">Nenhum comunicado por aqui ainda.</div>';
     return;
   }
-  el.innerHTML = visiveis.map(c=>{
+  el.innerHTML = '<div class="mural-board">' + visiveis.map(c=>{
     const tipo = COMUNICADO_TIPOS[c.tipo] || COMUNICADO_TIPOS.novidade;
     const expirado = c.expiraEm && c.expiraEm < agora;
     const naoLido = !expirado && !_lsGet('comunicado_visto_'+c.id);
     const data = c.criadoEm ? new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
-    return `<div onclick="_abrirComunicadoDoMural('${c.id}')" style="padding:11px 12px;margin-bottom:8px;border-radius:9px;cursor:pointer;background:${naoLido?tipo.bg:'rgba(3,13,26,.4)'};border:1px solid ${naoLido?'rgba(255,255,255,.08)':'var(--glass-b)'};opacity:${expirado?0.55:1};">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-        <span>${tipo.icon}</span>
-        <span style="font-size:12.5px;font-weight:600;color:var(--txt);flex:1;">${esc(c.titulo||'')}</span>
-        ${naoLido?'<span style="width:7px;height:7px;border-radius:50%;background:'+tipo.cor+';flex-shrink:0;"></span>':''}
-      </div>
-      <div style="font-size:11px;color:var(--txt3);">${data}${expirado?' · expirado':''}</div>
+    // Rotação leve e estável por id (não recalcula/"pisca" a cada render) — dá o
+    // efeito de post-it colado à mão, sem ficar torto igual a cada atualização.
+    const seed = (c.id||'').split('').reduce((a,ch)=>a+ch.charCodeAt(0),0);
+    const rot = (seed % 9) - 4;
+    return `<div class="mural-note${expirado?' mn-expired':''}" style="background:${tipo.paper};transform:rotate(${rot}deg);" onclick="_abrirComunicadoDoMural('${c.id}')">
+      <span class="mn-pin" style="background:${tipo.pin};"></span>
+      ${naoLido?'<span class="mn-dot"></span>':''}
+      <div class="mn-icon">${tipo.icon}</div>
+      <div class="mn-title">${esc(c.titulo||'')}</div>
+      <div class="mn-date">${data}${expirado?' · expirado':''}</div>
     </div>`;
-  }).join('');
+  }).join('') + '</div>';
 }
 
 function _abrirComunicadoDoMural(id){
