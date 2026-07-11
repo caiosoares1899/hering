@@ -3734,22 +3734,26 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 <!-- CARDS ANTIGOS (limpeza em massa por idade) -->
 <div class="ov" id="cleanup-ov">
 <div class="panel ql-panel">
-  <div class="panel-hd"><div class="panel-title">🧹 Cards antigos</div><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button></div>
+  <div class="panel-hd">
+    <div class="panel-title">🧹 Cards antigos</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+      <button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
+    </div>
+  </div>
   <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
     <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
       Ativos há mais de
       <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
       dias
     </label>
+    <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
     <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
     <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
     <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
   </div>
   <div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
   <div style="padding:8px 14px 12px;display:flex;flex-direction:column;gap:7px;" id="cleanup-body"></div>
-  <div style="padding:0 14px 14px;display:flex;justify-content:flex-end;">
-    <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
-  </div>
 </div>
 </div>
 
@@ -3775,7 +3779,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.119-dev</div>
+<div class="version">v8.30.120-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8345,14 +8349,22 @@ function _cardAgeDays(c){
   return Math.floor((Date.now()-t)/86400000);
 }
 function openCleanupOld(){
+  const sel=document.getElementById('cleanup-col');
+  if(sel){
+    const prev=sel.value;
+    sel.innerHTML='<option value="">📋 Todas as colunas</option>'+columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+    sel.value=prev;
+  }
   renderCleanupList();
   document.getElementById('cleanup-ov').classList.add('open');
 }
 function renderCleanupList(){
   const days=parseInt(document.getElementById('cleanup-days')?.value||'365');
+  const qCol=document.getElementById('cleanup-col')?.value||'';
   const body=document.getElementById('cleanup-body'); if(!body) return;
   const old=cards.filter(c=>{
     if(c.archived) return false;
+    if(qCol && c.col!==qCol) return false;
     const age=_cardAgeDays(c);
     return age!==null && age>=days;
   }).sort((a,b)=>_cardAgeDays(b)-_cardAgeDays(a));
