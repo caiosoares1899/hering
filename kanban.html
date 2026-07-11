@@ -2552,12 +2552,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="attach-hd">
         <span class="attach-lbl">📌 Peça no Milanote</span>
       </div>
-      <div id="m-milanote-view" style="display:none;padding:8px 0;">
-        <a id="m-milanote-link" href="#" target="_blank" rel="noopener"
-          style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(232,70,70,.1);border:1px solid rgba(232,70,70,.3);border-radius:8px;color:#ff8080;text-decoration:none;font-size:12px;font-weight:600;">
-          🎨 Abrir peça no Milanote →
-        </a>
-        <button onclick="removeMilanoteLink()" title="Desvincular" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:8px;text-decoration:underline;">Desvincular</button>
+      <div id="m-milanote-view" style="display:none;padding:8px 0;flex-direction:column;align-items:flex-start;">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+          <a id="m-milanote-link" href="#" target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(232,70,70,.1);border:1px solid rgba(232,70,70,.3);border-radius:8px;color:#ff8080;text-decoration:none;font-size:12px;font-weight:600;">
+            🎨 Abrir peça no Milanote →
+          </a>
+          <button id="m-milanote-preview-btn" onclick="toggleMilanotePreview()" style="display:none;background:none;border:1px solid rgba(232,70,70,.3);color:#ff8080;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;">🖼️ Ver preview aqui</button>
+          <button onclick="removeMilanoteLink()" title="Desvincular" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;text-decoration:underline;">Desvincular</button>
+        </div>
+        <div id="m-milanote-embed" style="display:none;margin-top:10px;width:100%;"></div>
       </div>
       <div id="m-milanote-inp-row" class="attach-inp-row">
         <input class="attach-inp" id="m-milanote-url" type="url" placeholder="Cole o link da peça/board no Milanote..."
@@ -3737,7 +3741,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.121</div>
+<div class="version">v8.30.122</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14536,21 +14540,54 @@ function loadAttachments(card){
 
 // Peça vinculada no Milanote — campo dedicado (card.milanoteLink), separado
 // dos links genéricos, pra dar destaque visual próprio ao criativo associado.
+// Detecta se o link vinculado é um link de compartilhamento "somente leitura"
+// do Milanote (formato https://app.milanote.com/{boardId}?p={token}) — só
+// esse formato é embeddable via iframe (é o mesmo link do "Generate HTML
+// embed code" no Share do Milanote). Outros links (ex.: milanote.com/app/...
+// sem token) exigem login e não renderizam dentro de iframe.
+function _isMilanoteEmbeddable(url){
+  return /^https?:\/\/(app\.)?milanote\.com\/[A-Za-z0-9_-]+/i.test(url||'');
+}
 function renderMilanoteLink(card){
   const view = document.getElementById('m-milanote-view');
   const inpRow = document.getElementById('m-milanote-inp-row');
   const link = document.getElementById('m-milanote-link');
+  const previewBtn = document.getElementById('m-milanote-preview-btn');
+  const embedBox = document.getElementById('m-milanote-embed');
   if(!view || !inpRow) return;
+  if(embedBox){ embedBox.style.display = 'none'; embedBox.innerHTML = ''; }
+  if(previewBtn) previewBtn.textContent = '🖼️ Ver preview aqui';
   if(card?.milanoteLink){
     view.style.display = 'flex';
-    view.style.alignItems = 'center';
     inpRow.style.display = 'none';
     if(link) link.href = card.milanoteLink;
+    if(previewBtn) previewBtn.style.display = _isMilanoteEmbeddable(card.milanoteLink) ? 'inline-flex' : 'none';
   } else {
     view.style.display = 'none';
     inpRow.style.display = 'flex';
     const inp = document.getElementById('m-milanote-url');
     if(inp) inp.value = '';
+  }
+}
+// Mostra/esconde um preview ao vivo (iframe) do board do Milanote, carregado
+// só quando a pessoa pede (lazy) — evita carregar iframe de todo card à toa.
+// Exige que o link seja um link "somente leitura" gerado no Share do Milanote.
+function toggleMilanotePreview(){
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(!card?.milanoteLink) return;
+  const box = document.getElementById('m-milanote-embed');
+  const btn = document.getElementById('m-milanote-preview-btn');
+  if(!box) return;
+  const jaAberto = box.style.display !== 'none' && box.innerHTML;
+  if(jaAberto){
+    box.style.display = 'none';
+    box.innerHTML = '';
+    if(btn) btn.textContent = '🖼️ Ver preview aqui';
+  } else {
+    box.innerHTML = `<iframe src="${esc(card.milanoteLink)}" width="100%" height="420" frameborder="0" loading="lazy" title="Preview do Milanote" style="border:1px solid rgba(232,70,70,.25);border-radius:10px;background:#1a1a1a;display:block;"></iframe>
+      <div style="font-size:9.5px;color:var(--txt3);margin-top:4px;">Preview ao vivo do board — só funciona se o link for "somente leitura" (Milanote → Share → Enable read-only link). Se aparecer em branco, o link colado provavelmente não é desse tipo.</div>`;
+    box.style.display = 'block';
+    if(btn) btn.textContent = '🖼️ Ocultar preview';
   }
 }
 
