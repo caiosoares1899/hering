@@ -2043,7 +2043,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.75 · painel-dev</div>
+<div class="version">v2.76 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2102,8 +2102,6 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 
 // esc(): escape de HTML. Redefinido aqui porque a versão do <script type="module">
 // fica encapsulada no escopo do módulo e NÃO é visível neste script clássico.
-function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-
 // ── FILTRO DE SQUAD ────────────────────────────────────────────────
 let activeFilter = 'all';
 
@@ -4833,6 +4831,7 @@ let allErrors = [];   // {id, squad, entry}
 let errFilterSquad = 'all';
 let errFilterCat   = 'all';
 let errFilterStatus= 'all';
+let errFilterDate  = null; // 'YYYY-MM-DD' ou null (clique numa barra do grafico de 7 dias)
 let monitorVisible = false;
 let doneInWindow = [];
 let errStats = {}; // {squad: {date: count}}
@@ -4864,8 +4863,16 @@ function getFilteredErrors(){
     if(errFilterSquad!=='all'&&squad!==errFilterSquad) return false;
     if(errFilterCat!=='all'&&entry.category!==errFilterCat) return false;
     if(errFilterStatus!=='all'&&entry.status!==errFilterStatus) return false;
+    if(errFilterDate&&!(entry.ts||'').startsWith(errFilterDate)) return false;
     return true;
   }).sort((a,b)=>b.entry.ts.localeCompare(a.entry.ts));
+}
+
+// Clique numa barra do grafico "erros por dia": filtra a lista pra aquele dia.
+// Clicar de novo na mesma barra remove o filtro (toggle).
+function setDateFilter(day){
+  errFilterDate = (errFilterDate===day) ? null : day;
+  renderErrors();
 }
 
 function renderErrors(){
@@ -4975,8 +4982,9 @@ function renderErrChart(){
     const isToday=i===6;
     const color=n===0?'rgba(56,182,255,.1)':n>5?'rgba(255,107,107,.75)':n>2?'rgba(255,209,102,.75)':'rgba(56,182,255,.55)';
     const lbl=day.split('-').slice(1).join('/');
+    const isFiltered=errFilterDate===day;
     svg+=`<rect class="tp-bar" x="${x}" y="${y}" width="${barW}" height="${barH_}" rx="3"
-      fill="${color}" data-val="${n}" onclick="setDateFilter('${day}')" style="cursor:pointer;" title="${day}: ${n} erros"/>`;
+      fill="${color}" data-val="${n}" onclick="setDateFilter('${day}')" style="cursor:pointer;${isFiltered?'stroke:#fff;stroke-width:1.5;':''}" title="${day}: ${n} erros — clique p/ filtrar"/>`;
     if(n>0){
       svg+=`<text class="tp-bar-lbl" x="${x+barW/2}" y="${y-3}" text-anchor="middle" fill="${color}">${n}</text>`;
     }
