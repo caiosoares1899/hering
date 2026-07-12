@@ -3755,7 +3755,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.126</div>
+<div class="version">v8.30.127</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6768,6 +6768,7 @@ function _listenLembretesDismiss(){
   if(!p){ setTimeout(_listenLembretesDismiss, 1200); return; }
   fbListen(p, val=>{
     lembretesDismiss = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    updLemBadge(); // sem isso, o badge fica preso contando lembrete já dispensado (bug do "fantasma")
     if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
   });
 }
