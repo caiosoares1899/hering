@@ -1153,6 +1153,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
     <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
+    <button class="ptab"     id="ptab-dados"   onclick="swPtab('dados')"  style="color:var(--cyan);"><span class="ptab-icon">📊</span><span class="ptab-lbl">Dados</span></button>
   </div>
 
   <!-- ═══ ABA: VISÃO ═══ -->
@@ -1637,6 +1638,66 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
   </div><!-- /ppane-status -->
 
+  <!-- ═══ ABA: DADOS (central de captação digital) ═══ -->
+  <div class="ptab-pane" id="ppane-dados">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:600;">📊 Central de Dados — Digital</div>
+        <div style="font-size:11px;color:var(--txt3);">Resultado diário de captação, publicado direto no quadro pra todo o time — substitui o envio manual por WhatsApp.</div>
+      </div>
+    </div>
+
+    <div id="dados-lock-msg" style="display:none;font-size:11px;color:var(--txt3);background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.15);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5;">🔒 Você tem acesso de leitura aqui. Só quem tem permissão de publicação (veja a lista abaixo) edita os números do dia.</div>
+
+    <div id="dados-form-wrap" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
+      <div class="cfg-sec">Publicar resultado do dia</div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Data</label><div style="display:flex;gap:6px;"><input class="cfg-input" id="dd-date" type="date" onchange="dadosSelDate=this.value;loadDadosFormForDate(this.value);" style="flex:1;"> <button type="button" class="dp-btn" onclick="_dpOpen('dd-date',this)" title="Escolher no calendário">📅</button></div></div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Captação do dia (R$)</label><input class="cfg-input" id="dd-cap-dia" type="number" step="0.01" placeholder="Ex.: 1170000"></div>
+        <div class="cfg-field"><label class="cfg-label">Meta do dia (R$)</label><input class="cfg-input" id="dd-meta-dia" type="number" step="0.01" placeholder="Ex.: 1570000"></div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">Captação acumulada no mês (R$)</label><input class="cfg-input" id="dd-cap-acum" type="number" step="0.01" placeholder="Ex.: 9120000"></div>
+        <div class="cfg-field"><label class="cfg-label">Meta acumulada no mês (R$)</label><input class="cfg-input" id="dd-meta-acum" type="number" step="0.01" placeholder="Ex.: 12460000"></div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-field"><label class="cfg-label">% vs. ano anterior — acumulado (opcional)</label><input class="cfg-input" id="dd-ly" type="number" step="0.1" placeholder="Ex.: -40"></div>
+        <div class="cfg-field"><label class="cfg-label">Meta de captação amanhã (opcional, R$)</label><input class="cfg-input" id="dd-meta-amanha" type="number" step="0.01" placeholder="Ex.: 1359000"></div>
+      </div>
+      <div class="cfg-field"><label class="cfg-label">Mensagem (o resumo que hoje vai pro WhatsApp)</label><textarea class="cfg-input" id="dd-texto" rows="3" style="resize:vertical;min-height:60px;line-height:1.5;" placeholder="Bom dia pessoal. Seguem números atualizados do Digital..."></textarea></div>
+
+      <div class="cfg-sec" style="margin-top:10px;">Apresentação (Google Apresentações, ao vivo)</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input class="cfg-input" id="dd-slides-url" placeholder="Link 'Publicar na web' do Google Apresentações" style="flex:1;" onchange="saveDadosSlidesUrl()">
+        <button class="save-btn" onclick="saveDadosSlidesUrl()">Salvar link</button>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.5;">No Slides: Arquivo → Compartilhar → Publicar na Web → copie o link do "conteúdo incorporado". Salvo uma vez só — como é o mesmo arquivo atualizado todo dia, o quadro sempre mostra a versão mais recente automaticamente, sem precisar tirar print.</div>
+
+      <div class="cfg-sec" style="margin-top:10px;">PDF do resultado captado (opcional)</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="file" id="dd-pdf-file" accept="application/pdf" onchange="uploadDadosPdf()" style="font-size:11px;color:var(--txt2);">
+        <span id="dd-pdf-status" style="font-size:10.5px;color:var(--txt3);"></span>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-p" onclick="publishDadosPost()">📊 Publicar no quadro</button>
+      </div>
+    </div>
+
+    <div class="cfg-sec">Quem pode publicar</div>
+    <div id="dd-editors-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
+    <div id="dd-editors-add" style="display:flex;gap:6px;margin-bottom:18px;">
+      <input class="cfg-input" id="dd-editor-email" placeholder="email@ciahering.com.br" style="flex:1;">
+      <button class="save-btn" onclick="addDadosEditor()">+ Acesso</button>
+    </div>
+    <div style="font-size:10px;color:var(--txt3);margin-top:-12px;margin-bottom:18px;">ADMs sempre podem publicar. Aqui você dá acesso só a esta aba, sem tornar a pessoa ADM do painel.</div>
+
+    <div class="cfg-sec">Histórico</div>
+    <div id="dd-historico"></div>
+  </div><!-- /ppane-dados -->
+
   <!-- ═══ MODAL: COMPOR COMUNICADO ═══ -->
   <div class="pev-modal-ov" id="comunicado-compose-ov">
     <div class="pev-modal" style="max-width:520px;">
@@ -2041,13 +2102,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.78 · painel</div>
+<div class="version">v2.79 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
@@ -2063,6 +2125,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // Escopo de calendário isolado do login normal — só pedido quando alguém conecta uma agenda
@@ -2080,6 +2143,7 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
 });
 
 window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update;
+window._storage=storage; window._sRef=sRef; window._uploadBytes=uploadBytes; window._getDownloadURL=getDownloadURL; window._deleteObject=deleteObject;
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
@@ -3952,6 +4016,7 @@ function swPtab(tab){
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
+  if(tab==='dados'){ renderDadosTab(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
 }
@@ -5991,6 +6056,219 @@ function saveAdmEmails(){
 }
 // ── FIM GERENCIAMENTO ADMs ────────────────────────────────────────
 
+// ── CENTRAL DE DADOS (captação digital diária) ─────────────────────
+let DADOS_EDITORS = [];       // emails com permissão de publicar (além dos ADMs)
+let dadosDiarios = {};        // {date:'YYYY-MM-DD': {...}}
+let dadosSlidesUrl = '';      // link "publicar na web" do Google Apresentações
+let dadosSelDate = null;      // data selecionada no formulário (default: hoje)
+let _dadosPendingPdf = null;  // {url,name} do PDF recém-enviado, aguardando publicar
+
+function isDadosEditor(user){ return !!user && (isAdmUser(user) || DADOS_EDITORS.includes(user.email)); }
+
+function _todayStr(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function _fmtDateBR(dateStr){ const p=(dateStr||'').split('-'); return p.length===3? (p[2]+'/'+p[1]+'/'+p[0]) : dateStr; }
+function _numVal(id){ const v=document.getElementById(id)?.value; return (v===''||v==null)? null : Number(v); }
+
+function loadDadosConfig(){
+  window._get(window._ref(window._db,'kanban/config/dados_editors')).then(snap=>{
+    const saved=snap.val();
+    if(saved&&Array.isArray(saved)) DADOS_EDITORS=saved;
+    renderDadosEditorList();
+  }).catch(()=>{});
+  window._get(window._ref(window._db,'kanban/config/dados_slides_url')).then(snap=>{
+    dadosSlidesUrl = snap.val()||'';
+    const inp=document.getElementById('dd-slides-url');
+    if(inp && document.activeElement!==inp) inp.value = dadosSlidesUrl;
+  }).catch(()=>{});
+}
+
+function loadDadosDiarios(){
+  window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{
+    dadosDiarios = snap.val()||{};
+    if(_isPtab('dados')) renderDadosTab();
+  });
+}
+
+function renderDadosTab(){
+  const editor = isDadosEditor(window._currentUser);
+  const formWrap = document.getElementById('dados-form-wrap');
+  const lockMsg = document.getElementById('dados-lock-msg');
+  const editorsAdd = document.getElementById('dd-editors-add');
+  if(formWrap) formWrap.style.display = editor? 'block':'none';
+  if(lockMsg) lockMsg.style.display = editor? 'none':'block';
+  if(editorsAdd) editorsAdd.style.display = isAdmUser(window._currentUser)? 'flex':'none';
+
+  if(editor){
+    if(!dadosSelDate) dadosSelDate = _todayStr();
+    const dateInp=document.getElementById('dd-date');
+    if(dateInp && !dateInp.value) dateInp.value = dadosSelDate;
+    loadDadosFormForDate(dateInp?.value || dadosSelDate);
+    const slidesInp = document.getElementById('dd-slides-url');
+    if(slidesInp && document.activeElement!==slidesInp) slidesInp.value = dadosSlidesUrl;
+  }
+  renderDadosHistorico();
+  renderDadosEditorList();
+}
+
+function loadDadosFormForDate(date){
+  const d = dadosDiarios[date] || {};
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value = (v==null?'':v); };
+  set('dd-texto', d.texto||'');
+  set('dd-cap-dia', d.capDia);
+  set('dd-meta-dia', d.metaDia);
+  set('dd-cap-acum', d.capAcum);
+  set('dd-meta-acum', d.metaAcum);
+  set('dd-ly', d.lyAcumPct);
+  set('dd-meta-amanha', d.metaAmanha);
+  const pdfStatus=document.getElementById('dd-pdf-status');
+  if(pdfStatus) pdfStatus.textContent = d.pdfUrl? ('📄 '+(d.pdfName||'arquivo atual já anexado')) : '';
+  _dadosPendingPdf = null;
+}
+
+async function uploadDadosPdf(){
+  const inp = document.getElementById('dd-pdf-file');
+  const file = inp?.files?.[0];
+  if(!file) return;
+  if(file.type!=='application/pdf'){ showToast('⚠ Selecione um arquivo PDF'); inp.value=''; return; }
+  const date = document.getElementById('dd-date')?.value || _todayStr();
+  const path = 'dados_diarios/'+date+'/'+Date.now()+'_'+file.name;
+  const statusEl = document.getElementById('dd-pdf-status');
+  if(statusEl) statusEl.textContent = '⏳ Enviando...';
+  try{
+    const fileRef = window._sRef(window._storage, path);
+    await window._uploadBytes(fileRef, file);
+    const url = await window._getDownloadURL(fileRef);
+    _dadosPendingPdf = { url, name: file.name };
+    if(statusEl) statusEl.textContent = '✅ '+file.name+' (clique em Publicar pra salvar)';
+  }catch(e){
+    if(statusEl) statusEl.textContent = '❌ Falha no envio: '+e.message;
+  }
+}
+
+function saveDadosSlidesUrl(){
+  if(!isDadosEditor(window._currentUser)){ showToast('Sem permissão.'); return; }
+  const url = document.getElementById('dd-slides-url')?.value?.trim()||'';
+  window._set(window._ref(window._db,'kanban/config/dados_slides_url'), url)
+    .then(()=>{ dadosSlidesUrl=url; showToast('✅ Link da apresentação salvo'); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+function publishDadosPost(){
+  if(!isDadosEditor(window._currentUser)){ showToast('Sem permissão.'); return; }
+  const date = document.getElementById('dd-date')?.value;
+  if(!date){ showToast('⚠ Escolha uma data'); return; }
+  const u = window._currentUser;
+  const existing = dadosDiarios[date] || {};
+  const obj = {
+    date, ts: Date.now(),
+    autorUid: u.uid, autorNome: u.displayName||u.email||'?',
+    texto: document.getElementById('dd-texto')?.value.trim()||'',
+    capDia: _numVal('dd-cap-dia'), metaDia: _numVal('dd-meta-dia'),
+    capAcum: _numVal('dd-cap-acum'), metaAcum: _numVal('dd-meta-acum'),
+    lyAcumPct: _numVal('dd-ly'), metaAmanha: _numVal('dd-meta-amanha'),
+    pdfUrl: _dadosPendingPdf?.url || existing.pdfUrl || '',
+    pdfName: _dadosPendingPdf?.name || existing.pdfName || '',
+  };
+  window._set(window._ref(window._db,'kanban/dados_diarios/'+date), obj)
+    .then(()=>{
+      showToast('✅ Publicado no quadro pra todo o time');
+      _dadosPendingPdf = null;
+      const pdfInp=document.getElementById('dd-pdf-file'); if(pdfInp) pdfInp.value='';
+    })
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+function editDadosPost(date){
+  dadosSelDate = date;
+  const dateInp=document.getElementById('dd-date'); if(dateInp) dateInp.value = date;
+  loadDadosFormForDate(date);
+}
+
+function deleteDadosPost(date){
+  if(!isDadosEditor(window._currentUser)){ showToast('Sem permissão.'); return; }
+  if(!confirm('Excluir o post de '+_fmtDateBR(date)+'?')) return;
+  window._set(window._ref(window._db,'kanban/dados_diarios/'+date), null)
+    .then(()=>showToast('🗑 Excluído'))
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+function renderDadosHistorico(){
+  const wrap=document.getElementById('dd-historico'); if(!wrap) return;
+  const dates=Object.keys(dadosDiarios).sort().reverse();
+  if(!dates.length){ wrap.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum post publicado ainda.</div>'; return; }
+  const editor = isDadosEditor(window._currentUser);
+  wrap.innerHTML = dates.map(date=>{
+    const d=dadosDiarios[date]||{};
+    const pct = (d.capDia!=null && d.metaDia) ? Math.round(d.capDia/d.metaDia*100) : null;
+    const pctAcum = (d.capAcum!=null && d.metaAcum) ? Math.round(d.capAcum/d.metaAcum*100) : null;
+    const ok = pct!=null && pct>=100;
+    return `<div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <div style="font-weight:600;font-size:12.5px;">${esc(_fmtDateBR(date))}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          ${pct!=null?`<span class="badge" style="background:${ok?'rgba(29,233,182,.2)':'rgba(255,107,107,.2)'};color:${ok?'var(--teal)':'var(--danger)'};border:1px solid ${ok?'rgba(29,233,182,.3)':'rgba(255,107,107,.3)'};">${pct}% da meta do dia</span>`:''}
+          ${pctAcum!=null?`<span class="badge" style="background:rgba(56,182,255,.15);color:var(--blue);border:1px solid rgba(56,182,255,.3);">${pctAcum}% acum.</span>`:''}
+          ${editor?`<button class="btn btn-sm" onclick="editDadosPost('${date}')" style="font-size:10px;" title="Carregar no formulário pra editar">✏️</button><button class="btn btn-sm" onclick="deleteDadosPost('${date}')" style="font-size:10px;color:var(--danger);" title="Excluir">🗑</button>`:''}
+        </div>
+      </div>
+      ${d.texto?`<div style="font-size:11px;color:var(--txt2);margin-top:6px;white-space:pre-wrap;">${esc(d.texto)}</div>`:''}
+      <div style="font-size:10px;color:var(--txt3);margin-top:6px;">por ${esc(d.autorNome||'—')}${d.pdfUrl?` · <a href="${esc(d.pdfUrl)}" target="_blank" rel="noopener" style="color:var(--cyan);">📄 PDF</a>`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDadosEditorList(){
+  const list=document.getElementById('dd-editors-list'); if(!list) return;
+  const isAdm = isAdmUser(window._currentUser);
+  if(!DADOS_EDITORS.length){
+    list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum editor extra ainda — só ADMs publicam.</div>';
+    return;
+  }
+  list.innerHTML='';
+  DADOS_EDITORS.forEach(email=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
+    const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=email;
+    const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(126,200,227,.15);color:var(--cyan);border:1px solid rgba(126,200,227,.3);'; badge.textContent='Dados';
+    row.appendChild(lbl); row.appendChild(badge);
+    if(isAdm){
+      const rm=document.createElement('button');
+      rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
+      rm.textContent='✕'; rm.title='Remover acesso';
+      const emailCopy=email;
+      rm.onclick=()=>removeDadosEditor(emailCopy);
+      row.appendChild(rm);
+    }
+    list.appendChild(row);
+  });
+}
+
+function addDadosEditor(){
+  if(!isAdmUser(window._currentUser)){ showToast('Só ADMs gerenciam quem publica.'); return; }
+  const inp=document.getElementById('dd-editor-email');
+  const email=inp?.value?.trim();
+  if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
+  if(DADOS_EDITORS.includes(email)){ showToast('Já tem acesso'); return; }
+  DADOS_EDITORS.push(email);
+  window._set(window._ref(window._db,'kanban/config/dados_editors'), DADOS_EDITORS)
+    .then(()=>{ showToast('✅ Acesso concedido'); renderDadosEditorList(); })
+    .catch(e=>showToast('❌ '+e.message));
+  if(inp) inp.value='';
+}
+
+function removeDadosEditor(email){
+  if(!isAdmUser(window._currentUser)){ showToast('Só ADMs gerenciam quem publica.'); return; }
+  if(!confirm('Remover acesso de publicação de '+email+'?')) return;
+  DADOS_EDITORS=DADOS_EDITORS.filter(e=>e!==email);
+  window._set(window._ref(window._db,'kanban/config/dados_editors'), DADOS_EDITORS)
+    .then(()=>{ showToast('✅ Removido'); renderDadosEditorList(); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+// ── FIM CENTRAL DE DADOS ───────────────────────────────────────────
+
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
   ['sprint','users','adm'].forEach(t=>{
@@ -6194,6 +6472,8 @@ window.addEventListener('fb-ready',()=>{
   loadPainelCampanhas();
   loadGruposCamp();
   loadPainelNotifs();
+  loadDadosConfig();
+  loadDadosDiarios();
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){

@@ -2352,6 +2352,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
+<!-- ═══ CENTRAL DE DADOS (captação digital, somente leitura no board) ═══ -->
+<button class="lem-tab" id="dados-tab" onclick="toggleDados()" title="Central de Dados — captação digital"
+  style="top:calc(50% - 110px);background:rgba(56,182,255,.92);border-color:rgba(126,200,227,.5);box-shadow:-4px 0 24px rgba(56,182,255,.35);">
+  📊 Dados
+</button>
+<div class="lem-drawer" id="dados-drawer">
+  <div class="lem-hd">
+    <div class="lem-hd-title">📊 Central de Dados — Digital</div>
+    <button class="x-btn" onclick="toggleDados()">✕</button>
+  </div>
+  <div class="lem-body" id="dados-body"></div>
+</div>
+
 <!-- ═══ ESTRELAS DO MAR (Kudos) ═══ -->
 <div class="lem-drawer kudos-drawer" id="kudos-drawer">
   <div class="lem-hd">
@@ -3780,7 +3793,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.125-dev</div>
+<div class="version">v8.30.126-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4029,6 +4042,88 @@ const today = new Date(); today.setHours(0,0,0,0);
 // ── Seguranca: escape de HTML e validacao de URL ──
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
+
+// ── CENTRAL DE DADOS (captação digital — leitura no board) ─────────
+let dadosDiariosBoard = {};   // {date:'YYYY-MM-DD': {...}} — kanban/dados_diarios
+let dadosSlidesUrlBoard = ''; // kanban/config/dados_slides_url
+
+function toggleDados(){
+  const d = document.getElementById('dados-drawer');
+  if(!d) return;
+  const opening = !d.classList.contains('open');
+  d.classList.toggle('open');
+  if(opening) renderDadosPainel();
+}
+function _fmtBRL(v){ return v==null? '—' : 'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0}); }
+function _fmtDateBR2(dateStr){ const p=(dateStr||'').split('-'); return p.length===3? (p[2]+'/'+p[1]) : (dateStr||''); }
+function _pctBadgeDados(cap,meta){
+  if(cap==null||!meta) return '';
+  const pct = Math.round(cap/meta*100);
+  const ok = pct>=100;
+  return `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${ok?'rgba(29,233,182,.18)':'rgba(255,107,107,.18)'};color:${ok?'var(--teal)':'var(--danger)'};border:1px solid ${ok?'rgba(29,233,182,.3)':'rgba(255,107,107,.3)'};">${pct}%</span>`;
+}
+function _renderDadosDay(date){
+  const d = dadosDiariosBoard[date]||{};
+  return `<div style="background:rgba(6,26,46,.6);border:1px solid var(--glass-b);border-radius:12px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;">${esc(_fmtDateBR2(date))}</div>
+      ${d.pdfUrl?`<a href="${esc(d.pdfUrl)}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;">📄 PDF completo</a>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="met"><div class="met-lbl">Captação hoje</div><div class="met-val" style="font-size:16px;">${_fmtBRL(d.capDia)}</div><div style="margin-top:4px;">${_pctBadgeDados(d.capDia,d.metaDia)}</div></div>
+      <div class="met"><div class="met-lbl">Acumulado no mês</div><div class="met-val" style="font-size:16px;">${_fmtBRL(d.capAcum)}</div><div style="margin-top:4px;">${_pctBadgeDados(d.capAcum,d.metaAcum)}${d.lyAcumPct!=null?` <span style="font-size:10px;color:var(--txt3);">${d.lyAcumPct>0?'+':''}${d.lyAcumPct}% LY</span>`:''}</div></div>
+    </div>
+    ${d.metaAmanha!=null?`<div style="font-size:10.5px;color:var(--txt3);margin-top:10px;">🎯 Meta de amanhã: ${_fmtBRL(d.metaAmanha)}</div>`:''}
+    ${d.texto?`<div style="font-size:12px;color:var(--txt2);line-height:1.5;white-space:pre-wrap;border-top:1px solid var(--glass-b);margin-top:10px;padding-top:10px;">${esc(d.texto)}</div>`:''}
+    <div style="font-size:9.5px;color:var(--txt3);margin-top:8px;">por ${esc(d.autorNome||'—')}</div>
+  </div>`;
+}
+function _renderDadosDayCompact(date){
+  const d = dadosDiariosBoard[date]||{};
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:rgba(6,26,46,.4);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;font-size:11px;">
+    <span style="color:var(--txt2);">${esc(_fmtDateBR2(date))}</span>
+    <span style="color:var(--txt3);">${_fmtBRL(d.capDia)}</span>
+    ${_pctBadgeDados(d.capDia,d.metaDia)}
+  </div>`;
+}
+function toggleDadosSlides(){
+  const box = document.getElementById('dados-slides-embed');
+  const btn = document.getElementById('dados-slides-toggle-btn');
+  if(!box || !dadosSlidesUrlBoard) return;
+  const aberto = box.style.display!=='none' && box.innerHTML;
+  if(aberto){
+    box.style.display='none'; box.innerHTML='';
+    if(btn) btn.textContent='🖥️ Ver apresentação completa';
+  } else {
+    box.innerHTML = `<iframe src="${esc(dadosSlidesUrlBoard)}" width="100%" height="320" frameborder="0" loading="lazy" title="Apresentação — Digital" style="border:1px solid rgba(126,200,227,.25);border-radius:10px;background:#1a1a1a;display:block;"></iframe>`;
+    box.style.display='block';
+    if(btn) btn.textContent='🖥️ Ocultar apresentação';
+  }
+}
+function renderDadosPainel(){
+  const body = document.getElementById('dados-body'); if(!body) return;
+  const dates = Object.keys(dadosDiariosBoard).sort().reverse();
+  if(!dates.length){
+    body.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:20px 4px;text-align:center;line-height:1.6;">Nenhum resultado publicado ainda.<br>Configure em Painel → 📊 Dados.</div>';
+    return;
+  }
+  const latestDate = dates[0];
+  let html = _renderDadosDay(latestDate);
+  if(dadosSlidesUrlBoard){
+    html += `<div style="margin-top:14px;">
+      <button class="btn btn-sm" id="dados-slides-toggle-btn" onclick="toggleDadosSlides()" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ Ver apresentação completa</button>
+      <div id="dados-slides-embed" style="display:none;margin-top:10px;"></div>
+    </div>`;
+  }
+  if(dates.length>1){
+    html += `<div style="margin-top:18px;">
+      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:8px;">Dias anteriores</div>
+      ${dates.slice(1,15).map(d=>_renderDadosDayCompact(d)).join('')}
+    </div>`;
+  }
+  body.innerHTML = html;
+}
+// ── FIM CENTRAL DE DADOS ────────────────────────────────────────────
 
 const PALETTE=[
   {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.35)',c:'#38b6ff',h:'#38b6ff'},
@@ -4788,6 +4883,14 @@ function fbLoadAll(){
       lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
       updLemBadge();
       if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+    });
+    // Central de Dados (captação digital) — globais, fora do squad (isolado do prod)
+    window._onValue(window._ref(window._db,'kanban/dados_diarios_dev'),snap=>{
+      dadosDiariosBoard = snap.val()||{};
+      if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
+    });
+    window._onValue(window._ref(window._db,'kanban/config/dados_slides_url_dev'),snap=>{
+      dadosSlidesUrlBoard = snap.val()||'';
     });
   }
   // Lembretes próprios (privados, por uid) — registra quando o usuário é conhecido
