@@ -2325,10 +2325,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- ═══ QUADRO DE LEMBRETES ═══ -->
-<button class="lem-tab" id="lem-tab" onclick="toggleLembretes()" title="Quadro de lembretes">
+<div id="side-tabs-wrap" style="position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:55;display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+<button class="lem-tab" id="dados-tab" onclick="toggleDados()" title="Central de Dados — captação digital"
+  style="position:static;top:auto;transform:none;background:rgba(56,182,255,.92);border-color:rgba(126,200,227,.5);box-shadow:-4px 0 24px rgba(56,182,255,.35);">
+  📊 Dados
+</button>
+<button class="lem-tab" id="lem-tab" onclick="toggleLembretes()" title="Quadro de lembretes" style="position:static;top:auto;transform:none;">
   📌 Lembretes
   <span class="lem-badge" id="lem-badge" style="display:none;">0</span>
 </button>
+</div>
 <div class="lem-drawer" id="lem-drawer">
   <div class="lem-hd">
     <div class="lem-hd-title">📌 Lembretes</div>
@@ -2353,10 +2359,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 
 <!-- ═══ CENTRAL DE DADOS (captação digital, somente leitura no board) ═══ -->
-<button class="lem-tab" id="dados-tab" onclick="toggleDados()" title="Central de Dados — captação digital"
-  style="top:calc(50% - 110px);background:rgba(56,182,255,.92);border-color:rgba(126,200,227,.5);box-shadow:-4px 0 24px rgba(56,182,255,.35);">
-  📊 Dados
-</button>
 <div class="lem-drawer" id="dados-drawer">
   <div class="lem-hd">
     <div class="lem-hd-title">📊 Central de Dados — Digital</div>
@@ -3793,7 +3795,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.126-dev</div>
+<div class="version">v8.30.127-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
