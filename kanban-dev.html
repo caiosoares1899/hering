@@ -3795,7 +3795,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.128-dev</div>
+<div class="version">v8.30.129-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4047,7 +4047,7 @@ function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
 // ── CENTRAL DE DADOS (captação digital — leitura no board) ─────────
 let dadosDiariosBoard = {};   // {date:'YYYY-MM-DD': {...}} — kanban/dados_diarios
-let dadosSlidesUrlBoard = ''; // kanban/config/dados_slides_url
+let dadosApresentacoesBoard = []; // [{id,title,url}] — kanban/config/dados_apresentacoes
 
 function toggleDados(){
   const d = document.getElementById('dados-drawer');
@@ -4088,18 +4088,19 @@ function _renderDadosDayCompact(date){
     ${_pctBadgeDados(d.capDia,d.metaDia)}
   </div>`;
 }
-function toggleDadosSlides(){
-  const box = document.getElementById('dados-slides-embed');
-  const btn = document.getElementById('dados-slides-toggle-btn');
-  if(!box || !dadosSlidesUrlBoard) return;
+function toggleDadosApres(id){
+  const apres = dadosApresentacoesBoard.find(a=>a.id===id); if(!apres) return;
+  const box = document.getElementById('dados-apres-embed-'+id);
+  const btn = document.getElementById('dados-apres-btn-'+id);
+  if(!box) return;
   const aberto = box.style.display!=='none' && box.innerHTML;
   if(aberto){
     box.style.display='none'; box.innerHTML='';
-    if(btn) btn.textContent='🖥️ Ver apresentação completa';
+    if(btn) btn.textContent='🖥️ '+esc(apres.title);
   } else {
-    box.innerHTML = `<iframe src="${esc(dadosSlidesUrlBoard)}" width="100%" height="320" frameborder="0" loading="lazy" title="Apresentação — Digital" style="border:1px solid rgba(126,200,227,.25);border-radius:10px;background:#1a1a1a;display:block;"></iframe>`;
+    box.innerHTML = `<iframe src="${esc(apres.url)}" width="100%" height="320" frameborder="0" loading="lazy" title="${esc(apres.title)}" style="border:1px solid rgba(126,200,227,.25);border-radius:10px;background:#1a1a1a;display:block;"></iframe>`;
     box.style.display='block';
-    if(btn) btn.textContent='🖥️ Ocultar apresentação';
+    if(btn) btn.textContent='🖥️ Ocultar '+esc(apres.title);
   }
 }
 function renderDadosPainel(){
@@ -4111,10 +4112,12 @@ function renderDadosPainel(){
   }
   const latestDate = dates[0];
   let html = _renderDadosDay(latestDate);
-  if(dadosSlidesUrlBoard){
-    html += `<div style="margin-top:14px;">
-      <button class="btn btn-sm" id="dados-slides-toggle-btn" onclick="toggleDadosSlides()" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ Ver apresentação completa</button>
-      <div id="dados-slides-embed" style="display:none;margin-top:10px;"></div>
+  if(dadosApresentacoesBoard.length){
+    html += `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+      ${dadosApresentacoesBoard.map(a=>`<div>
+        <button class="btn btn-sm" id="dados-apres-btn-${a.id}" onclick="toggleDadosApres('${a.id}')" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ ${esc(a.title)}</button>
+        <div id="dados-apres-embed-${a.id}" style="display:none;margin-top:10px;"></div>
+      </div>`).join('')}
     </div>`;
   }
   if(dates.length>1){
@@ -4891,8 +4894,10 @@ function fbLoadAll(){
       dadosDiariosBoard = snap.val()||{};
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
     });
-    window._onValue(window._ref(window._db,'kanban/config/dados_slides_url_dev'),snap=>{
-      dadosSlidesUrlBoard = snap.val()||'';
+    window._onValue(window._ref(window._db,'kanban/config/dados_apresentacoes_dev'),snap=>{
+      const saved = snap.val();
+      dadosApresentacoesBoard = Array.isArray(saved) ? saved.filter(Boolean) : (saved ? Object.values(saved).filter(Boolean) : []);
+      if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
     });
   }
   // Lembretes próprios (privados, por uid) — registra quando o usuário é conhecido
