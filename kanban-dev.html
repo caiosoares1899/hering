@@ -3598,7 +3598,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="camp-empty">Carregando campanhas...</div>
     </div>
     <div class="camp-list-ft">
-      <button class="btn btn-sm" onclick="openCampEdit(null)" style="color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova campanha</button>
+      <button class="btn btn-sm" id="camp-new-btn" onclick="openCampEdit(null)" style="color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova campanha</button>
+      <button class="btn btn-sm" id="camp-logs-btn" onclick="openCampLogs()" style="color:var(--txt2);border-color:var(--glass-b);">📋 Logs</button>
     </div>
   </div>
 
@@ -3611,8 +3612,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div class="camp-hd-title" id="camp-det-hd-nome">—</div>
       </div>
       <div class="camp-det-hd-btns" style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-        <button class="btn btn-sm" onclick="openCampEdit(window._campAtual?.id)" style="color:var(--txt2);border-color:var(--glass-b);">✏️ <span class="camp-btn-lbl">Editar</span></button>
-        <button class="btn btn-sm" onclick="campDeleteFromDetail()" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <button class="btn btn-sm" id="camp-edit-btn" onclick="openCampEdit(_campAtual?.id)" style="color:var(--txt2);border-color:var(--glass-b);">✏️ <span class="camp-btn-lbl">Editar</span></button>
+        <button class="btn btn-sm" id="camp-del-btn" onclick="campDeleteFromDetail()" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <button class="x-btn" onclick="closeOv('camp-ov')" style="margin-left:0;">✕</button>
       </div>
     </div>
@@ -3712,6 +3713,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </div>
 </div>
 
+<!-- Logs de campanhas -->
+<div class="ov" id="camp-logs-ov" style="z-index:210;">
+<div class="camp-edit-modal">
+  <div class="camp-edit-hd">
+    <span style="font-size:14px;font-weight:700;">📋 Logs de campanhas</span>
+    <button class="x-btn" onclick="closeOv('camp-logs-ov')">✕</button>
+  </div>
+  <div class="camp-edit-body" id="camp-logs-body">
+    <div class="camp-empty">Carregando...</div>
+  </div>
+</div>
+</div>
+
 <!-- Grid de cards vinculados -->
 <div class="ov" id="camp-cards-ov">
 <div class="camp-cards-grid-panel">
@@ -3795,7 +3809,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.130-dev</div>
+<div class="version">v8.30.131-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7633,6 +7647,44 @@ let _campComposerLinks = [];   // links do composer ativo
 
 // Caminho Firebase: global (cross-squad configurado no painel)
 function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'/'+sub:'')); }
+function _campLogRef(sub){ return window._ref(window._db, 'kanban/campanhas_log'+(sub?'/'+sub:'')); }
+function _logCampAction(action, camp){
+  try{
+    const u = window._currentUser;
+    const logId = 'l'+Date.now()+Math.random().toString(36).slice(2,6);
+    const entry = { ts:new Date().toISOString(), action, campId:camp?.id||'', campNome:camp?.nome||'(sem nome)', user:u?.displayName||u?.email||'?' };
+    window._set(_campLogRef(logId), entry).catch(()=>{});
+  } catch(e){}
+}
+function _fmtCampLogTs(iso){
+  if(!iso) return '';
+  try{ const d=new Date(iso); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso; }
+}
+function _applyCampPerms(){
+  const canManage = _isPOorOrg();
+  ['camp-new-btn','camp-logs-btn','camp-edit-btn','camp-del-btn'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display = canManage?'inline-flex':'none';
+  });
+}
+function openCampLogs(){
+  if(!_isPOorOrg()){ showToast('Apenas PO, organizador ou adm podem ver os logs.'); return; }
+  document.getElementById('camp-logs-ov').classList.add('open');
+  const body = document.getElementById('camp-logs-body');
+  body.innerHTML = '<div class="camp-empty">Carregando...</div>';
+  window._get(_campLogRef()).then(snap=>{
+    const val = snap.val();
+    const logs = val ? Object.values(val).filter(Boolean) : [];
+    logs.sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
+    if(!logs.length){ body.innerHTML = '<div class="camp-empty">Nenhum log ainda.</div>'; return; }
+    const ACTION_LBL = {criar:'🆕 Criou', editar:'✏️ Editou', excluir:'🗑 Excluiu'};
+    body.innerHTML = logs.slice(0,200).map(l=>`
+      <div style="padding:8px 10px;border-bottom:1px solid var(--glass-b);font-size:12px;">
+        <div style="font-weight:600;">${esc(ACTION_LBL[l.action]||l.action)} — ${esc(l.campNome||l.campId||'?')}</div>
+        <div style="color:var(--txt3);font-size:10.5px;margin-top:2px;">${esc(l.user||'?')} · ${esc(_fmtCampLogTs(l.ts))}</div>
+      </div>`).join('');
+  }).catch(e=>{ body.innerHTML = '<div class="camp-empty">Erro: '+esc(e.message)+'</div>'; });
+}
+
 
 // ── Carregar ──────────────────────────────────────────────────────
 function loadCampanhas(){
@@ -7672,6 +7724,7 @@ function openCamp(){
   document.getElementById('camp-view-detalhe').style.display = 'none';
   _applyTemaPanel('neutro');
   document.getElementById('camp-ov').classList.add('open');
+  _applyCampPerms();
   // Se _campanhas ainda vazio (Firebase ainda carregando), mostra loading e aguarda
   if(Object.keys(_campanhas).length===0){
     const body = document.getElementById('camp-list-body');
@@ -7780,6 +7833,7 @@ function openCampDetalhe(id){
 }
 
 function renderCampDetalhe(c){
+  _applyCampPerms();
   const tema = CAMP_TEMAS[c.tema]||CAMP_TEMAS.neutro;
   document.getElementById('camp-det-emoji').textContent = tema.emoji;
   document.getElementById('camp-det-hd-nome').textContent = c.nome||'—';
@@ -8159,6 +8213,7 @@ async function delCampEntrada(campId, entradaId){
 
 // ── Criar / Editar campanha ───────────────────────────────────────
 function openCampEdit(id){
+  if(!_isPOorOrg()){ showToast('Apenas PO, organizador ou adm podem editar campanhas.'); return; }
   _campEditId = id||null;
   const c = id ? (_campanhas[id]||{}) : {};
   _campEditTema = c.tema||'neutro';
@@ -8223,6 +8278,7 @@ function campSelTema(el, tema){
 }
 
 async function saveCamp(){
+  if(!_isPOorOrg()){ showToast('Apenas PO, organizador ou adm podem editar campanhas.'); return; }
   const nome = document.getElementById('camp-edit-nome').value.trim();
   if(!nome){ uiAlert('Defina um nome para a campanha.'); return; }
   const tipo  = document.querySelector('input[name="camp-tipo"]:checked')?.value||'campanha';
@@ -8248,7 +8304,9 @@ async function saveCamp(){
     atualizadoEm: new Date().toISOString(),
   };
   try{
+    const _isNewCamp = !_campEditId;
     await window._set(_campRef(id), camp);
+    _logCampAction(_isNewCamp?'criar':'editar', camp);
     closeOv('camp-edit-ov');
     showToast('✅ Campanha salva!');
     if(_campAtual?.id===id){ _campAtual=camp; renderCampDetalhe(camp); }
@@ -8336,18 +8394,22 @@ async function campDelFixedLink(campId, tipo, idx){
 }
 
 async function campDeleteFromDetail(){
+  if(!_isPOorOrg()){ showToast('Apenas PO, organizador ou adm podem excluir campanhas.'); return; }
   if(!_campAtual) return;
   const c = _campanhas[_campAtual.id];
   if(!await uiConfirm('Excluir a campanha "'+esc(c?.nome||_campAtual.id)+'"? As entradas serão apagadas permanentemente.',{danger:true,okText:'Excluir'})) return;
+  _logCampAction('excluir', c||_campAtual);
   await window._set(_campRef(_campAtual.id), null).catch(e=>uiAlert(e.message));
   showToast('🗑 Campanha excluída.');
   campBack();
 }
 
 async function campDeleteCurrent(){
+  if(!_isPOorOrg()){ showToast('Apenas PO, organizador ou adm podem excluir campanhas.'); return; }
   if(!_campEditId) return;
   const c = _campanhas[_campEditId];
   if(!await uiConfirm('Excluir a campanha "'+esc(c?.nome||_campEditId)+'"? As entradas serão apagadas.',{danger:true,okText:'Excluir'})) return;
+  _logCampAction('excluir', c||{id:_campEditId});
   await window._set(_campRef(_campEditId), null).catch(e=>uiAlert(e.message));
   closeOv('camp-edit-ov');
   if(_campAtual?.id===_campEditId){ campBack(); }
