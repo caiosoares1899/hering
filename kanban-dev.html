@@ -3795,7 +3795,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.127-dev</div>
+<div class="version">v8.30.128-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15008,6 +15008,8 @@ async function sendBackupEmail(isTest=false){
 function testBackupEmail(){ sendBackupEmail(true); }
 
 // Salva snapshot completo no Firebase em backups/{date}
+const BACKUP_KEEP = 8; // mantem so os N snapshots mais recentes -- sem isso o
+                        // node de backups cresce pra sempre dentro do banco
 function saveSnapshotToFirebase(payload, type){
   const date = new Date().toISOString().split('T')[0];
   const key  = date; // uma entrada por dia (sobrescreve se rodar 2x no mesmo dia)
@@ -15022,6 +15024,19 @@ function saveSnapshotToFirebase(payload, type){
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/meta', meta);
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/data', payload);
   console.log('[Backup] Snapshot salvo no Firebase: backups/'+key);
+  _pruneOldBackups();
+}
+function _pruneOldBackups(){
+  window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/backups')).then(snap=>{
+    const val = snap.val(); if(!val) return;
+    const dates = Object.keys(val).sort(); // ascendente: mais antigo primeiro
+    if(dates.length <= BACKUP_KEEP) return;
+    const toDelete = dates.slice(0, dates.length - BACKUP_KEEP);
+    toDelete.forEach(d=>{
+      window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+d), null).catch(()=>{});
+    });
+    console.log('[Backup] Removidos '+toDelete.length+' snapshot(s) antigo(s) — mantendo os '+BACKUP_KEEP+' mais recentes.');
+  }).catch(()=>{});
 }
 
 // Renderiza histórico de snapshots do Firebase na aba Backup

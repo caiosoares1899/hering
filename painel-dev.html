@@ -2104,7 +2104,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.77 · painel-dev</div>
+<div class="version">v2.78 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6722,51 +6722,62 @@ function deleteGlobalUser(uid, nome){
     .catch(e=>showToast('❌ '+e.message));
 }
 
+// Custo de banda do Realtime Database: onValue() reenvia o nó inteiro a
+// cada mudança, pra cada aba conectada, sem limite. Com vários squads e
+// várias pessoas editando o dia todo, isso soma rápido. Por isso o Painel
+// usa polling (get() a cada POLL_MS) em vez de escuta em tempo real —
+// perde a atualização instantânea, mas o consumo passa a ter um teto fixo.
+const POLL_MS = 60000; // 60s — ajustável se precisar de mais/menos frescor
+function _applySquadDados(sqId, val){
+  val = val||{};
+  const _prev = squadData[sqId]||{};
+  squadData[sqId]={
+    cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({
+      ...card,
+      // Garante que todo card tem um id único e consistente
+      id: card.id || ('idx_'+i),
+    })):[],
+    columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
+    tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
+    agilCfg:val.agil_cfg||{},
+    flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
+    lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
+    cal_events: _prev.cal_events,
+  };
+  renderAll();
+  if(cfgSquadId===sqId) updateFlowBaselineLabel();
+  if(typeof renderLembretesPainel==='function') renderLembretesPainel();
+}
+function _pollSquadDados(sqId){
+  if(document.hidden) return; // aba em segundo plano: economiza banda, nao busca
+  window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados'))
+    .then(snap=>_applySquadDados(sqId, snap.val()))
+    .catch(()=>{});
+}
+function _pollSquadSnapshots(sqId){
+  if(document.hidden) return;
+  window._get(window._ref(window._db,'kanban/squads/'+sqId+'/snapshots'))
+    .then(snap=>{ snapshots[sqId]=snap.val()||{}; renderTrend(); })
+    .catch(()=>{});
+}
+// Quando a aba volta a ficar visível, faz um refresh imediato de todos os
+// squads já rastreados (em vez de esperar até 60s pra atualizar de novo).
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden || !window._squadListeners) return;
+  Object.keys(window._squadListeners).forEach(sqId=>{
+    _pollSquadDados(sqId);
+    _pollSquadSnapshots(sqId);
+  });
+});
 function loadAll(){
   if(!window._squadListeners) window._squadListeners = {};
   SQUADS.forEach(sq=>{
-    if(window._squadListeners[sq.id]) return; // ja ouvindo, evita listener duplicado
+    if(window._squadListeners[sq.id]) return; // ja monitorando, evita polling duplicado
     window._squadListeners[sq.id] = true;
-    // Ouve dados do squad
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados'),snap=>{
-      const val=snap.val()||{};
-      const _prev = squadData[sq.id]||{};
-      squadData[sq.id]={
-        cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({
-          ...card,
-          // Garante que todo card tem um id único e consistente
-          id: card.id || ('idx_'+i),
-        })):[],
-        columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
-        tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
-        agilCfg:val.agil_cfg||{},
-        flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
-        lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
-        cal_events: _prev.cal_events,
-      };
-      renderAll();
-    });
-    // Ouve snapshots (tendência)
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/snapshots'),snap=>{
-      const val=snap.val()||{};
-      snapshots[sq.id]=val;
-      renderTrend();
-    });
-    // Ouve lembretes compartilhados do squad (gestão / PO)
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/lembretes'),snap=>{
-      const val=snap.val();
-      if(!squadData[sq.id]) squadData[sq.id]={};
-      squadData[sq.id].lembretes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
-      if(typeof renderLembretesPainel==='function') renderLembretesPainel();
-    });
-    // Ouve baseline de fluxo (reset de contagem por squad)
-    window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/flow_baseline'),snap=>{
-      const val=snap.val();
-      if(!squadData[sq.id]) squadData[sq.id]={};
-      squadData[sq.id].flowBaseline = val||null;
-      if(cfgSquadId===sq.id) updateFlowBaselineLabel();
-      renderConsolidated();
-    });
+    _pollSquadDados(sq.id);
+    _pollSquadSnapshots(sq.id);
+    setInterval(()=>_pollSquadDados(sq.id), POLL_MS);
+    setInterval(()=>_pollSquadSnapshots(sq.id), POLL_MS);
   });
 }
 
