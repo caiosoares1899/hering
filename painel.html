@@ -2100,6 +2100,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 
 // esc(): escape de HTML. Redefinido aqui porque a versão do <script type="module">
 // fica encapsulada no escopo do módulo e NÃO é visível neste script clássico.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 // ── FILTRO DE SQUAD ────────────────────────────────────────────────
 let activeFilter = 'all';
 
