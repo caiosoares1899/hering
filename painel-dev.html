@@ -2120,7 +2120,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.80 · painel-dev</div>
+<div class="version">v2.81 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3086,10 +3086,18 @@ async function saveCamp(){
   const nome = document.getElementById('camp-edit-nome').value.trim();
   if(!nome){ uiAlert('Defina um nome para a campanha.'); return; }
   const tipo  = document.querySelector('input[name="camp-tipo"]:checked')?.value||'campanha';
-  const squads = [...document.querySelectorAll('input[name="camp-squads"]:checked')].map(cb=>cb.value);
   const u = window._currentUser;
   const id = _campEditId || ('c'+Date.now()+Math.random().toString(36).slice(2,6));
   const existing = _campanhas[id]||{};
+  // Preserva squads que a UI local nao consegue exibir (ex.: kanban.html so
+  // renderiza o checkbox da squad ativa, pois a lista global SQUADS so
+  // existe no painel.html) -- evita apagar outras squads de uma campanha
+  // multi-squad so por editar a partir de um board que nao lista todas.
+  const _squadCbs = [...document.querySelectorAll('input[name="camp-squads"]')];
+  const _renderedSquadIds = _squadCbs.map(cb=>cb.value);
+  const _squadsChecked = _squadCbs.filter(cb=>cb.checked).map(cb=>cb.value);
+  const _squadsPreserved = (existing.squads||[]).filter(sq=>!_renderedSquadIds.includes(sq));
+  const squads = [...new Set([..._squadsChecked, ..._squadsPreserved])];
   const camp = {
     ...existing,
     id, nome, tipo,
