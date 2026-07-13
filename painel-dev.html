@@ -2121,7 +2121,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.82 · painel-dev</div>
+<div class="version">v2.83 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2184,6 +2184,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 // esc(): escape de HTML. Redefinido aqui porque a versão do <script type="module">
 // fica encapsulada no escopo do módulo e NÃO é visível neste script clássico.
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 // ── FILTRO DE SQUAD ────────────────────────────────────────────────
 let activeFilter = 'all';
 
