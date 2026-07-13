@@ -3767,7 +3767,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.131</div>
+<div class="version">v8.30.132</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4245,6 +4245,7 @@ function updateBulkBar(){
     <div class="bulk-actions">
       <button class="bulk-act" ${dis} onclick="bulkMove()" title="Mover para coluna">📥<span>Mover</span></button>
       <button class="bulk-act" ${dis} onclick="bulkAssign()" title="Atribuir responsável">👤<span>Responsável</span></button>
+      <button class="bulk-act" ${dis} onclick="bulkDueDate()" title="Definir prazo">📅<span>Prazo</span></button>
       <button class="bulk-act" ${dis} onclick="bulkTag()" title="Adicionar/trocar tag">🏷<span>Tag</span></button>
       <button class="bulk-act" ${dis} onclick="bulkDuplicate()" title="Duplicar cards">⧉<span>Duplicar</span></button>
       <button class="bulk-act" ${dis} onclick="bulkArchive()" title="Arquivar">📦<span>Arquivar</span></button>
@@ -4259,7 +4260,7 @@ function _bulkPopover(html){
   pop=document.createElement('div'); pop.id='bulk-pop'; pop.className='bulk-pop';
   pop.innerHTML=html;
   document.body.appendChild(pop);
-  setTimeout(()=>{ const close=(e)=>{ if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },50);
+  setTimeout(()=>{ const close=(e)=>{ if(!pop.contains(e.target) && !e.target.closest('.dp-pop')){ pop.remove(); document.removeEventListener('mousedown',close); } }; document.addEventListener('mousedown',close); },50);
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
@@ -4328,6 +4329,28 @@ function _doBulkAssign(init){
     recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável');
   });
   _bulkFinish('👤 ' + n + ' card(s) ' + (init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável') + '.', true);
+}
+function bulkDueDate(){
+  if(!selectedCards.size) return;
+  const n=selectedCards.size;
+  _bulkPopover(`<div class="bulk-pop-title">Definir prazo em ${n} card(s):</div>
+    <div style="display:flex;gap:6px;align-items:center;padding:4px 4px 8px;">
+      <input type="date" id="bulk-due-inp" class="fi" style="flex:1;">
+      <button type="button" class="dp-btn" onclick="_dpOpen('bulk-due-inp',this)" title="Escolher no calendário">📅</button>
+    </div>
+    <button class="bulk-pop-item" onclick="_doBulkDueDate(document.getElementById('bulk-due-inp').value)">✓ Aplicar prazo</button>
+    <button class="bulk-pop-item" style="color:var(--danger);" onclick="_doBulkDueDate('')">🚫 Remover prazo</button>`);
+}
+function _doBulkDueDate(dateVal){
+  if(dateVal===undefined||dateVal===null) return;
+  const n=selectedCards.size;
+  _selectedList().forEach(c=>{
+    c.due=dateVal||'';
+    c.updatedAt=new Date().toISOString();
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    recordHistory(c, dateVal?('alterou prazo: '+_fmtDateBR2(dateVal)):'removeu prazo');
+  });
+  _bulkFinish('📅 ' + n + ' card(s) ' + (dateVal?('com prazo '+_fmtDateBR2(dateVal)):'sem prazo') + '.', true);
 }
 function bulkTag(){
   if(!selectedCards.size) return;
@@ -7319,6 +7342,12 @@ function _cardTempoPorColuna(c){
   return out;
 }
 function _fmtHoras(h){
+  if(h==null) return '—';
+  if(h<1) return '<1h';
+  if(h<24) return Math.round(h)+'h';
+  const d=Math.floor(h/24), rh=Math.round(h%24);
+  return rh? d+'d '+rh+'h' : d+'d';
+}
 // ── DATE PICKER: calendário custom com navegação por mês ────────────────
 // Complementa os <input type="date"> nativos (que continuam funcionando
 // normalmente pra quem prefere digitar) com um botão 📅 que abre um
@@ -7406,13 +7435,6 @@ function _dpRender(){
       <button onclick="_dpPick('')" type="button">✕ Limpar</button>
       <button onclick="_dpToday()" type="button">Hoje</button>
     </div>`;
-}
-
-  if(h==null) return '—';
-  if(h<1) return '<1h';
-  if(h<24) return Math.round(h)+'h';
-  const d=Math.floor(h/24), rh=Math.round(h%24);
-  return rh? d+'d '+rh+'h' : d+'d';
 }
 function openTempoReport(){
   document.getElementById('tempo-ov').classList.add('open');
