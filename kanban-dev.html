@@ -3807,7 +3807,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.134-dev</div>
+<div class="version">v8.30.135-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10303,8 +10303,10 @@ const tagId = cardTags[0] || '';
       if(spField) sp=String(spField.value.number);
     }
 
-    // Descrição limitada (Trello usa Markdown)
-    const desc=(card.desc||'').substring(0,600);
+    // Descrição completa (Trello usa Markdown) -- ANTES cortava em 600
+    // caracteres sem aviso, causando perda silenciosa de texto em cards
+    // importados (confirmado: 260 cards com desc truncada em produção).
+    const desc=card.desc||'';
 
     // Prazo
     const due=card.due?card.due.split('T')[0]:'';
