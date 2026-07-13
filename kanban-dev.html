@@ -303,6 +303,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
+/* Esconde o iconezinho nativo do navegador dentro do <input type=date> —
+   fica só o nosso botão 📅 (.dp-btn) temático, sem o calendário pretinho
+   padrão do Chrome/Edge embutido no campo. */
+input[type="date"]::-webkit-calendar-picker-indicator{display:none;-webkit-appearance:none;}
+input[type="date"]::-webkit-inner-spin-button{display:none;}
+input[type="date"]{-moz-appearance:textfield;}
 .dp-btn:hover{color:var(--accent);border-color:var(--accent);}
 .dp-pop{position:fixed;z-index:9999;background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:10px;padding:10px;box-shadow:0 10px 28px rgba(0,0,0,.55);width:224px;font-family:'DM Sans',sans-serif;}
 .dp-pop-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -3807,7 +3813,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.137-dev</div>
+<div class="version">v8.30.138-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
