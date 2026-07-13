@@ -3377,8 +3377,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 </div>
-</div>
-  </div>
 </div> <div class="ev-modal-ov" id="cal-day-pop-ov" style="z-index: 9500;">
   <div class="ev-modal" style="max-width: 360px;">
     <div class="ev-modal-hd">
@@ -3769,7 +3767,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.129</div>
+<div class="version">v8.30.130</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11451,8 +11449,8 @@ function renderMentionDropdown(dd, matches, ta, atPos, pos){
   matches.forEach((m,i)=>{
     const opt = document.createElement('div');
     opt.className = 'mention-option' + (i===0?' active':'');
-    const av = m.foto
-      ? '<img src="'+m.foto+'" onerror="this.style.display=\'none\'">' 
+    const av = safeUrl(m.foto)
+      ? '<img src="'+safeUrl(m.foto)+'" onerror="this.style.display=\'none\'">' 
       : '<div class="mention-avatar">'+m.init+'</div>';
     const handle = getMemberHandle(m);
     opt.innerHTML = av
