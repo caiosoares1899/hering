@@ -2128,7 +2128,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.86 · painel-dev</div>
+<div class="version">v2.87 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3951,7 +3951,7 @@ function openPcModal(squadId, cardId){
   const tag=d.tags?.find(t=>t.id===card.tag);
   
   document.getElementById('pc-modal-title').textContent=card.title;
-  document.getElementById('pc-modal-link').href=squadBoardUrl(squadId);
+  document.getElementById('pc-modal-link').href=squadBoardUrl(squadId, card.id);
   
   const cl=card.checklist||[];
   const done=cl.filter(i=>i.done).length;
