@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maré Digital · Documentação Técnica v8.3</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --deep:#030d1a;--glass:rgba(10,37,64,.55);--glass-b:rgba(56,182,255,.15);
+  --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --warn:#ffd166;--danger:#ff6b6b;--purple:#a78bfa;--orange:#fb923c;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,.65);--txt3:rgba(150,200,240,.35);
+  --r:10px;--r2:16px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);min-height:100vh;overflow-x:hidden;}
+.ocean-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 15% 85%,rgba(0,70,140,.5) 0%,transparent 55%),
+             radial-gradient(ellipse at 85% 15%,rgba(0,130,160,.22) 0%,transparent 50%),#010810;}
+.bubble{position:fixed;border-radius:50%;border:1px solid rgba(56,182,255,.15);
+  background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.18),rgba(0,229,255,.03));
+  animation:rise linear infinite;bottom:-60px;}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.7}90%{opacity:.2}100%{transform:translateY(-110vh);opacity:0}}
+.layout{position:relative;z-index:2;display:grid;grid-template-columns:265px 1fr;min-height:100vh;}
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;padding:1.5rem 1.1rem;
+  border-right:1px solid var(--glass-b);background:rgba(3,13,26,.78);backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;gap:.25rem;}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:99px;}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:.9rem;padding-bottom:.9rem;border-bottom:1px solid var(--glass-b);}
+.logo-icon{font-size:24px;}
+.logo-text{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:800;line-height:1.2;}
+.logo-sub{font-size:9px;color:var(--txt3);letter-spacing:.14em;text-transform:uppercase;}
+.ng{margin-top:.5rem;}
+.ng-lbl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.14em;font-weight:700;
+  padding:.3rem 8px .35rem;display:flex;align-items:center;gap:5px;}
+.ng-lbl::before{content:'';display:block;width:10px;height:1px;background:var(--txt3);}
+.nl{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:8px;
+  font-size:11px;color:var(--txt2);cursor:pointer;transition:all .15s;border-left:2px solid transparent;}
+.nl:hover{background:rgba(56,182,255,.08);color:var(--accent);}
+.nl.active{background:rgba(56,182,255,.1);color:var(--accent);border-left-color:var(--accent);}
+.nd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.nb{margin-left:auto;font-size:8px;padding:1px 5px;border-radius:999px;font-weight:700;}
+.nb-t{background:rgba(29,233,182,.14);color:var(--teal);border:1px solid rgba(29,233,182,.3);}
+.nb-w{background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
+.nb-b{background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);}
+.nb-p{background:rgba(167,139,250,.14);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+.main{padding:2.8rem 3.2rem;max-width:980px;}
+/* hero */
+.hero{margin-bottom:2.8rem;}
+.ey{font-size:10px;color:var(--teal);font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  margin-bottom:.5rem;display:flex;align-items:center;gap:7px;}
+.ey::before{content:'';display:block;width:18px;height:1px;background:var(--teal);}
+h1{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;line-height:1.1;margin-bottom:.7rem;}
+h1 span{color:var(--accent);}
+.hdesc{font-size:13.5px;color:var(--txt2);line-height:1.7;max-width:580px;margin-bottom:1.4rem;}
+.pills{display:flex;gap:7px;flex-wrap:wrap;}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid;}
+.pb{background:rgba(37,99,201,.18);border-color:rgba(37,99,201,.4);color:#7eb3ff;}
+.pt{background:rgba(29,233,182,.1);border-color:rgba(29,233,182,.28);color:var(--teal);}
+.pw{background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.25);color:var(--warn);}
+.pp{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.28);color:var(--purple);}
+.po{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.28);color:var(--orange);}
+/* section */
+.section{margin-bottom:3.2rem;scroll-margin-top:2rem;opacity:0;transform:translateY(14px);transition:opacity .4s,transform .4s;}
+.section.visible{opacity:1;transform:translateY(0);}
+.sh{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1.4rem;}
+.sn{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--txt3);min-width:26px;padding-top:4px;}
+.stag{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem;display:flex;align-items:center;gap:5px;}
+.stag::before{content:'';display:block;width:12px;height:1px;}
+h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:.35rem;}
+.slead{font-size:12.5px;color:var(--txt2);line-height:1.65;max-width:560px;}
+/* grid cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:1.1rem;}
+.g2{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:repeat(3,1fr);}
+.card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:1.1rem;backdrop-filter:blur(10px);transition:all .2s;}
+.card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.ci{font-size:20px;margin-bottom:.55rem;}
+.ct{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;margin-bottom:.3rem;}
+.cd{font-size:10.5px;color:var(--txt2);line-height:1.6;}
+/* wide card */
+.wc{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:1.1rem 1.3rem;backdrop-filter:blur(10px);margin-bottom:9px;}
+.wch{display:flex;align-items:center;gap:8px;margin-bottom:.55rem;}
+.wci{font-size:16px;}
+.wct{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;flex:1;}
+.wcb{font-size:11.5px;color:var(--txt2);line-height:1.7;}
+.wcb strong{color:var(--txt);}
+/* code */
+.code{background:rgba(1,8,20,.85);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);
+  padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;
+  color:#7ec8e3;overflow-x:auto;margin:.5rem 0;}
+.code .cm{color:rgba(150,200,240,.36);}
+.code .k{color:#ffd166;}.code .v{color:#1de9b6;}.code .fn{color:#a78bfa;}
+.cl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);
+  margin-bottom:.3rem;display:flex;align-items:center;gap:5px;}
+.cl::before{content:'';width:9px;height:1px;background:var(--txt3);}
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:.7rem 0;}
+.tbl th{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;padding:7px 11px;text-align:left;border-bottom:1px solid var(--glass-b);}
+.tbl td{padding:8px 11px;color:var(--txt2);border-bottom:1px solid rgba(56,182,255,.05);vertical-align:top;}
+.tbl tr:hover td{background:rgba(56,182,255,.03);}
+.tbl td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:10px;}
+/* flow */
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:.8rem 0;}
+.fb{background:rgba(37,99,201,.16);border:1px solid rgba(37,99,201,.32);border-radius:var(--r);padding:6px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;color:#7eb3ff;white-space:nowrap;}
+.fb.t{background:rgba(29,233,182,.1);border-color:rgba(29,233,182,.3);color:var(--teal);}
+.fb.p{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.28);color:var(--purple);}
+.fa{font-size:12px;color:var(--txt3);padding:0 6px;}
+/* security */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.si{background:var(--glass);border-radius:var(--r2);padding:1rem;border:1px solid var(--glass-b);backdrop-filter:blur(10px);}
+.si.ok{border-color:rgba(29,233,182,.3);background:rgba(29,233,182,.05);}
+.bdg{font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;}
+.ok-b{background:rgba(29,233,182,.16);color:var(--teal);border:1px solid rgba(29,233,182,.28);}
+.done-b{background:rgba(37,99,201,.18);color:#7eb3ff;border:1px solid rgba(37,99,201,.32);}
+.si-t{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;margin:.35rem 0 .25rem;}
+.si-d{font-size:10.5px;color:var(--txt2);line-height:1.6;}
+/* roles */
+.role{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:999px;}
+.r-po{background:rgba(29,233,182,.13);color:var(--teal);border:1px solid rgba(29,233,182,.28);}
+.r-org{background:rgba(255,209,102,.11);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
+.r-mem{background:rgba(56,182,255,.11);color:var(--accent);border:1px solid rgba(56,182,255,.25);}
+/* squad chips */
+.sc{display:flex;gap:8px;flex-wrap:wrap;margin:.8rem 0;}
+.sch{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:var(--r);background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(8px);}
+.sci{font-size:17px;}
+.scn{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;}
+.scu{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt3);}
+/* db tree */
+.dbt{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:2;background:rgba(1,8,20,.8);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);padding:1rem 1.2rem;color:var(--txt2);}
+.dbt .p{color:var(--accent);}.dbt .n{color:rgba(150,200,240,.36);font-size:10px;}
+.dbt .sq{color:var(--teal);}.dbt .sh2{color:var(--purple);}
+code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56,182,255,.1);color:var(--teal);padding:1px 5px;border-radius:4px;}
+.div{height:1px;background:linear-gradient(90deg,transparent,var(--glass-b),transparent);margin:2.5rem 0;}
+.footer{padding:1.8rem 0;border-top:1px solid var(--glass-b);margin-top:2rem;font-size:11px;color:var(--txt3);display:flex;justify-content:space-between;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.sidebar{position:static;height:auto;}.main{padding:1.2rem 1rem;}h1{font-size:24px;}.sg,.g2,.g3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="ocean-bg"></div>
+<div id="bubbles"></div>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo"><div class="logo-icon">🐟</div><div><div class="logo-text">Maré Digital</div><div class="logo-sub">Docs v8.3</div></div></div>
+
+  <div class="ng"><div class="ng-lbl">Visão geral</div>
+    <a class="nl" onclick="goTo('overview')"><span class="nd" style="background:var(--accent)"></span>O que é</a>
+    <a class="nl" onclick="goTo('arch')"><span class="nd" style="background:var(--cyan)"></span>Arquitetura</a>
+    <a class="nl" onclick="goTo('files')"><span class="nd" style="background:var(--purple)"></span>Os três arquivos</a>
+    <a class="nl" onclick="goTo('squads')"><span class="nd" style="background:var(--teal)"></span>Squads & multi-board</a>
+    <a class="nl" onclick="goTo('firebase-db')"><span class="nd" style="background:var(--teal)"></span>Estrutura Firebase</a>
+  </div>
+
+  <div class="ng"><div class="ng-lbl">kanban.html · v8.3.2</div>
+    <a class="nl" onclick="goTo('auth')"><span class="nd" style="background:var(--purple)"></span>Autenticação & papéis</a>
+    <a class="nl" onclick="goTo('board')"><span class="nd" style="background:var(--accent)"></span>Board & visualizações</a>
+    <a class="nl" onclick="goTo('cards')"><span class="nd" style="background:var(--cyan)"></span>Sistema de cards</a>
+    <a class="nl" onclick="goTo('agent')"><span class="nd" style="background:var(--warn)"></span>Agente Ágil <span class="nb nb-w">IA</span></a>
+    <a class="nl" onclick="goTo('auto')"><span class="nd" style="background:var(--purple)"></span>Automações</a>
+    <a class="nl" onclick="goTo('extras')"><span class="nd" style="background:var(--accent)"></span>Extras & features</a>
+    <a class="nl" onclick="goTo('backup')"><span class="nd" style="background:var(--orange)"></span>Backup & snapshots</a>
+  </div>
+
+  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.2.7</div>
+    <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
+  </div>
+
+  <div class="ng"><div class="ng-lbl">painel.html · v1.8</div>
+    <a class="nl" onclick="goTo('painel-overview')"><span class="nd" style="background:var(--teal)"></span>Visão geral</a>
+    <a class="nl" onclick="goTo('painel-sections')"><span class="nd" style="background:var(--cyan)"></span>Seções & métricas</a>
+    <a class="nl" onclick="goTo('painel-setup')"><span class="nd" style="background:var(--purple)"></span>Board Setup</a>
+    <a class="nl" onclick="goTo('painel-users')"><span class="nd" style="background:var(--accent)"></span>Gestão de usuários</a>
+  </div>
+
+  <div class="ng"><div class="ng-lbl">Segurança</div>
+    <a class="nl" onclick="goTo('security')"><span class="nd" style="background:var(--teal)"></span>Camadas <span class="nb nb-t">v8.3</span></a>
+    <a class="nl" onclick="goTo('firebase-rules')"><span class="nd" style="background:var(--danger)"></span>Firebase Rules</a>
+    <a class="nl" onclick="goTo('worker-sec')"><span class="nd" style="background:var(--warn)"></span>Worker v3.0</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="ey">Digital Hering · Grupo Azzas 2154</div>
+  <h1>Maré Digital<br><span>Documentação Técnica</span></h1>
+  <p class="hdesc">Sistema Kanban desenvolvido internamente. Três arquivos HTML, zero backend próprio, sincronização em tempo real via Firebase, agente de IA integrado e suporte a múltiplos squads.</p>
+  <div class="pills">
+    <span class="pill pb">kanban.html · v8.3.2</span>
+    <span class="pill pp">kanban-dev.html · v8.2.7</span>
+    <span class="pill pt">painel.html · v1.8</span>
+    <span class="pill pw">🤖 Claude Sonnet</span>
+    <span class="pill po">☁ Firebase RTDB</span>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- 01 O QUE É -->
+<section class="section" id="overview">
+  <div class="sh"><div class="sn">01</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>Visão geral</div>
+    <h2>O que é o Maré Digital</h2>
+    <p class="slead">Kanban ágil single-file que roda no browser. Deploy = git push no GitHub Pages.</p>
+  </div></div>
+  <div class="grid">
+    <div class="card"><div class="ci">📄</div><div class="ct">Single-file app</div><div class="cd">HTML, CSS e JS num único arquivo por tela. Sem build, sem dependências locais, sem servidor próprio.</div></div>
+    <div class="card"><div class="ci">🔄</div><div class="ct">Tempo real</div><div class="cd">Firebase Realtime DB via WebSocket — qualquer mudança aparece no board de todos em menos de 1s.</div></div>
+    <div class="card"><div class="ci">🤖</div><div class="ct">Agente de IA</div><div class="cd">Lê o estado atual e age sobre ele: move cards, cria tarefas, atribui donos, analisa métricas.</div></div>
+    <div class="card"><div class="ci">🏢</div><div class="ct">Multi-squad</div><div class="cd">Um deployment serve N squads via <code class="hl">?squad=id</code>. Dados isolados por squad no Firebase.</div></div>
+    <div class="card"><div class="ci">📱</div><div class="ct">PWA + Mobile</div><div class="cd">Instalável no Android/iOS. Bottom nav, touch drag-and-drop, safe-area. Service Worker para cache offline.</div></div>
+    <div class="card"><div class="ci">🔒</div><div class="ct">Acesso restrito</div><div class="cd">Login exclusivo Google <code class="hl">@ciahering.com.br</code>. Domínio validado no servidor via Firebase Rules.</div></div>
+  </div>
+</section>
+
+<!-- 02 ARQUITETURA -->
+<section class="section" id="arch">
+  <div class="sh"><div class="sn">02</div><div>
+    <div class="stag" style="color:var(--cyan)"><span style="background:var(--cyan)"></span>Infraestrutura</div>
+    <h2>Arquitetura</h2>
+    <p class="slead">Quatro peças externas, nenhum servidor próprio.</p>
+  </div></div>
+  <svg viewBox="0 0 800 290" xmlns="http://www.w3.org/2000/svg" width="100%" style="display:block;margin:0 auto 1.4rem;max-width:800px;">
+    <defs>
+      <marker id="a1" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(56,182,255,.45)"/></marker>
+      <marker id="a2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(29,233,182,.45)"/></marker>
+    </defs>
+    <rect x="10" y="105" width="155" height="80" rx="10" fill="rgba(37,99,201,.16)" stroke="rgba(37,99,201,.4)" stroke-width="1"/>
+    <text x="87" y="134" text-anchor="middle" fill="#7eb3ff" font-family="Syne" font-size="12" font-weight="700">GitHub Pages</text>
+    <text x="87" y="151" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="JetBrains Mono" font-size="9">kanban.html</text>
+    <text x="87" y="167" text-anchor="middle" fill="rgba(200,230,255,.35)" font-family="JetBrains Mono" font-size="9">kanban-dev · painel</text>
+    <rect x="10" y="12" width="155" height="58" rx="10" fill="rgba(167,139,250,.1)" stroke="rgba(167,139,250,.3)" stroke-width="1"/>
+    <text x="87" y="38" text-anchor="middle" fill="#a78bfa" font-family="Syne" font-size="12" font-weight="700">Google Auth</text>
+    <text x="87" y="55" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="JetBrains Mono" font-size="9">@ciahering.com.br</text>
+    <rect x="10" y="215" width="155" height="60" rx="10" fill="rgba(29,233,182,.09)" stroke="rgba(29,233,182,.32)" stroke-width="1"/>
+    <text x="87" y="243" text-anchor="middle" fill="#1de9b6" font-family="Syne" font-size="12" font-weight="700">Firebase RTDB</text>
+    <text x="87" y="260" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="JetBrains Mono" font-size="9">hering-onboarding</text>
+    <line x1="87" y1="70" x2="87" y2="105" stroke="rgba(167,139,250,.4)" stroke-width="1.5" marker-end="url(#a1)" stroke-dasharray="4,3"/>
+    <line x1="87" y1="185" x2="87" y2="215" stroke="rgba(29,233,182,.4)" stroke-width="1.5" marker-end="url(#a2)" stroke-dasharray="4,3"/>
+    <text x="93" y="204" fill="rgba(29,233,182,.55)" font-family="DM Sans" font-size="9">sync realtime ↕</text>
+    <rect x="322" y="105" width="155" height="80" rx="10" fill="rgba(255,209,102,.07)" stroke="rgba(255,209,102,.28)" stroke-width="1"/>
+    <text x="399" y="134" text-anchor="middle" fill="#ffd166" font-family="Syne" font-size="12" font-weight="700">Cloudflare Worker</text>
+    <text x="399" y="151" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="JetBrains Mono" font-size="9">falling-bush-7bdd</text>
+    <text x="399" y="167" text-anchor="middle" fill="rgba(200,230,255,.35)" font-family="JetBrains Mono" font-size="9">proxy + Origin guard v3.0</text>
+    <line x1="165" y1="145" x2="322" y2="145" stroke="rgba(255,209,102,.38)" stroke-width="1.5" marker-end="url(#a1)"/>
+    <text x="212" y="138" fill="rgba(255,209,102,.6)" font-family="DM Sans" font-size="9">POST /api/chat</text>
+    <rect x="635" y="105" width="155" height="80" rx="10" fill="rgba(255,107,107,.07)" stroke="rgba(255,107,107,.22)" stroke-width="1"/>
+    <text x="712" y="134" text-anchor="middle" fill="#ff8fa3" font-family="Syne" font-size="12" font-weight="700">Anthropic API</text>
+    <text x="712" y="151" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="JetBrains Mono" font-size="9">claude-sonnet-4</text>
+    <text x="712" y="167" text-anchor="middle" fill="rgba(200,230,255,.35)" font-family="JetBrains Mono" font-size="9">API Key = secret</text>
+    <line x1="477" y1="145" x2="635" y2="145" stroke="rgba(255,107,107,.32)" stroke-width="1.5" marker-end="url(#a1)"/>
+    <text x="512" y="138" fill="rgba(255,107,107,.5)" font-family="DM Sans" font-size="9">key nunca exposta</text>
+  </svg>
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">📦</div><div class="wct">O que fica no Firebase</div></div><div class="wcb">Cards, tags, colunas, sprint cfg, automações, backups, comentários, logs de erro, presença. <strong>Segregado por squad.</strong></div></div>
+    <div class="wc"><div class="wch"><div class="wci">🔑</div><div class="wct">O que fica no Worker</div></div><div class="wcb">A <strong>chave da Anthropic</strong> como secret Cloudflare. Browser nunca a vê. Worker pina model e limita tokens.</div></div>
+  </div>
+</section>
+
+<!-- 03 OS TRÊS ARQUIVOS -->
+<section class="section" id="files">
+  <div class="sh"><div class="sn">03</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>Arquivos</div>
+    <h2>Os três arquivos</h2>
+    <p class="slead">Papel e URL próprios. Mesmo Firebase, mesmo Worker.</p>
+  </div></div>
+  <table class="tbl">
+    <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
+    <tbody>
+      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.3.2 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=midia</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
+      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.2.7 dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios</td></tr>
+      <tr><td>painel.html</td><td><span class="bdg nb-t">v1.8</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads</td></tr>
+    </tbody>
+  </table>
+  <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
+    <div class="wch"><div class="wci">🔁</div><div class="wct">Relação prod ↔ dev</div></div>
+    <div class="wcb"><strong>kanban-dev.html é uma cópia funcional do prod</strong> — mesmas funções, mesmo Firebase — com duas diferenças: squad padrão é <code class="hl">dev</code> (dados isolados) e tem o <strong>Dev Seed</strong> para popular o board com dados fictícios. Toda feature nova é testada aqui antes de ir para kanban.html.</div>
+  </div>
+</section>
+
+<!-- 04 SQUADS -->
+<section class="section" id="squads">
+  <div class="sh"><div class="sn">04</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Multi-squad</div>
+    <h2>Squads & Multi-board</h2>
+    <p class="slead">Squad ativo lido da URL — determina título, path Firebase, presença e contexto do agente.</p>
+  </div></div>
+  <div class="sc">
+    <div class="sch"><div class="sci">📊</div><div><div class="scn">Squad Dados</div><div class="scu">?squad=dados</div></div></div>
+    <div class="sch"><div class="sci">📱</div><div><div class="scn">Mkt de Performance</div><div class="scu">?squad=midia</div></div></div>
+    <div class="sch"><div class="sci">🎨</div><div><div class="scn">Mídia Criativa</div><div class="scu">?squad=midiacriativa</div></div></div>
+    <div class="sch" style="border-color:rgba(251,146,60,.3);"><div class="sci">🧪</div><div><div class="scn">Dev Sandbox</div><div class="scu">?squad=dev</div></div></div>
+    <div class="sch" style="border-style:dashed;border-color:rgba(167,139,250,.3);"><div class="sci">＋</div><div><div class="scn">Criado via Painel</div><div class="scu">Board Setup dinâmico</div></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🔀</div><div class="wct">Redirect legacy</div></div><div class="wcb">Squad <code class="hl">criacao</code> renomeado para <code class="hl">midiacriativa</code>. Código detecta e redireciona automaticamente — bookmarks antigos continuam funcionando.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">👤</div><div class="wct">Acesso por squad</div></div><div class="wcb">Cada usuário tem <code class="hl">squads: {dados:true}</code> no Firebase. No login, o app verifica a quais squads pertence e redireciona. POs convidam membros e adicionam externos.</div></div>
+  </div>
+</section>
+
+<!-- 05 FIREBASE DB -->
+<section class="section" id="firebase-db">
+  <div class="sh"><div class="sn">05</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Firebase</div>
+    <h2>Estrutura do banco</h2>
+    <p class="slead">Dados segregados por squad. Usuários e presença compartilhados.</p>
+  </div></div>
+  <div class="dbt">
+<span class="sq">kanban/</span>
+├── <span class="sq">squads/</span>
+│   └── <span class="p">{squadId}/</span>                <span class="n">← dados, midia, midiacriativa, dev...</span>
+│       ├── <span class="p">dados/</span>
+│       │   ├── cards          <span class="n">← todos os cards do squad</span>
+│       │   ├── tags           <span class="n">← tags configuradas</span>
+│       │   ├── columns        <span class="n">← colunas customizadas</span>
+│       │   ├── agil_cfg       <span class="n">← sprint, WIP, objetivo</span>
+│       │   ├── auto_rules     <span class="n">← automações Butler-style</span>
+│       │   ├── ql_items       <span class="n">← modelos e recorrentes</span>
+│       │   ├── links          <span class="n">← links importantes</span>
+│       │   ├── agent_msgs     <span class="n">← histórico do Agente Ágil</span>
+│       │   └── config         <span class="n">← ex: blockerMode</span>
+│       ├── <span class="p">cards/{cardId}/comments</span>  <span class="n">← threads de comentários</span>
+│       ├── <span class="p">error_logs</span>               <span class="n">← logs de erro monitorados</span>
+│       ├── <span class="p">error_stats</span>              <span class="n">← estatísticas diárias</span>
+│       ├── <span class="p">agent_usage</span>              <span class="n">← frequência de uso do agente</span>
+│       ├── <span class="p">snapshots/{date}</span>         <span class="n">← fotos diárias do board</span>
+│       ├── <span class="p">backups/{key}</span>            <span class="n">← backups manuais/automáticos</span>
+│       ├── <span class="p">externos</span>                <span class="n">← e-mails externos autorizados</span>
+│       └── <span class="p">presence</span>                <span class="n">← presença online do squad</span>
+│
+├── <span class="sh2">squads_meta/</span>               <span class="n">← squads criados dinamicamente via Painel</span>
+├── <span class="sh2">usuarios/{uid}</span>             <span class="n">← perfil, papel e squads de cada membro</span>
+└── <span class="sh2">presence/{uid}</span>             <span class="n">← presença global (usada pelo Painel)</span>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 06 AUTH -->
+<section class="section" id="auth">
+  <div class="sh"><div class="sn">06</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>kanban.html</div>
+    <h2>Autenticação & Papéis</h2>
+    <p class="slead">Google OAuth + ADMs hardcoded + papéis por squad.</p>
+  </div></div>
+  <div class="flow">
+    <div class="fb p">Login Google</div><div class="fa">→</div>
+    <div class="fb">@ciahering?</div><div class="fa">→</div>
+    <div class="fb t">autoRegistrar()</div><div class="fa">→</div>
+    <div class="fb">squads do user</div><div class="fa">→</div>
+    <div class="fb t">resolveSquadAndShow()</div>
+  </div>
+  <div class="grid g3" style="margin:.9rem 0;">
+    <div class="card" style="border-color:rgba(29,233,182,.3);background:rgba(29,233,182,.05);"><div style="margin-bottom:.4rem;"><span class="role r-po">PO</span></div><div class="cd">Agente Ágil, configurações, gestão de papéis, convite de membros, backup, automações.</div></div>
+    <div class="card" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.04);"><div style="margin-bottom:.4rem;"><span class="role r-org">Organizador</span></div><div class="cd">Agente Ágil, tudo no board. Não altera papéis de outros membros.</div></div>
+    <div class="card"><div style="margin-bottom:.4rem;"><span class="role r-mem">Membro</span></div><div class="cd">Cria, edita e move cards. Sem Agente Ágil, sem configurações avançadas.</div></div>
+  </div>
+  <div class="wc"><div class="wch"><div class="wci">🛡</div><div class="wct">ADMs hardcoded — getEffectiveRole()</div></div>
+  <div class="wcb">Dois e-mails (<code class="hl">caio.soares</code> e <code class="hl">rafael.passos</code>) têm papel mínimo PO hardcoded em <code class="hl">ADM_EMAILS</code>. A função <code class="hl">getEffectiveRole()</code> garante isso independente do que estiver no Firebase — não é possível rebaixá-los editando o banco.</div></div>
+</section>
+
+<!-- 07 BOARD -->
+<section class="section" id="board">
+  <div class="sh"><div class="sn">07</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>kanban.html</div>
+    <h2>Board & Visualizações</h2>
+    <p class="slead">Três modos de visualização, filtros multicritério, drag-and-drop mouse e toque.</p>
+  </div></div>
+  <table class="tbl">
+    <thead><tr><th>Função</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>renderNormal()</td><td>Grid de colunas. Cards ordenados por prioridade (critical→high→medium→low). Colunas minimizáveis.</td></tr>
+      <tr><td>renderRaiaOwner()</td><td>"Raia · pessoa" — faixa horizontal por responsável. Sem dono = faixa de aviso pulsante no fim.</td></tr>
+      <tr><td>renderRaiaTag()</td><td>"Raia · tipo" — faixa por tag. Cor da faixa = cor da tag. Sem tag = "Sem tipo".</td></tr>
+      <tr><td>toggleRaia()</td><td>Cicla: Off → Raia pessoa → Raia tipo → Off. Rótulo do botão muda para indicar o modo.</td></tr>
+      <tr><td>passesFilter()</td><td>Dono, tag, prazo (atrasado/hoje/7 dias), prioridade, impedido, com riscos — AND entre filtros.</td></tr>
+      <tr><td>handleDrag*()</td><td>Drag-and-drop desktop com ghost-line indicando posição. Drop aciona Firebase + automações.</td></tr>
+      <tr><td>addTouchDnD()</td><td>Touch DnD mobile via touchstart/move/end. Clone visual segue o dedo; detecta coluna via elementFromPoint().</td></tr>
+      <tr><td>openSearch()</td><td>Busca por texto em título, descrição e PO. Navegação por teclado (↑↓ Enter). Abre card diretamente.</td></tr>
+    </tbody>
+  </table>
+  <div class="grid">
+    <div class="card"><div class="ci">💤</div><div class="ct">Card aging</div><div class="cd">7 dias sem edição: desbotado. 14 dias: emoji 💤 + mais transparente. Sinal visual de estagnação.</div></div>
+    <div class="card"><div class="ci">🔗</div><div class="ct">Dependências</div><div class="cd">Cards vinculados via "depende de". Mini-mapa de dependências no card. Modal com árvore completa.</div></div>
+    <div class="card"><div class="ci">💬</div><div class="ct">Comentários</div><div class="cd">Thread por card com @menção a membros e @card. Persiste em <code class="hl">squads/{id}/cards/{cid}/comments</code>.</div></div>
+    <div class="card"><div class="ci">📊</div><div class="ct">Métricas de WIP</div><div class="cd">WIP, throughput, bloqueios e capacidade exibidos em tempo real. O Agente Ágil os lê e interpreta.</div></div>
+  </div>
+</section>
+
+<!-- 08 CARDS -->
+<section class="section" id="cards">
+  <div class="sh"><div class="sn">08</div><div>
+    <div class="stag" style="color:var(--cyan)"><span style="background:var(--cyan)"></span>kanban.html</div>
+    <h2>Sistema de Cards</h2>
+    <p class="slead">Objeto rico com campos ágeis completos. Auto-save, OKR flag, anexos e dependências.</p>
+  </div></div>
+  <div class="cl">estrutura de um card</div>
+  <div class="code">{ <span class="k">id</span>:<span class="v">"c1749123"</span>, <span class="k">col</span>:<span class="v">"progress"</span>, <span class="k">tag</span>:<span class="v">"data"</span>, <span class="k">owner</span>:<span class="v">"CS"</span>,
+  <span class="k">participants</span>:<span class="v">["CS","RP"]</span>, <span class="k">due</span>:<span class="v">"2025-06-20"</span>, <span class="k">priority</span>:<span class="v">"high"</span>, <span class="k">sp</span>:<span class="v">"5"</span>,
+  <span class="k">desc</span>:<span class="v">"..."</span>, <span class="k">po</span>:<span class="v">"Objetivo SMART..."</span>, <span class="cm">// campo exclusivo do PO</span>
+  <span class="k">checklist</span>:<span class="v">[{t:"item",done:false}]</span>, <span class="k">riscos</span>:<span class="v">["Dep ERP"]</span>,
+  <span class="k">okr</span>:<span class="v">false</span>, <span class="k">dependsOn</span>:<span class="v">"c1749000001"</span>, <span class="cm">// card pai</span>
+  <span class="k">blocker</span>:<span class="v">false</span>, <span class="k">archived</span>:<span class="v">false</span>,
+  <span class="k">created</span>:<span class="v">"Caio"</span>, <span class="k">edited</span>:<span class="v">"Caio"</span>, <span class="k">createdAt</span>:<span class="v">"2025-06-01"</span>, <span class="k">editedAt</span>:<span class="v">"2025-06-08"</span> }</div>
+  <div class="grid" style="margin-top:1rem;">
+    <div class="card"><div class="ci">🎯</div><div class="ct">Insights do PO</div><div class="cd">Campo exclusivo para objetivo, contexto e critério de aceite SMART. Isolado da descrição técnica.</div></div>
+    <div class="card"><div class="ci">🏆</div><div class="ct">Flag de OKR</div><div class="cd">Card marcado como OKR da sprint. Painel agrega OKRs de todos os squads em uma visão consolidada.</div></div>
+    <div class="card"><div class="ci">📎</div><div class="ct">Anexos de links</div><div class="cd">Links dentro do card com detecção automática do serviço (Jira, Figma, GitHub, Drive etc.) e favicon.</div></div>
+    <div class="card"><div class="ci">💾</div><div class="ct">Auto-save</div><div class="cd">Debounce 800ms: sem nova edição no modal, salva automaticamente no Firebase.</div></div>
+    <div class="card"><div class="ci">🚥</div><div class="ct">Semáforo de prazo</div><div class="cd">Verde/amarelo/vermelho. Cards em "Concluído" congelam o badge com ✓ — nunca ficam vermelhos.</div></div>
+    <div class="card"><div class="ci">📋</div><div class="ct">Modelos reutilizáveis</div><div class="cd">Salva tag, PO, checklist zerado e riscos. Disponível em Toolbar → Modelos para criar em qualquer sprint.</div></div>
+  </div>
+</section>
+
+<!-- 09 AGENTE -->
+<section class="section" id="agent">
+  <div class="sh"><div class="sn">09</div><div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>IA · kanban.html</div>
+    <h2>Agente Ágil</h2>
+    <p class="slead">IA que lê o board e age sobre ele. Disponível para PO e Organizadores.</p>
+  </div></div>
+  <div class="wc" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
+    <div class="wch"><div class="wci">🧠</div><div class="wct">Contexto dinâmico — agCtx()</div></div>
+    <div class="wcb">A cada mensagem monta snapshot completo: todos os cards com ID exato, coluna, dono, prazo, checklist, OKR, riscos, PO — mais WIP, capacidade, sprint e membros. Enviado como system prompt. <strong>Agente sempre vê o estado mais recente.</strong></div>
+  </div>
+  <table class="tbl" style="margin-top:.9rem;">
+    <thead><tr><th>Ferramenta (tool_use)</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>mover_card</td><td>Move para qualquer coluna. Aceita ID exato ou título parcial.</td></tr>
+      <tr><td>atualizar_prazo</td><td>Redefine data de entrega (YYYY-MM-DD).</td></tr>
+      <tr><td>marcar_checklist</td><td>Marca/desmarca item pelo índice.</td></tr>
+      <tr><td>criar_card</td><td>Cria card completo (prioridade, PO, dono, prazo, tag).</td></tr>
+      <tr><td>atualizar_owner</td><td>Atribui responsável. Resolve "eu", "me" e nomes para iniciais.</td></tr>
+      <tr><td>definir_prioridade</td><td>Define ou remove prioridade (critical/high/medium/low).</td></tr>
+      <tr><td>salvar_modelo</td><td>Salva como modelo reutilizável na biblioteca.</td></tr>
+      <tr><td>salvar_recorrente</td><td>Adiciona à lista de recorrentes.</td></tr>
+      <tr><td>excluir_card</td><td>Exclui permanentemente. Requer <code class="hl">confirmado: true</code>.</td></tr>
+      <tr><td>atualizar_descricao</td><td>Edita título, descrição ou PO de qualquer card.</td></tr>
+    </tbody>
+  </table>
+  <div class="wc" style="margin-top:8px;">
+    <div class="wch"><div class="wci">📊</div><div class="wct">Log de uso</div></div>
+    <div class="wcb">Cada chamada registra timestamp, usuário, aba e primeiros 120 chars da pergunta em <code class="hl">squads/{id}/agent_usage</code>. O Painel exibe frequência de uso por squad.</div>
+  </div>
+</section>
+
+<!-- 10 AUTOMAÇÕES -->
+<section class="section" id="auto">
+  <div class="sh"><div class="sn">10</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>kanban.html</div>
+    <h2>Automações (Butler-style)</h2>
+    <p class="slead">Regras "quando X → então Y" pelo PO, persistidas no Firebase, executadas localmente.</p>
+  </div></div>
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">⚡</div><div class="wct">Triggers</div></div><div class="wcb"><strong>Card movido para coluna · Card vence hoje · Card atrasado · WIP excede limite · Card criado · Prioridade = critical.</strong></div></div>
+    <div class="wc"><div class="wch"><div class="wci">🎬</div><div class="wct">Ações</div></div><div class="wcb"><strong>Mover para coluna · Definir prioridade · Notificar Agente Ágil · Adicionar tag · Atribuir responsável.</strong></div></div>
+  </div>
+  <div class="wc" style="margin-top:8px;"><div class="wch"><div class="wci">🧪</div><div class="wct">AutoLab — teste antes de ativar</div></div><div class="wcb">Botão <strong>Testar no AutoLab</strong> abre o Agente Ágil e simula o efeito no estado atual do board, mostrando quais cards seriam afetados.</div></div>
+</section>
+
+<!-- 11 EXTRAS -->
+<section class="section" id="extras">
+  <div class="sh"><div class="sn">11</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>kanban.html</div>
+    <h2>Extras & Features</h2>
+  </div></div>
+  <div class="grid">
+    <div class="card"><div class="ci">↩</div><div class="ct">Undo</div><div class="cd">Stack de 10 estados. Botão flutuante por 6s após mover/excluir/arquivar.</div></div>
+    <div class="card"><div class="ci">🖱</div><div class="ct">Menu de contexto</div><div class="cd">Botão direito no card: mover, prioridade, atribuir, OKR toggle, modelo, arquivar, excluir.</div></div>
+    <div class="card"><div class="ci">🟢</div><div class="ct">Presença online</div><div class="cd">Avatares de quem está com o board aberto. Heartbeat 15s. Remove via onDisconnect ao fechar.</div></div>
+    <div class="card"><div class="ci">📥</div><div class="ct">Import do Trello</div><div class="cd">Cola JSON do Trello → mapeia listas→colunas, labels→tags, checklists. Pré-visualização antes de confirmar.</div></div>
+    <div class="card"><div class="ci">🔁</div><div class="ct">Recorrentes</div><div class="cd">Cards que reaparecem toda sprint. Clique "Usar" para criar pré-preenchido.</div></div>
+    <div class="card"><div class="ci">🚧</div><div class="ct">Modo impedimento</div><div class="cd"><strong>Coluna separada</strong> (card move para Impedimentos) ou <strong>Tag no card</strong> (badge vermelho, fica na coluna).</div></div>
+    <div class="card"><div class="ci">📸</div><div class="ct">Snapshots históricos</div><div class="cd">Foto diária do board via <code class="hl">maybeSnapshot()</code>. Alimenta métricas e histórico de fluxo.</div></div>
+    <div class="card"><div class="ci">👥</div><div class="ct">Externos autorizados</div><div class="cd">PO adiciona e-mails externos ao squad via whitelist em <code class="hl">squads/{id}/externos</code>.</div></div>
+  </div>
+</section>
+
+<!-- 12 BACKUP -->
+<section class="section" id="backup">
+  <div class="sh"><div class="sn">12</div><div>
+    <div class="stag" style="color:var(--orange)"><span style="background:var(--orange)"></span>kanban.html</div>
+    <h2>Backup & Snapshots</h2>
+    <p class="slead">Backups por squad + backup global no Painel. Manual e automático.</p>
+  </div></div>
+  <div class="grid g2">
+    <div class="card"><div class="ci">📤</div><div class="ct">Export JSON</div><div class="cd">Baixa ou copia JSON completo (cards, tags, colunas, cfg). Função <code class="hl">exportBackupJSON()</code>.</div></div>
+    <div class="card"><div class="ci">☁</div><div class="ct">Salvo no Firebase</div><div class="cd">Backup em <code class="hl">squads/{id}/backups/{key}</code> com metadata. Histórico visível na aba Config.</div></div>
+    <div class="card"><div class="ci">📧</div><div class="ct">E-mail automático</div><div class="cd">Backup semanal (domingo meia-noite) via Worker. JSON em anexo. Configurável pelo PO.</div></div>
+    <div class="card"><div class="ci">🗓</div><div class="ct">Snapshot diário</div><div class="cd"><code class="hl">maybeSnapshot()</code> — foto do estado uma vez por dia ao abrir o board. Histórico para métricas.</div></div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 13 DEV -->
+<section class="section" id="dev">
+  <div class="sh"><div class="sn">13</div><div>
+    <div class="stag" style="color:var(--orange)"><span style="background:var(--orange)"></span>kanban-dev.html</div>
+    <h2>Sandbox & Dev Seed</h2>
+    <p class="slead">Ambiente isolado para testar features novas antes de ir para produção.</p>
+  </div></div>
+  <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
+    <div class="wch"><div class="wci">🧪</div><div class="wct">O que é o kanban-dev</div></div>
+    <div class="wcb">Cópia funcional do kanban.html com squad padrão em <code class="hl">dev</code>. Dados isolados em <code class="hl">kanban/squads/dev/</code> — não interferem em produção. Mesmo Firebase, mesmo Worker, mesma lógica.</div>
+  </div>
+  <div class="wc" style="margin-top:8px;">
+    <div class="wch"><div class="wci">🌱</div><div class="wct">Dev Seed — runDevSeed()</div></div>
+    <div class="wcb">Se o board dev está vazio ao abrir, um <strong>overlay de seed</strong> lista os cards que serão criados. Ao confirmar, popula o board com dados fictícios realistas — cards com tags, donos, prazos, checklists e riscos. Log visual em tempo real mostra cada card criado. Ideal para demos e testes de UI.</div>
+  </div>
+  <div class="grid g2" style="margin-top:.8rem;">
+    <div class="card"><div class="ci">🔁</div><div class="ct">Ciclo de desenvolvimento</div><div class="cd">Feature → testada no dev com seed → validada → portada para kanban.html cirurgicamente (sem sobrescrever o arquivo).</div></div>
+    <div class="card"><div class="ci">📋</div><div class="ct">Squad dev no Painel</div><div class="cd">Aparece no seletor do Painel identificado como sandbox. Backups do dev são separados dos de produção.</div></div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 14 PAINEL OVERVIEW -->
+<section class="section" id="painel-overview">
+  <div class="sh"><div class="sn">14</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>painel.html</div>
+    <h2>Painel — Visão Geral</h2>
+    <p class="slead">Dashboard de gestão para diretoria. Lê dados de todos os squads simultaneamente.</p>
+  </div></div>
+  <div class="wc">
+    <div class="wch"><div class="wci">🔭</div><div class="wct">O que o Painel faz que o Kanban não faz</div></div>
+    <div class="wcb">O kanban foca em <strong>um squad por vez</strong>. O painel lê <strong>todos os squads simultaneamente</strong> e entrega: visão consolidada de OKRs, blockers e riscos; calendário unificado; log de erros de todos os boards; gestão global de usuários; Board Setup para criar novos squads; backup global em um clique.</div>
+  </div>
+  <div class="flow" style="margin:1rem 0;">
+    <div class="fb p">Login ADM</div><div class="fa">→</div>
+    <div class="fb">loadAll()</div><div class="fa">→</div>
+    <div class="fb t">Firebase todos squads</div><div class="fa">→</div>
+    <div class="fb">renderAll()</div><div class="fa">→</div>
+    <div class="fb t">Dashboard consolidado</div>
+  </div>
+</section>
+
+<!-- 15 PAINEL SECTIONS -->
+<section class="section" id="painel-sections">
+  <div class="sh"><div class="sn">15</div><div>
+    <div class="stag" style="color:var(--cyan)"><span style="background:var(--cyan)"></span>painel.html</div>
+    <h2>Seções & Métricas</h2>
+  </div></div>
+  <table class="tbl">
+    <thead><tr><th>Seção</th><th>O que mostra</th></tr></thead>
+    <tbody>
+      <tr><td>Cards por squad</td><td>Cards de todos os squads. Filtro por squad. Abre card em modal sem sair do painel.</td></tr>
+      <tr><td>OKRs — renderOKR()</td><td>Todos os cards flagados como OKR de qualquer squad, agrupados com progresso de checklist.</td></tr>
+      <tr><td>Blockers — renderBlockers()</td><td>Cards na coluna blocker de todos os squads. resolveAllBlockers() move todos de volta para "Em Progresso".</td></tr>
+      <tr><td>Riscos — renderRiscos()</td><td>Todos os cards com riscos mapeados, de todos os squads.</td></tr>
+      <tr><td>Throughput — renderTrend()</td><td>Gráfico de barras de cards concluídos por dia nos últimos 14 dias.</td></tr>
+      <tr><td>Distribuição — renderColDist()</td><td>Distribuição de cards por coluna, por squad.</td></tr>
+      <tr><td>Comparação — renderComparison()</td><td>WIP, backlog e done de cada squad lado a lado.</td></tr>
+      <tr><td>Calendário unificado</td><td>Visão mensal com eventos de gestão + prazos de cards. Dois grids: geral e gestão.</td></tr>
+      <tr><td>Monitor de erros</td><td>Logs de erro de todos os squads com filtros (squad/categoria/status). Status: novo → visto → resolvido.</td></tr>
+      <tr><td>Uso do Agente — loadAgentUsage()</td><td>Total de chamadas e últimas perguntas feitas ao agente por squad.</td></tr>
+      <tr><td>Presença global</td><td>Quem está online agora e em qual squad.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 16 BOARD SETUP -->
+<section class="section" id="painel-setup">
+  <div class="sh"><div class="sn">16</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>painel.html</div>
+    <h2>Board Setup — criação de squads</h2>
+    <p class="slead">Cria novos squads dinâmicos sem editar código.</p>
+  </div></div>
+  <div class="wc">
+    <div class="wch"><div class="wci">🏗</div><div class="wct">Como funciona</div></div>
+    <div class="wcb">ADM preenche nome, emoji, cor e ID. Painel salva em <code class="hl">kanban/squads_meta/{id}</code>. Na próxima abertura do kanban.html, <code class="hl">loadSquadsFromFirebase()</code> carrega o squad e o adiciona ao <code class="hl">SQUAD_META_LIVE</code> — disponível via <code class="hl">?squad=id</code>. Preview em tempo real durante a criação.</div>
+  </div>
+  <div class="grid g2" style="margin-top:.8rem;">
+    <div class="wc"><div class="wch"><div class="wci">🌍</div><div class="wct">Backup global</div></div><div class="wcb">Um clique exporta o JSON de todos os squads ou de cada um individualmente. Configuração de e-mail automático separada do backup por squad.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🔧</div><div class="wct">Config de squad no painel</div></div><div class="wcb">Sprint, WIP, objetivo e colunas visíveis de cada squad configuráveis diretamente do painel, sem precisar abrir o kanban.</div></div>
+  </div>
+</section>
+
+<!-- 17 PAINEL USERS -->
+<section class="section" id="painel-users">
+  <div class="sh"><div class="sn">17</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>painel.html</div>
+    <h2>Gestão global de usuários</h2>
+  </div></div>
+  <div class="wc">
+    <div class="wch"><div class="wci">👥</div><div class="wct">openGlobalUsersModal()</div></div>
+    <div class="wcb">Lista todos os usuários. Para cada um: foto, nome, e-mail, iniciais, papel e checkboxes dos squads. ADM pode <strong>adicionar a squads, mudar papel e excluir</strong>. Alterações vão direto para <code class="hl">kanban/usuarios/{uid}</code>.</div>
+  </div>
+  <div class="grid g2" style="margin-top:.8rem;">
+    <div class="card"><div class="ci">📧</div><div class="ct">ADM Emails</div><div class="cd">Painel permite adicionar/remover e-mails da lista <code class="hl">ADM_EMAILS</code> persistida no Firebase, sem editar código.</div></div>
+    <div class="card"><div class="ci">🔒</div><div class="ct">Colunas ocultas</div><div class="cd">ADM pode ocultar colunas específicas por squad via <code class="hl">initHiddenCols()</code> — sem deletar, apenas esconder na visualização.</div></div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 18 SEGURANÇA -->
+<section class="section" id="security">
+  <div class="sh"><div class="sn">18</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Segurança</div>
+    <h2>Camadas de segurança — v8.3</h2>
+    <p class="slead">Seis camadas independentes. Se uma falhar, as outras continuam de pé.</p>
+  </div></div>
+  <div class="sg">
+    <div class="si ok"><div style="margin-bottom:.35rem;"><span class="bdg ok-b">✓ ativo</span></div><div class="si-t">Escape de HTML (XSS)</div><div class="si-d"><code class="hl">esc()</code> e <code class="hl">safeUrl()</code> aplicados em todos os 35 pontos de renderização. Dados do Firebase nunca entram crus no innerHTML. Presente em kanban, kanban-dev e painel.</div></div>
+    <div class="si ok"><div style="margin-bottom:.35rem;"><span class="bdg ok-b">✓ ativo</span></div><div class="si-t">Firebase Database Rules</div><div class="si-d">Verifica <code class="hl">auth.token.email</code> no servidor. Campo <code>role</code> só alterável por PO. Presença: cada user escreve só o próprio nó.</div></div>
+    <div class="si ok"><div style="margin-bottom:.35rem;"><span class="bdg ok-b">✓ ativo</span></div><div class="si-t">Worker + Origin Validation</div><div class="si-d">Worker v3.0 valida header <code class="hl">Origin</code> contra <code class="hl">ALLOWED_ORIGINS</code>. Sem variável → retorna 500 (fail-secure). Bloqueia uso indevido da URL.</div></div>
+    <div class="si ok"><div style="margin-bottom:.35rem;"><span class="bdg ok-b">✓ ativo</span></div><div class="si-t">Chave API protegida</div><div class="si-d">Chave da Anthropic como <em>secret</em> Cloudflare. Nunca no HTML, nunca em localStorage, nunca em trânsito para o browser.</div></div>
+    <div class="si ok"><div style="margin-bottom:.35rem;"><span class="bdg ok-b">✓ ativo</span></div><div class="si-t">RBAC + ADMs hardcoded</div><div class="si-d">PO/Org/Membro com permissões distintas. ADMs via <code class="hl">ADM_EMAILS</code> têm papel mínimo PO — não rebaixável editando o banco.</div></div>
+    <div class="si ok"><div style="margin-bottom:.35rem;"><span class="bdg ok-b">✓ ativo</span></div><div class="si-t">Model fixo + max_tokens</div><div class="si-d">Worker pina <code class="hl">claude-sonnet-4-20250514</code>. Teto de 2000 tokens por requisição. Cliente não controla nem o modelo nem os tokens.</div></div>
+  </div>
+</section>
+
+<!-- 19 FIREBASE RULES -->
+<section class="section" id="firebase-rules">
+  <div class="sh"><div class="sn">19</div><div>
+    <div class="stag" style="color:var(--danger)"><span style="background:var(--danger)"></span>Firebase</div>
+    <h2>Firebase Database Rules</h2>
+    <p class="slead">Aplicadas no servidor — não há como contornar pelo browser.</p>
+  </div></div>
+  <div class="cl">firebase-rules.json</div>
+  <div class="code"><span class="cm">// squads/{id}/dados — qualquer @ciahering autenticado lê e escreve</span>
+<span class="k">"squads"</span>: { <span class="k">"$squadId"</span>: { <span class="k">"dados"</span>: {
+  <span class="v">".read"</span>:  <span class="fn">"auth != null && auth.token.email.endsWith('@ciahering.com.br')"</span>,
+  <span class="v">".write"</span>: <span class="fn">"auth != null && auth.token.email.endsWith('@ciahering.com.br')"</span>
+}}},
+
+<span class="cm">// usuarios/$uid — usuário escreve o próprio; PO escreve qualquer</span>
+<span class="k">"usuarios"</span>: { <span class="k">"$uid"</span>: {
+  <span class="v">".write"</span>: <span class="fn">"auth.uid === $uid
+             || root.child('kanban/usuarios/'+auth.uid+'/role').val()==='po'"</span>,
+  <span class="k">"role"</span>: {
+    <span class="cm">// só PO muda; 1ª gravação como 'membro' sempre permitida</span>
+    <span class="v">".validate"</span>: <span class="fn">"root.child('kanban/usuarios/'+auth.uid+'/role').val()==='po'
+                || newData.val()===data.val()
+                || (!data.exists() && newData.val()==='membro')"</span>
+  }
+}},
+
+<span class="cm">// presence/$uid — cada user só escreve o próprio heartbeat</span>
+<span class="k">"presence"</span>: { <span class="k">"$uid"</span>: {
+  <span class="v">".write"</span>: <span class="fn">"auth.uid === $uid && auth.token.email.endsWith('@ciahering.com.br')"</span>
+}}</div>
+</section>
+
+<!-- 20 WORKER -->
+<section class="section" id="worker-sec">
+  <div class="sh"><div class="sn">20</div><div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>Cloudflare Worker</div>
+    <h2>Worker v3.0</h2>
+  </div></div>
+  <div class="wc">
+    <div class="wch"><div class="wci">⚙</div><div class="wct">Variáveis — Cloudflare → Workers → Settings → Variables</div></div>
+    <div class="code" style="margin-top:.5rem;"><span class="k">ANTHROPIC_API_KEY</span>  <span class="cm">(Secret)  →  sk-ant-...</span>
+<span class="k">ALLOWED_ORIGINS</span>    <span class="cm">(Text)    →  https://caiosoares1899.github.io</span>
+                               <span class="cm">           (adicione ,http://localhost:5500 para dev local)</span></div>
+  </div>
+  <div class="grid g2" style="margin-top:.8rem;">
+    <div class="card"><div class="ci">🛡</div><div class="ct">Fail-secure</div><div class="cd">Sem <code class="hl">ALLOWED_ORIGINS</code> configurado → Worker retorna 500. Nunca abre para qualquer origem por acidente.</div></div>
+    <div class="card"><div class="ci">📌</div><div class="ct">Model + tokens pinados</div><div class="cd">Model fixo no Worker. Teto de 2000 tokens. Cliente envia os dois mas são ignorados — nunca usa modelo mais caro.</div></div>
+  </div>
+</section>
+
+<div class="div"></div>
+<footer class="footer">
+  <span>🐟 Maré Digital · Digital Hering · Grupo Azzas 2154</span>
+  <span>Docs v8.3 · kanban + kanban-dev + painel</span>
+</footer>
+
+</main>
+</div>
+
+<script>
+const bw=document.getElementById('bubbles');
+for(let i=0;i<14;i++){const b=document.createElement('div');b.className='bubble';const sz=3+Math.random()*16;b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${10+Math.random()*20}s;animation-delay:-${Math.random()*20}s;`;bw.appendChild(b);}
+
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');});},{threshold:.06});
+document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+
+function goTo(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+
+const nls=document.querySelectorAll('.nl');
+document.querySelectorAll('.section').forEach(s=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){
+    nls.forEach(l=>l.classList.remove('active'));
+    const a=Array.from(nls).find(l=>(l.getAttribute('onclick')||'').includes("'"+e.target.id+"'"));
+    if(a){a.classList.add('active');a.scrollIntoView({block:'nearest'});}
+  }});},{threshold:.28}).observe(s);
+});
+</script>
+</body>
+</html>
