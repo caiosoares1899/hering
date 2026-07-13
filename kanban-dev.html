@@ -1610,6 +1610,20 @@ input[type="date"]{-moz-appearance:textfield;}
   #comunicado-corpo{font-size:14px!important;}
   #comunicado-corpo a{word-break:break-word;}
   .pev-modal,.pcal-day-pop{max-width:100%!important;}
+
+  /* ── BULK BAR (multiselect): não sobrepor a bottom-nav e não estourar a tela ── */
+  .bulk-bar{
+    bottom:calc(64px + env(safe-area-inset-bottom));
+    left:8px;right:8px;transform:none;
+    max-width:calc(100% - 16px);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    justify-content:flex-start;scrollbar-width:none;
+  }
+  .bulk-bar::-webkit-scrollbar{display:none;}
+  .bulk-bar > *{flex-shrink:0;}
+
+  /* ── Botões de fechar (x): alvo de toque melhor ── */
+  .x-btn{min-width:40px;min-height:40px;font-size:20px;}
 }
 
 /* Telas muito pequenas (<380px) */
@@ -3813,7 +3827,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.138-dev</div>
+<div class="version">v8.30.139-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
