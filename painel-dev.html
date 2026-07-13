@@ -2102,6 +2102,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     </div>
   </div>
 </div>
+</div><!-- /app-root -->
 
 <div class="toast" id="toast"></div>
 
@@ -2120,7 +2121,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.81 · painel-dev</div>
+<div class="version">v2.82 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2286,7 +2287,7 @@ function renderOnline(){
   const count=document.getElementById('online-count'); if(count) count.textContent=all.length;
   if(!all.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no momento.</div>'; return; }
   const renderPills=list=>list.map(u=>{
-    const foto=u.foto?'<img src="'+u.foto+'" style="width:20px;height:20px;border-radius:50%;">':'';
+    const foto=safeUrl(u.foto)?'<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">':'';
     return '<div class="online-pill">'
       +'<span class="online-pip"></span>'
       +foto
