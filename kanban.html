@@ -1512,13 +1512,12 @@ input[type="date"]{-moz-appearance:textfield;}
   .raia-cols{gap:6px;}
   .raia-cols .col{width:72vw;min-width:210px;}
 
-  /* ── MODAIS: bottom sheet ─────────────────────────────── */
-  .ov{padding:0;align-items:flex-end;}
+  /* ── MODAIS: dialog centralizado (evita vão vazio quando o conteúdo é curto) ── */
+  .ov{padding:.6rem;align-items:center;}
   .panel{
     max-width:100%!important;width:100%!important;
-    max-height:96vh;
-    border-radius:16px 16px 0 0;
-    border-bottom:none;
+    max-height:90vh;
+    border-radius:16px;
   }
   .panel-hd{border-radius:16px 16px 0 0;padding:12px 14px 10px;}
 
@@ -1625,6 +1624,20 @@ input[type="date"]{-moz-appearance:textfield;}
 
   /* ── DAY POPOVER (calendário) ────────────────────────── */
   .pev-modal,.pcal-day-pop{max-width:100%!important;}
+
+  /* ── BULK BAR (multiselect): não sobrepor a bottom-nav e não estourar a tela ── */
+  .bulk-bar{
+    bottom:calc(64px + env(safe-area-inset-bottom));
+    left:8px;right:8px;transform:none;
+    max-width:calc(100% - 16px);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+    justify-content:flex-start;scrollbar-width:none;
+  }
+  .bulk-bar::-webkit-scrollbar{display:none;}
+  .bulk-bar > *{flex-shrink:0;}
+
+  /* ── Botões de fechar (x): alvo de toque melhor ── */
+  .x-btn{min-width:40px;min-height:40px;font-size:20px;}
 }
 
 /* Telas muito pequenas (<380px) */
@@ -3773,7 +3786,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.133</div>
+<div class="version">v8.30.136</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8785,7 +8798,7 @@ function _recurrenceLabel(rec){
 // Calcula a próxima data de criação devida (>= a partir de 'desde'), ou null
 function _nextDueDate(rec, desde){
   if(!rec||!rec.type) return null;
-  const d=new Date(desde); d.setHours(0,0,0,0);
+  const d=new Date(desde+'T00:00:00'); // parse como horário local (evita shift de fuso)
   if(rec.type==='days'){
     return d; // a verificação de intervalo é feita em _recurrenceDue via lastCreated
   }
@@ -8805,7 +8818,10 @@ function _nextDueDate(rec, desde){
 // Decide se um item recorrente deve gerar um card hoje
 function _recurrenceDue(item, hoje){
   const rec=item.recurrence; if(!rec||!rec.type||item.active===false) return false;
-  const today=new Date(hoje); today.setHours(0,0,0,0);
+  // 'hoje' é uma string YYYY-MM-DD; sem o 'T00:00:00' o JS interpreta como UTC e
+  // getDay()/getDate() (que são locais) voltam um dia em fusos atrás de UTC (ex: Brasil) —
+  // isso fazia recorrências semanais/mensais nunca baterem no dia configurado.
+  const today=new Date(hoje+'T00:00:00');
   const last=item.lastCreated? new Date(item.lastCreated+'T00:00:00') : null;
   if(last) last.setHours(0,0,0,0);
   if(rec.type==='days'){
@@ -8855,7 +8871,9 @@ function processRecorrentes(){
   if(!window._fbReady) return;
   const recs=(qlItems.recorrentes||[]).filter(it=>it.recurrence&&it.recurrence.type&&it.active!==false);
   if(!recs.length) return;
-  const hoje=new Date().toISOString().split('T')[0];
+  // Data local (não UTC) — evita disparo prematuro/atrasado perto da virada da meia-noite em fusos como o do Brasil
+  const _n=new Date();
+  const hoje=_n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
   let criados=[]; let mudou=false;
   recs.forEach(item=>{
     if(_recurrenceDue(item, hoje)){
