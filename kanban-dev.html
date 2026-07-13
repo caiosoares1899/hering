@@ -3807,7 +3807,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.136-dev</div>
+<div class="version">v8.30.137-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7340,6 +7340,12 @@ function _cardTempoPorColuna(c){
   return out;
 }
 function _fmtHoras(h){
+  if(h==null) return '—';
+  if(h<1) return '<1h';
+  if(h<24) return Math.round(h)+'h';
+  const d=Math.floor(h/24), rh=Math.round(h%24);
+  return rh? d+'d '+rh+'h' : d+'d';
+}
 // ── DATE PICKER: calendário custom com navegação por mês ────────────────
 // Complementa os <input type="date"> nativos (que continuam funcionando
 // normalmente pra quem prefere digitar) com um botão 📅 que abre um
@@ -7427,13 +7433,6 @@ function _dpRender(){
       <button onclick="_dpPick('')" type="button">✕ Limpar</button>
       <button onclick="_dpToday()" type="button">Hoje</button>
     </div>`;
-}
-
-  if(h==null) return '—';
-  if(h<1) return '<1h';
-  if(h<24) return Math.round(h)+'h';
-  const d=Math.floor(h/24), rh=Math.round(h%24);
-  return rh? d+'d '+rh+'h' : d+'d';
 }
 function openTempoReport(){
   document.getElementById('tempo-ov').classList.add('open');
