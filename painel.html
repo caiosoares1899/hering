@@ -2119,7 +2119,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.85 · painel</div>
+<div class="version">v2.86 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2281,7 +2281,7 @@ function loadPresence(){
   });
 }
 function renderOnline(){
-  const all=SQUADS.flatMap(sq=>window['_presence_'+sq.id]||[]);
+  const all=SQUADS.flatMap(sq=>window['_presence_'+sq.id]||[]).filter(u=>u.nome);
   const el=document.getElementById('online-list'); if(!el) return;
   const count=document.getElementById('online-count'); if(count) count.textContent=all.length;
   if(!all.length){ el.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no momento.</div>'; return; }

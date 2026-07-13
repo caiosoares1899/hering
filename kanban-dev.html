@@ -3807,7 +3807,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.133-dev</div>
+<div class="version">v8.30.134-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5123,8 +5123,9 @@ function setMyStatus(s){
   _reflectMyStatus();
   // grava imediatamente
   if(window._currentUser && window._fbReady){
-    window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
-      {status:window._myStatus,ts:Date.now()});
+    const _u=window._currentUser;
+    window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+_u.uid),
+      {status:window._myStatus,ts:Date.now(),nome:_u.displayName||_u.email,foto:_u.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD});
   }
   closeStatusMenu();
   const st=STATUS_MAP[window._myStatus];
@@ -13676,11 +13677,13 @@ _onFbReady(()=>{
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
   clearInterval(window._heartbeat);
   window._heartbeat = setInterval(()=>{
-    if(window._currentUser && window._fbReady)
+    if(window._currentUser && window._fbReady){
+      const _u=window._currentUser;
       window._update(
-        window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
-        {ts:Date.now(),status:window._myStatus||''}
+        window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+_u.uid),
+        {ts:Date.now(),status:window._myStatus||'',nome:_u.displayName||_u.email,foto:_u.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD}
       );
+    }
   }, 15000);
 });
 
