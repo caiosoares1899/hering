@@ -778,6 +778,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .ptab .ptab-lbl{ font-size:9px; line-height:1; }
 }
 
+/* ── Campos de formulário: 16px evita zoom automático do iOS ao focar ── */
+@media(max-width:600px){
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),
+  textarea, select{ font-size:16px!important; }
+}
+
+/* ── Botões de fechar (x): alvo de toque melhor no mobile ── */
+@media(max-width:600px){
+  .x-btn{ min-width:40px; min-height:40px; font-size:20px; }
+}
+
 
 /* Temas */
 .camp-tema-inverno   { --ct:#1a3a5c; --ct2:#4a9ede; --ct3:#a8d8f0; --ct-bg:rgba(26,58,92,.18);  --ct-border:rgba(74,158,222,.35); }
@@ -2126,7 +2137,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.89 · painel</div>
+<div class="version">v2.90 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
