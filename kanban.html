@@ -3767,7 +3767,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </button>
 </nav>
 
-<div class="version">v8.30.130</div>
+<div class="version">v8.30.131</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5099,8 +5099,9 @@ function setMyStatus(s){
   _reflectMyStatus();
   // grava imediatamente
   if(window._currentUser && window._fbReady){
-    window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
-      {status:window._myStatus,ts:Date.now()});
+    const _u=window._currentUser;
+    window._update(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+_u.uid),
+      {status:window._myStatus,ts:Date.now(),nome:_u.displayName||_u.email,foto:_u.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD});
   }
   closeStatusMenu();
   const st=STATUS_MAP[window._myStatus];
@@ -10308,8 +10309,10 @@ const tagId = cardTags[0] || '';
       if(spField) sp=String(spField.value.number);
     }
 
-    // Descrição limitada (Trello usa Markdown)
-    const desc=(card.desc||'').substring(0,600);
+    // Descrição completa (Trello usa Markdown) -- ANTES cortava em 600
+    // caracteres sem aviso, causando perda silenciosa de texto em cards
+    // importados (confirmado: 260 cards com desc truncada em produção).
+    const desc=card.desc||'';
 
     // Prazo
     const due=card.due?card.due.split('T')[0]:'';
@@ -13679,11 +13682,13 @@ _onFbReady(()=>{
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
   clearInterval(window._heartbeat);
   window._heartbeat = setInterval(()=>{
-    if(window._currentUser && window._fbReady)
+    if(window._currentUser && window._fbReady){
+      const _u=window._currentUser;
       window._update(
-        window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+window._currentUser.uid),
-        {ts:Date.now(),status:window._myStatus||''}
+        window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence/'+_u.uid),
+        {ts:Date.now(),status:window._myStatus||'',nome:_u.displayName||_u.email,foto:_u.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD}
       );
+    }
   }, 15000);
 });
 
