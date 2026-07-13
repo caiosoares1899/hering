@@ -3826,7 +3826,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.140-dev</div>
+<div class="version">v8.30.141-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8800,7 +8800,7 @@ function _recurrenceLabel(rec){
 // Calcula a próxima data de criação devida (>= a partir de 'desde'), ou null
 function _nextDueDate(rec, desde){
   if(!rec||!rec.type) return null;
-  const d=new Date(desde); d.setHours(0,0,0,0);
+  const d=new Date(desde+'T00:00:00'); // parse como horário local (evita shift de fuso)
   if(rec.type==='days'){
     return d; // a verificação de intervalo é feita em _recurrenceDue via lastCreated
   }
@@ -8820,7 +8820,10 @@ function _nextDueDate(rec, desde){
 // Decide se um item recorrente deve gerar um card hoje
 function _recurrenceDue(item, hoje){
   const rec=item.recurrence; if(!rec||!rec.type||item.active===false) return false;
-  const today=new Date(hoje); today.setHours(0,0,0,0);
+  // 'hoje' é uma string YYYY-MM-DD; sem o 'T00:00:00' o JS interpreta como UTC e
+  // getDay()/getDate() (que são locais) voltam um dia em fusos atrás de UTC (ex: Brasil) —
+  // isso fazia recorrências semanais/mensais nunca baterem no dia configurado.
+  const today=new Date(hoje+'T00:00:00');
   const last=item.lastCreated? new Date(item.lastCreated+'T00:00:00') : null;
   if(last) last.setHours(0,0,0,0);
   if(rec.type==='days'){
@@ -8870,7 +8873,9 @@ function processRecorrentes(){
   if(!window._fbReady) return;
   const recs=(qlItems.recorrentes||[]).filter(it=>it.recurrence&&it.recurrence.type&&it.active!==false);
   if(!recs.length) return;
-  const hoje=new Date().toISOString().split('T')[0];
+  // Data local (não UTC) — evita disparo prematuro/atrasado perto da virada da meia-noite em fusos como o do Brasil
+  const _n=new Date();
+  const hoje=_n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
   let criados=[]; let mudou=false;
   recs.forEach(item=>{
     if(_recurrenceDue(item, hoje)){
