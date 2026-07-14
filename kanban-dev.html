@@ -4077,7 +4077,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.155-dev</div>
+<div class="version">v8.30.156-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12163,22 +12163,33 @@ document.addEventListener('click', e=>{
 // ── Cria uma notificação para um usuário ──────────────────────────
 // Deduplication: track recently created notifs (uid+type+cardId) within 5s
 const _recentNotifs = new Map();
-function createNotif(targetUid, type, title, sub, cardId){
+function createNotif(targetUid, type, title, sub, cardId, idOverride){
   if(!window._fbReady || !targetUid) return;
-  // Evita duplicatas: mesma uid+type+card dentro de 5s
-  const dedupeKey = targetUid+'|'+type+'|'+(cardId||'');
+  // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
+  // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
+  const dedupeKey = targetUid+'|'+type+'|'+(cardId||idOverride||'');
   const lastTs = _recentNotifs.get(dedupeKey)||0;
   if(Date.now()-lastTs < 5000) return;
   _recentNotifs.set(dedupeKey, Date.now());
+  const notifId = idOverride || ('n'+Date.now()+Math.random().toString(36).slice(2,6));
   const notif = {
-    id: 'n'+Date.now()+Math.random().toString(36).slice(2,6),
+    id: notifId,
     type, title, sub, cardId,
     read: false,
     ts: new Date().toISOString(),
     squad: ACTIVE_SQUAD,
   };
-  window._set(window._ref(window._db,'kanban/usuarios/'+targetUid+'/notificacoes/'+notif.id), notif)
-    .catch(()=>{});
+  const path = 'kanban/usuarios/'+targetUid+'/notificacoes/'+notifId;
+  if(idOverride){
+    // Id determinístico (ex.: lembrete de reunião) — se a pessoa está em vários squads/abas,
+    // todos calculam o MESMO id pro mesmo evento real, então só cria se ainda não existe
+    // (evita duplicar a notificação e evita reabrir como "não lida" uma que já foi vista).
+    fbGet(path).then(snap=>{
+      if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(()=>{});
+    }).catch(()=>{});
+  } else {
+    window._set(window._ref(window._db,path), notif).catch(()=>{});
+  }
 }
 
 // Resolve uid de um membro pelo init
@@ -13634,7 +13645,9 @@ function checkUpcomingMeetings(){
 
       // Notificação interna (aparece no sininho do board) pro usuário logado
       if (window._currentUser?.uid) {
-        createNotif(window._currentUser.uid, 'reuniao', '🎥 Reunião em '+minutosRestantes+' min', tituloLimpo, null);
+        const _reuniaoSlug = tituloLimpo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,50);
+        const _reuniaoId = 'reuniao-'+inicioMs+'-'+_reuniaoSlug;
+        createNotif(window._currentUser.uid, 'reuniao', '🎥 Reunião em '+minutosRestantes+' min', tituloLimpo, null, _reuniaoId);
       }
     }
 
