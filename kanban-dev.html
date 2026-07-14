@@ -3878,7 +3878,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.145-dev</div>
+<div class="version">v8.30.146-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15734,6 +15734,7 @@ async function runEcommSeed(){
   const nowE=new Date().toISOString();
   const todayE=nowE.split('T')[0];
   const dE=(days)=>new Date(Date.now()+days*86400000).toISOString().split('T')[0];
+  const dtE=(days,mins)=>new Date(Date.now()+days*86400000+(mins||0)*60000).toISOString();
 
   try{
     // ── MEMBROS FICTÍCIOS (humanos) ──────────────────────────────────────
@@ -15926,37 +15927,60 @@ async function runEcommSeed(){
         ],
         riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
         archived:false, created:'Ana Ribeiro', edited:'Ana Ribeiro', createdAt:dE(-2), editedAt:dE(-1) },
-      { id:'eco-4-2', col:'desenvolvimento', title:'Relatório semanal de vendas por categoria',
-        desc:'Bruno pede o relatório → agente 🤖 Coletor Sheets (conceitual) puxa e resume os dados → Ana valida os números.',
-        tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'awaiting_validation', owner:'BRU', sp:'2', due:dE(2),
+      { id:'eco-4-2', col:'concluido', title:'Relatório semanal de vendas por categoria',
+        desc:'Ciclo completo: Bruno pede o relatório → agente 🤖 Coletor Sheets confirma, executa em 2 fases e entrega → Ana valida os números. Exemplo de ciclo 100% concluído.',
+        tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'done', owner:'BRU', sp:'2', due:dE(-1),
         checklist:[
           {id:'c1',text:'Bruno abre o card com o pedido',done:true},
-          {id:'c2',text:'🤖 Agente Coletor Sheets processa (simulado)',done:true,simComment:'📊 Coletor Sheets: Puxei os dados da planilha \'Vendas 2026\' (aba Semanal). Top 3 categorias: Casa (R$ 42.1k, +12% vs. sem. anterior), Moda (R$ 38.7k, -4%) e Beleza (R$ 21.3k, +23%). Planilha-fonte e cálculo completo disponíveis para conferência. cc @Ana Ribeiro'},
-          {id:'c3',text:'Ana valida o resultado',done:false},
+          {id:'c2',text:'🤖 Agente confirma recebimento do pedido',done:true,simComment:'📊 Coletor Sheets: Recebi seu pedido, @Bruno Tanaka! Vou puxar os dados de vendas da última semana na planilha \'Vendas 2026\' e volto com o resumo por categoria.'},
+          {id:'c3',text:'🤖 Fase 1 — Coleta os dados da planilha',done:true,simComment:'📊 Coletor Sheets: Dados coletados (aba Semanal, últimos 7 dias). 187 linhas processadas, sem inconsistências. Seguindo para a consolidação por categoria.'},
+          {id:'c4',text:'🤖 Fase 2 — Consolida e resume por categoria',done:true,simComment:'📊 Coletor Sheets: Consolidação pronta. Top 3 categorias: Casa (R$ 42.1k, +12% vs. sem. anterior), Moda (R$ 38.7k, -4%) e Beleza (R$ 21.3k, +23%). Preparando a entrega final.'},
+          {id:'c5',text:'🤖 Agente entrega o relatório',done:true,simComment:'📊 Coletor Sheets: Relatório entregue! Planilha completa e gráficos disponíveis para conferência. cc @Ana Ribeiro para validação.'},
+          {id:'c6',text:'Ana valida o resultado',done:true},
         ],
-        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:['ANA','CST'],
-        archived:false, created:'Bruno Tanaka', edited:'Claude', createdAt:dE(-2), editedAt:dE(0) },
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{
+          cE1:{id:'cE1',uid:'seed-bru',author:'Bruno Tanaka',init:'BRU',foto:'',text:'@Coletor Sheets 🤖 preciso do relatório semanal de vendas por categoria, consegue puxar até hoje à tarde?',ts:dtE(-2,0)},
+          cE2:{id:'cE2',uid:'agent-CST',author:'Coletor Sheets',init:'CST',foto:'',isAgent:true,avatarEmoji:'📊',cor:'#38b6ff',text:'📊 Coletor Sheets: Recebi seu pedido, @Bruno Tanaka! Vou puxar os dados de vendas da última semana na planilha \'Vendas 2026\' e volto com o resumo por categoria.',ts:dtE(-2,4)},
+          cE3:{id:'cE3',uid:'agent-CST',author:'Coletor Sheets',init:'CST',foto:'',isAgent:true,avatarEmoji:'📊',cor:'#38b6ff',text:'📊 Coletor Sheets: Dados coletados (aba Semanal, últimos 7 dias). 187 linhas processadas, sem inconsistências. Seguindo para a consolidação por categoria.',ts:dtE(-2,9)},
+          cE4:{id:'cE4',uid:'agent-CST',author:'Coletor Sheets',init:'CST',foto:'',isAgent:true,avatarEmoji:'📊',cor:'#38b6ff',text:'📊 Coletor Sheets: Consolidação pronta. Top 3 categorias: Casa (R$ 42.1k, +12% vs. sem. anterior), Moda (R$ 38.7k, -4%) e Beleza (R$ 21.3k, +23%). Preparando a entrega final.',ts:dtE(-2,15)},
+          cE5:{id:'cE5',uid:'agent-CST',author:'Coletor Sheets',init:'CST',foto:'',isAgent:true,avatarEmoji:'📊',cor:'#38b6ff',text:'📊 Coletor Sheets: Relatório entregue! Planilha completa e gráficos disponíveis para conferência. cc @Ana Ribeiro para validação.',ts:dtE(-2,18)},
+          cE6:{id:'cE6',uid:'seed-ana',author:'Ana Ribeiro',init:'ANA',foto:'',text:'Validado! Números batem com o que vi no VTEX. Obrigada 🙌',ts:dtE(-1,30)},
+          cE7:{id:'cE7',uid:'system',author:'Sistema',init:'⚙️',foto:'',isSystem:true,text:'✅ Validado por Ana. Etapa encerrada com sucesso.',ts:dtE(-1,31)},
+        }, participants:['ANA','CST'],
+        archived:false, created:'Bruno Tanaka', edited:'Ana Ribeiro', createdAt:dE(-2), editedAt:dE(-1) },
       { id:'eco-4-3', col:'definicao', title:'Investigar queda de conversão no checkout VTEX',
-        desc:'Carla identifica o problema → agente 🤖 Analista VTEX (conceitual) levanta dados de pedidos/abandono → Bruno decide ação.',
+        desc:'Ciclo em andamento: Carla identifica o problema → agente 🤖 Analista VTEX confirma, executa em 2 fases → ainda faltam a entrega e a decisão do Bruno. Exemplo de ciclo pela metade.',
         tags:['generico-ecomm'], priority:'high', executorType:'hybrid', agentStatus:'running', owner:'CAR', sp:'5', due:dE(1),
         checklist:[
           {id:'c1',text:'Carla abre o card com a hipótese',done:true},
-          {id:'c2',text:'🤖 Agente Analista VTEX levanta dados (simulado)',done:false,simComment:'🛒 Analista VTEX: Levantei os pedidos dos últimos 7 dias. Taxa de abandono no checkout subiu de 18% para 31%, concentrada no passo de pagamento via Pix — principalmente em mobile (iOS Safari, ~68% dos casos). Nenhuma mudança recente identificada no fluxo de pagamento em si. Relatório completo nos comentários. cc @Bruno Tanaka'},
-          {id:'c3',text:'Bruno define próximos passos',done:false},
+          {id:'c2',text:'🤖 Agente confirma recebimento do pedido',done:true,simComment:'🛒 Analista VTEX: Recebi o pedido, @Carla Nogueira! Vou levantar os dados de pedidos e abandono de checkout dos últimos 7 dias.'},
+          {id:'c3',text:'🤖 Fase 1 — Levanta dados de pedidos e abandono',done:true,simComment:'🛒 Analista VTEX: Levantei os pedidos dos últimos 7 dias. Taxa de abandono no checkout subiu de 18% para 31%, concentrada no passo de pagamento via Pix. Seguindo para cruzar com dispositivo/navegador.'},
+          {id:'c4',text:'🤖 Fase 2 — Cruza com dispositivo, navegador e forma de pagamento',done:false,simComment:'🛒 Analista VTEX: Cruzamento concluído — o problema está concentrado em mobile (iOS Safari, ~68% dos casos de abandono). Nenhuma mudança recente identificada no fluxo de pagamento em si. Pode ser algo específico do navegador/PWA.'},
+          {id:'c5',text:'🤖 Agente entrega o diagnóstico',done:false},
+          {id:'c6',text:'Bruno define próximos passos',done:false},
         ],
         riscos:[{id:'r1',text:'Queda de conversão pode estar impactando receita diária',level:'alto'}],
-        links:[], dependsOn:null, dependents:[], comments:{}, participants:['BRU','AVX'],
+        links:[], dependsOn:null, dependents:[], comments:{
+          cE1:{id:'cE1',uid:'seed-car',author:'Carla Nogueira',init:'CAR',foto:'',text:'@Analista VTEX 🤖 reparei que a conversão no checkout caiu bastante essa semana, consegue investigar? Pode ser urgente.',ts:dtE(-1,0)},
+          cE2:{id:'cE2',uid:'agent-AVX',author:'Analista VTEX',init:'AVX',foto:'',isAgent:true,avatarEmoji:'🛒',cor:'#1de9b6',text:'🛒 Analista VTEX: Recebi o pedido, @Carla Nogueira! Vou levantar os dados de pedidos e abandono de checkout dos últimos 7 dias.',ts:dtE(-1,3)},
+          cE3:{id:'cE3',uid:'agent-AVX',author:'Analista VTEX',init:'AVX',foto:'',isAgent:true,avatarEmoji:'🛒',cor:'#1de9b6',text:'🛒 Analista VTEX: Levantei os pedidos dos últimos 7 dias. Taxa de abandono no checkout subiu de 18% para 31%, concentrada no passo de pagamento via Pix. Seguindo para cruzar com dispositivo/navegador.',ts:dtE(-1,20)},
+        }, participants:['BRU','AVX'],
         archived:false, created:'Carla Nogueira', edited:'Carla Nogueira', createdAt:dE(-1), editedAt:dE(0) },
       { id:'eco-4-4', col:'backlog', title:'Apresentação de resultados do trimestre para diretoria',
-        desc:'Ana define o escopo → agente 🤖 Coletor/Design de Slides (conceitual) monta o rascunho → Carla ajusta visual → Ana aprova.',
+        desc:'Ciclo ainda não iniciado: Ana precisa definir o escopo antes de acionar o agente 🤖 Coletor/Design de Slides. Exemplo de card no início do fluxo (fila).',
         tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'queued', owner:'ANA', sp:'8', due:dE(10),
         checklist:[
           {id:'c1',text:'Ana define o escopo da apresentação',done:false},
-          {id:'c2',text:'🤖 Agente Slides monta rascunho (simulado)',done:false,simComment:'📽️ Coletor/Design de Slides: Rascunho pronto com 12 slides — visão geral do trimestre, receita por canal, ticket médio, CAC e recomendações para o próximo trimestre. Usei o template padrão da marca. Link do rascunho nos comentários. cc @Carla Nogueira para ajuste visual'},
-          {id:'c3',text:'Carla ajusta identidade visual',done:false},
-          {id:'c4',text:'Ana aprova versão final',done:false},
+          {id:'c2',text:'🤖 Agente confirma recebimento do pedido',done:false,simComment:'📽️ Coletor/Design de Slides: Recebi o pedido, @Ana Ribeiro! Vou montar a estrutura inicial com base no escopo definido.'},
+          {id:'c3',text:'🤖 Fase 1 — Monta estrutura e coleta dados-base',done:false,simComment:'📽️ Coletor/Design de Slides: Estrutura pronta — 12 slides cobrindo visão geral, receita por canal, ticket médio e CAC. Seguindo para o design visual.'},
+          {id:'c4',text:'🤖 Fase 2 — Gera rascunho visual dos slides',done:false,simComment:'📽️ Coletor/Design de Slides: Rascunho visual pronto, usando o template padrão da marca. Pronto para ajuste fino.'},
+          {id:'c5',text:'🤖 Agente entrega o rascunho',done:false,simComment:'📽️ Coletor/Design de Slides: Rascunho entregue! Link disponível para revisão. cc @Carla Nogueira para ajuste visual.'},
+          {id:'c6',text:'Carla ajusta identidade visual',done:false},
+          {id:'c7',text:'Ana aprova versão final',done:false},
         ],
-        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:['CAR','CDS'],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{
+          cE1:{id:'cE1',uid:'seed-ana',author:'Ana Ribeiro',init:'ANA',foto:'',text:'Vou fechar o escopo dessa apresentação até amanhã e já acionar o agente de Slides. Card fica aguardando por enquanto.',ts:dtE(-1,0)},
+        }, participants:['CAR','CDS'],
         archived:false, created:'Ana Ribeiro', edited:'Ana Ribeiro', createdAt:dE(-1), editedAt:dE(-1) },
       { id:'eco-4-5', col:'validacao', title:'Revisar copy da página de produto',
         desc:'Card 100% humano, sem nenhum agente envolvido — serve de contraste no board pra mostrar que nem tudo precisa passar por agente.',
