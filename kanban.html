@@ -3786,7 +3786,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.136</div>
+<div class="version">v8.30.137</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4770,6 +4770,25 @@ function fbSaveAll(){
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
     throw err; // re-throw so handleDrop .catch can revert
+  });
+}
+function fbSaveCard(card){
+  // Salva SOMENTE este card (update num path especifico), em vez de
+  // sobrescrever o array `cards` inteiro. Isso evita que edicoes
+  // concorrentes de outras pessoas no board (ex.: adicionar um risco
+  // enquanto alguem move outro card) se apaguem mutuamente — o bug
+  // classico de "last write wins" num array unico compartilhado.
+  // fbSaveAll() continua existindo p/ operacoes que mudam o array
+  // inteiro (criar/excluir/reordenar cards).
+  _lastLocalSave = Date.now();
+  _hasLocalSession = true;
+  if(!window._fbReady) return Promise.resolve();
+  const idx = cards.indexOf(card);
+  if(idx < 0) return fbSaveAll(); // card nao encontrado no array local — fallback seguro
+  return window._update(fb(FB+'/cards'), {[idx]: card}).catch(err=>{
+    if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
+      console.warn('[fbSaveCard] write failed:', err);
+    throw err;
   });
 }
 function fbSaveMsgs(tab){
@@ -6190,7 +6209,7 @@ function scheduleAutoSave(){
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
-    fbSaveAll(); renderBoard();
+    fbSaveCard(c); renderBoard();
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
     if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
@@ -6674,7 +6693,8 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
   }
-  fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
+  if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
+  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
   _clearPendingRequired();
 }
 function toggleCardOKR(cardId){
@@ -13631,6 +13651,70 @@ function closeOv(id){
   }
 }
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov) ov.classList.remove('open');}));
+
+// ══ AUTO-UPDATE: detecta nova versão publicada e recarrega quando for seguro ══
+(function(){
+  const VERSION_KEY = 'kanban';
+  const CHECK_INTERVAL_MS = 5*60*1000; // reconsulta a cada 5 min
+  const FIRST_CHECK_DELAY_MS = 20000;  // espera a app estabilizar antes da 1ª checagem
+  const IDLE_TIMEOUT_MS = 45*1000;     // precisa estar parado 45s pra recarregar sozinho
+  const IDLE_RECHECK_MS = 15*1000;
+  let lastActivity = Date.now();
+  ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt=>{
+    document.addEventListener(evt, ()=>{ lastActivity = Date.now(); }, {passive:true});
+  });
+  function _auGetCurrentVersion(){
+    const el = document.querySelector('.version');
+    return el ? el.textContent.trim() : '';
+  }
+  function _auModalOpen(){
+    if(document.querySelector('.ov.open, .cal-ov.open, .ev-modal-ov.open, .dep-map-ov.open, #search-overlay.open, .notif-panel.open')) return true;
+    
+    return false;
+  }
+  function _auTyping(){
+    const a = document.activeElement;
+    if(!a) return false;
+    if(['INPUT','TEXTAREA','SELECT'].includes(a.tagName)) return true;
+    if(a.isContentEditable) return true;
+    return false;
+  }
+  let _auPollTimer=null, _auIdleTimer=null, _auBannerShown=false;
+  function _auShowBanner(){
+    if(_auBannerShown) return;
+    _auBannerShown = true;
+    const b = document.createElement('div');
+    b.id='_au-banner';
+    b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:rgba(4,22,39,.97);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);backdrop-filter:blur(14px);font-family:"DM Sans",sans-serif;font-size:12px;color:var(--txt,#e8f4fd);';
+    b.innerHTML = '<span>🔄 Nova versão disponível</span><button id="_au-banner-btn" style="background:rgba(56,182,255,.18);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600;font-family:inherit;">Atualizar agora</button>';
+    document.body.appendChild(b);
+    document.getElementById('_au-banner-btn').onclick=()=>location.reload();
+    _auIdleTimer = setInterval(_auTryIdleReload, IDLE_RECHECK_MS);
+  }
+  function _auTryIdleReload(){
+    const idleFor = Date.now()-lastActivity;
+    if(idleFor >= IDLE_TIMEOUT_MS && !_auModalOpen() && !_auTyping()){
+      location.reload();
+    }
+  }
+  async function _auCheckVersion(){
+    try{
+      const res = await fetch('version.json?_='+Date.now(), {cache:'no-store'});
+      if(!res.ok) return;
+      const data = await res.json();
+      const remote = data[VERSION_KEY];
+      const current = _auGetCurrentVersion();
+      if(remote && current && remote!==current){
+        if(_auPollTimer){ clearInterval(_auPollTimer); _auPollTimer=null; }
+        _auShowBanner();
+      }
+    }catch(e){ /* offline ou erro de rede — ignora silenciosamente */ }
+  }
+  setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
+  _auPollTimer = setInterval(_auCheckVersion, CHECK_INTERVAL_MS);
+})();
+// ══ FIM AUTO-UPDATE ══
+
 
 // Fish & Bubbles
 (function(){
