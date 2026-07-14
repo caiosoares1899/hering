@@ -1222,6 +1222,18 @@ input[type="date"]{-moz-appearance:textfield;}
   color:var(--teal);border-radius:999px;padding:0 7px;font-weight:700;
   font-size:11px;cursor:pointer;white-space:nowrap;
 }
+.mention-user.mention-agent{
+  background:rgba(167,139,250,.14);border-color:rgba(167,139,250,.35);color:#c4b5fd;
+}
+.avatar.agent-avatar{
+  border-width:1.5px;font-size:10px;
+}
+.hvs-btn{
+  background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;
+  padding:4px 8px;border-radius:999px;transition:all .15s;line-height:1;
+}
+.hvs-btn:hover{color:var(--txt);}
+.hvs-btn.active{background:rgba(56,182,255,.18);color:var(--accent);}
 .mention-card{
   display:inline-flex;align-items:center;gap:3px;
   background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);
@@ -2220,6 +2232,11 @@ input[type="date"]{-moz-appearance:textfield;}
 
   </div>
   <div class="hd-btns">
+    <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
+      <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
+      <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
+      <button class="hvs-btn" data-mode="agent" onclick="setHybridView('agent')" title="Só cards com agente envolvido">🤖</button>
+    </div>
     <div id="online-bar" onclick="openTeamList()" style="display:flex;align-items:center;gap:4px;cursor:pointer;" title="Ver equipe do quadro"></div>
     <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
       <div id="header-avatar" onclick="openStatusMenu()" title="Definir meu status" style="display:flex;align-items:center;gap:7px;cursor:pointer;position:relative;">
@@ -2270,6 +2287,12 @@ input[type="date"]{-moz-appearance:textfield;}
     <option value="high">🔴 Alta</option>
     <option value="medium">🟡 Média</option>
     <option value="low">🟢 Baixa</option>
+  </select>
+  <select id="f-exectype" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">Qualquer executor</option>
+    <option value="human">👤 Humano</option>
+    <option value="agent">🤖 Agente</option>
+    <option value="hybrid">🤝 Híbrido</option>
   </select>
   <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
     <input type="checkbox" id="f-blocker" onchange="applyFilters()" style="accent-color:var(--danger);"> Só impedidos
@@ -2523,6 +2546,25 @@ input[type="date"]{-moz-appearance:textfield;}
               <option value="medium">🟡 Média</option>
               <option value="high">🔴 Alta</option>
               <option value="critical">🔥 Crítica</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-attr-row">
+          <div class="field"><label class="fl">Executor</label>
+            <select class="fi" id="m-exectype" onchange="scheduleAutoSave();updateAgentStatusVisibility();">
+              <option value="human">👤 Humano</option>
+              <option value="agent">🤖 Agente</option>
+              <option value="hybrid">🤝 Híbrido</option>
+            </select>
+          </div>
+          <div class="field" id="m-agentstatus-field" style="display:none;"><label class="fl">Status do Agente</label>
+            <select class="fi" id="m-agentstatus" onchange="scheduleAutoSave()">
+              <option value="">— sem status —</option>
+              <option value="queued">⏳ Na fila</option>
+              <option value="running">⚙️ Em execução</option>
+              <option value="awaiting_validation">👀 Aguardando validação</option>
+              <option value="done">✅ Concluído</option>
+              <option value="error">⚠️ Erro</option>
             </select>
           </div>
         </div>
@@ -3826,7 +3868,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.142-dev</div>
+<div class="version">v8.30.143-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4001,6 +4043,7 @@ const ACTIVE_SQUAD = (_urlParams.get('squad') || 'dev').replace(/[^a-z0-9_-]/gi,
 const SQUAD_META_DEFAULT = {
   dev:           { label: '🧪 Dev Sandbox',           subtitle: 'Ambiente de testes',       agentRole: 'engenheiro', emoji: '🧪' },
   omnichannel:   { label: '🧪 Squad Omnichannel',     subtitle: 'Ambiente de testes (multi-squad)', agentRole: 'omnichannel', emoji: '🛍️' },
+  ecomm:         { label: '🧪 Squad Ecomm · Piloto Híbrido', subtitle: 'Simulação humano + agente de IA', agentRole: 'ecomm', emoji: '🤝' },
 };
 
 // Squads ativos — começa com o default, pode ser estendido pelo Firebase
@@ -4028,7 +4071,7 @@ function loadSquadsFromFirebase(callback) {
     const val = snap.val() || {};
     // squads_meta é compartilhado com o prod — o dev só deve exibir os
     // squads fictícios de teste, nunca squads reais cadastrados por lá.
-    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel','ecomm']);
     Object.entries(val).forEach(([id, meta]) => {
       if (!SQUADS_FICTICIOS.has(id)) return;
       if (meta && meta.label) {
@@ -4241,6 +4284,40 @@ let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (su
 let colSortMode = safeLS.getItem('col_sort_'+ACTIVE_SQUAD) || 'priority';
 let colSortOverrides = JSON.parse(safeLS.getItem('col_sort_ov_'+ACTIVE_SQUAD) || '{}');
 let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
+let agentes=[];     // [{id,nome,init,cor,avatarEmoji,escopo}] — identidades de agente de IA (em dados/agentes)
+// Membros humanos + agentes de IA combinados — usado só pra exibição/seleção (avatar, seletor de responsável,
+// participantes, @menção). NUNCA usar pra checagem de permissão/role — isso continua só em `members`.
+function allIdentities(){
+  return [...members, ...agentes.map(a=>({
+    init:a.init||a.id, name:a.nome||a.id, foto:'', uid:'agent:'+a.id,
+    isAgent:true, cor:a.cor||'#a78bfa', avatarEmoji:a.avatarEmoji||'🤖',
+  }))];
+}
+// ── MODO DE VISUALIZAÇÃO HÍBRIDO (humanos / agentes / híbrido-padrão) ──
+// Só aparece em squads com agentes de IA cadastrados (ex.: ecomm). Funciona como
+// um filtro forte: Humanos esconde cards 100% de agente; Agentes esconde cards
+// 100% humanos; Híbrido (padrão) mostra tudo, sem filtrar nada.
+let hybridViewMode = safeLS.getItem('hybrid_view_'+ACTIVE_SQUAD) || 'hybrid';
+function setHybridView(mode){
+  hybridViewMode = mode;
+  safeLS.setItem('hybrid_view_'+ACTIVE_SQUAD, mode);
+  updateHybridViewUI();
+  renderBoard();
+}
+function updateHybridViewUI(){
+  document.querySelectorAll('.hvs-btn').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-mode')===hybridViewMode);
+  });
+  const wrap=document.getElementById('hybrid-view-switch');
+  if(wrap) wrap.style.display = agentes.length>0 ? 'flex' : 'none';
+}
+function passesHybridView(card){
+  if(hybridViewMode==='hybrid') return true; // padrão: mostra tudo
+  const et = card.executorType||'human';
+  if(hybridViewMode==='human') return et==='human'||et==='hybrid';
+  if(hybridViewMode==='agent') return et==='agent'||et==='hybrid';
+  return true;
+}
 // ═══ SELEÇÃO MÚLTIPLA / EXCLUSÃO EM MASSA ═══
 let selectMode=false;
 let selectedCards=new Set();
@@ -4855,6 +4932,12 @@ function fbLoadAll(){
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderSubteamEditor();
     renderBoard();
   });
+  // Agentes de IA (piloto híbrido humano+agente) — identidades selecionáveis como responsável/participante/@menção
+  fbListen(FB+'/agentes',val=>{
+    agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    updateHybridViewUI();
+    renderBoard();
+  });
   fbListen(FB+'/tags',val=>{
     if(!val) return;
     const incoming = Array.isArray(val) ? val : Object.values(val);
@@ -4876,13 +4959,14 @@ function fbLoadAll(){
         // Persiste o backfill (1x) sem disparar loop de echo
         if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
       }
-      // Board populado — garante overlay de seed fechado (dev)
-      if(ACTIVE_SQUAD==='dev' && incoming.filter(c=>!c.archived).length > 0){
+      // Board populado — garante overlay de seed fechado (dev/ecomm)
+      if((ACTIVE_SQUAD==='dev'||ACTIVE_SQUAD==='ecomm') && incoming.filter(c=>!c.archived).length > 0){
         document.getElementById('seed-overlay')?.classList.remove('active');
       }
     } else {
-      // Sem cards no Firebase — mostra overlay de seed se for board dev
-      if(ACTIVE_SQUAD==='dev'){
+      // Sem cards no Firebase — mostra overlay de seed se for board de teste
+      if(ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='ecomm'){
+        updateSeedOverlayContent();
         document.getElementById('seed-overlay')?.classList.add('active');
       }
     }
@@ -5553,13 +5637,15 @@ function makeCardEl(card){
   const bex=card.col==='blocker'?'border-color:rgba(255,107,107,.4);':''
   const op=isDone?'opacity:.62;':''
   const dueHtml=dl?`<span class="due-badge ${dc}">${dl}</span>`:`<span class="due-none">sem prazo</span>`;
-  const m=members.find(m=>m.init===card.owner);
+  const m=allIdentities().find(m=>m.init===card.owner);
   const avHtml=card.owner
-    ?(safeUrl(m?.foto)?`<div class="avatar"><img src="${safeUrl(m.foto)}"></div>`:`<div class="avatar">${esc(card.owner)}</div>`)
+    ?(m?.isAgent?`<div class="avatar agent-avatar" style="background:${_hexA(m.cor,.25)};border-color:${_hexA(m.cor,.5)};" title="🤖 ${esc(m.name)}">${esc(m.avatarEmoji)}</div>`
+      :safeUrl(m?.foto)?`<div class="avatar"><img src="${safeUrl(m.foto)}"></div>`:`<div class="avatar">${esc(card.owner)}</div>`)
     :`<div class="avatar" style="opacity:.25">?</div>`;
   // Avatares de participantes (além do owner)
   const partAvatars=(card.participants||[]).filter(p=>p!==card.owner).slice(0,3).map(init=>{
-    const pm=members.find(x=>x.init===init);
+    const pm=allIdentities().find(x=>x.init===init);
+    if(pm?.isAgent) return `<div class="avatar agent-avatar" style="background:${_hexA(pm.cor,.25)};border-color:${_hexA(pm.cor,.5)};" title="🤖 ${esc(pm.name)}">${esc(pm.avatarEmoji)}</div>`;
     return safeUrl(pm?.foto)?`<div class="avatar" title="${esc(pm.name)}"><img src="${safeUrl(pm.foto)}"></div>`:`<div class="avatar" title="${esc(init)}">${esc(init)}</div>`;
   }).join('');
   const partHtml=partAvatars?`<div class="part-avatars">${partAvatars}</div>`:'';
@@ -5598,11 +5684,18 @@ function makeCardEl(card){
   }
   div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const spBadge=card.sp?`<span style="font-size:8px;background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);padding:1px 5px;border-radius:999px;margin-left:3px;">${esc(card.sp)}pts</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  // Chip de executor — só aparece pra agent/hybrid (humano é o default silencioso, não polui boards que não usam a feature)
+  const _execMap={agent:{ico:'🤖',lbl:'Agente',bg:'rgba(167,139,250,.14)',bd:'rgba(167,139,250,.35)',tx:'#c4b5fd'},hybrid:{ico:'🤝',lbl:'Híbrido',bg:'rgba(29,233,182,.12)',bd:'rgba(29,233,182,.3)',tx:'var(--teal)'}};
+  const _execInfo=_execMap[card.executorType];
+  const execChip=_execInfo?`<span class="exec-chip" style="font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;white-space:nowrap;" title="Executor: ${_execInfo.lbl}">${_execInfo.ico} ${_execInfo.lbl}</span>`:'';
+  const _agentStatusMap={queued:{ico:'⏳',lbl:'Na fila'},running:{ico:'⚙️',lbl:'Em execução'},awaiting_validation:{ico:'👀',lbl:'Aguardando validação'},done:{ico:'✅',lbl:'Concluído'},error:{ico:'⚠️',lbl:'Erro'}};
+  const _asInfo=card.executorType&&card.executorType!=='human'?_agentStatusMap[card.agentStatus]:null;
+  const agentStatusChip=_asInfo?`<span class="exec-chip" style="font-size:9px;background:rgba(56,182,255,.1);color:var(--accent);border:1px solid rgba(56,182,255,.25);padding:1px 6px;border-radius:999px;margin-left:4px;white-space:nowrap;" title="Status do agente">${_asInfo.ico} ${_asInfo.lbl}</span>`:'';
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${spBadge}${riscoBadge}${okrBadge}${execChip}${agentStatusChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -5868,7 +5961,7 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -5895,6 +5988,7 @@ function applyFilters(){
     blocker:document.getElementById('f-blocker').checked,
     risco:document.getElementById('f-risco').checked,
     subteam:document.getElementById('f-subteam')?.value||'',
+    execType:document.getElementById('f-exectype')?.value||'',
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
   renderBoard();
@@ -5907,10 +6001,12 @@ function clearFilters(){
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
-  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+  const fe=document.getElementById('f-exectype'); if(fe) fe.value='';
+  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
+  if(!passesHybridView(card)) return false;
   if(!ignoreOwner&&activeFilters.owner){
     const cardParticipants = card.participants||card.participantes||[];
     const isInvolved = card.owner===activeFilters.owner || cardParticipants.includes(activeFilters.owner);
@@ -5921,6 +6017,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.blocker&&card.col!=='blocker') return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
+  if(activeFilters.execType&&(card.executorType||'human')!==activeFilters.execType) return false;
   if(activeFilters.due){
     if(!card.due) return false;
     const d=new Date(card.due+'T00:00:00'); d.setHours(0,0,0,0);
@@ -6044,15 +6141,19 @@ function populatePartSelect(excludeInits=[]){
   const init=window._currentUserInit; const u=window._currentUser;
   if(init&&u&&!excludeInits.includes(init)&&!members.find(m=>m.init===init))
     sel.innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName?.split(' ')[0]||'')}</option>`;
+  // Agentes de IA
+  const _agInits=agentes.map(a=>a.init||a.id).filter(i=>!excludeInits.includes(i));
+  if(_agInits.length)
+    sel.innerHTML+=`<optgroup label="🤖 Agentes">`+agentes.filter(a=>_agInits.includes(a.init||a.id)).map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('')+`</optgroup>`;
 }
 
 function renderParticipants(parts){
   const w=document.getElementById('m-participants'); if(!w) return;
   const partArr=parts||[];
   w.innerHTML=partArr.map((init,i)=>{
-    const m=members.find(x=>x.init===init);
-    const foto=safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}">`:'';
-    const nome=m?.name?.split(' ')[0]||init;
+    const m=allIdentities().find(x=>x.init===init);
+    const foto=m?.isAgent?'':(safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}">`:'');
+    const nome=m?.isAgent?(m.avatarEmoji+' '+m.name):(m?.name?.split(' ')[0]||init);
     return `<span class="part-chip">${foto}${esc(init)} · ${esc(nome)}
       <button class="part-chip-del" onclick="removeParticipant(${i})">✕</button>
     </span>`;
@@ -6345,8 +6446,17 @@ function populateOwnerSelect(){
   const u=window._currentUser; const init=window._currentUserInit;
   if(u&&init&&!members.find(m=>m.init===init))
     document.getElementById('m-owner').innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName||u.email||'')}</option>`;
+  // Agentes de IA — optgroup separado, visualmente marcados
+  if(agentes.length)
+    document.getElementById('m-owner').innerHTML+=`<optgroup label="🤖 Agentes">`+agentes.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('')+`</optgroup>`;
 }
 function populateColSelect(){ document.getElementById('m-col').innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); }
+// ── executorType / agentStatus: mostra o status do agente só quando faz sentido ──
+function updateAgentStatusVisibility(){
+  const et=document.getElementById('m-exectype')?.value||'human';
+  const f=document.getElementById('m-agentstatus-field');
+  if(f) f.style.display = (et==='human') ? 'none' : '';
+}
 
 function openCard(id){
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
@@ -6376,6 +6486,9 @@ function openCard(id){
   document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
   document.getElementById('m-sp').value=c.sp||'';
   document.getElementById('m-priority').value=c.priority||'';
+  document.getElementById('m-exectype').value=c.executorType||'human';
+  document.getElementById('m-agentstatus').value=c.agentStatus||'';
+  updateAgentStatusVisibility();
   renderSubPrioRow();
   renderParticipants(c.participants||[]);
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
@@ -6651,6 +6764,8 @@ function saveCard(){
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
+      executorType:document.getElementById('m-exectype')?.value||'human',
+      agentStatus:document.getElementById('m-agentstatus')?.value||'',
       participants:getParticipants(),
       isOKR:document.getElementById('m-is-okr')?.checked||false,
       dependsOn:c.dependsOn||null,
@@ -6667,7 +6782,10 @@ function saveCard(){
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
+      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
+      executorType:document.getElementById('m-exectype')?.value||'human',
+      agentStatus:document.getElementById('m-agentstatus')?.value||'',
+      participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
@@ -7738,7 +7856,7 @@ function loadCampanhas(){
     // (squads:['dados'], ['prf']...) ficam de fora da tela do dev. É o
     // espelho do filtro que o kanban.html (prod) já tinha, que esconde as
     // campanhas fictícias de lá.
-    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel','ecomm']);
     _campanhas = Object.fromEntries(
       Object.entries(raw).filter(([_,c])=>{
         const sq = c.squads||[];
@@ -9953,12 +10071,14 @@ function renderMd(txt){
     // Quebras de linha — não duplica após blocos
     .replace(/(<\/div>|<\/tr>|<hr[^>]*>)<br>/g,'$1')
     .replace(/\n/g,'<br>');
-  // @USER mentions → teal underlined (done separately to avoid chain complexity)
-  const _members = typeof members !== 'undefined' ? members : [];
+  // @USER mentions → teal underlined (agentes de IA → roxo, com 🤖) (done separately to avoid chain complexity)
+  const _members = typeof allIdentities === 'function' ? allIdentities() : (typeof members !== 'undefined' ? members : []);
   txt = txt.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
     // Match by handle (email local) or init
     const mem=_members.find(x=>getMemberHandle(x)===handle.toLowerCase())||_members.find(x=>x.init===handle.toUpperCase());
-    return mem ? '<span class="mention-user" title="'+esc(mem.name)+'" onclick="void(0)">@'+esc(handle)+'</span>' : m;
+    if(!mem) return m;
+    if(mem.isAgent) return '<span class="mention-user mention-agent" title="🤖 '+esc(mem.name)+' (agente de IA)" onclick="void(0)">@'+esc(handle)+' 🤖</span>';
+    return '<span class="mention-user" title="'+esc(mem.name)+'" onclick="void(0)">@'+esc(handle)+'</span>';
   });
   // [[CARD:id:title]] → blue underlined clickable
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
@@ -11442,8 +11562,8 @@ function handleMentionInput(ta, dd){
     return;
   }
 
-  // @INICIAIS → busca membros
-  const matches = members.filter(m=>{
+  // @INICIAIS → busca membros + agentes de IA
+  const matches = allIdentities().filter(m=>{
     const handle = getMemberHandle(m);
     return handle.toLowerCase().includes(query.toLowerCase()) ||
       m.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -11489,12 +11609,14 @@ function renderMentionDropdown(dd, matches, ta, atPos, pos){
   matches.forEach((m,i)=>{
     const opt = document.createElement('div');
     opt.className = 'mention-option' + (i===0?' active':'');
-    const av = safeUrl(m.foto)
-      ? '<img src="'+safeUrl(m.foto)+'" onerror="this.style.display=\'none\'">' 
-      : '<div class="mention-avatar">'+m.init+'</div>';
+    const av = m.isAgent
+      ? '<div class="mention-avatar" style="background:'+_hexA(m.cor,.25)+';">'+(m.avatarEmoji||'🤖')+'</div>'
+      : (safeUrl(m.foto)
+        ? '<img src="'+safeUrl(m.foto)+'" onerror="this.style.display=\'none\'">' 
+        : '<div class="mention-avatar">'+m.init+'</div>');
     const handle = getMemberHandle(m);
     opt.innerHTML = av
-      + '<span class="mention-init">@'+handle+'</span>'
+      + '<span class="mention-init">@'+handle+(m.isAgent?' 🤖':'')+'</span>'
       + '<span class="mention-name">'+m.name+'</span>';
     opt.onmousedown = e=>{ e.preventDefault(); insertMention(ta, atPos, pos, m.init); };
     dd.appendChild(opt);
@@ -11553,7 +11675,7 @@ function getMemberByHandle(handle){
 }
 
 function insertMention(ta, atPos, curPos, init){
-  const member = members.find(m=>m.init===init);
+  const member = allIdentities().find(m=>m.init===init);
   const handle = member ? getMemberHandle(member) : init;
   const val = ta.value;
   ta.value = val.slice(0,atPos) + '@'+handle+' ' + val.slice(curPos);
@@ -14075,10 +14197,12 @@ function renderCommentList(comments){
 
 function renderMentionText(text){
   if(!text) return '';
-  // @USER mentions → teal underlined
+  // @USER mentions → teal underlined (agentes de IA → roxo, com 🤖)
   text=text.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
-    const _mem=typeof members!=='undefined'?members.find(x=>typeof getMemberHandle==='function'&&getMemberHandle(x)===handle.toLowerCase()):null;
+    const _pool=typeof allIdentities==='function'?allIdentities():(typeof members!=='undefined'?members:[]);
+    const _mem=_pool.find(x=>typeof getMemberHandle==='function'&&getMemberHandle(x)===handle.toLowerCase());
     const title=_mem?_mem.name:handle;
+    if(_mem?.isAgent) return '<span class="mention-user mention-agent" title="🤖 '+esc(title)+' (agente de IA)">@'+esc(handle)+' 🤖</span>';
     return '<span class="mention-user" title="'+esc(title)+'">@'+esc(handle)+'</span>';
   });
   // [[CARD:id:title]] → blue underlined (data-cid for click wiring after insertion)
@@ -15354,14 +15478,349 @@ function _forceReload(){
 }
 
 async function reSeedDev(){
-  const isTestSquad = ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='omnichannel';
-  if(!isTestSquad){ await uiAlert('A re-população de dados de teste só está disponível nos boards de teste (dev e omnichannel).'); return; }
+  const isTestSquad = ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='omnichannel' || ACTIVE_SQUAD==='ecomm';
+  if(!isTestSquad){ await uiAlert('A re-população de dados de teste só está disponível nos boards de teste (dev, omnichannel e ecomm).'); return; }
   const ok=await uiConfirm('Isto vai SOBRESCREVER o board atual com os dados de demonstração mais recentes.\n\nOs dados atuais serão substituídos. Continuar?');
   if(!ok) return;
   // mostra o overlay de seed (que tem o seed-btn e o log) e roda
   const ov=document.getElementById('seed-overlay');
-  if(ov) ov.classList.add('active');
-  await runDevSeed();
+  if(ov){ updateSeedOverlayContent(); ov.classList.add('active'); }
+  await runTestSeed();
+}
+function runTestSeed(){
+  if(ACTIVE_SQUAD==='ecomm') return runEcommSeed();
+  return runDevSeed();
+}
+function updateSeedOverlayContent(){
+  const t=document.getElementById('seed-title'), d=document.getElementById('seed-desc'), l=document.getElementById('seed-cards-list');
+  if(!t||!d||!l) return;
+  if(ACTIVE_SQUAD==='ecomm'){
+    t.textContent='🤝 Squad Ecomm vazia — piloto híbrido humano + agente de IA';
+    d.innerHTML='Este é o <strong>piloto de simulação</strong> da estrutura híbrida (pessoas + agentes de IA) no board — inclui 3 agentes conceituais, 3 membros fictícios e os cards do plano de construção da própria feature.<br><br>Clique abaixo para popular com os dados do piloto.';
+    l.innerHTML=`
+      <li>🤖 3 agentes de IA conceituais (Coletor Sheets, Analista VTEX, Coletor/Design de Slides)</li>
+      <li>🧑‍🤝‍🧑 3 membros fictícios (Ana · PO, Bruno · Dev, Carla · Designer)</li>
+      <li>📋 Cards dos Épicos 1-5 do plano híbrido (fundação, execução, conceitual, genéricos, piloto)</li>
+      <li>👤🤖🤝 Cards com executor humano, agente e híbrido misturados</li>
+      <li>🏷️ Labels: fundacao, execucao, seguranca, resiliencia, observabilidade, conceitual, generico-ecomm, piloto</li>
+    `;
+  } else {
+    t.textContent='🌱 Board de testes vazio';
+    d.innerHTML='Este é o <strong>Dev Sandbox</strong> — ambiente para testar funcionalidades e se familiarizar com o board antes de usar em produção.<br><br>Clique abaixo para popular com cards de teste cobrindo todas as funcionalidades disponíveis.';
+    l.innerHTML=`
+      <li>📋 13 cards em todas as colunas (Backlog, A Fazer, Em Progresso, Impedimentos, Concluído)</li>
+      <li>✅ Checklist, ⚠️ Riscos, 🔗 Links, 🎯 OKR, Tags múltiplas</li>
+      <li>💬 Comentários com reações (👍 👀 ❤️ ✅ 🎉) entre os usuários</li>
+      <li>⭐ 4 Estrelas do Mar no cardume, já com reações (👏 ❤️ 🎉 🔥)</li>
+      <li>🟢 5 usuários "online" com status (🎧 Foco, 📞 Reunião, 🍔 Almoço)</li>
+      <li>📌 Lembretes de exemplo (PO direcionado + para a squad)</li>
+      <li>🔗 Dependência entre cards, 🗂 1 arquivado, 🚧 1 bloqueado</li>
+      <li>📅 Eventos no calendário, 🔗 links, 📦 modelos e recorrentes</li>
+      <li>🏃 Sprint 12 configurado com objetivo</li>
+    `;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SEED — Squad Ecomm (piloto híbrido humano + agente de IA)
+// ═══════════════════════════════════════════════════════════════════════
+async function runEcommSeed(){
+  const btn=document.getElementById('seed-btn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Populando...'; }
+  const FBE = 'kanban/squads/ecomm/dados';
+  const seedLogE = (msg,type)=>{
+    const log=document.getElementById('seed-log'); if(!log) return;
+    const cls = type==='ok'?'ok':(type==='err'?'err':'inf');
+    log.innerHTML += `<div class="seed-log-line ${cls}">${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+  };
+  const nowE=new Date().toISOString();
+  const todayE=nowE.split('T')[0];
+  const dE=(days)=>new Date(Date.now()+days*86400000).toISOString().split('T')[0];
+
+  try{
+    // ── MEMBROS FICTÍCIOS (humanos) ──────────────────────────────────────
+    const usuariosE = {
+      'uid-ecomm-001': { nome:'Ana Ribeiro', email:'ana.ribeiro@ciahering.com.br', init:'ANA', foto:'', role:'po',
+        inscrito:true, inscritoEm:nowE, squads:{ecomm:true}, squads_roles:{ecomm:'po'} },
+      'uid-ecomm-002': { nome:'Bruno Tanaka', email:'bruno.tanaka@ciahering.com.br', init:'BRU', foto:'', role:'membro',
+        inscrito:true, inscritoEm:nowE, squads:{ecomm:true}, squads_roles:{ecomm:'membro'} },
+      'uid-ecomm-003': { nome:'Carla Nogueira', email:'carla.nogueira@ciahering.com.br', init:'CAR', foto:'', role:'membro',
+        inscrito:true, inscritoEm:nowE, squads:{ecomm:true}, squads_roles:{ecomm:'membro'} },
+    };
+    let _uOkE=0;
+    for(const [uid,u] of Object.entries(usuariosE)){
+      try{ await window._set(window._ref(window._db,'kanban/usuarios/'+uid), u); _uOkE++; }catch(e){}
+    }
+    seedLogE('✅ '+_uOkE+'/3 membros fictícios criados (Ana · PO, Bruno · Dev, Carla · Designer)','ok');
+
+    // ── AGENTES DE IA (conceituais — sem execução real na v1) ────────────
+    const seedAgentesE=[
+      { id:'agente-coletor-sheets', nome:'Coletor Sheets', init:'CST', avatarEmoji:'📊', cor:'#38b6ff',
+        escopo:'Coleta e analisa dados a partir de planilhas Google Sheets: lê um range definido, gera resumo/insight, escreve o retorno como comentário no card. Conceitual — sem worker real conectado na v1.' },
+      { id:'agente-analista-vtex', nome:'Analista VTEX', init:'AVX', avatarEmoji:'🛒', cor:'#1de9b6',
+        escopo:'Coleta e transforma dados da VTEX (pedidos, catálogo, abandono de checkout). Escopo exato de endpoints ainda em aberto. Conceitual — sem worker real conectado na v1.' },
+      { id:'agente-slides', nome:'Coletor/Design de Slides', init:'CDS', avatarEmoji:'📽️', cor:'#ffd166',
+        escopo:'Coleta dados (dos outros agentes ou de fontes diretas) e monta relatório em Google Apresentações. Fonte de dado ainda em aberto — provavelmente depende dos outros dois agentes. Conceitual — sem worker real conectado na v1.' },
+    ];
+    await window._set(window._ref(window._db, FBE+'/agentes'), seedAgentesE);
+    seedLogE('✅ 3 agentes de IA conceituais criados (Coletor Sheets, Analista VTEX, Coletor/Design de Slides)','ok');
+
+    // ── COLUNAS ────────────────────────────────────────────────────────
+    const seedColumnsE=[
+      {id:'backlog',         name:'Backlog',            color:'#888888', collapsible:true},
+      {id:'definicao',       name:'Em definição',       color:'#38b6ff', collapsible:false},
+      {id:'desenvolvimento', name:'Em desenvolvimento', color:'#a78bfa', collapsible:false},
+      {id:'validacao',       name:'Em validação',       color:'#ffd166', collapsible:false},
+      {id:'concluido',       name:'Concluído',          color:'#639922', collapsible:true},
+    ];
+    await window._set(window._ref(window._db, FBE+'/columns'), seedColumnsE);
+    seedLogE('✅ 5 colunas criadas (Backlog → Em definição → Em desenvolvimento → Em validação → Concluído)','ok');
+
+    // ── TAGS ───────────────────────────────────────────────────────────
+    const seedTagsE=[
+      {id:'fundacao',         label:'Fundação',          pi:0},
+      {id:'execucao',         label:'Execução',          pi:1},
+      {id:'seguranca',        label:'Segurança',         pi:2},
+      {id:'resiliencia',      label:'Resiliência',       pi:3},
+      {id:'observabilidade',  label:'Observabilidade',   pi:4},
+      {id:'conceitual',       label:'Conceitual',        pi:5},
+      {id:'generico-ecomm',   label:'Genérico Ecomm',    pi:6},
+      {id:'piloto',           label:'Piloto',            pi:7},
+    ];
+    await window._set(window._ref(window._db, FBE+'/tags'), seedTagsE);
+    seedLogE('✅ 8 tags criadas','ok');
+
+    // ── CARDS ──────────────────────────────────────────────────────────
+    const seedCardsE=[
+      // ═══ ÉPICO 1 — Fundação de dados e roles ═══
+      { id:'eco-1-1', col:'concluido', title:'Modelar executorType e agentStatus no card',
+        desc:'Adicionar os dois campos ao schema do card. executorType (human/agent/hybrid) visível no board como chip colorido — só aparece pra agent/hybrid, humano fica silencioso pra não poluir boards que não usam a feature. agentStatus (queued/running/awaiting_validation/done/error) só aparece ao abrir o card, e some quando executorType é human.',
+        tags:['fundacao'], priority:'high', owner:'ANA', executorType:'human', sp:'3', due:dE(-2),
+        checklist:[
+          {id:'c1',text:'executorType (human/agent/hybrid)',done:true},
+          {id:'c2',text:'agentStatus (queued/running/awaiting_validation/done/error)',done:true},
+          {id:'c3',text:'Migration para cards existentes (default executorType: human)',done:true},
+          {id:'c4',text:'Filtro no board por executorType',done:true},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-2) },
+      { id:'eco-1-2', col:'concluido', title:'Novo role agente + seletor de responsável',
+        desc:'Agente aparece no seletor de responsável do card e nos participantes, com avatar/cor própria (optgroup separado "🤖 Agentes"). Implementado como coleção `agentes` por squad em vez de estender o enum de permissão — evita mexer nas checagens de role (po/adm/organizador/membro/convidado) usadas em todo o app.',
+        tags:['fundacao'], priority:'high', owner:'ANA', executorType:'human', sp:'5', due:dE(-1),
+        checklist:[
+          {id:'c1',text:'Coleção "agentes" por squad no Firebase',done:true},
+          {id:'c2',text:'UI do seletor de responsável mostrando agentes',done:true},
+          {id:'c3',text:'Avatar/cor customizável por agente',done:true},
+          {id:'c4',text:'@menção reconhece agente como entidade mencionável',done:true},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-1) },
+      { id:'eco-1-3', col:'backlog', title:'Service account e autenticação do agente',
+        desc:'Cada agente autentica com service account própria, separada de ADM_EMAILS, com regras de segurança do Firebase escopadas à squad ecomm. **Fora do escopo desta rodada** — precisa de acesso real ao Firebase Console e ao Cloudflare (provisionar credenciais), que a Claude não tem nesta sessão.',
+        tags:['fundacao','seguranca'], priority:'medium', executorType:'human', sp:'8',
+        checklist:[
+          {id:'c1',text:'Criar service account por agente no Firebase',done:false},
+          {id:'c2',text:'Regras de segurança: agente só lê/escreve em cards da própria squad',done:false},
+          {id:'c3',text:'Segredo compartilhado pra validar origem do webhook',done:false},
+          {id:'c4',text:'Rate limit por agente no endpoint de webhook',done:false},
+        ],
+        riscos:[{id:'r1',text:'Depende de acesso real ao Firebase Console / Cloudflare — não disponível nesta sessão',level:'alto'}],
+        links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+
+      // ═══ ÉPICO 2 — Gatilho e execução (agente-piloto: Coleta) — tracking only, sem backend real ═══
+      { id:'eco-2-1', col:'backlog', title:'Webhook de gatilho (@menção e mudança de coluna)',
+        desc:'Endpoint que dispara ao @mencionar agente em comentário, ou ao mover card pra coluna configurada. Payload inclui corpo do card + comentários (contexto/prompt). **Requer infra real (Cloudflare/servidor) — fora do escopo desta rodada.**',
+        tags:['execucao'], priority:'medium', executorType:'human', sp:'8',
+        checklist:[
+          {id:'c1',text:'Endpoint que dispara ao @mencionar agente em comentário',done:false},
+          {id:'c2',text:'Endpoint que dispara ao mover card para coluna configurada',done:false},
+          {id:'c3',text:'Payload do webhook inclui corpo do card + comentários (contexto/prompt)',done:false},
+          {id:'c4',text:'Retry com backoff em caso de falha de entrega',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-1-3', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+      { id:'eco-2-2', col:'backlog', title:'Worker do agente Coleta (Cloudflare)',
+        desc:'Primeiro agente ponta a ponta. Recebe payload, seta agentStatus: running, executa, escreve retorno. **Requer deploy real de Cloudflare Worker — fora do escopo desta rodada.**',
+        tags:['execucao'], priority:'medium', executorType:'hybrid', agentStatus:'', sp:'13',
+        checklist:[
+          {id:'c1',text:'Setup do worker no Cloudflare',done:false},
+          {id:'c2',text:'🤖 Lógica de execução da coleta (definir escopo mínimo real)',done:false},
+          {id:'c3',text:'🤖 Escreve comentário de retorno no card',done:false},
+          {id:'c4',text:'🤖 Atualiza agentStatus ao final (done/error)',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-2-1', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+      { id:'eco-2-3', col:'backlog', title:'Heartbeat e timeout automático',
+        desc:'Evitar card preso em running pra sempre se o worker cair no meio da execução. **Requer job periódico real (cron/Worker) — fora do escopo desta rodada.**',
+        tags:['execucao','resiliencia'], priority:'medium', executorType:'human', sp:'5',
+        checklist:[
+          {id:'c1',text:'Campo lastHeartbeat no agentLog',done:false},
+          {id:'c2',text:'Job periódico checando heartbeat',done:false},
+          {id:'c3',text:'Regra: sem heartbeat há N minutos → agentStatus: error',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-1-3', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+      { id:'eco-2-4', col:'backlog', title:'Log de execução do agente',
+        desc:'Estrutura agentLog[] (timestamp/action/result/detail/costEstimate) + UI simples exibindo o histórico dentro do card. **Depende do worker real (Card eco-2-2) pra ter dado de verdade pra logar.**',
+        tags:['execucao','observabilidade'], priority:'low', executorType:'human', sp:'5',
+        checklist:[
+          {id:'c1',text:'Estrutura agentLog[] (timestamp/action/result/detail/costEstimate)',done:false},
+          {id:'c2',text:'UI simples exibindo o histórico dentro do card',done:false},
+          {id:'c3',text:'Campo de custo estimado por execução (tokens/$)',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-2-2', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+
+      // ═══ ÉPICO 3 — Os 3 agentes (conceitual — v1 não precisa funcionar) ═══
+      { id:'eco-3-1', col:'concluido', title:"Conceituar agente \"Coletor Sheets\"",
+        desc:'Coleta e analisa dados a partir de planilhas Google Sheets. Escopo esperado (a validar depois): ler range definido, gerar resumo/insight, escrever de volta como comentário no card.',
+        tags:['conceitual'], priority:'low', executorType:'agent', owner:'CST', sp:'2', due:dE(-1),
+        checklist:[
+          {id:'c1',text:'Definir nome, avatar e cor do agente',done:true},
+          {id:'c2',text:'Criar identidade "agente" no board (sem service account real ainda)',done:true},
+          {id:'c3',text:'Escrever descrição de escopo (o que ele faz / não faz)',done:true},
+          {id:'c4',text:'Card de exemplo simulando um pedido a este agente (sem execução)',done:true},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-1) },
+      { id:'eco-3-2', col:'concluido', title:'Conceituar agente "Analista VTEX"',
+        desc:'Coleta e transforma dados da VTEX (pedidos, catálogo, etc. — a definir). Escopo ainda em aberto quanto a quais endpoints/dados são prioridade.',
+        tags:['conceitual'], priority:'low', executorType:'agent', owner:'AVX', sp:'2', due:dE(-1),
+        checklist:[
+          {id:'c1',text:'Definir nome, avatar e cor do agente',done:true},
+          {id:'c2',text:'Criar identidade "agente" no board',done:true},
+          {id:'c3',text:'Levantar (sem implementar) quais dados da VTEX importam mais',done:false},
+          {id:'c4',text:'Card de exemplo simulando um pedido a este agente',done:true},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-1) },
+      { id:'eco-3-3', col:'concluido', title:'Conceituar agente "Coletor/Design de Slides"',
+        desc:'Coleta dados (de onde? a definir — provavelmente dos outros dois agentes ou de fontes diretas) e monta relatório em Google Apresentações.',
+        tags:['conceitual'], priority:'low', executorType:'agent', owner:'CDS', sp:'2', due:dE(-1),
+        checklist:[
+          {id:'c1',text:'Definir nome, avatar e cor do agente',done:true},
+          {id:'c2',text:'Criar identidade "agente" no board',done:true},
+          {id:'c3',text:'Levantar de onde vem o dado que ele apresenta (depende dos outros agentes?)',done:false},
+          {id:'c4',text:'Card de exemplo simulando um pedido a este agente',done:true},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-1) },
+      { id:'eco-3-4', col:'validacao', title:'Testar seletor/menção com os 3 agentes juntos',
+        desc:'Validar que os 3 aparecem corretamente no seletor de responsável e são @mencionáveis em comentários, sem nenhum ter execução real ligada ainda. **Aguardando validação manual do time no board.**',
+        tags:['conceitual'], priority:'medium', executorType:'human', owner:'ANA', sp:'2', due:dE(3),
+        checklist:[
+          {id:'c1',text:'@mencionar os 3 em um mesmo comentário de teste',done:false},
+          {id:'c2',text:'Confirmar diferenciação visual (avatar/cor) no board',done:false},
+          {id:'c3',text:'Confirmar filtro por executorType: agent mostrando os 3',done:false},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:['BRU','CAR'],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-1), editedAt:dE(-1) },
+
+      // ═══ ÉPICO 4 — Cards genéricos de ecomm (conteúdo demo, humano + híbrido) ═══
+      { id:'eco-4-1', col:'desenvolvimento', title:'Atualizar preços de campanha de inverno',
+        desc:'Ajustar tabela de preços de 40 SKUs para campanha sazonal.',
+        tags:['generico-ecomm'], priority:'medium', executorType:'human', owner:'ANA', sp:'3', due:dE(4),
+        checklist:[
+          {id:'c1',text:'Levantar os 40 SKUs da campanha',done:true},
+          {id:'c2',text:'Ajustar preços na tabela',done:false},
+          {id:'c3',text:'Validar com o time comercial',done:false},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Ana Ribeiro', edited:'Ana Ribeiro', createdAt:dE(-2), editedAt:dE(-1) },
+      { id:'eco-4-2', col:'desenvolvimento', title:'Relatório semanal de vendas por categoria',
+        desc:'Bruno pede o relatório → agente 🤖 Coletor Sheets (conceitual) puxa e resume os dados → Ana valida os números.',
+        tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'awaiting_validation', owner:'BRU', sp:'2', due:dE(2),
+        checklist:[
+          {id:'c1',text:'Bruno abre o card com o pedido',done:true},
+          {id:'c2',text:'🤖 Agente Coletor Sheets processa (simulado)',done:true},
+          {id:'c3',text:'Ana valida o resultado',done:false},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:['ANA','CST'],
+        archived:false, created:'Bruno Tanaka', edited:'Claude', createdAt:dE(-2), editedAt:dE(0) },
+      { id:'eco-4-3', col:'definicao', title:'Investigar queda de conversão no checkout VTEX',
+        desc:'Carla identifica o problema → agente 🤖 Analista VTEX (conceitual) levanta dados de pedidos/abandono → Bruno decide ação.',
+        tags:['generico-ecomm'], priority:'high', executorType:'hybrid', agentStatus:'running', owner:'CAR', sp:'5', due:dE(1),
+        checklist:[
+          {id:'c1',text:'Carla abre o card com a hipótese',done:true},
+          {id:'c2',text:'🤖 Agente Analista VTEX levanta dados (simulado)',done:false},
+          {id:'c3',text:'Bruno define próximos passos',done:false},
+        ],
+        riscos:[{id:'r1',text:'Queda de conversão pode estar impactando receita diária',level:'alto'}],
+        links:[], dependsOn:null, dependents:[], comments:{}, participants:['BRU','AVX'],
+        archived:false, created:'Carla Nogueira', edited:'Carla Nogueira', createdAt:dE(-1), editedAt:dE(0) },
+      { id:'eco-4-4', col:'backlog', title:'Apresentação de resultados do trimestre para diretoria',
+        desc:'Ana define o escopo → agente 🤖 Coletor/Design de Slides (conceitual) monta o rascunho → Carla ajusta visual → Ana aprova.',
+        tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'queued', owner:'ANA', sp:'8', due:dE(10),
+        checklist:[
+          {id:'c1',text:'Ana define o escopo da apresentação',done:false},
+          {id:'c2',text:'🤖 Agente Slides monta rascunho (simulado)',done:false},
+          {id:'c3',text:'Carla ajusta identidade visual',done:false},
+          {id:'c4',text:'Ana aprova versão final',done:false},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:['CAR','CDS'],
+        archived:false, created:'Ana Ribeiro', edited:'Ana Ribeiro', createdAt:dE(-1), editedAt:dE(-1) },
+      { id:'eco-4-5', col:'validacao', title:'Revisar copy da página de produto',
+        desc:'Card 100% humano, sem nenhum agente envolvido — serve de contraste no board pra mostrar que nem tudo precisa passar por agente.',
+        tags:['generico-ecomm'], priority:'low', executorType:'human', owner:'CAR', sp:'2', due:dE(2),
+        checklist:[
+          {id:'c1',text:'Revisar copy das 12 páginas de produto da campanha',done:true},
+          {id:'c2',text:'Ajustar tom de voz conforme guia de marca',done:true},
+          {id:'c3',text:'Enviar pra aprovação final',done:false},
+        ],
+        riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:[],
+        archived:false, created:'Carla Nogueira', edited:'Carla Nogueira', createdAt:dE(-2), editedAt:dE(-1) },
+
+      // ═══ ÉPICO 5 — Validação e piloto real (v2) — tracking only, sem execução real ═══
+      { id:'eco-5-1', col:'backlog', title:'Definir nível de autonomia do agente Coleta',
+        desc:'Aplicar o framework in/on/off the loop. Default: **on the loop** (agente propõe, humano aprova antes de ação externa).',
+        tags:['piloto'], priority:'low', executorType:'human', owner:'ANA', sp:'2',
+        checklist:[
+          {id:'c1',text:'Confirmar nível "on the loop" como padrão do piloto',done:false},
+          {id:'c2',text:'Critério de promoção para "in the loop" (ex.: 2 semanas sem erro)',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-2-2', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+      { id:'eco-5-2', col:'backlog', title:'Rodar card real em paralelo (humano vs. agente)',
+        desc:'Escolher uma tarefa real de coleta, rodar uma vez com humano e uma vez com o agente, comparar tempo e qualidade. **Depende do worker real (Épico 2) estar pronto.**',
+        tags:['piloto'], priority:'low', executorType:'hybrid', agentStatus:'', sp:'5',
+        checklist:[
+          {id:'c1',text:'Escolher a tarefa de comparação',done:false},
+          {id:'c2',text:'Rodar versão humana',done:false},
+          {id:'c3',text:'🤖 Rodar versão agente',done:false},
+          {id:'c4',text:'Comparar resultado e documentar aprendizado',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-2-2', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+      { id:'eco-5-3', col:'backlog', title:'Go/no-go para 2º agente ou outra squad',
+        desc:'Revisar métricas do piloto (tempo, erro, custo) e decidir: expandir para 2º agente (Analista) ou nova squad.',
+        tags:['piloto'], priority:'low', executorType:'human', owner:'ANA', sp:'2',
+        checklist:[
+          {id:'c1',text:'Revisar métricas do piloto (tempo, erro, custo)',done:false},
+          {id:'c2',text:'Decisão: expandir para 2º agente (Analista) ou nova squad',done:false},
+        ],
+        riscos:[], links:[], dependsOn:'eco-5-2', dependents:[], comments:{}, participants:[],
+        archived:false, created:'Claude', edited:'Claude', createdAt:dE(-3), editedAt:dE(-3) },
+    ];
+    await window._set(window._ref(window._db, FBE+'/cards'), seedCardsE);
+    seedLogE('✅ 19 cards criados (Épico 1: 3 · Épico 2: 4 · Épico 3: 4 · Épico 4: 5 · Épico 5: 3)','ok');
+
+    // ── SPRINT ─────────────────────────────────────────────────────────
+    const seedAgilCfgE={
+      sprintNum:'1', sprintDays:'14', sprintStart:todayE, sprintEnd:dE(13),
+      goal:'Simular a interação híbrida humano + agente de IA no board — validar UX antes de plugar execução real',
+      wip:'4', capacity:'80', blockerMode:'col',
+    };
+    await window._set(window._ref(window._db, FBE+'/agil_cfg'), seedAgilCfgE);
+    seedLogE('✅ Sprint configurada','ok');
+
+    seedLogE('🎉 Squad Ecomm populada! Recarregue o board pra ver tudo.','ok');
+  } catch(e){
+    seedLogE('⚠ Erro ao popular: '+e.message,'err');
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='🚀 Popular board com dados de teste'; }
+  }
 }
 
 async function runDevSeed(){
@@ -16706,12 +17165,12 @@ renderBoard();
 <!-- SEED OVERLAY — aparece quando board dev está zerado -->
 <div id="seed-overlay">
   <div class="seed-panel">
-    <div class="seed-title">🌱 Board de testes vazio</div>
-    <div class="seed-desc">
+    <div class="seed-title" id="seed-title">🌱 Board de testes vazio</div>
+    <div class="seed-desc" id="seed-desc">
       Este é o <strong>Dev Sandbox</strong> — ambiente para testar funcionalidades e se familiarizar com o board antes de usar em produção.<br><br>
       Clique abaixo para popular com cards de teste cobrindo todas as funcionalidades disponíveis.
     </div>
-    <ul class="seed-cards">
+    <ul class="seed-cards" id="seed-cards-list">
       <li>📋 13 cards em todas as colunas (Backlog, A Fazer, Em Progresso, Impedimentos, Concluído)</li>
       <li>✅ Checklist, ⚠️ Riscos, 🔗 Links, 🎯 OKR, Tags múltiplas</li>
       <li>💬 Comentários com reações (👍 👀 ❤️ ✅ 🎉) entre os usuários</li>
@@ -16723,7 +17182,7 @@ renderBoard();
       <li>🏃 Sprint 12 configurado com objetivo</li>
     </ul>
     <div class="seed-log" id="seed-log"></div>
-    <button class="btn btn-p" onclick="runDevSeed()" id="seed-btn" style="width:100%;justify-content:center;padding:12px;">
+    <button class="btn btn-p" onclick="runTestSeed()" id="seed-btn" style="width:100%;justify-content:center;padding:12px;">
       🚀 Popular board com dados de teste
     </button>
     <button class="btn" onclick="document.getElementById('seed-overlay').classList.remove('active')"
