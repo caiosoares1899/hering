@@ -1168,7 +1168,7 @@ input[type="date"]{-moz-appearance:textfield;}
   display:none;width:100%;background:rgba(3,13,26,.85);
   border:1px solid rgba(56,182,255,.3);border-radius:8px;
   padding:8px 10px;font-size:12px;color:var(--txt);
-  font-family:"DM Sans",sans-serif;resize:vertical;min-height:70px;
+  font-family:"DM Sans",sans-serif;resize:vertical;min-height:220px;
   outline:none;box-sizing:border-box;line-height:1.6;
 }
 .eoc-textarea:focus{border-color:rgba(56,182,255,.5);}
@@ -2598,8 +2598,8 @@ input[type="date"]{-moz-appearance:textfield;}
           </span>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','link')" title="Link">🔗</button>
         </div>
-        <textarea class="eoc-textarea" id="m-desc" rows="4"
-          oninput="scheduleAutoSave()"
+        <textarea class="eoc-textarea" id="m-desc" rows="12"
+          oninput="scheduleAutoSave()" onpaste="_eocPasteHandler(event)"
           onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('desc-eoc');}"></textarea>
         <div class="eoc-actions">
           <button class="eoc-save" onclick="eocSave('desc-eoc')">Salvar</button>
@@ -2691,7 +2691,7 @@ input[type="date"]{-moz-appearance:textfield;}
             </div>
             <div style="position:relative;">
               <textarea class="eoc-textarea" id="m-comment-inp"
-                oninput="autoResizeCommentInp(this);handleCommentMentions(this)"
+                oninput="autoResizeCommentInp(this);handleCommentMentions(this)" onpaste="_eocPasteHandler(event)"
                 onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('comment-eoc');}
                   else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
               <div class="link-dropdown" id="comment-mention-dd" style="position:absolute;bottom:100%;left:0;width:100%;z-index:20;margin-bottom:4px;"></div>
@@ -3999,7 +3999,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.143</div>
+<div class="version">v8.30.144</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14551,7 +14551,14 @@ function closeOv(id){
     }
   }
 }
-document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov) ov.classList.remove('open');}));
+document.querySelectorAll('.ov').forEach(ov=>{
+  let _downOnBackdrop=false;
+  ov.addEventListener('mousedown', e=>{ _downOnBackdrop = (e.target===ov); });
+  ov.addEventListener('click', e=>{
+    if(_downOnBackdrop && e.target===ov) ov.classList.remove('open');
+    _downOnBackdrop=false;
+  });
+});
 
 // ══ AUTO-UPDATE: detecta nova versão publicada e recarrega quando for seguro ══
 (function(){
@@ -15479,6 +15486,56 @@ async function _fmtText(taId, type, arg){
   ta.focus();
   const cs = s + wrap[0].length;
   ta.selectionStart = cs; ta.selectionEnd = cs + newText.length;
+  ta.dispatchEvent(new Event('input',{bubbles:true}));
+}
+// Converte HTML colado (Milanote, Word, Google Docs...) pra sintaxe markdown do Maré,
+// preservando negrito/itálico/sublinhado/links/listas em vez de virar tudo texto puro.
+function _htmlToMd(html){
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  function walk(node){
+    let out = '';
+    node.childNodes.forEach(n=>{
+      if(n.nodeType===3){ out += n.textContent; return; }
+      if(n.nodeType!==1) return;
+      const tag = (n.tagName||'').toLowerCase();
+      let inner = walk(n);
+      const style = n.getAttribute ? (n.getAttribute('style')||'') : '';
+      const isBold = tag==='b'||tag==='strong'||/font-weight\s*:\s*(bold|[6-9]00)/i.test(style);
+      const isItalic = tag==='i'||tag==='em'||/font-style\s*:\s*italic/i.test(style);
+      const isUnderline = tag==='u'||/text-decoration[^;]*underline/i.test(style);
+      if(inner.trim()){
+        if(isBold) inner = '**'+inner+'**';
+        if(isItalic) inner = '*'+inner+'*';
+        if(isUnderline) inner = '__'+inner+'__';
+      }
+      if(tag==='a'){ const href=n.getAttribute('href')||''; if(href) inner = '['+inner+']('+href+')'; }
+      else if(tag==='br'){ inner = '\n'; }
+      else if(tag==='li'){ inner = '- '+inner.trim()+'\n'; }
+      else if(tag==='p'||tag==='div'){ inner = inner+'\n'; }
+      else if(tag==='h1'){ inner = '# '+inner.trim()+'\n'; }
+      else if(tag==='h2'){ inner = '## '+inner.trim()+'\n'; }
+      else if(tag==='h3'){ inner = '### '+inner.trim()+'\n'; }
+      out += inner;
+    });
+    return out;
+  }
+  return walk(container).replace(/\n{3,}/g,'\n\n').replace(/[ \t]+\n/g,'\n').trim();
+}
+// Handler de paste pros textareas com formatação (descrição, comentários) — usa o HTML da área
+// de transferência se existir (preserva negrito etc.); sem HTML, deixa o paste padrão rolar.
+function _eocPasteHandler(e){
+  const cd = e.clipboardData || window.clipboardData;
+  const html = cd && cd.getData && cd.getData('text/html');
+  if(!html || !html.trim()) return; // sem HTML na área de transferência — paste padrão (texto puro)
+  e.preventDefault();
+  const ta = e.target;
+  const md = _htmlToMd(html) || (cd.getData('text/plain')||'');
+  const s = ta.selectionStart, en = ta.selectionEnd;
+  const before = ta.value.substring(0,s), after = ta.value.substring(en);
+  ta.value = before + md + after;
+  const cs = s + md.length;
+  ta.selectionStart = ta.selectionEnd = cs;
   ta.dispatchEvent(new Event('input',{bubbles:true}));
 }
 function eocEdit(wrapId){
