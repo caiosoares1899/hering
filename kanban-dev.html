@@ -3868,7 +3868,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.143-dev</div>
+<div class="version">v8.30.144-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4867,6 +4867,25 @@ function fbSaveAll(){
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
     throw err; // re-throw so handleDrop .catch can revert
+  });
+}
+function fbSaveCard(card){
+  // Salva SOMENTE este card (update num path especifico), em vez de
+  // sobrescrever o array `cards` inteiro. Isso evita que edicoes
+  // concorrentes de outras pessoas no board (ex.: adicionar um risco
+  // enquanto alguem move outro card) se apaguem mutuamente — o bug
+  // classico de "last write wins" num array unico compartilhado.
+  // fbSaveAll() continua existindo p/ operacoes que mudam o array
+  // inteiro (criar/excluir/reordenar cards).
+  _lastLocalSave = Date.now();
+  _hasLocalSession = true;
+  if(!window._fbReady) return Promise.resolve();
+  const idx = cards.indexOf(card);
+  if(idx < 0) return fbSaveAll(); // card nao encontrado no array local — fallback seguro
+  return window._update(fb(FB+'/cards'), {[idx]: card}).catch(err=>{
+    if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
+      console.warn('[fbSaveCard] write failed:', err);
+    throw err;
   });
 }
 function fbSaveMsgs(tab){
@@ -6295,7 +6314,7 @@ function scheduleAutoSave(){
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
-    fbSaveAll(); renderBoard();
+    fbSaveCard(c); renderBoard();
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
     if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
@@ -6790,7 +6809,8 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
   }
-  fbSaveAll(); renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
+  if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
+  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
   _clearPendingRequired();
 }
 function toggleCardOKR(cardId){
