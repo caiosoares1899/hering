@@ -3979,7 +3979,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.148-dev</div>
+<div class="version">v8.30.149-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7052,11 +7052,14 @@ function renderCL(cl){
   });
 }
 function getCL(){
-  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({
-    t: r.querySelector('.cl-it')?.textContent?.trim()||'',
-    done: r.querySelector('input[type=checkbox]')?.checked||false,
-    simComment: r.dataset.sim || undefined,
-  })).filter(x=>x.t);
+  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>{
+    const item = {
+      t: r.querySelector('.cl-it')?.textContent?.trim()||'',
+      done: r.querySelector('input[type=checkbox]')?.checked||false,
+    };
+    if(r.dataset.sim) item.simComment = r.dataset.sim;
+    return item;
+  }).filter(x=>x.t);
 }
 function renderRiscos(rl){
   const w=document.getElementById('m-riscos'); if(!w) return; w.innerHTML='';
