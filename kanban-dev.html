@@ -2569,14 +2569,6 @@ input[type="date"]{-moz-appearance:textfield;}
             </select>
           </div>
         </div>
-        <div class="field" id="m-subprio-row" style="display:none;">
-          <label class="fl">Posição na prioridade<span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dentro dessa prioridade (ex.: entre todos os cards "Alta" da coluna), decide qual aparece primeiro. Cards sem posição definida ficam depois dos que já têm uma, na ordem de criação.</span></span></label>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <button type="button" class="btn btn-sm" onclick="moveCardSubPrio(-1)" title="Subir dentro da prioridade">⬆ Subir</button>
-            <button type="button" class="btn btn-sm" onclick="moveCardSubPrio(1)" title="Descer dentro da prioridade">⬇ Descer</button>
-            <span id="m-subprio-lbl" style="font-size:10.5px;color:var(--txt3);"></span>
-          </div>
-        </div>
         <div class="field">
           <label class="fl">Participantes</label>
           <div class="part-list" id="m-participants"></div>
@@ -2672,6 +2664,7 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div>
 
+    <div class="cfg-sec-title" style="margin:2px 0 -2px;">📝 Conteúdo</div>
     <!-- Descrição full-width -->
     <div class="field">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
@@ -2717,6 +2710,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..."></textarea></div>
     </div>
 
+    <div class="cfg-sec-title" style="margin:2px 0 -2px;">🔗 Vínculos &amp; anexos</div>
     <!-- Peça vinculada no Milanote (campo dedicado, separado dos links genéricos) -->
     <div class="attach-wrap" id="m-milanote-wrap" style="border-color:rgba(232,70,70,.25);">
       <div class="attach-hd">
@@ -2755,6 +2749,7 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div>
 
+    <div class="cfg-sec-title" style="margin:2px 0 -2px;">💬 Colaboração</div>
     <!-- Comentários e Atividade -->
     <div class="comments-wrap" id="m-comments-wrap">
       <div class="comments-hd">
@@ -4082,7 +4077,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.153-dev</div>
+<div class="version">v8.30.154-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11716,7 +11711,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o card e use "Posição na prioridade" (⬆/⬇) pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
+    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
