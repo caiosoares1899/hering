@@ -4077,7 +4077,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.154-dev</div>
+<div class="version">v8.30.155-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5874,7 +5874,7 @@ function getDue(due, isDone){
 function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.round(d/cl.length*100)}; }
 
 function makeCardEl(card){
-  const isDone=card.col==='done';
+  const isDone=_isColDone(card.col);
   const{cls:dc,lbl:dl}=getDue(card.due,isDone);
   const cp=clProg(card.checklist);
   const bex=card.col==='blocker'?'border-color:rgba(255,107,107,.4);':''
@@ -5897,7 +5897,7 @@ function makeCardEl(card){
   // Card aging — limiares atrelados à duração da sprint configurada
   // 1 sprint sem edição = aged-1 (esmaece); 2 sprints = aged-2 (mais apagado + 💤)
   let agingClass='';
-  if(card.col!=='done'&&card.editedAt){
+  if(!_isColDone(card.col)&&card.editedAt){
     const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
     const editedD=new Date(card.editedAt+'T00:00:00'); const ageDays=Math.round((today-editedD)/86400000);
     if(ageDays>=sprintLen*2) agingClass=' aged-2';
