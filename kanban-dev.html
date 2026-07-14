@@ -2338,6 +2338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
+  <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
   <div class="tb-sep"></div>
 </div>
 
@@ -2621,6 +2622,51 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div><!-- /modal-grid -->
 
+    <!-- FICHA DE CRIATIVO (opt-in por squad, ver Config → Criativos) -->
+    <div class="cl-sec" id="m-criativo-sec" style="display:none;border-color:rgba(255,179,217,.3);margin:0 20px 14px;">
+      <div class="cl-hd-row"><div class="cl-hd" style="color:#ffb3d9;">🎬 Ficha de Criativo</div></div>
+      <div class="card-attr-row">
+        <div class="field"><label class="fl">Canal</label>
+          <input class="fi" id="m-crv-canal" list="crv-canal-list" oninput="scheduleAutoSave()" placeholder="OOH, App, Site...">
+          <datalist id="crv-canal-list"><option value="OOH"><option value="App"><option value="Site"><option value="O2O"><option value="TV"><option value="Rádio"><option value="Outros"></datalist>
+        </div>
+        <div class="field"><label class="fl">Objetivo</label>
+          <input class="fi" id="m-crv-objetivo" list="crv-objetivo-list" oninput="scheduleAutoSave()" placeholder="Alcance, Conversão...">
+          <datalist id="crv-objetivo-list"><option value="Alcance e Reconhecimento"><option value="Tráfego"><option value="Engajamento"><option value="Conversão"><option value="Aquisição"><option value="Instalação"><option value="Remarketing"><option value="Impressões"><option value="Visita às lojas"></datalist>
+        </div>
+      </div>
+      <div class="card-attr-row">
+        <div class="field"><label class="fl">Plataforma</label>
+          <input class="fi" id="m-crv-plataforma" list="crv-plataforma-list" oninput="scheduleAutoSave()" placeholder="Meta, Google, Tiktok...">
+          <datalist id="crv-plataforma-list"><option value="Meta"><option value="Google"><option value="Tiktok"><option value="Youtube"><option value="Pinterest"><option value="RTB / Criteo"><option value="Rocket Lab"><option value="Outros"></datalist>
+        </div>
+        <div class="field"><label class="fl">Formato</label>
+          <input class="fi" id="m-crv-formato" list="crv-formato-list" oninput="scheduleAutoSave()" placeholder="Estático, Vídeo...">
+          <datalist id="crv-formato-list"><option value="Estático"><option value="Vídeo"><option value="Multiformatos"><option value="Carrossel"></datalist>
+        </div>
+      </div>
+      <div class="card-attr-row">
+        <div class="field"><label class="fl">Qtd Criativos</label>
+          <input class="fi" id="m-crv-qtd" type="number" min="0" oninput="scheduleAutoSave()" placeholder="0">
+        </div>
+        <div class="field"><label class="fl">Status de produção</label>
+          <select class="fi" id="m-crv-status" onchange="scheduleAutoSave()">
+            <option value="">— sem status —</option>
+            <option value="Não iniciada">Não iniciada</option>
+            <option value="Briefing OK">Briefing OK</option>
+            <option value="Material pendente">Material pendente</option>
+            <option value="Em execução">Em execução</option>
+            <option value="Em aprovação">Em aprovação</option>
+            <option value="Stand by">Stand by</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label class="fl">Obs</label>
+        <input class="fi" id="m-crv-obs" oninput="scheduleAutoSave()" placeholder="Observações...">
+      </div>
+    </div>
+
     <!-- Descrição full-width -->
     <div class="field">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
@@ -2850,6 +2896,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('firebase')">🔥 Firebase</div>
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
+    <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
   </div>
   <div class="cfg-body">
 
@@ -2941,6 +2988,15 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 
     <!-- ABA USUARIOS -->
+    <div class="tab-c" id="cfgtab-criativos">
+      <div class="cfg-sec-title">🎬 Controle de Criativos</div>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Ativa uma ficha extra no card (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações) pra times que produzem peças criativas — pensado pra substituir planilhas de controle. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
+      </p>
+      <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
+        <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha de Criativo neste squad
+      </label>
+    </div>
     <div class="tab-c" id="cfgtab-usuarios">
       <div class="usr-view-toggle">
         <button class="uvt-btn on" id="uvt-users" onclick="setUsuariosView('users')">👤 Usuários</button>
@@ -3635,6 +3691,47 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 </div>
 <!-- DADOS DO BOARD - fim -->
+<!-- ═══ CONTROLE DE CRIATIVOS (opt-in por squad) ═══ -->
+<div class="ov" id="criativos-ov">
+<div class="panel" style="width:min(1080px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">🎬 Controle de Criativos</div>
+    <button class="x-btn" onclick="closeOv('criativos-ov')">✕</button>
+  </div>
+  <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Todos os cards deste squad com a Ficha de Criativo preenchida, centralizados aqui. Clique numa linha pra abrir o card.</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+      <input class="fi" id="crv-search" placeholder="Buscar por título, canal, plataforma..." oninput="renderCriativosTable()" style="max-width:320px;flex:1;">
+      <span id="crv-count" style="font-size:11px;color:var(--txt3);white-space:nowrap;">0 pedido(s)</span>
+      <button class="btn btn-sm" onclick="exportCriativosCSV()" style="margin-left:auto;color:var(--teal);border-color:rgba(29,233,182,.3);">⬇ Exportar CSV</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="border-collapse:collapse;width:100%;font-size:12px;">
+        <thead>
+          <tr style="text-align:left;color:var(--txt3);border-bottom:1px solid var(--glass-b);">
+            <th style="padding:6px 8px;">Pedido</th>
+            <th style="padding:6px 8px;">Canal</th>
+            <th style="padding:6px 8px;">Objetivo</th>
+            <th style="padding:6px 8px;">Plataforma</th>
+            <th style="padding:6px 8px;">Formato</th>
+            <th style="padding:6px 8px;">Status</th>
+            <th style="padding:6px 8px;">Prazo</th>
+            <th style="padding:6px 8px;">Prioridade</th>
+            <th style="padding:6px 8px;">Qtd</th>
+          </tr>
+        </thead>
+        <tbody id="crv-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+<style>
+.crv-row{cursor:pointer;border-bottom:1px solid var(--glass-b);}
+.crv-row:hover{background:rgba(255,179,217,.08);}
+.crv-row td{padding:7px 8px;color:var(--txt2);}
+</style>
+<!-- CONTROLE DE CRIATIVOS - fim -->
 <!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
 <div class="ov" id="camp-ov">
 <div class="camp-panel camp-tema-neutro" id="camp-panel">
@@ -3882,7 +3979,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.147-dev</div>
+<div class="version">v8.30.148-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4644,6 +4741,7 @@ let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanb
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
 let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts visto (p/ badge de não-lidos), persistido
 let agilCfg={};
+let criativosAtivo=false; // toggle por squad: mostra a Ficha de Criativo no card + botão Controle de Criativos
 let archiveCfg={};
 
 // ═══════════════════════════════════════════════════════
@@ -4957,6 +5055,11 @@ function fbLoadAll(){
 
   // Agil cfg — segundo (WIP depende disso)
   fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); renderBoard(); }});
+  fbListen(FB+'/config/criativos_ativo', val=>{
+    criativosAtivo = !!val;
+    const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
+    const sec=document.getElementById('m-criativo-sec'); if(sec) sec.style.display = criativosAtivo?'':'none';
+  });
   fbListen(FB+'/archive_cfg',val=>{ if(val) archiveCfg=val; });
 
   // Tags — terceiro
@@ -6326,7 +6429,8 @@ function scheduleAutoSave(){
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
-      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td});
+      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
+      criativo:getCriativoData()});
     _histDiff(c, _asBefore); // 📜 registra o que mudou
     fbSaveCard(c); renderBoard();
     // feedback sutil
@@ -6537,6 +6641,8 @@ function openCard(id){
   }
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
+  setCriativoFields(c.criativo||{});
+  const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
   // Inicia mention dropdowns e carrega comentários
@@ -6766,6 +6872,8 @@ function openNewCard(col){
   if(bRow) bRow.style.display='none';
   renderCL([]);
   renderRiscos([]);
+  setCriativoFields({});
+  const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   document.getElementById('card-ov').classList.add('open');
 }
 function saveCard(){
@@ -6829,6 +6937,7 @@ function saveCard(){
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
+      criativo:getCriativoData(),
       edited:user,editedAt:td});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
@@ -6839,7 +6948,8 @@ function saveCard(){
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
       agentStatus:document.getElementById('m-agentstatus')?.value||'',
-      participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td};
+      participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td,
+      criativo:getCriativoData()};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
@@ -6957,6 +7067,92 @@ function renderRiscos(rl){
   });
 }
 function getRiscos(){ return Array.from(document.querySelectorAll('#m-riscos .cl-item')).map(r=>r.querySelector('.cl-it').textContent); }
+// ── Ficha de Criativo (opt-in por squad) ──
+function getCriativoData(){
+  const canal=document.getElementById('m-crv-canal')?.value.trim()||'';
+  const objetivo=document.getElementById('m-crv-objetivo')?.value.trim()||'';
+  const plataforma=document.getElementById('m-crv-plataforma')?.value.trim()||'';
+  const formato=document.getElementById('m-crv-formato')?.value.trim()||'';
+  const qtd=document.getElementById('m-crv-qtd')?.value||'';
+  const status=document.getElementById('m-crv-status')?.value||'';
+  const obs=document.getElementById('m-crv-obs')?.value.trim()||'';
+  if(!canal && !objetivo && !plataforma && !formato && !qtd && !status && !obs) return null;
+  return {canal,objetivo,plataforma,formato,qtd,status,obs};
+}
+function setCriativoFields(crv){
+  crv=crv||{};
+  const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('m-crv-canal',crv.canal); set('m-crv-objetivo',crv.objetivo); set('m-crv-plataforma',crv.plataforma);
+  set('m-crv-formato',crv.formato); set('m-crv-qtd',crv.qtd); set('m-crv-status',crv.status); set('m-crv-obs',crv.obs);
+}
+
+function _criativosRows(){
+  return cards.filter(c=>!c.archived && c.criativo && (c.criativo.canal||c.criativo.objetivo||c.criativo.plataforma||c.criativo.formato||c.criativo.qtd||c.criativo.status||c.criativo.obs));
+}
+function toggleCriativosAtivo(checked){
+  if(!_isPOorOrg()) return;
+  criativosAtivo = !!checked;
+  fbSet(FB+'/config/criativos_ativo', criativosAtivo);
+  const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
+  const sec=document.getElementById('m-criativo-sec'); if(sec && document.getElementById('card-ov')?.classList.contains('open')) sec.style.display = criativosAtivo?'':'none';
+  showToast(criativosAtivo?'🎬 Ficha de Criativo ativada neste squad.':'Ficha de Criativo desativada neste squad.');
+}
+function openCriativos(){
+  const ov=document.getElementById('criativos-ov'); if(!ov) return;
+  ov.classList.add('open');
+  const s=document.getElementById('crv-search'); if(s) s.value='';
+  renderCriativosTable();
+}
+function renderCriativosTable(){
+  const q=(document.getElementById('crv-search')?.value||'').toLowerCase().trim();
+  let rows=_criativosRows();
+  if(q){
+    rows=rows.filter(c=>{
+      const crv=c.criativo||{};
+      return (c.title||'').toLowerCase().includes(q) ||
+        Object.values(crv).some(v=>String(v||'').toLowerCase().includes(q));
+    });
+  }
+  const cEl=document.getElementById('crv-count'); if(cEl) cEl.textContent = rows.length+' pedido(s)';
+  const tbody=document.getElementById('crv-tbody'); if(!tbody) return;
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha de Criativo preenchida ainda.</td></tr>';
+    return;
+  }
+  const prioMap={low:'🟢 Baixa',medium:'🟡 Média',high:'🔴 Alta',critical:'🔥 Crítica'};
+  tbody.innerHTML = rows.map(c=>{
+    const crv=c.criativo||{};
+    const owner=members.find(m=>m.init===c.owner);
+    return '<tr class="crv-row" onclick="closeOv(\'criativos-ov\');openCard(\''+String(c.id).replace(/'/g,"\\'")+'\')">'
+      +'<td>'+esc(c.title)+'</td>'
+      +'<td>'+esc(crv.canal||'—')+'</td>'
+      +'<td>'+esc(crv.objetivo||'—')+'</td>'
+      +'<td>'+esc(crv.plataforma||'—')+'</td>'
+      +'<td>'+esc(crv.formato||'—')+'</td>'
+      +'<td>'+esc(crv.status||'—')+'</td>'
+      +'<td>'+(c.due?esc(_fmtDateBR2(c.due)):'—')+'</td>'
+      +'<td>'+(prioMap[c.priority]||'—')+'</td>'
+      +'<td>'+esc(crv.qtd||'0')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+function exportCriativosCSV(){
+  const rows=_criativosRows();
+  if(!rows.length){ showToast('Nenhum dado para exportar.'); return; }
+  const headers=['Pedido','Canal','Objetivo','Plataforma','Formato','Status','Prazo','Prioridade','Qtd Criativos','Responsável','Obs'];
+  const csvRows=[headers.join(';')];
+  rows.forEach(c=>{
+    const crv=c.criativo||{};
+    const owner=members.find(m=>m.init===c.owner);
+    const line=[c.title,crv.canal,crv.objetivo,crv.plataforma,crv.formato,crv.status,c.due||'',c.priority||'',crv.qtd||'',owner?owner.name:(c.owner||''),crv.obs||'']
+      .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"');
+    csvRows.push(line.join(';'));
+  });
+  const blob=new Blob(['\ufeff'+csvRows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='controle_criativos_'+ACTIVE_SQUAD+'_'+new Date().toISOString().split('T')[0]+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
 function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.value.trim(); if(!v) return; renderRiscos([...getRiscos(),v]); i.value=''; i.focus(); }
 function delRisco(i){ const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); }
 function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; saveUndo('adicionar item checklist'); renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
@@ -9546,7 +9742,7 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); }
@@ -9556,6 +9752,7 @@ function swCfgTab(tab){
   if(tab==='tags') renderTagEditor();
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
+  if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; }
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
