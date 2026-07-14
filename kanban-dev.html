@@ -3705,6 +3705,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('criativos-ov')">✕</button>
   </div>
   <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
+    <div class="crv-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn btn-sm crv-tab-btn active" id="crv-tab-lista" onclick="_crvSwitchTab('lista')">📋 Lista</button>
+      <button class="btn btn-sm crv-tab-btn" id="crv-tab-dash" onclick="_crvSwitchTab('dashboard')">📊 Dashboard</button>
+    </div>
+    <div id="crv-view-lista">
     <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Todos os cards deste squad com a Ficha de Criativo preenchida, centralizados aqui. Clique numa linha pra abrir o card — duplo clique numa célula edita direto (na coluna "Pedido" o duplo clique vincula a outro card).</div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
       <input class="fi" id="crv-search" placeholder="Buscar por título, canal, plataforma..." oninput="renderCriativosTable()" style="max-width:320px;flex:1;">
@@ -3775,6 +3780,10 @@ input[type="date"]{-moz-appearance:textfield;}
         <tbody id="crv-tbody"></tbody>
       </table>
     </div>
+    </div>
+    <div id="crv-view-dashboard" style="display:none;">
+      <div id="crv-dash-body"></div>
+    </div>
   </div>
 </div>
 </div>
@@ -3786,6 +3795,11 @@ input[type="date"]{-moz-appearance:textfield;}
 .crv-row td[ondblclick]:hover{background:rgba(255,179,217,.14);outline:1px dashed rgba(255,179,217,.35);outline-offset:-2px;}
 .crv-fh{font-size:10.5px !important;padding:3px 5px !important;width:100%;}
 .crv-edit-input,.crv-edit-select{font-size:11px;padding:3px 6px;}
+.crv-tab-btn{opacity:.6;}
+.crv-tab-btn.active{opacity:1;background:rgba(255,179,217,.15);border-color:rgba(255,179,217,.4);color:#ffb3d9;}
+.crv-dash-donut{border-radius:50%;flex-shrink:0;position:relative;}
+.crv-dash-donut::after{content:'';position:absolute;inset:16px;border-radius:50%;background:rgba(6,26,46,.97);}
+.crv-dash-donut span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--txt);z-index:1;}
 </style>
 <!-- CONTROLE DE CRIATIVOS - fim -->
 <!-- ═══ IMPORTAR EXCEL — CONTROLE DE CRIATIVOS ═══ -->
@@ -4077,7 +4091,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.156-dev</div>
+<div class="version">v8.30.157-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7291,6 +7305,145 @@ function openCriativos(){
   const expB=document.getElementById('crv-export-btn'); if(expB) expB.style.display=canManage?'':'none';
   const delB=document.getElementById('crv-delall-btn'); if(delB) delB.style.display=canManage?'':'none';
   renderCriativosTable();
+  _crvSwitchTab('lista');
+}
+// Alterna entre a tabela (Lista) e o painel visual (Dashboard) dentro do Controle de Criativos
+function _crvSwitchTab(tab){
+  const isDash = tab==='dashboard';
+  const vl=document.getElementById('crv-view-lista'); if(vl) vl.style.display = isDash?'none':'';
+  const vd=document.getElementById('crv-view-dashboard'); if(vd) vd.style.display = isDash?'':'none';
+  const tl=document.getElementById('crv-tab-lista'); if(tl) tl.classList.toggle('active', !isDash);
+  const td=document.getElementById('crv-tab-dash'); if(td) td.classList.toggle('active', isDash);
+  if(isDash) renderCriativosDashboard();
+}
+// Gera um conic-gradient CSS a partir de segmentos [{color,value}]
+function _crvDonutGradient(segments){
+  const total = segments.reduce((s,x)=>s+x.value,0) || 1;
+  let acc = 0; const parts = [];
+  segments.forEach(seg=>{
+    if(!seg.value || seg.value<=0) return;
+    const start = acc/total*360; acc += seg.value;
+    const end = acc/total*360;
+    parts.push(seg.color+' '+start.toFixed(2)+'deg '+end.toFixed(2)+'deg');
+  });
+  return parts.length ? 'conic-gradient('+parts.join(',')+')' : 'conic-gradient(var(--glass-b) 0deg 360deg)';
+}
+// Uma linha de "barra" horizontal (label + barra colorida proporcional + contagem)
+function _crvBarRow(label, count, total, color){
+  const pct = total>0 ? Math.round(count/total*100) : 0;
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">'
+    + '<span style="width:110px;flex-shrink:0;font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+esc(label)+'">'+esc(label)+'</span>'
+    + '<div style="flex:1;height:13px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden;">'
+    +   '<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:7px;"></div>'
+    + '</div>'
+    + '<span style="width:30px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+count+'</span>'
+    + '</div>';
+}
+// Renderiza o painel visual do Controle de Criativos: cards de resumo + donuts (status/prioridade) + barras (lista/canal/plataforma/formato)
+function renderCriativosDashboard(){
+  const body=document.getElementById('crv-dash-body'); if(!body) return;
+  const rows=_criativosRows();
+  if(!rows.length){
+    body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card com Ficha de Criativo preenchida ainda.</div>';
+    return;
+  }
+  const total=rows.length;
+  const statusOrder=['Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Concluído'];
+  const statusColors={'Não iniciada':'#8a94a6','Briefing OK':'#38b6ff','Material pendente':'#ffab40','Em execução':'#a78bfa','Em aprovação':'#ffd54f','Stand by':'#5b6472','Concluído':'#4ade80'};
+  const statusCounts={}; statusOrder.forEach(s=>statusCounts[s]=0); let semStatus=0;
+  rows.forEach(c=>{ const st=(c.criativo&&c.criativo.status)||''; if(statusCounts.hasOwnProperty(st)) statusCounts[st]++; else semStatus++; });
+  const concluidos=statusCounts['Concluído']||0;
+  const paradas=(statusCounts['Não iniciada']||0)+(statusCounts['Stand by']||0);
+  const emAndamento=Math.max(0, total-concluidos-paradas-semStatus);
+  const today=new Date().toISOString().split('T')[0];
+  const atrasados=rows.filter(c=>c.due && c.due<today && (!c.criativo || c.criativo.status!=='Concluído')).length;
+  const pctConcl = total>0?Math.round(concluidos/total*100):0;
+
+  const prioOrder=['critical','high','medium','low'];
+  const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
+  const prioColors={critical:'#e84646',high:'#ff6b6b',medium:'#ffd54f',low:'#4ade80',none:'#5b6472'};
+  const prioCounts={critical:0,high:0,medium:0,low:0}; let semPrio=0;
+  rows.forEach(c=>{ if(c.priority && prioCounts.hasOwnProperty(c.priority)) prioCounts[c.priority]++; else semPrio++; });
+
+  function topBy(field,n){
+    const m=new Map();
+    rows.forEach(c=>{ const v=(c.criativo&&c.criativo[field]||'').trim()||'—'; m.set(v,(m.get(v)||0)+1); });
+    return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n||6);
+  }
+  const byCanal=topBy('canal',6);
+  const byPlataforma=topBy('plataforma',6);
+  const byFormato=topBy('formato',6);
+  const listaMap=new Map();
+  rows.forEach(c=>{ const lid=c.criativo&&c.criativo.lista; const nome=lid&&criativosListas[lid]?criativosListas[lid].nome:'Sem lista'; listaMap.set(nome,(listaMap.get(nome)||0)+1); });
+  const byLista=[...listaMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+  const statusSegs=statusOrder.map(s=>({color:statusColors[s],value:statusCounts[s]}));
+  if(semStatus>0) statusSegs.push({color:'#444',value:semStatus});
+  const statusGrad=_crvDonutGradient(statusSegs);
+  const statusLegend=statusOrder.map(s=>{
+    const n=statusCounts[s]; const pct=total>0?Math.round(n/total*100):0;
+    return '<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt2);margin-bottom:5px;">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+statusColors[s]+';flex-shrink:0;"></span>'
+      +'<span style="flex:1;">'+esc(s)+'</span>'
+      +'<b style="color:var(--txt);">'+n+'</b><span style="color:var(--txt3);margin-left:4px;">('+pct+'%)</span>'
+      +'</div>';
+  }).join('') + (semStatus>0? ('<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt3);margin-bottom:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#444;flex-shrink:0;"></span><span style="flex:1;">Sem status</span><b>'+semStatus+'</b></div>') : '');
+
+  const prioSegs=prioOrder.map(p=>({color:prioColors[p],value:prioCounts[p]}));
+  if(semPrio>0) prioSegs.push({color:prioColors.none,value:semPrio});
+  const prioGrad=_crvDonutGradient(prioSegs);
+  const prioLegend=prioOrder.map(p=>{
+    const n=prioCounts[p]; const pct=total>0?Math.round(n/total*100):0;
+    return '<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt2);margin-bottom:5px;">'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+prioColors[p]+';flex-shrink:0;"></span>'
+      +'<span style="flex:1;">'+prioLabels[p]+'</span>'
+      +'<b style="color:var(--txt);">'+n+'</b><span style="color:var(--txt3);margin-left:4px;">('+pct+'%)</span>'
+      +'</div>';
+  }).join('') + (semPrio>0? ('<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt3);margin-bottom:5px;"><span style="width:9px;height:9px;border-radius:50%;background:'+prioColors.none+';flex-shrink:0;"></span><span style="flex:1;">Sem prioridade</span><b>'+semPrio+'</b></div>') : '');
+
+  const statCard=(icon,label,val,color)=>
+    '<div style="flex:1;min-width:130px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;">'
+    +'<div style="font-size:20px;font-weight:800;color:'+color+';">'+icon+' '+val+'</div>'
+    +'<div style="font-size:10.5px;color:var(--txt3);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
+    +'</div>';
+
+  const barsBlock=(title,items)=>{
+    const bTotal = items.reduce((s,[,c])=>s+c,0);
+    return '<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+      +'<div class="cfg-sec-title" style="margin-bottom:10px;">'+title+'</div>'
+      + (items.length ? items.map(([label,count])=>_crvBarRow(label,count,bTotal,'#ffb3d9')).join('') : '<div style="font-size:11px;color:var(--txt3);">Sem dados.</div>')
+      +'</div>';
+  };
+
+  body.innerHTML =
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+      +statCard('📦','Total de pedidos',total,'var(--txt)')
+      +statCard('✅','Concluídos',concluidos+' <span style=\'font-size:12px;color:var(--txt3);\'>('+pctConcl+'%)</span>','#4ade80')
+      +statCard('🔄','Em andamento',emAndamento,'#38b6ff')
+      +statCard('⚠️','Atrasados',atrasados,'#ff6b6b')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
+      +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+        +'<div class="cfg-sec-title" style="margin-bottom:12px;">📊 Por status</div>'
+        +'<div style="display:flex;align-items:center;gap:18px;">'
+          +'<div class="crv-dash-donut" style="width:96px;height:96px;background:'+statusGrad+';"><span>'+total+'</span></div>'
+          +'<div style="flex:1;">'+statusLegend+'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+        +'<div class="cfg-sec-title" style="margin-bottom:12px;">🚦 Por prioridade</div>'
+        +'<div style="display:flex;align-items:center;gap:18px;">'
+          +'<div class="crv-dash-donut" style="width:96px;height:96px;background:'+prioGrad+';"><span>'+total+'</span></div>'
+          +'<div style="flex:1;">'+prioLegend+'</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+      +barsBlock('📋 Por lista',byLista)
+      +barsBlock('📡 Por canal',byCanal)
+      +barsBlock('🎯 Por plataforma',byPlataforma)
+      +barsBlock('🖼 Por formato',byFormato)
+    +'</div>';
 }
 function _crvClearFilters(){
   ['crv-fh-canal','crv-fh-objetivo','crv-fh-plataforma','crv-fh-formato','crv-fh-qtd'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
