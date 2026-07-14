@@ -3341,6 +3341,10 @@ input[type="date"]{-moz-appearance:textfield;}
     <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;">
       <input type="checkbox" id="colcfg-collapsible" onchange="_colCfgSetField('collapsible', this.checked)"> Permite minimizar
     </label>
+    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:7px 8px;background:rgba(46,213,115,.06);border:1px solid rgba(46,213,115,.2);border-radius:var(--r);">
+      <input type="checkbox" id="colcfg-done" onchange="_colCfgToggleDone(this.checked)"> 🏁 Marcar esta coluna como "Concluído" (done)
+      <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Usada pelo relatório de tempo e pelas métricas de fluxo pra saber quando um card foi finalizado. Pode marcar mais de uma coluna (ex.: "Concluído" e "Em veiculação"). Sem nenhuma marcada, o board detecta automaticamente. Ajuste fino em Configurações → Fluxo.</span></span>
+    </label>
     <div class="field">
       <label class="fl">Visualização (ordem dos cards nesta coluna)</label>
       <select class="fi" id="colcfg-sort" onchange="setColSortOverride(_colCfgId, this.value)">
@@ -3878,7 +3882,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.146-dev</div>
+<div class="version">v8.30.147-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6617,8 +6621,9 @@ function openColCfg(colId){
   document.getElementById('colcfg-collapsible').checked = col.collapsible!==false;
   document.getElementById('colcfg-wip').value = (typeof col.wip==='number') ? col.wip : '';
   document.getElementById('colcfg-sort').value = colSortOverrides[colId] || '';
+  document.getElementById('colcfg-done').checked = _isColDone(colId);
   const podeEstrutural=_isPOorOrg();
-  ['colcfg-name','colcfg-color','colcfg-collapsible','colcfg-wip'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!podeEstrutural; });
+  ['colcfg-name','colcfg-color','colcfg-collapsible','colcfg-wip','colcfg-done'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!podeEstrutural; });
   document.getElementById('colcfg-wip-field').style.display = podeEstrutural?'':'none';
   document.getElementById('colcfg-save-btn').style.display = podeEstrutural?'':'none';
   renderColCfgSubPrio(colId);
@@ -6630,6 +6635,25 @@ function _colCfgSetField(field,val){
   if(field==='wip' && (val===null || val<=0)) delete col.wip; else col[field]=val;
   if(field==='name') document.getElementById('colcfg-title').textContent=val;
   renderBoard();
+}
+// Diz se uma coluna conta como "concluído" — usa a config manual do PO (flowConfig.doneCols)
+// se existir; senão cai na heurística automática (_flowDoneColIds), igual ao resto do fluxo.
+function _isColDone(colId){
+  const set = (flowConfig.doneCols && flowConfig.doneCols.length) ? flowConfig.doneCols : _flowDoneColIds();
+  return set.includes(colId);
+}
+// Atalho rápido dentro da engrenagem da coluna. Na primeira vez que o PO mexe aqui (ainda em
+// modo automático, sem config manual), materializa o que a heurística já detectava antes de
+// aplicar a mudança — assim ele só ajusta o que quer, sem perder o resto da detecção automática.
+function _colCfgToggleDone(checked){
+  if(!_colCfgId || !_isPOorOrg()) return;
+  if(!flowConfig.startCols || !flowConfig.startCols.length) flowConfig.startCols = _flowStartColIds();
+  if(!flowConfig.doneCols) flowConfig.doneCols = [];
+  if(!flowConfig.doneCols.length) flowConfig.doneCols = _flowDoneColIds();
+  if(checked){ if(!flowConfig.doneCols.includes(_colCfgId)) flowConfig.doneCols.push(_colCfgId); }
+  else { flowConfig.doneCols = flowConfig.doneCols.filter(id=>id!==_colCfgId); }
+  fbSet(FB+'/config/flow', flowConfig);
+  showToast(checked ? '🏁 Coluna marcada como "Concluído".' : '↩ Coluna removida de "Concluído".');
 }
 function setColSortOverride(colId, mode){
   if(!colId) return;
