@@ -2592,6 +2592,16 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="modal-col">
         <div class="cl-sec">
           <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
+          <div id="m-agent-sim" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.28);border-radius:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <span id="m-agent-sim-progress" style="font-size:11px;color:#c4b5fd;font-weight:600;"></span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm" id="m-agent-sim-advance" onclick="_agentAdvanceStep()" style="background:rgba(167,139,250,.16);border-color:rgba(167,139,250,.4);color:#c4b5fd;">▶ Avançar etapa</button>
+                <button type="button" class="btn btn-sm" id="m-agent-sim-validate" onclick="_agentValidate()" style="display:none;background:rgba(29,233,182,.15);border-color:rgba(29,233,182,.4);color:var(--teal);">✅ Validar e concluir</button>
+                <button type="button" class="btn btn-sm" id="m-agent-sim-return" onclick="_agentReturnForRework()" style="display:none;background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.35);color:#ff6b6b;">↩ Devolver</button>
+              </div>
+            </div>
+          </div>
           <div class="cl-items" id="m-checklist"></div>
           <div class="cl-add-r">
             <input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()">
@@ -3868,7 +3878,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.144-dev</div>
+<div class="version">v8.30.145-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6475,6 +6485,7 @@ function updateAgentStatusVisibility(){
   const et=document.getElementById('m-exectype')?.value||'human';
   const f=document.getElementById('m-agentstatus-field');
   if(f) f.style.display = (et==='human') ? 'none' : '';
+  _agentSimRefreshUI();
 }
 
 function openCard(id){
@@ -6880,8 +6891,9 @@ function renderCL(cl){
     const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
     handle.addEventListener('mousedown',()=>d.draggable=true);
     // Texto editável inline
-    const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
-    cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); scheduleAutoSave(); });
+    const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=(item.t!=null?item.t:item.text)||'';
+    d.dataset.sim = item.simComment || '';
+    cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); scheduleAutoSave(); _agentSimRefreshUI(); });
     span.title='Clique para editar';
     let _prev='';
     span.addEventListener('click',()=>{
@@ -6909,6 +6921,7 @@ function getCL(){
   return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({
     t: r.querySelector('.cl-it')?.textContent?.trim()||'',
     done: r.querySelector('input[type=checkbox]')?.checked||false,
+    simComment: r.dataset.sim || undefined,
   })).filter(x=>x.t);
 }
 function renderRiscos(rl){
@@ -6924,6 +6937,162 @@ function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.val
 function delRisco(i){ const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); }
 function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; saveUndo('adicionar item checklist'); renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
 function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
+// ═══════════════════════════════════════════════════════
+// SIMULAÇÃO DE FLUXO DO AGENTE (checklist = etapas do processo + comentários com contexto)
+// Disponível em qualquer card com executorType 'agent' ou 'hybrid'. 100% client-side —
+// sem execução real, sem service account. Serve pra dar sensação de acompanhar o agente
+// trabalhando (etapas avançando + comentários explicando o que "fez"), pra ajudar o time
+// a se acostumar com esse tipo de interação antes de plugarmos agentes reais.
+// ═══════════════════════════════════════════════════════
+const _AGENT_GENERIC_TEMPLATES = [
+  '✅ Concluí a etapa "{step}". Seguindo para a próxima.',
+  '🔎 Etapa "{step}" finalizada — não encontrei bloqueios até aqui.',
+  '📌 "{step}" concluída. Detalhes registrados no card para referência.',
+  '⚙️ Executei "{step}" com sucesso. Prosseguindo com o fluxo.',
+  '📊 Finalizei "{step}". Dados/resultado disponíveis para consulta.',
+];
+function _agentGenericComment(stepText){
+  const tpl = _AGENT_GENERIC_TEMPLATES[Math.floor(Math.random()*_AGENT_GENERIC_TEMPLATES.length)];
+  return tpl.replace('{step}', stepText);
+}
+// Descobre qual identidade de agente "pertence" a este card (dono, senão participante-agente, senão o 1º do squad)
+function _agentFindCardAgent(c){
+  const pool = allIdentities();
+  const ownerAgent = pool.find(m=>m.init===c.owner && m.isAgent);
+  if(ownerAgent) return ownerAgent;
+  const partAgent = (c.participants||[]).map(init=>pool.find(m=>m.init===init)).find(m=>m&&m.isAgent);
+  if(partAgent) return partAgent;
+  return agentes[0] ? {init:agentes[0].init||agentes[0].id, name:agentes[0].nome, cor:agentes[0].cor, avatarEmoji:agentes[0].avatarEmoji} : null;
+}
+function _agentPostComment(c, text){
+  const agent = _agentFindCardAgent(c);
+  const comment = {
+    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+    uid:'agent-'+(agent?.init||'generico'), author:(agent?.name||'Agente de IA'),
+    init:(agent?.init||'🤖'), foto:'', isAgent:true,
+    avatarEmoji:agent?.avatarEmoji||'🤖', cor:agent?.cor||'#a78bfa',
+    text, ts:new Date().toISOString(),
+  };
+  if(!c.comments) c.comments={};
+  c.comments[comment.id]=comment;
+}
+function _agentPostSystemComment(c, text){
+  const comment = {
+    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+    uid:'system', author:'Sistema', init:'⚙️', foto:'', isSystem:true,
+    text, ts:new Date().toISOString(),
+  };
+  if(!c.comments) c.comments={};
+  c.comments[comment.id]=comment;
+}
+// Grava checklist + status atuais do DOM no card e salva (via fbSaveCard — grava só este
+// card, não a lista inteira, evitando pisar em edição concorrente de outra pessoa no board).
+function _agentCommitState(c){
+  c.checklist = getCL();
+  c.agentStatus = document.getElementById('m-agentstatus')?.value||'';
+  c.executorType = document.getElementById('m-exectype')?.value||'human';
+  c.edited = window._currentUser?.displayName||'Usuário';
+  c.editedAt = new Date().toISOString().split('T')[0];
+  c.updatedAt = new Date().toISOString();
+  c.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+  fbSaveCard(c);
+  renderBoard();
+  if(_commentCardId===c.id) loadComments(c.id);
+  _agentSimRefreshUI();
+}
+function _agentSimRefreshUI(){
+  const panel=document.getElementById('m-agent-sim'); if(!panel) return;
+  const et=document.getElementById('m-exectype')?.value||'human';
+  if(et==='human'){ panel.style.display='none'; return; }
+  panel.style.display='';
+  const cl=getCL();
+  const total=cl.length, done=cl.filter(x=>x.done).length;
+  const status=document.getElementById('m-agentstatus')?.value||'';
+  const STATUS_LABEL={queued:'⏳ Na fila',running:'⚙️ Em execução',awaiting_validation:'👀 Aguardando validação',done:'✅ Concluído',error:'⚠️ Erro'};
+  const progEl=document.getElementById('m-agent-sim-progress');
+  if(progEl) progEl.textContent=(total?done+'/'+total+' etapas · ':'')+(STATUS_LABEL[status]||'Não iniciado');
+  const advBtn=document.getElementById('m-agent-sim-advance');
+  const valBtn=document.getElementById('m-agent-sim-validate');
+  const retBtn=document.getElementById('m-agent-sim-return');
+  if(!advBtn||!valBtn||!retBtn) return;
+  if(status==='awaiting_validation'){
+    advBtn.style.display='none'; valBtn.style.display=''; retBtn.style.display=''; retBtn.textContent='↩ Devolver';
+  } else if(status==='done'){
+    advBtn.style.display='none'; valBtn.style.display='none'; retBtn.style.display=''; retBtn.textContent='↩ Reabrir';
+  } else {
+    advBtn.style.display = total ? '' : 'none';
+    advBtn.disabled = !total || done>=total;
+    valBtn.style.display='none'; retBtn.style.display='none';
+  }
+}
+// Avança uma etapa: marca o próximo item do checklist como feito e posta um comentário do
+// agente com contexto (usa simComment pré-escrito do seed quando existe; senão gera um genérico).
+function _agentAdvanceStep(){
+  if(!editingId) return;
+  const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const et=document.getElementById('m-exectype')?.value||'human';
+  if(et==='human') return;
+  const cl=getCL();
+  const idx=cl.findIndex(x=>!x.done);
+  const statusSel=document.getElementById('m-agentstatus');
+  if(idx<0){
+    if(statusSel && statusSel.value!=='awaiting_validation' && statusSel.value!=='done'){
+      statusSel.value='awaiting_validation';
+      _agentPostSystemComment(c,'👀 Todas as etapas concluídas. Aguardando validação.');
+    }
+    updateAgentStatusVisibility();
+    _agentCommitState(c);
+    return;
+  }
+  cl[idx].done=true;
+  renderCL(cl);
+  saveUndo('avançar etapa do agente');
+  _agentPostComment(c, cl[idx].simComment || _agentGenericComment(cl[idx].t));
+  const remaining=cl.filter(x=>!x.done).length;
+  if(statusSel){
+    if(remaining===0){
+      statusSel.value='awaiting_validation';
+      _agentPostSystemComment(c,'👀 Todas as etapas concluídas. Aguardando validação.');
+    } else if(!statusSel.value || statusSel.value==='queued'){
+      statusSel.value='running';
+    }
+  }
+  updateAgentStatusVisibility();
+  _agentCommitState(c);
+}
+// Humano valida o trabalho do agente — encerra o ciclo.
+function _agentValidate(){
+  if(!editingId) return;
+  const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const statusSel=document.getElementById('m-agentstatus'); if(!statusSel) return;
+  statusSel.value='done';
+  const who=(window._currentUser?.displayName||'Alguém').split(' ')[0];
+  _agentPostSystemComment(c,'✅ Validado por '+who+'. Etapa encerrada com sucesso.');
+  updateAgentStatusVisibility();
+  _agentCommitState(c);
+  showToast('✅ Trabalho do agente validado.');
+}
+// Humano devolve pro agente: reabre o card (se já 'done') ou desmarca a última etapa concluída
+// e volta pra 'running' (se em 'awaiting_validation'), simulando pedir retrabalho.
+function _agentReturnForRework(){
+  if(!editingId) return;
+  const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const statusSel=document.getElementById('m-agentstatus'); if(!statusSel) return;
+  const who=(window._currentUser?.displayName||'Alguém').split(' ')[0];
+  if(statusSel.value==='done'){
+    statusSel.value='awaiting_validation';
+    _agentPostSystemComment(c,'↩ '+who+' reabriu o card para nova validação.');
+  } else {
+    const cl=getCL();
+    for(let i=cl.length-1;i>=0;i--){ if(cl[i].done){ cl[i].done=false; break; } }
+    renderCL(cl);
+    statusSel.value='running';
+    _agentPostSystemComment(c,'↩ '+who+' devolveu o card para o agente revisar.');
+  }
+  updateAgentStatusVisibility();
+  _agentCommitState(c);
+  showToast('↩ Devolvido para o agente.');
+}
 function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov'); openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }
 
 // ═══════════════════════════════════════════════════════
@@ -14173,18 +14342,26 @@ function renderCommentList(comments){
     const item=document.createElement('div');
     item.className='comment-item';
     item.dataset.cid=c.id||'';
-    const avatarHtml=c.foto
-      ? '<img src="'+esc(c.foto)+'" style="width:100%;height:100%;object-fit:cover;">'
-      : '<span>'+esc((c.init||c.author||'?').substring(0,2).toUpperCase())+'</span>';
+    const avatarHtml=c.isAgent
+      ? '<span title="🤖 Agente de IA">'+esc(c.avatarEmoji||'🤖')+'</span>'
+      : c.isSystem
+        ? '<span title="Sistema">⚙️</span>'
+        : c.foto
+          ? '<img src="'+esc(c.foto)+'" style="width:100%;height:100%;object-fit:cover;">'
+          : '<span>'+esc((c.init||c.author||'?').substring(0,2).toUpperCase())+'</span>';
+    const avatarStyle = c.isAgent
+      ? ' style="background:'+_hexA(c.cor||'#a78bfa',.22)+';border-color:'+_hexA(c.cor||'#a78bfa',.5)+';"'
+      : c.isSystem ? ' style="background:rgba(150,160,180,.12);border-color:rgba(150,160,180,.3);"' : '';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
     const canDel=c.uid===window._currentUser?.uid||window._currentUserRole==='adm';
     const canEdit=c.uid===window._currentUser?.uid;
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
+    const agentBadge = c.isAgent ? ' <span class="mention-user mention-agent" style="padding:0 6px;font-size:9px;">🤖 agente</span>' : (c.isSystem ? ' <span class="mention-user" style="padding:0 6px;font-size:9px;opacity:.7;">⚙️ sistema</span>' : '');
     item.innerHTML=
-      '<div class="comment-avatar">'+avatarHtml+'</div>'+
+      '<div class="comment-avatar"'+avatarStyle+'>'+avatarHtml+'</div>'+
       '<div class="comment-bubble">'+
-        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong> · '+dt+editedTag+'</div>'+
+        '<div class="comment-meta"><strong>'+esc(c.author||c.init||'?')+'</strong>'+agentBadge+' · '+dt+editedTag+'</div>'+
         '<div class="comment-text" id="ctext-'+esc(c.id)+'">'+textHtml+'</div>'+
         _renderReactions(c)+
         '<div class="comment-actions">'+
@@ -15754,7 +15931,7 @@ async function runEcommSeed(){
         tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'awaiting_validation', owner:'BRU', sp:'2', due:dE(2),
         checklist:[
           {id:'c1',text:'Bruno abre o card com o pedido',done:true},
-          {id:'c2',text:'🤖 Agente Coletor Sheets processa (simulado)',done:true},
+          {id:'c2',text:'🤖 Agente Coletor Sheets processa (simulado)',done:true,simComment:'📊 Coletor Sheets: Puxei os dados da planilha \'Vendas 2026\' (aba Semanal). Top 3 categorias: Casa (R$ 42.1k, +12% vs. sem. anterior), Moda (R$ 38.7k, -4%) e Beleza (R$ 21.3k, +23%). Planilha-fonte e cálculo completo disponíveis para conferência. cc @Ana Ribeiro'},
           {id:'c3',text:'Ana valida o resultado',done:false},
         ],
         riscos:[], links:[], dependsOn:null, dependents:[], comments:{}, participants:['ANA','CST'],
@@ -15764,7 +15941,7 @@ async function runEcommSeed(){
         tags:['generico-ecomm'], priority:'high', executorType:'hybrid', agentStatus:'running', owner:'CAR', sp:'5', due:dE(1),
         checklist:[
           {id:'c1',text:'Carla abre o card com a hipótese',done:true},
-          {id:'c2',text:'🤖 Agente Analista VTEX levanta dados (simulado)',done:false},
+          {id:'c2',text:'🤖 Agente Analista VTEX levanta dados (simulado)',done:false,simComment:'🛒 Analista VTEX: Levantei os pedidos dos últimos 7 dias. Taxa de abandono no checkout subiu de 18% para 31%, concentrada no passo de pagamento via Pix — principalmente em mobile (iOS Safari, ~68% dos casos). Nenhuma mudança recente identificada no fluxo de pagamento em si. Relatório completo nos comentários. cc @Bruno Tanaka'},
           {id:'c3',text:'Bruno define próximos passos',done:false},
         ],
         riscos:[{id:'r1',text:'Queda de conversão pode estar impactando receita diária',level:'alto'}],
@@ -15775,7 +15952,7 @@ async function runEcommSeed(){
         tags:['generico-ecomm'], priority:'medium', executorType:'hybrid', agentStatus:'queued', owner:'ANA', sp:'8', due:dE(10),
         checklist:[
           {id:'c1',text:'Ana define o escopo da apresentação',done:false},
-          {id:'c2',text:'🤖 Agente Slides monta rascunho (simulado)',done:false},
+          {id:'c2',text:'🤖 Agente Slides monta rascunho (simulado)',done:false,simComment:'📽️ Coletor/Design de Slides: Rascunho pronto com 12 slides — visão geral do trimestre, receita por canal, ticket médio, CAC e recomendações para o próximo trimestre. Usei o template padrão da marca. Link do rascunho nos comentários. cc @Carla Nogueira para ajuste visual'},
           {id:'c3',text:'Carla ajusta identidade visual',done:false},
           {id:'c4',text:'Ana aprova versão final',done:false},
         ],
@@ -15808,7 +15985,7 @@ async function runEcommSeed(){
         checklist:[
           {id:'c1',text:'Escolher a tarefa de comparação',done:false},
           {id:'c2',text:'Rodar versão humana',done:false},
-          {id:'c3',text:'🤖 Rodar versão agente',done:false},
+          {id:'c3',text:'🤖 Rodar versão agente',done:false,simComment:'🤖 Agente: Concluí a execução da tarefa de comparação. Tempo total: 4min12s (vs. ~35min do processo manual equivalente). Resultado consistente com a versão humana em 95% dos casos — as divergências ficaram concentradas em arredondamento de valores.'},
           {id:'c4',text:'Comparar resultado e documentar aprendizado',done:false},
         ],
         riscos:[], links:[], dependsOn:'eco-2-2', dependents:[], comments:{}, participants:[],
