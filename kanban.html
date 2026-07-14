@@ -155,7 +155,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .btn-sm{padding:3px 9px;font-size:11px;}
 
 /* toolbar */
-.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}
+.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
 /* sprint goal bar — fundo opaco (era 12% de opacidade e deixava as bolhas/peixes
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
@@ -3990,7 +3990,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.140</div>
+<div class="version">v8.30.141</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -16365,6 +16365,45 @@ renderBoard();
     if(tentativas < 15) setTimeout(tentar, 400);
   };
   setTimeout(tentar, 600);
+})();
+
+// ── Toolbar: rolagem horizontal por clique-e-arraste + setas do teclado ──
+(function _initToolbarDragScroll(){
+  let hovered = null;
+  function wire(el){
+    if(!el || el._dragScrollWired) return;
+    el._dragScrollWired = true;
+    let isDown=false, startX=0, scrollStart=0, moved=false;
+    el.addEventListener('mouseenter', ()=>{ hovered = el; });
+    el.addEventListener('mouseleave', ()=>{ if(hovered===el) hovered=null; });
+    el.addEventListener('mousedown', e=>{
+      if(e.target.closest('button, select, input, a, textarea, label')) return;
+      isDown=true; moved=false;
+      startX=e.pageX; scrollStart=el.scrollLeft;
+      el.classList.add('crv-dragging');
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', e=>{
+      if(!isDown) return;
+      const dx=e.pageX-startX;
+      if(Math.abs(dx)>4) moved=true;
+      el.scrollLeft = scrollStart - dx;
+    });
+    window.addEventListener('mouseup', ()=>{
+      if(isDown){ isDown=false; el.classList.remove('crv-dragging'); }
+    });
+    // Evita disparar o clique de um botão logo depois de um arraste
+    el.addEventListener('click', e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } }, true);
+  }
+  document.querySelectorAll('.toolbar').forEach(wire);
+  document.addEventListener('keydown', e=>{
+    if(!hovered) return;
+    if(e.key!=='ArrowRight' && e.key!=='ArrowLeft') return;
+    const ae=document.activeElement;
+    if(ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'||ae.isContentEditable)) return;
+    hovered.scrollLeft += (e.key==='ArrowRight'?90:-90);
+    e.preventDefault();
+  });
 })();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
