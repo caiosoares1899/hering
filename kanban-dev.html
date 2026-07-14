@@ -155,7 +155,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .btn-sm{padding:3px 9px;font-size:11px;}
 
 /* toolbar */
-.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;position:relative;z-index:2;}
+.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
 /* sprint goal bar — fundo opaco (era 12% de opacidade e deixava as bolhas/peixes
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
@@ -3703,7 +3703,9 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
       <input class="fi" id="crv-search" placeholder="Buscar por título, canal, plataforma..." oninput="renderCriativosTable()" style="max-width:320px;flex:1;">
       <span id="crv-count" style="font-size:11px;color:var(--txt3);white-space:nowrap;">0 pedido(s)</span>
-      <button class="btn btn-sm" onclick="exportCriativosCSV()" style="margin-left:auto;color:var(--teal);border-color:rgba(29,233,182,.3);">⬇ Exportar CSV</button>
+      <input type="file" id="crv-import-file" accept=".xlsx,.xls" style="display:none;" onchange="_criativosHandleFile(this)">
+      <button class="btn btn-sm" onclick="document.getElementById('crv-import-file').click()" style="margin-left:auto;color:#ffb3d9;border-color:rgba(255,179,217,.35);">📥 Importar Excel</button>
+      <button class="btn btn-sm" onclick="exportCriativosCSV()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">⬇ Exportar CSV</button>
     </div>
     <div style="overflow-x:auto;">
       <table style="border-collapse:collapse;width:100%;font-size:12px;">
@@ -3732,6 +3734,42 @@ input[type="date"]{-moz-appearance:textfield;}
 .crv-row td{padding:7px 8px;color:var(--txt2);}
 </style>
 <!-- CONTROLE DE CRIATIVOS - fim -->
+<!-- ═══ IMPORTAR EXCEL — CONTROLE DE CRIATIVOS ═══ -->
+<div class="ov" id="criativos-import-ov">
+<div class="panel" style="width:min(1140px,97vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">📥 Importar Excel — Controle de Criativos</div>
+    <button class="x-btn" onclick="closeOv('criativos-import-ov')">✕</button>
+  </div>
+  <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Confira o de-para antes de confirmar. A gente tenta casar o "Pedido" da planilha com o título dos cards automaticamente — linhas sem card encontrado ficam desmarcadas, mas você pode escolher manualmente ou ignorar.</div>
+    <div id="crv-import-count" style="font-size:11px;color:var(--txt3);margin-bottom:10px;"></div>
+    <div style="overflow-x:auto;">
+      <table style="border-collapse:collapse;width:100%;font-size:11.5px;">
+        <thead>
+          <tr style="text-align:left;color:var(--txt3);border-bottom:1px solid var(--glass-b);">
+            <th style="padding:5px 6px;"><input type="checkbox" id="crv-import-all" onchange="_criativosImportToggleAll(this.checked)" title="Marcar/desmarcar todas com card encontrado"></th>
+            <th style="padding:5px 6px;">Pedido (Excel)</th>
+            <th style="padding:5px 6px;min-width:220px;">Card no board</th>
+            <th style="padding:5px 6px;">Canal</th>
+            <th style="padding:5px 6px;">Objetivo</th>
+            <th style="padding:5px 6px;">Plataforma</th>
+            <th style="padding:5px 6px;">Formato</th>
+            <th style="padding:5px 6px;">Status</th>
+            <th style="padding:5px 6px;">Qtd</th>
+          </tr>
+        </thead>
+        <tbody id="crv-import-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div style="padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;justify-content:flex-end;gap:8px;">
+    <button class="btn btn-sm" onclick="closeOv('criativos-import-ov')">Cancelar</button>
+    <button class="btn btn-sm" onclick="_criativosImportConfirm()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Confirmar importação</button>
+  </div>
+</div>
+</div>
+<!-- IMPORTAR EXCEL - fim -->
 <!-- ═══ CAMPANHAS & COLEÇÕES ═══ -->
 <div class="ov" id="camp-ov">
 <div class="camp-panel camp-tema-neutro" id="camp-panel">
@@ -3979,7 +4017,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.149-dev</div>
+<div class="version">v8.30.150-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7155,6 +7193,130 @@ function exportCriativosCSV(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='controle_criativos_'+ACTIVE_SQUAD+'_'+new Date().toISOString().split('T')[0]+'.csv';
   document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+// ── Importar Excel pro Controle de Criativos ──
+let _criativosImportRows = [];
+function _loadXLSXLib(cb){
+  if(window.XLSX){ cb(); return; }
+  const existing = document.getElementById('xlsx-lib-script');
+  if(existing){ existing.addEventListener('load',cb); return; }
+  const s=document.createElement('script');
+  s.id='xlsx-lib-script';
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=cb;
+  s.onerror=()=>{ showToast('❌ Não consegui carregar a biblioteca de leitura de Excel. Verifique sua conexão.'); };
+  document.head.appendChild(s);
+}
+function _colVal(row, patterns){
+  const keys=Object.keys(row);
+  for(const pat of patterns){
+    const k=keys.find(kk=>pat.test(kk));
+    if(k!=null && String(row[k]).trim()!=='') return String(row[k]).trim();
+  }
+  return '';
+}
+function _norm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+function _criativosHandleFile(input){
+  const file=input.files && input.files[0]; if(!file) return;
+  _loadXLSXLib(()=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        let rows=null;
+        for(const sn of wb.SheetNames){
+          const sheet=wb.Sheets[sn];
+          const json=XLSX.utils.sheet_to_json(sheet,{defval:''});
+          if(json.length && Object.keys(json[0]).some(k=>/pedido|t[ií]tulo|card/i.test(k))){ rows=json; break; }
+        }
+        if(!rows){ showToast('⚠️ Não encontrei uma coluna "Pedido" ou "Título" na planilha.'); return; }
+        _buildCriativosImportPreview(rows);
+      }catch(err){
+        showToast('❌ Erro ao ler o arquivo: '+(err&&err.message?err.message:err));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+  input.value='';
+}
+function _buildCriativosImportPreview(rows){
+  const boardCards = cards.filter(c=>!c.archived);
+  _criativosImportRows = rows.map(row=>{
+    const pedido = _colVal(row,[/pedido/i,/t[ií]tulo/i,/^card$/i]);
+    const nPedido = _norm(pedido);
+    let match = boardCards.find(c=>_norm(c.title)===nPedido);
+    if(!match && nPedido) match = boardCards.find(c=>_norm(c.title).includes(nPedido) || nPedido.includes(_norm(c.title)));
+    return {
+      pedido,
+      cardId: match?match.id:'',
+      canal: _colVal(row,[/canal/i]),
+      objetivo: _colVal(row,[/objetivo/i]),
+      plataforma: _colVal(row,[/plataforma/i]),
+      formato: _colVal(row,[/formato/i]),
+      qtd: _colVal(row,[/qtd/i,/quantidade/i]),
+      status: _colVal(row,[/status/i]),
+      obs: _colVal(row,[/obs/i]),
+      include: !!match,
+    };
+  }).filter(r=>r.pedido);
+  if(!_criativosImportRows.length){ showToast('⚠️ Nenhuma linha com "Pedido" preenchido foi encontrada.'); return; }
+  openCriativosImportPreview();
+}
+function openCriativosImportPreview(){
+  const ov=document.getElementById('criativos-import-ov'); if(!ov) return;
+  ov.classList.add('open');
+  renderCriativosImportPreview();
+}
+function renderCriativosImportPreview(){
+  const boardCards = cards.filter(c=>!c.archived);
+  const tbody=document.getElementById('crv-import-tbody'); if(!tbody) return;
+  const matched = _criativosImportRows.filter(r=>r.cardId).length;
+  const cEl=document.getElementById('crv-import-count');
+  if(cEl) cEl.textContent = _criativosImportRows.length+' linha(s) na planilha · '+matched+' com card correspondente encontrado';
+  tbody.innerHTML = _criativosImportRows.map((r,i)=>{
+    const opts = boardCards.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===r.cardId?' selected':'')+'>'+esc(c.title)+'</option>').join('');
+    return '<tr style="border-bottom:1px solid var(--glass-b);">'
+      +'<td style="padding:5px 6px;"><input type="checkbox" '+(r.include?'checked':'')+' onchange="_criativosImportToggleInclude('+i+',this.checked)"></td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+esc(r.pedido)+'</td>'
+      +'<td style="padding:5px 6px;"><select class="fi" style="font-size:11px;padding:3px 6px;" onchange="_criativosImportSetMatch('+i+',this.value)">'
+        +'<option value="">— sem card / ignorar —</option>'+opts+'</select></td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.canal)||'—')+'</td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.objetivo)||'—')+'</td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.plataforma)||'—')+'</td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.formato)||'—')+'</td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.status)||'—')+'</td>'
+      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.qtd)||'—')+'</td>'
+      +'</tr>';
+  }).join('');
+}
+function _criativosImportToggleInclude(i,checked){ if(_criativosImportRows[i]) _criativosImportRows[i].include=checked; }
+function _criativosImportToggleAll(checked){ _criativosImportRows.forEach(r=>{ if(r.cardId) r.include=checked; }); renderCriativosImportPreview(); }
+function _criativosImportSetMatch(i,cardId){ if(!_criativosImportRows[i]) return; _criativosImportRows[i].cardId=cardId; _criativosImportRows[i].include=!!cardId; renderCriativosImportPreview(); }
+function _criativosImportConfirm(){
+  let n=0;
+  const who = (window._currentUser && (window._currentUser.displayName||window._currentUser.email)) || 'Usuário';
+  const td = new Date().toISOString().split('T')[0];
+  _criativosImportRows.forEach(r=>{
+    if(!r.include || !r.cardId) return;
+    const card=cards.find(c=>c.id===r.cardId); if(!card) return;
+    const crv = Object.assign({}, card.criativo||{});
+    if(r.canal) crv.canal=r.canal;
+    if(r.objetivo) crv.objetivo=r.objetivo;
+    if(r.plataforma) crv.plataforma=r.plataforma;
+    if(r.formato) crv.formato=r.formato;
+    if(r.status) crv.status=r.status;
+    if(r.qtd) crv.qtd=r.qtd;
+    if(r.obs) crv.obs=r.obs;
+    card.criativo=crv;
+    card.edited=who; card.editedAt=td;
+    fbSaveCard(card);
+    n++;
+  });
+  closeOv('criativos-import-ov');
+  renderBoard();
+  renderCriativosTable();
+  showToast(n?('✅ '+n+' card(s) atualizado(s) com dados da planilha.'):'Nenhuma linha marcada pra importar.');
 }
 function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.value.trim(); if(!v) return; renderRiscos([...getRiscos(),v]); i.value=''; i.focus(); }
 function delRisco(i){ const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); }
