@@ -3710,16 +3710,14 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('criativos-ov')">✕</button>
   </div>
   <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Todos os cards deste squad com a Ficha de Criativo preenchida, centralizados aqui. Clique numa linha pra abrir o card.</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Todos os cards deste squad com a Ficha de Criativo preenchida, centralizados aqui. Clique numa linha pra abrir o card — duplo clique numa célula edita direto (na coluna "Pedido" o duplo clique vincula a outro card).</div>
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
       <input class="fi" id="crv-search" placeholder="Buscar por título, canal, plataforma..." oninput="renderCriativosTable()" style="max-width:320px;flex:1;">
-      <select class="fi" id="crv-filter-lista" onchange="renderCriativosTable()" style="max-width:200px;">
-        <option value="">Todas as listas</option>
-      </select>
       <span id="crv-count" style="font-size:11px;color:var(--txt3);white-space:nowrap;">0 pedido(s)</span>
+      <button class="btn btn-sm" id="crv-delall-btn" onclick="_crvDeleteAll()" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Excluir todos</button>
       <input type="file" id="crv-import-file" accept=".xlsx,.xls" style="display:none;" onchange="_criativosHandleFile(this)">
-      <button class="btn btn-sm" onclick="document.getElementById('crv-import-file').click()" style="margin-left:auto;color:#ffb3d9;border-color:rgba(255,179,217,.35);">📥 Importar Excel</button>
-      <button class="btn btn-sm" onclick="exportCriativosCSV()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">⬇ Exportar CSV</button>
+      <button class="btn btn-sm" id="crv-import-btn" onclick="_crvTriggerImport()" style="margin-left:auto;color:#ffb3d9;border-color:rgba(255,179,217,.35);">📥 Importar Excel</button>
+      <button class="btn btn-sm" id="crv-export-btn" onclick="exportCriativosCSV()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">⬇ Exportar CSV</button>
     </div>
     <div style="overflow-x:auto;">
       <table style="border-collapse:collapse;width:100%;font-size:12px;">
@@ -3735,6 +3733,48 @@ input[type="date"]{-moz-appearance:textfield;}
             <th style="padding:6px 8px;">Prazo</th>
             <th style="padding:6px 8px;">Prioridade</th>
             <th style="padding:6px 8px;">Qtd</th>
+            <th style="padding:6px 8px;"></th>
+          </tr>
+          <tr style="text-align:left;border-bottom:1px solid var(--glass-b);">
+            <th style="padding:3px 8px;"></th>
+            <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-filter-lista" onchange="renderCriativosTable()"><option value="">Todas</option></select></th>
+            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-canal" list="crv-canal-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
+            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-objetivo" list="crv-objetivo-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
+            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-plataforma" list="crv-plataforma-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
+            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-formato" list="crv-formato-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
+            <th style="padding:3px 8px;">
+              <select class="fi crv-fh" id="crv-fh-status" onchange="renderCriativosTable()">
+                <option value="">Todos</option>
+                <option value="Não iniciada">Não iniciada</option>
+                <option value="Briefing OK">Briefing OK</option>
+                <option value="Material pendente">Material pendente</option>
+                <option value="Em execução">Em execução</option>
+                <option value="Em aprovação">Em aprovação</option>
+                <option value="Stand by">Stand by</option>
+                <option value="Concluído">Concluído</option>
+              </select>
+            </th>
+            <th style="padding:3px 8px;">
+              <select class="fi crv-fh" id="crv-fh-prazo" onchange="renderCriativosTable()">
+                <option value="">Todos</option>
+                <option value="late">Atrasado</option>
+                <option value="week">Próx. 7 dias</option>
+                <option value="month">Este mês</option>
+                <option value="none">Sem prazo</option>
+              </select>
+            </th>
+            <th style="padding:3px 8px;">
+              <select class="fi crv-fh" id="crv-fh-prioridade" onchange="renderCriativosTable()">
+                <option value="">Todas</option>
+                <option value="low">🟢 Baixa</option>
+                <option value="medium">🟡 Média</option>
+                <option value="high">🔴 Alta</option>
+                <option value="critical">🔥 Crítica</option>
+                <option value="none">Sem prioridade</option>
+              </select>
+            </th>
+            <th style="padding:3px 8px;"><input class="fi crv-fh" type="number" min="0" id="crv-fh-qtd" placeholder="mín." style="width:60px;" oninput="renderCriativosTable()"></th>
+            <th style="padding:3px 8px;"><button class="btn btn-sm" onclick="_crvClearFilters()" title="Limpar filtros" style="padding:2px 6px;font-size:10px;">✕</button></th>
           </tr>
         </thead>
         <tbody id="crv-tbody"></tbody>
@@ -3747,6 +3787,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .crv-row{cursor:pointer;border-bottom:1px solid var(--glass-b);}
 .crv-row:hover{background:rgba(255,179,217,.08);}
 .crv-row td{padding:7px 8px;color:var(--txt2);}
+.crv-row td[ondblclick]{cursor:text;}
+.crv-row td[ondblclick]:hover{background:rgba(255,179,217,.14);outline:1px dashed rgba(255,179,217,.35);outline-offset:-2px;}
+.crv-fh{font-size:10.5px !important;padding:3px 5px !important;width:100%;}
+.crv-edit-input,.crv-edit-select{font-size:11px;padding:3px 6px;}
 </style>
 <!-- CONTROLE DE CRIATIVOS - fim -->
 <!-- ═══ IMPORTAR EXCEL — CONTROLE DE CRIATIVOS ═══ -->
@@ -3760,7 +3804,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Confira o de-para antes de confirmar. A gente tenta casar o "Pedido" da planilha com o título dos cards automaticamente — linhas sem card encontrado ficam desmarcadas, mas você pode escolher manualmente ou ignorar.</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
       <label style="font-size:11px;color:var(--txt3);white-space:nowrap;">Lista de destino:</label>
-      <select class="fi" id="crv-import-lista" style="max-width:240px;">
+      <select class="fi" id="crv-import-lista" style="max-width:240px;" onchange="_criativosImportListaChange(this)">
         <option value="">— sem lista —</option>
       </select>
     </div>
@@ -4038,7 +4082,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.152-dev</div>
+<div class="version">v8.30.153-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7232,21 +7276,70 @@ function _populateCriativosImportLista(){
   const sel=document.getElementById('crv-import-lista'); if(!sel) return;
   const cur=sel.value;
   const opts=Object.values(criativosListas).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
-  sel.innerHTML='<option value="">— sem lista —</option>'+opts.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.nome)+'</option>').join('');
-  sel.value=cur||'';
+  sel.innerHTML='<option value="">— sem lista —</option>'+opts.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.nome)+'</option>').join('')+'<option value="__nova__">+ Criar nova lista...</option>';
+  sel.value=(cur && criativosListas[cur]) ? cur : (cur||'');
+}
+async function _criativosImportListaChange(sel){
+  if(sel.value!=='__nova__') return;
+  const id=await _crvPromptNovaLista();
+  if(!id){ sel.value=''; return; }
+  _populateCriativosImportLista();
+  sel.value=id;
 }
 function openCriativos(){
   const ov=document.getElementById('criativos-ov'); if(!ov) return;
   ov.classList.add('open');
-  const s=document.getElementById('crv-search'); if(s) s.value='';
   _populateCriativosFilterLista();
+  _crvClearFilters();
+  const canManage=_isPOorOrg();
+  const impB=document.getElementById('crv-import-btn'); if(impB) impB.style.display=canManage?'':'none';
+  const expB=document.getElementById('crv-export-btn'); if(expB) expB.style.display=canManage?'':'none';
+  const delB=document.getElementById('crv-delall-btn'); if(delB) delB.style.display=canManage?'':'none';
   renderCriativosTable();
+}
+function _crvClearFilters(){
+  ['crv-fh-canal','crv-fh-objetivo','crv-fh-plataforma','crv-fh-formato','crv-fh-qtd'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['crv-filter-lista','crv-fh-status','crv-fh-prazo','crv-fh-prioridade'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const s=document.getElementById('crv-search'); if(s) s.value='';
+  renderCriativosTable();
+}
+function _crvTriggerImport(){
+  if(!_isPOorOrg()){ showToast('🔒 Importar disponível só para ADM, PO e Organizador.'); return; }
+  document.getElementById('crv-import-file').click();
 }
 function _criativosFilteredRows(){
   const q=(document.getElementById('crv-search')?.value||'').toLowerCase().trim();
   const listaFilter=document.getElementById('crv-filter-lista')?.value||'';
+  const fCanal=_norm(document.getElementById('crv-fh-canal')?.value||'');
+  const fObjetivo=_norm(document.getElementById('crv-fh-objetivo')?.value||'');
+  const fPlataforma=_norm(document.getElementById('crv-fh-plataforma')?.value||'');
+  const fFormato=_norm(document.getElementById('crv-fh-formato')?.value||'');
+  const fStatus=document.getElementById('crv-fh-status')?.value||'';
+  const fPrazo=document.getElementById('crv-fh-prazo')?.value||'';
+  const fPrioridade=document.getElementById('crv-fh-prioridade')?.value||'';
+  const fQtdRaw=document.getElementById('crv-fh-qtd')?.value||'';
+  const fQtdMin=fQtdRaw===''?NaN:parseFloat(fQtdRaw);
   let rows=_criativosRows();
   if(listaFilter) rows=rows.filter(c=>(c.criativo&&c.criativo.lista||'')===listaFilter);
+  if(fCanal) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.canal||'').includes(fCanal));
+  if(fObjetivo) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.objetivo||'').includes(fObjetivo));
+  if(fPlataforma) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.plataforma||'').includes(fPlataforma));
+  if(fFormato) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.formato||'').includes(fFormato));
+  if(fStatus) rows=rows.filter(c=>(c.criativo&&c.criativo.status||'')===fStatus);
+  if(fPrioridade){
+    if(fPrioridade==='none') rows=rows.filter(c=>!c.priority);
+    else rows=rows.filter(c=>c.priority===fPrioridade);
+  }
+  if(fPrazo){
+    const today=new Date().toISOString().split('T')[0];
+    const in7=new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+    const d=new Date(); const endMonth=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().split('T')[0];
+    if(fPrazo==='none') rows=rows.filter(c=>!c.due);
+    else if(fPrazo==='late') rows=rows.filter(c=>c.due && c.due<today);
+    else if(fPrazo==='week') rows=rows.filter(c=>c.due && c.due>=today && c.due<=in7);
+    else if(fPrazo==='month') rows=rows.filter(c=>c.due && c.due>=today && c.due<=endMonth);
+  }
+  if(!isNaN(fQtdMin)) rows=rows.filter(c=>parseFloat((c.criativo&&c.criativo.qtd)||0)>=fQtdMin);
   if(q){
     rows=rows.filter(c=>{
       const crv=c.criativo||{};
@@ -7261,29 +7354,179 @@ function renderCriativosTable(){
   const cEl=document.getElementById('crv-count'); if(cEl) cEl.textContent = rows.length+' pedido(s)';
   const tbody=document.getElementById('crv-tbody'); if(!tbody) return;
   if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha de Criativo preenchida ainda.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha de Criativo preenchida ainda (ou nenhum bate com os filtros).</td></tr>';
     return;
   }
   const prioMap={low:'🟢 Baixa',medium:'🟡 Média',high:'🔴 Alta',critical:'🔥 Crítica'};
   tbody.innerHTML = rows.map(c=>{
     const crv=c.criativo||{};
-    const owner=members.find(m=>m.init===c.owner);
+    const id=String(c.id).replace(/'/g,"\\'");
     const listaNome = crv.lista && criativosListas[crv.lista] ? criativosListas[crv.lista].nome : '—';
-    return '<tr class="crv-row" onclick="closeOv(\'criativos-ov\');openCard(\''+String(c.id).replace(/'/g,"\\'")+'\')">'
-      +'<td>'+esc(c.title)+'</td>'
-      +'<td>'+esc(listaNome)+'</td>'
-      +'<td>'+esc(crv.canal||'—')+'</td>'
-      +'<td>'+esc(crv.objetivo||'—')+'</td>'
-      +'<td>'+esc(crv.plataforma||'—')+'</td>'
-      +'<td>'+esc(crv.formato||'—')+'</td>'
-      +'<td>'+esc(crv.status||'—')+'</td>'
-      +'<td>'+(c.due?esc(_fmtDateBR2(c.due)):'—')+'</td>'
-      +'<td>'+(prioMap[c.priority]||'—')+'</td>'
-      +'<td>'+esc(crv.qtd||'0')+'</td>'
+    return '<tr class="crv-row" onclick="_crvRowClick(\''+id+'\')">'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'vinculo\')" title="Duplo clique pra vincular a outro card">'+esc(c.title)+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'lista\')">'+esc(listaNome)+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'canal\')">'+esc(crv.canal||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'objetivo\')">'+esc(crv.objetivo||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'plataforma\')">'+esc(crv.plataforma||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'formato\')">'+esc(crv.formato||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'status\')">'+esc(crv.status||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'due\')">'+(c.due?esc(_fmtDateBR2(c.due)):'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'priority\')">'+(prioMap[c.priority]||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'qtd\')">'+esc(crv.qtd||'0')+'</td>'
+      +'<td style="text-align:center;"><button class="btn btn-sm" onclick="event.stopPropagation();_crvCancelRowClick();_crvDeleteRow(\''+id+'\')" title="Remover ficha de criativo deste card" style="padding:2px 7px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button></td>'
       +'</tr>';
   }).join('');
 }
+// ── Clique/duplo-clique/edição inline/exclusão da tabela agregada ──
+let _crvClickTimer=null;
+function _crvCancelRowClick(){ if(_crvClickTimer){ clearTimeout(_crvClickTimer); _crvClickTimer=null; } }
+function _crvRowClick(cardId){
+  _crvCancelRowClick();
+  _crvClickTimer=setTimeout(()=>{ _crvClickTimer=null; closeOv('criativos-ov'); openCard(cardId); }, 260);
+}
+async function _crvPromptNovaLista(){
+  if(!_isPOorOrg()){ showToast('🔒 Só ADM/PO/Organizador pode criar listas.'); return null; }
+  const nome=await uiPrompt('Nome da nova lista de criativos:','',{title:'📋 Nova lista',okText:'Criar',placeholder:'Ex: Dia dos Pais 2026'});
+  if(!nome||!nome.trim()) return null;
+  const id='l'+Date.now()+Math.random().toString(36).slice(2,6);
+  const novaLista={id,nome:nome.trim(),createdAt:new Date().toISOString()};
+  criativosListas[id]=novaLista;
+  fbSet(FB+'/config/criativos_listas/'+id, novaLista);
+  showToast('📋 Lista "'+nome.trim()+'" criada.');
+  return id;
+}
+function _crvEditCell(td, cardId, field){
+  if(td.querySelector('.crv-edit-input,.crv-edit-select')) return;
+  const card=cards.find(c=>c.id===cardId); if(!card) return;
+  const crv=card.criativo||{};
+  const finish=(commit,newVal)=>{
+    if(!commit){ renderCriativosTable(); return; }
+    saveUndo('editar controle de criativos');
+    const who=(window._currentUser && (window._currentUser.displayName||window._currentUser.email)) || 'Usuário';
+    const td2=new Date().toISOString().split('T')[0];
+    if(field==='due'){ card.due=newVal||null; }
+    else if(field==='priority'){ card.priority=newVal||''; }
+    else { const c2=Object.assign({},card.criativo||{}); c2[field]=newVal; card.criativo=c2; }
+    card.edited=who; card.editedAt=td2;
+    fbSaveCard(card);
+    renderBoard();
+    renderCriativosTable();
+  };
+  if(field==='vinculo'){
+    const boardCards=cards.filter(c=>!c.archived);
+    const sel=document.createElement('select');
+    sel.className='fi crv-edit-select'; sel.style.maxWidth='220px';
+    sel.innerHTML=boardCards.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===cardId?' selected':'')+'>'+esc(c.title)+'</option>').join('');
+    td.innerHTML=''; td.appendChild(sel); sel.focus();
+    sel.onchange=()=>{
+      const newCardId=sel.value;
+      if(newCardId && newCardId!==cardId){
+        const target=cards.find(c=>c.id===newCardId);
+        if(target){
+          saveUndo('vincular ficha de criativo a outro card');
+          const who=(window._currentUser && (window._currentUser.displayName||window._currentUser.email)) || 'Usuário';
+          const td2=new Date().toISOString().split('T')[0];
+          target.criativo=Object.assign({},card.criativo||{});
+          card.criativo=null;
+          target.edited=who; target.editedAt=td2; card.edited=who; card.editedAt=td2;
+          fbSaveCard(target); fbSaveCard(card);
+          renderBoard();
+        }
+      }
+      renderCriativosTable();
+    };
+    sel.onblur=()=>renderCriativosTable();
+    return;
+  }
+  if(field==='lista'){
+    const opts=Object.values(criativosListas).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+    const sel=document.createElement('select');
+    sel.className='fi crv-edit-select';
+    sel.innerHTML='<option value="">— sem lista —</option>'+opts.map(l=>'<option value="'+esc(l.id)+'"'+(l.id===(crv.lista||'')?' selected':'')+'>'+esc(l.nome)+'</option>').join('')+'<option value="__nova__">+ Criar nova lista...</option>';
+    td.innerHTML=''; td.appendChild(sel); sel.focus();
+    sel.onchange=async ()=>{
+      if(sel.value==='__nova__'){
+        const id=await _crvPromptNovaLista();
+        if(!id){ renderCriativosTable(); return; }
+        finish(true,id);
+        return;
+      }
+      finish(true,sel.value);
+    };
+    sel.onblur=()=>finish(false);
+    return;
+  }
+  if(field==='status'){
+    const statuses=['','Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Concluído'];
+    const sel=document.createElement('select');
+    sel.className='fi crv-edit-select';
+    sel.innerHTML=statuses.map(s=>'<option value="'+esc(s)+'"'+(s===(crv.status||'')?' selected':'')+'>'+(s?esc(s):'— sem status —')+'</option>').join('');
+    td.innerHTML=''; td.appendChild(sel); sel.focus();
+    sel.onchange=()=>finish(true,sel.value);
+    sel.onblur=()=>finish(false);
+    return;
+  }
+  if(field==='priority'){
+    const opts=[['','— sem prioridade —'],['low','🟢 Baixa'],['medium','🟡 Média'],['high','🔴 Alta'],['critical','🔥 Crítica']];
+    const sel=document.createElement('select');
+    sel.className='fi crv-edit-select';
+    sel.innerHTML=opts.map(o=>'<option value="'+o[0]+'"'+(o[0]===(card.priority||'')?' selected':'')+'>'+o[1]+'</option>').join('');
+    td.innerHTML=''; td.appendChild(sel); sel.focus();
+    sel.onchange=()=>finish(true,sel.value);
+    sel.onblur=()=>finish(false);
+    return;
+  }
+  if(field==='due'){
+    const inp=document.createElement('input');
+    inp.type='date'; inp.className='fi crv-edit-input'; inp.value=card.due||'';
+    td.innerHTML=''; td.appendChild(inp); inp.focus();
+    inp.onchange=()=>finish(true,inp.value);
+    inp.onblur=()=>finish(true,inp.value);
+    inp.onkeydown=e=>{ if(e.key==='Escape') finish(false); };
+    return;
+  }
+  if(field==='qtd'){
+    const inp=document.createElement('input');
+    inp.type='number'; inp.min='0'; inp.className='fi crv-edit-input'; inp.style.width='70px'; inp.value=crv.qtd||'';
+    td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
+    inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value); else if(e.key==='Escape') finish(false); };
+    inp.onblur=()=>finish(true,inp.value);
+    return;
+  }
+  const listId={canal:'crv-canal-list',objetivo:'crv-objetivo-list',plataforma:'crv-plataforma-list',formato:'crv-formato-list'}[field];
+  const inp=document.createElement('input');
+  inp.type='text'; inp.className='fi crv-edit-input'; inp.style.width='100%';
+  if(listId) inp.setAttribute('list',listId);
+  inp.value=crv[field]||'';
+  td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
+  inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value.trim()); else if(e.key==='Escape') finish(false); };
+  inp.onblur=()=>finish(true,inp.value.trim());
+}
+async function _crvDeleteRow(cardId){
+  const card=cards.find(c=>c.id===cardId); if(!card) return;
+  const ok=await uiConfirm('Remover a ficha de criativo deste card? O card continua no board, só a ficha de criativo some. Dá pra desfazer logo em seguida (↩).',{title:'🗑 Remover ficha de criativo',okText:'Remover',cancelText:'Cancelar',danger:true});
+  if(!ok) return;
+  saveUndo('remover ficha de criativo');
+  card.criativo=null;
+  fbSaveCard(card);
+  renderBoard();
+  renderCriativosTable();
+  showToast('🗑 Ficha de criativo removida.');
+}
+async function _crvDeleteAll(){
+  if(!_isPOorOrg()){ showToast('🔒 Só ADM/PO/Organizador pode excluir em massa.'); return; }
+  const rows=_criativosFilteredRows();
+  if(!rows.length){ showToast('Nada para excluir com os filtros atuais.'); return; }
+  const ok=await uiConfirm('Remover a ficha de criativo de '+rows.length+' card(s) (respeitando o filtro atual)? Os cards continuam no board. Dá pra desfazer logo em seguida (↩).',{title:'🗑 Excluir todos',okText:'Excluir todos',cancelText:'Cancelar',danger:true});
+  if(!ok) return;
+  saveUndo('remover '+rows.length+' fichas de criativo');
+  rows.forEach(c=>{ c.criativo=null; fbSaveCard(c); });
+  renderBoard();
+  renderCriativosTable();
+  showToast('🗑 '+rows.length+' ficha(s) removida(s).');
+}
 function exportCriativosCSV(){
+  if(!_isPOorOrg()){ showToast('🔒 Exportar disponível só para ADM, PO e Organizador.'); return; }
   const rows=_criativosFilteredRows();
   if(!rows.length){ showToast('Nenhum dado para exportar.'); return; }
   const headers=['Pedido','Lista','Canal','Objetivo','Plataforma','Formato','Status','Prazo','Prioridade','Qtd Criativos','Responsável','Obs'];
@@ -7325,6 +7568,7 @@ function _colVal(row, patterns){
 }
 function _norm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
 function _criativosHandleFile(input){
+  if(!_isPOorOrg()){ showToast('🔒 Importar disponível só para ADM, PO e Organizador.'); input.value=''; return; }
   const file=input.files && input.files[0]; if(!file) return;
   _loadXLSXLib(()=>{
     const reader=new FileReader();
@@ -7404,6 +7648,7 @@ function _criativosImportToggleInclude(i,checked){ if(_criativosImportRows[i]) _
 function _criativosImportToggleAll(checked){ _criativosImportRows.forEach(r=>{ if(r.cardId) r.include=checked; }); renderCriativosImportPreview(); }
 function _criativosImportSetMatch(i,cardId){ if(!_criativosImportRows[i]) return; _criativosImportRows[i].cardId=cardId; _criativosImportRows[i].include=!!cardId; renderCriativosImportPreview(); }
 function _criativosImportConfirm(){
+  if(!_isPOorOrg()){ showToast('🔒 Só ADM/PO/Organizador pode confirmar importação.'); return; }
   let n=0;
   const who = (window._currentUser && (window._currentUser.displayName||window._currentUser.email)) || 'Usuário';
   const td = new Date().toISOString().split('T')[0];
