@@ -4095,7 +4095,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.161-dev</div>
+<div class="version">v8.30.162-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5380,6 +5380,8 @@ function fbLoadAll(){
         doneCols: Array.isArray(val.doneCols)?val.doneCols:[],
         reportCols: Array.isArray(val.reportCols)?val.reportCols:[],
       };
+      renderBoard(); // 🔧 sem isso o board só refletia a config depois de um reload
+      if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
   });
   // Agent msgs
@@ -10835,12 +10837,15 @@ function salvarFluxoCfg(){
   }
   flowConfig=cfg;
   fbSet(FB+'/config/flow', cfg);
+  renderBoard(); // 🔧 aplica o dimming/checkmark na hora, sem precisar recarregar
+  if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 corrige status retroativamente
   showToast('💾 Fluxo configurado. O relatório de tempo já usa as novas colunas.');
 }
 async function resetFluxoCfg(){
   if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada.',{title:'Resetar fluxo',okText:'Resetar'})) return;
   flowConfig={ startCols:[], doneCols:[], reportCols:[] };
   fbSet(FB+'/config/flow', flowConfig);
+  renderBoard(); // 🔧 aplica na hora
   renderFluxoCfg();
   showToast('↺ Voltou para a detecção automática.');
 }
