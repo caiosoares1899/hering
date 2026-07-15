@@ -2569,6 +2569,8 @@ input[type="date"]{-moz-appearance:textfield;}
             <option value="Em execução">Em execução</option>
             <option value="Em aprovação">Em aprovação</option>
             <option value="Stand by">Stand by</option>
+            <option value="Impedido">🚧 Impedido</option>
+            <option value="Atrasado">⏰ Atrasado</option>
             <option value="Concluído">Concluído</option>
           </select>
         </div>
@@ -3659,6 +3661,8 @@ input[type="date"]{-moz-appearance:textfield;}
                 <option value="Em execução">Em execução</option>
                 <option value="Em aprovação">Em aprovação</option>
                 <option value="Stand by">Stand by</option>
+                <option value="Impedido">🚧 Impedido</option>
+                <option value="Atrasado">⏰ Atrasado</option>
                 <option value="Concluído">Concluído</option>
               </select>
             </th>
@@ -3999,7 +4003,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.144</div>
+<div class="version">v8.30.145</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4537,6 +4541,7 @@ function _doBulkMove(colId){
     c.col=colId;
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    _crvApplyAutoStatus(c); // 🤖
     recordHistory(c,'moveu para '+(col?.name||colId));
   } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
@@ -6437,6 +6442,7 @@ function scheduleAutoSave(){
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
+    _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _asBefore); // 📜 registra o que mudou
     fbSaveCard(c); renderBoard();
     // feedback sutil
@@ -6934,6 +6940,7 @@ function saveCard(){
       edited:user,editedAt:td,
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
+    _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
   } else {
@@ -7163,7 +7170,42 @@ async function _criativosImportListaChange(sel){
   _populateCriativosImportLista();
   sel.value=id;
 }
+// 🤖 Automacao de Status do Controle de Criativos: recalcula o status do criativo
+// conforme o card anda no board. Prioridade: coluna de conclusao > impedimento > atrasado.
+// So mexe em cards com campo criativo preenchido. Sempre sobrescreve quando uma condicao
+// automatica bate (nao respeita edicao manual anterior); quando nenhuma condicao bate, nao
+// mexe em nada -- o status manual do usuario fica intacto.
+function _crvComputeAutoStatus(card){
+  if(!card || !card.criativo) return null;
+  if(_isColDone(card.col)) return 'Concluído';
+  const _crvCol = columns.find(cc=>cc.id===card.col);
+  const _crvColBlocked = _crvCol && /imped|bloque/i.test(_crvCol.name||'');
+  if(card.blocker || _crvColBlocked) return 'Impedido';
+  const today = new Date().toISOString().slice(0,10);
+  if(card.due && card.due < today) return 'Atrasado';
+  return null;
+}
+function _crvApplyAutoStatus(card){
+  if(!card || !card.criativo) return;
+  const auto = _crvComputeAutoStatus(card);
+  if(auto && card.criativo.status !== auto){
+    const before = card.criativo.status || '—';
+    card.criativo.status = auto;
+    recordHistory(card, '🤖 status do criativo mudou automaticamente de "'+before+'" para "'+auto+'"');
+  }
+}
+function _crvSweepAutoStatus(){
+  let changed=false;
+  (cards||[]).forEach(c=>{
+    if(c.archived || !c.criativo) return;
+    const before=c.criativo.status;
+    _crvApplyAutoStatus(c);
+    if(c.criativo.status!==before){ changed=true; fbSaveCard(c); }
+  });
+  if(changed && typeof renderCriativosTable==='function') renderCriativosTable();
+}
 function openCriativos(){
+  _crvSweepAutoStatus();
   const ov=document.getElementById('criativos-ov'); if(!ov) return;
   ov.classList.add('open');
   _populateCriativosFilterLista();
@@ -7216,8 +7258,8 @@ function renderCriativosDashboard(){
     return;
   }
   const total=rows.length;
-  const statusOrder=['Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Concluído'];
-  const statusColors={'Não iniciada':'#8a94a6','Briefing OK':'#38b6ff','Material pendente':'#ffab40','Em execução':'#a78bfa','Em aprovação':'#ffd54f','Stand by':'#5b6472','Concluído':'#4ade80'};
+  const statusOrder=['Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Impedido','Atrasado','Concluído'];
+  const statusColors={'Não iniciada':'#8a94a6','Briefing OK':'#38b6ff','Material pendente':'#ffab40','Em execução':'#a78bfa','Em aprovação':'#ffd54f','Stand by':'#5b6472','Impedido':'#e84646','Atrasado':'#ff9800','Concluído':'#4ade80'};
   const statusCounts={}; statusOrder.forEach(s=>statusCounts[s]=0); let semStatus=0;
   rows.forEach(c=>{ const st=(c.criativo&&c.criativo.status)||''; if(statusCounts.hasOwnProperty(st)) statusCounts[st]++; else semStatus++; });
   const concluidos=statusCounts['Concluído']||0;
@@ -7473,7 +7515,7 @@ function _crvEditCell(td, cardId, field){
     return;
   }
   if(field==='status'){
-    const statuses=['','Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Concluído'];
+    const statuses=['','Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Impedido','Atrasado','Concluído'];
     const sel=document.createElement('select');
     sel.className='fi crv-edit-select';
     sel.innerHTML=statuses.map(s=>'<option value="'+esc(s)+'"'+(s===(crv.status||'')?' selected':'')+'>'+(s?esc(s):'— sem status —')+'</option>').join('');
@@ -13778,6 +13820,7 @@ function handleDrop(e, colId){
   card.editedAt = new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+  _crvApplyAutoStatus(card); // 🤖
   if(prevColDrop!==colId){ const _cn=columns.find(x=>x.id===colId); recordHistory(card, 'moveu para '+(_cn?_cn.name:colId)); } // 📜
   recordMove(card, colId); // ← registra transição p/ métricas de fluxo
   card._savePending = true; // flag: ignora echo do Firebase durante o save
@@ -13889,6 +13932,7 @@ function addTouchDnD(el, cardId){
     card.editedAt=new Date().toISOString().split('T')[0];
     card.updatedAt = new Date().toISOString();
     card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    _crvApplyAutoStatus(card); // 🤖
     renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
     showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
   });
@@ -14089,6 +14133,7 @@ function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.blocker=false; c.blockerReason='';
+  _crvApplyAutoStatus(c); // 🤖
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
@@ -14306,6 +14351,7 @@ function ctxMove(colId){
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+  _crvApplyAutoStatus(card); // 🤖
   renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
   // Notificações
   const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
@@ -14560,50 +14606,30 @@ document.querySelectorAll('.ov').forEach(ov=>{
   });
 });
 
-// ══ AUTO-UPDATE: detecta nova versão publicada e recarrega quando for seguro ══
+// ══ AUTO-UPDATE: detecta nova versão publicada e BLOQUEIA a tela até atualizar ══
+// Funciona igual em desktop e mobile: assim que uma versao nova e publicada, a proxima
+// checagem (a cada 5 min) mostra uma tela cheia com botao "Atualizar agora" -- nao da
+// pra continuar usando a versao antiga sem clicar. Substitui o banner antigo, que so
+// recarregava sozinho apos 45s parado (no mobile a pessoa quase sempre esta tocando a
+// tela, entao praticamente nunca disparava).
 (function(){
   const VERSION_KEY = 'kanban';
   const CHECK_INTERVAL_MS = 5*60*1000; // reconsulta a cada 5 min
   const FIRST_CHECK_DELAY_MS = 20000;  // espera a app estabilizar antes da 1ª checagem
-  const IDLE_TIMEOUT_MS = 45*1000;     // precisa estar parado 45s pra recarregar sozinho
-  const IDLE_RECHECK_MS = 15*1000;
-  let lastActivity = Date.now();
-  ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt=>{
-    document.addEventListener(evt, ()=>{ lastActivity = Date.now(); }, {passive:true});
-  });
   function _auGetCurrentVersion(){
     const el = document.querySelector('.version');
     return el ? el.textContent.trim() : '';
   }
-  function _auModalOpen(){
-    if(document.querySelector('.ov.open, .cal-ov.open, .ev-modal-ov.open, .dep-map-ov.open, #search-overlay.open, .notif-panel.open')) return true;
-    
-    return false;
-  }
-  function _auTyping(){
-    const a = document.activeElement;
-    if(!a) return false;
-    if(['INPUT','TEXTAREA','SELECT'].includes(a.tagName)) return true;
-    if(a.isContentEditable) return true;
-    return false;
-  }
-  let _auPollTimer=null, _auIdleTimer=null, _auBannerShown=false;
-  function _auShowBanner(){
-    if(_auBannerShown) return;
-    _auBannerShown = true;
-    const b = document.createElement('div');
-    b.id='_au-banner';
-    b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:rgba(4,22,39,.97);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);backdrop-filter:blur(14px);font-family:"DM Sans",sans-serif;font-size:12px;color:var(--txt,#e8f4fd);';
-    b.innerHTML = '<span>🔄 Nova versão disponível</span><button id="_au-banner-btn" style="background:rgba(56,182,255,.18);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600;font-family:inherit;">Atualizar agora</button>';
-    document.body.appendChild(b);
-    document.getElementById('_au-banner-btn').onclick=()=>location.reload();
-    _auIdleTimer = setInterval(_auTryIdleReload, IDLE_RECHECK_MS);
-  }
-  function _auTryIdleReload(){
-    const idleFor = Date.now()-lastActivity;
-    if(idleFor >= IDLE_TIMEOUT_MS && !_auModalOpen() && !_auTyping()){
-      location.reload();
-    }
+  let _auShown = false, _auPollTimer = null;
+  function _auShowBlock(){
+    if(_auShown) return;
+    _auShown = true;
+    const ov = document.createElement('div');
+    ov.id = '_au-block';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(4,10,18,.94);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:"DM Sans",sans-serif;padding:20px;';
+    ov.innerHTML = '<div style="max-width:360px;text-align:center;background:rgba(10,26,44,.98);border:1px solid var(--accent,#38b6ff);border-radius:16px;padding:32px 24px;box-shadow:0 12px 40px rgba(0,0,0,.6);"><div style="font-size:40px;margin-bottom:12px;">🔄</div><div style="font-size:17px;font-weight:700;color:var(--txt,#e8f4fd);margin-bottom:8px;">Versão desatualizada</div><div style="font-size:13px;color:var(--txt2,#9fb3c8);margin-bottom:20px;line-height:1.5;">Uma nova versão do Maré Digital está disponível. Atualize pra continuar usando — leva 1 segundo, e o que você já digitou fica salvo.</div><button id="_au-block-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Atualizar agora</button></div>';
+    document.body.appendChild(ov);
+    document.getElementById('_au-block-btn').onclick=()=>location.reload();
   }
   async function _auCheckVersion(){
     try{
@@ -14614,7 +14640,7 @@ document.querySelectorAll('.ov').forEach(ov=>{
       const current = _auGetCurrentVersion();
       if(remote && current && remote!==current){
         if(_auPollTimer){ clearInterval(_auPollTimer); _auPollTimer=null; }
-        _auShowBanner();
+        _auShowBlock();
       }
     }catch(e){ /* offline ou erro de rede — ignora silenciosamente */ }
   }
