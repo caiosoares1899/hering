@@ -4099,7 +4099,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.165-dev</div>
+<div class="version">v8.30.166-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4250,17 +4250,20 @@ const WORKER_URL = safeLS.getItem('kanban_worker_url') || 'https://falling-bush-
 // ── SQUAD FIXO ──────────────────────────────────────────────────
 // ── MULTI-SQUAD: detecta squad via URL param ─────────────────────────
 const _urlParams = new URLSearchParams(window.location.search);
-// Redireciona squad legado 'criacao' para 'midiacriativa'
-if((_urlParams.get('squad')||'') === 'criacao'){
-  var _u = new URL(window.location.href);
-  _u.searchParams.set('squad','midiacriativa');
-  window.location.replace(_u.toString());
-}
-// Redireciona squad legado 'midia' (Marketing de Performance) para 'prf'
-if((_urlParams.get('squad')||'') === 'midia'){
-  var _u2 = new URL(window.location.href);
-  _u2.searchParams.set('squad','prf');
-  window.location.replace(_u2.toString());
+// Redireciona squads legados -- para de vez, sem deixar o resto do script rodar
+// (location.replace() sozinho NAO interrompe a execucao sincrona; sem o throw logo
+// depois, o app chegava a montar listeners do Firebase pro squad antigo por uma
+// fracao de segundo antes da navegacao acontecer, causando leituras/escritas
+// perdidas e o erro 'Firebase INTERNAL ASSERTION FAILED: Pending promise was never
+// set'. Os squads 'criacao' e 'midia' foram descontinuados; seus dados foram
+// migrados/conferidos manualmente e os nodes antigos no Firebase já foram apagados.
+const _legacySquadMap = { criacao: 'midiacriativa', midia: 'prf' };
+const _legacySquad = _legacySquadMap[_urlParams.get('squad')||''];
+if(_legacySquad){
+  var _u3 = new URL(window.location.href);
+  _u3.searchParams.set('squad', _legacySquad);
+  window.location.replace(_u3.toString());
+  throw new Error('squad-legado-redirecionando'); // interrompe o resto do script classico de proposito
 }
 const ACTIVE_SQUAD = (_urlParams.get('squad') || 'dev').replace(/[^a-z0-9_-]/gi,'');
 
