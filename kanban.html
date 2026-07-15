@@ -2603,6 +2603,7 @@ input[type="date"]{-moz-appearance:textfield;}
             <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','color','#38b6ff')" title="Azul"></button>
           </span>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','link')" title="Link">🔗</button>
+          <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted('m-desc')" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
         </div>
         <textarea class="eoc-textarea" id="m-desc" rows="12"
           oninput="scheduleAutoSave()" onpaste="_eocPasteHandler(event)"
@@ -2694,6 +2695,7 @@ input[type="date"]{-moz-appearance:textfield;}
                 <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','color','#38b6ff')" title="Azul"></button>
               </span>
               <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-comment-inp','link')" title="Link">🔗</button>
+              <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted('m-comment-inp')" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
             </div>
             <div style="position:relative;">
               <textarea class="eoc-textarea" id="m-comment-inp"
@@ -4007,7 +4009,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.148</div>
+<div class="version">v8.30.149</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5242,6 +5244,10 @@ function fbLoadAll(){
           foto:cu.photoURL||'', uid:cu.uid, role:window._currentUserRole||'membro'});
       }
     }
+    // 🛡️ Rede de segurança contra "pessoa duplicada" nos pickers (atribuir card, responsável,
+    // reatribuir, etc.): garante uid único em members mesmo se algum caminho secundário
+    // (ex.: timing entre autoRegistrar() e este listener) tiver introduzido duplicata.
+    { const _seenUids=new Set(); members = members.filter(m=>{ if(_seenUids.has(m.uid)) return false; _seenUids.add(m.uid); return true; }); }
     // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
     window._allUsers = [];
     Object.entries(val).forEach(([uid,u])=>{
@@ -15722,6 +15728,59 @@ function _htmlToMd(html){
     return out;
   }
   return walk(container).replace(/\n{3,}/g,'\n\n').replace(/[ \t]+\n/g,'\n').trim();
+}
+// Converte a sintaxe markdown do Maré (**negrito**, *itálico*, __sublinhado__, links, cor,
+// listas) pra HTML limpo e semântico (<b>/<i>/<u>/<a>/<span>) — usado pra exportar texto
+// rico pro clipboard (colar em apps de fora como Milanote, Word, Google Docs, Slack...).
+// Diferente de renderMd(), NÃO inclui menções/links de card (não fazem sentido fora do app).
+function _mdToExportHtml(txt){
+  let out = esc(txt||'')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+    .replace(/\*(.+?)\*/g,'<i>$1</i>')
+    .replace(/__(.+?)__/g,'<u>$1</u>')
+    .replace(/\{cor:(#[0-9a-fA-F]{3,6}|[a-z]+)\|(.+?)\}/g,'<span style="color:$1;">$2</span>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/\[\[CARD:[^:]+:([^\]]+)\]\]/g,'$1')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2">$1</a>')
+    .replace(/^[\-\*] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/gs, m=>'<ul>'+m+'</ul>')
+    .replace(/\n/g,'<br>');
+  return out;
+}
+// Copia a Descrição/Comentário atual (textarea) pro clipboard já em texto rico (HTML real,
+// não a sintaxe markdown) — resolve o problema de colar no Milanote/Word e perder negrito/
+// itálico: selecionar texto direto da <textarea> só copia texto puro, é limitação do
+// navegador; por isso geramos o HTML manualmente e escrevemos no clipboard via Clipboard API.
+async function copyFormatted(taId){
+  const ta = document.getElementById(taId);
+  if(!ta) return;
+  const raw = ta.value||'';
+  if(!raw.trim()){ if(typeof toast==='function') toast('Nada para copiar ainda'); return; }
+  const html = _mdToExportHtml(raw);
+  const plain = raw
+    .replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/__(.+?)__/g,'$1')
+    .replace(/\{cor:[^|]+\|(.+?)\}/g,'$1')
+    .replace(/\[\[CARD:[^:]+:([^\]]+)\]\]/g,'$1')
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^\s)]+\)/g,'$1');
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html],{type:'text/html'}),
+        'text/plain': new Blob([plain],{type:'text/plain'})
+      })]);
+    } else if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(plain);
+    } else {
+      throw new Error('Clipboard API indisponível');
+    }
+    if(typeof toast==='function') toast('📋 Copiado com formatação! Cole no Milanote, Word, etc.');
+  }catch(err){
+    console.error('copyFormatted falhou', err);
+    if(typeof toast==='function') toast('Não consegui copiar automaticamente — selecione o texto e use Ctrl+C');
+  }
 }
 // Handler de paste pros textareas com formatação (descrição, comentários) — usa o HTML da área
 // de transferência se existir (preserva negrito etc.); sem HTML, deixa o paste padrão rolar.
