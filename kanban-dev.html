@@ -4095,7 +4095,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.159-dev</div>
+<div class="version">v8.30.160-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7309,7 +7309,9 @@ async function _criativosImportListaChange(sel){
 function _crvComputeAutoStatus(card){
   if(!card || !card.criativo) return null;
   if(_isColDone(card.col)) return 'Concluído';
-  if(card.blocker) return 'Impedido';
+  const _crvCol = columns.find(cc=>cc.id===card.col);
+  const _crvColBlocked = _crvCol && /imped|bloque/i.test(_crvCol.name||'');
+  if(card.blocker || _crvColBlocked) return 'Impedido';
   const today = new Date().toISOString().slice(0,10);
   if(card.due && card.due < today) return 'Atrasado';
   return null;
