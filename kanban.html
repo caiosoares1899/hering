@@ -4009,7 +4009,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.149</div>
+<div class="version">v8.30.150</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14713,6 +14713,22 @@ async function _copyToClipboard(text, successMsg){
     }
   }
 }
+// Igual _copyToClipboard, mas escreve HTML de verdade (negrito/itálico/links reais) além
+// do texto puro de fallback — usado nos resumos pro Milanote/Word/Docs, que só respeitam
+// formatação se ela vier como text/html no clipboard (colar markdown como texto não funciona).
+async function _copyRichToClipboard(html, plainFallback, successMsg){
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html],{type:'text/html'}),
+        'text/plain': new Blob([plainFallback],{type:'text/plain'})
+      })]);
+      showToast(successMsg);
+      return;
+    }
+  }catch(err){ console.error('_copyRichToClipboard falhou, usando fallback texto puro', err); }
+  await _copyToClipboard(plainFallback, successMsg);
+}
 
 // Copia o link direto pra este card. Útil pra colar em Milanote, Slack, docs etc.
 async function shareCardLink(){
@@ -14731,7 +14747,8 @@ async function exportToMilanote(){
   const card = cards.find(x=>x.id===editingId); if(!card) return;
   const url = _cardShareUrl();
   const tagLabels = getCardTags(card).map(id=>getTag(id)?.label).filter(Boolean).join(', ');
-  const content = `${card.title}
+  // Texto puro de fallback (caso o navegador não suporte ClipboardItem)
+  const plainContent = `${card.title}
 
 👤 Responsável: ${card.owner || 'Sem atribuição'}
 📅 Prazo: ${card.due || 'Sem prazo'}
@@ -14742,7 +14759,16 @@ ${card.desc || 'Sem descrição.'}
 
 🔗 Link para o Kanban:
 ${url}`.trim();
-  await _copyToClipboard(content, '📋 Copiado! Agora é só dar Ctrl+V no Milanote.');
+  // HTML de verdade — negrito nos labels + descrição convertida de markdown pra <b>/<i>/<u>/<a>
+  // real, pra Milanote (e Word/Docs/Slack) renderizarem formatação em vez de símbolos literais.
+  const descHtml = card.desc ? _mdToExportHtml(card.desc) : 'Sem descrição.';
+  const htmlContent = `<div><b>${esc(card.title)}</b></div><br>`+
+    `<div>👤 <b>Responsável:</b> ${esc(card.owner || 'Sem atribuição')}</div>`+
+    `<div>📅 <b>Prazo:</b> ${esc(card.due || 'Sem prazo')}</div>`+
+    `<div>🏷️ <b>Tags:</b> ${esc(tagLabels || 'Sem tag')}</div><br>`+
+    `<div>📝 <b>Descrição:</b></div><div>${descHtml}</div><br>`+
+    `<div>🔗 <b>Link para o Kanban:</b></div><div><a href="${esc(url)}">${esc(url)}</a></div>`;
+  await _copyRichToClipboard(htmlContent, plainContent, '📋 Copiado com formatação! Agora é só dar Ctrl+V no Milanote.');
 }
 
 // Copia SÓ a URL, sem nenhum texto ao redor. Muitas ferramentas (Milanote,
