@@ -2655,6 +2655,8 @@ input[type="date"]{-moz-appearance:textfield;}
             <option value="Em execução">Em execução</option>
             <option value="Em aprovação">Em aprovação</option>
             <option value="Stand by">Stand by</option>
+            <option value="Impedido">🚧 Impedido</option>
+            <option value="Atrasado">⏰ Atrasado</option>
             <option value="Concluído">Concluído</option>
           </select>
         </div>
@@ -3751,6 +3753,8 @@ input[type="date"]{-moz-appearance:textfield;}
                 <option value="Em execução">Em execução</option>
                 <option value="Em aprovação">Em aprovação</option>
                 <option value="Stand by">Stand by</option>
+                <option value="Impedido">🚧 Impedido</option>
+                <option value="Atrasado">⏰ Atrasado</option>
                 <option value="Concluído">Concluído</option>
               </select>
             </th>
@@ -4091,7 +4095,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.158-dev</div>
+<div class="version">v8.30.159-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4650,7 +4654,7 @@ function bulkMove(){
 function _doBulkMove(colId){
   const col=columns.find(c=>c.id===colId);
   const n = selectedCards.size;
-  _selectedList().forEach(c=>{ if(c.col!==colId){ recordMove(c,colId); c.col=colId; recordHistory(c,'moveu para '+(col?.name||colId)); } });
+  _selectedList().forEach(c=>{ if(c.col!==colId){ recordMove(c,colId); c.col=colId; _crvApplyAutoStatus(c); recordHistory(c,'moveu para '+(col?.name||colId)); } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
   // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
   const wrap = document.getElementById('board-wrap');
@@ -6552,6 +6556,7 @@ function scheduleAutoSave(){
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       criativo:getCriativoData()});
+    _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _asBefore); // 📜 registra o que mudou
     fbSaveCard(c); renderBoard();
     // feedback sutil
@@ -7060,6 +7065,7 @@ function saveCard(){
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       criativo:getCriativoData(),
       edited:user,editedAt:td});
+    _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
   } else {
@@ -7295,7 +7301,40 @@ async function _criativosImportListaChange(sel){
   _populateCriativosImportLista();
   sel.value=id;
 }
+// 🤖 Automacao de Status do Controle de Criativos: recalcula o status do criativo
+// conforme o card anda no board. Prioridade: coluna de conclusao > impedimento > atrasado.
+// So mexe em cards com campo criativo preenchido. Sempre sobrescreve quando uma condicao
+// automatica bate (nao respeita edicao manual anterior); quando nenhuma condicao bate, nao
+// mexe em nada -- o status manual do usuario fica intacto.
+function _crvComputeAutoStatus(card){
+  if(!card || !card.criativo) return null;
+  if(_isColDone(card.col)) return 'Concluído';
+  if(card.blocker) return 'Impedido';
+  const today = new Date().toISOString().slice(0,10);
+  if(card.due && card.due < today) return 'Atrasado';
+  return null;
+}
+function _crvApplyAutoStatus(card){
+  if(!card || !card.criativo) return;
+  const auto = _crvComputeAutoStatus(card);
+  if(auto && card.criativo.status !== auto){
+    const before = card.criativo.status || '—';
+    card.criativo.status = auto;
+    recordHistory(card, '🤖 status do criativo mudou automaticamente de "'+before+'" para "'+auto+'"');
+  }
+}
+function _crvSweepAutoStatus(){
+  let changed=false;
+  (cards||[]).forEach(c=>{
+    if(c.archived || !c.criativo) return;
+    const before=c.criativo.status;
+    _crvApplyAutoStatus(c);
+    if(c.criativo.status!==before){ changed=true; fbSaveCard(c); }
+  });
+  if(changed && typeof renderCriativosTable==='function') renderCriativosTable();
+}
 function openCriativos(){
+  _crvSweepAutoStatus();
   const ov=document.getElementById('criativos-ov'); if(!ov) return;
   ov.classList.add('open');
   _populateCriativosFilterLista();
@@ -7348,8 +7387,8 @@ function renderCriativosDashboard(){
     return;
   }
   const total=rows.length;
-  const statusOrder=['Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Concluído'];
-  const statusColors={'Não iniciada':'#8a94a6','Briefing OK':'#38b6ff','Material pendente':'#ffab40','Em execução':'#a78bfa','Em aprovação':'#ffd54f','Stand by':'#5b6472','Concluído':'#4ade80'};
+  const statusOrder=['Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Impedido','Atrasado','Concluído'];
+  const statusColors={'Não iniciada':'#8a94a6','Briefing OK':'#38b6ff','Material pendente':'#ffab40','Em execução':'#a78bfa','Em aprovação':'#ffd54f','Stand by':'#5b6472','Impedido':'#e84646','Atrasado':'#ff9800','Concluído':'#4ade80'};
   const statusCounts={}; statusOrder.forEach(s=>statusCounts[s]=0); let semStatus=0;
   rows.forEach(c=>{ const st=(c.criativo&&c.criativo.status)||''; if(statusCounts.hasOwnProperty(st)) statusCounts[st]++; else semStatus++; });
   const concluidos=statusCounts['Concluído']||0;
@@ -7605,7 +7644,7 @@ function _crvEditCell(td, cardId, field){
     return;
   }
   if(field==='status'){
-    const statuses=['','Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Concluído'];
+    const statuses=['','Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Impedido','Atrasado','Concluído'];
     const sel=document.createElement('select');
     sel.className='fi crv-edit-select';
     sel.innerHTML=statuses.map(s=>'<option value="'+esc(s)+'"'+(s===(crv.status||'')?' selected':'')+'>'+(s?esc(s):'— sem status —')+'</option>').join('');
@@ -14059,6 +14098,7 @@ function handleDrop(e, colId){
   card.col = colId;
   card.edited = window._currentUser?.displayName||'Usuário';
   card.editedAt = new Date().toISOString().split('T')[0];
+  _crvApplyAutoStatus(card); // 🤖
   if(prevColDrop!==colId){ const _cn=columns.find(x=>x.id===colId); recordHistory(card, 'moveu para '+(_cn?_cn.name:colId)); } // 📜
   recordMove(card, colId); // ← registra transição p/ métricas de fluxo
   card._savePending = true; // flag: ignora echo do Firebase durante o save
@@ -14168,6 +14208,7 @@ function addTouchDnD(el, cardId){
     const ant=card.col; card.col=colId;
     card.edited=window._currentUser?.displayName||'Usuário';
     card.editedAt=new Date().toISOString().split('T')[0];
+    _crvApplyAutoStatus(card); // 🤖
     renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
     showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
   });
@@ -14368,6 +14409,7 @@ function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.blocker=false; c.blockerReason='';
+  _crvApplyAutoStatus(c); // 🤖
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
@@ -14583,6 +14625,7 @@ function ctxMove(colId){
   const ant=card.col; card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
+  _crvApplyAutoStatus(card); // 🤖
   renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
   // Notificações
   const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
