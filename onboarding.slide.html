@@ -723,7 +723,7 @@ html, body {
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progressFill"></div>
     </div>
-    <span class="slide-counter" id="slideCounter">1 / 14</span>
+    <span class="slide-counter" id="slideCounter">1 / 15</span>
   </div>
   <div class="tb-nav">
     <button class="tb-btn" id="btnPrev" onclick="go(-1)">← Anterior</button>
@@ -1186,6 +1186,29 @@ html, body {
     </div>
   </div>
 
+  <!-- ── S7B: MARE DIGITAL (KANBAN) ── -->
+  <div class="slide slide-fill" id="s7b" style="padding:20px 40px;align-items:stretch;">
+    <div style="width:100%;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;height:100%;gap:0;">
+
+      <!-- Header -->
+      <div style="flex-shrink:0;display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+        <div class="s-tag" style="margin-bottom:0;">🌊 Ferramenta</div>
+        <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:800;letter-spacing:-0.02em;">Maré Digital <span style="color:var(--accent)">— nosso quadro Kanban</span></h2>
+        <p style="font-size:12px;color:var(--w60);line-height:1.45;margin-left:auto;text-align:right;max-width:340px;">Onde o fluxo de trabalho de cada squad sobe e desce com a maré — visibilidade em tempo real do que está em andamento.</p>
+      </div>
+
+      <!-- Iframe embed -->
+      <div style="flex:1;min-height:0;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:var(--glass);">
+        <iframe src="https://caiosoares1899.github.io/hering/kanban-dev.html?squad=dev" title="Maré Digital — Kanban" style="width:100%;height:100%;border:0;display:block;" loading="lazy"></iframe>
+      </div>
+
+      <div style="flex-shrink:0;margin-top:10px;text-align:center;">
+        <span class="chip">🧪 Board de teste · squad dev</span>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ── S8: RITUAIS ── -->
   <div class="slide" id="s8">
     <div class="slide-inner">
@@ -1398,7 +1421,7 @@ setInterval(updateClock, 1000);
 })();
 
 // ── SLIDE ENGINE ──
-const total = 14;
+const total = 15;
 let cur = 0;
 let prev = -1;
 
