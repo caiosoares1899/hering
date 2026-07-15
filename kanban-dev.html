@@ -4099,7 +4099,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.166-dev</div>
+<div class="version">v8.30.167-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5359,6 +5359,10 @@ function fbLoadAll(){
           foto:cu.photoURL||'', uid:cu.uid, role:window._currentUserRole||'membro'});
       }
     }
+    // 🛡️ Rede de segurança contra "pessoa duplicada" nos pickers (atribuir card, responsável,
+    // reatribuir, etc.): garante uid único em members mesmo se algum caminho secundário
+    // (ex.: timing entre autoRegistrar() e este listener) tiver introduzido duplicata.
+    { const _seenUids=new Set(); members = members.filter(m=>{ if(_seenUids.has(m.uid)) return false; _seenUids.add(m.uid); return true; }); }
     // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
     window._allUsers = [];
     Object.entries(val).forEach(([uid,u])=>{
