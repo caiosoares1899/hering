@@ -4101,7 +4101,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.171-dev</div>
+<div class="version">v8.30.172-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6311,6 +6311,11 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.execType&&(card.executorType||'human')!==activeFilters.execType) return false;
   if(activeFilters.due){
     if(!card.due) return false;
+    // Cards em coluna Concluído (checagem via _isColDone, que respeita a config manual de
+    // "coluna de done") têm o prazo congelado -- nunca devem contar como atrasados/vencendo
+    // hoje/na semana, igual já acontece no badge visual (getDue). Bug relatado: cards já
+    // concluídos apareciam no filtro "Atrasados".
+    if(_isColDone(card.col)) return false;
     const d=new Date(card.due+'T00:00:00'); d.setHours(0,0,0,0);
     const diff=Math.round((d-today)/86400000);
     if(activeFilters.due==='late'&&diff>=0) return false;
@@ -8125,17 +8130,17 @@ function computeAvisosQuadro(){
     if(c.col==='blocker'){
       out.push({tipo:'quadro', urgent:true, text:`🚧 Card bloqueado: "${titulo}"`, cardId:c.id, sub:'impedimento ativo', ts:c.editedAt||''});
     }
-    if(c.riscos?.length && c.col!=='done'){
+    if(c.riscos?.length && !_isColDone(c.col)){
       out.push({tipo:'quadro', urgent:true, text:`⚠ Risco mapeado: "${titulo}" (${c.riscos.length})`, cardId:c.id, sub:(typeof c.riscos[0]==='string'?c.riscos[0].substring(0,60):''), ts:c.editedAt||''});
     }
-    if(c.due && c.col!=='done'){
+    if(c.due && !_isColDone(c.col)){
       const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
       const diff=Math.round((d-today)/86400000);
       if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${Math.abs(diff)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
       else if(diff===0) out.push({tipo:'quadro', urgent:true, text:`⚡ Vence hoje: "${titulo}"`, cardId:c.id, sub:'prazo é hoje', ts:c.due});
       else if(diff<=2) out.push({tipo:'quadro', urgent:false, text:`📅 Vence em ${diff}d: "${titulo}"`, cardId:c.id, sub:'prazo próximo', ts:c.due});
     }
-    if(c.col==='done' && c.doneAt){
+    if(_isColDone(c.col) && c.doneAt){
       const dd=new Date(c.doneAt); const ageH=(Date.now()-dd.getTime())/3600000;
       if(ageH<=48) out.push({tipo:'quadro', urgent:false, text:`✅ Resolvido: "${titulo}"`, cardId:c.id, sub:'concluído recentemente', ts:c.doneAt});
     }
@@ -12775,7 +12780,7 @@ function checkDueNotifs(){
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
   const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
   const tomorrowStr=tomorrow.toISOString().split('T')[0];
-  cards.filter(c=>c.due&&!c.archived&&c.col!=='done').forEach(card=>{
+  cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
     const uid=getUidByInit(card.owner); if(!uid) return;
     if(card.due===today){
       createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
