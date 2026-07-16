@@ -4016,7 +4016,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.153</div>
+<div class="version">v8.30.154</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6528,6 +6528,9 @@ function _manualFieldsNow(){
     isOKR: document.getElementById('m-is-okr')?.checked||false,
     blockerOn: document.getElementById('m-blocker-row')?.style.display!=='none',
     blockerReason: document.getElementById('m-blocker-reason')?.value||'',
+    // Comentário digitado mas não enviado (não tem autosave de propósito — comentário
+    // é "enviar", não "rascunho" — mas precisa avisar se for fechar sem enviar).
+    commentDraft: document.getElementById('m-comment-inp')?.value||'',
   };
 }
 function _cardIsDirty(){
@@ -6744,6 +6747,7 @@ function openCard(id){
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
+  const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
   // Inicia mention dropdowns e carrega comentários
@@ -6977,6 +6981,7 @@ function openNewCard(col){
   setCriativoFields({});
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   document.getElementById('card-ov').classList.add('open');
+  const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
 }
 function saveCard(){
@@ -14881,7 +14886,7 @@ document.addEventListener('click', e=>{
 
 function closeOv(id, afterClose){
   if(id==='card-ov' && editingId && _cardIsDirty()){
-    uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento ou OKR).\n\nFechar mesmo assim?',
+    uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento, OKR ou um comentário digitado mas não enviado).\n\nFechar mesmo assim?',
       {title:'Alterações não salvas', okText:'Fechar mesmo assim', cancelText:'Continuar editando'}).then(ok=>{
       if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
     });
