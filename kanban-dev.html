@@ -4101,12 +4101,12 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.172-dev</div>
+<div class="version">v8.30.173-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -4147,6 +4147,7 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
+window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._auth=auth; window._provider=provider;
 
 // Captura e salva o token de acesso de forma segura
@@ -5214,33 +5215,54 @@ function fbLoadAll(){
     if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
   });
 
-  // Cards — por último, já com columns/agilCfg/tags carregados
-  fbListen(FB+'/cards',val=>{
+  // Cards — via listeners granulares (child_added/child_changed/child_removed) em vez
+  // de onValue no array inteiro. onValue reenviava o node /cards COMPLETO pra CADA
+  // client conectado toda vez que QUALQUER card mudava — com centenas de cards por
+  // squad, essa era a principal causa do consumo de download do Realtime Database
+  // estourar a cota gratuita (10GB/mes). Os listeners granulares so baixam o card
+  // que de fato mudou (child_changed), foi criado (child_added) ou removido
+  // (child_removed) — nao o array inteiro a cada evento.
+  let _cardsByKey = {};
+  let _cardsSyncDebounce = null;
+  function _applyCardsSync(){
     if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
-    if(val){
-      const incoming = Array.isArray(val)?val:Object.values(val);
-      if(JSON.stringify(incoming) !== JSON.stringify(cards)){
-        cards = incoming;
-        // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
-        const _bf = backfillAllFlow();
-        // Garante que _lastFlowCol esteja consistente com a coluna atual
-        cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
-        renderBoard();
-        // Persiste o backfill (1x) sem disparar loop de echo
-        if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
-      }
-      // Board populado — garante overlay de seed fechado (dev/ecomm)
-      if((ACTIVE_SQUAD==='dev'||ACTIVE_SQUAD==='ecomm') && incoming.filter(c=>!c.archived).length > 0){
-        document.getElementById('seed-overlay')?.classList.remove('active');
-      }
-    } else {
-      // Sem cards no Firebase — mostra overlay de seed se for board de teste
-      if(ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='ecomm'){
+    const keys = Object.keys(_cardsByKey).sort((a,b)=>Number(a)-Number(b));
+    const incoming = keys.map(k=>_cardsByKey[k]).filter(Boolean);
+    if(JSON.stringify(incoming) !== JSON.stringify(cards)){
+      cards = incoming;
+      // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
+      const _bf = backfillAllFlow();
+      // Garante que _lastFlowCol esteja consistente com a coluna atual
+      cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
+      renderBoard();
+      // Persiste o backfill (1x) sem disparar loop de echo
+      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
+    }
+    // Board populado — garante overlay de seed fechado (dev/ecomm)
+    if((ACTIVE_SQUAD==='dev'||ACTIVE_SQUAD==='ecomm') && incoming.filter(c=>!c.archived).length > 0){
+      document.getElementById('seed-overlay')?.classList.remove('active');
+    }
+  }
+  function _scheduleCardsSync(){
+    clearTimeout(_cardsSyncDebounce);
+    _cardsSyncDebounce = setTimeout(_applyCardsSync, 150);
+  }
+  if(window._fbReady){
+    // Checagem inicial unica: board de teste (dev/ecomm) sem NENHUM card ainda —
+    // mostra overlay de seed. Os listeners de child_* abaixo nao disparam nada pra
+    // um node totalmente vazio, entao essa checagem precisa ser feita à parte
+    // (unica leitura extra, so na carga inicial, nao recorrente).
+    fbGet(FB+'/cards').then(snap=>{
+      if(!snap.val() && (ACTIVE_SQUAD==='dev' || ACTIVE_SQUAD==='ecomm')){
         updateSeedOverlayContent();
         document.getElementById('seed-overlay')?.classList.add('active');
       }
-    }
-  });
+    }).catch(()=>{});
+    const _cardsRef = fb(FB+'/cards');
+    window._onChildAdded(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildChanged(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildRemoved(_cardsRef, snap=>{ delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+  }
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
   // onValue só dispara em writes — sessões longas abertas ANTES de uma
