@@ -861,7 +861,14 @@ input[type="date"]{-moz-appearance:textfield;}
 .okr-check-wrap:hover{border-color:rgba(255,215,0,.3);}
 .linked-wrap{padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.4);}
 .modal-ft-row{display:flex;align-items:center;gap:6px;padding:10px 16px;
-  border-top:1px solid var(--glass-b);background:rgba(3,13,26,.3);}
+  border-top:1px solid var(--glass-b);background:rgba(6,26,46,.97);
+  position:sticky;bottom:0;z-index:2;border-radius:0 0 var(--r2) var(--r2);}
+.btn-unsaved{background:rgba(255,209,102,.22)!important;border-color:var(--warn)!important;
+  color:var(--warn)!important;animation:btnUnsavedPulse 1.6s ease-in-out infinite;}
+@keyframes btnUnsavedPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.35);}
+  50%{box-shadow:0 0 0 6px rgba(255,209,102,0);}
+}
 
 /* Indicativos do card */
 .card-indicators{display:flex;gap:4px;align-items:center;margin:3px 0 4px;flex-wrap:wrap;}
@@ -2881,7 +2888,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="flex:1;"></div>
     <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
     <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
-    <button class="btn btn-p btn-sm" onclick="saveCard()">💾 Salvar</button>
+    <button class="btn btn-p btn-sm" id="btn-save-card" onclick="saveCard()">💾 Salvar</button>
   </div>
 
 </div>
@@ -4101,7 +4108,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.173-dev</div>
+<div class="version">v8.30.174-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6628,6 +6635,40 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 let editingTags=[]; // tags do card sendo editado (array de IDs)
 let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,text,author,authorInit,at,editedAt}
+// ── Indicador de alterações não salvas ──────────────────────────────────
+// Campos como prioridade, story points, impedimento e OKR ainda não têm
+// autosave (só título/tags/coluna/responsável/prazo/descrição/checklist/riscos
+// têm). Isso monitora esses campos "manuais" pra avisar visualmente quando há
+// algo pendente, e evita fechar o modal sem querer perdendo essa edição.
+let _cardManualSnap = null;
+let _cardDirtyTimer = null;
+function _manualFieldsNow(){
+  return {
+    sp: document.getElementById('m-sp')?.value||'',
+    priority: document.getElementById('m-priority')?.value||'',
+    isOKR: document.getElementById('m-is-okr')?.checked||false,
+    blockerOn: document.getElementById('m-blocker-row')?.style.display!=='none',
+    blockerReason: document.getElementById('m-blocker-reason')?.value||'',
+  };
+}
+function _cardIsDirty(){
+  if(!_cardManualSnap) return false;
+  return JSON.stringify(_manualFieldsNow()) !== JSON.stringify(_cardManualSnap);
+}
+function _updateSaveBtnDirtyState(){
+  const btn=document.getElementById('btn-save-card'); if(!btn) return;
+  if(_cardIsDirty()){ btn.classList.add('btn-unsaved'); btn.textContent='💾 Salvar alterações'; }
+  else { btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
+}
+function _startDirtyWatch(){
+  clearInterval(_cardDirtyTimer);
+  _cardDirtyTimer = setInterval(_updateSaveBtnDirtyState, 400);
+}
+function _stopDirtyWatch(){
+  clearInterval(_cardDirtyTimer); _cardDirtyTimer=null;
+  _cardManualSnap = null;
+  const btn=document.getElementById('btn-save-card'); if(btn){ btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
+}
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
@@ -6829,6 +6870,8 @@ function openCard(id){
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
+  _cardManualSnap = _manualFieldsNow();
+  _startDirtyWatch();
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
     initMentionDropdown('m-po');
@@ -7059,6 +7102,7 @@ function openNewCard(col){
   setCriativoFields({});
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   document.getElementById('card-ov').classList.add('open');
+  _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
 }
 function saveCard(){
   if(!checkEditPermission()) return;
@@ -7140,6 +7184,7 @@ function saveCard(){
     cards.push(_newCard);
   }
   if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
+  _stopDirtyWatch(); // já salvou tudo — não faz sentido avisar de "não salvo" ao fechar em seguida
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
   _clearPendingRequired();
 }
@@ -15093,8 +15138,13 @@ document.addEventListener('click', e=>{
 });
 
 function closeOv(id){
+  if(id==='card-ov' && editingId && _cardIsDirty()){
+    const ok = confirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento ou OKR).\n\nFechar mesmo assim?');
+    if(!ok) return;
+  }
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
+    _stopDirtyWatch();
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
@@ -15107,7 +15157,9 @@ document.querySelectorAll('.ov').forEach(ov=>{
   let _downOnBackdrop=false;
   ov.addEventListener('mousedown', e=>{ _downOnBackdrop = (e.target===ov); });
   ov.addEventListener('click', e=>{
-    if(_downOnBackdrop && e.target===ov) ov.classList.remove('open');
+    // Roteia pelo closeOv() (em vez de fechar a classe direto) pra respeitar a
+    // trava de confirmação do card-ov quando há algo "manual" não salvo.
+    if(_downOnBackdrop && e.target===ov) closeOv(ov.id);
     _downOnBackdrop=false;
   });
 });
