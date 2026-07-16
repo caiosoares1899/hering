@@ -4009,7 +4009,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.151</div>
+<div class="version">v8.30.152</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6462,8 +6462,13 @@ function scheduleAutoSave(){
     const user=window._currentUser?.displayName||'Usuário';
     const c=cards.find(x=>x.id===editingId); if(!c) return;
     const _asBefore=_histSnapshot(c); // 📜 snapshot antes do auto-save
+    // Só grava a coluna do <select> se o usuário de fato mexeu nela nesta sessão
+    // do modal — senão preserva c.col (que pode ter sido atualizado por outra
+    // aba/pessoa via drag-and-drop enquanto este modal ficou aberto).
+    const _selCol=document.getElementById('m-col').value;
+    const _colToSave=(_selCol===_modalOpenCol)?c.col:_selCol;
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
-      col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
+      col:_colToSave,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       criativo:getCriativoData(),
@@ -6484,6 +6489,13 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 let editingTags=[]; // tags do card sendo editado (array de IDs)
 let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,text,author,authorInit,at,editedAt}
+// Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
+// distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro
+// lugar (drag-and-drop de outra aba/pessoa) enquanto este modal ficou aberto" —
+// sem isso, o autosave/save reescrevia sempre o valor do <select>, revertendo
+// silenciosamente o card pra coluna antiga (bug: card "volta sozinho" pra
+// coluna anterior depois de ser movido por outra aba/pessoa).
+let _modalOpenCol=null;
 let _editingDescIdx=new Set(); // índices das descrições em modo edição
 function renderExtraDescs(){
   const box=document.getElementById('extra-descs-list'); if(!box) return;
@@ -6646,6 +6658,7 @@ function openCard(id){
   document.getElementById('m-title-disp').textContent=c.title;
   editingTags=getCardTags(c).slice(); populateTagSelect();
   document.getElementById('m-col').value=c.col;
+  _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-due').value=c.due||'';
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
@@ -6886,6 +6899,7 @@ function openNewCard(col){
   document.getElementById('m-title-disp').textContent='Novo card';
   editingTags=[]; populateTagSelect();
   document.getElementById('m-col').value=col||columns[0]?.id||'backlog';
+  _modalOpenCol=null;
   document.getElementById('m-owner').value=window._currentUserInit||'';
   document.getElementById('m-due').value='';
   document.getElementById('m-meta-c').textContent='';
@@ -6949,9 +6963,13 @@ function saveCard(){
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
     const c=cards.find(x=>x.id===editingId); if(!c) return;
-    const _prevCol=c.col; const _newCol=document.getElementById('m-col').value;
+    const _prevCol=c.col;
+    // Mesma proteção do autosave: só trata como mudança de coluna intencional
+    // se o valor do <select> divergir do que estava quando o modal abriu.
+    const _selCol=document.getElementById('m-col').value;
+    const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
-    Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:document.getElementById('m-col').value,
+    Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
       checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
@@ -6984,7 +7002,7 @@ function saveCard(){
     cards.push(_newCard);
   }
   if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
-  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
+  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value); closeOv('card-ov');
   _clearPendingRequired();
 }
 function toggleCardOKR(cardId){
