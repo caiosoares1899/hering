@@ -2139,7 +2139,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.89 · painel-dev</div>
+<div class="version">v2.90 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6890,14 +6890,22 @@ document.addEventListener('visibilitychange', ()=>{
   });
 });
 function loadAll(){
+  // Antes disparava um setInterval por squad a cada POLL_MS (60s), rodando pra
+  // sempre enquanto a aba do painel ficasse aberta em primeiro plano — isso
+  // buscava o node /dados INTEIRO (cards+colunas+tags) de TODAS as squads a
+  // cada minuto, consumindo banda do Firebase o dia todo mesmo sem ninguem
+  // editando nada (identificado como principal causa do consumo de download
+  // do Realtime Database ultrapassar a cota gratuita).
+  // Removido o polling automatico: agora so busca ao abrir a pagina, ao voltar
+  // pra aba (visibilitychange mais abaixo) e ao clicar em "🔄 Atualizar dados"
+  // (onclick="loadAll()"). O guard antigo (if ja monitorando, return) tambem
+  // saiu, porque sem setInterval ele so servia pra bloquear o proprio botao
+  // de atualizar manualmente depois do primeiro carregamento.
   if(!window._squadListeners) window._squadListeners = {};
   SQUADS.forEach(sq=>{
-    if(window._squadListeners[sq.id]) return; // ja monitorando, evita polling duplicado
     window._squadListeners[sq.id] = true;
     _pollSquadDados(sq.id);
     _pollSquadSnapshots(sq.id);
-    setInterval(()=>_pollSquadDados(sq.id), POLL_MS);
-    setInterval(()=>_pollSquadSnapshots(sq.id), POLL_MS);
   });
 }
 
