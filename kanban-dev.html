@@ -4101,7 +4101,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.169-dev</div>
+<div class="version">v8.30.170-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6263,6 +6263,12 @@ function toggleFilters(){
   if(fSub) fSub.innerHTML='<option value="">Todos os subtimes</option>'+subteams.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
   document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
   document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
+  // 🛠️ Fix "board encolhe": abrir/fechar o painel de Filtros muda a altura da toolbar,
+  // mas isso nunca disparava um re-render (renderBoard só roda ao aplicar/limpar filtro),
+  // então a variável --board-top (usada pra calcular a altura do quadro) ficava travada
+  // no valor de quando o painel estava aberto. Remedimos aqui, igual já acontece a cada
+  // renderBoard() e no resize da janela.
+  if(!raiaMode) setViewMode(viewMode);
 }
 function applyFilters(){
   activeFilters={
