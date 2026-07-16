@@ -861,7 +861,14 @@ input[type="date"]{-moz-appearance:textfield;}
 .okr-check-wrap:hover{border-color:rgba(255,215,0,.3);}
 .linked-wrap{padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(3,13,26,.4);}
 .modal-ft-row{display:flex;align-items:center;gap:6px;padding:10px 16px;
-  border-top:1px solid var(--glass-b);background:rgba(3,13,26,.3);}
+  border-top:1px solid var(--glass-b);background:rgba(6,26,46,.97);
+  position:sticky;bottom:0;z-index:2;border-radius:0 0 var(--r2) var(--r2);}
+.btn-unsaved{background:rgba(255,209,102,.22)!important;border-color:var(--warn)!important;
+  color:var(--warn)!important;animation:btnUnsavedPulse 1.6s ease-in-out infinite;}
+@keyframes btnUnsavedPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.35);}
+  50%{box-shadow:0 0 0 6px rgba(255,209,102,0);}
+}
 
 /* Indicativos do card */
 .card-indicators{display:flex;gap:4px;align-items:center;margin:3px 0 4px;flex-wrap:wrap;}
@@ -2795,7 +2802,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="flex:1;"></div>
     <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
     <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
-    <button class="btn btn-p btn-sm" onclick="saveCard()">💾 Salvar</button>
+    <button class="btn btn-p btn-sm" id="btn-save-card" onclick="saveCard()">💾 Salvar</button>
   </div>
 
 </div>
@@ -4009,12 +4016,12 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.152</div>
+<div class="version">v8.30.153</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -4055,6 +4062,7 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
+window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._auth=auth; window._provider=provider;
 
 // Captura e salva o token de acesso de forma segura
@@ -5105,23 +5113,40 @@ function fbLoadAll(){
     if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
   });
 
-  // Cards — por último, já com columns/agilCfg/tags carregados
-  fbListen(FB+'/cards',val=>{
+  // Cards — via listeners granulares (child_added/child_changed/child_removed) em vez
+  // de onValue no array inteiro. onValue reenviava o node /cards COMPLETO pra CADA
+  // client conectado toda vez que QUALQUER card mudava — com centenas de cards por
+  // squad, essa era a principal causa do consumo de download do Realtime Database
+  // estourar a cota gratuita (10GB/mes). Os listeners granulares so baixam o card
+  // que de fato mudou (child_changed), foi criado (child_added) ou removido
+  // (child_removed) — nao o array inteiro a cada evento.
+  let _cardsByKey = {};
+  let _cardsSyncDebounce = null;
+  function _applyCardsSync(){
     if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
-    if(val){
-      const incoming = Array.isArray(val)?val:Object.values(val);
-      if(JSON.stringify(incoming) !== JSON.stringify(cards)){
-        cards = incoming;
-        // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
-        const _bf = backfillAllFlow();
-        // Garante que _lastFlowCol esteja consistente com a coluna atual
-        cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
-        renderBoard();
-        // Persiste o backfill (1x) sem disparar loop de echo
-        if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
-      }
+    const keys = Object.keys(_cardsByKey).sort((a,b)=>Number(a)-Number(b));
+    const incoming = keys.map(k=>_cardsByKey[k]).filter(Boolean);
+    if(JSON.stringify(incoming) !== JSON.stringify(cards)){
+      cards = incoming;
+      // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
+      const _bf = backfillAllFlow();
+      // Garante que _lastFlowCol esteja consistente com a coluna atual
+      cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
+      renderBoard();
+      // Persiste o backfill (1x) sem disparar loop de echo
+      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
     }
-  });
+  }
+  function _scheduleCardsSync(){
+    clearTimeout(_cardsSyncDebounce);
+    _cardsSyncDebounce = setTimeout(_applyCardsSync, 150);
+  }
+  if(window._fbReady){
+    const _cardsRef = fb(FB+'/cards');
+    window._onChildAdded(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildChanged(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildRemoved(_cardsRef, snap=>{ delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+  }
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
   // onValue só dispara em writes — sessões longas abertas ANTES de uma
@@ -6489,6 +6514,40 @@ function scheduleAutoSave(){
 // ═══════════════════════════════════════════════════════
 let editingTags=[]; // tags do card sendo editado (array de IDs)
 let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,text,author,authorInit,at,editedAt}
+// ── Indicador de alterações não salvas ──────────────────────────────────
+// Campos como prioridade, story points, impedimento e OKR ainda não têm
+// autosave (só título/tags/coluna/responsável/prazo/descrição/checklist/riscos
+// têm). Isso monitora esses campos "manuais" pra avisar visualmente quando há
+// algo pendente, e evita fechar o modal sem querer perdendo essa edição.
+let _cardManualSnap = null;
+let _cardDirtyTimer = null;
+function _manualFieldsNow(){
+  return {
+    sp: document.getElementById('m-sp')?.value||'',
+    priority: document.getElementById('m-priority')?.value||'',
+    isOKR: document.getElementById('m-is-okr')?.checked||false,
+    blockerOn: document.getElementById('m-blocker-row')?.style.display!=='none',
+    blockerReason: document.getElementById('m-blocker-reason')?.value||'',
+  };
+}
+function _cardIsDirty(){
+  if(!_cardManualSnap) return false;
+  return JSON.stringify(_manualFieldsNow()) !== JSON.stringify(_cardManualSnap);
+}
+function _updateSaveBtnDirtyState(){
+  const btn=document.getElementById('btn-save-card'); if(!btn) return;
+  if(_cardIsDirty()){ btn.classList.add('btn-unsaved'); btn.textContent='💾 Salvar alterações'; }
+  else { btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
+}
+function _startDirtyWatch(){
+  clearInterval(_cardDirtyTimer);
+  _cardDirtyTimer = setInterval(_updateSaveBtnDirtyState, 400);
+}
+function _stopDirtyWatch(){
+  clearInterval(_cardDirtyTimer); _cardDirtyTimer=null;
+  _cardManualSnap = null;
+  const btn=document.getElementById('btn-save-card'); if(btn){ btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
+}
 // Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
 // distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro
 // lugar (drag-and-drop de outra aba/pessoa) enquanto este modal ficou aberto" —
@@ -6685,6 +6744,8 @@ function openCard(id){
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
+  _cardManualSnap = _manualFieldsNow();
+  _startDirtyWatch();
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
     initMentionDropdown('m-po');
@@ -6916,6 +6977,7 @@ function openNewCard(col){
   setCriativoFields({});
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   document.getElementById('card-ov').classList.add('open');
+  _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
 }
 function saveCard(){
   if(!checkEditPermission()) return;
@@ -7002,6 +7064,7 @@ function saveCard(){
     cards.push(_newCard);
   }
   if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
+  _stopDirtyWatch(); // já salvou tudo — não faz sentido avisar de "não salvo" ao fechar em seguida
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value); closeOv('card-ov');
   _clearPendingRequired();
 }
@@ -7017,6 +7080,7 @@ async function deleteCard(){
   if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
   cards=cards.filter(x=>x.id!==editingId);
+  _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
   fbSaveAll(); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
@@ -7783,7 +7847,7 @@ function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.val
 function delRisco(i){ const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); }
 function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; saveUndo('adicionar item checklist'); renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); }
 function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); }
-function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov'); openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }
+function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov', ()=>{ openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }); }
 
 // ═══════════════════════════════════════════════════════
 // QUADRO DE LEMBRETES (post-its)
@@ -12174,7 +12238,7 @@ function renderLinkedChips(){
         '</div>'+
       '</div>'+
       '<button class="minicard-rm" data-lcid="'+lc.id+'" title="Remover vínculo">✕</button>';
-    card.querySelector('.minicard-body').onclick = ()=>{ closeOv('card-ov'); openCard(lc.id); };
+    card.querySelector('.minicard-body').onclick = ()=>{ closeOv('card-ov', ()=>openCard(lc.id)); };
     list.appendChild(card);
   });
   const ind = document.getElementById('cs-links-ind');
@@ -14815,9 +14879,21 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('#m-milanote-menu-wrap')) closeMilanoteMenu();
 });
 
-function closeOv(id){
+function closeOv(id, afterClose){
+  if(id==='card-ov' && editingId && _cardIsDirty()){
+    uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento ou OKR).\n\nFechar mesmo assim?',
+      {title:'Alterações não salvas', okText:'Fechar mesmo assim', cancelText:'Continuar editando'}).then(ok=>{
+      if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
+    });
+    return;
+  }
+  _finishCloseOv(id);
+  if(afterClose) afterClose();
+}
+function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
+    _stopDirtyWatch();
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
@@ -14830,7 +14906,9 @@ document.querySelectorAll('.ov').forEach(ov=>{
   let _downOnBackdrop=false;
   ov.addEventListener('mousedown', e=>{ _downOnBackdrop = (e.target===ov); });
   ov.addEventListener('click', e=>{
-    if(_downOnBackdrop && e.target===ov) ov.classList.remove('open');
+    // Roteia pelo closeOv() (em vez de fechar a classe direto) pra respeitar a
+    // trava de confirmação do card-ov quando há algo "manual" não salvo.
+    if(_downOnBackdrop && e.target===ov) closeOv(ov.id);
     _downOnBackdrop=false;
   });
 });
@@ -15171,8 +15249,7 @@ function unlinkDependsOn(){
 
 function openDependsOnCard(){
   const card=cards.find(c=>c.id===editingId); if(!card?.dependsOn) return;
-  closeOv('card-ov');
-  openCard(card.dependsOn);
+  closeOv('card-ov', ()=>openCard(card.dependsOn));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -15254,7 +15331,7 @@ function renderCommentList(comments){
     // Wire card-mention clicks
     item.querySelectorAll('.mention-card').forEach(el=>{
       const cid=el.dataset.cid;
-      if(cid) el.onclick=()=>{ closeOv('card-ov'); openCard(cid); };
+      if(cid) el.onclick=()=>{ closeOv('card-ov', ()=>openCard(cid)); };
     });
     list.appendChild(item);
   });
@@ -15460,7 +15537,7 @@ function renderDescPreview(){
   // Wire card mention clicks
   preview.querySelectorAll('.mention-card').forEach(el=>{
     const cid=el.dataset.cid;
-    if(cid) el.onclick=()=>{ closeOv('card-ov'); openCard(cid); };
+    if(cid) el.onclick=()=>{ closeOv('card-ov', ()=>openCard(cid)); };
   });
 }
 
@@ -15663,7 +15740,7 @@ function renderMiniNode(container, node, selfId){
     '<div class="card-dep-mini-node-dot" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="card-dep-mini-node-title">'+(isSelf?'<strong>':'')+esc(c.title)+(isSelf?'</strong>':'')+'</span>'+
     '<span class="card-dep-mini-node-col">'+(col?.name||c.col)+'</span>';
-  if(!isSelf) div.onclick=()=>{ closeOv('card-ov'); openCard(c.id); };
+  if(!isSelf) div.onclick=()=>{ closeOv('card-ov', ()=>openCard(c.id)); };
   container.appendChild(div);
 
   if(node.dependents?.length){
@@ -15903,12 +15980,12 @@ function _eocRenderDisplay(display, text, placeholder){
       const onclickAttr = el.getAttribute('onclick')||'';
       const idMatch = onclickAttr.match(/openCard\(["']([^"']+)["']\)/);
       const cid = el.dataset.cid || (idMatch && idMatch[1]) || '';
-      if(cid) el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(cid); };
+      if(cid) el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov', ()=>openCard(cid)); };
     });
     // Wire mention-card via data-cid if present
     display.querySelectorAll('.mention-card[data-cid]').forEach(el=>{
       el.style.pointerEvents='auto';
-      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(el.dataset.cid); };
+      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov', ()=>openCard(el.dataset.cid)); };
     });
     // @user mentions show tooltip on click
     display.querySelectorAll('.mention-user').forEach(el=>{
