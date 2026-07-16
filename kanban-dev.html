@@ -4101,7 +4101,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.170-dev</div>
+<div class="version">v8.30.171-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6634,9 +6634,10 @@ function renderExtraDescs(){
               <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#38b6ff')"></button>
             </span>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','link')" title="Link">🔗</button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted('${taId}')" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
           </div>
           <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
-            oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
+            oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})" onpaste="_eocPasteHandler(event)"
             onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
           <div class="xdesc-foot">
             ${meta?`<span class="xdesc-meta">${meta}</span>`:'<span class="xdesc-meta"></span>'}
