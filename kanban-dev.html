@@ -4108,7 +4108,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.174-dev</div>
+<div class="version">v8.30.175-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7200,6 +7200,7 @@ async function deleteCard(){
   if(!await uiConfirm('Excluir "'+c.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   saveUndo('excluir card');
   cards=cards.filter(x=>x.id!==editingId);
+  _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
   fbSaveAll(); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
@@ -8127,7 +8128,7 @@ function _agentReturnForRework(){
   _agentCommitState(c);
   showToast('↩ Devolvido para o agente.');
 }
-function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov'); openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }
+function insightsCard(){ const title=document.getElementById('m-title').value; const po=document.getElementById('m-po').value; closeOv('card-ov', ()=>{ openAgent(); swAgTab('daily'); const q=`Dá insights ágeis sobre o card "${title}"${po?' — PO: '+po.substring(0,100):''}`; document.getElementById('inp-daily').value=q; qa('daily',q); }); }
 
 // ═══════════════════════════════════════════════════════
 // QUADRO DE LEMBRETES (post-its)
@@ -12516,7 +12517,7 @@ function renderLinkedChips(){
         '</div>'+
       '</div>'+
       '<button class="minicard-rm" data-lcid="'+lc.id+'" title="Remover vínculo">✕</button>';
-    card.querySelector('.minicard-body').onclick = ()=>{ closeOv('card-ov'); openCard(lc.id); };
+    card.querySelector('.minicard-body').onclick = ()=>{ closeOv('card-ov', ()=>openCard(lc.id)); };
     list.appendChild(card);
   });
   const ind = document.getElementById('cs-links-ind');
@@ -15137,11 +15138,18 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('#m-milanote-menu-wrap')) closeMilanoteMenu();
 });
 
-function closeOv(id){
+function closeOv(id, afterClose){
   if(id==='card-ov' && editingId && _cardIsDirty()){
-    const ok = confirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento ou OKR).\n\nFechar mesmo assim?');
-    if(!ok) return;
+    uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento ou OKR).\n\nFechar mesmo assim?',
+      {title:'Alterações não salvas', okText:'Fechar mesmo assim', cancelText:'Continuar editando'}).then(ok=>{
+      if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
+    });
+    return;
   }
+  _finishCloseOv(id);
+  if(afterClose) afterClose();
+}
+function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
     _stopDirtyWatch();
@@ -15525,8 +15533,7 @@ function unlinkDependsOn(){
 
 function openDependsOnCard(){
   const card=cards.find(c=>c.id===editingId); if(!card?.dependsOn) return;
-  closeOv('card-ov');
-  openCard(card.dependsOn);
+  closeOv('card-ov', ()=>openCard(card.dependsOn));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -15615,7 +15622,7 @@ function renderCommentList(comments){
     // Wire card-mention clicks
     item.querySelectorAll('.mention-card').forEach(el=>{
       const cid=el.dataset.cid;
-      if(cid) el.onclick=()=>{ closeOv('card-ov'); openCard(cid); };
+      if(cid) el.onclick=()=>{ closeOv('card-ov', ()=>openCard(cid)); };
     });
     list.appendChild(item);
   });
@@ -15816,7 +15823,7 @@ function renderDescPreview(){
   // Wire card mention clicks
   preview.querySelectorAll('.mention-card').forEach(el=>{
     const cid=el.dataset.cid;
-    if(cid) el.onclick=()=>{ closeOv('card-ov'); openCard(cid); };
+    if(cid) el.onclick=()=>{ closeOv('card-ov', ()=>openCard(cid)); };
   });
 }
 
@@ -16019,7 +16026,7 @@ function renderMiniNode(container, node, selfId){
     '<div class="card-dep-mini-node-dot" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
     '<span class="card-dep-mini-node-title">'+(isSelf?'<strong>':'')+esc(c.title)+(isSelf?'</strong>':'')+'</span>'+
     '<span class="card-dep-mini-node-col">'+(col?.name||c.col)+'</span>';
-  if(!isSelf) div.onclick=()=>{ closeOv('card-ov'); openCard(c.id); };
+  if(!isSelf) div.onclick=()=>{ closeOv('card-ov', ()=>openCard(c.id)); };
   container.appendChild(div);
 
   if(node.dependents?.length){
@@ -16259,12 +16266,12 @@ function _eocRenderDisplay(display, text, placeholder){
       const onclickAttr = el.getAttribute('onclick')||'';
       const idMatch = onclickAttr.match(/openCard\(["']([^"']+)["']\)/);
       const cid = el.dataset.cid || (idMatch && idMatch[1]) || '';
-      if(cid) el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(cid); };
+      if(cid) el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov', ()=>openCard(cid)); };
     });
     // Wire mention-card via data-cid if present
     display.querySelectorAll('.mention-card[data-cid]').forEach(el=>{
       el.style.pointerEvents='auto';
-      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov'); openCard(el.dataset.cid); };
+      el.onclick=(e)=>{ e.stopPropagation(); closeOv('card-ov', ()=>openCard(el.dataset.cid)); };
     });
     // @user mentions show tooltip on click
     display.querySelectorAll('.mention-user').forEach(el=>{
