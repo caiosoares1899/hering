@@ -4009,7 +4009,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.150</div>
+<div class="version">v8.30.151</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6136,6 +6136,8 @@ function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
   bar.style.display=show?'flex':'none';
+  // Recalcula --board-top pra evitar que o board encolhe ao abrir/fechar Filtros
+  setViewMode(viewMode);
   // Popula selects
   // Combina members + owners de cards que não estão em members
   const cardOwners=cards.filter(c=>c.owner).map(c=>c.owner);
@@ -6189,6 +6191,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.due){
     if(!card.due) return false;
+    if(_isColDone(card.col)) return false;
     const d=new Date(card.due+'T00:00:00'); d.setHours(0,0,0,0);
     const diff=Math.round((d-today)/86400000);
     if(activeFilters.due==='late'&&diff>=0) return false;
@@ -6514,9 +6517,10 @@ function renderExtraDescs(){
               <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#38b6ff')"></button>
             </span>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','link')" title="Link">🔗</button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted('${taId}')" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
           </div>
           <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
-            oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})"
+            oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})" onpaste="_eocPasteHandler(event)"
             onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveExtraDesc(${i});}">${esc(d.text||'')}</textarea>
           <div class="xdesc-foot">
             ${meta?`<span class="xdesc-meta">${meta}</span>`:'<span class="xdesc-meta"></span>'}
@@ -7831,17 +7835,17 @@ function computeAvisosQuadro(){
     if(c.col==='blocker'){
       out.push({tipo:'quadro', urgent:true, text:`🚧 Card bloqueado: "${titulo}"`, cardId:c.id, sub:'impedimento ativo', ts:c.editedAt||''});
     }
-    if(c.riscos?.length && c.col!=='done'){
+    if(c.riscos?.length && !_isColDone(c.col)){
       out.push({tipo:'quadro', urgent:true, text:`⚠ Risco mapeado: "${titulo}" (${c.riscos.length})`, cardId:c.id, sub:(typeof c.riscos[0]==='string'?c.riscos[0].substring(0,60):''), ts:c.editedAt||''});
     }
-    if(c.due && c.col!=='done'){
+    if(c.due && !_isColDone(c.col)){
       const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
       const diff=Math.round((d-today)/86400000);
       if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${Math.abs(diff)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
       else if(diff===0) out.push({tipo:'quadro', urgent:true, text:`⚡ Vence hoje: "${titulo}"`, cardId:c.id, sub:'prazo é hoje', ts:c.due});
       else if(diff<=2) out.push({tipo:'quadro', urgent:false, text:`📅 Vence em ${diff}d: "${titulo}"`, cardId:c.id, sub:'prazo próximo', ts:c.due});
     }
-    if(c.col==='done' && c.doneAt){
+    if(_isColDone(c.col) && c.doneAt){
       const dd=new Date(c.doneAt); const ageH=(Date.now()-dd.getTime())/3600000;
       if(ageH<=48) out.push({tipo:'quadro', urgent:false, text:`✅ Resolvido: "${titulo}"`, cardId:c.id, sub:'concluído recentemente', ts:c.doneAt});
     }
@@ -12486,7 +12490,7 @@ function checkDueNotifs(){
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
   const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
   const tomorrowStr=tomorrow.toISOString().split('T')[0];
-  cards.filter(c=>c.due&&!c.archived&&c.col!=='done').forEach(card=>{
+  cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
     const uid=getUidByInit(card.owner); if(!uid) return;
     if(card.due===today){
       createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
