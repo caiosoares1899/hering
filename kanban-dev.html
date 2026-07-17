@@ -4390,10 +4390,14 @@ async function toggleSquadSwitcher(e){
       return;
     }
     dd.innerHTML = mySquads.map(id=>{
-      const meta = SQUAD_META_LIVE[id] || {label:'Squad '+id, emoji:'🐟'};
+      // Nao prefixa com meta.emoji separado: varios squads (nativos e do painel)
+      // ja trazem o emoji embutido no proprio label, e concatenar de novo duplicava
+      // (ex.: "🧪 🧪 Dev Sandbox"). O fallback (squad sem meta carregada) ja embute
+      // o emoji genérico no proprio texto.
+      const meta = SQUAD_META_LIVE[id] || {label:'🐟 Squad '+id};
       const isActive = id === ACTIVE_SQUAD;
       return '<a href="'+window.location.pathname+'?squad='+encodeURIComponent(id)+'" class="squad-switcher-item'+(isActive?' active':'')+'">'
-        + (meta.emoji||'🐟') + ' ' + esc(meta.label)
+        + esc(meta.label)
         + (isActive ? ' <span class="squad-switcher-tag">atual</span>' : '')
         + '</a>';
     }).join('');
