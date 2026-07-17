@@ -5698,11 +5698,19 @@ function boasVindasOpenHelp(){
 
 function showSquadSelectorFiltered(squadIds) {
   document.getElementById('login-ov').style.display = 'none';
-  // Carrega squads do Firebase antes de renderizar (inclui novos boards)
+  // Fix: antes o grid só renderizava DEPOIS do Firebase responder (kanban/squads_meta),
+  // então NENHUM card aparecia até essa leitura terminar — o que fazia os squads criados
+  // pelo painel (squads_meta, ex.: app e outlet) parecerem sempre mais lentos, já que os
+  // squads nativos (dados/prf/midiacriativa) já estão disponíveis localmente sem precisar
+  // de rede. Agora: renderiza na hora com o que já tem (squads nativos aparecem
+  // instantaneamente) e re-renderiza assim que o Firebase responder, incluindo os squads
+  // do painel — que agora só demoram o tempo real da leitura (bem rápido), em vez de
+  // segurar a tela toda esperando.
+  if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
+  const sel = document.getElementById('squad-selector');
+  if (sel) sel.classList.add('active');
   loadSquadsFromFirebase(() => {
     if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
-    const sel = document.getElementById('squad-selector');
-    if (sel) sel.classList.add('active');
   });
 }
 
