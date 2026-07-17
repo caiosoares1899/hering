@@ -6136,7 +6136,7 @@ function renderBoard(){
   // de um card, etc.) fazia a tela 'pular' pro topo de cada coluna e perder o scroll horizontal.
   const _scrollBoardX=board.scrollLeft;
   const _scrollColY={};
-  board.querySelectorAll('.col-body[id^="body-"]').forEach(elx=>{ _scrollColY[elx.id]=elx.scrollTop; });
+  board.querySelectorAll('.col-body[id^="body-"], .col-body[id^="rbody-"]').forEach(elx=>{ _scrollColY[elx.id]=elx.scrollTop; });
   const _scrollWinY=window.scrollY;
   // Snapshot diário: só agenda o timer se ainda não fez hoje (evita timers acumulados a cada render)
   if(cards.length>0 && !_snapshotDoneToday()) setTimeout(maybeSnapshot,2000);
@@ -6309,7 +6309,7 @@ function renderRaiaTag(board,activeCards){
           <span class="col-cnt">${colCards.length}</span>
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
         </div>
-      </div><div class="col-body"></div>`;
+      </div><div class="col-body" id="rbody-${tColId}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -6361,7 +6361,7 @@ function renderRaiaSubteam(board,activeCards){
           <span class="col-cnt">${colCards.length}</span>
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
         </div>
-      </div><div class="col-body"></div>`;
+      </div><div class="col-body" id="rbody-${sColId}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!sCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
