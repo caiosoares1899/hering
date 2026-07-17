@@ -5115,25 +5115,37 @@ function fbSaveAll(){
     throw err; // re-throw so handleDrop .catch can revert
   });
 }
-function fbSaveCard(card){
-  // Salva SOMENTE este card (update num path especifico), em vez de
-  // sobrescrever o array `cards` inteiro. Isso evita que edicoes
-  // concorrentes de outras pessoas no board (ex.: adicionar um risco
-  // enquanto alguem move outro card) se apaguem mutuamente — o bug
-  // classico de "last write wins" num array unico compartilhado.
-  // fbSaveAll() continua existindo p/ operacoes que mudam o array
-  // inteiro (criar/excluir/reordenar cards).
-  _lastLocalSave = Date.now();
-  _hasLocalSession = true;
-  if(!window._fbReady) return Promise.resolve();
-  const idx = cards.indexOf(card);
-  if(idx < 0) return fbSaveAll(); // card nao encontrado no array local — fallback seguro
-  return window._update(fb(FB+'/cards'), {[idx]: card}).catch(err=>{
-    if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
-      console.warn('[fbSaveCard] write failed:', err);
-    throw err;
-  });
-}
+ function fbSaveCard(card){
+      // Salva SOMENTE este card (update num path especifico), em vez de
+      // sobrescrever o array `cards` inteiro. Isso evita que edicoes
+      // concorrentes de outras pessoas no board (ex.: adicionar um risco
+      // enquanto alguem move outro card) se apaguem mutuamente — o bug
+      // classico de "last write wins" num array unico compartilhado.
+      // fbSaveAll() continua existindo p/ operacoes que mudam o array
+      // inteiro (criar/excluir/reordenar cards).
+      _lastLocalSave = Date.now();
+      _hasLocalSession = true;
+      if(!window._fbReady) return Promise.resolve();
+      // Acha a CHAVE REAL do card no Firebase pelo id (via snapshot espelhado
+      // pelos listeners granulares) — em vez de cards.indexOf(card), que é a
+      // posição LOCAL no array e pode desalinhar da posição real no Firebase
+      // (ex.: outra pessoa criou/removeu um card entre uma sincronização e
+      // outra), fazendo o update() gravar no card ERRADO sem erro visível.
+      const byKey = window._cardsByKey||{};
+      let key = Object.keys(byKey).find(k => byKey[k] && byKey[k].id === card.id);
+      if(key == null){
+        // Fallback: snapshot espelhado ainda não tem esse card (ex.: acabou
+        // de ser criado) — tenta pela posição local antes do fbSaveAll.
+        const idx = cards.indexOf(card);
+        if(idx < 0) return fbSaveAll();
+        key = String(idx);
+      }
+      return window._update(fb(FB+'/cards'), {[key]: card}).catch(err=>{
+        if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
+          console.warn('[fbSaveCard] write failed:', err);
+        throw err;
+      });
+    }
 function fbSaveMsgs(tab){
   const msgs=Array.from(document.querySelectorAll('#msgs-'+tab+' .msg')).map(m=>({
     role:m.classList.contains('msg-ai')?'ai':'user',
@@ -5230,7 +5242,8 @@ function fbLoadAll(){
   // que de fato mudou (child_changed), foi criado (child_added) ou removido
   // (child_removed) — nao o array inteiro a cada evento.
   let _cardsByKey = {};
-  let _cardsSyncDebounce = null;
+    window._cardsByKey = _cardsByKey; // exposto p/ fbSaveCard() achar a chave real do card por id
+    let _cardsSyncDebounce = null;
   function _applyCardsSync(){
     if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
     const keys = Object.keys(_cardsByKey).sort((a,b)=>Number(a)-Number(b));
