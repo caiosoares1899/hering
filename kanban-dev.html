@@ -4069,6 +4069,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <span style="font-size:10.5px;color:var(--danger);">ano(s)</span>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="purgeOldArchived()">Excluir</button>
   </div>
+  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn btn-sm" onclick="_archSelectAll(true)">☑ Todos</button>
+    <button class="btn btn-sm" onclick="_archSelectAll(false)">☐ Nenhum</button>
+    <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedArchived()">🗑 Excluir selecionados</button>
+  </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;" id="arch-body"></div>
 </div>
 </div>
@@ -4080,6 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="panel-title">🧹 Cards antigos</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
       <button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
     </div>
   </div>
@@ -10145,12 +10151,23 @@ function openArquivados(){
   archived.forEach(c=>{
     const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
   document.getElementById('arch-ov').classList.add('open');
 }
 function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveAll(); renderBoard(); openArquivados(); }
+function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
+async function deleteSelectedArchived(){
+  const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
+  const idSet=new Set(ids);
+  cards=cards.filter(c=>!idSet.has(c.id));
+  fbSaveAll();
+  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  openArquivados();
+}
 
 // ── LIMPEZA DE CARDS ANTIGOS (arquivamento em massa por idade) ──────
 function _cardAgeDays(c){
@@ -10198,6 +10215,16 @@ function renderCleanupList(){
   }).join('');
 }
 function _cleanupSelectAll(v){ document.querySelectorAll('.cleanup-chk').forEach(cb=>cb.checked=v); }
+async function deleteSelectedOldCards(){
+  const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
+  const idSet=new Set(ids);
+  cards=cards.filter(c=>!idSet.has(c.id));
+  fbSaveAll(); renderBoard();
+  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  renderCleanupList();
+}
 async function bulkArchiveOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
