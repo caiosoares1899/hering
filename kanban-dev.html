@@ -146,7 +146,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
 .squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
 .squad-switcher-caret{cursor:pointer;font-size:9px;color:var(--txt3);user-select:none;}
-.squad-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;background:rgba(10,26,44,.98);border:1px solid var(--glass-b);border-radius:10px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.4);z-index:500;display:none;flex-direction:column;gap:2px;}
+.squad-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;background:rgb(10,26,44);border:1px solid var(--accent,#38b6ff);border-radius:10px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column;gap:2px;}
 .squad-switcher-dd.open{display:flex;}
 .squad-switcher-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--txt);text-decoration:none;white-space:nowrap;}
 .squad-switcher-item:hover{background:rgba(56,182,255,.1);}
@@ -4369,42 +4369,27 @@ document.addEventListener('DOMContentLoaded', applySquadIdentity);
 // lista os squads em que a pessoa está inscrita (kanban/usuarios/{uid}/squads)
 // e navega pra ?squad={id} ao clicar. Busca os squads_meta na hora do clique
 // (não só no login) pra já incluir squads criados pelo painel recentemente.
-async function toggleSquadSwitcher(e){
+function toggleSquadSwitcher(e){
   e.stopPropagation();
   const dd = document.getElementById('squad-switcher-dd');
   if(!dd) return;
   if(dd.classList.contains('open')){ dd.classList.remove('open'); return; }
-  dd.innerHTML = '<div class="squad-switcher-msg">Carregando squads...</div>';
-  dd.classList.add('open');
-  const user = window._currentUser;
-  if(!user){ dd.innerHTML = '<div class="squad-switcher-msg">Faça login pra ver seus squads.</div>'; return; }
-  try{
-    const [squadsSnap] = await Promise.all([
-      fbGet('kanban/usuarios/'+user.uid+'/squads'),
-      new Promise(resolve => loadSquadsFromFirebase(resolve))
-    ]);
-    const squadsVal = squadsSnap.val() || {};
-    const mySquads = Object.keys(squadsVal).filter(k => squadsVal[k] === true);
-    if(!mySquads.length){
-      dd.innerHTML = '<div class="squad-switcher-msg">Você não está inscrito em outros squads.</div>';
-      return;
-    }
-    dd.innerHTML = mySquads.map(id=>{
-      // Nao prefixa com meta.emoji separado: varios squads (nativos e do painel)
-      // ja trazem o emoji embutido no proprio label, e concatenar de novo duplicava
-      // (ex.: "🧪 🧪 Dev Sandbox"). O fallback (squad sem meta carregada) ja embute
-      // o emoji genérico no proprio texto.
-      const meta = SQUAD_META_LIVE[id] || {label:'🐟 Squad '+id};
+  // Simplificado a pedido do Caio: sem checagem de permissão/inscrição por usuário
+  // (isso causava squads sumirem do menu) — lista só os nomes de todos os squads
+  // conhecidos (SQUAD_META_LIVE), igual à tela inicial de seleção.
+  const render = () => {
+    dd.innerHTML = Object.keys(SQUAD_META_LIVE).map(id=>{
+      const meta = SQUAD_META_LIVE[id];
       const isActive = id === ACTIVE_SQUAD;
       return '<a href="'+window.location.pathname+'?squad='+encodeURIComponent(id)+'" class="squad-switcher-item'+(isActive?' active':'')+'">'
         + esc(meta.label)
         + (isActive ? ' <span class="squad-switcher-tag">atual</span>' : '')
         + '</a>';
     }).join('');
-  }catch(err){
-    console.error('[squad switcher] erro ao carregar squads:', err);
-    dd.innerHTML = '<div class="squad-switcher-msg">Erro ao carregar squads — tente de novo.</div>';
-  }
+  };
+  render();
+  dd.classList.add('open');
+  loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
 }
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
