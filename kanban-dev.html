@@ -14749,6 +14749,7 @@ function testAutoRule(){
 // Executa automações após mudanças no board
 function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
+  let _anyTriggered=false; // true se alguma regra mudou o card — usado no final pra persistir no Firebase (antes só mudava em memória e sumia no reload)
   activeRules.forEach(rule=>{
     const card=cards.find(c=>c.id===cardId); if(!card) return;
     let triggered=false;
@@ -14756,6 +14757,7 @@ function runAutoRules(eventType, cardId, extraVal){
     if(rule.trigger==='card_created' && eventType==='create') triggered=true;
     if(rule.trigger==='priority_set' && eventType==='priority' && card.priority==='critical') triggered=true;
     if(!triggered) return;
+    _anyTriggered=true;
     const td=new Date().toISOString().split('T')[0];
     const user='Automação';
     if(rule.action==='move_card'){ card.col=rule.actionVal; card.edited=user; card.editedAt=td; const _cn=columns.find(x=>x.id===rule.actionVal); recordHistory(card, 'moveu para '+(_cn?_cn.name:rule.actionVal), '⚙ Automação'); }
@@ -14778,6 +14780,14 @@ function runAutoRules(eventType, cardId, extraVal){
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }
     }
+  }
+  // Persiste as mudanças que as regras acima fizeram no card — antes disso, runAutoRules()
+  // só mexia em memória (card.col/priority/tags/owner) e a mudança sumia no próximo reload
+  // porque nenhum fbSave* era chamado depois da automação rodar.
+  if(_anyTriggered){
+    const _autoCard=cards.find(c=>c.id===cardId);
+    if(_autoCard){ fbSaveCard(_autoCard).catch(err=>console.error('[runAutoRules] falha ao salvar mudança da automação:', err)); }
+    renderBoard();
   }
 }
 // Carrega regras do Firebase com listener contínuo
