@@ -12602,7 +12602,8 @@ document.addEventListener('click', e=>{
 
 
 // ── NOTIFICAÇÕES ─────────────────────────────────────────────────
-const NOTIF_TTL_DAYS = 3; // notificações somem após 3 dias
+const NOTIF_TTL_DAYS = 3; // notificações lidas somem após 3 dias
+const NOTIF_TTL_UNREAD_DAYS = 30; // notificações NÃO lidas só somem depois de 30 dias (evita apagar antes de ver)
 let notifOpen = false;
 let _notifListener = null;
 
@@ -12653,23 +12654,29 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride){
     squad: ACTIVE_SQUAD,
   };
   const path = 'kanban/usuarios/'+targetUid+'/notificacoes/'+notifId;
+  // Loga falha de escrita em vez de engolir silenciosamente — nao interrompe o fluxo do app.
+  const _notifWarn = err => { if(!String(err).includes('error_logs')&&!String(err).includes('error_stats')) console.warn('[createNotif] write failed:', err); };
   if(idOverride){
     // Id determinístico (ex.: lembrete de reunião) — se a pessoa está em vários squads/abas,
     // todos calculam o MESMO id pro mesmo evento real, então só cria se ainda não existe
     // (evita duplicar a notificação e evita reabrir como "não lida" uma que já foi vista).
     fbGet(path).then(snap=>{
-      if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(()=>{});
-    }).catch(()=>{});
+      if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(_notifWarn);
+    }).catch(_notifWarn);
   } else {
-    window._set(window._ref(window._db,path), notif).catch(()=>{});
+    window._set(window._ref(window._db,path), notif).catch(_notifWarn);
   }
 }
 
 // Resolve uid de um membro pelo init
 function getUidByInit(init){
   if(!init) return null;
-  const m = members.find(m=>m.init===init);
-  return m?.uid||null;
+  const matches = members.filter(m=>m.init===init);
+  if(matches.length>1){
+    console.warn('[getUidByInit] iniciais duplicadas no squad:', init, '— notificação não enviada p/ evitar destinatário errado.');
+    return null;
+  }
+  return matches[0]?.uid||null;
 }
 
 // ── Escuta notificações do usuário atual ──────────────────────────
@@ -12681,18 +12688,24 @@ function loadNotifs(){
     const val = snap.val()||{};
     const now = Date.now();
     const TTL = NOTIF_TTL_DAYS * 86400000;
-    // Remove expiradas
+    const TTL_UNREAD = NOTIF_TTL_UNREAD_DAYS * 86400000;
+    // Remove expiradas — não lidas ganham prazo bem maior (evita sumir antes de ver)
     const PAINEL_ONLY_TYPES = new Set(['rascunho']);
     const active = Object.entries(val)
-      .filter(([id,n])=> now - new Date(n.ts).getTime() < TTL && !PAINEL_ONLY_TYPES.has(n.type))
+      .filter(([id,n])=> now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
       .map(([id,n])=>({...n,id}))
       .sort((a,b)=>b.ts.localeCompare(a.ts));
     // Limpa expiradas do Firebase
     Object.entries(val).forEach(([id,n])=>{
-      if(now - new Date(n.ts).getTime() >= TTL)
+      if(now - new Date(n.ts).getTime() >= (n.read?TTL:TTL_UNREAD))
         window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+id),null).catch(()=>{});
     });
     renderNotifs(active);
+  }, err=>{
+    // Sem isso, uma queda silenciosa de conexão deixava o sino surdo pro resto da sessão
+    console.warn('[loadNotifs] listener cancelado (provável queda de conexão):', err);
+    _notifListener = null; // permite reinscrição
+    if(window._currentUser) setTimeout(loadNotifs, 5000);
   });
 }
 
@@ -12837,7 +12850,7 @@ function notifRisk(card){
     const all=snap.val()||{};
     Object.entries(all).forEach(([uid,u])=>{
       if(!u||!uid) return;
-      const role=u.role||'membro';
+      const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
       if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
       if(uid===window._currentUser?.uid) return;
       createNotif(uid,'risk',
@@ -14390,7 +14403,7 @@ function handleDrop(e, colId){
     .then(()=>{
       card._savePending = false;
       // Notificações só depois de confirmado pelo Firebase
-      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
       if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
       if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
       // Feedback visual
@@ -14877,7 +14890,7 @@ async function resolveAllBugs(){
     /bug|bloqueio|blocker|erro|error|fix/i.test(t.label||t.id)
   ).map(t=>t.id);
   if(!bugTags.length && !await uiConfirm('Nenhuma tag de bug encontrada automaticamente.\nDeseja mover TODOS os cards de Impedimentos para Concluído?')) return;
-  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))||columns[columns.length-1];
+  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
   let count = 0;
   cards.forEach(c=>{
     if(c.archived) return;
@@ -14886,6 +14899,7 @@ async function resolveAllBugs(){
       c.col = doneCol.id;
       c.doneAt = new Date().toISOString();
       count++;
+      notifDone(c); // antes pulava a notificação de conclusão nesse fluxo em massa
     }
   });
   if(!count){ showToast('Nenhum card de bug encontrado para resolver.'); return; }
@@ -14909,7 +14923,7 @@ function ctxMove(colId){
   _crvApplyAutoStatus(card); // 🤖
   renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
   // Notificações
-  const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+  const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
   if(ant!==colId && colId===_doneColId) notifDone(card);
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
@@ -15301,7 +15315,14 @@ _onFbReady(()=>{
   loadAutoRules();
   loadCalEvents();
   applyViewMode();
-  setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+  if(window._currentUser){
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+  } else {
+    // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
+    window.addEventListener('auth-change', e=>{
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+    }, {once:true});
+  }
   loadCampanhas();
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
