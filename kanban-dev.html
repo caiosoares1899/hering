@@ -3341,7 +3341,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="panel ql-panel">
   <div class="panel-hd">
     <div class="panel-title" id="ql-title">Lista</div>
-    <button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
+    <button class="btn btn-sm" onclick="voltarParaFuncoesCard('ql-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
   </div>
   <div class="ql-filter-bar" id="ql-filter-bar">
     <input id="ql-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderQLBody()">
@@ -4057,7 +4057,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
-  <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
+  <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="btn btn-sm" onclick="voltarParaFuncoesCard('arch-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
   <div class="ql-filter-bar">
     <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
@@ -4087,7 +4087,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
       <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
-      <button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
+      <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
     </div>
   </div>
   <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
@@ -15317,6 +15317,11 @@ function closeOv(id, afterClose){
   }
   _finishCloseOv(id);
   if(afterClose) afterClose();
+}
+// Volta pro menu 'Funções de card' em vez de fechar tudo e cair no board — usado pelos
+// submenus (Recorrentes/Agendamentos/Modelos/Arquivados/Cards antigos) que só tinham a opção de fechar.
+function voltarParaFuncoesCard(modalId){
+  closeOv(modalId, () => { document.getElementById('card-fn-ov')?.classList.add('open'); });
 }
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
