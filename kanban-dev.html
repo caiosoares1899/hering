@@ -4062,6 +4062,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
     <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
+    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">Criado há mais de <input type="number" id="arch-f-days" min="0" placeholder="0" style="width:56px;" class="ql-filter-inp" onchange="openArquivados()"> dias</label>
   </div>
   <div id="arch-purge-bar" style="display:none;padding:8px 14px;background:rgba(255,107,107,.06);border-bottom:1px solid rgba(255,107,107,.15);align-items:center;gap:8px;flex-wrap:wrap;">
     <span style="font-size:10.5px;color:var(--danger);">🗑 Excluir definitivamente arquivados há mais de</span>
@@ -10147,7 +10148,9 @@ function openArquivados(){
   if(qNome) archived=archived.filter(c=>(c.title||'').toLowerCase().includes(qNome));
   if(qTag) archived=archived.filter(c=>getCardTags(c).includes(qTag));
   if(qOwner) archived=archived.filter(c=>c.owner===qOwner);
-  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner)?' com esse filtro.':'.')+'</div>'; }
+  const qDays=parseInt(document.getElementById('arch-f-days')?.value||'0');
+  if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
+  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
     const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
