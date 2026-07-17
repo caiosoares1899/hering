@@ -13891,7 +13891,24 @@ function categorizeError(msg){
   }
   return 'geral';
 }
+let _authGlitchWarned = false;
+// Detecta erros conhecidos do SDK do Firebase que travam o token de auth (login via popup)
+// sem dar erro visível — nesse estado, escritas no Firebase ficam pendentes pra sempre e nunca
+// salvam, sem mostrar nada no console. Como não dá pra corrigir o bug do SDK em si, avisa a
+// pessoa pra recarregar a página em vez de deixar ela editando numa sessão com login quebrado.
+function _checkAuthGlitch(msgStr){
+  if(_authGlitchWarned) return;
+  if(!msgStr.includes('Pending promise was never set') && !msgStr.includes('auth/network-request-failed')) return;
+  _authGlitchWarned = true;
+  const b = document.createElement('div');
+  b.id = '_auth-glitch-banner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999998;background:#3a1f0a;border-bottom:2px solid #ff9d38;color:#ffe3c2;font-family:"DM Sans",sans-serif;font-size:13px;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;';
+  b.innerHTML = '<span>\u26A0\uFE0F Conex\u00e3o inst\u00e1vel \u2014 suas pr\u00f3ximas altera\u00e7\u00f5es podem n\u00e3o salvar. Recarregue a p\u00e1gina pra garantir.</span><button id="_auth-glitch-btn" style="background:#ff9d38;border:none;color:#2a1200;border-radius:8px;padding:6px 16px;font-weight:700;cursor:pointer;font-family:inherit;">Recarregar agora</button>';
+  document.body.appendChild(b);
+  document.getElementById('_auth-glitch-btn').onclick = ()=>location.reload();
+}
 function logError(msg, source='', line=0, col=0, err=null){
+  _checkAuthGlitch(String(msg||'')+' '+(err&&err.message||''));
   // Anti-loop: ignora se já estamos logando
   if(window._loggingError) return;
   if(!window._fbReady) return;
