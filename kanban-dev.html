@@ -5712,24 +5712,39 @@ window.addEventListener('auth-change',e=>{
     // Valida domínio: @ciahering.com.br OU email na whitelist de externos
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
       // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
-      fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
-        const externos = snap.val() || {};
+      // Fix bug de desconexão de usuária externa (relatada por Roberta): antes essa consulta ao
+      // Firebase rodava de novo toda vez que o auth-change disparava — o que pode acontecer sozinho,
+      // por instabilidade do SDK do Firebase, sem a pessoa fazer nada — e qualquer erro passageiro de
+      // rede na consulta derrubava a sessão como se ela não tivesse autorização. Agora: guarda por 24h
+      // que a pessoa já foi validada (não reconsulta à toa) e, se a consulta falhar, tenta mais 2x
+      // antes de desconectar de fato.
+      const _extCacheKey = 'ext_ok_'+user.email;
+      const _extCached = parseInt(safeLS.getItem(_extCacheKey)||'0', 10);
+      if(_extCached && (Date.now()-_extCached) < 86400000){
+        window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+        autoRegistrar(user);
+        return;
+      }
+      const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+        const externos = snap.val()||{};
         const allowed = Object.values(externos).map(e=>e.email||e).includes(user.email);
         if(!allowed){
           document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
           window._signOut();
         } else {
-          // Email externo autorizado — prossegue como convidado
+          safeLS.setItem(_extCacheKey, String(Date.now()));
           window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
           autoRegistrar(user);
         }
       }).catch((err)=>{
-        console.error('[externos check] erro:', err);
+        console.error('[externos check] erro (tentativa '+tentativa+'):', err);
+        if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
         document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         window._signOut();
       });
+      _checkExternos(1);
       return; // aguarda verificação async
     }
     window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
