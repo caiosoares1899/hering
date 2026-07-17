@@ -1550,6 +1550,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <div style="font-size:11px;color:var(--txt3);">Saúde e crescimento dos dados no Firebase (estimativas do lado cliente)</div>
       </div>
       <button class="btn btn-sm" onclick="loadStatusData()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">🔄 Atualizar</button>
+      <button class="btn btn-sm" onclick="deslogarTodos()" style="color:var(--danger);border-color:rgba(255,107,107,.3);" title="Desloga todo mundo de todas as squads agora (util pra economizar Firebase a noite/fim de semana)">🚪 Deslogar todos</button>
     </div>
     <div style="font-size:10px;color:var(--txt3);background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.15);border-radius:8px;padding:8px 12px;margin-bottom:14px;line-height:1.5;">
       ⚠️ O Firebase não expõe a quota oficial (leituras/downloads/limite do plano) pelo navegador — esses números só existem no Console. Aqui mostramos <b>proxies mensuráveis</b>: peso dos dados, contagens, latência e presença. Servem para acompanhar o crescimento e detectar squads inflando o banco.
@@ -5283,6 +5284,20 @@ async function loadStatusData(){
         </div>
       </div>`;
     }).join('') + (campBytes? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-b);font-size:11px;color:var(--txt3);">📣 Campanhas: ${_fmtBytes(campBytes)}</div>`:'');
+  }
+}
+
+// Escreve um timestamp global que todo cliente conectado (kanban-dev.html/kanban.html)
+// escuta -- quem logou antes desse timestamp se desloga sozinho. Pensado pra economizar
+// consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
+async function deslogarTodos(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  if(!await uiConfirm('Deslogar TODOS os usuários de TODAS as squads agora? Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos'})) return;
+  try{
+    await window._set(window._ref(window._db,'kanban/global/force_logout_after'), Date.now());
+    showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
+  }catch(e){
+    uiAlert('Erro ao deslogar todos: '+e.message);
   }
 }
 
