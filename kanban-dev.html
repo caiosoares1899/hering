@@ -15735,27 +15735,25 @@ let _commentCardId = null;
 function loadComments(cardId){
   _commentCardId = cardId;
   const list = document.getElementById('m-comment-list'); if(!list) return;
-  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   // Update avatar
   const av = document.getElementById('m-comment-avatar');
   if(av && window._currentUser){
     if(window._currentUser.photoURL){
-      av.innerHTML='<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
+      av.innerHTML = '<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
     } else {
-      av.textContent=window._currentUserInit||'?';
+      av.textContent = window._currentUserInit||'?';
     }
   }
-  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/cards/'+cardId+'/comments').then(snap=>{
-    const val=snap.val()||{};
-    renderCommentList(Object.values(val).sort((a,b)=>a.ts.localeCompare(b.ts)));
-  }).catch(()=>{
-    fbGet(FB+'/cards').then(snap=>{
-      const cardsVal=snap.val()||[];
-      const c=Array.isArray(cardsVal)?cardsVal.find(x=>x&&x.id===cardId):Object.values(cardsVal).find(x=>x&&x.id===cardId);
-      const comments=c?.comments?Object.values(c.comments).sort((a,b)=>a.ts.localeCompare(b.ts)):[];
-      renderCommentList(comments);
-    }).catch(()=>renderCommentList([]));
-  });
+  // Le direto do array 'cards' ja carregado em memoria (via os listeners granulares de
+  // FB+'/cards') em vez de bater no Firebase de novo. Antes disso, TODA abertura de card
+  // fazia uma leitura em 'kanban/squads/{squad}/cards/{id}/comments' (caminho que nao
+  // existe mais nas regras de seguranca -> sempre da Permission denied) e, no catch,
+  // caia num fallback que baixava o node /cards INTEIRO so pra achar os comentarios de
+  // 1 card -- em squads com muitos cards isso multiplicava MUITO o consumo de download
+  // do Realtime Database (uma causa provavel do estouro de cota reportado pelo Caio).
+  const cardObj = cards.find(c=>c.id===cardId);
+  const comments = cardObj && cardObj.comments ? Object.values(cardObj.comments).sort((a,b)=>a.ts.localeCompare(b.ts)) : [];
+  renderCommentList(comments);
 }
 
 function renderCommentList(comments){
@@ -15859,7 +15857,11 @@ function submitComment(){
   if(cardObj){
     if(!cardObj.comments) cardObj.comments={};
     cardObj.comments[comment.id]=comment;
-    fbSaveAll();
+    // Antes usava fbSaveAll() (reescreve o array /cards INTEIRO no Firebase a cada
+    // comentario postado); trocado por fbSaveCard() (update incremental so desse
+    // card) pra bater com o mesmo padrao ja usado no resto do app e nao inflar o
+    // trafego de escrita/leitura em squads com muitos cards.
+    fbSaveCard(cardObj);
   }
   inp.value=''; inp.style.height='auto';
   eocResetComment();
