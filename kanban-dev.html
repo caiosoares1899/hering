@@ -7216,10 +7216,20 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
   }
-  if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
-  _stopDirtyWatch(); // já salvou tudo — não faz sentido avisar de "não salvo" ao fechar em seguida
-  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value); closeOv('card-ov');
-  _clearPendingRequired();
+  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll();
+  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, document.getElementById('m-col').value);
+  // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
+  // (ex.: instabilidade do SDK de auth já corrigida antes, ou queda de rede), o card fechava mesmo
+  // assim, dando a falsa impressão de que tinha salvo. Agora só fecha quando o Firebase confirma o
+  // sucesso; se der erro, mantém o card aberto e avisa a pessoa em vez de fechar às cegas.
+  Promise.resolve(_saveP).then(()=>{
+    _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
+    closeOv('card-ov');
+    _clearPendingRequired();
+  }).catch(err=>{
+    console.error('[saveCard] falha ao confirmar salvamento:', err);
+    showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
+  });
 }
 function toggleCardOKR(cardId){
   const card = cards.find(c=>c.id===cardId); if(!card) return;
