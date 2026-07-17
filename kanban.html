@@ -5953,6 +5953,10 @@ function _sortCards(arr, colId){
 
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
+  const _scrollBoardX=board.scrollLeft;
+  const _scrollColY={};
+  board.querySelectorAll('.col-body[id^="body-"], .col-body[id^="rbody-"]').forEach(elx=>{ _scrollColY[elx.id]=elx.scrollTop; });
+  const _scrollWinY=window.scrollY;
   // Snapshot diário: só agenda o timer se ainda não fez hoje (evita timers acumulados a cada render)
   if(cards.length>0 && !_snapshotDoneToday()) setTimeout(maybeSnapshot,2000);
   if(cards.length>0 && !_autoArchiveDoneToday()) setTimeout(maybeAutoArchiveOldCards,3000);
@@ -5971,6 +5975,9 @@ function renderBoard(){
   updateMetrics();
   // Garante a classe de modo correta após render (síncrono, sem timing frágil)
   if(!raiaMode) setViewMode(viewMode);
+  board.scrollLeft=_scrollBoardX;
+  Object.keys(_scrollColY).forEach(elId=>{ const elx=document.getElementById(elId); if(elx) elx.scrollTop=_scrollColY[elId]; });
+  if(_scrollWinY) window.scrollTo(0,_scrollWinY);
 }
 
 function renderNormal(board,activeCards){
@@ -6120,7 +6127,7 @@ function renderRaiaTag(board,activeCards){
           <span class="col-cnt">${colCards.length}</span>
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
         </div>
-      </div><div class="col-body"></div>`;
+      </div><div class="col-body" id="rbody-${tColId}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -6172,7 +6179,7 @@ function renderRaiaSubteam(board,activeCards){
           <span class="col-cnt">${colCards.length}</span>
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
         </div>
-      </div><div class="col-body"></div>`;
+      </div><div class="col-body" id="rbody-${sColId}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!sCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -14382,6 +14389,7 @@ function testAutoRule(){
 // Executa automações após mudanças no board
 function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
+  let _anyTriggered=false; // true se alguma regra mudou o card -- usado no final pra persistir no Firebase (antes so mudava em memoria e sumia no reload)
   activeRules.forEach(rule=>{
     const card=cards.find(c=>c.id===cardId); if(!card) return;
     let triggered=false;
@@ -14389,6 +14397,7 @@ function runAutoRules(eventType, cardId, extraVal){
     if(rule.trigger==='card_created' && eventType==='create') triggered=true;
     if(rule.trigger==='priority_set' && eventType==='priority' && card.priority==='critical') triggered=true;
     if(!triggered) return;
+    _anyTriggered=true;
     const td=new Date().toISOString().split('T')[0];
     const user='Automação';
     if(rule.action==='move_card'){ card.col=rule.actionVal; card.edited=user; card.editedAt=td; const _cn=columns.find(x=>x.id===rule.actionVal); recordHistory(card, 'moveu para '+(_cn?_cn.name:rule.actionVal), '⚙ Automação'); }
@@ -14411,6 +14420,15 @@ function runAutoRules(eventType, cardId, extraVal){
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }
     }
+  }
+
+  // Persiste as mudancas que as regras acima fizeram no card -- antes disso, runAutoRules()
+  // so mexia em memoria (card.col/priority/tags/owner) e a mudanca sumia no proximo reload
+  // porque nenhum fbSave* era chamado depois da automacao rodar.
+  if(_anyTriggered){
+    const _autoCard=cards.find(c=>c.id===cardId);
+    if(_autoCard){ fbSaveCard(_autoCard).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err)); }
+    renderBoard();
   }
 }
 // Carrega regras do Firebase com listener contínuo
@@ -15341,27 +15359,25 @@ let _commentCardId = null;
 function loadComments(cardId){
   _commentCardId = cardId;
   const list = document.getElementById('m-comment-list'); if(!list) return;
-  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   // Update avatar
   const av = document.getElementById('m-comment-avatar');
   if(av && window._currentUser){
     if(window._currentUser.photoURL){
-      av.innerHTML='<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
+      av.innerHTML = '<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
     } else {
-      av.textContent=window._currentUserInit||'?';
+      av.textContent = window._currentUserInit||'?';
     }
   }
-  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/cards/'+cardId+'/comments').then(snap=>{
-    const val=snap.val()||{};
-    renderCommentList(Object.values(val).sort((a,b)=>a.ts.localeCompare(b.ts)));
-  }).catch(()=>{
-    fbGet(FB+'/cards').then(snap=>{
-      const cardsVal=snap.val()||[];
-      const c=Array.isArray(cardsVal)?cardsVal.find(x=>x&&x.id===cardId):Object.values(cardsVal).find(x=>x&&x.id===cardId);
-      const comments=c?.comments?Object.values(c.comments).sort((a,b)=>a.ts.localeCompare(b.ts)):[];
-      renderCommentList(comments);
-    }).catch(()=>renderCommentList([]));
-  });
+  // Le direto do array 'cards' ja carregado em memoria (via os listeners granulares de
+  // FB+'/cards') em vez de bater no Firebase de novo. Antes disso, TODA abertura de card
+  // fazia uma leitura em 'kanban/squads/{squad}/cards/{id}/comments' (caminho que nao
+  // existe mais nas regras de seguranca -> sempre da Permission denied) e, no catch,
+  // caia num fallback que baixava o node /cards INTEIRO so pra achar os comentarios de
+  // 1 card -- em squads com muitos cards isso multiplicava MUITO o consumo de download
+  // do Realtime Database (causa confirmada do estouro de cota reportado pelo Caio).
+  const cardObj = cards.find(c=>c.id===cardId);
+  const comments = cardObj && cardObj.comments ? Object.values(cardObj.comments).sort((a,b)=>a.ts.localeCompare(b.ts)) : [];
+  renderCommentList(comments);
 }
 
 function renderCommentList(comments){
@@ -15456,7 +15472,11 @@ function submitComment(){
   if(cardObj){
     if(!cardObj.comments) cardObj.comments={};
     cardObj.comments[comment.id]=comment;
-    fbSaveAll();
+    // Antes usava fbSaveAll() (reescreve o array /cards INTEIRO no Firebase a cada
+    // comentario postado); trocado por fbSaveCard() (update incremental so desse
+    // card) pra bater com o mesmo padrao ja usado no resto do app e nao inflar o
+    // trafego de escrita/leitura em squads com muitos cards.
+    fbSaveCard(cardObj);
   }
   inp.value=''; inp.style.height='auto';
   eocResetComment();
