@@ -140,10 +140,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
 .app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
-.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:2;}
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:20;}
 .hd-l{display:flex;align-items:center;gap:8px;}
 .hd-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+.squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
+.squad-switcher-caret{cursor:pointer;font-size:9px;color:var(--txt3);user-select:none;}
+.squad-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;background:rgb(10,26,44);border:1px solid var(--accent,#38b6ff);border-radius:10px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column;gap:2px;}
+.squad-switcher-dd.open{display:flex;}
+.squad-switcher-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--txt);text-decoration:none;white-space:nowrap;}
+.squad-switcher-item:hover{background:rgba(56,182,255,.1);}
+.squad-switcher-item.active{background:rgba(56,182,255,.15);font-weight:700;cursor:default;pointer-events:none;}
+.squad-switcher-tag{font-size:10px;color:var(--txt3);font-weight:400;margin-left:auto;}
+.squad-switcher-msg{padding:10px;font-size:12px;color:var(--txt2);}
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{background:var(--glass-h);border-color:var(--accent);}
@@ -2193,7 +2202,11 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="hd">
   <div class="hd-l">
     <div class="hd-title">🐟 Maré Digital</div>
-    <span class="hd-badge" id="sprint-badge">Carregando...</span>
+    <span class="squad-switcher-wrap">
+      <span class="hd-badge" id="sprint-badge" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad">Carregando...</span>
+      <span class="squad-switcher-caret" onclick="toggleSquadSwitcher(event)">▾</span>
+      <div id="squad-switcher-dd" class="squad-switcher-dd"></div>
+    </span>
 
   </div>
   <div class="hd-btns">
@@ -3236,7 +3249,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="panel ql-panel">
   <div class="panel-hd">
     <div class="panel-title" id="ql-title">Lista</div>
-    <button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
+    <button class="btn btn-sm" onclick="voltarParaFuncoesCard('ql-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
   </div>
   <div class="ql-filter-bar" id="ql-filter-bar">
     <input id="ql-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderQLBody()">
@@ -3952,17 +3965,23 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
-  <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
+  <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="btn btn-sm" onclick="voltarParaFuncoesCard('arch-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
   <div class="ql-filter-bar">
     <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
     <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
+    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">Criado há mais de <input type="number" id="arch-f-days" min="0" placeholder="0" style="width:56px;" class="ql-filter-inp" onchange="openArquivados()"> dias</label>
   </div>
   <div id="arch-purge-bar" style="display:none;padding:8px 14px;background:rgba(255,107,107,.06);border-bottom:1px solid rgba(255,107,107,.15);align-items:center;gap:8px;flex-wrap:wrap;">
     <span style="font-size:10.5px;color:var(--danger);">🗑 Excluir definitivamente arquivados há mais de</span>
     <input type="number" id="arch-purge-years" value="2" min="1" step="0.5" style="width:54px;" class="ql-filter-inp">
     <span style="font-size:10.5px;color:var(--danger);">ano(s)</span>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="purgeOldArchived()">Excluir</button>
+  </div>
+  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn btn-sm" onclick="_archSelectAll(true)">☑ Todos</button>
+    <button class="btn btn-sm" onclick="_archSelectAll(false)">☐ Nenhum</button>
+    <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedArchived()">🗑 Excluir selecionados</button>
   </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;" id="arch-body"></div>
 </div>
@@ -3975,6 +3994,8 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="panel-title">🧹 Cards antigos</div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
+      <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button>
       <button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
     </div>
   </div>
@@ -4263,10 +4284,41 @@ function applySquadIdentity() {
   if (loginSub) loginSub.textContent = 'Digital Hering · ' + subtitle;
 }
 document.addEventListener('DOMContentLoaded', applySquadIdentity);
+// Menu suspenso pra trocar de squad direto pelo nome do badge no header —
+// lista os squads em que a pessoa esta inscrita (kanban/usuarios/{uid}/squads)
+// e navega pra ?squad={id} ao clicar. Busca os squads_meta na hora do clique
+// (nao so no login) pra ja incluir squads criados pelo painel recentemente.
+function toggleSquadSwitcher(e){
+  e.stopPropagation();
+  const dd = document.getElementById('squad-switcher-dd');
+  if(!dd) return;
+  if(dd.classList.contains('open')){ dd.classList.remove('open'); return; }
+  // Simplificado a pedido do Caio: sem checagem de permissão/inscrição por usuário
+  // (isso causava squads sumirem do menu) — lista só os nomes de todos os squads
+  // conhecidos (SQUAD_META_LIVE), igual à tela inicial de seleção.
+  const render = () => {
+    dd.innerHTML = Object.keys(SQUAD_META_LIVE).map(id=>{
+      const meta = SQUAD_META_LIVE[id];
+      const isActive = id === ACTIVE_SQUAD;
+      return '<a href="'+window.location.pathname+'?squad='+encodeURIComponent(id)+'" class="squad-switcher-item'+(isActive?' active':'')+'">'
+        + esc(meta.label)
+        + (isActive ? ' <span class="squad-switcher-tag">atual</span>' : '')
+        + '</a>';
+    }).join('');
+  };
+  render();
+  dd.classList.add('open');
+  loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
+});
+
 // Fecha qualquer picker de reação ao clicar fora
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('.cmt-react')){ document.querySelectorAll('.rx-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
+  if(!e.target.closest('.squad-switcher-wrap')){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
 });
 // ── FIM SQUAD ────────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
@@ -5581,11 +5633,19 @@ function boasVindasOpenHelp(){
 
 function showSquadSelectorFiltered(squadIds) {
   document.getElementById('login-ov').style.display = 'none';
-  // Carrega squads do Firebase antes de renderizar (inclui novos boards)
+  // Fix: antes o grid só renderizava DEPOIS do Firebase responder (kanban/squads_meta),
+  // então NENHUM card aparecia até essa leitura terminar — o que fazia os squads criados
+  // pelo painel (squads_meta, ex.: app e outlet) parecerem sempre mais lentos, já que os
+  // squads nativos (dados/prf/midiacriativa) já estão disponíveis localmente sem precisar
+  // de rede. Agora: renderiza na hora com o que já tem (squads nativos aparecem
+  // instantaneamente) e re-renderiza assim que o Firebase responder, incluindo os squads
+  // do painel — que agora só demoram o tempo real da leitura (bem rápido), em vez de
+  // segurar a tela toda esperando.
+  if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
+  const sel = document.getElementById('squad-selector');
+  if (sel) sel.classList.add('active');
   loadSquadsFromFirebase(() => {
     if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
-    const sel = document.getElementById('squad-selector');
-    if (sel) sel.classList.add('active');
   });
 }
 
@@ -6782,6 +6842,8 @@ function openCard(id){
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
+  // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
+  const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
@@ -9811,16 +9873,30 @@ function openArquivados(){
   if(qNome) archived=archived.filter(c=>(c.title||'').toLowerCase().includes(qNome));
   if(qTag) archived=archived.filter(c=>getCardTags(c).includes(qTag));
   if(qOwner) archived=archived.filter(c=>c.owner===qOwner);
-  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner)?' com esse filtro.':'.')+'</div>'; }
+  const qDays=parseInt(document.getElementById('arch-f-days')?.value||'0');
+  if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
+  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
     const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
   document.getElementById('arch-ov').classList.add('open');
 }
 function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveAll(); renderBoard(); openArquivados(); }
+function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
+async function deleteSelectedArchived(){
+  const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
+  const idSet=new Set(ids);
+  cards=cards.filter(c=>!idSet.has(c.id));
+  fbSaveAll();
+  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  openArquivados();
+}
+
 
 // ── LIMPEZA DE CARDS ANTIGOS (arquivamento em massa por idade) ──────
 function _cardAgeDays(c){
@@ -9868,6 +9944,17 @@ function renderCleanupList(){
   }).join('');
 }
 function _cleanupSelectAll(v){ document.querySelectorAll('.cleanup-chk').forEach(cb=>cb.checked=v); }
+async function deleteSelectedOldCards(){
+  const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
+  const idSet=new Set(ids);
+  cards=cards.filter(c=>!idSet.has(c.id));
+  fbSaveAll(); renderBoard();
+  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  renderCleanupList();
+}
+
 async function bulkArchiveOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
@@ -14982,6 +15069,10 @@ function closeOv(id, afterClose){
   _finishCloseOv(id);
   if(afterClose) afterClose();
 }
+function voltarParaFuncoesCard(modalId){
+  closeOv(modalId, () => { document.getElementById('card-fn-ov')?.classList.add('open'); });
+}
+
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
