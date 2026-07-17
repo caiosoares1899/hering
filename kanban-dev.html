@@ -4081,27 +4081,29 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <!-- CARDS ANTIGOS (limpeza em massa por idade) -->
 <div class="ov" id="cleanup-ov">
-<div class="panel ql-panel">
-  <div class="panel-hd">
-    <div class="panel-title">🧹 Cards antigos</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
-      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
-      <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
-    </div>
+<div class="panel-hd">
+  <div class="panel-title">🧹 Cards antigos</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
   </div>
-  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
-    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
-      Ativos há mais de
-      <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
-      dias
-    </label>
-    <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
-    <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
-    <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
-    <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
-  </div>
-  <div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
+</div>
+<div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+  <input id="cleanup-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderCleanupList()">
+  <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+    Ativos há mais de
+    <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
+    dias
+  </label>
+  <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
+  <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
+</div>
+<div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+  <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
+  <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
+  <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+  <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
+</div>
+<div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
   <div style="padding:8px 14px 12px;display:flex;flex-direction:column;gap:7px;" id="cleanup-body"></div>
 </div>
 </div>
@@ -10207,10 +10209,12 @@ function openCleanupOld(){
 function renderCleanupList(){
   const days=parseInt(document.getElementById('cleanup-days')?.value||'365');
   const qCol=document.getElementById('cleanup-col')?.value||'';
+  const qNome=(document.getElementById('cleanup-f-nome')?.value||'').toLowerCase().trim();
   const body=document.getElementById('cleanup-body'); if(!body) return;
   const old=cards.filter(c=>{
     if(c.archived) return false;
     if(qCol && c.col!==qCol) return false;
+    if(qNome && !(c.title||'').toLowerCase().includes(qNome)) return false;
     const age=_cardAgeDays(c);
     return age!==null && age>=days;
   }).sort((a,b)=>_cardAgeDays(b)-_cardAgeDays(a));
