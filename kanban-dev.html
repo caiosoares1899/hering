@@ -6971,6 +6971,8 @@ function openCard(id){
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
+  // Sempre abre do topo — sem isso, o modal mantinha o scroll do card anterior (às vezes abria lá embaixo, perto do menu de Modelo/Duplicar)
+  const _cardPanel=document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
