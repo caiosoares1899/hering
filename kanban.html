@@ -4097,7 +4097,14 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   }
   if(insc) window._pendingInsc=true; 
 });
-window._signOut=()=>signOut(auth);
+window._signOut=(reason)=>{
+  try{
+    const info={reason:reason||'desconhecido', ts:Date.now(), tsStr:new Date().toISOString()};
+    console.warn('[Mare] Logout disparado. Motivo:', info.reason, info);
+    safeLS.setItem('last_logout_reason', JSON.stringify(info));
+  }catch(e){}
+  signOut(auth);
+};
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
 
@@ -4119,7 +4126,7 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   }
   return credential;
 });
-window.doSignOut = () => window._signOut();
+window.doSignOut = () => window._signOut('manual');
 
 onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
@@ -5556,7 +5563,7 @@ function doSignIn(insc=false){
 }
 function doSignOut(){ 
   safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
-  if(window._signOut) window._signOut(); 
+  if(window._signOut) window._signOut('manual'); 
 }
 
 // ── Lógica de direcionamento pós-login ───────────────────────────────────
@@ -5676,7 +5683,7 @@ window.addEventListener('auth-change',e=>{
         if(!allowed){
           document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
-          window._signOut();
+          window._signOut('external_not_authorized');
         } else {
           safeLS.setItem(_extCacheKey, String(Date.now()));
           window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -5687,7 +5694,7 @@ window.addEventListener('auth-change',e=>{
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
         document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
-        window._signOut();
+        window._signOut('external_whitelist_check_error');
       });
       _checkExternos(1);
       return; // aguarda verificação async
@@ -15261,22 +15268,35 @@ _onFbReady(()=>{
   // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
   // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
   const IDLE_LOGOUT_MS = 2*60*60*1000; // 2 horas sem interacao
-  window._lastActivityTs = window._lastActivityTs || Date.now();
+  const IDLE_STORAGE_KEY = 'mare_last_activity_ts';
+  // Atividade e compartilhada entre abas via localStorage: a sessao do Firebase Auth e
+  // unica por navegador (nao por aba) -- se a pessoa estiver ativa em OUTRA aba/squad,
+  // essa aba parada aqui nao pode deslogar todo mundo sozinha (bug real encontrado em
+  // 18/07: sessao caiu com poucos minutos de uso porque outra aba esquecida bateu 2h).
+  function _markActivity(){
+    const now = Date.now();
+    window._lastActivityTs = now;
+    try{ safeLS.setItem(IDLE_STORAGE_KEY, String(now)); }catch(e){}
+  }
+  const _storedActivityInit = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
+  window._lastActivityTs = Math.max(window._lastActivityTs||0, _storedActivityInit) || Date.now();
   if(!window._idleListenersAttached){
     window._idleListenersAttached = true;
     ['mousemove','mousedown','keydown','scroll','touchstart'].forEach(evt=>{
-      window.addEventListener(evt, ()=>{ window._lastActivityTs = Date.now(); }, {passive:true});
+      window.addEventListener(evt, _markActivity, {passive:true});
     });
   }
   const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
   clearInterval(window._idleCheckInterval);
   window._idleCheckInterval = setInterval(()=>{
-    if(Date.now() - window._lastActivityTs > IDLE_LOGOUT_MS){ window._signOut(); }
+    const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
+    const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
+    if(Date.now() - _lastActivity > IDLE_LOGOUT_MS){ window._signOut('idle_timeout_2h'); }
   }, 60000);
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
   window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after'), snap=>{
     const forceAfter = snap.val();
-    if(forceAfter && _sessionStartMs < forceAfter){ window._signOut(); }
+    if(forceAfter && _sessionStartMs < forceAfter){ window._signOut('admin_force_logout'); }
   });
 
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
