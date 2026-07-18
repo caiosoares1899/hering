@@ -4273,9 +4273,9 @@ function _logAccess(user, role){
     }).catch(()=>{});
   }
 }
-function getEffectiveRole(user, dbRole){
+function getEffectiveRole(user, squadRole, legacyRole){
   if(isAdmUser(user)) return 'adm';
-  return dbRole||'membro';
+  return squadRole || legacyRole || 'membro';
 }
 // ── FIM ADMs ─────────────────────────────────────────────────────
 
@@ -5548,7 +5548,7 @@ function openTeamList(){
         return oa-ob || String(a[1].nome||'').localeCompare(String(b[1].nome||''));
       });
       list.innerHTML=entries.map(([uid,u])=>{
-        const role=u.role||'membro';
+        const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
         const on=onlineUids.has(uid);
         const av=safeUrl(u.foto)?`<img src="${safeUrl(u.foto)}" style="width:100%;height:100%;object-fit:cover;">`:esc((u.init||'?').substring(0,2));
         // Subtimes a que a pessoa pertence (por iniciais)
@@ -5842,11 +5842,15 @@ function autoRegistrar(user){
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
+      // Grava também squads_roles/{squad} explicitamente (não só o role global) --
+      // assim, quando essa pessoa entrar em outro squad depois, o papel dela lá
+      // não fica preso a este primeiro valor: cada squad novo nasce isolado.
+      const newSquadsRoles={}; newSquadsRoles[ACTIVE_SQUAD]=newRole;
       fbSet('kanban/usuarios/'+user.uid,{
         uid:user.uid, nome:user.displayName||'', email:user.email,
         init, foto:user.photoURL||'', role:newRole,
         inscrito:true, inscritoEm:new Date().toISOString(),
-        squads:newSquads, criadoEm:new Date().toISOString()
+        squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
       });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
@@ -5857,7 +5861,7 @@ function autoRegistrar(user){
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
-      window._currentUserRole=getEffectiveRole(user, existe.role);
+      window._currentUserRole=getEffectiveRole(user, existe.squads_roles&&existe.squads_roles[ACTIVE_SQUAD], existe.role);
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       _logAccess(user, window._currentUserRole);
       setTimeout(_updateGcalPendingBadge, 1500);
@@ -11009,16 +11013,16 @@ function renderUsuarios(){
       const roleTextColors={membro:'var(--accent)',organizador:'var(--warn)',po:'var(--teal)'};
       const roleBorderColors={membro:'rgba(56,182,255,.3)',organizador:'rgba(255,209,102,.3)',po:'rgba(29,233,182,.3)'};
       const roleLabels={membro:'Membro',organizador:'Organizador',po:'PO'};
-      const role=u.role||'membro';
+      const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
       // ⚠ Detecta colisão de iniciais com outro membro do squad
       const dupInit = entries.some(([uid2,u2])=>uid2!==uid && (u2.init||'').toUpperCase()===(u.init||'').toUpperCase() && u.init);
       const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial('${uid}','${esc(u.init||'')}','${esc((u.nome||u.email||'').replace(/'/g,''))}')" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
       row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
 <select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
-        <option value="membro"${(u.role||'membro')==='membro'?' selected':''}>Membro</option>
-        <option value="organizador"${u.role==='organizador'?' selected':''}>Organizador</option>
-        <option value="po"${u.role==='po'?' selected':''}>PO</option>
+        <option value="membro"${role==='membro'?' selected':''}>Membro</option>
+        <option value="organizador"${role==='organizador'?' selected':''}>Organizador</option>
+        <option value="po"${role==='po'?' selected':''}>PO</option>
       </select>`;
       list.appendChild(row);
     });
@@ -11067,9 +11071,13 @@ async function executarReatribuir(){
   showToast('✅ '+alvos.length+' card(s) reatribuídos de '+from+' para '+to+'.');
 }
 function alterarRole(uid,role){
+  // Só grava o papel PARA ESTE QUADRO (squads_roles/{ACTIVE_SQUAD}) -- NÃO mexe mais
+  // no campo global 'role'. Antes esta função sobrescrevia o role global toda vez,
+  // o que vazava o papel de um quadro pra todos os outros quadros da pessoa (ex.:
+  // promover alguém a Organizador na Mídia Criativa fazia ela aparecer como
+  // Organizador na Outlet também, mesmo sem ninguém ter escolhido isso lá).
   const update = {};
   update['squads_roles/'+ACTIVE_SQUAD] = role;
-  update['role'] = role;
   fbUpdate('kanban/usuarios/'+uid, update);
   if(window._currentUser?.uid===uid) window._currentUserRole=role;
 }
@@ -16815,10 +16823,11 @@ async function convidarMembro(){
       upd['init'] = uniq;
       avisoInit = ' (iniciais ajustadas de '+desired+' para '+uniq+' para evitar conflito)';
     }
-    // If no role set for this squad, default to membro
+    // Squad novo pra essa pessoa sempre nasce como Membro -- nunca herda o papel
+    // que ela tem em outro squad (nem grava mais no role global, só no escopo
+    // deste squad, seguindo o mesmo princípio do fix do alterarRole()).
     if(!u.squads_roles?.[ACTIVE_SQUAD]){
       upd['squads_roles/'+ACTIVE_SQUAD] = 'membro';
-      upd['role'] = u.role||'membro';
     }
     fbUpdate('kanban/usuarios/'+uid, upd);
     showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!'+avisoInit);
