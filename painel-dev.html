@@ -5292,9 +5292,9 @@ async function loadStatusData(){
 // consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
 async function deslogarTodos(){
   if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
-  if(!await uiConfirm('Deslogar TODOS os usuários de TODAS as squads agora? Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos'})) return;
+  if(!await uiConfirm('[AMBIENTE DE TESTES] Deslogar TODOS os usuários de TODAS as squads DO DEV agora? Isso NÃO afeta o kanban.html de produção. Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos (dev)'})) return;
   try{
-    await window._set(window._ref(window._db,'kanban/global/force_logout_after'), Date.now());
+    await window._set(window._ref(window._db,'kanban/global/force_logout_after_dev'), Date.now());
     showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
   }catch(e){
     uiAlert('Erro ao deslogar todos: '+e.message);
