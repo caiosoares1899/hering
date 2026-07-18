@@ -3990,27 +3990,29 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CARDS ANTIGOS (limpeza em massa por idade) -->
 <div class="ov" id="cleanup-ov">
 <div class="panel ql-panel">
-  <div class="panel-hd">
-    <div class="panel-title">🧹 Cards antigos</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
-      <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
-      <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button>
-      <button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
-    </div>
+<div class="panel-hd">
+  <div class="panel-title">🧹 Cards antigos</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
   </div>
-  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
-    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
-      Ativos há mais de
-      <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
-      dias
-    </label>
-    <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
-    <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
-    <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
-    <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
-  </div>
-  <div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
+</div>
+<div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+  <input id="cleanup-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderCleanupList()">
+  <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+    Ativos há mais de
+    <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
+    dias
+  </label>
+  <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
+  <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
+</div>
+<div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+  <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
+  <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
+  <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+  <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
+</div>
+<div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
   <div style="padding:8px 14px 12px;display:flex;flex-direction:column;gap:7px;" id="cleanup-body"></div>
 </div>
 </div>
@@ -9920,10 +9922,12 @@ function openCleanupOld(){
 function renderCleanupList(){
   const days=parseInt(document.getElementById('cleanup-days')?.value||'365');
   const qCol=document.getElementById('cleanup-col')?.value||'';
+  const qNome=(document.getElementById('cleanup-f-nome')?.value||'').toLowerCase().trim();
   const body=document.getElementById('cleanup-body'); if(!body) return;
   const old=cards.filter(c=>{
     if(c.archived) return false;
     if(qCol && c.col!==qCol) return false;
+    if(qNome && !(c.title||'').toLowerCase().includes(qNome)) return false;
     const age=_cardAgeDays(c);
     return age!==null && age>=days;
   }).sort((a,b)=>_cardAgeDays(b)-_cardAgeDays(a));
@@ -15227,18 +15231,51 @@ _onFbReady(()=>{
       }
     });
   }
-  // Listener de presença — renderiza lista de online
-  // Guarda referência do unsubscribe para evitar listeners duplicados
-  if(window._presenceUnsub) window._presenceUnsub();
-  window._presenceUnsub = window._onValue(
-    window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),
-    snap=>{
-      const val=snap.val()||{};
-      const now=Date.now();
-      const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
-      renderOnline(online);
-    }
-  );
+  // Listener de presenca -- usa child_added/child_changed/child_removed em vez de onValue
+  // no node inteiro. onValue reenviava TODOS os usuarios online pra CADA client
+  // conectado a cada heartbeat de QUALQUER pessoa (a cada 15s por usuario online) --
+  // com o time inteiro com aba aberta, isso multiplicava bastante o consumo de
+  // download do Realtime Database. Os listeners granulares so baixam o usuario que
+  // de fato mudou (heartbeat/entrada/saida), nao o objeto inteiro a cada evento.
+  if(window._presenceUnsubs) window._presenceUnsubs.forEach(fn=>fn && fn());
+  window._presenceByUid = window._presenceByUid || {};
+  function _renderPresenceFromMap(){
+    const now=Date.now();
+    const online=Object.values(window._presenceByUid).filter(u=>now-u.ts<30000); // 30s timeout
+    renderOnline(online);
+  }
+  const _presenceRef = window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence');
+  const _pAdd = window._onChildAdded(_presenceRef, snap=>{ window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
+  const _pChg = window._onChildChanged(_presenceRef, snap=>{ window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
+  const _pRem = window._onChildRemoved(_presenceRef, snap=>{ delete window._presenceByUid[snap.key]; _renderPresenceFromMap(); });
+  window._presenceUnsubs=[_pAdd,_pChg,_pRem];
+  clearInterval(window._presenceSweep);
+  window._presenceSweep = setInterval(_renderPresenceFromMap, 20000); // reavalia o timeout localmente sem leitura nova, cobre quem desconectou sem heartbeat
+
+  // Deslogar todos (manual, via painel) + logout automatico por inatividade --
+  // reduz consumo de download do Firebase de abas deixadas abertas a noite/fim de
+  // semana. (1) um admin escreve em kanban/global/force_logout_after pelo painel,
+  // e todo cliente com sessao anterior a esse timestamp se desloga sozinho; (2)
+  // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
+  // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
+  const IDLE_LOGOUT_MS = 2*60*60*1000; // 2 horas sem interacao
+  window._lastActivityTs = window._lastActivityTs || Date.now();
+  if(!window._idleListenersAttached){
+    window._idleListenersAttached = true;
+    ['mousemove','mousedown','keydown','scroll','touchstart'].forEach(evt=>{
+      window.addEventListener(evt, ()=>{ window._lastActivityTs = Date.now(); }, {passive:true});
+    });
+  }
+  const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
+  clearInterval(window._idleCheckInterval);
+  window._idleCheckInterval = setInterval(()=>{
+    if(Date.now() - window._lastActivityTs > IDLE_LOGOUT_MS){ window._signOut(); }
+  }, 60000);
+  if(window._forceLogoutUnsub) window._forceLogoutUnsub();
+  window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after'), snap=>{
+    const forceAfter = snap.val();
+    if(forceAfter && _sessionStartMs < forceAfter){ window._signOut(); }
+  });
 
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
   clearInterval(window._heartbeat);
