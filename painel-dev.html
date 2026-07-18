@@ -6704,6 +6704,10 @@ function toggleKudospReaction(id, emoji){
 
 let _globalUsersCache = {}; // { uid: userObj }
 const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
+// Papéis atribuíveis POR SQUAD (mesmas 3 opções do dropdown de papel dentro do
+// próprio board) -- não inclui 'adm' (vem só da whitelist ADM_EMAILS) nem
+// 'convidado' (definido automaticamente pelo domínio do email).
+const SQUAD_ROLES = ['membro','organizador','po'];
 
 function openGlobalUsersModal(){
   document.getElementById('global-users-ov').classList.add('open');
@@ -6792,26 +6796,27 @@ function renderGlobalUsers(){
 
       chip.appendChild(cb);
       chip.appendChild(lbl);
+
+      // Papel DESTA pessoa NESTE squad especificamente -- squads_roles/{squadId}.
+      // Cada squad guarda seu próprio papel, então promover alguém aqui não
+      // afeta o papel dela em nenhum outro squad (mesma lógica usada no board).
+      if(inSquad){
+        const roleSel = document.createElement('select');
+        roleSel.style.cssText = 'padding:1px 4px;font-size:9px;border:1px solid var(--glass-b);border-radius:5px;background:rgba(3,13,26,.9);color:var(--txt);cursor:pointer;margin-left:2px;';
+        roleSel.onclick = (e)=>e.stopPropagation();
+        const squadRole = (u.squads_roles && u.squads_roles[sq.id]) || u.role || 'membro';
+        SQUAD_ROLES.forEach(r=>{
+          const opt = document.createElement('option');
+          opt.value = r; opt.textContent = r;
+          if(squadRole===r) opt.selected = true;
+          roleSel.appendChild(opt);
+        });
+        roleSel.onchange = (e)=>{ e.stopPropagation(); updateSquadUserRole(uid, sq.id, roleSel.value); };
+        chip.appendChild(roleSel);
+      }
+
       squadsWrap.appendChild(chip);
     });
-
-    // Role select (global) — aplica a 'role' raiz do usuário
-    const roleWrap = document.createElement('div');
-    roleWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
-    const roleLbl = document.createElement('span');
-    roleLbl.style.cssText = 'font-size:9px;color:var(--txt3);';
-    roleLbl.textContent = 'Role:';
-    const roleSel = document.createElement('select');
-    roleSel.style.cssText = 'padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;';
-    GLOBAL_ROLES.forEach(r=>{
-      const opt = document.createElement('option');
-      opt.value = r; opt.textContent = r;
-      if((u.role||'membro')===r) opt.selected = true;
-      roleSel.appendChild(opt);
-    });
-    roleSel.onchange = ()=>updateGlobalUserRole(uid, roleSel.value);
-    roleWrap.appendChild(roleLbl);
-    roleWrap.appendChild(roleSel);
 
     // Botão excluir (remove o usuário inteiro de kanban/usuarios)
     const delBtn = document.createElement('button');
@@ -6823,7 +6828,6 @@ function renderGlobalUsers(){
     row.appendChild(av);
     row.appendChild(info);
     row.appendChild(squadsWrap);
-    row.appendChild(roleWrap);
     row.appendChild(delBtn);
     list.appendChild(row);
   });
@@ -6832,11 +6836,15 @@ function renderGlobalUsers(){
 function toggleUserSquad(uid, squadId, checked){
   const upd = {};
   upd['squads/'+squadId] = checked ? true : null;
-  // Se desmarcando, também remove role específica do squad
-  if(!checked) upd['squads_roles/'+squadId] = null;
-  // Se marcando e não tem role global ainda, define como membro
   const u = _globalUsersCache[uid] || {};
-  if(checked && !u.role) upd['role'] = 'membro';
+  if(!checked){
+    // Se desmarcando, também remove o papel específico daquele squad
+    upd['squads_roles/'+squadId] = null;
+  } else if(!u.squads_roles || !u.squads_roles[squadId]){
+    // Squad novo pra essa pessoa sempre nasce como Membro -- nunca herda o
+    // papel que ela tem em outro squad (mesmo princípio usado no board).
+    upd['squads_roles/'+squadId] = 'membro';
+  }
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), upd)
     .then(()=>{
       showToast(checked ? '✅ Adicionado ao squad' : '✅ Removido do squad');
@@ -6844,9 +6852,11 @@ function toggleUserSquad(uid, squadId, checked){
     .catch(e=>showToast('❌ '+e.message));
 }
 
-function updateGlobalUserRole(uid, role){
-  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'), role)
-    .then(()=>showToast('✅ Role atualizado para '+role))
+function updateSquadUserRole(uid, squadId, role){
+  // Grava só o papel PARA ESTE SQUAD (squads_roles/{squadId}) -- nunca mexe no
+  // campo global 'role', pra não vazar o papel de um squad pra outros da pessoa.
+  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+squadId), role)
+    .then(()=>showToast('✅ Papel em '+squadId+' atualizado para '+role))
     .catch(e=>showToast('❌ '+e.message));
 }
 
