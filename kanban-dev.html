@@ -15561,17 +15561,30 @@ _onFbReady(()=>{
   // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
   // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
   const IDLE_LOGOUT_MS = 2*60*60*1000; // 2 horas sem interacao
-  window._lastActivityTs = window._lastActivityTs || Date.now();
+  const IDLE_STORAGE_KEY = 'mare_last_activity_ts';
+  // Atividade e compartilhada entre abas via localStorage: a sessao do Firebase Auth e
+  // unica por navegador (nao por aba) -- se a pessoa estiver ativa em OUTRA aba/squad,
+  // essa aba parada aqui nao pode deslogar todo mundo sozinha (bug real encontrado em
+  // 18/07: sessao caiu com poucos minutos de uso porque outra aba esquecida bateu 2h).
+  function _markActivity(){
+    const now = Date.now();
+    window._lastActivityTs = now;
+    try{ safeLS.setItem(IDLE_STORAGE_KEY, String(now)); }catch(e){}
+  }
+  const _storedActivityInit = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
+  window._lastActivityTs = Math.max(window._lastActivityTs||0, _storedActivityInit) || Date.now();
   if(!window._idleListenersAttached){
     window._idleListenersAttached = true;
     ['mousemove','mousedown','keydown','scroll','touchstart'].forEach(evt=>{
-      window.addEventListener(evt, ()=>{ window._lastActivityTs = Date.now(); }, {passive:true});
+      window.addEventListener(evt, _markActivity, {passive:true});
     });
   }
   const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
   clearInterval(window._idleCheckInterval);
   window._idleCheckInterval = setInterval(()=>{
-    if(Date.now() - window._lastActivityTs > IDLE_LOGOUT_MS){ window._signOut('idle_timeout_2h'); }
+    const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
+    const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
+    if(Date.now() - _lastActivity > IDLE_LOGOUT_MS){ window._signOut('idle_timeout_2h'); }
   }, 60000);
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
   window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after_dev'), snap=>{
