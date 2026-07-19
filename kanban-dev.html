@@ -15586,6 +15586,7 @@ _onFbReady(()=>{
       window.addEventListener(evt, _markActivity, {passive:true});
     });
   }
+  _markActivity();
   const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
   clearInterval(window._idleCheckInterval);
   window._idleCheckInterval = setInterval(()=>{
@@ -15593,6 +15594,45 @@ _onFbReady(()=>{
     const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
     if(Date.now() - _lastActivity > IDLE_LOGOUT_MS){ window._signOut('idle_timeout_2h'); }
   }, 60000);
+
+  // ── DEBUG (só dev): relógio visível de sessão + simulador de tempo parado ──
+  (function _setupIdleDebugClock(){
+    let elx = document.getElementById('idle-debug-clock');
+    if(!elx){
+      elx = document.createElement('div');
+      elx.id = 'idle-debug-clock';
+      elx.style.cssText = 'position:fixed;bottom:10px;left:10px;z-index:999999;background:#0b1622;border:1px solid rgba(120,180,255,.35);border-radius:8px;padding:8px 10px;font:11px/1.5 monospace;color:#9fd3ff;max-width:280px;box-shadow:0 4px 14px rgba(0,0,0,.45);';
+      document.body.appendChild(elx);
+    }
+    function _fmtMs(ms){
+      if(ms<0) ms=0;
+      const s = Math.floor(ms/1000);
+      const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = s%60;
+      return (h>0?h+'h ':'')+String(m).padStart(2,'0')+'m '+String(ss).padStart(2,'0')+'s';
+    }
+    clearInterval(window._idleDebugClockInterval);
+    window._idleDebugClockInterval = setInterval(()=>{
+      const storedNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0',10) || 0;
+      const lastAct = Math.max(window._lastActivityTs||0, storedNow);
+      const elapsed = Date.now() - lastAct;
+      const remaining = IDLE_LOGOUT_MS - elapsed;
+      let lastLogoutLine = '';
+      try{
+        const raw = safeLS.getItem('last_logout_reason');
+        if(raw){
+          const info = JSON.parse(raw);
+          lastLogoutLine = '<br>Último logout: '+info.reason+' às '+new Date(info.ts).toLocaleTimeString('pt-BR');
+        }
+      }catch(e){}
+      elx.innerHTML = '🧪 <b>Sessão (dev)</b><br>Ativo há: '+_fmtMs(elapsed)+'<br>Desloga em: '+_fmtMs(remaining)+lastLogoutLine;
+    }, 1000);
+  })();
+  window._debugSimularIdle = function(minutos){
+    const novoTs = Date.now() - minutos*60*1000;
+    window._lastActivityTs = novoTs;
+    try{ safeLS.setItem(IDLE_STORAGE_KEY, String(novoTs)); }catch(e){}
+    console.warn('[Mare][debug] Simulando '+minutos+' min parado. A checagem roda a cada 60s.');
+  };
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
   window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after_dev'), snap=>{
     const forceAfter = snap.val();
