@@ -15578,6 +15578,17 @@ _onFbReady(()=>{
     window._lastActivityTs = now;
     try{ safeLS.setItem(IDLE_STORAGE_KEY, String(now)); }catch(e){}
   }
+  // Nao desloga por inatividade se tiver um card aberto ou edicao em andamento
+  // (evita perder alteracoes de quem esta parado lendo/pensando com o card aberto).
+  function _hasActiveCardEditing(){
+    try{
+      if(document.getElementById('card-ov')?.classList.contains('open')) return true;
+      if(typeof _cardIsDirty === 'function' && _cardIsDirty()) return true;
+      const ae = document.activeElement;
+      if(ae && (ae.tagName==='TEXTAREA' || ae.tagName==='INPUT' || ae.isContentEditable)) return true;
+    }catch(e){}
+    return false;
+  }
   const _storedActivityInit = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
   window._lastActivityTs = Math.max(window._lastActivityTs||0, _storedActivityInit) || Date.now();
   if(!window._idleListenersAttached){
@@ -15592,7 +15603,10 @@ _onFbReady(()=>{
   window._idleCheckInterval = setInterval(()=>{
     const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
     const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
-    if(Date.now() - _lastActivity > IDLE_LOGOUT_MS){ window._signOut('idle_timeout_2h'); }
+    if(Date.now() - _lastActivity > IDLE_LOGOUT_MS){
+      if(_hasActiveCardEditing()){ _markActivity(); return; }
+      window._signOut('idle_timeout_2h');
+    }
   }, 60000);
 
   // ── DEBUG (só dev): relógio visível de sessão + simulador de tempo parado ──
