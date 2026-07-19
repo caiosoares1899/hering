@@ -6346,7 +6346,15 @@ function toggleRaia(){
 function toggleSortMenu(){
   const menu = document.getElementById('sort-menu');
   if(!menu) return;
-  menu.style.display = menu.style.display==='none' ? 'block' : 'none';
+  const willShow = menu.style.display==='none' || menu.style.display==='';
+  if(willShow){
+    const btn = document.getElementById('btn-sort');
+    const r = btn.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (r.bottom+6)+'px';
+    menu.style.left = r.left+'px';
+  }
+  menu.style.display = willShow ? 'block' : 'none';
 }
 function closeSortMenu(){
   const menu = document.getElementById('sort-menu');
