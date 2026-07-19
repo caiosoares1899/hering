@@ -1554,6 +1554,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       ⚠️ O Firebase não expõe a quota oficial (leituras/downloads/limite do plano) pelo navegador — esses números só existem no Console. Aqui mostramos <b>proxies mensuráveis</b>: peso dos dados, contagens, latência e presença. Servem para acompanhar o crescimento e detectar squads inflando o banco.
     </div>
 
+    <!-- Config de logout por inatividade -->
+    <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;margin-bottom:16px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;margin-bottom:8px;">😴 Logout automático por inatividade</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Controla quando o kanban desloga sozinho quem ficar parado sem mexer no quadro. Não afeta quem estiver com um card aberto ou editando algo.</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+          <input type="checkbox" id="cfg-idle-enabled" checked>
+          Ativado
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;">
+          Minutos até deslogar:
+          <input type="number" id="cfg-idle-minutos" value="180" min="5" style="width:70px;background:rgba(10,30,55,.7);border:1px solid var(--glass-b);border-radius:6px;color:var(--txt);padding:4px 8px;font-size:12px;">
+        </label>
+        <button class="btn btn-sm" onclick="salvarConfigInatividade()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">💾 Salvar</button>
+      </div>
+    </div>
+
     <!-- Cards de resumo -->
     <div class="status-grid" id="status-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;">
       <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
@@ -5213,7 +5230,38 @@ async function deslogarTodos(){
   }
 }
 
+async function carregarConfigInatividade(){
+  const elMin = document.getElementById('cfg-idle-minutos');
+  const elOn = document.getElementById('cfg-idle-enabled');
+  if(!elMin || !elOn) return;
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/global/idle_logout_config'));
+    const val = snap.val();
+    if(val && typeof val === 'object'){
+      elMin.value = Number(val.minutes) > 0 ? Number(val.minutes) : 180;
+      elOn.checked = val.enabled !== false;
+    } else {
+      elMin.value = 180;
+      elOn.checked = true;
+    }
+  }catch(e){ /* mantem os defaults do HTML se der erro (ex: regra ainda nao publicada) */ }
+}
+async function salvarConfigInatividade(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  const elMin = document.getElementById('cfg-idle-minutos');
+  const elOn = document.getElementById('cfg-idle-enabled');
+  const minutos = parseInt(elMin.value, 10);
+  if(!minutos || minutos < 5){ uiAlert('Coloque um número de minutos válido (mínimo 5).'); return; }
+  try{
+    await window._set(window._ref(window._db,'kanban/global/idle_logout_config'), { enabled: !!elOn.checked, minutes: minutos });
+    showToast('⚙️ Configuração salva.');
+  }catch(e){
+    uiAlert('Erro ao salvar: '+e.message);
+  }
+}
+
 async function loadStatusData(){
+  carregarConfigInatividade();
   const listEl = document.getElementById('st-squad-list');
   if(listEl) listEl.innerHTML='<div style="font-size:11px;color:var(--txt3);">Medindo dados de cada squad...</div>';
 
