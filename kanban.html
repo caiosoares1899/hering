@@ -15294,6 +15294,7 @@ _onFbReady(()=>{
       window.addEventListener(evt, _markActivity, {passive:true});
     });
   }
+  _markActivity();
   const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
   clearInterval(window._idleCheckInterval);
   window._idleCheckInterval = setInterval(()=>{
