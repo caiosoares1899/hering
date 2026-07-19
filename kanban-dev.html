@@ -15666,7 +15666,9 @@ _onFbReady(()=>{
       const storedNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0',10) || 0;
       const lastAct = Math.max(window._lastActivityTs||0, storedNow);
       const elapsed = Date.now() - lastAct;
-      const remaining = IDLE_LOGOUT_MS - elapsed;
+      const _cfgDbg = window._idleLogoutConfig || { enabled: true, minutes: 180 };
+      const _msLiveDbg = _cfgDbg.minutes * 60 * 1000;
+      const remaining = (_cfgDbg.enabled === false) ? null : (_msLiveDbg - elapsed);
       let lastLogoutLine = '';
       try{
         const raw = safeLS.getItem('last_logout_reason_dev');
@@ -15675,7 +15677,7 @@ _onFbReady(()=>{
           lastLogoutLine = '<br>Último logout: '+info.reason+' às '+new Date(info.ts).toLocaleTimeString('pt-BR');
         }
       }catch(e){}
-      elx.innerHTML = '🧪 <b>Sessão (dev)</b><br>Ativo há: '+_fmtMs(elapsed)+'<br>Desloga em: '+_fmtMs(remaining)+lastLogoutLine;
+      elx.innerHTML = '🧪 <b>Sessão (dev)</b><br>Ativo há: '+_fmtMs(elapsed)+'<br>Desloga em: '+(remaining===null?'desativado':_fmtMs(remaining))+' <small>(cfg: '+_cfgDbg.minutes+'min'+(_cfgDbg.enabled===false?' · OFF':'')+')</small>'+lastLogoutLine;
     }, 1000);
   })();
   window._debugSimularIdle = function(minutos){
