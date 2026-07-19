@@ -15689,7 +15689,7 @@ _onFbReady(()=>{
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
   window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after_dev'), snap=>{
     const forceAfter = snap.val();
-    if(forceAfter && _sessionStartMs < forceAfter){ window._signOut('admin_force_logout'); }
+    if(forceAfter && _sessionStartMs < forceAfter && (Date.now() - forceAfter) < 15*60*1000){ window._signOut('admin_force_logout'); }
   });
 
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
