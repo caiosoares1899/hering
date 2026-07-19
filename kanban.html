@@ -15275,7 +15275,18 @@ _onFbReady(()=>{
   // e todo cliente com sessao anterior a esse timestamp se desloga sozinho; (2)
   // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
   // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
-  const IDLE_LOGOUT_MS = 2*60*60*1000; // 2 horas sem interacao
+  const IDLE_LOGOUT_MS = 3*60*60*1000; // padrao 3h sem interacao (configuravel no painel > Status)
+  window._idleLogoutConfig = window._idleLogoutConfig || { enabled: true, minutes: 180 };
+  if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub();
+  window._idleLogoutConfigUnsub = window._onValue(window._ref(window._db,'kanban/global/idle_logout_config'), snap=>{
+    const val = snap.val();
+    if(val && typeof val === 'object'){
+      const mins = Number(val.minutes);
+      window._idleLogoutConfig = { enabled: val.enabled !== false, minutes: mins>0 ? mins : 180 };
+    } else {
+      window._idleLogoutConfig = { enabled: true, minutes: 180 };
+    }
+  });
   const IDLE_WARNING_LEAD_MS = 5*60*1000; // avisa 5 min antes de deslogar
   function _showIdleWarning(remainingMs){
     let el = document.getElementById('idle-warning-banner');
@@ -15329,12 +15340,15 @@ _onFbReady(()=>{
   window._idleCheckInterval = setInterval(()=>{
     const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
     const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
+    const _cfg = window._idleLogoutConfig || { enabled: true, minutes: 180 };
+    if(_cfg.enabled === false){ _hideIdleWarning(); return; }
+    const _idleLogoutMsLive = _cfg.minutes * 60 * 1000;
     const _elapsedIdle = Date.now() - _lastActivity;
-    if(_elapsedIdle > IDLE_LOGOUT_MS){
+    if(_elapsedIdle > _idleLogoutMsLive){
       if(_hasActiveCardEditing()){ _markActivity(); _hideIdleWarning(); return; }
       window._signOut('idle_timeout_2h');
-    } else if(_elapsedIdle > IDLE_LOGOUT_MS - IDLE_WARNING_LEAD_MS && !_hasActiveCardEditing()){
-      _showIdleWarning(IDLE_LOGOUT_MS - _elapsedIdle);
+    } else if(_elapsedIdle > _idleLogoutMsLive - IDLE_WARNING_LEAD_MS && !_hasActiveCardEditing()){
+      _showIdleWarning(_idleLogoutMsLive - _elapsedIdle);
     } else {
       _hideIdleWarning();
     }
