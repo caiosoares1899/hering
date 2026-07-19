@@ -4039,7 +4039,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.162</div>
+<div class="version">v8.30.163</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15356,7 +15356,7 @@ _onFbReady(()=>{
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
   window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after'), snap=>{
     const forceAfter = snap.val();
-    if(forceAfter && _sessionStartMs < forceAfter){ window._signOut('admin_force_logout'); }
+    if(forceAfter && _sessionStartMs < forceAfter && (Date.now() - forceAfter) < 15*60*1000){ window._signOut('admin_force_logout'); }
   });
 
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
