@@ -4193,7 +4193,7 @@ window._signOut=(reason)=>{
   try{
     const info={reason:reason||'desconhecido', ts:Date.now(), tsStr:new Date().toISOString()};
     console.warn('[Mare] Logout disparado. Motivo:', info.reason, info);
-    safeLS.setItem('last_logout_reason', JSON.stringify(info));
+    safeLS.setItem('last_logout_reason_dev', JSON.stringify(info));
   }catch(e){}
   signOut(auth);
 };
@@ -15568,7 +15568,7 @@ _onFbReady(()=>{
   // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
   // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
   const IDLE_LOGOUT_MS = 2*60*60*1000; // 2 horas sem interacao
-  const IDLE_STORAGE_KEY = 'mare_last_activity_ts';
+  const IDLE_STORAGE_KEY = 'mare_last_activity_ts_dev';
   // Atividade e compartilhada entre abas via localStorage: a sessao do Firebase Auth e
   // unica por navegador (nao por aba) -- se a pessoa estiver ativa em OUTRA aba/squad,
   // essa aba parada aqui nao pode deslogar todo mundo sozinha (bug real encontrado em
@@ -15618,7 +15618,7 @@ _onFbReady(()=>{
       const remaining = IDLE_LOGOUT_MS - elapsed;
       let lastLogoutLine = '';
       try{
-        const raw = safeLS.getItem('last_logout_reason');
+        const raw = safeLS.getItem('last_logout_reason_dev');
         if(raw){
           const info = JSON.parse(raw);
           lastLogoutLine = '<br>Último logout: '+info.reason+' às '+new Date(info.ts).toLocaleTimeString('pt-BR');
