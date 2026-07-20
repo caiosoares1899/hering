@@ -4039,7 +4039,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.164</div>
+<div class="version">v8.30.165</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4098,12 +4098,18 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   if(insc) window._pendingInsc=true; 
 });
 window._signOut=(reason)=>{
+  if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
+  window._signOutInProgress=true;
   try{
     const info={reason:reason||'desconhecido', ts:Date.now(), tsStr:new Date().toISOString()};
     console.warn('[Mare] Logout disparado. Motivo:', info.reason, info);
     safeLS.setItem('last_logout_reason', JSON.stringify(info));
   }catch(e){}
-  signOut(auth);
+  try{ clearInterval(window._idleCheckInterval); window._idleCheckInterval=null; }catch(e){}
+  try{ clearInterval(window._heartbeat); window._heartbeat=null; }catch(e){}
+  try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
+  try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
+  signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
 };
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
@@ -15276,6 +15282,7 @@ _onFbReady(()=>{
   // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
   // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
   const IDLE_LOGOUT_MS = 3*60*60*1000; // padrao 3h sem interacao (configuravel no painel > Status)
+  const IDLE_EDIT_GRACE_MS = 30*60*1000; // carencia maxima por card aberto/edicao em andamento -- nao e mais imunidade eterna (P1-4)
   window._idleLogoutConfig = window._idleLogoutConfig || { enabled: true, minutes: 180 };
   if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub();
   window._idleLogoutConfigUnsub = window._onValue(window._ref(window._db,'kanban/global/idle_logout_config'), snap=>{
@@ -15310,9 +15317,12 @@ _onFbReady(()=>{
   // unica por navegador (nao por aba) -- se a pessoa estiver ativa em OUTRA aba/squad,
   // essa aba parada aqui nao pode deslogar todo mundo sozinha (bug real encontrado em
   // 18/07: sessao caiu com poucos minutos de uso porque outra aba esquecida bateu 2h).
+  let _lastActivityWrite = 0;
   function _markActivity(){
     const now = Date.now();
     window._lastActivityTs = now;
+    if(now - _lastActivityWrite < 15000) return; // throttle: nao precisa escrever a cada mousemove
+    _lastActivityWrite = now;
     try{ safeLS.setItem(IDLE_STORAGE_KEY, String(now)); }catch(e){}
   }
   // Nao desloga por inatividade se tiver um card aberto ou edicao em andamento
@@ -15322,7 +15332,9 @@ _onFbReady(()=>{
       if(document.getElementById('card-ov')?.classList.contains('open')) return true;
       if(typeof _cardIsDirty === 'function' && _cardIsDirty()) return true;
       const ae = document.activeElement;
-      if(ae && (ae.tagName==='TEXTAREA' || ae.tagName==='INPUT' || ae.isContentEditable)) return true;
+      // so conta foco em campo se estiver DENTRO de um overlay de edicao aberto -- evita
+      // que um clique numa busca/filtro qualquer deixe a aba imune ao logout pra sempre
+      if(ae && (ae.tagName==='TEXTAREA' || ae.tagName==='INPUT' || ae.isContentEditable) && ae.closest('.ov.open, #card-ov.open')) return true;
     }catch(e){}
     return false;
   }
@@ -15335,9 +15347,12 @@ _onFbReady(()=>{
     });
   }
   _markActivity();
-  const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
+  function _computeSessionStart(u){ return Date.parse(u && u.metadata && u.metadata.lastSignInTime || 0) || Date.now(); }
+  let _sessionStartMs = _computeSessionStart(window._currentUser);
+  window.addEventListener('auth-change', e=>{ if(e.detail) _sessionStartMs = _computeSessionStart(e.detail); }); // recalcula quando o auth realmente resolver (P1-7: _onFbReady roda antes do onAuthStateChanged, entao o valor inicial quase sempre cai no fallback Date.now())
   clearInterval(window._idleCheckInterval);
   window._idleCheckInterval = setInterval(()=>{
+    if(!window._currentUser || window._signOutInProgress) return; // guard extra: nao roda mais depois do logout
     const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
     const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
     const _cfg = window._idleLogoutConfig || { enabled: true, minutes: 180 };
@@ -15345,8 +15360,15 @@ _onFbReady(()=>{
     const _idleLogoutMsLive = _cfg.minutes * 60 * 1000;
     const _elapsedIdle = Date.now() - _lastActivity;
     if(_elapsedIdle > _idleLogoutMsLive){
-      if(_hasActiveCardEditing()){ _markActivity(); _hideIdleWarning(); return; }
-      window._signOut('idle_timeout_2h');
+      if(_hasActiveCardEditing()){
+        if(!window._editingGraceStartTs) window._editingGraceStartTs = Date.now();
+        if(Date.now() - window._editingGraceStartTs < IDLE_EDIT_GRACE_MS){ _markActivity(); _hideIdleWarning(); return; }
+        // carencia de 30min esgotada: desloga mesmo com card aberto/editando, pra nao ficar imune pra sempre
+      } else {
+        window._editingGraceStartTs = null;
+      }
+      clearInterval(window._idleCheckInterval); window._idleCheckInterval=null;
+      window._signOut('idle_timeout');
     } else if(_elapsedIdle > _idleLogoutMsLive - IDLE_WARNING_LEAD_MS && !_hasActiveCardEditing()){
       _showIdleWarning(_idleLogoutMsLive - _elapsedIdle);
     } else {
