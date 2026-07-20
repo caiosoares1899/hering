@@ -4891,7 +4891,7 @@ function _dbgFlush(){
   const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
   const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
   const nodeKey=hourKey+'_'+uidShort;
-  const path='kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log/'+nodeKey;
+  const path=FB+'/_debug_bytes_log/'+nodeKey;
   // Mescla com o que já foi gravado nesta hora (várias flushes acumulam, não sobrescrevem)
   fbGet(path).then(snap=>{
     const prev=snap.val()||{ts:d.toISOString(),who,byPath:{}};
@@ -4908,12 +4908,12 @@ function _dbgFlush(){
   // Limpeza leve: 1x por sessão, remove buckets com mais de 7 dias
   if(!_dbg.cleaned){
     _dbg.cleaned=true;
-    fbGet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log').then(snap=>{
+    fbGet(FB+'/_debug_bytes_log').then(snap=>{
       const val=snap.val(); if(!val) return;
       const cutoff=Date.now()-7*86400000;
       Object.entries(val).forEach(([key,entry])=>{
         const t=entry?.ts?new Date(entry.ts).getTime():0;
-        if(t && t<cutoff) fbSet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log/'+key, null);
+        if(t && t<cutoff) fbSet(FB+'/_debug_bytes_log/'+key, null);
       });
     }).catch(()=>{});
   }
@@ -4940,7 +4940,7 @@ window.debugBytesReport=function(){
 };
 window.debugBytesRemote=function(hoursBack){
   hoursBack = hoursBack || 24;
-  return fbGet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log').then(snap=>{
+  return fbGet(FB+'/_debug_bytes_log').then(snap=>{
     const val=snap.val()||{};
     const cutoff=Date.now()-hoursBack*3600000;
     const agg={}; const byHour={};
@@ -4967,7 +4967,7 @@ window.debugBytesRemote=function(hoursBack){
   });
 };
 window.debugBytesClearRemote=function(){
-  return fbSet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log', null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+  return fbSet(FB+'/_debug_bytes_log', null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
 };
 // ═══════════════════════════════════════════════════════════════════
 
