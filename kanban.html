@@ -4043,7 +4043,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.165</div>
+<div class="version">v8.30.166</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4853,7 +4853,125 @@ function fbSet(path,val){
 }
 function fbGet(path){ return window._get(fb(path)); }
 function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); return window._update(fb(path),val); }
-function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
+// ═══════════════════════════════════════════════════════════════════
+// 🔬 DEBUG: medidor de bytes por listener (diagnóstico de download)
+// ───────────────────────────────────────────────────────────────────
+// SEMPRE LIGADO, pra todo mundo, automaticamente — sem precisar abrir
+// o console. Medir o tamanho do payload NÃO gera download extra (o
+// dado já chegou de qualquer forma); só o resumo que é escrito de
+// volta no Firebase a cada poucos minutos é que soma algo, e é
+// minúsculo (poucas dezenas de bytes por squad por hora). Assim dá
+// pra ver o consumo real de QUALQUER pessoa que abriu o board, não só
+// de quem lembrou de ligar manualmente.
+// Bucket por HORA (não por minuto) pra manter o volume de escritas e
+// de nós no Firebase baixo. Entradas com mais de 7 dias são limpas
+// automaticamente (1x por sessão, igual ao access_log).
+// Uso no console do navegador (F12), a qualquer momento:
+//   debugBytesReport()      → tabela do que ESTA aba recebeu até agora
+//   debugBytesRemote()      → agregado de TODAS as sessões nas últimas 24h
+//   debugBytesRemote(72)    → agregado das últimas 72h, por path
+//   debugBytesOff()         → desliga só nesta aba (não afeta outras pessoas)
+const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
+function _dbgSize(val){
+  try{ return val==null ? 0 : new Blob([JSON.stringify(val)]).size; }
+  catch(e){ try{ return JSON.stringify(val||'').length; }catch(e2){ return 0; } }
+}
+function _dbgTrack(pathKey, val){
+  if(!_dbg.on) return;
+  const bytes=_dbgSize(val);
+  const s=_dbg.stats[pathKey]||(_dbg.stats[pathKey]={count:0,bytes:0,lastAt:0,lastBytes:0});
+  s.count++; s.bytes+=bytes; s.lastAt=Date.now(); s.lastBytes=bytes;
+}
+function _dbgFlush(){
+  if(!_dbg.on || !window._fbReady) return;
+  const entries=Object.entries(_dbg.stats);
+  if(!entries.length) return;
+  const d=new Date();
+  const hourKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
+  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+  const nodeKey=hourKey+'_'+uidShort;
+  const path='kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log/'+nodeKey;
+  // Mescla com o que já foi gravado nesta hora (várias flushes acumulam, não sobrescrevem)
+  fbGet(path).then(snap=>{
+    const prev=snap.val()||{ts:d.toISOString(),who,byPath:{}};
+    entries.forEach(([k,s])=>{
+      const key=k.replace(/[.#$/\[\]]/g,'_');
+      const acc=prev.byPath[key]||{count:0,bytes:0};
+      acc.count+=s.count; acc.bytes+=s.bytes;
+      prev.byPath[key]=acc;
+    });
+    prev.ts=d.toISOString(); prev.who=who;
+    fbSet(path, prev);
+  }).catch(()=>{});
+  Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
+  // Limpeza leve: 1x por sessão, remove buckets com mais de 7 dias
+  if(!_dbg.cleaned){
+    _dbg.cleaned=true;
+    fbGet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log').then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const cutoff=Date.now()-7*86400000;
+      Object.entries(val).forEach(([key,entry])=>{
+        const t=entry?.ts?new Date(entry.ts).getTime():0;
+        if(t && t<cutoff) fbSet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log/'+key, null);
+      });
+    }).catch(()=>{});
+  }
+}
+function _dbgStart(){
+  clearInterval(_dbg.flushTimer);
+  _dbg.flushTimer=setInterval(_dbgFlush,5*60000); // flush a cada 5min — bem leve
+  window.addEventListener('beforeunload', _dbgFlush); // garante que a última janela de dados não se perde ao fechar a aba
+}
+if(window._fbReady) _dbgStart(); else window.addEventListener('fb-ready', _dbgStart);
+window.debugBytesOn=function(){ _dbg.on=true; _dbgStart(); console.log('%c🔬 Medição ligada nesta aba.','color:#38b6ff;font-weight:bold;'); };
+window.debugBytesOff=function(){
+  _dbg.on=false;
+  clearInterval(_dbg.flushTimer); _dbg.flushTimer=null;
+  console.log('%c🔬 Medição desligada nesta aba (outras pessoas continuam medindo normalmente).','color:#ff6b6b;');
+};
+window.debugBytesReport=function(){
+  const rows=Object.entries(_dbg.stats).map(([path,s])=>({
+    path, chamadas:s.count, 'bytes (desde o último flush)':s.bytes, 'KB':(s.bytes/1024).toFixed(1),
+    'última msg (bytes)':s.lastBytes, 'há quanto':s.lastAt?Math.round((Date.now()-s.lastAt)/1000)+'s':'—',
+  })).sort((a,b)=>b['bytes (desde o último flush)']-a['bytes (desde o último flush)']);
+  console.table(rows);
+  return rows;
+};
+window.debugBytesRemote=function(hoursBack){
+  hoursBack = hoursBack || 24;
+  return fbGet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log').then(snap=>{
+    const val=snap.val()||{};
+    const cutoff=Date.now()-hoursBack*3600000;
+    const agg={}; const byHour={};
+    Object.values(val).forEach(entry=>{
+      const t=entry?.ts?new Date(entry.ts).getTime():0;
+      if(!t || t<cutoff) return;
+      const hourLbl=entry.ts.slice(0,13); // YYYY-MM-DDTHH
+      Object.entries(entry.byPath||{}).forEach(([path,s])=>{
+        const a=agg[path]||(agg[path]={count:0,bytes:0});
+        a.count+=s.count||0; a.bytes+=s.bytes||0;
+        const h=byHour[hourLbl]||(byHour[hourLbl]={count:0,bytes:0});
+        h.count+=s.count||0; h.bytes+=s.bytes||0;
+      });
+    });
+    console.log('%c🔬 Por path (últimas '+hoursBack+'h):','color:#38b6ff;font-weight:bold;');
+    const rows=Object.entries(agg).map(([path,s])=>({ path, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1) }))
+      .sort((a,b)=>parseFloat(b['KB total'])-parseFloat(a['KB total']));
+    console.table(rows);
+    console.log('%c🔬 Por hora (todos os paths somados):','color:#38b6ff;font-weight:bold;');
+    const hourRows=Object.entries(byHour).map(([hour,s])=>({ hora:hour, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1) }))
+      .sort((a,b)=>a.hora.localeCompare(b.hora));
+    console.table(hourRows);
+    return {byPath:rows, byHour:hourRows};
+  });
+};
+window.debugBytesClearRemote=function(){
+  return fbSet('kanban/squads/'+ACTIVE_SQUAD+'/_debug_bytes_log', null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+// ═══════════════════════════════════════════════════════════════════
+
+function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>{ const v=s.val(); _dbgTrack(path,v); cb(v); }); }
 
 let _lastLocalSave = 0;
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
@@ -5227,9 +5345,9 @@ let _cardsSyncDebounce = null;
   }
   if(window._fbReady){
     const _cardsRef = fb(FB+'/cards');
-    window._onChildAdded(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-    window._onChildChanged(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-    window._onChildRemoved(_cardsRef, snap=>{ delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+    window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
   }
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
@@ -5283,18 +5401,18 @@ let _cardsSyncDebounce = null;
   });
   // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
   if(window._fbReady){
-    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
       const val=snap.val();
       lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
       updLemBadge();
       if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
     });
     // Central de Dados (captação digital) — globais, fora do squad
-    window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{ _dbgTrack('dados_diarios', snap.val());
       dadosDiariosBoard = snap.val()||{};
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
     });
-    window._onValue(window._ref(window._db,'kanban/config/dados_apresentacoes'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/config/dados_apresentacoes'),snap=>{ _dbgTrack('dados_apresentacoes', snap.val());
       const saved = snap.val();
       dadosApresentacoesBoard = Array.isArray(saved) ? saved.filter(Boolean) : (saved ? Object.values(saved).filter(Boolean) : []);
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
@@ -8437,13 +8555,13 @@ let _kudosScope='squad';
 
 function _listenKudos(){
   if(!window._fbReady){ setTimeout(_listenKudos, 1000); return; }
-  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'),snap=>{ _dbgTrack('kudos_squad', snap.val());
     const val=snap.val();
     kudosSquad = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     updKudosBadge();
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{ _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     updKudosBadge();
@@ -13675,7 +13793,7 @@ function loadCalEvents(){
   });
 
   // ── Eventos de Gestão Digital (painel) ───────────────────────
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{ _dbgTrack('cal_events', snap.val());
     const val=snap.val();
     const gestaoEvs=val?(Array.isArray(val)?val:Object.values(val)):[];
     const filtered=gestaoEvs
