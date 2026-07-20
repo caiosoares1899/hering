@@ -4061,7 +4061,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.166</div>
+<div class="version">v8.30.165</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12878,7 +12878,7 @@ function renderDndUI(){
 // te avisar mesmo com o app fechado.
 // ⚠ Preencha com a VAPID key gerada em: Console do Firebase → Configurações
 // do projeto → Cloud Messaging → "Certificados push da Web" → Gerar par de chaves.
-const FCM_VAPID_KEY = 'BJEbQRe9lG-PkwtABA5v8KhQlAWG4sJmxZmKwEbCjCc7vUXbNgjiz1gWnKjPUJDyU64OibIddERAQRUiavdwvMI';
+const FCM_VAPID_KEY = 'COLE_AQUI_A_VAPID_KEY_GERADA_NO_CONSOLE_DO_FIREBASE';
 function notifPermissionState(){
   if(!window.Notification) return 'unsupported';
   return Notification.permission; // 'default' | 'granted' | 'denied'
@@ -12951,7 +12951,7 @@ function renderNotifPermUI(){
 // mostramos um toast interno pra não passar batido.
 window.addEventListener('fb-ready', ()=>{
   const tryHook=()=>{
-    if(window._fcmOnMessage){ window._fcmOnMessage(payload=>{ showToast('🔔 '+(payload.notification?.title||'Nova notificação')); loadNotifs(); }); }
+    if(window._fcmOnMessage){ window._fcmOnMessage(payload=>{ showToast('🔔 '+(payload.data?.title||payload.notification?.title||'Nova notificação')); loadNotifs(); }); }
     else setTimeout(tryHook, 1000);
   };
   tryHook();
