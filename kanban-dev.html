@@ -13184,8 +13184,18 @@ async function registerPushToken(){
     const token = await window._fcmGetToken(FCM_VAPID_KEY, swReg);
     if(!token) return null;
     const tokenKey = token.replace(/[.#$/\[\]]/g,'_').slice(0,120);
+    const ua = navigator.userAgent;
+    // Remove qualquer token ANTIGO desse mesmo aparelho/navegador antes de salvar o novo —
+    // sem isso, cada reinstalação do PWA (token muda) deixava o token velho "fantasma" no
+    // Firebase pra sempre, e aí o mesmo aparelho recebia a notificação em duplicidade.
+    const existingSnap = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens'));
+    const existing = existingSnap.val()||{};
+    const cleanups = Object.entries(existing)
+      .filter(([key,t]) => t.ua===ua && key!==tokenKey)
+      .map(([key]) => window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+key), null).catch(()=>{}));
+    await Promise.all(cleanups);
     await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+tokenKey), {
-      token, ua: navigator.userAgent, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
+      token, ua, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
     });
     return token;
   }catch(e){ console.warn('[FCM] falha ao registrar token:', e); return null; }
@@ -13227,7 +13237,7 @@ function renderNotifPermUI(){
 }
 window.addEventListener('fb-ready', ()=>{
   const tryHook=()=>{
-    if(window._fcmOnMessage){ window._fcmOnMessage(payload=>{ showToast('🔔 '+(payload.notification?.title||'Nova notificação')); loadNotifs(); }); }
+    if(window._fcmOnMessage){ window._fcmOnMessage(payload=>{ showToast('🔔 '+(payload.data?.title||payload.notification?.title||'Nova notificação')); loadNotifs(); }); }
     else setTimeout(tryHook, 1000);
   };
   tryHook();
