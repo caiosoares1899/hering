@@ -28,11 +28,15 @@ const messaging = firebase.messaging();
 // Dispara quando chega um push com a aba FECHADA ou em background.
 // (Com a aba em primeiro plano, quem trata é o onMessage() no kanban.html —
 // isso evita notificação duplicada quando a pessoa já está olhando o board.)
+// A Cloud Function manda só "data" (não "notification") de propósito — se
+// mandasse os dois juntos, alguns navegadores (Safari/iOS em especial) já
+// exibem a notificação sozinhos automaticamente ANTES deste código rodar,
+// e então isso aqui mostrava de novo por cima, duplicando o aviso.
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'Maré Digital';
+  const title = payload.data?.title || 'Maré Digital';
   const options = {
-    body: payload.notification?.body || '',
-    icon: payload.notification?.icon || '/favicon.ico',
+    body: payload.data?.body || '',
+    icon: '/favicon.ico',
     badge: '/favicon.ico',
     tag: payload.data?.tag || 'mare-digital-notif', // evita empilhar notificações repetidas
     data: payload.data || {},
