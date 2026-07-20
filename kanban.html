@@ -12878,7 +12878,7 @@ function renderDndUI(){
 // te avisar mesmo com o app fechado.
 // ⚠ Preencha com a VAPID key gerada em: Console do Firebase → Configurações
 // do projeto → Cloud Messaging → "Certificados push da Web" → Gerar par de chaves.
-const FCM_VAPID_KEY = 'COLE_AQUI_A_VAPID_KEY_GERADA_NO_CONSOLE_DO_FIREBASE';
+const FCM_VAPID_KEY = 'BJEbQRe9lG-PkwtABA5v8KhQlAWG4sJmxZmKwEbCjCc7vUXbNgjiz1gWnKjPUJDyU64OibIddERAQRUiavdwvMI';
 function notifPermissionState(){
   if(!window.Notification) return 'unsupported';
   return Notification.permission; // 'default' | 'granted' | 'denied'
@@ -12902,8 +12902,18 @@ async function registerPushToken(){
     const token = await window._fcmGetToken(FCM_VAPID_KEY, swReg);
     if(!token) return null;
     const tokenKey = token.replace(/[.#$/\[\]]/g,'_').slice(0,120);
+    const ua = navigator.userAgent;
+    // Remove qualquer token ANTIGO desse mesmo aparelho/navegador antes de salvar o novo —
+    // sem isso, cada reinstalação do PWA (token muda) deixava o token velho "fantasma" no
+    // Firebase pra sempre, e aí o mesmo aparelho recebia a notificação em duplicidade.
+    const existingSnap = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens'));
+    const existing = existingSnap.val()||{};
+    const cleanups = Object.entries(existing)
+      .filter(([key,t]) => t.ua===ua && key!==tokenKey)
+      .map(([key]) => window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+key), null).catch(()=>{}));
+    await Promise.all(cleanups);
     await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+tokenKey), {
-      token, ua: navigator.userAgent, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
+      token, ua, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
     });
     return token;
   }catch(e){ console.warn('[FCM] falha ao registrar token:', e); return null; }
