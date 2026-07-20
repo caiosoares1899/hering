@@ -2213,6 +2213,118 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 </script>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════
+// 🔬 DEBUG: medidor de bytes por fetch (diagnóstico de download do Painel)
+// ───────────────────────────────────────────────────────────────────
+// SEMPRE LIGADO, automaticamente. Mede o tamanho (via Blob) de CADA
+// payload recebido pelo Painel — tanto onValue (listeners em tempo
+// real) quanto get() (buscas avulsas de _pollSquadDados/loadAll) — e
+// acumula por "path". A cada 5 minutos escreve um resumo pequeno em
+// kanban/painel/_debug_bytes_log/{hora} (permitido pelas regras atuais,
+// que já liberam leitura/escrita de kanban/painel pra @ciahering.com.br).
+// Uso no console (F12), a qualquer momento:
+//   debugBytesReport()      → tabela do que ESTA aba recebeu até agora
+//   debugBytesRemote()      → agregado de todas as sessões nas últimas 24h
+//   debugBytesRemote(72)    → agregado das últimas 72h, por path e por hora
+//   debugBytesOff()         → desliga só nesta aba
+const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
+function _dbgSize(val){
+  try{ return val==null ? 0 : new Blob([JSON.stringify(val)]).size; }
+  catch(e){ try{ return JSON.stringify(val||'').length; }catch(e2){ return 0; } }
+}
+function _dbgTrack(pathKey, val){
+  if(!_dbg.on) return;
+  const bytes=_dbgSize(val);
+  const s=_dbg.stats[pathKey]||(_dbg.stats[pathKey]={count:0,bytes:0,lastAt:0,lastBytes:0});
+  s.count++; s.bytes+=bytes; s.lastAt=Date.now(); s.lastBytes=bytes;
+}
+function _dbgFlush(){
+  if(!_dbg.on || !window._fbReady) return;
+  const entries=Object.entries(_dbg.stats);
+  if(!entries.length) return;
+  const d=new Date();
+  const hourKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
+  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+  const nodeKey=hourKey+'_'+uidShort;
+  const path='kanban/painel/_debug_bytes_log/'+nodeKey;
+  window._get(window._ref(window._db,path)).then(snap=>{
+    const prev=snap.val()||{ts:d.toISOString(),who,byPath:{}};
+    entries.forEach(([k,s])=>{
+      const key=k.replace(/[.#$/\[\]]/g,'_');
+      const acc=prev.byPath[key]||{count:0,bytes:0};
+      acc.count+=s.count; acc.bytes+=s.bytes;
+      prev.byPath[key]=acc;
+    });
+    prev.ts=d.toISOString(); prev.who=who;
+    window._set(window._ref(window._db,path), prev).catch(()=>{});
+  }).catch(()=>{});
+  Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
+  if(!_dbg.cleaned){
+    _dbg.cleaned=true;
+    window._get(window._ref(window._db,'kanban/painel/_debug_bytes_log')).then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const cutoff=Date.now()-7*86400000;
+      Object.entries(val).forEach(([key,entry])=>{
+        const t=entry?.ts?new Date(entry.ts).getTime():0;
+        if(t && t<cutoff) window._set(window._ref(window._db,'kanban/painel/_debug_bytes_log/'+key), null).catch(()=>{});
+      });
+    }).catch(()=>{});
+  }
+}
+function _dbgStart(){
+  clearInterval(_dbg.flushTimer);
+  _dbg.flushTimer=setInterval(_dbgFlush,5*60000);
+  window.addEventListener('beforeunload', _dbgFlush);
+}
+if(window._fbReady) _dbgStart(); else window.addEventListener('fb-ready', _dbgStart);
+window.debugBytesOn=function(){ _dbg.on=true; _dbgStart(); console.log('%c🔬 Medição ligada nesta aba.','color:#38b6ff;font-weight:bold;'); };
+window.debugBytesOff=function(){
+  _dbg.on=false;
+  clearInterval(_dbg.flushTimer); _dbg.flushTimer=null;
+  console.log('%c🔬 Medição desligada nesta aba.','color:#ff6b6b;');
+};
+window.debugBytesReport=function(){
+  const rows=Object.entries(_dbg.stats).map(([path,s])=>({
+    path, chamadas:s.count, 'bytes (desde o último flush)':s.bytes, 'KB':(s.bytes/1024).toFixed(1),
+    'última msg (bytes)':s.lastBytes, 'há quanto':s.lastAt?Math.round((Date.now()-s.lastAt)/1000)+'s':'—',
+  })).sort((a,b)=>b['bytes (desde o último flush)']-a['bytes (desde o último flush)']);
+  console.table(rows);
+  return rows;
+};
+window.debugBytesRemote=function(hoursBack){
+  hoursBack = hoursBack || 24;
+  return window._get(window._ref(window._db,'kanban/painel/_debug_bytes_log')).then(snap=>{
+    const val=snap.val()||{};
+    const cutoff=Date.now()-hoursBack*3600000;
+    const agg={}; const byHour={};
+    Object.values(val).forEach(entry=>{
+      const t=entry?.ts?new Date(entry.ts).getTime():0;
+      if(!t || t<cutoff) return;
+      const hourLbl=entry.ts.slice(0,13);
+      Object.entries(entry.byPath||{}).forEach(([path,s])=>{
+        const a=agg[path]||(agg[path]={count:0,bytes:0});
+        a.count+=s.count||0; a.bytes+=s.bytes||0;
+        const h=byHour[hourLbl]||(byHour[hourLbl]={count:0,bytes:0});
+        h.count+=s.count||0; h.bytes+=s.bytes||0;
+      });
+    });
+    console.log('%c🔬 Por path (últimas '+hoursBack+'h):','color:#38b6ff;font-weight:bold;');
+    const rows=Object.entries(agg).map(([path,s])=>({ path, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1) }))
+      .sort((a,b)=>parseFloat(b['KB total'])-parseFloat(a['KB total']));
+    console.table(rows);
+    console.log('%c🔬 Por hora (todos os paths somados):','color:#38b6ff;font-weight:bold;');
+    const hourRows=Object.entries(byHour).map(([hour,s])=>({ hora:hour, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1) }))
+      .sort((a,b)=>a.hora.localeCompare(b.hora));
+    console.table(hourRows);
+    return {byPath:rows, byHour:hourRows};
+  });
+};
+window.debugBytesClearRemote=function(){
+  return window._set(window._ref(window._db,'kanban/painel/_debug_bytes_log'), null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+// ═══════════════════════════════════════════════════════════════════
+
 // ── SQUADS CONFIGURADOS ────────────────────────────────────────────
 
 // esc(): escape de HTML. Redefinido aqui porque a versão do <script type="module">
@@ -4734,7 +4846,7 @@ function deletePevEvent(){
 
 function loadPcalEvents(){
   // Eventos do painel (gestão + geral)
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{ _dbgTrack('painel_cal_events', snap.val());
     const val=snap.val();
     pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
     if(_isPtab('pessoas')){ renderPcal(); renderPcalGestao(); }
@@ -5542,7 +5654,7 @@ let _editingComunicadoId = null;
 function loadComunicados(){
   if(window._comunicadosListenerOn) return; // evita registrar o listener de novo a cada troca de aba
   window._comunicadosListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{ _dbgTrack('comunicados', snap.val());
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
@@ -5912,7 +6024,7 @@ let _fbFilter = 'all';
 function loadFeedback(){
   if(window._fbListenerOn) return; // evita listener duplicado a cada troca de aba
   window._fbListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{ _dbgTrack('feedback', snap.val());
     _fbCache = snap.val() || {};
     renderFbLista();
   });
@@ -6570,7 +6682,7 @@ function squadBoardUrl(squadId, cardId){ return 'kanban.html?squad=' + squadId +
 // Carrega squads criados via painel de setup do Firebase
 function loadExtraSquads(callback){
   let firstRun=true;
-  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{ _dbgTrack('squads_meta', snap.val());
     const val=snap.val()||{};
     let changed=false;
     Object.entries(val).forEach(([id,meta])=>{
@@ -6661,7 +6773,7 @@ window.addEventListener('fb-ready',()=>{
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
-  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
     const val=snap.val();
     lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     if(typeof renderLembretesPainel==='function') renderLembretesPainel();
@@ -6673,7 +6785,7 @@ function loadLembretesGestao(){
 // ══════════════════════════════════════════════════════════════
 let kudosGeral = [];
 function loadKudosGeral(){
-  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{ _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     renderKudosPainel();
@@ -6803,7 +6915,7 @@ function closeGlobalUsersModal(){
 }
 
 function loadGlobalUsers(){
-  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{ _dbgTrack('usuarios', snap.val());
     _globalUsersCache = snap.val() || {};
     renderGlobalUsers();
     if(typeof renderKudosPainel==='function') renderKudosPainel();
@@ -6976,25 +7088,36 @@ function _applySquadDados(sqId, val){
 function _pollSquadDados(sqId){
   if(document.hidden) return; // aba em segundo plano: economiza banda, nao busca
   window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados'))
-    .then(snap=>_applySquadDados(sqId, snap.val()))
+    .then(snap=>{ _dbgTrack('poll:squads/'+sqId+'/dados', snap.val()); _applySquadDados(sqId, snap.val()); })
     .catch(()=>{});
 }
 function _pollSquadSnapshots(sqId){
   if(document.hidden) return;
   window._get(window._ref(window._db,'kanban/squads/'+sqId+'/snapshots'))
-    .then(snap=>{ snapshots[sqId]=snap.val()||{}; renderTrend(); })
+    .then(snap=>{ _dbgTrack('poll:squads/'+sqId+'/snapshots', snap.val()); snapshots[sqId]=snap.val()||{}; renderTrend(); })
     .catch(()=>{});
 }
-// Quando a aba volta a ficar visível, faz um refresh imediato de todos os
-// squads já rastreados (em vez de esperar até 60s pra atualizar de novo).
+// Quando a aba volta a ficar visível, faz um refresh de todos os squads já
+// rastreados — mas só se já tiver passado um tempo mínimo desde o último
+// refresh completo. Sem esse cooldown, cada troca de aba (ir olhar email,
+// Slack etc. e voltar) disparava um puxão do node /dados INTEIRO de TODOS
+// os squads de novo, mesmo que a pessoa tivesse saído e voltado há 5
+// segundos — isso foi identificado como uma fonte relevante de consumo de
+// download mesmo em uso de squad único, sem qualquer ação manual.
+const VISIBILITY_REFRESH_COOLDOWN_MS = 3*60000; // 3 minutos
+let _lastVisibilityRefresh = 0;
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden || !window._squadListeners) return;
+  const now = Date.now();
+  if(now - _lastVisibilityRefresh < VISIBILITY_REFRESH_COOLDOWN_MS) return; // ainda dentro do cooldown, ignora
+  _lastVisibilityRefresh = now;
   Object.keys(window._squadListeners).forEach(sqId=>{
     _pollSquadDados(sqId);
     _pollSquadSnapshots(sqId);
   });
 });
 function loadAll(){
+  _lastVisibilityRefresh = Date.now(); // conta como refresh recente, evita duplicar com o próximo visibilitychange
   // Antes disparava um setInterval por squad a cada POLL_MS (60s), rodando pra
   // sempre enquanto a aba do painel ficasse aberta em primeiro plano — isso
   // buscava o node /dados INTEIRO (cards+colunas+tags) de TODAS as squads a
@@ -7770,6 +7893,7 @@ function showBsToast(msg){
 // Helper: inicia listener de um squad específico (para novos boards criados em sessão)
 function loadSquadData(sqId){
   window._onValue(window._ref(window._db,'kanban/squads/'+sqId+'/dados'),snap=>{
+    _dbgTrack('onValue:squads/'+sqId+'/dados (novo squad em sessão)', snap.val());
     const val=snap.val()||{};
     squadData[sqId]={
       cards:val.cards?(Array.isArray(val.cards)?val.cards:Object.values(val.cards)).map((card,i)=>({...card,id:card.id||('idx_'+i)})):[],
