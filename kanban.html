@@ -1279,6 +1279,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .kudos-hdr-btn:hover{filter:brightness(1.15);}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
+#dnd-toggle-btn.dnd-active{border-color:rgba(255,209,102,.4)!important;color:var(--warn)!important;background:rgba(255,209,102,.08)!important;}
 @keyframes bell-ring{
   0%,100%{transform:rotate(0);}
   20%{transform:rotate(-20deg);}
@@ -2223,6 +2224,7 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
+    <span id="dnd-bell-badge" title="Não Perturbe ativo" style="display:none;position:absolute;bottom:-2px;right:-2px;font-size:10px;line-height:1;">🔕</span>
   </button>
   <button class="notif-btn" id="mural-btn" onclick="openMural()" title="Mural — avisos e fale com o ADM">
     📢<span class="notif-badge" id="mural-badge" style="display:none;">0</span>
@@ -2327,8 +2329,24 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="notif-list" id="notif-list">
     <div class="notif-empty">Nenhuma notificação</div>
   </div>
-  <div class="notif-ft">
-    <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
+  <div class="notif-ft" style="flex-direction:column;align-items:stretch;gap:6px;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
+      <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+    </div>
+    <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;">
+      <button id="dnd-toggle-btn" onclick="toggleDndMenu(event)" style="width:100%;text-align:left;background:none;border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--txt2);font-size:11px;">
+        <span id="dnd-status-lbl">🔔 Notificações ativas</span>
+      </button>
+      <div id="dnd-menu" style="display:none;position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:10;">
+        <div style="font-size:10px;color:var(--txt3);padding:4px 8px 6px;">Silenciar avisos que interrompem (o sino continua registrando tudo)</div>
+        <button onclick="setDnd(true,60,'1 hora');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Por 1 hora</button>
+        <button onclick="setDnd(true,480,'8 horas');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Por 8 horas</button>
+        <button onclick="setDndUntilTomorrowMorning();toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Até amanhã de manhã</button>
+        <button onclick="setDnd(true,null,'');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Até eu desativar</button>
+        <button onclick="setDnd(false);toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--accent);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;border-top:1px solid var(--glass-b);margin-top:4px;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔔 Reativar notificações</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4050,6 +4068,7 @@ input[type="date"]{-moz-appearance:textfield;}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
 const safeLS = (function(){
@@ -4091,6 +4110,23 @@ window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._auth=auth; window._provider=provider;
+
+// ── Push notifications (FCM) ────────────────────────────────────────
+// Isolado num try/catch porque getMessaging() lança em contextos sem
+// suporte (http não-seguro, alguns navegadores/versões de iOS) — nesses
+// casos window._fcmReady fica false e a UI mostra "não suportado" em
+// vez de quebrar o app inteiro.
+window._fcmReady = false;
+fcmIsSupported().then(supported=>{
+  if(!supported) return;
+  try{
+    const messaging = getMessaging(app);
+    window._fcmGetToken = (vapidKey, swReg) => fcmGetToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
+    window._fcmDeleteToken = () => fcmDeleteToken(messaging);
+    window._fcmOnMessage = (cb) => fcmOnMessage(messaging, cb);
+    window._fcmReady = true;
+  }catch(e){ console.warn('[FCM] não inicializado:', e); }
+}).catch(()=>{});
 
 // Captura e salva o token de acesso de forma segura
 window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
@@ -12721,6 +12757,10 @@ document.addEventListener('click', e=>{
     notifOpen=false;
     document.getElementById('notif-panel')?.classList.remove('open');
   }
+  const dndMenu=document.getElementById('dnd-menu');
+  if(dndMenu && dndMenu.style.display==='block' && !e.target.closest('#dnd-menu') && !e.target.closest('#dnd-toggle-btn')){
+    dndMenu.style.display='none';
+  }
 });
 
 // ── Cria uma notificação para um usuário ──────────────────────────
@@ -12769,6 +12809,155 @@ function getUidByInit(init){
 }
 
 // ── Escuta notificações do usuário atual ──────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// 🔕 NÃO PERTURBE + permissão de notificações externas
+// ───────────────────────────────────────────────────────────────────
+// Preferências ficam em kanban/usuarios/{uid}/notif_prefs:
+//   { dnd: { on:bool, until: ISOString|null, label:string } }
+// until=null com on=true = "até eu desativar manualmente".
+// Isso NÃO desliga as notificações internas do sino (continuam sendo
+// registradas normalmente, pra não perder histórico) — só suprime
+// avisos que "interrompem" (som/popup do navegador). A base pra push
+// externo de verdade (fora do app, com o celular bloqueado) fica
+// pronta aqui — o disparo do lado do servidor (Cloud Function) é um
+// passo futuro, combinado.
+let _notifPrefs = { dnd: { on:false, until:null, label:'' } };
+function loadNotifPrefs(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notif_prefs'), snap=>{
+    const v = snap.val()||{};
+    _notifPrefs.dnd = v.dnd || { on:false, until:null, label:'' };
+    _dndAutoExpireCheck();
+    renderDndUI();
+  });
+}
+function _dndAutoExpireCheck(){
+  const d=_notifPrefs.dnd;
+  if(d.on && d.until && new Date(d.until).getTime() <= Date.now()){
+    // Expirou sozinho: desliga localmente (o listener do Firebase confirma na próxima leitura)
+    d.on=false; d.until=null; d.label='';
+  }
+}
+function isDndActive(){
+  _dndAutoExpireCheck();
+  return !!_notifPrefs.dnd.on;
+}
+function setDnd(on, minutesFromNow, label){
+  const user = window._currentUser; if(!user) return;
+  const until = (on && minutesFromNow) ? new Date(Date.now()+minutesFromNow*60000).toISOString() : null;
+  const val = { on:!!on, until, label: on ? (label||'') : '' };
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notif_prefs/dnd'), val).catch(()=>{});
+}
+function setDndUntilTomorrowMorning(){
+  const user = window._currentUser; if(!user) return;
+  const d=new Date(); d.setDate(d.getDate()+1); d.setHours(9,0,0,0);
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notif_prefs/dnd'),
+    { on:true, until:d.toISOString(), label:'até amanhã 9h' }).catch(()=>{});
+}
+function toggleDndMenu(e){
+  e?.stopPropagation();
+  const m=document.getElementById('dnd-menu');
+  if(m) m.style.display = (m.style.display==='block') ? 'none' : 'block';
+}
+function renderDndUI(){
+  const active=isDndActive();
+  const btn=document.getElementById('dnd-toggle-btn');
+  const lbl=document.getElementById('dnd-status-lbl');
+  const bellBadge=document.getElementById('dnd-bell-badge');
+  if(btn) btn.classList.toggle('dnd-active', active);
+  if(lbl){
+    lbl.textContent = active
+      ? ('🔕 Não Perturbe ativo' + (_notifPrefs.dnd.label ? ' ('+_notifPrefs.dnd.label+')' : ' (até você desativar)'))
+      : '🔔 Notificações ativas';
+  }
+  if(bellBadge) bellBadge.style.display = active ? 'inline-block' : 'none';
+}
+// Permissão de notificação do navegador — pré-requisito pra qualquer
+// notificação fora da aba (local ou push). Ao conceder, já registra o
+// token de push (FCM) do aparelho no Firebase, pra Cloud Function poder
+// te avisar mesmo com o app fechado.
+// ⚠ Preencha com a VAPID key gerada em: Console do Firebase → Configurações
+// do projeto → Cloud Messaging → "Certificados push da Web" → Gerar par de chaves.
+const FCM_VAPID_KEY = BJEbQRe9lG-PkwtABA5v8KhQlAWG4sJmxZmKwEbCjCc7vUXbNgjiz1gWnKjPUJDyU64OibIddERAQRUiavdwvMI;
+function notifPermissionState(){
+  if(!window.Notification) return 'unsupported';
+  return Notification.permission; // 'default' | 'granted' | 'denied'
+}
+function notifPermRowClick(){
+  const state=notifPermissionState();
+  if(state==='default') requestNotifPermission();
+  else if(state==='granted'){
+    if(confirm('Desativar notificações push neste aparelho?\n\n(A permissão do navegador continua concedida — é só o registro deste aparelho pra receber avisos que é removido.)')){
+      unregisterPushToken().then(()=>showToast('🔕 Push desativado neste aparelho.'));
+    }
+  }
+}
+async function registerPushToken(){
+  if(!window._fcmReady){ console.warn('[FCM] indisponível neste navegador/contexto.'); return null; }
+  if(FCM_VAPID_KEY.startsWith('COLE_AQUI')){ console.warn('[FCM] VAPID key ainda não configurada — veja FCM_VAPID_KEY no código.'); return null; }
+  const user = window._currentUser; if(!user) return null;
+  try{
+    const swReg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    const token = await window._fcmGetToken(FCM_VAPID_KEY, swReg);
+    if(!token) return null;
+    const tokenKey = token.replace(/[.#$/\[\]]/g,'_').slice(0,120);
+    await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+tokenKey), {
+      token, ua: navigator.userAgent, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
+    });
+    return token;
+  }catch(e){ console.warn('[FCM] falha ao registrar token:', e); return null; }
+}
+async function unregisterPushToken(){
+  const user = window._currentUser;
+  try{
+    if(window._fcmReady) await window._fcmDeleteToken();
+    if(user){
+      const snap = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens'));
+      const tokens = snap.val()||{};
+      const mine = navigator.userAgent;
+      // Remove só o(s) token(s) desse aparelho/navegador (mesma UA) — não mexe nos de outros dispositivos da pessoa
+      for(const [key,t] of Object.entries(tokens)){
+        if(t.ua===mine) await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+key), null).catch(()=>{});
+      }
+    }
+  }catch(e){ console.warn('[FCM] falha ao remover token:', e); }
+}
+function requestNotifPermission(){
+  if(!window.Notification){ showToast('⚠ Este navegador não suporta notificações.'); return; }
+  Notification.requestPermission().then(async perm=>{
+    renderNotifPermUI();
+    if(perm==='granted'){
+      showToast('🔔 Notificações permitidas neste aparelho.');
+      const token = await registerPushToken();
+      if(!token) showToast('⚠ Permissão OK, mas o push ainda não está configurado (fala com o time técnico).');
+    }
+    else if(perm==='denied') showToast('🔕 Notificações bloqueadas — ative manualmente nas configurações do navegador se mudar de ideia.');
+  }).catch(()=>{});
+}
+function renderNotifPermUI(){
+  const el=document.getElementById('notif-perm-row'); if(!el) return;
+  const state=notifPermissionState();
+  const labels={ granted:'✅ Permitidas neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador' };
+  el.textContent = labels[state] || labels.default;
+  el.style.cursor = (state==='default'||state==='granted') ? 'pointer' : 'default';
+  el.style.opacity = state==='denied' ? '.6' : '1';
+  // Se a permissão já estava concedida de uma sessão anterior, garante que o
+  // token de push está registrado (ex.: reinstalou o navegador, limpou dados).
+  if(state==='granted' && window._currentUser && window._fcmReady) registerPushToken();
+}
+// Mensagens de push recebidas com a aba EM PRIMEIRO PLANO não disparam o
+// popup do sistema sozinhas (o FCM só faz isso em background) — então
+// mostramos um toast interno pra não passar batido.
+window.addEventListener('fb-ready', ()=>{
+  const tryHook=()=>{
+    if(window._fcmOnMessage){ window._fcmOnMessage(payload=>{ showToast('🔔 '+(payload.notification?.title||'Nova notificação')); loadNotifs(); }); }
+    else setTimeout(tryHook, 1000);
+  };
+  tryHook();
+});
+// ═══════════════════════════════════════════════════════════════════
+
 function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
@@ -14207,8 +14396,9 @@ function checkUpcomingMeetings(){
 
       showToast(`🎥 "${tituloLimpo}" começa em ${minutosRestantes} min`);
 
-      // Notificação nativa do navegador, se permitida (complementa o toast — some quando a aba fecha)
-      if (window.Notification && Notification.permission === 'granted') {
+      // Notificação nativa do navegador, se permitida e fora do modo Não Perturbe
+      // (complementa o toast — some quando a aba fecha)
+      if (window.Notification && Notification.permission === 'granted' && !isDndActive()) {
         try {
           const n = new Notification('🎥 Reunião em ' + minutosRestantes + ' min', {
             body: tituloLimpo,
@@ -15428,11 +15618,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); }, 2000);
     }, {once:true});
   }
   loadCampanhas();
