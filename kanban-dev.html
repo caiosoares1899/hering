@@ -4190,12 +4190,18 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   if(insc) window._pendingInsc=true; 
 });
 window._signOut=(reason)=>{
+  if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
+  window._signOutInProgress=true;
   try{
     const info={reason:reason||'desconhecido', ts:Date.now(), tsStr:new Date().toISOString()};
     console.warn('[Mare] Logout disparado. Motivo:', info.reason, info);
     safeLS.setItem('last_logout_reason_dev', JSON.stringify(info));
   }catch(e){}
-  signOut(auth);
+  try{ clearInterval(window._idleCheckInterval); window._idleCheckInterval=null; }catch(e){}
+  try{ clearInterval(window._heartbeat); window._heartbeat=null; }catch(e){}
+  try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
+  try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
+  signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
 };
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
@@ -15630,6 +15636,7 @@ _onFbReady(()=>{
   const _sessionStartMs = Date.parse((window._currentUser && window._currentUser.metadata && window._currentUser.metadata.lastSignInTime) || 0) || Date.now();
   clearInterval(window._idleCheckInterval);
   window._idleCheckInterval = setInterval(()=>{
+    if(!window._currentUser || window._signOutInProgress) return; // guard extra: nao roda mais depois do logout
     const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
     const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
     const _cfg = window._idleLogoutConfig || { enabled: true, minutes: 180 };
