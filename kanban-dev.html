@@ -2345,6 +2345,10 @@ input[type="date"]{-moz-appearance:textfield;}
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         📅 Prazo (data prevista)
       </button>
+      <button onclick="setColSortMode('movedAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🕓 Movimentação (mais recente)
+      </button>
     </div>
   </div>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
@@ -2619,10 +2623,9 @@ input[type="date"]{-moz-appearance:textfield;}
               </div>
             </div>
           </div>
-          <div class="cl-items" id="m-checklist"></div>
+          <div id="m-checklist"></div>
           <div class="cl-add-r">
-            <input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()">
-            <button class="cl-ab" onclick="addCI()">+ Add</button>
+            <button class="btn btn-sm" onclick="addChecklistGroup()">+ Novo checklist</button>
             <button class="btn btn-sm" onclick="doUndo()" title="Desfazer última ação (Ctrl+Z)" style="padding:4px 8px;font-size:13px;color:rgba(150,200,240,.5);border-color:rgba(56,182,255,.2);border-radius:var(--r);">↩</button>
           </div>
         </div>
@@ -4131,7 +4134,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.179-dev</div>
+<div class="version">v8.30.180-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5223,7 +5226,7 @@ function fbSaveMsgs(tab){
 
 function fbLoadAll(){
   (function _initSortLabel(){
-    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo'};
+    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação'};
     const lbl = document.getElementById('btn-sort-lbl');
     if(lbl) lbl.textContent = labels[colSortMode] || 'Prioridade';
     const btn = document.getElementById('btn-sort');
@@ -6125,6 +6128,17 @@ function _sortCards(arr, colId){
   if(mode==='createdAt'){
     return arr.slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   }
+  if(mode==='movedAt'){
+    // Data da última movimentação de coluna (card.flow.enteredAt na coluna atual);
+    // cards sem flow (legado não migrado) caem por último.
+    return arr.slice().sort((a,b)=>{
+      const ma=a.flow?.enteredAt?.[a.col]||'', mb=b.flow?.enteredAt?.[b.col]||'';
+      if(ma && mb) return mb.localeCompare(ma); // mais recente primeiro
+      if(ma && !mb) return -1;
+      if(!ma && mb) return 1;
+      return 0;
+    });
+  }
   if(mode==='doneAt'){
     // "Prazo" = card.due (data prevista), não flow.doneAt (data real de
     // conclusão, só existe em cards já na coluna Done — inútil nas outras).
@@ -6518,7 +6532,7 @@ function cycleColSort(colId){
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
-  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo'};
+  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação'};
   const lbl = document.getElementById('btn-sort-lbl');
   if(lbl) lbl.textContent = labels[mode] || 'Prioridade';
   const btn = document.getElementById('btn-sort');
@@ -6743,7 +6757,7 @@ function scheduleAutoSave(){
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:document.getElementById('m-col').value,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
-      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
+      po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       criativo:getCriativoData()});
     _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _asBefore); // 📜 registra o que mudou
@@ -6992,6 +7006,7 @@ function openCard(id){
     blockerRow.style.display=(c.blocker||c.col==='blocker'||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
   }
+  _clGroupsInit(c);
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
   setCriativoFields(c.criativo||{});
@@ -7228,6 +7243,7 @@ function openNewCard(col){
   document.getElementById('btn-del-card').style.visibility='hidden';
   const bRow=document.getElementById('m-blocker-row');
   if(bRow) bRow.style.display='none';
+  _clGroupsInit(null);
   renderCL([]);
   renderRiscos([]);
   setCriativoFields({});
@@ -7285,7 +7301,7 @@ function saveCard(){
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:document.getElementById('m-col').value,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
+      checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
       agentStatus:document.getElementById('m-agentstatus')?.value||'',
       participants:getParticipants(),
@@ -7306,7 +7322,7 @@ function saveCard(){
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
+      checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
       agentStatus:document.getElementById('m-agentstatus')?.value||'',
       participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td,
@@ -7375,53 +7391,138 @@ function ctxDuplicate(){
   fbSaveAll(); renderBoard(); hideCtxMenu();
   showToast('⧉ Card duplicado.');
 }
+// ── MÚLTIPLOS CHECKLISTS POR CARD ──────────────────────────────────
+// _mCurrentGroups = cópia de trabalho de card.checklistGroups enquanto o
+// modal está aberto: [{id,title}]. Os itens continuam num único array
+// plano (card.checklist, lido/escrito por getCL()) — cada item ganha um
+// campo item.grp apontando pro id do grupo a que pertence. Isso mantém
+// 100% de compatibilidade com todo código legado que só lê card.checklist
+// (progresso do card no board, notificações, agente, modelos, import Trello).
+let _mCurrentGroups = [{id:'default', title:'Checklist'}];
+function _clNewGroupId(){ return 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+// Chamar sempre que um card (ou card novo/modelo) for carregado no modal, antes de renderCL().
+function _clGroupsInit(card){
+  if(card && Array.isArray(card.checklistGroups) && card.checklistGroups.length){
+    _mCurrentGroups = card.checklistGroups.map(g=>({id:g.id, title:g.title||'Checklist'}));
+  } else {
+    _mCurrentGroups = [{id:'default', title:'Checklist'}];
+  }
+}
+function addChecklistGroup(){
+  saveUndo('adicionar checklist');
+  _mCurrentGroups.push({id:_clNewGroupId(), title:'Checklist'});
+  renderCL(getCL());
+  scheduleAutoSave();
+}
+function delChecklistGroup(gid){
+  if(_mCurrentGroups.length<=1){ showToast('⚠ O card precisa ter pelo menos um checklist.'); return; }
+  const g=_mCurrentGroups.find(x=>x.id===gid); if(!g) return;
+  const totalItens=getCL().filter(it=>(it.grp||_mCurrentGroups[0].id)===gid).length;
+  if(totalItens && !confirm(`Excluir o checklist "${g.title}" e seus ${totalItens} item(ns)?`)) return;
+  saveUndo('excluir checklist');
+  _mCurrentGroups = _mCurrentGroups.filter(x=>x.id!==gid);
+  const rest = getCL().filter(it=>(it.grp||gid)!==gid);
+  renderCL(rest); scheduleAutoSave();
+}
+function addCIToGroup(gid, v){
+  v=(v||'').trim(); if(!v) return;
+  saveUndo('adicionar item checklist');
+  const cl=getCL(); cl.push({t:v, done:false, grp:gid});
+  renderCL(cl); scheduleAutoSave();
+}
 function renderCL(cl){
   const w=document.getElementById('m-checklist'); if(!w) return; w.innerHTML='';
-  cl.forEach((item,i)=>{
-    const d=document.createElement('div');
-    d.className='cl-item'; d.draggable=true; d.dataset.idx=i;
-    // Drag events
-    d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; w._dragIdx=i; d.classList.add('dragging'); });
-    d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); w.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
-    d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
-    d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
-    d.addEventListener('drop',e=>{
-      e.preventDefault(); d.classList.remove('drag-over');
-      const from=w._dragIdx; const to=i; if(from===to) return;
-      saveUndo('reordenar checklist');
-      const cur=getCL(); const [moved]=cur.splice(from,1); cur.splice(to,0,moved);
-      renderCL(cur); scheduleAutoSave();
+  if(!_mCurrentGroups || !_mCurrentGroups.length) _mCurrentGroups=[{id:'default', title:'Checklist'}];
+  const fallbackId=_mCurrentGroups[0].id;
+  cl=(cl||[]).slice();
+  cl.forEach(it=>{ if(!it.grp || !_mCurrentGroups.some(g=>g.id===it.grp)) it.grp=fallbackId; });
+  // normaliza: agrupa itens contíguos na ordem dos checklists (evita índices cruzados no drag)
+  cl = _mCurrentGroups.flatMap(g=>cl.filter(it=>it.grp===g.id));
+  let gIdx=0;
+  _mCurrentGroups.forEach(g=>{
+    const groupItems = cl.filter(it=>it.grp===g.id);
+    const done=groupItems.filter(it=>it.done).length, total=groupItems.length;
+    const pct = total? Math.round(done/total*100) : 0;
+
+    const sec=document.createElement('div'); sec.className='cl-group'; sec.style.cssText='margin-bottom:14px;';
+    const hd=document.createElement('div'); hd.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const titleEl=document.createElement('input'); titleEl.value=g.title; titleEl.className='cl-group-title';
+    titleEl.style.cssText='background:none;border:none;color:var(--txt1);font-size:12px;font-weight:700;flex:1;min-width:0;padding:3px 5px;border-radius:5px;';
+    titleEl.addEventListener('focus',()=>titleEl.style.background='rgba(56,182,255,.08)');
+    titleEl.addEventListener('blur',()=>{
+      titleEl.style.background='none';
+      const v=titleEl.value.trim()||'Checklist';
+      if(v!==g.title){ saveUndo('renomear checklist'); g.title=v; scheduleAutoSave(); }
     });
-    // Checkbox
-    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
-    // Handle de drag
-    const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
-    handle.addEventListener('mousedown',()=>d.draggable=true);
-    // Texto editável inline
-    const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=(item.t!=null?item.t:item.text)||'';
-    d.dataset.sim = item.simComment || '';
-    cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); scheduleAutoSave(); _agentSimRefreshUI(); });
-    span.title='Clique para editar';
-    let _prev='';
-    span.addEventListener('click',()=>{
-      _prev=span.textContent;
-      span.contentEditable='true'; span.focus();
-      const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
-      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    titleEl.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); titleEl.blur(); } });
+    const pctEl=document.createElement('span'); pctEl.style.cssText='font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;';
+    pctEl.textContent = total? `${done}/${total} · ${pct}%` : '';
+    const delGrpBtn=document.createElement('button'); delGrpBtn.className='cl-del'; delGrpBtn.textContent='✕'; delGrpBtn.title='Excluir este checklist';
+    delGrpBtn.onclick=()=>delChecklistGroup(g.id);
+    hd.append(titleEl,pctEl,delGrpBtn);
+    sec.appendChild(hd);
+
+    if(total){
+      const bar=document.createElement('div'); bar.style.cssText='height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:6px;';
+      const fill=document.createElement('div'); fill.style.cssText=`height:100%;width:${pct}%;background:var(--teal);transition:width .2s;`;
+      bar.appendChild(fill); sec.appendChild(bar);
+    }
+
+    const itemsWrap=document.createElement('div'); itemsWrap.className='cl-items';
+    groupItems.forEach((item,li)=>{
+      const i=gIdx++; // índice global no array normalizado, usado só p/ excluir item
+      const d=document.createElement('div');
+      d.className='cl-item'; d.draggable=true; d.dataset.idx=i; d.dataset.grp=g.id;
+      d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; itemsWrap._dragLi=li; d.classList.add('dragging'); });
+      d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
+      d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
+      d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+      d.addEventListener('drop',e=>{
+        e.preventDefault(); d.classList.remove('drag-over');
+        const from=itemsWrap._dragLi; const to=li; if(from==null||from===to) return;
+        saveUndo('reordenar checklist');
+        const gi=groupItems.slice(); const [moved]=gi.splice(from,1); gi.splice(to,0,moved);
+        const rebuilt=_mCurrentGroups.flatMap(gg=> gg.id===g.id ? gi : cl.filter(it=>it.grp===gg.id));
+        renderCL(rebuilt); scheduleAutoSave();
+      });
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
+      const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
+      handle.addEventListener('mousedown',()=>d.draggable=true);
+      const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=(item.t!=null?item.t:item.text)||'';
+      d.dataset.sim = item.simComment || '';
+      cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); pctEl.textContent=''; scheduleAutoSave(); _agentSimRefreshUI(); });
+      span.title='Clique para editar';
+      let _prev='';
+      span.addEventListener('click',()=>{
+        _prev=span.textContent;
+        span.contentEditable='true'; span.focus();
+        const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
+        const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      });
+      span.addEventListener('blur',()=>{
+        span.contentEditable='false';
+        if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
+      });
+      span.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
+        if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
+      });
+      const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
+      del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
+      d.append(handle,cb,span,del);
+      itemsWrap.appendChild(d);
     });
-    span.addEventListener('blur',()=>{
-      span.contentEditable='false';
-      if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
-    });
-    span.addEventListener('keydown',e=>{
-      if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
-      if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
-    });
-    // Botão deletar
-    const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
-    del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
-    d.append(handle,cb,span,del);
-    w.appendChild(d);
+    sec.appendChild(itemsWrap);
+
+    const addRow=document.createElement('div'); addRow.className='cl-add-r'; addRow.style.cssText='margin-top:4px;';
+    const inp=document.createElement('input'); inp.className='cl-ai'; inp.placeholder='Novo item...';
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); } });
+    const addBtn=document.createElement('button'); addBtn.className='cl-ab'; addBtn.textContent='+ Add';
+    addBtn.onclick=()=>{ addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); };
+    addRow.append(inp,addBtn);
+    sec.appendChild(addRow);
+
+    w.appendChild(sec);
   });
 }
 function getCL(){
@@ -7429,6 +7530,7 @@ function getCL(){
     const item = {
       t: r.querySelector('.cl-it')?.textContent?.trim()||'',
       done: r.querySelector('input[type=checkbox]')?.checked||false,
+      grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
     };
     if(r.dataset.sim) item.simComment = r.dataset.sim;
     return item;
@@ -8166,6 +8268,7 @@ function _agentPostSystemComment(c, text){
 // card, não a lista inteira, evitando pisar em edição concorrente de outra pessoa no board).
 function _agentCommitState(c){
   c.checklist = getCL();
+  c.checklistGroups = _mCurrentGroups.slice();
   c.agentStatus = document.getElementById('m-agentstatus')?.value||'';
   c.executorType = document.getElementById('m-exectype')?.value||'human';
   c.edited = window._currentUser?.displayName||'Usuário';
@@ -10786,6 +10889,7 @@ function usarQLItem(i){
   populateTagSelect();
   document.getElementById('m-desc').value=item.desc||'';
   document.getElementById('m-po').value=item.po||'';
+  _clGroupsInit(item);
   if(item.checklist?.length) renderCL(item.checklist);
   if(item.riscos?.length) renderRiscos(item.riscos);
   // Guarda os campos obrigatórios deste modelo pra validar na criação
@@ -12359,7 +12463,7 @@ const HELP_CONTENT = {
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
-    { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.' },
+    { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\nMúltiplos checklists: clique em "+ Novo checklist" para criar quantas listas quiser dentro do mesmo card (ex.: "Aprovação", "Produção"), cada uma com seu próprio título e progresso. Clique no título de um checklist para renomeá-lo, ou no ✕ do cabeçalho para excluí-lo.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
