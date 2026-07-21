@@ -5040,14 +5040,15 @@ function _dbgFlush(){
   const path=FB+'/_debug_bytes_log/'+nodeKey;
   // Mescla com o que já foi gravado nesta hora (várias flushes acumulam, não sobrescrevem)
   fbGet(path).then(snap=>{
-    const prev=snap.val()||{ts:d.toISOString(),who,byPath:{}};
+    const _localTs=hourKey.slice(0,10)+'T'+hourKey.slice(11,13)+':00:00';
+    const prev=snap.val()||{ts:_localTs,who,byPath:{}};
     entries.forEach(([k,s])=>{
       const key=k.replace(/[.#$/\[\]]/g,'_');
       const acc=prev.byPath[key]||{count:0,bytes:0};
       acc.count+=s.count; acc.bytes+=s.bytes;
       prev.byPath[key]=acc;
     });
-    prev.ts=d.toISOString(); prev.who=who;
+    prev.ts=_localTs; prev.who=who;
     fbSet(path, prev);
   }).catch(()=>{});
   Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
