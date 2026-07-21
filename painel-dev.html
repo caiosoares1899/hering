@@ -6644,12 +6644,25 @@ function loadLembretesGestao(){
 // ⭐ ESTRELAS DO MAR (Geral) — mural cross-squad no painel
 // ══════════════════════════════════════════════════════════════
 let kudosGeral = [];
+const KUDOS_GERAL_POLL_MS = 3*60000; // 3 minutos
+let _lastKudosGeralRefresh = 0;
 function loadKudosGeral(){
-  window._onValue(window._ref(window._db,'kanban/painel/kudos_dev'),snap=>{
+  // ⚡ Mesmo padrão do path global do prod — convertido pra poll periódico
+  // (aba em primeiro plano) em vez de onValue em tempo real.
+  _refreshKudosGeral();
+  setInterval(()=>{ if(!document.hidden) _refreshKudosGeral(); }, KUDOS_GERAL_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastKudosGeralRefresh > KUDOS_GERAL_POLL_MS) _refreshKudosGeral();
+  });
+}
+function _refreshKudosGeral(){
+  _lastKudosGeralRefresh = Date.now();
+  window._get(window._ref(window._db,'kanban/painel/kudos_dev')).then(snap=>{
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     renderKudosPainel();
-  });
+  }).catch(()=>{});
 }
 function _kudosUserOpts(){
   // lista de usuários a partir do cache global
