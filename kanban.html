@@ -1280,6 +1280,27 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
 #dnd-toggle-btn.dnd-active{border-color:rgba(255,209,102,.4)!important;color:var(--warn)!important;background:rgba(255,209,102,.08)!important;}
+.dnd-toggle-btn{
+  box-sizing:border-box;width:100%;text-align:left;background:none;
+  border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;
+  cursor:pointer;color:var(--txt2);font-size:11px;
+  white-space:normal;word-break:break-word;
+}
+.dnd-menu{
+  display:none;box-sizing:border-box;position:fixed;
+  background:rgba(8,22,42,.99);border:1px solid var(--glass-b);
+  border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:9999;
+  max-height:70vh;overflow-y:auto; /* segurança extra: se ainda assim não couber, rola em vez de cortar */
+}
+.dnd-menu-hint{font-size:10px;color:var(--txt3);padding:4px 8px 6px;box-sizing:border-box;white-space:normal;}
+.dnd-menu-item{
+  box-sizing:border-box;display:block;width:100%;text-align:left;background:none;
+  border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;
+  cursor:pointer;transition:background .12s;
+  white-space:normal;word-break:break-word;line-height:1.4;
+}
+.dnd-menu-item:hover{background:rgba(56,182,255,.1);}
+.dnd-menu-item-reativar{color:var(--accent);border-top:1px solid var(--glass-b);margin-top:4px;padding-top:10px;}
 @keyframes bell-ring{
   0%,100%{transform:rotate(0);}
   20%{transform:rotate(-20deg);}
@@ -2332,19 +2353,22 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="notif-ft" style="flex-direction:column;align-items:stretch;gap:6px;position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
-      <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button id="notif-sound-toggle" onclick="toggleNotifSound()" title="Ligar/desligar som de notificação" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--txt3);padding:0;line-height:1;"></button>
+        <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+      </div>
     </div>
-    <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;">
-      <button id="dnd-toggle-btn" onclick="toggleDndMenu(event)" style="width:100%;text-align:left;background:none;border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--txt2);font-size:11px;">
+    <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;box-sizing:border-box;">
+      <button id="dnd-toggle-btn" class="dnd-toggle-btn" onclick="toggleDndMenu(event)">
         <span id="dnd-status-lbl">🔔 Notificações ativas</span>
       </button>
-      <div id="dnd-menu" style="display:none;position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:10;">
-        <div style="font-size:10px;color:var(--txt3);padding:4px 8px 6px;">Silenciar avisos que interrompem (o sino continua registrando tudo)</div>
-        <button onclick="setDnd(true,60,'1 hora');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Por 1 hora</button>
-        <button onclick="setDnd(true,480,'8 horas');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Por 8 horas</button>
-        <button onclick="setDndUntilTomorrowMorning();toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Até amanhã de manhã</button>
-        <button onclick="setDnd(true,null,'');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Até eu desativar</button>
-        <button onclick="setDnd(false);toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--accent);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;border-top:1px solid var(--glass-b);margin-top:4px;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔔 Reativar notificações</button>
+      <div id="dnd-menu" class="dnd-menu">
+        <div class="dnd-menu-hint">Silenciar avisos que interrompem (o sino continua registrando tudo)</div>
+        <button class="dnd-menu-item" onclick="setDnd(true,60,'1 hora');toggleDndMenu()">🔕 Por 1 hora</button>
+        <button class="dnd-menu-item" onclick="setDnd(true,480,'8 horas');toggleDndMenu()">🔕 Por 8 horas</button>
+        <button class="dnd-menu-item" onclick="setDndUntilTomorrowMorning();toggleDndMenu()">🔕 Até amanhã de manhã</button>
+        <button class="dnd-menu-item" onclick="setDnd(true,null,'');toggleDndMenu()">🔕 Até eu desativar</button>
+        <button class="dnd-menu-item dnd-menu-item-reativar" onclick="setDnd(false);toggleDndMenu()">🔔 Reativar notificações</button>
       </div>
     </div>
   </div>
@@ -12474,6 +12498,7 @@ const HELP_CONTENT = {
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
     { icon:'📱', title:'Ativar notificações externas (web e celular)', text:'O sino 🔔 avisa quando a aba está aberta, mas dá pra receber avisos também com o Maré fechado — no computador ou no celular. Dentro do painel do sino, clique em "🔔 Ativar notificações neste aparelho" e aceite a permissão que o navegador pedir.\n\nIsso avisa quando: um card é atribuído a você, alguém te menciona (@) num comentário, um impedimento seu é resolvido, um card seu é marcado com risco, ou um card recorrente/agendado entra no quadro. As outras notificações (Estrela do Mar, prazo, card finalizado, etc.) continuam só no sino, sem interromper.\n\nNo celular, funciona melhor com o Maré instalado como aplicativo (veja o item "Instalar no celular" aqui do lado) — no iPhone, inclusive, só funciona assim.\n\nPrecisa ativar em CADA aparelho separadamente (o computador do trabalho, o celular, etc. cada um tem seu próprio interruptor).' },
+    { icon:'🔊', title:'Som de notificação', text:'Quando chega uma notificação nova, o sino toca um "ding" curtinho — assim você percebe mesmo sem estar olhando pra tela. Pra ligar ou desligar, clique no ícone 🔊/🔇 dentro do painel do sino (perto de "Ativar notificações neste aparelho"). Fica salvo só nesse aparelho/navegador — pode deixar ligado no computador e mudo no celular, por exemplo. O som não toca durante o Não Perturbe.' },
     { icon:'🔕', title:'Não Perturbe', text:'Ainda dentro do painel do sino, o botão "🔔 Notificações ativas" abre um menu com opções de silêncio: por 1 hora, por 8 horas, até amanhã de manhã, ou até você mesmo desativar. Enquanto ativo, o sino mostra um selo 🔕 e as notificações que "interrompem" (o alerta de fora do app) ficam em silêncio — mas continuam sendo registradas normalmente no sino, então nada se perde, só não incomoda durante o período escolhido.' },
     { icon:'📲', title:'Instalar no celular (Android e iPhone)', text:'Instalar o Maré como um aplicativo de verdade na tela inicial — sem precisar de loja de app — deixa o uso mais rápido e é o que faz as notificações funcionarem direito no celular.\n\n📱 Android (Chrome): abra o Maré pelo Chrome → toque no menu ⋮ (três pontinhos, canto superior direito) → "Adicionar à tela inicial" (ou "Instalar app", dependendo da versão) → confirme. O ícone aparece na tela inicial como qualquer outro app.\n\n🍎 iPhone (precisa ser pelo Safari, não funciona por Chrome no iPhone): abra o Maré pelo Safari → toque no botão de compartilhar (o quadrado com a seta pra cima, na barra inferior) → role e toque em "Adicionar à Tela de Início" → confirme. Funciona a partir do iOS 16.4; em versões mais antigas o app abre normalmente, só as notificações externas que não funcionam.\n\nDepois de instalado, sempre abra pelo ícone da tela inicial (não pelo navegador) — é isso que garante as notificações e a experiência de app cheio, sem barra de endereço.' },
     { icon:'👥', title:'Equipe do quadro', text:'Clique nos avatares de usuários online (topo direito) para abrir a lista completa da equipe do squad: quem está online, papel de cada um (Membro, Organizador, PO, Admin) e iniciais. Útil para saber quem participa do quadro.' },
@@ -12934,7 +12959,25 @@ function setDndUntilTomorrowMorning(){
 function toggleDndMenu(e){
   e?.stopPropagation();
   const m=document.getElementById('dnd-menu');
-  if(m) m.style.display = (m.style.display==='block') ? 'none' : 'block';
+  const btn=document.getElementById('dnd-toggle-btn');
+  if(!m || !btn) return;
+  const willOpen = m.style.display!=='block';
+  if(willOpen){
+    // Posiciona como "fixed" com coordenadas calculadas na hora, escapando do
+    // overflow:hidden do .notif-panel (que corta qualquer coisa que ultrapasse
+    // sua própria caixa, mesmo com position:absolute) — sem isso, os itens do
+    // topo do menu (ex.: "Por 1 hora"/"Por 8 horas") ficavam invisíveis quando
+    // não cabia espaço suficiente acima do botão dentro do painel.
+    const r = btn.getBoundingClientRect();
+    m.style.position = 'fixed';
+    m.style.left = r.left+'px';
+    m.style.width = r.width+'px';
+    m.style.top = (r.bottom + 6)+'px';
+    m.style.bottom = 'auto';
+    m.style.display = 'block';
+  } else {
+    m.style.display = 'none';
+  }
 }
 function renderDndUI(){
   const active=isDndActive();
@@ -13076,6 +13119,49 @@ function loadNotifs(){
   });
 }
 
+// 🔔 Som de notificação — sintetizado na hora via Web Audio API, sem
+// nenhum arquivo de áudio (zero peso extra, zero download). Um "ding"
+// curtinho de dois tons. Respeita o Não Perturbe (não toca se estiver ativo)
+// e o mudo pessoal (isNotifSoundMuted), salvo no navegador de cada um.
+function isNotifSoundMuted(){
+  try{ return safeLS.getItem('notif_sound_muted')==='1'; }catch(e){ return false; }
+}
+function toggleNotifSound(){
+  const muted = !isNotifSoundMuted();
+  try{ safeLS.setItem('notif_sound_muted', muted?'1':'0'); }catch(e){}
+  renderNotifSoundToggle();
+  if(!muted) _playNotifSound(); // toquinha de confirmação ao reativar
+}
+function renderNotifSoundToggle(){
+  const btn = document.getElementById('notif-sound-toggle'); if(!btn) return;
+  const muted = isNotifSoundMuted();
+  btn.textContent = muted ? '🔇' : '🔊';
+  btn.title = muted ? 'Som desligado — clique para ligar' : 'Som ligado — clique para desligar';
+}
+let _notifAudioCtx = null;
+function _playNotifSound(){
+  try{
+    if(isNotifSoundMuted()) return;
+    if(typeof isDndActive === 'function' && isDndActive()) return;
+    if(!window.AudioContext && !window.webkitAudioContext) return;
+    if(!_notifAudioCtx) _notifAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const ctx = _notifAudioCtx;
+    if(ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    const now = ctx.currentTime;
+    [[880,0],[1108,0.09]].forEach(([freq,delay])=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now+delay);
+      gain.gain.linearRampToValueAtTime(0.15, now+delay+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+delay+0.25);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now+delay);
+      osc.stop(now+delay+0.26);
+    });
+  }catch(e){ /* navegador pode bloquear áudio sem interação prévia — silencioso */ }
+}
 function renderNotifs(notifs){
   const list = document.getElementById('notif-list'); if(!list) return;
   const badge = document.getElementById('notif-badge');
@@ -13089,6 +13175,7 @@ function renderNotifs(notifs){
     if(unread > 0 && !wasShowing && btn){
       btn.classList.add('ring');
       setTimeout(()=>btn.classList.remove('ring'), 600);
+      _playNotifSound();
     }
   }
   if(btn) btn.classList.toggle('has-unread', unread > 0);
@@ -15708,11 +15795,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   loadCampanhas();
