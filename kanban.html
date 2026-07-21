@@ -12892,6 +12892,17 @@ function notifPermRowClick(){
     }
   }
 }
+// Gerado UMA VEZ, síncrono, no carregamento da página — não dentro da função
+// async registerPushToken(). Gerar lá dentro criava uma corrida: se a página
+// já tentava reconfirmar o token sozinha (renderNotifPermUI) e a pessoa
+// clicasse no botão manualmente quase ao mesmo tempo, as duas chamadas liam
+// "ainda não existe" antes de qualquer uma salvar, e cada uma gerava um
+// device_id diferente — resultando em 2 entradas pro mesmo aparelho.
+let PUSH_DEVICE_ID = safeLS.getItem('push_device_id');
+if(!PUSH_DEVICE_ID){
+  PUSH_DEVICE_ID = 'dev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  safeLS.setItem('push_device_id', PUSH_DEVICE_ID);
+}
 async function registerPushToken(){
   if(!window._fcmReady){ console.warn('[FCM] indisponível neste navegador/contexto.'); return null; }
   if(FCM_VAPID_KEY.startsWith('COLE_AQUI')){ console.warn('[FCM] VAPID key ainda não configurada — veja FCM_VAPID_KEY no código.'); return null; }
@@ -12901,18 +12912,7 @@ async function registerPushToken(){
     await navigator.serviceWorker.ready;
     const token = await window._fcmGetToken(FCM_VAPID_KEY, swReg);
     if(!token) return null;
-    // Chave FIXA por aparelho/navegador, gerada uma vez e salva localmente — não
-    // depende do texto do user-agent (que no Safari/iOS pode variar sutilmente
-    // entre ativações e não bater na comparação) nem do token do FCM (que muda
-    // toda vez que o PWA é reinstalado). Assim, reativar no MESMO aparelho
-    // sempre sobrescreve a MESMA entrada no Firebase, em vez de criar uma nova
-    // e deixar a antiga "fantasma" recebendo push em duplicidade.
-    let deviceId = safeLS.getItem('push_device_id');
-    if(!deviceId){
-      deviceId = 'dev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
-      safeLS.setItem('push_device_id', deviceId);
-    }
-    await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+deviceId), {
+    await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+PUSH_DEVICE_ID), {
       token, ua: navigator.userAgent, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
     });
     return token;
@@ -12922,9 +12922,8 @@ async function unregisterPushToken(){
   const user = window._currentUser;
   try{
     if(window._fcmReady) await window._fcmDeleteToken();
-    const deviceId = safeLS.getItem('push_device_id');
-    if(user && deviceId){
-      await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+deviceId), null).catch(()=>{});
+    if(user){
+      await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+PUSH_DEVICE_ID), null).catch(()=>{});
     }
   }catch(e){ console.warn('[FCM] falha ao remover token:', e); }
 }
