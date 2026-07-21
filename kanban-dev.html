@@ -7219,6 +7219,12 @@ function openCard(id){
   _startDirtyWatch();
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
+    // ⚡ Trava contra corrida: se o usuário fechou este card e abriu outro
+    // (ou um "novo card" em branco) dentro desses 100ms, editingId já mudou
+    // — sem essa checagem, os comentários/anexos/cards vinculados do card
+    // ANTIGO vazavam pro formulário do card ATUAL, fazendo parecer que um
+    // card antigo tinha aberto sozinho no lugar de um novo em branco.
+    if(editingId !== id) return;
     initMentionDropdown('m-po');
     loadComments(id);
     renderDescPreview();
