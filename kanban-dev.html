@@ -1299,10 +1299,10 @@ input[type="date"]{-moz-appearance:textfield;}
   white-space:normal;word-break:break-word;
 }
 .dnd-menu{
-  display:none;box-sizing:border-box;position:absolute;bottom:100%;left:0;right:0;
-  margin-bottom:6px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);
-  border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:10;
-  overflow:hidden;
+  display:none;box-sizing:border-box;position:fixed;
+  background:rgba(8,22,42,.99);border:1px solid var(--glass-b);
+  border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:9999;
+  max-height:70vh;overflow-y:auto; /* segurança extra: se ainda assim não couber, rola em vez de cortar */
 }
 .dnd-menu-hint{font-size:10px;color:var(--txt3);padding:4px 8px 6px;box-sizing:border-box;white-space:normal;}
 .dnd-menu-item{
@@ -13239,7 +13239,25 @@ function setDndUntilTomorrowMorning(){
 function toggleDndMenu(e){
   e?.stopPropagation();
   const m=document.getElementById('dnd-menu');
-  if(m) m.style.display = (m.style.display==='block') ? 'none' : 'block';
+  const btn=document.getElementById('dnd-toggle-btn');
+  if(!m || !btn) return;
+  const willOpen = m.style.display!=='block';
+  if(willOpen){
+    // Posiciona como "fixed" com coordenadas calculadas na hora, escapando do
+    // overflow:hidden do .notif-panel (que corta qualquer coisa que ultrapasse
+    // sua própria caixa, mesmo com position:absolute) — sem isso, os itens do
+    // topo do menu (ex.: "Por 1 hora"/"Por 8 horas") ficavam invisíveis quando
+    // não cabia espaço suficiente acima do botão dentro do painel.
+    const r = btn.getBoundingClientRect();
+    m.style.position = 'fixed';
+    m.style.left = r.left+'px';
+    m.style.width = r.width+'px';
+    m.style.bottom = (window.innerHeight - r.top + 6)+'px';
+    m.style.top = 'auto';
+    m.style.display = 'block';
+  } else {
+    m.style.display = 'none';
+  }
 }
 function renderDndUI(){
   const active=isDndActive();
