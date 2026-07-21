@@ -12901,19 +12901,19 @@ async function registerPushToken(){
     await navigator.serviceWorker.ready;
     const token = await window._fcmGetToken(FCM_VAPID_KEY, swReg);
     if(!token) return null;
-    const tokenKey = token.replace(/[.#$/\[\]]/g,'_').slice(0,120);
-    const ua = navigator.userAgent;
-    // Remove qualquer token ANTIGO desse mesmo aparelho/navegador antes de salvar o novo —
-    // sem isso, cada reinstalação do PWA (token muda) deixava o token velho "fantasma" no
-    // Firebase pra sempre, e aí o mesmo aparelho recebia a notificação em duplicidade.
-    const existingSnap = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens'));
-    const existing = existingSnap.val()||{};
-    const cleanups = Object.entries(existing)
-      .filter(([key,t]) => t.ua===ua && key!==tokenKey)
-      .map(([key]) => window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+key), null).catch(()=>{}));
-    await Promise.all(cleanups);
-    await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+tokenKey), {
-      token, ua, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
+    // Chave FIXA por aparelho/navegador, gerada uma vez e salva localmente — não
+    // depende do texto do user-agent (que no Safari/iOS pode variar sutilmente
+    // entre ativações e não bater na comparação) nem do token do FCM (que muda
+    // toda vez que o PWA é reinstalado). Assim, reativar no MESMO aparelho
+    // sempre sobrescreve a MESMA entrada no Firebase, em vez de criar uma nova
+    // e deixar a antiga "fantasma" recebendo push em duplicidade.
+    let deviceId = safeLS.getItem('push_device_id');
+    if(!deviceId){
+      deviceId = 'dev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+      safeLS.setItem('push_device_id', deviceId);
+    }
+    await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+deviceId), {
+      token, ua: navigator.userAgent, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
     });
     return token;
   }catch(e){ console.warn('[FCM] falha ao registrar token:', e); return null; }
@@ -12922,14 +12922,9 @@ async function unregisterPushToken(){
   const user = window._currentUser;
   try{
     if(window._fcmReady) await window._fcmDeleteToken();
-    if(user){
-      const snap = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens'));
-      const tokens = snap.val()||{};
-      const mine = navigator.userAgent;
-      // Remove só o(s) token(s) desse aparelho/navegador (mesma UA) — não mexe nos de outros dispositivos da pessoa
-      for(const [key,t] of Object.entries(tokens)){
-        if(t.ua===mine) await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+key), null).catch(()=>{});
-      }
+    const deviceId = safeLS.getItem('push_device_id');
+    if(user && deviceId){
+      await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+deviceId), null).catch(()=>{});
     }
   }catch(e){ console.warn('[FCM] falha ao remover token:', e); }
 }
