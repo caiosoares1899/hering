@@ -6083,6 +6083,18 @@ async function _fbDelete(id){
 }
 
 async function loadUsoData(){
+  // ⏸️ TEMPORARIAMENTE DESATIVADO (2026-07-21) — essa função lia access_log de
+  // TODOS os squads toda vez que a aba Status abria ou o período mudava,
+  // suspeita de ser uma fonte relevante de consumo de download. O lado que
+  // escreve (kanban.html/_logAccess) também foi desativado junto — reative os
+  // dois ao mesmo tempo, senão fica um lendo log vazio ou o outro escrevendo à toa.
+  const elErro = document.getElementById('st-uso-erro-permissao');
+  if(elErro){
+    elErro.style.display = 'block';
+    elErro.innerHTML = '⏸ Engajamento & Uso Efetivo temporariamente desativado (economia de banda do Firebase). Fala com o Caio pra reativar.';
+  }
+  return;
+  // eslint-disable-next-line no-unreachable
   const dias = parseInt(document.getElementById('st-uso-periodo')?.value||'30');
   const hoje = new Date();
   const datasRange = [];
