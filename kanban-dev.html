@@ -13479,7 +13479,7 @@ function notifDone(card){
 // 5. Risco adicionado — notifica PO e Organizadores
 function notifRisk(card){
   // members pode não ter role populado — lê direto do Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
     const all=snap.val()||{};
     Object.entries(all).forEach(([uid,u])=>{
       if(!u||!uid) return;
@@ -17429,7 +17429,7 @@ async function convidarMembro(){
   const email = await uiPrompt('Digite o email do usuário a convidar:','',{title:'Convidar membro',placeholder:'email@exemplo.com'});
   if(!email || !email.includes('@')) return;
   // Busca o usuário pelo email no Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
     const all = snap.val()||{};
     const entry = Object.entries(all).find(([,u])=>u.email===email.trim().toLowerCase());
     if(!entry){
