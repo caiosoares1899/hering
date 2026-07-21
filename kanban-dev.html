@@ -2410,7 +2410,10 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="notif-ft" style="flex-direction:column;align-items:stretch;gap:6px;position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
-      <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button id="notif-sound-toggle" onclick="toggleNotifSound()" title="Ligar/desligar som de notificação" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--txt3);padding:0;line-height:1;"></button>
+        <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+      </div>
     </div>
     <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;box-sizing:border-box;">
       <button id="dnd-toggle-btn" class="dnd-toggle-btn" onclick="toggleDndMenu(event)">
@@ -13391,6 +13394,49 @@ function loadNotifs(){
   });
 }
 
+// 🔔 Som de notificação — sintetizado na hora via Web Audio API, sem
+// nenhum arquivo de áudio (zero peso extra, zero download). Um "ding"
+// curtinho de dois tons. Respeita o Não Perturbe (não toca se estiver ativo)
+// e o mudo pessoal (isNotifSoundMuted), salvo no navegador de cada um.
+function isNotifSoundMuted(){
+  try{ return safeLS.getItem('notif_sound_muted')==='1'; }catch(e){ return false; }
+}
+function toggleNotifSound(){
+  const muted = !isNotifSoundMuted();
+  try{ safeLS.setItem('notif_sound_muted', muted?'1':'0'); }catch(e){}
+  renderNotifSoundToggle();
+  if(!muted) _playNotifSound(); // toquinha de confirmação ao reativar
+}
+function renderNotifSoundToggle(){
+  const btn = document.getElementById('notif-sound-toggle'); if(!btn) return;
+  const muted = isNotifSoundMuted();
+  btn.textContent = muted ? '🔇' : '🔊';
+  btn.title = muted ? 'Som desligado — clique para ligar' : 'Som ligado — clique para desligar';
+}
+let _notifAudioCtx = null;
+function _playNotifSound(){
+  try{
+    if(isNotifSoundMuted()) return;
+    if(typeof isDndActive === 'function' && isDndActive()) return;
+    if(!window.AudioContext && !window.webkitAudioContext) return;
+    if(!_notifAudioCtx) _notifAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const ctx = _notifAudioCtx;
+    if(ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    const now = ctx.currentTime;
+    [[880,0],[1108,0.09]].forEach(([freq,delay])=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now+delay);
+      gain.gain.linearRampToValueAtTime(0.15, now+delay+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+delay+0.25);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now+delay);
+      osc.stop(now+delay+0.26);
+    });
+  }catch(e){ /* navegador pode bloquear áudio sem interação prévia — silencioso */ }
+}
 function renderNotifs(notifs){
   const list = document.getElementById('notif-list'); if(!list) return;
   const badge = document.getElementById('notif-badge');
@@ -13404,6 +13450,7 @@ function renderNotifs(notifs){
     if(unread > 0 && !wasShowing && btn){
       btn.classList.add('ring');
       setTimeout(()=>btn.classList.remove('ring'), 600);
+      _playNotifSound();
     }
   }
   if(btn) btn.classList.toggle('has-unread', unread > 0);
@@ -16033,11 +16080,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   loadCampanhas();
