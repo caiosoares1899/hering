@@ -8910,12 +8910,29 @@ function _listenKudos(){
     updKudosBadge();
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{ _dbgTrack('kudos_geral', snap.val());
+  // ⚡ kudos_geral é GLOBAL (todas as Estrelas do Mar de todos os squads, sem
+  // limpeza — só cresce) e antes era onValue: qualquer kudos dado em QUALQUER
+  // squad reenviava a lista inteira pra TODO board aberto de TODA squad.
+  // Trocado por poll periódico (aba em primeiro plano) — kudos não precisa
+  // aparecer em tempo real, alguns minutos de atraso é imperceptível.
+  _refreshKudosGeral();
+  setInterval(()=>{ if(!document.hidden) _refreshKudosGeral(); }, KUDOS_GERAL_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastKudosGeralRefresh > KUDOS_GERAL_POLL_MS) _refreshKudosGeral();
+  });
+}
+const KUDOS_GERAL_POLL_MS = 3*60000; // 3 minutos
+let _lastKudosGeralRefresh = 0;
+function _refreshKudosGeral(){
+  _lastKudosGeralRefresh = Date.now();
+  fbGet('kanban/painel/kudos_geral').then(snap=>{
+    _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     updKudosBadge();
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
-  });
+  }).catch(()=>{});
 }
 
 function toggleKudos(){
@@ -19236,7 +19253,12 @@ let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
 
 function _initComunicados(){
+  // ⚡ Antes eram DOIS listeners onValue separados no MESMO path
+  // 'kanban/comunicados' (um aqui, outro em _initMural mais abaixo) — cada
+  // mudança nesse node baixava os dados DUAS VEZES pra cada pessoa. Unificado
+  // num só: processa tanto o popup quanto o mural/badge no mesmo callback.
   window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
     _comunicadosAtivos = Object.entries(val)
@@ -19251,6 +19273,15 @@ function _initComunicados(){
       })
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _talvezMostrarComunicado();
+
+    // Mural — histórico completo (antes era o listener separado de _initMural)
+    _muralTodos = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
+      .filter(c=>c.publico!=='po' || _isPOOuMais())
+      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    _updateMuralBadge();
+    if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
   });
 }
 
@@ -19311,19 +19342,8 @@ function dismissComunicado(){
 // MURAL — histórico completo de comunicados (Fase 2) + Fale com o ADM (Fase 3)
 // ══════════════════════════════════════════════════════════════════════
 let _muralTodos = [];
-
-function _initMural(){
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
-    const val = snap.val() || {};
-    _muralTodos = Object.entries(val)
-      .map(([id,c])=>({...c, id}))
-      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
-      .filter(c=>c.publico!=='po' || _isPOOuMais())
-      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-    _updateMuralBadge();
-    if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
-  });
-}
+// _initMural() removido — sua lógica foi incorporada dentro de _initComunicados()
+// pra usar UM listener só no path 'kanban/comunicados' em vez de dois.
 
 function _updateMuralBadge(){
   const badge = document.getElementById('mural-badge');
@@ -19440,7 +19460,7 @@ function _lsGet(k){ try{ return (typeof safeLS!=='undefined'?safeLS:localStorage
 function _lsSet(k,v){ try{ (typeof safeLS!=='undefined'?safeLS:localStorage).setItem(k,v); }catch(e){} }
 
 window.addEventListener('auth-change', e=>{
-  if(e.detail){ setTimeout(_initComunicados, 2000); setTimeout(_initMural, 2000); }
+  if(e.detail){ setTimeout(_initComunicados, 2000); }
 }, {once:true});
 
 renderBoard();
