@@ -4061,7 +4061,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.168</div>
+<div class="version">v8.30.169</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5543,18 +5543,13 @@ let _cardsSyncDebounce = null;
     // Atualiza o botão de participar/sair do ADM
     updAdmParticiparBtn();
   }
-  const USUARIOS_POLL_MS = 3*60000; // 3 minutos — lista de membros não precisa ser instantânea
-  let _lastUsuariosRefresh = 0;
-  function _refreshUsuarios(){
-    _lastUsuariosRefresh = Date.now();
-    fbGet('kanban/usuarios').then(snap=>{ _dbgTrack('usuarios', snap.val()); _applyUsuariosData(snap.val()); }).catch(()=>{});
-  }
-  _refreshUsuarios(); // carga inicial
-  setInterval(()=>{ if(!document.hidden) _refreshUsuarios(); }, USUARIOS_POLL_MS);
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.hidden) return;
-    if(Date.now()-_lastUsuariosRefresh > USUARIOS_POLL_MS) _refreshUsuarios();
-  });
+  // 📡 Volta a ser tempo real (onValue) — mas agora no node LEVE
+  // 'kanban/usuarios_publicos' (só nome/email/foto/init/role/squads), em vez
+  // do 'kanban/usuarios' pesado (que carrega notificações + tokens de push de
+  // TODO MUNDO). O poll de 3min que existia aqui antes baixava o node inteiro
+  // mesmo sem nada mudar; onValue nesse node magro só reenvia quando alguém
+  // realmente edita o perfil — muito mais barato que os dois modelos anteriores.
+  fbListen('kanban/usuarios_publicos', val=>{ _applyUsuariosData(val); });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
     if(val){ blockerMode=val; applyBlockerMode(); renderBoard(); }
@@ -5614,7 +5609,7 @@ function openTeamList(){
     const pv=ps.val()||{}; const now=Date.now();
     Object.entries(pv).forEach(([uid,u])=>{ if(now-(u.ts||0)<30000) onlineUids.add(uid); });
   }).catch(()=>{}).finally(()=>{
-    fbGet('kanban/usuarios').then(snap=>{
+    fbGet('kanban/usuarios_publicos').then(snap=>{
       const val=snap.val()||{};
       const list=document.getElementById('team-list'); if(!list) return;
       const entries=Object.entries(val).filter(([uid,u])=> u.squads? u.squads[ACTIVE_SQUAD]===true : ((u.inscrito===true||u.inscrito==='true')&&u.init));
@@ -5931,6 +5926,13 @@ function autoRegistrar(user){
         inscrito:true, inscritoEm:new Date().toISOString(),
         squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
       });
+      // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
+      // qualquer board pode escutar em tempo real (onValue) sem baixar
+      // notificações/tokens de push de todo mundo (ver kanban/usuarios).
+      fbSet('kanban/usuarios_publicos/'+user.uid,{
+        nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
+        role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
+      });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
       _logAccess(user, newRole);
@@ -5941,26 +5943,40 @@ function autoRegistrar(user){
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
       window._currentUserRole=getEffectiveRole(user, existe.squads_roles&&existe.squads_roles[ACTIVE_SQUAD], existe.role);
+      // ⚡ Sincroniza usuarios_publicos SEMPRE no login, não só quando uma
+      // condição específica muda abaixo (foto, virar ADM, migração de squad).
+      // Sem isso, gente que já tinha conta e nunca disparou nenhuma dessas
+      // condições ficaria pra sempre sem entrada no node leve — sumindo da
+      // lista de membros/menções em qualquer board.
+      fbSet('kanban/usuarios_publicos/'+user.uid, {
+        nome: existe.nome||user.displayName||'', email: existe.email||user.email||'',
+        init: existe.init||'', foto: existe.foto||user.photoURL||'',
+        role: existe.role||'membro', inscrito: existe.inscrito||false,
+        squads: existe.squads||null, squads_roles: existe.squads_roles||null,
+      });
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       _logAccess(user, window._currentUserRole);
       setTimeout(_updateGcalPendingBadge, 1500);
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
-      if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
+      if(isAdmUser(user)&&existe.role!=='adm'){ fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{role:'adm'}); }
       // Migração: se inscrito legado sem squads, adiciona squad atual
       if((existe.inscrito===true||existe.inscrito==='true')&&existe.init&&!existe.squads){
         const migUpd={}; migUpd['squads/'+ACTIVE_SQUAD]=true;
         fbUpdate('kanban/usuarios/'+user.uid, migUpd);
+        fbUpdate('kanban/usuarios_publicos/'+user.uid, migUpd);
       }
       // Migra squad 'criacao' → 'midiacriativa' nos dados do usuário
       if(existe.squads&&existe.squads['criacao']&&!existe.squads['midiacriativa']){
         const criaMigUpd={'squads/midiacriativa':true,'squads/criacao':null};
         fbUpdate('kanban/usuarios/'+user.uid, criaMigUpd);
+        fbUpdate('kanban/usuarios_publicos/'+user.uid, criaMigUpd);
       }
       // Migra squad 'midia' → 'prf' (Marketing de Performance) nos dados do usuário
       if(existe.squads&&existe.squads['midia']&&!existe.squads['prf']){
         const midiaMigUpd={'squads/prf':true,'squads/midia':null};
         fbUpdate('kanban/usuarios/'+user.uid, midiaMigUpd);
+        fbUpdate('kanban/usuarios_publicos/'+user.uid, midiaMigUpd);
       }
       // Atualiza visibilidade do FAB do agente
       const fabBtn=document.querySelector('.fab-btn');
@@ -5972,7 +5988,7 @@ function autoRegistrar(user){
       if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
-      if(user.photoURL&&existe.foto!==user.photoURL) fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL});
+      if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
         members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
@@ -6010,6 +6026,7 @@ function confirmarInscricao(){
   const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
+  fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
   window._currentUserInit=init;
@@ -6052,6 +6069,7 @@ async function toggleAdmParticipar(){
     if(!await uiConfirm('Voltar a ser fantasma neste quadro? Você sai da lista de membros mas mantém todo o acesso de ADM.',{title:'Sair do quadro',okText:'Sair'})) return;
     const upd={}; upd['squads/'+ACTIVE_SQUAD]=null;
     fbUpdate('kanban/usuarios/'+u.uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+u.uid, upd);
     showToast('👻 Você voltou a ser fantasma neste quadro.');
   } else {
     // Participar: inscreve no squad
@@ -6060,6 +6078,7 @@ async function toggleAdmParticipar(){
     const upd={init, inscritoEm:new Date().toISOString()};
     upd['squads/'+ACTIVE_SQUAD]=true;
     fbUpdate('kanban/usuarios/'+u.uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+u.uid, upd);
     window._currentUserInit=init;
     showToast('🙋 Você agora participa deste quadro como membro.');
   }
@@ -7071,6 +7090,12 @@ function openCard(id){
   _startDirtyWatch();
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
+    // ⚡ Trava contra corrida: se o usuário fechou este card e abriu outro
+    // (ou um "novo card" em branco) dentro desses 100ms, editingId já mudou
+    // — sem essa checagem, os comentários/anexos/cards vinculados do card
+    // ANTIGO vazavam pro formulário do card ATUAL, fazendo parecer que um
+    // card antigo tinha aberto sozinho no lugar de um novo em branco.
+    if(editingId !== id) return;
     initMentionDropdown('m-po');
     loadComments(id);
     renderDescPreview();
@@ -8775,7 +8800,7 @@ function addKudos(){
     createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
   }
   // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
-  fbGet('kanban/usuarios').then(snap=>{
+  fbGet('kanban/usuarios_publicos').then(snap=>{
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(uid===u.uid || uid===toUid) return; // não duplica pro remetente nem pro agraciado
@@ -9227,7 +9252,7 @@ function openCampLogs(){
 
 // ── Carregar ──────────────────────────────────────────────────────
 function loadCampanhas(){
-  window._onValue(_campRef(), snap=>{
+  window._onValue(_campRef(), snap=>{ _dbgTrack('campanhas', snap.val());
     const raw = snap.val()||{};
     // Filtra campanhas que não pertencem ao squad ativo nem a squads reais —
     // evita que campanhas criadas em squads fictícios (dev, omnichannel) apareçam
@@ -11030,7 +11055,7 @@ function renderUsuariosSubs(){
 }
 function renderUsuarios(){
   const list=document.getElementById('usuarios-list'); list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
-  fbGet('kanban/usuarios').then(snap=>{
+  fbGet('kanban/usuarios_publicos').then(snap=>{
     const val=snap.val();
     if(!val){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário ainda.</div>'; return; }
     list.innerHTML='';
@@ -11110,6 +11135,7 @@ function alterarRole(uid,role){
   const update = {};
   update['squads_roles/'+ACTIVE_SQUAD] = role;
   fbUpdate('kanban/usuarios/'+uid, update);
+  fbUpdate('kanban/usuarios_publicos/'+uid, update);
   if(window._currentUser?.uid===uid) window._currentUserRole=role;
 }
 // Edita as iniciais de um membro e (opcionalmente) migra os cards atribuídos
@@ -11121,7 +11147,7 @@ async function editarInicial(uid, initAtual, nome){
   if(!novaInit || novaInit.length<1 || novaInit.length>4){ showToast('⚠ Use de 1 a 4 letras.'); return; }
   if(novaInit===initAtual.toUpperCase()){ return; }
   // Checa se a nova inicial já existe neste squad
-  const snap = await fbGet('kanban/usuarios');
+  const snap = await fbGet('kanban/usuarios_publicos');
   const all = snap.val()||{};
   const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit &&
     ((d.squads&&d.squads[ACTIVE_SQUAD]===true)||(!d.squads&&d.inscrito)));
@@ -11134,6 +11160,7 @@ async function editarInicial(uid, initAtual, nome){
   }
   // Atualiza a inicial do usuário
   await fbUpdate('kanban/usuarios/'+uid, {init:novaInit});
+  await fbUpdate('kanban/usuarios_publicos/'+uid, {init:novaInit});
   if(window._currentUser?.uid===uid) window._currentUserInit=novaInit;
   // Migra cards se confirmado
   if(migrar){
@@ -11156,6 +11183,7 @@ async function removerMembro(uid, nome){
   update['squads/'+ACTIVE_SQUAD] = null;
   update['squads_roles/'+ACTIVE_SQUAD] = null;
   fbUpdate('kanban/usuarios/'+uid, update);
+  fbUpdate('kanban/usuarios_publicos/'+uid, update);
   showToast('✅ '+nome+' removido do squad.');
   renderUsuarios();
 }
@@ -13012,6 +13040,7 @@ function loadNotifs(){
   if(_notifListener) return; // já registrado
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
   _notifListener = window._onValue(ref, snap=>{
+    _dbgTrack('notificacoes', snap.val());
     const val = snap.val()||{};
     const now = Date.now();
     const TTL = NOTIF_TTL_DAYS * 86400000;
@@ -13023,11 +13052,17 @@ function loadNotifs(){
       .filter(([id,n])=> now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
       .map(([id,n])=>({...n,id}))
       .sort((a,b)=>b.ts.localeCompare(a.ts));
-    // Limpa expiradas do Firebase
+    // Limpa expiradas do Firebase — TUDO numa escrita só (update multi-path),
+    // não um set(null) por item. Antes, cada delete individual re-disparava
+    // este mesmo onValue com a lista (um pouco menor) inteira de novo — K
+    // notificações expiradas = K downloads em cascata da lista completa.
+    const _toDelete = {};
     Object.entries(val).forEach(([id,n])=>{
-      if(now - new Date(n.ts).getTime() >= (n.read?TTL:TTL_UNREAD))
-        window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+id),null).catch(()=>{});
+      if(now - new Date(n.ts).getTime() >= (n.read?TTL:TTL_UNREAD)) _toDelete[id] = null;
     });
+    if(Object.keys(_toDelete).length){
+      window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), _toDelete).catch(()=>{});
+    }
     renderNotifs(active);
   }, err=>{
     // Sem isso, uma queda silenciosa de conexão deixava o sino surdo pro resto da sessão
@@ -13176,7 +13211,7 @@ function notifDone(card){
 // 5. Risco adicionado — notifica PO e Organizadores
 function notifRisk(card){
   // members pode não ter role populado — lê direto do Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
     const all=snap.val()||{};
     Object.entries(all).forEach(([uid,u])=>{
       if(!u||!uid) return;
@@ -13995,12 +14030,12 @@ function loadCalEvents(){
     window._gcalLocalEvents = val ? Object.values(val) : [];
     _mergeGcalSources();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => {
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => { _dbgTrack('painel_gcal_cache', snap.val());
     const val = snap.val();
     window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
     _mergeGcalSources();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => {
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => { _dbgTrack('painel_gcal_calendars', snap.val());
     const val = snap.val();
     window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
     _mergeGcalSources();
@@ -14012,7 +14047,7 @@ function loadCalEvents(){
 
   // ── Fila global de pedidos de agenda — cada um escuta e filtra os do PRÓPRIO squad,
   // pra saber quais das suas agendas ainda estão "aguardando aprovação do ADM" ──
-  window._onValue(window._ref(window._db,'kanban/config/gcal_queue'), snap => {
+  window._onValue(window._ref(window._db,'kanban/config/gcal_queue'), snap => { _dbgTrack('gcal_queue', snap.val());
     const val = snap.val() || {};
     window._gcalQueuePendingCalIds = new Set(
       Object.values(val).filter(r=>r.squadId===ACTIVE_SQUAD).map(r=>r.calId)
@@ -14156,7 +14191,7 @@ async function _queueGcalRequest(calId, calLabel){
   await window._set(window._ref(window._db,'kanban/config/gcal_queue/'+reqId), reqObj).catch(()=>{});
   // Notifica todos os ADMs conhecidos (busca uids pelos emails de ADM_EMAILS)
   try{
-    const snap = await fbGet('kanban/usuarios');
+    const snap = await fbGet('kanban/usuarios_publicos');
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
@@ -15731,9 +15766,9 @@ _onFbReady(()=>{
     renderOnline(online);
   }
   const _presenceRef = window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence');
-  const _pAdd = window._onChildAdded(_presenceRef, snap=>{ window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
-  const _pChg = window._onChildChanged(_presenceRef, snap=>{ window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
-  const _pRem = window._onChildRemoved(_presenceRef, snap=>{ delete window._presenceByUid[snap.key]; _renderPresenceFromMap(); });
+  const _pAdd = window._onChildAdded(_presenceRef, snap=>{ _dbgTrack('presence:child_added', snap.val()); window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
+  const _pChg = window._onChildChanged(_presenceRef, snap=>{ _dbgTrack('presence:child_changed', snap.val()); window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
+  const _pRem = window._onChildRemoved(_presenceRef, snap=>{ _dbgTrack('presence:child_removed', snap.val()); delete window._presenceByUid[snap.key]; _renderPresenceFromMap(); });
   window._presenceUnsubs=[_pAdd,_pChg,_pRem];
   clearInterval(window._presenceSweep);
   window._presenceSweep = setInterval(_renderPresenceFromMap, 20000); // reavalia o timeout localmente sem leitura nova, cobre quem desconectou sem heartbeat
@@ -17076,7 +17111,7 @@ async function convidarMembro(){
   const email = await uiPrompt('Digite o email do usuário a convidar:','',{title:'Convidar membro',placeholder:'email@exemplo.com'});
   if(!email || !email.includes('@')) return;
   // Busca o usuário pelo email no Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
     const all = snap.val()||{};
     const entry = Object.entries(all).find(([,u])=>u.email===email.trim().toLowerCase());
     if(!entry){
@@ -17101,6 +17136,7 @@ async function convidarMembro(){
       upd['squads_roles/'+ACTIVE_SQUAD] = 'membro';
     }
     fbUpdate('kanban/usuarios/'+uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+uid, upd);
     showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!'+avisoInit);
   });
 }
@@ -17727,7 +17763,7 @@ async function enviarFeedback(){
 
   try{
     await window._set(window._ref(window._db,'kanban/feedback/'+id), payload);
-    const snap = await fbGet('kanban/usuarios');
+    const snap = await fbGet('kanban/usuarios_publicos');
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
