@@ -4061,7 +4061,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.167</div>
+<div class="version">v8.30.168</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6971,7 +6971,7 @@ function saveExtraDesc(i){
   // se o card já existe, persiste na hora; senão fica no editingDescs até criar o card
   if(editingId){
     const c=cards.find(x=>x.id===editingId);
-    if(c){ c.descsExtra=_cleanExtraDescs(); fbSaveAll(); renderBoard(); }
+    if(c){ c.descsExtra=_cleanExtraDescs(); fbSaveCard(c); renderBoard(); }
   }
   renderExtraDescs();
   showToast('✅ Descrição salva!');
@@ -7406,7 +7406,7 @@ function saveCard(){
 function toggleCardOKR(cardId){
   const card = cards.find(c=>c.id===cardId); if(!card) return;
   card.isOKR = !card.isOKR;
-  fbSaveAll();
+  fbSaveCard(card);
   renderBoard();
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
@@ -7420,7 +7420,7 @@ async function deleteCard(){
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
-  c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveAll(); renderBoard(); closeOv('card-ov');
+  c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveCard(c); renderBoard(); closeOv('card-ov');
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
 function _duplicarCardObj(card){
@@ -7439,13 +7439,13 @@ function _duplicarCardObj(card){
 function duplicarCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   const novo=_duplicarCardObj(c);
-  fbSaveAll(); renderBoard(); closeOv('card-ov');
+  fbSaveCard(novo); renderBoard(); closeOv('card-ov');
   showToast('⧉ Card duplicado.');
 }
 function ctxDuplicate(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
-  _duplicarCardObj(card);
-  fbSaveAll(); renderBoard(); hideCtxMenu();
+  const novo=_duplicarCardObj(card);
+  fbSaveCard(novo); renderBoard(); hideCtxMenu();
   showToast('⧉ Card duplicado.');
 }
 // ── MÚLTIPLOS CHECKLISTS POR CARD ──────────────────────────────────
@@ -10210,7 +10210,7 @@ function openArquivados(){
   });
   document.getElementById('arch-ov').classList.add('open');
 }
-function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveAll(); renderBoard(); openArquivados(); }
+function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard(); openArquivados(); }
 function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
 async function deleteSelectedArchived(){
   const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
@@ -11396,7 +11396,7 @@ function executeTool(name,input){
       { const _cn=columns.find(x=>x.id===input.nova_coluna); recordHistory(found, 'moveu para '+(_cn?_cn.name:input.nova_coluna), '🤖 Agente Ágil'); } // 📜
       recordMove(found, input.nova_coluna); // ← métricas de fluxo
       renderBoard(); 
-      fbSaveAll(); 
+      fbSaveCard(found); 
       runAutoRules('move',found.id,input.nova_coluna);
       return{ok:true,msg:`"${found.title}" movido: ${ant} → ${input.nova_coluna}`};
     }
@@ -11406,7 +11406,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
       recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'—'), '🤖 Agente Ágil');
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo}`};
     }
     case 'marcar_checklist':{
@@ -11414,7 +11414,7 @@ function executeTool(name,input){
       if(!c||!c.checklist||c.checklist.length<=input.item_index) return{ok:false,msg:'Item não encontrado'};
       c.checklist[input.item_index].done=input.concluido; c.edited=user; c.editedAt=td;
       { const nd=(c.checklist||[]).filter(i=>i&&i.done).length, nt=(c.checklist||[]).length; recordHistory(c, 'checklist: '+nd+'/'+nt+' concluídos', '🤖 Agente Ágil'); }
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       return{ok:true,msg:`"${c.checklist[input.item_index].t}" ${input.concluido?'marcado':'desmarcado'}`};
     }
     case 'criar_card':{
@@ -11440,7 +11440,7 @@ function executeTool(name,input){
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
-      cards.push(novo); renderBoard(); fbSaveAll();
+      cards.push(novo); renderBoard(); fbSaveCard(novo);
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
     }
         case 'atualizar_owner':{
@@ -11473,7 +11473,7 @@ function executeTool(name,input){
       }
       c.owner=owner; c.edited=user; c.editedAt=td;
       { const m=members.find(x=>x.init===owner); recordHistory(c, 'definiu responsável: '+(m?m.name:(owner||'—')), '🤖 Agente Ágil'); }
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       const memberName=members.find(m=>m.init===owner)?.name||owner;
       return{ok:true,msg:`Responsável de "${c.title}" → ${memberName} (${owner})`};
     }
@@ -11483,7 +11483,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.priority=input.prioridade||''; c.edited=user; c.editedAt=td;
       recordHistory(c, 'alterou prioridade: '+(input.prioridade||'—'), '🤖 Agente Ágil');
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       const labels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa','':'removida'};
       return{ok:true,msg:`Prioridade de "${c.title}" → ${labels[input.prioridade||'']}`};
     }
@@ -11524,7 +11524,7 @@ function executeTool(name,input){
       if(input.descricao!==undefined) c.desc=input.descricao;
       if(input.po!==undefined) c.po=input.po;
       c.edited=user; c.editedAt=td;
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       return{ok:true,msg:`Card "${c.title}" atualizado`};
     }
         default: return{ok:false,msg:'Ferramenta desconhecida: '+name};
@@ -14748,8 +14748,10 @@ function handleDrop(e, colId){
   card._savePending = true; // flag: ignora echo do Firebase durante o save
   renderBoard();
 
-  // Persiste — reverte em caso de falha (anti rubber-banding)
-  fbSaveAll()
+  // ⚡ Trocado de fbSaveAll() (reescrevia o array /cards INTEIRO a cada
+  // arrastar de card — a ação mais comum do board) pra fbSaveCard(), que
+  // salva só esse card. Maior ponto de economia de banda encontrado no app.
+  fbSaveCard(card)
     .then(()=>{
       card._savePending = false;
       // Notificações só depois de confirmado pelo Firebase
@@ -14855,7 +14857,7 @@ function addTouchDnD(el, cardId){
     card.updatedAt = new Date().toISOString();
     card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     _crvApplyAutoStatus(card); // 🤖
-    renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+    renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
     showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
   });
   el.addEventListener('touchcancel',()=>{
@@ -15070,7 +15072,7 @@ function removeBlockerTag(){
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
-  fbSaveAll(); renderBoard();
+  fbSaveCard(c); renderBoard();
   showToast('Impedimento removido');
 }
 
@@ -15273,7 +15275,7 @@ async function resolveAllBugs(){
 function ctxToggleOKR(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   card.isOKR = !card.isOKR;
-  fbSaveAll(); renderBoard();
+  fbSaveCard(card); renderBoard();
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
 function ctxMove(colId){
@@ -15286,7 +15288,7 @@ function ctxMove(colId){
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   _crvApplyAutoStatus(card); // 🤖
-  renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+  renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
   // Notificações
   const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
   if(ant!==colId && colId===_doneColId) notifDone(card);
@@ -15304,7 +15306,7 @@ function ctxSetPriority(p){
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  renderBoard(); fbSaveAll();
+  renderBoard(); fbSaveCard(card);
   showToast(p ? `Prioridade ${p} definida` : 'Prioridade removida');
   hideCtxMenu();
 }
@@ -15318,7 +15320,7 @@ function ctxAssignMe(){
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  renderBoard(); fbSaveAll();
+  renderBoard(); fbSaveCard(card);
   showToast(`Card atribuído a ${window._currentUser?.displayName||init}`);
   hideCtxMenu();
 }
@@ -15383,7 +15385,7 @@ function ctxRecorrente(){
 function ctxArchive(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   saveUndo('arquivar card');
-  card.archived=true; card.archivedAt=new Date().toISOString(); renderBoard(); fbSaveAll();
+  card.archived=true; card.archivedAt=new Date().toISOString(); renderBoard(); fbSaveCard(card);
   showToast(`"${card.title.substring(0,25)}" arquivado`);
   hideCtxMenu();
 }
@@ -16182,7 +16184,7 @@ function deleteComment(cid){
   const cardObj=cards.find(c=>c.id===_commentCardId);
   if(!cardObj||!cardObj.comments) return;
   delete cardObj.comments[cid];
-  fbSaveAll();
+  fbSaveCard(cardObj);
   loadComments(_commentCardId);
 }
 
@@ -16234,7 +16236,7 @@ function saveEditComment(cid){
   if(!comment) return;
   comment.text = newText;
   comment.editedAt = new Date().toISOString();
-  fbSaveAll();
+  fbSaveCard(cardObj);
   loadComments(_commentCardId);
 }
 
@@ -16252,7 +16254,7 @@ function toggleReaction(cid, emoji){
   if(!c.reactions) c.reactions={};
   if(c.reactions[uid]===emoji){ delete c.reactions[uid]; } // toggle off
   else { c.reactions[uid]=emoji; }
-  fbSaveAll();
+  fbSaveCard(cardObj);
   loadComments(_commentCardId);
 }
 function _renderReactions(c){
@@ -16890,7 +16892,7 @@ function attachSave(){
   let title = svc?.label || '';
   try{ const u=new URL(url); if(!title) title=u.hostname.replace(/^www\./,''); } catch(e){}
   card.links.push({ id:'lnk'+Date.now(), url, title, ts:new Date().toISOString() });
-  fbSaveAll();
+  fbSaveCard(card);
   renderAttachList(card.links);
   inp.value='';
   document.getElementById('m-attach-inp-row').style.display='none';
@@ -16900,7 +16902,7 @@ function attachRemove(linkId){
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
   if(!card||!card.links) return;
   card.links = card.links.filter(l=>l.id!==linkId);
-  fbSaveAll();
+  fbSaveCard(card);
   renderAttachList(card.links);
 }
 
@@ -17051,7 +17053,7 @@ function saveMilanoteLink(){
   card.milanoteLink = url;
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  fbSaveAll();
+  fbSaveCard(card);
   renderMilanoteLink(card);
   renderBoard(); // atualiza o badge no card da lista
   showToast('📌 Peça do Milanote vinculada!');
@@ -17063,7 +17065,7 @@ function removeMilanoteLink(){
   delete card.milanoteLink;
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  fbSaveAll();
+  fbSaveCard(card);
   renderMilanoteLink(card);
   renderBoard();
   showToast('Peça desvinculada.');
