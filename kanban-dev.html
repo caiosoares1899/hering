@@ -1292,6 +1292,25 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
 #dnd-toggle-btn.dnd-active{border-color:rgba(255,209,102,.4)!important;color:var(--warn)!important;background:rgba(255,209,102,.08)!important;}
+.dnd-toggle-btn{
+  box-sizing:border-box;width:100%;text-align:left;background:none;
+  border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;
+  cursor:pointer;color:var(--txt2);font-size:11px;
+}
+.dnd-menu{
+  display:none;box-sizing:border-box;position:absolute;bottom:100%;left:0;right:0;
+  margin-bottom:6px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);
+  border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:10;
+  overflow:hidden;
+}
+.dnd-menu-hint{font-size:10px;color:var(--txt3);padding:4px 8px 6px;box-sizing:border-box;}
+.dnd-menu-item{
+  box-sizing:border-box;display:block;width:100%;text-align:left;background:none;
+  border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;
+  cursor:pointer;transition:background .12s;
+}
+.dnd-menu-item:hover{background:rgba(56,182,255,.1);}
+.dnd-menu-item-reativar{color:var(--accent);border-top:1px solid var(--glass-b);margin-top:4px;padding-top:10px;}
 @keyframes bell-ring{
   0%,100%{transform:rotate(0);}
   20%{transform:rotate(-20deg);}
@@ -2391,17 +2410,17 @@ input[type="date"]{-moz-appearance:textfield;}
       <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
       <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
     </div>
-    <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;">
-      <button id="dnd-toggle-btn" onclick="toggleDndMenu(event)" style="width:100%;text-align:left;background:none;border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--txt2);font-size:11px;">
+    <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;box-sizing:border-box;">
+      <button id="dnd-toggle-btn" class="dnd-toggle-btn" onclick="toggleDndMenu(event)">
         <span id="dnd-status-lbl">🔔 Notificações ativas</span>
       </button>
-      <div id="dnd-menu" style="display:none;position:absolute;bottom:100%;left:0;right:0;margin-bottom:6px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:10;">
-        <div style="font-size:10px;color:var(--txt3);padding:4px 8px 6px;">Silenciar avisos que interrompem (o sino continua registrando tudo)</div>
-        <button onclick="setDnd(true,60,'1 hora');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Por 1 hora</button>
-        <button onclick="setDnd(true,480,'8 horas');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Por 8 horas</button>
-        <button onclick="setDndUntilTomorrowMorning();toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Até amanhã de manhã</button>
-        <button onclick="setDnd(true,null,'');toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔕 Até eu desativar</button>
-        <button onclick="setDnd(false);toggleDndMenu()" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--accent);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;border-top:1px solid var(--glass-b);margin-top:4px;" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">🔔 Reativar notificações</button>
+      <div id="dnd-menu" class="dnd-menu">
+        <div class="dnd-menu-hint">Silenciar avisos que interrompem (o sino continua registrando tudo)</div>
+        <button class="dnd-menu-item" onclick="setDnd(true,60,'1 hora');toggleDndMenu()">🔕 Por 1 hora</button>
+        <button class="dnd-menu-item" onclick="setDnd(true,480,'8 horas');toggleDndMenu()">🔕 Por 8 horas</button>
+        <button class="dnd-menu-item" onclick="setDndUntilTomorrowMorning();toggleDndMenu()">🔕 Até amanhã de manhã</button>
+        <button class="dnd-menu-item" onclick="setDnd(true,null,'');toggleDndMenu()">🔕 Até eu desativar</button>
+        <button class="dnd-menu-item dnd-menu-item-reativar" onclick="setDnd(false);toggleDndMenu()">🔔 Reativar notificações</button>
       </div>
     </div>
   </div>
