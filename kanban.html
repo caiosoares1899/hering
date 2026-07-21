@@ -5460,8 +5460,17 @@ let _cardsSyncDebounce = null;
   _listenLembretesDismiss();
   // Estrelas do Mar (kudos)
   _listenKudos();
-  // Membros inscritos — carrega todos do Firebase
-  fbListen('kanban/usuarios', val=>{
+  // Membros inscritos — carrega todos do Firebase.
+  // ⚠ Antes usava fbListen (onValue) direto nesse node — só que kanban/usuarios
+  // é GLOBAL (todo mundo, de todos os squads, não só este). Com onValue, o
+  // Firebase reenviava a lista INTEIRA (dezenas de KB) pra ESTE board toda vez
+  // que QUALQUER usuário, em QUALQUER squad, tivesse qualquer campo alterado
+  // (login, presença, permissão, etc.) — mesmo sem relação nenhuma com este
+  // squad. Trocado por: 1 busca ao entrar + poll periódico (só com a aba em
+  // primeiro plano) — resolve o mesmo propósito (lista de membros/menções
+  // fica atualizada em minutos, não em milissegundos) sem o efeito multiplicador
+  // "qualquer mudança em qualquer lugar reenvia tudo pra todo mundo".
+  function _applyUsuariosData(val){
     if(!val) return;
     window._allUsersRaw = val; // dados crus p/ checagens (ex: ADM participando do quadro)
     members = [];
@@ -5526,6 +5535,18 @@ let _cardsSyncDebounce = null;
     }
     // Atualiza o botão de participar/sair do ADM
     updAdmParticiparBtn();
+  }
+  const USUARIOS_POLL_MS = 3*60000; // 3 minutos — lista de membros não precisa ser instantânea
+  let _lastUsuariosRefresh = 0;
+  function _refreshUsuarios(){
+    _lastUsuariosRefresh = Date.now();
+    fbGet('kanban/usuarios').then(snap=>{ _dbgTrack('usuarios', snap.val()); _applyUsuariosData(snap.val()); }).catch(()=>{});
+  }
+  _refreshUsuarios(); // carga inicial
+  setInterval(()=>{ if(!document.hidden) _refreshUsuarios(); }, USUARIOS_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastUsuariosRefresh > USUARIOS_POLL_MS) _refreshUsuarios();
   });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
