@@ -4061,7 +4061,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.166</div>
+<div class="version">v8.30.167</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4213,6 +4213,13 @@ function _localDateStrBoard(d){
   return y+'-'+m+'-'+day;
 }
 function _logAccess(user, role){
+  // ⏸️ TEMPORARIAMENTE DESATIVADO (2026-07-21) — suspeito de ser uma fonte
+  // relevante de consumo de download: o painel lia esse log inteiro, de
+  // TODOS os squads, toda vez que a aba Status abria. Reative removendo o
+  // "return" abaixo quando o painel também reativar a leitura (função
+  // loadUsoData em painel.html), senão fica escrevendo à toa sem ninguém ler.
+  return;
+  // eslint-disable-next-line no-unreachable
   if(!user || !user.uid || !window._fbReady) return;
   const today = _localDateStrBoard(new Date());
   const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
