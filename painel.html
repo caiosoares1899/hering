@@ -2249,14 +2249,15 @@ function _dbgFlush(){
   const nodeKey=hourKey+'_'+uidShort;
   const path='kanban/painel/_debug_bytes_log/'+nodeKey;
   window._get(window._ref(window._db,path)).then(snap=>{
-    const prev=snap.val()||{ts:d.toISOString(),who,byPath:{}};
+    const _localTs=hourKey.slice(0,10)+'T'+hourKey.slice(11,13)+':00:00';
+    const prev=snap.val()||{ts:_localTs,who,byPath:{}};
     entries.forEach(([k,s])=>{
       const key=k.replace(/[.#$/\[\]]/g,'_');
       const acc=prev.byPath[key]||{count:0,bytes:0};
       acc.count+=s.count; acc.bytes+=s.bytes;
       prev.byPath[key]=acc;
     });
-    prev.ts=d.toISOString(); prev.who=who;
+    prev.ts=_localTs; prev.who=who;
     window._set(window._ref(window._db,path), prev).catch(()=>{});
   }).catch(()=>{});
   Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
