@@ -1398,6 +1398,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <button id="pushm-btn" onclick="sendPainelPush()" disabled
         style="padding:7px 16px;font-size:11px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);border-radius:8px;cursor:pointer;opacity:.5;">🔔 Enviar push</button>
       <div style="font-size:9px;color:var(--txt3);margin-top:8px;">Só chega no aparelho de quem já ativou notificações push. Sem isso, a pessoa ainda vê no sino do board normalmente.</div>
+
+      <!-- Histórico: carregado SÓ quando expandido (não na abertura da aba) — quem nunca
+           abre isso não gasta nenhum byte com histórico de push. Depois de aberto uma vez,
+           fica em cache local (_pushHistCache) até a pessoa clicar em "🔄 Atualizar". -->
+      <div style="margin-top:14px;border-top:1px solid var(--glass-b);padding-top:10px;">
+        <button onclick="_togglePushHist()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;cursor:pointer;padding:4px 0;">
+          <span id="pushhist-caret">▶</span> 🗂 Histórico de pushes enviados
+        </button>
+        <div id="pushhist-wrap" style="display:none;margin-top:8px;">
+          <div id="pushhist-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
     </div>
 
     <div id="pcal-section" style="margin-bottom:20px;">
@@ -7039,6 +7051,20 @@ async function sendPainelPush(){
       ok++;
     }catch(e){ fail++; }
   }));
+  // 1 registro só de histórico por envio, INDEPENDENTE de quantas pessoas — mandar pra
+  // 1 pessoa ou 200 custa a mesma coisa aqui. Guarda só os uids (strings), não os dados
+  // completos de cada pessoa, pra manter o registro pequeno.
+  const histId='ph'+Date.now()+Math.random().toString(36).slice(2,6);
+  window._set(window._ref(window._db,'kanban/pushes_historico/'+histId), {
+    id:histId, titulo, msg, alvoUids:alvo, count:ok, enviadoPor:window._currentUser?.displayName||window._currentUser?.email||'?', ts,
+  }).then(()=>{
+    // Se o histórico já foi carregado nesta sessão, atualiza o cache local em vez de
+    // re-buscar tudo do Firebase de novo.
+    if(_pushHistCache){
+      _pushHistCache[histId] = {id:histId, titulo, msg, alvoUids:alvo, count:ok, enviadoPor:window._currentUser?.displayName||window._currentUser?.email||'?', ts};
+      renderPushHist();
+    }
+  }).catch(()=>{});
   if(btn){ btn.disabled=false; btn.textContent='🔔 Enviar push'; }
   document.getElementById('pushm-title').value='';
   document.getElementById('pushm-msg').value='';
@@ -7047,6 +7073,58 @@ async function sendPainelPush(){
   renderPushmUsers();
   showToast(fail===0 ? `🔔 Enviado pra ${ok} pessoa(s)!` : `🔔 ${ok} enviado(s), ${fail} falhou(aram).`);
 }
+
+// ── HISTÓRICO DE PUSHES (carregado sob demanda, não em toda abertura de aba) ──────
+let _pushHistCache = null; // null = ainda não carregado nesta sessão
+async function _togglePushHist(){
+  const wrap=document.getElementById('pushhist-wrap');
+  const caret=document.getElementById('pushhist-caret');
+  const opening = wrap.style.display==='none';
+  wrap.style.display = opening ? 'block' : 'none';
+  caret.textContent = opening ? '▼' : '▶';
+  if(opening && _pushHistCache===null){
+    document.getElementById('pushhist-list').innerHTML = '<div style="font-size:10px;color:var(--txt3);">Carregando...</div>';
+    // window._get = leitura ÚNICA (não é listener), não fica baixando de novo sozinha.
+    try{
+      const snap = await window._get(window._ref(window._db,'kanban/pushes_historico'));
+      _pushHistCache = snap.val() || {};
+    }catch(e){ _pushHistCache = {}; }
+    renderPushHist();
+  }
+}
+function renderPushHist(){
+  const el=document.getElementById('pushhist-list');
+  if(!el || !_pushHistCache) return;
+  const todos = Object.values(_pushHistCache).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))).slice(0,30);
+  if(!todos.length){ el.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhum push enviado ainda.</div>'; return; }
+  el.innerHTML = todos.map(p=>{
+    const data = p.ts ? new Date(p.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:8px;padding:8px 10px;font-size:11px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:start;">
+        <div style="min-width:0;">
+          <div style="font-weight:600;color:var(--txt1);">${esc(p.titulo||'')}</div>
+          <div style="color:var(--txt3);font-size:10px;margin-top:2px;">${esc(p.msg||'')}</div>
+          <div style="color:var(--txt3);font-size:9px;margin-top:4px;">${data} · ${p.count||0} pessoa(s) · por ${esc(p.enviadoPor||'?')}</div>
+        </div>
+        <button onclick="_pushHistReenviar('${esc(p.id)}')" style="flex-shrink:0;padding:4px 10px;font-size:10px;background:rgba(29,233,182,.12);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:7px;cursor:pointer;white-space:nowrap;">↩ Reenviar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _pushHistReenviar(id){
+  const p = _pushHistCache?.[id]; if(!p) return;
+  document.getElementById('pushm-title').value = p.titulo||'';
+  document.getElementById('pushm-msg').value = p.msg||'';
+  // Só re-seleciona quem ainda existe no cadastro hoje — gente removida some da seleção
+  // silenciosamente (não dá erro, só não fica marcada).
+  const aindaExiste = (p.alvoUids||[]).filter(uid=>_globalUsersCache && _globalUsersCache[uid]);
+  _pushmSelected = new Set(aindaExiste);
+  renderPushmUsers();
+  const removidos = (p.alvoUids||[]).length - aindaExiste.length;
+  showToast(removidos>0 ? `↩ Preenchido (${removidos} pessoa(s) daquele envio não existem mais).` : '↩ Preenchido — revise e clique em Enviar.');
+  document.getElementById('pushm-title').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
 
 function renderGlobalUsers(){
   const list = document.getElementById('global-users-list');
