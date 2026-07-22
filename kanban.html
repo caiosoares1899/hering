@@ -15300,6 +15300,14 @@ function doUndo(){
   const prev=_undoStack.pop();
   cards=prev.cards;
   fbSaveAll(); renderBoard();
+  // Se o modal do card estava aberto, os campos em tela (descrição, checklist, etc.)
+  // não se atualizam sozinhos com o renderBoard() — sem isso, o "Desfazer" parecia não
+  // fazer nada (o Firebase voltava, mas a tela continuava com o texto novo, e qualquer
+  // edição seguinte reescrevia por cima do que tinha acabado de ser restaurado).
+  const _covOpen = document.getElementById('card-ov')?.classList.contains('open');
+  if(_covOpen && editingId && cards.find(c=>c.id===editingId)){
+    openCard(editingId);
+  }
   showToast('↩ Desfeito: '+prev.label);
   if(_undoStack.length){
     showUndoBtn(_undoStack[_undoStack.length-1].label);
