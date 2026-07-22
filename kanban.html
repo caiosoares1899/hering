@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.169</div>
+<div class="version">v8.30.170</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -16435,6 +16435,10 @@ function toggleReaction(cid, emoji){
   else { c.reactions[uid]=emoji; }
   fbSaveCard(cardObj);
   loadComments(_commentCardId);
+  // notifica o autor do comentário que reagiram (se não for ele mesmo)
+  if(c.reactions[uid] && c.uid && c.uid!==uid){
+    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,cardObj.id);
+  }
 }
 function _renderReactions(c){
   const r=c.reactions||{};
