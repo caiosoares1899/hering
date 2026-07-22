@@ -1,0 +1,119 @@
+{
+  "rules": {
+    "kanban": {
+      "campanhas": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "campanhas_log": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "campanhas_log_dev": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "dados_diarios": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "dados_diarios_dev": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "comunicados": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "feedback": {
+        ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+        ".write": "auth != null"
+      },
+      "squads_meta": {
+        ".read": "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "squads": {
+        "$squadId": {
+          "dados": {
+            ".read":  "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true)",
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true)"
+          },
+          "presence": {
+            ".read": "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && auth.token.email.endsWith('@ciahering.com.br')"
+            }
+          },
+          "snapshots": {
+            ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+            ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+          },
+          "error_logs": {
+            ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+            ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+          },
+          "error_stats": {
+            ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+            ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+          },
+          "agent_usage": {
+            ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+            ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+          },
+          "access_log": {
+            ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+            ".write": "auth != null"
+          },
+          "externos": {
+            ".read": "auth != null",
+            ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
+          }
+        }
+      },
+      "painel": {
+        ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "config": {
+        ".read":  "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+        ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+      },
+      "usuarios": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
+          "role": {
+            ".validate": "auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
+          }
+        }
+      },
+      "usuarios_publicos": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))"
+        }
+      },
+      "presence": {
+        ".read": "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && auth.token.email.endsWith('@ciahering.com.br')"
+        }
+      },
+      "global": {
+        "force_logout_after": {
+          ".read":  "auth != null",
+          ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+        },
+        "force_logout_after_dev": {
+          ".read":  "auth != null",
+          ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+        },
+        "idle_logout_config": {
+          ".read":  "auth != null",
+          ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br')"
+        }
+      }
+    }
+  }
+}
