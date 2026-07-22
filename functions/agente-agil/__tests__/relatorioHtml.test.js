@@ -1,14 +1,13 @@
-// functions/agente-agil/outputs/relatorioHtml.test.js
-//
 // Testa extractImagesForUpload/replacePlaceholders como funções puras —
-// parseamento de string, sem tocar Storage. Rodar com:
-// node functions/agente-agil/outputs/relatorioHtml.test.js
+// parseamento de string, sem tocar Storage nem emulador.
 
+const test = require('node:test');
 const assert = require('node:assert/strict');
-const { extractImagesForUpload, replacePlaceholders } = require('./relatorioHtml');
 
-// PNG 1x1 transparente — não precisa ser uma imagem "de verdade" pra
-// testar o parseamento, só precisa ser base64 válido.
+const { extractImagesForUpload, replacePlaceholders } = require('../outputs/relatorioHtml');
+
+// PNG 1x1 transparente — não precisa ser uma imagem "de verdade" pra testar
+// o parseamento, só precisa ser base64 válido.
 const PNG_1PX = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 const FIXTURE_HTML = `<html><body>
@@ -18,8 +17,7 @@ const FIXTURE_HTML = `<html><body>
 <img src='data:image/jpeg;base64,${PNG_1PX}'>
 </body></html>`;
 
-// acha as duas imagens, decodifica pra buffer binário, tira o base64 do html
-{
+test('extractImagesForUpload acha as duas imagens, decodifica e tira o base64 do html', () => {
   const { html, images } = extractImagesForUpload(FIXTURE_HTML);
   assert.equal(images.length, 2);
   assert.equal(images[0].filename, 'imagem-1.png');
@@ -31,17 +29,15 @@ const FIXTURE_HTML = `<html><body>
   assert.ok(!html.includes('base64'), 'html final não deve sobrar nenhum base64');
   assert.ok(html.includes(images[0].placeholder));
   assert.ok(html.includes(images[1].placeholder));
-}
+});
 
-// html sem nenhuma imagem embutida -> devolve igual, lista vazia
-{
+test('extractImagesForUpload devolve igual quando não tem imagem embutida', () => {
   const { html, images } = extractImagesForUpload('<html><body>sem imagem</body></html>');
   assert.equal(images.length, 0);
   assert.equal(html, '<html><body>sem imagem</body></html>');
-}
+});
 
-// replacePlaceholders troca cada placeholder pela URL final
-{
+test('replacePlaceholders troca cada placeholder pela URL final', () => {
   const { html, images } = extractImagesForUpload(FIXTURE_HTML);
   const urlByPlaceholder = {};
   images.forEach((img, i) => {
@@ -51,6 +47,4 @@ const FIXTURE_HTML = `<html><body>
   assert.ok(final.includes('https://storage.example/img0.png'));
   assert.ok(final.includes('https://storage.example/img1.png'));
   assert.ok(!final.includes('__AGENTE_AGIL_IMG_'));
-}
-
-console.log('outputs/relatorioHtml.test.js: ok');
+});

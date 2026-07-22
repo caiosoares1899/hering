@@ -1,39 +1,34 @@
-// functions/agente-agil/outputs/link.js
+// card.links é array de verdade (kanban.html faz card.links.push() no cliente) —
+// o único campo tocado pelo Agente Ágil com risco real de concorrência. Por
+// isso a escrita usa uma transaction escopada só em {cardPath}/links, nunca
+// um update() direto que pudesse pisar num link adicionado ao mesmo tempo
+// por um humano no board.
 //
-// Traduz um output {type:'link', url, titulo} num plano de escrita.
-// links é array de verdade em /cards/{chave}/links — único campo com
-// risco real de concorrência (dois pushes simultâneos podem se pisar) —
-// então precisa rodar como TRANSACTION escopada só nesse campo, nunca
-// como update() direto.
-//
-// buildLinkPlan é a parte reaproveitável: relatorioHtml.js chama ela
-// direto depois de hospedar o relatório no Storage, pra não duplicar a
-// lógica de escrita do link no card.
+// buildLinkStep é a parte reaproveitável: relatorioHtml.js chama ela direto
+// depois de hospedar o relatório no Storage, pra não duplicar a lógica de
+// escrita do link no card.
 
-function buildLinkPlan({ url, titulo }, ctx) {
+function buildLinkStep({ url, titulo }, ctx) {
   const link = {
-    id: ctx.newId('lnk'),
+    id: 'lnk' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
     url,
     title: titulo,
-    ts: ctx.now(),
-    origemAgente: true,
+    ts: new Date().toISOString(),
   };
-  return [
-    {
-      kind: 'transaction',
-      path: 'links',
-      preview: link, // só pro dryRun mostrar o que seria escrito — apply() é quem manda de verdade
-      apply: (current) => {
-        const arr = Array.isArray(current) ? current.slice() : [];
-        arr.push(link);
-        return arr;
-      },
+  return {
+    kind: 'transaction',
+    path: `${ctx.cardPath}/links`,
+    preview: link, // só pro dryRun mostrar o que seria escrito — transform() é quem manda de verdade
+    transform(current) {
+      const links = Array.isArray(current) ? current.slice() : [];
+      links.push(link);
+      return links;
     },
-  ];
+  };
 }
 
-function plan(output, ctx) {
-  return buildLinkPlan({ url: output.url, titulo: output.titulo }, ctx);
+function build(out, ctx) {
+  return buildLinkStep({ url: out.url, titulo: out.titulo }, ctx);
 }
 
-module.exports = { plan, buildLinkPlan };
+module.exports = { build, buildLinkStep };

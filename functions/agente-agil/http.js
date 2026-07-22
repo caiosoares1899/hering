@@ -1,99 +1,86 @@
 // functions/agente-agil/http.js
 //
-// Endpoint HTTP do Agente Ágil — hoje só recebe a RESPOSTA de um
-// especialista (outputs a aplicar num card). O pedido inicial (Agente
-// Ágil -> Especialista) e o callback assíncrono são trabalho de fases
-// futuras (v3).
+// Endpoint HTTP do Agente Ágil — o ÚNICO ponto de contato entre especialistas
+// externos (hoje: agente Databricks) e o board. Especialistas nunca leem/
+// escrevem direto no Firebase; só mandam esse envelope aqui.
 //
-// Auth v0: header x-agent-key comparado com um secret. Sem auth por
-// agente ainda (v4).
+// v0: auth por secret compartilhado (header x-agent-key), idempotência por
+// requestId (sem TTL de limpeza automática ainda — RTDB não tem TTL nativo;
+// só evita duplicar em retry), resolução de card por cardId direto (sem
+// "referencia" de negócio — isso é v1), outputs "comentario", "link" e
+// "relatorio_html" (hospeda no Storage, ver outputs/relatorioHtml.js).
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
 
-const { AgentResponseEnvelope } = require('./schema');
-const { buildWritePlan } = require('./outputs');
-const board = require('./board');
-const storage = require('./storage');
+const { envelope } = require('./schema');
+const { SQUAD_ID, resolveCardKey, buildWritePlan, applyWritePlan } = require('./board');
 
-const AGENT_AGIL_KEY = defineSecret('AGENT_AGIL_KEY');
+const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
 
-function newId(prefix) {
-  return `${prefix}${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
+const IDEMPOTENCY_PATH = `kanban/squads/${SQUAD_ID}/dados/agente_agil_processed`;
 
-exports.agenteAgil = onRequest({ region: 'us-central1', secrets: [AGENT_AGIL_KEY] }, async (req, res) => {
-  if (req.method !== 'POST') {
-    res.status(405).json({ ok: false, error: 'method_not_allowed' });
-    return;
-  }
-
-  if (req.get('x-agent-key') !== AGENT_AGIL_KEY.value()) {
-    res.status(401).json({ ok: false, error: 'unauthorized' });
-    return;
-  }
-
-  const parsed = AgentResponseEnvelope.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ ok: false, error: 'invalid_payload', issues: parsed.error.issues });
-    return;
-  }
-  const body = parsed.data;
-
-  const db = getDatabase();
-
-  if (!body.dryRun && (await board.isProcessed(db, body.requestId))) {
-    res.status(200).json({ ok: true, requestId: body.requestId, alreadyProcessed: true });
-    return;
-  }
-
-  const ctx = {
-    agentUid: 'agente-agil',
-    agentName: 'Agente Ágil',
-    agentInit: 'AA',
-    now: () => new Date().toISOString(),
-    newId,
-    dryRun: body.dryRun,
-    reportBasePath: () => storage.reportBasePath(board.SQUAD, body.cardId),
-    uploadAndSign: storage.uploadAndSign,
-  };
-
-  let writePlan;
-  try {
-    writePlan = await buildWritePlan(body.outputs, ctx);
-  } catch (err) {
-    if (err.code === 'unknown_output_type') {
-      res.status(400).json({ ok: false, error: 'invalid_output', message: err.message });
+const agenteAgil = onRequest(
+  { region: 'us-central1', secrets: [AGENTE_AGIL_KEY] },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'method_not_allowed' });
       return;
     }
-    // Erro real de I/O (ex.: upload pro Storage falhou) — não é payload
-    // inválido do especialista, é falha do nosso lado.
-    console.error('[agenteAgil] falha ao montar plano de escrita:', err);
-    res.status(500).json({ ok: false, error: 'write_plan_failed' });
-    return;
+
+    if (req.get('x-agent-key') !== AGENTE_AGIL_KEY.value()) {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+
+    const parsed = envelope.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'invalid_payload', details: parsed.error.flatten() });
+      return;
+    }
+    const payload = parsed.data;
+    const db = getDatabase();
+
+    if (!payload.dryRun) {
+      const processedSnap = await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).get();
+      if (processedSnap.exists()) {
+        res.status(200).json({ ok: true, idempotent: true });
+        return;
+      }
+    }
+
+    const cardKey = await resolveCardKey(db, payload.cardId);
+    if (!cardKey) {
+      res.status(404).json({ error: 'card_not_found', cardId: payload.cardId });
+      return;
+    }
+
+    let plan;
+    try {
+      plan = await buildWritePlan(cardKey, payload.outputs, { cardId: payload.cardId, dryRun: payload.dryRun });
+    } catch (err) {
+      if (err.code === 'unknown_output_type') {
+        res.status(400).json({ error: 'invalid_output', message: err.message });
+        return;
+      }
+      // Falha de I/O de verdade (ex.: upload de relatorio_html pro Storage) —
+      // não é payload inválido do especialista, é falha do nosso lado.
+      console.error('[agenteAgil] falha ao montar plano de escrita:', err);
+      res.status(500).json({ error: 'write_plan_failed' });
+      return;
+    }
+
+    if (payload.dryRun) {
+      res.status(200).json({ ok: true, dryRun: true, cardKey, plan });
+      return;
+    }
+
+    await applyWritePlan(db, plan);
+    await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).set({ at: new Date().toISOString() });
+
+    res.status(200).json({ ok: true, cardKey, applied: plan.length });
   }
+);
 
-  if (body.dryRun) {
-    res.status(200).json({ ok: true, dryRun: true, requestId: body.requestId, cardId: body.cardId, plan: writePlan });
-    return;
-  }
-
-  const resolved = await board.resolveCardKeyWithRetry(db, body.cardId);
-  if (!resolved) {
-    res.status(404).json({ ok: false, error: 'card_not_found', cardId: body.cardId });
-    return;
-  }
-
-  try {
-    await board.applyWritePlan(db, resolved.key, writePlan);
-  } catch (err) {
-    console.error('[agenteAgil] falha ao aplicar plano de escrita:', err);
-    res.status(500).json({ ok: false, error: 'write_failed' });
-    return;
-  }
-
-  await board.markProcessed(db, body.requestId, { cardId: body.cardId, cardKey: resolved.key });
-
-  res.status(200).json({ ok: true, requestId: body.requestId, cardId: body.cardId, applied: writePlan.length });
-});
+module.exports = { agenteAgil };

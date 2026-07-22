@@ -1,21 +1,23 @@
-// functions/agente-agil/outputs/comentario.js
-//
-// Traduz um output {type:'comentario', texto} num plano de escrita.
-// comments é um OBJETO chaveado por id em /cards/{chave}/comments (não
-// array) — sem risco de posição, então é um update() de folha só.
+// Comentário vira update multi-path em {cardPath}/comments/{novoId} — comments
+// já é objeto chaveado por id no schema real do card (kanban.html), então não
+// tem risco de posição/concorrência como card.links (array) tem.
 
-function plan(output, ctx) {
-  const commentId = ctx.newId('agente');
-  const comment = {
-    id: commentId,
-    uid: ctx.agentUid,
-    author: ctx.agentName,
-    init: ctx.agentInit,
-    text: output.texto,
-    ts: ctx.now(),
-    origemAgente: true,
+function build(out, ctx) {
+  const id = 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
+  return {
+    kind: 'update',
+    path: `${ctx.cardPath}/comments`,
+    data: {
+      [id]: {
+        id,
+        uid: 'agente-agil',
+        author: 'Agente Ágil',
+        init: '🤖',
+        text: out.texto,
+        ts: new Date().toISOString(),
+      },
+    },
   };
-  return [{ kind: 'update', path: `comments/${commentId}`, value: comment }];
 }
 
-module.exports = { plan };
+module.exports = { build };
