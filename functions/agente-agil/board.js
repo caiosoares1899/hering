@@ -27,7 +27,7 @@ const outputBuilders = require('./outputs');
 
 // v0: escrita travada só neste squad (hardcoded). Autenticação/autorização
 // por squad de verdade fica pro v4.
-const SQUAD_ID = 'dev-ecomm';
+const SQUAD_ID = 'ecomm';
 const CARDS_PATH = `kanban/squads/${SQUAD_ID}/dados/cards`;
 
 async function resolveCardKey(db, cardId) {
