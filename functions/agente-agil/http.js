@@ -7,7 +7,8 @@
 // v0: auth por secret compartilhado (header x-agent-key), idempotência por
 // requestId (sem TTL de limpeza automática ainda — RTDB não tem TTL nativo;
 // só evita duplicar em retry), resolução de card por cardId direto (sem
-// "referencia" de negócio — isso é v1), outputs "comentario" e "link".
+// "referencia" de negócio — isso é v1), outputs "comentario", "link" e
+// "relatorio_html" (hospeda no Storage, ver outputs/relatorioHtml.js).
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -55,7 +56,20 @@ const agenteAgil = onRequest(
       return;
     }
 
-    const plan = buildWritePlan(cardKey, payload.outputs);
+    let plan;
+    try {
+      plan = await buildWritePlan(cardKey, payload.outputs, { cardId: payload.cardId, dryRun: payload.dryRun });
+    } catch (err) {
+      if (err.code === 'unknown_output_type') {
+        res.status(400).json({ error: 'invalid_output', message: err.message });
+        return;
+      }
+      // Falha de I/O de verdade (ex.: upload de relatorio_html pro Storage) —
+      // não é payload inválido do especialista, é falha do nosso lado.
+      console.error('[agenteAgil] falha ao montar plano de escrita:', err);
+      res.status(500).json({ error: 'write_plan_failed' });
+      return;
+    }
 
     if (payload.dryRun) {
       res.status(200).json({ ok: true, dryRun: true, cardKey, plan });

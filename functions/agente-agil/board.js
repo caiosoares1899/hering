@@ -24,6 +24,7 @@
 // mudou. Ver functions/agente-agil/outputs/*.js pra cada tipo de output.
 
 const outputBuilders = require('./outputs');
+const storage = require('./storage');
 
 // v0: escrita travada só neste squad (hardcoded). Autenticação/autorização
 // por squad de verdade fica pro v4.
@@ -37,20 +38,38 @@ async function resolveCardKey(db, cardId) {
   return key == null ? null : key;
 }
 
-// Função pura: valida envelope (feito em schema.js) -> monta plano de writes.
-// Testável com asserts simples, sem emulador — não toca no banco.
-function buildWritePlan(cardKey, outputs) {
-  const ctx = { cardPath: `${CARDS_PATH}/${cardKey}` };
-  return outputs.map((out) => {
+// Função pura o bastante pra testar sem emulador: valida envelope (feito em
+// schema.js) -> monta plano de writes. comentario/link não têm I/O nenhum;
+// relatorio_html tem (upload pro Storage), mas uploadAndSign/reportBasePath
+// vêm injetados via ctx (default: storage.js de verdade) — testável com um
+// fake no lugar deles, sem tocar rede nem emulador.
+async function buildWritePlan(cardKey, outputs, extra = {}) {
+  const ctx = {
+    cardPath: `${CARDS_PATH}/${cardKey}`,
+    cardId: extra.cardId,
+    squadId: SQUAD_ID,
+    dryRun: !!extra.dryRun,
+    uploadAndSign: extra.uploadAndSign || storage.uploadAndSign,
+    reportBasePath: extra.reportBasePath || storage.reportBasePath,
+  };
+  const plan = [];
+  for (const out of outputs) {
     const builder = outputBuilders[out.type];
-    if (!builder) throw new Error(`Output "${out.type}" ainda não suportado no v0`);
-    return builder(out, ctx);
-  });
+    if (!builder) {
+      const err = new Error(`Output "${out.type}" ainda não suportado no v0`);
+      err.code = 'unknown_output_type';
+      throw err;
+    }
+    plan.push(await builder(out, ctx));
+  }
+  return plan;
 }
 
 async function applyWritePlan(db, plan) {
   for (const step of plan) {
-    if (step.kind === 'update') {
+    if (step.kind === 'noop') {
+      continue; // só existe em dryRun (relatorio_html não sobe nada pra preview) — defensivo
+    } else if (step.kind === 'update') {
       await db.ref(step.path).update(step.data);
     } else if (step.kind === 'transaction') {
       await db.ref(step.path).transaction(step.transform);

@@ -4,8 +4,10 @@
 
 const comentario = require('./comentario');
 const link = require('./link');
+const relatorioHtml = require('./relatorioHtml');
 
 module.exports = {
   comentario: comentario.build,
   link: link.build,
+  relatorio_html: relatorioHtml.build,
 };

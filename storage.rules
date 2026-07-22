@@ -1,0 +1,32 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Relatórios do Agente Ágil (HTML + imagens extraídas de base64,
+    // ver functions/agente-agil/outputs/relatorioHtml.js). Só a Cloud
+    // Function escreve — Admin SDK ignora Storage Rules, então
+    // "write: if false" aqui só bloqueia escrita direta do cliente, não
+    // afeta a function. Leitura: mesmo critério de auth != null que
+    // database.rules.json já usa pro node kanban/dados_diarios (leitura
+    // aberta a qualquer autenticado, sem restrição de domínio).
+    match /relatorios/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Upload de PDF da Central de Dados (painel.html, uploadDadosPdf()).
+    // Espelha database.rules.json: kanban/dados_diarios — leitura pra
+    // qualquer autenticado, escrita só pra domínio @ciahering.com.br
+    // (mesmos ADMs/editores que já publicam esses dados no RTDB).
+    match /dados_diarios/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.token.email.matches('.*@ciahering[.]com[.]br$');
+    }
+
+    // Bucket foi criado do zero pra essa feature — nada mais usa Storage
+    // ainda hoje. Todo o resto continua negado por padrão (mesmo
+    // comportamento que já estava configurado no console antes desse
+    // arquivo existir: "allow read, write: if false").
+  }
+}

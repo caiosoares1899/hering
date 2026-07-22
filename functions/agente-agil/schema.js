@@ -4,8 +4,9 @@
 // validar em runtime quanto (via zod-to-json-schema) pra gerar documentação
 // do contrato pro time que integra especialistas externos e não escreve JS.
 //
-// v0 só sabe validar outputs "comentario" e "link" — os demais tipos do
-// contrato completo (checklistItem, agentStatus, mover_coluna) chegam no v2.
+// v0 sabe validar outputs "comentario", "link" e "relatorio_html" (hospeda
+// no Storage, ver outputs/relatorioHtml.js) — os demais tipos do contrato
+// completo (checklistItem, agentStatus, mover_coluna) chegam no v2.
 // v0 também recebe "cardId" direto no envelope: resolver "referencia" de
 // negócio (recorrência + data) pra cardId real é trabalho do v1
 // (ver resolver.js).
@@ -24,7 +25,16 @@ const outputLink = z.object({
   titulo: z.string().min(1),
 });
 
-const output = z.discriminatedUnion('type', [outputComentario, outputLink]);
+// HTML completo do relatório, com imagens embutidas em base64. O Agente
+// Ágil extrai as imagens, hospeda tudo no Storage e escreve só um link no
+// card — nunca guarda o HTML bruto no Realtime Database.
+const outputRelatorioHtml = z.object({
+  type: z.literal('relatorio_html'),
+  html: z.string().min(1),
+  titulo: z.string().min(1),
+});
+
+const output = z.discriminatedUnion('type', [outputComentario, outputLink, outputRelatorioHtml]);
 
 // Resposta do especialista -> Agente Ágil (v0: cardId direto, sem "referencia")
 const envelope = z.object({
@@ -42,4 +52,4 @@ function envelopeJsonSchema() {
   return zodToJsonSchema(envelope, 'AgenteAgilEnvelopeV0');
 }
 
-module.exports = { envelope, output, outputComentario, outputLink, envelopeJsonSchema };
+module.exports = { envelope, output, outputComentario, outputLink, outputRelatorioHtml, envelopeJsonSchema };
