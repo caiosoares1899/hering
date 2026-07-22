@@ -94,3 +94,7 @@ exports.sendPushOnNotification = onValueCreated(
     if (deletions.length) await Promise.all(deletions);
   }
 );
+
+// Agente Ágil — orquestrador entre o board e agentes especialistas externos
+// (hoje: Databricks). Deploy isolado: firebase deploy --only functions:agenteAgil
+exports.agenteAgil = require('./agente-agil/http').agenteAgil;
