@@ -16435,6 +16435,10 @@ function toggleReaction(cid, emoji){
   else { c.reactions[uid]=emoji; }
   fbSaveCard(cardObj);
   loadComments(_commentCardId);
+  // notifica o autor do comentário que reagiram (se não for ele mesmo)
+  if(c.reactions[uid] && c.uid && c.uid!==uid){
+    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,cardObj.id);
+  }
 }
 function _renderReactions(c){
   const r=c.reactions||{};
