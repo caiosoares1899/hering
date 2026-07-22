@@ -1370,6 +1370,36 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
     </div>
 
+    <!-- ═══ PUSH MANUAL (ADM → notificação no aparelho) ═══ -->
+    <!-- Reaproveita 100% a infra existente: escreve em kanban/usuarios/{uid}/notificacoes/{id}
+         igual qualquer outra notificação do sino — a Cloud Function sendPushOnNotification já
+         escuta esse path e dispara o push sozinha. Zero leitura nova (usa _globalUsersCache,
+         que já é carregado por um listener existente) e zero deploy novo — só precisa que o
+         tipo 'painel_broadcast' esteja na lista PUSH_TYPES da function (ver aviso no rodapé). -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🔔 Enviar push manual</div>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Manda uma notificação direto pro aparelho das pessoas selecionadas (respeita Não Perturbe e permissão ativada por cada um). Também fica salva no sino delas normalmente.</div>
+
+      <input id="pushm-title" type="text" placeholder="Título (ex: Manutenção hoje às 18h)" maxlength="60"
+        style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:12px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt1);margin-bottom:8px;">
+      <textarea id="pushm-msg" rows="2" maxlength="120" placeholder="Mensagem curta (até 120 caracteres)..."
+        style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:12px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt1);margin-bottom:10px;resize:vertical;font-family:inherit;"></textarea>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;">
+          <input type="checkbox" id="pushm-todos" onchange="_pushmToggleTodos(this.checked)"> Selecionar todos
+        </label>
+        <span id="pushm-count" style="font-size:10px;color:var(--txt3);">0 selecionado(s)</span>
+      </div>
+      <div id="pushm-users" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:8px;background:rgba(0,0,0,.15);border-radius:8px;margin-bottom:10px;"></div>
+
+      <button id="pushm-btn" onclick="sendPainelPush()" disabled
+        style="padding:7px 16px;font-size:11px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);border-radius:8px;cursor:pointer;opacity:.5;">🔔 Enviar push</button>
+      <div style="font-size:9px;color:var(--txt3);margin-top:8px;">Só chega no aparelho de quem já ativou notificações push. Sem isso, a pessoa ainda vê no sino do board normalmente.</div>
+    </div>
+
     <div id="pcal-section" style="margin-bottom:20px;">
       <div class="sec-title">📅 Calendário dos squads</div>
       <div class="pcal-tabs" id="pcal-tabs-bar">
@@ -4237,7 +4267,7 @@ function swPtab(tab){
   if(pane) pane.classList.add('on');
   // side-effects por aba
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
-  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); }
+  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); if(typeof renderPushmUsers==='function') renderPushmUsers(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
@@ -6947,7 +6977,75 @@ function loadGlobalUsers(){
     _globalUsersCache = snap.val() || {};
     renderGlobalUsers();
     if(typeof renderKudosPainel==='function') renderKudosPainel();
+    if(typeof renderPushmUsers==='function') renderPushmUsers();
   });
+}
+
+// ── PUSH MANUAL (aba Pessoas) ──────────────────────────────────────
+// Não faz NENHUMA leitura nova no Firebase: usa o _globalUsersCache que já é
+// mantido por um listener existente (loadGlobalUsers, acima). O envio em si é
+// só um write por pessoa selecionada em kanban/usuarios/{uid}/notificacoes/{id}
+// — a Cloud Function sendPushOnNotification já escuta esse path.
+let _pushmSelected = new Set();
+function renderPushmUsers(){
+  const wrap = document.getElementById('pushm-users');
+  if(!wrap) return;
+  const entries = Object.entries(_globalUsersCache||{})
+    .filter(([uid,u])=>u && (u.nome||u.email))
+    .sort((a,b)=>String(a[1].nome||a[1].email).localeCompare(String(b[1].nome||b[1].email)));
+  wrap.innerHTML = entries.map(([uid,u])=>{
+    const nome = esc(u.nome||u.email||u.init||uid);
+    const checked = _pushmSelected.has(uid) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:3px 4px;border-radius:5px;">
+      <input type="checkbox" ${checked} onchange="_pushmToggleUser('${esc(uid)}',this.checked)"> ${nome}
+    </label>`;
+  }).join('') || '<div style="font-size:10px;color:var(--txt3);">Nenhuma pessoa cadastrada ainda.</div>';
+  _pushmUpdateBtn();
+}
+function _pushmToggleUser(uid, checked){
+  if(checked) _pushmSelected.add(uid); else _pushmSelected.delete(uid);
+  const todosEl=document.getElementById('pushm-todos');
+  if(todosEl) todosEl.checked = _pushmSelected.size===Object.keys(_globalUsersCache||{}).length && _pushmSelected.size>0;
+  _pushmUpdateBtn();
+}
+function _pushmToggleTodos(checked){
+  _pushmSelected = checked ? new Set(Object.keys(_globalUsersCache||{})) : new Set();
+  renderPushmUsers();
+}
+function _pushmUpdateBtn(){
+  const count=_pushmSelected.size;
+  const countEl=document.getElementById('pushm-count');
+  if(countEl) countEl.textContent = count+' selecionado(s)';
+  const btn=document.getElementById('pushm-btn');
+  if(btn){ btn.disabled = count===0; btn.style.opacity = count===0 ? '.5' : '1'; }
+}
+async function sendPainelPush(){
+  if(!_isAdmPainel()){ showToast('🔒 Só administradores podem enviar push.'); return; }
+  const titulo=document.getElementById('pushm-title').value.trim();
+  const msg=document.getElementById('pushm-msg').value.trim();
+  if(!titulo || !msg){ showToast('⚠ Preencha título e mensagem.'); return; }
+  if(_pushmSelected.size===0){ showToast('⚠ Selecione ao menos uma pessoa.'); return; }
+  const alvo=[..._pushmSelected];
+  if(!await uiConfirm(`Enviar push pra ${alvo.length} pessoa(s)?\n\n"${titulo}" — ${msg}`, {title:'Confirmar envio', okText:'Enviar', cancelText:'Cancelar'})) return;
+  const btn=document.getElementById('pushm-btn'); if(btn){ btn.disabled=true; btn.textContent='Enviando...'; }
+  const ts=new Date().toISOString();
+  let ok=0, fail=0;
+  await Promise.all(alvo.map(async uid=>{
+    const nid='pm'+Date.now()+Math.random().toString(36).slice(2,6);
+    try{
+      await window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
+        id:nid, type:'painel_broadcast', title:titulo, sub:msg, read:false, ts, squad:'painel',
+      });
+      ok++;
+    }catch(e){ fail++; }
+  }));
+  if(btn){ btn.disabled=false; btn.textContent='🔔 Enviar push'; }
+  document.getElementById('pushm-title').value='';
+  document.getElementById('pushm-msg').value='';
+  _pushmSelected=new Set();
+  const todosEl=document.getElementById('pushm-todos'); if(todosEl) todosEl.checked=false;
+  renderPushmUsers();
+  showToast(fail===0 ? `🔔 Enviado pra ${ok} pessoa(s)!` : `🔔 ${ok} enviado(s), ${fail} falhou(aram).`);
 }
 
 function renderGlobalUsers(){
