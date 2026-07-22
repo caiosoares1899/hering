@@ -12684,34 +12684,17 @@ function initPWA(){
   const url=URL.createObjectURL(blob);
   manifestEl.href=url;
 
-  // Service Worker para cache offline
+  // Service Worker — UM ÚNICO arquivo (firebase-messaging-sw.js) cuida de cache offline
+  // E do push (onBackgroundMessage). Antes existiam DOIS service workers registrados no
+  // mesmo escopo (raiz do domínio): este de cache (criado via blob:, a cada carregamento
+  // de página) e o firebase-messaging-sw.js (só quando a pessoa ativava push). Dois SWs
+  // disputando o mesmo escopo é uma causa clássica de push "sumir" no Chrome — o navegador
+  // pode entregar o evento pro worker errado, que não tem handler pra ele. Unificar os dois
+  // num arquivo só elimina essa disputa de vez. A lógica de cache (stale-while-revalidate,
+  // pulando firebaseio.com/googleapis.com/workers.dev) foi movida pra dentro do
+  // firebase-messaging-sw.js — ver esse arquivo.
   if('serviceWorker' in navigator){
-    const swCode=`
-const CACHE='kanban-hering-v1';
-const ASSETS=[self.location.pathname];
-self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
-  self.skipWaiting();
-});
-self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET') return;
-  if(e.request.url.includes('firebaseio.com')||e.request.url.includes('googleapis.com')||e.request.url.includes('workers.dev')) return;
-  e.respondWith(caches.match(e.request).then(cached=>{
-    const fresh=fetch(e.request).then(res=>{
-      if(res.ok){const clone=res.clone();caches.open(CACHE).then(c=>c.put(e.request,clone));}
-      return res;
-    }).catch(()=>cached);
-    return cached||fresh;
-  }));
-});
-    `;
-    const swBlob=new Blob([swCode],{type:'application/javascript'});
-    const swUrl=URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl).catch(()=>{});
+    navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(()=>{});
   }
 
   // Banner "Adicionar à tela inicial" (Android)
