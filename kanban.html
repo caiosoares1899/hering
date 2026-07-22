@@ -140,10 +140,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
 .app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
-.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:2;}
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:20;}
 .hd-l{display:flex;align-items:center;gap:8px;}
 .hd-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+.squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
+.squad-switcher-caret{cursor:pointer;font-size:9px;color:var(--txt3);user-select:none;}
+.squad-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;background:rgb(10,26,44);border:1px solid var(--accent,#38b6ff);border-radius:10px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column;gap:2px;}
+.squad-switcher-dd.open{display:flex;}
+.squad-switcher-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--txt);text-decoration:none;white-space:nowrap;}
+.squad-switcher-item:hover{background:rgba(56,182,255,.1);}
+.squad-switcher-item.active{background:rgba(56,182,255,.15);font-weight:700;cursor:default;pointer-events:none;}
+.squad-switcher-tag{font-size:10px;color:var(--txt3);font-weight:400;margin-left:auto;}
+.squad-switcher-msg{padding:10px;font-size:12px;color:var(--txt2);}
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{background:var(--glass-h);border-color:var(--accent);}
@@ -155,7 +164,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .btn-sm{padding:3px 9px;font-size:11px;}
 
 /* toolbar */
-.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
+.toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
 /* sprint goal bar — fundo opaco (era 12% de opacidade e deixava as bolhas/peixes
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
@@ -1270,6 +1279,28 @@ input[type="date"]{-moz-appearance:textfield;}
 .kudos-hdr-btn:hover{filter:brightness(1.15);}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
+#dnd-toggle-btn.dnd-active{border-color:rgba(255,209,102,.4)!important;color:var(--warn)!important;background:rgba(255,209,102,.08)!important;}
+.dnd-toggle-btn{
+  box-sizing:border-box;width:100%;text-align:left;background:none;
+  border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;
+  cursor:pointer;color:var(--txt2);font-size:11px;
+  white-space:normal;word-break:break-word;
+}
+.dnd-menu{
+  display:none;box-sizing:border-box;position:fixed;
+  background:rgba(8,22,42,.99);border:1px solid var(--glass-b);
+  border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:9999;
+  max-height:70vh;overflow-y:auto; /* segurança extra: se ainda assim não couber, rola em vez de cortar */
+}
+.dnd-menu-hint{font-size:10px;color:var(--txt3);padding:4px 8px 6px;box-sizing:border-box;white-space:normal;}
+.dnd-menu-item{
+  box-sizing:border-box;display:block;width:100%;text-align:left;background:none;
+  border:none;color:var(--txt2);font-size:12px;padding:8px;border-radius:6px;
+  cursor:pointer;transition:background .12s;
+  white-space:normal;word-break:break-word;line-height:1.4;
+}
+.dnd-menu-item:hover{background:rgba(56,182,255,.1);}
+.dnd-menu-item-reativar{color:var(--accent);border-top:1px solid var(--glass-b);margin-top:4px;padding-top:10px;}
 @keyframes bell-ring{
   0%,100%{transform:rotate(0);}
   20%{transform:rotate(-20deg);}
@@ -2193,7 +2224,11 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="hd">
   <div class="hd-l">
     <div class="hd-title">🐟 Maré Digital</div>
-    <span class="hd-badge" id="sprint-badge">Carregando...</span>
+    <span class="squad-switcher-wrap">
+      <span class="hd-badge" id="sprint-badge" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad">Carregando...</span>
+      <span class="squad-switcher-caret" onclick="toggleSquadSwitcher(event)">▾</span>
+      <div id="squad-switcher-dd" class="squad-switcher-dd"></div>
+    </span>
 
   </div>
   <div class="hd-btns">
@@ -2210,6 +2245,7 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
+    <span id="dnd-bell-badge" title="Não Perturbe ativo" style="display:none;position:absolute;bottom:-2px;right:-2px;font-size:10px;line-height:1;">🔕</span>
   </button>
   <button class="notif-btn" id="mural-btn" onclick="openMural()" title="Mural — avisos e fale com o ADM">
     📢<span class="notif-badge" id="mural-badge" style="display:none;">0</span>
@@ -2275,6 +2311,10 @@ input[type="date"]{-moz-appearance:textfield;}
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         📅 Prazo (data prevista)
       </button>
+      <button onclick="setColSortMode('movedAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🕓 Movimentação (mais recente)
+      </button>
     </div>
   </div>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
@@ -2310,8 +2350,27 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="notif-list" id="notif-list">
     <div class="notif-empty">Nenhuma notificação</div>
   </div>
-  <div class="notif-ft">
-    <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
+  <div class="notif-ft" style="flex-direction:column;align-items:stretch;gap:6px;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <button class="notif-mark-all" onclick="clearOldNotifs()" style="color:var(--txt3);">Limpar antigas</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button id="notif-sound-toggle" onclick="toggleNotifSound()" title="Ligar/desligar som de notificação" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--txt3);padding:0;line-height:1;"></button>
+        <span id="notif-perm-row" onclick="notifPermRowClick()" style="font-size:10px;color:var(--txt3);cursor:pointer;white-space:nowrap;"></span>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--glass-b);margin-top:2px;padding-top:6px;box-sizing:border-box;">
+      <button id="dnd-toggle-btn" class="dnd-toggle-btn" onclick="toggleDndMenu(event)">
+        <span id="dnd-status-lbl">🔔 Notificações ativas</span>
+      </button>
+      <div id="dnd-menu" class="dnd-menu">
+        <div class="dnd-menu-hint">Silenciar avisos que interrompem (o sino continua registrando tudo)</div>
+        <button class="dnd-menu-item" onclick="setDnd(true,60,'1 hora');toggleDndMenu()">🔕 Por 1 hora</button>
+        <button class="dnd-menu-item" onclick="setDnd(true,480,'8 horas');toggleDndMenu()">🔕 Por 8 horas</button>
+        <button class="dnd-menu-item" onclick="setDndUntilTomorrowMorning();toggleDndMenu()">🔕 Até amanhã de manhã</button>
+        <button class="dnd-menu-item" onclick="setDnd(true,null,'');toggleDndMenu()">🔕 Até eu desativar</button>
+        <button class="dnd-menu-item dnd-menu-item-reativar" onclick="setDnd(false);toggleDndMenu()">🔔 Reativar notificações</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2520,10 +2579,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="modal-col">
         <div class="cl-sec">
           <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
-          <div class="cl-items" id="m-checklist"></div>
+          <div id="m-checklist"></div>
           <div class="cl-add-r">
-            <input class="cl-ai" id="cl-inp" placeholder="Novo item..." onkeydown="if(event.key==='Enter')addCI()">
-            <button class="cl-ab" onclick="addCI()">+ Add</button>
+            <button class="btn btn-sm" onclick="addChecklistGroup()">+ Novo checklist</button>
             <button class="btn btn-sm" onclick="doUndo()" title="Desfazer última ação (Ctrl+Z)" style="padding:4px 8px;font-size:13px;color:rgba(150,200,240,.5);border-color:rgba(56,182,255,.2);border-radius:var(--r);">↩</button>
           </div>
         </div>
@@ -3236,7 +3294,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="panel ql-panel">
   <div class="panel-hd">
     <div class="panel-title" id="ql-title">Lista</div>
-    <button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
+    <button class="btn btn-sm" onclick="voltarParaFuncoesCard('ql-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('ql-ov')">✕</button>
   </div>
   <div class="ql-filter-bar" id="ql-filter-bar">
     <input id="ql-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderQLBody()">
@@ -3337,6 +3395,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <option value="priority">🔥 Prioridade</option>
         <option value="createdAt">🕐 Data de criação</option>
         <option value="doneAt">📅 Prazo</option>
+        <option value="movedAt">🕓 Movimentação (mais recente)</option>
       </select>
     </div>
     <div>
@@ -3952,17 +4011,23 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <div class="ov" id="arch-ov">
 <div class="panel ql-panel">
-  <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
+  <div class="panel-hd"><div class="panel-title">📦 Cards arquivados</div><button class="btn btn-sm" onclick="voltarParaFuncoesCard('arch-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('arch-ov')">✕</button></div>
   <div class="ql-filter-bar">
     <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
     <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
+    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">Criado há mais de <input type="number" id="arch-f-days" min="0" placeholder="0" style="width:56px;" class="ql-filter-inp" onchange="openArquivados()"> dias</label>
   </div>
   <div id="arch-purge-bar" style="display:none;padding:8px 14px;background:rgba(255,107,107,.06);border-bottom:1px solid rgba(255,107,107,.15);align-items:center;gap:8px;flex-wrap:wrap;">
     <span style="font-size:10.5px;color:var(--danger);">🗑 Excluir definitivamente arquivados há mais de</span>
     <input type="number" id="arch-purge-years" value="2" min="1" step="0.5" style="width:54px;" class="ql-filter-inp">
     <span style="font-size:10.5px;color:var(--danger);">ano(s)</span>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="purgeOldArchived()">Excluir</button>
+  </div>
+  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn btn-sm" onclick="_archSelectAll(true)">☑ Todos</button>
+    <button class="btn btn-sm" onclick="_archSelectAll(false)">☐ Nenhum</button>
+    <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedArchived()">🗑 Excluir selecionados</button>
   </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;" id="arch-body"></div>
 </div>
@@ -3971,25 +4036,29 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CARDS ANTIGOS (limpeza em massa por idade) -->
 <div class="ov" id="cleanup-ov">
 <div class="panel ql-panel">
-  <div class="panel-hd">
-    <div class="panel-title">🧹 Cards antigos</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
-      <button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
-    </div>
+<div class="panel-hd">
+  <div class="panel-title">🧹 Cards antigos</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="btn btn-sm" onclick="voltarParaFuncoesCard('cleanup-ov')" title="Voltar pro menu de Funções de card">← Voltar</button><button class="x-btn" onclick="closeOv('cleanup-ov')">✕</button>
   </div>
-  <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
-    <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
-      Ativos há mais de
-      <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
-      dias
-    </label>
-    <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
-    <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
-    <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
-    <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
-  </div>
-  <div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
+</div>
+<div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+  <input id="cleanup-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="renderCleanupList()">
+  <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">
+    Ativos há mais de
+    <input type="number" id="cleanup-days" value="365" min="30" style="width:64px;" class="ql-filter-inp" onchange="renderCleanupList()">
+    dias
+  </label>
+  <select id="cleanup-col" class="ql-filter-sel" onchange="renderCleanupList()"></select>
+  <button class="btn btn-sm" onclick="renderCleanupList()">🔄 Atualizar</button>
+</div>
+<div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
+  <button class="btn btn-sm" onclick="_cleanupSelectAll(true)">☑ Todos</button>
+  <button class="btn btn-sm" onclick="_cleanupSelectAll(false)">☐ Nenhum</button>
+  <button class="btn btn-p btn-sm" onclick="bulkArchiveOldCards()">📦 Arquivar selecionados</button>
+  <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedOldCards()">🗑 Excluir selecionados</button>
+</div>
+<div style="padding:6px 14px 0;font-size:11px;color:var(--txt3);" id="cleanup-summary"></div>
   <div style="padding:8px 14px 12px;display:flex;flex-direction:column;gap:7px;" id="cleanup-body"></div>
 </div>
 </div>
@@ -4016,13 +4085,14 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.154</div>
+<div class="version">v8.30.169</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
 const safeLS = (function(){
@@ -4065,6 +4135,23 @@ window._onValue=onValue; window._update=update; window._remove=remove;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._auth=auth; window._provider=provider;
 
+// ── Push notifications (FCM) ────────────────────────────────────────
+// Isolado num try/catch porque getMessaging() lança em contextos sem
+// suporte (http não-seguro, alguns navegadores/versões de iOS) — nesses
+// casos window._fcmReady fica false e a UI mostra "não suportado" em
+// vez de quebrar o app inteiro.
+window._fcmReady = false;
+fcmIsSupported().then(supported=>{
+  if(!supported) return;
+  try{
+    const messaging = getMessaging(app);
+    window._fcmGetToken = (vapidKey, swReg) => fcmGetToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
+    window._fcmDeleteToken = () => fcmDeleteToken(messaging);
+    window._fcmOnMessage = (cb) => fcmOnMessage(messaging, cb);
+    window._fcmReady = true;
+  }catch(e){ console.warn('[FCM] não inicializado:', e); }
+}).catch(()=>{});
+
 // Captura e salva o token de acesso de forma segura
 window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
   const credential = GoogleAuthProvider.credentialFromResult(r);
@@ -4074,7 +4161,20 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   }
   if(insc) window._pendingInsc=true; 
 });
-window._signOut=()=>signOut(auth);
+window._signOut=(reason)=>{
+  if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
+  window._signOutInProgress=true;
+  try{
+    const info={reason:reason||'desconhecido', ts:Date.now(), tsStr:new Date().toISOString()};
+    console.warn('[Mare] Logout disparado. Motivo:', info.reason, info);
+    safeLS.setItem('last_logout_reason', JSON.stringify(info));
+  }catch(e){}
+  try{ clearInterval(window._idleCheckInterval); window._idleCheckInterval=null; }catch(e){}
+  try{ clearInterval(window._heartbeat); window._heartbeat=null; }catch(e){}
+  try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
+  try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
+  signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
+};
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
 
@@ -4096,9 +4196,9 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   }
   return credential;
 });
-window.doSignOut = () => window._signOut();
+window.doSignOut = () => window._signOut('manual');
 
-onAuthStateChanged(auth,user=>{ window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
+let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 
 <script>
@@ -4137,6 +4237,13 @@ function _localDateStrBoard(d){
   return y+'-'+m+'-'+day;
 }
 function _logAccess(user, role){
+  // ⏸️ TEMPORARIAMENTE DESATIVADO (2026-07-21) — suspeito de ser uma fonte
+  // relevante de consumo de download: o painel lia esse log inteiro, de
+  // TODOS os squads, toda vez que a aba Status abria. Reative removendo o
+  // "return" abaixo quando o painel também reativar a leitura (função
+  // loadUsoData em painel.html), senão fica escrevendo à toa sem ninguém ler.
+  return;
+  // eslint-disable-next-line no-unreachable
   if(!user || !user.uid || !window._fbReady) return;
   const today = _localDateStrBoard(new Date());
   const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
@@ -4158,9 +4265,9 @@ function _logAccess(user, role){
     }).catch(()=>{});
   }
 }
-function getEffectiveRole(user, dbRole){
+function getEffectiveRole(user, squadRole, legacyRole){
   if(isAdmUser(user)) return 'adm';
-  return dbRole||'membro';
+  return squadRole || legacyRole || 'membro';
 }
 // ── FIM ADMs ─────────────────────────────────────────────────────
 
@@ -4263,10 +4370,41 @@ function applySquadIdentity() {
   if (loginSub) loginSub.textContent = 'Digital Hering · ' + subtitle;
 }
 document.addEventListener('DOMContentLoaded', applySquadIdentity);
+// Menu suspenso pra trocar de squad direto pelo nome do badge no header —
+// lista os squads em que a pessoa esta inscrita (kanban/usuarios/{uid}/squads)
+// e navega pra ?squad={id} ao clicar. Busca os squads_meta na hora do clique
+// (nao so no login) pra ja incluir squads criados pelo painel recentemente.
+function toggleSquadSwitcher(e){
+  e.stopPropagation();
+  const dd = document.getElementById('squad-switcher-dd');
+  if(!dd) return;
+  if(dd.classList.contains('open')){ dd.classList.remove('open'); return; }
+  // Simplificado a pedido do Caio: sem checagem de permissão/inscrição por usuário
+  // (isso causava squads sumirem do menu) — lista só os nomes de todos os squads
+  // conhecidos (SQUAD_META_LIVE), igual à tela inicial de seleção.
+  const render = () => {
+    dd.innerHTML = Object.keys(SQUAD_META_LIVE).map(id=>{
+      const meta = SQUAD_META_LIVE[id];
+      const isActive = id === ACTIVE_SQUAD;
+      return '<a href="'+window.location.pathname+'?squad='+encodeURIComponent(id)+'" class="squad-switcher-item'+(isActive?' active':'')+'">'
+        + esc(meta.label)
+        + (isActive ? ' <span class="squad-switcher-tag">atual</span>' : '')
+        + '</a>';
+    }).join('');
+  };
+  render();
+  dd.classList.add('open');
+  loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
+});
+
 // Fecha qualquer picker de reação ao clicar fora
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('.cmt-react')){ document.querySelectorAll('.rx-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
+  if(!e.target.closest('.squad-switcher-wrap')){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
 });
 // ── FIM SQUAD ────────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
@@ -4782,7 +4920,126 @@ function fbSet(path,val){
 }
 function fbGet(path){ return window._get(fb(path)); }
 function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); return window._update(fb(path),val); }
-function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>cb(s.val())); }
+// ═══════════════════════════════════════════════════════════════════
+// 🔬 DEBUG: medidor de bytes por listener (diagnóstico de download)
+// ───────────────────────────────────────────────────────────────────
+// SEMPRE LIGADO, pra todo mundo, automaticamente — sem precisar abrir
+// o console. Medir o tamanho do payload NÃO gera download extra (o
+// dado já chegou de qualquer forma); só o resumo que é escrito de
+// volta no Firebase a cada poucos minutos é que soma algo, e é
+// minúsculo (poucas dezenas de bytes por squad por hora). Assim dá
+// pra ver o consumo real de QUALQUER pessoa que abriu o board, não só
+// de quem lembrou de ligar manualmente.
+// Bucket por HORA (não por minuto) pra manter o volume de escritas e
+// de nós no Firebase baixo. Entradas com mais de 7 dias são limpas
+// automaticamente (1x por sessão, igual ao access_log).
+// Uso no console do navegador (F12), a qualquer momento:
+//   debugBytesReport()      → tabela do que ESTA aba recebeu até agora
+//   debugBytesRemote()      → agregado de TODAS as sessões nas últimas 24h
+//   debugBytesRemote(72)    → agregado das últimas 72h, por path
+//   debugBytesOff()         → desliga só nesta aba (não afeta outras pessoas)
+const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
+function _dbgSize(val){
+  try{ return val==null ? 0 : new Blob([JSON.stringify(val)]).size; }
+  catch(e){ try{ return JSON.stringify(val||'').length; }catch(e2){ return 0; } }
+}
+function _dbgTrack(pathKey, val){
+  if(!_dbg.on) return;
+  const bytes=_dbgSize(val);
+  const s=_dbg.stats[pathKey]||(_dbg.stats[pathKey]={count:0,bytes:0,lastAt:0,lastBytes:0});
+  s.count++; s.bytes+=bytes; s.lastAt=Date.now(); s.lastBytes=bytes;
+}
+function _dbgFlush(){
+  if(!_dbg.on || !window._fbReady) return;
+  const entries=Object.entries(_dbg.stats);
+  if(!entries.length) return;
+  const d=new Date();
+  const hourKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
+  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+  const nodeKey=hourKey+'_'+uidShort;
+  const path=FB+'/_debug_bytes_log/'+nodeKey;
+  // Mescla com o que já foi gravado nesta hora (várias flushes acumulam, não sobrescrevem)
+  fbGet(path).then(snap=>{
+    const _localTs=hourKey.slice(0,10)+'T'+hourKey.slice(11,13)+':00:00';
+    const prev=snap.val()||{ts:_localTs,who,byPath:{}};
+    entries.forEach(([k,s])=>{
+      const key=k.replace(/[.#$/\[\]]/g,'_');
+      const acc=prev.byPath[key]||{count:0,bytes:0};
+      acc.count+=s.count; acc.bytes+=s.bytes;
+      prev.byPath[key]=acc;
+    });
+    prev.ts=_localTs; prev.who=who;
+    fbSet(path, prev);
+  }).catch(()=>{});
+  Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
+  // Limpeza leve: 1x por sessão, remove buckets com mais de 7 dias
+  if(!_dbg.cleaned){
+    _dbg.cleaned=true;
+    fbGet(FB+'/_debug_bytes_log').then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const cutoff=Date.now()-7*86400000;
+      Object.entries(val).forEach(([key,entry])=>{
+        const t=entry?.ts?new Date(entry.ts).getTime():0;
+        if(t && t<cutoff) fbSet(FB+'/_debug_bytes_log/'+key, null);
+      });
+    }).catch(()=>{});
+  }
+}
+function _dbgStart(){
+  clearInterval(_dbg.flushTimer);
+  _dbg.flushTimer=setInterval(_dbgFlush,5*60000); // flush a cada 5min — bem leve
+  window.addEventListener('beforeunload', _dbgFlush); // garante que a última janela de dados não se perde ao fechar a aba
+}
+if(window._fbReady) _dbgStart(); else window.addEventListener('fb-ready', _dbgStart);
+window.debugBytesOn=function(){ _dbg.on=true; _dbgStart(); console.log('%c🔬 Medição ligada nesta aba.','color:#38b6ff;font-weight:bold;'); };
+window.debugBytesOff=function(){
+  _dbg.on=false;
+  clearInterval(_dbg.flushTimer); _dbg.flushTimer=null;
+  console.log('%c🔬 Medição desligada nesta aba (outras pessoas continuam medindo normalmente).','color:#ff6b6b;');
+};
+window.debugBytesReport=function(){
+  const rows=Object.entries(_dbg.stats).map(([path,s])=>({
+    path, chamadas:s.count, 'bytes (desde o último flush)':s.bytes, 'KB':(s.bytes/1024).toFixed(1),
+    'última msg (bytes)':s.lastBytes, 'há quanto':s.lastAt?Math.round((Date.now()-s.lastAt)/1000)+'s':'—',
+  })).sort((a,b)=>b['bytes (desde o último flush)']-a['bytes (desde o último flush)']);
+  console.table(rows);
+  return rows;
+};
+window.debugBytesRemote=function(hoursBack){
+  hoursBack = hoursBack || 24;
+  return fbGet(FB+'/_debug_bytes_log').then(snap=>{
+    const val=snap.val()||{};
+    const cutoff=Date.now()-hoursBack*3600000;
+    const agg={}; const byHour={};
+    Object.values(val).forEach(entry=>{
+      const t=entry?.ts?new Date(entry.ts).getTime():0;
+      if(!t || t<cutoff) return;
+      const hourLbl=entry.ts.slice(0,13); // YYYY-MM-DDTHH
+      Object.entries(entry.byPath||{}).forEach(([path,s])=>{
+        const a=agg[path]||(agg[path]={count:0,bytes:0});
+        a.count+=s.count||0; a.bytes+=s.bytes||0;
+        const h=byHour[hourLbl]||(byHour[hourLbl]={count:0,bytes:0});
+        h.count+=s.count||0; h.bytes+=s.bytes||0;
+      });
+    });
+    console.log('%c🔬 Por path (últimas '+hoursBack+'h):','color:#38b6ff;font-weight:bold;');
+    const rows=Object.entries(agg).map(([path,s])=>({ path, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1) }))
+      .sort((a,b)=>parseFloat(b['KB total'])-parseFloat(a['KB total']));
+    console.table(rows);
+    console.log('%c🔬 Por hora (todos os paths somados):','color:#38b6ff;font-weight:bold;');
+    const hourRows=Object.entries(byHour).map(([hour,s])=>({ hora:hour, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1) }))
+      .sort((a,b)=>a.hora.localeCompare(b.hora));
+    console.table(hourRows);
+    return {byPath:rows, byHour:hourRows};
+  });
+};
+window.debugBytesClearRemote=function(){
+  return fbSet(FB+'/_debug_bytes_log', null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+// ═══════════════════════════════════════════════════════════════════
+
+function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>{ const v=s.val(); _dbgTrack(path,v); cb(v); }); }
 
 let _lastLocalSave = 0;
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
@@ -5009,25 +5266,37 @@ function fbSaveAll(){
     throw err; // re-throw so handleDrop .catch can revert
   });
 }
-function fbSaveCard(card){
-  // Salva SOMENTE este card (update num path especifico), em vez de
-  // sobrescrever o array `cards` inteiro. Isso evita que edicoes
-  // concorrentes de outras pessoas no board (ex.: adicionar um risco
-  // enquanto alguem move outro card) se apaguem mutuamente — o bug
-  // classico de "last write wins" num array unico compartilhado.
-  // fbSaveAll() continua existindo p/ operacoes que mudam o array
-  // inteiro (criar/excluir/reordenar cards).
-  _lastLocalSave = Date.now();
-  _hasLocalSession = true;
-  if(!window._fbReady) return Promise.resolve();
-  const idx = cards.indexOf(card);
-  if(idx < 0) return fbSaveAll(); // card nao encontrado no array local — fallback seguro
-  return window._update(fb(FB+'/cards'), {[idx]: card}).catch(err=>{
-    if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
-      console.warn('[fbSaveCard] write failed:', err);
-    throw err;
-  });
-}
+ function fbSaveCard(card){
+      // Salva SOMENTE este card (update num path especifico), em vez de
+      // sobrescrever o array `cards` inteiro. Isso evita que edicoes
+      // concorrentes de outras pessoas no board (ex.: adicionar um risco
+      // enquanto alguem move outro card) se apaguem mutuamente — o bug
+      // classico de "last write wins" num array unico compartilhado.
+      // fbSaveAll() continua existindo p/ operacoes que mudam o array
+      // inteiro (criar/excluir/reordenar cards).
+      _lastLocalSave = Date.now();
+      _hasLocalSession = true;
+      if(!window._fbReady) return Promise.resolve();
+      // Acha a CHAVE REAL do card no Firebase pelo id (via snapshot espelhado
+      // pelos listeners granulares) — em vez de cards.indexOf(card), que é a
+      // posição LOCAL no array e pode desalinhar da posição real no Firebase
+      // (ex.: outra pessoa criou/removeu um card entre uma sincronização e
+      // outra), fazendo o update() gravar no card ERRADO sem erro visível.
+      const byKey = window._cardsByKey||{};
+      let key = Object.keys(byKey).find(k => byKey[k] && byKey[k].id === card.id);
+      if(key == null){
+        // Fallback: snapshot espelhado ainda não tem esse card (ex.: acabou
+        // de ser criado) — tenta pela posição local antes do fbSaveAll.
+        const idx = cards.indexOf(card);
+        if(idx < 0) return fbSaveAll();
+        key = String(idx);
+      }
+      return window._update(fb(FB+'/cards'), {[key]: card}).catch(err=>{
+        if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
+          console.warn('[fbSaveCard] write failed:', err);
+        throw err;
+      });
+    }
 function fbSaveMsgs(tab){
   const msgs=Array.from(document.querySelectorAll('#msgs-'+tab+' .msg')).map(m=>({
     role:m.classList.contains('msg-ai')?'ai':'user',
@@ -5041,7 +5310,7 @@ function fbLoadAll(){
   // antes do primeiro renderBoard(), pra não mostrar "Prioridade" por engano
   // quando a pessoa já tinha escolhido outro modo numa sessão anterior.
   (function _initSortLabel(){
-    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo'};
+    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação'};
     const lbl = document.getElementById('btn-sort-lbl');
     if(lbl) lbl.textContent = labels[colSortMode] || 'Prioridade';
     const btn = document.getElementById('btn-sort');
@@ -5120,8 +5389,9 @@ function fbLoadAll(){
   // estourar a cota gratuita (10GB/mes). Os listeners granulares so baixam o card
   // que de fato mudou (child_changed), foi criado (child_added) ou removido
   // (child_removed) — nao o array inteiro a cada evento.
-  let _cardsByKey = {};
-  let _cardsSyncDebounce = null;
+let _cardsByKey = {};
+window._cardsByKey = _cardsByKey;
+let _cardsSyncDebounce = null;
   function _applyCardsSync(){
     if(_hasLocalSession && Date.now() - _lastLocalSave < 2000){ return; }
     const keys = Object.keys(_cardsByKey).sort((a,b)=>Number(a)-Number(b));
@@ -5143,9 +5413,9 @@ function fbLoadAll(){
   }
   if(window._fbReady){
     const _cardsRef = fb(FB+'/cards');
-    window._onChildAdded(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-    window._onChildChanged(_cardsRef, snap=>{ _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-    window._onChildRemoved(_cardsRef, snap=>{ delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+    window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+    window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
   }
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
@@ -5199,18 +5469,18 @@ function fbLoadAll(){
   });
   // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
   if(window._fbReady){
-    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
       const val=snap.val();
       lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
       updLemBadge();
       if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
     });
     // Central de Dados (captação digital) — globais, fora do squad
-    window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{ _dbgTrack('dados_diarios', snap.val());
       dadosDiariosBoard = snap.val()||{};
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
     });
-    window._onValue(window._ref(window._db,'kanban/config/dados_apresentacoes'),snap=>{
+    window._onValue(window._ref(window._db,'kanban/config/dados_apresentacoes'),snap=>{ _dbgTrack('dados_apresentacoes', snap.val());
       const saved = snap.val();
       dadosApresentacoesBoard = Array.isArray(saved) ? saved.filter(Boolean) : (saved ? Object.values(saved).filter(Boolean) : []);
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
@@ -5222,8 +5492,17 @@ function fbLoadAll(){
   _listenLembretesDismiss();
   // Estrelas do Mar (kudos)
   _listenKudos();
-  // Membros inscritos — carrega todos do Firebase
-  fbListen('kanban/usuarios', val=>{
+  // Membros inscritos — carrega todos do Firebase.
+  // ⚠ Antes usava fbListen (onValue) direto nesse node — só que kanban/usuarios
+  // é GLOBAL (todo mundo, de todos os squads, não só este). Com onValue, o
+  // Firebase reenviava a lista INTEIRA (dezenas de KB) pra ESTE board toda vez
+  // que QUALQUER usuário, em QUALQUER squad, tivesse qualquer campo alterado
+  // (login, presença, permissão, etc.) — mesmo sem relação nenhuma com este
+  // squad. Trocado por: 1 busca ao entrar + poll periódico (só com a aba em
+  // primeiro plano) — resolve o mesmo propósito (lista de membros/menções
+  // fica atualizada em minutos, não em milissegundos) sem o efeito multiplicador
+  // "qualquer mudança em qualquer lugar reenvia tudo pra todo mundo".
+  function _applyUsuariosData(val){
     if(!val) return;
     window._allUsersRaw = val; // dados crus p/ checagens (ex: ADM participando do quadro)
     members = [];
@@ -5288,7 +5567,14 @@ function fbLoadAll(){
     }
     // Atualiza o botão de participar/sair do ADM
     updAdmParticiparBtn();
-  });
+  }
+  // 📡 Volta a ser tempo real (onValue) — mas agora no node LEVE
+  // 'kanban/usuarios_publicos' (só nome/email/foto/init/role/squads), em vez
+  // do 'kanban/usuarios' pesado (que carrega notificações + tokens de push de
+  // TODO MUNDO). O poll de 3min que existia aqui antes baixava o node inteiro
+  // mesmo sem nada mudar; onValue nesse node magro só reenvia quando alguém
+  // realmente edita o perfil — muito mais barato que os dois modelos anteriores.
+  fbListen('kanban/usuarios_publicos', val=>{ _applyUsuariosData(val); });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
     if(val){ blockerMode=val; applyBlockerMode(); renderBoard(); }
@@ -5348,7 +5634,7 @@ function openTeamList(){
     const pv=ps.val()||{}; const now=Date.now();
     Object.entries(pv).forEach(([uid,u])=>{ if(now-(u.ts||0)<30000) onlineUids.add(uid); });
   }).catch(()=>{}).finally(()=>{
-    fbGet('kanban/usuarios').then(snap=>{
+    fbGet('kanban/usuarios_publicos').then(snap=>{
       const val=snap.val()||{};
       const list=document.getElementById('team-list'); if(!list) return;
       const entries=Object.entries(val).filter(([uid,u])=> u.squads? u.squads[ACTIVE_SQUAD]===true : ((u.inscrito===true||u.inscrito==='true')&&u.init));
@@ -5360,7 +5646,7 @@ function openTeamList(){
         return oa-ob || String(a[1].nome||'').localeCompare(String(b[1].nome||''));
       });
       list.innerHTML=entries.map(([uid,u])=>{
-        const role=u.role||'membro';
+        const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
         const on=onlineUids.has(uid);
         const av=safeUrl(u.foto)?`<img src="${safeUrl(u.foto)}" style="width:100%;height:100%;object-fit:cover;">`:esc((u.init||'?').substring(0,2));
         // Subtimes a que a pessoa pertence (por iniciais)
@@ -5489,7 +5775,7 @@ function doSignIn(insc=false){
 }
 function doSignOut(){ 
   safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
-  if(window._signOut) window._signOut(); 
+  if(window._signOut) window._signOut('manual'); 
 }
 
 // ── Lógica de direcionamento pós-login ───────────────────────────────────
@@ -5568,11 +5854,19 @@ function boasVindasOpenHelp(){
 
 function showSquadSelectorFiltered(squadIds) {
   document.getElementById('login-ov').style.display = 'none';
-  // Carrega squads do Firebase antes de renderizar (inclui novos boards)
+  // Fix: antes o grid só renderizava DEPOIS do Firebase responder (kanban/squads_meta),
+  // então NENHUM card aparecia até essa leitura terminar — o que fazia os squads criados
+  // pelo painel (squads_meta, ex.: app e outlet) parecerem sempre mais lentos, já que os
+  // squads nativos (dados/prf/midiacriativa) já estão disponíveis localmente sem precisar
+  // de rede. Agora: renderiza na hora com o que já tem (squads nativos aparecem
+  // instantaneamente) e re-renderiza assim que o Firebase responder, incluindo os squads
+  // do painel — que agora só demoram o tempo real da leitura (bem rápido), em vez de
+  // segurar a tela toda esperando.
+  if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
+  const sel = document.getElementById('squad-selector');
+  if (sel) sel.classList.add('active');
   loadSquadsFromFirebase(() => {
     if (window._renderSelectorGrid) window._renderSelectorGrid(squadIds);
-    const sel = document.getElementById('squad-selector');
-    if (sel) sel.classList.add('active');
   });
 }
 
@@ -5582,24 +5876,39 @@ window.addEventListener('auth-change',e=>{
     // Valida domínio: @ciahering.com.br OU email na whitelist de externos
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
       // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
-      fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
-        const externos = snap.val() || {};
+      // Fix bug de desconexão de usuária externa (relatada por Roberta): antes essa consulta ao
+      // Firebase rodava de novo toda vez que o auth-change disparava — o que pode acontecer sozinho,
+      // por instabilidade do SDK do Firebase, sem a pessoa fazer nada — e qualquer erro passageiro de
+      // rede na consulta derrubava a sessão como se ela não tivesse autorização. Agora: guarda por 24h
+      // que a pessoa já foi validada (não reconsulta à toa) e, se a consulta falhar, tenta mais 2x
+      // antes de desconectar de fato.
+      const _extCacheKey = 'ext_ok_'+user.email;
+      const _extCached = parseInt(safeLS.getItem(_extCacheKey)||'0', 10);
+      if(_extCached && (Date.now()-_extCached) < 86400000){
+        window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+        autoRegistrar(user);
+        return;
+      }
+      const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+        const externos = snap.val()||{};
         const allowed = Object.values(externos).map(e=>e.email||e).includes(user.email);
         if(!allowed){
           document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
-          window._signOut();
+          window._signOut('external_not_authorized');
         } else {
-          // Email externo autorizado — prossegue como convidado
+          safeLS.setItem(_extCacheKey, String(Date.now()));
           window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
           autoRegistrar(user);
         }
       }).catch((err)=>{
-        console.error('[externos check] erro:', err);
+        console.error('[externos check] erro (tentativa '+tentativa+'):', err);
+        if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
         document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
-        window._signOut();
+        window._signOut('external_whitelist_check_error');
       });
+      _checkExternos(1);
       return; // aguarda verificação async
     }
     window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
@@ -5635,11 +5944,19 @@ function autoRegistrar(user){
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
+      const newSquadsRoles={}; newSquadsRoles[ACTIVE_SQUAD]=newRole;
       fbSet('kanban/usuarios/'+user.uid,{
         uid:user.uid, nome:user.displayName||'', email:user.email,
         init, foto:user.photoURL||'', role:newRole,
         inscrito:true, inscritoEm:new Date().toISOString(),
-        squads:newSquads, criadoEm:new Date().toISOString()
+        squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
+      });
+      // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
+      // qualquer board pode escutar em tempo real (onValue) sem baixar
+      // notificações/tokens de push de todo mundo (ver kanban/usuarios).
+      fbSet('kanban/usuarios_publicos/'+user.uid,{
+        nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
+        role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
       });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
@@ -5650,27 +5967,41 @@ function autoRegistrar(user){
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
-      window._currentUserRole=getEffectiveRole(user, existe.role);
+      window._currentUserRole=getEffectiveRole(user, existe.squads_roles&&existe.squads_roles[ACTIVE_SQUAD], existe.role);
+      // ⚡ Sincroniza usuarios_publicos SEMPRE no login, não só quando uma
+      // condição específica muda abaixo (foto, virar ADM, migração de squad).
+      // Sem isso, gente que já tinha conta e nunca disparou nenhuma dessas
+      // condições ficaria pra sempre sem entrada no node leve — sumindo da
+      // lista de membros/menções em qualquer board.
+      fbSet('kanban/usuarios_publicos/'+user.uid, {
+        nome: existe.nome||user.displayName||'', email: existe.email||user.email||'',
+        init: existe.init||'', foto: existe.foto||user.photoURL||'',
+        role: existe.role||'membro', inscrito: existe.inscrito||false,
+        squads: existe.squads||null, squads_roles: existe.squads_roles||null,
+      });
       _applyRoleVisibility(); // ⚡ aplica visibilidade assim que o papel é conhecido
       _logAccess(user, window._currentUserRole);
       setTimeout(_updateGcalPendingBadge, 1500);
       setTimeout(loadNotifs, 1000);
       // Se é ADM, garante role no Firebase
-      if(isAdmUser(user)&&existe.role!=='adm') fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'});
+      if(isAdmUser(user)&&existe.role!=='adm'){ fbUpdate('kanban/usuarios/'+user.uid,{role:'adm'}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{role:'adm'}); }
       // Migração: se inscrito legado sem squads, adiciona squad atual
       if((existe.inscrito===true||existe.inscrito==='true')&&existe.init&&!existe.squads){
         const migUpd={}; migUpd['squads/'+ACTIVE_SQUAD]=true;
         fbUpdate('kanban/usuarios/'+user.uid, migUpd);
+        fbUpdate('kanban/usuarios_publicos/'+user.uid, migUpd);
       }
       // Migra squad 'criacao' → 'midiacriativa' nos dados do usuário
       if(existe.squads&&existe.squads['criacao']&&!existe.squads['midiacriativa']){
         const criaMigUpd={'squads/midiacriativa':true,'squads/criacao':null};
         fbUpdate('kanban/usuarios/'+user.uid, criaMigUpd);
+        fbUpdate('kanban/usuarios_publicos/'+user.uid, criaMigUpd);
       }
       // Migra squad 'midia' → 'prf' (Marketing de Performance) nos dados do usuário
       if(existe.squads&&existe.squads['midia']&&!existe.squads['prf']){
         const midiaMigUpd={'squads/prf':true,'squads/midia':null};
         fbUpdate('kanban/usuarios/'+user.uid, midiaMigUpd);
+        fbUpdate('kanban/usuarios_publicos/'+user.uid, midiaMigUpd);
       }
       // Atualiza visibilidade do FAB do agente
       const fabBtn=document.querySelector('.fab-btn');
@@ -5682,7 +6013,7 @@ function autoRegistrar(user){
       if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
-      if(user.photoURL&&existe.foto!==user.photoURL) fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL});
+      if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
         members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
@@ -5720,6 +6051,7 @@ function confirmarInscricao(){
   const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
+  fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
   window._currentUserInit=init;
@@ -5762,6 +6094,7 @@ async function toggleAdmParticipar(){
     if(!await uiConfirm('Voltar a ser fantasma neste quadro? Você sai da lista de membros mas mantém todo o acesso de ADM.',{title:'Sair do quadro',okText:'Sair'})) return;
     const upd={}; upd['squads/'+ACTIVE_SQUAD]=null;
     fbUpdate('kanban/usuarios/'+u.uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+u.uid, upd);
     showToast('👻 Você voltou a ser fantasma neste quadro.');
   } else {
     // Participar: inscreve no squad
@@ -5770,6 +6103,7 @@ async function toggleAdmParticipar(){
     const upd={init, inscritoEm:new Date().toISOString()};
     upd['squads/'+ACTIVE_SQUAD]=true;
     fbUpdate('kanban/usuarios/'+u.uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+u.uid, upd);
     window._currentUserInit=init;
     showToast('🙋 Você agora participa deste quadro como membro.');
   }
@@ -5895,6 +6229,17 @@ function _sortCards(arr, colId){
   if(mode==='createdAt'){
     return arr.slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   }
+  if(mode==='movedAt'){
+    // Data da última movimentação de coluna (card.flow.enteredAt na coluna atual);
+    // cards sem flow (legado não migrado) caem por último.
+    return arr.slice().sort((a,b)=>{
+      const ma=a.flow?.enteredAt?.[a.col]||'', mb=b.flow?.enteredAt?.[b.col]||'';
+      if(ma && mb) return mb.localeCompare(ma); // mais recente primeiro
+      if(ma && !mb) return -1;
+      if(!ma && mb) return 1;
+      return 0;
+    });
+  }
   if(mode==='doneAt'){
     // "Data de finalização" = PRAZO PREVISTO (card.due), não a data real de
     // conclusão (flow.doneAt) — esse último só existe quando o card já está
@@ -5925,6 +6270,10 @@ function _sortCards(arr, colId){
 
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
+  const _scrollBoardX=board.scrollLeft;
+  const _scrollColY={};
+  board.querySelectorAll('.col-body[id^="body-"], .col-body[id^="rbody-"]').forEach(elx=>{ _scrollColY[elx.id]=elx.scrollTop; });
+  const _scrollWinY=window.scrollY;
   // Snapshot diário: só agenda o timer se ainda não fez hoje (evita timers acumulados a cada render)
   if(cards.length>0 && !_snapshotDoneToday()) setTimeout(maybeSnapshot,2000);
   if(cards.length>0 && !_autoArchiveDoneToday()) setTimeout(maybeAutoArchiveOldCards,3000);
@@ -5943,6 +6292,9 @@ function renderBoard(){
   updateMetrics();
   // Garante a classe de modo correta após render (síncrono, sem timing frágil)
   if(!raiaMode) setViewMode(viewMode);
+  board.scrollLeft=_scrollBoardX;
+  Object.keys(_scrollColY).forEach(elId=>{ const elx=document.getElementById(elId); if(elx) elx.scrollTop=_scrollColY[elId]; });
+  if(_scrollWinY) window.scrollTo(0,_scrollWinY);
 }
 
 function renderNormal(board,activeCards){
@@ -6092,7 +6444,7 @@ function renderRaiaTag(board,activeCards){
           <span class="col-cnt">${colCards.length}</span>
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
         </div>
-      </div><div class="col-body"></div>`;
+      </div><div class="col-body" id="rbody-${tColId}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -6144,7 +6496,7 @@ function renderRaiaSubteam(board,activeCards){
           <span class="col-cnt">${colCards.length}</span>
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
         </div>
-      </div><div class="col-body"></div>`;
+      </div><div class="col-body" id="rbody-${sColId}"></div>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!sCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -6241,7 +6593,15 @@ function toggleRaia(){
 function toggleSortMenu(){
   const menu = document.getElementById('sort-menu');
   if(!menu) return;
-  menu.style.display = menu.style.display==='none' ? 'block' : 'none';
+  const willShow = menu.style.display==='none' || menu.style.display==='';
+  if(willShow){
+    const btn = document.getElementById('btn-sort');
+    const r = btn.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (r.bottom+6)+'px';
+    menu.style.left = r.left+'px';
+  }
+  menu.style.display = willShow ? 'block' : 'none';
 }
 function closeSortMenu(){
   const menu = document.getElementById('sort-menu');
@@ -6269,7 +6629,7 @@ function cycleColSort(colId){
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
-  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo'};
+  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação'};
   const lbl = document.getElementById('btn-sort-lbl');
   if(lbl) lbl.textContent = labels[mode] || 'Prioridade';
   const btn = document.getElementById('btn-sort');
@@ -6501,7 +6861,7 @@ function scheduleAutoSave(){
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
-      po:document.getElementById('m-po').value,checklist:cl,riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
+      po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
@@ -6671,7 +7031,7 @@ function saveExtraDesc(i){
   // se o card já existe, persiste na hora; senão fica no editingDescs até criar o card
   if(editingId){
     const c=cards.find(x=>x.id===editingId);
-    if(c){ c.descsExtra=_cleanExtraDescs(); fbSaveAll(); renderBoard(); }
+    if(c){ c.descsExtra=_cleanExtraDescs(); fbSaveCard(c); renderBoard(); }
   }
   renderExtraDescs();
   showToast('✅ Descrição salva!');
@@ -6757,17 +7117,26 @@ function openCard(id){
     blockerRow.style.display=(c.blocker||c.col==='blocker'||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
   }
+  _clGroupsInit(c);
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
   setCriativoFields(c.criativo||{});
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
+  // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
+  const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
+    // ⚡ Trava contra corrida: se o usuário fechou este card e abriu outro
+    // (ou um "novo card" em branco) dentro desses 100ms, editingId já mudou
+    // — sem essa checagem, os comentários/anexos/cards vinculados do card
+    // ANTIGO vazavam pro formulário do card ATUAL, fazendo parecer que um
+    // card antigo tinha aberto sozinho no lugar de um novo em branco.
+    if(editingId !== id) return;
     initMentionDropdown('m-po');
     loadComments(id);
     renderDescPreview();
@@ -6992,6 +7361,7 @@ function openNewCard(col){
   document.getElementById('btn-del-card').style.visibility='hidden';
   const bRow=document.getElementById('m-blocker-row');
   if(bRow) bRow.style.display='none';
+  _clGroupsInit(null);
   renderCL([]);
   renderRiscos([]);
   setCriativoFields({});
@@ -7055,7 +7425,7 @@ function saveCard(){
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
+      checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       participants:getParticipants(),
       criativo:getCriativoData(),
       isOKR:document.getElementById('m-is-okr')?.checked||false,
@@ -7076,7 +7446,7 @@ function saveCard(){
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
-      checklist:cl,riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td,
+      checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td,
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'};
@@ -7084,15 +7454,25 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
   }
-  if(editingId){ fbSaveCard(cards.find(x=>x.id===editingId)); } else { fbSaveAll(); }
-  _stopDirtyWatch(); // já salvou tudo — não faz sentido avisar de "não salvo" ao fechar em seguida
-  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value); closeOv('card-ov');
-  _clearPendingRequired();
+  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll();
+  renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
+  // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
+  // (ex.: instabilidade do SDK de auth já corrigida antes, ou queda de rede), o card fechava mesmo
+  // assim, dando a falsa impressão de que tinha salvo. Agora só fecha quando o Firebase confirma o
+  // sucesso; se der erro, mantém o card aberto e avisa a pessoa em vez de fechar às cegas.
+  Promise.resolve(_saveP).then(()=>{
+    _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
+    closeOv('card-ov');
+    _clearPendingRequired();
+  }).catch(err=>{
+    console.error('[saveCard] falha ao confirmar salvamento:', err);
+    showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
+  });
 }
 function toggleCardOKR(cardId){
   const card = cards.find(c=>c.id===cardId); if(!card) return;
   card.isOKR = !card.isOKR;
-  fbSaveAll();
+  fbSaveCard(card);
   renderBoard();
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
@@ -7106,7 +7486,7 @@ async function deleteCard(){
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
-  c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveAll(); renderBoard(); closeOv('card-ov');
+  c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveCard(c); renderBoard(); closeOv('card-ov');
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
 function _duplicarCardObj(card){
@@ -7125,67 +7505,153 @@ function _duplicarCardObj(card){
 function duplicarCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   const novo=_duplicarCardObj(c);
-  fbSaveAll(); renderBoard(); closeOv('card-ov');
+  fbSaveCard(novo); renderBoard(); closeOv('card-ov');
   showToast('⧉ Card duplicado.');
 }
 function ctxDuplicate(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
-  _duplicarCardObj(card);
-  fbSaveAll(); renderBoard(); hideCtxMenu();
+  const novo=_duplicarCardObj(card);
+  fbSaveCard(novo); renderBoard(); hideCtxMenu();
   showToast('⧉ Card duplicado.');
+}
+// ── MÚLTIPLOS CHECKLISTS POR CARD ──────────────────────────────────
+// _mCurrentGroups = cópia de trabalho de card.checklistGroups enquanto o
+// modal está aberto: [{id,title}]. Os itens continuam num único array
+// plano (card.checklist, lido/escrito por getCL()) — cada item ganha um
+// campo item.grp apontando pro id do grupo a que pertence. Isso mantém
+// 100% de compatibilidade com todo código legado que só lê card.checklist
+// (progresso do card no board, notificações, agente, modelos, import Trello).
+let _mCurrentGroups = [{id:'default', title:'Checklist'}];
+function _clNewGroupId(){ return 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+// Chamar sempre que um card (ou card novo/modelo) for carregado no modal, antes de renderCL().
+function _clGroupsInit(card){
+  if(card && Array.isArray(card.checklistGroups) && card.checklistGroups.length){
+    _mCurrentGroups = card.checklistGroups.map(g=>({id:g.id, title:g.title||'Checklist'}));
+  } else {
+    _mCurrentGroups = [{id:'default', title:'Checklist'}];
+  }
+}
+function addChecklistGroup(){
+  saveUndo('adicionar checklist');
+  _mCurrentGroups.push({id:_clNewGroupId(), title:'Checklist'});
+  renderCL(getCL());
+  scheduleAutoSave();
+}
+function delChecklistGroup(gid){
+  if(_mCurrentGroups.length<=1){ showToast('⚠ O card precisa ter pelo menos um checklist.'); return; }
+  const g=_mCurrentGroups.find(x=>x.id===gid); if(!g) return;
+  const totalItens=getCL().filter(it=>(it.grp||_mCurrentGroups[0].id)===gid).length;
+  if(totalItens && !confirm(`Excluir o checklist "${g.title}" e seus ${totalItens} item(ns)?`)) return;
+  saveUndo('excluir checklist');
+  _mCurrentGroups = _mCurrentGroups.filter(x=>x.id!==gid);
+  const rest = getCL().filter(it=>(it.grp||gid)!==gid);
+  renderCL(rest); scheduleAutoSave();
+}
+function addCIToGroup(gid, v){
+  v=(v||'').trim(); if(!v) return;
+  saveUndo('adicionar item checklist');
+  const cl=getCL(); cl.push({t:v, done:false, grp:gid});
+  renderCL(cl); scheduleAutoSave();
 }
 function renderCL(cl){
   const w=document.getElementById('m-checklist'); if(!w) return; w.innerHTML='';
-  cl.forEach((item,i)=>{
-    const d=document.createElement('div');
-    d.className='cl-item'; d.draggable=true; d.dataset.idx=i;
-    // Drag events
-    d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; w._dragIdx=i; d.classList.add('dragging'); });
-    d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); w.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
-    d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
-    d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
-    d.addEventListener('drop',e=>{
-      e.preventDefault(); d.classList.remove('drag-over');
-      const from=w._dragIdx; const to=i; if(from===to) return;
-      saveUndo('reordenar checklist');
-      const cur=getCL(); const [moved]=cur.splice(from,1); cur.splice(to,0,moved);
-      renderCL(cur); scheduleAutoSave();
+  if(!_mCurrentGroups || !_mCurrentGroups.length) _mCurrentGroups=[{id:'default', title:'Checklist'}];
+  const fallbackId=_mCurrentGroups[0].id;
+  cl=(cl||[]).slice();
+  cl.forEach(it=>{ if(!it.grp || !_mCurrentGroups.some(g=>g.id===it.grp)) it.grp=fallbackId; });
+  // normaliza: agrupa itens contíguos na ordem dos checklists (evita índices cruzados no drag)
+  cl = _mCurrentGroups.flatMap(g=>cl.filter(it=>it.grp===g.id));
+  let gIdx=0;
+  _mCurrentGroups.forEach(g=>{
+    const groupItems = cl.filter(it=>it.grp===g.id);
+    const done=groupItems.filter(it=>it.done).length, total=groupItems.length;
+    const pct = total? Math.round(done/total*100) : 0;
+
+    const sec=document.createElement('div'); sec.className='cl-group'; sec.style.cssText='margin-bottom:14px;';
+    const hd=document.createElement('div'); hd.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const titleEl=document.createElement('input'); titleEl.value=g.title; titleEl.className='cl-group-title';
+    titleEl.style.cssText='background:none;border:none;color:var(--txt1);font-size:12px;font-weight:700;flex:1;min-width:0;padding:3px 5px;border-radius:5px;';
+    titleEl.addEventListener('focus',()=>titleEl.style.background='rgba(56,182,255,.08)');
+    titleEl.addEventListener('blur',()=>{
+      titleEl.style.background='none';
+      const v=titleEl.value.trim()||'Checklist';
+      if(v!==g.title){ saveUndo('renomear checklist'); g.title=v; scheduleAutoSave(); }
     });
-    // Checkbox
-    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
-    // Handle de drag
-    const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
-    handle.addEventListener('mousedown',()=>d.draggable=true);
-    // Texto editável inline
-    const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
-    cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); scheduleAutoSave(); });
-    span.title='Clique para editar';
-    let _prev='';
-    span.addEventListener('click',()=>{
-      _prev=span.textContent;
-      span.contentEditable='true'; span.focus();
-      const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
-      const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    titleEl.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); titleEl.blur(); } });
+    const pctEl=document.createElement('span'); pctEl.style.cssText='font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;';
+    pctEl.textContent = total? `${done}/${total} · ${pct}%` : '';
+    const delGrpBtn=document.createElement('button'); delGrpBtn.className='cl-del'; delGrpBtn.textContent='✕'; delGrpBtn.title='Excluir este checklist';
+    delGrpBtn.onclick=()=>delChecklistGroup(g.id);
+    hd.append(titleEl,pctEl,delGrpBtn);
+    sec.appendChild(hd);
+
+    if(total){
+      const bar=document.createElement('div'); bar.style.cssText='height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:6px;';
+      const fill=document.createElement('div'); fill.style.cssText=`height:100%;width:${pct}%;background:var(--teal);transition:width .2s;`;
+      bar.appendChild(fill); sec.appendChild(bar);
+    }
+
+    const itemsWrap=document.createElement('div'); itemsWrap.className='cl-items';
+    groupItems.forEach((item,li)=>{
+      const i=gIdx++; // índice global no array normalizado, usado só p/ excluir item
+      const d=document.createElement('div');
+      d.className='cl-item'; d.draggable=true; d.dataset.idx=i; d.dataset.grp=g.id;
+      d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; itemsWrap._dragLi=li; d.classList.add('dragging'); });
+      d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
+      d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
+      d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
+      d.addEventListener('drop',e=>{
+        e.preventDefault(); d.classList.remove('drag-over');
+        const from=itemsWrap._dragLi; const to=li; if(from==null||from===to) return;
+        saveUndo('reordenar checklist');
+        const gi=groupItems.slice(); const [moved]=gi.splice(from,1); gi.splice(to,0,moved);
+        const rebuilt=_mCurrentGroups.flatMap(gg=> gg.id===g.id ? gi : cl.filter(it=>it.grp===gg.id));
+        renderCL(rebuilt); scheduleAutoSave();
+      });
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
+      const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
+      handle.addEventListener('mousedown',()=>d.draggable=true);
+      const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
+      cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); pctEl.textContent=''; scheduleAutoSave(); });
+      span.title='Clique para editar';
+      let _prev='';
+      span.addEventListener('click',()=>{
+        _prev=span.textContent;
+        span.contentEditable='true'; span.focus();
+        const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
+        const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      });
+      span.addEventListener('blur',()=>{
+        span.contentEditable='false';
+        if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
+      });
+      span.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
+        if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
+      });
+      const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
+      del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
+      d.append(handle,cb,span,del);
+      itemsWrap.appendChild(d);
     });
-    span.addEventListener('blur',()=>{
-      span.contentEditable='false';
-      if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
-    });
-    span.addEventListener('keydown',e=>{
-      if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
-      if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
-    });
-    // Botão deletar
-    const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
-    del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
-    d.append(handle,cb,span,del);
-    w.appendChild(d);
+    sec.appendChild(itemsWrap);
+
+    const addRow=document.createElement('div'); addRow.className='cl-add-r'; addRow.style.cssText='margin-top:4px;';
+    const inp=document.createElement('input'); inp.className='cl-ai'; inp.placeholder='Novo item...';
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); } });
+    const addBtn=document.createElement('button'); addBtn.className='cl-ab'; addBtn.textContent='+ Add';
+    addBtn.onclick=()=>{ addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); };
+    addRow.append(inp,addBtn);
+    sec.appendChild(addRow);
+
+    w.appendChild(sec);
   });
 }
 function getCL(){
   return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({
     t: r.querySelector('.cl-it')?.textContent?.trim()||'',
     done: r.querySelector('input[type=checkbox]')?.checked||false,
+    grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
   })).filter(x=>x.t);
 }
 function renderRiscos(rl){
@@ -8219,18 +8685,35 @@ let _kudosScope='squad';
 
 function _listenKudos(){
   if(!window._fbReady){ setTimeout(_listenKudos, 1000); return; }
-  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'),snap=>{ _dbgTrack('kudos_squad', snap.val());
     const val=snap.val();
     kudosSquad = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     updKudosBadge();
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/kudos_geral'),snap=>{
+  // ⚡ kudos_geral é GLOBAL (todas as Estrelas do Mar de todos os squads, sem
+  // limpeza — só cresce) e antes era onValue: qualquer kudos dado em QUALQUER
+  // squad reenviava a lista inteira pra TODO board aberto de TODA squad.
+  // Trocado por poll periódico (aba em primeiro plano) — kudos não precisa
+  // aparecer em tempo real, alguns minutos de atraso é imperceptível.
+  _refreshKudosGeral();
+  setInterval(()=>{ if(!document.hidden) _refreshKudosGeral(); }, KUDOS_GERAL_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastKudosGeralRefresh > KUDOS_GERAL_POLL_MS) _refreshKudosGeral();
+  });
+}
+const KUDOS_GERAL_POLL_MS = 3*60000; // 3 minutos
+let _lastKudosGeralRefresh = 0;
+function _refreshKudosGeral(){
+  _lastKudosGeralRefresh = Date.now();
+  fbGet('kanban/painel/kudos_geral').then(snap=>{
+    _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     updKudosBadge();
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
-  });
+  }).catch(()=>{});
 }
 
 function toggleKudos(){
@@ -8358,7 +8841,7 @@ function addKudos(){
     createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
   }
   // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
-  fbGet('kanban/usuarios').then(snap=>{
+  fbGet('kanban/usuarios_publicos').then(snap=>{
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(uid===u.uid || uid===toUid) return; // não duplica pro remetente nem pro agraciado
@@ -8761,7 +9244,25 @@ const CAMP_TIPO_LABELS = { aprendizado:'Aprendizado', resultado:'Resultado', pro
 
 let _campanhas = {};           // id -> objeto campanha
 let _campAtual     = null;  // campanha em detalhe
-let _campCrossData = {};    // cache pontual: {sqId:{cards,columns}} — carregado só quando usuário pede multi-squad
+let _campCrossData = {};    // cache pontual: {sqId:{cards,columns,flowConfig}} — carregado só quando usuário pede multi-squad
+// Diz se um card do dashboard de Campanhas conta como "concluído" — usa a
+// classificação de colunas (flowConfig.doneCols) do SQUAD DO CARD, não do
+// squad ativo. Squads com múltiplas colunas de finalização em sequência
+// (ex.: Done → Mídia │ Implementado) contam qualquer uma delas como
+// concluído, porque a contagem lê a coluna ATUAL do card a cada render —
+// ou seja, corrigir esta função já corrige o histórico inteiro da campanha
+// retroativamente, sem precisar de migração.
+function _isCampCardDone(c){
+  const sqFlow = c._squad===ACTIVE_SQUAD ? flowConfig : _campCrossData[c._squad]?.flowConfig;
+  if(sqFlow && sqFlow.doneCols && sqFlow.doneCols.length) return sqFlow.doneCols.includes(c.col);
+  if(c._squad===ACTIVE_SQUAD && typeof _isColDone==='function') return _isColDone(c.col);
+  // Sem config manual nem squad ativo p/ usar a heurística automática (_flowDoneColIds
+  // só enxerga o squad ativo) — último recurso: nome da coluna, igual ao comportamento antigo.
+  const cols = (window._campGridCtx && window._campGridCtx.getCols) ? window._campGridCtx.getCols(c._squad) : columns;
+  const col = (cols||[]).find(cl=>cl.id===c.col);
+  const colName = col?.name || c.col || '';
+  return /conclu|done|feito|finaliz/i.test(colName);
+}
 let _campEditId = null;        // id sendo editado (null = novo)
 let _campEditTema = 'neutro';  // tema selecionado no edit modal
 let _campEditTags  = [];       // tags selecionadas no edit modal
@@ -8810,7 +9311,7 @@ function openCampLogs(){
 
 // ── Carregar ──────────────────────────────────────────────────────
 function loadCampanhas(){
-  window._onValue(_campRef(), snap=>{
+  window._onValue(_campRef(), snap=>{ _dbgTrack('campanhas', snap.val());
     const raw = snap.val()||{};
     // Filtra campanhas que não pertencem ao squad ativo nem a squads reais —
     // evita que campanhas criadas em squads fictícios (dev, omnichannel) apareçam
@@ -9191,7 +9692,7 @@ function renderCampDashboard(){
     const cols = getCols(c._squad)||[];
     const col = cols.find(cl=>cl.id===c.col);
     const colName = col?.name || c.col || '—';
-    const done = (c._squad===ACTIVE_SQUAD && typeof _isColDone==='function') ? _isColDone(c.col) : /conclu|done|feito|finaliz/i.test(colName);
+    const done = _isCampCardDone(c);
     if(done) concluidos++;
     else if(c.due && c.due<today) atrasados++;
     colCounts.set(colName,(colCounts.get(colName)||0)+1);
@@ -9285,8 +9786,9 @@ async function setCampViewMode(mode){
             _campCrossData[sq]={
               cards:   val.cards   ?(Array.isArray(val.cards)   ?val.cards   :Object.values(val.cards))   :[],
               columns: val.columns ?(Array.isArray(val.columns) ?val.columns :Object.values(val.columns)) :[],
+              flowConfig: val.config?.flow || null,
             };
-          }).catch(()=>{ _campCrossData[sq]={cards:[],columns:[]}; })
+          }).catch(()=>{ _campCrossData[sq]={cards:[],columns:[],flowConfig:null}; })
       ));
       if(btn){ btn.textContent=orig; btn.disabled=false; }
     }
@@ -9782,16 +10284,30 @@ function openArquivados(){
   if(qNome) archived=archived.filter(c=>(c.title||'').toLowerCase().includes(qNome));
   if(qTag) archived=archived.filter(c=>getCardTags(c).includes(qTag));
   if(qOwner) archived=archived.filter(c=>c.owner===qOwner);
-  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner)?' com esse filtro.':'.')+'</div>'; }
+  const qDays=parseInt(document.getElementById('arch-f-days')?.value||'0');
+  if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
+  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
     const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
   document.getElementById('arch-ov').classList.add('open');
 }
-function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveAll(); renderBoard(); openArquivados(); }
+function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard(); openArquivados(); }
+function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
+async function deleteSelectedArchived(){
+  const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
+  const idSet=new Set(ids);
+  cards=cards.filter(c=>!idSet.has(c.id));
+  fbSaveAll();
+  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  openArquivados();
+}
+
 
 // ── LIMPEZA DE CARDS ANTIGOS (arquivamento em massa por idade) ──────
 function _cardAgeDays(c){
@@ -9815,10 +10331,12 @@ function openCleanupOld(){
 function renderCleanupList(){
   const days=parseInt(document.getElementById('cleanup-days')?.value||'365');
   const qCol=document.getElementById('cleanup-col')?.value||'';
+  const qNome=(document.getElementById('cleanup-f-nome')?.value||'').toLowerCase().trim();
   const body=document.getElementById('cleanup-body'); if(!body) return;
   const old=cards.filter(c=>{
     if(c.archived) return false;
     if(qCol && c.col!==qCol) return false;
+    if(qNome && !(c.title||'').toLowerCase().includes(qNome)) return false;
     const age=_cardAgeDays(c);
     return age!==null && age>=days;
   }).sort((a,b)=>_cardAgeDays(b)-_cardAgeDays(a));
@@ -9839,6 +10357,17 @@ function renderCleanupList(){
   }).join('');
 }
 function _cleanupSelectAll(v){ document.querySelectorAll('.cleanup-chk').forEach(cb=>cb.checked=v); }
+async function deleteSelectedOldCards(){
+  const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
+  const idSet=new Set(ids);
+  cards=cards.filter(c=>!idSet.has(c.id));
+  fbSaveAll(); renderBoard();
+  showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  renderCleanupList();
+}
+
 async function bulkArchiveOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
@@ -10355,6 +10884,7 @@ function usarQLItem(i){
   populateTagSelect();
   document.getElementById('m-desc').value=item.desc||'';
   document.getElementById('m-po').value=item.po||'';
+  _clGroupsInit(item);
   if(item.checklist?.length) renderCL(item.checklist);
   if(item.riscos?.length) renderRiscos(item.riscos);
   // Guarda os campos obrigatórios deste modelo pra validar na criação
@@ -10585,7 +11115,7 @@ function renderUsuariosSubs(){
 }
 function renderUsuarios(){
   const list=document.getElementById('usuarios-list'); list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
-  fbGet('kanban/usuarios').then(snap=>{
+  fbGet('kanban/usuarios_publicos').then(snap=>{
     const val=snap.val();
     if(!val){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum usuário ainda.</div>'; return; }
     list.innerHTML='';
@@ -10602,16 +11132,16 @@ function renderUsuarios(){
       const roleTextColors={membro:'var(--accent)',organizador:'var(--warn)',po:'var(--teal)'};
       const roleBorderColors={membro:'rgba(56,182,255,.3)',organizador:'rgba(255,209,102,.3)',po:'rgba(29,233,182,.3)'};
       const roleLabels={membro:'Membro',organizador:'Organizador',po:'PO'};
-      const role=u.role||'membro';
+      const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
       // ⚠ Detecta colisão de iniciais com outro membro do squad
       const dupInit = entries.some(([uid2,u2])=>uid2!==uid && (u2.init||'').toUpperCase()===(u.init||'').toUpperCase() && u.init);
       const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial('${uid}','${esc(u.init||'')}','${esc((u.nome||u.email||'').replace(/'/g,''))}')" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
       row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
 <select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
-        <option value="membro"${(u.role||'membro')==='membro'?' selected':''}>Membro</option>
-        <option value="organizador"${u.role==='organizador'?' selected':''}>Organizador</option>
-        <option value="po"${u.role==='po'?' selected':''}>PO</option>
+        <option value="membro"${role==='membro'?' selected':''}>Membro</option>
+        <option value="organizador"${role==='organizador'?' selected':''}>Organizador</option>
+        <option value="po"${role==='po'?' selected':''}>PO</option>
       </select>`;
       list.appendChild(row);
     });
@@ -10660,10 +11190,12 @@ async function executarReatribuir(){
   showToast('✅ '+alvos.length+' card(s) reatribuídos de '+from+' para '+to+'.');
 }
 function alterarRole(uid,role){
+  // Só grava o papel PARA ESTE QUADRO (squads_roles/{ACTIVE_SQUAD}) -- NÃO mexe mais
+  // no campo global 'role', pra não vazar o papel de um quadro pros outros.
   const update = {};
   update['squads_roles/'+ACTIVE_SQUAD] = role;
-  update['role'] = role;
   fbUpdate('kanban/usuarios/'+uid, update);
+  fbUpdate('kanban/usuarios_publicos/'+uid, update);
   if(window._currentUser?.uid===uid) window._currentUserRole=role;
 }
 // Edita as iniciais de um membro e (opcionalmente) migra os cards atribuídos
@@ -10675,7 +11207,7 @@ async function editarInicial(uid, initAtual, nome){
   if(!novaInit || novaInit.length<1 || novaInit.length>4){ showToast('⚠ Use de 1 a 4 letras.'); return; }
   if(novaInit===initAtual.toUpperCase()){ return; }
   // Checa se a nova inicial já existe neste squad
-  const snap = await fbGet('kanban/usuarios');
+  const snap = await fbGet('kanban/usuarios_publicos');
   const all = snap.val()||{};
   const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit &&
     ((d.squads&&d.squads[ACTIVE_SQUAD]===true)||(!d.squads&&d.inscrito)));
@@ -10688,6 +11220,7 @@ async function editarInicial(uid, initAtual, nome){
   }
   // Atualiza a inicial do usuário
   await fbUpdate('kanban/usuarios/'+uid, {init:novaInit});
+  await fbUpdate('kanban/usuarios_publicos/'+uid, {init:novaInit});
   if(window._currentUser?.uid===uid) window._currentUserInit=novaInit;
   // Migra cards se confirmado
   if(migrar){
@@ -10710,6 +11243,7 @@ async function removerMembro(uid, nome){
   update['squads/'+ACTIVE_SQUAD] = null;
   update['squads_roles/'+ACTIVE_SQUAD] = null;
   fbUpdate('kanban/usuarios/'+uid, update);
+  fbUpdate('kanban/usuarios_publicos/'+uid, update);
   showToast('✅ '+nome+' removido do squad.');
   renderUsuarios();
 }
@@ -10950,7 +11484,7 @@ function executeTool(name,input){
       { const _cn=columns.find(x=>x.id===input.nova_coluna); recordHistory(found, 'moveu para '+(_cn?_cn.name:input.nova_coluna), '🤖 Agente Ágil'); } // 📜
       recordMove(found, input.nova_coluna); // ← métricas de fluxo
       renderBoard(); 
-      fbSaveAll(); 
+      fbSaveCard(found); 
       runAutoRules('move',found.id,input.nova_coluna);
       return{ok:true,msg:`"${found.title}" movido: ${ant} → ${input.nova_coluna}`};
     }
@@ -10960,7 +11494,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
       recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'—'), '🤖 Agente Ágil');
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo}`};
     }
     case 'marcar_checklist':{
@@ -10968,7 +11502,7 @@ function executeTool(name,input){
       if(!c||!c.checklist||c.checklist.length<=input.item_index) return{ok:false,msg:'Item não encontrado'};
       c.checklist[input.item_index].done=input.concluido; c.edited=user; c.editedAt=td;
       { const nd=(c.checklist||[]).filter(i=>i&&i.done).length, nt=(c.checklist||[]).length; recordHistory(c, 'checklist: '+nd+'/'+nt+' concluídos', '🤖 Agente Ágil'); }
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       return{ok:true,msg:`"${c.checklist[input.item_index].t}" ${input.concluido?'marcado':'desmarcado'}`};
     }
     case 'criar_card':{
@@ -10994,7 +11528,7 @@ function executeTool(name,input){
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
-      cards.push(novo); renderBoard(); fbSaveAll();
+      cards.push(novo); renderBoard(); fbSaveCard(novo);
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
     }
         case 'atualizar_owner':{
@@ -11027,7 +11561,7 @@ function executeTool(name,input){
       }
       c.owner=owner; c.edited=user; c.editedAt=td;
       { const m=members.find(x=>x.init===owner); recordHistory(c, 'definiu responsável: '+(m?m.name:(owner||'—')), '🤖 Agente Ágil'); }
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       const memberName=members.find(m=>m.init===owner)?.name||owner;
       return{ok:true,msg:`Responsável de "${c.title}" → ${memberName} (${owner})`};
     }
@@ -11037,7 +11571,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       c.priority=input.prioridade||''; c.edited=user; c.editedAt=td;
       recordHistory(c, 'alterou prioridade: '+(input.prioridade||'—'), '🤖 Agente Ágil');
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       const labels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa','':'removida'};
       return{ok:true,msg:`Prioridade de "${c.title}" → ${labels[input.prioridade||'']}`};
     }
@@ -11078,7 +11612,7 @@ function executeTool(name,input){
       if(input.descricao!==undefined) c.desc=input.descricao;
       if(input.po!==undefined) c.po=input.po;
       c.edited=user; c.editedAt=td;
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveCard(c);
       return{ok:true,msg:`Card "${c.title}" atualizado`};
     }
         default: return{ok:false,msg:'Ferramenta desconhecida: '+name};
@@ -11998,6 +12532,9 @@ const HELP_CONTENT = {
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
+    { icon:'📱', title:'Ativar notificações externas (web e celular)', text:'O sino 🔔 avisa quando a aba está aberta, mas dá pra receber avisos também com o Maré fechado — no computador ou no celular. Dentro do painel do sino, clique em "🔔 Ativar notificações neste aparelho" e aceite a permissão que o navegador pedir.\n\nIsso avisa quando: um card é atribuído a você, alguém te menciona (@) num comentário, um impedimento seu é resolvido, um card seu é marcado com risco, ou um card recorrente/agendado entra no quadro. As outras notificações (Estrela do Mar, prazo, card finalizado, etc.) continuam só no sino, sem interromper.\n\nNo celular, funciona melhor com o Maré instalado como aplicativo (veja o item "Instalar no celular" aqui do lado) — no iPhone, inclusive, só funciona assim.\n\nPrecisa ativar em CADA aparelho separadamente (o computador do trabalho, o celular, etc. cada um tem seu próprio interruptor).' },
+    { icon:'🔕', title:'Não Perturbe', text:'Ainda dentro do painel do sino, o botão "🔔 Notificações ativas" abre um menu com opções de silêncio: por 1 hora, por 8 horas, até amanhã de manhã, ou até você mesmo desativar. Enquanto ativo, o sino mostra um selo 🔕 e as notificações que "interrompem" (o alerta de fora do app) ficam em silêncio — mas continuam sendo registradas normalmente no sino, então nada se perde, só não incomoda durante o período escolhido.' },
+    { icon:'📲', title:'Instalar no celular (Android e iPhone)', text:'Instalar o Maré como um aplicativo de verdade na tela inicial — sem precisar de loja de app — deixa o uso mais rápido e é o que faz as notificações funcionarem direito no celular.\n\n📱 Android (Chrome): abra o Maré pelo Chrome → toque no menu ⋮ (três pontinhos, canto superior direito) → "Adicionar à tela inicial" (ou "Instalar app", dependendo da versão) → confirme. O ícone aparece na tela inicial como qualquer outro app.\n\n🍎 iPhone (precisa ser pelo Safari, não funciona por Chrome no iPhone): abra o Maré pelo Safari → toque no botão de compartilhar (o quadrado com a seta pra cima, na barra inferior) → role e toque em "Adicionar à Tela de Início" → confirme. Funciona a partir do iOS 16.4; em versões mais antigas o app abre normalmente, só as notificações externas que não funcionam.\n\nDepois de instalado, sempre abra pelo ícone da tela inicial (não pelo navegador) — é isso que garante as notificações e a experiência de app cheio, sem barra de endereço.' },
     { icon:'👥', title:'Equipe do quadro', text:'Clique nos avatares de usuários online (topo direito) para abrir a lista completa da equipe do squad: quem está online, papel de cada um (Membro, Organizador, PO, Admin) e iniciais. Útil para saber quem participa do quadro.' },
   ],
   kudos: [
@@ -12326,7 +12863,8 @@ document.addEventListener('click', e=>{
 
 
 // ── NOTIFICAÇÕES ─────────────────────────────────────────────────
-const NOTIF_TTL_DAYS = 3; // notificações somem após 3 dias
+const NOTIF_TTL_DAYS = 3; // notificações lidas somem após 3 dias
+const NOTIF_TTL_UNREAD_DAYS = 30; // notificações NÃO lidas só somem depois de 30 dias (evita apagar antes de ver)
 let notifOpen = false;
 let _notifListener = null;
 
@@ -12355,6 +12893,10 @@ document.addEventListener('click', e=>{
     notifOpen=false;
     document.getElementById('notif-panel')?.classList.remove('open');
   }
+  const dndMenu=document.getElementById('dnd-menu');
+  if(dndMenu && dndMenu.style.display==='block' && !e.target.closest('#dnd-menu') && !e.target.closest('#dnd-toggle-btn')){
+    dndMenu.style.display='none';
+  }
 });
 
 // ── Cria uma notificação para um usuário ──────────────────────────
@@ -12377,50 +12919,283 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride){
     squad: ACTIVE_SQUAD,
   };
   const path = 'kanban/usuarios/'+targetUid+'/notificacoes/'+notifId;
+  // Loga falha de escrita em vez de engolir silenciosamente — nao interrompe o fluxo do app.
+  const _notifWarn = err => { if(!String(err).includes('error_logs')&&!String(err).includes('error_stats')) console.warn('[createNotif] write failed:', err); };
   if(idOverride){
     // Id determinístico (ex.: lembrete de reunião) — se a pessoa está em vários squads/abas,
     // todos calculam o MESMO id pro mesmo evento real, então só cria se ainda não existe
     // (evita duplicar a notificação e evita reabrir como "não lida" uma que já foi vista).
     fbGet(path).then(snap=>{
-      if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(()=>{});
-    }).catch(()=>{});
+      if(!snap || !snap.exists || !snap.exists()) window._set(window._ref(window._db,path), notif).catch(_notifWarn);
+    }).catch(_notifWarn);
   } else {
-    window._set(window._ref(window._db,path), notif).catch(()=>{});
+    window._set(window._ref(window._db,path), notif).catch(_notifWarn);
   }
 }
 
 // Resolve uid de um membro pelo init
 function getUidByInit(init){
   if(!init) return null;
-  const m = members.find(m=>m.init===init);
-  return m?.uid||null;
+  const matches = members.filter(m=>m.init===init);
+  if(matches.length>1){
+    console.warn('[getUidByInit] iniciais duplicadas no squad:', init, '— notificação não enviada p/ evitar destinatário errado.');
+    return null;
+  }
+  return matches[0]?.uid||null;
 }
 
 // ── Escuta notificações do usuário atual ──────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// 🔕 NÃO PERTURBE + permissão de notificações externas
+// ───────────────────────────────────────────────────────────────────
+// Preferências ficam em kanban/usuarios/{uid}/notif_prefs:
+//   { dnd: { on:bool, until: ISOString|null, label:string } }
+// until=null com on=true = "até eu desativar manualmente".
+// Isso NÃO desliga as notificações internas do sino (continuam sendo
+// registradas normalmente, pra não perder histórico) — só suprime
+// avisos que "interrompem" (som/popup do navegador). A base pra push
+// externo de verdade (fora do app, com o celular bloqueado) fica
+// pronta aqui — o disparo do lado do servidor (Cloud Function) é um
+// passo futuro, combinado.
+let _notifPrefs = { dnd: { on:false, until:null, label:'' } };
+function loadNotifPrefs(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notif_prefs'), snap=>{
+    const v = snap.val()||{};
+    _notifPrefs.dnd = v.dnd || { on:false, until:null, label:'' };
+    _dndAutoExpireCheck();
+    renderDndUI();
+  });
+}
+function _dndAutoExpireCheck(){
+  const d=_notifPrefs.dnd;
+  if(d.on && d.until && new Date(d.until).getTime() <= Date.now()){
+    // Expirou sozinho: desliga localmente (o listener do Firebase confirma na próxima leitura)
+    d.on=false; d.until=null; d.label='';
+  }
+}
+function isDndActive(){
+  _dndAutoExpireCheck();
+  return !!_notifPrefs.dnd.on;
+}
+function setDnd(on, minutesFromNow, label){
+  const user = window._currentUser; if(!user) return;
+  const until = (on && minutesFromNow) ? new Date(Date.now()+minutesFromNow*60000).toISOString() : null;
+  const val = { on:!!on, until, label: on ? (label||'') : '' };
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notif_prefs/dnd'), val).catch(()=>{});
+}
+function setDndUntilTomorrowMorning(){
+  const user = window._currentUser; if(!user) return;
+  const d=new Date(); d.setDate(d.getDate()+1); d.setHours(9,0,0,0);
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notif_prefs/dnd'),
+    { on:true, until:d.toISOString(), label:'até amanhã 9h' }).catch(()=>{});
+}
+function toggleDndMenu(e){
+  e?.stopPropagation();
+  const m=document.getElementById('dnd-menu');
+  const btn=document.getElementById('dnd-toggle-btn');
+  if(!m || !btn) return;
+  const willOpen = m.style.display!=='block';
+  if(willOpen){
+    // Posiciona como "fixed" com coordenadas calculadas na hora, escapando do
+    // overflow:hidden do .notif-panel (que corta qualquer coisa que ultrapasse
+    // sua própria caixa, mesmo com position:absolute) — sem isso, os itens do
+    // topo do menu (ex.: "Por 1 hora"/"Por 8 horas") ficavam invisíveis quando
+    // não cabia espaço suficiente acima do botão dentro do painel.
+    const r = btn.getBoundingClientRect();
+    m.style.position = 'fixed';
+    m.style.left = r.left+'px';
+    m.style.width = r.width+'px';
+    m.style.top = (r.bottom + 6)+'px';
+    m.style.bottom = 'auto';
+    m.style.display = 'block';
+  } else {
+    m.style.display = 'none';
+  }
+}
+function renderDndUI(){
+  const active=isDndActive();
+  const btn=document.getElementById('dnd-toggle-btn');
+  const lbl=document.getElementById('dnd-status-lbl');
+  const bellBadge=document.getElementById('dnd-bell-badge');
+  if(btn) btn.classList.toggle('dnd-active', active);
+  if(lbl){
+    lbl.textContent = active
+      ? ('🔕 Não Perturbe ativo' + (_notifPrefs.dnd.label ? ' ('+_notifPrefs.dnd.label+')' : ' (até você desativar)'))
+      : '🔔 Notificações ativas';
+  }
+  if(bellBadge) bellBadge.style.display = active ? 'inline-block' : 'none';
+}
+// Permissão de notificação do navegador — pré-requisito pra qualquer
+// notificação fora da aba (local ou push). Ao conceder, já registra o
+// token de push (FCM) do aparelho no Firebase, pra Cloud Function poder
+// te avisar mesmo com o app fechado.
+// ⚠ Preencha com a VAPID key gerada em: Console do Firebase → Configurações
+// do projeto → Cloud Messaging → "Certificados push da Web" → Gerar par de chaves.
+const FCM_VAPID_KEY = 'BJEbQRe9lG-PkwtABA5v8KhQlAWG4sJmxZmKwEbCjCc7vUXbNgjiz1gWnKjPUJDyU64OibIddERAQRUiavdwvMI';
+function notifPermissionState(){
+  if(!window.Notification) return 'unsupported';
+  return Notification.permission; // 'default' | 'granted' | 'denied'
+}
+function notifPermRowClick(){
+  const state=notifPermissionState();
+  if(state==='default') requestNotifPermission();
+  else if(state==='granted'){
+    if(confirm('Desativar notificações push neste aparelho?\n\n(A permissão do navegador continua concedida — é só o registro deste aparelho pra receber avisos que é removido.)')){
+      unregisterPushToken().then(()=>showToast('🔕 Push desativado neste aparelho.'));
+    }
+  }
+}
+// Gerado UMA VEZ, síncrono, no carregamento da página — não dentro da função
+// async registerPushToken(). Gerar lá dentro criava uma corrida: se a página
+// já tentava reconfirmar o token sozinha (renderNotifPermUI) e a pessoa
+// clicasse no botão manualmente quase ao mesmo tempo, as duas chamadas liam
+// "ainda não existe" antes de qualquer uma salvar, e cada uma gerava um
+// device_id diferente — resultando em 2 entradas pro mesmo aparelho.
+let PUSH_DEVICE_ID = safeLS.getItem('push_device_id');
+if(!PUSH_DEVICE_ID){
+  PUSH_DEVICE_ID = 'dev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+  safeLS.setItem('push_device_id', PUSH_DEVICE_ID);
+}
+async function registerPushToken(){
+  if(!window._fcmReady){ console.warn('[FCM] indisponível neste navegador/contexto.'); return null; }
+  if(FCM_VAPID_KEY.startsWith('COLE_AQUI')){ console.warn('[FCM] VAPID key ainda não configurada — veja FCM_VAPID_KEY no código.'); return null; }
+  const user = window._currentUser; if(!user) return null;
+  try{
+    const swReg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    const token = await window._fcmGetToken(FCM_VAPID_KEY, swReg);
+    if(!token) return null;
+    await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+PUSH_DEVICE_ID), {
+      token, ua: navigator.userAgent, squad: (typeof ACTIVE_SQUAD!=='undefined'?ACTIVE_SQUAD:''), ts: new Date().toISOString(),
+    });
+    return token;
+  }catch(e){ console.warn('[FCM] falha ao registrar token:', e); return null; }
+}
+async function unregisterPushToken(){
+  const user = window._currentUser;
+  try{
+    if(window._fcmReady) await window._fcmDeleteToken();
+    if(user){
+      await window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/fcm_tokens/'+PUSH_DEVICE_ID), null).catch(()=>{});
+    }
+  }catch(e){ console.warn('[FCM] falha ao remover token:', e); }
+}
+function requestNotifPermission(){
+  if(!window.Notification){ showToast('⚠ Este navegador não suporta notificações.'); return; }
+  Notification.requestPermission().then(async perm=>{
+    renderNotifPermUI();
+    if(perm==='granted'){
+      showToast('🔔 Notificações permitidas neste aparelho.');
+      const token = await registerPushToken();
+      if(!token) showToast('⚠ Permissão OK, mas o push ainda não está configurado (fala com o time técnico).');
+    }
+    else if(perm==='denied') showToast('🔕 Notificações bloqueadas — ative manualmente nas configurações do navegador se mudar de ideia.');
+  }).catch(()=>{});
+}
+function renderNotifPermUI(){
+  const el=document.getElementById('notif-perm-row'); if(!el) return;
+  const state=notifPermissionState();
+  const labels={ granted:'✅ Permitidas neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador' };
+  el.textContent = labels[state] || labels.default;
+  el.style.cursor = (state==='default'||state==='granted') ? 'pointer' : 'default';
+  el.style.opacity = state==='denied' ? '.6' : '1';
+  // Se a permissão já estava concedida de uma sessão anterior, garante que o
+  // token de push está registrado (ex.: reinstalou o navegador, limpou dados).
+  if(state==='granted' && window._currentUser && window._fcmReady) registerPushToken();
+}
+// Mensagens de push recebidas com a aba EM PRIMEIRO PLANO não disparam o
+// popup do sistema sozinhas (o FCM só faz isso em background) — então
+// mostramos um toast interno pra não passar batido.
+window.addEventListener('fb-ready', ()=>{
+  const tryHook=()=>{
+    if(window._fcmOnMessage){ window._fcmOnMessage(payload=>{ showToast('🔔 '+(payload.data?.title||payload.notification?.title||'Nova notificação')); loadNotifs(); }); }
+    else setTimeout(tryHook, 1000);
+  };
+  tryHook();
+});
+// ═══════════════════════════════════════════════════════════════════
+
 function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
   _notifListener = window._onValue(ref, snap=>{
+    _dbgTrack('notificacoes', snap.val());
     const val = snap.val()||{};
     const now = Date.now();
     const TTL = NOTIF_TTL_DAYS * 86400000;
+    const TTL_UNREAD = NOTIF_TTL_UNREAD_DAYS * 86400000;
     // Tipos exclusivos do painel — não devem aparecer no sino do board
     const PAINEL_ONLY_TYPES = new Set(['rascunho']);
-    // Remove expiradas e filtra tipos só do painel
+    // Remove expiradas (não lidas ganham prazo bem maior — evita sumir antes de ver) e filtra tipos só do painel
     const active = Object.entries(val)
-      .filter(([id,n])=> now - new Date(n.ts).getTime() < TTL && !PAINEL_ONLY_TYPES.has(n.type))
+      .filter(([id,n])=> now - new Date(n.ts).getTime() < (n.read?TTL:TTL_UNREAD) && !PAINEL_ONLY_TYPES.has(n.type))
       .map(([id,n])=>({...n,id}))
       .sort((a,b)=>b.ts.localeCompare(a.ts));
-    // Limpa expiradas do Firebase
+    // Limpa expiradas do Firebase — TUDO numa escrita só (update multi-path),
+    // não um set(null) por item. Antes, cada delete individual re-disparava
+    // este mesmo onValue com a lista (um pouco menor) inteira de novo — K
+    // notificações expiradas = K downloads em cascata da lista completa.
+    const _toDelete = {};
     Object.entries(val).forEach(([id,n])=>{
-      if(now - new Date(n.ts).getTime() >= TTL)
-        window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+id),null).catch(()=>{});
+      if(now - new Date(n.ts).getTime() >= (n.read?TTL:TTL_UNREAD)) _toDelete[id] = null;
     });
+    if(Object.keys(_toDelete).length){
+      window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), _toDelete).catch(()=>{});
+    }
     renderNotifs(active);
+  }, err=>{
+    // Sem isso, uma queda silenciosa de conexão deixava o sino surdo pro resto da sessão
+    console.warn('[loadNotifs] listener cancelado (provável queda de conexão):', err);
+    _notifListener = null; // permite reinscrição
+    if(window._currentUser) setTimeout(loadNotifs, 5000);
   });
 }
 
+// 🔔 Som de notificação — sintetizado na hora via Web Audio API, sem
+// nenhum arquivo de áudio (zero peso extra, zero download). Um "ding"
+// curtinho de dois tons. Respeita o Não Perturbe (não toca se estiver ativo)
+// e o mudo pessoal (isNotifSoundMuted), salvo no navegador de cada um.
+function isNotifSoundMuted(){
+  try{ return safeLS.getItem('notif_sound_muted')==='1'; }catch(e){ return false; }
+}
+function toggleNotifSound(){
+  const muted = !isNotifSoundMuted();
+  try{ safeLS.setItem('notif_sound_muted', muted?'1':'0'); }catch(e){}
+  renderNotifSoundToggle();
+  if(!muted) _playNotifSound(); // toquinha de confirmação ao reativar
+}
+function renderNotifSoundToggle(){
+  const btn = document.getElementById('notif-sound-toggle'); if(!btn) return;
+  const muted = isNotifSoundMuted();
+  btn.textContent = muted ? '🔇' : '🔊';
+  btn.title = muted ? 'Som desligado — clique para ligar' : 'Som ligado — clique para desligar';
+}
+let _notifAudioCtx = null;
+function _playNotifSound(){
+  try{
+    if(isNotifSoundMuted()) return;
+    if(typeof isDndActive === 'function' && isDndActive()) return;
+    if(!window.AudioContext && !window.webkitAudioContext) return;
+    if(!_notifAudioCtx) _notifAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const ctx = _notifAudioCtx;
+    if(ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    const now = ctx.currentTime;
+    [[880,0],[1108,0.09]].forEach(([freq,delay])=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now+delay);
+      gain.gain.linearRampToValueAtTime(0.15, now+delay+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+delay+0.25);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now+delay);
+      osc.stop(now+delay+0.26);
+    });
+  }catch(e){ /* navegador pode bloquear áudio sem interação prévia — silencioso */ }
+}
 function renderNotifs(notifs){
   const list = document.getElementById('notif-list'); if(!list) return;
   const badge = document.getElementById('notif-badge');
@@ -12434,6 +13209,7 @@ function renderNotifs(notifs){
     if(unread > 0 && !wasShowing && btn){
       btn.classList.add('ring');
       setTimeout(()=>btn.classList.remove('ring'), 600);
+      _playNotifSound();
     }
   }
   if(btn) btn.classList.toggle('has-unread', unread > 0);
@@ -12568,21 +13344,39 @@ function notifDone(card){
 }
 
 // 5. Risco adicionado — notifica PO e Organizadores
+// Cache client-side da lista de admins/POs/organizadores (TTL 5min) — evita rebaixar a
+// árvore inteira de kanban/usuarios_publicos a cada risco adicionado. Isso importa porque
+// notifRisk agora também é acionado pelo autosave (antes só pelo botão "Salvar" manual),
+// então sem cache o mesmo download completo repetiria a cada risco de uma sessão de edição.
+let _notifRiskCache = { ts: 0, uids: null };
+const _NOTIF_RISK_TTL = 5 * 60 * 1000;
 function notifRisk(card){
-  // members pode não ter role populado — lê direto do Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  const now = Date.now();
+  if(_notifRiskCache.uids && (now - _notifRiskCache.ts) < _NOTIF_RISK_TTL){
+    _fireRiskNotifs(card, _notifRiskCache.uids);
+    return;
+  }
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
     const all=snap.val()||{};
+    const uids=[];
     Object.entries(all).forEach(([uid,u])=>{
       if(!u||!uid) return;
-      const role=u.role||'membro';
+      const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
       if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
-      if(uid===window._currentUser?.uid) return;
-      createNotif(uid,'risk',
-        '⚠ Risco mapeado em card',
-        card.title?.substring(0,60),
-        card.id);
+      uids.push(uid);
     });
+    _notifRiskCache = { ts: Date.now(), uids };
+    _fireRiskNotifs(card, uids);
   }).catch(()=>{});
+}
+function _fireRiskNotifs(card, uids){
+  uids.forEach(uid=>{
+    if(uid===window._currentUser?.uid) return;
+    createNotif(uid,'risk',
+      '⚠ Risco mapeado em card',
+      card.title?.substring(0,60),
+      card.id);
+  });
 }
 
 // 6. Checklist 100% concluída
@@ -13389,12 +14183,12 @@ function loadCalEvents(){
     window._gcalLocalEvents = val ? Object.values(val) : [];
     _mergeGcalSources();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => {
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => { _dbgTrack('painel_gcal_cache', snap.val());
     const val = snap.val();
     window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
     _mergeGcalSources();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => {
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => { _dbgTrack('painel_gcal_calendars', snap.val());
     const val = snap.val();
     window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
     _mergeGcalSources();
@@ -13406,7 +14200,7 @@ function loadCalEvents(){
 
   // ── Fila global de pedidos de agenda — cada um escuta e filtra os do PRÓPRIO squad,
   // pra saber quais das suas agendas ainda estão "aguardando aprovação do ADM" ──
-  window._onValue(window._ref(window._db,'kanban/config/gcal_queue'), snap => {
+  window._onValue(window._ref(window._db,'kanban/config/gcal_queue'), snap => { _dbgTrack('gcal_queue', snap.val());
     const val = snap.val() || {};
     window._gcalQueuePendingCalIds = new Set(
       Object.values(val).filter(r=>r.squadId===ACTIVE_SQUAD).map(r=>r.calId)
@@ -13425,7 +14219,7 @@ function loadCalEvents(){
   });
 
   // ── Eventos de Gestão Digital (painel) ───────────────────────
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{ _dbgTrack('cal_events', snap.val());
     const val=snap.val();
     const gestaoEvs=val?(Array.isArray(val)?val:Object.values(val)):[];
     const filtered=gestaoEvs
@@ -13550,7 +14344,7 @@ async function _queueGcalRequest(calId, calLabel){
   await window._set(window._ref(window._db,'kanban/config/gcal_queue/'+reqId), reqObj).catch(()=>{});
   // Notifica todos os ADMs conhecidos (busca uids pelos emails de ADM_EMAILS)
   try{
-    const snap = await fbGet('kanban/usuarios');
+    const snap = await fbGet('kanban/usuarios_publicos');
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
@@ -13839,8 +14633,9 @@ function checkUpcomingMeetings(){
 
       showToast(`🎥 "${tituloLimpo}" começa em ${minutosRestantes} min`);
 
-      // Notificação nativa do navegador, se permitida (complementa o toast — some quando a aba fecha)
-      if (window.Notification && Notification.permission === 'granted') {
+      // Notificação nativa do navegador, se permitida e fora do modo Não Perturbe
+      // (complementa o toast — some quando a aba fecha)
+      if (window.Notification && Notification.permission === 'granted' && !isDndActive()) {
         try {
           const n = new Notification('🎥 Reunião em ' + minutosRestantes + ' min', {
             body: tituloLimpo,
@@ -13891,7 +14686,24 @@ function categorizeError(msg){
   }
   return 'geral';
 }
+let _authGlitchWarned = false;
+// Detecta erros conhecidos do SDK do Firebase que travam o token de auth (login via popup)
+// sem dar erro visível — nesse estado, escritas no Firebase ficam pendentes pra sempre e nunca
+// salvam, sem mostrar nada no console. Como não dá pra corrigir o bug do SDK em si, avisa a
+// pessoa pra recarregar a página em vez de deixar ela editando numa sessão com login quebrado.
+function _checkAuthGlitch(msgStr){
+  if(_authGlitchWarned) return;
+  if(!msgStr.includes('Pending promise was never set') && !msgStr.includes('auth/network-request-failed')) return;
+  _authGlitchWarned = true;
+  const b = document.createElement('div');
+  b.id = '_auth-glitch-banner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999998;background:#3a1f0a;border-bottom:2px solid #ff9d38;color:#ffe3c2;font-family:"DM Sans",sans-serif;font-size:13px;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;';
+  b.innerHTML = '<span>\u26A0\uFE0F Conex\u00e3o inst\u00e1vel \u2014 suas pr\u00f3ximas altera\u00e7\u00f5es podem n\u00e3o salvar. Recarregue a p\u00e1gina pra garantir.</span><button id="_auth-glitch-btn" style="background:#ff9d38;border:none;color:#2a1200;border-radius:8px;padding:6px 16px;font-weight:700;cursor:pointer;font-family:inherit;">Recarregar agora</button>';
+  document.body.appendChild(b);
+  document.getElementById('_auth-glitch-btn').onclick = ()=>location.reload();
+}
 function logError(msg, source='', line=0, col=0, err=null){
+  _checkAuthGlitch(String(msg||'')+' '+(err&&err.message||''));
   // Anti-loop: ignora se já estamos logando
   if(window._loggingError) return;
   if(!window._fbReady) return;
@@ -14124,12 +14936,14 @@ function handleDrop(e, colId){
   card._savePending = true; // flag: ignora echo do Firebase durante o save
   renderBoard();
 
-  // Persiste — reverte em caso de falha (anti rubber-banding)
-  fbSaveAll()
+  // ⚡ Trocado de fbSaveAll() (reescrevia o array /cards INTEIRO a cada
+  // arrastar de card — a ação mais comum do board) pra fbSaveCard(), que
+  // salva só esse card. Maior ponto de economia de banda encontrado no app.
+  fbSaveCard(card)
     .then(()=>{
       card._savePending = false;
       // Notificações só depois de confirmado pelo Firebase
-      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
       if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
       if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
       // Feedback visual
@@ -14231,7 +15045,7 @@ function addTouchDnD(el, cardId){
     card.updatedAt = new Date().toISOString();
     card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     _crvApplyAutoStatus(card); // 🤖
-    renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+    renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
     showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
   });
   el.addEventListener('touchcancel',()=>{
@@ -14340,6 +15154,7 @@ function testAutoRule(){
 // Executa automações após mudanças no board
 function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
+  let _anyTriggered=false; // true se alguma regra mudou o card -- usado no final pra persistir no Firebase (antes so mudava em memoria e sumia no reload)
   activeRules.forEach(rule=>{
     const card=cards.find(c=>c.id===cardId); if(!card) return;
     let triggered=false;
@@ -14347,6 +15162,7 @@ function runAutoRules(eventType, cardId, extraVal){
     if(rule.trigger==='card_created' && eventType==='create') triggered=true;
     if(rule.trigger==='priority_set' && eventType==='priority' && card.priority==='critical') triggered=true;
     if(!triggered) return;
+    _anyTriggered=true;
     const td=new Date().toISOString().split('T')[0];
     const user='Automação';
     if(rule.action==='move_card'){ card.col=rule.actionVal; card.edited=user; card.editedAt=td; const _cn=columns.find(x=>x.id===rule.actionVal); recordHistory(card, 'moveu para '+(_cn?_cn.name:rule.actionVal), '⚙ Automação'); }
@@ -14369,6 +15185,15 @@ function runAutoRules(eventType, cardId, extraVal){
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }
     }
+  }
+
+  // Persiste as mudancas que as regras acima fizeram no card -- antes disso, runAutoRules()
+  // so mexia em memoria (card.col/priority/tags/owner) e a mudanca sumia no proximo reload
+  // porque nenhum fbSave* era chamado depois da automacao rodar.
+  if(_anyTriggered){
+    const _autoCard=cards.find(c=>c.id===cardId);
+    if(_autoCard){ fbSaveCard(_autoCard).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err)); }
+    renderBoard();
   }
 }
 // Carrega regras do Firebase com listener contínuo
@@ -14435,7 +15260,7 @@ function removeBlockerTag(){
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
-  fbSaveAll(); renderBoard();
+  fbSaveCard(c); renderBoard();
   showToast('Impedimento removido');
 }
 
@@ -14618,7 +15443,7 @@ async function resolveAllBugs(){
     /bug|bloqueio|blocker|erro|error|fix/i.test(t.label||t.id)
   ).map(t=>t.id);
   if(!bugTags.length && !await uiConfirm('Nenhuma tag de bug encontrada automaticamente.\nDeseja mover TODOS os cards de Impedimentos para Concluído?')) return;
-  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))||columns[columns.length-1];
+  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
   let count = 0;
   cards.forEach(c=>{
     if(c.archived) return;
@@ -14627,6 +15452,7 @@ async function resolveAllBugs(){
       c.col = doneCol.id;
       c.doneAt = new Date().toISOString();
       count++;
+      notifDone(c); // antes pulava a notificação de conclusão nesse fluxo em massa
     }
   });
   if(!count){ showToast('Nenhum card de bug encontrado para resolver.'); return; }
@@ -14637,7 +15463,7 @@ async function resolveAllBugs(){
 function ctxToggleOKR(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   card.isOKR = !card.isOKR;
-  fbSaveAll(); renderBoard();
+  fbSaveCard(card); renderBoard();
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
 function ctxMove(colId){
@@ -14650,9 +15476,9 @@ function ctxMove(colId){
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   _crvApplyAutoStatus(card); // 🤖
-  renderBoard(); fbSaveAll(); runAutoRules('move',card.id,colId);
+  renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
   // Notificações
-  const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id||'done';
+  const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
   if(ant!==colId && colId===_doneColId) notifDone(card);
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
@@ -14668,7 +15494,7 @@ function ctxSetPriority(p){
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  renderBoard(); fbSaveAll();
+  renderBoard(); fbSaveCard(card);
   showToast(p ? `Prioridade ${p} definida` : 'Prioridade removida');
   hideCtxMenu();
 }
@@ -14682,7 +15508,7 @@ function ctxAssignMe(){
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  renderBoard(); fbSaveAll();
+  renderBoard(); fbSaveCard(card);
   showToast(`Card atribuído a ${window._currentUser?.displayName||init}`);
   hideCtxMenu();
 }
@@ -14747,7 +15573,7 @@ function ctxRecorrente(){
 function ctxArchive(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   saveUndo('arquivar card');
-  card.archived=true; card.archivedAt=new Date().toISOString(); renderBoard(); fbSaveAll();
+  card.archived=true; card.archivedAt=new Date().toISOString(); renderBoard(); fbSaveCard(card);
   showToast(`"${card.title.substring(0,25)}" arquivado`);
   hideCtxMenu();
 }
@@ -14921,6 +15747,10 @@ function closeOv(id, afterClose){
   _finishCloseOv(id);
   if(afterClose) afterClose();
 }
+function voltarParaFuncoesCard(modalId){
+  closeOv(modalId, () => { document.getElementById('card-fn-ov')?.classList.add('open'); });
+}
+
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
@@ -15026,7 +15856,14 @@ _onFbReady(()=>{
   loadAutoRules();
   loadCalEvents();
   applyViewMode();
-  setTimeout(()=>{ loadNotifs(); checkDueNotifs(); }, 2000);
+  if(window._currentUser){
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+  } else {
+    // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
+    window.addEventListener('auth-change', e=>{
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    }, {once:true});
+  }
   loadCampanhas();
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
@@ -15068,18 +15905,132 @@ _onFbReady(()=>{
       }
     });
   }
-  // Listener de presença — renderiza lista de online
-  // Guarda referência do unsubscribe para evitar listeners duplicados
-  if(window._presenceUnsub) window._presenceUnsub();
-  window._presenceUnsub = window._onValue(
-    window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence'),
-    snap=>{
-      const val=snap.val()||{};
-      const now=Date.now();
-      const online=Object.values(val).filter(u=>now-u.ts<30000); // 30s timeout
-      renderOnline(online);
+  // Listener de presenca -- usa child_added/child_changed/child_removed em vez de onValue
+  // no node inteiro. onValue reenviava TODOS os usuarios online pra CADA client
+  // conectado a cada heartbeat de QUALQUER pessoa (a cada 15s por usuario online) --
+  // com o time inteiro com aba aberta, isso multiplicava bastante o consumo de
+  // download do Realtime Database. Os listeners granulares so baixam o usuario que
+  // de fato mudou (heartbeat/entrada/saida), nao o objeto inteiro a cada evento.
+  if(window._presenceUnsubs) window._presenceUnsubs.forEach(fn=>fn && fn());
+  window._presenceByUid = window._presenceByUid || {};
+  function _renderPresenceFromMap(){
+    const now=Date.now();
+    const online=Object.values(window._presenceByUid).filter(u=>now-u.ts<30000); // 30s timeout
+    renderOnline(online);
+  }
+  const _presenceRef = window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/presence');
+  const _pAdd = window._onChildAdded(_presenceRef, snap=>{ _dbgTrack('presence:child_added', snap.val()); window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
+  const _pChg = window._onChildChanged(_presenceRef, snap=>{ _dbgTrack('presence:child_changed', snap.val()); window._presenceByUid[snap.key]=snap.val(); _renderPresenceFromMap(); });
+  const _pRem = window._onChildRemoved(_presenceRef, snap=>{ _dbgTrack('presence:child_removed', snap.val()); delete window._presenceByUid[snap.key]; _renderPresenceFromMap(); });
+  window._presenceUnsubs=[_pAdd,_pChg,_pRem];
+  clearInterval(window._presenceSweep);
+  window._presenceSweep = setInterval(_renderPresenceFromMap, 20000); // reavalia o timeout localmente sem leitura nova, cobre quem desconectou sem heartbeat
+
+  // Deslogar todos (manual, via painel) + logout automatico por inatividade --
+  // reduz consumo de download do Firebase de abas deixadas abertas a noite/fim de
+  // semana. (1) um admin escreve em kanban/global/force_logout_after pelo painel,
+  // e todo cliente com sessao anterior a esse timestamp se desloga sozinho; (2)
+  // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
+  // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
+  const IDLE_LOGOUT_MS = 3*60*60*1000; // padrao 3h sem interacao (configuravel no painel > Status)
+  const IDLE_EDIT_GRACE_MS = 30*60*1000; // carencia maxima por card aberto/edicao em andamento -- nao e mais imunidade eterna (P1-4)
+  window._idleLogoutConfig = window._idleLogoutConfig || { enabled: true, minutes: 180 };
+  if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub();
+  window._idleLogoutConfigUnsub = window._onValue(window._ref(window._db,'kanban/global/idle_logout_config'), snap=>{
+    const val = snap.val();
+    if(val && typeof val === 'object'){
+      const mins = Number(val.minutes);
+      window._idleLogoutConfig = { enabled: val.enabled !== false, minutes: mins>0 ? mins : 180 };
+    } else {
+      window._idleLogoutConfig = { enabled: true, minutes: 180 };
     }
-  );
+  });
+  const IDLE_WARNING_LEAD_MS = 5*60*1000; // avisa 5 min antes de deslogar
+  function _showIdleWarning(remainingMs){
+    let el = document.getElementById('idle-warning-banner');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'idle-warning-banner';
+      el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999998;background:#1a0f05;border:1px solid rgba(255,180,60,.5);border-radius:10px;padding:12px 16px;font:13px/1.4 "DM Sans",sans-serif;color:#ffd9a0;box-shadow:0 6px 20px rgba(0,0,0,.5);display:flex;align-items:center;gap:12px;max-width:440px;';
+      el.innerHTML = '<span id="idle-warning-text"></span><button id="idle-warning-btn" style="background:var(--accent,#38b6ff);border:none;color:#04182b;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap;font-size:13px;">🔄 Atualizar</button>';
+      document.body.appendChild(el);
+      document.getElementById('idle-warning-btn').onclick = ()=>{ _markActivity(); _hideIdleWarning(); };
+    }
+    const mins = Math.max(1, Math.ceil(remainingMs/60000));
+    document.getElementById('idle-warning-text').textContent = '⚠️ Sua sessão está parada há muito tempo. Vamos te desconectar em '+mins+' min.';
+  }
+  function _hideIdleWarning(){
+    const el = document.getElementById('idle-warning-banner');
+    if(el) el.remove();
+  }
+  const IDLE_STORAGE_KEY = 'mare_last_activity_ts';
+  // Atividade e compartilhada entre abas via localStorage: a sessao do Firebase Auth e
+  // unica por navegador (nao por aba) -- se a pessoa estiver ativa em OUTRA aba/squad,
+  // essa aba parada aqui nao pode deslogar todo mundo sozinha (bug real encontrado em
+  // 18/07: sessao caiu com poucos minutos de uso porque outra aba esquecida bateu 2h).
+  let _lastActivityWrite = 0;
+  function _markActivity(){
+    const now = Date.now();
+    window._lastActivityTs = now;
+    if(now - _lastActivityWrite < 15000) return; // throttle: nao precisa escrever a cada mousemove
+    _lastActivityWrite = now;
+    try{ safeLS.setItem(IDLE_STORAGE_KEY, String(now)); }catch(e){}
+  }
+  // Nao desloga por inatividade se tiver um card aberto ou edicao em andamento
+  // (evita perder alteracoes de quem esta parado lendo/pensando com o card aberto).
+  function _hasActiveCardEditing(){
+    try{
+      if(document.getElementById('card-ov')?.classList.contains('open')) return true;
+      if(typeof _cardIsDirty === 'function' && _cardIsDirty()) return true;
+      const ae = document.activeElement;
+      // so conta foco em campo se estiver DENTRO de um overlay de edicao aberto -- evita
+      // que um clique numa busca/filtro qualquer deixe a aba imune ao logout pra sempre
+      if(ae && (ae.tagName==='TEXTAREA' || ae.tagName==='INPUT' || ae.isContentEditable) && ae.closest('.ov.open, #card-ov.open')) return true;
+    }catch(e){}
+    return false;
+  }
+  const _storedActivityInit = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
+  window._lastActivityTs = Math.max(window._lastActivityTs||0, _storedActivityInit) || Date.now();
+  if(!window._idleListenersAttached){
+    window._idleListenersAttached = true;
+    ['mousemove','mousedown','keydown','scroll','touchstart'].forEach(evt=>{
+      window.addEventListener(evt, _markActivity, {passive:true});
+    });
+  }
+  _markActivity();
+  function _computeSessionStart(u){ return Date.parse(u && u.metadata && u.metadata.lastSignInTime || 0) || Date.now(); }
+  let _sessionStartMs = _computeSessionStart(window._currentUser);
+  window.addEventListener('auth-change', e=>{ if(e.detail) _sessionStartMs = _computeSessionStart(e.detail); }); // recalcula quando o auth realmente resolver (P1-7: _onFbReady roda antes do onAuthStateChanged, entao o valor inicial quase sempre cai no fallback Date.now())
+  clearInterval(window._idleCheckInterval);
+  window._idleCheckInterval = setInterval(()=>{
+    if(!window._currentUser || window._signOutInProgress) return; // guard extra: nao roda mais depois do logout
+    const _storedActivityNow = parseInt(safeLS.getItem(IDLE_STORAGE_KEY)||'0', 10) || 0;
+    const _lastActivity = Math.max(window._lastActivityTs, _storedActivityNow);
+    const _cfg = window._idleLogoutConfig || { enabled: true, minutes: 180 };
+    if(_cfg.enabled === false){ _hideIdleWarning(); return; }
+    const _idleLogoutMsLive = _cfg.minutes * 60 * 1000;
+    const _elapsedIdle = Date.now() - _lastActivity;
+    if(_elapsedIdle > _idleLogoutMsLive){
+      if(_hasActiveCardEditing()){
+        if(!window._editingGraceStartTs) window._editingGraceStartTs = Date.now();
+        if(Date.now() - window._editingGraceStartTs < IDLE_EDIT_GRACE_MS){ _markActivity(); _hideIdleWarning(); return; }
+        // carencia de 30min esgotada: desloga mesmo com card aberto/editando, pra nao ficar imune pra sempre
+      } else {
+        window._editingGraceStartTs = null;
+      }
+      clearInterval(window._idleCheckInterval); window._idleCheckInterval=null;
+      window._signOut('idle_timeout');
+    } else if(_elapsedIdle > _idleLogoutMsLive - IDLE_WARNING_LEAD_MS && !_hasActiveCardEditing()){
+      _showIdleWarning(_idleLogoutMsLive - _elapsedIdle);
+    } else {
+      _hideIdleWarning();
+    }
+  }, 60000);
+  if(window._forceLogoutUnsub) window._forceLogoutUnsub();
+  window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after'), snap=>{
+    const forceAfter = snap.val();
+    if(forceAfter && _sessionStartMs < forceAfter && (Date.now() - forceAfter) < 15*60*1000){ window._signOut('admin_force_logout'); }
+  });
 
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
   clearInterval(window._heartbeat);
@@ -15291,27 +16242,25 @@ let _commentCardId = null;
 function loadComments(cardId){
   _commentCardId = cardId;
   const list = document.getElementById('m-comment-list'); if(!list) return;
-  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   // Update avatar
   const av = document.getElementById('m-comment-avatar');
   if(av && window._currentUser){
     if(window._currentUser.photoURL){
-      av.innerHTML='<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
+      av.innerHTML = '<img src="'+window._currentUser.photoURL+'" style="width:100%;height:100%;object-fit:cover;">';
     } else {
-      av.textContent=window._currentUserInit||'?';
+      av.textContent = window._currentUserInit||'?';
     }
   }
-  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/cards/'+cardId+'/comments').then(snap=>{
-    const val=snap.val()||{};
-    renderCommentList(Object.values(val).sort((a,b)=>a.ts.localeCompare(b.ts)));
-  }).catch(()=>{
-    fbGet(FB+'/cards').then(snap=>{
-      const cardsVal=snap.val()||[];
-      const c=Array.isArray(cardsVal)?cardsVal.find(x=>x&&x.id===cardId):Object.values(cardsVal).find(x=>x&&x.id===cardId);
-      const comments=c?.comments?Object.values(c.comments).sort((a,b)=>a.ts.localeCompare(b.ts)):[];
-      renderCommentList(comments);
-    }).catch(()=>renderCommentList([]));
-  });
+  // Le direto do array 'cards' ja carregado em memoria (via os listeners granulares de
+  // FB+'/cards') em vez de bater no Firebase de novo. Antes disso, TODA abertura de card
+  // fazia uma leitura em 'kanban/squads/{squad}/cards/{id}/comments' (caminho que nao
+  // existe mais nas regras de seguranca -> sempre da Permission denied) e, no catch,
+  // caia num fallback que baixava o node /cards INTEIRO so pra achar os comentarios de
+  // 1 card -- em squads com muitos cards isso multiplicava MUITO o consumo de download
+  // do Realtime Database (causa confirmada do estouro de cota reportado pelo Caio).
+  const cardObj = cards.find(c=>c.id===cardId);
+  const comments = cardObj && cardObj.comments ? Object.values(cardObj.comments).sort((a,b)=>a.ts.localeCompare(b.ts)) : [];
+  renderCommentList(comments);
 }
 
 function renderCommentList(comments){
@@ -15406,7 +16355,11 @@ function submitComment(){
   if(cardObj){
     if(!cardObj.comments) cardObj.comments={};
     cardObj.comments[comment.id]=comment;
-    fbSaveAll();
+    // Antes usava fbSaveAll() (reescreve o array /cards INTEIRO no Firebase a cada
+    // comentario postado); trocado por fbSaveCard() (update incremental so desse
+    // card) pra bater com o mesmo padrao ja usado no resto do app e nao inflar o
+    // trafego de escrita/leitura em squads com muitos cards.
+    fbSaveCard(cardObj);
   }
   inp.value=''; inp.style.height='auto';
   eocResetComment();
@@ -15419,7 +16372,7 @@ function deleteComment(cid){
   const cardObj=cards.find(c=>c.id===_commentCardId);
   if(!cardObj||!cardObj.comments) return;
   delete cardObj.comments[cid];
-  fbSaveAll();
+  fbSaveCard(cardObj);
   loadComments(_commentCardId);
 }
 
@@ -15471,7 +16424,7 @@ function saveEditComment(cid){
   if(!comment) return;
   comment.text = newText;
   comment.editedAt = new Date().toISOString();
-  fbSaveAll();
+  fbSaveCard(cardObj);
   loadComments(_commentCardId);
 }
 
@@ -15489,7 +16442,7 @@ function toggleReaction(cid, emoji){
   if(!c.reactions) c.reactions={};
   if(c.reactions[uid]===emoji){ delete c.reactions[uid]; } // toggle off
   else { c.reactions[uid]=emoji; }
-  fbSaveAll();
+  fbSaveCard(cardObj);
   loadComments(_commentCardId);
 }
 function _renderReactions(c){
@@ -16139,7 +17092,7 @@ function attachSave(){
   let title = svc?.label || '';
   try{ const u=new URL(url); if(!title) title=u.hostname.replace(/^www\./,''); } catch(e){}
   card.links.push({ id:'lnk'+Date.now(), url, title, ts:new Date().toISOString() });
-  fbSaveAll();
+  fbSaveCard(card);
   renderAttachList(card.links);
   inp.value='';
   document.getElementById('m-attach-inp-row').style.display='none';
@@ -16149,7 +17102,7 @@ function attachRemove(linkId){
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
   if(!card||!card.links) return;
   card.links = card.links.filter(l=>l.id!==linkId);
-  fbSaveAll();
+  fbSaveCard(card);
   renderAttachList(card.links);
 }
 
@@ -16300,7 +17253,7 @@ function saveMilanoteLink(){
   card.milanoteLink = url;
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  fbSaveAll();
+  fbSaveCard(card);
   renderMilanoteLink(card);
   renderBoard(); // atualiza o badge no card da lista
   showToast('📌 Peça do Milanote vinculada!');
@@ -16312,7 +17265,7 @@ function removeMilanoteLink(){
   delete card.milanoteLink;
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  fbSaveAll();
+  fbSaveCard(card);
   renderMilanoteLink(card);
   renderBoard();
   showToast('Peça desvinculada.');
@@ -16323,7 +17276,7 @@ async function convidarMembro(){
   const email = await uiPrompt('Digite o email do usuário a convidar:','',{title:'Convidar membro',placeholder:'email@exemplo.com'});
   if(!email || !email.includes('@')) return;
   // Busca o usuário pelo email no Firebase
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
     const all = snap.val()||{};
     const entry = Object.entries(all).find(([,u])=>u.email===email.trim().toLowerCase());
     if(!entry){
@@ -16346,9 +17299,9 @@ async function convidarMembro(){
     // If no role set for this squad, default to membro
     if(!u.squads_roles?.[ACTIVE_SQUAD]){
       upd['squads_roles/'+ACTIVE_SQUAD] = 'membro';
-      upd['role'] = u.role||'membro';
     }
     fbUpdate('kanban/usuarios/'+uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+uid, upd);
     showToast('✅ '+( u.nome||email)+' adicionado(a) ao squad como membro!'+avisoInit);
   });
 }
@@ -16789,7 +17742,12 @@ let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
 
 function _initComunicados(){
+  // ⚡ Antes eram DOIS listeners onValue separados no MESMO path
+  // 'kanban/comunicados' (um aqui, outro em _initMural mais abaixo) — cada
+  // mudança nesse node baixava os dados DUAS VEZES pra cada pessoa. Unificado
+  // num só: processa tanto o popup quanto o mural/badge no mesmo callback.
   window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
     _comunicadosAtivos = Object.entries(val)
@@ -16804,6 +17762,15 @@ function _initComunicados(){
       })
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _talvezMostrarComunicado();
+
+    // Mural — histórico completo (antes era o listener separado de _initMural)
+    _muralTodos = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
+      .filter(c=>c.publico!=='po' || _isPOOuMais())
+      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    _updateMuralBadge();
+    if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
   });
 }
 
@@ -16864,19 +17831,8 @@ function dismissComunicado(){
 // MURAL — histórico completo de comunicados (Fase 2) + Fale com o ADM (Fase 3)
 // ══════════════════════════════════════════════════════════════════════
 let _muralTodos = [];
-
-function _initMural(){
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
-    const val = snap.val() || {};
-    _muralTodos = Object.entries(val)
-      .map(([id,c])=>({...c, id}))
-      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
-      .filter(c=>c.publico!=='po' || _isPOOuMais())
-      .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-    _updateMuralBadge();
-    if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
-  });
-}
+// _initMural() removido — sua lógica foi incorporada dentro de _initComunicados()
+// pra usar UM listener só no path 'kanban/comunicados' em vez de dois.
 
 function _updateMuralBadge(){
   const badge = document.getElementById('mural-badge');
@@ -16972,7 +17928,7 @@ async function enviarFeedback(){
 
   try{
     await window._set(window._ref(window._db,'kanban/feedback/'+id), payload);
-    const snap = await fbGet('kanban/usuarios');
+    const snap = await fbGet('kanban/usuarios_publicos');
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
@@ -16993,7 +17949,7 @@ function _lsGet(k){ try{ return (typeof safeLS!=='undefined'?safeLS:localStorage
 function _lsSet(k,v){ try{ (typeof safeLS!=='undefined'?safeLS:localStorage).setItem(k,v); }catch(e){} }
 
 window.addEventListener('auth-change', e=>{
-  if(e.detail){ setTimeout(_initComunicados, 2000); setTimeout(_initMural, 2000); }
+  if(e.detail){ setTimeout(_initComunicados, 2000); }
 }, {once:true});
 
 renderBoard();
