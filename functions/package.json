@@ -3,10 +3,18 @@
   "description": "Sync automatico das Agendas do Google (Mare Digital) - roda sob a conta caio.soares@ciahering.com.br, sem popup, sem reconexao manual.",
   "engines": { "node": "20" },
   "main": "index.js",
+  "scripts": {
+    "test": "node agente-agil/outputs/index.test.js",
+    "gen-agente-agil-schema": "node agente-agil/gen-json-schema.js > agente-agil/contract.schema.json"
+  },
   "dependencies": {
     "firebase-admin": "^12.1.0",
     "firebase-functions": "^5.0.0",
-    "google-auth-library": "^9.9.0"
+    "google-auth-library": "^9.9.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "zod-to-json-schema": "^3.24.1"
   },
   "private": true
 }
