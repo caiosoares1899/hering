@@ -44,6 +44,10 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  // Cache.put() só aceita esquemas http/https — sem esse filtro, requisições de
+  // extensões do Chrome (chrome-extension://...) ou outras origens não-http que passam
+  // pelo fetch do navegador quebram o cache.put() com TypeError.
+  if (!e.request.url.startsWith('http')) return;
   if (
     e.request.url.includes('firebaseio.com') ||
     e.request.url.includes('googleapis.com') ||
