@@ -5,9 +5,9 @@
 // gen-json-schema.js) é o que o time que for integrar um novo
 // especialista deve ler — não precisa saber Zod nem JS.
 //
-// v0: só outputs "comentario" e "link". A envelope também recebe
-// `cardId` direto em vez de `referencia` (chave de negócio) — resolução
-// por referencia é trabalho do v1, junto de resolver.js.
+// v0: outputs "comentario", "link" e "relatorio_html". A envelope também
+// recebe `cardId` direto em vez de `referencia` (chave de negócio) —
+// resolução por referencia é trabalho do v1, junto de resolver.js.
 
 const { z } = require('zod');
 
@@ -22,8 +22,18 @@ const LinkOutput = z.object({
   titulo: z.string().min(1, 'título do link não pode ser vazio'),
 });
 
+// HTML completo do relatório, com imagens embutidas em base64. O Agente
+// Ágil extrai as imagens, hospeda tudo no Storage e escreve só um link no
+// card — nunca guarda o HTML bruto no Realtime Database (ver
+// outputs/relatorioHtml.js).
+const RelatorioHtmlOutput = z.object({
+  type: z.literal('relatorio_html'),
+  html: z.string().min(1, 'html do relatório não pode ser vazio'),
+  titulo: z.string().min(1, 'título do relatório não pode ser vazio'),
+});
+
 // Cresce em v2 com checklistItem, agentStatus e mover_coluna.
-const OutputSchema = z.discriminatedUnion('type', [ComentarioOutput, LinkOutput]);
+const OutputSchema = z.discriminatedUnion('type', [ComentarioOutput, LinkOutput, RelatorioHtmlOutput]);
 
 const AgentResponseEnvelope = z.object({
   requestId: z.string().min(1),
@@ -39,6 +49,7 @@ const AgentResponseEnvelope = z.object({
 module.exports = {
   ComentarioOutput,
   LinkOutput,
+  RelatorioHtmlOutput,
   OutputSchema,
   AgentResponseEnvelope,
 };

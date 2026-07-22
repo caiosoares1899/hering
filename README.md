@@ -51,6 +51,27 @@ Pra aplicar uma mudança feita aqui de volta pro Firebase:
 firebase deploy --only database
 ```
 
+### Cloud Storage
+`storage.rules`, na raiz do repo — mesma lógica do `database.rules.json` acima
+(espelho do que está configurado no Firebase Console → Storage → Rules). Guarda os
+relatórios que o Agente Ágil hospeda (`relatorios/**`, ver
+`functions/agente-agil/`) e o upload de PDF da Central de Dados do painel
+(`dados_diarios/**`).
+
+Pra aplicar uma mudança feita aqui de volta pro Firebase:
+```bash
+firebase deploy --only storage
+```
+
+**Retenção dos relatórios** (`storage-lifecycle.json`, também na raiz): apaga
+automaticamente qualquer coisa em `relatorios/**` com mais de 2 dias. Isso é
+propriedade do bucket do Cloud Storage, não da camada Firebase — não existe
+`firebase deploy` pra isso, precisa do `gsutil` (ou `gcloud storage`), rodado
+**uma vez** (ou de novo só se o arquivo mudar):
+```bash
+gsutil lifecycle set storage-lifecycle.json gs://hering-onboarding.firebasestorage.app
+```
+
 ## Outras ferramentas no repo
 `bolao.html`, `capacitacao.html`, `onboarding.html`, `apresentacao.html`, `maredigital.html`,
 `resumo.slide.html`, `ai-slide.html`, `ai-txt.html`, `controle.html` — outras ferramentas

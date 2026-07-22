@@ -68,7 +68,9 @@ async function applyWritePlan(db, cardKey, planEntries) {
   const updates = {};
   const transactions = [];
   for (const entry of planEntries) {
-    if (entry.kind === 'update') {
+    if (entry.kind === 'noop') {
+      continue; // só existe em dryRun, que nunca chega aqui — defensivo
+    } else if (entry.kind === 'update') {
       updates[`${base}/${entry.path}`] = entry.value;
     } else if (entry.kind === 'transaction') {
       transactions.push(entry);

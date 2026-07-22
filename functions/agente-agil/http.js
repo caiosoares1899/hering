@@ -15,6 +15,7 @@ const { getDatabase } = require('firebase-admin/database');
 const { AgentResponseEnvelope } = require('./schema');
 const { buildWritePlan } = require('./outputs');
 const board = require('./board');
+const storage = require('./storage');
 
 const AGENT_AGIL_KEY = defineSecret('AGENT_AGIL_KEY');
 
@@ -53,13 +54,23 @@ exports.agenteAgil = onRequest({ region: 'us-central1', secrets: [AGENT_AGIL_KEY
     agentInit: 'AA',
     now: () => new Date().toISOString(),
     newId,
+    dryRun: body.dryRun,
+    reportBasePath: () => storage.reportBasePath(board.SQUAD, body.cardId),
+    uploadAndSign: storage.uploadAndSign,
   };
 
   let writePlan;
   try {
-    writePlan = buildWritePlan(body.outputs, ctx);
+    writePlan = await buildWritePlan(body.outputs, ctx);
   } catch (err) {
-    res.status(400).json({ ok: false, error: 'invalid_output', message: err.message });
+    if (err.code === 'unknown_output_type') {
+      res.status(400).json({ ok: false, error: 'invalid_output', message: err.message });
+      return;
+    }
+    // Erro real de I/O (ex.: upload pro Storage falhou) — não é payload
+    // inválido do especialista, é falha do nosso lado.
+    console.error('[agenteAgil] falha ao montar plano de escrita:', err);
+    res.status(500).json({ ok: false, error: 'write_plan_failed' });
     return;
   }
 
