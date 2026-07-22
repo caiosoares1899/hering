@@ -6,10 +6,8 @@
 // Este arquivo roda em background (fora da aba), então usa a versão
 // "compat" do SDK do Firebase via importScripts — Service Workers não
 // suportam import ES modules da mesma forma que o kanban.html.
-
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
-
 // Mesma config pública já usada no kanban.html — esses valores não são
 // segredo (são enviados pro navegador de qualquer forma), a segurança real
 // está nas Regras do Realtime Database, não aqui.
@@ -22,8 +20,51 @@ firebase.initializeApp({
   messagingSenderId: '122502391131',
   appId: '1:122502391131:web:0a31bed5ed2494e16ba67e',
 });
-
 const messaging = firebase.messaging();
+
+// ═══════════════════════════════════════════════════════════════════
+// CACHE OFFLINE (movido pra cá — antes era um segundo Service Worker,
+// registrado via blob: no kanban.html, disputando o MESMO escopo (raiz do
+// domínio) que este arquivo. Dois SWs no mesmo escopo é uma causa clássica
+// de push "sumir" no Chrome: o navegador pode entregar o evento de push pro
+// worker errado (o de cache, que não tem handler nenhum pra isso), e nada
+// acontece — mesmo com o token válido e a Cloud Function disparando normal.
+// Unificar num arquivo só elimina essa disputa. Mesma lógica de antes:
+// stale-while-revalidate, pulando chamadas de API (Firebase/Google/Workers).
+// ═══════════════════════════════════════════════════════════════════
+const CACHE = 'kanban-hering-v1';
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+  );
+  self.clients.claim();
+});
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  if (
+    e.request.url.includes('firebaseio.com') ||
+    e.request.url.includes('googleapis.com') ||
+    e.request.url.includes('workers.dev')
+  )
+    return;
+  e.respondWith(
+    caches.match(e.request).then((cached) => {
+      const fresh = fetch(e.request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || fresh;
+    })
+  );
+});
 
 // Dispara quando chega um push com a aba FECHADA ou em background.
 // (Com a aba em primeiro plano, quem trata é o onMessage() no kanban.html —
@@ -43,7 +84,6 @@ messaging.onBackgroundMessage((payload) => {
   };
   self.registration.showNotification(title, options);
 });
-
 // Clique na notificação → abre (ou foca) o board, opcionalmente já no card certo
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
