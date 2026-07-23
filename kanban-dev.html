@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.182-dev</div>
+<div class="version">v8.30.183-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6281,10 +6281,16 @@ function renderBoard(){
   board.classList.remove('mode-onepage','mode-expanded');
   board.classList.add('mode-'+(viewMode||'expanded'));
   board.innerHTML='';
-  // Em modo raia por pessoa, ignora o filtro de owner (a raia já organiza por isso)
-  // Em raia, ignora filtros de owner E tag (a raia já organiza por essas dimensões)
-  const isRaia = raiaMode==='owner'||raiaMode==='tag'||raiaMode==='subteam';
-  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, isRaia, isRaia));
+  // Cada raia só ignora o filtro da MESMA dimensão que ela organiza (a raia já
+  // agrupa por aquilo, filtrar de novo seria redundante) — raia por owner
+  // ignora só o filtro de owner, raia por tag ignora só o de tag. Raia por
+  // subtime não organiza por owner nem por tag, então não devia ignorar
+  // nenhum dos dois (bug corrigido: antes ignorava os DOIS também nesse modo,
+  // fazendo o filtro de tag/owner parecer "não pegar" cards enquanto essa
+  // raia estava ativa).
+  const ignoreOwner = raiaMode==='owner';
+  const ignoreTag = raiaMode==='tag';
+  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, ignoreOwner, ignoreTag));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else if(raiaMode==='subteam') renderRaiaSubteam(board,activeCards);
