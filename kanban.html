@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.170</div>
+<div class="version">v8.30.171</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8685,26 +8685,37 @@ let _kudosScope='squad';
 
 function _listenKudos(){
   if(!window._fbReady){ setTimeout(_listenKudos, 1000); return; }
-  window._onValue(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'),snap=>{ _dbgTrack('kudos_squad', snap.val());
+  // ⚡ kudos (squad E geral) são listas que só crescem, sem limpeza — um
+  // onValue() reenvia a lista INTEIRA pra todo mundo conectado a cada
+  // Estrela/reação nova (kudos_geral já tinha esse problema em escala maior,
+  // por ser global; kudosSquad tinha o mesmo problema por squad). Trocado
+  // por poll periódico (aba em primeiro plano) — kudos não precisa aparecer
+  // em tempo real, alguns minutos de atraso é imperceptível. A ação da
+  // PRÓPRIA pessoa (addKudos/delKudos/toggleKudosReaction) já atualiza a
+  // tela na hora via mutação local otimista — o poll só existe pra pegar o
+  // que os OUTROS fizeram enquanto a aba estava parada.
+  _refreshKudosSquad();
+  _refreshKudosGeral();
+  setInterval(()=>{ if(!document.hidden){ _refreshKudosSquad(); _refreshKudosGeral(); } }, KUDOS_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastKudosSquadRefresh > KUDOS_POLL_MS) _refreshKudosSquad();
+    if(Date.now()-_lastKudosGeralRefresh > KUDOS_POLL_MS) _refreshKudosGeral();
+  });
+}
+const KUDOS_POLL_MS = 3*60000; // 3 minutos
+let _lastKudosSquadRefresh = 0;
+let _lastKudosGeralRefresh = 0;
+function _refreshKudosSquad(){
+  _lastKudosSquadRefresh = Date.now();
+  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos').then(snap=>{
+    _dbgTrack('kudos_squad', snap.val());
     const val=snap.val();
     kudosSquad = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     updKudosBadge();
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) renderKudos();
-  });
-  // ⚡ kudos_geral é GLOBAL (todas as Estrelas do Mar de todos os squads, sem
-  // limpeza — só cresce) e antes era onValue: qualquer kudos dado em QUALQUER
-  // squad reenviava a lista inteira pra TODO board aberto de TODA squad.
-  // Trocado por poll periódico (aba em primeiro plano) — kudos não precisa
-  // aparecer em tempo real, alguns minutos de atraso é imperceptível.
-  _refreshKudosGeral();
-  setInterval(()=>{ if(!document.hidden) _refreshKudosGeral(); }, KUDOS_GERAL_POLL_MS);
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.hidden) return;
-    if(Date.now()-_lastKudosGeralRefresh > KUDOS_GERAL_POLL_MS) _refreshKudosGeral();
-  });
+  }).catch(()=>{});
 }
-const KUDOS_GERAL_POLL_MS = 3*60000; // 3 minutos
-let _lastKudosGeralRefresh = 0;
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
   fbGet('kanban/painel/kudos_geral').then(snap=>{
