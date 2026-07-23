@@ -50,7 +50,23 @@ const agenteAgil = onRequest(
       }
     }
 
-    const cardKey = await resolveCardKey(db, payload.cardId);
+    let cardKey;
+    try {
+      cardKey = await resolveCardKey(db, payload.cardId);
+    } catch (err) {
+      if (err.code === 'stale_cards_index') {
+        // cards_index apontava pra uma chave que não bate mais com o card
+        // esperado, mesmo depois de retentar — rastreável em vez de
+        // arriscar escrever no card errado silenciosamente. 409: o cliente
+        // pode tentar de novo (a reconciliação de carga do board deve
+        // corrigir o índice na próxima vez que alguém abrir o kanban).
+        res.status(409).json({ error: 'stale_cards_index', cardId: payload.cardId, message: err.message });
+        return;
+      }
+      console.error('[agenteAgil] falha ao resolver cardId:', err);
+      res.status(500).json({ error: 'resolve_card_key_failed' });
+      return;
+    }
     if (!cardKey) {
       res.status(404).json({ error: 'card_not_found', cardId: payload.cardId });
       return;
