@@ -5253,13 +5253,25 @@ function fbSaveAll(){
     return Promise.resolve();
   }
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
-  // NOTA: columns e tags NÃO são salvos aqui — apenas cards.
-  // columns/tags têm save dedicado em saveAgilCfg()/saveTags() para evitar
-  // race condition: se este save rodasse com columns/tags desatualizados
-  // (ex: outro usuário acabou de adicionar uma coluna), sobrescreveria
-  // o Firebase com dados antigos a cada drag de card.
+  // NOTA: columns e tags NÃO são salvos aqui — apenas cards (+ cards_index,
+  // ver abaixo). columns/tags têm save dedicado em saveAgilCfg()/saveTags()
+  // para evitar race condition: se este save rodasse com columns/tags
+  // desatualizados (ex: outro usuário acabou de adicionar uma coluna),
+  // sobrescreveria o Firebase com dados antigos a cada drag de card.
+  //
+  // cards_index/{cardId}->chave (PONTE TEMPORÁRIA — ver nota longa em
+  // fbSaveCard) precisa sair sincronizado com /cards sempre que este
+  // caminho reescreve o array inteiro: é o único jeito de garantir isso em
+  // operações que criam/removem/reordenam VÁRIOS cards de uma vez (bulk
+  // duplicate, import do Trello, recorrências/agendamentos em lote).
+  // Recalculado do zero a partir do array que está sendo salvo — fbSaveAll
+  // já é o caminho "caro" (reservado pra essas operações estruturais), então
+  // recalcular o índice inteiro junto não muda a ordem de grandeza do
+  // custo, e garante que este caminho nunca deixa o índice desatualizado.
+  const cardsIndex = {};
+  cards.forEach((c,i)=>{ if(c && c.id) cardsIndex[c.id] = String(i); });
   return Promise.all([
-    window._set(fb(FB+'/cards'), cards),
+    window._update(fb(FB), { cards, cards_index: cardsIndex }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -5284,14 +5296,25 @@ function fbSaveAll(){
       // outra), fazendo o update() gravar no card ERRADO sem erro visível.
       const byKey = window._cardsByKey||{};
       let key = Object.keys(byKey).find(k => byKey[k] && byKey[k].id === card.id);
+      const updates = {};
       if(key == null){
         // Fallback: snapshot espelhado ainda não tem esse card (ex.: acabou
         // de ser criado) — tenta pela posição local antes do fbSaveAll.
         const idx = cards.indexOf(card);
         if(idx < 0) return fbSaveAll();
         key = String(idx);
+        // PONTE TEMPORÁRIA: card não estava no espelho -> é criação. O
+        // índice cards_index/{cardId}->chave (que o Agente Ágil usa pra
+        // achar o card sem ler /cards inteiro) tem que nascer JUNTO com o
+        // card, no MESMO update() multi-path — nunca pode existir card
+        // órfão sem entrada no índice, nem por um segundo. Se um dia /cards
+        // migrar de array pra objeto chaveado por id de verdade (correção
+        // de raiz, hoje cara demais pra valer a pena), esse índice inteiro
+        // (e _cardsByKey) deixam de ser necessários.
+        updates['cards_index/'+card.id] = key;
       }
-      return window._update(fb(FB+'/cards'), {[key]: card}).catch(err=>{
+      updates['cards/'+key] = card;
+      return window._update(fb(FB), updates).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
@@ -5416,6 +5439,59 @@ let _cardsSyncDebounce = null;
     window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
     window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
     window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+    // cards_index (ver fbSaveAll/fbSaveCard): dá tempo do burst inicial de
+    // child_added popular _cardsByKey antes de comparar contra o remoto.
+    setTimeout(_reconcileCardsIndexOnce, 4000);
+  }
+
+  // ── cards_index: reconciliação de carga (autocorreção) ─────────────────
+  // fbSaveAll()/fbSaveCard() já escrevem cards_index no MOMENTO da criação
+  // — só quem causa a mutação escreve, evitando N clientes conectados
+  // reagirem ao mesmo child_added tentando gravar a mesma entrada. Mas um
+  // índice espelhado sem autocura sempre acaba mentindo um dia (bug antigo,
+  // sessão que caiu no meio de um save, migração futura) — por isso, na
+  // carga do board, faz UMA reconciliação barata: lê cards_index inteiro
+  // (pequeno, só id->chave — nada parecido com o custo de ler /cards
+  // inteiro) e corrige qualquer divergência contra o que os listeners de
+  // /cards já populam em _cardsByKey. Roda só 1x por sessão (guard abaixo).
+  //
+  // Função pura: compara o espelho local (_cardsByKey, chave->card) com o
+  // índice remoto (cardId->chave) e devolve o que precisa corrigir. Sem
+  // I/O — testável sem emulador.
+  function _diffCardsIndex(cardsByKey, remoteIndex){
+    const toWrite = {};   // cardId -> chave, precisa gravar/corrigir
+    const toRemove = [];  // cardId órfão no índice remoto (card não existe mais)
+    const liveIds = new Set();
+    Object.keys(cardsByKey||{}).forEach(key=>{
+      const card = cardsByKey[key];
+      if(!card || !card.id) return;
+      liveIds.add(card.id);
+      if(remoteIndex[card.id] !== key) toWrite[card.id] = key;
+    });
+    Object.keys(remoteIndex||{}).forEach(cardId=>{
+      if(!liveIds.has(cardId)) toRemove.push(cardId);
+    });
+    return { toWrite, toRemove };
+  }
+  let _cardsIndexReconciled = false;
+  async function _reconcileCardsIndexOnce(){
+    if(_cardsIndexReconciled || !window._fbReady) return;
+    _cardsIndexReconciled = true;
+    try{
+      const snap = await fbGet(FB+'/cards_index');
+      const remoteIndex = snap.val() || {};
+      const { toWrite, toRemove } = _diffCardsIndex(_cardsByKey, remoteIndex);
+      const updates = {};
+      Object.keys(toWrite).forEach(cardId=>{ updates['cards_index/'+cardId] = toWrite[cardId]; });
+      toRemove.forEach(cardId=>{ updates['cards_index/'+cardId] = null; });
+      if(Object.keys(updates).length){
+        await window._update(fb(FB), updates);
+        _dbgTrack('cards_index:reconciled', {corrigidas:Object.keys(toWrite).length, removidas:toRemove.length});
+      }
+    }catch(e){
+      console.warn('[cards_index] reconciliação falhou:', e);
+      _cardsIndexReconciled = false; // permite tentar de novo na próxima carga
+    }
   }
 
   // ── Re-sync periódico de columns/tags ───────────────────────────────────
