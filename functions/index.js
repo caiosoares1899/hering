@@ -65,13 +65,22 @@ exports.sendPushOnNotification = onValueCreated(
     // notificação sozinhos automaticamente ANTES do nosso Service Worker
     // rodar — e aí o onBackgroundMessage mostra de novo, duplicando. Com
     // "data" puro, quem decide e mostra é sempre o nosso código, uma única vez.
+    // Deep-link pro card específico, não só pro board — o Service Worker
+    // (firebase-messaging-sw.js, notificationclick) já sabe navegar pra
+    // event.notification.data.url quando a pessoa clica no push; só faltava
+    // essa URL incluir o card. Sem isso, todo push (inclusive menção) abria
+    // só o board, deixando a pessoa procurar o card na mão.
+    const params = new URLSearchParams();
+    if (notif.squad) params.set('squad', notif.squad);
+    if (notif.cardId) params.set('card', notif.cardId);
+    const qs = params.toString();
     const message = {
       data: {
         title,
         body,
         tag: String(notif.type || 'geral') + '_' + String(notif.cardId || ''),
         cardId: String(notif.cardId || ''),
-        url: notif.squad ? `/kanban.html?squad=${notif.squad}` : '/kanban.html',
+        url: qs ? `/kanban.html?${qs}` : '/kanban.html',
       },
       tokens,
     };
