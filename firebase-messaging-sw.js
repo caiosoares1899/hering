@@ -32,7 +32,7 @@ const messaging = firebase.messaging();
 // Unificar num arquivo só elimina essa disputa. Mesma lógica de antes:
 // stale-while-revalidate, pulando chamadas de API (Firebase/Google/Workers).
 // ═══════════════════════════════════════════════════════════════════
-const CACHE = 'kanban-hering-v1';
+const CACHE = 'kanban-hering-v2'; // bump: purga cache antigo com a estratégia stale-first pra HTML/version.json
 self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
@@ -54,6 +54,37 @@ self.addEventListener('fetch', (e) => {
     e.request.url.includes('workers.dev')
   )
     return;
+
+  // version.json e as páginas HTML (navegação) alimentam o mecanismo de
+  // auto-update do kanban/painel: a página compara a versão que carregou
+  // contra version.json e recarrega se estiver desatualizada. Servir essas
+  // duas coisas "stale-first" (cache antes da rede, como o resto abaixo)
+  // quebra esse mecanismo — o board podia abrir com o HTML antigo do
+  // cache E comparar contra um version.json TAMBÉM antigo (do mesmo
+  // cache), sem detectar divergência nenhuma, até uma leitura POSTERIOR
+  // (já com o cache atualizado em segundo plano) finalmente pegar a
+  // diferença — dava a sensação de "abriu na versão velha, atualizei nada
+  // mudou, atualizei de novo e aí sim veio a nova". Por isso essas duas
+  // coisas vão network-first (cache só como fallback se a rede falhar, pra
+  // continuar funcionando offline); o resto (imagens, libs de terceiros
+  // etc., que não participam do check de versão) continua como antes.
+  const isVersionCheck = /version\.json(\?|$)/.test(e.request.url);
+  const isNavigation = e.request.mode === 'navigate' || e.request.destination === 'document';
+  if (isVersionCheck || isNavigation) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then((cached) => {
       const fresh = fetch(e.request)
