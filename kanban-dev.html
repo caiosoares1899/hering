@@ -256,7 +256,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .m-tag-chip .x{cursor:pointer;opacity:.6;font-weight:800;font-size:12px;line-height:1;}
 .m-tag-chip .x:hover{opacity:1;}
 .m-tags-add{cursor:pointer;}
-.card-title{font-size:11px;font-weight:500;margin-bottom:3px;line-height:1.4;}
+.card-title{font-size:11px;font-weight:500;margin-bottom:3px;line-height:1.4;overflow-wrap:break-word;word-break:break-word;}
 
 .card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px;}
 .avatar{width:18px;height:18px;border-radius:50%;background:rgba(37,99,201,.5);border:1px solid rgba(56,182,255,.3);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:var(--accent);flex-shrink:0;overflow:hidden;}
@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.188-dev</div>
+<div class="version">v8.30.189-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -16041,7 +16041,16 @@ _onFbReady(()=>{
     }
   }).catch(()=>{});
   applyBlockerMode();
-  fbLoadAll();
+  // fbLoadAll() registra os listeners de /cards, /columns etc. — eles exigem
+  // auth.token.email (ver database.rules.json). _onFbReady só espera o SDK
+  // do Firebase estar pronto, não o login em si: em conexões mais lentas o
+  // onAuthStateChanged podia resolver DEPOIS desse ponto, e os listeners
+  // eram registrados sem usuário logado ainda — permission_denied, sem
+  // retry automático quando o login terminava logo em seguida. Resultado:
+  // board abrindo vazio até um F5 (que por acaso já pegava o login
+  // resolvido a tempo). Agora espera o auth-change real antes de carregar.
+  if(window._currentUser) fbLoadAll();
+  else window.addEventListener('auth-change', e=>{ if(e.detail) fbLoadAll(); }, {once:true});
   loadSquadsFromFirebase(() => applySquadIdentity()); // atualiza título com dados do Firebase
   loadAutoRules();
   loadCalEvents();
