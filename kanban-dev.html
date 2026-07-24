@@ -4137,7 +4137,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.191-dev</div>
+<div class="version">v8.30.192-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9676,6 +9676,25 @@ const CAMP_TIPO_LABELS = { aprendizado:'Aprendizado', resultado:'Resultado', pro
 let _campanhas = {};           // id -> objeto campanha
 let _campAtual     = null;  // campanha em detalhe
 let _campCrossData = {};    // cache pontual: {sqId:{cards,columns,flowConfig}} — carregado só quando usuário pede multi-squad
+// Campanhas/coleções que nascem com nomes DIFERENTES por squad (ex.: "Dia dos
+// Pais 2026" numa squad, "2026 | Dia dos Pais" noutra) nunca batiam pelo
+// pareamento automático por nome — cada squad ficava com seu registro
+// isolado, sem saber que fazia parte de algo maior. O painel já tinha um
+// agrupamento manual (grupos_campanha) pra resolver isso na VISÃO DO PAINEL,
+// mas nunca escrevia de volta no registro da campanha — então o board de
+// cada squad nunca sabia do vínculo. Agora o painel grava `grupoId` direto
+// em cada campanha do grupo (sem tocar no `nome` de ninguém), e essas duas
+// funções tratam campanhas com o mesmo grupoId como irmãs — mesmo esquema já
+// usado pro pareamento automático por nome, só que também via grupoId.
+function _campGrupoSiblings(c){
+  if(!c || !c.grupoId) return [c].filter(Boolean);
+  return Object.values(_campanhas||{}).filter(oc=>oc.grupoId===c.grupoId);
+}
+function _campEffectiveSquads(c){
+  if(!c) return [];
+  if(c.grupoId) return [...new Set(_campGrupoSiblings(c).flatMap(s=>s.squads||[]))];
+  return c.squads||[ACTIVE_SQUAD];
+}
 // Diz se um card do dashboard de Campanhas conta como "concluído" — usa a
 // classificação de colunas (flowConfig.doneCols) do SQUAD DO CARD, não do
 // squad ativo. Squads com múltiplas colunas de finalização em sequência
@@ -9851,7 +9870,7 @@ function renderCampList(){
     });
     const statusCls = `camp-status-${c.status||'planejamento'}`;
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
-    const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':'';
+    const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':(c.grupoId?'<span class="camp-ms-badge" title="Agrupada manualmente no painel com campanhas de outras squads (cada squad mantém seu próprio nome)">🔗 Grupo multi-squad</span>':'');
     const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
     return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe('${esc(c.id)}')">
       <div class="camp-card-icon">${tema.emoji}</div>
@@ -9891,8 +9910,8 @@ function renderCampDetalhe(c){
 
   const mostrarArq   = c.mostrarArquivados==='todos';
   const campTags     = (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]);
-  const isMS         = !!(c.multiSquad);
-  const msSquads     = (c.squads||[ACTIVE_SQUAD]);
+  const isMS         = !!(c.multiSquad||c.grupoId);
+  const msSquads     = _campEffectiveSquads(c);
   const statusLabel  = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status||'—';
   const periodo      = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ')||'Não definido';
 
@@ -9922,10 +9941,14 @@ function renderCampDetalhe(c){
   const _sqFilter = window._campSqFilter||'all';
   let todasEntradas;
   if(viewMode==='multi'){
-    // Agrega entradas de todas as campanhas com mesmo nome (campanhas irmãs de outros squads)
+    // Agrega entradas de todas as campanhas irmãs de outros squads — por mesmo
+    // nome (pareamento automático clássico) OU mesmo grupoId (agrupamento
+    // manual do painel, pra campanhas que nasceram com nomes diferentes).
     todasEntradas = [];
     Object.values(_campanhas||{}).forEach(oc=>{
-      if(String(oc.nome||'').toLowerCase()===String(c.nome||'').toLowerCase()){
+      const mesmoNome  = String(oc.nome||'').toLowerCase()===String(c.nome||'').toLowerCase();
+      const mesmoGrupo = c.grupoId && oc.grupoId===c.grupoId;
+      if(mesmoNome||mesmoGrupo){
         const sqFallback = (oc.squads&&oc.squads.length)?oc.squads[0]:ACTIVE_SQUAD;
         Object.values(oc.entradas||{}).forEach(e=>todasEntradas.push({...e,_squad:e._squad||sqFallback}));
       }
@@ -10205,7 +10228,7 @@ async function setCampViewMode(mode){
   window._campSqFilter = 'all';
   if(mode==='multi' && _campAtual){
     // Fetch pontual (one-shot) — não cria listener, não sobrecarrega outros squads
-    const outros = (_campAtual.squads||[]).filter(sq=>sq!==ACTIVE_SQUAD&&!_campCrossData[sq]);
+    const outros = _campEffectiveSquads(_campAtual).filter(sq=>sq!==ACTIVE_SQUAD&&!_campCrossData[sq]);
     if(outros.length){
       const btn = document.querySelector('.camp-ms-toggle-btn:not(.on)');
       const orig = btn?.textContent;
