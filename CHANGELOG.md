@@ -53,6 +53,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.191-dev — 2026-07-24 · PR #16 · tag `kanban_dev-v8.30.191-dev`
+Restaura o sistema híbrido humano+agente de IA que tinha sido apagado por
+acidente no commit `ea180cc` (22/07, edição direta pelo GitHub sem PR) — a
+correção da lista de squads do dev arrastou junto ~2000 linhas de uma
+feature que só existia lá. `functions/agente-agil/board.js` continua com
+`SQUAD_ID='ecomm'` fixo, ou seja, a Cloud Function do Agente Ágil já
+escrevia cards nesse squad enquanto o board tinha perdido a capacidade de
+mostrar/gerenciar esses cards como "de agente". Restaurado e integrado ao
+estado atual do arquivo:
+- Botão de 3 visões no header (👤 Humanos / 🤝 Híbrido / 🤖 IA), só
+  aparece em squads com agentes cadastrados.
+- Campo "Executor" (Humano/Agente/Híbrido) + status do agente no modal do
+  card, chip visual no card, filtro dedicado.
+- Identidades de agente (`agentes[]`/`allIdentities()`) integradas em
+  menções, dropdown de `@`, seletor de responsável/participante, avatares
+  de card e comentário.
+- Ciclo humano-agente: validar/devolver trabalho do agente (com
+  comentário de sistema) + painel de simulação client-side pra ensaiar o
+  fluxo antes de plugar agentes reais.
+- Não restaurado (por escolha): dados de seed/demo fictícios — só a
+  mecânica.
+
 ### v8.30.190-dev — 2026-07-24 · PR #12 · tag `kanban_dev-v8.30.190-dev`
 Dropdown de `@`menção/`@card:` na descrição principal passa a medir a
 posição real do cursor e abrir ali, em vez de sempre no rodapé do campo
