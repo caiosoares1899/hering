@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.187-dev</div>
+<div class="version">v8.30.188-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7109,6 +7109,15 @@ function renderExtraDescs(){
     }).join('');
   }
   document.getElementById('add-desc-btn').style.display = canEdit?'':'none';
+  // A descrição principal/PO/comentários chamam initMentionDropdown() quando
+  // entram em modo edição — as descrições adicionais nunca chamavam, então
+  // digitar "@" ou "@card:" aqui não abria dropdown nenhum (o texto digitado
+  // manualmente até salvava, mas sem a busca/seleção de pessoa ou card).
+  // innerHTML acima recria os <textarea>, então reinicia a cada render.
+  editingDescs.forEach((d,i)=>{
+    const isEditing = _editingDescIdx.has(i) || (!d.text||!d.text.trim());
+    if(isEditing && canEdit) initMentionDropdown('xdesc-ta-'+i);
+  });
 }
 function editExtraDesc(i){ _editingDescIdx.add(i); renderExtraDescs(); }
 function _touchDesc(i){
