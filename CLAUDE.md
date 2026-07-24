@@ -105,3 +105,45 @@ is no separate deploy step for the HTML files.
 - Given the file sizes (kanban/painel HTML files run several thousand lines
   and 400KB–1.1MB), use `grep`/targeted `Read` offsets rather than reading a
   whole file at once when investigating.
+
+## Release process
+
+Since deploy is automatic on push to `main` and there's no staging/CI gate,
+this is what stands in for one — follow it for any change to a versioned
+page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
+
+1. **Dev first.** Land the fix in the `-dev` file only, bump its key in
+   `version.json` **and** the `<div class="version">...</div>` string in
+   that HTML file, open a PR, merge it. GitHub Pages only redeploys on a
+   push to `main` — a commit sitting on a feature branch never reaches the
+   live site, so the PR has to actually merge before anyone can test it
+   there.
+2. **Wait for explicit validation** from whoever asked for the fix before
+   touching the prod file. Don't promote on your own judgement that "it
+   looks right."
+3. **Promote to prod** once validated: diff the `-dev` file against the prod
+   file (`diff kanban.html kanban-dev.html`) — it should be exactly the
+   accumulated fixes plus the version string/`VERSION_KEY` line. Apply that
+   diff to the prod file, restore its own version string/`VERSION_KEY`
+   (don't carry over the `-dev` one), bump `version.json`'s prod key, PR,
+   merge.
+4. **Tag the release.** On the commit that merged into `main` (the actual
+   live state), create an annotated tag:
+   - `kanban-vX.Y.Z` / `kanban_dev-vX.Y.Z-dev` for the kanban pair
+   - `painel-vX.Y` / `painel_dev-vX.Y-dev` for the painel pair
+   Push tags with `git push origin <tag>`. This is what makes "what's live
+   right now" and "what changed between two releases" answerable with
+   plain git (`git tag -l`, `git diff <old-tag> <new-tag>`) instead of
+   spelunking through commit history.
+5. **Update `CHANGELOG.md`** with a new entry under the right page/version,
+   summarizing what changed and linking the PR number. Keep entries
+   user-facing (what changed and why), not a copy of the commit's internal
+   diff description.
+
+Files without a `-dev` counterpart (`firebase-messaging-sw.js`,
+`database.rules.json`, `functions/`) skip the dev-first step — they're
+either shared (the service worker lives at the domain root for both
+environments) or deployed through their own separate command, not GitHub
+Pages. Still tag and log Cloud Function releases (see the `agente-agil-v1a`
+example in `CHANGELOG.md`) since they're versioned independently of
+`version.json`.
