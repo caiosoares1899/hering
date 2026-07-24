@@ -4137,7 +4137,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.192-dev</div>
+<div class="version">v8.30.193-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5331,7 +5331,7 @@ function resetFlowBaseline(opts){
   return n;
 }
 
-function fbSaveAll(){
+function fbSaveAll(extra){
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady){
@@ -5356,8 +5356,12 @@ function fbSaveAll(){
   // custo, e garante que este caminho nunca deixa o índice desatualizado.
   const cardsIndex = {};
   cards.forEach((c,i)=>{ if(c && c.id) cardsIndex[c.id] = String(i); });
+  // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
+  // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
+  // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
+  // sem precisar de um update() separado depois).
   return Promise.all([
-    window._update(fb(FB), { cards, cards_index: cardsIndex }),
+    window._update(fb(FB), { cards, cards_index: cardsIndex, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -11054,8 +11058,31 @@ function _recurrenceDue(item, hoje){
   }
   return false;
 }
-// Cria um card a partir de um item recorrente
-function _criarCardRecorrente(item){
+// Slug determinístico do título do item recorrente — vira card.recorrenteDe e
+// a chave do índice recorrentes_index/{slug}/{data} (Sprint 2 do Agente
+// Ágil). Chaves do Realtime Database não podem conter . # $ [ ] / nem ser
+// vazias, então normaliza: minúsculo, sem acento, tudo que não é [a-z0-9]
+// vira "_" (colapsado), sem "_" nas pontas.
+// ⚠️ LIMITAÇÃO CONHECIDA: o slug deriva do TÍTULO do item recorrente. Se
+// alguém renomear esse item no painel de recorrentes no futuro, o slug muda
+// pros cards criados DAÍ EM DIANTE — desalinhando de uma referência fixa que
+// um especialista externo (ex.: Databricks) tenha guardado do lado dele. Não
+// resolvido nesta rodada; documentado aqui como risco conhecido pra não
+// pegar ninguém de surpresa depois.
+function _slugifyRecorrente(title){
+  const slug = String(title||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'_')
+    .replace(/^_+|_+$/g,'');
+  return slug || 'recorrente';
+}
+// Cria um card a partir de um item recorrente. `hoje` é a mesma data local
+// (YYYY-MM-DD) já calculada em processRecorrentes() — reaproveitada aqui pra
+// recorrenteData, em vez de recalcular via new Date().toISOString() (que é
+// UTC e poderia divergir por um dia perto da meia-noite em fusos como o do
+// Brasil, dessincronizando do dia que efetivamente disparou a criação).
+function _criarCardRecorrente(item, hoje){
   const td=new Date().toISOString().split('T')[0];
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
@@ -11074,6 +11101,12 @@ function _criarCardRecorrente(item){
     archived:false, created:'🔁 Recorrência', edited:'🔁 Recorrência', createdAt:td, editedAt:td,
     _recorrente:true,
     _autoCriadoEm:td, _autoVisto:false, _autoTipo:'recorrente',
+    // Sprint 2 do Agente Ágil: identifica esta instância pra um especialista
+    // externo (ex.: Databricks) conseguir dizer "o relatório de hoje" via
+    // {tipo:'recorrente', nome, data} em vez de precisar do ID interno do
+    // card — ver resolveReferencia() em functions/agente-agil/resolver.js.
+    recorrenteDe: _slugifyRecorrente(item.title),
+    recorrenteData: hoje,
   };
   recordHistory(novo,'criado automaticamente (recorrência)');
   recordMove(novo, novo.col);
@@ -11091,14 +11124,22 @@ function processRecorrentes(){
   let criados=[]; let mudou=false;
   recs.forEach(item=>{
     if(_recurrenceDue(item, hoje)){
-      const card=_criarCardRecorrente(item);
+      const card=_criarCardRecorrente(item, hoje);
       item.lastCreated=hoje;
       criados.push(card);
       mudou=true;
     }
   });
   if(mudou){
-    fbSaveAll();
+    // recorrentes_index/{slug}/{data} -> cardId (Sprint 2 do Agente Ágil) — vai
+    // no MESMO update multi-path de fbSaveAll() (cards+cards_index), atômico
+    // com a criação dos cards do dia.
+    const recIdxUpdates = {};
+    criados.forEach(card=>{
+      if(card.recorrenteDe && card.recorrenteData)
+        recIdxUpdates['recorrentes_index/'+card.recorrenteDe+'/'+card.recorrenteData] = card.id;
+    });
+    fbSaveAll(recIdxUpdates);
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     // Avisa: lembrete + notificação + toast
