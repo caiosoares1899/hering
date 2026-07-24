@@ -6,9 +6,11 @@
 //
 // v0: auth por secret compartilhado (header x-agent-key), idempotência por
 // requestId (sem TTL de limpeza automática ainda — RTDB não tem TTL nativo;
-// só evita duplicar em retry), resolução de card por cardId direto (sem
-// "referencia" de negócio — isso é v1), outputs "comentario", "link" e
+// só evita duplicar em retry), outputs "comentario", "link" e
 // "relatorio_html" (hospeda no Storage, ver outputs/relatorioHtml.js).
+// Sprint 2: resolução de card por cardId direto OU por "referencia" de
+// negócio (recorrência + data, ver resolver.js) — o especialista manda um
+// dos dois, nunca os dois.
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -16,6 +18,7 @@ const { getDatabase } = require('firebase-admin/database');
 
 const { envelope } = require('./schema');
 const { SQUAD_ID, resolveCardKey, buildWritePlan, applyWritePlan } = require('./board');
+const { resolveReferencia } = require('./resolver');
 
 const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
 
@@ -50,9 +53,28 @@ const agenteAgil = onRequest(
       }
     }
 
+    // cardId direto (v0) ou referencia de negócio (Sprint 2) — schema.js já
+    // garante que exatamente um dos dois veio preenchido. A partir daqui o
+    // resto do fluxo (resolveCardKey, buildWritePlan, applyWritePlan) só
+    // conhece cardId — não importa de qual dos dois formatos ele veio.
+    let cardId = payload.cardId;
+    if (payload.referencia) {
+      try {
+        cardId = await resolveReferencia(db, payload.referencia);
+      } catch (err) {
+        if (err.code === 'referencia_not_found') {
+          res.status(404).json({ error: 'referencia_not_found', referencia: payload.referencia, message: err.message });
+          return;
+        }
+        console.error('[agenteAgil] falha ao resolver referencia:', err);
+        res.status(500).json({ error: 'resolve_referencia_failed' });
+        return;
+      }
+    }
+
     let cardKey;
     try {
-      cardKey = await resolveCardKey(db, payload.cardId);
+      cardKey = await resolveCardKey(db, cardId);
     } catch (err) {
       if (err.code === 'stale_cards_index') {
         // cards_index apontava pra uma chave que não bate mais com o card
@@ -60,7 +82,7 @@ const agenteAgil = onRequest(
         // arriscar escrever no card errado silenciosamente. 409: o cliente
         // pode tentar de novo (a reconciliação de carga do board deve
         // corrigir o índice na próxima vez que alguém abrir o kanban).
-        res.status(409).json({ error: 'stale_cards_index', cardId: payload.cardId, message: err.message });
+        res.status(409).json({ error: 'stale_cards_index', cardId, message: err.message });
         return;
       }
       console.error('[agenteAgil] falha ao resolver cardId:', err);
@@ -68,13 +90,13 @@ const agenteAgil = onRequest(
       return;
     }
     if (!cardKey) {
-      res.status(404).json({ error: 'card_not_found', cardId: payload.cardId });
+      res.status(404).json({ error: 'card_not_found', cardId });
       return;
     }
 
     let plan;
     try {
-      plan = await buildWritePlan(cardKey, payload.outputs, { cardId: payload.cardId, dryRun: payload.dryRun });
+      plan = await buildWritePlan(cardKey, payload.outputs, { cardId, dryRun: payload.dryRun });
     } catch (err) {
       if (err.code === 'unknown_output_type') {
         res.status(400).json({ error: 'invalid_output', message: err.message });

@@ -36,6 +36,11 @@ const storage = require('./storage');
 const SQUAD_ID = 'ecomm';
 const CARDS_PATH = `kanban/squads/${SQUAD_ID}/dados/cards`;
 const CARDS_INDEX_PATH = `kanban/squads/${SQUAD_ID}/dados/cards_index`;
+// Sprint 2: recorrentes_index/{recorrenteDe}/{recorrenteData} -> cardId.
+// Mesmo espírito do cards_index (get pontual O(1) em vez de escanear /cards),
+// mantido pelo CLIENTE — processRecorrentes() em kanban.html grava isso no
+// mesmo update multi-path que cria os cards do dia. Ver resolver.js.
+const RECORRENTES_INDEX_PATH = `kanban/squads/${SQUAD_ID}/dados/recorrentes_index`;
 
 async function resolveCardKey(db, cardId, { retries = 2, delayMs = 250 } = {}) {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -98,4 +103,4 @@ async function applyWritePlan(db, plan) {
   }
 }
 
-module.exports = { SQUAD_ID, CARDS_PATH, CARDS_INDEX_PATH, resolveCardKey, buildWritePlan, applyWritePlan };
+module.exports = { SQUAD_ID, CARDS_PATH, CARDS_INDEX_PATH, RECORRENTES_INDEX_PATH, resolveCardKey, buildWritePlan, applyWritePlan };
