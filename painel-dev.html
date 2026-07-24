@@ -2157,7 +2157,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.90 · painel-dev</div>
+<div class="version">v2.91 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3695,7 +3695,21 @@ async function _pmsSalvarGrupo(gid, nome){
     atualizadoEm: new Date().toISOString(),
   };
   try{
-    await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+id), grupo);
+    // Nota: esta função lia de kanban/painel/grupos_campanha_dev (loadGruposCamp) mas escrevia
+    // em kanban/painel/grupos_campanha (sem sufixo) — grupo criado no dev nunca aparecia (lido
+    // de um node vazio) e ainda escrevia por engano no node de produção. Corrigido pro mesmo
+    // node _dev usado na leitura.
+    await window._set(window._ref(window._db,'kanban/painel/grupos_campanha_dev/'+id), grupo);
+    // Grava o grupoId em cada campanha vinculada — o board de cada squad (kanban.html) lê isso
+    // direto do próprio registro da campanha pra saber que ela faz parte de um grupo multi-squad,
+    // sem precisar conhecer o node grupos_campanha do painel. Limpa dos que saíram do grupo
+    // nesta edição. NUNCA mexe no campo `nome` — cada squad continua vendo o nome que criou.
+    const idsAnteriores = _gruposCamp[id]?.campanhaIds||[];
+    const removidos = idsAnteriores.filter(cid=>!ids.includes(cid));
+    await Promise.all([
+      ...ids.map(cid=>window._set(_campRef(cid+'/grupoId'), id).catch(()=>{})),
+      ...removidos.map(cid=>window._set(_campRef(cid+'/grupoId'), null).catch(()=>{})),
+    ]);
     showToast('✅ Grupo salvo!');
     _pmsSwitchTab('manual');
   } catch(e){ uiAlert('Erro: '+e.message); }
@@ -3704,7 +3718,8 @@ async function _pmsSalvarGrupo(gid, nome){
 async function _pmsDelGrupo(gid){
   const g = _gruposCamp[gid];
   if(!await uiConfirm('Desagrupar "'+esc(g?.nome||gid)+'"? As campanhas voltam a aparecer separadas.',{danger:true,okText:'Desagrupar'})) return;
-  await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+gid), null).catch(e=>uiAlert(e.message));
+  await Promise.all((g?.campanhaIds||[]).map(cid=>window._set(_campRef(cid+'/grupoId'), null).catch(()=>{})));
+  await window._set(window._ref(window._db,'kanban/painel/grupos_campanha_dev/'+gid), null).catch(e=>uiAlert(e.message));
   showToast('🗑 Grupo desagrupado.');
 }
 
