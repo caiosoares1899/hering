@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.185-dev</div>
+<div class="version">v8.30.186-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6786,10 +6786,19 @@ function populatePartSelect(excludeInits=[]){
     sel.innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName?.split(' ')[0]||'')}</option>`;
 }
 
+// Fonte da verdade dos participantes do card sendo editado — mesmo padrão de
+// editingTags. Antes, getParticipants() não tinha um array próprio: reconstruía
+// a lista fazendo parsing do textContent de cada chip no DOM (formato esperado
+// "INIT · Nome", cortado em ' · '), o que é frágil e foi apontado como causa de
+// participante "sumir" do card (qualquer coisa que mude o texto renderizado do
+// chip, incluindo o próprio botão ✕ dentro dele, tinha chance de corromper o
+// parsing). Agora o array em memória é a fonte, o DOM só reflete ele.
+let editingParticipants=[];
+
 function renderParticipants(parts){
   const w=document.getElementById('m-participants'); if(!w) return;
-  const partArr=parts||[];
-  w.innerHTML=partArr.map((init,i)=>{
+  editingParticipants=(parts||[]).slice();
+  w.innerHTML=editingParticipants.map((init,i)=>{
     const m=members.find(x=>x.init===init);
     const foto=safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}">`:'';
     const nome=m?.name?.split(' ')[0]||init;
@@ -6797,29 +6806,22 @@ function renderParticipants(parts){
       <button class="part-chip-del" onclick="removeParticipant(${i})">✕</button>
     </span>`;
   }).join('');
-  populatePartSelect(partArr);
+  populatePartSelect(editingParticipants);
 }
 
 function getParticipants(){
-  return Array.from(document.querySelectorAll('#m-participants .part-chip'))
-    .map(el=>el.querySelector('.part-chip-del')?.getAttribute('onclick')?.match(/\d+/)?.[0])
-    .map((_,i)=>{ 
-      const chips=document.querySelectorAll('#m-participants .part-chip');
-      const txt=chips[i]?.textContent?.trim()?.split(' · ')[0]; 
-      return txt;
-    }).filter(Boolean);
+  return editingParticipants.slice();
 }
 
 function addParticipant(){
   const sel=document.getElementById('m-part-select'); if(!sel||!sel.value) return;
-  const current=getParticipants();
-  if(current.includes(sel.value)) return;
-  renderParticipants([...current, sel.value]);
+  if(editingParticipants.includes(sel.value)) return;
+  renderParticipants([...editingParticipants, sel.value]);
   scheduleAutoSave();
 }
 
 function removeParticipant(i){
-  const current=getParticipants();
+  const current=editingParticipants.slice();
   current.splice(i,1);
   renderParticipants(current);
   scheduleAutoSave();
@@ -10011,7 +10013,7 @@ function _campDoInsertMention(kind, val, title){
   const ta=document.getElementById('camp-comp-corpo'); if(!ta) return;
   let insert='';
   if(kind==='user') insert='@'+val+' ';
-  else insert='[[CARD:'+val+':'+(title||'card')+']] ';
+  else insert='[[CARD:'+val+':'+_sanitizeCardMentionTitle(title||'card')+']] ';
   const s=ta.selectionStart||ta.value.length;
   ta.value = ta.value.substring(0,s) + insert + ta.value.substring(ta.selectionEnd||s);
   const ov=document.getElementById('camp-mention-ov'); if(ov) ov.remove();
@@ -11255,7 +11257,7 @@ function _reassignTargets(){
   const from=document.getElementById('reassign-from').value;
   const incPart=document.getElementById('reassign-participantes').checked;
   if(!from) return [];
-  return cards.filter(c=> c.owner===from || (incPart && Array.isArray(c.participantes) && c.participantes.includes(from)));
+  return cards.filter(c=> c.owner===from || (incPart && Array.isArray(c.participants) && c.participants.includes(from)));
 }
 function _updReassignCount(){
   const n=_reassignTargets().length;
@@ -11273,9 +11275,9 @@ async function executarReatribuir(){
   if(!await uiConfirm(`Reatribuir ${alvos.length} card(s) de "${from}" para "${to}"${toMember?' ('+toMember.name+')':''}?`)) return;
   alvos.forEach(c=>{
     if(c.owner===from) c.owner=to;
-    if(incPart && Array.isArray(c.participantes)){
-      const idx=c.participantes.indexOf(from);
-      if(idx>=0){ if(c.participantes.includes(to)) c.participantes.splice(idx,1); else c.participantes[idx]=to; }
+    if(incPart && Array.isArray(c.participants)){
+      const idx=c.participants.indexOf(from);
+      if(idx>=0){ if(c.participants.includes(to)) c.participants.splice(idx,1); else c.participants[idx]=to; }
     }
   });
   fbSaveAll(); renderBoard();
@@ -11306,7 +11308,7 @@ async function editarInicial(uid, initAtual, nome){
     ((d.squads&&d.squads[ACTIVE_SQUAD]===true)||(!d.squads&&d.inscrito)));
   if(conflito){ showToast('⚠ Iniciais "'+novaInit+'" já usadas por '+(conflito[1].nome?.split(' ')[0]||novaInit)+'. Escolha outras.'); return; }
   // Pergunta se deve migrar os cards da inicial antiga
-  const cardsAfetados = cards.filter(c=>c.owner===initAtual || (Array.isArray(c.participantes)&&c.participantes.includes(initAtual)));
+  const cardsAfetados = cards.filter(c=>c.owner===initAtual || (Array.isArray(c.participants)&&c.participants.includes(initAtual)));
   let migrar=false;
   if(cardsAfetados.length){
     migrar = await uiConfirm(cardsAfetados.length+' card(s) estão atribuídos à inicial "'+initAtual+'".\n\nMigrar esses cards para "'+novaInit+'"?\n\n⚠ ATENÇÃO: se "'+initAtual+'" é compartilhada com outra pessoa (iniciais repetidas), NÃO migre — os cards podem ser de outra pessoa. Cancele e use a ferramenta "Reatribuir cards" para escolher card por card.');
@@ -11319,7 +11321,7 @@ async function editarInicial(uid, initAtual, nome){
   if(migrar){
     cards.forEach(c=>{
       if(c.owner===initAtual) c.owner=novaInit;
-      if(Array.isArray(c.participantes)){ const idx=c.participantes.indexOf(initAtual); if(idx>=0) c.participantes[idx]=novaInit; }
+      if(Array.isArray(c.participants)){ const idx=c.participants.indexOf(initAtual); if(idx>=0) c.participants[idx]=novaInit; }
     });
     fbSaveAll(); renderBoard();
     showToast('✅ Iniciais alteradas para '+novaInit+' e '+cardsAfetados.length+' card(s) migrados.');
@@ -11796,6 +11798,13 @@ function swAgTab(tab){
   document.querySelectorAll('.ag-tab').forEach((t,i)=>t.classList.toggle('on',['daily','metricas','retro'][i]===tab));
   ['daily','metricas','retro'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('on',t===tab));
 }
+// [[CARD:id:title]] usa ']' como delimitador de fechamento — se o TÍTULO do
+// card em si contiver um ']' (ex.: "Corrigir Array[0]"), o parser de renderMd()
+// para no primeiro ']' que encontra, corrompendo o token e podendo confundir
+// esse mention com o próximo da mesma string. Sanitiza no momento de
+// INSERIR o token (não dá pra corrigir retroativamente texto já salvo, mas
+// evita todo caso novo daqui pra frente).
+function _sanitizeCardMentionTitle(t){ return String(t||'').replace(/\]/g,')'); }
 function renderMd(txt){
   txt = txt
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -11832,8 +11841,19 @@ function renderMd(txt){
     return mem ? '<span class="mention-user" title="'+esc(mem.name)+'" onclick="void(0)">@'+esc(handle)+'</span>' : m;
   });
   // [[CARD:id:title]] → blue underlined clickable
+  // data-cid + openCardMention(this), em vez de embutir o id cru num
+  // onclick="openCard('...')" direto: chamar openCard() direto pulava a
+  // checagem de "alterações não salvas" que closeOv() faz — clicar num link
+  // de card dentro de um comentário/descrição enquanto você tinha uma edição
+  // pendente em OUTRO card descartava ela silenciosamente. openCardMention()
+  // corrige isso, e é usado por TODO renderMd() (comentários, descrição,
+  // descrições extras, mensagens do Agente Ágil, campanhas).
+  // NOTA: id/title aqui já passaram pelo primeiro .replace() desta função
+  // (&/</> já viraram entidade lá em cima) — só falta aspas, que é o único
+  // caractere perigoso que sobrou pra dentro do atributo data-cid="...".
+  // Usar esc() de novo aqui escaparia os &s da primeira passada outra vez.
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
-    return '<span class="mention-card" onclick="openCard(\'' + id + '\')" title="Abrir card">📎 ' + title + '</span>';
+    return '<span class="mention-card" data-cid="'+id.replace(/"/g,'&quot;')+'" onclick="openCardMention(this)" title="Abrir card">📎 '+title+'</span>';
   });
   // Links nomeados: [texto](url) → <a> com o texto visível (estilo Word)
   txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function(m, label, url){
@@ -11846,6 +11866,13 @@ function renderMd(txt){
     return pre + '<a href="'+safe+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+safe+'</a>';
   });
   return txt;
+}
+// Handler único pros links [[CARD:id:title]] gerados por renderMd() (comentários,
+// descrição, extras, chat do Agente Ágil, campanhas) — sempre passa por closeOv()
+// pra respeitar alterações não salvas no card que está aberto no momento do clique.
+function openCardMention(el){
+  const cid = el?.dataset?.cid; if(!cid) return;
+  closeOv('card-ov', ()=>openCard(cid));
 }
 function appMsg(tab,role,txt){
   const w=document.getElementById('msgs-'+tab);
@@ -13310,11 +13337,27 @@ function openNotif(notifId, cardId, squad){
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
   // Fecha painel
   notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
-  // Abre o card se for do board atual
-  if(cardId && squad===ACTIVE_SQUAD){
-    const card = cards.find(c=>c.id===cardId);
-    if(card) openCard(cardId);
+  if(!cardId) return;
+  // Notificação de outro squad (ex.: menção de alguém trabalhando em outro
+  // board) — antes isso não fazia NADA além de marcar como lida, e a pessoa
+  // achava que "clicar não redireciona pra lugar nenhum". Navega pra lá com
+  // o card já mirado, reaproveitando o mesmo deep-link ?card= que
+  // _openCardFromUrl já trata (inclusive o retry pro board ainda carregar).
+  if(squad && squad!==ACTIVE_SQUAD){
+    window.location.href = window.location.pathname+'?squad='+encodeURIComponent(squad)+'&card='+encodeURIComponent(cardId);
+    return;
   }
+  // Mesmo squad atual: tenta abrir na hora; se o array `cards` ainda não
+  // sincronizou (ex.: clicou a notificação segundos depois de carregar a
+  // página), tenta de novo por alguns segundos em vez de desistir em silêncio.
+  let tentativas = 0;
+  const tentar = () => {
+    tentativas++;
+    const card = cards.find(c=>c.id===cardId);
+    if(card){ openCard(cardId); return; }
+    if(tentativas < 15) setTimeout(tentar, 400);
+  };
+  tentar();
 }
 
 function markAllRead(){
@@ -13375,10 +13418,17 @@ function parseMentions(text, cardId){
     if(!uid || notified.has(uid)) continue;
     if(uid===window._currentUser?.uid) continue; // não notifica a si mesmo
     notified.add(uid);
+    // idOverride determinístico (cardId+uid): parseMentions roda de novo em
+    // TODO save do card (hook em saveCard, ver mais abaixo) pra não perder
+    // menção nenhuma — mas sem isso, qualquer save subsequente (ex.: só
+    // mover a coluna) re-notificava a MESMA menção antiga de novo, dias
+    // depois, como se fosse nova. createNotif já entende idOverride e só
+    // cria se ainda não existe (mesmo mecanismo usado pra lembretes).
     createNotif(uid,'mention',
       '@'+(init||token)+' — você foi mencionado',
       text.substring(0,80)+(text.length>80?'…':''),
-      cardId);
+      cardId,
+      'mention_'+cardId+'_'+uid);
   }
 }
 
@@ -13612,7 +13662,7 @@ function renderCardMentionDropdown(dd, cardMatches, ta, atPos, pos){
 function insertCardMentionInline(ta, atPos, curPos, cardId, cardTitle, dd){
   const val=ta.value;
   // Store short display title in textarea (max 40 chars) but full ID for rendering
-  const shortTitle=cardTitle.length>40?cardTitle.substring(0,40)+'…':cardTitle;
+  const shortTitle=_sanitizeCardMentionTitle(cardTitle.length>40?cardTitle.substring(0,40)+'…':cardTitle);
   const token='[[CARD:'+cardId+':'+shortTitle+']]';
   ta.value=val.slice(0,atPos)+token+val.slice(curPos);
   ta.selectionStart=ta.selectionEnd=atPos+token.length;
@@ -16587,7 +16637,7 @@ function insertCardMention(cardId,cardTitle){
   const before=val.slice(0,cur);
   // Replace the @card... trigger with the mention token
   const replaced=before.replace(/@card\s+\S*$/i,'').replace(/@c\S{0,20}$/,'');
-  const token='[[CARD:'+cardId+':'+cardTitle+']]';
+  const token='[[CARD:'+cardId+':'+_sanitizeCardMentionTitle(cardTitle)+']]';
   ta.value=replaced+token+val.slice(cur);
   ta.selectionStart=ta.selectionEnd=(replaced+token).length;
   document.getElementById('comment-mention-dd').classList.remove('show');
@@ -17184,6 +17234,13 @@ function attachSave(){
   renderAttachList(card.links);
   inp.value='';
   document.getElementById('m-attach-inp-row').style.display='none';
+  // Docs/Sheets/Slides/Forms/Drive do Google são privados por padrão — quem
+  // não tem acesso explícito bate em "Solicitar acesso" e o link vira letra
+  // morta pro resto do squad. Só um lembrete, não bloqueia nem pergunta nada
+  // que mude o fluxo — a pessoa sempre pode simplesmente ignorar o toast.
+  if(/drive\.google\.com|docs\.google\.com/i.test(url)){
+    showToast('📎 Link do Google adicionado — já liberou o acesso pra quem for abrir? (Compartilhar → Qualquer pessoa com o link)', 6000);
+  }
 }
 
 function attachRemove(linkId){
