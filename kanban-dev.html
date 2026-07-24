@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.186-dev</div>
+<div class="version">v8.30.187-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5320,6 +5320,30 @@ function fbSaveAll(){
         throw err;
       });
     }
+// Wrapper de fbSaveCard() com aviso visível + 1 retentativa em caso de falha.
+// Chamadores "fire-and-forget" de fbSaveCard() (autosave, salvar descrição
+// extra, etc.) deixavam uma falha de escrita completamente silenciosa: a
+// tela continuava mostrando a edição como salva, mas o Firebase nunca
+// recebia — na sincronização seguinte (de QUALQUER evento, de qualquer aba
+// conectada), o estado antigo do Firebase sobrescrevia o local sem aviso
+// nenhum ("salvei tudo de manhã, voltou como se nunca tivesse mexido").
+// Não é garantia total (se a segunda tentativa também falhar, a pessoa
+// ainda precisa notar o toast e agir), mas já tira o caso mais comum
+// (blip de rede) do silêncio total. Mesmo espírito que handleDrop() já
+// usa pro arrastar de coluna, só que reaproveitável pros outros save "fire
+// and forget" do modal.
+function _saveCardWithRetry(card, label){
+  label = label || 'Alterações do card';
+  fbSaveCard(card).catch(err=>{
+    console.warn('[_saveCardWithRetry] falha ao salvar, tentando de novo em 3s:', err);
+    setTimeout(()=>{
+      fbSaveCard(card).catch(err2=>{
+        console.warn('[_saveCardWithRetry] segunda tentativa também falhou:', err2);
+        showToast('⚠ '+label+' pode não ter sido salva — verifique sua conexão e edite de novo pra garantir.', 8000);
+      });
+    }, 3000);
+  });
+}
 function fbSaveMsgs(tab){
   const msgs=Array.from(document.querySelectorAll('#msgs-'+tab+' .msg')).map(m=>({
     role:m.classList.contains('msg-ai')?'ai':'user',
@@ -6951,7 +6975,17 @@ function scheduleAutoSave(){
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _asBefore); // 📜 registra o que mudou
-    fbSaveCard(c); renderBoard();
+    // ⚡ fbSaveCard() sem .catch() aqui era uma promise rejeitada e esquecida:
+    // se a escrita falhasse (rede instável, sessão expirada, etc.), NADA
+    // avisava — a tela continuava mostrando a edição como se tivesse salvo,
+    // mas o Firebase nunca recebeu. Na sincronização seguinte (de QUALQUER
+    // evento, de qualquer aba conectada), o estado antigo do Firebase
+    // sobrescrevia o local silenciosamente — "salvei tudo de manhã e depois
+    // voltou como se nunca tivesse mexido". Agora avisa e tenta de novo 1x
+    // antes de desistir (mesmo espírito do handleDrop, que já faz isso pro
+    // arrastar de coluna).
+    _saveCardWithRetry(c, 'Alterações do card');
+    renderBoard();
     // ── Notificações (saúde: precisam disparar aqui também, não só no saveCard manual) ──
     if(c.owner && c.owner!==_prevOwner) notifAssigned(c.owner, c.id, c.title);
     if(_prevBlocker && !c.blocker) notifUnblocked(c);
@@ -7115,7 +7149,16 @@ function saveExtraDesc(i){
   // se o card já existe, persiste na hora; senão fica no editingDescs até criar o card
   if(editingId){
     const c=cards.find(x=>x.id===editingId);
-    if(c){ c.descsExtra=_cleanExtraDescs(); fbSaveCard(c); renderBoard(); }
+    if(c){
+      c.descsExtra=_cleanExtraDescs();
+      _saveCardWithRetry(c, 'Descrição adicional');
+      renderBoard();
+      // Descrições ADICIONAIS nunca disparavam @menção/[[CARD:...]] — só a
+      // descrição principal (m-desc) e o campo PO tinham parseMentions
+      // ligado. Escrever um @nome aqui salvava normalmente, mas a pessoa
+      // nunca era notificada.
+      parseMentions(d.text, editingId);
+    }
   }
   renderExtraDescs();
   showToast('✅ Descrição salva!');
@@ -7556,7 +7599,7 @@ function saveCard(){
 function toggleCardOKR(cardId){
   const card = cards.find(c=>c.id===cardId); if(!card) return;
   card.isOKR = !card.isOKR;
-  fbSaveCard(card);
+  _saveCardWithRetry(card, 'Marcação de OKR');
   renderBoard();
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
@@ -13557,6 +13600,10 @@ saveCard = function(){
   parseMentions(card.desc, cardId);
   parseMentions(card.po, cardId);
   parseMentions(card.blockerReason, cardId);
+  // Descrições adicionais também podem ter @menção/[[CARD:...]] — cobre o
+  // caso de terem sido digitadas e salvas via o botão "Salvar" geral do
+  // card (não só via saveExtraDesc(), o botão de cada bloco individual).
+  (card.descsExtra||[]).forEach(d=>parseMentions(d?.text, cardId));
 
   // Responsável novo
   if(card.owner && card.owner!==prevOwner)
