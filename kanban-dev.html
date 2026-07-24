@@ -4085,7 +4085,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.189-dev</div>
+<div class="version">v8.30.190-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13661,6 +13661,48 @@ function initMentionDropdown(textareaId){
   ta.addEventListener('blur', ()=>setTimeout(()=>dd.classList.remove('open'), 150));
 }
 
+// Mede a posição do caractere @ dentro do textarea espelhando o texto num
+// <div> invisível com a mesma tipografia/largura (técnica padrão pra medir
+// posição de caret em textarea, que não tem API nativa pra isso).
+function _getCaretCoords(ta, position){
+  const mirror = document.createElement('div');
+  const cs = getComputedStyle(ta);
+  ['boxSizing','width','paddingTop','paddingRight','paddingBottom','paddingLeft',
+   'borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','borderStyle',
+   'fontFamily','fontSize','fontWeight','fontStyle','lineHeight','letterSpacing','wordSpacing','tabSize'
+  ].forEach(p=>{ mirror.style[p] = cs[p]; });
+  mirror.style.position = 'absolute';
+  mirror.style.top = '0';
+  mirror.style.left = '-9999px';
+  mirror.style.visibility = 'hidden';
+  mirror.style.whiteSpace = 'pre-wrap';
+  mirror.style.wordWrap = 'break-word';
+  mirror.style.height = 'auto';
+  document.body.appendChild(mirror);
+  mirror.textContent = ta.value.substring(0, position);
+  const marker = document.createElement('span');
+  marker.textContent = '​';
+  mirror.appendChild(marker);
+  const coords = { top: marker.offsetTop, left: marker.offsetLeft };
+  document.body.removeChild(mirror);
+  return coords;
+}
+// Antes o dropdown sempre nascia colado no RODAPÉ do textarea inteiro
+// (ta.offsetHeight) — em campos curtos (PO, comentário) isso coincide com
+// perto do cursor por acaso, mas na descrição principal (12 linhas) o "@"
+// digitado no topo abria o dropdown lá embaixo, longe de onde a pessoa
+// estava olhando. Agora posiciona relativo ao @ de verdade.
+function _positionMentionDropdown(ta, dd, atPos){
+  const lh = parseFloat(getComputedStyle(ta).lineHeight) || 18;
+  const c = _getCaretCoords(ta, atPos);
+  const top = ta.offsetTop + c.top + lh - ta.scrollTop + 4;
+  let left = ta.offsetLeft + c.left - ta.scrollLeft;
+  const maxLeft = Math.max(ta.offsetLeft, ta.offsetLeft + ta.offsetWidth - 220);
+  left = Math.min(Math.max(left, ta.offsetLeft), maxLeft);
+  dd.style.top = top+'px';
+  dd.style.left = left+'px';
+}
+
 function handleMentionInput(ta, dd){
   const val = ta.value;
   const pos = ta.selectionStart;
@@ -13671,6 +13713,7 @@ function handleMentionInput(ta, dd){
     if(/\s/.test(val[i])) break;
   }
   if(atPos < 0){ dd.classList.remove('open'); _mentionActive=null; return; }
+  _positionMentionDropdown(ta, dd, atPos);
   const query = val.slice(atPos+1, pos);
 
   // @card: → busca cards
@@ -13743,9 +13786,6 @@ function renderMentionDropdown(dd, matches, ta, atPos, pos){
     opt.onmousedown = e=>{ e.preventDefault(); insertMention(ta, atPos, pos, m.init); };
     dd.appendChild(opt);
   });
-  // Posiciona abaixo do textarea
-  dd.style.top = (ta.offsetHeight+2)+'px';
-  dd.style.left = '0';
   dd.classList.add('open');
 }
 
