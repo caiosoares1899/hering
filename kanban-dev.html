@@ -4137,7 +4137,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.194-dev</div>
+<div class="version">v8.30.195-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11176,6 +11176,12 @@ function processRecorrentes(){
 
 // ── AGENDAMENTOS: cards únicos agendados para uma data ──
 function _criarCardAgendado(item){
+  // ⚠️ Mesmo padrão de bug de fuso do _criarCardRecorrente (corrigido no
+  // commit 4e59a8e): td aqui é UTC, pode ficar 1 dia à frente da data local
+  // perto da meia-noite em fusos atrás de UTC (ex.: Brasil). Não é bug
+  // funcional hoje (nada depende de td bater com uma data exata de fora),
+  // mas considerar aplicar o mesmo fix (usar a data local, não UTC) se
+  // algum dia isso passar a alimentar algo tipo recorrenteData/um índice.
   const td=new Date().toISOString().split('T')[0];
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
