@@ -4137,7 +4137,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.193-dev</div>
+<div class="version">v8.30.195-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11078,12 +11078,20 @@ function _slugifyRecorrente(title){
   return slug || 'recorrente';
 }
 // Cria um card a partir de um item recorrente. `hoje` é a mesma data local
-// (YYYY-MM-DD) já calculada em processRecorrentes() — reaproveitada aqui pra
-// recorrenteData, em vez de recalcular via new Date().toISOString() (que é
-// UTC e poderia divergir por um dia perto da meia-noite em fusos como o do
-// Brasil, dessincronizando do dia que efetivamente disparou a criação).
+// (YYYY-MM-DD) já calculada em processRecorrentes() — reaproveitada aqui
+// como ÚNICA fonte de data do card inteiro (createdAt/editedAt/
+// _autoCriadoEm/recorrenteData), em vez de cada campo calcular a sua.
+// BUG CORRIGIDO: a versão anterior só usava `hoje` em recorrenteData, mas
+// createdAt/editedAt/_autoCriadoEm continuavam com `new Date().toISOString()`
+// (UTC) calculado à parte — perto da meia-noite em fusos atrás de UTC (ex.:
+// Brasil, UTC-3), o relógio UTC já vira o dia seguinte enquanto o local
+// ainda não, e os dois grupos de campos do MESMO card saíam com datas
+// diferentes (createdAt um dia à frente de recorrenteData). Isso quebrava
+// resolveReferencia() na prática: quem perguntasse pela data local de hoje
+// (a única que faz sentido pra alguém de fora) batia com recorrenteData,
+// mas o card continuava existindo — só que documentado erroneamente.
 function _criarCardRecorrente(item, hoje){
-  const td=new Date().toISOString().split('T')[0];
+  const td=hoje;
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
     id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
@@ -11168,6 +11176,12 @@ function processRecorrentes(){
 
 // ── AGENDAMENTOS: cards únicos agendados para uma data ──
 function _criarCardAgendado(item){
+  // ⚠️ Mesmo padrão de bug de fuso do _criarCardRecorrente (corrigido no
+  // commit 4e59a8e): td aqui é UTC, pode ficar 1 dia à frente da data local
+  // perto da meia-noite em fusos atrás de UTC (ex.: Brasil). Não é bug
+  // funcional hoje (nada depende de td bater com uma data exata de fora),
+  // mas considerar aplicar o mesmo fix (usar a data local, não UTC) se
+  // algum dia isso passar a alimentar algo tipo recorrenteData/um índice.
   const td=new Date().toISOString().split('T')[0];
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
