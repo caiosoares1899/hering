@@ -47,9 +47,29 @@ function resolveGroup(groupTitleInput, currentGroups) {
   return { id: slugifyGroup(groupTitleInput), title: groupTitleInput };
 }
 
+// Título de grupo não é chave única — o botão "+ grupo" da UI cria grupo
+// novo com título placeholder "Checklist" até alguém renomear, então é
+// normal um card ter DOIS grupos com o mesmo título (ex.: o "Checklist"
+// original vazio + um "Checklist" novo com os itens de verdade).
+// resolveGroup() acima escolhe só UM id (o primeiro por título) — bom o
+// bastante pra decidir onde CRIAR um item novo, mas ruim pra decidir se um
+// item já existe: se a busca olhasse só pra esse id, um item que mora no
+// OUTRO grupo do mesmo título seria tratado como inexistente, e o agente
+// criaria um duplicado em vez de achar o item certo. Por isso a busca por
+// item existente considera TODOS os grupos cujo título bate, não só o
+// primeiro.
+function matchingGroupIds(groupTitleInput, currentGroups, resolvedGroupId) {
+  if (!groupTitleInput) return new Set([resolvedGroupId]);
+  const ids = (currentGroups || [])
+    .filter((g) => g && g.title && g.title.toLowerCase() === groupTitleInput.toLowerCase())
+    .map((g) => g.id);
+  return new Set(ids.length ? ids : [resolvedGroupId]);
+}
+
 async function build(out, ctx) {
   const card = await ctx.readCard();
   const group = resolveGroup(out.grupo, card.checklistGroups);
+  const candidateGroupIds = matchingGroupIds(out.grupo, card.checklistGroups, group.id);
   const nowISO = new Date().toISOString();
 
   const groupsStep = {
@@ -70,7 +90,7 @@ async function build(out, ctx) {
     path: `${ctx.cardPath}/checklist`,
     transform(current) {
       const list = Array.isArray(current) ? current.slice() : [];
-      const idx = list.findIndex((it) => it && it.t === out.item && (it.grp || 'default') === group.id);
+      const idx = list.findIndex((it) => it && it.t === out.item && candidateGroupIds.has(it.grp || 'default'));
       if (idx >= 0) {
         wasCreated = false;
         noChange = !!list[idx].done === !!out.done;
