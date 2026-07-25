@@ -2674,7 +2674,7 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
         <div class="field"><label class="fl">Formato</label>
           <input class="fi" id="m-crv-formato" list="crv-formato-list" oninput="scheduleAutoSave()" placeholder="Estático, Vídeo...">
-          <datalist id="crv-formato-list"><option value="Estático"><option value="Vídeo"><option value="Multiformatos"><option value="Carrossel"></datalist>
+          <datalist id="crv-formato-list"><option value="Estático"><option value="Vídeo"><option value="Multiformatos"><option value="Carrossel"><option value="Texto"></datalist>
         </div>
       </div>
       <div class="card-attr-row">
@@ -3636,6 +3636,30 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 </div>
 
+<!-- Modal de duplicar card (escolher quais campos entram na cópia) -->
+<div class="ov" id="dup-ov">
+<div class="panel" style="max-width:400px;width:92vw;">
+  <div class="panel-hd">
+    <div class="panel-title">⧉ Duplicar card</div>
+    <button class="x-btn" onclick="fecharDuplicarModal()">✕</button>
+  </div>
+  <div style="padding:14px 16px;">
+    <p style="font-size:11.5px;color:var(--txt2);line-height:1.5;margin:0 0 10px;">Duplicando "<b id="dup-card-title"></b>". Título e coluna sempre copiam — escolha o que mais entra na cópia:</p>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-desc" checked> Descrição</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-checklist" checked> Checklist</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-tags" checked> Tags</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-owner" checked> Responsável</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-participants" checked> Participantes</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-due" checked> Prazo</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-priority" checked> Prioridade</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-riscos" checked> Riscos</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-links" checked> Anexos/Links</label>
+    </div>
+    <button class="btn btn-teal" onclick="confirmarDuplicar()" style="margin-top:16px;width:100%;">⧉ Duplicar</button>
+  </div>
+</div>
+</div>
 
 
 <!-- Modal de agendamento (definir data de entrada do card) -->
@@ -4137,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.195-dev</div>
+<div class="version">v8.30.196-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6361,7 +6385,7 @@ function makeCardEl(card){
   const isDone=_isColDone(card.col);
   const{cls:dc,lbl:dl}=getDue(card.due,isDone);
   const cp=clProg(card.checklist);
-  const bex=card.col==='blocker'?'border-color:rgba(255,107,107,.4);':''
+  const bex=_cardIsBlocked(card)?'border-color:rgba(255,107,107,.4);':''
   const op=isDone?'opacity:.62;':''
   const dueHtml=dl?`<span class="due-badge ${dc}">${dl}</span>`:`<span class="due-none">sem prazo</span>`;
   const m=allIdentities().find(m=>m.init===card.owner);
@@ -6777,7 +6801,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
-  if(activeFilters.blocker&&card.col!=='blocker') return false;
+  if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.execType&&(card.executorType||'human')!==activeFilters.execType) return false;
@@ -6870,7 +6894,7 @@ function toggleCol(id){
 function updateMetrics(){
   const g=document.getElementById('met-grid'); if(!g) return;
   const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
-  const bl=cards.filter(c=>c.col==='blocker'&&!c.archived).length;
+  const bl=cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length;
   const done=cards.filter(c=>c.col==='done'&&!c.archived).length;
   const wipLimit=parseInt(agilCfg.wip||3);
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
@@ -6886,7 +6910,7 @@ function renderBoardDataGrid(){
   if(document.getElementById('boarddata-ov')?.classList.contains('open')) _boardDataBarChart();
   const activeCards=cards.filter(c=>!c.archived);
   const wip=activeCards.filter(c=>c.col==='progress').length;
-  const bl=activeCards.filter(c=>c.col==='blocker').length;
+  const bl=activeCards.filter(c=>_cardIsBlocked(c)).length;
   const done=activeCards.filter(c=>c.col==='done').length;
   const wipLimit=parseInt(agilCfg.wip||3);
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
@@ -6983,7 +7007,7 @@ function maybeSnapshot(){
     total:cards.filter(c=>!c.archived).length,
     wip:cards.filter(c=>c.col==='progress'&&!c.archived).length,
     done:cards.filter(c=>c.col==='done'&&!c.archived).length,
-    blockers:cards.filter(c=>c.col==='blocker'&&!c.archived).length,
+    blockers:cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length,
     byCol:columns.reduce((acc,col)=>{
       acc[col.id]=cards.filter(c=>c.col===col.id&&!c.archived).length;
       return acc;
@@ -7376,7 +7400,7 @@ function openCard(id){
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   if(blockerRow){ 
-    blockerRow.style.display=(c.blocker||c.col==='blocker'||c.blockerReason)?'block':'none';
+    blockerRow.style.display=(_cardIsBlocked(c)||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
   }
   _clGroupsInit(c);
@@ -7756,7 +7780,14 @@ function archiveCard(){
   c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveCard(c); renderBoard(); closeOv('card-ov');
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
-function _duplicarCardObj(card){
+// opts: quais campos entram na cópia, além dos sempre-copiados (título com
+// "(cópia)", coluna atual). Cada chave default true (comportamento igual ao
+// de sempre) — abrirDuplicarModal() é quem deixa a pessoa desmarcar.
+// Tudo que NÃO está na lista de opts (comentários, PO, ficha de criativo,
+// vínculo Milanote, dependências etc.) continua sendo copiado sempre, sem
+// mudança — só os 9 campos escolhidos pelo usuário viraram opcionais.
+function _duplicarCardObj(card, opts){
+  opts = opts || {};
   const user=window._currentUser?.displayName||'Usuário';
   const td=new Date().toISOString().split('T')[0];
   const novo=JSON.parse(JSON.stringify(card));
@@ -7765,21 +7796,52 @@ function _duplicarCardObj(card){
   novo.archived=false;
   novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
   novo.history=[]; novo.moveLog=[];
+  if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
+  if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
+  if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
+  if(opts.owner===false){ novo.owner=''; }
+  if(opts.participants===false){ novo.participants=[]; }
+  if(opts.due===false){ novo.due=''; }
+  if(opts.priority===false){ novo.priority=''; }
+  if(opts.riscos===false){ novo.riscos=[]; }
+  if(opts.links===false){ novo.links=[]; }
   recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
   cards.push(novo);
   return novo;
 }
-function duplicarCard(){
-  if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
-  const novo=_duplicarCardObj(c);
-  fbSaveCard(novo); renderBoard(); closeOv('card-ov');
+// ── Modal de duplicar: deixa escolher quais campos entram na cópia ──────
+let _dupCardId = null;
+const _DUP_CAMPOS = ['desc','checklist','tags','owner','participants','due','priority','riscos','links'];
+function abrirDuplicarModal(cardId){
+  const card=cards.find(x=>x.id===cardId); if(!card) return;
+  _dupCardId = cardId;
+  const titleEl=document.getElementById('dup-card-title'); if(titleEl) titleEl.textContent=card.title||'(sem título)';
+  _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); if(el) el.checked=true; });
+  document.getElementById('dup-ov').classList.add('open');
+}
+function fecharDuplicarModal(){
+  document.getElementById('dup-ov')?.classList.remove('open');
+  _dupCardId = null;
+}
+function confirmarDuplicar(){
+  const card=cards.find(x=>x.id===_dupCardId); if(!card){ fecharDuplicarModal(); return; }
+  const opts = {};
+  _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); opts[f]=el?el.checked:true; });
+  const _wasEditingSameCard = editingId===_dupCardId;
+  const novo=_duplicarCardObj(card, opts);
+  fbSaveCard(novo); renderBoard();
+  fecharDuplicarModal();
+  if(_wasEditingSameCard) closeOv('card-ov'); // só fecha o modal do card se era ELE que estava aberto
   showToast('⧉ Card duplicado.');
 }
+function duplicarCard(){
+  if(!editingId) return;
+  abrirDuplicarModal(editingId);
+}
 function ctxDuplicate(){
-  const card=cards.find(x=>x.id===_ctxCardId); if(!card){ hideCtxMenu(); return; }
-  const novo=_duplicarCardObj(card);
-  fbSaveCard(novo); renderBoard(); hideCtxMenu();
-  showToast('⧉ Card duplicado.');
+  const cardId=_ctxCardId; if(!cardId){ hideCtxMenu(); return; }
+  hideCtxMenu();
+  abrirDuplicarModal(cardId);
 }
 // ── MÚLTIPLOS CHECKLISTS POR CARD ──────────────────────────────────
 // _mCurrentGroups = cópia de trabalho de card.checklistGroups enquanto o
@@ -8825,7 +8887,7 @@ function computeAvisosQuadro(){
     // Filtro: aviso só aparece pra quem está no card (ou pro PO que ativou "ver todos")
     if(!verTodos && !_euEstouNoCard(c)) return;
     const titulo=c.title||'(sem título)';
-    if(c.col==='blocker'){
+    if(_cardIsBlocked(c)){
       out.push({tipo:'quadro', urgent:true, text:`🚧 Card bloqueado: "${titulo}"`, cardId:c.id, sub:'impedimento ativo', ts:c.editedAt||''});
     }
     if(c.riscos?.length && !_isColDone(c.col)){
@@ -12187,7 +12249,7 @@ BOARD (${new Date().toLocaleDateString('pt-BR')}):
 ${snap}${doneNote}
 
 Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
-WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>c.col==='blocker'&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
+WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
 Sprint:${agilCfg.sprintNum||'?'} | Capacidade:${agilCfg.capacity||'??'}% | Objetivo:${agilCfg.goal||'não definido'}
 Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}
 Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais): ${members.map(m=>m.init).join(', ')||'nenhum'}
@@ -15805,6 +15867,19 @@ function loadAutoRules(){
 // MODO IMPEDIMENTO (coluna vs tag)
 // ═══════════════════════════════════════════════════════
 let blockerMode = 'col'; // carregado do Firebase
+// Fonte única de verdade pra "este card está impedido?" — respeitando o modo
+// escolhido pela squad. Antes disso, vários pontos do código checavam
+// card.col==='blocker' incondicionalmente, IGNORANDO blockerMode: numa squad
+// em modo "tag", qualquer coluna cujo id (não nome!) fosse literalmente
+// 'blocker' continuava marcando cards como impedidos por baixo dos panos —
+// isso incluía o caso de alguém ter renomeado a coluna padrão "Impedimentos"
+// pra outra coisa (ex.: "Finalizado") sem saber que o id não muda com o
+// nome. Em modo "col", card.blocker (a flag de tag) é ignorada de propósito
+// — só a coluna importa, IDÊNTICO ao comportamento de sempre.
+function _cardIsBlocked(card){
+  if(!card) return false;
+  return blockerMode==='col' ? card.col==='blocker' : !!card.blocker;
+}
 
 function saveBlockerMode(mode){
   blockerMode = mode;
@@ -15927,7 +16002,7 @@ function showCtxMenu(e, cardId){
     </div>`).join('');
 
   const isProg = card.col==='progress';
-  const isBlocker = card.col==='blocker';
+  const isBlocker = _cardIsBlocked(card);
 
   menu.innerHTML = `
     <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
@@ -16891,8 +16966,8 @@ function renderCommentList(comments){
       : c.isSystem ? ' style="background:rgba(150,160,180,.12);border-color:rgba(150,160,180,.3);"' : '';
     const dt=c.ts?new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const textHtml=renderMd(c.text||''); // texto rico: negrito/itálico/sublinhado/cor/links/menções (mesma engine da descrição)
-    const canDel=c.uid===window._currentUser?.uid||window._currentUserRole==='adm';
-    const canEdit=c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão o ADM também pode
+    const canDel=c.uid===window._currentUser?.uid||_isPOorOrg();
+    const canEdit=c.uid===window._currentUser?.uid; // edição só pelo autor — exclusão ADM/PO/organizador também podem
     const editedTag = c.editedAt ? ' <span style="color:var(--txt3);font-style:italic;">(editado)</span>' : '';
     const agentBadge = c.isAgent ? ' <span class="mention-user mention-agent" style="padding:0 6px;font-size:9px;">🤖 agente</span>' : (c.isSystem ? ' <span class="mention-user" style="padding:0 6px;font-size:9px;opacity:.7;">⚙️ sistema</span>' : '');
     item.innerHTML=
