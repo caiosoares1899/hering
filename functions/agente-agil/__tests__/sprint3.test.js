@@ -84,6 +84,28 @@ test('checklist_item marca item já existente (mesmo grupo) sem duplicar', async
   assert.match(card.history[0].what, /marcou "Revisar PR" como concluído/);
 });
 
+test('checklist_item acha o item certo mesmo com DOIS grupos de mesmo título (bug relatado em produção)', async () => {
+  // Cenário real: o grupo "Checklist" original (vazio, criado automaticamente)
+  // continua existindo, e a pessoa clicou em "+ grupo" (que nasce com o
+  // título placeholder "Checklist" até alguém renomear) pra colocar o item
+  // de verdade. resolveGroup() escolhe só o PRIMEIRO "Checklist" por título
+  // — sem o fix, a busca do item olhava só pra esse primeiro id, não achava
+  // "Revisar cadastro" (que mora no segundo) e criava um duplicado.
+  const db = seedDb('5', {
+    id: 'c5', title: 'Card X', col: 'progress',
+    checklistGroups: [{ id: 'default', title: 'Checklist' }, { id: 'g1a2b3c', title: 'Checklist' }],
+    checklist: [{ t: 'Revisar cadastro', done: false, grp: 'g1a2b3c' }],
+  });
+  const plan = await buildWritePlan('5', [{ type: 'checklist_item', item: 'Revisar cadastro', done: true, grupo: 'Checklist' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+
+  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  assert.equal(card.checklist.length, 1, 'não deveria duplicar o item só porque existem dois grupos "Checklist"');
+  assert.equal(card.checklist[0].done, true);
+  assert.equal(card.checklist[0].grp, 'g1a2b3c', 'o item marcado deveria continuar no grupo onde já estava, não se mudar pro primeiro "Checklist" encontrado');
+  assert.equal(card.checklistGroups.length, 2, 'não deveria criar um terceiro grupo nem tocar no grupo do agente');
+});
+
 test('checklist_item não escreve histórico quando o estado já era o mesmo (idempotente)', async () => {
   const db = seedDb('5', {
     id: 'c5', title: 'Card X', col: 'progress',
