@@ -4,13 +4,15 @@
 // validar em runtime quanto (via zod-to-json-schema) pra gerar documentação
 // do contrato pro time que integra especialistas externos e não escreve JS.
 //
-// v0 sabe validar outputs "comentario", "link" e "relatorio_html" (hospeda
-// no Storage, ver outputs/relatorioHtml.js) — os demais tipos do contrato
-// completo (checklistItem, agentStatus, mover_coluna) chegam no v2.
-// Sprint 2: o envelope aceita "cardId" direto (continua funcionando, nada
-// muda pra quem já usa) OU "referencia" de negócio (recorrência + data,
-// resolvida pra cardId real em resolver.js) — exatamente um dos dois, nunca
-// os dois nem nenhum.
+// v0 validava só "comentario", "link" e "relatorio_html" (hospeda no
+// Storage, ver outputs/relatorioHtml.js). Sprint 2 acrescentou "referencia"
+// de negócio no envelope (recorrência + data, resolvida pra cardId real em
+// resolver.js) — exatamente um dos dois (cardId XOR referencia), nunca os
+// dois nem nenhum. Sprint 3 acrescenta o "vocabulário de ações": checklist_
+// item, agent_status, mover_coluna, editar_campos (ver outputs/*.js) — cada
+// um decide sozinho, em outputs/*.js, se algum campo precisa de pelo menos
+// um valor preenchido (esse tipo de regra fica no builder, não aqui, porque
+// discriminatedUnion não aceita membros com .refine()).
 
 const { z } = require('zod');
 const { zodToJsonSchema } = require('zod-to-json-schema');
@@ -35,7 +37,50 @@ const outputRelatorioHtml = z.object({
   titulo: z.string().min(1),
 });
 
-const output = z.discriminatedUnion('type', [outputComentario, outputLink, outputRelatorioHtml]);
+// checklist_item: marca (ou cria, se ainda não existir) um item do
+// checklist. `grupo` é opcional — quando ausente, cai no grupo próprio do
+// agente ("🤖 Processo automatizado"), ver outputs/checklistItem.js.
+const outputChecklistItem = z.object({
+  type: z.literal('checklist_item'),
+  item: z.string().min(1),
+  done: z.boolean(),
+  grupo: z.string().min(1).optional(),
+});
+
+// agent_status: status visível do agente no card. executorType é opcional —
+// quando ausente, promove automaticamente 'human'/vazio para 'agent' (ver
+// outputs/agentStatus.js), nunca mexe se já for 'agent'/'hybrid'.
+const outputAgentStatus = z.object({
+  type: z.literal('agent_status'),
+  status: z.enum(['queued', 'running', 'awaiting_validation', 'done', 'error']),
+  executorType: z.enum(['human', 'agent', 'hybrid']).optional(),
+});
+
+// mover_coluna: id da coluna de destino — precisa existir no board (ver
+// outputs/moverColuna.js), senão o envelope inteiro falha com invalid_output.
+const outputMoverColuna = z.object({
+  type: z.literal('mover_coluna'),
+  coluna: z.string().min(1),
+});
+
+// editar_campos: ao menos um dos três precisa vir preenchido — validado no
+// builder (ver outputs/editarCampos.js), não aqui.
+const outputEditarCampos = z.object({
+  type: z.literal('editar_campos'),
+  desc: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  tags: z.array(z.string().min(1)).optional(),
+});
+
+const output = z.discriminatedUnion('type', [
+  outputComentario,
+  outputLink,
+  outputRelatorioHtml,
+  outputChecklistItem,
+  outputAgentStatus,
+  outputMoverColuna,
+  outputEditarCampos,
+]);
 
 // Só o tipo 'recorrente' existe por enquanto — nome é o slug carimbado em
 // card.recorrenteDe, data é a instância (YYYY-MM-DD) em card.recorrenteData.
@@ -68,4 +113,16 @@ function envelopeJsonSchema() {
   return zodToJsonSchema(envelope, 'AgenteAgilEnvelopeV0');
 }
 
-module.exports = { envelope, referencia, output, outputComentario, outputLink, outputRelatorioHtml, envelopeJsonSchema };
+module.exports = {
+  envelope,
+  referencia,
+  output,
+  outputComentario,
+  outputLink,
+  outputRelatorioHtml,
+  outputChecklistItem,
+  outputAgentStatus,
+  outputMoverColuna,
+  outputEditarCampos,
+  envelopeJsonSchema,
+};

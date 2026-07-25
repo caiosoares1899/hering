@@ -83,7 +83,7 @@ test('buildWritePlan preserva links existentes na transaction', async () => {
 });
 
 test('buildWritePlan rejeita output sem builder registrado', async () => {
-  await assert.rejects(() => buildWritePlan('5', [{ type: 'mover_coluna' }]));
+  await assert.rejects(() => buildWritePlan('5', [{ type: 'tipo_inexistente' }]), (err) => err.code === 'unknown_output_type');
 });
 
 test('buildWritePlan (relatorio_html, dryRun) não sobe nada pro Storage, só devolve preview', async () => {

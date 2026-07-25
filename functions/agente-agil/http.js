@@ -11,6 +11,10 @@
 // Sprint 2: resolução de card por cardId direto OU por "referencia" de
 // negócio (recorrência + data, ver resolver.js) — o especialista manda um
 // dos dois, nunca os dois.
+// Sprint 3: vocabulário de ações (checklist_item, agent_status,
+// mover_coluna, editar_campos — ver outputs/*.js) e o campo `notificar` do
+// envelope, ambos passados adiante em buildWritePlan(..., {db, notificar})
+// pra poder ler card/members/columns e resolver @menções/notificações.
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -96,9 +100,9 @@ const agenteAgil = onRequest(
 
     let plan;
     try {
-      plan = await buildWritePlan(cardKey, payload.outputs, { cardId, dryRun: payload.dryRun });
+      plan = await buildWritePlan(cardKey, payload.outputs, { cardId, dryRun: payload.dryRun, db, notificar: payload.notificar });
     } catch (err) {
-      if (err.code === 'unknown_output_type') {
+      if (err.code === 'unknown_output_type' || err.code === 'invalid_output') {
         res.status(400).json({ error: 'invalid_output', message: err.message });
         return;
       }

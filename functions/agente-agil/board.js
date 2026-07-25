@@ -30,6 +30,9 @@
 
 const outputBuilders = require('./outputs');
 const storage = require('./storage');
+const membersLib = require('./members');
+const flowLib = require('./flow');
+const notifications = require('./notifications');
 
 // v0: escrita travada só neste squad (hardcoded). Autenticação/autorização
 // por squad de verdade fica pro v4.
@@ -64,17 +67,52 @@ async function resolveCardKey(db, cardId, { retries = 2, delayMs = 250 } = {}) {
 
 // Função pura o bastante pra testar sem emulador: valida envelope (feito em
 // schema.js) -> monta plano de writes. comentario/link não têm I/O nenhum;
-// relatorio_html tem (upload pro Storage), mas uploadAndSign/reportBasePath
-// vêm injetados via ctx (default: storage.js de verdade) — testável com um
-// fake no lugar deles, sem tocar rede nem emulador.
+// relatorio_html tem (upload pro Storage), checklist_item/agent_status/
+// mover_coluna/editar_campos também podem ter (ler card/members/columns
+// pra montar o plano) — todo I/O é injetado via ctx (default: leituras de
+// verdade usando extra.db), testável com fakes no lugar deles, sem tocar
+// rede nem emulador.
+//
+// Sprint 3: builders que precisam do valor ATUAL de algum campo pra decidir
+// o que escrever (ex.: mover_coluna precisa saber a coluna anterior de
+// verdade, não uma que a gente leu há alguns milissegundos) usam
+// transaction() e resolvem histórico/notificação só DEPOIS que a
+// transaction commita de verdade, via um hook opcional `step.after(result)`
+// que devolve passos extras — ver outputs/moverColuna.js, checklistItem.js,
+// agentStatus.js, editarCampos.js. Builders continuam podendo devolver um
+// único step (como sempre) ou um array de steps — sempre granular, nunca
+// reescrevendo o card inteiro numa transaction só.
 async function buildWritePlan(cardKey, outputs, extra = {}) {
+  const cardPath = `${CARDS_PATH}/${cardKey}`;
+  const db = extra.db || null;
+  let _cardPromise = null;
   const ctx = {
-    cardPath: `${CARDS_PATH}/${cardKey}`,
+    cardPath,
     cardId: extra.cardId,
     squadId: SQUAD_ID,
     dryRun: !!extra.dryRun,
+    db,
     uploadAndSign: extra.uploadAndSign || storage.uploadAndSign,
     reportBasePath: extra.reportBasePath || storage.reportBasePath,
+    readCard:
+      extra.readCard ||
+      (() => {
+        if (!db) throw new Error('buildWritePlan: ctx.readCard precisa de extra.db (ou extra.readCard injetado em teste)');
+        if (!_cardPromise) _cardPromise = db.ref(cardPath).get().then((s) => s.val() || {});
+        return _cardPromise;
+      }),
+    readMembers:
+      extra.readMembers ||
+      (() => {
+        if (!db) throw new Error('buildWritePlan: ctx.readMembers precisa de extra.db (ou extra.readMembers injetado em teste)');
+        return membersLib.readSquadMembers(db, SQUAD_ID);
+      }),
+    readFlowMeta:
+      extra.readFlowMeta ||
+      (() => {
+        if (!db) throw new Error('buildWritePlan: ctx.readFlowMeta precisa de extra.db (ou extra.readFlowMeta injetado em teste)');
+        return flowLib.readFlowMeta(db, SQUAD_ID);
+      }),
   };
   const plan = [];
   for (const out of outputs) {
@@ -84,8 +122,29 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
       err.code = 'unknown_output_type';
       throw err;
     }
-    plan.push(await builder(out, ctx));
+    const built = await builder(out, ctx);
+    if (Array.isArray(built)) plan.push(...built);
+    else plan.push(built);
   }
+
+  // `notificar`: lista explícita do envelope, independente de @menção no
+  // texto — combinado com o time pra dar ao especialista externo um jeito
+  // de avisar alguém mesmo quando não há texto nenhum pra @mencionar (ex.:
+  // mover_coluna sozinho).
+  if (extra.notificar && extra.notificar.length) {
+    const members = await ctx.readMembers();
+    const card = await ctx.readCard();
+    const notifySteps = await notifications.buildExplicitNotifySteps(db, {
+      squadId: SQUAD_ID,
+      notificar: extra.notificar,
+      members,
+      cardId: extra.cardId,
+      cardTitle: card.title,
+      dryRun: ctx.dryRun,
+    });
+    plan.push(...notifySteps);
+  }
+
   return plan;
 }
 
@@ -93,12 +152,18 @@ async function applyWritePlan(db, plan) {
   for (const step of plan) {
     if (step.kind === 'noop') {
       continue; // só existe em dryRun (relatorio_html não sobe nada pra preview) — defensivo
-    } else if (step.kind === 'update') {
+    }
+    let result;
+    if (step.kind === 'update') {
       await db.ref(step.path).update(step.data);
     } else if (step.kind === 'transaction') {
-      await db.ref(step.path).transaction(step.transform);
+      result = await db.ref(step.path).transaction(step.transform);
     } else {
       throw new Error(`Write plan step desconhecido: ${step.kind}`);
+    }
+    if (step.after) {
+      const moreSteps = await step.after(result);
+      if (moreSteps && moreSteps.length) await applyWritePlan(db, moreSteps);
     }
   }
 }
