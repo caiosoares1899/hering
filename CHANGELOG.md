@@ -132,6 +132,34 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil (`functions/agente-agil/`)
 
+### v2 — 2026-07-25 · PR #23 · tag `agente-agil-v2`
+Sprint 3 — "vocabulário de ações": 4 novos tipos de output no envelope,
+além de comentário/link/relatório — `checklist_item` (marca ou cria item +
+grupo, grupo padrão "🤖 Processo automatizado" quando não especificado),
+`agent_status` (status visível do agente no card, promove `executorType`
+human→agent automaticamente), `mover_coluna` (move o card, decide coluna
+de "fim" via `flowConfig.doneCols`) e `editar_campos` (descrição/
+prioridade/tags — tags sempre aditivo, nunca remove). Toda ação nova
+replica o que o cliente já faz numa edição manual (`recordMove`/
+`recordHistory`/`createNotif`/`notifDone`/`notifChecklistDone`) — o agente
+nunca muda um card silenciosamente: sempre grava histórico e, quando
+aplicável, notifica dono/participantes/mencionados. Além disso, `@menções`
+em `comentario`/`editar_campos.desc` passam a ser resolvidas e notificadas
+do lado do servidor (antes, uma menção escrita pelo agente nunca
+notificava ninguém, porque isso normalmente acontece no `<textarea>` do
+cliente). O campo `notificar[]` do envelope, que já existia no schema mas
+nunca tinha sido usado, também passa a funcionar.
+
+### v1 Parte B — 2026-07-24 · PR #19 · tag `agente-agil-v1b`
+Sprint 2: o envelope aceita `referencia` de negócio (`{tipo:'recorrente',
+nome, data}`) além de `cardId` direto — o especialista externo (ex.:
+Databricks) não precisa mais conhecer o id interno do card, só a
+recorrência + a data da instância que quer atualizar. Resolvida via um
+novo índice `recorrentes_index/{nome}/{data} → cardId`, mantido pelo
+cliente no mesmo multi-path update que cria os cards recorrentes do dia
+(mesmo espírito do `cards_index`). `cardId` e `referencia` são mutuamente
+exclusivos — o schema exige exatamente um dos dois.
+
 ### v1 Parte A — 2026-07-23 · PR #6 · tag `agente-agil-v1a`
 `cards_index` de verdade, mantido pelo cliente: `fbSaveAll()`/`fbSaveCard()`
 escrevem o índice `id → chave` atomicamente junto com `/cards`;
