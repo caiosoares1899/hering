@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.201-dev</div>
+<div class="version">v8.30.202-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5447,14 +5447,30 @@ function fbSaveAll(extra){
   // já é o caminho "caro" (reservado pra essas operações estruturais), então
   // recalcular o índice inteiro junto não muda a ordem de grandeza do
   // custo, e garante que este caminho nunca deixa o índice desatualizado.
+  const _nowIso = new Date().toISOString();
   const cardsIndex = {};
-  cards.forEach((c,i)=>{ if(c && c.id) cardsIndex[c.id] = String(i); });
+  const cardsUpdatedAt = {};
+  cards.forEach((c,i)=>{
+    if(!c || !c.id) return;
+    cardsIndex[c.id] = String(i);
+    // cards_updated_at/{cardId}->timestamp: índice PARALELO ao cards_index,
+    // nunca muda o formato dele (o Agente Ágil lê cards_index esperando uma
+    // string simples — ver fbSaveCard). Usado só pelo carregamento em duas
+    // etapas (ver fbLoadAll): baixar esse índice pequeno primeiro permite
+    // saber quais cards realmente mudaram desde a última visita, sem ler
+    // /cards inteiro de novo. Carimba TODOS os cards do array (não só os
+    // que essa operação de fato tocou) — fbSaveAll já reescreve o array
+    // inteiro mesmo, então marcar tudo como "fresco" não muda a ordem de
+    // grandeza do custo, e evita esconder uma mudança por engano.
+    c.updatedAt = _nowIso;
+    cardsUpdatedAt[c.id] = _nowIso;
+  });
   // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
   return Promise.all([
-    window._update(fb(FB), { cards, cards_index: cardsIndex, ...(extra||{}) }),
+    window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -5472,6 +5488,11 @@ function fbSaveAll(extra){
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
       if(!window._fbReady) return Promise.resolve();
+      // Carimba updatedAt AQUI, não confiando em quem chamou fbSaveCard() ter
+      // feito isso — centraliza a garantia num lugar só (mais fácil de manter
+      // certa do que auditar todo call-site) pro cards_updated_at (ver
+      // fbSaveAll) sempre refletir a hora real da última escrita.
+      card.updatedAt = new Date().toISOString();
       // Acha a CHAVE REAL do card no Firebase pelo id (via snapshot espelhado
       // pelos listeners granulares) — em vez de cards.indexOf(card), que é a
       // posição LOCAL no array e pode desalinhar da posição real no Firebase
@@ -5497,6 +5518,7 @@ function fbSaveAll(extra){
         updates['cards_index/'+card.id] = key;
       }
       updates['cards/'+key] = card;
+      updates['cards_updated_at/'+card.id] = card.updatedAt;
       return window._update(fb(FB), updates).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
@@ -5686,20 +5708,54 @@ let _cardsSyncDebounce = null;
     });
     return { toWrite, toRemove };
   }
+  // Mesma autocorreção acima, pro índice paralelo cards_updated_at (ver
+  // fbSaveAll/fbSaveCard) — usado só pelo carregamento em duas etapas
+  // (buscar o índice pequeno primeiro, decidir quais cards buscar de
+  // verdade). A fonte da verdade é sempre o `updatedAt` que já está no
+  // PRÓPRIO card em memória (nunca inventa um valor novo) — card sem
+  // `updatedAt` nenhum (legado, nunca tocado pelos vários pontos que
+  // carimbam esse campo) fica de fora do índice de propósito: melhor o
+  // carregamento tratar "sem carimbo" como "busca completa por segurança"
+  // do que arriscar gravar um valor inventado que pareça confiável.
+  function _diffCardsUpdatedAt(cardsByKey, remoteUpdatedAt){
+    const toWrite = {};
+    const toRemove = [];
+    const liveIds = new Set();
+    Object.keys(cardsByKey||{}).forEach(key=>{
+      const card = cardsByKey[key];
+      if(!card || !card.id) return;
+      liveIds.add(card.id);
+      if(card.updatedAt && remoteUpdatedAt[card.id] !== card.updatedAt) toWrite[card.id] = card.updatedAt;
+    });
+    Object.keys(remoteUpdatedAt||{}).forEach(cardId=>{
+      if(!liveIds.has(cardId)) toRemove.push(cardId);
+    });
+    return { toWrite, toRemove };
+  }
   let _cardsIndexReconciled = false;
   async function _reconcileCardsIndexOnce(){
     if(_cardsIndexReconciled || !window._fbReady) return;
     _cardsIndexReconciled = true;
     try{
-      const snap = await fbGet(FB+'/cards_index');
-      const remoteIndex = snap.val() || {};
+      const [indexSnap, updatedAtSnap] = await Promise.all([
+        fbGet(FB+'/cards_index'),
+        fbGet(FB+'/cards_updated_at'),
+      ]);
+      const remoteIndex = indexSnap.val() || {};
+      const remoteUpdatedAt = updatedAtSnap.val() || {};
       const { toWrite, toRemove } = _diffCardsIndex(_cardsByKey, remoteIndex);
+      const { toWrite:toWriteUA, toRemove:toRemoveUA } = _diffCardsUpdatedAt(_cardsByKey, remoteUpdatedAt);
       const updates = {};
       Object.keys(toWrite).forEach(cardId=>{ updates['cards_index/'+cardId] = toWrite[cardId]; });
       toRemove.forEach(cardId=>{ updates['cards_index/'+cardId] = null; });
+      Object.keys(toWriteUA).forEach(cardId=>{ updates['cards_updated_at/'+cardId] = toWriteUA[cardId]; });
+      toRemoveUA.forEach(cardId=>{ updates['cards_updated_at/'+cardId] = null; });
       if(Object.keys(updates).length){
         await window._update(fb(FB), updates);
-        _dbgTrack('cards_index:reconciled', {corrigidas:Object.keys(toWrite).length, removidas:toRemove.length});
+        _dbgTrack('cards_index:reconciled', {
+          corrigidas:Object.keys(toWrite).length, removidas:toRemove.length,
+          corrigidasUA:Object.keys(toWriteUA).length, removidasUA:toRemoveUA.length,
+        });
       }
     }catch(e){
       console.warn('[cards_index] reconciliação falhou:', e);
