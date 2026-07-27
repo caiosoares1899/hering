@@ -229,3 +229,15 @@ existe (marcar como lida, limpar expiradas).
 **Precisa de `firebase deploy --only database` depois do merge** — só
 commitar/mergear este arquivo não muda as regras que já estão ao vivo no
 Console.
+
+### 2026-07-27 · correção da PR #30 (mesmo dia)
+A regra acima exigia `auth.token.email.endsWith('@ciahering.com.br')` — mas
+o app aceita convidados/freelancers com email fora desse domínio
+(`role:'convidado'`, ver aviso na aba de acesso do painel), e eles ficaram
+de fora tanto de mandar quanto de receber notificação. Removida a exigência
+de domínio da regra de `notificacoes/$notifId`: agora basta estar
+autenticado (`auth != null`) pra criar uma notificação nova em qualquer
+conta; modificar/apagar uma existente continua exclusivo do dono do nó ou
+`po`/`adm`. (Mesma restrição de domínio também bloqueia convidados de
+atualizar `presence/$uid` — bug preexistente, fora do escopo desta correção,
+sinalizado mas não alterado aqui.)
