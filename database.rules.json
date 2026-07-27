@@ -85,6 +85,11 @@
           ".write": "auth != null && (auth.uid === $uid || auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
           "role": {
             ".validate": "auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
+          },
+          "notificacoes": {
+            "$notifId": {
+              ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br') && (!data.exists() || auth.uid === $uid || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
+            }
           }
         }
       },
