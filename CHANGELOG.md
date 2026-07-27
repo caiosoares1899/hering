@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.179 — 2026-07-27 · PR #33 · tag `kanban-v8.30.179`
+Promove pra prod tudo que tinha sido validado no dev desde a v8.30.178:
+- Nova notificação **`notifMoved`**: card mudando pra qualquer coluna que
+  não seja "Concluído" (que já tinha `notifDone` dedicada) agora notifica
+  dono/participantes também — antes só coluna de conclusão disparava algo.
+  Só sino, sem push, mesmo padrão de `done`/`checklist`.
+- **Editar um comentário existente agora dispara `@`menção** — antes só
+  criar um comentário novo chamava `parseMentions()`.
+
+(A causa raiz de fundo — regra do Realtime Database bloqueando notificação
+entre membros comuns, e depois bloqueando convidados com email fora do
+domínio — foi corrigida em `database.rules.json`, não em `kanban.html`; ver
+seção própria mais abaixo.)
+
 ### v8.30.178 — 2026-07-27 · PR #28 · tag `kanban-v8.30.178`
 Promove pra prod tudo que tinha sido validado no dev desde a v8.30.177:
 - **Notificação por @menção nunca disparava quando o card era salvo só
