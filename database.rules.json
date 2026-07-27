@@ -88,7 +88,7 @@
           },
           "notificacoes": {
             "$notifId": {
-              ".write": "auth != null && auth.token.email.endsWith('@ciahering.com.br') && (!data.exists() || auth.uid === $uid || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
+              ".write": "auth != null && (!data.exists() || auth.uid === $uid || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
             }
           }
         }
