@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.199-dev</div>
+<div class="version">v8.30.200-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7211,7 +7211,10 @@ function scheduleAutoSave(){
     if(c.owner && c.owner!==_prevOwner) notifAssigned(c.owner, c.id, c.title);
     if(_prevBlocker && !c.blocker) notifUnblocked(c);
     const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
-    if(_prevCol!==c.col && c.col===_doneCol?.id) notifDone(c);
+    if(_prevCol!==c.col){
+      if(c.col===_doneCol?.id) notifDone(c);
+      else notifMoved(c, columns.find(cc=>cc.id===c.col)?.name);
+    }
     if((c.riscos?.length||0) > _prevRiscosLen) notifRisk(c);
     if(c.checklist?.length>0 && c.checklist.every(i=>i.done)){
       const _prevDone=_prevChecklist.filter(i=>i.done).length;
@@ -13545,6 +13548,7 @@ const NOTIF_ICONS = {
   done:       '🏁',
   risk:       '⚠️',
   checklist:  '☑️',
+  moved:      '➡️',
 };
 
 function toggleNotifPanel(){
@@ -14055,6 +14059,22 @@ function notifDone(card){
   });
 }
 
+// 4b. Card mudou de coluna (qualquer transição que NÃO seja pra "Feito" —
+// essa já tem a notificação acima, dedicada; notificar as duas ao mesmo
+// tempo pra quem foi pra "Concluído" duplicaria o aviso pela mesma ação).
+// Mesmo público de notifDone: dono + participantes, nunca a si mesmo.
+function notifMoved(card, destColName){
+  const targets=[card.owner,...(card.participants||[])].filter(Boolean);
+  const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
+  uids.forEach(uid=>{
+    if(uid===window._currentUser?.uid) return;
+    createNotif(uid,'moved',
+      'Card movido para '+(destColName||'outra coluna'),
+      card.title?.substring(0,60),
+      card.id);
+  });
+}
+
 // 5. Risco adicionado — notifica PO e Organizadores
 // Cache client-side da lista de admins/POs/organizadores (TTL 5min) — evita rebaixar a
 // árvore inteira de kanban/usuarios_publicos a cada risco adicionado. Isso importa porque
@@ -14156,10 +14176,12 @@ saveCard = function(){
   if(prevBlocker && !card.blocker)
     notifUnblocked(card);
 
-  // Movido para feito
+  // Movido para feito (ou pra qualquer outra coluna)
   const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
-  if(prevCol!==card.col && card.col===doneCol?.id)
-    notifDone(card);
+  if(prevCol!==card.col){
+    if(card.col===doneCol?.id) notifDone(card);
+    else notifMoved(card, columns.find(c=>c.id===card.col)?.name);
+  }
 
   // Risco novo
   if((card.riscos?.length||0) > prevRiscos)
@@ -15702,7 +15724,10 @@ function handleDrop(e, colId){
       card._savePending = false;
       // Notificações só depois de confirmado pelo Firebase
       const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
-      if(prevColDrop!==colId && colId===_doneColId) notifDone(card);
+      if(prevColDrop!==colId){
+        if(colId===_doneColId) notifDone(card);
+        else notifMoved(card, columns.find(c=>c.id===colId)?.name);
+      }
       if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
       // Feedback visual
       const destCol = document.getElementById('col-'+colId);
@@ -16258,7 +16283,10 @@ function ctxMove(colId){
   renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
   // Notificações
   const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
-  if(ant!==colId && colId===_doneColId) notifDone(card);
+  if(ant!==colId){
+    if(colId===_doneColId) notifDone(card);
+    else notifMoved(card, colName);
+  }
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
