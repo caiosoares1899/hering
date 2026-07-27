@@ -122,7 +122,10 @@ messaging.onBackgroundMessage((payload) => {
 // Clique na notificação → abre (ou foca) o board, opcionalmente já no card certo
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/kanban.html';
+  // Sem barra inicial (ver functions/index.js) — o site fica em /hering/,
+  // não na raiz do domínio; URL relativa resolve certo a partir de
+  // self.location (onde este próprio Service Worker roda).
+  const url = event.notification.data?.url || 'kanban.html';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {

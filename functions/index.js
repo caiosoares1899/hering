@@ -70,6 +70,13 @@ exports.sendPushOnNotification = onValueCreated(
     // event.notification.data.url quando a pessoa clica no push; só faltava
     // essa URL incluir o card. Sem isso, todo push (inclusive menção) abria
     // só o board, deixando a pessoa procurar o card na mão.
+    // SEM barra inicial: o site fica em /hering/ (GitHub Pages de projeto,
+    // não a raiz do domínio) — uma URL absoluta como "/kanban.html" resolve
+    // pra caiosoares1899.github.io/kanban.html, que é 404. Relativa
+    // ("kanban.html") resolve certo porque o Service Worker que consome
+    // esse campo (firebase-messaging-sw.js, notificationclick) roda a
+    // partir de /hering/firebase-messaging-sw.js — mesma convenção já usada
+    // nos links internos do próprio kanban.html/kanban-dev.html.
     const params = new URLSearchParams();
     if (notif.squad) params.set('squad', notif.squad);
     if (notif.cardId) params.set('card', notif.cardId);
@@ -80,7 +87,7 @@ exports.sendPushOnNotification = onValueCreated(
         body,
         tag: String(notif.type || 'geral') + '_' + String(notif.cardId || ''),
         cardId: String(notif.cardId || ''),
-        url: qs ? `/kanban.html?${qs}` : '/kanban.html',
+        url: qs ? `kanban.html?${qs}` : 'kanban.html',
       },
       tokens,
     };
