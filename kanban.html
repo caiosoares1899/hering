@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.177</div>
+<div class="version">v8.30.178</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5028,7 +5028,7 @@ function fbSet(path,val){
   if(!window._fbReady) return;
   window._set(fb(path),val)?.catch(()=>{}); // silencioso — evita loop com logError
 }
-function fbGet(path){ return window._get(fb(path)); }
+function fbGet(path){ return window._get(fb(path)).then(snap=>{ _dbgTrack(path, snap.val()); return snap; }); }
 function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); return window._update(fb(path),val); }
 // ═══════════════════════════════════════════════════════════════════
 // 🔬 DEBUG: medidor de bytes por listener (diagnóstico de download)
@@ -5042,13 +5042,24 @@ function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); retu
 // de quem lembrou de ligar manualmente.
 // Bucket por HORA (não por minuto) pra manter o volume de escritas e
 // de nós no Firebase baixo. Entradas com mais de 7 dias são limpas
-// automaticamente (1x por sessão, igual ao access_log).
+// automaticamente (1x por sessão, igual ao access_log). Além do log
+// horário (fino, mas de vida curta), também mantém um rollup DIÁRIO
+// (grosso, mas retido por 90 dias) — sem ele não dava pra comparar "esse
+// mês" com "mês passado", já que o log horário se auto-limpa em 1 semana.
+// Todo read INTERNO deste bloco (ler o próprio log pra mesclar/limpar) usa
+// window._get() bruto, não fbGet() — senão a própria medição virava um
+// path medido, poluindo o relatório com o consumo de si mesma.
 // Uso no console do navegador (F12), a qualquer momento:
-//   debugBytesReport()      → tabela do que ESTA aba recebeu até agora
-//   debugBytesRemote()      → agregado de TODAS as sessões nas últimas 24h
-//   debugBytesRemote(72)    → agregado das últimas 72h, por path
-//   debugBytesOff()         → desliga só nesta aba (não afeta outras pessoas)
+//   debugBytesReport()        → tabela do que ESTA aba recebeu até agora
+//   debugBytesRemote()        → agregado de TODAS as sessões nas últimas 24h (log horário)
+//   debugBytesRemote(72)      → agregado das últimas 72h, por path
+//   debugBytesHistory()       → rollup diário dos últimos 30 dias, por path e por dia
+//   debugBytesHistory(90)     → idem, últimos 90 dias (limite de retenção)
+//   debugBytesExportCSV(90)   → mesmos dados de debugBytesHistory(), em CSV pra colar numa planilha
+//   debugBytesOff()           → desliga só nesta aba (não afeta outras pessoas)
 const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
+const _DBG_LOG_PATH = FB+'/_debug_bytes_log';
+const _DBG_DAILY_PATH = FB+'/_debug_bytes_daily';
 function _dbgSize(val){
   try{ return val==null ? 0 : new Blob([JSON.stringify(val)]).size; }
   catch(e){ try{ return JSON.stringify(val||'').length; }catch(e2){ return 0; } }
@@ -5059,39 +5070,57 @@ function _dbgTrack(pathKey, val){
   const s=_dbg.stats[pathKey]||(_dbg.stats[pathKey]={count:0,bytes:0,lastAt:0,lastBytes:0});
   s.count++; s.bytes+=bytes; s.lastAt=Date.now(); s.lastBytes=bytes;
 }
-function _dbgFlush(){
-  if(!_dbg.on || !window._fbReady) return;
-  const entries=Object.entries(_dbg.stats);
-  if(!entries.length) return;
-  const d=new Date();
-  const hourKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
-  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
-  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
-  const nodeKey=hourKey+'_'+uidShort;
-  const path=FB+'/_debug_bytes_log/'+nodeKey;
-  // Mescla com o que já foi gravado nesta hora (várias flushes acumulam, não sobrescrevem)
-  fbGet(path).then(snap=>{
-    const _localTs=hourKey.slice(0,10)+'T'+hourKey.slice(11,13)+':00:00';
-    const prev=snap.val()||{ts:_localTs,who,byPath:{}};
+// Mescla `entries` (path -> {count,bytes}) no nó já existente em `path` (sem
+// sobrescrever o que outras flushes/abas já gravaram nesse mesmo bucket).
+function _dbgMerge(path, entries, extra){
+  return window._get(fb(path)).then(snap=>{
+    const existing=snap.val()||{};
+    const prev=Object.assign({}, existing, extra, {byPath:Object.assign({}, existing.byPath)});
     entries.forEach(([k,s])=>{
       const key=k.replace(/[.#$/\[\]]/g,'_');
       const acc=prev.byPath[key]||{count:0,bytes:0};
       acc.count+=s.count; acc.bytes+=s.bytes;
       prev.byPath[key]=acc;
     });
-    prev.ts=_localTs; prev.who=who;
     fbSet(path, prev);
   }).catch(()=>{});
+}
+function _dbgFlush(){
+  if(!_dbg.on || !window._fbReady) return;
+  // Snapshot em objetos NOVOS (não referências pras stats vivas) — _dbgMerge
+  // é assíncrono (window._get().then(...)), e o reset de _dbg.stats logo
+  // abaixo é síncrono; sem esse snapshot, quando o .then() rodasse já ia
+  // encontrar count/bytes zerados (mesma referência mutável já resetada).
+  const entries=Object.entries(_dbg.stats).map(([k,s])=>[k,{count:s.count,bytes:s.bytes}]);
+  if(!entries.length) return;
+  const d=new Date();
+  const dateKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const hourKey=dateKey+'-'+String(d.getHours()).padStart(2,'0');
+  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
+  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+  const hourLocalTs=dateKey+'T'+String(d.getHours()).padStart(2,'0')+':00:00';
+  _dbgMerge(_DBG_LOG_PATH+'/'+hourKey+'_'+uidShort, entries, {ts:hourLocalTs, who});
+  _dbgMerge(_DBG_DAILY_PATH+'/'+dateKey, entries, {date:dateKey});
   Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
-  // Limpeza leve: 1x por sessão, remove buckets com mais de 7 dias
+  // Limpeza leve: 1x por sessão. Log horário (fino) só vive 7 dias; o
+  // rollup diário (grosso) vive 90 — dá pra olhar tendência de meses sem
+  // acumular nó pra sempre.
   if(!_dbg.cleaned){
     _dbg.cleaned=true;
-    fbGet(FB+'/_debug_bytes_log').then(snap=>{
+    window._get(fb(_DBG_LOG_PATH)).then(snap=>{
       const val=snap.val(); if(!val) return;
       const cutoff=Date.now()-7*86400000;
       Object.entries(val).forEach(([key,entry])=>{
         const t=entry?.ts?new Date(entry.ts).getTime():0;
-        if(t && t<cutoff) fbSet(FB+'/_debug_bytes_log/'+key, null);
+        if(t && t<cutoff) fbSet(_DBG_LOG_PATH+'/'+key, null);
+      });
+    }).catch(()=>{});
+    window._get(fb(_DBG_DAILY_PATH)).then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const cutoff=Date.now()-90*86400000;
+      Object.entries(val).forEach(([key,entry])=>{
+        const t=entry?.date?new Date(entry.date+'T00:00:00').getTime():0;
+        if(t && t<cutoff) fbSet(_DBG_DAILY_PATH+'/'+key, null);
       });
     }).catch(()=>{});
   }
@@ -5118,7 +5147,7 @@ window.debugBytesReport=function(){
 };
 window.debugBytesRemote=function(hoursBack){
   hoursBack = hoursBack || 24;
-  return fbGet(FB+'/_debug_bytes_log').then(snap=>{
+  return window._get(fb(_DBG_LOG_PATH)).then(snap=>{
     const val=snap.val()||{};
     const cutoff=Date.now()-hoursBack*3600000;
     const agg={}; const byHour={};
@@ -5145,7 +5174,47 @@ window.debugBytesRemote=function(hoursBack){
   });
 };
 window.debugBytesClearRemote=function(){
-  return fbSet(FB+'/_debug_bytes_log', null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+  return fbSet(_DBG_LOG_PATH, null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+// Rollup diário (retenção de 90 dias) — pra "acompanhar" tendência ao longo
+// de semanas/meses, não só as últimas 72h que o log horário cobre.
+function _dbgDailyRows(daysBack){
+  return window._get(fb(_DBG_DAILY_PATH)).then(snap=>{
+    const val=snap.val()||{};
+    const cutoff=Date.now()-daysBack*86400000;
+    const rows=[]; const totalsByDate={};
+    Object.values(val).forEach(entry=>{
+      const t=entry?.date?new Date(entry.date+'T00:00:00').getTime():0;
+      if(!t || t<cutoff) return;
+      Object.entries(entry.byPath||{}).forEach(([path,s])=>{
+        rows.push({data:entry.date, path, chamadas:s.count||0, bytes:s.bytes||0});
+        const acc=totalsByDate[entry.date]||(totalsByDate[entry.date]={count:0,bytes:0});
+        acc.count+=s.count||0; acc.bytes+=s.bytes||0;
+      });
+    });
+    rows.sort((a,b)=> a.data===b.data ? b.bytes-a.bytes : a.data.localeCompare(b.data));
+    return {rows, totalsByDate};
+  });
+}
+window.debugBytesHistory=function(daysBack){
+  daysBack = daysBack || 30;
+  return _dbgDailyRows(daysBack).then(({rows, totalsByDate})=>{
+    console.log('%c🔬 Histórico diário — últimos '+daysBack+' dias, por path:','color:#38b6ff;font-weight:bold;');
+    console.table(rows.map(r=>({data:r.data, path:r.path, chamadas:r.chamadas, 'KB':(r.bytes/1024).toFixed(1)})));
+    const totalRows=Object.entries(totalsByDate).map(([data,s])=>({data, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1)})).sort((a,b)=>a.data.localeCompare(b.data));
+    console.log('%c🔬 Total por dia (todos os paths somados):','color:#38b6ff;font-weight:bold;');
+    console.table(totalRows);
+    return {rows, totalRows};
+  });
+};
+window.debugBytesExportCSV=function(daysBack){
+  daysBack = daysBack || 30;
+  return _dbgDailyRows(daysBack).then(({rows})=>{
+    const csv=['data,path,chamadas,bytes'].concat(rows.map(r=>[r.data,r.path,r.chamadas,r.bytes].join(','))).join('\n');
+    console.log('%c🔬 CSV (últimos '+daysBack+' dias) — copie o texto abaixo pra colar numa planilha:','color:#38b6ff;font-weight:bold;');
+    console.log(csv);
+    return csv;
+  });
 };
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7107,6 +7176,11 @@ function scheduleAutoSave(){
       col:_colToSave,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
+      // blockerReason faltava aqui — o autosave nunca capturava esse campo
+      // (só o botão "Salvar" manual fazia isso), então uma edição do motivo
+      // do impedimento deixada pro autosave salvar sozinho se perdia
+      // silenciosamente (o card ficava com o texto antigo/vazio no Firebase).
+      blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
@@ -7124,6 +7198,16 @@ function scheduleAutoSave(){
     _saveCardWithRetry(c, 'Alterações do card');
     renderBoard();
     // ── Notificações (saúde: precisam disparar aqui também, não só no saveCard manual) ──
+    // @menção nos campos de texto — faltava aqui (só existia no saveCard()
+    // manual, ver mais abaixo), então uma @menção digitada e deixada pro
+    // autosave salvar sozinho (o caminho mais comum: quase ninguém clica no
+    // botão "Salvar" do card) nunca virava notificação nenhuma, nem no
+    // sino. createNotif() já dedupe por idOverride (mention_{cardId}_{uid}),
+    // então rodar isso a cada autosave não duplica nada.
+    parseMentions(c.desc, c.id);
+    parseMentions(c.po, c.id);
+    parseMentions(c.blockerReason, c.id);
+    (c.descsExtra||[]).forEach(d=>parseMentions(d?.text, c.id));
     if(c.owner && c.owner!==_prevOwner) notifAssigned(c.owner, c.id, c.title);
     if(_prevBlocker && !c.blocker) notifUnblocked(c);
     const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
@@ -13514,7 +13598,10 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride){
   }
 }
 
-// Resolve uid de um membro pelo init
+// Resolve uid de um membro pelo init — usado só pra achar o DESTINATÁRIO de
+// uma notificação (dono/participante/menção/kudos), nunca pra popular
+// seletor de "atribuir card" (isso itera `members` direto, continua só
+// squad atual).
 function getUidByInit(init){
   if(!init) return null;
   const matches = members.filter(m=>m.init===init);
@@ -13522,7 +13609,28 @@ function getUidByInit(init){
     console.warn('[getUidByInit] iniciais duplicadas no squad:', init, '— notificação não enviada p/ evitar destinatário errado.');
     return null;
   }
-  return matches[0]?.uid||null;
+  if(matches.length===1) return matches[0].uid;
+  // Ninguém INSCRITO neste squad tem essa inicial agora — mas o vínculo do
+  // card com essa pessoa (dono/participante) não desaparece só porque o
+  // vínculo dela com o squad mudou (saiu, foi removida, nunca "participou"
+  // formalmente). Sem isso, notificação pra card de gente que não está mais
+  // inscrita sumia 100% em silêncio, sem warning nenhum — bug real
+  // reportado por usuários que "não recebem notificação", sem rastro
+  // nenhum pra investigar. Cai pra buscar em TODOS os usuários cadastrados
+  // (já carregado em _allUsersRaw pela mesma leitura que popula `members`,
+  // sem leitura nova no Firebase), não só quem está inscrito neste squad.
+  const raw = window._allUsersRaw||{};
+  const globalMatches = Object.entries(raw).filter(([,u])=>{
+    const i = (u.init&&u.init.trim()) ? u.init.trim() : deriveInit(u.nome||u.email||'');
+    return i===init;
+  });
+  if(globalMatches.length>1){
+    console.warn('[getUidByInit] iniciais duplicadas fora do squad atual:', init, '— notificação não enviada p/ evitar destinatário errado.');
+    return null;
+  }
+  if(globalMatches.length===1) return globalMatches[0][0];
+  console.warn('[getUidByInit] nenhum usuário encontrado com a inicial:', init, '— notificação não enviada (a pessoa pode ter saído do squad, ou a inicial no card está desatualizada).');
+  return null;
 }
 
 // ── Escuta notificações do usuário atual ──────────────────────────

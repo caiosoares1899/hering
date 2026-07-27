@@ -18,6 +18,48 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.178 — 2026-07-27 · PR #28 · tag `kanban-v8.30.178`
+Promove pra prod tudo que tinha sido validado no dev desde a v8.30.177:
+- **Notificação por @menção nunca disparava quando o card era salvo só
+  pelo autosave** (o caminho mais comum — quase ninguém clica no botão
+  "Salvar" manual): `scheduleAutoSave()` replicava os outros 5 gatilhos de
+  notificação (atribuído/desbloqueado/concluído/risco/checklist), mas não
+  chamava `parseMentions()`. Corrigido — junto com um bug adjacente onde o
+  campo "motivo do impedimento" também não era capturado pelo autosave.
+- **Notificação sumia em silêncio quando o dono/participante/mencionado
+  não estava mais inscrito no squad atual** (saiu, foi removido, nunca
+  "participou" formalmente) — `getUidByInit()` retornava `null` sem
+  nenhum aviso. Agora cai pra buscar entre todos os usuários cadastrados
+  antes de desistir, e sempre loga um aviso quando realmente não acha
+  ninguém.
+- Medidor de bytes por path do Realtime Database (`debugBytesRemote()`
+  no console): agora também rastreia leituras pontuais (`fbGet()`), não
+  só listeners em tempo real, e ganha um rollup diário de 90 dias
+  (`debugBytesHistory()`/`debugBytesExportCSV()`) além do log horário de
+  7 dias que já existia.
+
+### v8.30.177 — 2026-07-25 · PR #22 · tag `kanban-v8.30.177`
+Promove pra prod tudo que tinha sido validado no dev desde a v8.30.176:
+- Sistema híbrido humano+agente de IA restaurado (perdido acidentalmente
+  num commit anterior sem PR): visão 👤/🤝/🤖, campo Executor + status do
+  agente no card, identidades de agente integradas em menções/seletores/
+  avatares, ciclo de validar/devolver trabalho do agente.
+- Agrupamento manual de campanhas do painel passa a valer no board de
+  cada squad (`grupoId`), sem alterar o nome que cada squad enxerga.
+- Agente Ágil Sprint 2: resolve "referencia" de negócio (recorrência +
+  data) em vez de exigir `cardId` direto — mais o fix do bug de data que
+  fazia `recorrenteData` e `createdAt` divergirem por 1 dia perto da
+  meia-noite em fusos como o do Brasil.
+- Impedimento vazando em squads no modo "tag" (ex.: Outlet Comercial):
+  mover card pra uma coluna renomeada (ex.: "Impedimentos" → "Finalizado")
+  não marca mais como impedido por baixo dos panos.
+- Duplicar card abre modal deixando escolher quais campos entram na cópia
+  (Descrição, Checklist, Tags, Responsável, Participantes, Prazo,
+  Prioridade, Riscos, Anexos/Links).
+- ADM, PO e Organizador podem excluir comentários de qualquer usuário
+  (antes só ADM, além do próprio autor).
+- "Texto" adicionado às sugestões de Formato da Ficha de Criativo.
+
 ### v8.30.176 — 2026-07-24 · PR #13 · tag `kanban-v8.30.176`
 Promove pra prod tudo que tinha sido validado no dev desde a v8.30.174:
 - Título de card com uma palavra só muito longa (sem espaço) agora quebra
