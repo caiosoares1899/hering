@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.198-dev</div>
+<div class="version">v8.30.199-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7176,6 +7176,11 @@ function scheduleAutoSave(){
       col:_colToSave,owner:document.getElementById('m-owner').value,
       due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
+      // blockerReason faltava aqui — o autosave nunca capturava esse campo
+      // (só o botão "Salvar" manual fazia isso), então uma edição do motivo
+      // do impedimento deixada pro autosave salvar sozinho se perdia
+      // silenciosamente (o card ficava com o texto antigo/vazio no Firebase).
+      blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
@@ -7193,6 +7198,16 @@ function scheduleAutoSave(){
     _saveCardWithRetry(c, 'Alterações do card');
     renderBoard();
     // ── Notificações (saúde: precisam disparar aqui também, não só no saveCard manual) ──
+    // @menção nos campos de texto — faltava aqui (só existia no saveCard()
+    // manual, ver mais abaixo), então uma @menção digitada e deixada pro
+    // autosave salvar sozinho (o caminho mais comum: quase ninguém clica no
+    // botão "Salvar" do card) nunca virava notificação nenhuma, nem no
+    // sino. createNotif() já dedupe por idOverride (mention_{cardId}_{uid}),
+    // então rodar isso a cada autosave não duplica nada.
+    parseMentions(c.desc, c.id);
+    parseMentions(c.po, c.id);
+    parseMentions(c.blockerReason, c.id);
+    (c.descsExtra||[]).forEach(d=>parseMentions(d?.text, c.id));
     if(c.owner && c.owner!==_prevOwner) notifAssigned(c.owner, c.id, c.title);
     if(_prevBlocker && !c.blocker) notifUnblocked(c);
     const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
