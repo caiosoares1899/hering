@@ -181,6 +181,19 @@ nenhuma). HTML (navegação) e `version.json` agora vão network-first; o
 resto (imagens, libs de terceiros) continua como antes. Bump de `CACHE`
 (`v1` → `v2`) pra purgar cache antigo salvo com a estratégia anterior.
 
+## Cloud Function — `sendPushOnNotification` (`functions/index.js`, sem versão própria em `version.json`)
+
+### 2026-07-27 · PR #36
+Corrige o link do push levando pra fora do site: a URL do deep-link do
+card era montada como `/kanban.html?...` (absoluta a partir da raiz do
+domínio), mas o site fica em `caiosoares1899.github.io/hering/`, não na
+raiz — todo clique num push caía em 404
+(`caiosoares1899.github.io/kanban.html`, sem `/hering/`). Tirada a barra
+inicial (URL relativa) tanto na Cloud Function quanto no fallback do
+`firebase-messaging-sw.js`. **Requer `firebase deploy --only functions`
+manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
+o link antigo quebrado.
+
 ## painel.html / painel-dev.html
 
 Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
