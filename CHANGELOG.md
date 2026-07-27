@@ -209,3 +209,23 @@ escrevem o índice `id → chave` atomicamente junto com `/cards`;
 (em vez de escanear `/cards` inteiro a cada chamada), com verificação +
 retry e erro rastreável (`stale_cards_index`, HTTP 409) em caso de
 divergência.
+
+## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
+
+### 2026-07-27 · PR #30
+Corrige a causa raiz de notificações entre membros comuns nunca chegando
+(mas chegando normalmente quando quem dispara a ação é `po`/`adm`):
+`createNotif()` no cliente escreve direto em `kanban/usuarios/{uid-do-
+destinatário}/notificacoes/{id}` — é assim que menção, atribuição,
+desbloqueio etc. funcionam, quem dispara a ação escreve no nó de quem vai
+ser avisado. A regra de `kanban/usuarios/{uid}` só liberava escrita pro
+dono do próprio nó ou pra `po`/`adm`, então um membro comum notificando
+outro membro comum tinha a escrita rejeitada (`PERMISSION_DENIED`) em
+silêncio — só um `console.warn`, nenhum erro visível, nenhuma notificação
+criada. Adiciona uma regra específica pra `notificacoes/$notifId`: qualquer
+pessoa autenticada do domínio pode criar uma notificação nova em qualquer
+conta; só o dono do nó ou `po`/`adm` pode modificar/apagar uma que já
+existe (marcar como lida, limpar expiradas).
+**Precisa de `firebase deploy --only database` depois do merge** — só
+commitar/mergear este arquivo não muda as regras que já estão ao vivo no
+Console.
