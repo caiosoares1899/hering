@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.197-dev</div>
+<div class="version">v8.30.198-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13583,7 +13583,10 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride){
   }
 }
 
-// Resolve uid de um membro pelo init
+// Resolve uid de um membro pelo init — usado só pra achar o DESTINATÁRIO de
+// uma notificação (dono/participante/menção/kudos), nunca pra popular
+// seletor de "atribuir card" (isso itera `members` direto, continua só
+// squad atual).
 function getUidByInit(init){
   if(!init) return null;
   const matches = members.filter(m=>m.init===init);
@@ -13591,7 +13594,28 @@ function getUidByInit(init){
     console.warn('[getUidByInit] iniciais duplicadas no squad:', init, '— notificação não enviada p/ evitar destinatário errado.');
     return null;
   }
-  return matches[0]?.uid||null;
+  if(matches.length===1) return matches[0].uid;
+  // Ninguém INSCRITO neste squad tem essa inicial agora — mas o vínculo do
+  // card com essa pessoa (dono/participante) não desaparece só porque o
+  // vínculo dela com o squad mudou (saiu, foi removida, nunca "participou"
+  // formalmente). Sem isso, notificação pra card de gente que não está mais
+  // inscrita sumia 100% em silêncio, sem warning nenhum — bug real
+  // reportado por usuários que "não recebem notificação", sem rastro
+  // nenhum pra investigar. Cai pra buscar em TODOS os usuários cadastrados
+  // (já carregado em _allUsersRaw pela mesma leitura que popula `members`,
+  // sem leitura nova no Firebase), não só quem está inscrito neste squad.
+  const raw = window._allUsersRaw||{};
+  const globalMatches = Object.entries(raw).filter(([,u])=>{
+    const i = (u.init&&u.init.trim()) ? u.init.trim() : deriveInit(u.nome||u.email||'');
+    return i===init;
+  });
+  if(globalMatches.length>1){
+    console.warn('[getUidByInit] iniciais duplicadas fora do squad atual:', init, '— notificação não enviada p/ evitar destinatário errado.');
+    return null;
+  }
+  if(globalMatches.length===1) return globalMatches[0][0];
+  console.warn('[getUidByInit] nenhum usuário encontrado com a inicial:', init, '— notificação não enviada (a pessoa pode ter saído do squad, ou a inicial no card está desatualizada).');
+  return null;
 }
 
 // ── Escuta notificações do usuário atual ──────────────────────────
