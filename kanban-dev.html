@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.203-dev</div>
+<div class="version">v8.30.204-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5854,13 +5854,16 @@ let _cardsSyncDebounce = null;
   // Mesma autocorreção acima, pro índice paralelo cards_updated_at (ver
   // fbSaveAll/fbSaveCard) — usado só pelo carregamento em duas etapas
   // (buscar o índice pequeno primeiro, decidir quais cards buscar de
-  // verdade). A fonte da verdade é sempre o `updatedAt` que já está no
-  // PRÓPRIO card em memória (nunca inventa um valor novo) — card sem
-  // `updatedAt` nenhum (legado, nunca tocado pelos vários pontos que
-  // carimbam esse campo) fica de fora do índice de propósito: melhor o
-  // carregamento tratar "sem carimbo" como "busca completa por segurança"
-  // do que arriscar gravar um valor inventado que pareça confiável.
-  function _diffCardsUpdatedAt(cardsByKey, remoteUpdatedAt){
+  // verdade). Card legado sem `updatedAt` nenhum (nunca foi salvo desde
+  // que este índice existe) ganha o horário ATUAL aqui — não é inventar
+  // histórico, é só registrar que ACABAMOS de confirmar esse é o conteúdo
+  // real (a reconciliação só roda depois do burst inicial de child_added
+  // já ter baixado o card por completo). Sem isso, um board com muitos
+  // cards parados fica PERMANENTEMENTE acima do limite de "mudou demais"
+  // (ver _twoPhaseCardsLoad) e nunca converge pro carregamento barato —
+  // carimbar aqui é o que deixa o índice se auto-completar com o uso
+  // normal, sem precisar que alguém edite cada card na mão.
+  function _diffCardsUpdatedAt(cardsByKey, remoteUpdatedAt, nowIso){
     const toWrite = {};
     const toRemove = [];
     const liveIds = new Set();
@@ -5868,7 +5871,8 @@ let _cardsSyncDebounce = null;
       const card = cardsByKey[key];
       if(!card || !card.id) return;
       liveIds.add(card.id);
-      if(card.updatedAt && remoteUpdatedAt[card.id] !== card.updatedAt) toWrite[card.id] = card.updatedAt;
+      const ts = card.updatedAt || nowIso;
+      if(remoteUpdatedAt[card.id] !== ts) toWrite[card.id] = ts;
     });
     Object.keys(remoteUpdatedAt||{}).forEach(cardId=>{
       if(!liveIds.has(cardId)) toRemove.push(cardId);
@@ -5887,7 +5891,8 @@ let _cardsSyncDebounce = null;
       const remoteIndex = indexSnap.val() || {};
       const remoteUpdatedAt = updatedAtSnap.val() || {};
       const { toWrite, toRemove } = _diffCardsIndex(_cardsByKey, remoteIndex);
-      const { toWrite:toWriteUA, toRemove:toRemoveUA } = _diffCardsUpdatedAt(_cardsByKey, remoteUpdatedAt);
+      const _nowIso = new Date().toISOString();
+      const { toWrite:toWriteUA, toRemove:toRemoveUA } = _diffCardsUpdatedAt(_cardsByKey, remoteUpdatedAt, _nowIso);
       const updates = {};
       Object.keys(toWrite).forEach(cardId=>{ updates['cards_index/'+cardId] = toWrite[cardId]; });
       toRemove.forEach(cardId=>{ updates['cards_index/'+cardId] = null; });
@@ -5895,6 +5900,18 @@ let _cardsSyncDebounce = null;
       toRemoveUA.forEach(cardId=>{ updates['cards_updated_at/'+cardId] = null; });
       if(Object.keys(updates).length){
         await window._update(fb(FB), updates);
+        // Reflete o backfill no espelho local também — senão o próximo
+        // _persistCardsCacheFromCurrent() (ver _applyCardsSync) grava o
+        // cache SEM o carimbo que acabou de ir pro remoto, e a sessão
+        // atual ficaria "burra" quanto ao que ela mesma acabou de corrigir.
+        Object.values(_cardsByKey).forEach(card=>{
+          if(card && card.id && toWriteUA[card.id] && !card.updatedAt) card.updatedAt = toWriteUA[card.id];
+        });
+        // Regrava o cache local JÁ com os carimbos corrigidos — sem isso, o
+        // blob salvo antes da reconciliação rodar fica com esses cards sem
+        // updatedAt pra sempre, e o PRÓPRIO device que acabou de corrigir o
+        // remoto continuaria caindo no fallback pra sempre também.
+        _persistCardsCacheFromCurrent();
         _dbgTrack('cards_index:reconciled', {
           corrigidas:Object.keys(toWrite).length, removidas:toRemove.length,
           corrigidasUA:Object.keys(toWriteUA).length, removidasUA:toRemoveUA.length,
