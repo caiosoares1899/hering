@@ -3112,6 +3112,16 @@ input[type="date"]{-moz-appearance:textfield;}
         <button class="btn btn-teal btn-sm" onclick="addTag()">+ Tag</button>
       </div>
       <div style="display:flex;justify-content:flex-end;padding-top:8px;"><button class="btn btn-p btn-sm" onclick="saveTags()">Salvar tags</button></div>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--glass-b);">
+        <div class="cfg-sec-title">👕 Tamanho (camiseta)</div>
+        <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
+          Cria 4 tags prontas — P, M, G e GG — pra sizing de cards, no espírito da camiseta (o carro-chefe da Hering). A tag cresce visualmente junto com o tamanho.
+        </p>
+        <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:var(--r);">
+          <input type="checkbox" id="cfg-tamanho-ativo" onchange="toggleTamanhoAtivo(this.checked)"> Ativar tags de tamanho (👕 P/M/G/GG) neste squad
+        </label>
+      </div>
     </div>
 
     <!-- ABA SUBTIMES -->
@@ -4161,7 +4171,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.204-dev</div>
+<div class="version">v8.30.205-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5019,6 +5029,15 @@ let agilCfg={};
 let criativosAtivo=false; // toggle por squad: mostra a Ficha de Criativo no card + botão Controle de Criativos
 let criativosListas={}; // {id:{id,nome,createdAt}} — listas de segmentação do Controle de Criativos
 let archiveCfg={};
+let tamanhoAtivo=false; // toggle por squad: disponibiliza as tags de tamanho de camiseta (👕 P/M/G/GG)
+// Tags de tamanho — ids fixos (idempotência: reativar não duplica), cor/pi combinando com o
+// tema teal do app. sizeLevel (1-4) é usado só por tagHtml() pra fazer o 👕 crescer por tamanho.
+const SIZE_TAGS = [
+  {id:'tag_tam_p',  label:'👕 P',  pi:2, sizeLevel:1},
+  {id:'tag_tam_m',  label:'👕 M',  pi:2, sizeLevel:2},
+  {id:'tag_tam_g',  label:'👕 G',  pi:2, sizeLevel:3},
+  {id:'tag_tam_gg', label:'👕 GG', pi:2, sizeLevel:4},
+];
 
 // ═══════════════════════════════════════════════════════
 // FIREBASE HELPERS
@@ -5611,6 +5630,10 @@ function fbLoadAll(){
     criativosAtivo = !!val;
     const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
     const sec=document.getElementById('m-criativo-sec'); if(sec) sec.style.display = criativosAtivo?'':'none';
+  });
+  fbListen(FB+'/config/tamanho_ativo', val=>{
+    tamanhoAtivo = !!val;
+    const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
   });
   fbListen(FB+'/config/criativos_listas', val=>{
     criativosListas = val||{};
@@ -6635,7 +6658,15 @@ function getPal(x){
 function tagHtml(tagId){ if(!tagId) return ''; const t=getTag(tagId); if(!t) return '';
   if(t.isOKR||t.id==='okr') return `<span class="card-tag" style="background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.5);color:#ffd700;font-weight:800;">${esc(t.label)}</span>`;
   if(t.isCalGestao||t.id==='cal_gestao') return `<span class="card-tag" style="background:rgba(150,80,220,.15);border-color:rgba(150,80,220,.4);color:#d67fff;font-weight:700;">${esc(t.label)}</span>`;
-  const p=getPal(t); return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
+  const p=getPal(t);
+  // Tags de tamanho (ver SIZE_TAGS): o 👕 cresce de fonte por nível (P menor, GG maior);
+  // o resto do label (" P"/" M"/...) mantém o tamanho normal da pill.
+  if(t.sizeLevel){
+    const px = 9 + t.sizeLevel*2; // 11,13,15,17px
+    const resto = esc(t.label).replace('👕','').trim();
+    return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}"><span style="font-size:${px}px;line-height:1;vertical-align:middle;">👕</span> ${resto}</span>`;
+  }
+  return `<span class="card-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`; }
 
 // ── MULTI-TAG: helper central de compatibilidade ──
 // Sempre retorna um array de IDs de tag, lendo de card.tags (novo) OU card.tag (legado).
@@ -8335,6 +8366,21 @@ function toggleCriativosAtivo(checked){
   const sec=document.getElementById('m-criativo-sec'); if(sec && document.getElementById('card-ov')?.classList.contains('open')) sec.style.display = criativosAtivo?'':'none';
   const listasWrap=document.getElementById('crv-listas-cfg-wrap'); if(listasWrap) listasWrap.style.display = criativosAtivo?'':'none';
   showToast(criativosAtivo?'🎬 Ficha de Criativo ativada neste squad.':'Ficha de Criativo desativada neste squad.');
+}
+// Provisiona (idempotente) as 4 tags de tamanho no squad — reativar não duplica,
+// já que os ids são fixos (SIZE_TAGS). Desativar NÃO remove as tags já criadas/
+// aplicadas em cards (mesma filosofia não-destrutiva do resto do app — excluir
+// uma tag continua sendo uma ação manual e deliberada via "✕" no editor de tags).
+function toggleTamanhoAtivo(checked){
+  if(!_isPOorOrg()) return;
+  tamanhoAtivo = !!checked;
+  fbSet(FB+'/config/tamanho_ativo', tamanhoAtivo);
+  if(tamanhoAtivo){
+    let mudou=false;
+    SIZE_TAGS.forEach(st=>{ if(!tags.find(t=>t.id===st.id)){ tags.push(Object.assign({},st)); mudou=true; } });
+    if(mudou){ fbSet(FB+'/tags', tags); renderTagEditor(); }
+  }
+  showToast(tamanhoAtivo?'👕 Tags de tamanho ativadas neste squad.':'Tags de tamanho desativadas (as já criadas continuam disponíveis).');
 }
 // ── Listas de Criativos (CRUD) ──
 function renderCriativosListasCfg(){
@@ -11855,7 +11901,7 @@ function swCfgTab(tab){
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
-  if(tab==='tags') renderTagEditor();
+  if(tab==='tags'){ renderTagEditor(); const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo; }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
