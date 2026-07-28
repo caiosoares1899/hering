@@ -2593,9 +2593,7 @@ input[type="date"]{-moz-appearance:textfield;}
               <option value="critical">🔥 Crítica</option>
             </select>
           </div>
-        </div>
-        <div class="card-attr-row" id="m-tamanho-row" style="display:none;">
-          <div class="field" style="flex:1;"><label class="fl">👕 Tamanho</label>
+          <div class="field" id="m-tamanho-field" style="flex:1;display:none;"><label class="fl">👕 Tamanho</label>
             <select class="fi" id="m-tamanho" onchange="setCardTamanho(this.value)">
               <option value="">— sem tamanho —</option>
               <option value="tag_tam_p">👕 P</option>
@@ -4194,7 +4192,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.181</div>
+<div class="version">v8.30.182</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5740,22 +5738,67 @@ let _cardsSyncDebounce = null;
   // fbSaveAll() estrutural, que carimba TODOS os cards de novo). Em
   // QUALQUER desses casos o resultado final é idêntico ao carregamento
   // completo — nunca perde nem atrasa a exibição de um card.
+  // Guarda em IndexedDB, não localStorage — squads grandes (ex.: milhares de
+  // cards) fazem o JSON do cache passar fácil da cota do localStorage
+  // (~5-10MB por site, compartilhada entre TODOS os squads/páginas do
+  // domínio). Quando isso acontecia, o setItem falhava em silêncio (try/catch
+  // engolindo o erro) e o cache NUNCA persistia — o board caía no
+  // carregamento completo pra sempre, sem nenhum aviso, justamente nos
+  // squads onde a economia mais importa. IndexedDB tem cota bem maior
+  // (dezenas/centenas de MB, varia por navegador) e foi feito pra esse tipo
+  // de dado estruturado maior. Guarda o objeto direto (structured clone),
+  // sem precisar serializar pra string como o localStorage exige.
   const _CARDS_CACHE_KEY = 'cardsCache_v1_'+ACTIVE_SQUAD;
   const _CARDS_CACHE_STALE_RATIO = 0.4;
-  function _loadCardsCache(){
+  const _IDB_NAME = 'mare_digital_cache';
+  const _IDB_STORE = 'cards_cache';
+  let _idbOpenPromise = null;
+  function _openCardsIdb(){
+    if(_idbOpenPromise) return _idbOpenPromise;
+    _idbOpenPromise = new Promise((resolve,reject)=>{
+      if(!window.indexedDB){ reject(new Error('IndexedDB indisponível')); return; }
+      const req = window.indexedDB.open(_IDB_NAME, 1);
+      req.onupgradeneeded = ()=>{ if(!req.result.objectStoreNames.contains(_IDB_STORE)) req.result.createObjectStore(_IDB_STORE); };
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+    return _idbOpenPromise;
+  }
+  async function _idbGetCache(key){
+    const db = await _openCardsIdb();
+    return new Promise((resolve,reject)=>{
+      const tx = db.transaction(_IDB_STORE,'readonly');
+      const req = tx.objectStore(_IDB_STORE).get(key);
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+  async function _idbSetCache(key,val){
+    const db = await _openCardsIdb();
+    return new Promise((resolve,reject)=>{
+      const tx = db.transaction(_IDB_STORE,'readwrite');
+      tx.objectStore(_IDB_STORE).put(val,key);
+      tx.oncomplete = ()=>resolve();
+      tx.onerror = ()=>reject(tx.error);
+    });
+  }
+  let _cleanedOldLsCache = false;
+  async function _loadCardsCache(){
     try{
-      const raw = safeLS.getItem(_CARDS_CACHE_KEY);
-      if(!raw) return null;
-      const parsed = JSON.parse(raw);
+      // Limpeza 1x por sessão do resíduo antigo em localStorage (versões
+      // anteriores tentavam salvar aqui; em squads grandes, nunca
+      // conseguiam — só ocupa espaço à toa, nunca mais é lido).
+      if(!_cleanedOldLsCache){ _cleanedOldLsCache = true; try{ safeLS.removeItem(_CARDS_CACHE_KEY); }catch(e){} }
+      const parsed = await _idbGetCache(_CARDS_CACHE_KEY);
       if(!parsed || !parsed.cardsById || !parsed.updatedAtById) return null;
       return parsed;
     }catch(e){ return null; }
   }
-  function _saveCardsCache(cardsById, updatedAtById){
-    // Pior caso (cota do localStorage estourada, Safari privado etc.):
+  async function _saveCardsCache(cardsById, updatedAtById){
+    // Pior caso (IndexedDB bloqueado — modo privado antigo do Safari, etc.):
     // perde o cache, nunca quebra o board — próxima carga só cai pro
     // caminho completo de novo.
-    try{ safeLS.setItem(_CARDS_CACHE_KEY, JSON.stringify({cardsById, updatedAtById})); }catch(e){}
+    try{ await _idbSetCache(_CARDS_CACHE_KEY, {cardsById, updatedAtById}); }catch(e){}
   }
   // Persiste o cache a partir do array `cards` atual — chamado a cada sync
   // (já debounced por _scheduleCardsSync), assim QUALQUER caminho de carga
@@ -5783,7 +5826,7 @@ let _cardsSyncDebounce = null;
   }
   let _liveCardsIndexById = {};
   async function _twoPhaseCardsLoad(){
-    const cache = _loadCardsCache();
+    const cache = await _loadCardsCache();
     if(!cache) return false;
     const [idxSnap, uaSnap] = await Promise.all([
       fbGet(FB+'/cards_index'),
@@ -8435,7 +8478,7 @@ function toggleTamanhoAtivo(checked){
 // Ficha de Criativo (m-criativo-sec). Tags de tamanho continuam existindo
 // como tags normais mesmo com isso escondido; só a UI dedicada some.
 function _applyTamanhoUIVisibility(){
-  const row=document.getElementById('m-tamanho-row'); if(row) row.style.display=tamanhoAtivo?'':'none';
+  const field=document.getElementById('m-tamanho-field'); if(field) field.style.display=tamanhoAtivo?'':'none';
   const f=document.getElementById('f-tamanho'); if(f) f.style.display=tamanhoAtivo?'':'none';
 }
 // Troca a tag de tamanho do card sendo editado — exclusivo (nunca 2 tamanhos
