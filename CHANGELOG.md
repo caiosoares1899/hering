@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.182 — 2026-07-28 · PR #48 · tag `kanban-v8.30.182`
+Promove pra prod a correção de um bug real do delta-sync em squads grandes
+(PR #47): o cache do carregamento em duas etapas guardava o conteúdo
+completo dos cards em `localStorage`, que tem cota pequena (~5-10MB por
+site, compartilhada entre todos os squads/páginas do domínio). Em squads
+com muitos cards (ex.: `outlet-crm`, 4.690 cards) o JSON serializado
+estourava essa cota — o `setItem` falhava em silêncio e o cache nunca
+persistia, fazendo o board cair **sempre** no carregamento completo, sem
+nenhum aviso visível, justamente nos squads onde a economia mais importa.
+Corrigido movendo o cache pra **IndexedDB** (cota bem maior). Confirmado ao
+vivo em `outlet-crm` após a promoção: carregamento caiu de ~9.045KB pra
+~827KB numa recarga (~91% de redução), buscando individualmente só o card
+que de fato tinha mudado.
+
+### v8.30.181 — 2026-07-28 · PR #45 · tag `kanban-v8.30.181`
+Promove pra prod tudo validado no dev desde a v8.30.180 (PRs #41, #42, #43,
+#44):
+- Tags de tamanho de camiseta (**👕 P/M/G/GG**), opcionais por squad —
+  ativa em Configurações → Tags (só PO/ADM/Organizador). Provisiona 4 tags
+  fixas; o emoji 👕 cresce de fonte conforme o tamanho.
+- Ordenação dos cards por tamanho (P → GG), no menu global e por coluna.
+- Botão "Prioridade" da toolbar virou **"Ordenação"** (rótulo fixo, mesmo
+  padrão de Filtros/Raia — antes mudava de texto conforme o modo ativo).
+- Campo dedicado "👕 Tamanho" no modal do card (exclusivo, ao lado de
+  Prioridade) e filtro dedicado de tamanho na barra de Filtros, separados
+  do campo/filtro genérico de tags.
+- Correções no conteúdo de ajuda: notificação de mudança de coluna que
+  faltava na lista, lista de abas de Configurações desatualizada (faltavam
+  Fluxo, Calendário e Criativos), dicas novas pras abas Fluxo e Ficha de
+  Criativo (que nunca tinham nenhuma).
+
 ### v8.30.180 — 2026-07-28 · PR #39 · tag `kanban-v8.30.180`
 Promove pra prod o **carregamento em duas etapas dos cards** (delta-sync),
 validado no dev desde a v8.30.204-dev (PRs #34, #35, #38): em vez de
