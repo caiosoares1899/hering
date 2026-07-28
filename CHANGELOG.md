@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.180 — 2026-07-28 · PR #39 · tag `kanban-v8.30.180`
+Promove pra prod o **carregamento em duas etapas dos cards** (delta-sync),
+validado no dev desde a v8.30.204-dev (PRs #34, #35, #38): em vez de
+`onChildAdded` direto em `/cards` (baixa o board inteiro toda vez que é
+aberto), lê primeiro os índices pequenos `cards_index` +
+`cards_updated_at`, compara com um cache local por squad, e busca
+individualmente só os cards novos/mudados — cai automaticamente no
+carregamento completo de sempre quando não há cache, mudou demais desde
+a última visita, ou o board ainda não tem `cards_updated_at` migrado
+(nunca perde nem atrasa a exibição de um card). Validado ao vivo numa
+squad real (`ecomm`) antes da promoção: edição de card caiu de ~46,5KB
+pra ~4,3KB no reload, exclusão não reaparece, sincronização ao vivo
+entre abas funcionando.
+
 ### v8.30.179 — 2026-07-27 · PR #33 · tag `kanban-v8.30.179`
 Promove pra prod tudo que tinha sido validado no dev desde a v8.30.178:
 - Nova notificação **`notifMoved`**: card mudando pra qualquer coluna que
