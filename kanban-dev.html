@@ -2338,6 +2338,10 @@ input[type="date"]{-moz-appearance:textfield;}
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         🕓 Movimentação (mais recente)
       </button>
+      <button onclick="setColSortMode('size')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        👕 Tamanho (P → GG)
+      </button>
     </div>
   </div>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
@@ -3458,6 +3462,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <option value="createdAt">🕐 Data de criação</option>
         <option value="doneAt">📅 Prazo</option>
         <option value="movedAt">🕓 Movimentação (mais recente)</option>
+        <option value="size">👕 Tamanho (P → GG)</option>
       </select>
     </div>
     <div>
@@ -4171,7 +4176,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.205-dev</div>
+<div class="version">v8.30.206-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5581,7 +5586,7 @@ function fbLoadAll(){
   // antes do primeiro renderBoard(), pra não mostrar "Prioridade" por engano
   // quando a pessoa já tinha escolhido outro modo numa sessão anterior.
   (function _initSortLabel(){
-    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação'};
+    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação', size:'Tamanho'};
     const lbl = document.getElementById('btn-sort-lbl');
     if(lbl) lbl.textContent = labels[colSortMode] || 'Prioridade';
     const btn = document.getElementById('btn-sort');
@@ -6766,11 +6771,28 @@ function makeCardEl(card){
   return div;
 }
 
+// Nível de tamanho (👕 P/M/G/GG, ver SIZE_TAGS) do card, pela primeira tag de
+// tamanho encontrada entre as tags dele — null se não tiver nenhuma (cards sem
+// tamanho ficam por último na ordenação, nunca escondidos ou quebram o sort).
+function _cardSizeLevel(card){
+  const ids = getCardTags(card);
+  for(const id of ids){ const t=getTag(id); if(t && t.sizeLevel) return t.sizeLevel; }
+  return null;
+}
 // Ordena os cards de uma coluna conforme colSortMode — usado em renderNormal
 // e em todas as visões de raia (owner/tag/subteam), pra manter consistência
 // independente do modo de visualização escolhido.
 function _sortCards(arr, colId){
   const mode = (colId && colSortOverrides[colId]) || colSortMode;
+  if(mode==='size'){
+    return arr.slice().sort((a,b)=>{
+      const sa=_cardSizeLevel(a), sb=_cardSizeLevel(b);
+      if(sa!=null && sb!=null) return sa-sb; // P → M → G → GG
+      if(sa!=null && sb==null) return -1;
+      if(sa==null && sb!=null) return 1;
+      return 0;
+    });
+  }
   if(mode==='createdAt'){
     return arr.slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   }
@@ -7184,7 +7206,7 @@ function cycleColSort(colId){
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
-  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação'};
+  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação', size:'Tamanho'};
   const lbl = document.getElementById('btn-sort-lbl');
   if(lbl) lbl.textContent = labels[mode] || 'Prioridade';
   const btn = document.getElementById('btn-sort');
