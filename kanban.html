@@ -4161,7 +4161,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.179</div>
+<div class="version">v8.30.180</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5447,14 +5447,30 @@ function fbSaveAll(extra){
   // já é o caminho "caro" (reservado pra essas operações estruturais), então
   // recalcular o índice inteiro junto não muda a ordem de grandeza do
   // custo, e garante que este caminho nunca deixa o índice desatualizado.
+  const _nowIso = new Date().toISOString();
   const cardsIndex = {};
-  cards.forEach((c,i)=>{ if(c && c.id) cardsIndex[c.id] = String(i); });
+  const cardsUpdatedAt = {};
+  cards.forEach((c,i)=>{
+    if(!c || !c.id) return;
+    cardsIndex[c.id] = String(i);
+    // cards_updated_at/{cardId}->timestamp: índice PARALELO ao cards_index,
+    // nunca muda o formato dele (o Agente Ágil lê cards_index esperando uma
+    // string simples — ver fbSaveCard). Usado só pelo carregamento em duas
+    // etapas (ver fbLoadAll): baixar esse índice pequeno primeiro permite
+    // saber quais cards realmente mudaram desde a última visita, sem ler
+    // /cards inteiro de novo. Carimba TODOS os cards do array (não só os
+    // que essa operação de fato tocou) — fbSaveAll já reescreve o array
+    // inteiro mesmo, então marcar tudo como "fresco" não muda a ordem de
+    // grandeza do custo, e evita esconder uma mudança por engano.
+    c.updatedAt = _nowIso;
+    cardsUpdatedAt[c.id] = _nowIso;
+  });
   // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
   return Promise.all([
-    window._update(fb(FB), { cards, cards_index: cardsIndex, ...(extra||{}) }),
+    window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -5472,6 +5488,11 @@ function fbSaveAll(extra){
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
       if(!window._fbReady) return Promise.resolve();
+      // Carimba updatedAt AQUI, não confiando em quem chamou fbSaveCard() ter
+      // feito isso — centraliza a garantia num lugar só (mais fácil de manter
+      // certa do que auditar todo call-site) pro cards_updated_at (ver
+      // fbSaveAll) sempre refletir a hora real da última escrita.
+      card.updatedAt = new Date().toISOString();
       // Acha a CHAVE REAL do card no Firebase pelo id (via snapshot espelhado
       // pelos listeners granulares) — em vez de cards.indexOf(card), que é a
       // posição LOCAL no array e pode desalinhar da posição real no Firebase
@@ -5497,6 +5518,7 @@ function fbSaveAll(extra){
         updates['cards_index/'+card.id] = key;
       }
       updates['cards/'+key] = card;
+      updates['cards_updated_at/'+card.id] = card.updatedAt;
       return window._update(fb(FB), updates).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
@@ -5641,17 +5663,160 @@ let _cardsSyncDebounce = null;
       renderBoard();
       // Persiste o backfill (1x) sem disparar loop de echo
       if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
+      _persistCardsCacheFromCurrent();
     }
   }
   function _scheduleCardsSync(){
     clearTimeout(_cardsSyncDebounce);
     _cardsSyncDebounce = setTimeout(_applyCardsSync, 150);
   }
+  // ── Carregamento em duas etapas (índice pequeno primeiro) ──────────────
+  // Mesmo com listeners granulares, onChildAdded ainda dispara uma vez por
+  // card JÁ EXISTENTE toda vez que o board é aberto — baixando o objeto
+  // completo de cada card, mesmo que nada tenha mudado desde a última
+  // visita. cards_index (id->posição) e cards_updated_at (id->timestamp,
+  // ver PR #34) são MUITO menores que /cards — ler os dois primeiro e
+  // comparar com um cache local (por squad, em localStorage) permite
+  // reaproveitar os cards que não mudaram e baixar por completo só os que
+  // de fato mudaram ou são novos.
+  //
+  // cards_index é a lista AUTORITATIVA de ids (sempre completa — todo card
+  // com .id ganha entrada nela em fbSaveAll/fbSaveCard). cards_updated_at
+  // pode estar incompleto por um tempo após este recurso ser lançado (só
+  // ganha entrada quando o card é salvo de novo) — por isso um id sem
+  // timestamp remoto conta como "mudou", nunca fica de fora silenciosamente.
+  //
+  // Cai automaticamente no caminho de sempre (listener direto em /cards,
+  // como antes desta função existir) quando: não há cache local ainda (1a
+  // visita neste dispositivo/squad), ou quando uma fração grande demais dos
+  // cards mudou desde o cache (nesse caso ler tudo de uma vez é mais
+  // eficiente que centenas de leituras individuais — ex.: logo após um
+  // fbSaveAll() estrutural, que carimba TODOS os cards de novo). Em
+  // QUALQUER desses casos o resultado final é idêntico ao carregamento
+  // completo — nunca perde nem atrasa a exibição de um card.
+  const _CARDS_CACHE_KEY = 'cardsCache_v1_'+ACTIVE_SQUAD;
+  const _CARDS_CACHE_STALE_RATIO = 0.4;
+  function _loadCardsCache(){
+    try{
+      const raw = safeLS.getItem(_CARDS_CACHE_KEY);
+      if(!raw) return null;
+      const parsed = JSON.parse(raw);
+      if(!parsed || !parsed.cardsById || !parsed.updatedAtById) return null;
+      return parsed;
+    }catch(e){ return null; }
+  }
+  function _saveCardsCache(cardsById, updatedAtById){
+    // Pior caso (cota do localStorage estourada, Safari privado etc.):
+    // perde o cache, nunca quebra o board — próxima carga só cai pro
+    // caminho completo de novo.
+    try{ safeLS.setItem(_CARDS_CACHE_KEY, JSON.stringify({cardsById, updatedAtById})); }catch(e){}
+  }
+  // Persiste o cache a partir do array `cards` atual — chamado a cada sync
+  // (já debounced por _scheduleCardsSync), assim QUALQUER caminho de carga
+  // (dois-passos ou completo) deixa o dispositivo pronto pra usar o
+  // caminho barato na PRÓXIMA visita.
+  function _persistCardsCacheFromCurrent(){
+    const cardsById = {}, updatedAtById = {};
+    cards.forEach(c=>{
+      if(!c || !c.id) return;
+      cardsById[c.id] = c;
+      if(c.updatedAt) updatedAtById[c.id] = c.updatedAt;
+    });
+    _saveCardsCache(cardsById, updatedAtById);
+  }
+  // Pura — decide o que buscar de verdade. Separada do resto pra dar pra
+  // testar sem Firebase.
+  function _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAt){
+    const remoteIds = Object.keys(remoteIndex||{});
+    const toFetch = remoteIds.filter(id=>{
+      const remoteTs = (remoteUpdatedAt||{})[id];
+      if(remoteTs == null) return true; // ainda não migrado — trata como "mudou"
+      return (cachedUpdatedAt||{})[id] !== remoteTs;
+    });
+    return { remoteIds, toFetch };
+  }
+  let _liveCardsIndexById = {};
+  async function _twoPhaseCardsLoad(){
+    const cache = _loadCardsCache();
+    if(!cache) return false;
+    const [idxSnap, uaSnap] = await Promise.all([
+      fbGet(FB+'/cards_index'),
+      fbGet(FB+'/cards_updated_at'),
+    ]);
+    const remoteIndex = idxSnap.val() || {};
+    const remoteUpdatedAt = uaSnap.val() || {};
+    const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cache.updatedAtById);
+    if(!remoteIds.length) return false;
+    if(toFetch.length > remoteIds.length * _CARDS_CACHE_STALE_RATIO) return false;
+
+    const fetched = {};
+    await Promise.all(toFetch.map(async id=>{
+      const snap = await fbGet(FB+'/cards/'+remoteIndex[id]);
+      _dbgTrack('/cards:targeted_get', snap.val());
+      if(snap.val()) fetched[id] = snap.val();
+    }));
+
+    _liveCardsIndexById = Object.assign({}, remoteIndex);
+    _cardsByKey = {};
+    remoteIds.forEach(id=>{
+      const card = fetched[id] || cache.cardsById[id];
+      if(card) _cardsByKey[remoteIndex[id]] = card;
+    });
+    window._cardsByKey = _cardsByKey;
+    _applyCardsSync();
+
+    // Live updates a partir daqui: escuta os índices PEQUENOS (cards_index +
+    // cards_updated_at), não /cards inteiro — o burst inicial de
+    // onChildAdded nesses nós custa só posições/timestamps, não os cards
+    // completos. Uma mudança real ainda baixa o card inteiro (mesmo custo
+    // de hoje por mudança) — só o CARREGAMENTO INICIAL fica mais barato.
+    const _idxRef = fb(FB+'/cards_index');
+    window._onChildAdded(_idxRef, snap=>{ _dbgTrack('/cards_index:child_added(live)', snap.val()); _liveCardsIndexById[snap.key]=snap.val(); });
+    window._onChildChanged(_idxRef, snap=>{
+      _dbgTrack('/cards_index:child_changed(live)', snap.val());
+      const oldKey = _liveCardsIndexById[snap.key];
+      _liveCardsIndexById[snap.key] = snap.val();
+      if(oldKey!=null && oldKey!==snap.val()) delete _cardsByKey[oldKey];
+    });
+    window._onChildRemoved(_idxRef, snap=>{
+      _dbgTrack('/cards_index:child_removed(live)', snap.val());
+      delete _liveCardsIndexById[snap.key];
+      const key = snap.val();
+      if(key!=null){ delete _cardsByKey[key]; _scheduleCardsSync(); }
+    });
+
+    const _uaRef = fb(FB+'/cards_updated_at');
+    async function _onCardsUpdatedAtLive(snap){
+      _dbgTrack('/cards_updated_at:live', snap.val());
+      const id = snap.key, ts = snap.val();
+      let key = _liveCardsIndexById[id];
+      if(key==null){
+        // Corrida rara: evento de cards_updated_at chegou antes do de
+        // cards_index pro mesmo id novo — resolve na unha (leitura de um
+        // único valor, custo desprezível).
+        const idxOne = await fbGet(FB+'/cards_index/'+id);
+        key = idxOne.val();
+        if(key!=null) _liveCardsIndexById[id] = key;
+      }
+      if(key==null) return; // sem posição resolvível — a reconciliação periódica corrige depois
+      if(_cardsByKey[key] && _cardsByKey[key].updatedAt === ts) return; // já está atual (replay do burst inicial)
+      const snapCard = await fbGet(FB+'/cards/'+key);
+      _dbgTrack('/cards:targeted_get(live)', snapCard.val());
+      if(snapCard.val()){ _cardsByKey[key] = snapCard.val(); _scheduleCardsSync(); }
+    }
+    window._onChildAdded(_uaRef, _onCardsUpdatedAtLive);
+    window._onChildChanged(_uaRef, _onCardsUpdatedAtLive);
+
+    return true;
+  }
   if(window._fbReady){
-    const _cardsRef = fb(FB+'/cards');
-    window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-    window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-    window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+    _twoPhaseCardsLoad().catch(e=>{ console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e); return false; }).then(usedTwoPhase=>{
+      if(usedTwoPhase) return;
+      const _cardsRef = fb(FB+'/cards');
+      window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+      window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+      window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+    });
     // cards_index (ver fbSaveAll/fbSaveCard): dá tempo do burst inicial de
     // child_added popular _cardsByKey antes de comparar contra o remoto.
     setTimeout(_reconcileCardsIndexOnce, 4000);
@@ -5686,20 +5851,71 @@ let _cardsSyncDebounce = null;
     });
     return { toWrite, toRemove };
   }
+  // Mesma autocorreção acima, pro índice paralelo cards_updated_at (ver
+  // fbSaveAll/fbSaveCard) — usado só pelo carregamento em duas etapas
+  // (buscar o índice pequeno primeiro, decidir quais cards buscar de
+  // verdade). Card legado sem `updatedAt` nenhum (nunca foi salvo desde
+  // que este índice existe) ganha o horário ATUAL aqui — não é inventar
+  // histórico, é só registrar que ACABAMOS de confirmar esse é o conteúdo
+  // real (a reconciliação só roda depois do burst inicial de child_added
+  // já ter baixado o card por completo). Sem isso, um board com muitos
+  // cards parados fica PERMANENTEMENTE acima do limite de "mudou demais"
+  // (ver _twoPhaseCardsLoad) e nunca converge pro carregamento barato —
+  // carimbar aqui é o que deixa o índice se auto-completar com o uso
+  // normal, sem precisar que alguém edite cada card na mão.
+  function _diffCardsUpdatedAt(cardsByKey, remoteUpdatedAt, nowIso){
+    const toWrite = {};
+    const toRemove = [];
+    const liveIds = new Set();
+    Object.keys(cardsByKey||{}).forEach(key=>{
+      const card = cardsByKey[key];
+      if(!card || !card.id) return;
+      liveIds.add(card.id);
+      const ts = card.updatedAt || nowIso;
+      if(remoteUpdatedAt[card.id] !== ts) toWrite[card.id] = ts;
+    });
+    Object.keys(remoteUpdatedAt||{}).forEach(cardId=>{
+      if(!liveIds.has(cardId)) toRemove.push(cardId);
+    });
+    return { toWrite, toRemove };
+  }
   let _cardsIndexReconciled = false;
   async function _reconcileCardsIndexOnce(){
     if(_cardsIndexReconciled || !window._fbReady) return;
     _cardsIndexReconciled = true;
     try{
-      const snap = await fbGet(FB+'/cards_index');
-      const remoteIndex = snap.val() || {};
+      const [indexSnap, updatedAtSnap] = await Promise.all([
+        fbGet(FB+'/cards_index'),
+        fbGet(FB+'/cards_updated_at'),
+      ]);
+      const remoteIndex = indexSnap.val() || {};
+      const remoteUpdatedAt = updatedAtSnap.val() || {};
       const { toWrite, toRemove } = _diffCardsIndex(_cardsByKey, remoteIndex);
+      const _nowIso = new Date().toISOString();
+      const { toWrite:toWriteUA, toRemove:toRemoveUA } = _diffCardsUpdatedAt(_cardsByKey, remoteUpdatedAt, _nowIso);
       const updates = {};
       Object.keys(toWrite).forEach(cardId=>{ updates['cards_index/'+cardId] = toWrite[cardId]; });
       toRemove.forEach(cardId=>{ updates['cards_index/'+cardId] = null; });
+      Object.keys(toWriteUA).forEach(cardId=>{ updates['cards_updated_at/'+cardId] = toWriteUA[cardId]; });
+      toRemoveUA.forEach(cardId=>{ updates['cards_updated_at/'+cardId] = null; });
       if(Object.keys(updates).length){
         await window._update(fb(FB), updates);
-        _dbgTrack('cards_index:reconciled', {corrigidas:Object.keys(toWrite).length, removidas:toRemove.length});
+        // Reflete o backfill no espelho local também — senão o próximo
+        // _persistCardsCacheFromCurrent() (ver _applyCardsSync) grava o
+        // cache SEM o carimbo que acabou de ir pro remoto, e a sessão
+        // atual ficaria "burra" quanto ao que ela mesma acabou de corrigir.
+        Object.values(_cardsByKey).forEach(card=>{
+          if(card && card.id && toWriteUA[card.id] && !card.updatedAt) card.updatedAt = toWriteUA[card.id];
+        });
+        // Regrava o cache local JÁ com os carimbos corrigidos — sem isso, o
+        // blob salvo antes da reconciliação rodar fica com esses cards sem
+        // updatedAt pra sempre, e o PRÓPRIO device que acabou de corrigir o
+        // remoto continuaria caindo no fallback pra sempre também.
+        _persistCardsCacheFromCurrent();
+        _dbgTrack('cards_index:reconciled', {
+          corrigidas:Object.keys(toWrite).length, removidas:toRemove.length,
+          corrigidasUA:Object.keys(toWriteUA).length, removidasUA:toRemoveUA.length,
+        });
       }
     }catch(e){
       console.warn('[cards_index] reconciliação falhou:', e);
