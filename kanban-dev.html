@@ -2593,9 +2593,7 @@ input[type="date"]{-moz-appearance:textfield;}
               <option value="critical">🔥 Crítica</option>
             </select>
           </div>
-        </div>
-        <div class="card-attr-row" id="m-tamanho-row" style="display:none;">
-          <div class="field" style="flex:1;"><label class="fl">👕 Tamanho</label>
+          <div class="field" id="m-tamanho-field" style="flex:1;display:none;"><label class="fl">👕 Tamanho</label>
             <select class="fi" id="m-tamanho" onchange="setCardTamanho(this.value)">
               <option value="">— sem tamanho —</option>
               <option value="tag_tam_p">👕 P</option>
@@ -4194,7 +4192,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.208-dev</div>
+<div class="version">v8.30.209-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8435,7 +8433,7 @@ function toggleTamanhoAtivo(checked){
 // Ficha de Criativo (m-criativo-sec). Tags de tamanho continuam existindo
 // como tags normais mesmo com isso escondido; só a UI dedicada some.
 function _applyTamanhoUIVisibility(){
-  const row=document.getElementById('m-tamanho-row'); if(row) row.style.display=tamanhoAtivo?'':'none';
+  const field=document.getElementById('m-tamanho-field'); if(field) field.style.display=tamanhoAtivo?'':'none';
   const f=document.getElementById('f-tamanho'); if(f) f.style.display=tamanhoAtivo?'':'none';
 }
 // Troca a tag de tamanho do card sendo editado — exclusivo (nunca 2 tamanhos
