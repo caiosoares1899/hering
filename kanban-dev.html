@@ -2285,6 +2285,13 @@ input[type="date"]{-moz-appearance:textfield;}
   <select id="f-tag" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todas as tags</option>
   </select>
+  <select id="f-tamanho" onchange="applyFilters()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">👕 Qualquer tamanho</option>
+    <option value="tag_tam_p">👕 P</option>
+    <option value="tag_tam_m">👕 M</option>
+    <option value="tag_tam_g">👕 G</option>
+    <option value="tag_tam_gg">👕 GG</option>
+  </select>
   <select id="f-subteam" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os subtimes</option>
   </select>
@@ -2318,7 +2325,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="toolbar">
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <div style="position:relative;" id="sort-menu-wrap">
-    <button class="btn btn-sm" onclick="toggleSortMenu()" id="btn-sort" title="Ordenar cards dentro de cada coluna">↕ <span id="btn-sort-lbl">Prioridade</span></button>
+    <button class="btn btn-sm" onclick="toggleSortMenu()" id="btn-sort" title="Ordenar cards dentro de cada coluna">↕ <span id="btn-sort-lbl">Ordenação</span></button>
     <div id="sort-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
       background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
       box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:220px;z-index:500;overflow:hidden;">
@@ -2584,6 +2591,17 @@ input[type="date"]{-moz-appearance:textfield;}
               <option value="medium">🟡 Média</option>
               <option value="high">🔴 Alta</option>
               <option value="critical">🔥 Crítica</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-attr-row" id="m-tamanho-row" style="display:none;">
+          <div class="field" style="flex:1;"><label class="fl">👕 Tamanho</label>
+            <select class="fi" id="m-tamanho" onchange="setCardTamanho(this.value)">
+              <option value="">— sem tamanho —</option>
+              <option value="tag_tam_p">👕 P</option>
+              <option value="tag_tam_m">👕 M</option>
+              <option value="tag_tam_g">👕 G</option>
+              <option value="tag_tam_gg">👕 GG</option>
             </select>
           </div>
         </div>
@@ -4176,7 +4194,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.206-dev</div>
+<div class="version">v8.30.207-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5583,12 +5601,11 @@ function fbSaveMsgs(tab){
 
 function fbLoadAll(){
   // Sincroniza o botão de ordenação com a preferência já salva (localStorage)
-  // antes do primeiro renderBoard(), pra não mostrar "Prioridade" por engano
-  // quando a pessoa já tinha escolhido outro modo numa sessão anterior.
+  // antes do primeiro renderBoard(), pra já mostrar destacado (borda/cor teal)
+  // quando a pessoa já tinha escolhido um modo não-padrão numa sessão anterior.
+  // O botão em si é um rótulo fixo ("Ordenação") — não muda de texto por modo,
+  // mesmo padrão dos outros botões de configuração da toolbar (Filtros, Raia).
   (function _initSortLabel(){
-    const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação', size:'Tamanho'};
-    const lbl = document.getElementById('btn-sort-lbl');
-    if(lbl) lbl.textContent = labels[colSortMode] || 'Prioridade';
     const btn = document.getElementById('btn-sort');
     if(btn && colSortMode!=='priority'){
       btn.style.borderColor = 'var(--teal)';
@@ -5639,6 +5656,7 @@ function fbLoadAll(){
   fbListen(FB+'/config/tamanho_ativo', val=>{
     tamanhoAtivo = !!val;
     const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
+    _applyTamanhoUIVisibility();
   });
   fbListen(FB+'/config/criativos_listas', val=>{
     criativosListas = val||{};
@@ -7081,7 +7099,7 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
+let activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -7105,6 +7123,7 @@ function applyFilters(){
   activeFilters={
     owner:document.getElementById('f-owner').value,
     tag:document.getElementById('f-tag').value,
+    tamanho:document.getElementById('f-tamanho')?.value||'',
     due:document.getElementById('f-due').value,
     priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
@@ -7118,13 +7137,14 @@ function applyFilters(){
 function clearFilters(){
   document.getElementById('f-owner').value='';
   document.getElementById('f-tag').value='';
+  const ftm=document.getElementById('f-tamanho'); if(ftm) ftm.value='';
   document.getElementById('f-due').value='';
   const fp=document.getElementById('f-priority'); if(fp) fp.value='';
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   const fe=document.getElementById('f-exectype'); if(fe) fe.value='';
-  activeFilters={owner:'',tag:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
+  activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
@@ -7138,6 +7158,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
     if(!isInvolved) return false;
   }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
+  if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
@@ -7206,9 +7227,8 @@ function cycleColSort(colId){
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
-  const labels = {priority:'Prioridade', createdAt:'Data de criação', doneAt:'Prazo', movedAt:'Movimentação', size:'Tamanho'};
-  const lbl = document.getElementById('btn-sort-lbl');
-  if(lbl) lbl.textContent = labels[mode] || 'Prioridade';
+  // Rótulo do botão é fixo ("Ordenação") — só a cor/borda indica que um modo
+  // não-padrão está ativo (mesmo padrão de Filtros/Raia na toolbar).
   const btn = document.getElementById('btn-sort');
   if(btn){
     btn.style.borderColor = mode!=='priority' ? 'var(--teal)' : '';
@@ -7764,6 +7784,9 @@ function openCard(id){
   renderRiscos(c.riscos||[]);
   setCriativoFields(c.criativo||{});
   const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
+  const _sizeIds=SIZE_TAGS.map(t=>t.id);
+  const _mTam=document.getElementById('m-tamanho'); if(_mTam) _mTam.value=getCardTags(c).find(id=>_sizeIds.includes(id))||'';
+  _applyTamanhoUIVisibility();
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
@@ -8008,6 +8031,8 @@ function openNewCard(col){
   renderRiscos([]);
   setCriativoFields({});
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
+  const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
+  _applyTamanhoUIVisibility();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
@@ -8403,6 +8428,24 @@ function toggleTamanhoAtivo(checked){
     if(mudou){ fbSet(FB+'/tags', tags); renderTagEditor(); }
   }
   showToast(tamanhoAtivo?'👕 Tags de tamanho ativadas neste squad.':'Tags de tamanho desativadas (as já criadas continuam disponíveis).');
+  _applyTamanhoUIVisibility();
+}
+// Mostra/esconde o campo dedicado "👕 Tamanho" (modal do card) e o filtro
+// dedicado (barra de Filtros) conforme o toggle do squad — mesmo padrão da
+// Ficha de Criativo (m-criativo-sec). Tags de tamanho continuam existindo
+// como tags normais mesmo com isso escondido; só a UI dedicada some.
+function _applyTamanhoUIVisibility(){
+  const row=document.getElementById('m-tamanho-row'); if(row) row.style.display=tamanhoAtivo?'':'none';
+  const f=document.getElementById('f-tamanho'); if(f) f.style.display=tamanhoAtivo?'':'none';
+}
+// Troca a tag de tamanho do card sendo editado — exclusivo (nunca 2 tamanhos
+// ao mesmo tempo). tagId vazio remove qualquer tamanho já aplicado.
+function setCardTamanho(tagId){
+  const sizeIds = SIZE_TAGS.map(t=>t.id);
+  editingTags = editingTags.filter(id=>!sizeIds.includes(id));
+  if(tagId) editingTags.push(tagId);
+  populateTagSelect();
+  scheduleAutoSave();
 }
 // ── Listas de Criativos (CRUD) ──
 function renderCriativosListasCfg(){
@@ -13411,7 +13454,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas', text:'O botão ↕ na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Três opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral). O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
+    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
@@ -13474,6 +13517,7 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Automações', text:'Em Config → Auto, crie regras que disparam ações automaticamente. Exemplos: quando card mover para Impedimentos, notificar PO. Quando WIP exceder o limite, bloquear criação em Progresso.' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
+    { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
