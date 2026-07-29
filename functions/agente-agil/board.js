@@ -113,6 +113,18 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
         if (!db) throw new Error('buildWritePlan: ctx.readFlowMeta precisa de extra.db (ou extra.readFlowMeta injetado em teste)');
         return flowLib.readFlowMeta(db, SQUAD_ID);
       }),
+    // Lista de tags do squad ({id, label, ...}) — usado por editar_campos pra
+    // resolver o label legível que o especialista manda pro id interno que o
+    // card de verdade guarda em card.tags (ver outputs/editarCampos.js).
+    readTags:
+      extra.readTags ||
+      (() => {
+        if (!db) throw new Error('buildWritePlan: ctx.readTags precisa de extra.db (ou extra.readTags injetado em teste)');
+        return db
+          .ref(`kanban/squads/${SQUAD_ID}/dados/tags`)
+          .get()
+          .then((s) => s.val() || []);
+      }),
   };
   const plan = [];
   for (const out of outputs) {

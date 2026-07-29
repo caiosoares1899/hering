@@ -246,6 +246,21 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil (`functions/agente-agil/`)
 
+### 2026-07-29 · PR #50
+Corrige `editar_campos` gravando tag "invisível" na UI: o especialista manda
+o label legível (ex.: `"Piloto"`), mas `card.tags` é um array de IDs
+internos (`kanban.html` resolve cada id via `getTag()` pra desenhar os
+chips) — a função gravava o label cru sem resolver, então `getTag()` nunca
+achava a tag e renderizava vazio, sem erro nenhum (achado na validação
+manual do Sprint 3, teste 6.2). Mesma classe de bug já corrigida em
+`checklistItem.js`/`resolveGroup()` pra grupo de checklist: agora
+`editarCampos.js` resolve cada label contra
+`kanban/squads/{squad}/dados/tags` (case-insensitive) e grava o `.id`
+correspondente, mantendo o comportamento aditivo (nunca remove tag
+existente). Label que não bate com tag nenhuma do squad agora é erro (400
+`invalid_output`) em vez de gravar algo que a UI nunca vai conseguir
+resolver. **Requer `firebase deploy --only functions` manual.**
+
 ### v2 — 2026-07-25 · PR #23 · tag `agente-agil-v2`
 Sprint 3 — "vocabulário de ações": 4 novos tipos de output no envelope,
 além de comentário/link/relatório — `checklist_item` (marca ou cria item +
