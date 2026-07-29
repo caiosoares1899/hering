@@ -1,11 +1,20 @@
 // functions/agente-agil/outputs/moverColuna.js
 //
 // Move o card de coluna — replica o que o cliente faz em TODA movimentação
-// manual (recordMove -> card.flow, recordHistory -> card.history,
-// notifDone se o destino for coluna de "fim") pra o agente nunca mover um
-// card silenciosamente: quem olha o board depois vê no histórico que foi o
-// Agente Ágil quem moveu, e dono/participantes são avisados igual a uma
-// movimentação humana que chega em "Feito".
+// manual (recordMove -> card.flow, recordHistory -> card.history, notifDone
+// se o destino for coluna de "fim", notifMoved pra qualquer outra) pra o
+// agente nunca mover um card silenciosamente: quem olha o board depois vê
+// no histórico que foi o Agente Ágil quem moveu, e dono/participantes são
+// avisados igual a uma movimentação humana, seja pra "Feito" ou pra
+// qualquer coluna intermediária.
+//
+// Achado na validação manual do Sprint 3 (bloco mover_coluna): até aqui só
+// a notificação de coluna de fim (notifDone) tinha sido replicada — mover
+// pra uma coluna intermediária ficava silencioso pro agente, embora o
+// cliente (kanban.html:notifMoved, ver handleDrop) já notifique em QUALQUER
+// mudança de coluna há algum tempo. Não era intencional (o comentário acima
+// sempre disse "TODA movimentação manual") — o agente só ficou defasado
+// depois que notifMoved foi adicionado ao fluxo manual.
 //
 // "Coluna de fim", pra decidir se notifica, usa flowConfig.doneCols (ver
 // flow.js) — a config oficial que o PO ajusta em Configurações > Fluxo, não
@@ -80,20 +89,19 @@ async function build(out, ctx) {
         },
       ];
 
-      if (flow.isDoneColumn(out.coluna, meta)) {
-        const card = await ctx.readCard();
-        const members = await ctx.readMembers();
-        const notifSteps = await notify.buildOwnerParticipantNotifSteps(ctx.db, {
-          squadId: ctx.squadId,
-          card,
-          members,
-          type: 'done',
-          title: 'Card concluído 🎉',
-          cardId: ctx.cardId,
-          dryRun: ctx.dryRun,
-        });
-        steps.push(...notifSteps);
-      }
+      const isDone = flow.isDoneColumn(out.coluna, meta);
+      const card = await ctx.readCard();
+      const members = await ctx.readMembers();
+      const notifSteps = await notify.buildOwnerParticipantNotifSteps(ctx.db, {
+        squadId: ctx.squadId,
+        card,
+        members,
+        type: isDone ? 'done' : 'moved',
+        title: isDone ? 'Card concluído 🎉' : `Card movido para ${destName}`,
+        cardId: ctx.cardId,
+        dryRun: ctx.dryRun,
+      });
+      steps.push(...notifSteps);
 
       return steps;
     },

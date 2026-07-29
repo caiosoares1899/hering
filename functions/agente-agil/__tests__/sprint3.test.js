@@ -204,7 +204,13 @@ test('mover_coluna rejeita coluna inexistente', async () => {
   );
 });
 
-test('mover_coluna registra flow + histórico e não notifica pra coluna não-final', async () => {
+test('mover_coluna registra flow + histórico e notifica owner com tipo "moved" pra coluna não-final', async () => {
+  // Achado na validação manual do Sprint 3: o fluxo manual (notifMoved, ver
+  // kanban.html/handleDrop) notifica owner+participants em QUALQUER
+  // movimentação, não só na coluna de fim — mover_coluna do agente ficava
+  // silencioso pra colunas intermediárias, divergindo do cliente sem
+  // intenção. Corrigido pra sempre notificar, com type 'done'/'moved'
+  // conforme o destino.
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'backlog', owner: 'ANA' });
   const plan = await buildWritePlan('5', [{ type: 'mover_coluna', coluna: 'progress' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
@@ -218,7 +224,10 @@ test('mover_coluna registra flow + histórico e não notifica pra coluna não-fi
   assert.equal(card.flow.log.length, 1);
   assert.equal(card.flow.log[0].from, 'backlog');
   assert.equal(card.flow.log[0].to, 'progress');
-  assert.equal(db._data().kanban.usuarios, undefined, 'coluna não é done — não deveria notificar');
+  const notifsAna = Object.values(db._data().kanban.usuarios.uidAna.notificacoes || {});
+  assert.equal(notifsAna.length, 1);
+  assert.equal(notifsAna[0].type, 'moved');
+  assert.match(notifsAna[0].title, /Card movido para Em andamento/);
 });
 
 test('mover_coluna pra coluna done notifica owner+participants e marca flow.doneAt', async () => {

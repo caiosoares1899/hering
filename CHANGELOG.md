@@ -246,6 +246,21 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil (`functions/agente-agil/`)
 
+### 2026-07-29 · PR #52
+Corrige `mover_coluna` ficando silencioso ao mover um card pra coluna
+intermediária: o fluxo manual (`kanban.html`/`notifMoved`, ver `handleDrop`)
+notifica owner+participants em **qualquer** mudança de coluna há algum
+tempo, mas `mover_coluna` do Agente Ágil só replicava a notificação de
+coluna de fim (`notifDone`) — achado durante a validação manual do Sprint 3.
+Divergência não intencional (o próprio comentário do arquivo sempre disse
+"replica TODA movimentação manual"): o agente só ficou defasado depois que
+`notifMoved` foi adicionado ao fluxo manual. Corrigido reaproveitando
+`buildOwnerParticipantNotifSteps` também pra coluna não-final, com
+`type:'moved'` e título `Card movido para {coluna}` (mesmo texto do
+cliente). Teste de regressão atualizado pra confirmar a notificação em vez
+de confirmar a ausência dela. **Requer `firebase deploy --only functions`
+manual.**
+
 ### 2026-07-29 · PR #51
 Corrige um bug bem mais sério, achado ao re-testar o fix da PR #50: nenhuma
 escrita do Agente Ágil (nenhum dos 7 tipos de output — `comentario`, `link`,
