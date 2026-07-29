@@ -108,12 +108,22 @@ self.addEventListener('fetch', (e) => {
 // mandasse os dois juntos, alguns navegadores (Safari/iOS em especial) já
 // exibem a notificação sozinhos automaticamente ANTES deste código rodar,
 // e então isso aqui mostrava de novo por cima, duplicando o aviso.
+// URL COMPLETA em tudo que vira parâmetro de clients.openWindow()/showNotification()
+// (não relativa): iOS tem histórico de bugs resolvendo URL relativa dentro do
+// Service Worker (achado numa validação real — o link do push chegava sem o
+// /hering/, mesmo com o Service Worker já atualizado). Ver functions/index.js
+// pro mesmo raciocínio do lado de quem monta o payload do push.
+const SITE_BASE_URL = 'https://caiosoares1899.github.io/hering/';
 messaging.onBackgroundMessage((payload) => {
   const title = payload.data?.title || 'Maré Digital';
   const options = {
     body: payload.data?.body || '',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    // "/favicon.ico" nunca existiu neste repo (o ícone real do app é
+    // inline/data-URI em kanban.html) — sempre deu 404, silenciosamente
+    // (só o ícone da notificação ficava genérico, não travava nada).
+    // marinheiro.png é um arquivo estático de verdade.
+    icon: `${SITE_BASE_URL}marinheiro.png`,
+    badge: `${SITE_BASE_URL}marinheiro.png`,
     tag: payload.data?.tag || 'mare-digital-notif', // evita empilhar notificações repetidas
     data: payload.data || {},
   };
@@ -122,10 +132,7 @@ messaging.onBackgroundMessage((payload) => {
 // Clique na notificação → abre (ou foca) o board, opcionalmente já no card certo
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  // Sem barra inicial (ver functions/index.js) — o site fica em /hering/,
-  // não na raiz do domínio; URL relativa resolve certo a partir de
-  // self.location (onde este próprio Service Worker roda).
-  const url = event.notification.data?.url || 'kanban.html';
+  const url = event.notification.data?.url || `${SITE_BASE_URL}kanban.html`;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {

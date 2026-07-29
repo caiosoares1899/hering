@@ -70,13 +70,16 @@ exports.sendPushOnNotification = onValueCreated(
     // event.notification.data.url quando a pessoa clica no push; só faltava
     // essa URL incluir o card. Sem isso, todo push (inclusive menção) abria
     // só o board, deixando a pessoa procurar o card na mão.
-    // SEM barra inicial: o site fica em /hering/ (GitHub Pages de projeto,
-    // não a raiz do domínio) — uma URL absoluta como "/kanban.html" resolve
-    // pra caiosoares1899.github.io/kanban.html, que é 404. Relativa
-    // ("kanban.html") resolve certo porque o Service Worker que consome
-    // esse campo (firebase-messaging-sw.js, notificationclick) roda a
-    // partir de /hering/firebase-messaging-sw.js — mesma convenção já usada
-    // nos links internos do próprio kanban.html/kanban-dev.html.
+    // URL COMPLETA (com esquema+domínio), não relativa: a primeira versão
+    // desse fix usava "kanban.html" relativo (confiando que o Service Worker
+    // resolve a partir de self.location, que fica em /hering/) — funcionava
+    // no desktop, mas usuárias em iOS continuaram vendo 404 SEM o /hering/
+    // (achado numa validação real: link chegou como
+    // caiosoares1899.github.io/kanban.html?..., faltando o /hering/). O Web
+    // Push do iOS tem histórico de bugs resolvendo URL relativa dentro do
+    // Service Worker — uma URL já totalmente qualificada não depende de
+    // NENHUMA resolução do navegador, elimina essa classe de bug inteira.
+    const SITE_BASE_URL = 'https://caiosoares1899.github.io/hering/';
     const params = new URLSearchParams();
     if (notif.squad) params.set('squad', notif.squad);
     if (notif.cardId) params.set('card', notif.cardId);
@@ -87,7 +90,7 @@ exports.sendPushOnNotification = onValueCreated(
         body,
         tag: String(notif.type || 'geral') + '_' + String(notif.cardId || ''),
         cardId: String(notif.cardId || ''),
-        url: qs ? `kanban.html?${qs}` : 'kanban.html',
+        url: qs ? `${SITE_BASE_URL}kanban.html?${qs}` : `${SITE_BASE_URL}kanban.html`,
       },
       tokens,
     };

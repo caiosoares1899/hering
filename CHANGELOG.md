@@ -217,6 +217,22 @@ pra descrição principal, PO e comentário).
 
 ## Service Worker — `firebase-messaging-sw.js` (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-07-29 · PR #53
+Corrige push em iOS ainda levando pra 404 mesmo depois do fix da PR #36:
+aquele fix trocou a URL absoluta (`/kanban.html`) por uma relativa
+(`kanban.html`), confiando que o navegador resolve a partir de
+`self.location` do Service Worker (que roda em `/hering/`) — funcionava no
+desktop, mas usuárias em iOS reportaram o mesmo 404 (`caiosoares1899.github.io/kanban.html?...`,
+sem `/hering/`), sinal de que o Web Push do iOS tem bug conhecido resolvendo
+URL relativa dentro do Service Worker. Trocado por URL **totalmente
+qualificada** (com esquema+domínio) tanto no payload do push
+(`functions/index.js`) quanto no fallback do `notificationclick` — elimina
+qualquer dependência de resolução de URL pelo navegador, em qualquer
+plataforma. De quebra, corrigido também `icon`/`badge` da notificação
+(`/favicon.ico` nunca existiu neste repo — sempre deu 404 silencioso,
+ícone genérico em vez do logo do app); agora apontam pra `marinheiro.png`
+(arquivo estático real) com URL completa também.
+
 ### CACHE v2 — 2026-07-24 · PR #14
 Corrige o SW servindo HTML/`version.json` desatualizados: a estratégia
 stale-while-revalidate cacheava as páginas HTML e o `version.json`, o que
@@ -227,6 +243,13 @@ resto (imagens, libs de terceiros) continua como antes. Bump de `CACHE`
 (`v1` → `v2`) pra purgar cache antigo salvo com a estratégia anterior.
 
 ## Cloud Function — `sendPushOnNotification` (`functions/index.js`, sem versão própria em `version.json`)
+
+### 2026-07-29 · PR #53
+Mesmo fix descrito na seção do Service Worker acima: URL do deep-link do
+push passa a ser totalmente qualificada
+(`https://caiosoares1899.github.io/hering/kanban.html?...`) em vez de
+relativa — corrige 404 persistente em iOS. **Requer `firebase deploy
+--only functions` manual.**
 
 ### 2026-07-27 · PR #36
 Corrige o link do push levando pra fora do site: a URL do deep-link do
