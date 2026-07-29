@@ -246,6 +246,26 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil (`functions/agente-agil/`)
 
+### 2026-07-29 · PR #51
+Corrige um bug bem mais sério, achado ao re-testar o fix da PR #50: nenhuma
+escrita do Agente Ágil (nenhum dos 7 tipos de output — `comentario`, `link`,
+`relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`,
+`editar_campos`) nunca tocava `cards_updated_at/{cardId}`, o índice paralelo
+que o cliente (`fbSaveCard`/`fbSaveAll` em `kanban.html`) sempre carimba
+junto com qualquer escrita de card, e que o delta-sync
+(`_planCardsDelta`/carregamento em duas etapas, ver PR #47/#48) usa pra
+decidir se um card precisa ser rebuscado. Sem esse carimbo, toda mudança
+feita pelo agente ficava invisível pro delta-sync — o board seguia servindo
+a versão em cache de antes da chamada, pra sempre (nem no F5, nem ao vivo),
+sem erro nenhum em lugar nenhum. Era exatamente por isso que o teste 6.2
+(tags) continuava "sem efeito" na UI mesmo depois do fix da PR #50 gravar o
+id certo no card. Corrigido centralizando o carimbo em `applyWritePlan()`
+(`board.js`): quando o plano de escrita toca algum path dentro do card,
+`updatedAt` do card e `cards_updated_at/{cardId}` são gravados no mesmo
+commit lógico, com o mesmo timestamp — nenhum output builder precisa saber
+disso individualmente. Regressão cobrindo os 7 tipos de output confirmando
+o carimbo. **Requer `firebase deploy --only functions` manual.**
+
 ### 2026-07-29 · PR #50
 Corrige `editar_campos` gravando tag "invisível" na UI: o especialista manda
 o label legível (ex.: `"Piloto"`), mas `card.tags` é um array de IDs
