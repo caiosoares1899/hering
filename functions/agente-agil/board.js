@@ -39,6 +39,18 @@ const notifications = require('./notifications');
 const SQUAD_ID = 'ecomm';
 const CARDS_PATH = `kanban/squads/${SQUAD_ID}/dados/cards`;
 const CARDS_INDEX_PATH = `kanban/squads/${SQUAD_ID}/dados/cards_index`;
+// cards_updated_at/{cardId}->timestamp: índice paralelo que o CLIENTE
+// (kanban.html, fbSaveCard/fbSaveAll) sempre carimba junto com qualquer
+// escrita de card — é dele que o delta-sync (_planCardsDelta, carregamento
+// em duas etapas E os listeners ao vivo) decide se um card mudou desde a
+// última visita, sem ler /cards inteiro de novo. Se uma escrita no card não
+// carimbar isso, ela fica INVISÍVEL pro delta-sync: o cliente segue servindo
+// a versão em cache pra sempre, sem erro nenhum (achado na validação manual
+// do Sprint 3, teste 6.2 — editar_campos escrevia a tag certinho no card,
+// mas a UI nunca via a mudança). applyWritePlan() carimba isso centralizado
+// (ver mais abaixo) pra todo write do Agente Ágil manter o mesmo invariante
+// que o cliente já mantém — nenhum output builder precisa saber disso.
+const CARDS_UPDATED_AT_PATH = `kanban/squads/${SQUAD_ID}/dados/cards_updated_at`;
 // Sprint 2: recorrentes_index/{recorrenteDe}/{recorrenteData} -> cardId.
 // Mesmo espírito do cards_index (get pontual O(1) em vez de escanear /cards),
 // mantido pelo CLIENTE — processRecorrentes() em kanban.html grava isso no
@@ -160,11 +172,18 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
   return plan;
 }
 
-async function applyWritePlan(db, plan) {
+// Executa os steps de verdade e devolve os paths tocados (inclui os steps
+// que só existem por causa de um hook `after`, ex.: o history escrito depois
+// que uma transaction de tags/coluna/status commita) — usado por
+// applyWritePlan() pra decidir se a escrita tocou o card e precisa carimbar
+// updatedAt/cards_updated_at (ver CARDS_UPDATED_AT_PATH acima).
+async function _applySteps(db, plan) {
+  const touchedPaths = [];
   for (const step of plan) {
     if (step.kind === 'noop') {
       continue; // só existe em dryRun (relatorio_html não sobe nada pra preview) — defensivo
     }
+    touchedPaths.push(step.path);
     let result;
     if (step.kind === 'update') {
       await db.ref(step.path).update(step.data);
@@ -175,9 +194,36 @@ async function applyWritePlan(db, plan) {
     }
     if (step.after) {
       const moreSteps = await step.after(result);
-      if (moreSteps && moreSteps.length) await applyWritePlan(db, moreSteps);
+      if (moreSteps && moreSteps.length) touchedPaths.push(...(await _applySteps(db, moreSteps)));
     }
   }
+  return touchedPaths;
 }
 
-module.exports = { SQUAD_ID, CARDS_PATH, CARDS_INDEX_PATH, RECORRENTES_INDEX_PATH, resolveCardKey, buildWritePlan, applyWritePlan };
+// cardMeta ({cardPath, cardId}) é opcional — quando vem (sempre, no uso real
+// via http.js), e algum step do plano tocou dentro do card (path === cardPath
+// ou começa com `${cardPath}/`), carimba updatedAt do card + cards_updated_at
+// no MESMO commit lógico da escrita, com um único timestamp pros dois. Sem
+// isso, todo write do Agente Ágil fica invisível pro delta-sync do cliente
+// (ver comentário de CARDS_UPDATED_AT_PATH) — não é responsabilidade de cada
+// output builder saber disso, por isso fica centralizado aqui.
+async function applyWritePlan(db, plan, cardMeta = null) {
+  const touchedPaths = await _applySteps(db, plan);
+  if (!cardMeta) return;
+  const touchedCard = touchedPaths.some((p) => p === cardMeta.cardPath || (p && p.startsWith(`${cardMeta.cardPath}/`)));
+  if (!touchedCard) return;
+  const stampedAt = new Date().toISOString();
+  await db.ref(cardMeta.cardPath).update({ updatedAt: stampedAt });
+  await db.ref(CARDS_UPDATED_AT_PATH).update({ [cardMeta.cardId]: stampedAt });
+}
+
+module.exports = {
+  SQUAD_ID,
+  CARDS_PATH,
+  CARDS_INDEX_PATH,
+  RECORRENTES_INDEX_PATH,
+  CARDS_UPDATED_AT_PATH,
+  resolveCardKey,
+  buildWritePlan,
+  applyWritePlan,
+};

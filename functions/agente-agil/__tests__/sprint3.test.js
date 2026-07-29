@@ -9,7 +9,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { makeFakeDb } = require('./fakeDb');
-const { buildWritePlan, applyWritePlan, CARDS_PATH } = require('../board');
+const { buildWritePlan, applyWritePlan, CARDS_PATH, CARDS_UPDATED_AT_PATH } = require('../board');
 const membersLib = require('../members');
 const flowLib = require('../flow');
 const notifications = require('../notifications');
@@ -360,4 +360,91 @@ test('extractMentionedMembers resolve por handle (email) e por init, ignora toke
   const found = notifications.extractMentionedMembers('oi @ana.silva e @BRU, e @ninguem.aqui não existe', members);
   assert.equal(found.length, 2);
   assert.deepEqual(found.map((m) => m.uid).sort(), ['u1', 'u2']);
+});
+
+// ── carimbo de updatedAt/cards_updated_at (delta-sync) ──────────────────
+//
+// Achado real na validação manual do Sprint 3 (teste 6.2): editar_campos
+// escrevia a tag certinho no card, mas nenhuma escrita do Agente Ágil nunca
+// tocava cards_updated_at/{cardId} — o índice que o delta-sync do cliente
+// (kanban.html, _planCardsDelta) usa pra decidir se um card precisa ser
+// rebuscado. Sem esse carimbo, o cliente segue servindo a versão em cache
+// pra sempre, sem erro nenhum. applyWritePlan() agora carimba isso
+// centralizado quando recebe cardMeta ({cardPath, cardId}) — exatamente
+// como http.js faz em todo request real (ver board.js).
+
+function cardUpdatedAtOf(db, cardKey) {
+  return db._data().kanban.squads.ecomm.dados.cards[cardKey].updatedAt;
+}
+function remoteUpdatedAtOf(db, cardId) {
+  // Navega CARDS_UPDATED_AT_PATH em vez de repetir o path na unha, pra este
+  // teste quebrar se o path exportado por board.js algum dia divergir.
+  const node = CARDS_UPDATED_AT_PATH.split('/').reduce((cur, seg) => (cur ? cur[seg] : undefined), db._data());
+  return node?.[cardId];
+}
+
+test('applyWritePlan sem cardMeta não carimba nada (compatibilidade com chamadas antigas/sem contexto de card)', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', desc: 'antiga' });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', desc: 'nova' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+  assert.equal(cardUpdatedAtOf(db, '5'), undefined);
+  assert.equal(remoteUpdatedAtOf(db, 'c5'), undefined);
+});
+
+test('editar_campos carimba updatedAt do card e cards_updated_at no mesmo write, com o mesmo timestamp', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', desc: 'antiga' });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', desc: 'nova' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  const stampedCard = cardUpdatedAtOf(db, '5');
+  const stampedRemote = remoteUpdatedAtOf(db, 'c5');
+  assert.ok(stampedCard, 'card.updatedAt deveria ter sido carimbado');
+  assert.equal(stampedCard, stampedRemote, 'card.updatedAt e cards_updated_at/{cardId} devem ter o MESMO timestamp');
+});
+
+test('comentario carimba cards_updated_at', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress' });
+  const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'oi' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  assert.ok(remoteUpdatedAtOf(db, 'c5'));
+});
+
+test('link carimba cards_updated_at', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress' });
+  const plan = await buildWritePlan('5', [{ type: 'link', url: 'https://x.com', titulo: 'X' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  assert.ok(remoteUpdatedAtOf(db, 'c5'));
+});
+
+test('checklist_item carimba cards_updated_at (inclusive quando a escrita relevante só existe dentro do hook after)', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', checklist: [], checklistGroups: [] });
+  const plan = await buildWritePlan('5', [{ type: 'checklist_item', item: 'Gerar relatório', done: true }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  assert.ok(remoteUpdatedAtOf(db, 'c5'));
+});
+
+test('agent_status carimba cards_updated_at', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress' });
+  const plan = await buildWritePlan('5', [{ type: 'agent_status', status: 'running' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  assert.ok(remoteUpdatedAtOf(db, 'c5'));
+});
+
+test('mover_coluna carimba cards_updated_at', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'backlog', owner: 'ANA' });
+  const plan = await buildWritePlan('5', [{ type: 'mover_coluna', coluna: 'progress' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  assert.ok(remoteUpdatedAtOf(db, 'c5'));
+});
+
+test('relatorio_html carimba cards_updated_at (escrita só existe via buildLinkStep, não no builder direto)', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress' });
+  const html = '<html><body><img src="data:image/png;base64,QUJD"></body></html>';
+  const plan = await buildWritePlan('5', [{ type: 'relatorio_html', html, titulo: 'Relatório' }], {
+    cardId: 'c5',
+    db,
+    reportBasePath: (squadId, cardId) => `relatorios/${squadId}/${cardId}`,
+    uploadAndSign: async (path) => `https://fake-storage.example/${path}`,
+  });
+  await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
+  assert.ok(remoteUpdatedAtOf(db, 'c5'));
 });

@@ -21,7 +21,7 @@ const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
 
 const { envelope } = require('./schema');
-const { SQUAD_ID, resolveCardKey, buildWritePlan, applyWritePlan } = require('./board');
+const { SQUAD_ID, CARDS_PATH, resolveCardKey, buildWritePlan, applyWritePlan } = require('./board');
 const { resolveReferencia } = require('./resolver');
 
 const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
@@ -118,7 +118,10 @@ const agenteAgil = onRequest(
       return;
     }
 
-    await applyWritePlan(db, plan);
+    // cardMeta faz applyWritePlan carimbar updatedAt do card + cards_updated_at
+    // no mesmo write (ver board.js) — sem isso, o cliente (delta-sync) nunca
+    // percebe que esse card mudou.
+    await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/${cardKey}`, cardId });
     await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).set({ at: new Date().toISOString() });
 
     res.status(200).json({ ok: true, cardKey, applied: plan.length });
