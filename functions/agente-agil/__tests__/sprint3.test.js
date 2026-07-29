@@ -31,6 +31,12 @@ const COLUMNS_SEED = {
   config: { flow: { startCols: ['progress'], doneCols: ['done'], reportCols: [] } },
 };
 
+const TAGS_SEED = [
+  { id: 'tag_1', label: 'Urgente', pi: 0 },
+  { id: 'tag_2', label: 'Financeiro', pi: 1 },
+  { id: 'tag_3', label: 'Piloto', pi: 2 },
+];
+
 function seedDb(cardKey, card) {
   membersLib._resetCacheForTests();
   flowLib._resetCacheForTests();
@@ -41,6 +47,7 @@ function seedDb(cardKey, card) {
         ecomm: {
           dados: {
             cards: { [cardKey]: card },
+            tags: TAGS_SEED,
             ...COLUMNS_SEED,
           },
         },
@@ -258,14 +265,43 @@ test('editar_campos atualiza desc/priority e registra histórico dos dois', asyn
   assert.equal(card.history.length, 2);
 });
 
-test('editar_campos adiciona tags sem remover as existentes (add-only)', async () => {
-  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: ['urgente'] });
-  const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['urgente', 'financeiro'] }], { cardId: 'c5', db });
+test('editar_campos resolve tag por label pro id correto', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: [] });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['Piloto'] }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
   const card = db._data().kanban.squads.ecomm.dados.cards['5'];
-  assert.deepEqual(card.tags, ['urgente', 'financeiro']);
+  assert.deepEqual(card.tags, ['tag_3']);
   assert.equal(card.history.length, 1);
-  assert.match(card.history[0].what, /adicionou tag\(s\): financeiro/);
+  assert.match(card.history[0].what, /adicionou tag\(s\): Piloto/);
+});
+
+test('editar_campos resolve tag por label case-insensitive', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: [] });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['piloto'] }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  assert.deepEqual(card.tags, ['tag_3']);
+});
+
+test('editar_campos rejeita label de tag inexistente no squad, sem gravar nada', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: ['tag_1'] });
+  await assert.rejects(
+    () => buildWritePlan('5', [{ type: 'editar_campos', tags: ['Piloto', 'NãoExiste'] }], { cardId: 'c5', db }),
+    (err) => err.code === 'invalid_output'
+  );
+  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  assert.deepEqual(card.tags, ['tag_1']);
+  assert.equal(card.history, undefined);
+});
+
+test('editar_campos adiciona tags sem remover as existentes (add-only)', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: ['tag_1'] });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['Urgente', 'Financeiro'] }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  assert.deepEqual(card.tags, ['tag_1', 'tag_2']);
+  assert.equal(card.history.length, 1);
+  assert.match(card.history[0].what, /adicionou tag\(s\): Financeiro/);
 });
 
 test('editar_campos com desc mencionando @alguém notifica a pessoa', async () => {

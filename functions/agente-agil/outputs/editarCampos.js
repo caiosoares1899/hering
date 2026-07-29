@@ -13,6 +13,19 @@
 // notifications.js) — sem isso, editar a descrição pelo agente nunca
 // notificava ninguém, porque isso normalmente acontece no <textarea> do
 // cliente (parseMentions()), que o agente nunca toca.
+//
+// tags: o especialista manda o LABEL legível (ex.: "Piloto"), não o id
+// interno da tag — ele não tem por que conhecer esse id, e não faz sentido
+// pedir pra conhecer. card.tags, porém, é um array de IDs (kanban.html
+// resolve cada id via getTag()/tags.find(t=>t.id===id) pra desenhar os
+// chips); gravar o label cru ali deixava a tag "invisível" na UI (getTag()
+// não achava nada com aquele id, renderizava vazio, sem erro nenhum) —
+// mesma classe de bug já corrigida em checklistItem.js/resolveGroup() pra
+// grupo de checklist, agora resolvida aqui pra tags: busca o label contra
+// kanban/squads/{squad}/dados/tags (case-insensitive, mesmo padrão de
+// resolveGroup()) e grava o .id correspondente. Label que não bate com
+// tag nenhuma do squad é erro (400 invalid_output) — prefere recusar a
+// arriscar gravar algo que a UI nunca vai conseguir resolver.
 
 const notify = require('../notifications');
 
@@ -23,6 +36,12 @@ function truncateForHistory(v) {
   if (v == null || v === '') return '—';
   const s = String(v);
   return s.length > 40 ? s.substring(0, 40) + '…' : s;
+}
+
+function resolveTagId(labelInput, squadTags) {
+  const list = Array.isArray(squadTags) ? squadTags : Object.values(squadTags || {});
+  const match = list.find((t) => t && t.label && t.label.toLowerCase() === String(labelInput).toLowerCase());
+  return match ? match.id : null;
 }
 
 async function build(out, ctx) {
@@ -62,6 +81,17 @@ async function build(out, ctx) {
   }
 
   if (out.tags !== undefined && out.tags.length) {
+    const squadTags = await ctx.readTags();
+    const resolved = out.tags.map((label) => ({ label, id: resolveTagId(label, squadTags) }));
+    const unresolved = resolved.find((r) => !r.id);
+    if (unresolved) {
+      const err = new Error(`editar_campos: tag "${unresolved.label}" não existe no squad`);
+      err.code = 'invalid_output';
+      throw err;
+    }
+    const idToLabel = new Map(resolved.map((r) => [r.id, r.label]));
+    const resolvedIds = resolved.map((r) => r.id);
+
     let originalTags = [];
     steps.push({
       kind: 'transaction',
@@ -69,21 +99,22 @@ async function build(out, ctx) {
       transform(current) {
         originalTags = Array.isArray(current) ? current.slice() : [];
         const tags = originalTags.slice();
-        out.tags.forEach((t) => {
-          if (t && !tags.includes(t)) tags.push(t);
+        resolvedIds.forEach((id) => {
+          if (id && !tags.includes(id)) tags.push(id);
         });
         return tags;
       },
       after: async () => {
-        const newlyAdded = out.tags.filter((t) => t && !originalTags.includes(t));
+        const newlyAdded = resolvedIds.filter((id) => id && !originalTags.includes(id));
         if (!newlyAdded.length) return [];
+        const newlyAddedLabels = newlyAdded.map((id) => idToLabel.get(id) || id);
         return [
           {
             kind: 'transaction',
             path: `${ctx.cardPath}/history`,
             transform(current) {
               const history = Array.isArray(current) ? current.slice() : [];
-              history.push({ who: 'Agente Ágil', what: `adicionou tag(s): ${newlyAdded.join(', ')}`, at: nowISO });
+              history.push({ who: 'Agente Ágil', what: `adicionou tag(s): ${newlyAddedLabels.join(', ')}`, at: nowISO });
               return history.length > HIST_CAP ? history.slice(-HIST_CAP) : history;
             },
           },
