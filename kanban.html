@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.187</div>
+<div class="version">v8.30.188</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12496,6 +12496,23 @@ function saveTags(){
 // Esta função repara o que já ficou órfão: escaneia todos os cards,
 // acha IDs de tag que não existem mais em `tags`, e recria uma tag de
 // verdade pra cada um (com um rótulo legível a partir do próprio ID).
+//
+// BUGFIX: alguns squads têm tags legadas com IDs que não seguem o padrão
+// "tag_<slug>_<4chars>" do import do Trello (ex.: IDs puramente numéricos,
+// como um Date.now() cru). Pra esses, o replace() de prefixo/sufixo não
+// tinha o que remover — o rótulo "derivado" acabava sendo o próprio ID
+// (ex.: "1782410107254"), parecendo um bug de UI em vez de uma tag de
+// verdade. Agora só usa o ID como base do rótulo quando ele bate com o
+// formato esperado; caso contrário, marca claramente como "sem nome" (com
+// o ID entre parênteses, pra continuar rastreável) em vez de expor o
+// número cru.
+function _derivarLabelTagFantasma(tid){
+  if(/^tag_/.test(tid)){
+    const label=tid.replace(/^tag_/,'').replace(/_[a-z0-9]{4}$/,'').replace(/_/g,' ').trim();
+    if(label) return label.charAt(0).toUpperCase()+label.slice(1);
+  }
+  return `Tag sem nome (${tid})`;
+}
 function _repararTagsFantasmas(){
   const encontrados = new Map(); // tagId órfão -> quantos cards usam
   cards.forEach(c=>{
@@ -12511,9 +12528,7 @@ function _repararTagsFantasmas(){
   let idx=0;
   const criadas=[];
   encontrados.forEach((n,tid)=>{
-    // Deriva um rótulo legível do próprio ID (ex.: "tag_revisao_a1b2" -> "Revisao")
-    let label=tid.replace(/^tag_/,'').replace(/_[a-z0-9]{4}$/,'').replace(/_/g,' ').trim();
-    label=label? label.charAt(0).toUpperCase()+label.slice(1) : tid;
+    const label=_derivarLabelTagFantasma(tid);
     const pi=PALETTE_CYCLE[idx++ % PALETTE_CYCLE.length];
     tags.push({id:tid, label, pi});
     criadas.push(`${label} (${n} card${n>1?'s':''})`);
