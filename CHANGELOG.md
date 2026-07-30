@@ -161,6 +161,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.212-dev — 2026-07-30 · PR #56
+Três pedidos do time, todos só no modal do card:
+- **Checklist difícil de selecionar com o mouse**: `d.draggable=true` era
+  aplicado no item inteiro desde a criação, então qualquer gesto de
+  clicar-e-arrastar no texto virava drag nativo do navegador em vez de
+  seleção — só dava pra selecionar clicando dentro e usando Ctrl+A. Agora só
+  a alcinha ⠿ arma o drag (mousedown/touchstart), igual ao padrão já usado
+  em `renderColCfgSubPrio()`.
+- **Botão "copiar checklist"**: 📋 no cabeçalho da seção Checklist —
+  copia todos os itens de todos os grupos (`[x]`/`[ ]` + texto, agrupado por
+  título) pro clipboard em texto puro, pra colar em outro lugar (Slack,
+  outro card) sem precisar selecionar item por item.
+- **Atalho "ir para Descrição"**: botão ⬇️ fixo no cabeçalho do modal (que
+  já é `position:sticky`) — rola suave até o campo Descrição, que fica no
+  meio do modal e é muito usado pelo time.
+- **Tamanhos de texto na Descrição (principal e adicionais)**: dropdown "Tt"
+  no início da barra de formatação (Texto normal / Título 1 / 2 / 3),
+  inspirado no Trello (referência anexada pelo time). A sintaxe markdown
+  (`#`/`##`/`###`) e a renderização já existiam (`renderMd()`,
+  `_mdToExportHtml()`) desde a função de copiar com formatação — só faltava
+  um jeito de inserir sem digitar na mão. Só 3 níveis (não os 6 do Trello),
+  que é até onde a renderização já sabe desenhar; dá pra estender depois se
+  fizer falta. Comentários (`m-comment-inp`, edição de comentário) ficaram
+  de fora de propósito — não foi pedido pra eles.
+
+Só landing no dev — aguardando validação antes de promover pra prod.
+
 ### v8.30.211-dev — 2026-07-30 · PR #54
 Corrige o mesmo bug de ícone quebrado achado e corrigido na PR #53 pro push
 (`firebase-messaging-sw.js`/`functions/index.js`), agora na notificação
