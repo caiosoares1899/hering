@@ -184,6 +184,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.220-dev — 2026-07-30 · PR #66
+Remove o filtro "Qualquer executor" (`#f-exectype`) da barra de Filtros —
+redundante com o seletor 👤/🤝/🤖 do cabeçalho (`hybrid-view-switch`),
+que já filtra por `card.executorType`. Não eram 100% idênticos (o seletor
+do cabeçalho é inclusivo — 👤 mostra humano OU híbrido; o dropdown fazia
+match exato — 👤 mostrava só humano, excluindo híbrido), mas a diferença é
+sutil o bastante pra não valer o item a mais na barra, que também ajuda a
+reduzir quebra de linha (discutido numa validação real comparando com o
+fix da PR #65). Removida também a chave `execType` de `activeFilters` e o
+check correspondente em `passesFilter()`.
+
 ### v8.30.219-dev — 2026-07-30 · PR #65
 Ajuste no fix da PR #64 (achado numa validação real): o `margin-left:auto`
 resolvia o agrupamento, mas fazia "💡 Meus cards"/"✕ Limpar" quebrarem pra

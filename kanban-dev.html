@@ -2329,12 +2329,6 @@ input[type="date"]{-moz-appearance:textfield;}
     <option value="medium">🟡 Média</option>
     <option value="low">🟢 Baixa</option>
   </select>
-  <select id="f-exectype" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
-    <option value="">Qualquer executor</option>
-    <option value="human">👤 Humano</option>
-    <option value="agent">🤖 Agente</option>
-    <option value="hybrid">🤝 Híbrido</option>
-  </select>
   <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
     <input type="checkbox" id="f-blocker" onchange="applyFilters()" style="accent-color:var(--danger);"> Só impedidos
   </label>
@@ -4226,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.219-dev</div>
+<div class="version">v8.30.220-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7176,7 +7170,7 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
+let activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -7206,7 +7200,6 @@ function applyFilters(){
     blocker:document.getElementById('f-blocker').checked,
     risco:document.getElementById('f-risco').checked,
     subteam:document.getElementById('f-subteam')?.value||'',
-    execType:document.getElementById('f-exectype')?.value||'',
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
   renderBoard();
@@ -7220,8 +7213,7 @@ function clearFilters(){
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
-  const fe=document.getElementById('f-exectype'); if(fe) fe.value='';
-  activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:'',execType:''};
+  activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
@@ -7240,7 +7232,6 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
-  if(activeFilters.execType&&(card.executorType||'human')!==activeFilters.execType) return false;
   if(activeFilters.due){
     if(!card.due) return false;
     if(_isColDone(card.col)) return false;
