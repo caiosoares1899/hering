@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.227-dev</div>
+<div class="version">v8.30.228-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5518,6 +5518,7 @@ function fbSaveAll(extra){
   const _nowIso = new Date().toISOString();
   const cardsIndex = {};
   const cardsUpdatedAt = {};
+  const cardsArchived = {};
   cards.forEach((c,i)=>{
     if(!c || !c.id) return;
     cardsIndex[c.id] = String(i);
@@ -5532,13 +5533,22 @@ function fbSaveAll(extra){
     // grandeza do custo, e evita esconder uma mudança por engano.
     c.updatedAt = _nowIso;
     cardsUpdatedAt[c.id] = _nowIso;
+    // cards_archived/{cardId}->true: só existe pra cards arquivados (ausente
+    // = ativo). Índice leve que _twoPhaseCardsLoad() usa pra parar de
+    // reverificar cards arquivados a cada carga do board (ver fbLoadAll) —
+    // sem isso, um board com muitos cards antigos arquivados (comum, ex.:
+    // squads grandes acumulam anos de histórico) fica pra sempre baixando
+    // TODOS eles de novo a cada sessão, mesmo que ninguém nunca abra
+    // Arquivados. Reescrito por completo aqui (igual cards_index/
+    // cards_updated_at) porque fbSaveAll já reescreve o array inteiro mesmo.
+    if(c.archived) cardsArchived[c.id] = true;
   });
   // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
   return Promise.all([
-    window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, ...(extra||{}) }),
+    window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -5587,6 +5597,11 @@ function fbSaveAll(extra){
       }
       updates['cards/'+key] = card;
       updates['cards_updated_at/'+card.id] = card.updatedAt;
+      // cards_archived/{cardId}->true: mesmo índice mantido em fbSaveAll (ver
+      // comentário lá) — aqui é update pontual, então precisa gravar `true`
+      // OU `null` (remove) explicitamente conforme o estado atual do card,
+      // nunca deixar a entrada velha pra trás quando alguém desarquiva.
+      updates['cards_archived/'+card.id] = card.archived ? true : null;
       return window._update(fb(FB), updates).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
@@ -5861,9 +5876,21 @@ let _cardsSyncDebounce = null;
   }
   // Pura — decide o que buscar de verdade. Separada do resto pra dar pra
   // testar sem Firebase.
-  function _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAt){
+  //
+  // remoteArchived (cards_archived/{id}->true, só existe pra arquivados):
+  // um card arquivado só entra em toFetch se NUNCA tiver sido cacheado
+  // (primeira vez neste dispositivo) — não mais toda vez que o timestamp
+  // dele mudar. Cards arquivados raramente mudam e quase ninguém abre
+  // Arquivados; sem essa exceção, board grande com muito histórico
+  // arquivado (comum) fica pra sempre rebaixando todo mundo a cada sessão,
+  // mesmo sem nunca abrir a tela de Arquivados (achado num squad real:
+  // 84% dos cards arquivados, consumo de leitura crescendo sem parar).
+  // `cards` continua tendo TUDO (ativos + arquivados) — só muda a
+  // FREQUÊNCIA de reverificação, não o que fica disponível localmente.
+  function _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAt, remoteArchived){
     const remoteIds = Object.keys(remoteIndex||{});
     const toFetch = remoteIds.filter(id=>{
+      if((remoteArchived||{})[id]) return (cachedUpdatedAt||{})[id] === undefined;
       const remoteTs = (remoteUpdatedAt||{})[id];
       if(remoteTs == null) return true; // ainda não migrado — trata como "mudou"
       return (cachedUpdatedAt||{})[id] !== remoteTs;
@@ -5871,16 +5898,19 @@ let _cardsSyncDebounce = null;
     return { remoteIds, toFetch };
   }
   let _liveCardsIndexById = {};
+  let _liveArchivedIds = new Set();
   async function _twoPhaseCardsLoad(){
     const cache = await _loadCardsCache();
     if(!cache) return false;
-    const [idxSnap, uaSnap] = await Promise.all([
+    const [idxSnap, uaSnap, archSnap] = await Promise.all([
       fbGet(FB+'/cards_index'),
       fbGet(FB+'/cards_updated_at'),
+      fbGet(FB+'/cards_archived'),
     ]);
     const remoteIndex = idxSnap.val() || {};
     const remoteUpdatedAt = uaSnap.val() || {};
-    const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cache.updatedAtById);
+    const remoteArchived = archSnap.val() || {};
+    const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cache.updatedAtById, remoteArchived);
     if(!remoteIds.length) return false;
     if(toFetch.length > remoteIds.length * _CARDS_CACHE_STALE_RATIO) return false;
 
@@ -5892,6 +5922,7 @@ let _cardsSyncDebounce = null;
     }));
 
     _liveCardsIndexById = Object.assign({}, remoteIndex);
+    _liveArchivedIds = new Set(Object.keys(remoteArchived));
     _cardsByKey = {};
     remoteIds.forEach(id=>{
       const card = fetched[id] || cache.cardsById[id];
@@ -5920,10 +5951,20 @@ let _cardsSyncDebounce = null;
       if(key!=null){ delete _cardsByKey[key]; _scheduleCardsSync(); }
     });
 
+    // Mantém _liveArchivedIds em sincronia durante a sessão — um card
+    // arquivado/desarquivado AGORA (por qualquer pessoa) precisa mudar de
+    // comportamento na hora, sem esperar reload: arquivar para de forçar
+    // reverificação; desarquivar volta a tratar como ativo normal (a
+    // próxima mudança em cards_updated_at, se houver, já baixa de novo).
+    const _archRef = fb(FB+'/cards_archived');
+    window._onChildAdded(_archRef, snap=>{ _dbgTrack('/cards_archived:live', snap.val()); _liveArchivedIds.add(snap.key); });
+    window._onChildRemoved(_archRef, snap=>{ _dbgTrack('/cards_archived:live(removed)', null); _liveArchivedIds.delete(snap.key); });
+
     const _uaRef = fb(FB+'/cards_updated_at');
     async function _onCardsUpdatedAtLive(snap){
       _dbgTrack('/cards_updated_at:live', snap.val());
       const id = snap.key, ts = snap.val();
+      if(_liveArchivedIds.has(id)) return; // arquivado -- não força rebaixar, já está cacheado
       let key = _liveCardsIndexById[id];
       if(key==null){
         // Corrida rara: evento de cards_updated_at chegou antes do de
