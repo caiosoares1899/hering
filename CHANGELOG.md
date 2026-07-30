@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.186 — 2026-07-30 · PR #67
+Promove pra prod tudo desde a v8.30.185 (PRs #64-#66), validado no dev:
+
+- Corrige quebra de linha feia dos botões "💡 Meus cards"/"✕🗑️" na barra
+  de Filtros (agrupados, sem `margin-left:auto`, fluem normal com o resto
+  da barra).
+- Remove o filtro "Qualquer executor", redundante com o seletor 👤/🤝/🤖
+  do cabeçalho.
+
 ### v8.30.185 — 2026-07-30 · PR #63
 Promove pra prod tudo desde a v8.30.184 (PRs #61 e #62), validado no dev:
 
