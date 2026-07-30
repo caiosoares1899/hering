@@ -193,6 +193,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.221-dev — 2026-07-30 · PR #68
+Corrige "💡 Meus cards" (PR #61) só destacando/rolando até o card na
+coluna Concluído, ignorando cards em outras colunas — achado numa
+validação real. Causa: colunas grandes só renderizam os primeiros 80
+cards por performance (`_colRenderLimit`, botão "ver mais") — um card da
+pessoa além desse limite numa coluna maior (ex.: em andamento) nem existia
+no DOM ainda, então não tinha como pulsar nem rolar até ele. Só funcionava
+em colunas pequenas (como Concluído, tipicamente com poucos cards).
+Corrigido expandindo o limite de renderização da coluna pro total dela
+quando há um card da pessoa além do limite atual. Testado com harness
+Playwright simulando uma coluna com 90 cards (card da pessoa na posição
+85, além do limite padrão de 80) — agora renderiza e pulsa certo.
+
 ### v8.30.220-dev — 2026-07-30 · PR #66
 Remove o filtro "Qualquer executor" (`#f-exectype`) da barra de Filtros —
 redundante com o seletor 👤/🤝/🤖 do cabeçalho (`hybrid-view-switch`),

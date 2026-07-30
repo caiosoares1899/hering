@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.220-dev</div>
+<div class="version">v8.30.221-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9457,6 +9457,19 @@ function highlightMyCards(){
 
   let expandedSome=false;
   mine.forEach(c=>{ if(collapsedCols.has(c.col)){ collapsedCols.delete(c.col); expandedSome=true; } });
+
+  // Colunas grandes só renderizam os primeiros N cards por performance (ver
+  // renderNormal()/_colRenderLimit, "ver mais") — achado numa validação
+  // real: se um card meu está além do limite atual da coluna, ele nem
+  // existe no DOM ainda, então nem pulsa nem dá pra rolar até ele (só
+  // funcionava em colunas pequenas, como Concluído). Expande o limite pra
+  // cobrir a coluna inteira quando isso acontece.
+  new Set(mine.map(c=>c.col)).forEach(colId=>{
+    const totalNaColuna = cards.filter(c=>!c.archived && c.col===colId && passesFilter(c)).length;
+    const limiteAtual = _colRenderLimit[colId] || 80;
+    if(totalNaColuna > limiteAtual){ _colRenderLimit[colId] = totalNaColuna; expandedSome=true; }
+  });
+
   if(expandedSome) renderBoard();
 
   mine.forEach(c=>{
