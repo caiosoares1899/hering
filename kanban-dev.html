@@ -1153,8 +1153,17 @@ input[type="date"]{-moz-appearance:textfield;}
 .eoc-editing .fmt-toolbar,.xdesc-card.editing .fmt-toolbar{display:flex;}
 .fmt-btn{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;}
 .fmt-btn:hover{background:rgba(56,182,255,.18);color:var(--txt);}
-.fmt-heading-select{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);height:24px;border-radius:5px;cursor:pointer;font-size:11px;padding:0 3px;transition:all .12s;font-family:"DM Sans",sans-serif;margin-right:2px;}
-.fmt-heading-select:hover{background:rgba(56,182,255,.18);color:var(--txt);}
+.fmt-heading-dd{position:relative;display:inline-block;margin-right:2px;}
+.fmt-heading-btn{width:auto;padding:0 6px;gap:2px;font-size:11px;}
+.fmt-heading-menu{position:absolute;top:calc(100% + 4px);left:0;z-index:50;display:none;
+  background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:8px;
+  min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;}
+.fmt-heading-menu.show{display:block;}
+.fmt-heading-opt{padding:7px 12px;font-size:12px;color:var(--txt2);cursor:pointer;transition:background .1s;white-space:nowrap;}
+.fmt-heading-opt:hover{background:rgba(37,99,201,.2);color:var(--txt);}
+.fmt-heading-opt.fmt-h1{font-size:15px;font-weight:700;color:var(--txt);}
+.fmt-heading-opt.fmt-h2{font-size:14px;font-weight:700;color:var(--txt);}
+.fmt-heading-opt.fmt-h3{font-size:13px;font-weight:600;color:var(--txt);}
 .fmt-colors{display:inline-flex;gap:3px;padding:0 4px;border-left:1px solid var(--glass-b);border-right:1px solid var(--glass-b);margin:0 2px;}
 .fmt-color{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;padding:0;transition:transform .12s;}
 .fmt-color:hover{transform:scale(1.2);}
@@ -2735,13 +2744,15 @@ input[type="date"]{-moz-appearance:textfield;}
           data-placeholder="Adicionar descrição..."
           onclick="eocEdit('desc-eoc')"></div>
         <div class="fmt-toolbar" data-for="m-desc">
-          <select class="fmt-heading-select" onmousedown="event.stopPropagation()" onchange="_fmtText('m-desc','heading',this.value);this.value='';" title="Tamanho do texto">
-            <option value="" selected disabled>Tt</option>
-            <option value="0">Texto normal</option>
-            <option value="1">Título 1</option>
-            <option value="2">Título 2</option>
-            <option value="3">Título 3</option>
-          </select>
+          <div class="fmt-heading-dd">
+            <button type="button" class="fmt-btn fmt-heading-btn" onmousedown="event.preventDefault()" onclick="_toggleHeadingDD(this)" title="Tamanho do texto">Tt ▾</button>
+            <div class="fmt-heading-menu">
+              <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','0');_closeHeadingDD(this)">Texto normal</div>
+              <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','1');_closeHeadingDD(this)">Título 1</div>
+              <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','2');_closeHeadingDD(this)">Título 2</div>
+              <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','3');_closeHeadingDD(this)">Título 3</div>
+            </div>
+          </div>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','bold')" title="Negrito"><b>B</b></button>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','italic')" title="Itálico"><i>I</i></button>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','underline')" title="Sublinhado"><u>U</u></button>
@@ -4204,7 +4215,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.212-dev</div>
+<div class="version">v8.30.213-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7643,13 +7654,15 @@ function renderExtraDescs(){
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
           </div>
           <div class="fmt-toolbar">
-            <select class="fmt-heading-select" onmousedown="event.stopPropagation()" onchange="_fmtText('${taId}','heading',this.value);this.value='';" title="Tamanho do texto">
-              <option value="" selected disabled>Tt</option>
-              <option value="0">Texto normal</option>
-              <option value="1">Título 1</option>
-              <option value="2">Título 2</option>
-              <option value="3">Título 3</option>
-            </select>
+            <div class="fmt-heading-dd">
+              <button type="button" class="fmt-btn fmt-heading-btn" onmousedown="event.preventDefault()" onclick="_toggleHeadingDD(this)" title="Tamanho do texto">Tt ▾</button>
+              <div class="fmt-heading-menu">
+                <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','0');_closeHeadingDD(this)">Texto normal</div>
+                <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','1');_closeHeadingDD(this)">Título 1</div>
+                <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','2');_closeHeadingDD(this)">Título 2</div>
+                <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','3');_closeHeadingDD(this)">Título 3</div>
+              </div>
+            </div>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
@@ -18035,6 +18048,24 @@ function openCardDepMapModal(){
 // ═══════════════════════════════════════════════════════
 // EDIT-ON-CLICK (EOC) — campos que editam ao clicar
 // ═══════════════════════════════════════════════════════
+
+// ── dropdown "Tt" de tamanho de texto (Descrição) — custom em vez de
+// <select> nativo porque a LISTA aberta de um <select> é renderizada pelo
+// SO/navegador, fora do alcance do CSS do app (ficava branca, destoando
+// completamente do tema escuro — achado numa validação real). ──
+function _toggleHeadingDD(btn){
+  const menu = btn.nextElementSibling;
+  const wasOpen = menu.classList.contains('show');
+  document.querySelectorAll('.fmt-heading-menu.show').forEach(m=>m.classList.remove('show'));
+  if(!wasOpen) menu.classList.add('show');
+}
+function _closeHeadingDD(optEl){
+  optEl.closest('.fmt-heading-menu')?.classList.remove('show');
+}
+document.addEventListener('mousedown', e=>{
+  if(e.target.closest('.fmt-heading-dd')) return;
+  document.querySelectorAll('.fmt-heading-menu.show').forEach(m=>m.classList.remove('show'));
+});
 
 // ── inserir marcador de formatação na seleção do textarea ──
 async function _fmtText(taId, type, arg){
