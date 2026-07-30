@@ -368,7 +368,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-it{flex:1;cursor:text;word-break:break-word;min-width:0;border-radius:4px;padding:2px 4px;}
 .cl-it.cl-it-done{text-decoration:line-through;opacity:.5;}
 .cl-it:hover{background:rgba(56,182,255,.1);}
-.cl-it[contenteditable=true]{outline:1px solid rgba(56,182,255,.4);background:rgba(3,13,26,.6);padding:2px 6px;cursor:text;}
+.cl-it-edit-ta{flex:1;min-width:0;outline:1px solid rgba(56,182,255,.4);background:rgba(3,13,26,.6);padding:2px 6px;cursor:text;border:none;resize:none;overflow:hidden;font:inherit;color:inherit;border-radius:4px;}
 .cl-item input[type=checkbox]{accent-color:var(--teal);}
 .cl-it{flex:1;color:var(--txt);}
 .cl-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;}
@@ -4215,7 +4215,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.213-dev</div>
+<div class="version">v8.30.214-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8403,23 +8403,47 @@ function renderCL(cl){
       const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
       handle.addEventListener('mousedown',()=>d.draggable=true);
       handle.addEventListener('touchstart',()=>d.draggable=true,{passive:true});
-      const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
+      // Texto do item guarda a fonte crua em data-raw (o que fica em card.checklist,
+      // lido por getCL()) e mostra renderMd() no modo leitura — pedido do time:
+      // permitir @menção (pessoa OU agente de IA) num item de checklist, igual já
+      // funciona em descrição/comentário/PO. Edição trocou de contenteditable pra
+      // <textarea> DE VERDADE (mesmo elemento entra/sai do DOM a cada clique) só
+      // porque initMentionDropdown() precisa de .value/.selectionStart de verdade
+      // pra reaproveitar o MESMO dropdown de autocomplete (@nome, @sigla, @card:)
+      // que já existe pra descrição/comentário/PO — contenteditable não tem essas
+      // propriedades nativamente, teria que duplicar toda aquela lógica.
+      const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':'');
+      span.dataset.raw=item.t; span.innerHTML=renderMd(item.t);
       cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); pctEl.textContent=''; scheduleAutoSave(); _agentSimRefreshUI(); });
       span.title='Clique para editar';
-      let _prev='';
+      const clEditId='cl-edit-ta-'+i;
       span.addEventListener('click',()=>{
-        _prev=span.textContent;
-        span.contentEditable='true'; span.focus();
-        const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
-        const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-      });
-      span.addEventListener('blur',()=>{
-        span.contentEditable='false';
-        if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
-      });
-      span.addEventListener('keydown',e=>{
-        if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
-        if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
+        const prevRaw=span.dataset.raw||'';
+        const ta=document.createElement('textarea');
+        ta.className='cl-it-edit-ta'; ta.id=clEditId; ta.rows=1; ta.value=prevRaw;
+        span.replaceWith(ta);
+        ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+        ta.focus(); ta.selectionStart=ta.selectionEnd=ta.value.length;
+        initMentionDropdown(clEditId);
+        ta.addEventListener('input',()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
+        let finished=false;
+        function finishEdit(save){
+          if(finished) return; finished=true;
+          document.getElementById(clEditId+'-mention-dd')?.remove();
+          const newRaw = save ? ta.value.trim() : prevRaw;
+          if(save && newRaw!==prevRaw) saveUndo('editar item checklist');
+          span.dataset.raw = newRaw;
+          span.innerHTML = renderMd(newRaw);
+          ta.replaceWith(span);
+          if(save && newRaw!==prevRaw) scheduleAutoSave();
+        }
+        ta.addEventListener('blur',()=>finishEdit(true));
+        ta.addEventListener('keydown',e=>{
+          const dd=document.getElementById(clEditId+'-mention-dd');
+          const ddOpen = dd && dd.classList.contains('open');
+          if(e.key==='Enter' && !ddOpen){ e.preventDefault(); ta.blur(); }
+          else if(e.key==='Escape'){ e.preventDefault(); if(dd) dd.classList.remove('open'); finishEdit(false); }
+        });
       });
       const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
       del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
@@ -8440,11 +8464,21 @@ function renderCL(cl){
   });
 }
 function getCL(){
-  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({
-    t: r.querySelector('.cl-it')?.textContent?.trim()||'',
-    done: r.querySelector('input[type=checkbox]')?.checked||false,
-    grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
-  })).filter(x=>x.t);
+  // .cl-it guarda a fonte crua em data-raw (ver renderCL) — mas se o autosave
+  // (debounce disparado por OUTRO campo, ex.: Título) cair bem no meio de uma
+  // edição de item ainda não commitada, o .cl-it desse item foi TROCADO por um
+  // .cl-it-edit-ta (a <textarea> de edição) — sem esse fallback, esse item
+  // sumiria silenciosamente do save (querySelector('.cl-it') não acharia nada,
+  // getCL() devolveria '' pra ele, e o filter(x=>x.t) no final descartaria).
+  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>{
+    const editingTa = r.querySelector('.cl-it-edit-ta');
+    const t = editingTa ? editingTa.value.trim() : (r.querySelector('.cl-it')?.dataset.raw?.trim()||'');
+    return {
+      t,
+      done: r.querySelector('input[type=checkbox]')?.checked||false,
+      grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
+    };
+  }).filter(x=>x.t);
 }
 // Copia todos os itens de todos os checklists do card (texto puro, "[x]"/"[ ]"
 // por item, agrupado por título) — pedido do time: selecionar item por item
@@ -14606,6 +14640,9 @@ saveCard = function(){
   // caso de terem sido digitadas e salvas via o botão "Salvar" geral do
   // card (não só via saveExtraDesc(), o botão de cada bloco individual).
   (card.descsExtra||[]).forEach(d=>parseMentions(d?.text, cardId));
+  // Itens de checklist também podem ter @menção (pessoa ou agente de IA) —
+  // pedido do time, mesmo mecanismo/dedupe determinístico dos outros campos.
+  (card.checklist||[]).forEach(it=>parseMentions(it?.t, cardId));
 
   // Responsável novo
   if(card.owner && card.owner!==prevOwner)

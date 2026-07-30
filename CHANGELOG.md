@@ -161,6 +161,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.214-dev — 2026-07-30 · PR #58
+Adiciona @menção (pessoa ou agente de IA) nos itens de checklist — pedido do
+time, mesmo mecanismo que já funciona em descrição/comentário/PO.
+
+- Item de checklist agora guarda o texto cru em `data-raw` e renderiza via
+  `renderMd()` no modo leitura (menção vira chip clicável com tooltip,
+  agente de IA ganha 🤖, igual em qualquer outro lugar do app).
+- Edição trocou de `contenteditable` pra uma `<textarea>` real que entra/sai
+  do DOM a cada clique — só assim dá pra reaproveitar `initMentionDropdown()`
+  (autocomplete de `@nome`/`@sigla`/`@card:`, mesmo dropdown já usado em
+  descrição/comentário/PO) sem duplicar toda aquela lógica, já que ela
+  depende de `.value`/`.selectionStart`, que `contenteditable` não tem.
+- `getCL()` ganhou um fallback: se o autosave (disparado por OUTRO campo,
+  ex.: Título) cair bem no meio de uma edição de item ainda não commitada,
+  lê o valor ao vivo da `<textarea>` em vez de simplesmente não achar
+  `.cl-it` (que teria sido trocado pela textarea) e descartar o item do
+  save silenciosamente — achado e testado antes de subir, com harness em
+  Playwright simulando clique → editar → autosave no meio → Escape/Enter/
+  blur, confirmando que nenhum cenário perde texto nem duplica o save.
+- Hook central de notificação (`saveCard`) passa a escanear
+  `card.checklist` também, junto com desc/po/blockerReason/descsExtra.
+
 ### v8.30.213-dev — 2026-07-30 · PR #57
 Corrige o dropdown "Tt" da PR #56 (tamanhos de texto na Descrição): usava
 `<select>` nativo, e a LISTA aberta de um `<select>` é renderizada pelo
