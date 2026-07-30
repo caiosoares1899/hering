@@ -492,6 +492,29 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Validação final do system prompt v1 — etapa encerrada
+Confirma a execução do `scripts/llmRealSystemPromptV1DryRunContraSquadDev.js`
+(entrada anterior) com `ler_card` disponível, contra o squad `dev` real,
+mesmo pedido aberto de antes ("dá uma olhada nesse card e vê se falta
+algo"). Primeira prova de que a cautela descrita no prompt se traduz em
+decisões coerentes na prática:
+- Usou `ler_card` primeiro (analisou antes de agir).
+- Identificou o card vazio sem inventar conteúdo.
+- Respeitou um aviso de "não mexer" no título, sem regra explícita sobre
+  isso no prompt — inferência correta de cautela.
+- Escolheu `comentario` (baixo risco) em vez de ação de risco médio, e foi
+  transparente sobre a incerteza.
+- Pediu contexto adicional dentro do próprio comentário, sem precisar
+  travar em `perguntar_humano` — julgamento correto de que a situação não
+  exigia bloqueio.
+
+Com isso, encerra a etapa de validação técnica e de comportamento da
+Fase 2: loop + ferramentas reais + LLM real + `ler_card` + system prompt
+v1, tudo validado contra dados reais do squad `dev`, sempre com `dryRun`
+fixo (nenhuma escrita real em nenhum teste). Próximos passos (tirar o
+`dryRun` fixo, ampliar o system prompt, etc.) ficam pra uma próxima
+sessão — nenhuma decisão de escopo tomada aqui.
+
 ### 2026-07-30 · ler_card — primeira ferramenta de leitura
 Confirma a execução do `scripts/llmRealSystemPromptV1DryRunContraSquadDev.js`
 (entrada anterior, pedido aberto): `status: 'awaiting_human'`, o modelo

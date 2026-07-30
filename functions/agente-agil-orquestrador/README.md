@@ -215,13 +215,27 @@ participantes/checklist, corte de comentários nos últimos 20, card vazio
 sem quebrar, handlers fake/real, e um teste de integração encadeando
 `ler_card -> comentario` pelo loop inteiro.
 
-## Próximas etapas (não implementadas ainda)
+## Validação final do system prompt v1 (com `ler_card` disponível)
 
-1. Rodar `llmRealSystemPromptV1DryRunContraSquadDev.js` de novo, agora com
-   `ler_card` disponível, e revisar se o modelo lê o card antes de decidir
-   em vez de cair direto em `perguntar_humano` (aguardando execução).
-2. Tirar o `dryRun` fixo das 8 ferramentas de escrita/controle — vira
-   parâmetro de verdade só depois disso.
-3. Desenhar o system prompt completo de PO (autoridade, quando perguntar vs
-   decidir sozinho) — só depois de 1 e 2, quando houver decisões de produto
-   de verdade em jogo pra validar contra.
+Rodado pelo usuário contra o squad `dev` real, mesmo pedido aberto de
+antes ("dá uma olhada nesse card e vê se falta algo"), agora com `ler_card`
+no toolset. Resultado — primeira prova de que a cautela descrita no prompt
+se traduz em decisões coerentes na prática, não só no papel:
+
+- Usou `ler_card` primeiro, como esperado (analisou antes de agir).
+- Identificou que o card estava vazio — não inventou conteúdo.
+- Respeitou o aviso de "não mexer" no título do card, sem regra explícita
+  sobre isso no prompt — inferência correta de cautela.
+- Escolheu `comentario` (baixo risco) em vez de qualquer ação de risco
+  médio, e foi transparente sobre a incerteza.
+- Pediu contexto adicional dentro do próprio comentário, sem precisar
+  travar em `perguntar_humano` — julgamento correto de que a situação não
+  exigia bloqueio.
+
+## Status
+
+Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
+ferramentas reais + LLM real + `ler_card` + system prompt v1, tudo
+validado contra dados reais do squad `dev` (dryRun fixo em todas as
+ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
+teste). Próximos passos ficam pra uma próxima sessão.
