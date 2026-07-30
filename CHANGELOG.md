@@ -161,6 +161,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.213-dev — 2026-07-30 · PR #57
+Corrige o dropdown "Tt" da PR #56 (tamanhos de texto na Descrição): usava
+`<select>` nativo, e a LISTA aberta de um `<select>` é renderizada pelo
+sistema operacional/navegador, fora do alcance do CSS do app — ficava
+branca, destoando completamente do tema escuro (achado numa validação real).
+Trocado por um dropdown custom (botão + menu absolutamente posicionado),
+mesmo padrão visual já usado no dropdown de `@card:` (`.link-dropdown`/
+`.link-option`) — fecha ao clicar fora ou ao escolher uma opção.
+
 ### v8.30.212-dev — 2026-07-30 · PR #56
 Três pedidos do time, todos só no modal do card:
 - **Checklist difícil de selecionar com o mouse**: `d.draggable=true` era
