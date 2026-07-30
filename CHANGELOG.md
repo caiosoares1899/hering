@@ -18,7 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.188 — 2026-07-30 · PR #80
+### v8.30.189 — 2026-07-30 · PR #82
+Promove pra prod o fix validado no dev (`v8.30.225-dev`): "💡 Meus cards"
+destacava cards de outra pessoa quando `window._currentUserInit` (recém-
+calculado por uma fórmula ingênua a cada login) divergia do `init`
+registrado no Firebase, que pode ter sido editado manualmente pra resolver
+colisão de iniciais entre pessoas de nome parecido. `autoRegistrar()`
+agora usa `existe.init` (autoritativo) pro usuário já cadastrado, em vez do
+valor recém-calculado.
+
+### v8.30.188 — 2026-07-30 · PR #81
 Promove pra prod o fix validado no dev (v8.30.224-dev): "🔧 Detectar e
 reparar tags fantasma" mostrava o ID cru como rótulo (ex.: `1782410107254`)
 quando a tag órfã tinha um ID que não segue o padrão `tag_<slug>_<4chars>`

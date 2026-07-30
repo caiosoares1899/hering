@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.188</div>
+<div class="version">v8.30.189</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6589,6 +6589,14 @@ function autoRegistrar(user){
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
+      // BUGFIX "Meus cards" destacando card de outra pessoa: window._currentUserInit
+      // era calculado só pela fórmula ingênua (1ª letra de cada palavra do nome) lá em
+      // cima no auth-change, e NUNCA corrigido pro `init` de verdade registrado no
+      // Firebase (que pode ter sido editado manualmente pra resolver colisão com outra
+      // pessoa de nome parecido — ver campo ✎ Iniciais). _euEstouNoCard() faz match
+      // exato contra window._currentUserInit, então uma divergência aqui podia acabar
+      // batendo com a inicial registrada de OUTRA pessoa. Usa o valor autoritativo.
+      window._currentUserInit=existe.init||window._currentUserInit;
       window._currentUserRole=getEffectiveRole(user, existe.squads_roles&&existe.squads_roles[ACTIVE_SQUAD], existe.role);
       // ⚡ Sincroniza usuarios_publicos SEMPRE no login, não só quando uma
       // condição específica muda abaixo (foto, virar ADM, migração de squad).
