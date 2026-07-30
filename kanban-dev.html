@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.226-dev</div>
+<div class="version">v8.30.227-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5708,6 +5708,24 @@ function fbLoadAll(){
   });
   fbListen(FB+'/tags',val=>{
     if(!val) return;
+    // BUGFIX (causa raiz das tags "fantasma"): enquanto o editor de tags
+    // (Config → Tags) está aberto, as linhas do DOM já renderizadas dependem
+    // do ÍNDICE do array `tags` no momento em que renderTagEditor() rodou —
+    // updateTagName(i,...)/setTagColor(i,...)/delTag(i) mexem em `tags[i]`,
+    // não numa referência direta à tag. Sem esta guarda, uma atualização
+    // remota chegando aqui (ex.: outra pessoa salvando tags ao mesmo tempo)
+    // REATRIBUÍA `tags` pra um array novo por baixo do editor aberto — os
+    // handlers passavam a mexer no item ERRADO do array novo (mesmo índice,
+    // tag diferente), e o saveTags() seguinte sobrescrevia /tags inteiro
+    // (fbSet, sem merge) com esse estado corrompido, derrubando silenciosamente
+    // tags que ainda estavam em uso por cards. Mesmo espírito de proteção que
+    // o listener de `cards` já tem (_hasLocalSession/_lastLocalSave) — aqui,
+    // ignora a atualização remota enquanto o editor de tags está de fato
+    // aberto E mostrando linhas (cfg-ov aberto podia estar noutra aba de
+    // configuração, sem nenhuma linha de tag renderizada — nesse caso não
+    // há edição local em risco, então a atualização remota pode aplicar
+    // normalmente).
+    if(document.getElementById('cfg-ov')?.classList.contains('open') && document.querySelector('#tag-editor .tag-row')) return;
     const incoming = Array.isArray(val) ? val : Object.values(val);
     if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
   });
