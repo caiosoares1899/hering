@@ -492,6 +492,28 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Script de dryRun com LLM real
+Adiciona `scripts/llmRealDryRunContraSquadDev.js` — mesmo objetivo técnico
+do script anterior (validar encanamento contra o squad `dev` real), mas
+troca o cliente scriptado pelo `createAnthropicLlmClient` de verdade.
+**Primeiro script desta fase que gasta tokens de verdade** — decisão
+deliberada e combinada com o usuário antes de escrever, não efeito
+colateral de mais um teste. `dryRun` continua fixo em `true` — nada é
+escrito de verdade, mesmo com o LLM real decidindo.
+
+Princípios de segurança seguidos (pedidos explicitamente antes da
+implementação): `ANTHROPIC_API_KEY` só é lida de variável de ambiente,
+nunca aparece em nenhum log do script; `dryRun` inalterado; kill switch
+sempre `enabled:true` explícito. System prompt deliberadamente mínimo — só
+confirma escolha de ferramenta + parada natural, não a visão de PO
+completa (fica pra quando houver decisões de produto de verdade pra
+validar). Script imprime o número exato de chamadas à API no final, pra dar
+visibilidade de custo real (estimativa prévia: ordem de poucos milhares de
+tokens de input, poucas centenas de output, ~2 chamadas — centavos de
+dólar, não uma surpresa).
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ### 2026-07-30 · Validação da Etapa 2 contra o Firebase real
 Adiciona `scripts/dryRunContraSquadDev.js` — script standalone (fora de
 `npm test`, fora de qualquer deploy), roda localmente com credenciais reais
