@@ -4224,7 +4224,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.216-dev</div>
+<div class="version">v8.30.217-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8422,7 +8422,7 @@ function renderCL(cl){
       // que já existe pra descrição/comentário/PO — contenteditable não tem essas
       // propriedades nativamente, teria que duplicar toda aquela lógica.
       const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':'');
-      span.dataset.raw=item.t; span.innerHTML=renderMd(item.t);
+      span.dataset.raw=item.t||''; span.innerHTML=renderMd(item.t||'');
       cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); pctEl.textContent=''; scheduleAutoSave(); _agentSimRefreshUI(); });
       span.title='Clique para editar';
       const clEditId='cl-edit-ta-'+i;
