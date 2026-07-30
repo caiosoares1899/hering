@@ -677,6 +677,24 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Confirma validação real: checklist quase completo
+Confirma a execução do
+`scripts/llmRealSystemPromptV1ChecklistQuaseProntoDryRunContraSquadDev.js`
+(entrada anterior): rodado pelo usuário contra o card `c1785433909974`
+(squad `dev`, checklist preparado com 4 de 5 itens marcados, faltando
+"Testar em produção") — `status: 'done'`, 3 chamadas à API.
+
+Comportamento observado bate nos três pontos do cenário: usou `ler_card`
+antes de responder; relatou o item pendente com precisão ("4 de 5
+itens... falta 'Testar em produção'"), sem arredondar pra "pronto", e
+ainda cruzou com a coluna atual ("A Fazer") como sinal adicional sem
+regra explícita sobre isso no prompt; não usou `mover_coluna` — respondeu
+só com `comentario`, oferecendo mover o card/marcar o checklist
+**perguntando confirmação** antes, em vez de agir direto ou travar em
+`perguntar_humano` sem necessidade. Segunda prova (após o card vazio) de
+que a cautela do prompt se traduz em julgamento coerente também num
+cenário onde "parece óbvio" seria fácil de atalhar.
+
 ### 2026-07-30 · Novo cenário de julgamento: checklist quase completo
 Adiciona
 `scripts/llmRealSystemPromptV1ChecklistQuaseProntoDryRunContraSquadDev.js`
