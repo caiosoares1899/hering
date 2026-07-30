@@ -4215,7 +4215,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.214-dev</div>
+<div class="version">v8.30.215-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8453,14 +8453,23 @@ function renderCL(cl){
     sec.appendChild(itemsWrap);
 
     const addRow=document.createElement('div'); addRow.className='cl-add-r'; addRow.style.cssText='margin-top:4px;';
-    const inp=document.createElement('input'); inp.className='cl-ai'; inp.placeholder='Novo item...';
-    inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); } });
+    const addInpId='cl-add-inp-'+g.id;
+    const inp=document.createElement('input'); inp.className='cl-ai'; inp.id=addInpId; inp.placeholder='Novo item...';
+    inp.addEventListener('keydown',e=>{
+      const dd=document.getElementById(addInpId+'-mention-dd');
+      if(e.key==='Enter' && !(dd && dd.classList.contains('open'))){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); }
+    });
     const addBtn=document.createElement('button'); addBtn.className='cl-ab'; addBtn.textContent='+ Add';
     addBtn.onclick=()=>{ addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); };
     addRow.append(inp,addBtn);
     sec.appendChild(addRow);
 
     w.appendChild(sec);
+    // Só agora `inp` está de verdade na árvore do documento — initMentionDropdown()
+    // faz document.getElementById(addInpId), que devolve null (e sai sem fazer nada,
+    // silenciosamente) se chamado ANTES do elemento estar anexado. @menção (pessoa/
+    // agente) já ao CRIAR o item, não só ao editar depois.
+    initMentionDropdown(addInpId);
   });
 }
 function getCL(){
