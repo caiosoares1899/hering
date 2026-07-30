@@ -4,9 +4,8 @@
 // partir dos MESMOS schemas Zod que o Agente Ágil v0-v3 usa pros seus
 // "outputs" (functions/agente-agil/schema.js) — o LLM aqui recebe literal-
 // mente o mesmo vocabulário de ações que um especialista humano/externo já
-// usa hoje. Isso é deliberado: quando a Etapa 3 trocar os handlers falsos
-// pelos reais (buildWritePlan()/applyWritePlan()), nenhum schema muda, só o
-// handler.
+// usa hoje. Isso é deliberado: trocar os handlers falsos pelos reais (Etapa
+// 2, ver tools/realHandlers.js) não muda nenhum schema, só o handler.
 //
 // zodToJsonSchema(schema) é chamado SEM o segundo argumento (nome) —
 // confirmado que isso produz um objeto plano (sem $ref/definitions),
@@ -22,6 +21,7 @@ const {
   outputEditarCampos,
 } = require('../../agente-agil/schema');
 const { makeHandler } = require('./fakeHandlers');
+const { makeRealHandler } = require('./realHandlers');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -48,12 +48,29 @@ const perguntarHumanoSchema = z.object({
   pergunta: z.string().min(1),
 });
 
-function buildTools() {
+// mode:'fake' (default) — nenhuma ferramenta toca o board, ver
+// tools/fakeHandlers.js. Usado pelos testes e por qualquer chamada que não
+// passe explicitamente pra 'real'.
+// mode:'real' — handlers de verdade (tools/realHandlers.js), precisa de
+// {db, squadId, cardId}; dryRun fica sempre fixo (ver DRY_RUN_FIXO em
+// realHandlers.js, não é opção aqui). perguntar_humano nunca tem handler
+// real — não existe escrita nenhuma associada a ela, real ou fake, em
+// nenhum modo: é só o sinal que para o loop (ver loop.js, status
+// 'awaiting_human').
+function buildTools(options = {}) {
+  const { mode = 'fake', db, squadId, cardId } = options;
+  if (mode === 'real' && (!db || !squadId || !cardId)) {
+    throw new Error('buildTools({mode:"real"}) precisa de db, squadId e cardId.');
+  }
+
   const tools = Object.entries(REUSED_OUTPUT_SCHEMAS).map(([name, schema]) => ({
     name,
-    description: `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Etapa 1: execução simulada, não escreve no board.`,
+    description:
+      mode === 'real'
+        ? `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Monta o plano de escrita de verdade contra o board, mas em dryRun — nunca aplica.`
+        : `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Execução simulada, não escreve no board.`,
     input_schema: zodToJsonSchema(schema),
-    handler: makeHandler(name),
+    handler: mode === 'real' ? makeRealHandler(name, { db, squadId, cardId }) : makeHandler(name),
   }));
 
   tools.push({

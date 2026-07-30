@@ -34,11 +34,15 @@ const membersLib = require('./members');
 const flowLib = require('./flow');
 const notifications = require('./notifications');
 
-// v0: escrita travada só neste squad (hardcoded). Autenticação/autorização
-// por squad de verdade fica pro v4.
+// v0: escrita travada só neste squad por padrão. Fase 2 (agente-agil-
+// orquestrador/) precisa rodar contra outros squads (ex.: 'dev', pra dryRun)
+// sem arriscar produção — por isso todo path abaixo virou função de
+// `squadId`, mas o valor default segue sendo este, e nada em http.js precisa
+// mudar (ele nunca passa squadId, então continua batendo em 'ecomm' exatamente
+// como antes). Autenticação/autorização por squad de verdade fica pro v4.
 const SQUAD_ID = 'ecomm';
-const CARDS_PATH = `kanban/squads/${SQUAD_ID}/dados/cards`;
-const CARDS_INDEX_PATH = `kanban/squads/${SQUAD_ID}/dados/cards_index`;
+const cardsPath = (squadId) => `kanban/squads/${squadId}/dados/cards`;
+const cardsIndexPath = (squadId) => `kanban/squads/${squadId}/dados/cards_index`;
 // cards_updated_at/{cardId}->timestamp: índice paralelo que o CLIENTE
 // (kanban.html, fbSaveCard/fbSaveAll) sempre carimba junto com qualquer
 // escrita de card — é dele que o delta-sync (_planCardsDelta, carregamento
@@ -50,20 +54,29 @@ const CARDS_INDEX_PATH = `kanban/squads/${SQUAD_ID}/dados/cards_index`;
 // mas a UI nunca via a mudança). applyWritePlan() carimba isso centralizado
 // (ver mais abaixo) pra todo write do Agente Ágil manter o mesmo invariante
 // que o cliente já mantém — nenhum output builder precisa saber disso.
-const CARDS_UPDATED_AT_PATH = `kanban/squads/${SQUAD_ID}/dados/cards_updated_at`;
+const cardsUpdatedAtPath = (squadId) => `kanban/squads/${squadId}/dados/cards_updated_at`;
 // Sprint 2: recorrentes_index/{recorrenteDe}/{recorrenteData} -> cardId.
 // Mesmo espírito do cards_index (get pontual O(1) em vez de escanear /cards),
 // mantido pelo CLIENTE — processRecorrentes() em kanban.html grava isso no
 // mesmo update multi-path que cria os cards do dia. Ver resolver.js.
-const RECORRENTES_INDEX_PATH = `kanban/squads/${SQUAD_ID}/dados/recorrentes_index`;
+const recorrentesIndexPath = (squadId) => `kanban/squads/${squadId}/dados/recorrentes_index`;
+const tagsPath = (squadId) => `kanban/squads/${squadId}/dados/tags`;
 
-async function resolveCardKey(db, cardId, { retries = 2, delayMs = 250 } = {}) {
+// Constantes pré-calculadas pro squad default — mantidas por compatibilidade
+// (http.js e os testes existentes as importam literalmente; ver funções
+// acima pra montar o path de qualquer outro squad).
+const CARDS_PATH = cardsPath(SQUAD_ID);
+const CARDS_INDEX_PATH = cardsIndexPath(SQUAD_ID);
+const CARDS_UPDATED_AT_PATH = cardsUpdatedAtPath(SQUAD_ID);
+const RECORRENTES_INDEX_PATH = recorrentesIndexPath(SQUAD_ID);
+
+async function resolveCardKey(db, cardId, { squadId = SQUAD_ID, retries = 2, delayMs = 250 } = {}) {
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const keySnap = await db.ref(`${CARDS_INDEX_PATH}/${cardId}`).get();
+    const keySnap = await db.ref(`${cardsIndexPath(squadId)}/${cardId}`).get();
     const key = keySnap.val();
     if (key == null) return null; // sem entrada no índice -> card não existe (ou ainda não foi indexado)
 
-    const idSnap = await db.ref(`${CARDS_PATH}/${key}/id`).get();
+    const idSnap = await db.ref(`${cardsPath(squadId)}/${key}/id`).get();
     if (idSnap.val() === cardId) return key;
 
     // Índice desatualizado (corrida rara: reorder/bulk archive mudou a
@@ -95,13 +108,14 @@ async function resolveCardKey(db, cardId, { retries = 2, delayMs = 250 } = {}) {
 // único step (como sempre) ou um array de steps — sempre granular, nunca
 // reescrevendo o card inteiro numa transaction só.
 async function buildWritePlan(cardKey, outputs, extra = {}) {
-  const cardPath = `${CARDS_PATH}/${cardKey}`;
+  const squadId = extra.squadId || SQUAD_ID;
+  const cardPath = `${cardsPath(squadId)}/${cardKey}`;
   const db = extra.db || null;
   let _cardPromise = null;
   const ctx = {
     cardPath,
     cardId: extra.cardId,
-    squadId: SQUAD_ID,
+    squadId,
     dryRun: !!extra.dryRun,
     db,
     uploadAndSign: extra.uploadAndSign || storage.uploadAndSign,
@@ -117,13 +131,13 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
       extra.readMembers ||
       (() => {
         if (!db) throw new Error('buildWritePlan: ctx.readMembers precisa de extra.db (ou extra.readMembers injetado em teste)');
-        return membersLib.readSquadMembers(db, SQUAD_ID);
+        return membersLib.readSquadMembers(db, squadId);
       }),
     readFlowMeta:
       extra.readFlowMeta ||
       (() => {
         if (!db) throw new Error('buildWritePlan: ctx.readFlowMeta precisa de extra.db (ou extra.readFlowMeta injetado em teste)');
-        return flowLib.readFlowMeta(db, SQUAD_ID);
+        return flowLib.readFlowMeta(db, squadId);
       }),
     // Lista de tags do squad ({id, label, ...}) — usado por editar_campos pra
     // resolver o label legível que o especialista manda pro id interno que o
@@ -133,7 +147,7 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
       (() => {
         if (!db) throw new Error('buildWritePlan: ctx.readTags precisa de extra.db (ou extra.readTags injetado em teste)');
         return db
-          .ref(`kanban/squads/${SQUAD_ID}/dados/tags`)
+          .ref(tagsPath(squadId))
           .get()
           .then((s) => s.val() || []);
       }),
@@ -159,7 +173,7 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
     const members = await ctx.readMembers();
     const card = await ctx.readCard();
     const notifySteps = await notifications.buildExplicitNotifySteps(db, {
-      squadId: SQUAD_ID,
+      squadId,
       notificar: extra.notificar,
       members,
       cardId: extra.cardId,
@@ -200,13 +214,16 @@ async function _applySteps(db, plan) {
   return touchedPaths;
 }
 
-// cardMeta ({cardPath, cardId}) é opcional — quando vem (sempre, no uso real
-// via http.js), e algum step do plano tocou dentro do card (path === cardPath
-// ou começa com `${cardPath}/`), carimba updatedAt do card + cards_updated_at
-// no MESMO commit lógico da escrita, com um único timestamp pros dois. Sem
-// isso, todo write do Agente Ágil fica invisível pro delta-sync do cliente
-// (ver comentário de CARDS_UPDATED_AT_PATH) — não é responsabilidade de cada
-// output builder saber disso, por isso fica centralizado aqui.
+// cardMeta ({cardPath, cardId, squadId?}) é opcional — quando vem (sempre, no
+// uso real via http.js), e algum step do plano tocou dentro do card (path ===
+// cardPath ou começa com `${cardPath}/`), carimba updatedAt do card +
+// cards_updated_at no MESMO commit lógico da escrita, com um único timestamp
+// pros dois. squadId é opcional (default SQUAD_ID) — só importa pra saber em
+// qual cards_updated_at carimbar; cardMeta.cardPath já vem pronto de quem
+// chama (não é recalculado aqui). Sem isso, todo write do Agente Ágil fica
+// invisível pro delta-sync do cliente (ver comentário de cardsUpdatedAtPath)
+// — não é responsabilidade de cada output builder saber disso, por isso fica
+// centralizado aqui.
 async function applyWritePlan(db, plan, cardMeta = null) {
   const touchedPaths = await _applySteps(db, plan);
   if (!cardMeta) return;
@@ -214,7 +231,7 @@ async function applyWritePlan(db, plan, cardMeta = null) {
   if (!touchedCard) return;
   const stampedAt = new Date().toISOString();
   await db.ref(cardMeta.cardPath).update({ updatedAt: stampedAt });
-  await db.ref(CARDS_UPDATED_AT_PATH).update({ [cardMeta.cardId]: stampedAt });
+  await db.ref(cardsUpdatedAtPath(cardMeta.squadId || SQUAD_ID)).update({ [cardMeta.cardId]: stampedAt });
 }
 
 module.exports = {
@@ -223,6 +240,11 @@ module.exports = {
   CARDS_INDEX_PATH,
   RECORRENTES_INDEX_PATH,
   CARDS_UPDATED_AT_PATH,
+  cardsPath,
+  cardsIndexPath,
+  cardsUpdatedAtPath,
+  recorrentesIndexPath,
+  tagsPath,
   resolveCardKey,
   buildWritePlan,
   applyWritePlan,
