@@ -108,11 +108,33 @@ completa (autoridade, quando perguntar vs decidir sozinho) — isso fica pra
 quando estivermos prontos pra validar decisões de produto de verdade, não
 só o encanamento técnico.
 
+Rodado pelo usuário contra o card `c1785433909974` (squad `dev`): `status:
+'done'`, 2 chamadas à API, ferramenta `comentario` escolhida corretamente,
+plano com path/formato corretos, `dryRun: true` confirmado, e o modelo
+parou naturalmente com um `finalText` coerente. Primeiro teste ponta a
+ponta com LLM real validado.
+
+## Validação com LLM real encadeando 2 ferramentas
+
+`scripts/llmRealMultiToolDryRunContraSquadDev.js` — mesmo princípio dos
+scripts anteriores, mas com uma tarefa que precisa de `comentario` **e**
+`mover_coluna`, pra exercitar contra a API de verdade a única parte do loop
+que o teste de 1 ferramenta não tocava: o histórico de `tool_result`
+sendo re-enviado ao modelo entre a 1ª e a 2ª chamada
+(`historyToAnthropicMessages()` em `llmClient.js`).
+
+`mover_coluna` exige o ID exato da coluna de destino, e o orquestrador não
+tem nenhuma ferramenta de leitura ainda (só as 7 de escrita +
+`perguntar_humano`) — então o próprio script lê a coluna atual do card e a
+lista de colunas do squad `dev` direto do Firebase antes de montar a
+tarefa, e informa ambas (id + nome) no texto. O LLM não precisa adivinhar
+nada, só decidir o que fazer com a informação dada.
+
 ## Próximas etapas (não implementadas ainda)
 
-1. Rodar `llmRealDryRunContraSquadDev.js` e confirmar que o LLM real escolhe
-   a ferramenta certa (aguardando execução).
-2. Tirar o `dryRun` fixo — vira parâmetro de verdade só depois do passo 1.
+1. Rodar `llmRealMultiToolDryRunContraSquadDev.js` e confirmar que o LLM
+   real encadeia as duas ferramentas corretamente (aguardando execução).
+2. Tirar o `dryRun` fixo — vira parâmetro de verdade só depois disso.
 3. Desenhar o system prompt completo de PO (autoridade, quando perguntar vs
    decidir sozinho) — só depois de 1 e 2, quando houver decisões de produto
    de verdade em jogo pra validar contra.

@@ -492,6 +492,35 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Validação com LLM real + script de encadeamento de 2 ferramentas
+Confirma a execução do `scripts/llmRealDryRunContraSquadDev.js` (entrada
+anterior): rodado pelo usuário contra o card `c1785433909974` (squad
+`dev`) — `status: 'done'`, 2 chamadas à API, ferramenta `comentario`
+escolhida corretamente, plano com path/formato corretos, `dryRun: true`
+confirmado, modelo parou naturalmente com `finalText` coerente. Primeiro
+teste ponta a ponta com LLM real (loop + ferramentas reais + LLM real +
+dryRun) validado contra o Firebase de verdade.
+
+Adiciona `scripts/llmRealMultiToolDryRunContraSquadDev.js` — mesmo
+princípio, mas com uma tarefa que precisa de `comentario` **e**
+`mover_coluna`, pra exercitar contra a API de verdade a única parte do loop
+que o teste de 1 ferramenta não tocava: o histórico de `tool_result`
+sendo re-enviado ao modelo entre a 1ª e a 2ª chamada
+(`historyToAnthropicMessages()` em `llmClient.js`). Como `mover_coluna`
+exige o ID exato da coluna de destino e o orquestrador ainda não tem
+nenhuma ferramenta de leitura (só as 7 de escrita + `perguntar_humano`), o
+próprio script lê a coluna atual do card e a lista de colunas do squad
+`dev` direto do Firebase antes de montar a tarefa, informando id + nome ao
+modelo — sem exigir que o LLM adivinhe nada. Mesmos princípios de
+segurança dos scripts anteriores (`ANTHROPIC_API_KEY` só via variável de
+ambiente, nunca logada; `dryRun` fixo; contador dedicado de chamadas à
+API). Verificado antes de pedir execução real: mesma lógica rodada contra
+um fake db simulando a forma real do card (mesma `cardKey` "21" que
+apareceu na execução real anterior) — 2 iterações, `comentario` seguido de
+`mover_coluna`, `status: 'done'`.
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ### 2026-07-30 · Script de dryRun com LLM real
 Adiciona `scripts/llmRealDryRunContraSquadDev.js` — mesmo objetivo técnico
 do script anterior (validar encanamento contra o squad `dev` real), mas
