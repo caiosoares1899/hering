@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.191 — 2026-07-30 · PR #85
+Promove pra prod o fix validado no dev (`v8.30.226-dev`): fortalece a
+correção de "🔧 Detectar e reparar tags fantasma" pra também cobrir ids no
+formato `tag_<Date.now() cru>` (o mesmo esquema que `addTag()` usa pra
+tags criadas normalmente pelo time, não só import do Trello) —
+`_derivarLabelTagFantasma()` agora rejeita um rótulo derivado que continue
+sendo só dígitos, não só a ausência do prefixo `tag_`.
+
 ### v8.30.190 — 2026-07-30 · PR #71
 Promove pra prod a documentação de "💡 Meus cards" no conteúdo de ajuda
 (F1/❓), landed no dev há um tempo (PR #71) mas nunca promovida — mudança

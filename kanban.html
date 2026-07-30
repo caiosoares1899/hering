@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.190</div>
+<div class="version">v8.30.191</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12514,10 +12514,17 @@ function saveTags(){
 // formato esperado; caso contrário, marca claramente como "sem nome" (com
 // o ID entre parênteses, pra continuar rastreável) em vez de expor o
 // número cru.
+//
+// BUGFIX 2: a checagem original só olhava pro PREFIXO ("tag_") — mas
+// addTag() cria tags com id 'tag_'+Date.now() (SEM sufixo de 4 chars), o
+// mesmo esquema que este reparo tenta desmontar. Pra esses, o prefixo bate
+// (entra no `if`), mas depois de remover "tag_" sobra só o timestamp cru —
+// ainda puramente numérico, escapando do fallback "Tag sem nome". Agora
+// também rejeita um rótulo derivado que continue sendo só dígitos.
 function _derivarLabelTagFantasma(tid){
   if(/^tag_/.test(tid)){
     const label=tid.replace(/^tag_/,'').replace(/_[a-z0-9]{4}$/,'').replace(/_/g,' ').trim();
-    if(label) return label.charAt(0).toUpperCase()+label.slice(1);
+    if(label && !/^\d+$/.test(label)) return label.charAt(0).toUpperCase()+label.slice(1);
   }
   return `Tag sem nome (${tid})`;
 }
