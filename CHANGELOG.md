@@ -223,6 +223,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.226-dev — 2026-07-30
+Fortalece o fix de "🔧 Detectar e reparar tags fantasma" (v8.30.224-dev):
+o fix anterior só checava se o ID **começa** com `tag_`, mas `addTag()`
+cria tags com id `'tag_'+Date.now()` — sem sufixo de 4 caracteres. Pra
+esses, o prefixo bate (entra no `if`), mas depois de remover `tag_` sobra
+só o timestamp cru, ainda puramente numérico — escapando do fallback "Tag
+sem nome" e reproduzindo o bug original. Achado com dados reais: 4 tags no
+squad `midiacriativa` (`tag_1782410107254` e outras 3), usadas por 12+
+cards de modelo (`MODELO | ...`), com esse formato exato. Agora
+`_derivarLabelTagFantasma()` também rejeita um rótulo derivado que
+continue sendo só dígitos, não só a ausência do prefixo `tag_`.
+
+Isso também aponta o provável motivo dessas tags terem sumido: como
+`tag_'+Date.now()` é exatamente o esquema que `addTag()` usa pra tags
+criadas normalmente pelo time (não só import do Trello), a hipótese mais
+forte é que elas eram tags de verdade, criadas via `addTag()`, e viraram
+"fantasma" (removidas do array `tags` sem querer) por causa de
+`saveTags()` fazer um `fbSet` — sobrescrita completa do array — sem
+merge; duas edições concorrentes de tags podem se pisar, uma apagando a
+tag que a outra tinha acabado de criar. Ainda não confirmado nem corrigido
+— fica como próximo passo de investigação.
+
 ### v8.30.225-dev — 2026-07-30
 Corrige "💡 Meus cards" destacando cards de OUTRA pessoa. Causa raiz:
 `window._currentUserInit` (o que `_euEstouNoCard()` usa pra decidir "esse
