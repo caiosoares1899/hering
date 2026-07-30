@@ -209,6 +209,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.225-dev — 2026-07-30
+Corrige "💡 Meus cards" destacando cards de OUTRA pessoa. Causa raiz:
+`window._currentUserInit` (o que `_euEstouNoCard()` usa pra decidir "esse
+card é meu") era recalculado a cada login só pela fórmula ingênua de
+1ª-letra-de-cada-palavra do `displayName`/email do Google — e nunca
+corrigido pro `init` de verdade registrado no Firebase (`existe.init`),
+que pode ter sido editado manualmente (campo ✎ Iniciais) pra resolver
+colisão com outra pessoa de nome parecido. Se o valor calculado na hora
+divergisse do registrado — inclusive coincidindo com a inicial real de
+OUTRA pessoa — "Meus cards" destacava os cards errados, já que o match é
+exato. Reportado com um caso real: duas "Leticia" diferentes (iniciais LM
+e LN), uma via os cards da outra ao clicar no botão. Fix: em
+`autoRegistrar()`, pro ramo de usuário já cadastrado, usa `existe.init`
+(autoritativo) em vez do recém-calculado.
+
 ### v8.30.224-dev — 2026-07-30
 Corrige o rótulo mostrado por "🔧 Detectar e reparar tags fantasma" quando
 o ID da tag órfã não segue o padrão `tag_<slug>_<4chars>` do import do
