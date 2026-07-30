@@ -130,10 +130,46 @@ lista de colunas do squad `dev` direto do Firebase antes de montar a
 tarefa, e informa ambas (id + nome) no texto. O LLM não precisa adivinhar
 nada, só decidir o que fazer com a informação dada.
 
+Rodado pelo usuário: `status: 'done'`, 3 chamadas à API (2 tool calls + 1
+final), `comentario` seguido de `mover_coluna` com o id real da coluna,
+modelo manteve contexto entre as chamadas, `dryRun: true` confirmado nas
+duas operações. Valida o histórico `tool_result` multi-turno contra a API
+real.
+
+## System prompt v1 (`systemPrompt.js`)
+
+`SYSTEM_PROMPT_V1` — texto aprovado pelo usuário, armazenado verbatim (não
+parametrizado). Define o Agente Ágil como uma mistura de PO + assistente de
+board, com uma escala de risco explícita por ferramenta:
+
+- **Baixo risco, age direto**: `comentario`, `checklist_item` (item que o
+  pedido menciona claramente), `agent_status`.
+- **Risco médio, age com cautela e explica no comentário**: `mover_coluna`
+  (só se o destino for óbvio; ambiguidade real → `perguntar_humano`),
+  `editar_campos` (só o que foi pedido, nunca inventa conteúdo).
+- **`perguntar_humano`** quando o pedido é aberto/interpretativo, falta
+  informação, ou a ação afeta outras pessoas.
+
+Fica em módulo próprio (não em `loop.js`, que é o motor genérico do loop e
+não deveria conhecer conteúdo de produto) — mesmo espírito de isolamento
+de `limits.js` (kill switch/iterações) e `llmClient.js` (specifics da
+Anthropic). Escopo desta v1: só o squad `'dev'`, não parametrizado por
+`squadId` — decisão explícita, ver comentário no topo do arquivo.
+
+`scripts/llmRealSystemPromptV1DryRunContraSquadDev.js` — mesmo padrão dos
+scripts anteriores, mas com um pedido **aberto** ("Dá uma olhada no card X
+e vê se falta algo") em vez de um pedido específico, pra validar que a
+cautela descrita no prompt acontece na prática, não só no papel. `dryRun`
+continua fixo. Não é um teste automatizado — o resultado depende do
+julgamento do modelo real (não determinístico); o script anota se a
+ferramenta escolhida bate com o nível de risco esperado pro tipo de pedido,
+mas isso é leitura, não validação automática.
+
 ## Próximas etapas (não implementadas ainda)
 
-1. Rodar `llmRealMultiToolDryRunContraSquadDev.js` e confirmar que o LLM
-   real encadeia as duas ferramentas corretamente (aguardando execução).
+1. Rodar `llmRealSystemPromptV1DryRunContraSquadDev.js` e revisar se o
+   comportamento cauteloso em pedido aberto aconteceu na prática
+   (aguardando execução).
 2. Tirar o `dryRun` fixo — vira parâmetro de verdade só depois disso.
 3. Desenhar o system prompt completo de PO (autoridade, quando perguntar vs
    decidir sozinho) — só depois de 1 e 2, quando houver decisões de produto
