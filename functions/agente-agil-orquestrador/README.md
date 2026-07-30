@@ -39,10 +39,44 @@ board de verdade ainda:
   parâmetro. A suíte de testes sempre passa `enabled: true` e por isso nunca
   fica bloqueada pelo valor real do kill switch.
 
+## Etapa 2 (este commit)
+
+Handlers reais, ainda travados em `dryRun` — nada escreve no board de
+verdade, mas o plano de escrita agora é montado pelo MESMO código de
+produção, contra um squad de teste real:
+
+- **`SQUAD_ID` configurável** (`agente-agil/board.js`): `resolveCardKey()`,
+  `buildWritePlan()` e `applyWritePlan()` passam a aceitar `squadId`/
+  `cardMeta.squadId` como parâmetro explícito, com default `SQUAD_ID='ecomm'`
+  preservado — `agente-agil/http.js` não muda uma linha e os 57 testes
+  originais de `agente-agil/__tests__/` continuam passando sem alteração.
+  De passagem, corrige um bug latente: a lista `notificar` do envelope
+  estava montando os steps de notificação com o `SQUAD_ID` fixo do módulo em
+  vez do `squadId` de quem chamou — inofensivo hoje (só existe um squad em
+  uso), mas ficaria errado assim que outro squad passasse a escrever de
+  verdade. Cobertura nova em `agente-agil/__tests__/squadIdParam.test.js`
+  (arquivo novo, não mexe nos 4 arquivos de teste já existentes).
+- **`tools/realHandlers.js`** — `makeRealHandler(toolName, {db, squadId,
+  cardId})` chama `resolveCardKey`/`buildWritePlan` de verdade (mesmo caminho
+  que `http.js` usa em produção), mas com `dryRun` **fixo em `true`**
+  (`DRY_RUN_FIXO`, não é parâmetro aceito) — o plano é sempre montado (dá pra
+  inspecionar o que seria escrito) mas `applyWritePlan()` nunca é chamado.
+  Não exposto como opção ainda de propósito: só vira parâmetro de verdade
+  depois que esse caminho for validado ponta a ponta.
+- **`tools/index.js`** — `buildTools({mode:'real', db, squadId, cardId})`
+  monta as 7 ferramentas com handlers reais; `mode:'fake'` (default) continua
+  igual à Etapa 1. `perguntar_humano` nunca tem handler real em nenhum modo —
+  não existe escrita associada a ela, é só o sinal que para o loop.
+- Squad de teste: `'dev'`, que já existe no projeto como squad fictício
+  (`SQUADS_FICTICIOS` em `kanban-dev.html`, criado via painel-dev) — nenhum
+  squad novo precisou ser criado.
+- 14 testes novos (5 em `squadIdParam.test.js` + 5 em `realHandlers.test.js`
+  + validação de que o loop inteiro, ponta a ponta, nunca muta o fake db).
+  **76 testes passando no total.**
+
 ## Próximas etapas (não implementadas ainda)
 
-1. Reaproveitar o motor de escrita do Sprint 1-3 (`buildWritePlan()`/
-   `applyWritePlan()`) nos handlers reais, no lugar dos falsos.
-2. Rodar em `dryRun` contra um squad de teste real.
-3. Tornar `SQUAD_ID` configurável (hoje é fixo em `agente-agil/board.js`) —
-   pré-requisito pra rodar contra um squad de teste sem arriscar produção.
+1. Tirar o `dryRun` fixo — virar parâmetro de verdade, só depois de validar
+   esta etapa contra o squad `dev`.
+2. Rodar o orquestrador de ponta a ponta contra o squad `dev` (LLM real, não
+   só o cliente scriptado dos testes).

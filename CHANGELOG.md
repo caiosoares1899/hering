@@ -492,6 +492,55 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Etapa 2
+Troca os handlers falsos das 7 ferramentas reaproveitadas do vocabulário de
+outputs por handlers reais, mas ainda travados em `dryRun` — nada escreve no
+board de verdade, mas o plano de escrita agora é montado pelo MESMO código
+que `agente-agil/http.js` já usa em produção (`resolveCardKey` →
+`buildWritePlan`), contra um squad de teste real:
+- **`SQUAD_ID` configurável em `agente-agil/board.js`**: `resolveCardKey()`,
+  `buildWritePlan()` e `applyWritePlan()` passam a aceitar `squadId`/
+  `cardMeta.squadId` como parâmetro explícito (nunca lido como global
+  escondida — mesmo espírito do kill switch), com `SQUAD_ID='ecomm'`
+  preservado como default. `agente-agil/http.js` não muda uma linha e os 57
+  testes originais de `agente-agil/__tests__/` continuam passando **sem
+  nenhuma alteração nos 4 arquivos de teste existentes** — critério de
+  aceite pedido explicitamente antes de tocar em `board.js`, confirmado
+  rodando esses 4 arquivos isolados. De passagem, corrige um bug latente
+  (achado ao revisar o código pra fazer essa mudança, não em produção): a
+  lista `notificar` do envelope montava os steps de notificação com o
+  `SQUAD_ID` fixo do módulo em vez do `squadId` de quem chamou —
+  inofensivo até aqui (só existia um squad em uso), mas ficaria errado assim
+  que outro squad passasse a escrever de verdade. Cobertura nova em
+  `agente-agil/__tests__/squadIdParam.test.js` (arquivo NOVO, 5 testes).
+- **`tools/realHandlers.js`**: `makeRealHandler(toolName, {db, squadId,
+  cardId})` chama `resolveCardKey`/`buildWritePlan` de verdade, mas com
+  `dryRun` **fixo em `true`** (constante `DRY_RUN_FIXO`, não é parâmetro
+  aceito) — o plano é sempre montado (dá pra inspecionar o que seria
+  escrito) mas `applyWritePlan()` nunca chega a ser chamado. Não exposto
+  como opção ainda, de propósito: só vira parâmetro de verdade depois que
+  esse caminho for validado ponta a ponta contra o squad `dev`.
+- **`tools/index.js`**: `buildTools({mode:'real', db, squadId, cardId})`
+  monta as ferramentas com handlers reais; `mode:'fake'` (default) continua
+  igual à Etapa 1, sem mudança de comportamento pros testes já existentes de
+  `loop.test.js`. `perguntar_humano` nunca tem handler real em nenhum modo —
+  não existe escrita associada a ela, é só o sinal que para o loop
+  (`status:'awaiting_human'`).
+- Squad de teste usado: `'dev'`, que já existia no projeto como squad
+  fictício (`SQUADS_FICTICIOS` em `kanban-dev.html`, criado via painel-dev)
+  — nenhum squad novo precisou ser criado.
+- 14 testes novos (5 em `squadIdParam.test.js` + 9 em
+  `realHandlers.test.js`/integração com `loop.js`, incluindo um teste
+  ponta a ponta que roda o loop inteiro com ferramentas reais e confirma que
+  o fake db nunca é mutado). **76 testes passando no total** (62
+  `agente-agil/` + 14 `agente-agil-orquestrador/`).
+
+Requer confirmação explícita do usuário antes de tirar o `dryRun` fixo —
+combinado como critério de segurança em camadas, junto com o kill switch, já
+que esta etapa ainda não tem nenhum caminho de escrita real validado contra
+dados de verdade. Não requer `firebase deploy` (nada aqui é chamado por
+endpoint HTTP ainda).
+
 ### 2026-07-30 · Etapa 1
 Abre o projeto novo da Fase 2 do Agente Ágil (PO+orquestrador com LLM e
 ferramentas), separado e isolado de `functions/agente-agil/` — que segue
