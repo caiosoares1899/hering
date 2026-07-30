@@ -492,6 +492,46 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · System prompt v1 + confirma validação do encadeamento de 2 ferramentas
+Confirma a execução do `scripts/llmRealMultiToolDryRunContraSquadDev.js`
+(entrada anterior): rodado pelo usuário contra o squad `dev` real —
+`status: 'done'`, 3 chamadas à API, `comentario` seguido de `mover_coluna`
+com o id real da coluna, modelo manteve contexto entre as chamadas,
+`dryRun: true` confirmado nas duas operações. Histórico `tool_result`
+multi-turno validado contra a API real.
+
+Adiciona `systemPrompt.js` (`SYSTEM_PROMPT_V1`) — o system prompt do
+orquestrador, aprovado pelo usuário e armazenado verbatim. Define o Agente
+Ágil como PO+assistente de board, com uma escala explícita de risco por
+ferramenta: baixo risco (`comentario`, `checklist_item`, `agent_status`)
+age direto; risco médio (`mover_coluna`, `editar_campos`) age com cautela
+e explica o raciocínio; `perguntar_humano` pra pedidos abertos/ambíguos,
+falta de informação, ou ações que afetam outras pessoas. Fica em módulo
+próprio (não em `loop.js`, que é o motor genérico e não deveria conhecer
+conteúdo de produto), mesmo espírito de isolamento de `limits.js`/
+`llmClient.js`. Escopo desta v1: só o squad `'dev'`, não parametrizado por
+`squadId` (decisão explícita — só existe um squad em uso até aqui).
+Cobertura em `__tests__/systemPrompt.test.js`: smoke test garantindo que o
+texto aprovado não seja corrompido/esvaziado por uma edição futura, e que
+todas as 8 ferramentas expostas por `buildTools()` estejam mencionadas.
+79 testes passando no total.
+
+Adiciona `scripts/llmRealSystemPromptV1DryRunContraSquadDev.js` — usa o
+system prompt v1 de verdade (não mais o mínimo genérico dos scripts
+anteriores) com um pedido **aberto** ("dá uma olhada nesse card e vê se
+falta algo"), pra validar que a cautela descrita no prompt acontece na
+prática contra o modelo real, não só no papel. Não é um teste automatizado
+— o resultado depende do julgamento do modelo (não determinístico); o
+script anota se a ferramenta escolhida bateu com o nível de risco esperado,
+mas isso é leitura pro usuário, não validação automática. Mesmos princípios
+de segurança dos scripts anteriores (`ANTHROPIC_API_KEY` só via variável de
+ambiente, nunca logada; `dryRun` fixo). Verificado antes de pedir execução
+real: mesma lógica (incluindo o `system` recebido por `decide()`) rodada
+contra um fake db, com um cliente scriptado simulando uma resposta cautelosa
+plausível (comenta com análise + pergunta, em vez de agir direto).
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ### 2026-07-30 · Validação com LLM real + script de encadeamento de 2 ferramentas
 Confirma a execução do `scripts/llmRealDryRunContraSquadDev.js` (entrada
 anterior): rodado pelo usuário contra o card `c1785433909974` (squad
