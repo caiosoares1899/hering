@@ -200,6 +200,11 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.223-dev — 2026-07-30 · PR #71
+Documenta "💡 Meus cards" (PRs #61/#68/#69) no conteúdo de ajuda (F1/❓) —
+novo item na seção do board, logo depois de "Filtros". Conferido que não
+sobrou nenhuma menção ao filtro "Qualquer executor" removido na PR #66.
+
 ### v8.30.222-dev — 2026-07-30 · PR #69
 Corrige "💡 Meus cards" (achado numa validação real, seguida da PR #68):
 todos os cards da pessoa já pulsavam certo (fix anterior), mas só o
