@@ -193,6 +193,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.222-dev — 2026-07-30 · PR #69
+Corrige "💡 Meus cards" (achado numa validação real, seguida da PR #68):
+todos os cards da pessoa já pulsavam certo (fix anterior), mas só o
+primeiro match ficava de fato visível — `scrollIntoView()` só decide UMA
+posição horizontal final pro board (colunas dividem a mesma rolagem
+horizontal), então cards em colunas fora da tela (ex.: Backlog rolado pra
+fora) ou mais abaixo dentro de uma coluna já visível (ex.: Em
+desenvolvimento) pulsavam "escondidos", sem a pessoa nunca ver.
+
+Cada coluna tem sua PRÓPRIA rolagem vertical independente, então agora
+pré-posiciona a rolagem vertical de toda coluna com card da pessoa
+(`inline:'nearest'`, sem brigar pela rolagem horizontal ainda) antes da
+rolagem "de verdade" (suave) pro primeiro match, que decide a posição
+horizontal final por último. Resultado: mesmo colunas que não ficam
+visíveis de cara já mostram o card certo assim que a pessoa rolar até lá
+manualmente. Testado com harness Playwright confirmando a ordem das
+chamadas (pré-posicionamento primeiro, rolagem suave final por último).
+
 ### v8.30.221-dev — 2026-07-30 · PR #68
 Corrige "💡 Meus cards" (PR #61) só destacando/rolando até o card na
 coluna Concluído, ignorando cards em outras colunas — achado numa

@@ -4220,7 +4220,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.221-dev</div>
+<div class="version">v8.30.222-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9472,17 +9472,25 @@ function highlightMyCards(){
 
   if(expandedSome) renderBoard();
 
-  mine.forEach(c=>{
-    const el=document.querySelector('.card[data-id="'+CSS.escape(c.id)+'"]');
-    if(!el) return;
+  const els = mine.map(c=>document.querySelector('.card[data-id="'+CSS.escape(c.id)+'"]')).filter(Boolean);
+  els.forEach(el=>{
     el.classList.remove('card-pulse-highlight');
     void el.offsetWidth; // força reflow pra reiniciar a animação se já rodou antes
     el.classList.add('card-pulse-highlight');
     el.addEventListener('animationend', ()=>el.classList.remove('card-pulse-highlight'), {once:true});
   });
 
-  const first=document.querySelector('.card[data-id="'+CSS.escape(mine[0].id)+'"]');
-  if(first) first.scrollIntoView({behavior:'smooth', block:'center'});
+  // scrollIntoView só consegue decidir UMA posição horizontal final pro
+  // board (colunas ficam lado a lado, rolagem horizontal é compartilhada) —
+  // então só dá pra "chegar" visualmente numa coluna por vez. Mas cada
+  // coluna tem sua PRÓPRIA rolagem vertical independente — pré-posiciona a
+  // de toda coluna com card meu (inline:'nearest' evita brigar pela
+  // rolagem horizontal ainda) antes da rolagem "de verdade" (suave) pro
+  // primeiro match, que decide a posição horizontal final. Assim, mesmo
+  // colunas que não ficam visíveis de cara (ex.: fora da tela, tipo
+  // Backlog) já mostram o card certo assim que a pessoa rolar até lá.
+  els.slice(1).forEach(el=>el.scrollIntoView({behavior:'auto', block:'center', inline:'nearest'}));
+  if(els[0]) els[0].scrollIntoView({behavior:'smooth', block:'center'});
 }
 function computeAvisosQuadro(){
   const out=[]; const today=new Date(); today.setHours(0,0,0,0);
