@@ -184,6 +184,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.219-dev — 2026-07-30 · PR #65
+Ajuste no fix da PR #64 (achado numa validação real): o `margin-left:auto`
+resolvia o agrupamento, mas fazia "💡 Meus cards"/"✕ Limpar" quebrarem pra
+uma linha própria, flutuando isolados à direita numa linha por si só —
+esteticamente estranho. Removido o `margin-left:auto` (o grupo agora flui
+normal com o resto da barra, como qualquer outro item) e encurtado
+"✕ Limpar" pra só "✕🗑️" (mantém o tooltip "Limpar filtros" no hover),
+reduzindo a chance de quebra de linha também. Verificado com screenshot em
+3 cenários (squad com/sem filtro de tamanho, janela larga e estreita).
+
 ### v8.30.218-dev — 2026-07-30 · PR #64
 Corrige quebra de linha feia na barra de Filtros (achado numa validação
 real, comparando squads `dados` e `ecomm`): "💡 Meus cards" e "✕ Limpar"
