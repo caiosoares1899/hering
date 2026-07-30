@@ -492,6 +492,28 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Validação da Etapa 2 contra o Firebase real
+Adiciona `scripts/dryRunContraSquadDev.js` — script standalone (fora de
+`npm test`, fora de qualquer deploy), roda localmente com credenciais reais
+de Firebase (Application Default Credentials). Ainda usa o cliente LLM
+scriptado, não o real (decisão deliberada, ver Etapa 2 abaixo) — o objetivo
+é validar o encanamento LLM decide → tool call → handler real →
+`buildWritePlan` contra o formato REAL de um card do squad `dev`, algo que
+os testes automatizados (fake db montado à mão) não conseguem pegar
+sozinhos. Rodado pelo usuário contra o card `c1785433909974` (squad `dev`):
+`status: 'done'`, plano corretamente montado (path e formato certos),
+`dryRun: true` confirmado, nenhuma escrita real. Caminho técnico validado
+ponta a ponta.
+
+De passagem, corrige `llmClient.js`: `DEFAULT_MODEL` estava com um ID de
+modelo desatualizado (nunca chegou a ser exercitado contra a API de verdade,
+já que Etapa 1/2 só usaram cliente scriptado) — atualizado pro modelo atual,
+achado ao revisar o que falta antes de ligar o LLM real.
+
+Próximo passo combinado: ligar `createAnthropicLlmClient` de verdade contra
+o squad `dev`, ainda em `dryRun`, com um system prompt inicial simples (a
+visão de PO completa fica pra quando houver decisões de verdade em jogo).
+
 ### 2026-07-30 · Etapa 2
 Troca os handlers falsos das 7 ferramentas reaproveitadas do vocabulário de
 outputs por handlers reais, mas ainda travados em `dryRun` — nada escreve no

@@ -12,7 +12,12 @@
 // zod-to-json-schema.
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
-const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
+// Atualizado em 2026-07-30 pro ID de modelo atual — o valor anterior
+// (claude-sonnet-4-5-20250929) era um snapshot antigo, nunca chegou a ser
+// exercitado contra a API de verdade (Etapa 1/2 só usaram cliente
+// scriptado). Revisar este valor sempre que o próximo passo (LLM real)
+// for implementado, caso um modelo mais novo já exista nessa altura.
+const DEFAULT_MODEL = 'claude-sonnet-5';
 const DEFAULT_MAX_TOKENS = 4096;
 
 // Traduz o histórico genérico do loop (ver loop.js) pro formato de
