@@ -74,9 +74,28 @@ produção, contra um squad de teste real:
   + validação de que o loop inteiro, ponta a ponta, nunca muta o fake db).
   **76 testes passando no total.**
 
+## Validação contra o Firebase real (squad `dev`)
+
+`scripts/dryRunContraSquadDev.js` — script standalone (não faz parte de
+`npm test` nem de deploy nenhum), roda localmente com credenciais reais
+(Application Default Credentials). Ainda usa o cliente LLM scriptado
+(mesma decisão deliberada da Etapa 2: não gastar tokens de verdade até ser
+uma escolha explícita) — o que valida aqui é o encanamento LLM decide → tool
+call → handler real → `buildWritePlan` contra o FORMATO REAL de um card do
+squad `dev`, não um fake db montado à mão.
+
+Rodado contra o card `c1785433909974` (squad `dev`): `status: 'done'`,
+plano corretamente montado (`path` certo, formato certo — `id`, `uid`,
+`author`, `init`, `text`, `ts`), `output.dryRun: true`, nenhuma escrita real.
+Caminho técnico validado ponta a ponta.
+
 ## Próximas etapas (não implementadas ainda)
 
-1. Tirar o `dryRun` fixo — virar parâmetro de verdade, só depois de validar
-   esta etapa contra o squad `dev`.
-2. Rodar o orquestrador de ponta a ponta contra o squad `dev` (LLM real, não
-   só o cliente scriptado dos testes).
+1. Ligar o cliente LLM real (`createAnthropicLlmClient`) contra o mesmo squad
+   `dev`, ainda em `dryRun` — com um system prompt inicial simples (não a
+   visão de PO completa ainda, que só faz sentido testar com decisões de
+   verdade em jogo). Pré-requisitos: `DEFAULT_MODEL` em `llmClient.js` foi
+   atualizado (estava com um snapshot antigo, nunca exercitado contra a API
+   de verdade); falta decidir de onde a `apiKey` vem nesse script (variável
+   de ambiente, nunca hardcoded/logada).
+2. Tirar o `dryRun` fixo — vira parâmetro de verdade só depois do passo 1.
