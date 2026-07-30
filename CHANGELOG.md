@@ -677,6 +677,33 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · escolheClienteParaTarefa() — esqueleto do roteamento de modelo
+Discussão de design registrada no card de acompanhamento antes de
+implementar: ideia geral é centralizar a maioria das chamadas no Haiku,
+escalar pro Sonnet em pedidos complexos/abertos, e reservar o Opus só sob
+aprovação explícita do ADM (não automático). Decidido implementar só o
+esqueleto agora — ainda em dryRun/squad de teste, sem tráfego real pra
+calibrar heurística de complexidade nem justificar o gate de aprovação de
+verdade.
+
+Adiciona `escolheClienteParaTarefa.js` — hardcoded pra sempre devolver o
+tier `'sonnet'` (mesmo `DEFAULT_MODEL` que `llmClient.js` já usava), sem
+heurística nenhuma. O que importa nesta etapa é o *boundary*: a decisão de
+qual client de LLM usar fica fora de `loop.js` (que continua só conhecendo
+o contrato genérico `decide({system, history, tools})`, mesmo espírito de
+isolamento de `limits.js`/`systemPrompt.js`), num único lugar que roda
+antes de `runLoop()`. `MODEL_BY_TIER` já registra os ids de `haiku` e
+`opus`, ainda inalcançáveis por nenhum caminho de código — quando o
+roteamento por complexidade e o gate de aprovação do ADM pro tier `opus`
+forem implementados de verdade, entram só nesta função, sem precisar caçar
+escolhas de modelo espalhadas pelo código.
+
+5 testes novos em `__tests__/escolheClienteParaTarefa.test.js` (tier
+sempre `sonnet`, resolução pro `DEFAULT_MODEL`, forma do `llmClient`
+devolvido, tiers futuros já registrados no mapa, propagação da validação
+de `apiKey`) — sem chamada de rede, mesmo princípio de `llmClient.js` não
+ser exercitado pelos testes. **92 testes passando no total.**
+
 ### 2026-07-30 · Validação final do system prompt v1 — etapa encerrada
 Confirma a execução do `scripts/llmRealSystemPromptV1DryRunContraSquadDev.js`
 (entrada anterior) com `ler_card` disponível, contra o squad `dev` real,
