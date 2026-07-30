@@ -18,7 +18,25 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.192 — 2026-07-30 · PR #87
+### v8.30.193 — 2026-07-30 · PR #90
+Promove pra prod o fix validado no dev (`v8.30.228-dev`, PR #89): reduz o
+consumo de leitura do Firebase em boards com muito histórico arquivado.
+Novo índice `cards_archived/{cardId}->true` (mantido junto de `cards_index`/
+`cards_updated_at` em `fbSaveAll()`/`fbSaveCard()`) permite que o
+carregamento em duas etapas (`_twoPhaseCardsLoad()`) pare de reverificar
+cards já arquivados a cada sessão — eles só entram em `toFetch` na primeira
+vez que o dispositivo os vê, não mais toda vez que o timestamp deles muda.
+Achado num squad real (`outlet-crm`): 84% dos 4725 cards estavam
+arquivados, e cada sessão baixava esse histórico inteiro de novo, mesmo sem
+ninguém abrir a tela de Arquivados — consumo diário tinha saltado de ~156k
+pra ~1,3M chamadas em 4 dias. `cards` continua carregando tudo (ativos +
+arquivados) — essa mudança só reduz a FREQUÊNCIA de reverificação, não o
+que fica disponível localmente. Requer a migração one-off (script enviado
+fora do repo) que popula `cards_archived` pros cards já arquivados antes
+desta versão, senão eles continuam sendo revalidados até o próximo
+arquivamento/desarquivamento real.
+
+### v8.30.192 — 2026-07-30 · PR #88
 Promove pra prod o fix validado no dev (`v8.30.227-dev`): corrige a CAUSA
 RAIZ das tags fantasma (as duas promoções anteriores só mitigavam o
 sintoma). O listener ao vivo de `/tags` reatribuía o array `tags` assim
