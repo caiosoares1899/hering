@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.187 — 2026-07-30 · PR #70
+Promove pra prod tudo desde a v8.30.186 (PRs #68 e #69), validado no dev:
+"💡 Meus cards" agora encontra e mostra corretamente cards em qualquer
+coluna (não só Concluído) — corrige a expansão do limite de renderização
+por coluna e a pré-posicionação da rolagem vertical independente de cada
+coluna antes da rolagem horizontal final.
+
 ### v8.30.186 — 2026-07-30 · PR #67
 Promove pra prod tudo desde a v8.30.185 (PRs #64-#66), validado no dev:
 
