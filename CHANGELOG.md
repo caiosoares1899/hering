@@ -174,6 +174,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.216-dev — 2026-07-30 · PR #61
+Novo botão "💡 Meus cards" na barra de Filtros — destaca (sem esconder o
+resto) todos os cards onde a pessoa é responsável ou participante
+(reaproveita `_euEstouNoCard()`, já usado pra dar um tom sutil permanente a
+esses cards via `.card-mine`), expande colunas colapsadas que tenham algum,
+e rola até o primeiro. Pedido do time: achar os próprios cards num board
+lotado sem precisar filtrar (o filtro por usuário existente esconde o
+resto, que nem sempre é o que a pessoa quer).
+
+Destaque é um **glow/pulso suave** (3 pulsos, ~2s), não um blink literal —
+flash rápido repetido é gatilho conhecido de fotosensibilidade. Testado com
+harness Playwright isolado: cards certos pulsam, coluna colapsada expande
+quando tem card da pessoa, scroll vai pro primeiro, clique de novo
+reinicia o pulso (em vez de não fazer nada), sem card nenhum mostra toast
+sem quebrar.
+
 ### v8.30.215-dev — 2026-07-30 · PR #59
 Corrige a PR #58 (@menção em checklist): funcionava ao editar um item já
 existente, mas não ao **criar** um item novo — achado numa validação real
