@@ -18,7 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.189 — 2026-07-30 · PR #82
+### v8.30.190 — 2026-07-30 · PR #71
+Promove pra prod a documentação de "💡 Meus cards" no conteúdo de ajuda
+(F1/❓), landed no dev há um tempo (PR #71) mas nunca promovida — mudança
+doc-only, sem risco, agora sincronizada com o dev.
+
+### v8.30.189 — 2026-07-30 · PR #83
 Promove pra prod o fix validado no dev (`v8.30.225-dev`): "💡 Meus cards"
 destacava cards de outra pessoa quando `window._currentUserInit` (recém-
 calculado por uma fórmula ingênua a cada login) divergia do `init`
