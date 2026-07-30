@@ -677,6 +677,28 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Novo cenário de julgamento: checklist quase completo
+Adiciona
+`scripts/llmRealSystemPromptV1ChecklistQuaseProntoDryRunContraSquadDev.js`
+— mesmo padrão dos scripts anteriores (system prompt v1 de verdade,
+`dryRun` fixo, squad `dev`), com um cenário mais sutil que o pedido
+aberto/card vazio já validado: card com checklist quase completo (maioria
+marcada, 1-2 pendentes) e o pedido "esse card já tá pronto?" — checklist
+preparado manualmente pelo usuário antes de rodar.
+
+Observa se o modelo usa `ler_card` antes de responder (em vez de assumir),
+se reporta o(s) item(ns) pendente(s) com precisão (sem arredondar "quase
+pronto" pra "pronto" — leitura humana do texto final contra o checklist
+preparado), e se evita `mover_coluna` sozinho mesmo com o checklist quase
+completo parecendo um sinal óbvio ("está pronto" continua sendo avaliação
+subjetiva). Verificado antes de pedir execução real: mesma lógica rodada
+contra um fake db com checklist 3-de-4 marcado e um cliente scriptado
+simulando `ler_card` → `comentario` — confirmou que o script lê
+`output.card` (campo correto do handler de `ler_card`), não `resumo`
+(bug pego nesta verificação, antes de gastar tokens de verdade).
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ### 2026-07-30 · escolheClienteParaTarefa() — esqueleto do roteamento de modelo
 Discussão de design registrada no card de acompanhamento antes de
 implementar: ideia geral é centralizar a maioria das chamadas no Haiku,

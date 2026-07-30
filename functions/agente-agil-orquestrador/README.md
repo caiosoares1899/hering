@@ -252,6 +252,37 @@ inalcançáveis por nenhum caminho de código — quando o roteamento por
 complexidade e o gate de aprovação do ADM pro tier `opus` existirem de
 verdade, entram só nesta função.
 
+## Cenário de julgamento: checklist quase completo
+
+`scripts/llmRealSystemPromptV1ChecklistQuaseProntoDryRunContraSquadDev.js`
+— mesmo padrão dos scripts anteriores (system prompt v1 de verdade,
+`dryRun` fixo, squad `dev`), mas com um cenário mais sutil que o pedido
+aberto/card vazio já validado: card com checklist **quase** completo
+(maioria marcada, 1-2 itens pendentes) e o pedido "esse card já tá
+pronto?". O checklist precisa ser preparado manualmente antes de rodar —
+o script não mexe no card.
+
+Observa três coisas que o cenário anterior (card vazio) não testava:
+- Se usa `ler_card` **antes** de responder, em vez de assumir pelo
+  título/texto do pedido.
+- Se relata o(s) item(ns) pendente(s) com precisão, sem arredondar "quase
+  pronto" pra "pronto" — isso exige leitura humana do texto final contra o
+  checklist preparado, o script só sinaliza os pontos objetivos (ordem das
+  ferramentas, se moveu coluna).
+- Se evita `mover_coluna` sozinho — "está pronto" é avaliação subjetiva
+  mesmo com o checklist quase completo parecendo um sinal óbvio; o
+  comportamento esperado é relatar via `comentario` (ou `perguntar_humano`
+  se achar necessário), não decidir e mover.
+
+Verificado antes de pedir execução real: mesma lógica (incluindo o
+`system` recebido por `decide()`) rodada contra um fake db com checklist
+3-de-4 marcado, cliente scriptado simulando a sequência esperada
+(`ler_card` → `comentario` relatando o item pendente) — confirma que
+`output.card.checklist` (campo correto do handler de `ler_card`, não
+`resumo`) chega íntegro no script.
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -259,5 +290,6 @@ ferramentas reais + LLM real + `ler_card` + system prompt v1, tudo
 validado contra dados reais do squad `dev` (dryRun fixo em todas as
 ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
 teste). Esqueleto do roteamento de modelo (`escolheClienteParaTarefa()`)
-adicionado, hardcoded pra `sonnet`. Próximos passos ficam pra uma próxima
-sessão.
+adicionado, hardcoded pra `sonnet`. Novo cenário de julgamento (checklist
+quase completo) escrito, aguardando execução real. Próximos passos ficam
+pra uma próxima sessão.
