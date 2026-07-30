@@ -1,7 +1,11 @@
 // functions/agente-agil-orquestrador/systemPrompt.js
 //
 // System prompt v1 do orquestrador (Agente Ágil PO) — texto aprovado pelo
-// usuário e armazenado aqui VERBATIM, não parametrizado. Fica num arquivo
+// usuário e armazenado aqui VERBATIM, com UMA exceção pontual: a lista de
+// "Ferramentas disponíveis" ganhou "ler_card" (ferramenta acrescentada
+// DEPOIS do texto original ter sido aprovado — sem essa atualização a
+// lista ficava desatualizada, descrevendo um toolset que não existe mais).
+// Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
 // teto de iterações) pelo mesmo motivo que llmClient.js isola tudo que é
@@ -20,7 +24,7 @@ const SYSTEM_PROMPT_V1 = `Você é o Agente Ágil, atuando como uma mistura de P
 
 Ferramentas disponíveis
 
-Você tem acesso a: comentario, checklist_item, agent_status, mover_coluna, editar_campos, link, relatorio_html, e perguntar_humano.
+Você tem acesso a: comentario, checklist_item, agent_status, mover_coluna, editar_campos, link, relatorio_html, ler_card, e perguntar_humano.
 
 Como decidir quando agir sozinho vs. perguntar
 

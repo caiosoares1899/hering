@@ -492,6 +492,45 @@ Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · ler_card — primeira ferramenta de leitura
+Confirma a execução do `scripts/llmRealSystemPromptV1DryRunContraSquadDev.js`
+(entrada anterior, pedido aberto): `status: 'awaiting_human'`, o modelo
+usou `perguntar_humano` — correto dado o prompt, mas revelou uma lacuna
+real: o orquestrador não tinha NENHUMA ferramenta de leitura, só as 8 de
+escrita/controle, então todo pedido que exigisse "analisar antes de
+decidir" caía sempre em `perguntar_humano` por falta de contexto.
+
+Adiciona `tools/lerCard.js` (`ler_card`) — devolve um resumo curado do card
+(não o objeto cru do RTDB, mesma simetria que o lado de escrita já tem):
+título, descrição, prioridade, tags (id→label), coluna (id+nome, resolve o
+mesmo id que `mover_coluna` exige), responsável/participantes (resolvidos
+pro nome completo — descoberto que `owner`/`participants` no card já são
+iniciais, não uids), checklist (grupo resolvido pro título), e os últimos
+20 comentários (cronológico, combinado com o usuário antes de implementar).
+Fora do escopo de propósito: `history` (auditoria, não decisão), `links`,
+campos de implementação. Reaproveita 100% leituras já existentes
+(`resolveCardKey`/`cardsPath`/`tagsPath` de `board.js`, `readFlowMeta`/
+`columnName` de `flow.js`, `readSquadMembers` de `members.js`) — nenhuma
+lógica de leitura nova. Schema de input vazio — `cardId`/`squadId` já vêm
+fixados em `buildTools()`, mesmo padrão das outras 8 ferramentas. Existe em
+modo fake e real; sem `dryRun` pra travar, já que não escreve nada.
+
+A lista "Ferramentas disponíveis" do `SYSTEM_PROMPT_V1` ganhou `ler_card` —
+única linha tocada no texto aprovado (enumeração ficaria desatualizada sem
+isso), nenhuma outra parte alterada.
+
+8 testes novos em `__tests__/lerCard.test.js` (resolução de coluna/tags/
+responsável/participantes/checklist, corte de comentários, card vazio,
+handlers fake/real, integração `ler_card -> comentario` pelo loop inteiro).
+Ajustado 1 teste existente em `__tests__/loop.test.js` (lista de nomes de
+`buildTools()`, que ganhou mais uma ferramenta). **87 testes passando no
+total.**
+
+Ainda não rodado contra a API de verdade com `ler_card` disponível —
+aguardando execução do usuário (mesmo script de pedido aberto de antes,
+sem mudança nenhuma nele — a diferença é só o toolset agora incluir
+`ler_card`).
+
 ### 2026-07-30 · System prompt v1 + confirma validação do encadeamento de 2 ferramentas
 Confirma a execução do `scripts/llmRealMultiToolDryRunContraSquadDev.js`
 (entrada anterior): rodado pelo usuário contra o squad `dev` real —

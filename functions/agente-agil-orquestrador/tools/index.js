@@ -22,6 +22,7 @@ const {
 } = require('../../agente-agil/schema');
 const { makeHandler } = require('./fakeHandlers');
 const { makeRealHandler } = require('./realHandlers');
+const { lerCardSchema, makeFakeLerCardHandler, makeRealLerCardHandler } = require('./lerCard');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -52,11 +53,12 @@ const perguntarHumanoSchema = z.object({
 // tools/fakeHandlers.js. Usado pelos testes e por qualquer chamada que não
 // passe explicitamente pra 'real'.
 // mode:'real' — handlers de verdade (tools/realHandlers.js), precisa de
-// {db, squadId, cardId}; dryRun fica sempre fixo (ver DRY_RUN_FIXO em
-// realHandlers.js, não é opção aqui). perguntar_humano nunca tem handler
-// real — não existe escrita nenhuma associada a ela, real ou fake, em
-// nenhum modo: é só o sinal que para o loop (ver loop.js, status
-// 'awaiting_human').
+// {db, squadId, cardId}; dryRun fica sempre fixo pras 7 de escrita (ver
+// DRY_RUN_FIXO em realHandlers.js, não é opção aqui) — ler_card não escreve
+// nada, então não tem dryRun nenhum pra travar, real ou fake sempre lê.
+// perguntar_humano nunca tem handler real — não existe escrita nenhuma
+// associada a ela, real ou fake, em nenhum modo: é só o sinal que para o
+// loop (ver loop.js, status 'awaiting_human').
 function buildTools(options = {}) {
   const { mode = 'fake', db, squadId, cardId } = options;
   if (mode === 'real' && (!db || !squadId || !cardId)) {
@@ -78,6 +80,13 @@ function buildTools(options = {}) {
     description: 'Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir.',
     input_schema: zodToJsonSchema(perguntarHumanoSchema),
     handler: makeHandler('perguntar_humano'),
+  });
+
+  tools.push({
+    name: 'ler_card',
+    description: 'Lê um resumo do card atual (descrição, checklist, comentários, coluna, tags, responsável/participantes) — use antes de decidir uma ação em pedidos abertos ou quando faltar contexto.',
+    input_schema: zodToJsonSchema(lerCardSchema),
+    handler: mode === 'real' ? makeRealLerCardHandler({ db, squadId, cardId }) : makeFakeLerCardHandler(),
   });
 
   return tools;

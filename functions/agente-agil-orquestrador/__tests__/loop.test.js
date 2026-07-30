@@ -109,13 +109,13 @@ test('a suíte nunca depende do valor real do kill switch de produção', async 
   assert.equal(llmClient.calls(), 1);
 });
 
-test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_humano', () => {
+test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_humano + ler_card', () => {
   const tools = buildTools();
   const names = tools.map((t) => t.name);
 
   assert.deepEqual(
     names.sort(),
-    ['agent_status', 'checklist_item', 'comentario', 'editar_campos', 'link', 'mover_coluna', 'perguntar_humano', 'relatorio_html'].sort(),
+    ['agent_status', 'checklist_item', 'comentario', 'editar_campos', 'ler_card', 'link', 'mover_coluna', 'perguntar_humano', 'relatorio_html'].sort(),
   );
   tools.forEach((t) => {
     assert.equal(t.input_schema.type, 'object');
