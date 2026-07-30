@@ -490,6 +490,46 @@ o link antigo quebrado.
 Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
 `git log -- painel.html painel-dev.html` pro histórico completo.
 
+## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-07-30 · Etapa 1
+Abre o projeto novo da Fase 2 do Agente Ágil (PO+orquestrador com LLM e
+ferramentas), separado e isolado de `functions/agente-agil/` — que segue
+intocado e estável recebendo `POST` de especialistas externos normalmente.
+Etapa 1 é só o esqueleto do loop, com ferramentas **falsas** (nenhuma escrita
+real no board ainda):
+- `loop.js`: `runLoop()` usa o protocolo nativo de tool-use do Claude pra
+  decidir quando parar — continua enquanto a resposta trouxer tool calls,
+  para com `status:'done'` quando for só texto, sem ferramenta `finish()`
+  customizada. Duas paradas de segurança adicionais: `stopped_max_iterations`
+  (estourou o teto) e `disabled` (kill switch desligado, nem chama o LLM). Uma
+  terceira parada de produto: `awaiting_human`, quando o modelo chama a nova
+  ferramenta `perguntar_humano`.
+- `limits.js`: kill switch (`KILL_SWITCH_ENABLED = false` por padrão) e
+  `MAX_ITERATIONS = 8`. `enabled` é sempre recebido como parâmetro explícito
+  em `runLoop()`, nunca lido como global escondida — a suíte de testes passa
+  `enabled: true` diretamente e por isso nunca fica bloqueada pelo valor real
+  do switch de produção.
+- `tools/index.js`: monta as ferramentas a partir dos MESMOS schemas Zod que
+  `agente-agil/schema.js` usa pros 7 outputs do Sprint 1-3, via
+  `zodToJsonSchema(schema)` sem nome (produz schema plano, compatível com
+  `input_schema` da Anthropic) — trocar as ferramentas falsas pelas reais
+  (Etapa 3) vai ser só trocar o handler, sem mexer em schema.
+- `llmClient.js`: `createAnthropicLlmClient()` via `fetch()` direto em
+  `https://api.anthropic.com/v1/messages`, sem acrescentar dependência nova
+  (`@anthropic-ai/sdk` não usado, propositalmente). Não exercitado pelos
+  testes automatizados (que usam um cliente 100% falso/scripted).
+- 9 testes novos em `__tests__/loop.test.js` (parada natural, encadeamento de
+  múltiplas ferramentas, `perguntar_humano`, teto de iterações, kill switch,
+  ferramenta desconhecida, defaults). `functions/package.json`'s `test` agora
+  roda os dois pacotes de testes. 66 testes passando no total
+  (57 `agente-agil/` + 9 `agente-agil-orquestrador/`).
+
+Próximas etapas (não implementadas ainda): plugar o motor de escrita real
+(`buildWritePlan`/`applyWritePlan`) nos handlers, rodar em `dryRun` contra um
+squad de teste, tornar `SQUAD_ID` configurável. Nada aqui é chamado por
+nenhum endpoint HTTP ainda — não requer `firebase deploy`.
+
 ## Agente Ágil (`functions/agente-agil/`)
 
 ### 2026-07-29 · PR #52
