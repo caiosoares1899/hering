@@ -89,13 +89,30 @@ plano corretamente montado (`path` certo, formato certo — `id`, `uid`,
 `author`, `init`, `text`, `ts`), `output.dryRun: true`, nenhuma escrita real.
 Caminho técnico validado ponta a ponta.
 
+## Validação com LLM real (ainda em dryRun)
+
+`scripts/llmRealDryRunContraSquadDev.js` — mesmo objetivo técnico do script
+anterior, mas troca o cliente scriptado pelo `createAnthropicLlmClient` de
+verdade. Primeiro script desta fase que gasta tokens de verdade — decisão
+deliberada, não efeito colateral de mais um teste. `dryRun` continua fixo
+em `true` (`tools/realHandlers.js`, `DRY_RUN_FIXO`) — nada é escrito de
+verdade, mesmo com o LLM real decidindo.
+
+`ANTHROPIC_API_KEY` só é lida de variável de ambiente — nunca aparece em
+nenhum `console.log`/`console.error` do script, nem parcial/mascarada.
+
+System prompt deliberadamente mínimo: só confirma que o modelo escolhe a
+ferramenta certa dado um pedido claro e para quando termina (protocolo
+nativo de tool-use, sem `finish()`). **Não** tenta capturar a visão de PO
+completa (autoridade, quando perguntar vs decidir sozinho) — isso fica pra
+quando estivermos prontos pra validar decisões de produto de verdade, não
+só o encanamento técnico.
+
 ## Próximas etapas (não implementadas ainda)
 
-1. Ligar o cliente LLM real (`createAnthropicLlmClient`) contra o mesmo squad
-   `dev`, ainda em `dryRun` — com um system prompt inicial simples (não a
-   visão de PO completa ainda, que só faz sentido testar com decisões de
-   verdade em jogo). Pré-requisitos: `DEFAULT_MODEL` em `llmClient.js` foi
-   atualizado (estava com um snapshot antigo, nunca exercitado contra a API
-   de verdade); falta decidir de onde a `apiKey` vem nesse script (variável
-   de ambiente, nunca hardcoded/logada).
+1. Rodar `llmRealDryRunContraSquadDev.js` e confirmar que o LLM real escolhe
+   a ferramenta certa (aguardando execução).
 2. Tirar o `dryRun` fixo — vira parâmetro de verdade só depois do passo 1.
+3. Desenhar o system prompt completo de PO (autoridade, quando perguntar vs
+   decidir sozinho) — só depois de 1 e 2, quando houver decisões de produto
+   de verdade em jogo pra validar contra.
