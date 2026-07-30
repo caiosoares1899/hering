@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.188 — 2026-07-30 · PR #80
+Promove pra prod o fix validado no dev (v8.30.224-dev): "🔧 Detectar e
+reparar tags fantasma" mostrava o ID cru como rótulo (ex.: `1782410107254`)
+quando a tag órfã tinha um ID que não segue o padrão `tag_<slug>_<4chars>`
+do import do Trello (squads com tags legadas de ID numérico). Extraído pra
+`_derivarLabelTagFantasma()`, com fallback claro (`Tag sem nome (<id>)`)
+pra IDs fora do formato esperado. Só afeta reparos futuros — tags já
+criadas com nome numérico precisam ser renomeadas manualmente no editor.
+
 ### v8.30.187 — 2026-07-30 · PR #70
 Promove pra prod tudo desde a v8.30.186 (PRs #68 e #69), validado no dev:
 "💡 Meus cards" agora encontra e mostra corretamente cards em qualquer
