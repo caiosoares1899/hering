@@ -174,6 +174,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.217-dev — 2026-07-30 · PR #62
+Corrige crash real achado ao abrir um card no squad `ecomm`: `renderCL()`
+passava `item.t` direto pra `renderMd()` (introduzido na PR #58, @menção em
+checklist) sem o fallback `||''` que todo outro call-site de `renderMd()`
+no app já usa — um item de checklist existente com `t` undefined/null
+(dado legado/malformado) travava com `TypeError: Cannot read properties
+of undefined (reading 'replace')` ao tentar abrir QUALQUER card daquele
+squad. Corrigido pra `renderMd(item.t||'')`/`dataset.raw=item.t||''`,
+igual ao padrão já usado em `renderMd(d.text||'')` (descrições
+adicionais). Testado com harness reproduzindo item sem `t`, com `t: null`
+e com `t: undefined` — nenhum crasha mais, todos caem pra texto vazio.
+
 ### v8.30.216-dev — 2026-07-30 · PR #61
 Novo botão "💡 Meus cards" na barra de Filtros — destaca (sem esconder o
 resto) todos os cards onde a pessoa é responsável ou participante
