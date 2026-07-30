@@ -18,7 +18,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.191 — 2026-07-30 · PR #85
+### v8.30.192 — 2026-07-30 · PR #87
+Promove pra prod o fix validado no dev (`v8.30.227-dev`): corrige a CAUSA
+RAIZ das tags fantasma (as duas promoções anteriores só mitigavam o
+sintoma). O listener ao vivo de `/tags` reatribuía o array `tags` assim
+que qualquer atualização remota chegava, sem proteção contra colisão com
+edições locais em andamento no editor de tags (diferente do listener de
+`cards`, que já tinha essa guarda) — o que podia corromper silenciosamente
+o array salvo em seguida, derrubando tags ainda em uso por cards. Agora
+ignora a atualização remota enquanto o editor de tags está de fato aberto
+e mostrando linhas.
+
+### v8.30.191 — 2026-07-30 · PR #86
 Promove pra prod o fix validado no dev (`v8.30.226-dev`): fortalece a
 correção de "🔧 Detectar e reparar tags fantasma" pra também cobrir ids no
 formato `tag_<Date.now() cru>` (o mesmo esquema que `addTag()` usa pra
