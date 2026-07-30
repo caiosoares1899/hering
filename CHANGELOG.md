@@ -161,6 +161,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.215-dev — 2026-07-30 · PR #59
+Corrige a PR #58 (@menção em checklist): funcionava ao editar um item já
+existente, mas não ao **criar** um item novo — achado numa validação real
+(digitar "@" no campo "Novo item..." não abria dropdown nenhum). Causa:
+`initMentionDropdown(addInpId)` era chamado antes do `<input>` estar
+anexado à árvore do documento (`document.getElementById()` volta `null`
+nesse ponto, então a função saía sem fazer nada, silenciosamente) — corrigido
+chamando depois de `w.appendChild(sec)`. Confirmado com o mesmo harness
+Playwright, testando especificamente o campo de novo item (dropdown abre ao
+digitar "@", Enter com dropdown aberto não submete o item, Enter/clique
+"+ Add" depois de escolher a menção funciona normalmente).
+
 ### v8.30.214-dev — 2026-07-30 · PR #58
 Adiciona @menção (pessoa ou agente de IA) nos itens de checklist — pedido do
 time, mesmo mecanismo que já funciona em descrição/comentário/PO.
