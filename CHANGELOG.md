@@ -231,6 +231,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.227-dev — 2026-07-30
+Corrige a CAUSA RAIZ das tags fantasma (as duas entradas anteriores só
+mitigavam o sintoma — o rótulo numérico no reparo). O listener ao vivo de
+`/tags` (`fbListen`) reatribuía `tags` pra um array novo assim que
+QUALQUER atualização remota chegava, sem nenhuma proteção contra colisão
+com edições locais em andamento — diferente do listener de `cards`, que já
+tem essa guarda (`_hasLocalSession`/`_lastLocalSave`).
+
+Sequência do bug: o editor de tags (Config → Tags) renderiza linhas cujos
+handlers (`updateTagName(i,...)`, `delTag(i)`, etc.) dependem do ÍNDICE do
+array `tags` no momento da renderização. Se uma atualização remota chegasse
+enquanto o editor estava aberto (ex.: outra pessoa salvando tags ao mesmo
+tempo), `tags` era reatribuído a um array novo por baixo do editor — os
+handlers passavam a mexer no item ERRADO do array novo (mesmo índice, tag
+diferente), e o `saveTags()` seguinte sobrescrevia `/tags` inteiro (`fbSet`,
+sem merge) com esse estado corrompido, derrubando silenciosamente tags
+ainda em uso por cards.
+
+Fix: ignora a atualização remota enquanto o editor de tags está de fato
+aberto E mostrando linhas (`cfg-ov` com `.open` E `#tag-editor .tag-row`
+presente) — mesmo espírito de proteção que `cards` já tem. Verificado com
+Playwright contra os 4 cenários relevantes (editor fechado, aberto em
+outra aba, aberto na aba de tags, fechado de novo com DOM residual —
+`closeOv()` só remove a classe `.open`, não limpa o HTML).
+
 ### v8.30.226-dev — 2026-07-30
 Fortalece o fix de "🔧 Detectar e reparar tags fantasma" (v8.30.224-dev):
 o fix anterior só checava se o ID **começa** com `tag_`, mas `addTag()`
