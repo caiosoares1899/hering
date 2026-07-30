@@ -165,12 +165,63 @@ julgamento do modelo real (não determinístico); o script anota se a
 ferramenta escolhida bate com o nível de risco esperado pro tipo de pedido,
 mas isso é leitura, não validação automática.
 
+Rodado pelo usuário: `status: 'awaiting_human'`, 1 chamada à API, o modelo
+usou `perguntar_humano` — comportamento correto dado o prompt (não chutou
+ação), mas revelou uma lacuna real: **o orquestrador não tinha nenhuma
+ferramenta de leitura**, só as 8 de escrita/controle. Todo pedido que
+exigisse "analisar antes de decidir" caía sempre em `perguntar_humano` por
+falta de contexto, mesmo quando o pedido seria simples de resolver se o
+agente pudesse ler o card sozinho.
+
+## `ler_card` — a primeira ferramenta de leitura
+
+`tools/lerCard.js`. Devolve um **resumo curado** do card (não o objeto cru
+do RTDB) — mesma simetria que o lado de escrita já tem (nenhuma ferramenta
+expõe path/schema interno):
+
+```
+{
+  titulo, desc, prioridade,
+  tags: ["Piloto", "Urgente"],                       // id → label
+  coluna: { id: "progress", nome: "Em andamento" },   // resolve o mesmo id que mover_coluna exige
+  responsavel: { init: "ANA", nome: "Ana Silva" },
+  participantes: [{ init: "BRU", nome: "Bruno Tanaka" }],
+  checklist: [{ texto, done, grupo }],                // grupo resolvido pro título
+  comentarios: [{ autor, texto, quando }],            // últimos 20, cronológico
+}
+```
+
+Cobre exatamente o que o próprio prompt pede pra ler em pedido aberto
+(checklist, descrição, comentários) + contexto mínimo de decisão. Fora do
+escopo de propósito: `history` (auditoria, não é o que um PO lê pra
+decidir a próxima ação), `links`, campos de implementação. Reaproveita
+100% leituras que já existem: `resolveCardKey`/`cardsPath`/`tagsPath`
+(`agente-agil/board.js`), `readFlowMeta`/`columnName` (`flow.js`),
+`readSquadMembers` (`members.js`) — nenhuma lógica de leitura nova.
+`owner`/`participants` no card já são iniciais (não uids — achado ao
+investigar `notifications.js`), resolvidos pro nome completo via a mesma
+lista de membros que as ferramentas de escrita já usam pra @menção.
+
+Schema de input vazio (`z.object({})`) — `cardId`/`squadId` já vêm fixados
+em `buildTools({mode, db, squadId, cardId})`, mesmo padrão das outras 8
+ferramentas. Existe em modo fake (resumo simulado) e real (leitura de
+verdade) — sem `dryRun` nenhum pra travar, já que não escreve nada.
+
+A lista "Ferramentas disponíveis" do `SYSTEM_PROMPT_V1` ganhou `ler_card`
+— única linha tocada no texto aprovado (a enumeração ficaria desatualizada
+sem isso; nenhuma outra parte do texto foi alterada). Cobertura em
+`__tests__/lerCard.test.js`: resolução de coluna/tags/responsável/
+participantes/checklist, corte de comentários nos últimos 20, card vazio
+sem quebrar, handlers fake/real, e um teste de integração encadeando
+`ler_card -> comentario` pelo loop inteiro.
+
 ## Próximas etapas (não implementadas ainda)
 
-1. Rodar `llmRealSystemPromptV1DryRunContraSquadDev.js` e revisar se o
-   comportamento cauteloso em pedido aberto aconteceu na prática
-   (aguardando execução).
-2. Tirar o `dryRun` fixo — vira parâmetro de verdade só depois disso.
+1. Rodar `llmRealSystemPromptV1DryRunContraSquadDev.js` de novo, agora com
+   `ler_card` disponível, e revisar se o modelo lê o card antes de decidir
+   em vez de cair direto em `perguntar_humano` (aguardando execução).
+2. Tirar o `dryRun` fixo das 8 ferramentas de escrita/controle — vira
+   parâmetro de verdade só depois disso.
 3. Desenhar o system prompt completo de PO (autoridade, quando perguntar vs
    decidir sozinho) — só depois de 1 e 2, quando houver decisões de produto
    de verdade em jogo pra validar contra.
