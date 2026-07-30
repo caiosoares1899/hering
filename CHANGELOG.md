@@ -242,6 +242,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.228-dev — 2026-07-30
+Reduz drasticamente o consumo de leitura do Firebase em boards com muito
+histórico arquivado. Achado com dados reais de um squad de produção
+(`outlet-crm`): 4.725 cards no total, **84% arquivados** (3.966) — e o
+sync do board estava rebaixando TODOS eles, ativos e arquivados, a cada
+sessão de cada pessoa conectada, o tempo todo (não só no carregamento
+inicial — o listener ao vivo de `cards_updated_at` também revalidava
+arquivados a cada burst). Consumo medido: mais que dobrando por dia
+(155k → 1,3M chamadas/dia em 4 dias), espalhado por várias pessoas
+simultaneamente, não uma sessão travada.
+
+Novo índice leve `cards_archived/{cardId}->true` (só existe pra
+arquivados, ausente = ativo) — mantido no mesmo funil que já mantém
+`cards_index`/`cards_updated_at` (`fbSaveAll()`/`fbSaveCard()`).
+`_planCardsDelta()` (kanban.html) passa a receber esse índice: um card
+arquivado só entra na lista de busca individual se **nunca tiver sido
+cacheado** neste dispositivo — não mais toda vez que o timestamp dele
+mudar. `_onCardsUpdatedAtLive()` (listener ao vivo) ignora reverificar
+ids já marcados como arquivados; novo listener em `cards_archived`
+mantém isso atualizado em tempo real durante a sessão (arquivar/
+desarquivar por qualquer pessoa reflete na hora, sem esperar reload).
+
+Decisão deliberada de escopo: `cards` continua contendo TUDO (ativos +
+arquivados), exatamente como hoje — investigação encontrou ~50 lugares no
+código que dependem disso (renderização, filtros, `openArquivados()`,
+`desarquivar()`, limpeza em massa, relatórios). Só muda a FREQUÊNCIA de
+reverificação de arquivados, não o que fica disponível localmente — trade-
+off: cada dispositivo ainda baixa os arquivados uma vez (não zero), mas
+nunca mais fica re-baixando o mesmo histórico parado indefinidamente. Uma
+versão "sob demanda" (só carrega arquivados ao abrir a tela de
+Arquivados, evitando até esse custo único) fica pra uma investigação
+separada — mudança maior, toca os ~50 call-sites que hoje assumem `cards`
+completo.
+
+**Requer migração pros squads com arquivados já existentes** (como este):
+sem popular `cards_archived` retroativamente, o mecanismo só vale pra
+arquivamentos novos a partir de agora. Script de migração fornecido à
+parte (console do navegador, roda uma vez por squad).
+
+Verificado: `_planCardsDelta()` (função pura) testada isoladamente contra
+6 cenários (ativo mudou, ativo igual, arquivado já cacheado com timestamp
+divergente, arquivado nunca cacheado, card legado sem timestamp, e
+`remoteIds` sempre completo independente do que entra em `toFetch`).
+
 ### v8.30.227-dev — 2026-07-30
 Corrige a CAUSA RAIZ das tags fantasma (as duas entradas anteriores só
 mitigavam o sintoma — o rótulo numérico no reparo). O listener ao vivo de
