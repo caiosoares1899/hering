@@ -356,6 +356,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
 .cl-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.cl-copy-all{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:4px;transition:all .12s;}
+.cl-copy-all:hover{color:var(--cyan);background:rgba(56,182,255,.1);}
 .cl-items{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
 .cl-item{display:flex;align-items:center;gap:6px;font-size:12px;border-radius:6px;padding:2px 4px;transition:background .15s;cursor:grab;}
 .cl-item:hover{background:rgba(56,182,255,.07);}
@@ -1151,6 +1153,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .eoc-editing .fmt-toolbar,.xdesc-card.editing .fmt-toolbar{display:flex;}
 .fmt-btn{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;}
 .fmt-btn:hover{background:rgba(56,182,255,.18);color:var(--txt);}
+.fmt-heading-select{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);height:24px;border-radius:5px;cursor:pointer;font-size:11px;padding:0 3px;transition:all .12s;font-family:"DM Sans",sans-serif;margin-right:2px;}
+.fmt-heading-select:hover{background:rgba(56,182,255,.18);color:var(--txt);}
 .fmt-colors{display:inline-flex;gap:3px;padding:0 4px;border-left:1px solid var(--glass-b);border-right:1px solid var(--glass-b);margin:0 2px;}
 .fmt-color{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;padding:0;transition:transform .12s;}
 .fmt-color:hover{transform:scale(1.2);}
@@ -2544,6 +2548,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
+    <button class="x-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
@@ -2640,7 +2645,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <!-- Coluna direita: checklist + riscos + links -->
       <div class="modal-col">
         <div class="cl-sec">
-          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
+          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div><button type="button" class="cl-copy-all" onclick="copyAllChecklist()" title="Copiar todos os itens do checklist">📋</button></div>
           <div id="m-agent-sim" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.28);border-radius:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
               <span id="m-agent-sim-progress" style="font-size:11px;color:#c4b5fd;font-weight:600;"></span>
@@ -2723,13 +2728,20 @@ input[type="date"]{-moz-appearance:textfield;}
 
     <div class="cfg-sec-title" style="margin:2px 0 -2px;">📝 Conteúdo</div>
     <!-- Descrição full-width -->
-    <div class="field">
+    <div class="field" id="desc-field" style="scroll-margin-top:60px;">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
       <div class="eoc-wrap" id="desc-eoc">
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
           onclick="eocEdit('desc-eoc')"></div>
         <div class="fmt-toolbar" data-for="m-desc">
+          <select class="fmt-heading-select" onmousedown="event.stopPropagation()" onchange="_fmtText('m-desc','heading',this.value);this.value='';" title="Tamanho do texto">
+            <option value="" selected disabled>Tt</option>
+            <option value="0">Texto normal</option>
+            <option value="1">Título 1</option>
+            <option value="2">Título 2</option>
+            <option value="3">Título 3</option>
+          </select>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','bold')" title="Negrito"><b>B</b></button>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','italic')" title="Itálico"><i>I</i></button>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','underline')" title="Sublinhado"><u>U</u></button>
@@ -4192,7 +4204,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.211-dev</div>
+<div class="version">v8.30.212-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7631,6 +7643,13 @@ function renderExtraDescs(){
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
           </div>
           <div class="fmt-toolbar">
+            <select class="fmt-heading-select" onmousedown="event.stopPropagation()" onchange="_fmtText('${taId}','heading',this.value);this.value='';" title="Tamanho do texto">
+              <option value="" selected disabled>Tt</option>
+              <option value="0">Texto normal</option>
+              <option value="1">Título 1</option>
+              <option value="2">Título 2</option>
+              <option value="3">Título 3</option>
+            </select>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
@@ -8348,9 +8367,15 @@ function renderCL(cl){
     groupItems.forEach((item,li)=>{
       const i=gIdx++; // índice global no array normalizado, usado só p/ excluir item
       const d=document.createElement('div');
-      d.className='cl-item'; d.draggable=true; d.dataset.idx=i; d.dataset.grp=g.id;
+      // draggable NÃO fica true por padrão (achado real: deixava o item
+      // inteiro "sequestrando" qualquer gesto de clicar-e-arrastar pro drag
+      // nativo do navegador, em vez de seleção de texto — só dava pra
+      // selecionar clicando dentro e usando Ctrl+A). Só a alcinha ⠿ arma o
+      // drag (mousedown/touchstart abaixo), igual ao padrão já usado em
+      // renderColCfgSubPrio().
+      d.className='cl-item'; d.dataset.idx=i; d.dataset.grp=g.id;
       d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; itemsWrap._dragLi=li; d.classList.add('dragging'); });
-      d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
+      d.addEventListener('dragend',()=>{ d.draggable=false; d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
       d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
       d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
       d.addEventListener('drop',e=>{
@@ -8364,6 +8389,7 @@ function renderCL(cl){
       const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
       const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
       handle.addEventListener('mousedown',()=>d.draggable=true);
+      handle.addEventListener('touchstart',()=>d.draggable=true,{passive:true});
       const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
       cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); pctEl.textContent=''; scheduleAutoSave(); _agentSimRefreshUI(); });
       span.title='Clique para editar';
@@ -8406,6 +8432,33 @@ function getCL(){
     done: r.querySelector('input[type=checkbox]')?.checked||false,
     grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
   })).filter(x=>x.t);
+}
+// Copia todos os itens de todos os checklists do card (texto puro, "[x]"/"[ ]"
+// por item, agrupado por título) — pedido do time: selecionar item por item
+// pelo mouse era ruim (ver fix de d.draggable acima), então isso dá um jeito
+// de levar o checklist inteiro pra outro lugar (Slack, outro card) num clique.
+async function copyAllChecklist(){
+  const groups = Array.from(document.querySelectorAll('#m-checklist .cl-group'));
+  const blocks = groups.map(g=>{
+    const title = g.querySelector('.cl-group-title')?.value?.trim() || 'Checklist';
+    const items = Array.from(g.querySelectorAll('.cl-item')).map(it=>{
+      const text = it.querySelector('.cl-it')?.textContent?.trim();
+      if(!text) return null;
+      const done = it.querySelector('input[type=checkbox]')?.checked;
+      return `[${done?'x':' '}] ${text}`;
+    }).filter(Boolean);
+    return items.length ? `${title}\n${items.join('\n')}` : null;
+  }).filter(Boolean);
+  if(!blocks.length){ if(typeof toast==='function') toast('Nada pra copiar ainda'); return; }
+  const text = blocks.join('\n\n');
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+    else throw new Error('Clipboard API indisponível');
+    if(typeof toast==='function') toast('📋 Checklist copiado!');
+  }catch(err){
+    console.error('copyAllChecklist falhou', err);
+    if(typeof toast==='function') toast('Não consegui copiar automaticamente — selecione o texto e use Ctrl+C');
+  }
 }
 function renderRiscos(rl){
   const w=document.getElementById('m-riscos'); if(!w) return; w.innerHTML='';
@@ -16859,6 +16912,12 @@ async function shareCardLink(){
   if(!url) return;
   await _copyToClipboard(url, '🔗 Link do card copiado! Já pode colar (Ctrl+V).');
 }
+// Descrição fica no meio do modal (pedido do time: usam bastante, mas
+// precisam rolar até lá toda vez) — atalho fixo no cabeçalho, que fica
+// sticky enquanto o resto do modal rola.
+function scrollToDescription(){
+  document.getElementById('desc-field')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 // Formata o card como texto simples e legível pra colar no Milanote.
 // IMPORTANTE: testamos na prática e o parser de clipboard do Milanote NÃO
@@ -18001,6 +18060,28 @@ async function _fmtText(taId, type, arg){
     ta.value = before + md + after;
     ta.focus();
     ta.selectionStart=s; ta.selectionEnd=s+md.length;
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    return;
+  } else if(type==='heading'){
+    // Diferente de bold/italic/etc. (que envolvem a SELEÇÃO), heading é uma
+    // marca de INÍCIO DE LINHA — pega a linha onde o cursor está (não a
+    // seleção inteira, pra ficar simples e previsível com seleção
+    // multi-linha), tira qualquer '#'/'##'/'###' que já exista no começo
+    // dela, e recoloca o nível escolhido (arg: '0'=texto normal,'1'..'3').
+    // Só 3 níveis (não 6, como o Trello) porque é só até onde renderMd()/
+    // _mdToExportHtml() já sabem desenhar título hoje.
+    const level = Number(arg)||0;
+    const val = ta.value;
+    const lineStart = val.lastIndexOf('\n', s-1)+1;
+    let lineEnd = val.indexOf('\n', s); if(lineEnd===-1) lineEnd = val.length;
+    const line = val.slice(lineStart, lineEnd);
+    const stripped = line.replace(/^#{1,3} /, '');
+    const prefix = level>0 ? '#'.repeat(level)+' ' : '';
+    const newLine = prefix + stripped;
+    ta.value = val.slice(0,lineStart) + newLine + val.slice(lineEnd);
+    ta.focus();
+    const cursor = lineStart + newLine.length;
+    ta.selectionStart = ta.selectionEnd = cursor;
     ta.dispatchEvent(new Event('input',{bubbles:true}));
     return;
   } else return;
