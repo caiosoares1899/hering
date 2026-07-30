@@ -184,6 +184,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.218-dev — 2026-07-30 · PR #64
+Corrige quebra de linha feia na barra de Filtros (achado numa validação
+real, comparando squads `dados` e `ecomm`): "💡 Meus cards" e "✕ Limpar"
+eram só mais dois itens soltos no `flex-wrap` da barra, então onde eles
+quebravam de linha dependia de quantos filtros estavam visíveis (varia por
+squad — ex.: o filtro de tamanho só aparece pra squads com essa opção
+ativa) e da largura da tela. Às vezes cada um ficava sozinho numa linha
+(ok), às vezes os dois ficavam espremidos meio deslocados no fim da linha
+anterior (feio). Agrupados os dois num `<div>` próprio com
+`margin-left:auto` — sempre ficam juntos e alinhados à direita, com ou sem
+o filtro de tamanho visível. Verificado com screenshot comparando os dois
+cenários (squad com/sem filtro de tamanho, mesma largura de tela).
+
 ### v8.30.217-dev — 2026-07-30 · PR #62
 Corrige crash real achado ao abrir um card no squad `ecomm`: `renderCL()`
 passava `item.t` direto pra `renderMd()` (introduzido na PR #58, @menção em
