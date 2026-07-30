@@ -232,10 +232,32 @@ se traduz em decisões coerentes na prática, não só no papel:
   travar em `perguntar_humano` — julgamento correto de que a situação não
   exigia bloqueio.
 
+## `escolheClienteParaTarefa()` — esqueleto do roteamento de modelo
+
+`escolheClienteParaTarefa.js`. Visão de produto (registrada no card de
+acompanhamento antes de implementar): centralizar a maioria das chamadas
+no Haiku, escalar pro Sonnet em pedidos complexos/abertos, e reservar o
+Opus só sob aprovação explícita do ADM — não automático.
+
+Implementado só o esqueleto por enquanto: `escolheClienteParaTarefa()`
+sempre devolve `{ tier: 'sonnet', model, llmClient }` (mesmo
+`DEFAULT_MODEL` que `llmClient.js` já usava), sem heurística de
+complexidade nenhuma — ainda em dryRun/squad de teste, sem tráfego real
+pra calibrar uma heurística contra. O que importa aqui é o *boundary*: a
+escolha de client fica fora de `loop.js` (que continua só conhecendo o
+contrato genérico `decide({system, history, tools})`, mesmo isolamento de
+`limits.js`/`systemPrompt.js`), num único lugar que roda antes de
+`runLoop()`. `MODEL_BY_TIER` já registra os ids de `haiku` e `opus`, ainda
+inalcançáveis por nenhum caminho de código — quando o roteamento por
+complexidade e o gate de aprovação do ADM pro tier `opus` existirem de
+verdade, entram só nesta função.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
 ferramentas reais + LLM real + `ler_card` + system prompt v1, tudo
 validado contra dados reais do squad `dev` (dryRun fixo em todas as
 ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
-teste). Próximos passos ficam pra uma próxima sessão.
+teste). Esqueleto do roteamento de modelo (`escolheClienteParaTarefa()`)
+adicionado, hardcoded pra `sonnet`. Próximos passos ficam pra uma próxima
+sessão.
