@@ -154,6 +154,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.211-dev — 2026-07-30 · PR #54
+Corrige o mesmo bug de ícone quebrado achado e corrigido na PR #53 pro push
+(`firebase-messaging-sw.js`/`functions/index.js`), agora na notificação
+nativa do navegador (`Notification`) de lembrete de reunião: `/favicon.ico`
+nunca existiu neste repo (o ícone real do app é inline/data-URI), sempre
+deu 404 silencioso — ícone genérico em vez do logo. Trocado por
+`marinheiro.png` (arquivo estático real). Só landing no dev — aguardando
+validação antes de promover pra prod.
+
 ### v8.30.191-dev — 2026-07-24 · PR #16 · tag `kanban_dev-v8.30.191-dev`
 Restaura o sistema híbrido humano+agente de IA que tinha sido apagado por
 acidente no commit `ea180cc` (22/07, edição direta pelo GitHub sem PR) — a
