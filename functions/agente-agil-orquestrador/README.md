@@ -281,7 +281,24 @@ Verificado antes de pedir execução real: mesma lógica (incluindo o
 `output.card.checklist` (campo correto do handler de `ler_card`, não
 `resumo`) chega íntegro no script.
 
-Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+Rodado pelo usuário contra o card `c1785433909974` (squad `dev`, checklist
+preparado com 4 de 5 itens marcados, faltando "Testar em produção"):
+`status: 'done'`, 3 chamadas à API. Bate nos três pontos observados, e
+acrescenta um comportamento não pedido explicitamente mas condizente com
+a cautela do prompt:
+- Usou `ler_card` primeiro, como esperado.
+- Relatou o item pendente com precisão ("4 de 5 itens... falta 'Testar em
+  produção'"), sem arredondar pra "pronto" — e cruzou com a coluna atual
+  ("A Fazer") como sinal adicional, sem regra explícita sobre isso no
+  prompt.
+- Não usou `mover_coluna` — respondeu só com `comentario`, e ainda
+  ofereceu mover o card/marcar o checklist **perguntando confirmação**
+  antes ("posso mover o card de coluna... só me confirma"), em vez de
+  agir direto ou travar em `perguntar_humano` sem necessidade.
+
+Segunda prova (após o card vazio) de que a cautela do prompt se traduz em
+julgamento coerente também num cenário onde "parece óbvio" seria fácil de
+atalhar.
 
 ## Status
 
@@ -290,6 +307,7 @@ ferramentas reais + LLM real + `ler_card` + system prompt v1, tudo
 validado contra dados reais do squad `dev` (dryRun fixo em todas as
 ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
 teste). Esqueleto do roteamento de modelo (`escolheClienteParaTarefa()`)
-adicionado, hardcoded pra `sonnet`. Novo cenário de julgamento (checklist
-quase completo) escrito, aguardando execução real. Próximos passos ficam
+adicionado, hardcoded pra `sonnet`. Cenário de julgamento com checklist
+quase completo validado contra o LLM real — comportamento cauteloso
+confirmado. Próximos passos ficam
 pra uma próxima sessão.
