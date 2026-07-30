@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.183 — 2026-07-30 · PR #55
+Promove pra prod o fix da PR #54 (validado no dev): ícone quebrado
+(`/favicon.ico`, que nunca existiu neste repo) na notificação nativa do
+navegador de lembrete de reunião. Trocado por `marinheiro.png`, arquivo
+estático real. Mesma classe de bug já corrigida na PR #53 pro push
+(`firebase-messaging-sw.js`/`functions/index.js`).
+
 ### v8.30.182 — 2026-07-28 · PR #48 · tag `kanban-v8.30.182`
 Promove pra prod a correção de um bug real do delta-sync em squads grandes
 (PR #47): o cache do carregamento em duas etapas guardava o conteúdo
