@@ -200,6 +200,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.224-dev — 2026-07-30
+Corrige o rótulo mostrado por "🔧 Detectar e reparar tags fantasma" quando
+o ID da tag órfã não segue o padrão `tag_<slug>_<4chars>` do import do
+Trello (ex.: squads com tags legadas de ID puramente numérico). Antes, o
+`replace()` de prefixo/sufixo não tinha o que remover nesses casos e o
+"rótulo derivado" acabava sendo o próprio ID cru (ex.: `1782410107254`
+aparecendo como nome da tag) — parecia bug de UI, não uma tag de verdade.
+Agora só deriva do ID quando ele bate com o formato esperado; caso
+contrário, usa `Tag sem nome (<id>)`, claramente sinalizando que precisa
+de um nome, mas ainda rastreável pelo ID entre parênteses. Extraído pra
+uma função própria (`_derivarLabelTagFantasma`) — mesma lógica, só
+nomeada e testável isoladamente.
+
+Achado numa sessão de uso real: o botão de reparo tinha sido clicado numa
+squad de produção com tags de ID legado/não-padrão, gerando 5 tags com
+nome numérico. O fix cobre reparos futuros; as 5 já criadas precisam ser
+renomeadas manualmente no editor de tags (o editor já funciona bem pra
+isso, não precisa de código).
+
 ### v8.30.223-dev — 2026-07-30 · PR #71
 Documenta "💡 Meus cards" (PRs #61/#68/#69) no conteúdo de ajuda (F1/❓) —
 novo item na seção do board, logo depois de "Filtros". Conferido que não
