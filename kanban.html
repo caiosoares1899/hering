@@ -356,6 +356,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-sec{background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
 .cl-hd-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
 .cl-hd{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.cl-copy-all{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:4px;transition:all .12s;}
+.cl-copy-all:hover{color:var(--cyan);background:rgba(56,182,255,.1);}
 .cl-items{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
 .cl-item{display:flex;align-items:center;gap:6px;font-size:12px;border-radius:6px;padding:2px 4px;transition:background .15s;cursor:grab;}
 .cl-item:hover{background:rgba(56,182,255,.07);}
@@ -366,7 +368,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-it{flex:1;cursor:text;word-break:break-word;min-width:0;border-radius:4px;padding:2px 4px;}
 .cl-it.cl-it-done{text-decoration:line-through;opacity:.5;}
 .cl-it:hover{background:rgba(56,182,255,.1);}
-.cl-it[contenteditable=true]{outline:1px solid rgba(56,182,255,.4);background:rgba(3,13,26,.6);padding:2px 6px;cursor:text;}
+.cl-it-edit-ta{flex:1;min-width:0;outline:1px solid rgba(56,182,255,.4);background:rgba(3,13,26,.6);padding:2px 6px;cursor:text;border:none;resize:none;overflow:hidden;font:inherit;color:inherit;border-radius:4px;}
 .cl-item input[type=checkbox]{accent-color:var(--teal);}
 .cl-it{flex:1;color:var(--txt);}
 .cl-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;}
@@ -1151,6 +1153,17 @@ input[type="date"]{-moz-appearance:textfield;}
 .eoc-editing .fmt-toolbar,.xdesc-card.editing .fmt-toolbar{display:flex;}
 .fmt-btn{background:rgba(56,182,255,.08);border:1px solid var(--glass-b);color:var(--txt2);width:26px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;}
 .fmt-btn:hover{background:rgba(56,182,255,.18);color:var(--txt);}
+.fmt-heading-dd{position:relative;display:inline-block;margin-right:2px;}
+.fmt-heading-btn{width:auto;padding:0 6px;gap:2px;font-size:11px;}
+.fmt-heading-menu{position:absolute;top:calc(100% + 4px);left:0;z-index:50;display:none;
+  background:rgba(6,26,46,.98);border:1px solid var(--glass-b);border-radius:8px;
+  min-width:130px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;}
+.fmt-heading-menu.show{display:block;}
+.fmt-heading-opt{padding:7px 12px;font-size:12px;color:var(--txt2);cursor:pointer;transition:background .1s;white-space:nowrap;}
+.fmt-heading-opt:hover{background:rgba(37,99,201,.2);color:var(--txt);}
+.fmt-heading-opt.fmt-h1{font-size:15px;font-weight:700;color:var(--txt);}
+.fmt-heading-opt.fmt-h2{font-size:14px;font-weight:700;color:var(--txt);}
+.fmt-heading-opt.fmt-h3{font-size:13px;font-weight:600;color:var(--txt);}
 .fmt-colors{display:inline-flex;gap:3px;padding:0 4px;border-left:1px solid var(--glass-b);border-right:1px solid var(--glass-b);margin:0 2px;}
 .fmt-color{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);cursor:pointer;padding:0;transition:transform .12s;}
 .fmt-color:hover{transform:scale(1.2);}
@@ -2544,6 +2557,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
+    <button class="x-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
@@ -2640,7 +2654,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <!-- Coluna direita: checklist + riscos + links -->
       <div class="modal-col">
         <div class="cl-sec">
-          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div></div>
+          <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div><button type="button" class="cl-copy-all" onclick="copyAllChecklist()" title="Copiar todos os itens do checklist">📋</button></div>
           <div id="m-agent-sim" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.28);border-radius:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
               <span id="m-agent-sim-progress" style="font-size:11px;color:#c4b5fd;font-weight:600;"></span>
@@ -2723,13 +2737,22 @@ input[type="date"]{-moz-appearance:textfield;}
 
     <div class="cfg-sec-title" style="margin:2px 0 -2px;">📝 Conteúdo</div>
     <!-- Descrição full-width -->
-    <div class="field">
+    <div class="field" id="desc-field" style="scroll-margin-top:60px;">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
       <div class="eoc-wrap" id="desc-eoc">
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
           onclick="eocEdit('desc-eoc')"></div>
         <div class="fmt-toolbar" data-for="m-desc">
+          <div class="fmt-heading-dd">
+            <button type="button" class="fmt-btn fmt-heading-btn" onmousedown="event.preventDefault()" onclick="_toggleHeadingDD(this)" title="Tamanho do texto">Tt ▾</button>
+            <div class="fmt-heading-menu">
+              <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','0');_closeHeadingDD(this)">Texto normal</div>
+              <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','1');_closeHeadingDD(this)">Título 1</div>
+              <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','2');_closeHeadingDD(this)">Título 2</div>
+              <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','heading','3');_closeHeadingDD(this)">Título 3</div>
+            </div>
+          </div>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','bold')" title="Negrito"><b>B</b></button>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','italic')" title="Itálico"><i>I</i></button>
           <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('m-desc','underline')" title="Sublinhado"><u>U</u></button>
@@ -4192,7 +4215,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.183</div>
+<div class="version">v8.30.184</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7631,6 +7654,15 @@ function renderExtraDescs(){
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
           </div>
           <div class="fmt-toolbar">
+            <div class="fmt-heading-dd">
+              <button type="button" class="fmt-btn fmt-heading-btn" onmousedown="event.preventDefault()" onclick="_toggleHeadingDD(this)" title="Tamanho do texto">Tt ▾</button>
+              <div class="fmt-heading-menu">
+                <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','0');_closeHeadingDD(this)">Texto normal</div>
+                <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','1');_closeHeadingDD(this)">Título 1</div>
+                <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','2');_closeHeadingDD(this)">Título 2</div>
+                <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','3');_closeHeadingDD(this)">Título 3</div>
+              </div>
+            </div>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
             <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
@@ -8348,9 +8380,15 @@ function renderCL(cl){
     groupItems.forEach((item,li)=>{
       const i=gIdx++; // índice global no array normalizado, usado só p/ excluir item
       const d=document.createElement('div');
-      d.className='cl-item'; d.draggable=true; d.dataset.idx=i; d.dataset.grp=g.id;
+      // draggable NÃO fica true por padrão (achado real: deixava o item
+      // inteiro "sequestrando" qualquer gesto de clicar-e-arrastar pro drag
+      // nativo do navegador, em vez de seleção de texto — só dava pra
+      // selecionar clicando dentro e usando Ctrl+A). Só a alcinha ⠿ arma o
+      // drag (mousedown/touchstart abaixo), igual ao padrão já usado em
+      // renderColCfgSubPrio().
+      d.className='cl-item'; d.dataset.idx=i; d.dataset.grp=g.id;
       d.addEventListener('dragstart',e=>{ e.dataTransfer.effectAllowed='move'; itemsWrap._dragLi=li; d.classList.add('dragging'); });
-      d.addEventListener('dragend',()=>{ d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
+      d.addEventListener('dragend',()=>{ d.draggable=false; d.classList.remove('dragging'); itemsWrap.querySelectorAll('.cl-item').forEach(x=>x.classList.remove('drag-over')); });
       d.addEventListener('dragover',e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; d.classList.add('drag-over'); });
       d.addEventListener('dragleave',()=>d.classList.remove('drag-over'));
       d.addEventListener('drop',e=>{
@@ -8364,23 +8402,48 @@ function renderCL(cl){
       const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!item.done;
       const handle=document.createElement('span'); handle.className='cl-drag-handle'; handle.textContent='⠿'; handle.title='Arrastar para reordenar';
       handle.addEventListener('mousedown',()=>d.draggable=true);
-      const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':''); span.textContent=item.t;
+      handle.addEventListener('touchstart',()=>d.draggable=true,{passive:true});
+      // Texto do item guarda a fonte crua em data-raw (o que fica em card.checklist,
+      // lido por getCL()) e mostra renderMd() no modo leitura — pedido do time:
+      // permitir @menção (pessoa OU agente de IA) num item de checklist, igual já
+      // funciona em descrição/comentário/PO. Edição trocou de contenteditable pra
+      // <textarea> DE VERDADE (mesmo elemento entra/sai do DOM a cada clique) só
+      // porque initMentionDropdown() precisa de .value/.selectionStart de verdade
+      // pra reaproveitar o MESMO dropdown de autocomplete (@nome, @sigla, @card:)
+      // que já existe pra descrição/comentário/PO — contenteditable não tem essas
+      // propriedades nativamente, teria que duplicar toda aquela lógica.
+      const span=document.createElement('span'); span.className='cl-it'+(item.done?' cl-it-done':'');
+      span.dataset.raw=item.t; span.innerHTML=renderMd(item.t);
       cb.addEventListener('change',()=>{ span.classList.toggle('cl-it-done', cb.checked); pctEl.textContent=''; scheduleAutoSave(); _agentSimRefreshUI(); });
       span.title='Clique para editar';
-      let _prev='';
+      const clEditId='cl-edit-ta-'+i;
       span.addEventListener('click',()=>{
-        _prev=span.textContent;
-        span.contentEditable='true'; span.focus();
-        const range=document.createRange(); range.selectNodeContents(span); range.collapse(false);
-        const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-      });
-      span.addEventListener('blur',()=>{
-        span.contentEditable='false';
-        if(span.textContent.trim()!==_prev){ saveUndo('editar item checklist'); scheduleAutoSave(); }
-      });
-      span.addEventListener('keydown',e=>{
-        if(e.key==='Enter'){ e.preventDefault(); span.blur(); }
-        if(e.key==='Escape'){ span.textContent=_prev; span.contentEditable='false'; }
+        const prevRaw=span.dataset.raw||'';
+        const ta=document.createElement('textarea');
+        ta.className='cl-it-edit-ta'; ta.id=clEditId; ta.rows=1; ta.value=prevRaw;
+        span.replaceWith(ta);
+        ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+        ta.focus(); ta.selectionStart=ta.selectionEnd=ta.value.length;
+        initMentionDropdown(clEditId);
+        ta.addEventListener('input',()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
+        let finished=false;
+        function finishEdit(save){
+          if(finished) return; finished=true;
+          document.getElementById(clEditId+'-mention-dd')?.remove();
+          const newRaw = save ? ta.value.trim() : prevRaw;
+          if(save && newRaw!==prevRaw) saveUndo('editar item checklist');
+          span.dataset.raw = newRaw;
+          span.innerHTML = renderMd(newRaw);
+          ta.replaceWith(span);
+          if(save && newRaw!==prevRaw) scheduleAutoSave();
+        }
+        ta.addEventListener('blur',()=>finishEdit(true));
+        ta.addEventListener('keydown',e=>{
+          const dd=document.getElementById(clEditId+'-mention-dd');
+          const ddOpen = dd && dd.classList.contains('open');
+          if(e.key==='Enter' && !ddOpen){ e.preventDefault(); ta.blur(); }
+          else if(e.key==='Escape'){ e.preventDefault(); if(dd) dd.classList.remove('open'); finishEdit(false); }
+        });
       });
       const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
       del.onclick=()=>{ saveUndo('remover item checklist'); delCI(i); };
@@ -8390,22 +8453,68 @@ function renderCL(cl){
     sec.appendChild(itemsWrap);
 
     const addRow=document.createElement('div'); addRow.className='cl-add-r'; addRow.style.cssText='margin-top:4px;';
-    const inp=document.createElement('input'); inp.className='cl-ai'; inp.placeholder='Novo item...';
-    inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); } });
+    const addInpId='cl-add-inp-'+g.id;
+    const inp=document.createElement('input'); inp.className='cl-ai'; inp.id=addInpId; inp.placeholder='Novo item...';
+    inp.addEventListener('keydown',e=>{
+      const dd=document.getElementById(addInpId+'-mention-dd');
+      if(e.key==='Enter' && !(dd && dd.classList.contains('open'))){ e.preventDefault(); addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); }
+    });
     const addBtn=document.createElement('button'); addBtn.className='cl-ab'; addBtn.textContent='+ Add';
     addBtn.onclick=()=>{ addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); };
     addRow.append(inp,addBtn);
     sec.appendChild(addRow);
 
     w.appendChild(sec);
+    // Só agora `inp` está de verdade na árvore do documento — initMentionDropdown()
+    // faz document.getElementById(addInpId), que devolve null (e sai sem fazer nada,
+    // silenciosamente) se chamado ANTES do elemento estar anexado. @menção (pessoa/
+    // agente) já ao CRIAR o item, não só ao editar depois.
+    initMentionDropdown(addInpId);
   });
 }
 function getCL(){
-  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>({
-    t: r.querySelector('.cl-it')?.textContent?.trim()||'',
-    done: r.querySelector('input[type=checkbox]')?.checked||false,
-    grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
-  })).filter(x=>x.t);
+  // .cl-it guarda a fonte crua em data-raw (ver renderCL) — mas se o autosave
+  // (debounce disparado por OUTRO campo, ex.: Título) cair bem no meio de uma
+  // edição de item ainda não commitada, o .cl-it desse item foi TROCADO por um
+  // .cl-it-edit-ta (a <textarea> de edição) — sem esse fallback, esse item
+  // sumiria silenciosamente do save (querySelector('.cl-it') não acharia nada,
+  // getCL() devolveria '' pra ele, e o filter(x=>x.t) no final descartaria).
+  return Array.from(document.querySelectorAll('#m-checklist .cl-item')).map(r=>{
+    const editingTa = r.querySelector('.cl-it-edit-ta');
+    const t = editingTa ? editingTa.value.trim() : (r.querySelector('.cl-it')?.dataset.raw?.trim()||'');
+    return {
+      t,
+      done: r.querySelector('input[type=checkbox]')?.checked||false,
+      grp: r.dataset.grp || (_mCurrentGroups[0] && _mCurrentGroups[0].id) || 'default',
+    };
+  }).filter(x=>x.t);
+}
+// Copia todos os itens de todos os checklists do card (texto puro, "[x]"/"[ ]"
+// por item, agrupado por título) — pedido do time: selecionar item por item
+// pelo mouse era ruim (ver fix de d.draggable acima), então isso dá um jeito
+// de levar o checklist inteiro pra outro lugar (Slack, outro card) num clique.
+async function copyAllChecklist(){
+  const groups = Array.from(document.querySelectorAll('#m-checklist .cl-group'));
+  const blocks = groups.map(g=>{
+    const title = g.querySelector('.cl-group-title')?.value?.trim() || 'Checklist';
+    const items = Array.from(g.querySelectorAll('.cl-item')).map(it=>{
+      const text = it.querySelector('.cl-it')?.textContent?.trim();
+      if(!text) return null;
+      const done = it.querySelector('input[type=checkbox]')?.checked;
+      return `[${done?'x':' '}] ${text}`;
+    }).filter(Boolean);
+    return items.length ? `${title}\n${items.join('\n')}` : null;
+  }).filter(Boolean);
+  if(!blocks.length){ if(typeof toast==='function') toast('Nada pra copiar ainda'); return; }
+  const text = blocks.join('\n\n');
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+    else throw new Error('Clipboard API indisponível');
+    if(typeof toast==='function') toast('📋 Checklist copiado!');
+  }catch(err){
+    console.error('copyAllChecklist falhou', err);
+    if(typeof toast==='function') toast('Não consegui copiar automaticamente — selecione o texto e use Ctrl+C');
+  }
 }
 function renderRiscos(rl){
   const w=document.getElementById('m-riscos'); if(!w) return; w.innerHTML='';
@@ -14540,6 +14649,9 @@ saveCard = function(){
   // caso de terem sido digitadas e salvas via o botão "Salvar" geral do
   // card (não só via saveExtraDesc(), o botão de cada bloco individual).
   (card.descsExtra||[]).forEach(d=>parseMentions(d?.text, cardId));
+  // Itens de checklist também podem ter @menção (pessoa ou agente de IA) —
+  // pedido do time, mesmo mecanismo/dedupe determinístico dos outros campos.
+  (card.checklist||[]).forEach(it=>parseMentions(it?.t, cardId));
 
   // Responsável novo
   if(card.owner && card.owner!==prevOwner)
@@ -16859,6 +16971,12 @@ async function shareCardLink(){
   if(!url) return;
   await _copyToClipboard(url, '🔗 Link do card copiado! Já pode colar (Ctrl+V).');
 }
+// Descrição fica no meio do modal (pedido do time: usam bastante, mas
+// precisam rolar até lá toda vez) — atalho fixo no cabeçalho, que fica
+// sticky enquanto o resto do modal rola.
+function scrollToDescription(){
+  document.getElementById('desc-field')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 // Formata o card como texto simples e legível pra colar no Milanote.
 // IMPORTANTE: testamos na prática e o parser de clipboard do Milanote NÃO
@@ -17977,6 +18095,24 @@ function openCardDepMapModal(){
 // EDIT-ON-CLICK (EOC) — campos que editam ao clicar
 // ═══════════════════════════════════════════════════════
 
+// ── dropdown "Tt" de tamanho de texto (Descrição) — custom em vez de
+// <select> nativo porque a LISTA aberta de um <select> é renderizada pelo
+// SO/navegador, fora do alcance do CSS do app (ficava branca, destoando
+// completamente do tema escuro — achado numa validação real). ──
+function _toggleHeadingDD(btn){
+  const menu = btn.nextElementSibling;
+  const wasOpen = menu.classList.contains('show');
+  document.querySelectorAll('.fmt-heading-menu.show').forEach(m=>m.classList.remove('show'));
+  if(!wasOpen) menu.classList.add('show');
+}
+function _closeHeadingDD(optEl){
+  optEl.closest('.fmt-heading-menu')?.classList.remove('show');
+}
+document.addEventListener('mousedown', e=>{
+  if(e.target.closest('.fmt-heading-dd')) return;
+  document.querySelectorAll('.fmt-heading-menu.show').forEach(m=>m.classList.remove('show'));
+});
+
 // ── inserir marcador de formatação na seleção do textarea ──
 async function _fmtText(taId, type, arg){
   const ta=document.getElementById(taId); if(!ta) return;
@@ -18001,6 +18137,28 @@ async function _fmtText(taId, type, arg){
     ta.value = before + md + after;
     ta.focus();
     ta.selectionStart=s; ta.selectionEnd=s+md.length;
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    return;
+  } else if(type==='heading'){
+    // Diferente de bold/italic/etc. (que envolvem a SELEÇÃO), heading é uma
+    // marca de INÍCIO DE LINHA — pega a linha onde o cursor está (não a
+    // seleção inteira, pra ficar simples e previsível com seleção
+    // multi-linha), tira qualquer '#'/'##'/'###' que já exista no começo
+    // dela, e recoloca o nível escolhido (arg: '0'=texto normal,'1'..'3').
+    // Só 3 níveis (não 6, como o Trello) porque é só até onde renderMd()/
+    // _mdToExportHtml() já sabem desenhar título hoje.
+    const level = Number(arg)||0;
+    const val = ta.value;
+    const lineStart = val.lastIndexOf('\n', s-1)+1;
+    let lineEnd = val.indexOf('\n', s); if(lineEnd===-1) lineEnd = val.length;
+    const line = val.slice(lineStart, lineEnd);
+    const stripped = line.replace(/^#{1,3} /, '');
+    const prefix = level>0 ? '#'.repeat(level)+' ' : '';
+    const newLine = prefix + stripped;
+    ta.value = val.slice(0,lineStart) + newLine + val.slice(lineEnd);
+    ta.focus();
+    const cursor = lineStart + newLine.length;
+    ta.selectionStart = ta.selectionEnd = cursor;
     ta.dispatchEvent(new Event('input',{bubbles:true}));
     return;
   } else return;
