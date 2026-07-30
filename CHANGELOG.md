@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.185 — 2026-07-30 · PR #63
+Promove pra prod tudo desde a v8.30.184 (PRs #61 e #62), validado no dev:
+
+- Botão "💡 Meus cards" na barra de Filtros — destaca (glow/pulso, sem
+  esconder o resto) os cards onde a pessoa é responsável ou participante,
+  expande colunas colapsadas que tenham algum, e rola até o primeiro.
+- Corrige crash real ao abrir um card com item de checklist sem texto
+  (`t` undefined/null) — `renderMd()` chamado sem o fallback `||''` que o
+  resto do app já usa, travava a abertura de qualquer card nessa condição.
+
 ### v8.30.184 — 2026-07-30 · PR #60
 Promove pra prod tudo desde a v8.30.183 (PRs #56-#59), validado no dev:
 
