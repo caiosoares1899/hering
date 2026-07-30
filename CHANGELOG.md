@@ -18,6 +18,19 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.184 — 2026-07-30 · PR #60
+Promove pra prod tudo desde a v8.30.183 (PRs #56-#59), validado no dev:
+
+- **Checklist**: corrige item inteiro ficando `draggable` desde a criação
+  (quebrava seleção de texto por mouse — só dava pra selecionar clicando
+  dentro e usando Ctrl+A); botão 📋 pra copiar todos os itens de uma vez;
+  **@menção** (pessoa ou agente de IA) nos itens, tanto ao criar quanto ao
+  editar, com o mesmo autocomplete/notificação de descrição/comentário/PO.
+- **Modal do card**: botão ⬇️ fixo no cabeçalho pra rolar até a Descrição.
+- **Descrição (principal e adicionais)**: dropdown "Tt" de tamanho de texto
+  (Texto normal / Título 1/2/3), inspirado no Trello — dropdown custom
+  (não `<select>` nativo, que renderiza fora do alcance do CSS do app).
+
 ### v8.30.183 — 2026-07-30 · PR #55
 Promove pra prod o fix da PR #54 (validado no dev): ícone quebrado
 (`/favicon.ico`, que nunca existiu neste repo) na notificação nativa do
