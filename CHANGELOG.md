@@ -18,6 +18,28 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.194 — 2026-07-30 · PR #96
+Promove pra prod os fixes validados no dev (`v8.30.230-dev`, PRs #94 e
+#95):
+
+- **Heartbeat de presença pausa em aba oculta** — evita escrita
+  desperdiçada com a aba em background (comum no mobile ao trocar de
+  app); a pessoa já aparece "offline" pros outros depois do timeout de
+  30s de qualquer forma. Manda um heartbeat imediato ao voltar pra aba.
+- **Colunas reordenáveis por toque (mobile)** — cards já tinham touch
+  drag-and-drop custom (`addTouchDnD`); colunas só tinham `dragstart`
+  nativo do HTML5, que não dispara em touch, e não havia alternativa
+  nenhuma. Novo `addTouchColDnD` replica o mesmo gesto de long-press dos
+  cards. Ajuda (F1/❓) ganhou entrada documentando o gesto.
+- **Limpeza de código morto**: 17 funções órfãs, 2 variáveis órfãs e 8
+  regras CSS órfãs removidas (achado por um agente de auditoria dedicado,
+  cada item re-verificado manualmente antes de remover). Dois clusters
+  (painel "mini dependência", subsistema "Linked Cards") ficaram de fora
+  de propósito — precisam de decisão de produto, não são limpeza simples.
+
+Detalhes completos de cada mudança nas entradas de `v8.30.229-dev` e
+`v8.30.230-dev` abaixo.
+
 ### v8.30.193 — 2026-07-30 · PR #90
 Promove pra prod o fix validado no dev (`v8.30.228-dev`, PR #89): reduz o
 consumo de leitura do Firebase em boards com muito histórico arquivado.
