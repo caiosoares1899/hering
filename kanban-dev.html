@@ -721,6 +721,12 @@ input[type="date"]{-moz-appearance:textfield;}
 .spotify-row .sp-connect-btn{font-size:10px;padding:4px 10px;background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.35);
   border-radius:999px;color:#1DB954;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
 .spotify-row .sp-connect-btn:hover{background:rgba(29,185,84,.22);}
+.spotify-row .sp-actions{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;}
+.spotify-row .sp-actions-row{display:flex;gap:5px;}
+.spotify-row .sp-disconnect-btn{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--danger);}
+.spotify-row .sp-disconnect-btn:hover{background:rgba(255,107,107,.2);}
+.spotify-row .sp-manage-link{font-size:9px;color:var(--txt3);text-decoration:none;}
+.spotify-row .sp-manage-link:hover{color:var(--txt2);text-decoration:underline;}
 .spotify-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
 .kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
@@ -4244,7 +4250,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.232-dev</div>
+<div class="version">v8.30.233-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10102,6 +10108,13 @@ let _spotifyScope = 'squad';
 let spotifyNowSquad = {}; // {uid: {playing, track, artist, albumArt, updatedAt}}
 let spotifyNowGeral = {};
 let _spotifyUnsubs = [];
+// A própria pessoa não consegue ler kanban/spotify_secrets (deny total,
+// ver database.rules.json) pra saber se já está conectada — por isso
+// spotifyOauthCallback também grava uma flag PÚBLICA e sem token nenhum
+// (usuarios/{uid}/spotify_connected), que é o que essa variável reflete.
+// Buscada 1x quando o painel abre (não é listener — muda raramente,
+// mesmo espírito de "não manter mais estado ao vivo do que precisa").
+let _spotifySelfConnected = false;
 
 function _spotifyDetach(){
   _spotifyUnsubs.forEach(fn=>{ try{ fn && fn(); }catch(e){} });
@@ -10121,7 +10134,7 @@ function _spotifyAttach(scope){
   const rem = window._onChildRemoved(ref, snap=>{ _dbgTrack(path+':child_removed', null); delete bucket[snap.key]; if(_spotifyScope===scope) renderSpotifyPanel(); });
   _spotifyUnsubs = [add, chg, rem];
 }
-function toggleSpotify(){
+async function toggleSpotify(){
   const dr=document.getElementById('spotify-drawer');
   const wasOpen=dr.classList.contains('open');
   // fecha os outros drawers que ocupam a mesma área
@@ -10130,6 +10143,13 @@ function toggleSpotify(){
   document.getElementById('dados-drawer')?.classList.remove('open');
   dr.classList.toggle('open');
   if(!wasOpen){
+    const cu=window._currentUser;
+    if(cu){
+      try{
+        const snap = await fbGet('kanban/usuarios/'+cu.uid+'/spotify_connected');
+        _spotifySelfConnected = snap.val()===true;
+      }catch(e){ _spotifySelfConnected=false; }
+    }
     _spotifyAttach(_spotifyScope);
     renderSpotifyPanel();
   } else {
@@ -10165,13 +10185,21 @@ function renderSpotifyPanel(){
     const isSelf = p.uid===window._currentUser?.uid;
     const status = bucket[p.uid];
     let mid;
-    if(status && status.playing && status.track){
+    if(isSelf){
+      const nameLine = `<div class="sp-name">${esc(p.name||p.init)}</div>`;
+      const art = (status && status.albumArt) ? `<div class="sp-art"><img src="${safeUrl(status.albumArt)||''}"></div>` : '';
+      const statusLine = (status && status.playing && status.track)
+        ? `<div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div>`
+        : (status ? `<div class="sp-idle">⏸ Nada tocando agora</div>` : '');
+      const actions = _spotifySelfConnected
+        ? `<div class="sp-actions"><div class="sp-actions-row"><button class="sp-connect-btn" onclick="connectSpotify()">🔁 Trocar</button><button class="sp-connect-btn sp-disconnect-btn" onclick="desconectarSpotify()">❌ Desconectar</button></div><a class="sp-manage-link" href="https://www.spotify.com/account/apps/" target="_blank" rel="noopener">Gerenciar no Spotify ↗</a></div>`
+        : `<button class="sp-connect-btn" onclick="connectSpotify()">🔌 Conectar Spotify</button>`;
+      mid = `${art}<div class="sp-info">${nameLine}${statusLine}</div>${actions}`;
+    } else if(status && status.playing && status.track){
       const art = status.albumArt ? `<div class="sp-art"><img src="${safeUrl(status.albumArt)||''}"></div>` : '';
       mid = `${art}<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div></div>`;
     } else if(status){
       mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-idle">⏸ Nada tocando agora</div></div>`;
-    } else if(isSelf){
-      mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div></div><button class="sp-connect-btn" onclick="connectSpotify()">🔌 Conectar Spotify</button>`;
     } else {
       mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-idle">Não conectado</div></div>`;
     }
@@ -10181,17 +10209,19 @@ function renderSpotifyPanel(){
 // Monta o link de autorização do Spotify e redireciona — client_id não é
 // secreto, não precisa de function nenhuma pra esse passo (só a troca do
 // code por token, feita em spotifyOauthCallback, exige o client_secret).
-const SPOTIFY_CLIENT_ID = 'PREENCHER_DEPOIS_DE_CRIAR_O_APP_NO_SPOTIFY';
+// Mesmo botão serve pra "conectar" (primeira vez) e "trocar de conta"
+// (já conectado) — spotifyOauthCallback faz .set() no token, então
+// re-autorizar simplesmente sobrescreve; a troca de conta em si é
+// resolvida pelo próprio Spotify (link "entrar com outra conta" na tela
+// de autorização deles), não precisamos de fluxo nenhum separado aqui.
+const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 const SPOTIFY_REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyOauthCallback';
+const SPOTIFY_DISCONNECT_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyDisconnect';
 async function connectSpotify(){
-  if(SPOTIFY_CLIENT_ID==='PREENCHER_DEPOIS_DE_CRIAR_O_APP_NO_SPOTIFY'){
-    showToast('🎧 Integração com Spotify ainda não configurada — falta cadastrar o app no Spotify for Developers.');
-    return;
-  }
   const cu=window._currentUser; if(!cu){ showToast('Faça login antes de conectar o Spotify.'); return; }
   const state = (crypto.randomUUID ? crypto.randomUUID() : ('st'+Date.now()+Math.random().toString(36).slice(2)));
   try{
-    await window._set(window._ref(window._db,'kanban/oauth_pending/'+state), {uid:cu.uid, returnUrl:window.location.href.split('?')[0]});
+    await window._set(window._ref(window._db,'kanban/oauth_pending/'+state), {uid:cu.uid, returnUrl:window.location.href.split('?')[0], wasConnected:_spotifySelfConnected});
   }catch(e){ showToast('Não deu pra iniciar a conexão com o Spotify — tenta de novo.'); return; }
   const params = new URLSearchParams({
     client_id: SPOTIFY_CLIENT_ID,
@@ -10202,13 +10232,38 @@ async function connectSpotify(){
   });
   window.location.href = 'https://accounts.spotify.com/authorize?'+params.toString();
 }
+// Apaga de verdade o refresh_token (não uma flag de "inativo") + todo o
+// status público espalhado (squad(s) + geral) — passa por Cloud Function
+// porque o cliente não tem (nem deveria ter) acesso de escrita a
+// spotify_secrets. A ausência da entrada em spotify_secrets já é, por si
+// só, o sinal que faz a function de sync parar de tentar essa pessoa —
+// não existe uma flag "ativo" separada de propósito.
+async function desconectarSpotify(){
+  const cu=window._currentUser; if(!cu){ return; }
+  if(!await uiConfirm('Desconectar sua conta Spotify? Você para de aparecer pro time (inclusive o "ouvindo agora" atual some), e pode reconectar quando quiser.',{title:'Desconectar Spotify',danger:true,okText:'Desconectar'})) return;
+  try{
+    const idToken = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_DISCONNECT_URL, { method:'POST', headers:{ 'Authorization':'Bearer '+idToken } });
+    if(!res.ok) throw new Error('status '+res.status);
+    _spotifySelfConnected = false;
+    delete spotifyNowSquad[cu.uid];
+    delete spotifyNowGeral[cu.uid];
+    renderSpotifyPanel();
+    showToast('🔌 Spotify desconectado.');
+  }catch(e){
+    console.warn('[desconectarSpotify] falhou:', e);
+    showToast('⚠ Não deu pra desconectar — tenta de novo.');
+  }
+}
 // Feedback pós-redirect do OAuth — o callback manda de volta com
-// ?spotify=connected ou ?spotify=error na URL.
+// ?spotify=connected (primeira vez), ?spotify=reconnected (já estava
+// conectado, trocou de conta) ou ?spotify=error na URL.
 (function(){
   const qs = new URLSearchParams(window.location.search);
   const spotifyResult = qs.get('spotify');
   if(spotifyResult){
     if(spotifyResult==='connected') showToast('🎧 Spotify conectado!');
+    else if(spotifyResult==='reconnected') showToast('🔁 Conta Spotify atualizada!');
     else if(spotifyResult==='error') showToast('⚠ Não deu pra conectar o Spotify — tenta de novo.');
     qs.delete('spotify');
     const newUrl = window.location.pathname + (qs.toString()?'?'+qs.toString():'') + window.location.hash;
@@ -13981,6 +14036,7 @@ const HELP_CONTENT = {
     { icon:'🎧', title:'O que é "Ouvindo agora"', text:'Mostra o que cada pessoa está ouvindo no Spotify neste exato momento — abra pelo botão 🎧 Spotify na lateral direita do board. É opt-in: só aparece com música quem conectou a própria conta. Não guarda histórico, só o que está tocando agora.' },
     { icon:'🐠', title:'Sua Squad vs. 🌊 Geral', text:'Mesma lógica das Estrelas do Mar: a aba "Sua Squad" mostra só quem está na sua squad; "Geral" mostra todo mundo da empresa que conectou o Spotify.' },
     { icon:'🔌', title:'Como conectar', text:'Clique em "🔌 Conectar Spotify" na sua própria linha do painel — vai te levar pra tela de autorização do Spotify. Depois de autorizar, você volta pro board automaticamente. Só é possível conectar a própria conta, não a de outra pessoa.' },
+    { icon:'🔁', title:'Trocar de conta ou desconectar', text:'Já conectado, sua linha mostra "🔁 Trocar" (conectou a conta errada ou quer usar outra — clique de novo, o Spotify deixa escolher outra conta na tela dele) e "❌ Desconectar" (para de aparecer pro time, e o acesso salvo é apagado de verdade, não só desativado). Reconectar depois é normal, a qualquer momento. O link "Gerenciar no Spotify" leva pra tela de apps conectados da sua conta Spotify, caso queira revogar o acesso por lá também.' },
   ],
 }
 let _helpTab = 'board';
