@@ -260,6 +260,52 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.230-dev — 2026-07-30
+Limpeza de código morto, parte 2 da leva de "otimização de rotina" —
+relatório gerado por um agente de auditoria dedicado (750+ identificadores
+top-level verificados contra o arquivo inteiro + `painel.html`/
+`painel-dev.html`, buscando `onclick`, `window.x()`, dispatch por string).
+Cada item foi re-verificado manualmente antes de remover (contagem de
+referências no arquivo, confirmando exatamente 1 — a própria definição).
+
+**17 funções órfãs removidas** (nunca chamadas — a maioria era duplicata
+substituída por outra função, achado durante a auditoria): `cardHasDesc`,
+`_doBulkTag`, `subteamsOfInit`, `_flowFirstColId`, `resetFlowBaseline`,
+`cycleColSort`, `moveCardSubPrio`, `toggleCardOKR` (duplicata de
+`ctxToggleOKR`), `addCI` (lia um `#cl-inp` inexistente no HTML —
+substituída por `addCIToGroup`), `_nextDueDate`, `_cleanupQLTemp`,
+`openTrelloImport`, `_maybeRequestNotifPermission` (duplicata de
+`requestNotifPermission`), `ctxProgress`/`ctxDone` (duplicatas de
+`ctxMove`), `renderMentionText` (duplicata de lógica já embutida em
+`renderMd`), `resolveAllBugs`, `salvarComoModelo` (duplicata de
+`ctxModel`/`salvarComoModeloModal`, cuidado pra não confundir com essa
+que continua em uso).
+
+**2 variáveis órfãs removidas**: `_origQa` (leftover de instrumentação
+que nunca foi lida) e `_qlEditIdx` (superseded por `_editingQLItem`).
+
+**CSS órfão removido** (correlacionado com o código acima ou standalone,
+sem nenhuma referência em markup/JS, incluindo construção dinâmica via
+template string): `.card-has-desc`, `.dep-node-indent`/`.dep-node-line-h`/
+`.dep-node-line-v` (leftovers de um estilo antigo de árvore, substituído
+pela seta de texto simples do Mapa de Dependências atual), `.parent-btn`
+(substituído por `.minicard-*` no seletor de "Depende de" atual),
+`.retro-s`/`.retro-t`/`.retro-i` (cluster órfão isolado, sem recurso vivo
+correspondente).
+
+**Deixado de fora desta leva, por decisão de produto** (não é limpeza de
+código morto simples, precisa de decisão consciente — terminar de religar
+a UI ou remover o subsistema inteiro):
+- Painel "mini dependência" (`renderCardDepMini`, `depMiniNav` etc.) —
+  chamado mas sempre no-opa, os IDs de DOM que espera não existem no HTML.
+- Subsistema "Linked Cards" (`searchLinkedCards` e vizinhos) — parece
+  substituído pelo "Depende de" atual, mas o texto de ajuda (F1/❓) e o
+  prompt da IA ainda descrevem esse recurso pros usuários — inconsistência
+  real, além do código morto.
+- Cauda de ~30 classes CSS órfãs de confiança média (`.btn-modelo`,
+  `.squad-btn`, `.cal-legend` etc.) — impacto individual pequeno, mas
+  merecem uma segunda olhada isolada antes de remover em lote.
+
 ### v8.30.229-dev — 2026-07-30
 Leva de otimização de rotina + auditoria mobile, pedida como "otimização
 de rotina + análise e correção mobile" — escopo combinado antes de

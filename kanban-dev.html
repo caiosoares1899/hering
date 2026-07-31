@@ -425,10 +425,6 @@ input[type="date"]{-moz-appearance:textfield;}
 .met-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px;}
 .met-val{font-size:20px;font-weight:700;font-family:"Syne",sans-serif;}
 .met-sub{font-size:9px;color:var(--txt3);}
-.retro-s{background:rgba(3,13,26,.7);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px;margin-bottom:7px;}
-.retro-t{font-size:10px;font-weight:700;color:var(--txt2);margin-bottom:5px;}
-.retro-i{font-size:11px;color:var(--txt);padding:3px 0;border-bottom:1px solid rgba(56,182,255,.07);line-height:1.5;}
-.retro-i:last-child{border:none;}
 /* config */
 .cfg-panel{max-width:820px;width:94vw;height:88vh;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
 .cfg-panel .panel-hd{flex-shrink:0;}
@@ -896,8 +892,6 @@ input[type="date"]{-moz-appearance:textfield;}
   display:inline-flex;align-items:center;gap:2px;line-height:1.4;}
 .ci-desc{letter-spacing:1px;}
 
-.card-has-desc{font-size:11px;color:var(--txt3);margin-right:3px;letter-spacing:1px;vertical-align:middle;}
-
 /* Cards vinculados */
 .linked-cards{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
 
@@ -922,9 +916,6 @@ input[type="date"]{-moz-appearance:textfield;}
 .dep-chain-lbl input:focus{border-color:var(--accent);}
 .dep-tree{display:flex;flex-direction:column;gap:6px;}
 .dep-node{display:flex;align-items:stretch;gap:0;}
-.dep-node-indent{display:flex;flex-direction:column;align-items:center;width:24px;flex-shrink:0;}
-.dep-node-line-v{width:1px;background:rgba(56,182,255,.2);flex:1;}
-.dep-node-line-h{width:14px;height:1px;background:rgba(56,182,255,.2);margin-top:14px;flex-shrink:0;}
 .dep-node-card{flex:1;min-width:0;display:flex;align-items:center;gap:8px;
   background:rgba(6,20,44,.85);border:1px solid rgba(56,182,255,.12);
   border-radius:8px;padding:7px 10px;cursor:pointer;
@@ -975,14 +966,6 @@ input[type="date"]{-moz-appearance:textfield;}
 }
 .card-parent-bar a{color:var(--accent);text-decoration:none;cursor:pointer;}
 .card-parent-bar a:hover{text-decoration:underline;}
-.parent-btn{
-  display:flex;align-items:center;gap:5px;
-  background:none;border:1px solid rgba(56,182,255,.2);border-radius:6px;
-  color:var(--txt2);font-size:10px;padding:3px 9px;cursor:pointer;
-  transition:border-color .15s,color .15s;
-}
-.parent-btn:hover{border-color:var(--accent);color:var(--accent);}
-.parent-btn svg{opacity:.7;}
 
 /* ── MINICARD (linked card Trello-style) ───────────────── */
 .minicard{
@@ -4221,7 +4204,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.229-dev</div>
+<div class="version">v8.30.230-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4661,11 +4644,6 @@ function getExtraDescs(card){
   if(!card || !Array.isArray(card.descsExtra)) return [];
   return card.descsExtra.filter(Boolean);
 }
-// Card tem qualquer descrição com conteúdo (principal OU adicional)?
-function cardHasDesc(card){
-  if(card?.desc && card.desc.trim()) return true;
-  return getExtraDescs(card).some(d=>d.text&&d.text.trim());
-}
 // Texto concatenado de todas as descrições (para busca/menções/IA)
 function cardDescText(card){
   const parts=[];
@@ -4995,16 +4973,6 @@ function _doBulkTagClear(){
   });
   _bulkFinish(`🚫 Tags removidas de ${selectedCards.size} cards.`, true);
 }
-function _doBulkTag(tagId, mode){
-  _selectedList().forEach(c=>{
-    let arr=getCardTags(c);
-    if(mode==='set'){ arr=[tagId]; }
-    else if(!arr.includes(tagId)){ arr=[...arr, tagId]; }
-    c.tags=arr; c.tag=arr[0]||'';
-  });
-  const t=getTag(tagId);
-  _bulkFinish('🏷 Tag "'+(t?.label||'')+'" aplicada em '+selectedCards.size+' card(s).');
-}
 async function bulkDuplicate(){
   if(!selectedCards.size) return;
   if(!await uiConfirm('Duplicar '+selectedCards.size+' card(s)?',{title:'Duplicar cards',okText:'Duplicar'})) return;
@@ -5052,8 +5020,6 @@ async function bulkDeleteSelected(){
 }
 // Helpers de subtime
 function getSubteam(id){ return subteams.find(s=>s.id===id)||null; }
-// subtimes de um usuário (por init) — pode estar em vários
-function subteamsOfInit(init){ if(!init) return []; return subteams.filter(s=>Array.isArray(s.members)&&s.members.includes(init)); }
 // um card pertence ao subtime se o responsável OU qualquer participante estiver nele
 function cardInSubteam(card, subteamId){
   const st=getSubteam(subteamId); if(!st||!Array.isArray(st.members)) return false;
@@ -5327,9 +5293,6 @@ function _flowDoneColIds(){
   }
   const d=_flowDoneColId(); return d?[d]:[];
 }
-function _flowFirstColId(){
-  return (columns&&columns[0]&&columns[0].id)||'backlog';
-}
 // Marca a entrada de um card numa coluna (chamado em TODA movimentação).
 function recordMove(card, toCol, atISO){
   if(!card) return;
@@ -5472,25 +5435,6 @@ function toggleHistory(){
   const open=list.style.display!=='none';
   list.style.display=open?'none':'flex';
   if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
-}
-
-// ── Reset de contagem por squad (zera métricas pós-import do Trello) ──
-function resetFlowBaseline(opts){
-  opts = opts || {};
-  const now = new Date().toISOString();
-  let n=0;
-  (cards||[]).forEach(c=>{
-    if(!c || c.archived) return;
-    c.flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null, resetAt:now };
-    c.flow.enteredAt[c.col] = now;
-    c._lastFlowCol = c.col;
-    if(_flowStartColIds().includes(c.col)) c.flow.firstStartAt = now;
-    if(c.col===_flowDoneColId()){ c.flow.firstStartAt = now; c.flow.doneAt = now; }
-    n++;
-  });
-  if(window._fbReady){ try{ fbSet(FB+'/flow_baseline', { at: now, by: window._currentUser?.displayName||'?' }); }catch(e){} }
-  fbSaveAll();
-  return n;
 }
 
 function fbSaveAll(extra){
@@ -7346,21 +7290,6 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('#sort-menu-wrap')) closeSortMenu();
 });
 
-// Ordenação INDIVIDUAL de uma coluna — clique no ↕ ao lado do WIP cicla:
-// (usa o padrão global) → Data de criação → Prazo (data prevista) → (volta ao padrão).
-function cycleColSort(colId){
-  const current = colSortOverrides[colId] || null;
-  const cycle = { null: 'createdAt', createdAt: 'doneAt', doneAt: null };
-  const next = cycle[current];
-  if(next === null){
-    delete colSortOverrides[colId];
-  } else {
-    colSortOverrides[colId] = next;
-  }
-  safeLS.setItem('col_sort_ov_'+ACTIVE_SQUAD, JSON.stringify(colSortOverrides));
-  renderBoard();
-}
-
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
@@ -7985,24 +7914,6 @@ function _prioTierCards(colId, prio){
       return cards.indexOf(a)-cards.indexOf(b);
     });
 }
-function moveCardSubPrio(dir){
-  if(!editingId) return;
-  const c=cards.find(x=>x.id===editingId);
-  if(!c || !c.priority) return;
-  const tier=_prioTierCards(c.col, c.priority);
-  // Garante posição sequencial pra todo o grupo antes de trocar (cards "soltos" ganham um valor agora)
-  tier.forEach((cc,i)=>{ if(typeof cc.subPrio!=='number') cc.subPrio=i; });
-  tier.sort((a,b)=>a.subPrio-b.subPrio);
-  const idx=tier.findIndex(x=>x.id===c.id);
-  const swapIdx=idx+dir;
-  if(swapIdx<0 || swapIdx>=tier.length) return; // já está no topo/fundo dessa prioridade
-  const tmp=tier[idx].subPrio; tier[idx].subPrio=tier[swapIdx].subPrio; tier[swapIdx].subPrio=tmp;
-  c.edited=window._currentUser?.displayName||'Usuário';
-  c.editedAt=new Date().toISOString().split('T')[0];
-  fbSaveAll();
-  renderSubPrioRow();
-  renderBoard();
-}
 // Limpa a posição manual de todos os cards de uma coluna — volta pra ordem padrão
 async function resetColSubPrio(colId){
   if(!await uiConfirm('Remover a ordem manual desta coluna? Os cards voltam pra ordem padrão (prioridade + criação).')) return;
@@ -8286,13 +8197,6 @@ function saveCard(){
     console.error('[saveCard] falha ao confirmar salvamento:', err);
     showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
   });
-}
-function toggleCardOKR(cardId){
-  const card = cards.find(c=>c.id===cardId); if(!card) return;
-  card.isOKR = !card.isOKR;
-  _saveCardWithRetry(card, 'Marcação de OKR');
-  renderBoard();
-  showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
 async function deleteCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -9298,7 +9202,6 @@ function _criativosImportConfirm(){
 }
 function addRisco(){ const i=document.getElementById('risco-inp'); const v=i.value.trim(); if(!v) return; saveUndo('adicionar risco'); renderRiscos([...getRiscos(),v]); i.value=''; i.focus(); scheduleAutoSave(); }
 function delRisco(i){ saveUndo('remover risco'); const rl=getRiscos(); rl.splice(i,1); renderRiscos(rl); scheduleAutoSave(); }
-function addCI(){ const i=document.getElementById('cl-inp'); const v=i.value.trim(); if(!v) return; saveUndo('adicionar item checklist'); renderCL([...getCL(),{t:v,done:false}]); i.value=''; i.focus(); scheduleAutoSave(); }
 function delCI(i){ const cl=getCL(); cl.splice(i,1); renderCL(cl); scheduleAutoSave(); }
 // ═══════════════════════════════════════════════════════
 // SIMULAÇÃO DE FLUXO DO AGENTE (checklist = etapas do processo + comentários com contexto)
@@ -11758,26 +11661,6 @@ function _recurrenceLabel(rec){
   if(rec.type==='monthly') return 'Todo dia '+(rec.monthday||1)+' do mês';
   return '';
 }
-// Calcula a próxima data de criação devida (>= a partir de 'desde'), ou null
-function _nextDueDate(rec, desde){
-  if(!rec||!rec.type) return null;
-  const d=new Date(desde+'T00:00:00'); // parse como horário local (evita shift de fuso)
-  if(rec.type==='days'){
-    return d; // a verificação de intervalo é feita em _recurrenceDue via lastCreated
-  }
-  if(rec.type==='weekly'){
-    const alvo=rec.weekday??1;
-    while(d.getDay()!==alvo) d.setDate(d.getDate()+1);
-    return d;
-  }
-  if(rec.type==='monthly'){
-    const dia=Math.min(rec.monthday||1,28);
-    if(d.getDate()>dia) d.setMonth(d.getMonth()+1);
-    d.setDate(dia);
-    return d;
-  }
-  return null;
-}
 // Decide se um item recorrente deve gerar um card hoje
 function _recurrenceDue(item, hoje){
   const rec=item.recurrence; if(!rec||!rec.type||item.active===false) return false;
@@ -12025,7 +11908,6 @@ function processRelembreteAuto(){
 function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items',qlItems); renderQLBody(); }
 // ── Modal de configuração de recorrência ──
 let _recEditIdx=null;
-let _qlEditIdx = -1;
 let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente via modal de card
 
 // Edição completa: abre o item como se fosse um card real no quadro
@@ -12059,14 +11941,6 @@ function openQLEdit(i){
     const disp=document.getElementById('m-title-disp'); if(disp) disp.setAttribute('data-qlmode',lbl);
     const btnDel=document.getElementById('btn-del-card'); if(btnDel) btnDel.style.visibility='hidden';
   }, 50);
-}
-
-// Remove card temporário de QL ao fechar o modal sem salvar
-function _cleanupQLTemp(){
-  if(_editingQLItem){
-    cards = cards.filter(c=>!c._isQLTemp);
-    _editingQLItem = null;
-  }
 }
 
 function openRecorrenciaModal(i){
@@ -13183,7 +13057,6 @@ function uiPrompt(message, defaultValue='', opts={}){ return _uiModal({message, 
 // IMPORTAR TRELLO
 // ═══════════════════════════════════════════════════════
 let _trelloParsed = null;
-function openTrelloImport(){ openCfg('importar'); }
 // Decodifica a data REAL de criacao no Trello a partir do ID do card.
 // IDs do Trello sao ObjectId do Mongo: os 8 primeiros hex chars sao um
 // timestamp Unix (segundos). Funciona tanto com o ID completo (24 chars,
@@ -16067,13 +15940,6 @@ function checkUpcomingMeetings(){
 // Helper simples pra não quebrar se a flag ainda não existir no escopo (defensivo)
 function GCAL_FEATURE_ENABLED_SAFE(){ return typeof GCAL_FEATURE_ENABLED === 'undefined' ? true : GCAL_FEATURE_ENABLED; }
 
-// Pede permissão de notificação do navegador na primeira vez que há agendas conectadas
-function _maybeRequestNotifPermission(){
-  if (window.Notification && Notification.permission === 'default') {
-    Notification.requestPermission().catch(()=>{});
-  }
-}
-
 setInterval(checkUpcomingMeetings, 60000);
 
 
@@ -16175,7 +16041,6 @@ window.onunhandledrejection = function(e){
 };
 
 // Wrapper pra capturar erros específicos do sistema
-const _origQa = typeof qa !== 'undefined' ? qa : null;
 function wrapWithErrorLog(fn, context){
   return async function(...args){
     try{ return await fn.apply(this,args); }
@@ -16941,29 +16806,6 @@ document.addEventListener('contextmenu', e=>{
   if(!e.target.closest('.card')) hideCtxMenu();
 });
 
-// Ações do context menu
-async function resolveAllBugs(){
-  const bugTags = tags.filter(t=>
-    /bug|bloqueio|blocker|erro|error|fix/i.test(t.label||t.id)
-  ).map(t=>t.id);
-  if(!bugTags.length && !await uiConfirm('Nenhuma tag de bug encontrada automaticamente.\nDeseja mover TODOS os cards de Impedimentos para Concluído?')) return;
-  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
-  let count = 0;
-  cards.forEach(c=>{
-    if(c.archived) return;
-    const isBug = bugTags.length ? getCardTags(c).some(t=>bugTags.includes(t)) : c.col==='blocker';
-    if(isBug && c.col!==doneCol.id){
-      c.col = doneCol.id;
-      c.doneAt = new Date().toISOString();
-      count++;
-      notifDone(c); // antes pulava a notificação de conclusão nesse fluxo em massa
-    }
-  });
-  if(!count){ showToast('Nenhum card de bug encontrado para resolver.'); return; }
-  fbSaveAll(); renderBoard();
-  showToast('✅ '+count+' card'+(count>1?'s':'')+' de bug marcado'+(count>1?'s':'')+' como Concluído!');
-}
-
 function ctxToggleOKR(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   card.isOKR = !card.isOKR;
@@ -16990,9 +16832,7 @@ function ctxMove(colId){
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
-function ctxProgress(){ ctxMove('progress'); }
 function ctxBlock(){ ctxMove('blocker'); }
-function ctxDone(){ ctxMove('done'); }
 
 function ctxSetPriority(p){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
@@ -17116,24 +16956,6 @@ async function salvarComoModeloModal(){
   const btn=event.target; const orig=btn.textContent;
   btn.textContent='✅ Salvo!'; btn.disabled=true;
   setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },2000);
-}
-async function salvarComoModelo(id){
-  const card=cards.find(x=>x.id===id); if(!card) return;
-  if(!qlItems.modelos) qlItems.modelos=[];
-  const jaExiste=qlItems.modelos.find(m=>m.title===card.title);
-  if(jaExiste){ await uiAlert('"'+card.title+'" já está nos modelos.',{title:'Modelo duplicado'}); return; }
-  qlItems.modelos.push({
-    title: card.title,
-    tag: card.tag,
-    desc: card.desc||'',
-    po: card.po||'',
-    checklist: (card.checklist||[]).map(i=>({t:i.t,done:false})),
-    riscos: card.riscos||[],
-  });
-  fbSet(FB+'/ql_items',qlItems);
-  // feedback visual
-  const btn=event.target; const orig=btn.textContent;
-  btn.textContent='✅'; setTimeout(()=>btn.textContent=orig,1500);
 }
 // Gera a URL direta pra este card (mesmo mecanismo do ?opencard= usado pelo
 // multi-squad de campanhas) — reaproveitada por shareCardLink e exportToMilanote.
@@ -17861,23 +17683,6 @@ function renderCommentList(comments){
     });
     list.appendChild(item);
   });
-}
-
-function renderMentionText(text){
-  if(!text) return '';
-  // @USER mentions → teal underlined (agentes de IA → roxo, com 🤖)
-  text=text.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
-    const _pool=typeof allIdentities==='function'?allIdentities():(typeof members!=='undefined'?members:[]);
-    const _mem=_pool.find(x=>typeof getMemberHandle==='function'&&getMemberHandle(x)===handle.toLowerCase());
-    const title=_mem?_mem.name:handle;
-    if(_mem?.isAgent) return '<span class="mention-user mention-agent" title="🤖 '+esc(title)+' (agente de IA)">@'+esc(handle)+' 🤖</span>';
-    return '<span class="mention-user" title="'+esc(title)+'">@'+esc(handle)+'</span>';
-  });
-  // [[CARD:id:title]] → blue underlined (data-cid for click wiring after insertion)
-  text=text.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g,function(m,id,title){
-    return '<span class="mention-card" data-cid="'+id+'">📎 '+title+'</span>';
-  });
-  return text;
 }
 
 function autoResizeCommentInp(ta){
