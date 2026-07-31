@@ -129,3 +129,17 @@ exports.spotifyDisconnect = require('./spotify/disconnect').spotifyDisconnect;
 // Spotify — sync agendado do "ouvindo agora" (a cada minuto, ver
 // functions/spotify/sync.js). Deploy isolado: firebase deploy --only functions:spotifySync
 exports.spotifySync = require('./spotify/sync').spotifySync;
+
+// Rádio do Maré — playlist colaborativa (ver functions/spotify/radio*.js).
+// Callback de conexão da conta DONA das playlists — manual, uma vez só
+// (não é o fluxo por-pessoa de spotifyOauthCallback). Deploy isolado:
+// firebase deploy --only functions:spotifyRadioOwnerCallback
+exports.spotifyRadioOwnerCallback = require('./spotify/radioOwnerCallback').spotifyRadioOwnerCallback;
+
+// Busca de faixas pra sugerir (token app-only, não depende da conta
+// dona). Deploy isolado: firebase deploy --only functions:spotifyRadioSearch
+exports.spotifyRadioSearch = require('./spotify/radioSearch').spotifyRadioSearch;
+
+// Adiciona a faixa sugerida na playlist (token da conta dona). Deploy
+// isolado: firebase deploy --only functions:spotifyRadioSuggest
+exports.spotifyRadioSuggest = require('./spotify/radioSuggest').spotifyRadioSuggest;

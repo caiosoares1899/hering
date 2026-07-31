@@ -728,6 +728,28 @@ input[type="date"]{-moz-appearance:textfield;}
 .spotify-row .sp-manage-link{font-size:9px;color:var(--txt3);text-decoration:none;}
 .spotify-row .sp-manage-link:hover{color:var(--txt2);text-decoration:underline;}
 .spotify-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+/* Sub-toggle "Ouvindo agora" / "Playlist" — mesma classe visual das abas
+   de escopo (spotify-stab), só que numa fileira abaixo. */
+.spotify-content-tabs{display:flex;gap:6px;padding:10px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.spotify-ctab{flex:1;font-size:10.5px;font-weight:600;color:var(--txt2);background:rgba(29,185,84,.05);
+  border:1px solid var(--glass-b);border-radius:9px;padding:6px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.spotify-ctab:hover{border-color:rgba(29,185,84,.4);}
+.spotify-ctab.on{background:rgba(29,185,84,.14);border-color:rgba(29,185,84,.5);color:#1DB954;}
+/* Rádio do Maré (playlist colaborativa) — botões/inputs fora do contexto
+   de uma .spotify-row (que é só pra linhas de pessoa/faixa), por isso
+   uma classe própria em vez de reusar .sp-connect-btn. */
+.sp-btn{font-size:11px;padding:6px 12px;background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.35);
+  border-radius:999px;color:#1DB954;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;text-decoration:none;display:inline-block;}
+.sp-btn:hover{background:rgba(29,185,84,.22);}
+.spotify-playlist-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;padding:0 2px;}
+.spotify-playlist-hd .sp-manage-link{font-size:10px;color:var(--txt3);text-decoration:none;}
+.spotify-playlist-hd .sp-manage-link:hover{color:var(--txt2);text-decoration:underline;}
+.spotify-playlist-form{padding:24px 4px;}
+.spotify-playlist-form input{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--glass-b);
+  background:rgba(0,0,0,.2);color:var(--txt);font-size:12px;font-family:"DM Sans",sans-serif;margin:12px 0 8px;}
+.spotify-search-row{display:flex;gap:6px;margin-bottom:12px;padding:0 2px;}
+.spotify-search-row input{flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--glass-b);
+  background:rgba(0,0,0,.2);color:var(--txt);font-size:12px;font-family:"DM Sans",sans-serif;}
 .kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
@@ -2517,15 +2539,19 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
 </div>
 
-<!-- ═══ SPOTIFY (ouvindo agora) ═══ -->
+<!-- ═══ SPOTIFY (ouvindo agora + Rádio do Maré) ═══ -->
 <div class="lem-drawer spotify-drawer" id="spotify-drawer">
   <div class="lem-hd">
-    <div class="lem-hd-title">🎧 Ouvindo agora</div>
+    <div class="lem-hd-title">🎧 Spotify</div>
     <button class="x-btn" onclick="toggleSpotify()">✕</button>
   </div>
   <div class="spotify-scope-tabs">
     <button class="spotify-stab on" id="sptab-squad" onclick="setSpotifyScope('squad')">🐠 Sua Squad</button>
     <button class="spotify-stab" id="sptab-geral" onclick="setSpotifyScope('geral')">🌊 Geral</button>
+  </div>
+  <div class="spotify-content-tabs">
+    <button class="spotify-ctab on" id="spctab-ouvindo" onclick="setSpotifyContent('ouvindo')">🎧 Ouvindo agora</button>
+    <button class="spotify-ctab" id="spctab-playlist" onclick="setSpotifyContent('playlist')">🎵 Playlist</button>
   </div>
   <div class="lem-body" id="spotify-body"></div>
 </div>
@@ -4250,7 +4276,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.235-dev</div>
+<div class="version">v8.30.236-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10115,6 +10141,10 @@ let _spotifyUnsubs = [];
 // Buscada 1x quando o painel abre (não é listener — muda raramente,
 // mesmo espírito de "não manter mais estado ao vivo do que precisa").
 let _spotifySelfConnected = false;
+// 'ouvindo' (presença ao vivo, listener) ou 'playlist' (Rádio do Maré —
+// NÃO é ao vivo, só um ponteiro pra uma playlist real do Spotify + busca
+// sob demanda; ver renderSpotifyPlaylist()).
+let _spotifyContent = 'ouvindo';
 
 function _spotifyDetach(){
   _spotifyUnsubs.forEach(fn=>{ try{ fn && fn(); }catch(e){} });
@@ -10150,7 +10180,7 @@ async function toggleSpotify(){
         _spotifySelfConnected = snap.val()===true;
       }catch(e){ _spotifySelfConnected=false; }
     }
-    _spotifyAttach(_spotifyScope);
+    if(_spotifyContent==='ouvindo') _spotifyAttach(_spotifyScope);
     renderSpotifyPanel();
   } else {
     _spotifyDetach();
@@ -10160,7 +10190,19 @@ function setSpotifyScope(s){
   _spotifyScope=s;
   document.getElementById('sptab-squad')?.classList.toggle('on',s==='squad');
   document.getElementById('sptab-geral')?.classList.toggle('on',s==='geral');
-  _spotifyAttach(s);
+  if(_spotifyContent==='ouvindo') _spotifyAttach(s);
+  renderSpotifyPanel();
+}
+// Troca entre "Ouvindo agora" (ao vivo, listener) e "Playlist" (Rádio do
+// Maré, sob demanda) — só um dos dois tem listener ativo por vez; entrar
+// em "playlist" desanexa o listener de presença (nada ali é ao vivo, não
+// faz sentido manter a leitura contínua rodando à toa).
+function setSpotifyContent(c){
+  _spotifyContent=c;
+  document.getElementById('spctab-ouvindo')?.classList.toggle('on',c==='ouvindo');
+  document.getElementById('spctab-playlist')?.classList.toggle('on',c==='playlist');
+  if(c==='ouvindo') _spotifyAttach(_spotifyScope);
+  else _spotifyDetach();
   renderSpotifyPanel();
 }
 // Geral = todo mundo da empresa. window._allUsers já existe (populado pro
@@ -10186,6 +10228,10 @@ function _spotifyGroupRank(p, status){
   return (status && status.playing && status.track) ? 0 : 1;
 }
 function renderSpotifyPanel(){
+  if(_spotifyContent==='playlist'){ renderSpotifyPlaylist(); return; }
+  _renderSpotifyOuvindo();
+}
+function _renderSpotifyOuvindo(){
   const body=document.getElementById('spotify-body'); if(!body) return;
   const bucket = _spotifyScope==='geral' ? spotifyNowGeral : spotifyNowSquad;
   const todos = _spotifyScope==='geral' ? _spotifyGeralUsers() : members;
@@ -10232,6 +10278,150 @@ function renderSpotifyPanel(){
     return `<div class="spotify-row"><div class="sp-av">${av}</div>${mid}</div>`;
   }).join('');
 }
+
+// ═══════════════════════════════════════════════════════
+// RÁDIO DO MARÉ (playlist colaborativa) — Nível 1
+// ═══════════════════════════════════════════════════════
+// Diferente do "ouvindo agora", isso NÃO é ao vivo: não tem listener,
+// sincronização em tempo real ou sessão compartilhada nenhuma. É só uma
+// playlist REAL do Spotify (uma pra empresa toda, uma por squad — mesmo
+// padrão Squad/Geral do resto do painel) que qualquer pessoa pode abrir
+// no próprio Spotify e ouvir no próprio ritmo. O que a gente guarda no
+// RTDB é só um PONTEIRO ({playlistId}) pra essa playlist — lido 1x
+// quando o painel abre/troca de aba/escopo, igual a _spotifySelfConnected
+// (estado que muda raramente, não precisa ficar "ao vivo").
+//
+// A escrita de verdade na playlist (adicionar a faixa sugerida) sempre
+// passa pelo token de UMA conta dona fixa (kanban/spotify_radio_owner_secret,
+// deny total — só Admin SDK, mesmo padrão de spotify_secrets), nunca pelo
+// token pessoal de quem sugere: a playlist é única/compartilhada, então
+// precisa de um token de escrita fixo, independente de quem tá sugerindo
+// — e como bônus, sugerir música não exige ter conectado o próprio
+// Spotify (só estar logado no Maré). Moderação: livre total, sem fila de
+// aprovação e sem trilha de auditoria nesta v1 — combinado assim de
+// propósito, mesmo espírito de confiança do resto do app (Kudos,
+// comentários, etc. também não têm aprovação).
+const SPOTIFY_RADIO_SEARCH_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyRadioSearch';
+const SPOTIFY_RADIO_SUGGEST_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyRadioSuggest';
+
+function _spotifyRadioPath(){
+  return _spotifyScope==='geral' ? 'kanban/painel/radio_geral' : (FB+'/radio_squad');
+}
+// Aceita tanto uma URL colada (https://open.spotify.com/playlist/{id}?si=...,
+// spotify:playlist:{id}) quanto o ID puro.
+function _extractSpotifyPlaylistId(raw){
+  const s=(raw||'').trim();
+  const m = s.match(/playlist[\/:]([a-zA-Z0-9]{10,})/);
+  if(m) return m[1].split('?')[0];
+  if(/^[a-zA-Z0-9]{10,}$/.test(s)) return s;
+  return null;
+}
+async function renderSpotifyPlaylist(){
+  const body=document.getElementById('spotify-body'); if(!body) return;
+  body.innerHTML = `<div class="spotify-empty">Carregando...</div>`;
+  const path = _spotifyRadioPath();
+  let info=null;
+  try{ const snap = await fbGet(path); info = snap.val(); }catch(e){}
+  // Se trocou de aba/escopo enquanto esse fetch tava em voo, essa
+  // resposta já é velha — não pisa no que está na tela agora.
+  if(_spotifyContent!=='playlist' || _spotifyRadioPath()!==path) return;
+
+  if(!info || !info.playlistId){
+    body.innerHTML = `
+      <div class="spotify-empty spotify-playlist-form">
+        🎵 Nenhuma playlist registrada ${_spotifyScope==='geral'?'pra Rádio do Maré (geral)':'pra esse squad'} ainda.
+        <input type="text" id="sp-playlist-input" placeholder="Cole o link ou ID da playlist do Spotify">
+        <button class="sp-btn" onclick="registrarSpotifyPlaylist()">Salvar playlist</button>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="spotify-playlist-hd">
+      <a href="https://open.spotify.com/playlist/${esc(info.playlistId)}" target="_blank" rel="noopener" class="sp-btn">🎵 Abrir playlist no Spotify</a>
+      <a href="#" class="sp-manage-link" onclick="event.preventDefault();trocarSpotifyPlaylist()">🔧 Trocar</a>
+    </div>
+    <div class="spotify-search-row">
+      <input type="text" id="sp-search-input" placeholder="Buscar música pra sugerir...">
+      <button class="sp-btn" onclick="buscarSpotifyTrack()">🔍 Buscar</button>
+    </div>
+    <div id="sp-search-results"></div>
+  `;
+  document.getElementById('sp-search-input')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); buscarSpotifyTrack(); } });
+}
+async function registrarSpotifyPlaylist(){
+  const input = document.getElementById('sp-playlist-input');
+  const id = _extractSpotifyPlaylistId(input?.value);
+  if(!id){ showToast('Link ou ID de playlist do Spotify inválido.'); return; }
+  try{
+    await window._set(window._ref(window._db,_spotifyRadioPath()), {playlistId:id, playlistUrl:'https://open.spotify.com/playlist/'+id, updatedAt:new Date().toISOString()});
+    showToast('🎵 Playlist registrada!');
+    renderSpotifyPlaylist();
+  }catch(e){ showToast('Não deu pra salvar a playlist — tenta de novo.'); }
+}
+function trocarSpotifyPlaylist(){
+  const body=document.getElementById('spotify-body'); if(!body) return;
+  body.innerHTML = `
+    <div class="spotify-empty spotify-playlist-form">
+      🎵 Trocar a playlist ${_spotifyScope==='geral'?'da Rádio do Maré (geral)':'do squad'}:
+      <input type="text" id="sp-playlist-input" placeholder="Cole o novo link ou ID da playlist do Spotify">
+      <button class="sp-btn" onclick="registrarSpotifyPlaylist()">Salvar</button>
+      <a href="#" class="sp-manage-link" onclick="event.preventDefault();renderSpotifyPlaylist()">Cancelar</a>
+    </div>`;
+}
+async function buscarSpotifyTrack(){
+  const cu=window._currentUser; if(!cu){ showToast('Faça login antes de buscar.'); return; }
+  const input = document.getElementById('sp-search-input');
+  const q = (input?.value||'').trim();
+  const results = document.getElementById('sp-search-results'); if(!results) return;
+  if(!q){ results.innerHTML=''; return; }
+  results.innerHTML = `<div class="spotify-empty">Buscando...</div>`;
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_RADIO_SEARCH_URL+'?q='+encodeURIComponent(q), {headers:{'Authorization':'Bearer '+token}});
+    if(!res.ok) throw new Error('http_'+res.status);
+    const data = await res.json();
+    const tracks = data.tracks||[];
+    if(!tracks.length){ results.innerHTML = `<div class="spotify-empty">Nada encontrado.</div>`; return; }
+    window._spotifySearchResults = tracks;
+    results.innerHTML = tracks.map((t,i)=>`
+      <div class="spotify-row">
+        <div class="sp-art">${t.albumArt?`<img src="${safeUrl(t.albumArt)||''}">`:''}</div>
+        <div class="sp-info"><div class="sp-track">${esc(t.name)}</div><div class="sp-artist">${esc(t.artist)}</div></div>
+        <button class="sp-connect-btn sp-suggest-btn" data-idx="${i}">+ Sugerir</button>
+      </div>
+    `).join('');
+    results.querySelectorAll('.sp-suggest-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> sugerirSpotifyTrack(window._spotifySearchResults[Number(btn.dataset.idx)], btn));
+    });
+  }catch(e){ results.innerHTML = `<div class="spotify-empty">Não deu pra buscar agora — tenta de novo.</div>`; }
+}
+async function sugerirSpotifyTrack(track, btnEl){
+  const cu=window._currentUser; if(!cu||!track) return;
+  let info=null;
+  try{ const snap=await fbGet(_spotifyRadioPath()); info=snap.val(); }catch(e){}
+  if(!info || !info.playlistId){ showToast('Nenhuma playlist registrada pra esse escopo.'); return; }
+  if(btnEl){ btnEl.disabled=true; btnEl.textContent='...'; }
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_RADIO_SUGGEST_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({playlistId:info.playlistId, trackUri:track.uri}),
+    });
+    if(!res.ok){
+      let msg='Não deu pra sugerir agora — tenta de novo.';
+      try{ const body=await res.json(); if(body?.error==='radio_owner_not_connected') msg='A Rádio do Maré ainda não foi configurada (conta dona não conectada).'; }catch(e){}
+      throw new Error(msg);
+    }
+    showToast('🎵 "'+track.name+'" sugerida pra playlist!');
+    if(btnEl){ btnEl.textContent='✓ Sugerida'; }
+  }catch(e){
+    showToast(e.message || 'Não deu pra sugerir agora — tenta de novo.');
+    if(btnEl){ btnEl.disabled=false; btnEl.textContent='+ Sugerir'; }
+  }
+}
+
 // Monta o link de autorização do Spotify e redireciona — client_id não é
 // secreto, não precisa de function nenhuma pra esse passo (só a troca do
 // code por token, feita em spotifyOauthCallback, exige o client_secret).
@@ -14063,6 +14253,7 @@ const HELP_CONTENT = {
     { icon:'🐠', title:'Sua Squad vs. 🌊 Geral', text:'Mesma lógica das Estrelas do Mar: a aba "Sua Squad" mostra só quem está na sua squad; "Geral" mostra todo mundo da empresa que conectou o Spotify.' },
     { icon:'🔌', title:'Como conectar', text:'Clique em "🔌 Conectar Spotify" na sua própria linha do painel — vai te levar pra tela de autorização do Spotify. Depois de autorizar, você volta pro board automaticamente. Só é possível conectar a própria conta, não a de outra pessoa.' },
     { icon:'🔁', title:'Trocar de conta ou desconectar', text:'Já conectado, sua linha mostra "🔁 Trocar" (conectou a conta errada ou quer usar outra — clique de novo, o Spotify deixa escolher outra conta na tela dele) e "❌ Desconectar" (para de aparecer pro time, e o acesso salvo é apagado de verdade, não só desativado). Reconectar depois é normal, a qualquer momento. O link "Gerenciar no Spotify" leva pra tela de apps conectados da sua conta Spotify, caso queira revogar o acesso por lá também.' },
+    { icon:'🎵', title:'Rádio do Maré (playlist colaborativa)', text:'Aba "🎵 Playlist" dentro do painel Spotify — uma playlist de verdade, uma pra empresa toda ("Geral") e uma por squad. Diferente do "Ouvindo agora", isso NÃO é ao vivo: é só uma playlist que qualquer pessoa pode abrir no próprio Spotify e ouvir no próprio ritmo, sem sincronia entre quem está ouvindo. Busque uma música e clique "+ Sugerir" pra adicionar direto na playlist — não precisa ter conectado o próprio Spotify pra sugerir, só estar logada no Maré. Entra direto, sem aprovação.' },
   ],
 }
 let _helpTab = 'board';
