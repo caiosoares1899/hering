@@ -357,6 +357,38 @@ cautela do system prompt v1 se traduz em julgamento coerente também
 quando a ambiguidade é entre duas ações concretas, não só entre agir e
 não agir.
 
+## Cenário de controle: mesma ambiguidade, card sem aviso no título
+
+`scripts/llmRealSystemPromptV1AmbiguidadeControleSemAvisoDryRunContraSquadDev.js`
+— achado do usuário ao revisar os três cenários anteriores: todos rodaram
+contra o MESMO card (`c1785433909974`), cujo título é literalmente
+"[TESTE Orquestrador] não mexer". Em pelo menos 2 dos 3 cenários, o
+modelo citou esse aviso como motivo (às vezes o motivo PRIMÁRIO) pra
+travar em `perguntar_humano`. Sem variar essa variável, não dá pra saber
+se a cautela observada vem do julgamento geral do prompt ou é um reflexo
+ao texto literal "não mexer" — pode ser um acidente feliz do card de
+teste, não do comportamento do prompt em si.
+
+Roda a MESMA tarefa ambígua ("Termina esse card pra mim.") contra um card
+DIFERENTE, preparado pelo usuário sem nenhum aviso no título, mantendo o
+resto do desenho igual (checklist com item(ns) pendente(s), mesma
+estrutura de ambiguidade mover-coluna-vs-checklist). Isola só a variável
+do título. `cardId` é **obrigatório** (sem default, de propósito) — o
+script recusa rodar sem ele, pra não repetir sem querer contra o card
+antigo e invalidar o controle.
+
+Verificado antes de pedir execução real: mesma lógica rodada contra um
+fake db com um card de título neutro ("Revisão de conteúdo do blog") e
+checklist 3-de-4 marcado — confirma que a detecção de aviso no título
+(regex simples: "não mexer"/"cuidado"/"não editar"/"não alterar") acerta
+nos dois sentidos (detecta no card original, não detecta no card
+neutro), e que a extração/impressão do resultado funciona igual ao
+cenário original. Também verificado que o script recusa rodar sem
+`cardId` explícito.
+
+Ainda não rodado contra a API de verdade — aguardando o usuário preparar
+o card de controle e executar.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -369,5 +401,8 @@ quase completo validado contra o LLM real — comportamento cauteloso
 confirmado. Terceiro cenário (ambiguidade mover x checklist) validado
 contra o LLM real — reconheceu a ambiguidade, travou em
 `perguntar_humano`, e ainda notou um aviso implícito no título do card
-sem regra nenhuma sobre isso no prompt. Próximos passos ficam
-pra uma próxima sessão.
+sem regra nenhuma sobre isso no prompt. Cenário de controle (mesma
+ambiguidade, card sem aviso no título) escrito, pra isolar se essa
+cautela vem do julgamento geral do prompt ou é reflexo ao texto "não
+mexer" — aguardando o usuário preparar o card e executar. Próximos
+passos ficam pra uma próxima sessão.

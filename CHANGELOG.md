@@ -902,6 +902,32 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Cenário de controle: mesma ambiguidade, card sem aviso no título
+Adiciona
+`scripts/llmRealSystemPromptV1AmbiguidadeControleSemAvisoDryRunContraSquadDev.js`
+— achado do usuário ao revisar os três cenários anteriores: todos rodaram
+contra o mesmo card (`c1785433909974`), cujo título é literalmente
+"[TESTE Orquestrador] não mexer", e o modelo citou esse aviso como motivo
+(às vezes primário) pra travar em `perguntar_humano` em pelo menos 2 dos
+3 cenários. Sem variar essa variável, não dá pra saber se a cautela vem
+do julgamento geral do prompt ou é reflexo ao texto literal — pode ser um
+acidente feliz do card de teste.
+
+Roda a mesma tarefa ambígua ("Termina esse card pra mim.") contra um card
+diferente, preparado pelo usuário sem nenhum aviso no título, isolando só
+essa variável. `cardId` é obrigatório (sem default) — recusa rodar sem
+ele, pra não invalidar o controle rodando sem querer contra o card
+antigo.
+
+Verificado contra fake db antes de pedir execução real: card de título
+neutro ("Revisão de conteúdo do blog") + checklist 3-de-4 marcado —
+confirma que a detecção de aviso no título acerta nos dois sentidos
+(detecta no card original, não detecta no neutro), e que o script recusa
+rodar sem `cardId`.
+
+Ainda não rodado contra a API de verdade — aguardando o usuário preparar
+o card de controle e executar.
+
 ### 2026-07-30 · Confirma validação real: ambiguidade mover coluna x checklist
 Confirma a execução do
 `scripts/llmRealSystemPromptV1AmbiguidadeMoverOuChecklistDryRunContraSquadDev.js`
