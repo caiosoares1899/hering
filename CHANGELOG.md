@@ -362,6 +362,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.242-dev — 2026-07-31
+Limpa o visual da barra de botões do rodapé do modal do card (`.modal-ft-row`)
+— feedback direto de que ela estava "desorganizada", com cores demais
+competindo sem hierarquia real. Antes: 4 estilos visuais diferentes —
+neutro, vermelho, teal (usado em DOIS botões sem relação nenhuma entre
+si — Arquivar e Insights) e um chip preto/cinza customizado só pro
+Milanote, destoando da paleta azul-teal do resto do app.
+
+Agora só 3 pesos visuais, cada um com significado único:
+- **Neutro** (outline padrão) — Duplicar, Modelo, Usar modelo, Arquivar,
+  Dependência, Milanote, Cancelar. `btn-milanote` (chip preto) removido
+  da CSS (única referência era esse botão).
+- **Vermelho** — só Excluir (ação destrutiva).
+- **Teal** — só Insights (único destaque, sinaliza IA).
+- **Azul preenchido** — só Salvar (ação principal do modal).
+
+Sem mudança de comportamento, só classe CSS trocada em 2 botões
+(Arquivar, Milanote) e remoção da regra `.btn-milanote` órfã.
+
 ### v8.30.241-dev — 2026-07-31
 Corrige dois bugs reais de gestão de usuário externo, reportados ao vivo
 testando com um email pessoal na squad `ecomm`: exclusão não pegava
