@@ -1165,6 +1165,42 @@ o link antigo quebrado.
 
 ## Cloud Functions — Spotify (`functions/spotify/`, sem versão própria em `version.json`)
 
+### 2026-07-31 · PR #112 — causa raiz DEFINITIVA do 403 (a nota abaixo estava incompleta)
+A allowlist "Users and Access" (nota abaixo) era real e precisava ser
+corrigida, mas **não era a causa completa** — o 403 continuou
+idêntico mesmo depois de cadastrar a conta na allowlist e reconectar
+com um token novo (confirmado pelo prefixo do token mudando). Um
+diagnóstico adicional (log comparando dono do token vs. dono da
+playlist, ambos "Caio Soares") também descartou mismatch de conta.
+
+**Causa raiz real**: a Web API do Spotify migrou
+`POST /playlists/{id}/tracks` pra `POST /playlists/{id}/items` em
+fevereiro/2026, com cutover pra apps em Development Mode em 9/mar/2026
+— depois disso, o endpoint antigo (`/tracks`) passa a devolver 403
+Forbidden genérico pra QUALQUER chamada, mesmo com token, escopo e
+allowlist certos. `radioSuggestCore.js` ainda usava `/tracks` (escrito
+antes dessa migração ser conhecida). Migração afeta os 4 métodos
+(GET/POST/PUT/DELETE) desse sub-recurso — `radioSuggestCore.js` só usava
+o `POST`, foi o único ponto a corrigir no projeto.
+
+Formato do corpo (`{"uris": [...]}`) não mudou — só o path. Resposta de
+sucesso é `201` (não `200`), mas o código já tratava isso certo desde
+sempre (checa `res.ok`, que é `true` pra qualquer 2xx — nunca comparou
+com `status===200` em lugar nenhum).
+
+O diagnóstico de propriedade (dono do token vs. dono da playlist,
+adicionado num PR anterior) continua no código — não foi a causa desta
+vez, mas é uma checagem legítima que pode ajudar num problema futuro
+diferente. O log temporário da requisição exata (URL/headers/body) foi
+o que permitiu montar o quadro completo antes de decidir a correção —
+mantido por enquanto, com um TODO pra remoção depois que o fix for
+validado em produção.
+
+**Lição pra próxima vez que um endpoint do Spotify voltar 403 do nada,
+com token/escopo/allowlist aparentemente certos**: conferir primeiro se
+o endpoint em si não foi renomeado/migrado — `developer.spotify.com/
+documentation/web-api/references/changes/` lista as mudanças por mês.
+
 ### 2026-07-31 · nota operacional (sem PR de código — achado ao investigar um bug)
 **Spotify Developer Mode exige allowlist manual de usuários, ou toda
 chamada de escrita à Web API volta 403.** Achado ao investigar o 500 da
