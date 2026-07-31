@@ -19,8 +19,19 @@ const SPOTIFY_NOW_PLAYING_URL = 'https://api.spotify.com/v1/me/player/currently-
 const _accessTokenCache = new Map();
 
 async function _getAccessToken(uid, refreshToken, clientSecret) {
+  // O cache só é válido se o refreshToken bater com o que gerou o
+  // access_token cacheado. Sem essa checagem, alguém que reconecta (ex:
+  // "🔁 Trocar" pra ganhar um escopo novo, como user-modify-playback-state)
+  // continuaria recebendo o access_token ANTIGO (escopo velho) até o
+  // cache expirar sozinho (~1h) — mesmo com o refresh_token novo já
+  // salvo no banco. Achado em produção: alguém reconectou pra ganhar
+  // escopo de playback e continuou tomando 401 "Permissions missing"
+  // porque o sync (que roda a cada 30s) já tinha cacheado um token com o
+  // escopo velho minutos antes da reconexão.
   const cached = _accessTokenCache.get(uid);
-  if (cached && cached.expiresAt > Date.now() + 30000) return { token: cached.token };
+  if (cached && cached.refreshToken === refreshToken && cached.expiresAt > Date.now() + 30000) {
+    return { token: cached.token };
+  }
 
   const res = await fetch(SPOTIFY_TOKEN_URL, {
     method: 'POST',
@@ -39,9 +50,16 @@ async function _getAccessToken(uid, refreshToken, clientSecret) {
   }
 
   const data = await res.json();
+  // Se veio rotação (refresh_token novo), guarda o cache já com o
+  // refreshToken NOVO — senão a própria rotação (legítima, não uma
+  // reconexão de verdade) invalidaria o cache no próximo tick à toa,
+  // já que quem chama vai persistir newRefreshToken no banco e passar
+  // esse valor novo na chamada seguinte.
+  const effectiveRefreshToken = data.refresh_token || refreshToken;
   _accessTokenCache.set(uid, {
     token: data.access_token,
     expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+    refreshToken: effectiveRefreshToken,
   });
   // Spotify às vezes manda um refresh_token novo junto (rotação) — se
   // vier, é esse que vale dali pra frente, o antigo pode já não servir.

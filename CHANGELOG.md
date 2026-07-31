@@ -1279,6 +1279,72 @@ o link antigo quebrado.
 
 ## Cloud Functions — Spotify (`functions/spotify/`, sem versão própria em `version.json`)
 
+### 2026-07-31 · PR #116 — corrige 401 no controle de playback + bug real de cache de token
+Primeiro teste real do controle de playback (PR #115) voltou 500
+genérico. `detail` (mecanismo criado nos PRs #110/#112 especificamente
+pra não precisar de acesso ao Cloud Logging) mostrou o real motivo:
+`http_401 Permissions missing`.
+
+**Causa raiz nº1 — inconsistência real do Spotify**: a família de
+endpoints `/me/player/*` (play/pause/next) devolve `401 "Permissions
+missing"` pra escopo faltando, diferente da maioria da Web API (que
+devolve `403 "Insufficient client scope"` pro mesmo problema, como
+vimos na Rádio do Maré). `playbackCore.js` só reconhecia o padrão 403 —
+corrigido pra também reconhecer esse 401 específico e mapear pra
+`insufficient_scope` (mesma mensagem amigável de sempre, "reconecte sua
+conta").
+
+**Causa raiz nº2 — bug real, mais importante**: o usuário confirmou que
+já tinha reconectado (🔁 Trocar) antes de testar, especificamente pra
+ganhar o escopo novo — e mesmo assim tomou o erro de escopo faltando.
+Investigado: `_accessTokenCache` (`syncCore.js`) e `_ownerTokenCache`
+(`radioSuggestCore.js`) cacheavam o `access_token` em memória (~1h de
+validade) só verificando o *tempo* de expiração, nunca se o
+`refresh_token` usado pra gerar aquele token ainda era o mesmo salvo no
+banco. Como o sync periódico (rodando a cada 30s) quase certamente já
+tinha cacheado um `access_token` com o escopo VELHO minutos antes da
+reconexão, o controle de playback recebia esse token cacheado — que
+genuinamente não tinha o escopo novo — em vez de trocar o refresh_token
+novo (já salvo no banco desde a reconexão) por um token fresco.
+
+- **`functions/spotify/syncCore.js`**: `_getAccessToken()` agora só usa
+  o cache se o `refreshToken` recebido bater exatamente com o que gerou
+  o `access_token` cacheado — qualquer reconexão/troca de conta invalida
+  o cache na próxima chamada, sem esperar expirar sozinho. Ao cachear
+  depois de uma troca bem-sucedida, guarda o `refreshToken` já
+  atualizado pra rotação (se o Spotify mandou um `refresh_token` novo
+  junto) não invalidar o cache à toa no tick seguinte.
+- **`functions/spotify/radioSuggestCore.js`**: mesmo fix em
+  `_getOwnerAccessToken()` — agora lê o `refresh_token` atual do banco
+  ANTES de decidir se o cache serve (leitura RTDB extra, barata, garante
+  correção se a conta dona da Rádio do Maré um dia trocar/reconectar).
+- **`functions/spotify/playbackCore.js`**: passou a persistir
+  `refresh_token` rotacionado no banco quando o Spotify manda um novo
+  durante um controle de playback — só `_syncOneUser()` fazia isso
+  antes; sem persistir, o próximo tick do sync usaria um `refresh_token`
+  que o Spotify já pode ter invalidado (rotação costuma ser de uso
+  único), derrubando a conexão por `invalid_grant` sem motivo real.
+  Também reconhece o 401 "Permissions missing" (ver acima).
+
+Verificado com `node --test` (4 casos novos, todos nomeados "BUG DE
+PRODUÇÃO CORRIGIDO" — reconexão não serve token cacheado velho, 401
+"Permissions missing" vira `insufficient_scope`, rotação de
+refresh_token persiste durante playback, mesmo cache-bug corrigido na
+conta dona da Rádio — 128/128 no total da suíte de functions, sem
+regressão em nenhum teste existente).
+
+Deploy necessário depois do merge:
+```
+firebase deploy --only functions:spotifySync
+firebase deploy --only functions:spotifySyncNow
+firebase deploy --only functions:spotifyPlayback
+firebase deploy --only functions:spotifyRadioSuggest
+```
+(as 4 functions que usam `_getAccessToken`/`_getOwnerAccessToken` —
+`spotifyDisconnect` também importa `_shared.js` mas não usa cache de
+token, não precisa redeploy por causa deste fix especificamente, mas
+não custa incluir se for redeployar tudo de uma vez.)
+
 ### 2026-07-31 · PR #113 — fechamento: integração validada em produção
 **Rádio do Maré (Nível 1) confirmada funcionando ponta a ponta em
 produção**: conta dona conectada, playlists Geral + squad registradas,

@@ -143,6 +143,32 @@ próprio Spotify e dá play no próprio ritmo, sem sincronia com ninguém.
    renomeado/migrado — `developer.spotify.com/documentation/web-api/
    references/changes/` lista as mudanças por mês.
 
+4. **`/me/player/*` (play/pause/next) devolve `401 "Permissions
+   missing"` pra escopo faltando** — diferente da maioria da Web API,
+   que devolve `403 "Insufficient client scope"` pro mesmo problema.
+   Inconsistência real do lado do Spotify entre famílias de endpoints,
+   não um bug de detecção "certo vs. errado" — as duas formas existem de
+   verdade, cada uma numa família diferente.
+
+5. **Cache de `access_token` em memória precisa validar o `refresh_token`
+   usado, não só o uid/uma flag fixa.** Bug real encontrado ao lançar o
+   controle de playback: alguém reconectou (🔁 Trocar) especificamente
+   pra ganhar o escopo novo (`user-modify-playback-state`), e mesmo assim
+   continuou tomando o 401 de escopo faltando — porque o sync (que roda
+   a cada 30s) já tinha cacheado um `access_token` com o escopo VELHO
+   minutos antes da reconexão, e o cache (`_accessTokenCache` em
+   `syncCore.js`, `_ownerTokenCache` em `radioSuggestCore.js`) só checava
+   `expiresAt` (~1h de validade), nunca se o `refresh_token` usado pra
+   gerar aquele token ainda era o mesmo salvo no banco. Corrigido nos
+   dois caches: agora só serve o cache se o `refreshToken` bater
+   exatamente com o que gerou o `access_token` cacheado — qualquer
+   reconexão/troca de conta invalida o cache na hora, sem precisar
+   esperar expirar sozinho. De passagem, `playbackCore.js` também passou
+   a persistir `refresh_token` rotacionado no banco (só `_syncOneUser()`
+   fazia isso antes) — sem isso, uma rotação durante um controle de
+   playback ficaria só na memória, e o próximo tick do sync usaria um
+   `refresh_token` que o Spotify já pode ter invalidado.
+
 ## Testes
 
 `functions/spotify/__tests__/*.test.js` — `node --test`, mesma
