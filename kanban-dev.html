@@ -727,6 +727,11 @@ input[type="date"]{-moz-appearance:textfield;}
 .spotify-row .sp-disconnect-btn:hover{background:rgba(255,107,107,.2);}
 .spotify-row .sp-manage-link{font-size:9px;color:var(--txt3);text-decoration:none;}
 .spotify-row .sp-manage-link:hover{color:var(--txt2);text-decoration:underline;}
+.spotify-row .sp-playback{display:flex;gap:6px;margin:4px 0;}
+.spotify-row .sp-play-btn{width:26px;height:26px;border-radius:50%;background:rgba(29,185,84,.14);
+  border:1px solid rgba(29,185,84,.4);color:#1DB954;cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+.spotify-row .sp-play-btn:hover{background:rgba(29,185,84,.26);}
 .spotify-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
 /* Sub-toggle "Ouvindo agora" / "Playlist" — mesma classe visual das abas
    de escopo (spotify-stab), só que numa fileira abaixo. */
@@ -4276,7 +4281,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.238-dev</div>
+<div class="version">v8.30.239-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10270,10 +10275,19 @@ function _renderSpotifyOuvindo(){
       const statusLine = (status && status.playing && status.track)
         ? `<div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div>`
         : (status ? `<div class="sp-idle">⏸ Nada tocando agora</div>` : '');
+      // Controle de playback PESSOAL (não é "DJ" pra todo mundo — só um
+      // atalho pra própria reprodução). Ícone play/pause reflete
+      // status.playing já conhecido (sem chamada nova pra decidir qual
+      // mostrar); tenta-e-avisa em vez de checar dispositivo ativo antes
+      // (ver _spotifyPlaybackAction() — evita uma chamada de API extra
+      // só pra decidir se desabilita o botão).
+      const playback = _spotifySelfConnected
+        ? `<div class="sp-playback"><button class="sp-play-btn" onclick="_spotifyPlaybackAction('${(status&&status.playing)?'pause':'play'}')" title="${(status&&status.playing)?'Pausar':'Tocar'}">${(status&&status.playing)?'⏸️':'▶️'}</button><button class="sp-play-btn" onclick="_spotifyPlaybackAction('next')" title="Próxima">⏭️</button></div>`
+        : '';
       const actions = _spotifySelfConnected
         ? `<div class="sp-actions"><div class="sp-actions-row"><button class="sp-connect-btn" onclick="connectSpotify()">🔁 Trocar</button><button class="sp-connect-btn sp-disconnect-btn" onclick="desconectarSpotify()">❌ Desconectar</button></div><a class="sp-manage-link" href="https://www.spotify.com/account/apps/" target="_blank" rel="noopener">Gerenciar no Spotify ↗</a></div>`
         : `<button class="sp-connect-btn" onclick="connectSpotify()">🔌 Conectar Spotify</button>`;
-      mid = `${art}<div class="sp-info">${nameLine}${statusLine}</div>${actions}`;
+      mid = `${art}<div class="sp-info">${nameLine}${statusLine}${playback}</div>${actions}`;
     } else if(status && status.playing && status.track){
       const art = status.albumArt ? `<div class="sp-art"><img src="${safeUrl(status.albumArt)||''}"></div>` : '';
       mid = `${art}<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div></div>`;
@@ -10456,6 +10470,42 @@ async function _spotifySyncNow(){
     await fetch(SPOTIFY_SYNC_NOW_URL, {method:'POST', headers:{'Authorization':'Bearer '+token}});
   }catch(e){ console.warn('[spotify] sync sob demanda falhou (silencioso, não crítico):', e); }
 }
+const SPOTIFY_PLAYBACK_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyPlayback';
+// Controle de playback PESSOAL (play/pause/próxima) — NÃO é um "DJ"
+// tocando pra todo mundo (descartado por decisão de produto), é só um
+// atalho pra própria reprodução, no próprio dispositivo Spotify ativo.
+// Tenta-e-avisa em vez de checar dispositivo ativo antes (evita uma
+// chamada de API extra só pra decidir se desabilita o botão) — cada
+// causa de erro tem uma mensagem própria, já que são bem diferentes
+// (falta escopo vs. sem Premium vs. sem aparelho aberto).
+async function _spotifyPlaybackAction(action){
+  const cu=window._currentUser; if(!cu) return;
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_PLAYBACK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({action}),
+    });
+    if(!res.ok){
+      const body = await res.json().catch(()=>({}));
+      const msgs = {
+        insufficient_scope: 'Reconecte sua conta (🔁 Trocar) pra habilitar o controle de playback.',
+        premium_required: 'Controle de playback exige Spotify Premium.',
+        no_active_device: 'Abra o Spotify em algum aparelho primeiro.',
+        not_connected: 'Conecte sua conta Spotify primeiro.',
+      };
+      showToast(msgs[body?.error] || 'Não deu pra controlar a reprodução agora — tenta de novo.');
+      return;
+    }
+    // Sincroniza logo em seguida pra refletir o novo estado (tocando/
+    // pausado, ou a próxima faixa) sem esperar o próximo tick do sync
+    // periódico — sujeito ao mesmo cooldown de 10s de sempre, então se a
+    // pessoa acabou de abrir o painel (que já disparou um sync), esse
+    // aqui pode ser ignorado silenciosamente; o tick de 30s cobre o resto.
+    _spotifySyncNow();
+  }catch(e){ showToast('Não deu pra controlar a reprodução agora — tenta de novo.'); }
+}
 async function connectSpotify(){
   const cu=window._currentUser; if(!cu){ showToast('Faça login antes de conectar o Spotify.'); return; }
   const state = (crypto.randomUUID ? crypto.randomUUID() : ('st'+Date.now()+Math.random().toString(36).slice(2)));
@@ -10466,7 +10516,13 @@ async function connectSpotify(){
     client_id: SPOTIFY_CLIENT_ID,
     response_type: 'code',
     redirect_uri: SPOTIFY_REDIRECT_URI,
-    scope: 'user-read-currently-playing user-read-playback-state',
+    // user-modify-playback-state (controle de play/pause/próxima) pedido
+    // a partir de agora em toda conexão/reconexão nova — sem campanha de
+    // reconexão em massa pra quem já estava conectado antes. Quem tentar
+    // usar o controle sem esse escopo recebe 403 "Insufficient client
+    // scope" (distinto de PREMIUM_REQUIRED/NO_ACTIVE_DEVICE — ver
+    // _spotifyPlaybackAction()), e aí sim é convidado a reconectar.
+    scope: 'user-read-currently-playing user-read-playback-state user-modify-playback-state',
     state,
   });
   window.location.href = 'https://accounts.spotify.com/authorize?'+params.toString();
@@ -14277,6 +14333,7 @@ const HELP_CONTENT = {
     { icon:'🔌', title:'Como conectar', text:'Clique em "🔌 Conectar Spotify" na sua própria linha do painel — vai te levar pra tela de autorização do Spotify. Depois de autorizar, você volta pro board automaticamente. Só é possível conectar a própria conta, não a de outra pessoa.' },
     { icon:'🔁', title:'Trocar de conta ou desconectar', text:'Já conectado, sua linha mostra "🔁 Trocar" (conectou a conta errada ou quer usar outra — clique de novo, o Spotify deixa escolher outra conta na tela dele) e "❌ Desconectar" (para de aparecer pro time, e o acesso salvo é apagado de verdade, não só desativado). Reconectar depois é normal, a qualquer momento. O link "Gerenciar no Spotify" leva pra tela de apps conectados da sua conta Spotify, caso queira revogar o acesso por lá também.' },
     { icon:'🎵', title:'Rádio do Maré (playlist colaborativa)', text:'Aba "🎵 Playlist" dentro do painel Spotify — uma playlist de verdade, uma pra empresa toda ("Geral") e uma por squad. Diferente do "Ouvindo agora", isso NÃO é ao vivo: é só uma playlist que qualquer pessoa pode abrir no próprio Spotify e ouvir no próprio ritmo, sem sincronia entre quem está ouvindo. Busque uma música e clique "+ Sugerir" pra adicionar direto na playlist — não precisa ter conectado o próprio Spotify pra sugerir, só estar logada no Maré. Entra direto, sem aprovação.' },
+    { icon:'▶️', title:'Controlar a própria reprodução', text:'Na sua linha, os botões ▶️/⏸️ e ⏭️ tocam/pausam/pulam a faixa direto pelo painel, sem precisar abrir o Spotify. É só um atalho pra SUA reprodução — não afeta o que mais ninguém está ouvindo. Precisa de: (1) ter reconectado depois desse recurso existir (conexões antigas não têm a permissão nova — reconecte com "🔁 Trocar" se aparecer um aviso), (2) ter Spotify Premium, e (3) estar com o Spotify aberto em algum aparelho (celular, computador, alto-falante) — sem isso, o controle não tem onde tocar.' },
   ],
 }
 let _helpTab = 'board';
