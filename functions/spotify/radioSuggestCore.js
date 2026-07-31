@@ -29,12 +29,24 @@ const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 let _ownerTokenCache = null; // {token, expiresAt}
 
 async function _getOwnerAccessToken(db, clientSecret) {
-  if (_ownerTokenCache && _ownerTokenCache.expiresAt > Date.now() + 30000) return _ownerTokenCache.token;
-
+  // Lê o refresh_token atual do banco ANTES de decidir se o cache serve
+  // — mesmo cuidado de _getAccessToken() em syncCore.js (achado em
+  // produção lá: reconectar não adiantava, porque o cache continuava
+  // servindo o access_token antigo até expirar sozinho, ~1h). Aqui a
+  // leitura é barata (RTDB), vale a garantia de nunca servir um token
+  // desatualizado depois de reconectar/trocar a conta dona.
   const snap = await db.ref('kanban/spotify_radio_owner_secret').get();
   const secret = snap.val();
   if (!secret || !secret.refresh_token) {
     throw new Error('radio_owner_not_connected');
+  }
+
+  if (
+    _ownerTokenCache &&
+    _ownerTokenCache.refreshToken === secret.refresh_token &&
+    _ownerTokenCache.expiresAt > Date.now() + 30000
+  ) {
+    return _ownerTokenCache.token;
   }
 
   const res = await fetch(SPOTIFY_TOKEN_URL, {
@@ -52,7 +64,12 @@ async function _getOwnerAccessToken(db, clientSecret) {
     throw new Error('owner_token_refresh_failed: ' + (body.error || res.status));
   }
   const data = await res.json();
-  _ownerTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in || 3600) * 1000 };
+  const effectiveRefreshToken = data.refresh_token || secret.refresh_token;
+  _ownerTokenCache = {
+    token: data.access_token,
+    expiresAt: Date.now() + (data.expires_in || 3600) * 1000,
+    refreshToken: effectiveRefreshToken,
+  };
   // Rotação de refresh_token, mesmo cuidado de syncCore.js — se vier um
   // novo, é esse que vale dali pra frente.
   if (data.refresh_token && data.refresh_token !== secret.refresh_token) {

@@ -49,6 +49,14 @@ async function controlPlayback(db, clientSecret, uid, action) {
   if (tok.error) {
     return { error: 'token_refresh_failed', detail: tok.error };
   }
+  // Mesmo cuidado de _syncOneUser() em syncCore.js — se a troca rotacionou
+  // o refresh_token, persiste o novo no banco. Sem isso, o próximo tick
+  // do sync usaria o refresh_token velho, que o Spotify pode já ter
+  // invalidado (rotação costuma ser de uso único), causando uma
+  // desconexão espúria por invalid_grant.
+  if (tok.newRefreshToken && tok.newRefreshToken !== secret.refresh_token) {
+    await db.ref('kanban/spotify_secrets/' + uid + '/refresh_token').set(tok.newRefreshToken);
+  }
 
   const res = await fetch(endpoint.url, {
     method: endpoint.method,
@@ -63,6 +71,15 @@ async function controlPlayback(db, clientSecret, uid, action) {
 
   if (reason === 'PREMIUM_REQUIRED') return { error: 'premium_required' };
   if (reason === 'NO_ACTIVE_DEVICE' || res.status === 404) return { error: 'no_active_device' };
+  // A família de endpoints /me/player/* (play/pause/next) devolve 401
+  // "Permissions missing" pra escopo faltando — diferente de outras
+  // partes da Web API (ex: escrita em playlist), que devolvem 403
+  // "Insufficient client scope" pro mesmo tipo de problema. Achado em
+  // produção: alguém com token válido, reconectado, ainda tomou esse
+  // 401 específico — confirmado contra relatos de outros devs que é
+  // assim mesmo que o Spotify responde pra essa família de endpoints,
+  // não um bug de token malformado/expirado.
+  if (res.status === 401 && /permissions? missing/i.test(message)) return { error: 'insufficient_scope' };
   if (res.status === 403 && /insufficient client scope/i.test(message)) return { error: 'insufficient_scope' };
 
   return { error: 'playback_failed', detail: `http_${res.status} ${message || JSON.stringify(body)}`.slice(0, 300) };

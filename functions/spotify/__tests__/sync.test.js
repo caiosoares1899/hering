@@ -11,7 +11,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { runSpotifySync, syncOneUserNow, _accessTokenCache, _resetManualSyncCooldown } = require('../syncCore');
+const { runSpotifySync, syncOneUserNow, _getAccessToken, _accessTokenCache, _resetManualSyncCooldown } = require('../syncCore');
 
 function makeFakeDb(initial) {
   const data = JSON.parse(JSON.stringify(initial));
@@ -166,6 +166,36 @@ test('reusa o access_token em cache entre ticks (não bate no /token de novo den
   await runSpotifySync(db, 'fake-secret');
 
   assert.equal(tokenCalls, 1, 'segundo tick reusa o access_token cacheado, não bate no /token de novo');
+});
+
+test('BUG DE PRODUÇÃO CORRIGIDO: cache não serve o access_token antigo depois que a pessoa reconecta com um refresh_token novo', async () => {
+  // Reproduz o cenário real: sync já cacheou um access_token (escopo
+  // velho) pro uid; a pessoa reconecta ("🔁 Trocar", ganhando escopo
+  // novo) e o refresh_token no banco muda — a PRÓXIMA chamada com o
+  // refresh_token NOVO tem que ignorar o cache velho, não servir o
+  // access_token antigo (que não teria o escopo novo).
+  let tokenCalls = 0;
+  const tokensIssued = [];
+  global.fetch = async (url, opts) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      tokenCalls++;
+      const body = String(opts.body);
+      const token = body.includes('refresh_token=rt-novo-pos-reconexao') ? 'at-NOVO-com-escopo' : 'at-velho-sem-escopo';
+      tokensIssued.push(token);
+      return { ok: true, json: async () => ({ access_token: token, expires_in: 3600 }) };
+    }
+    throw new Error('URL inesperada: ' + url);
+  };
+
+  const r1 = await _getAccessToken('uidA', 'rt-velho', 'fake-secret');
+  assert.equal(r1.token, 'at-velho-sem-escopo');
+
+  // Reconectou — refresh_token mudou no banco, mas o cache em memória
+  // ainda tem a entrada de antes (não expirou, ~1h de validade).
+  const r2 = await _getAccessToken('uidA', 'rt-novo-pos-reconexao', 'fake-secret');
+
+  assert.equal(tokenCalls, 2, 'bateu no /token de novo — NÃO serviu o cache velho pra um refresh_token diferente');
+  assert.equal(r2.token, 'at-NOVO-com-escopo', 'devolveu o access_token novo, com o escopo novo — não o velho cacheado');
 });
 
 // ─── syncOneUserNow (sync sob demanda, disparado ao abrir o painel) ───

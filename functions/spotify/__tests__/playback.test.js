@@ -13,10 +13,23 @@ function makeFakeDb(initial) {
     for (const part of parts) cur = cur && cur[part];
     return cur;
   }
+  function setAt(p, value) {
+    const parts = p.split('/').filter(Boolean);
+    let cur = data;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (cur[parts[i]] == null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = value;
+  }
   return {
     ref(p) {
-      return { get: async () => ({ val: () => (getAt(p) === undefined ? null : getAt(p)) }) };
+      return {
+        get: async () => ({ val: () => (getAt(p) === undefined ? null : getAt(p)) }),
+        set: async (v) => setAt(p, v),
+      };
     },
+    _data: () => data,
   };
 }
 
@@ -170,4 +183,40 @@ test('reusa o access_token cacheado do syncCore (mesmo cache, não bate no /toke
   await controlPlayback(db, 'fake-secret', 'uidA', 'play');
   await controlPlayback(db, 'fake-secret', 'uidA', 'pause');
   assert.equal(tokenCalls, 1, 'segunda ação reusa o token cacheado (mesmo cache do sync)');
+});
+
+test('BUG DE PRODUÇÃO CORRIGIDO: distingue 401 "Permissions missing" (família /me/player/*) como insufficient_scope', async () => {
+  // Achado em produção: alguém reconectado (com o escopo novo, de
+  // verdade) tomou 401 "Permissions missing" ao tentar usar o controle
+  // — não 403 "Insufficient client scope" como as outras partes da Web
+  // API. Confirmado que é assim mesmo que o Spotify responde pra essa
+  // família de endpoints específica.
+  const db = makeFakeDb({ kanban: { spotify_secrets: { uidA: { refresh_token: 'rtA' } } } });
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'atA', expires_in: 3600 }) };
+    }
+    return { ok: false, status: 401, json: async () => ({ error: { status: 401, message: 'Permissions missing' } }) };
+  };
+
+  const result = await controlPlayback(db, 'fake-secret', 'uidA', 'pause');
+  assert.deepEqual(result, { error: 'insufficient_scope' });
+});
+
+test('BUG DE PRODUÇÃO CORRIGIDO: persiste o refresh_token novo no banco quando o Spotify rotaciona durante um controle de playback', async () => {
+  // Antes desse fix, controlPlayback ignorava tok.newRefreshToken —
+  // diferente de _syncOneUser(), que já persistia. Sem persistir, o
+  // próximo tick do sync usaria o refresh_token velho, que o Spotify
+  // pode já ter invalidado (rotação costuma ser de uso único),
+  // derrubando a conexão por invalid_grant sem motivo real.
+  const db = makeFakeDb({ kanban: { spotify_secrets: { uidA: { refresh_token: 'rtA-velho' } } } });
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'atA', expires_in: 3600, refresh_token: 'rtA-novo-rotacionado' }) };
+    }
+    return { ok: true, status: 204 };
+  };
+
+  await controlPlayback(db, 'fake-secret', 'uidA', 'play');
+  assert.equal(db._data().kanban.spotify_secrets.uidA.refresh_token, 'rtA-novo-rotacionado');
 });

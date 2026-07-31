@@ -187,3 +187,27 @@ test('diagnóstico de propriedade falhando (rede fora) não impede o erro origin
 
   await assert.rejects(() => suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz'), /add_track_failed: http_403/);
 });
+
+test('BUG DE PRODUÇÃO CORRIGIDO (mesma classe do cache do sync pessoal): cache da conta dona não serve token antigo depois que o refresh_token muda no banco', async () => {
+  const db = makeFakeDb({ kanban: { spotify_radio_owner_secret: { refresh_token: 'owner-rt-velho' } } });
+  let tokenCalls = 0;
+  global.fetch = async (url, opts) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      tokenCalls++;
+      const usouRtNovo = String(opts.body).includes('refresh_token=owner-rt-novo');
+      return { ok: true, json: async () => ({ access_token: usouRtNovo ? 'at-novo' : 'at-velho', expires_in: 3600 }) };
+    }
+    return { ok: true, json: async () => ({}) };
+  };
+
+  await suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:a');
+  assert.equal(tokenCalls, 1);
+
+  // Alguém reconectou a conta dona fora do processo normal (ex: trocou
+  // de conta) — o refresh_token no banco mudou, mas o cache em memória
+  // ainda tem a entrada de antes.
+  await db.ref('kanban/spotify_radio_owner_secret').set({ refresh_token: 'owner-rt-novo' });
+  await suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:b');
+
+  assert.equal(tokenCalls, 2, 'bateu no /token de novo — não serviu o access_token cacheado do refresh_token antigo');
+});
