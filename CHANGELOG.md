@@ -294,6 +294,86 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.236-dev — 2026-07-31 · PR #109
+**Rádio do Maré — Nível 1**: nova funcionalidade, playlist colaborativa
+real do Spotify (não confundir com "ouvindo agora" — aqui NÃO é ao vivo,
+não é sincronizado, cada um ouve no próprio ritmo). Design discutido e
+aprovado antes de escrever código (dono da conta, UI, moderação — ver
+PRs anteriores dessa conversa). Mesmo padrão Squad/Geral do resto do
+painel: uma playlist pra empresa toda + uma por squad.
+
+- **`database.rules.json`**: novo nó `kanban/spotify_radio_owner_secret`
+  (deny total, mesmo padrão de `spotify_secrets`) — guarda o
+  refresh_token de uma ÚNICA conta "dona" das playlists (a playlist é
+  compartilhada, então precisa de um token de escrita fixo, independente
+  de quem está sugerindo música — diferente do token pessoal de cada
+  membro pro "ouvindo agora"). `radio_geral` (dentro de `painel`) e
+  `radio_squad` (dentro de `squads/{id}/dados`) não precisaram de regra
+  nova — já cobertos pelas regras existentes desses nós, mesmo caso de
+  `spotify_now`.
+- **`functions/spotify/radioOwnerCallback.js`** (novo): callback de
+  conexão da conta dona — diferente de `spotifyOauthCallback` (uma
+  conexão POR PESSOA, resolvida via `state`/`oauth_pending`), esta é uma
+  conexão ÚNICA e manual (sem uid envolvido, é sempre a mesma conta
+  fixa), pedindo os escopos `playlist-modify-public`/
+  `playlist-modify-private` em vez de `user-read-currently-playing`.
+  Deploy isolado: `firebase deploy --only functions:spotifyRadioOwnerCallback`.
+- **`functions/spotify/radioSearchCore.js`** + **`radioSearch.js`**
+  (novos): busca de faixas via `GET /v1/search`. Decisão importante:
+  usa um token **app-only** via `client_credentials` (só
+  client_id+client_secret, sem usuário nenhum envolvido) — busca é
+  catálogo público, então funciona mesmo antes da conta dona ter sido
+  conectada, e não arrisca nada relacionado a ela. Qualquer pessoa
+  logada no Maré pode buscar (só verifica o ID token do Firebase Auth).
+  Deploy isolado: `firebase deploy --only functions:spotifyRadioSearch`.
+- **`functions/spotify/radioSuggestCore.js`** + **`radioSuggest.js`**
+  (novos): adiciona a faixa escolhida na playlist via
+  `POST /v1/playlists/{id}/tracks`, sempre usando o token da CONTA DONA
+  (cacheado em memória entre chamadas, mesmo padrão de `syncCore.js`) —
+  nunca o de quem sugere. Isso também significa que sugerir não exige
+  ter conectado o próprio Spotify, só estar logado no Maré. **Moderação:
+  livre total** — entra direto na playlist, sem fila de aprovação nem
+  log de auditoria nesta v1 (decisão combinada, mesmo espírito de
+  confiança do resto do app — Kudos/comentários também não têm
+  aprovação). Deploy isolado: `firebase deploy --only functions:spotifyRadioSuggest`.
+- **UI**: painel Spotify ganhou um sub-toggle "🎧 Ouvindo agora" /
+  "🎵 Playlist" (escopo Squad/Geral continua como aba principal, como já
+  era). Só um dos dois tem listener ativo por vez — entrar em "Playlist"
+  desanexa o listener de presença (nada ali é ao vivo). Sem playlist
+  registrada ainda, mostra um formulário simples pra colar o link/ID (a
+  criação das playlists em si é manual, feita direto no app do Spotify —
+  decisão de escopo pra v1, evita automatizar `POST /users/{id}/playlists`
+  por um ganho pequeno). Registrada, mostra "🎵 Abrir playlist no
+  Spotify" + busca + resultados com "+ Sugerir" em cada um.
+- Ajuda (F1/❓) ganhou uma entrada nova sobre a Rádio do Maré.
+- **Deixado de fora desta v1, por decisão combinada**: o botão "🎙️ Ir pra
+  rádio" (extensão automática de sugestões do Spotify) — não existe uma
+  URL/URI documentada e confiável pra abrir direto nesse modo (é um botão
+  dentro do próprio app do Spotify, não um parâmetro de link conhecido);
+  fica pra uma investigação futura, sem prioridade agora.
+
+Verificado com Playwright (17 cenários) + `node --test` (8 casos novos em
+`functions/spotify/__tests__/radioSearch.test.js` e `radioSuggest.test.js`,
+105/105 no total da suíte de functions): form de registro aparece sem
+playlist; extração do ID a partir de uma URL colada; grava no path certo
+por escopo (squad vs. geral); busca manda o Bearer do usuário e a query
+certa; sugerir manda playlistId+trackUri corretos e não depende de o
+usuário ter conectado o próprio Spotify; mensagem específica quando a
+conta dona ainda não foi conectada; token app-only da busca e token da
+conta dona (sugestão) cacheados corretamente e nunca confundidos entre si;
+autodesconexão simulada (rotação de refresh_token) coberta nos testes da
+function.
+
+**Pendência pra habilitar de verdade**: a conta dona ainda não foi
+conectada — sem isso, `spotifyRadioSuggest` responde
+`radio_owner_not_connected` (a UI já mostra essa mensagem específica) e
+nenhuma playlist pode receber sugestões ainda. URL de autorização
+(escopos `playlist-modify-public playlist-modify-private`) entregue fora
+do repo, mesmo processo manual do `spotifyOauthCallback` original — só
+depois do primeiro deploy + confirmação da Redirect URI exata no Firebase
+Console + cadastro dela no Spotify for Developers (adicionando uma
+segunda Redirect URI ao mesmo app já existente, mesmo `client_id`).
+
 ### v8.30.235-dev — 2026-07-31 · PR #108
 Ajuste no grupo "não conectado" do painel Spotify (squad e geral): antes
 mostrava TODAS as pessoas que nunca conectaram, cada uma com o convite
