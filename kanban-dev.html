@@ -4291,7 +4291,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.240-dev</div>
+<div class="version">v8.30.241-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6599,8 +6599,10 @@ function resolveSquadAndShow(user, userSquads) {
   if (inscritosNosBoards.length === 1) {
     const targetSquad = inscritosNosBoards[0];
     if (targetSquad !== ACTIVE_SQUAD) {
-      // Redireciona silenciosamente pro board correto
-      window.location.replace('kanban.html?squad=' + targetSquad);
+      // Redireciona silenciosamente pro board correto (usa o arquivo atual —
+      // kanban.html ou kanban-dev.html — pra nao jogar quem esta testando no dev pra producao)
+      const _currentFile = location.pathname.split('/').pop() || 'kanban.html';
+      window.location.replace(_currentFile + '?squad=' + targetSquad);
       return;
     }
     // Já está no squad certo — abre o board
@@ -12891,7 +12893,7 @@ function renderUsuarios(){
       // ⚠ Detecta colisão de iniciais com outro membro do squad
       const dupInit = entries.some(([uid2,u2])=>uid2!==uid && (u2.init||'').toUpperCase()===(u.init||'').toUpperCase() && u.init);
       const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial('${uid}','${esc(u.init||'')}','${esc((u.nome||u.email||'').replace(/'/g,''))}')" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
-      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}','${esc(u.email||'')}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
 <select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
         <option value="membro"${role==='membro'?' selected':''}>Membro</option>
         <option value="organizador"${role==='organizador'?' selected':''}>Organizador</option>
@@ -12990,7 +12992,7 @@ async function editarInicial(uid, initAtual, nome){
   renderUsuarios();
 }
 
-async function removerMembro(uid, nome){
+async function removerMembro(uid, nome, email){
   if(!await uiConfirm('Remover "'+nome+'" deste squad?',{title:'Remover do squad',danger:true,okText:'Remover'})) return;
   // Remove a inscrição deste squad (mantém o usuário global para outros squads)
   const update = {};
@@ -12998,6 +13000,17 @@ async function removerMembro(uid, nome){
   update['squads_roles/'+ACTIVE_SQUAD] = null;
   fbUpdate('kanban/usuarios/'+uid, update);
   fbUpdate('kanban/usuarios_publicos/'+uid, update);
+  // Se essa pessoa também estava na whitelist de "externos" deste squad, remove
+  // junto -- senão ela reaparece sozinha no próximo login (autoRegistrar recria
+  // o usuário achando que é um cadastro novo).
+  if(email){
+    fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+      const externos = snap.val()||{};
+      Object.entries(externos).forEach(([key,ext])=>{
+        if((ext.email||ext)===email) fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, null);
+      });
+    });
+  }
   showToast('✅ '+nome+' removido do squad.');
   renderUsuarios();
 }
@@ -19430,7 +19443,7 @@ function renderExternos(){
           (nome?'<div style="font-size:10px;color:var(--txt3);">'+email+'</div>':'')+
         '</div>'+
         '<button style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>';
-      row.querySelector('button').onclick=()=>removerExterno(key);
+      row.querySelector('button').onclick=()=>removerExterno(key, email);
       list.appendChild(row);
     });
   }).catch(()=>{
@@ -19453,14 +19466,44 @@ function salvarExterno(){
   const key = 'ext_'+Date.now();
   const ext = { email, nome: nomeInp?.value.trim()||'', adicionadoEm: new Date().toISOString(), adicionadoPor: window._currentUserInit||'' };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, ext);
+  // Se essa pessoa já tem conta (já logou antes, em outro squad), a whitelist
+  // sozinha não dá acesso a ESTE squad -- precisa gravar em usuarios/{uid}/squads
+  // também, senão ela continua só vendo o squad onde entrou primeiro.
+  window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
+    const all = snap.val()||{};
+    const entry = Object.entries(all).find(([,u])=>u.email===email);
+    if(!entry) return;
+    const [uid, u] = entry;
+    const upd = {};
+    upd['squads/'+ACTIVE_SQUAD] = true;
+    if(!u.squads_roles?.[ACTIVE_SQUAD]) upd['squads_roles/'+ACTIVE_SQUAD] = 'convidado';
+    fbUpdate('kanban/usuarios/'+uid, upd);
+    fbUpdate('kanban/usuarios_publicos/'+uid, upd);
+  });
   emailInp.value=''; if(nomeInp) nomeInp.value='';
   document.getElementById('add-externo-row').style.display='none';
   showToast('✅ '+email+' autorizado como externo!');
   setTimeout(renderExternos, 500);
 }
 
-function removerExterno(key){
+function removerExterno(key, email){
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, null);
+  // Se essa pessoa já tinha logado e ganhado acesso real a este squad, revoga
+  // junto -- senão remover só da whitelist não tira o acesso dela de fato.
+  if(email){
+    window._get(window._ref(window._db,'kanban/usuarios_publicos')).then(snap=>{
+      const all = snap.val()||{};
+      const entry = Object.entries(all).find(([,u])=>u.email===email);
+      if(!entry) return;
+      const [uid] = entry;
+      const upd = {};
+      upd['squads/'+ACTIVE_SQUAD] = null;
+      upd['squads_roles/'+ACTIVE_SQUAD] = null;
+      fbUpdate('kanban/usuarios/'+uid, upd);
+      fbUpdate('kanban/usuarios_publicos/'+uid, upd);
+      renderUsuarios();
+    });
+  }
   showToast('✅ Email externo removido.');
   setTimeout(renderExternos, 500);
 }
