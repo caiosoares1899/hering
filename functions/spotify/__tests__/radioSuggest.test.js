@@ -106,7 +106,52 @@ test('propaga erro quando adicionar a faixa falha (ex: playlist não editável p
     if (String(url).includes('/tracks')) {
       return { ok: false, status: 403, text: async () => 'Forbidden' };
     }
+    // Diagnóstico de propriedade (GET /me e GET /playlists/{id}) — não
+    // mockado nesse teste de propósito, só confirma que o erro original
+    // ainda propaga mesmo se o diagnóstico falhar (ver teste seguinte
+    // pro caso feliz do diagnóstico).
     throw new Error('URL inesperada: ' + url);
+  };
+
+  await assert.rejects(() => suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz'), /add_track_failed: http_403/);
+});
+
+test('em 403, roda o diagnóstico de propriedade (GET /me + GET playlist) com o token certo, sem afetar o erro original', async () => {
+  const db = makeFakeDb({ kanban: { spotify_radio_owner_secret: { refresh_token: 'owner-rt' } } });
+  const diagCalls = [];
+  global.fetch = async (url, opts) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
+    }
+    if (String(url).includes('/playlists/plId123/tracks')) {
+      return { ok: false, status: 403, text: async () => 'Forbidden' };
+    }
+    if (String(url) === 'https://api.spotify.com/v1/me') {
+      diagCalls.push({ url: String(url), auth: opts.headers.Authorization });
+      return { ok: true, json: async () => ({ id: 'owner-account-id', display_name: 'Dono Real' }) };
+    }
+    if (String(url).includes('/v1/playlists/plId123?fields=')) {
+      diagCalls.push({ url: String(url), auth: opts.headers.Authorization });
+      return { ok: true, json: async () => ({ name: 'Rádio dev', owner: { id: 'outra-conta-id', display_name: 'Outra Pessoa' }, collaborative: false }) };
+    }
+    throw new Error('URL inesperada: ' + url);
+  };
+
+  await assert.rejects(() => suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz'), /add_track_failed: http_403/);
+  assert.equal(diagCalls.length, 2, 'chamou GET /me e GET /playlists/{id} pro diagnóstico');
+  assert.ok(diagCalls.every((c) => c.auth === 'Bearer owner-at'), 'diagnóstico usa o mesmo token da conta dona, não um token diferente');
+});
+
+test('diagnóstico de propriedade falhando (rede fora) não impede o erro original de propagar', async () => {
+  const db = makeFakeDb({ kanban: { spotify_radio_owner_secret: { refresh_token: 'owner-rt' } } });
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
+    }
+    if (String(url).includes('/playlists/plId123/tracks')) {
+      return { ok: false, status: 403, text: async () => 'Forbidden' };
+    }
+    throw new Error('rede caiu no diagnóstico');
   };
 
   await assert.rejects(() => suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz'), /add_track_failed: http_403/);

@@ -46,12 +46,18 @@ exports.spotifyRadioSuggest = onRequest(
       await suggestTrack(getDatabase(), SPOTIFY_CLIENT_SECRET.value(), playlistId, trackUri);
       res.status(200).json({ ok: true });
     } catch (e) {
-      if (String(e.message).includes('radio_owner_not_connected')) {
+      const msg = String((e && e.message) || e);
+      console.error('[spotifyRadioSuggest] falha ao adicionar faixa:', e);
+      if (msg.includes('radio_owner_not_connected')) {
         res.status(503).json({ error: 'radio_owner_not_connected' });
         return;
       }
-      console.error('[spotifyRadioSuggest] falha ao adicionar faixa:', e);
-      res.status(500).json({ error: 'add_track_failed' });
+      // Detalhe do erro real (do Spotify, ou da troca de token) — não é
+      // segredo nenhum, é só o texto de erro público da API deles (ex:
+      // "Insufficient client scope", "Invalid playlist Id"). Devolvido
+      // pra UI mostrar direto no toast, sem precisar de ninguém entrar
+      // no Cloud Logging pra descobrir o que aconteceu.
+      res.status(500).json({ error: 'add_track_failed', detail: msg.slice(0, 300) });
     }
   }
 );
