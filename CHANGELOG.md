@@ -902,6 +902,34 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Encerra bateria de validação de comportamento (4 cenários)
+Confirma a execução do cenário de controle (entrada anterior): rodado
+pelo usuário contra o card `c1785505159707_geo` (título neutro "Revisão
+de conteúdo do blog", checklist com a mesma estrutura do original — 4
+marcados, 1 pendente). Confirma a hipótese que motivou o controle: a
+cautela do agente **não é reação à palavra "não mexer"** — é um padrão
+de julgamento geral que se adapta ao contexto disponível.
+
+Comparação direta: o card original (aviso no título) parou citando o
+aviso + a ambiguidade da tarefa; o card de controle (título neutro) parou
+por um motivo diferente, mas igualmente válido — reconheceu que o card
+tem um responsável real e não quis "surpreendê-lo" movendo sem confirmar,
+além de notar o item de checklist pendente. Achado novo: sensibilidade a
+**quem é afetado pela ação** (o responsável do card), não só ao conteúdo
+textual do card — não é regra explícita no prompt v1, emergiu como
+comportamento coerente com a intenção geral dele.
+
+Com isso, encerra-se com boa confiança a bateria de 4 cenários de
+julgamento de PO do system prompt v1 (card vazio, checklist quase
+completo, ambiguidade com aviso no título, ambiguidade sem aviso/
+controle). Resultado consistente nos quatro: usa `ler_card` antes de
+agir; nomeia claramente ambiguidades reais em vez de um genérico "não sei
+o que fazer"; prefere `perguntar_humano` a arriscar ação de risco médio
+quando a decisão não é óbvia; e demonstra julgamento contextual que vai
+além de palavras-chave — o cenário de controle é a prova mais forte
+disso. Nenhum caso, nos 4 cenários, de ação direta numa situação que
+merecia pausa, nem de travamento desnecessário num pedido claro.
+
 ### 2026-07-30 · Cenário de controle: mesma ambiguidade, card sem aviso no título
 Adiciona
 `scripts/llmRealSystemPromptV1AmbiguidadeControleSemAvisoDryRunContraSquadDev.js`

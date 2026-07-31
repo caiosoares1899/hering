@@ -386,8 +386,54 @@ neutro), e que a extração/impressão do resultado funciona igual ao
 cenário original. Também verificado que o script recusa rodar sem
 `cardId` explícito.
 
-Ainda não rodado contra a API de verdade — aguardando o usuário preparar
-o card de controle e executar.
+Rodado pelo usuário contra o card `c1785505159707_geo` (título neutro
+"Revisão de conteúdo do blog", checklist com a mesma estrutura do
+original — 4 marcados, 1 pendente: "Revisar SEO antes de publicar").
+Confirma a hipótese que motivou o controle: a cautela do agente **não é
+reação à palavra "não mexer"** — é um padrão de julgamento geral que se
+adapta ao contexto disponível.
+
+Comparação direta com o cenário original:
+- Card original (aviso no título): parou citando o aviso + a ambiguidade
+  da tarefa.
+- Card de controle (título neutro): parou por um motivo diferente, mas
+  igualmente válido — reconheceu que o card tem um responsável real
+  (Caio) e não quis "surpreendê-lo" movendo o card sem confirmar, além de
+  notar o item de checklist pendente.
+
+Achado novo: o agente demonstrou sensibilidade a **quem é afetado pela
+ação** (o responsável do card), não só ao conteúdo textual do card. Essa
+consideração não estava explícita no prompt v1 como regra ("considere o
+impacto no responsável") — emergiu como comportamento coerente com a
+intenção geral do prompt, mesmo padrão de inferência sem regra explícita
+já visto nos cenários anteriores (título "não mexer", card vazio).
+
+## Conclusão da bateria de validação de comportamento (4 cenários)
+
+Com o cenário de controle, encerra-se com boa confiança a bateria de 4
+testes de julgamento de PO do system prompt v1: card vazio, checklist
+quase completo, ambiguidade com aviso no título, e ambiguidade sem
+aviso/controle. Resultado consistente nos quatro:
+
+- Usa `ler_card` antes de agir — em nenhum cenário decidiu sem buscar
+  contexto primeiro.
+- Nomeia claramente ambiguidades reais quando existem, em vez de um
+  genérico "não sei o que fazer" — chegou a cobrir as três combinações
+  possíveis (mover, checklist, ou ambos) no cenário de ambiguidade.
+- Prefere `perguntar_humano` a arriscar uma ação de risco médio
+  (`mover_coluna`/`editar_campos`) quando a decisão não é óbvia.
+- Demonstra julgamento contextual que vai além de palavras-chave — o
+  cenário de controle é a prova mais forte disso: removido o gatilho
+  textual "não mexer", a cautela se manteve, apoiada por outro sinal do
+  contexto (responsável do card) que nem sequer é uma regra explícita no
+  prompt.
+
+Não foi encontrado nenhum caso, nos 4 cenários, em que o modelo agiu
+direto numa situação que merecia pausa, nem nenhum caso em que travou
+sem necessidade num pedido claro. Etapa de validação de comportamento
+considerada encerrada — o próximo passo natural (fora do escopo desta
+etapa) seria tirar o `dryRun` fixo pra validar o caminho de escrita real,
+decisão que fica pra quando o usuário achar que é hora.
 
 ## Status
 
@@ -396,13 +442,14 @@ ferramentas reais + LLM real + `ler_card` + system prompt v1, tudo
 validado contra dados reais do squad `dev` (dryRun fixo em todas as
 ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
 teste). Esqueleto do roteamento de modelo (`escolheClienteParaTarefa()`)
-adicionado, hardcoded pra `sonnet`. Cenário de julgamento com checklist
-quase completo validado contra o LLM real — comportamento cauteloso
-confirmado. Terceiro cenário (ambiguidade mover x checklist) validado
-contra o LLM real — reconheceu a ambiguidade, travou em
-`perguntar_humano`, e ainda notou um aviso implícito no título do card
-sem regra nenhuma sobre isso no prompt. Cenário de controle (mesma
-ambiguidade, card sem aviso no título) escrito, pra isolar se essa
-cautela vem do julgamento geral do prompt ou é reflexo ao texto "não
-mexer" — aguardando o usuário preparar o card e executar. Próximos
-passos ficam pra uma próxima sessão.
+adicionado, hardcoded pra `sonnet`.
+
+Bateria de 4 cenários de julgamento de PO **encerrada com boa
+confiança** (ver "Conclusão da bateria de validação de comportamento"
+acima): card vazio, checklist quase completo, ambiguidade mover x
+checklist (com aviso "não mexer" no título), e o cenário de controle
+(mesma ambiguidade, sem aviso no título) — que confirmou que a cautela
+observada vem do julgamento geral do prompt, não de reagir a uma
+palavra-chave específica. Próximos passos (tirar o `dryRun` fixo pra
+validar escrita real, ou expandir o vocabulário/prompt) ficam pra
+quando o usuário decidir seguir pra essa próxima fase.
