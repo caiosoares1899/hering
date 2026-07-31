@@ -18,6 +18,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.195 — 2026-07-30 · PR #100
+Promove pra prod o fix validado no dev (`v8.30.231-dev`, PR #99): nova
+ação em massa **🚧 Impedimento** na barra de seleção múltipla, pra
+marcar/remover impedimento em vários cards de uma vez. Respeita o
+`blockerMode` do squad (coluna vs tag) via `_cardIsBlocked()` — em modo
+"coluna", marcar move os cards pra Impedimentos e remover pede uma
+coluna de destino; em modo "tag", marcar/remover só liga/desliga
+`card.blocker`+`card.blockerReason`, sem mexer na coluna. De passagem,
+corrige a entrada de ajuda "Seleção múltipla" (estava desatualizada,
+dizia "seis ações" quando já eram sete). Detalhes completos na entrada
+de `v8.30.231-dev` abaixo.
+
 ### v8.30.194 — 2026-07-30 · PR #96
 Promove pra prod os fixes validados no dev (`v8.30.230-dev`, PRs #94 e
 #95):
