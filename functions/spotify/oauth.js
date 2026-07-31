@@ -1,0 +1,119 @@
+// functions/spotify/oauth.js
+//
+// Callback do OAuth do Spotify — troca o `code` que o Spotify manda de
+// volta por um access_token + refresh_token, e grava o refresh_token em
+// kanban/spotify_secrets/{uid} (ver database.rules.json: esse nó não é
+// legível nem gravável por nenhum cliente, só por Admin SDK).
+//
+// Não existe uma function separada pra "iniciar" o OAuth — o client_id
+// não é secreto, então o kanban.html monta o link de autorização
+// (https://accounts.spotify.com/authorize?...) direto no navegador, sem
+// passar por servidor nenhum. Só a troca do code (que exige o
+// client_secret) precisa de function.
+//
+// Como o Spotify não sabe nada sobre Firebase Auth, o cliente precisa
+// avisar ESTA function qual uid iniciou o fluxo. Isso é feito via um
+// `state` aleatório: o cliente grava kanban/oauth_pending/{state} =
+// {uid, returnUrl} ANTES de ir pro Spotify, e esta function lê + apaga
+// (uso único) esse registro quando o Spotify redireciona de volta com o
+// mesmo state.
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const { getDatabase } = require('firebase-admin/database');
+
+const SPOTIFY_CLIENT_SECRET = defineSecret('SPOTIFY_CLIENT_SECRET');
+
+// Não é secreto (o próprio Spotify espera esse valor exposto no client) —
+// por isso vive como constante de código, não Secret Manager. Placeholder
+// até o app ser criado no Spotify for Developers; ver CHANGELOG/PR pra
+// instruções de como preencher.
+const SPOTIFY_CLIENT_ID = 'PREENCHER_DEPOIS_DE_CRIAR_O_APP_NO_SPOTIFY';
+
+// Precisa bater EXATAMENTE com a Redirect URI cadastrada no formulário do
+// Spotify for Developers — confirmar a URL real no Firebase Console após
+// o primeiro deploy (functions v2 nem sempre expõe a URL cloudfunctions.net
+// "legada" de primeira; ver discussão no PR).
+const REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyOauthCallback';
+
+const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
+
+exports.spotifyOauthCallback = onRequest(
+  { region: 'us-central1', secrets: [SPOTIFY_CLIENT_SECRET] },
+  async (req, res) => {
+    const { code, state, error } = req.query;
+    const db = getDatabase();
+
+    if (!state || typeof state !== 'string') {
+      res.status(400).send('Requisição inválida: state ausente.');
+      return;
+    }
+
+    // Consome o state ANTES de qualquer outra coisa — uso único, evita
+    // que um redirect repetido (ex.: usuário atualiza a página de volta)
+    // tente gravar de novo com um state já usado.
+    const pendingRef = db.ref('kanban/oauth_pending/' + state);
+    const pendingSnap = await pendingRef.get();
+    const pending = pendingSnap.val();
+    await pendingRef.remove();
+
+    if (!pending || !pending.uid || !pending.returnUrl) {
+      res.status(400).send('Sessão de conexão com o Spotify expirada ou inválida — tente conectar de novo.');
+      return;
+    }
+
+    if (error) {
+      // Usuário negou a autorização na tela do Spotify, ou algum outro erro
+      // do lado deles — não é uma falha do nosso código.
+      res.redirect(pending.returnUrl + '?spotify=error');
+      return;
+    }
+
+    if (!code || typeof code !== 'string') {
+      res.status(400).send('Requisição inválida: code ausente.');
+      return;
+    }
+
+    let tokenData;
+    try {
+      const tokenRes = await fetch(SPOTIFY_TOKEN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: REDIRECT_URI,
+          client_id: SPOTIFY_CLIENT_ID,
+          client_secret: SPOTIFY_CLIENT_SECRET.value(),
+        }),
+      });
+      if (!tokenRes.ok) {
+        const body = await tokenRes.text().catch(() => '');
+        console.error('[spotifyOauthCallback] troca de token falhou:', tokenRes.status, body);
+        res.redirect(pending.returnUrl + '?spotify=error');
+        return;
+      }
+      tokenData = await tokenRes.json();
+    } catch (e) {
+      console.error('[spotifyOauthCallback] erro ao trocar o code:', e);
+      res.redirect(pending.returnUrl + '?spotify=error');
+      return;
+    }
+
+    if (!tokenData.refresh_token) {
+      // Não deveria acontecer no primeiro consentimento (scope pedido inclui
+      // acesso offline), mas Spotify não devolve refresh_token de novo se a
+      // pessoa já tinha autorizado o app antes e a autorização ainda for
+      // válida — nesse caso o token antigo continua servindo, não é erro.
+      console.warn('[spotifyOauthCallback] resposta sem refresh_token pra uid', pending.uid, '— mantendo o token existente, se houver.');
+      res.redirect(pending.returnUrl + '?spotify=connected');
+      return;
+    }
+
+    await db.ref('kanban/spotify_secrets/' + pending.uid).set({
+      refresh_token: tokenData.refresh_token,
+      connectedAt: new Date().toISOString(),
+    });
+
+    res.redirect(pending.returnUrl + '?spotify=connected');
+  }
+);

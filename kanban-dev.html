@@ -699,6 +699,29 @@ input[type="date"]{-moz-appearance:textfield;}
 .kudos-btn{background:rgba(255,209,102,.16)!important;border-color:rgba(255,209,102,.4)!important;color:#ffd166!important;}
 .kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
 .kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+/* ═══ SPOTIFY (ouvindo agora) ═══ */
+.spotify-drawer .lem-hd-title{color:#1DB954;}
+.spotify-scope-tabs{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.spotify-stab{flex:1;font-size:11px;font-weight:600;color:var(--txt2);background:rgba(29,185,84,.05);
+  border:1px solid var(--glass-b);border-radius:9px;padding:8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.spotify-stab:hover{border-color:rgba(29,185,84,.4);}
+.spotify-stab.on{background:rgba(29,185,84,.14);border-color:rgba(29,185,84,.5);color:#1DB954;}
+.spotify-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:12px;
+  background:rgba(6,20,44,.6);border:1px solid var(--glass-b);margin-bottom:7px;}
+.spotify-row .sp-av{width:32px;height:32px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.spotify-row .sp-av img{width:100%;height:100%;object-fit:cover;}
+.spotify-row .sp-art{width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,.3);}
+.spotify-row .sp-art img{width:100%;height:100%;object-fit:cover;}
+.spotify-row .sp-info{flex:1;min-width:0;}
+.spotify-row .sp-name{font-size:11.5px;color:var(--txt2);font-weight:600;margin-bottom:1px;}
+.spotify-row .sp-track{font-size:12.5px;color:var(--txt);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spotify-row .sp-artist{font-size:10.5px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spotify-row .sp-idle{font-size:11px;color:var(--txt3);font-style:italic;}
+.spotify-row .sp-connect-btn{font-size:10px;padding:4px 10px;background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.35);
+  border-radius:999px;color:#1DB954;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
+.spotify-row .sp-connect-btn:hover{background:rgba(29,185,84,.22);}
+.spotify-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
 .kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
@@ -2426,6 +2449,9 @@ input[type="date"]{-moz-appearance:textfield;}
   📌 Lembretes
   <span class="lem-badge" id="lem-badge" style="display:none;">0</span>
 </button>
+<button class="lem-tab" id="spotify-tab" onclick="toggleSpotify()" title="Ouvindo agora — Spotify" style="position:static;top:auto;transform:none;background:rgba(29,185,84,.92);border-color:rgba(29,185,84,.5);box-shadow:-4px 0 24px rgba(29,185,84,.35);">
+  🎧 Spotify
+</button>
 </div>
 <div class="lem-drawer" id="lem-drawer">
   <div class="lem-hd">
@@ -2483,6 +2509,19 @@ input[type="date"]{-moz-appearance:textfield;}
       <button class="kudos-send-btn" id="kudos-btn" onclick="addKudos()" disabled>⭐ Enviar</button>
     </div>
   </div>
+</div>
+
+<!-- ═══ SPOTIFY (ouvindo agora) ═══ -->
+<div class="lem-drawer spotify-drawer" id="spotify-drawer">
+  <div class="lem-hd">
+    <div class="lem-hd-title">🎧 Ouvindo agora</div>
+    <button class="x-btn" onclick="toggleSpotify()">✕</button>
+  </div>
+  <div class="spotify-scope-tabs">
+    <button class="spotify-stab on" id="sptab-squad" onclick="setSpotifyScope('squad')">🐠 Sua Squad</button>
+    <button class="spotify-stab" id="sptab-geral" onclick="setSpotifyScope('geral')">🌊 Geral</button>
+  </div>
+  <div class="lem-body" id="spotify-body"></div>
 </div>
 
 <!-- AGENTE ÁGIL -->
@@ -3531,6 +3570,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swHelpTab('config')">Configurações</div>
     <div class="ag-tab" onclick="swHelpTab('comunicacao')">💬 Comunicação</div>
     <div class="ag-tab" onclick="swHelpTab('kudos')">⭐ Estrelas</div>
+    <div class="ag-tab" onclick="swHelpTab('spotify')">🎧 Spotify</div>
     <div class="ag-tab" onclick="swHelpTab('agil')">Conceitos Ágeis</div>
   </div>
   <div style="padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;" id="help-body">
@@ -4204,7 +4244,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.231-dev</div>
+<div class="version">v8.30.232-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10049,6 +10089,134 @@ function updKudosBadge(){
 }
 
 // ═══════════════════════════════════════════════════════
+// SPOTIFY (ouvindo agora)
+// ═══════════════════════════════════════════════════════
+// Diferente do Kudos (que faz poll a cada 3min o tempo todo, pra manter um
+// badge de contagem atualizado mesmo com o painel fechado), o Spotify não
+// tem badge nenhum — não tem nada útil pra mostrar com o painel fechado.
+// Por isso o listener SÓ existe enquanto o painel está aberto: anexado em
+// toggleSpotify()/setSpotifyScope(), desanexado ao fechar ou trocar de aba.
+// A function agendada que mantém o dado fresco no RTDB roda independente
+// disso, sempre — só o lado do CLIENTE é lazy.
+let _spotifyScope = 'squad';
+let spotifyNowSquad = {}; // {uid: {playing, track, artist, albumArt, updatedAt}}
+let spotifyNowGeral = {};
+let _spotifyUnsubs = [];
+
+function _spotifyDetach(){
+  _spotifyUnsubs.forEach(fn=>{ try{ fn && fn(); }catch(e){} });
+  _spotifyUnsubs = [];
+}
+function _spotifyAttach(scope){
+  _spotifyDetach();
+  if(!window._fbReady) return;
+  const path = scope==='geral' ? 'kanban/painel/spotify_now_geral' : (FB+'/spotify_now');
+  const ref = fb(path);
+  const bucket = scope==='geral' ? spotifyNowGeral : spotifyNowSquad;
+  // Zera o bucket da vez — evita mostrar dado velho de uma sessão anterior
+  // do listener enquanto o novo snapshot ainda não chegou.
+  Object.keys(bucket).forEach(k=>delete bucket[k]);
+  const add = window._onChildAdded(ref, snap=>{ _dbgTrack(path+':child_added', snap.val()); bucket[snap.key]=snap.val(); if(_spotifyScope===scope) renderSpotifyPanel(); });
+  const chg = window._onChildChanged(ref, snap=>{ _dbgTrack(path+':child_changed', snap.val()); bucket[snap.key]=snap.val(); if(_spotifyScope===scope) renderSpotifyPanel(); });
+  const rem = window._onChildRemoved(ref, snap=>{ _dbgTrack(path+':child_removed', null); delete bucket[snap.key]; if(_spotifyScope===scope) renderSpotifyPanel(); });
+  _spotifyUnsubs = [add, chg, rem];
+}
+function toggleSpotify(){
+  const dr=document.getElementById('spotify-drawer');
+  const wasOpen=dr.classList.contains('open');
+  // fecha os outros drawers que ocupam a mesma área
+  document.getElementById('lem-drawer')?.classList.remove('open');
+  document.getElementById('kudos-drawer')?.classList.remove('open');
+  document.getElementById('dados-drawer')?.classList.remove('open');
+  dr.classList.toggle('open');
+  if(!wasOpen){
+    _spotifyAttach(_spotifyScope);
+    renderSpotifyPanel();
+  } else {
+    _spotifyDetach();
+  }
+}
+function setSpotifyScope(s){
+  _spotifyScope=s;
+  document.getElementById('sptab-squad')?.classList.toggle('on',s==='squad');
+  document.getElementById('sptab-geral')?.classList.toggle('on',s==='geral');
+  _spotifyAttach(s);
+  renderSpotifyPanel();
+}
+// Geral = todo mundo da empresa. window._allUsers já existe (populado pro
+// dropdown do Kudos) mas exclui a própria pessoa de propósito (não faz
+// sentido "dar kudos pra si mesmo") — aqui faz sentido se ver na lista
+// geral, então soma de volta.
+function _spotifyGeralUsers(){
+  const cu=window._currentUser;
+  const self=cu?[{init:window._currentUserInit,name:cu.displayName||cu.email||'',email:cu.email||'',foto:cu.photoURL||'',uid:cu.uid}]:[];
+  return [...self, ...(window._allUsers||[])];
+}
+function renderSpotifyPanel(){
+  const body=document.getElementById('spotify-body'); if(!body) return;
+  const pessoas = _spotifyScope==='geral' ? _spotifyGeralUsers() : members;
+  const bucket = _spotifyScope==='geral' ? spotifyNowGeral : spotifyNowSquad;
+  if(!pessoas.length){
+    body.innerHTML=`<div class="spotify-empty">🎧 Ninguém por aqui ainda.</div>`;
+    return;
+  }
+  body.innerHTML = pessoas.slice().sort((a,b)=>String(a.name||a.init).localeCompare(String(b.name||b.init))).map(p=>{
+    const av = p.foto ? `<img src="${safeUrl(p.foto)||''}">` : esc((p.init||'?').substring(0,2));
+    const isSelf = p.uid===window._currentUser?.uid;
+    const status = bucket[p.uid];
+    let mid;
+    if(status && status.playing && status.track){
+      const art = status.albumArt ? `<div class="sp-art"><img src="${safeUrl(status.albumArt)||''}"></div>` : '';
+      mid = `${art}<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div></div>`;
+    } else if(status){
+      mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-idle">⏸ Nada tocando agora</div></div>`;
+    } else if(isSelf){
+      mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div></div><button class="sp-connect-btn" onclick="connectSpotify()">🔌 Conectar Spotify</button>`;
+    } else {
+      mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-idle">Não conectado</div></div>`;
+    }
+    return `<div class="spotify-row"><div class="sp-av">${av}</div>${mid}</div>`;
+  }).join('');
+}
+// Monta o link de autorização do Spotify e redireciona — client_id não é
+// secreto, não precisa de function nenhuma pra esse passo (só a troca do
+// code por token, feita em spotifyOauthCallback, exige o client_secret).
+const SPOTIFY_CLIENT_ID = 'PREENCHER_DEPOIS_DE_CRIAR_O_APP_NO_SPOTIFY';
+const SPOTIFY_REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyOauthCallback';
+async function connectSpotify(){
+  if(SPOTIFY_CLIENT_ID==='PREENCHER_DEPOIS_DE_CRIAR_O_APP_NO_SPOTIFY'){
+    showToast('🎧 Integração com Spotify ainda não configurada — falta cadastrar o app no Spotify for Developers.');
+    return;
+  }
+  const cu=window._currentUser; if(!cu){ showToast('Faça login antes de conectar o Spotify.'); return; }
+  const state = (crypto.randomUUID ? crypto.randomUUID() : ('st'+Date.now()+Math.random().toString(36).slice(2)));
+  try{
+    await window._set(window._ref(window._db,'kanban/oauth_pending/'+state), {uid:cu.uid, returnUrl:window.location.href.split('?')[0]});
+  }catch(e){ showToast('Não deu pra iniciar a conexão com o Spotify — tenta de novo.'); return; }
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    scope: 'user-read-currently-playing user-read-playback-state',
+    state,
+  });
+  window.location.href = 'https://accounts.spotify.com/authorize?'+params.toString();
+}
+// Feedback pós-redirect do OAuth — o callback manda de volta com
+// ?spotify=connected ou ?spotify=error na URL.
+(function(){
+  const qs = new URLSearchParams(window.location.search);
+  const spotifyResult = qs.get('spotify');
+  if(spotifyResult){
+    if(spotifyResult==='connected') showToast('🎧 Spotify conectado!');
+    else if(spotifyResult==='error') showToast('⚠ Não deu pra conectar o Spotify — tenta de novo.');
+    qs.delete('spotify');
+    const newUrl = window.location.pathname + (qs.toString()?'?'+qs.toString():'') + window.location.hash;
+    history.replaceState(null,'',newUrl);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════
 // ARQUIVADOS
 // ═══════════════════════════════════════════════════════
 async function zerarBoard(){
@@ -13809,6 +13977,11 @@ const HELP_CONTENT = {
     { icon:'🙌', title:'Como enviar', text:'Escolha a aba (Sua Squad ou Geral), selecione a pessoa em "Para quem?", escreva o reconhecimento e envie. A pessoa recebe uma notificação 🔔 avisando que ganhou uma Estrela. Enter envia, Shift+Enter quebra linha.' },
     { icon:'📜', title:'Regras de convivência', text:'As Estrelas são públicas e permanentes (até serem removidas). Use para reconhecer de verdade, não para brincadeiras internas que excluam outros. Reconheça pessoas, não a si mesmo. Quem enviou e os admins podem remover uma Estrela se necessário. Mantenha o respeito: é um espaço de cultura positiva.' },
   ],
+  spotify: [
+    { icon:'🎧', title:'O que é "Ouvindo agora"', text:'Mostra o que cada pessoa está ouvindo no Spotify neste exato momento — abra pelo botão 🎧 Spotify na lateral direita do board. É opt-in: só aparece com música quem conectou a própria conta. Não guarda histórico, só o que está tocando agora.' },
+    { icon:'🐠', title:'Sua Squad vs. 🌊 Geral', text:'Mesma lógica das Estrelas do Mar: a aba "Sua Squad" mostra só quem está na sua squad; "Geral" mostra todo mundo da empresa que conectou o Spotify.' },
+    { icon:'🔌', title:'Como conectar', text:'Clique em "🔌 Conectar Spotify" na sua própria linha do painel — vai te levar pra tela de autorização do Spotify. Depois de autorizar, você volta pro board automaticamente. Só é possível conectar a própria conta, não a de outra pessoa.' },
+  ],
 }
 let _helpTab = 'board';
 
@@ -13828,7 +14001,7 @@ function openHelp(tab, searchTerm){
 
 function swHelpTab(tab){
   _helpTab = tab;
-  const TABS = ['board','cards','agente','config','comunicacao','kudos','agil'];
+  const TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil'];
   document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i) => t.classList.toggle('on', TABS[i]===tab));
   renderHelp();
 }
@@ -13847,7 +14020,7 @@ function renderHelp(){
   if(searching){
     // Busca em todas as seções
     if(tabs) tabs.style.opacity = '.45';
-    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','agil'];
+    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil'];
     ALL_TABS.forEach(t => { (HELP_CONTENT[t]||[]).forEach(item => items.push({...item, _tab:t})); });
     items = items.filter(item =>
       item.title.toLowerCase().includes(query) ||

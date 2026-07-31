@@ -117,3 +117,7 @@ exports.sendPushOnNotification = onValueCreated(
 // Agente Ágil — orquestrador entre o board e agentes especialistas externos
 // (hoje: Databricks). Deploy isolado: firebase deploy --only functions:agenteAgil
 exports.agenteAgil = require('./agente-agil/http').agenteAgil;
+
+// Spotify "ouvindo agora" — callback do OAuth (troca code por token, ver
+// functions/spotify/oauth.js). Deploy isolado: firebase deploy --only functions:spotifyOauthCallback
+exports.spotifyOauthCallback = require('./spotify/oauth').spotifyOauthCallback;
