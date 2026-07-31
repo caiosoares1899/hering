@@ -16,6 +16,14 @@
 // OAuth contra CSRF) mas validado contra um valor fixo, não contra um
 // registro no banco — não existe uma "URL pública" que dispare isso, é
 // uma URL entregue manualmente, uma vez, fora do app.
+//
+// IMPORTANTE (achado em produção, ver CHANGELOG "Cloud Functions —
+// Spotify" de 2026-07-31): mesmo com token válido e escopo certo, a
+// conta que autoriza aqui PRECISA estar cadastrada manualmente em
+// Spotify for Developers → app → "Users and Access" (Development Mode
+// limita a poucos usuários allowlistados) — senão toda chamada de
+// escrita à Web API feita com o token dela volta 403, sem relação
+// nenhuma com bug de código.
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');

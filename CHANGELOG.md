@@ -1163,6 +1163,48 @@ inicial (URL relativa) tanto na Cloud Function quanto no fallback do
 manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
 
+## Cloud Functions — Spotify (`functions/spotify/`, sem versão própria em `version.json`)
+
+### 2026-07-31 · nota operacional (sem PR de código — achado ao investigar um bug)
+**Spotify Developer Mode exige allowlist manual de usuários, ou toda
+chamada de escrita à Web API volta 403.** Achado ao investigar o 500 da
+Rádio do Maré (`spotifyRadioSuggest`) na primeira sugestão real de
+música: os logs mostraram `add_track_failed: http_403 {"error":
+{"status": 403, "message": "Forbidden"}}` — token válido, escopo
+correto (`playlist-modify-public`/`playlist-modify-private`), mesmo
+assim negado.
+
+Causa raiz: desde fevereiro/2026, apps do Spotify em "Development Mode"
+(o modo padrão de qualquer app novo, incluindo o nosso "Maré Digital")
+ficam limitados a um máximo de 5 usuários autenticados — cadastrados
+manualmente em **Spotify for Developers → seu app → "Users and Access"**
+— e qualquer usuário fora dessa lista recebe 403 em endpoints de
+escrita, independente de token/escopo estarem certos. Resolvido
+adicionando o e-mail da conta dona da Rádio do Maré nessa lista, fora
+do repo (configuração no painel do Spotify, não código).
+
+**Isso vale pra QUALQUER conta que vá se autenticar no nosso app
+Spotify com permissão de escrita** — a conta dona da Rádio do Maré já
+foi cadastrada, mas se essa conta mudar no futuro (ver design de
+"gestão de conta" no PR #106, aplicado à conta pessoal do "ouvindo
+agora" — a conta da Rádio do Maré, sendo única e fixa, não tem esse
+mesmo fluxo de troca automática), a nova conta precisa ser adicionada
+manualmente na allowlist antes de funcionar. Vale desconfiar de 403 aqui
+primeiro, antes de investigar código.
+
+De passagem, uma segunda pista foi investigada e descartada como causa
+deste erro: o mesmo changelog de fevereiro/2026 da Web API também
+removeu/substituiu alguns endpoints escopados por `users/{user_id}`
+(ex.: `POST /users/{user_id}/playlists` → `POST /me/playlists`,
+`GET /users/{id}`, `GET /users/{id}/playlists`). Conferido: nenhum
+desses aparece em `oauth.js`, `radioOwnerCallback.js`, `disconnect.js`,
+`sync.js`/`syncCore.js`, `radioSearch.js`/`radioSearchCore.js` ou
+`radioSuggest.js`/`radioSuggestCore.js` — todos usam `/me/...` (quando
+aplicável) ou endpoints escopados por playlist/faixa diretamente, nunca
+`/users/{id}/...`. Não era a causa, e não há nada a corrigir por esse
+lado por enquanto — só fica registrado aqui caso alguém precise cruzar
+essa informação de novo no futuro.
+
 ## painel.html / painel-dev.html
 
 ### painel.html v2.92 · painel — 2026-07-30

@@ -10,6 +10,12 @@
 // playlist-modify-*, independente de quem tá sugerindo. Isso também
 // significa que sugerir não exige a pessoa ter conectado o próprio
 // Spotify (só estar logada no Maré — ver radioSuggest.js).
+//
+// Se isso voltar 403 mesmo com token/escopo certos: não é bug de código
+// — é a conta dona faltando na allowlist "Users and Access" do app em
+// Spotify for Developers (Development Mode). Ver
+// radioOwnerCallback.js e o CHANGELOG "Cloud Functions — Spotify" de
+// 2026-07-31 pro relato completo.
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 
