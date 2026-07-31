@@ -260,6 +260,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.229-dev — 2026-07-30
+Leva de otimização de rotina + auditoria mobile, pedida como "otimização
+de rotina + análise e correção mobile" — escopo combinado antes de
+implementar: performance de sync/polling, limpeza de código morto (relatório
+separado) e auditoria geral de responsividade (sem bug específico relatado).
+
+**Heartbeat de presença pausa em aba oculta.** O heartbeat (escreve
+`kanban/squads/{squad}/presence/{uid}` a cada 15s) rodava mesmo com a aba
+em background — diferente do poll de kudos, que já tinha essa guarda
+(`if(!document.hidden)`). Cada heartbeat em background é escrita
+desperdiçada (a pessoa já apareceria "offline" pros outros depois do
+timeout de 30s de qualquer forma, que é o comportamento correto) —
+especialmente relevante no mobile, onde trocar de app deixa a aba em
+background o tempo todo. Ganha também um heartbeat imediato ao VOLTAR pra
+aba (`visibilitychange`), pra não ficar "às escuras" até o próximo tick de
+15s.
+
+**Reordenar colunas por toque (mobile).** Auditoria mobile encontrou um
+gap concreto: cards já tinham um sistema de touch drag-and-drop custom
+(`addTouchDnD`, toque longo com vibração/clone visual), mas colunas só
+tinham o `dragstart` nativo do HTML5 — que simplesmente não dispara em
+touch. Não existia alternativa (sem botões mover-esquerda/direita, sem
+menu): reordenar colunas só funcionava no desktop. Novo `addTouchColDnD`
+replica o mesmo gesto de long-press dos cards (arma depois de 400ms
+parado, vibra, classe visual `.col-armed`), calculando o destino pela
+metade esquerda/direita da coluna sob o dedo — mesma lógica de
+`handleColDrop` (mouse), reaproveitada. Verificado com Playwright
+(dispatch de `TouchEvent` reais) antes de fechar: arrasto pro fim da
+lista, arrasto pra posição inicial, tap rápido sem long-press (não deve
+reordenar nada), e toque começando dentro de um `.card` (não deve colidir
+com o drag do card). Os 4 cenários passaram. Texto novo em Ajuda (F1/❓)
+documentando o gesto, ao lado da entrada já existente de "Arrastar card
+no celular".
+
+Auditoria também sinalizou dois pontos que ficam de fora desta leva, por
+não terem risco/retorno claros o bastante pra mexer sem mais confirmação:
+um poll de 60s que rebusca `/columns` e `/tags` inteiros além dos
+listeners ao vivo que já existem pros dois (parece redundante, mas o
+comentário no código descreve como "rede de segurança" deliberada — sem
+histórico de por que foi adicionado, não risquei remover); e
+`_cardDirtyTimer`, que faz polling de 400ms comparando `JSON.stringify`
+pra detectar alterações não salvas no card aberto — daria pra trocar por
+listeners de evento nos campos, mas é refator maior tocando a UX do botão
+salvar em vários tipos de campo.
+
+Reordenar cards DENTRO da mesma coluna por toque (só entre colunas
+funciona hoje) fica como gap conhecido, não resolvido nesta leva.
+
 ### v8.30.228-dev — 2026-07-30
 Reduz drasticamente o consumo de leitura do Firebase em boards com muito
 histórico arquivado. Achado com dados reais de um squad de produção
