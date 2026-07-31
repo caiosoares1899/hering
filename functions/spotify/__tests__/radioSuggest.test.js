@@ -43,12 +43,43 @@ test('adiciona a faixa na playlist usando o token da CONTA DONA (refresh_token f
       assert.ok(String(opts.body).includes('refresh_token=owner-rt'));
       return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
     }
-    if (String(url).includes('/playlists/plId123/tracks')) {
+    if (String(url).includes('/playlists/plId123/items')) {
       assert.equal(opts.headers.Authorization, 'Bearer owner-at');
       assert.deepEqual(JSON.parse(opts.body), { uris: ['spotify:track:xyz'] });
       return { ok: true, json: async () => ({ snapshot_id: 'abc' }) };
     }
     throw new Error('URL inesperada: ' + url);
+  };
+
+  const result = await suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz');
+  assert.deepEqual(result, { snapshot_id: 'abc' });
+});
+
+test('usa o endpoint /playlists/{id}/items (não /tracks — renomeado na migração de fev/2026 da Web API)', async () => {
+  const db = makeFakeDb({ kanban: { spotify_radio_owner_secret: { refresh_token: 'owner-rt' } } });
+  let calledUrl = null;
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
+    }
+    calledUrl = String(url);
+    return { ok: true, json: async () => ({ snapshot_id: 'abc' }) };
+  };
+
+  await suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz');
+  assert.equal(calledUrl, 'https://api.spotify.com/v1/playlists/plId123/items');
+});
+
+test('trata 201 (status real de sucesso do Spotify pra esse endpoint) como sucesso, não só 200', async () => {
+  const db = makeFakeDb({ kanban: { spotify_radio_owner_secret: { refresh_token: 'owner-rt' } } });
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
+    }
+    // fetch() real do Node marca res.ok=true pra qualquer 2xx, incluindo
+    // 201 — reproduzido aqui explicitamente pra não depender de o mock
+    // "esquecer" e cair num default enganoso.
+    return { ok: true, status: 201, json: async () => ({ snapshot_id: 'abc' }) };
   };
 
   const result = await suggestTrack(db, 'fake-secret', 'plId123', 'spotify:track:xyz');
@@ -68,7 +99,7 @@ test('rotaciona o refresh_token no banco quando o Spotify manda um novo', async 
     if (String(url).includes('accounts.spotify.com/api/token')) {
       return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600, refresh_token: 'owner-rt-novo' }) };
     }
-    if (String(url).includes('/tracks')) {
+    if (String(url).includes('/items')) {
       return { ok: true, json: async () => ({}) };
     }
     throw new Error('URL inesperada: ' + url);
@@ -86,7 +117,7 @@ test('reusa o access_token em cache entre sugestões (não bate no /token de nov
       tokenCalls++;
       return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
     }
-    if (String(url).includes('/tracks')) {
+    if (String(url).includes('/items')) {
       return { ok: true, json: async () => ({}) };
     }
     throw new Error('URL inesperada: ' + url);
@@ -103,7 +134,7 @@ test('propaga erro quando adicionar a faixa falha (ex: playlist não editável p
     if (String(url).includes('accounts.spotify.com/api/token')) {
       return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
     }
-    if (String(url).includes('/tracks')) {
+    if (String(url).includes('/items')) {
       return { ok: false, status: 403, text: async () => 'Forbidden' };
     }
     // Diagnóstico de propriedade (GET /me e GET /playlists/{id}) — não
@@ -123,7 +154,7 @@ test('em 403, roda o diagnóstico de propriedade (GET /me + GET playlist) com o 
     if (String(url).includes('accounts.spotify.com/api/token')) {
       return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
     }
-    if (String(url).includes('/playlists/plId123/tracks')) {
+    if (String(url).includes('/playlists/plId123/items')) {
       return { ok: false, status: 403, text: async () => 'Forbidden' };
     }
     if (String(url) === 'https://api.spotify.com/v1/me') {
@@ -148,7 +179,7 @@ test('diagnóstico de propriedade falhando (rede fora) não impede o erro origin
     if (String(url).includes('accounts.spotify.com/api/token')) {
       return { ok: true, json: async () => ({ access_token: 'owner-at', expires_in: 3600 }) };
     }
-    if (String(url).includes('/playlists/plId123/tracks')) {
+    if (String(url).includes('/playlists/plId123/items')) {
       return { ok: false, status: 403, text: async () => 'Forbidden' };
     }
     throw new Error('rede caiu no diagnóstico');

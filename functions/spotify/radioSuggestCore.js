@@ -11,11 +11,16 @@
 // significa que sugerir não exige a pessoa ter conectado o próprio
 // Spotify (só estar logada no Maré — ver radioSuggest.js).
 //
-// Se isso voltar 403 mesmo com token/escopo certos: não é bug de código
-// — é a conta dona faltando na allowlist "Users and Access" do app em
-// Spotify for Developers (Development Mode). Ver
-// radioOwnerCallback.js e o CHANGELOG "Cloud Functions — Spotify" de
-// 2026-07-31 pro relato completo.
+// Se isso voltar 403 mesmo com token/escopo/allowlist certos, desconfie
+// primeiro do endpoint em si: a Web API migrou POST /playlists/{id}/tracks
+// pra POST /playlists/{id}/items em fevereiro/2026 (cutover pra apps em
+// Development Mode em 9/mar/2026) — o endpoint antigo passou a devolver
+// 403 Forbidden genérico pra qualquer chamada, mesmo com tudo mais
+// correto. Foi exatamente essa a causa raiz encontrada aqui (ver
+// CHANGELOG "Cloud Functions — Spotify"). Também vale conferir a
+// allowlist "Users and Access" (Spotify for Developers → app →
+// Development Mode) — ver radioOwnerCallback.js —, mas isso já foi
+// descartado como causa desta vez.
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 
@@ -85,7 +90,11 @@ async function _logOwnershipDiagnostic(token, playlistId) {
 
 async function suggestTrack(db, clientSecret, playlistId, trackUri) {
   const token = await _getOwnerAccessToken(db, clientSecret);
-  const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+  // /items, não /tracks — endpoint renomeado na migração de fev/2026 da
+  // Web API (ver comentário no topo do arquivo). Resposta de sucesso é
+  // 201 (não 200), mas o código já tratava isso certo desde sempre —
+  // checa res.ok (qualquer 2xx), nunca comparou com status===200.
+  const url = `https://api.spotify.com/v1/playlists/${playlistId}/items`;
   const method = 'POST';
   const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
   const bodyStr = JSON.stringify({ uris: [trackUri] });
