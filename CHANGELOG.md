@@ -337,6 +337,49 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.241-dev — 2026-07-31
+Corrige dois bugs reais de gestão de usuário externo, reportados ao vivo
+testando com um email pessoal na squad `ecomm`: exclusão não pegava
+(usuário voltava sozinho no próximo login) e adicionar externo na squad
+`dev` não dava acesso (login continuava redirecionando pra `ecomm`).
+
+Investigação (agente de exploração dedicado) achou a causa raiz: existem
+dois mecanismos de dado completamente separados que a UI chama de
+"externo" — `kanban/squads/{squad}/externos` (whitelist por email, só
+libera o login) e `kanban/usuarios/{uid}/squads/{squad}` (acesso real).
+Nenhum fluxo de adicionar/remover tocava os dois ao mesmo tempo:
+
+- **`salvarExterno()`** (Settings → Usuários → "Emails externos
+  autorizados") só escrevia a whitelist, nunca `usuarios/{uid}/squads` —
+  então adicionar alguém como externo numa squad nova não dava acesso de
+  fato se a pessoa já tinha conta (criada ao logar pela primeira vez em
+  outra squad). Agora, se já existir um `usuarios/{uid}` com aquele
+  email, também grava `squads/{ACTIVE_SQUAD}=true` (papel `convidado` se
+  a squad ainda não tinha um definido) — fecha o buraco que forçava
+  marcar o squad manualmente no Painel depois.
+- **`removerMembro()`** e **`removerExterno()`** só limpavam metade dos
+  dados cada um (a inscrição no squad, ou a whitelist — nunca as duas).
+  Como a whitelist sobrevivia, o próximo login caía no `if(!existe)` de
+  `autoRegistrar()` e recriava a conta do zero. Agora os dois limpam a
+  ponta que faltava: `removerMembro` também apaga a entrada da whitelist
+  correspondente (recebe o email do usuário além de uid/nome);
+  `removerExterno` também revoga `squads`/`squads_roles` se a pessoa já
+  tinha uma conta real associada àquele email.
+- **Redirect hardcoded pra produção** — `resolveSquadAndShow()` (usuário
+  com um squad só é jogado direto pra lá) tinha `'kanban.html?squad=...'`
+  fixo no código, copiado sem adaptar pro `kanban-dev.html`. Alguém
+  testando no dev com squad único podia ser silenciosamente redirecionado
+  pra produção. Agora usa o arquivo atual (`location.pathname`).
+
+Testado via Playwright (13 cenários): whitelist + acesso real concedidos
+juntos ao adicionar externo com conta pré-existente; sem crash quando o
+email não tem conta ainda; remoção por qualquer um dos dois caminhos
+limpa a whitelist e o acesso junto, sem afetar outras squads da mesma
+pessoa; redirect de squad único aponta pro arquivo certo.
+
+Ver também `painel-dev.html v2.94` — mesma investigação, correções
+irmãs no lado do Painel (`toggleUserSquad`, `deleteGlobalUser`).
+
 ### v8.30.240-dev — 2026-07-31 · PR #118
 Duas melhorias no board pedidas direto, fora do contexto do Spotify: usar
 um modelo dentro de um card já aberto, e escolher a coluna de destino ao
@@ -1546,6 +1589,39 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v2.94 · painel-dev — 2026-07-31
+Correções irmãs de `kanban-dev.html v8.30.241-dev` (ver entrada acima
+pro contexto completo dos dois bugs de usuário externo reportados:
+exclusão não pegava, adicionar externo em squad nova não dava acesso).
+Do lado do Painel:
+
+- **`toggleUserSquad()`** (checkbox de squad no modal "Usuários
+  Globais") desmarcava `squads/{id}` mas nunca sincronizava o espelho
+  `usuarios_publicos/{uid}` (é o que `kanban.html` lê pra listar membros
+  do squad — ficava com gente removida ainda aparecendo lá) nem limpava
+  a whitelist `kanban/squads/{id}/externos` correspondente (deixando a
+  pessoa conseguir logar de novo mesmo sem o squad marcado). Agora
+  sincroniza os dois.
+- **`deleteGlobalUser()`** ("🗑 Excluir" no modal "Usuários Globais")
+  apagava só `kanban/usuarios/{uid}`, deixando `usuarios_publicos/{uid}`
+  órfão e a whitelist de externos intacta em toda squad que a pessoa
+  frequentava — reabrindo a mesma porta de reaparecer sozinho no
+  próximo login. Agora também limpa `usuarios_publicos` e a whitelist
+  `externos` de cada squad que estava em `squads` da pessoa.
+
+Testado via Playwright (4 cenários): desmarcar squad limpa os três
+lugares; marcar não mexe na whitelist (comportamento correto — só
+desmarcar deve limpar); exclusão total cascade em múltiplas squads; sem
+crash pra usuário sem squads/email.
+
+**Nota de escopo**: `painel-dev.html` só gerencia as squads fictícias
+(`dev`/`omnichannel` — `SQUADS` fixo no código, não carrega
+`squads_meta` de produção, decisão de isolamento já documentada na
+entrada `v2.93` abaixo). O bug original foi reproduzido numa squad real
+(`ecomm`), então a validação completa do cenário exato só é possível
+depois de promover pra `painel.html`; aqui a squad `dev` cobre o mesmo
+código/mesmo bug já que a lógica não depende de qual squad é.
 
 ### painel.html v2.92 · painel — 2026-07-30
 Promove pra prod o fix validado no dev (`v2.93 · painel-dev`): compilado

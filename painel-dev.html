@@ -2157,7 +2157,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.93 · painel-dev</div>
+<div class="version">v2.94 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7135,6 +7135,25 @@ function toggleUserSquad(uid, squadId, checked){
   }
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), upd)
     .then(()=>{
+      // Mantém usuarios_publicos em sincronia -- é o que o kanban.html lê pra
+      // listar membros do squad, e ficava desatualizado só com o update acima.
+      return window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid), upd);
+    })
+    .then(()=>{
+      // Desmarcando: se essa pessoa também estava na whitelist de "externos"
+      // desse squad, remove junto -- senão ela consegue logar de novo mesmo
+      // sem o squad marcado aqui.
+      if(!checked && u.email){
+        return window._get(window._ref(window._db,'kanban/squads/'+squadId+'/externos')).then(snap=>{
+          const externos = snap.val()||{};
+          const dels = Object.entries(externos)
+            .filter(([,ext])=>(ext.email||ext)===u.email)
+            .map(([key])=>window._set(window._ref(window._db,'kanban/squads/'+squadId+'/externos/'+key), null));
+          return Promise.all(dels);
+        });
+      }
+    })
+    .then(()=>{
       showToast(checked ? '✅ Adicionado ao squad' : '✅ Removido do squad');
     })
     .catch(e=>showToast('❌ '+e.message));
@@ -7150,7 +7169,26 @@ function updateSquadUserRole(uid, squadId, role){
 
 function deleteGlobalUser(uid, nome){
   if(!confirm('Excluir completamente o usuário "'+nome+'"?\n\nIsso remove o acesso dele de TODOS os squads. Ele precisará se inscrever novamente.')) return;
+  const u = _globalUsersCache[uid] || {};
+  const email = u.email;
+  const squadIds = Object.keys(u.squads||{});
   window._set(window._ref(window._db,'kanban/usuarios/'+uid), null)
+    .then(()=>window._set(window._ref(window._db,'kanban/usuarios_publicos/'+uid), null))
+    .then(()=>{
+      // Limpa a whitelist de "externos" em todo squad onde essa pessoa estava --
+      // senão ela reaparece sozinha no próximo login (autoRegistrar recria a
+      // conta achando que é um cadastro novo, já que a whitelist ainda libera).
+      if(!email || !squadIds.length) return;
+      return Promise.all(squadIds.map(sqId =>
+        window._get(window._ref(window._db,'kanban/squads/'+sqId+'/externos')).then(snap=>{
+          const externos = snap.val()||{};
+          const dels = Object.entries(externos)
+            .filter(([,ext])=>(ext.email||ext)===email)
+            .map(([key])=>window._set(window._ref(window._db,'kanban/squads/'+sqId+'/externos/'+key), null));
+          return Promise.all(dels);
+        })
+      ));
+    })
     .then(()=>showToast('✅ '+nome+' excluído.'))
     .catch(e=>showToast('❌ '+e.message));
 }
