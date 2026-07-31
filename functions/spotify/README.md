@@ -11,7 +11,10 @@ conecta a própria conta (opt-in); quem não conectou não aparece.
 
 - **Conexão**: `oauth.js` (`spotifyOauthCallback`) — callback do OAuth
   POR PESSOA. Escopos `user-read-currently-playing
-  user-read-playback-state`. `state`/`kanban/oauth_pending/{state}`
+  user-read-playback-state user-modify-playback-state` (o terceiro,
+  pra controle de playback — pedido só em conexões/reconexões a partir
+  de quando esse recurso foi lançado, sem campanha de reconexão em massa
+  pra quem já estava conectado antes). `state`/`kanban/oauth_pending/{state}`
   bridge entre o cliente (que sabe o uid) e o Spotify (que não sabe nada
   de Firebase Auth).
 - **Gestão de conta**: `disconnect.js` (`spotifyDisconnect`) — apaga o
@@ -44,6 +47,21 @@ conecta a própria conta (opt-in); quem não conectou não aparece.
   de abrir/fechar o painel repetidamente. Reusa a mesma lógica por-uid do
   sync periódico (`_syncOneUser()`, extraída de `runSpotifySync()`
   especificamente pra esse reuso).
+- **Controle de playback pessoal**: `playback.js`/`playbackCore.js`
+  (`spotifyPlayback`) — play/pause/próxima, cada pessoa controlando a
+  PRÓPRIA reprodução (não é um "DJ" tocando pra todo mundo — descartado
+  por decisão de produto). Usa o token PESSOAL de cada uid (reusa
+  `_getAccessToken`/`_accessTokenCache` de `syncCore.js`, mesmo cache —
+  nunca o token da conta dona da Rádio do Maré, que é só pra escrita em
+  playlist compartilhada). `uid` sempre do ID token decodificado. 3
+  causas de erro distintas, cada uma com mensagem própria na UI: escopo
+  insuficiente (403 "Insufficient client scope" — reconectar resolve),
+  Premium ausente (403 `reason: PREMIUM_REQUIRED`, requisito histórico
+  do Spotify Connect pra controle via API, não relacionado à migração de
+  fev/2026), sem dispositivo ativo (404 `reason: NO_ACTIVE_DEVICE`).
+  Tenta-e-avisa em vez de checar dispositivo antes (evita uma chamada de
+  API extra só pra decidir se desabilita o botão). Estado do botão
+  (▶️/⏸️) vem do `spotify_now` já existente, sem chamada nova.
 - **UI**: painel "🎧 Spotify" no board, tabs Squad/Geral (mesmo padrão do
   Kudos) + sub-toggle "Ouvindo agora"/"Playlist" (ver seção 2). Listener
   ao vivo só existe com o painel aberto (lazy) — diferente do Kudos, que
@@ -149,6 +167,7 @@ firebase deploy --only functions:spotifyOauthCallback
 firebase deploy --only functions:spotifyDisconnect
 firebase deploy --only functions:spotifySync
 firebase deploy --only functions:spotifySyncNow
+firebase deploy --only functions:spotifyPlayback
 firebase deploy --only functions:spotifyRadioOwnerCallback
 firebase deploy --only functions:spotifyRadioSearch
 firebase deploy --only functions:spotifyRadioSuggest

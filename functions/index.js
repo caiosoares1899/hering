@@ -134,6 +134,10 @@ exports.spotifySync = require('./spotify/sync').spotifySync;
 // ver functions/spotify/syncNow.js). Deploy isolado: firebase deploy --only functions:spotifySyncNow
 exports.spotifySyncNow = require('./spotify/syncNow').spotifySyncNow;
 
+// Spotify — controle de playback PESSOAL (play/pause/próxima, ver
+// functions/spotify/playback.js). Deploy isolado: firebase deploy --only functions:spotifyPlayback
+exports.spotifyPlayback = require('./spotify/playback').spotifyPlayback;
+
 // Rádio do Maré — playlist colaborativa (ver functions/spotify/radio*.js).
 // Callback de conexão da conta DONA das playlists — manual, uma vez só
 // (não é o fluxo por-pessoa de spotifyOauthCallback). Deploy isolado:

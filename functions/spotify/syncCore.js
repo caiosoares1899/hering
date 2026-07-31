@@ -186,6 +186,12 @@ async function syncOneUserNow(db, clientSecret, uid) {
 module.exports = {
   runSpotifySync,
   syncOneUserNow,
+  // Exportado pra playbackCore.js reusar a MESMA troca de refresh_token
+  // (e o mesmo cache) em vez de duplicar uma terceira vez — controle de
+  // playback usa o token PESSOAL de cada uid, igual ao sync, só que pra
+  // um endpoint diferente (/me/player/play|pause|next em vez de
+  // /me/player/currently-playing).
+  _getAccessToken,
   _accessTokenCache,
   _resetManualSyncCooldown: () => { _manualSyncCooldown.clear(); },
 };

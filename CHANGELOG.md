@@ -294,6 +294,67 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.239-dev — 2026-07-31 · PR #115
+Item 3 das 4 frentes de UX/performance: **controle de playback pessoal**
+— play/pause/próxima direto pelo painel, sem precisar abrir o Spotify
+separadamente. NÃO é um "DJ" tocando pra todo mundo (item 4, descartado
+pelo próprio usuário por decisão de produto — fragilidade técnica,
+latência desencontrada, exigiria permissão de escrita de todo mundo; a
+playlist colaborativa da Rádio do Maré já resolve o espírito da ideia) —
+é só um atalho de conveniência pra reprodução da PRÓPRIA pessoa.
+
+- **`functions/spotify/playbackCore.js`** (novo): `controlPlayback(db,
+  clientSecret, uid, action)` — `action` é `'play'`/`'pause'`/`'next'`,
+  mapeado pra `PUT /me/player/play`, `PUT /me/player/pause`,
+  `POST /me/player/next`. Usa o token **pessoal** de cada uid
+  (`kanban/spotify_secrets/{uid}`) — reusa `_getAccessToken`/
+  `_accessTokenCache` de `syncCore.js` (agora exportados), mesmo cache
+  em memória, evita duplicar a troca de refresh_token uma terceira vez
+  (a primeira é o sync, a segunda seria essa se não reusasse). Nunca usa
+  o token da conta dona da Rádio do Maré — são coisas completamente
+  diferentes (uma é token pessoal pra controlar o próprio player, a
+  outra é token fixo de uma conta pra escrever numa playlist
+  compartilhada).
+  Distingue 3 causas de erro pela resposta do Spotify: `reason:
+  PREMIUM_REQUIRED` (a própria conta não é Premium — requisito histórico
+  do Spotify Connect pra controle via API, não relacionado à migração de
+  endpoints de fev/2026), `reason: NO_ACTIVE_DEVICE` ou 404 puro (sem
+  Spotify aberto em nenhum aparelho), e 403 com mensagem "Insufficient
+  client scope" (conexão antiga, sem o escopo novo). Cada uma vira uma
+  mensagem diferente na UI.
+- **`functions/spotify/playback.js`** (novo): wrapper `onRequest`,
+  autenticado por ID token — `uid` **sempre** do token decodificado,
+  nunca aceito do corpo da requisição (mesmo cuidado de
+  `syncNow.js`/`spotifyDisconnect`). Deploy isolado:
+  `firebase deploy --only functions:spotifyPlayback`.
+- **`functions/spotify/oauth.js`**: escopo do OAuth pessoal ganhou
+  `user-modify-playback-state` — pedido só em conexões/reconexões NOVAS
+  a partir de agora (`connectSpotify()` em `kanban-dev.html`), sem
+  campanha de reconexão em massa pra quem já estava conectado. Quem
+  tentar controlar o playback sem esse escopo recebe o erro
+  `insufficient_scope` e um convite pra reconectar (reusa o mesmo botão
+  "🔁 Trocar" já existente).
+- **UI**: linha da própria pessoa ganhou botões ▶️/⏸️ (alterna com base
+  em `status.playing`, já conhecido — sem chamada nova pra decidir qual
+  ícone mostrar) e ⏭️, visíveis só quando conectada. Tenta-e-avisa em vez
+  de checar dispositivo ativo antes de mostrar os botões (evita uma
+  chamada de API extra só pra decidir se desabilita algo). Depois de uma
+  ação bem-sucedida, dispara um sync sob demanda (mesmo do PR #114) pra
+  refletir o novo estado sem esperar o tick periódico — sujeito ao mesmo
+  cooldown de 10s de sempre, então pode ser ignorado silenciosamente se
+  a pessoa acabou de abrir o painel; o tick de 30s cobre o resto.
+  Ajuda (F1/❓) ganhou uma entrada nova sobre o controle de playback,
+  incluindo os 3 requisitos (reconectar, Premium, dispositivo ativo).
+
+Verificado com `node --test` (11 casos novos em `playback.test.js` —
+usa o token pessoal certo (não o da conta dona), cada uma das 3 ações
+chama o endpoint/método certo, distingue as 3 causas de erro
+corretamente, reusa o cache de token do sync — 124/124 no total da
+suíte de functions) e Playwright (12 cenários: ícone play/pause reflete
+o estado certo, botões somem quando não conectada, cada causa de erro
+mostra a mensagem certa, dispara o sync-now depois de uma ação
+bem-sucedida).
+
 ### v8.30.238-dev — 2026-07-31 · PR #114
 Primeira das 4 frentes de UX/performance discutidas e aprovadas antes de
 implementar: **sync sob demanda ao abrir o painel** + **cadência do sync
