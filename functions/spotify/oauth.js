@@ -24,15 +24,11 @@ const { getDatabase } = require('firebase-admin/database');
 const SPOTIFY_CLIENT_SECRET = defineSecret('SPOTIFY_CLIENT_SECRET');
 
 // Não é secreto (o próprio Spotify espera esse valor exposto no client) —
-// por isso vive como constante de código, não Secret Manager. Placeholder
-// até o app ser criado no Spotify for Developers; ver CHANGELOG/PR pra
-// instruções de como preencher.
-const SPOTIFY_CLIENT_ID = 'PREENCHER_DEPOIS_DE_CRIAR_O_APP_NO_SPOTIFY';
+// por isso vive como constante de código, não Secret Manager.
+const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 
-// Precisa bater EXATAMENTE com a Redirect URI cadastrada no formulário do
-// Spotify for Developers — confirmar a URL real no Firebase Console após
-// o primeiro deploy (functions v2 nem sempre expõe a URL cloudfunctions.net
-// "legada" de primeira; ver discussão no PR).
+// Confirmada batendo com a Redirect URI cadastrada no formulário do
+// Spotify for Developers após o primeiro deploy (ver CHANGELOG).
 const REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyOauthCallback';
 
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
@@ -99,21 +95,39 @@ exports.spotifyOauthCallback = onRequest(
       return;
     }
 
+    // "connected" (primeira vez) vs "reconnected" (já estava conectado,
+    // trocou de conta/re-autorizou) — o cliente manda esse contexto no
+    // próprio oauth_pending (ele sabia, antes de sair pro Spotify, se já
+    // tinha spotify_connected=true) e a function só ecoa de volta na URL,
+    // pra mostrar um toast diferente ("conta atualizada" vs "conectado").
+    const resultParam = pending.wasConnected ? 'reconnected' : 'connected';
+
     if (!tokenData.refresh_token) {
       // Não deveria acontecer no primeiro consentimento (scope pedido inclui
       // acesso offline), mas Spotify não devolve refresh_token de novo se a
       // pessoa já tinha autorizado o app antes e a autorização ainda for
       // válida — nesse caso o token antigo continua servindo, não é erro.
+      // Ainda assim garante a flag pública (idempotente — pode já estar true).
       console.warn('[spotifyOauthCallback] resposta sem refresh_token pra uid', pending.uid, '— mantendo o token existente, se houver.');
-      res.redirect(pending.returnUrl + '?spotify=connected');
+      await db.ref('kanban/usuarios/' + pending.uid + '/spotify_connected').set(true);
+      res.redirect(pending.returnUrl + '?spotify=' + resultParam);
       return;
     }
 
-    await db.ref('kanban/spotify_secrets/' + pending.uid).set({
-      refresh_token: tokenData.refresh_token,
-      connectedAt: new Date().toISOString(),
+    // Duas gravações atômicas: o token em si (privado, spotify_secrets — ver
+    // database.rules.json) e uma flag PÚBLICA (spotify_connected, dentro de
+    // usuarios/{uid}, que já é legível por qualquer pessoa logada) — o
+    // cliente não consegue ler spotify_secrets pra saber se já está
+    // conectado (por isso "Conectar" vira "Trocar conta" na UI), então
+    // precisa desse sinal separado, sem token nenhum nele.
+    await db.ref().update({
+      ['kanban/spotify_secrets/' + pending.uid]: {
+        refresh_token: tokenData.refresh_token,
+        connectedAt: new Date().toISOString(),
+      },
+      ['kanban/usuarios/' + pending.uid + '/spotify_connected']: true,
     });
 
-    res.redirect(pending.returnUrl + '?spotify=connected');
+    res.redirect(pending.returnUrl + '?spotify=' + resultParam);
   }
 );

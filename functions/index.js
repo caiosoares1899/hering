@@ -121,3 +121,7 @@ exports.agenteAgil = require('./agente-agil/http').agenteAgil;
 // Spotify "ouvindo agora" — callback do OAuth (troca code por token, ver
 // functions/spotify/oauth.js). Deploy isolado: firebase deploy --only functions:spotifyOauthCallback
 exports.spotifyOauthCallback = require('./spotify/oauth').spotifyOauthCallback;
+
+// Spotify — desconecta (apaga token + status público, ver
+// functions/spotify/disconnect.js). Deploy isolado: firebase deploy --only functions:spotifyDisconnect
+exports.spotifyDisconnect = require('./spotify/disconnect').spotifyDisconnect;

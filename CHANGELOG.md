@@ -294,6 +294,67 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.233-dev — 2026-07-31 · PR #106
+Segunda leva da integração com Spotify: credenciais reais plugadas
+(`SPOTIFY_CLIENT_ID` não é secreto, vive como constante no código; o
+`SPOTIFY_CLIENT_SECRET` já estava no Secret Manager desde o primeiro
+deploy) e gestão de conta por usuário — trocar de conta, desconectar de
+verdade e lidar com quem está em mais de um squad. Design discutido e
+aprovado antes de escrever código (ver PRs anteriores dessa conversa).
+
+- **`functions/spotify/oauth.js`**: `SPOTIFY_CLIENT_ID` deixou de ser
+  placeholder. O redirect de sucesso agora distingue `?spotify=connected`
+  (primeira conexão) de `?spotify=reconnected` (já estava conectado,
+  trocou de conta/reautorizou) — o cliente informa qual dos dois é via
+  `wasConnected` no próprio `oauth_pending/{state}`, já que a function não
+  tem outro jeito de saber. Gravação do token e da flag pública
+  `spotify_connected` virou um `update()` multi-path atômico.
+- **`functions/spotify/disconnect.js`** (novo): `spotifyDisconnect`, uma
+  `onRequest` v2 em `us-central1` com CORS liberado só pro domínio do
+  GitHub Pages (chamada via `fetch()` do navegador, não redirect — precisa
+  de CORS, diferente do callback do OAuth). Verifica o ID token do
+  Firebase Auth (`Authorization: Bearer`), e então **apaga de verdade**
+  (não é flag de "inativo"): `spotify_secrets/{uid}` (o refresh token em
+  si), `usuarios/{uid}/spotify_connected`, `painel/spotify_now_geral/{uid}`
+  e `squads/{sq}/dados/spotify_now/{uid}` — este último pra **cada squad
+  que a pessoa participa** (`usuarios/{uid}/squads` é um mapa
+  `{squadId: true}`, confirmado que não existe conceito de "squad
+  principal" em nenhum outro lugar do código; sem esse fan-out, alguém em
+  dois squads continuaria aparecendo como "ouvindo" no squad que não foi
+  desconectado). A ausência da entrada em `spotify_secrets` é o único
+  sinal que a futura function de sync vai checar pra saber que parou —
+  não tem flag separada de "ativo" pra ficar dessincronizada.
+  Deploy isolado: `firebase deploy --only functions:spotifyDisconnect`.
+- **`functions/index.js`**: exporta `spotifyDisconnect`.
+- **UI (`kanban-dev.html`)**: a linha da própria pessoa no painel agora
+  reflete `usuarios/{uid}/spotify_connected` (buscado uma vez ao abrir o
+  painel, via `toggleSpotify()`) — se já conectada, mostra "🔁 Trocar
+  conta" + "❌ Desconectar" + um link de cortesia "Gerenciar no Spotify ↗"
+  pra `https://www.spotify.com/account/apps/` (pro caso de a pessoa
+  querer revogar o acesso direto pelo lado do Spotify também); se não,
+  mostra o botão "🔌 Conectar Spotify" de antes. "Trocar conta" reusa o
+  mesmo fluxo de conexão (o `.set()` do callback já sobrescreve o token
+  antigo) — só precisou passar `wasConnected` no `oauth_pending` pra virar
+  o toast certo. Nova `desconectarSpotify()`: confirma
+  (`uiConfirm`), chama `spotifyDisconnect` com o ID token da sessão, e em
+  caso de sucesso limpa o estado local (`_spotifySelfConnected` e a
+  entrada da própria pessoa nos buckets de "ouvindo agora" já
+  carregados) sem esperar o próximo tick de um listener. Ajuda (F1/❓)
+  ganhou uma 4ª entrada explicando trocar/desconectar.
+
+Verificado com Playwright (24 cenários): estado não-conectado vs conectado
+na linha própria; `connectSpotify()` grava `wasConnected` correto nos dois
+casos; fluxo completo de `desconectarSpotify()` (chamada com o Bearer
+certo, limpeza de estado local, toast) e seu cancelamento; os três
+resultados de query string (`connected`/`reconnected`/`error`) mostram o
+toast certo e limpam a URL depois.
+
+**Ainda pendente** (fora do escopo desta leva): a function agendada de
+sync (polling de `/me/player/currently-playing` a cada squad conectado e
+fan-out pra `spotify_now`/`spotify_now_geral`) — sem ela, conectar/
+desconectar e a UI já são testáveis ponta a ponta, mas o "ouvindo agora"
+em si ainda não populará no painel.
+
 ### v8.30.232-dev — 2026-07-31
 Primeira leva da integração com Spotify ("ouvindo agora") — escopo v1
 deliberadamente simples: só o que cada pessoa está ouvindo neste momento,
