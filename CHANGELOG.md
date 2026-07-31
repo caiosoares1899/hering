@@ -18,6 +18,21 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.198 — 2026-07-31 · PR #121
+Promove pra prod a limpeza visual da barra de botões do rodapé do modal
+do card, validada no dev (`v8.30.242-dev`) — Arquivar e Milanote
+saíram dos estilos destoantes (teal e chip preto customizado) e foram
+pro mesmo outline neutro do resto dos botões utilitários. Só Excluir
+(vermelho), Insights (teal) e Salvar (azul preenchido) mantêm destaque
+visual, cada um com significado próprio. Sem mudança de comportamento.
+Detalhes completos na entrada `kanban-dev.html v8.30.242-dev` abaixo.
+
+`diff kanban.html kanban-dev.html` antes desta mudança mostrou só essa
+entrada mais a string de versão/`VERSION_KEY` — promoção limpa.
+
+Promovido sem validação manual prévia — a pedido direto do usuário logo
+após o merge do PR #121 pro dev.
+
 ### v8.30.197 — 2026-07-31 · PR #118, #119
 Promove pra prod duas leva de melhorias acumuladas no dev desde a última
 promoção (`v8.30.240-dev` e `v8.30.241-dev`), sem validação manual prévia
