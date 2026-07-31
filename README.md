@@ -27,6 +27,13 @@ Só dispara push pra notificações cujo `type` esteja na lista `PUSH_TYPES` (de
 `recorrente`, `painel_broadcast`. Pra um novo tipo de notificação também virar push,
 precisa adicionar o tipo nessa lista e fazer deploy de novo.
 
+### Integração com Spotify
+Pasta `functions/spotify/` — "ouvindo agora" (presença ao vivo, opt-in por pessoa) +
+Rádio do Maré (playlist colaborativa por squad + geral). Ver
+[`functions/spotify/README.md`](functions/spotify/README.md) pra arquitetura completa,
+deploy de cada function e gotchas já encontrados em produção (allowlist do Spotify
+Developer Mode, migração de endpoint `/tracks` → `/items`).
+
 ### Rodando a function localmente
 ```bash
 cd functions

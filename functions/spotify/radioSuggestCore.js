@@ -92,27 +92,13 @@ async function suggestTrack(db, clientSecret, playlistId, trackUri) {
   const token = await _getOwnerAccessToken(db, clientSecret);
   // /items, não /tracks — endpoint renomeado na migração de fev/2026 da
   // Web API (ver comentário no topo do arquivo). Resposta de sucesso é
-  // 201 (não 200), mas o código já tratava isso certo desde sempre —
-  // checa res.ok (qualquer 2xx), nunca comparou com status===200.
-  const url = `https://api.spotify.com/v1/playlists/${playlistId}/items`;
-  const method = 'POST';
-  const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
-  const bodyStr = JSON.stringify({ uris: [trackUri] });
-  // Log temporário — descarta problema de FORMA da requisição (não de
-  // permissão), pra comparar linha a linha com a doc oficial
-  // (developer.spotify.com/documentation/web-api/reference/add-items-to-playlist).
-  // Token mascarado (só prefixo) — o resto do log é 100% seguro de expor
-  // (URL, método, nomes de header, corpo — nada disso é segredo).
-  // TODO: remover depois que o 403 for resolvido de vez.
-  console.log(
-    '[radioSuggestCore] request exata do POST de add-track —',
-    'url=' + url,
-    '| method=' + method,
-    '| headers=' + JSON.stringify({ Authorization: 'Bearer ' + token.slice(0, 8) + '...(mascarado, ' + token.length + ' chars no total)', 'Content-Type': headers['Content-Type'] }),
-    '| body=' + bodyStr,
-    '| trackUri_bruto=' + JSON.stringify(trackUri)
-  );
-  const res = await fetch(url, { method, headers, body: bodyStr });
+  // 201 (não 200), mas o código já trata isso certo desde sempre — checa
+  // res.ok (qualquer 2xx), nunca comparou com status===200.
+  const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uris: [trackUri] }),
+  });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     console.error('[radioSuggestCore] add_track falhou:', 'playlistId=' + playlistId, 'status=' + res.status, 'token_prefix=' + token.slice(0, 8) + '...');

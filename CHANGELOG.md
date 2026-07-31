@@ -1165,6 +1165,41 @@ o link antigo quebrado.
 
 ## Cloud Functions — Spotify (`functions/spotify/`, sem versão própria em `version.json`)
 
+### 2026-07-31 · PR #113 — fechamento: integração validada em produção
+**Rádio do Maré (Nível 1) confirmada funcionando ponta a ponta em
+produção**: conta dona conectada, playlists Geral + squad registradas,
+busca funcionando, sugestão de música funcionando (depois do fix do PR
+#112) — faixa sugerida apareceu de verdade na playlist real do Spotify.
+Considero a integração completa como um todo — "ouvindo agora" (PRs
+#105–#108) + Rádio do Maré (PRs #109–#112) — funcionalmente encerrada
+com boa confiança.
+
+- Removido o log temporário da requisição exata (URL/headers/body do
+  `POST /playlists/{id}/items`), adicionado no PR #111 só pra descartar
+  problema de forma antes de achar a causa raiz real (migração de
+  endpoint, PR #112) — TODO marcado, cumprido agora que o fix foi
+  validado em produção. O diagnóstico de propriedade (dono do token vs.
+  dono da playlist, PR #110) continua no código — é uma checagem
+  legítima de erro, não instrumentação temporária.
+- **`functions/spotify/README.md`** (novo): visão consolidada das duas
+  funcionalidades (arquitetura, RTDB, deploy, testes) + os 3 gotchas
+  reais encontrados em produção (cascata de regras RTDB, allowlist do
+  Developer Mode, migração `/tracks` → `/items`) num lugar só, pra quem
+  mexer nisso no futuro não ter que garimpar em 9 PRs de changelog pra
+  montar o quadro completo.
+
+**Pendências conhecidas, fora de escopo desta v1** (não bloqueiam o
+fechamento, só registradas pra continuidade futura):
+- Function agendada de sync do "ouvindo agora" já roda todo minuto — ok.
+- Rádio do Maré não tem histórico/log de quem sugeriu o quê (decisão
+  deliberada: moderação livre total, sem auditoria, nesta v1).
+- Botão "🎙️ Ir pra rádio" (extensão automática de sugestões do Spotify)
+  segue fora de escopo — sem URL/URI documentada confiável encontrada.
+- Conta dona da Rádio do Maré é pessoal, não institucional (não existe
+  conta da Hering disponível ainda) — migrar pra uma conta institucional
+  no futuro é só reconectar `spotifyRadioOwnerCallback` com a nova
+  conta, sem mudança de código.
+
 ### 2026-07-31 · PR #112 — causa raiz DEFINITIVA do 403 (a nota abaixo estava incompleta)
 A allowlist "Users and Access" (nota abaixo) era real e precisava ser
 corrigida, mas **não era a causa completa** — o 403 continuou
