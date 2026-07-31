@@ -4204,7 +4204,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.194</div>
+<div class="version">v8.30.195</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4786,6 +4786,7 @@ function updateBulkBar(){
       <button class="bulk-act" ${dis} onclick="bulkAssign()" title="Atribuir responsável">👤<span>Responsável</span></button>
       <button class="bulk-act" ${dis} onclick="bulkDueDate()" title="Definir prazo">📅<span>Prazo</span></button>
       <button class="bulk-act" ${dis} onclick="bulkTag()" title="Adicionar/trocar tag">🏷<span>Tag</span></button>
+      <button class="bulk-act" ${dis} onclick="bulkBlocker()" title="Marcar/remover impedimento">🚧<span>Impedimento</span></button>
       <button class="bulk-act" ${dis} onclick="bulkDuplicate()" title="Duplicar cards">⧉<span>Duplicar</span></button>
       <button class="bulk-act" ${dis} onclick="bulkArchive()" title="Arquivar">📦<span>Arquivar</span></button>
       <button class="bulk-act bulk-act-del" ${dis} onclick="bulkDeleteSelected()" title="Excluir">🗑<span>Excluir</span></button>
@@ -4972,6 +4973,90 @@ function _doBulkTagClear(){
     recordHistory(c, 'removeu todas as tags');
   });
   _bulkFinish(`🚫 Tags removidas de ${selectedCards.size} cards.`, true);
+}
+// Marcar/remover impedimento em massa — respeita o blockerMode do squad
+// (mesma fonte única de verdade de _cardIsBlocked(), coluna vs tag) em vez
+// de reimplementar a decisão aqui. Em modo "col", marcar é só mover pra
+// Impedimentos (reaproveitável via bulkMove, mas com rótulo dedicado pra
+// descoberta) — remover pede uma coluna de destino, já que não existe (em
+// nenhum lugar do código, nem no single-card) um "voltar pra coluna
+// anterior" rastreado. Em modo "tag", marcar/remover só liga/desliga
+// card.blocker+card.blockerReason, sem mexer na coluna.
+function bulkBlocker(){
+  if(!selectedCards.size) return;
+  const list=_selectedList();
+  const blocked=list.filter(c=>_cardIsBlocked(c));
+  const naoBlocked=list.filter(c=>!_cardIsBlocked(c));
+  const title=`<div class="bulk-pop-title">🚧 Impedimento (${list.length} card(s) selecionados)</div>`;
+  if(blockerMode==='tag'){
+    const partes=[
+      naoBlocked.length?`<div style="padding:4px 8px 8px;">
+        <input type="text" id="bulk-blocker-reason" class="fi" placeholder="Motivo do impedimento (opcional)" style="width:100%;box-sizing:border-box;margin-bottom:6px;">
+        <button class="bulk-pop-item" onclick="_doBulkBlockTag(document.getElementById('bulk-blocker-reason').value)">🚧 Marcar ${naoBlocked.length} card(s) como impedidos</button>
+      </div>`:'',
+      blocked.length?`<button class="bulk-pop-item" style="color:var(--danger);" onclick="_doBulkUnblockTag()">✅ Remover impedimento de ${blocked.length} card(s)</button>`:'',
+    ].filter(Boolean).join('');
+    _bulkPopover(title+(partes||'<div class="bulk-pop-sec">Nenhum card selecionado pode ter o impedimento alterado.</div>'));
+    return;
+  }
+  const destOpts=columns.filter(c=>c.id!=='blocker').map(c=>`<button class="bulk-pop-item" onclick="_doBulkUnblockCol('${c.id}')"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
+  const partes=[
+    naoBlocked.length?`<button class="bulk-pop-item" onclick="_doBulkBlockCol()">🚧 Marcar ${naoBlocked.length} card(s) como impedidos (mover pra Impedimentos)</button>`:'',
+    blocked.length?`<div class="bulk-pop-sec">Remover impedimento de ${blocked.length} card(s) — mover pra:</div>${destOpts}`:'',
+  ].filter(Boolean).join('');
+  _bulkPopover(title+(partes||'<div class="bulk-pop-sec">Nenhum card selecionado pode ter o impedimento alterado.</div>'));
+}
+function _doBulkBlockCol(){
+  const col=columns.find(c=>c.id==='blocker');
+  const list=_selectedList().filter(c=>!_cardIsBlocked(c));
+  const n=list.length;
+  list.forEach(c=>{
+    recordMove(c,'blocker');
+    c.col='blocker';
+    c.updatedAt=new Date().toISOString();
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    _crvApplyAutoStatus(c); // 🤖
+    recordHistory(c,'moveu para '+(col?.name||'Impedimentos'));
+  });
+  _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.');
+}
+function _doBulkUnblockCol(colId){
+  const col=columns.find(c=>c.id===colId);
+  const list=_selectedList().filter(c=>_cardIsBlocked(c));
+  const n=list.length;
+  list.forEach(c=>{
+    recordMove(c,colId);
+    c.col=colId;
+    c.updatedAt=new Date().toISOString();
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    _crvApplyAutoStatus(c); // 🤖
+    recordHistory(c,'moveu para '+(col?.name||colId));
+  });
+  _bulkFinish('✅ '+n+' card(s) removidos de Impedimentos → '+(col?.name||colId)+'.');
+}
+function _doBulkBlockTag(reason){
+  const list=_selectedList().filter(c=>!_cardIsBlocked(c));
+  const n=list.length;
+  list.forEach(c=>{
+    c.blocker=true;
+    c.blockerReason=reason||'';
+    c.updatedAt=new Date().toISOString();
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    recordHistory(c,'marcou como impedido'+(reason?': '+reason:''));
+  });
+  _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.', true);
+}
+function _doBulkUnblockTag(){
+  const list=_selectedList().filter(c=>_cardIsBlocked(c));
+  const n=list.length;
+  list.forEach(c=>{
+    c.blocker=false;
+    c.blockerReason='';
+    c.updatedAt=new Date().toISOString();
+    c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
+    recordHistory(c,'removeu impedimento');
+  });
+  _bulkFinish('✅ impedimento removido de '+n+' card(s).', true);
 }
 async function bulkDuplicate(){
   if(!selectedCards.size) return;
@@ -13658,7 +13743,7 @@ const HELP_CONTENT = {
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
     { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.' },
-    { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com seis ações em massa: 📥 Mover para coluna, 👤 Responsável, 🏷 Tag (adicionar ou substituir), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
+    { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com ações em massa: 📥 Mover para coluna, 👤 Responsável, 📅 Prazo, 🏷 Tag (adicionar ou substituir), 🚧 Impedimento (marcar/remover em vários cards de uma vez), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
     { icon:'📱', title:'Arrastar card no celular', text:'No celular, para mover um card entre colunas, segure o dedo nele por um instante até ele "levantar" (vibra e ganha destaque) e então arraste. Um toque rápido ou arrastar direto rola o board normalmente, sem mover cards por engano.' },
     { icon:'📱', title:'Reordenar colunas no celular', text:'Mesmo gesto dos cards: segure o dedo no cabeçalho da coluna até ela "levantar" e então arraste pra esquerda ou direita, soltando na metade da coluna vizinha onde quer posicioná-la.' },
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
