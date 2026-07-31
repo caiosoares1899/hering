@@ -294,6 +294,72 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.232-dev — 2026-07-31
+Primeira leva da integração com Spotify ("ouvindo agora") — escopo v1
+deliberadamente simples: só o que cada pessoa está ouvindo neste momento,
+sem histórico. Plano de arquitetura discutido e aprovado antes de
+escrever código (investigação de OAuth existente, padrão do Kudos pra
+squad/geral, leitura lazy) — ver PRs anteriores dessa conversa.
+
+**Só as partes que não dependem de credenciais do Spotify**, por decisão
+combinada — a troca de token real (`SPOTIFY_CLIENT_ID`/
+`SPOTIFY_CLIENT_SECRET`) fica pra depois que o app for criado no Spotify
+for Developers:
+
+- **`database.rules.json`**: novo nó `kanban/spotify_secrets` com
+  `.read`/`.write: false` pra todo mundo — só Admin SDK (Cloud Functions)
+  acessa. Importante: teve que ficar FORA da árvore `kanban/usuarios`,
+  porque essa árvore já tem `.read: "auth != null"` no nível raiz, e
+  regras do Realtime Database cascateiam só numa direção — um `.read:
+  false` mais profundo não revoga um acesso já concedido por um
+  ancestral. Também novo `kanban/oauth_pending/{state}` (ponte de uso
+  único entre "cliente inicia o OAuth" e "Spotify redireciona pro
+  callback", já que o Spotify não sabe nada sobre uid do Firebase). Os
+  nós de status público (`spotify_now` por squad, `spotify_now_geral`)
+  não precisaram de regra nova — já caem dentro de `dados`/`painel`, que
+  já têm regras adequadas.
+- **`functions/spotify/oauth.js`** (novo): `spotifyOauthCallback`, uma
+  `onRequest` v2 em `us-central1` (mesma região de `agenteAgil`). Troca o
+  `code` por tokens usando `client_secret` (Secret Manager, mesmo padrão
+  de `AGENTE_AGIL_KEY` em `agente-agil/http.js`), grava o `refresh_token`
+  em `spotify_secrets/{uid}` via Admin SDK, redireciona de volta pro app
+  com `?spotify=connected` ou `?spotify=error`. `SPOTIFY_CLIENT_ID` é
+  constante no código (não é secreto — o próprio Spotify espera isso
+  exposto no client) — hoje um placeholder, aguardando o app ser criado.
+  Não existe function separada pra "iniciar" o OAuth: o link de
+  autorização é montado direto no `kanban.html`, sem servidor.
+- **UI**: novo botão "🎧 Spotify" na mesma família visual de "📊 Dados"/
+  "📌 Lembretes" (pílula fixa na lateral direita), abrindo um painel com
+  duas abas "Sua Squad"/"Geral" — mesmo padrão visual e arquitetural do
+  Kudos (dois paths reais, não agregação: `kanban/squads/{squad}/dados/
+  spotify_now` e `kanban/painel/spotify_now_geral`, function de sync
+  futura escreve os dois a cada tick). Cada pessoa aparece com a música
+  atual (capa + artista), "⏸ Nada tocando agora" (conectado mas parado),
+  ou "Não conectado" — a própria pessoa, se não conectada, vê um botão
+  "🔌 Conectar Spotify" em vez disso.
+- **Leitura lazy**: diferente do Kudos (que faz poll a cada 3min o tempo
+  todo, pra manter um badge de contagem), o Spotify não tem badge — então
+  o listener (`_onChildAdded`/`_onChildChanged`/`_onChildRemoved`, mesmo
+  padrão de `presence`) só é anexado quando o painel abre, na aba ativa;
+  desanexado ao fechar ou trocar de aba. Zero leitura em background com o
+  painel fechado. A function agendada de sync (ainda não implementada —
+  fica pra quando as credenciais existirem) roda independente disso.
+- Ajuda (F1/❓) ganhou uma aba nova "🎧 Spotify" com 3 entradas.
+
+Verificado com Playwright (13 cenários): abrir o painel anexa listener só
+no path certo; trocar de aba desanexa o antigo e anexa o novo; fechar
+desanexa tudo; renderização cobre os 4 estados (tocando, parado, própria
+pessoa não conectada, outra pessoa não conectada); `connectSpotify()` sem
+`client_id` configurado avisa em vez de tentar redirecionar.
+
+**Pendências explícitas pra próxima leva** (fora do escopo desta,
+combinado com o usuário): function agendada de sync (polling da API do
+Spotify a cada 60s, escrevendo `spotify_now`/`spotify_now_geral`);
+preencher `SPOTIFY_CLIENT_ID`/`SPOTIFY_CLIENT_SECRET` reais depois que o
+app for criado no Spotify for Developers; confirmar a Redirect URI exata
+no Firebase Console após o primeiro deploy de `spotifyOauthCallback`,
+antes de cadastrar no formulário do Spotify.
+
 ### v8.30.231-dev — 2026-07-30
 Nova ação em massa na barra de seleção múltipla: **🚧 Impedimento**, pra
 marcar/remover impedimento em vários cards de uma vez — pedido pelo
@@ -1426,6 +1492,31 @@ retry e erro rastreável (`stale_cards_index`, HTTP 409) em caso de
 divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
+
+### 2026-07-31 · Regras pra integração com Spotify ("ouvindo agora")
+Duas adições, ambas pra suportar a primeira leva da integração com
+Spotify (ver entrada de `v8.30.232-dev` no `kanban-dev.html`):
+
+- `kanban/spotify_secrets`: `.read`/`.write: false` incondicional — o
+  `refresh_token` OAuth de cada pessoa não pode ser lido por nenhum
+  cliente (só Admin SDK, usado pela Cloud Function). Ficou
+  deliberadamente FORA da árvore `kanban/usuarios` — essa árvore já tem
+  `.read: "auth != null"` no nível raiz, e regras do Realtime Database
+  cascateiam só numa direção (um `.read: false` mais profundo não revoga
+  um acesso já concedido por um ancestral) — aninhar o token ali dentro
+  deixaria ele legível por qualquer pessoa logada, mesmo com `.read:
+  false` no nó específico.
+- `kanban/oauth_pending/$state`: ponte de uso único entre o cliente
+  iniciando o fluxo OAuth e o callback recebendo o redirect do Spotify
+  (que não sabe nada sobre uid do Firebase). `.write` exige que o
+  registro criado aponte pro próprio uid de quem está escrevendo;
+  `.read: false` (só a function precisa ler, via Admin SDK).
+
+Os nós de status público (`spotify_now` por squad, `spotify_now_geral`)
+não precisaram de regra nova — já caem dentro de `dados`/`painel`, que já
+têm regras adequadas.
+
+**Precisa de `firebase deploy --only database` depois do merge.**
 
 ### 2026-07-27 · PR #30
 Corrige a causa raiz de notificações entre membros comuns nunca chegando
