@@ -788,8 +788,56 @@ o link antigo quebrado.
 
 ## painel.html / painel-dev.html
 
-Sem mudanças nesta leva de trabalho — seguem em v2.91 / v2.90-dev. Ver
-`git log -- painel.html painel-dev.html` pro histórico completo.
+### painel-dev.html v2.93 · painel-dev — 2026-07-30
+Corrige o compilado de "🚧 Bloqueios ativos" (seção que junta os cards
+impedidos de todos os squads numa lista só) — reportado pelo usuário num
+squad de produção: um card já resolvido dentro do board continuava
+aparecendo pra sempre nessa lista do Painel.
+
+**Causa raiz**: `renderBlockers()`/`resolveAllBlockers()` decidiam "este
+card está impedido?" com `c.col==='blocker' || (c.blocker && c.blockerReason)`
+incondicionalmente — um OR que ignora o `blockerMode` do squad (coluna vs
+tag, configurável por squad em `kanban.html`, ver `_cardIsBlocked()` lá,
+que já tinha esse mesmo fix aplicado só no board, nunca propagado pro
+Painel). Em squads no modo padrão "coluna", mover um card pra fora de
+Impedimentos só muda `c.col` — os campos legados `blocker`/`blockerReason`
+(usados pelo modo "tag") não são limpos nesse fluxo, então o card
+resolvido continuava batendo na segunda metade do OR pra sempre. `_applySquadDados()`
+agora também captura `blockerMode` de `dados/config/blockerMode` (o mesmo
+path que `kanban.html` lê/escreve — **não** `dados/agil_cfg/blockerMode`,
+editado no modal de config do Painel, que é um path solto sem nenhuma
+leitura correspondente em `kanban.html` e por isso nunca refletia o modo
+real; ficou registrado no código como achado, não mexido nesta leva).
+`resolveAllBlockers()` (botão "✅ Resolver todos") ganha a mesma detecção
+mode-aware, e agora limpa `blockerReason` além de `blocker` ao resolver —
+evita este mesmo bug se lançar de novo caso o squad troque de modo depois.
+
+**Filtro de squad no compilado** (pedido junto pelo usuário): o filtro por
+squad já existia e já era respeitado por `renderBlockers()`
+(`squadVisible()`), mas a barra de botões (`.filter-bar`) era HTML fixo
+com só os 3 squads originais — squads criados depois via painel de setup
+(ex.: o squad de produção que motivou o reporte) nunca ganhavam botão
+nenhum, então não dava pra isolar esses squads em nenhuma seção que usa
+esse filtro (bloqueios, riscos, OKR, cards do squad — não só a lista de
+impedimentos). Novo `renderFilterBar()` gera os botões dinamicamente a
+partir do array `SQUADS` (que já cresce com `loadExtraSquads()`),
+preservando o filtro ativo ao re-renderizar.
+
+Verificado com Playwright (10 cenários): card resolvido com campos legados
+não aparece mais em modo "coluna"; card com tag em modo "tag" continua
+aparecendo independente da coluna; `resolveAllBlockers()` não re-escreve
+cards que não estão genuinemente bloqueados e limpa os dois campos nos que
+resolve; `renderFilterBar()` gera botão pra squads extras e `setFilter()`
+continua funcionando com os botões dinâmicos.
+
+**Nota de validação**: `painel-dev.html` roda contra um conjunto fixo de
+squads fictícios (`dados`/`prf`/`midiacriativa`/`omnichannel` — não carrega
+`squads_meta` de produção, decisão deliberada de isolamento, ver comentário
+em `loadExtraSquads()`), então não dá pra validar isso contra o squad real
+que motivou o reporte usando o Painel dev — a lógica foi validada de forma
+genérica (não depende de nenhum id de squad específico) e o botão novo do
+squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
+como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
