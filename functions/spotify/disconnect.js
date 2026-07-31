@@ -14,13 +14,15 @@
 // (agente-agil/http.js verifica um header customizado à mão).
 //
 // A ausência de uma entrada em kanban/spotify_secrets/{uid} É o sinal de
-// "não sincronizar essa pessoa" pra function de sync (ainda não escrita)
-// — não existe uma flag "ativo"/"inativo" separada de propósito, pra não
-// criar um jeito dessas duas informações (token existe vs. sincronização
-// ligada) ficarem desencontradas.
+// "não sincronizar essa pessoa" pra spotifySync — não existe uma flag
+// "ativo"/"inativo" separada de propósito, pra não criar um jeito dessas
+// duas informações (token existe vs. sincronização ligada) ficarem
+// desencontradas. spotifySync também dispara essa mesma desconexão
+// sozinho quando o refresh_token vem invalid_grant (ver _shared.js).
 const { onRequest } = require('firebase-functions/v2/https');
 const { getAuth } = require('firebase-admin/auth');
 const { getDatabase } = require('firebase-admin/database');
+const { buildDisconnectUpdates } = require('./_shared');
 
 const SITE_ORIGIN = 'https://caiosoares1899.github.io';
 
@@ -49,24 +51,7 @@ exports.spotifyDisconnect = onRequest(
     }
 
     const db = getDatabase();
-
-    // Squads em que a pessoa está — precisa limpar spotify_now em CADA um
-    // (uma pessoa pode participar de mais de um squad; o "ouvindo agora"
-    // aparece em todos eles, não só um "principal" — não existe esse
-    // conceito no modelo de dados).
-    const squadsSnap = await db.ref('kanban/usuarios/' + uid + '/squads').get();
-    const squadsMap = squadsSnap.val() || {};
-    const squadIds = Object.keys(squadsMap).filter((sq) => squadsMap[sq] === true);
-
-    const updates = {
-      ['kanban/spotify_secrets/' + uid]: null,
-      ['kanban/usuarios/' + uid + '/spotify_connected']: null,
-      ['kanban/painel/spotify_now_geral/' + uid]: null,
-    };
-    squadIds.forEach((sq) => {
-      updates['kanban/squads/' + sq + '/dados/spotify_now/' + uid] = null;
-    });
-
+    const updates = await buildDisconnectUpdates(db, uid);
     await db.ref().update(updates);
 
     res.status(200).json({ ok: true });

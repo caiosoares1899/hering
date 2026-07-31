@@ -125,3 +125,7 @@ exports.spotifyOauthCallback = require('./spotify/oauth').spotifyOauthCallback;
 // Spotify — desconecta (apaga token + status público, ver
 // functions/spotify/disconnect.js). Deploy isolado: firebase deploy --only functions:spotifyDisconnect
 exports.spotifyDisconnect = require('./spotify/disconnect').spotifyDisconnect;
+
+// Spotify — sync agendado do "ouvindo agora" (a cada minuto, ver
+// functions/spotify/sync.js). Deploy isolado: firebase deploy --only functions:spotifySync
+exports.spotifySync = require('./spotify/sync').spotifySync;

@@ -294,6 +294,76 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.234-dev — 2026-07-31 · PR #107
+Terceira leva da integração com Spotify: **a function agendada de sync**
+(a peça que faltava pra "ouvindo agora" aparecer de verdade no painel) +
+reordenação por prioridade na lista. Conectar/trocar/desconectar (PR
+#106) já foi validado ponta a ponta pelo usuário em ambiente real — único
+ajuste veio de lá: `database.rules.json` do PR #105 não tinha sido
+deployado ainda (`firebase deploy --only database`), lembrete registrado
+aqui pra não repetir: quando `database.rules.json` E `functions/` mudam
+na mesma leva, os DOIS deploys são necessários, nenhum published pela
+promoção do HTML.
+
+- **`functions/spotify/syncCore.js`** (novo) + **`functions/spotify/
+  sync.js`** (novo): lógica separada do wrapper `onSchedule`, mesmo
+  motivo de `agente-agil/http.js` vs. `agente-agil/board.js` — a parte
+  testável com `node --test` não deveria depender do runtime de Cloud
+  Functions. `spotifySync` roda a cada 1 minuto (mínimo que o Cloud
+  Scheduler permite — bate com o "a cada 60s" combinado desde o desenho
+  original). Pra cada uid em `spotify_secrets`: renova o `access_token`
+  via `refresh_token` (cacheado em memória entre execuções — o
+  `access_token` dura ~1h, não faz sentido renovar a cada tick só pra 1
+  leitura; testado que o segundo tick reusa o cache sem bater no Spotify
+  de novo), consulta `GET /v1/me/player/currently-playing`, e escreve o
+  resultado em **todos os squads que a pessoa participa + no geral**
+  (mesmo fan-out multi-squad de `spotifyDisconnect`). Uma pessoa falhando
+  (rede, token) não derruba o tick inteiro (`Promise.allSettled`).
+  **Autocorreção**: se o `refresh_token` vier `invalid_grant` — a pessoa
+  revogou o acesso direto pela tela "Apps conectados" do Spotify (o link
+  de cortesia que a UI já oferece desde o PR #106), sem passar pelo nosso
+  botão — a function desconecta a pessoa por completo (mesmo helper de
+  `spotifyDisconnect`, agora extraído pra `functions/spotify/_shared.js`
+  e reusado pelos dois), em vez de ficar tentando e falhando pra sempre e
+  deixando um "conectado" fantasma no painel.
+  Deploy isolado: `firebase deploy --only functions:spotifySync`.
+- **`functions/spotify/_shared.js`** (novo): `buildDisconnectUpdates(db,
+  uid)` — o multi-path update que apaga o refresh_token + todo o status
+  público espalhado. Extraído de `spotifyDisconnect` (que passou a usar
+  também) porque agora dois lugares diferentes (o botão de desconectar E
+  a autocorreção do sync) precisam apagar exatamente as mesmas coisas —
+  copiar essa lógica duas vezes seria um jeito fácil dela divergir se
+  alguém adicionar um novo path de status no futuro e esquecer de
+  atualizar as duas cópias.
+- **`functions/package.json`**: novo `spotify/__tests__/*.test.js` no
+  script de teste, mesma convenção de `agente-agil`/
+  `agente-agil-orquestrador`. `functions/spotify/__tests__/sync.test.js`
+  (5 casos, `node --test`, sem emulador — fake db local + `fetch`
+  mockado): fan-out multi-squad + geral, imagem de capa pega a menor do
+  array, entrada não some quando nada está tocando (`{playing:false}`,
+  não ausência), autodesconexão real no `invalid_grant`, tick resiliente
+  a uma pessoa falhando, cache de `access_token` reusado no tick seguinte.
+- **UI (`kanban-dev.html`)**: nova ordenação por prioridade em
+  `renderSpotifyPanel()`/`_spotifyGroupRank()` — **1º** quem está
+  conectado E ouvindo algo agora, **2º** conectado mas parado, **3º** não
+  conectado; dentro de cada grupo continua alfabético, como já era. A
+  própria pessoa usa `_spotifySelfConnected` (a flag pública, não a
+  presença no bucket) pra decidir o grupo 1-vs-3 — o sync só escreve a
+  cada 1 minuto, então logo depois de conectar o bucket pode ainda não
+  ter entrada nenhuma; sem esse cuidado a própria pessoa cairia no grupo
+  "não conectado" por até 1 minuto após conectar (mesmo motivo de
+  `_spotifySelfConnected` existir desde o PR #106). Pra todo mundo, é
+  suficiente calcular com o que o sync já escreve — presença em
+  `spotify_now` = conectado, `playing && track` = ouvindo, ausência = não
+  conectado — sem precisar de nenhum dado novo.
+
+Verificado com Playwright (8 cenários, ambiente de teste descartado
+depois — client não tem framework de teste, ver `CLAUDE.md`): grupo 1
+sempre no topo, dois "ouvindo agora" ficam juntos em ordem alfabética
+entre si, grupo 2 logo depois, grupo 3 alfabético por último, própria
+pessoa recém-conectada (sem entrada no bucket ainda) cai no grupo 2 e não
+no 3, volta pro grupo 3 corretamente ao desconectar.
+
 ### v8.30.233-dev — 2026-07-31 · PR #106
 Segunda leva da integração com Spotify: credenciais reais plugadas
 (`SPOTIFY_CLIENT_ID` não é secreto, vive como constante no código; o

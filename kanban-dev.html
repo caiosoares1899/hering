@@ -4250,7 +4250,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.233-dev</div>
+<div class="version">v8.30.234-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10172,6 +10172,19 @@ function _spotifyGeralUsers(){
   const self=cu?[{init:window._currentUserInit,name:cu.displayName||cu.email||'',email:cu.email||'',foto:cu.photoURL||'',uid:cu.uid}]:[];
   return [...self, ...(window._allUsers||[])];
 }
+// Ordem entre os 3 grupos (ouvindo agora > conectado parado > não
+// conectado) — dentro de cada grupo continua alfabético, como já era.
+// Pra própria pessoa usa _spotifySelfConnected (não a presença no bucket)
+// como sinal de "conectado": é o mesmo motivo dessa flag existir (ver
+// comentário acima) — logo depois de conectar, o bucket pode ainda não
+// ter entrada nenhuma (o sync só escreve a cada 1min), e sem isso a
+// própria pessoa cairia no grupo "não conectado" por até 1 minuto.
+function _spotifyGroupRank(p, status){
+  const isSelf = p.uid===window._currentUser?.uid;
+  const connected = isSelf ? _spotifySelfConnected : !!status;
+  if(!connected) return 2;
+  return (status && status.playing && status.track) ? 0 : 1;
+}
 function renderSpotifyPanel(){
   const body=document.getElementById('spotify-body'); if(!body) return;
   const pessoas = _spotifyScope==='geral' ? _spotifyGeralUsers() : members;
@@ -10180,7 +10193,11 @@ function renderSpotifyPanel(){
     body.innerHTML=`<div class="spotify-empty">🎧 Ninguém por aqui ainda.</div>`;
     return;
   }
-  body.innerHTML = pessoas.slice().sort((a,b)=>String(a.name||a.init).localeCompare(String(b.name||b.init))).map(p=>{
+  body.innerHTML = pessoas.slice().sort((a,b)=>{
+    const ra=_spotifyGroupRank(a,bucket[a.uid]), rb=_spotifyGroupRank(b,bucket[b.uid]);
+    if(ra!==rb) return ra-rb;
+    return String(a.name||a.init).localeCompare(String(b.name||b.init));
+  }).map(p=>{
     const av = p.foto ? `<img src="${safeUrl(p.foto)||''}">` : esc((p.init||'?').substring(0,2));
     const isSelf = p.uid===window._currentUser?.uid;
     const status = bucket[p.uid];
