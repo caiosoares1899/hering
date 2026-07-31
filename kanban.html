@@ -699,6 +699,62 @@ input[type="date"]{-moz-appearance:textfield;}
 .kudos-btn{background:rgba(255,209,102,.16)!important;border-color:rgba(255,209,102,.4)!important;color:#ffd166!important;}
 .kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
 .kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+/* ═══ SPOTIFY (ouvindo agora) ═══ */
+.spotify-drawer .lem-hd-title{color:#1DB954;}
+.spotify-scope-tabs{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.spotify-stab{flex:1;font-size:11px;font-weight:600;color:var(--txt2);background:rgba(29,185,84,.05);
+  border:1px solid var(--glass-b);border-radius:9px;padding:8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.spotify-stab:hover{border-color:rgba(29,185,84,.4);}
+.spotify-stab.on{background:rgba(29,185,84,.14);border-color:rgba(29,185,84,.5);color:#1DB954;}
+.spotify-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:12px;
+  background:rgba(6,20,44,.6);border:1px solid var(--glass-b);margin-bottom:7px;}
+.spotify-row .sp-av{width:32px;height:32px;border-radius:50%;overflow:hidden;background:rgba(37,99,201,.5);
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.spotify-row .sp-av img{width:100%;height:100%;object-fit:cover;}
+.spotify-row .sp-art{width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,.3);}
+.spotify-row .sp-art img{width:100%;height:100%;object-fit:cover;}
+.spotify-row .sp-info{flex:1;min-width:0;}
+.spotify-row .sp-name{font-size:11.5px;color:var(--txt2);font-weight:600;margin-bottom:1px;}
+.spotify-row .sp-track{font-size:12.5px;color:var(--txt);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spotify-row .sp-artist{font-size:10.5px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.spotify-row .sp-idle{font-size:11px;color:var(--txt3);font-style:italic;}
+.spotify-row .sp-connect-btn{font-size:10px;padding:4px 10px;background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.35);
+  border-radius:999px;color:#1DB954;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;flex-shrink:0;}
+.spotify-row .sp-connect-btn:hover{background:rgba(29,185,84,.22);}
+.spotify-row .sp-actions{display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;}
+.spotify-row .sp-actions-row{display:flex;gap:5px;}
+.spotify-row .sp-disconnect-btn{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--danger);}
+.spotify-row .sp-disconnect-btn:hover{background:rgba(255,107,107,.2);}
+.spotify-row .sp-manage-link{font-size:9px;color:var(--txt3);text-decoration:none;}
+.spotify-row .sp-manage-link:hover{color:var(--txt2);text-decoration:underline;}
+.spotify-row .sp-playback{display:flex;gap:6px;margin:4px 0;}
+.spotify-row .sp-play-btn{width:26px;height:26px;border-radius:50%;background:rgba(29,185,84,.14);
+  border:1px solid rgba(29,185,84,.4);color:#1DB954;cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;}
+.spotify-row .sp-play-btn:hover{background:rgba(29,185,84,.26);}
+.spotify-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+/* Sub-toggle "Ouvindo agora" / "Playlist" — mesma classe visual das abas
+   de escopo (spotify-stab), só que numa fileira abaixo. */
+.spotify-content-tabs{display:flex;gap:6px;padding:10px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.spotify-ctab{flex:1;font-size:10.5px;font-weight:600;color:var(--txt2);background:rgba(29,185,84,.05);
+  border:1px solid var(--glass-b);border-radius:9px;padding:6px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.spotify-ctab:hover{border-color:rgba(29,185,84,.4);}
+.spotify-ctab.on{background:rgba(29,185,84,.14);border-color:rgba(29,185,84,.5);color:#1DB954;}
+/* Rádio do Maré (playlist colaborativa) — botões/inputs fora do contexto
+   de uma .spotify-row (que é só pra linhas de pessoa/faixa), por isso
+   uma classe própria em vez de reusar .sp-connect-btn. */
+.sp-btn{font-size:11px;padding:6px 12px;background:rgba(29,185,84,.12);border:1px solid rgba(29,185,84,.35);
+  border-radius:999px;color:#1DB954;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;text-decoration:none;display:inline-block;}
+.sp-btn:hover{background:rgba(29,185,84,.22);}
+.spotify-playlist-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;padding:0 2px;}
+.spotify-playlist-hd .sp-manage-link{font-size:10px;color:var(--txt3);text-decoration:none;}
+.spotify-playlist-hd .sp-manage-link:hover{color:var(--txt2);text-decoration:underline;}
+.spotify-playlist-form{padding:24px 4px;}
+.spotify-playlist-form input{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--glass-b);
+  background:rgba(0,0,0,.2);color:var(--txt);font-size:12px;font-family:"DM Sans",sans-serif;margin:12px 0 8px;}
+.spotify-search-row{display:flex;gap:6px;margin-bottom:12px;padding:0 2px;}
+.spotify-search-row input{flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--glass-b);
+  background:rgba(0,0,0,.2);color:var(--txt);font-size:12px;font-family:"DM Sans",sans-serif;}
 .kudos-tab-badge{position:fixed;top:calc(50% + 64px);left:0;transform:translateY(-50%);z-index:55;}
 .version{position:fixed;bottom:6px;right:16px;font-size:9px;color:var(--txt3);z-index:3;pointer-events:none;}
 .hidden{display:none!important;}
@@ -2426,6 +2482,9 @@ input[type="date"]{-moz-appearance:textfield;}
   📌 Lembretes
   <span class="lem-badge" id="lem-badge" style="display:none;">0</span>
 </button>
+<button class="lem-tab" id="spotify-tab" onclick="toggleSpotify()" title="Ouvindo agora — Spotify" style="position:static;top:auto;transform:none;background:rgba(29,185,84,.92);border-color:rgba(29,185,84,.5);box-shadow:-4px 0 24px rgba(29,185,84,.35);">
+  🎧 Spotify
+</button>
 </div>
 <div class="lem-drawer" id="lem-drawer">
   <div class="lem-hd">
@@ -2483,6 +2542,23 @@ input[type="date"]{-moz-appearance:textfield;}
       <button class="kudos-send-btn" id="kudos-btn" onclick="addKudos()" disabled>⭐ Enviar</button>
     </div>
   </div>
+</div>
+
+<!-- ═══ SPOTIFY (ouvindo agora + Rádio do Maré) ═══ -->
+<div class="lem-drawer spotify-drawer" id="spotify-drawer">
+  <div class="lem-hd">
+    <div class="lem-hd-title">🎧 Spotify</div>
+    <button class="x-btn" onclick="toggleSpotify()">✕</button>
+  </div>
+  <div class="spotify-scope-tabs">
+    <button class="spotify-stab on" id="sptab-squad" onclick="setSpotifyScope('squad')">🐠 Sua Squad</button>
+    <button class="spotify-stab" id="sptab-geral" onclick="setSpotifyScope('geral')">🌊 Geral</button>
+  </div>
+  <div class="spotify-content-tabs">
+    <button class="spotify-ctab on" id="spctab-ouvindo" onclick="setSpotifyContent('ouvindo')">🎧 Ouvindo agora</button>
+    <button class="spotify-ctab" id="spctab-playlist" onclick="setSpotifyContent('playlist')">🎵 Playlist</button>
+  </div>
+  <div class="lem-body" id="spotify-body"></div>
 </div>
 
 <!-- AGENTE ÁGIL -->
@@ -3531,6 +3607,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swHelpTab('config')">Configurações</div>
     <div class="ag-tab" onclick="swHelpTab('comunicacao')">💬 Comunicação</div>
     <div class="ag-tab" onclick="swHelpTab('kudos')">⭐ Estrelas</div>
+    <div class="ag-tab" onclick="swHelpTab('spotify')">🎧 Spotify</div>
     <div class="ag-tab" onclick="swHelpTab('agil')">Conceitos Ágeis</div>
   </div>
   <div style="padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;" id="help-body">
@@ -4204,7 +4281,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.195</div>
+<div class="version">v8.30.196</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10049,6 +10126,447 @@ function updKudosBadge(){
 }
 
 // ═══════════════════════════════════════════════════════
+// SPOTIFY (ouvindo agora)
+// ═══════════════════════════════════════════════════════
+// Diferente do Kudos (que faz poll a cada 3min o tempo todo, pra manter um
+// badge de contagem atualizado mesmo com o painel fechado), o Spotify não
+// tem badge nenhum — não tem nada útil pra mostrar com o painel fechado.
+// Por isso o listener SÓ existe enquanto o painel está aberto: anexado em
+// toggleSpotify()/setSpotifyScope(), desanexado ao fechar ou trocar de aba.
+// A function agendada que mantém o dado fresco no RTDB roda independente
+// disso, sempre — só o lado do CLIENTE é lazy.
+let _spotifyScope = 'squad';
+let spotifyNowSquad = {}; // {uid: {playing, track, artist, albumArt, updatedAt}}
+let spotifyNowGeral = {};
+let _spotifyUnsubs = [];
+// A própria pessoa não consegue ler kanban/spotify_secrets (deny total,
+// ver database.rules.json) pra saber se já está conectada — por isso
+// spotifyOauthCallback também grava uma flag PÚBLICA e sem token nenhum
+// (usuarios/{uid}/spotify_connected), que é o que essa variável reflete.
+// Buscada 1x quando o painel abre (não é listener — muda raramente,
+// mesmo espírito de "não manter mais estado ao vivo do que precisa").
+let _spotifySelfConnected = false;
+// 'ouvindo' (presença ao vivo, listener) ou 'playlist' (Rádio do Maré —
+// NÃO é ao vivo, só um ponteiro pra uma playlist real do Spotify + busca
+// sob demanda; ver renderSpotifyPlaylist()).
+let _spotifyContent = 'ouvindo';
+
+function _spotifyDetach(){
+  _spotifyUnsubs.forEach(fn=>{ try{ fn && fn(); }catch(e){} });
+  _spotifyUnsubs = [];
+}
+function _spotifyAttach(scope){
+  _spotifyDetach();
+  if(!window._fbReady) return;
+  const path = scope==='geral' ? 'kanban/painel/spotify_now_geral' : (FB+'/spotify_now');
+  const ref = fb(path);
+  const bucket = scope==='geral' ? spotifyNowGeral : spotifyNowSquad;
+  // Zera o bucket da vez — evita mostrar dado velho de uma sessão anterior
+  // do listener enquanto o novo snapshot ainda não chegou.
+  Object.keys(bucket).forEach(k=>delete bucket[k]);
+  const add = window._onChildAdded(ref, snap=>{ _dbgTrack(path+':child_added', snap.val()); bucket[snap.key]=snap.val(); if(_spotifyScope===scope) renderSpotifyPanel(); });
+  const chg = window._onChildChanged(ref, snap=>{ _dbgTrack(path+':child_changed', snap.val()); bucket[snap.key]=snap.val(); if(_spotifyScope===scope) renderSpotifyPanel(); });
+  const rem = window._onChildRemoved(ref, snap=>{ _dbgTrack(path+':child_removed', null); delete bucket[snap.key]; if(_spotifyScope===scope) renderSpotifyPanel(); });
+  _spotifyUnsubs = [add, chg, rem];
+}
+async function toggleSpotify(){
+  const dr=document.getElementById('spotify-drawer');
+  const wasOpen=dr.classList.contains('open');
+  // fecha os outros drawers que ocupam a mesma área
+  document.getElementById('lem-drawer')?.classList.remove('open');
+  document.getElementById('kudos-drawer')?.classList.remove('open');
+  document.getElementById('dados-drawer')?.classList.remove('open');
+  dr.classList.toggle('open');
+  if(!wasOpen){
+    const cu=window._currentUser;
+    if(cu){
+      try{
+        const snap = await fbGet('kanban/usuarios/'+cu.uid+'/spotify_connected');
+        _spotifySelfConnected = snap.val()===true;
+      }catch(e){ _spotifySelfConnected=false; }
+      // Fire-and-forget — não espera o próximo tick do sync periódico
+      // (30s) pra refletir o que a própria pessoa está ouvindo agora.
+      // Não bloqueia o painel abrir nem re-renderiza nada aqui: o
+      // listener ao vivo (_spotifyAttach, logo abaixo) já reflete a
+      // escrita assim que ela chegar no RTDB, igual a qualquer outra
+      // atualização do sync periódico.
+      if(_spotifySelfConnected) _spotifySyncNow();
+    }
+    if(_spotifyContent==='ouvindo') _spotifyAttach(_spotifyScope);
+    renderSpotifyPanel();
+  } else {
+    _spotifyDetach();
+  }
+}
+function setSpotifyScope(s){
+  _spotifyScope=s;
+  document.getElementById('sptab-squad')?.classList.toggle('on',s==='squad');
+  document.getElementById('sptab-geral')?.classList.toggle('on',s==='geral');
+  if(_spotifyContent==='ouvindo') _spotifyAttach(s);
+  renderSpotifyPanel();
+}
+// Troca entre "Ouvindo agora" (ao vivo, listener) e "Playlist" (Rádio do
+// Maré, sob demanda) — só um dos dois tem listener ativo por vez; entrar
+// em "playlist" desanexa o listener de presença (nada ali é ao vivo, não
+// faz sentido manter a leitura contínua rodando à toa).
+function setSpotifyContent(c){
+  _spotifyContent=c;
+  document.getElementById('spctab-ouvindo')?.classList.toggle('on',c==='ouvindo');
+  document.getElementById('spctab-playlist')?.classList.toggle('on',c==='playlist');
+  if(c==='ouvindo') _spotifyAttach(_spotifyScope);
+  else _spotifyDetach();
+  renderSpotifyPanel();
+}
+// Geral = todo mundo da empresa. window._allUsers já existe (populado pro
+// dropdown do Kudos) mas exclui a própria pessoa de propósito (não faz
+// sentido "dar kudos pra si mesmo") — aqui faz sentido se ver na lista
+// geral, então soma de volta.
+function _spotifyGeralUsers(){
+  const cu=window._currentUser;
+  const self=cu?[{init:window._currentUserInit,name:cu.displayName||cu.email||'',email:cu.email||'',foto:cu.photoURL||'',uid:cu.uid}]:[];
+  return [...self, ...(window._allUsers||[])];
+}
+// Ordem entre os 3 grupos (ouvindo agora > conectado parado > não
+// conectado) — dentro de cada grupo continua alfabético, como já era.
+// Pra própria pessoa usa _spotifySelfConnected (não a presença no bucket)
+// como sinal de "conectado": é o mesmo motivo dessa flag existir (ver
+// comentário acima) — logo depois de conectar, o bucket pode ainda não
+// ter entrada nenhuma (o sync só escreve a cada 1min), e sem isso a
+// própria pessoa cairia no grupo "não conectado" por até 1 minuto.
+function _spotifyGroupRank(p, status){
+  const isSelf = p.uid===window._currentUser?.uid;
+  const connected = isSelf ? _spotifySelfConnected : !!status;
+  if(!connected) return 2;
+  return (status && status.playing && status.track) ? 0 : 1;
+}
+function renderSpotifyPanel(){
+  if(_spotifyContent==='playlist'){ renderSpotifyPlaylist(); return; }
+  _renderSpotifyOuvindo();
+}
+function _renderSpotifyOuvindo(){
+  const body=document.getElementById('spotify-body'); if(!body) return;
+  const bucket = _spotifyScope==='geral' ? spotifyNowGeral : spotifyNowSquad;
+  const todos = _spotifyScope==='geral' ? _spotifyGeralUsers() : members;
+  // Grupo "não conectado" só mostra a PRÓPRIA pessoa (com o convite pra
+  // conectar) — o resto de quem nunca conectou fica de fora, pra não
+  // virar uma lista longa de gente que não usa a feature. Os outros 2
+  // grupos (ouvindo agora / conectado parado) continuam mostrando todo
+  // mundo que se aplica, sem filtro nenhum.
+  const pessoas = todos.filter(p=>{
+    const isSelf = p.uid===window._currentUser?.uid;
+    return isSelf || _spotifyGroupRank(p,bucket[p.uid])!==2;
+  });
+  if(!pessoas.length){
+    body.innerHTML=`<div class="spotify-empty">🎧 Ninguém por aqui ainda.</div>`;
+    return;
+  }
+  body.innerHTML = pessoas.slice().sort((a,b)=>{
+    const ra=_spotifyGroupRank(a,bucket[a.uid]), rb=_spotifyGroupRank(b,bucket[b.uid]);
+    if(ra!==rb) return ra-rb;
+    return String(a.name||a.init).localeCompare(String(b.name||b.init));
+  }).map(p=>{
+    const av = p.foto ? `<img src="${safeUrl(p.foto)||''}">` : esc((p.init||'?').substring(0,2));
+    const isSelf = p.uid===window._currentUser?.uid;
+    const status = bucket[p.uid];
+    let mid;
+    if(isSelf){
+      const nameLine = `<div class="sp-name">${esc(p.name||p.init)}</div>`;
+      const art = (status && status.albumArt) ? `<div class="sp-art"><img src="${safeUrl(status.albumArt)||''}"></div>` : '';
+      const statusLine = (status && status.playing && status.track)
+        ? `<div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div>`
+        : (status ? `<div class="sp-idle">⏸ Nada tocando agora</div>` : '');
+      // Controle de playback PESSOAL (não é "DJ" pra todo mundo — só um
+      // atalho pra própria reprodução). Ícone play/pause reflete
+      // status.playing já conhecido (sem chamada nova pra decidir qual
+      // mostrar); tenta-e-avisa em vez de checar dispositivo ativo antes
+      // (ver _spotifyPlaybackAction() — evita uma chamada de API extra
+      // só pra decidir se desabilita o botão).
+      const playback = _spotifySelfConnected
+        ? `<div class="sp-playback"><button class="sp-play-btn" onclick="_spotifyPlaybackAction('${(status&&status.playing)?'pause':'play'}')" title="${(status&&status.playing)?'Pausar':'Tocar'}">${(status&&status.playing)?'⏸️':'▶️'}</button><button class="sp-play-btn" onclick="_spotifyPlaybackAction('next')" title="Próxima">⏭️</button></div>`
+        : '';
+      const actions = _spotifySelfConnected
+        ? `<div class="sp-actions"><div class="sp-actions-row"><button class="sp-connect-btn" onclick="connectSpotify()">🔁 Trocar</button><button class="sp-connect-btn sp-disconnect-btn" onclick="desconectarSpotify()">❌ Desconectar</button></div><a class="sp-manage-link" href="https://www.spotify.com/account/apps/" target="_blank" rel="noopener">Gerenciar no Spotify ↗</a></div>`
+        : `<button class="sp-connect-btn" onclick="connectSpotify()">🔌 Conectar Spotify</button>`;
+      mid = `${art}<div class="sp-info">${nameLine}${statusLine}${playback}</div>${actions}`;
+    } else if(status && status.playing && status.track){
+      const art = status.albumArt ? `<div class="sp-art"><img src="${safeUrl(status.albumArt)||''}"></div>` : '';
+      mid = `${art}<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-track">${esc(status.track)}</div><div class="sp-artist">${esc(status.artist||'')}</div></div>`;
+    } else if(status){
+      mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-idle">⏸ Nada tocando agora</div></div>`;
+    } else {
+      mid = `<div class="sp-info"><div class="sp-name">${esc(p.name||p.init)}</div><div class="sp-idle">Não conectado</div></div>`;
+    }
+    return `<div class="spotify-row"><div class="sp-av">${av}</div>${mid}</div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// RÁDIO DO MARÉ (playlist colaborativa) — Nível 1
+// ═══════════════════════════════════════════════════════
+// Diferente do "ouvindo agora", isso NÃO é ao vivo: não tem listener,
+// sincronização em tempo real ou sessão compartilhada nenhuma. É só uma
+// playlist REAL do Spotify (uma pra empresa toda, uma por squad — mesmo
+// padrão Squad/Geral do resto do painel) que qualquer pessoa pode abrir
+// no próprio Spotify e ouvir no próprio ritmo. O que a gente guarda no
+// RTDB é só um PONTEIRO ({playlistId}) pra essa playlist — lido 1x
+// quando o painel abre/troca de aba/escopo, igual a _spotifySelfConnected
+// (estado que muda raramente, não precisa ficar "ao vivo").
+//
+// A escrita de verdade na playlist (adicionar a faixa sugerida) sempre
+// passa pelo token de UMA conta dona fixa (kanban/spotify_radio_owner_secret,
+// deny total — só Admin SDK, mesmo padrão de spotify_secrets), nunca pelo
+// token pessoal de quem sugere: a playlist é única/compartilhada, então
+// precisa de um token de escrita fixo, independente de quem tá sugerindo
+// — e como bônus, sugerir música não exige ter conectado o próprio
+// Spotify (só estar logado no Maré). Moderação: livre total, sem fila de
+// aprovação e sem trilha de auditoria nesta v1 — combinado assim de
+// propósito, mesmo espírito de confiança do resto do app (Kudos,
+// comentários, etc. também não têm aprovação).
+const SPOTIFY_RADIO_SEARCH_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyRadioSearch';
+const SPOTIFY_RADIO_SUGGEST_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyRadioSuggest';
+
+function _spotifyRadioPath(){
+  return _spotifyScope==='geral' ? 'kanban/painel/radio_geral' : (FB+'/radio_squad');
+}
+// Aceita tanto uma URL colada (https://open.spotify.com/playlist/{id}?si=...,
+// spotify:playlist:{id}) quanto o ID puro.
+function _extractSpotifyPlaylistId(raw){
+  const s=(raw||'').trim();
+  const m = s.match(/playlist[\/:]([a-zA-Z0-9]{10,})/);
+  if(m) return m[1].split('?')[0];
+  if(/^[a-zA-Z0-9]{10,}$/.test(s)) return s;
+  return null;
+}
+async function renderSpotifyPlaylist(){
+  const body=document.getElementById('spotify-body'); if(!body) return;
+  body.innerHTML = `<div class="spotify-empty">Carregando...</div>`;
+  const path = _spotifyRadioPath();
+  let info=null;
+  try{ const snap = await fbGet(path); info = snap.val(); }catch(e){}
+  // Se trocou de aba/escopo enquanto esse fetch tava em voo, essa
+  // resposta já é velha — não pisa no que está na tela agora.
+  if(_spotifyContent!=='playlist' || _spotifyRadioPath()!==path) return;
+
+  if(!info || !info.playlistId){
+    body.innerHTML = `
+      <div class="spotify-empty spotify-playlist-form">
+        🎵 Nenhuma playlist registrada ${_spotifyScope==='geral'?'pra Rádio do Maré (geral)':'pra esse squad'} ainda.
+        <input type="text" id="sp-playlist-input" placeholder="Cole o link ou ID da playlist do Spotify">
+        <button class="sp-btn" onclick="registrarSpotifyPlaylist()">Salvar playlist</button>
+      </div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="spotify-playlist-hd">
+      <a href="https://open.spotify.com/playlist/${esc(info.playlistId)}" target="_blank" rel="noopener" class="sp-btn">🎵 Abrir playlist no Spotify</a>
+      <a href="#" class="sp-manage-link" onclick="event.preventDefault();trocarSpotifyPlaylist()">🔧 Trocar</a>
+    </div>
+    <div class="spotify-search-row">
+      <input type="text" id="sp-search-input" placeholder="Buscar música pra sugerir...">
+      <button class="sp-btn" onclick="buscarSpotifyTrack()">🔍 Buscar</button>
+    </div>
+    <div id="sp-search-results"></div>
+  `;
+  document.getElementById('sp-search-input')?.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); buscarSpotifyTrack(); } });
+}
+async function registrarSpotifyPlaylist(){
+  const input = document.getElementById('sp-playlist-input');
+  const id = _extractSpotifyPlaylistId(input?.value);
+  if(!id){ showToast('Link ou ID de playlist do Spotify inválido.'); return; }
+  try{
+    await window._set(window._ref(window._db,_spotifyRadioPath()), {playlistId:id, playlistUrl:'https://open.spotify.com/playlist/'+id, updatedAt:new Date().toISOString()});
+    showToast('🎵 Playlist registrada!');
+    renderSpotifyPlaylist();
+  }catch(e){ showToast('Não deu pra salvar a playlist — tenta de novo.'); }
+}
+function trocarSpotifyPlaylist(){
+  const body=document.getElementById('spotify-body'); if(!body) return;
+  body.innerHTML = `
+    <div class="spotify-empty spotify-playlist-form">
+      🎵 Trocar a playlist ${_spotifyScope==='geral'?'da Rádio do Maré (geral)':'do squad'}:
+      <input type="text" id="sp-playlist-input" placeholder="Cole o novo link ou ID da playlist do Spotify">
+      <button class="sp-btn" onclick="registrarSpotifyPlaylist()">Salvar</button>
+      <a href="#" class="sp-manage-link" onclick="event.preventDefault();renderSpotifyPlaylist()">Cancelar</a>
+    </div>`;
+}
+async function buscarSpotifyTrack(){
+  const cu=window._currentUser; if(!cu){ showToast('Faça login antes de buscar.'); return; }
+  const input = document.getElementById('sp-search-input');
+  const q = (input?.value||'').trim();
+  const results = document.getElementById('sp-search-results'); if(!results) return;
+  if(!q){ results.innerHTML=''; return; }
+  results.innerHTML = `<div class="spotify-empty">Buscando...</div>`;
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_RADIO_SEARCH_URL+'?q='+encodeURIComponent(q), {headers:{'Authorization':'Bearer '+token}});
+    if(!res.ok) throw new Error('http_'+res.status);
+    const data = await res.json();
+    const tracks = data.tracks||[];
+    if(!tracks.length){ results.innerHTML = `<div class="spotify-empty">Nada encontrado.</div>`; return; }
+    window._spotifySearchResults = tracks;
+    results.innerHTML = tracks.map((t,i)=>`
+      <div class="spotify-row">
+        <div class="sp-art">${t.albumArt?`<img src="${safeUrl(t.albumArt)||''}">`:''}</div>
+        <div class="sp-info"><div class="sp-track">${esc(t.name)}</div><div class="sp-artist">${esc(t.artist)}</div></div>
+        <button class="sp-connect-btn sp-suggest-btn" data-idx="${i}">+ Sugerir</button>
+      </div>
+    `).join('');
+    results.querySelectorAll('.sp-suggest-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> sugerirSpotifyTrack(window._spotifySearchResults[Number(btn.dataset.idx)], btn));
+    });
+  }catch(e){ results.innerHTML = `<div class="spotify-empty">Não deu pra buscar agora — tenta de novo.</div>`; }
+}
+async function sugerirSpotifyTrack(track, btnEl){
+  const cu=window._currentUser; if(!cu||!track) return;
+  let info=null;
+  try{ const snap=await fbGet(_spotifyRadioPath()); info=snap.val(); }catch(e){}
+  if(!info || !info.playlistId){ showToast('Nenhuma playlist registrada pra esse escopo.'); return; }
+  if(btnEl){ btnEl.disabled=true; btnEl.textContent='...'; }
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_RADIO_SUGGEST_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({playlistId:info.playlistId, trackUri:track.uri}),
+    });
+    if(!res.ok){
+      let msg='Não deu pra sugerir agora — tenta de novo.';
+      try{
+        const body=await res.json();
+        if(body?.error==='radio_owner_not_connected') msg='A Rádio do Maré ainda não foi configurada (conta dona não conectada).';
+        else if(body?.detail) msg='Não deu pra sugerir: '+body.detail;
+      }catch(e){}
+      throw new Error(msg);
+    }
+    showToast('🎵 "'+track.name+'" sugerida pra playlist!');
+    if(btnEl){ btnEl.textContent='✓ Sugerida'; }
+  }catch(e){
+    showToast(e.message || 'Não deu pra sugerir agora — tenta de novo.');
+    if(btnEl){ btnEl.disabled=false; btnEl.textContent='+ Sugerir'; }
+  }
+}
+
+// Monta o link de autorização do Spotify e redireciona — client_id não é
+// secreto, não precisa de function nenhuma pra esse passo (só a troca do
+// code por token, feita em spotifyOauthCallback, exige o client_secret).
+// Mesmo botão serve pra "conectar" (primeira vez) e "trocar de conta"
+// (já conectado) — spotifyOauthCallback faz .set() no token, então
+// re-autorizar simplesmente sobrescreve; a troca de conta em si é
+// resolvida pelo próprio Spotify (link "entrar com outra conta" na tela
+// de autorização deles), não precisamos de fluxo nenhum separado aqui.
+const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
+const SPOTIFY_REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyOauthCallback';
+const SPOTIFY_DISCONNECT_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyDisconnect';
+const SPOTIFY_SYNC_NOW_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifySyncNow';
+// Sync sob demanda da PRÓPRIA pessoa, disparado ao abrir o painel (ver
+// toggleSpotify()) — silencioso de propósito: falha aqui não é grave (o
+// sync periódico de 30s cobre de qualquer forma), não vale um toast de
+// erro por causa disso.
+async function _spotifySyncNow(){
+  const cu=window._currentUser; if(!cu) return;
+  try{
+    const token = await cu.getIdToken();
+    await fetch(SPOTIFY_SYNC_NOW_URL, {method:'POST', headers:{'Authorization':'Bearer '+token}});
+  }catch(e){ console.warn('[spotify] sync sob demanda falhou (silencioso, não crítico):', e); }
+}
+const SPOTIFY_PLAYBACK_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyPlayback';
+// Controle de playback PESSOAL (play/pause/próxima) — NÃO é um "DJ"
+// tocando pra todo mundo (descartado por decisão de produto), é só um
+// atalho pra própria reprodução, no próprio dispositivo Spotify ativo.
+// Tenta-e-avisa em vez de checar dispositivo ativo antes (evita uma
+// chamada de API extra só pra decidir se desabilita o botão) — cada
+// causa de erro tem uma mensagem própria, já que são bem diferentes
+// (falta escopo vs. sem Premium vs. sem aparelho aberto).
+async function _spotifyPlaybackAction(action){
+  const cu=window._currentUser; if(!cu) return;
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_PLAYBACK_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({action}),
+    });
+    if(!res.ok){
+      const body = await res.json().catch(()=>({}));
+      const msgs = {
+        insufficient_scope: 'Reconecte sua conta (🔁 Trocar) pra habilitar o controle de playback.',
+        premium_required: 'Controle de playback exige Spotify Premium.',
+        no_active_device: 'Abra o Spotify em algum aparelho primeiro.',
+        not_connected: 'Conecte sua conta Spotify primeiro.',
+      };
+      showToast(msgs[body?.error] || 'Não deu pra controlar a reprodução agora — tenta de novo.');
+      return;
+    }
+    // Sincroniza logo em seguida pra refletir o novo estado (tocando/
+    // pausado, ou a próxima faixa) sem esperar o próximo tick do sync
+    // periódico — sujeito ao mesmo cooldown de 10s de sempre, então se a
+    // pessoa acabou de abrir o painel (que já disparou um sync), esse
+    // aqui pode ser ignorado silenciosamente; o tick de 30s cobre o resto.
+    _spotifySyncNow();
+  }catch(e){ showToast('Não deu pra controlar a reprodução agora — tenta de novo.'); }
+}
+async function connectSpotify(){
+  const cu=window._currentUser; if(!cu){ showToast('Faça login antes de conectar o Spotify.'); return; }
+  const state = (crypto.randomUUID ? crypto.randomUUID() : ('st'+Date.now()+Math.random().toString(36).slice(2)));
+  try{
+    await window._set(window._ref(window._db,'kanban/oauth_pending/'+state), {uid:cu.uid, returnUrl:window.location.href.split('?')[0], wasConnected:_spotifySelfConnected});
+  }catch(e){ showToast('Não deu pra iniciar a conexão com o Spotify — tenta de novo.'); return; }
+  const params = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT_URI,
+    // user-modify-playback-state (controle de play/pause/próxima) pedido
+    // a partir de agora em toda conexão/reconexão nova — sem campanha de
+    // reconexão em massa pra quem já estava conectado antes. Quem tentar
+    // usar o controle sem esse escopo recebe 403 "Insufficient client
+    // scope" (distinto de PREMIUM_REQUIRED/NO_ACTIVE_DEVICE — ver
+    // _spotifyPlaybackAction()), e aí sim é convidado a reconectar.
+    scope: 'user-read-currently-playing user-read-playback-state user-modify-playback-state',
+    state,
+  });
+  window.location.href = 'https://accounts.spotify.com/authorize?'+params.toString();
+}
+// Apaga de verdade o refresh_token (não uma flag de "inativo") + todo o
+// status público espalhado (squad(s) + geral) — passa por Cloud Function
+// porque o cliente não tem (nem deveria ter) acesso de escrita a
+// spotify_secrets. A ausência da entrada em spotify_secrets já é, por si
+// só, o sinal que faz a function de sync parar de tentar essa pessoa —
+// não existe uma flag "ativo" separada de propósito.
+async function desconectarSpotify(){
+  const cu=window._currentUser; if(!cu){ return; }
+  if(!await uiConfirm('Desconectar sua conta Spotify? Você para de aparecer pro time (inclusive o "ouvindo agora" atual some), e pode reconectar quando quiser.',{title:'Desconectar Spotify',danger:true,okText:'Desconectar'})) return;
+  try{
+    const idToken = await cu.getIdToken();
+    const res = await fetch(SPOTIFY_DISCONNECT_URL, { method:'POST', headers:{ 'Authorization':'Bearer '+idToken } });
+    if(!res.ok) throw new Error('status '+res.status);
+    _spotifySelfConnected = false;
+    delete spotifyNowSquad[cu.uid];
+    delete spotifyNowGeral[cu.uid];
+    renderSpotifyPanel();
+    showToast('🔌 Spotify desconectado.');
+  }catch(e){
+    console.warn('[desconectarSpotify] falhou:', e);
+    showToast('⚠ Não deu pra desconectar — tenta de novo.');
+  }
+}
+// Feedback pós-redirect do OAuth — o callback manda de volta com
+// ?spotify=connected (primeira vez), ?spotify=reconnected (já estava
+// conectado, trocou de conta) ou ?spotify=error na URL.
+(function(){
+  const qs = new URLSearchParams(window.location.search);
+  const spotifyResult = qs.get('spotify');
+  if(spotifyResult){
+    if(spotifyResult==='connected') showToast('🎧 Spotify conectado!');
+    else if(spotifyResult==='reconnected') showToast('🔁 Conta Spotify atualizada!');
+    else if(spotifyResult==='error') showToast('⚠ Não deu pra conectar o Spotify — tenta de novo.');
+    qs.delete('spotify');
+    const newUrl = window.location.pathname + (qs.toString()?'?'+qs.toString():'') + window.location.hash;
+    history.replaceState(null,'',newUrl);
+  }
+})();
+
+// ═══════════════════════════════════════════════════════
 // ARQUIVADOS
 // ═══════════════════════════════════════════════════════
 async function zerarBoard(){
@@ -13809,6 +14327,14 @@ const HELP_CONTENT = {
     { icon:'🙌', title:'Como enviar', text:'Escolha a aba (Sua Squad ou Geral), selecione a pessoa em "Para quem?", escreva o reconhecimento e envie. A pessoa recebe uma notificação 🔔 avisando que ganhou uma Estrela. Enter envia, Shift+Enter quebra linha.' },
     { icon:'📜', title:'Regras de convivência', text:'As Estrelas são públicas e permanentes (até serem removidas). Use para reconhecer de verdade, não para brincadeiras internas que excluam outros. Reconheça pessoas, não a si mesmo. Quem enviou e os admins podem remover uma Estrela se necessário. Mantenha o respeito: é um espaço de cultura positiva.' },
   ],
+  spotify: [
+    { icon:'🎧', title:'O que é "Ouvindo agora"', text:'Mostra o que cada pessoa está ouvindo no Spotify neste exato momento — abra pelo botão 🎧 Spotify na lateral direita do board. É opt-in: só aparece com música quem conectou a própria conta. Não guarda histórico, só o que está tocando agora.' },
+    { icon:'🐠', title:'Sua Squad vs. 🌊 Geral', text:'Mesma lógica das Estrelas do Mar: a aba "Sua Squad" mostra só quem está na sua squad; "Geral" mostra todo mundo da empresa que conectou o Spotify.' },
+    { icon:'🔌', title:'Como conectar', text:'Clique em "🔌 Conectar Spotify" na sua própria linha do painel — vai te levar pra tela de autorização do Spotify. Depois de autorizar, você volta pro board automaticamente. Só é possível conectar a própria conta, não a de outra pessoa.' },
+    { icon:'🔁', title:'Trocar de conta ou desconectar', text:'Já conectado, sua linha mostra "🔁 Trocar" (conectou a conta errada ou quer usar outra — clique de novo, o Spotify deixa escolher outra conta na tela dele) e "❌ Desconectar" (para de aparecer pro time, e o acesso salvo é apagado de verdade, não só desativado). Reconectar depois é normal, a qualquer momento. O link "Gerenciar no Spotify" leva pra tela de apps conectados da sua conta Spotify, caso queira revogar o acesso por lá também.' },
+    { icon:'🎵', title:'Rádio do Maré (playlist colaborativa)', text:'Aba "🎵 Playlist" dentro do painel Spotify — uma playlist de verdade, uma pra empresa toda ("Geral") e uma por squad. Diferente do "Ouvindo agora", isso NÃO é ao vivo: é só uma playlist que qualquer pessoa pode abrir no próprio Spotify e ouvir no próprio ritmo, sem sincronia entre quem está ouvindo. Busque uma música e clique "+ Sugerir" pra adicionar direto na playlist — não precisa ter conectado o próprio Spotify pra sugerir, só estar logada no Maré. Entra direto, sem aprovação.' },
+    { icon:'▶️', title:'Controlar a própria reprodução', text:'Na sua linha, os botões ▶️/⏸️ e ⏭️ tocam/pausam/pulam a faixa direto pelo painel, sem precisar abrir o Spotify. É só um atalho pra SUA reprodução — não afeta o que mais ninguém está ouvindo. Precisa de: (1) ter reconectado depois desse recurso existir (conexões antigas não têm a permissão nova — reconecte com "🔁 Trocar" se aparecer um aviso), (2) ter Spotify Premium, e (3) estar com o Spotify aberto em algum aparelho (celular, computador, alto-falante) — sem isso, o controle não tem onde tocar.' },
+  ],
 }
 let _helpTab = 'board';
 
@@ -13828,7 +14354,7 @@ function openHelp(tab, searchTerm){
 
 function swHelpTab(tab){
   _helpTab = tab;
-  const TABS = ['board','cards','agente','config','comunicacao','kudos','agil'];
+  const TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil'];
   document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i) => t.classList.toggle('on', TABS[i]===tab));
   renderHelp();
 }
@@ -13847,7 +14373,7 @@ function renderHelp(){
   if(searching){
     // Busca em todas as seções
     if(tabs) tabs.style.opacity = '.45';
-    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','agil'];
+    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil'];
     ALL_TABS.forEach(t => { (HELP_CONTENT[t]||[]).forEach(item => items.push({...item, _tab:t})); });
     items = items.filter(item =>
       item.title.toLowerCase().includes(query) ||

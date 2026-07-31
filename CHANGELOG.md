@@ -18,6 +18,49 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.196 — 2026-07-31 · PR #117
+Promove pra prod toda a integração com Spotify, validada em produção
+(conectar, trocar de conta, desconectar, "ouvindo agora" ao vivo, Rádio
+do Maré — playlist colaborativa por squad + geral, controle de playback
+pessoal play/pause/próxima), acumulada em 12 PRs no dev
+(`v8.30.232-dev` até `v8.30.239-dev`, PRs #105–#116). Promoção limpa:
+`diff kanban.html kanban-dev.html` antes desta mudança mostrou só 526
+linhas adicionadas (nada removido/alterado fora da string de versão e
+`VERSION_KEY`) — o dev nunca teve nada além desse trabalho acumulado
+desde a última promoção.
+
+Resumo do que vai ao ar:
+
+- **🎧 Ouvindo agora**: pílula nova no board, mostra o que cada pessoa
+  do squad está ouvindo em tempo real (opt-in — só quem conecta a
+  própria conta aparece). Tabs Squad/Geral, ordenação por prioridade
+  (ouvindo agora > conectado parado > não conectado, e nesse último
+  grupo só a própria pessoa aparece). Sync periódico a cada 30s efetivos
+  + sync imediato ao abrir o painel.
+- **🎵 Rádio do Maré**: playlist colaborativa real do Spotify (uma pra
+  empresa toda, uma por squad) — NÃO é ao vivo, cada um ouve no próprio
+  ritmo. Busca + sugestão de música direto pelo painel, sem precisar ter
+  conectado o próprio Spotify pra sugerir.
+- **▶️ Controle de playback pessoal**: play/pause/próxima direto pelo
+  painel, pra própria reprodução de cada um (não é um "DJ" tocando pra
+  todo mundo).
+- Gestão de conta completa: conectar, trocar de conta, desconectar de
+  verdade (apaga o token, não só desativa).
+
+6 Cloud Functions novas por trás disso
+(`spotifyOauthCallback`/`spotifyDisconnect`/`spotifySync`/
+`spotifySyncNow`/`spotifyPlayback`/`spotifyRadioOwnerCallback`/
+`spotifyRadioSearch`/`spotifyRadioSuggest` — 8, na verdade), já
+deployadas e validadas em produção ao longo do desenvolvimento no dev
+(não fazem parte desta promoção — só o HTML/JS do board). Duas correções
+de bug reais encontradas e resolvidas durante a validação: migração de
+endpoint da Web API do Spotify (`/playlists/{id}/tracks` →
+`/playlists/{id}/items`, fev/2026) e um bug de cache de `access_token`
+que ignorava reconexões. Detalhes completos e o histórico da investigação
+nas entradas `v8.30.232-dev` a `v8.30.239-dev` abaixo e na seção "Cloud
+Functions — Spotify" mais adiante neste arquivo — incluindo
+`functions/spotify/README.md`, que consolida arquitetura e gotchas.
+
 ### v8.30.195 — 2026-07-30 · PR #100
 Promove pra prod o fix validado no dev (`v8.30.231-dev`, PR #99): nova
 ação em massa **🚧 Impedimento** na barra de seleção múltipla, pra
