@@ -2972,6 +2972,12 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="btn btn-sm" id="btn-del-card" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
     <button class="btn btn-sm" id="btn-dup-card" onclick="duplicarCard()" title="Duplicar este card">⧉ Duplicar</button>
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
+    <div style="position:relative;" id="m-usarmodelo-wrap">
+      <button class="btn btn-sm" onclick="toggleUsarModeloMenu()" title="Aplicar um modelo salvo neste card">📥 Usar modelo</button>
+      <div id="m-usarmodelo-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+        background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
+        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:220px;max-height:260px;overflow-y:auto;z-index:500;"></div>
+    </div>
     <button class="btn btn-sm btn-teal" onclick="archiveCard()">📦 Arquivar</button>
     <div style="position:relative;" id="m-depends-wrap">
       <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
@@ -3764,7 +3770,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="fecharDuplicarModal()">✕</button>
   </div>
   <div style="padding:14px 16px;">
-    <p style="font-size:11.5px;color:var(--txt2);line-height:1.5;margin:0 0 10px;">Duplicando "<b id="dup-card-title"></b>". Título e coluna sempre copiam — escolha o que mais entra na cópia:</p>
+    <p style="font-size:11.5px;color:var(--txt2);line-height:1.5;margin:0 0 10px;">Duplicando "<b id="dup-card-title"></b>". O título sempre copia (com "(cópia)" no final) — escolha a coluna de destino e o que mais entra na cópia:</p>
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:11px;color:var(--txt3);margin-bottom:4px;">Coluna da cópia</label>
+      <select id="dup-col" class="fi" style="width:100%;"></select>
+    </div>
     <div style="display:flex;flex-direction:column;gap:2px;">
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-desc" checked> Descrição</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-checklist" checked> Checklist</label>
@@ -4281,7 +4291,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.239-dev</div>
+<div class="version">v8.30.240-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8374,8 +8384,13 @@ function archiveCard(){
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
 // opts: quais campos entram na cópia, além dos sempre-copiados (título com
-// "(cópia)", coluna atual). Cada chave default true (comportamento igual ao
-// de sempre) — abrirDuplicarModal() é quem deixa a pessoa desmarcar.
+// "(cópia)"). Cada chave de campo default true (comportamento igual ao de
+// sempre) — abrirDuplicarModal() é quem deixa a pessoa desmarcar.
+// opts.col (opcional): coluna de destino — default é a mesma do card
+// original, mas a pessoa pode escolher outra no modal (ex.: card em
+// "Concluído", cópia já nasce em "Backlog"). Precisa ser aplicado ANTES de
+// recordMove() logo abaixo, senão o log de movimentação registraria a
+// coluna errada (a original, não a escolhida).
 // Tudo que NÃO está na lista de opts (comentários, PO, ficha de criativo,
 // vínculo Milanote, dependências etc.) continua sendo copiado sempre, sem
 // mudança — só os 9 campos escolhidos pelo usuário viraram opcionais.
@@ -8386,6 +8401,7 @@ function _duplicarCardObj(card, opts){
   const novo=JSON.parse(JSON.stringify(card));
   novo.id='c'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
   novo.title=(card.title||'')+' (cópia)';
+  if(opts.col) novo.col=opts.col;
   novo.archived=false;
   novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
   novo.history=[]; novo.moveLog=[];
@@ -8410,6 +8426,8 @@ function abrirDuplicarModal(cardId){
   _dupCardId = cardId;
   const titleEl=document.getElementById('dup-card-title'); if(titleEl) titleEl.textContent=card.title||'(sem título)';
   _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); if(el) el.checked=true; });
+  const colSel=document.getElementById('dup-col');
+  if(colSel){ colSel.innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); colSel.value=card.col; }
   document.getElementById('dup-ov').classList.add('open');
 }
 function fecharDuplicarModal(){
@@ -8420,12 +8438,17 @@ function confirmarDuplicar(){
   const card=cards.find(x=>x.id===_dupCardId); if(!card){ fecharDuplicarModal(); return; }
   const opts = {};
   _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); opts[f]=el?el.checked:true; });
-  const _wasEditingSameCard = editingId===_dupCardId;
+  const colSel=document.getElementById('dup-col');
+  if(colSel && colSel.value) opts.col = colSel.value;
   const novo=_duplicarCardObj(card, opts);
   fbSaveCard(novo); renderBoard();
   fecharDuplicarModal();
-  if(_wasEditingSameCard) closeOv('card-ov'); // só fecha o modal do card se era ELE que estava aberto
-  showToast('⧉ Card duplicado.');
+  // Sempre abre o modal da cópia pra edição imediata — antes só fechava o
+  // modal do card original (se estava aberto) e deixava a pessoa no board;
+  // agora abre direto a cópia, veio ela de dentro do card ou do menu de
+  // contexto do board (onde nenhum modal estava aberto antes).
+  openCard(novo.id);
+  showToast('⧉ Card duplicado — editando a cópia.');
 }
 function duplicarCard(){
   if(!editingId) return;
@@ -17567,6 +17590,64 @@ async function salvarComoModeloModal(){
   const btn=event.target; const orig=btn.textContent;
   btn.textContent='✅ Salvo!'; btn.disabled=true;
   setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },2000);
+}
+// "Usar modelo" DENTRO de um card já aberto — diferente de usarQLItem()
+// (chamado a partir do drawer de Modelos), que sempre abre um card NOVO
+// em branco a partir do modelo. Aqui o card sendo editado continua sendo
+// o mesmo (editingId não muda), só os campos são atualizados.
+function toggleUsarModeloMenu(){
+  const menu=document.getElementById('m-usarmodelo-menu'); if(!menu) return;
+  const isOpen=menu.style.display!=='none';
+  if(isOpen){ menu.style.display='none'; return; }
+  if(!qlItems.modelos || !qlItems.modelos.length){ showToast('Nenhum modelo salvo pra essa squad ainda.'); return; }
+  menu.innerHTML=qlItems.modelos.map((m,i)=>
+    `<button onclick="aplicarModeloNoCard(${i})" style="display:block;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+      onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">${esc(m.title)}</button>`
+  ).join('');
+  menu.style.display='block';
+  setTimeout(()=>{ document.addEventListener('click', closeUsarModeloMenuOutside, {once:true}); }, 10);
+}
+function closeUsarModeloMenu(){
+  const menu=document.getElementById('m-usarmodelo-menu'); if(menu) menu.style.display='none';
+}
+function closeUsarModeloMenuOutside(e){
+  if(!e.target.closest('#m-usarmodelo-wrap')) closeUsarModeloMenu();
+}
+// Aplica um modelo no card já aberto MESCLANDO com o que já existe — nunca
+// sobrescreve (decisão combinada, pra não apagar o que a pessoa já tinha
+// digitado): checklist e riscos do modelo são ADICIONADOS aos existentes
+// (riscos idênticos não duplicam); tags do modelo são somadas às já
+// marcadas; descrição/PO só entram se estiverem vazios no card.
+function aplicarModeloNoCard(idx){
+  const modelo=qlItems.modelos?.[idx];
+  if(!modelo || !editingId){ closeUsarModeloMenu(); return; }
+  saveUndo('aplicar modelo');
+
+  const descEl=document.getElementById('m-desc');
+  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=modelo.desc; renderDescPreview(); }
+  const poEl=document.getElementById('m-po');
+  if(poEl && !poEl.value.trim() && modelo.po) poEl.value=modelo.po;
+
+  if(Array.isArray(modelo.tags) && modelo.tags.length){
+    modelo.tags.forEach(t=>{ if(!editingTags.includes(t)) editingTags.push(t); });
+    populateTagSelect();
+  }
+
+  if(Array.isArray(modelo.checklist) && modelo.checklist.length){
+    const atual=getCL();
+    const novos=modelo.checklist.map(i=>({t:i.t, done:false}));
+    renderCL([...atual, ...novos]);
+  }
+
+  if(Array.isArray(modelo.riscos) && modelo.riscos.length){
+    const atuais=getRiscos();
+    const novos=modelo.riscos.filter(r=>!atuais.includes(r));
+    if(novos.length) renderRiscos([...atuais, ...novos]);
+  }
+
+  closeUsarModeloMenu();
+  scheduleAutoSave();
+  showToast('📥 Modelo "'+modelo.title+'" aplicado — revise e salve.');
 }
 // Gera a URL direta pra este card (mesmo mecanismo do ?opencard= usado pelo
 // multi-squad de campanhas) — reaproveitada por shareCardLink e exportToMilanote.

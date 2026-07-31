@@ -337,6 +337,52 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.240-dev — 2026-07-31 · PR #118
+Duas melhorias no board pedidas direto, fora do contexto do Spotify: usar
+um modelo dentro de um card já aberto, e escolher a coluna de destino ao
+duplicar (+ abrir a cópia automaticamente).
+
+- **Usar modelo num card já aberto** — novo botão "📥 Usar modelo" no
+  rodapé do modal do card, ao lado de "⧉ Duplicar"/"📋 Modelo" (mesmo
+  padrão visual do menu de "Dependência" — dropdown posicionado acima do
+  botão). Lista os modelos já salvos da squad (`qlItems.modelos`, já
+  carregado ao vivo, nenhuma busca nova). Diferente de `usarQLItem()`
+  (usado no drawer de Modelos), que sempre abre um card NOVO em branco a
+  partir do modelo — aqui o card sendo editado continua sendo o mesmo.
+  **Mescla, nunca sobrescreve** (decisão combinada antes de implementar):
+  checklist e riscos do modelo são ADICIONADOS aos que já existem no card
+  (riscos idênticos não duplicam); tags do modelo são somadas às já
+  marcadas; descrição/PO só entram se estiverem vazios no card — nada do
+  que a pessoa já tinha digitado é apagado. Registra um checkpoint de
+  desfazer (`saveUndo`) antes de aplicar, igual a outras mutações do
+  card.
+- **Duplicar com escolha de coluna** — modal de duplicar (`#dup-ov`)
+  ganhou um `<select>` de coluna de destino, pré-selecionado com a coluna
+  ATUAL do card (então quem não mexer tem o comportamento de sempre —
+  cópia na mesma coluna). Antes não existia essa opção: a coluna sempre
+  copiava igual à original, sem alternativa (ex.: card em "Concluído",
+  cópia só podia nascer em "Concluído" também). A escolha é aplicada
+  ANTES de `recordMove()` internamente (`_duplicarCardObj` ganhou
+  `opts.col`), pra o log de movimentação do card registrar a coluna
+  certa, não a original.
+- **Abre a cópia automaticamente** — depois de duplicar, o modal do card
+  RECÉM-CRIADO abre sozinho, pronto pra edição (`openCard(novo.id)`).
+  Antes, duplicar apenas fechava o modal do card original (se estava
+  aberto) e deixava a pessoa olhando pro board — precisava achar e abrir
+  a cópia manualmente. Vale tanto duplicando de dentro de um card aberto
+  quanto pelo menu de contexto do board (clique direito → Duplicar, onde
+  nenhum modal estava aberto antes).
+
+Verificado com Playwright (26 cenários, ambiente de teste descartado
+depois): modelo aplicado em card vazio preenche tudo; aplicado em card
+com conteúdo mescla sem apagar nada (desc/PO não sobrescritos, checklist/
+riscos/tags somados, riscos idênticos não duplicam); sem card aberto não
+quebra; coluna pré-selecionada com a atual; sem trocar a coluna, cópia
+fica na mesma; trocando, cópia nasce na coluna escolhida E o log de
+movimentação registra a coluna certa; campos desmarcados continuam
+funcionando junto com a coluna nova (sem regressão); modal da cópia abre
+automaticamente com o id certo em ambos os pontos de entrada.
+
 ### v8.30.239-dev — 2026-07-31 · PR #115
 Item 3 das 4 frentes de UX/performance: **controle de playback pessoal**
 — play/pause/próxima direto pelo painel, sem precisar abrir o Spotify
