@@ -282,6 +282,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.231-dev — 2026-07-30
+Nova ação em massa na barra de seleção múltipla: **🚧 Impedimento**, pra
+marcar/remover impedimento em vários cards de uma vez — pedido pelo
+usuário depois de mexer no compilado de bloqueios do Painel.
+
+Respeita o `blockerMode` do squad (coluna vs tag) através da mesma fonte
+única de verdade que já existia (`_cardIsBlocked()`), em vez de
+reimplementar a decisão:
+- **Modo "coluna"** (padrão): marcar move os cards não-bloqueados
+  selecionados pra Impedimentos (mesmo caminho de `bulkMove`, com rótulo
+  dedicado pra descoberta). Remover pede uma coluna de destino — não
+  existe (em nenhum lugar do código, nem no single-card) um "voltar pra
+  coluna anterior" rastreado, então não inventei esse estado novo; só
+  reaproveitei a lista de colunas já usada por `bulkMove()`.
+- **Modo "tag"**: marcar liga `card.blocker`+`card.blockerReason` (com um
+  campo de motivo opcional no popover) sem mexer na coluna; remover limpa
+  os dois campos. Não abre o modal do card pra digitar o motivo (como o
+  fluxo single-card faz) — o motivo vem direto do popover em massa, mais
+  rápido pra aplicar o mesmo texto em vários cards.
+
+O popover separa "marcar" (só cards ainda não impedidos) de "remover" (só
+cards já impedidos) dentro da mesma seleção — evita marcar de novo quem já
+está impedido ou tentar remover de quem nunca esteve.
+
+Verificado com Playwright (18 cenários, sem tocar DOM real — chama as
+funções de mutação diretamente): nos dois modos, marca só quem devia,
+ignora cards fora da seleção, não duplica/reprocessa quem já está no
+estado-alvo, e usa `_bulkFinish` com `keepSelection` correto pra cada modo
+(estrutural em coluna, não-estrutural em tag — mesmo padrão das outras
+ações em massa).
+
+Ajuda (F1/❓) atualizada — a entrada de "Seleção múltipla" também estava
+desatualizada (dizia "seis ações" mas já eram sete, faltando 📅 Prazo);
+corrigido de passagem junto com a entrada nova de 🚧 Impedimento.
+
 ### v8.30.230-dev — 2026-07-30
 Limpeza de código morto, parte 2 da leva de "otimização de rotina" —
 relatório gerado por um agente de auditoria dedicado (750+ identificadores
