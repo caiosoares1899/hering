@@ -377,6 +377,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.243-dev — 2026-07-31
+Corrige bug de contagem em dobro no medidor de bytes (`debugBytesRemote`),
+achado investigando um `debugBytesRemote(72)` real de uma squad
+(`outlet-crm`) que mostrou `_cards:targeted_get(live)` como o maior
+consumidor (875 MB / 432 mil chamadas em 72h) — e quase 5000 "paths"
+diferentes na lista, um pra cada card individual que teve fetch.
+
+**Causa raiz**: `fbGet(path)` já rastreia automaticamente sob o path
+BRUTO passado a ele (`_dbgTrack(path, snap.val())` dentro da própria
+função). Em `_twoPhaseCardsLoad()` (carregamento em duas etapas dos
+cards) e em `_refreshKudosSquad()`/`_refreshKudosGeral()`, o código
+chamava `fbGet(...)` e DEPOIS rastreava de novo manualmente sob um
+rótulo agregado (`/cards:targeted_get`, `/cards:targeted_get(live)`,
+`kudos_squad`, `kudos_geral`) — contando a mesma leitura duas vezes: uma
+sob o path bruto individual (ex.: `kanban_squads_outlet-crm_dados_cards_4677`),
+outra sob o rótulo agregado. Isso inflava o total reportado em ~2x pra
+essas categorias E pulverizava o relatório em milhares de linhas por
+card individual, em vez de ficar concentrado no rótulo agregado (que é
+o que realmente ajuda a diagnosticar).
+
+**Fix**: troca `fbGet(...)` por `window._get(fb(...))` bruto (sem
+auto-rastreio) nesses 4 pontos, mantendo só o `_dbgTrack` manual com o
+rótulo agregado. Sem mudança de comportamento funcional — só a
+instrumentação de diagnóstico fica correta (contagem única, sem
+poluição por path individual).
+
+Mesmo corrigindo a duplicação, o volume real de leituras disparadas por
+mudança em cards no `outlet-crm` continua alto (~438MB/72h só nessa
+categoria) — isso é uma investigação separada, ainda em aberto, sobre
+por que essa squad especificamente gera tantas atualizações de card.
+
 ### v8.30.242-dev — 2026-07-31
 Limpa o visual da barra de botões do rodapé do modal do card (`.modal-ft-row`)
 — feedback direto de que ela estava "desorganizada", com cores demais
