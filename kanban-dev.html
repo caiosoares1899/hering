@@ -1803,6 +1803,7 @@ input[type="date"]{-moz-appearance:textfield;}
 }
 /* Mobile: feedback quando o long-press arma o drag */
 .card-armed{transform:scale(1.04);border-color:var(--accent)!important;box-shadow:0 6px 20px rgba(56,182,255,.35);transition:transform .12s,box-shadow .12s;}
+.col-armed{transform:scale(1.02);border-color:var(--accent)!important;box-shadow:0 6px 20px rgba(56,182,255,.35);transition:transform .12s,box-shadow .12s;}
 .card.dragging{opacity:.35;transform:rotate(2deg);border-color:var(--accent)!important;box-shadow:0 8px 24px rgba(37,99,201,.4);}
 .col-body.drag-over{background:rgba(56,182,255,.08);border-radius:var(--r);outline:2px dashed rgba(56,182,255,.4);outline-offset:-4px;}
 .col-body.drag-over-blocked{outline:2px dashed rgba(255,107,107,.4);background:rgba(255,107,107,.05);}
@@ -4220,7 +4221,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.228-dev</div>
+<div class="version">v8.30.229-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7045,6 +7046,7 @@ function renderNormal(board,activeCards){
     div.ondragover = e => handleColDragOver(e, col.id);
     div.ondragleave = e => handleColDragLeave(e);
     div.ondrop = e => handleColDrop(e, col.id);
+    addTouchColDnD(div, col.id);
 
     const canCollapse=col.collapsible!==false;
     div.innerHTML=`<div class="col-hd">
@@ -13785,6 +13787,7 @@ const HELP_CONTENT = {
     { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.' },
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com seis ações em massa: 📥 Mover para coluna, 👤 Responsável, 🏷 Tag (adicionar ou substituir), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
     { icon:'📱', title:'Arrastar card no celular', text:'No celular, para mover um card entre colunas, segure o dedo nele por um instante até ele "levantar" (vibra e ganha destaque) e então arraste. Um toque rápido ou arrastar direto rola o board normalmente, sem mover cards por engano.' },
+    { icon:'📱', title:'Reordenar colunas no celular', text:'Mesmo gesto dos cards: segure o dedo no cabeçalho da coluna até ela "levantar" e então arraste pra esquerda ou direita, soltando na metade da coluna vizinha onde quer posicioná-la.' },
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
   ],
@@ -16460,6 +16463,80 @@ function addTouchDnD(el, cardId){
   },{passive:true});
 }
 
+// Touch drag and drop de COLUNAS (mobile) — mesmo padrão de long-press do
+// addTouchDnD (cards), mas reordena colunas em vez de mover card de coluna.
+// Sem isso, reordenar colunas só funcionava com mouse (dragstart nativo do
+// HTML5 não dispara em touch) — cards já tinham o equivalente, colunas não.
+function addTouchColDnD(el, colId){
+  let startX,startY,dragging,longPressTimer,armed,targetCol;
+  el.addEventListener('touchstart',e=>{
+    if(selectMode) return; // mesmo guard do mouse (draggable=false em selectMode)
+    if(e.touches.length>1) return;
+    // mesmo guard de handleColDragStart: não arma se o toque começou num
+    // card ou dentro do corpo da coluna (senão colidiria com addTouchDnD)
+    if(e.target.closest('.card') || e.target.closest('.col-body')) return;
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    dragging=false; armed=false; targetCol=null;
+    longPressTimer=setTimeout(()=>{
+      armed=true;
+      try{ if(navigator.vibrate) navigator.vibrate(15); }catch(_){}
+      el.classList.add('col-armed');
+    },400);
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(!armed){
+      if(dist>8){ clearTimeout(longPressTimer); el.classList.remove('col-armed'); }
+      return; // deixa o scroll horizontal do board acontecer livremente
+    }
+    if(!dragging){
+      dragging=true;
+      el.classList.remove('col-armed');
+      el.classList.add('col-dragging');
+    }
+    e.preventDefault(); // agora sim bloqueia o scroll, é drag intencional
+    document.querySelectorAll('.col').forEach(c=>c.classList.remove('col-drag-left','col-drag-right'));
+    const elUnder=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+    const under=elUnder?.closest('.col');
+    targetCol=(under && under!==el) ? under : null;
+    if(targetCol){
+      const rect=targetCol.getBoundingClientRect();
+      const mid=rect.left+rect.width/2;
+      targetCol.classList.add(e.touches[0].clientX<mid?'col-drag-left':'col-drag-right');
+    }
+  },{passive:false});
+  el.addEventListener('touchend',e=>{
+    clearTimeout(longPressTimer);
+    el.classList.remove('col-armed','col-dragging');
+    document.querySelectorAll('.col').forEach(c=>c.classList.remove('col-drag-left','col-drag-right'));
+    if(!dragging){ dragging=false; return; } // não foi um arrasto (tap ou scroll)
+    dragging=false;
+    if(!targetCol) return;
+    const targetColId=targetCol.id.replace('col-','');
+    const draggedIdx=columns.findIndex(c=>c.id===colId);
+    const targetIdx=columns.findIndex(c=>c.id===targetColId);
+    if(draggedIdx<0||targetIdx<0) return;
+    const touch=e.changedTouches[0];
+    const rect=targetCol.getBoundingClientRect();
+    const mid=rect.left+rect.width/2;
+    let insertIdx=targetIdx;
+    if(touch.clientX>mid) insertIdx++;
+    if(draggedIdx<insertIdx) insertIdx--;
+    const [removed]=columns.splice(draggedIdx,1);
+    columns.splice(insertIdx,0,removed);
+    saveUndo('reordenar colunas');
+    fbSet(FB+'/columns', columns);
+    renderBoard();
+  });
+  el.addEventListener('touchcancel',()=>{
+    clearTimeout(longPressTimer);
+    el.classList.remove('col-armed','col-dragging');
+    document.querySelectorAll('.col').forEach(c=>c.classList.remove('col-drag-left','col-drag-right'));
+    dragging=false; targetCol=null;
+  },{passive:true});
+}
+
 // ═══════════════════════════════════════════════════════
 // AUTOMAÇÕES (Butler-style)
 // ═══════════════════════════════════════════════════════
@@ -17479,7 +17556,7 @@ _onFbReady(()=>{
 
   // Heartbeat FORA do onValue: um único setInterval que nunca se acumula
   clearInterval(window._heartbeat);
-  window._heartbeat = setInterval(()=>{
+  function _sendHeartbeat(){
     if(window._currentUser && window._fbReady){
       const _u=window._currentUser;
       window._update(
@@ -17487,7 +17564,23 @@ _onFbReady(()=>{
         {ts:Date.now(),status:window._myStatus||'',nome:_u.displayName||_u.email,foto:_u.photoURL||'',init:window._currentUserInit||'?',squad:ACTIVE_SQUAD}
       );
     }
+  }
+  window._heartbeat = setInterval(()=>{
+    // Pausa em aba oculta — evita escrita desperdiçada com o app trocado em
+    // background (comum no mobile) ou aba minimizada; a pessoa já aparece
+    // "offline" pros outros depois do timeout de 30s (_renderPresenceFromMap),
+    // que é o comportamento correto, não um bug. Mesmo padrão do poll de kudos.
+    if(document.hidden) return;
+    _sendHeartbeat();
   }, 15000);
+  // Manda um heartbeat imediato ao voltar pra aba, em vez de esperar até
+  // 15s pro próximo tick — sem isso a pessoa fica "às escuras" um pouco
+  // depois de voltar. Guard de "set uma vez" evita acumular listeners a
+  // cada fbLoadAll() na mesma sessão (squad trocado, re-login).
+  if(!window._heartbeatVisHandlerSet){
+    window._heartbeatVisHandlerSet = true;
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _sendHeartbeat(); });
+  }
 });
 
 // ═══════════════════════════════════════════════════════
