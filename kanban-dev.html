@@ -4289,7 +4289,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.242-dev</div>
+<div class="version">v8.30.243-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6031,7 +6031,13 @@ let _cardsSyncDebounce = null;
 
     const fetched = {};
     await Promise.all(toFetch.map(async id=>{
-      const snap = await fbGet(FB+'/cards/'+remoteIndex[id]);
+      // window._get() bruto (não fbGet()) -- fbGet() já rastreia sob o path
+      // INTEIRO (ex.: kanban_squads_{squad}_dados_cards_4677), o que pulveriza
+      // o relatório em milhares de linhas por card individual E conta cada
+      // leitura duas vezes (uma sob o path bruto, outra sob o rótulo agregado
+      // abaixo). Usando window._get() direto, só existe UM registro, sob o
+      // rótulo agregado que realmente importa pro diagnóstico.
+      const snap = await window._get(fb(FB+'/cards/'+remoteIndex[id]));
       _dbgTrack('/cards:targeted_get', snap.val());
       if(snap.val()) fetched[id] = snap.val();
     }));
@@ -6091,7 +6097,9 @@ let _cardsSyncDebounce = null;
       }
       if(key==null) return; // sem posição resolvível — a reconciliação periódica corrige depois
       if(_cardsByKey[key] && _cardsByKey[key].updatedAt === ts) return; // já está atual (replay do burst inicial)
-      const snapCard = await fbGet(FB+'/cards/'+key);
+      // window._get() bruto -- ver comentário equivalente em _twoPhaseCardsLoad()
+      // acima: evita path bruto por card poluindo o relatório + contagem em dobro.
+      const snapCard = await window._get(fb(FB+'/cards/'+key));
       _dbgTrack('/cards:targeted_get(live)', snapCard.val());
       if(snapCard.val()){ _cardsByKey[key] = snapCard.val(); _scheduleCardsSync(); }
     }
@@ -9965,7 +9973,7 @@ let _lastKudosSquadRefresh = 0;
 let _lastKudosGeralRefresh = 0;
 function _refreshKudosSquad(){
   _lastKudosSquadRefresh = Date.now();
-  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos').then(snap=>{
+  window._get(fb('kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos')).then(snap=>{
     _dbgTrack('kudos_squad', snap.val());
     const val=snap.val();
     kudosSquad = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
@@ -9975,7 +9983,7 @@ function _refreshKudosSquad(){
 }
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
-  fbGet('kanban/painel/kudos_geral').then(snap=>{
+  window._get(fb('kanban/painel/kudos_geral')).then(snap=>{
     _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
