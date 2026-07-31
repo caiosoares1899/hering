@@ -4250,7 +4250,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.234-dev</div>
+<div class="version">v8.30.235-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10187,8 +10187,17 @@ function _spotifyGroupRank(p, status){
 }
 function renderSpotifyPanel(){
   const body=document.getElementById('spotify-body'); if(!body) return;
-  const pessoas = _spotifyScope==='geral' ? _spotifyGeralUsers() : members;
   const bucket = _spotifyScope==='geral' ? spotifyNowGeral : spotifyNowSquad;
+  const todos = _spotifyScope==='geral' ? _spotifyGeralUsers() : members;
+  // Grupo "não conectado" só mostra a PRÓPRIA pessoa (com o convite pra
+  // conectar) — o resto de quem nunca conectou fica de fora, pra não
+  // virar uma lista longa de gente que não usa a feature. Os outros 2
+  // grupos (ouvindo agora / conectado parado) continuam mostrando todo
+  // mundo que se aplica, sem filtro nenhum.
+  const pessoas = todos.filter(p=>{
+    const isSelf = p.uid===window._currentUser?.uid;
+    return isSelf || _spotifyGroupRank(p,bucket[p.uid])!==2;
+  });
   if(!pessoas.length){
     body.innerHTML=`<div class="spotify-empty">🎧 Ninguém por aqui ainda.</div>`;
     return;

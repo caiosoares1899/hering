@@ -294,6 +294,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.235-dev — 2026-07-31 · PR #108
+Ajuste no grupo "não conectado" do painel Spotify (squad e geral): antes
+mostrava TODAS as pessoas que nunca conectaram, cada uma com o convite
+"Conectar Spotify" — em squads/na empresa toda isso vira uma lista longa
+e pouco útil de gente que não usa a feature. Agora só a **própria pessoa
+logada** aparece nesse grupo quando não conectada (com o botão de
+conectar); as outras pessoas que nunca conectaram somem da lista.
+
+- `renderSpotifyPanel()`: novo filtro antes do sort — mantém uma pessoa
+  se ela for a própria (`isSelf`, sempre visível, conectada ou não) OU se
+  `_spotifyGroupRank()` não for 2 (grupo "não conectado"). Os outros 2
+  grupos (ouvindo agora / conectado parado) continuam mostrando todo
+  mundo que se aplica, sem filtro nenhum — só o grupo 3 mudou.
+  `_spotifyGroupRank()` em si não mudou (mesma lógica da v8.30.234-dev);
+  o filtro roda em cima do resultado dela.
+
+Verificado com Playwright (10 cenários, ambiente de teste descartado
+depois): grupo 1/2 continuam mostrando todo mundo normalmente; grupo 3
+mostra só a própria pessoa mesmo com outras pessoas nunca conectadas no
+squad; self mantém o convite mesmo sem ninguém mais conectado; ao
+conectar, self passa a aparecer no grupo certo e os outros continuam de
+fora; mesmo comportamento reproduzido no escopo "Geral".
+
 ### v8.30.234-dev — 2026-07-31 · PR #107
 Terceira leva da integração com Spotify: **a function agendada de sync**
 (a peça que faltava pra "ouvindo agora" aparecer de verdade no painel) +
