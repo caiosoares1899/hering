@@ -788,6 +788,20 @@ o link antigo quebrado.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.92 · painel — 2026-07-30
+Promove pra prod o fix validado no dev (`v2.93 · painel-dev`): compilado
+de "🚧 Bloqueios ativos" parava de mostrar cards já resolvidos, e filtro
+de squad dinâmico (inclui squads criados via painel de setup, antes
+ausentes da barra de filtro). Detalhes completos na entrada de
+`painel-dev.html v2.93` logo abaixo.
+
+Promovido sem validação manual prévia no dev — `painel-dev.html` roda só
+contra squads fictícios fixos, não carrega `squads_meta` de produção
+(decisão deliberada de isolamento), então não tinha como reproduzir o bug
+relatado (num squad real) nesse ambiente. Validação foi só automatizada
+(10 cenários via Playwright, ver entrada abaixo); usuário confirmou querer
+subir direto pra prod dado esse impasse.
+
 ### painel-dev.html v2.93 · painel-dev — 2026-07-30
 Corrige o compilado de "🚧 Bloqueios ativos" (seção que junta os cards
 impedidos de todos os squads numa lista só) — reportado pelo usuário num

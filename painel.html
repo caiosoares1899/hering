@@ -2197,7 +2197,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.91 · painel</div>
+<div class="version">v2.92 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6748,6 +6748,7 @@ function loadExtraSquads(callback){
       }
     });
     renderSquadLinks();
+    renderFilterBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
     else if(changed){ loadAll(); renderSquadCards(); }
   });
@@ -6760,6 +6761,20 @@ function renderSquadLinks(){
   wrap.innerHTML = SQUADS.map(sq=>
     `<a href="kanban.html?squad=${sq.id}" target="_blank" class="btn" style="color:${sq.color};border-color:${sq.color}33;">${sq.icon} ${sq.label.replace('Squad ','')}</a>`
   ).join('');
+}
+// Renderiza os botões de filtro de squad (usados por squadVisible(), que já
+// filtra bloqueios/riscos/OKR/cards do squad) a partir do array SQUADS
+// dinamicamente, em vez do HTML fixo com só os 3 squads originais — squads
+// criados depois (via painel de setup) nunca ganhavam botão de filtro,
+// então não dava pra isolar um squad extra em NENHUMA dessas seções
+// (o filtro em si já funcionava — squadVisible(sqId) aceita qualquer id —
+// só faltava o botão pra escolher esse id). Preserva o filtro ativo ao
+// re-renderizar (ex: squad novo aparece no meio da sessão).
+function renderFilterBar(){
+  const bar = document.querySelector('.filter-bar');
+  if(!bar) return;
+  bar.innerHTML = `<button class="filter-btn${activeFilter==='all'?' active':''}" id="fb-all" onclick="setFilter('all')">🏠 Todos</button>`
+    + SQUADS.map(sq=>`<button class="filter-btn${activeFilter===sq.id?' active':''}" id="fb-${esc(sq.id)}" onclick="setFilter('${esc(sq.id)}')">${sq.icon} ${esc(sq.label.replace('Squad ',''))}</button>`).join('');
 }
 const DEFAULT_COLUMNS = ['backlog','todo','progress','blocker','done'];
 const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
@@ -7281,6 +7296,15 @@ function _applySquadDados(sqId, val){
     columns:val.columns?(Array.isArray(val.columns)?val.columns:Object.values(val.columns)):DEFAULT_COLUMNS.map(id=>({id,name:COL_NAMES[id]||id,color:COL_COLORS[id]||'#888'})),
     tags:val.tags?(Array.isArray(val.tags)?val.tags:Object.values(val.tags)):[],
     agilCfg:val.agil_cfg||{},
+    // Modo de impedimento real do squad (coluna vs tag) — vem de
+    // dados/config/blockerMode, o MESMO path que kanban.html lê/escreve
+    // (ver saveBlockerMode() lá). NÃO é o mesmo campo que agilCfg.blockerMode
+    // (dados/agil_cfg/blockerMode, editado no modal de config daqui do
+    // Painel) — esse outro path nunca é lido pelo kanban.html, então hoje
+    // não reflete o modo real; usar o path certo aqui evita repetir esse
+    // mesmo desalinhamento nos usos abaixo (ver renderBlockers/
+    // resolveAllBlockers). Default 'col' bate com o default de kanban.html.
+    blockerMode: val.config?.blockerMode || 'col',
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
@@ -7818,11 +7842,19 @@ function resolveAllBlockers(){
   SQUADS.forEach(sq=>{
     const d = squadData[sq.id]; if(!d || !d.cards) return;
     const doneCol = d.columns?.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id || 'done';
+    // Mesma detecção mode-aware de renderBlockers() — ver comentário lá.
+    const bmode = d.blockerMode||'col';
     (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
-      if(c && !c.archived && (c.col==='blocker' || (c.blocker && c.blockerReason)) && c.col!==doneCol){
+      const isBlocked = bmode==='col' ? c.col==='blocker' : !!c.blocker;
+      if(c && !c.archived && isBlocked && c.col!==doneCol){
         c.col = doneCol;
         c.doneAt = new Date().toISOString();
+        // Limpa os dois campos do modo "tag" (não só blocker) — deixar
+        // blockerReason órfão pra trás é justamente o que causava um card já
+        // resolvido continuar contando como bloqueado depois, se algum dia o
+        // squad tivesse mudado de modo (ver bug corrigido em renderBlockers).
         c.blocker = false;
+        c.blockerReason = '';
         count++;
         squadsToSave.add(sq.id);
       }
@@ -7860,7 +7892,15 @@ function renderBlockers(){
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d || !d.cards) return;
     if(!squadVisible(sq.id)) return;
-    const bl=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && (c.col==='blocker'||(c.blocker&&c.blockerReason))&&!c.archived);
+    // Fonte única de verdade pra "está impedido?" respeitando o blockerMode do
+    // squad — mesma lógica de _cardIsBlocked() em kanban.html. Antes disso,
+    // o OR incondicional (col==='blocker' || (blocker&&blockerReason)) fazia
+    // um card resolvido (movido pra fora da coluna Impedimentos em modo "col")
+    // continuar aparecendo aqui pra sempre, porque blocker/blockerReason são
+    // campos legados de quando o modo é "tag" e não são limpos ao mudar de
+    // coluna — resolvia no board, nunca resolvia no compilado do Painel.
+    const bmode = d.blockerMode||'col';
+    const bl=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived && (bmode==='col' ? c.col==='blocker' : !!c.blocker));
     bl.forEach(c=>blockers.push({...c, _squad:sq}));
   });
   count.textContent=blockers.length;
