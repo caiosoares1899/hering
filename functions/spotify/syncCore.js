@@ -68,11 +68,13 @@ async function _fetchNowPlaying(accessToken) {
   };
 }
 
-// Pra cada uid em kanban/spotify_secrets: troca o refresh_token por um
-// access_token válido, consulta currently-playing, e escreve o resultado
-// em TODOS os squads que a pessoa participa + no geral — mesmo fan-out
+// Sincroniza UM uid — troca o refresh_token por um access_token válido,
+// consulta currently-playing, e monta (sem aplicar) as atualizações pra
+// TODOS os squads que a pessoa participa + o geral — mesmo fan-out
 // multi-squad de spotifyDisconnect (usuarios/{uid}/squads é um mapa
-// {squadId:true}, sem "squad principal").
+// {squadId:true}, sem "squad principal"). Quem chama decide quando/como
+// aplicar (`runSpotifySync` acumula de vários uids num só `update()` em
+// lote; `syncOneUserNow` aplica sozinha, pra 1 pessoa só).
 //
 // A presença de uma entrada em spotify_now É o sinal de "conectado" pro
 // painel (ver renderSpotifyPanel/_spotifyGroupRank em kanban-dev.html) —
@@ -86,6 +88,53 @@ async function _fetchNowPlaying(accessToken) {
 // desconecta por completo (mesmo helper de spotifyDisconnect), em vez de
 // ficar tentando e falhando pra sempre e deixando o painel com um
 // "conectado" fantasma.
+async function _syncOneUser(db, clientSecret, uid, refreshToken) {
+  const updates = {};
+  if (!refreshToken) return updates;
+
+  const tok = await _getAccessToken(uid, refreshToken, clientSecret);
+  if (tok.error) {
+    if (tok.error === 'invalid_grant') {
+      console.warn('[syncCore] refresh_token revogado pra uid', uid, '— desconectando.');
+      Object.assign(updates, await buildDisconnectUpdates(db, uid));
+    } else {
+      console.error('[syncCore] falha ao renovar access_token pra uid', uid, ':', tok.error);
+    }
+    return updates;
+  }
+  if (tok.newRefreshToken && tok.newRefreshToken !== refreshToken) {
+    updates['kanban/spotify_secrets/' + uid + '/refresh_token'] = tok.newRefreshToken;
+  }
+
+  const now = await _fetchNowPlaying(tok.token);
+  if (now.error) {
+    console.error('[syncCore] falha ao consultar currently-playing pra uid', uid, ':', now.error);
+    return updates;
+  }
+
+  const status = {
+    playing: now.playing,
+    track: now.track || null,
+    artist: now.artist || null,
+    albumArt: now.albumArt || null,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const squadsSnap = await db.ref('kanban/usuarios/' + uid + '/squads').get();
+  const squadsMap = squadsSnap.val() || {};
+  Object.keys(squadsMap)
+    .filter((sq) => squadsMap[sq] === true)
+    .forEach((sq) => {
+      updates['kanban/squads/' + sq + '/dados/spotify_now/' + uid] = status;
+    });
+  updates['kanban/painel/spotify_now_geral/' + uid] = status;
+
+  return updates;
+}
+
+// Roda pra TODOS os uids em kanban/spotify_secrets, batendo num único
+// db.ref().update() no final (menos escritas separadas que N updates
+// individuais).
 async function runSpotifySync(db, clientSecret) {
   const secretsSnap = await db.ref('kanban/spotify_secrets').get();
   const secrets = secretsSnap.val() || {};
@@ -93,52 +142,50 @@ async function runSpotifySync(db, clientSecret) {
   if (!uids.length) return;
 
   const updates = {};
-
   await Promise.allSettled(
     uids.map(async (uid) => {
-      const refreshToken = secrets[uid]?.refresh_token;
-      if (!refreshToken) return;
-
-      const tok = await _getAccessToken(uid, refreshToken, clientSecret);
-      if (tok.error) {
-        if (tok.error === 'invalid_grant') {
-          console.warn('[spotifySync] refresh_token revogado pra uid', uid, '— desconectando.');
-          Object.assign(updates, await buildDisconnectUpdates(db, uid));
-        } else {
-          console.error('[spotifySync] falha ao renovar access_token pra uid', uid, ':', tok.error);
-        }
-        return;
-      }
-      if (tok.newRefreshToken && tok.newRefreshToken !== refreshToken) {
-        updates['kanban/spotify_secrets/' + uid + '/refresh_token'] = tok.newRefreshToken;
-      }
-
-      const now = await _fetchNowPlaying(tok.token);
-      if (now.error) {
-        console.error('[spotifySync] falha ao consultar currently-playing pra uid', uid, ':', now.error);
-        return;
-      }
-
-      const status = {
-        playing: now.playing,
-        track: now.track || null,
-        artist: now.artist || null,
-        albumArt: now.albumArt || null,
-        updatedAt: new Date().toISOString(),
-      };
-
-      const squadsSnap = await db.ref('kanban/usuarios/' + uid + '/squads').get();
-      const squadsMap = squadsSnap.val() || {};
-      Object.keys(squadsMap)
-        .filter((sq) => squadsMap[sq] === true)
-        .forEach((sq) => {
-          updates['kanban/squads/' + sq + '/dados/spotify_now/' + uid] = status;
-        });
-      updates['kanban/painel/spotify_now_geral/' + uid] = status;
+      const frag = await _syncOneUser(db, clientSecret, uid, secrets[uid]?.refresh_token);
+      Object.assign(updates, frag);
     })
   );
 
   if (Object.keys(updates).length) await db.ref().update(updates);
 }
 
-module.exports = { runSpotifySync, _accessTokenCache };
+// uid -> timestamp do último sync manual disparado por essa pessoa (ao
+// abrir o painel "🎧 Spotify" — ver toggleSpotify() em kanban-dev.html).
+// Só em memória — o objetivo é impedir spam de abrir/fechar o painel
+// repetido, não uma garantia dura; se a instância reciclar, pior caso é
+// permitir um sync a mais, não um bug.
+const _manualSyncCooldown = new Map();
+const MANUAL_SYNC_COOLDOWN_MS = 10000;
+
+// Sync sob demanda de 1 pessoa só — não espera o próximo tick do
+// spotifySync (que roda a cada 30s, ver sync.js). `uid` é sempre resolvido
+// pelo chamador a partir do ID token decodificado (ver syncNow.js), nunca
+// aceito como parâmetro vindo de fora sem verificação — senão qualquer
+// pessoa logada poderia forçar sync de outro uid.
+async function syncOneUserNow(db, clientSecret, uid) {
+  const last = _manualSyncCooldown.get(uid);
+  if (last && Date.now() - last < MANUAL_SYNC_COOLDOWN_MS) {
+    return { skipped: true, reason: 'cooldown' };
+  }
+  _manualSyncCooldown.set(uid, Date.now());
+
+  const secretSnap = await db.ref('kanban/spotify_secrets/' + uid).get();
+  const secret = secretSnap.val();
+  if (!secret || !secret.refresh_token) {
+    return { skipped: true, reason: 'not_connected' };
+  }
+
+  const updates = await _syncOneUser(db, clientSecret, uid, secret.refresh_token);
+  if (Object.keys(updates).length) await db.ref().update(updates);
+  return { skipped: false };
+}
+
+module.exports = {
+  runSpotifySync,
+  syncOneUserNow,
+  _accessTokenCache,
+  _resetManualSyncCooldown: () => { _manualSyncCooldown.clear(); },
+};

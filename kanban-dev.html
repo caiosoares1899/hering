@@ -4276,7 +4276,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.237-dev</div>
+<div class="version">v8.30.238-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10179,6 +10179,13 @@ async function toggleSpotify(){
         const snap = await fbGet('kanban/usuarios/'+cu.uid+'/spotify_connected');
         _spotifySelfConnected = snap.val()===true;
       }catch(e){ _spotifySelfConnected=false; }
+      // Fire-and-forget — não espera o próximo tick do sync periódico
+      // (30s) pra refletir o que a própria pessoa está ouvindo agora.
+      // Não bloqueia o painel abrir nem re-renderiza nada aqui: o
+      // listener ao vivo (_spotifyAttach, logo abaixo) já reflete a
+      // escrita assim que ela chegar no RTDB, igual a qualquer outra
+      // atualização do sync periódico.
+      if(_spotifySelfConnected) _spotifySyncNow();
     }
     if(_spotifyContent==='ouvindo') _spotifyAttach(_spotifyScope);
     renderSpotifyPanel();
@@ -10437,6 +10444,18 @@ async function sugerirSpotifyTrack(track, btnEl){
 const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 const SPOTIFY_REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyOauthCallback';
 const SPOTIFY_DISCONNECT_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyDisconnect';
+const SPOTIFY_SYNC_NOW_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifySyncNow';
+// Sync sob demanda da PRÓPRIA pessoa, disparado ao abrir o painel (ver
+// toggleSpotify()) — silencioso de propósito: falha aqui não é grave (o
+// sync periódico de 30s cobre de qualquer forma), não vale um toast de
+// erro por causa disso.
+async function _spotifySyncNow(){
+  const cu=window._currentUser; if(!cu) return;
+  try{
+    const token = await cu.getIdToken();
+    await fetch(SPOTIFY_SYNC_NOW_URL, {method:'POST', headers:{'Authorization':'Bearer '+token}});
+  }catch(e){ console.warn('[spotify] sync sob demanda falhou (silencioso, não crítico):', e); }
+}
 async function connectSpotify(){
   const cu=window._currentUser; if(!cu){ showToast('Faça login antes de conectar o Spotify.'); return; }
   const state = (crypto.randomUUID ? crypto.randomUUID() : ('st'+Date.now()+Math.random().toString(36).slice(2)));

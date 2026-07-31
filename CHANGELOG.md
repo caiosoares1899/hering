@@ -294,6 +294,59 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.238-dev — 2026-07-31 · PR #114
+Primeira das 4 frentes de UX/performance discutidas e aprovadas antes de
+implementar: **sync sob demanda ao abrir o painel** + **cadência do sync
+periódico reduzida de 60s pra 30s efetivos**. As outras 2 frentes
+(controle de playback pessoal, "DJ" sincronizado descartado) ficam pra
+próxima leva.
+
+- **`functions/spotify/syncCore.js`**: refactor — lógica por-uid extraída
+  de `runSpotifySync()` pra `_syncOneUser(db, clientSecret, uid,
+  refreshToken)` (monta as atualizações RTDB sem aplicar; quem chama
+  decide como aplicar). `runSpotifySync()` continua com o mesmo
+  comportamento externo exato (testes existentes passaram sem alteração
+  nenhuma, confirmando que o refactor não mudou nada observável). Nova
+  `syncOneUserNow(db, clientSecret, uid)`: sincroniza 1 pessoa só, com
+  rate limit de 10s por uid (`Map` em memória, mesmo espírito dos caches
+  de token já existentes).
+- **`functions/spotify/syncNow.js`** (novo): `spotifySyncNow`, `onRequest`
+  autenticado por ID token — o `uid` sincronizado é **sempre** o do token
+  decodificado, nunca aceito do corpo da requisição (evita alguém forçar
+  sync de outro uid). Deploy isolado:
+  `firebase deploy --only functions:spotifySyncNow`.
+- **`functions/spotify/sync.js`**: cadência efetiva mudou de 60s pra 30s
+  — como o Cloud Scheduler não agenda sub-minuto via cron (mínimo é 1
+  minuto), cada invocação agora roda `runSpotifySync()` duas vezes, com
+  uma pausa de 30s no meio (`timeoutSeconds: 90`, margem sobre o default
+  de 60s que ficaria justo). Número de invocações do Scheduler não muda
+  (continua 1x/min, não afeta o limite gratuito de jobs); custo de API
+  calculado antes de decidir (ver discussão) — ~43k chamadas/dia pra um
+  squad de ~10 pessoas conectadas, longe de qualquer limite conhecido do
+  Spotify ou do free tier do Firebase/GCP.
+- **UI (`kanban-dev.html`)**: `toggleSpotify()` dispara `_spotifySyncNow()`
+  (fire-and-forget, silencioso em caso de falha) quando a própria pessoa
+  abre o painel e já está conectada — não espera o próximo tick do sync
+  periódico pra refletir o que ela está ouvindo agora. Não bloqueia o
+  painel abrir nem re-renderiza nada diretamente: o listener ao vivo já
+  existente reflete a escrita assim que ela chegar no RTDB.
+
+Verificado com `node --test` (9 casos novos em `sync.test.js`, cobrindo
+`syncOneUserNow`: sincroniza só o uid pedido sem mexer em outros,
+`skipped:not_connected` sem nem chamar o Spotify, cooldown de 10s
+respeitado, cooldown é por uid — 113/113 no total da suíte de functions)
+e Playwright (6 cenários: dispara o sync-now com o Bearer certo ao abrir
+conectada, não dispara nada se não conectada, falha no sync-now não
+derruba o painel abrir).
+
+**Confirmado antes de implementar** (ver discussão): conta dona do app
+Spotify (kicaio@hotmail.com) tem Premium ativo — sem risco do app parar
+de funcionar por esse requisito (obrigatório desde fev/2026 pra apps em
+Development Mode). `/me/player/currently-playing` conferido contra o
+changelog oficial da Web API — não fez parte da leva de migração de
+endpoints de fevereiro/2026 (só afetou `/playlists/{id}/tracks` e
+outros, já corrigidos no PR #112).
+
 ### v8.30.237-dev — 2026-07-31 · PR #110
 Fix de diagnóstico na Rádio do Maré: primeiro teste real de "sugerir"
 (depois de conectar a conta dona e registrar 2 playlists reais) voltou
