@@ -300,6 +300,44 @@ Segunda prova (após o card vazio) de que a cautela do prompt se traduz em
 julgamento coerente também num cenário onde "parece óbvio" seria fácil de
 atalhar.
 
+## Cenário de julgamento: ambiguidade entre mover coluna e checklist
+
+`scripts/llmRealSystemPromptV1AmbiguidadeMoverOuChecklistDryRunContraSquadDev.js`
+— terceiro cenário, mesmo padrão dos anteriores. Os dois cenários
+anteriores testaram extremos (pedido totalmente aberto/card vazio; pergunta
+objetiva com checklist quase completo). Este testa uma ambiguidade
+genuína **entre duas ações concretas**, não entre agir e não agir: a
+tarefa "Termina esse card pra mim." pode significar mover_coluna pra
+"Concluído" OU marcar o que falta no checklist como feito
+(checklist_item/agent_status) — sem contexto adicional, não tem uma
+leitura obviamente certa.
+
+Calibração deliberada da frase: evitamos "marca esse card como
+concluído" porque "concluído" ecoa literalmente o nome da coluna
+(`COL_NAMES.done = 'Concluído'`), o que enviesaria o modelo (e a leitura
+do teste) pra "mover coluna" como resposta óbvia, matando a ambiguidade
+que o cenário quer testar. "Terminar" não aponta pra nenhuma coluna
+específica. Roda contra o mesmo card `c1785433909974`, deliberadamente
+sem resetar o checklist deixado pelo cenário anterior (decisão discutida
+com o usuário) — o estado "quase pronto" pode até reforçar a ambiguidade,
+já que tanto "só falta 1 item, marca ele" quanto "já tá quase pronto,
+pode mover" ficam plausíveis.
+
+Observa: se usa `ler_card` antes de decidir; se reconhece a ambiguidade
+real e trava em `perguntar_humano` em vez de escolher uma das duas
+interpretações sozinho; e — a parte que exige leitura humana, o script só
+imprime o texto pra conferência — se a pergunta feita nomeia CLARAMENTE
+as duas leituras possíveis ("pode significar X ou Y, qual você quer?"),
+não só "não sei o que fazer".
+
+Verificado antes de pedir execução real: mesma lógica rodada contra um
+fake db (checklist 3-de-4 marcado) com um cliente scriptado simulando a
+sequência esperada (`ler_card` → `perguntar_humano` com a pergunta
+completa) — confirma que o script extrai e imprime o texto da pergunta
+corretamente.
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -309,5 +347,6 @@ ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
 teste). Esqueleto do roteamento de modelo (`escolheClienteParaTarefa()`)
 adicionado, hardcoded pra `sonnet`. Cenário de julgamento com checklist
 quase completo validado contra o LLM real — comportamento cauteloso
-confirmado. Próximos passos ficam
+confirmado. Terceiro cenário (ambiguidade mover x checklist) escrito,
+aguardando execução real. Próximos passos ficam
 pra uma próxima sessão.
