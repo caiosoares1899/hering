@@ -902,6 +902,35 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Novo cenário de julgamento: ambiguidade mover coluna x checklist
+Adiciona
+`scripts/llmRealSystemPromptV1AmbiguidadeMoverOuChecklistDryRunContraSquadDev.js`
+— terceiro cenário, mesmo padrão dos anteriores (system prompt v1 de
+verdade, `dryRun` fixo, squad `dev`). Os dois cenários anteriores
+testaram extremos (pedido aberto/card vazio; pergunta objetiva com
+checklist quase completo); este testa ambiguidade genuína entre duas
+ações concretas: "Termina esse card pra mim." pode significar
+`mover_coluna` pra "Concluído" OU marcar o que falta no checklist como
+feito (`checklist_item`/`agent_status`).
+
+Frase calibrada em discussão com o usuário antes de escrever o script —
+"marca esse card como concluído" foi descartada por ecoar literalmente o
+nome da coluna (`COL_NAMES.done = 'Concluído'`), o que enviesaria a
+resposta óbvia pra "mover coluna" e mataria a ambiguidade pretendida.
+Roda contra o mesmo card `c1785433909974`, deliberadamente sem resetar o
+checklist do cenário anterior (decisão combinada) — o estado "quase
+pronto" pode reforçar a ambiguidade em vez de atrapalhar.
+
+Observa: uso de `ler_card` antes de decidir; se reconhece a ambiguidade e
+trava em `perguntar_humano` em vez de escolher uma interpretação sozinho;
+e imprime o texto completo da pergunta pra conferência manual se nomeia
+claramente as duas leituras possíveis. Verificado contra fake db antes de
+pedir execução real (cliente scriptado simulando `ler_card` →
+`perguntar_humano`, confirma extração/impressão correta do texto da
+pergunta).
+
+Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+
 ### 2026-07-30 · Confirma validação real: checklist quase completo
 Confirma a execução do
 `scripts/llmRealSystemPromptV1ChecklistQuaseProntoDryRunContraSquadDev.js`
