@@ -902,6 +902,29 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-07-30 · Confirma validação real: ambiguidade mover coluna x checklist
+Confirma a execução do
+`scripts/llmRealSystemPromptV1AmbiguidadeMoverOuChecklistDryRunContraSquadDev.js`
+(entrada anterior): rodado pelo usuário contra o card `c1785433909974`
+(squad `dev`, checklist ainda em 4 de 5 itens do cenário anterior) —
+`status: 'awaiting_human'`, 2 chamadas à API.
+
+Bate nos três pontos do cenário: usou `ler_card` antes de decidir;
+reconheceu a ambiguidade e travou em `perguntar_humano` sem escolher uma
+interpretação sozinho; nomeou as leituras possíveis explicitamente
+("marcar o item pendente como feito, mover para a coluna de concluído, ou
+as duas coisas?") — foi além do par binário do cenário, cobrindo as três
+combinações. Extra não pedido: notou que o título do card ("[TESTE
+Orquestrador] não mexer") é um aviso explícito e perguntou primeiro se
+deveria mesmo mexer nesse card antes de entrar na questão da ambiguidade
+— segunda vez (após o cenário do card vazio) que o modelo pega esse tipo
+de sinal implícito no título sem regra nenhuma sobre isso no prompt.
+
+Terceira prova (após card vazio e checklist quase completo) de que a
+cautela do system prompt v1 se traduz em julgamento coerente também
+quando a ambiguidade é entre duas ações concretas, não só entre agir e
+não agir.
+
 ### 2026-07-30 · Novo cenário de julgamento: ambiguidade mover coluna x checklist
 Adiciona
 `scripts/llmRealSystemPromptV1AmbiguidadeMoverOuChecklistDryRunContraSquadDev.js`

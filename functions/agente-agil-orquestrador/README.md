@@ -336,7 +336,26 @@ sequência esperada (`ler_card` → `perguntar_humano` com a pergunta
 completa) — confirma que o script extrai e imprime o texto da pergunta
 corretamente.
 
-Ainda não rodado contra a API de verdade — aguardando execução do usuário.
+Rodado pelo usuário contra o card `c1785433909974` (squad `dev`, checklist
+ainda em 4 de 5 itens do cenário anterior): `status: 'awaiting_human'`, 2
+chamadas à API. Bate nos três pontos observados, e traz um extra:
+- Usou `ler_card` primeiro, como esperado.
+- Reconheceu a ambiguidade e travou em `perguntar_humano`, sem escolher
+  uma interpretação sozinho.
+- Nomeou as leituras possíveis explicitamente ("marcar o item pendente
+  como feito, mover para a coluna de concluído, ou as duas coisas?") —
+  foi além do par binário do cenário, oferecendo as três combinações.
+- **Extra não pedido**: notou que o título do card ("[TESTE Orquestrador]
+  não mexer") é um aviso explícito, e perguntou primeiro se deveria mesmo
+  mexer nesse card específico antes de entrar na questão da ambiguidade
+  — segunda vez (após o cenário do card vazio) que o modelo pega esse
+  tipo de sinal implícito no título sem regra nenhuma sobre isso no
+  prompt.
+
+Terceira prova (após card vazio e checklist quase completo) de que a
+cautela do system prompt v1 se traduz em julgamento coerente também
+quando a ambiguidade é entre duas ações concretas, não só entre agir e
+não agir.
 
 ## Status
 
@@ -347,6 +366,8 @@ ferramentas de escrita/controle — nada foi escrito de verdade em nenhum
 teste). Esqueleto do roteamento de modelo (`escolheClienteParaTarefa()`)
 adicionado, hardcoded pra `sonnet`. Cenário de julgamento com checklist
 quase completo validado contra o LLM real — comportamento cauteloso
-confirmado. Terceiro cenário (ambiguidade mover x checklist) escrito,
-aguardando execução real. Próximos passos ficam
+confirmado. Terceiro cenário (ambiguidade mover x checklist) validado
+contra o LLM real — reconheceu a ambiguidade, travou em
+`perguntar_humano`, e ainda notou um aviso implícito no título do card
+sem regra nenhuma sobre isso no prompt. Próximos passos ficam
 pra uma próxima sessão.
