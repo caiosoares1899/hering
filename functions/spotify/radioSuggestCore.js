@@ -56,6 +56,33 @@ async function _getOwnerAccessToken(db, clientSecret) {
   return _ownerTokenCache.token;
 }
 
+// Só roda quando add-track já falhou (custo zero no caminho feliz).
+// Confirma se o dono do token bate com o dono da playlist — a causa mais
+// provável de um 403 aqui (token/escopo certos, allowlist em dia) é a
+// conta conectada como "dona" não ter permissão de ESCRITA nessa
+// playlist específica (não é owner nem colaboradora dela), que é uma
+// exigência real da Web API do Spotify e não algo que o nosso código
+// valida antes de tentar.
+async function _logOwnershipDiagnostic(token, playlistId) {
+  try {
+    const [meRes, plRes] = await Promise.all([
+      fetch('https://api.spotify.com/v1/me', { headers: { Authorization: 'Bearer ' + token } }),
+      fetch(`https://api.spotify.com/v1/playlists/${playlistId}?fields=name,owner(id,display_name),collaborative`, {
+        headers: { Authorization: 'Bearer ' + token },
+      }),
+    ]);
+    const me = meRes.ok ? await meRes.json() : null;
+    const pl = plRes.ok ? await plRes.json() : null;
+    console.error(
+      '[radioSuggestCore] diagnóstico de permissão —',
+      'token pertence a:', me ? `${me.id} (${me.display_name || 'sem nome'})` : `não deu pra checar (http_${meRes.status})`,
+      '| playlist', playlistId, pl ? `"${pl.name}" pertence a: ${pl.owner.id} (${pl.owner.display_name || 'sem nome'}), collaborative=${pl.collaborative}` : `não deu pra checar (http_${plRes.status})`
+    );
+  } catch (diagErr) {
+    console.error('[radioSuggestCore] diagnóstico de permissão falhou (não afeta o erro original):', diagErr);
+  }
+}
+
 async function suggestTrack(db, clientSecret, playlistId, trackUri) {
   const token = await _getOwnerAccessToken(db, clientSecret);
   const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -65,6 +92,8 @@ async function suggestTrack(db, clientSecret, playlistId, trackUri) {
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
+    console.error('[radioSuggestCore] add_track falhou:', 'playlistId=' + playlistId, 'status=' + res.status, 'token_prefix=' + token.slice(0, 8) + '...');
+    await _logOwnershipDiagnostic(token, playlistId);
     throw new Error('add_track_failed: http_' + res.status + ' ' + body);
   }
   return res.json();
