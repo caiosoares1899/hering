@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.197 — 2026-07-31 · PR #118, #119
+Promove pra prod duas leva de melhorias acumuladas no dev desde a última
+promoção (`v8.30.240-dev` e `v8.30.241-dev`), sem validação manual prévia
+do usuário — promovido direto a pedido, ver ressalva abaixo.
+
+- **PR #118** — usar um modelo salvo da squad dentro de um card já aberto
+  (mescla com o que já existe, nunca sobrescreve) e, no modal de
+  duplicar, escolher a coluna de destino da cópia (+ abrir a cópia
+  automaticamente depois de duplicar). Detalhes completos na entrada
+  `kanban-dev.html v8.30.240-dev` abaixo.
+- **PR #119** — corrige dois bugs reais de gestão de usuário externo:
+  exclusão que não pegava (usuário reaparecia sozinho no próximo login)
+  e adicionar externo numa squad nova que não dava acesso de fato (login
+  continuava redirecionando pra outra squad). Detalhes completos na
+  entrada `kanban-dev.html v8.30.241-dev` abaixo.
+
+`diff kanban.html kanban-dev.html` antes desta mudança mostrou só as
+mudanças dessas duas entradas (mais a string de versão/`VERSION_KEY`) —
+promoção limpa, sem contaminação de trabalho não relacionado.
+
+**Ressalva**: diferente do processo normal (dev-first → validação
+explícita → promoção), essa promoção foi feita a pedido direto do
+usuário logo após o merge do PR #119 pro dev, sem validação manual
+prévia do fix de usuário externo em produção.
+
 ### v8.30.196 — 2026-07-31 · PR #117
 Promove pra prod toda a integração com Spotify, validada em produção
 (conectar, trocar de conta, desconectar, "ouvindo agora" ao vivo, Rádio
@@ -1622,6 +1647,20 @@ entrada `v2.93` abaixo). O bug original foi reproduzido numa squad real
 (`ecomm`), então a validação completa do cenário exato só é possível
 depois de promover pra `painel.html`; aqui a squad `dev` cobre o mesmo
 código/mesmo bug já que a lógica não depende de qual squad é.
+
+### painel.html v2.93 · painel — 2026-07-31
+Promove pra prod o fix de `toggleUserSquad()`/`deleteGlobalUser()`
+validado em `painel-dev.html v2.94` (ver entrada acima) — sincroniza
+`usuarios_publicos` e limpa a whitelist `kanban/squads/{id}/externos`
+correspondente ao desmarcar squad ou excluir usuário global, fechando o
+bug de usuário externo removido que reaparecia sozinho. Patch aplicado
+seletivamente só nessas duas funções (`diff painel.html painel-dev.html`
+confirmou zero diferença nelas depois) — os dois arquivos continuam
+divergindo deliberadamente no resto (banner de dev, "Push manual" que só
+existe em produção, etc.), como sempre.
+
+Promovido sem validação manual prévia — a pedido direto do usuário logo
+após o merge do fix pro dev.
 
 ### painel.html v2.92 · painel — 2026-07-30
 Promove pra prod o fix validado no dev (`v2.93 · painel-dev`): compilado
