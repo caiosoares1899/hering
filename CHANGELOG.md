@@ -294,6 +294,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.237-dev — 2026-07-31 · PR #110
+Fix de diagnóstico na Rádio do Maré: primeiro teste real de "sugerir"
+(depois de conectar a conta dona e registrar 2 playlists reais) voltou
+erro 500 genérico, sem detalhe nenhum acessível fora do Cloud Logging —
+que nem eu nem o usuário tínhamos como consultar diretamente neste
+ambiente. `spotifyRadioSuggest` engolia qualquer erro que não fosse
+`radio_owner_not_connected` e devolvia só `{error:'add_track_failed'}`,
+sem nenhum jeito de saber SE o problema era a troca do token da conta
+dona ou a chamada em si de adicionar a faixa (403 de escopo? playlist
+não editável pela conta dona? etc.).
+
+- **`functions/spotify/radioSuggest.js`**: resposta de erro agora inclui
+  `detail` (texto de erro real do Spotify ou da troca de token, truncado
+  em 300 caracteres) — não é segredo nenhum, é só o texto de erro público
+  da API deles. `radioSuggestCore.js` não mudou, só o wrapper que decide
+  o que devolver pro cliente.
+- **UI**: `sugerirSpotifyTrack()` agora mostra esse `detail` direto no
+  toast ("Não deu pra sugerir: ...") em vez da mensagem genérica — o erro
+  real fica visível na hora, sem precisar de ninguém entrar no Firebase
+  Console.
+
+Verificado com Playwright (3 cenários): detail devolvido pela function
+aparece no toast; `radio_owner_not_connected` continua com a mensagem
+específica de sempre (não regrediu); resposta sem body parseável cai no
+fallback genérico sem quebrar.
+
+**Ainda não é a causa raiz do 500 relatado** — só o instrumento pra
+descobrir qual é, sem depender de acesso ao Cloud Logging. Aguardando o
+usuário rodar de novo com este fix em produção pra ver o `detail` exato.
+
 ### v8.30.236-dev — 2026-07-31 · PR #109
 **Rádio do Maré — Nível 1**: nova funcionalidade, playlist colaborativa
 real do Spotify (não confundir com "ouvindo agora" — aqui NÃO é ao vivo,

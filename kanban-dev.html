@@ -4276,7 +4276,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.236-dev</div>
+<div class="version">v8.30.237-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10411,7 +10411,11 @@ async function sugerirSpotifyTrack(track, btnEl){
     });
     if(!res.ok){
       let msg='Não deu pra sugerir agora — tenta de novo.';
-      try{ const body=await res.json(); if(body?.error==='radio_owner_not_connected') msg='A Rádio do Maré ainda não foi configurada (conta dona não conectada).'; }catch(e){}
+      try{
+        const body=await res.json();
+        if(body?.error==='radio_owner_not_connected') msg='A Rádio do Maré ainda não foi configurada (conta dona não conectada).';
+        else if(body?.detail) msg='Não deu pra sugerir: '+body.detail;
+      }catch(e){}
       throw new Error(msg);
     }
     showToast('🎵 "'+track.name+'" sugerida pra playlist!');
