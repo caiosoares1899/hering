@@ -19,13 +19,31 @@ conecta a própria conta (opt-in); quem não conectou não aparece.
   TODOS os squads que a pessoa participa (`usuarios/{uid}/squads` é
   multi-squad, sem "squad principal"). "Trocar de conta" reusa o mesmo
   fluxo de conexão — o `.set()` do callback já sobrescreve.
-- **Sync**: `sync.js`/`syncCore.js` (`spotifySync`) — `onSchedule`, a
-  cada 1 minuto (mínimo do Cloud Scheduler). Renova o `access_token` por
-  pessoa conectada (cacheado em memória — dura ~1h, não precisa renovar
-  todo tick), consulta `GET /v1/me/player/currently-playing`, escreve em
-  `spotify_now` (por squad) + `spotify_now_geral`. Autocorreção: se o
-  `refresh_token` vier `invalid_grant` (revogado direto pelo Spotify),
-  desconecta a pessoa por completo.
+- **Sync periódico**: `sync.js`/`syncCore.js` (`spotifySync`) —
+  `onSchedule`, gatilho do Cloud Scheduler a cada 1 minuto (mínimo que o
+  Scheduler permite via cron — não dá pra agendar sub-minuto
+  diretamente), mas com **cadência efetiva de 30s**: cada invocação roda
+  `runSpotifySync()` duas vezes, com uma pausa de 30s no meio
+  (`timeoutSeconds: 90`, dá margem — o default de 60s ficaria justo
+  demais). Mesmo custo total de chamadas por dia que rodar nativamente a
+  cada 30s (número calculado e aprovado antes de implementar: pra um
+  squad de ~10 pessoas conectadas, ~43k chamadas/dia — bem longe de
+  qualquer limite conhecido do Spotify e do free tier do Firebase/GCP).
+  Renova o `access_token` por pessoa conectada (cacheado em memória —
+  dura ~1h, não precisa renovar todo tick), consulta
+  `GET /v1/me/player/currently-playing`, escreve em `spotify_now` (por
+  squad) + `spotify_now_geral`. Autocorreção: se o `refresh_token` vier
+  `invalid_grant` (revogado direto pelo Spotify), desconecta a pessoa por
+  completo.
+- **Sync sob demanda**: `syncNow.js`/`syncCore.js`
+  (`spotifySyncNow`, função `syncOneUserNow`) — disparado (fire-and-
+  forget) quando a própria pessoa abre o painel, pra não esperar até 30s
+  pelo próximo tick do sync periódico. `uid` sempre resolvido do ID token
+  decodificado (nunca aceito do corpo da requisição — evita forçar sync
+  de outro uid). Rate limit de 10s por uid (`Map` em memória) evita spam
+  de abrir/fechar o painel repetidamente. Reusa a mesma lógica por-uid do
+  sync periódico (`_syncOneUser()`, extraída de `runSpotifySync()`
+  especificamente pra esse reuso).
 - **UI**: painel "🎧 Spotify" no board, tabs Squad/Geral (mesmo padrão do
   Kudos) + sub-toggle "Ouvindo agora"/"Playlist" (ver seção 2). Listener
   ao vivo só existe com o painel aberto (lazy) — diferente do Kudos, que
@@ -130,6 +148,7 @@ do HTML — GitHub Pages só redeploya as páginas estáticas):
 firebase deploy --only functions:spotifyOauthCallback
 firebase deploy --only functions:spotifyDisconnect
 firebase deploy --only functions:spotifySync
+firebase deploy --only functions:spotifySyncNow
 firebase deploy --only functions:spotifyRadioOwnerCallback
 firebase deploy --only functions:spotifyRadioSearch
 firebase deploy --only functions:spotifyRadioSuggest

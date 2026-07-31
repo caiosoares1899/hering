@@ -11,7 +11,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { runSpotifySync, _accessTokenCache } = require('../syncCore');
+const { runSpotifySync, syncOneUserNow, _accessTokenCache, _resetManualSyncCooldown } = require('../syncCore');
 
 function makeFakeDb(initial) {
   const data = JSON.parse(JSON.stringify(initial));
@@ -33,7 +33,7 @@ function makeFakeDb(initial) {
   };
 }
 
-test.beforeEach(() => { _accessTokenCache.clear(); });
+test.beforeEach(() => { _accessTokenCache.clear(); _resetManualSyncCooldown(); });
 
 test('escreve status "tocando" em todos os squads da pessoa + geral, pegando a menor imagem', async () => {
   const db = makeFakeDb({
@@ -166,4 +166,87 @@ test('reusa o access_token em cache entre ticks (não bate no /token de novo den
   await runSpotifySync(db, 'fake-secret');
 
   assert.equal(tokenCalls, 1, 'segundo tick reusa o access_token cacheado, não bate no /token de novo');
+});
+
+// ─── syncOneUserNow (sync sob demanda, disparado ao abrir o painel) ───
+
+test('syncOneUserNow sincroniza só o uid pedido, aplicando o update sozinha (sem esperar outros uids)', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      spotify_secrets: { uidA: { refresh_token: 'rtA' }, uidOutro: { refresh_token: 'rtOutro' } },
+      usuarios: { uidA: { squads: { squadX: true, squadY: true } } },
+    },
+  });
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'atA', expires_in: 3600 }) };
+    }
+    if (String(url).includes('currently-playing')) {
+      return { ok: true, status: 200, json: async () => ({ is_playing: true, item: { name: 'Track X', artists: [{ name: 'Artist X' }], album: { images: [] } } }) };
+    }
+    throw new Error('URL inesperada: ' + url);
+  };
+
+  const result = await syncOneUserNow(db, 'fake-secret', 'uidA');
+
+  assert.deepEqual(result, { skipped: false });
+  assert.equal(db._updateCalls.length, 1);
+  const updates = db._updateCalls[0];
+  assert.equal(updates['kanban/squads/squadX/dados/spotify_now/uidA'].track, 'Track X');
+  assert.ok(updates['kanban/squads/squadY/dados/spotify_now/uidA'], 'fan-out multi-squad também no sync sob demanda');
+  assert.ok(!('kanban/spotify_secrets/uidOutro' in updates), 'não mexe em nenhum outro uid');
+});
+
+test('syncOneUserNow devolve skipped:not_connected sem chamar o Spotify se o uid não tem refresh_token', async () => {
+  const db = makeFakeDb({ kanban: { spotify_secrets: {} } });
+  global.fetch = async () => { throw new Error('não devia chamar o Spotify pra quem não conectou'); };
+
+  const result = await syncOneUserNow(db, 'fake-secret', 'uidNuncaConectou');
+  assert.deepEqual(result, { skipped: true, reason: 'not_connected' });
+});
+
+test('syncOneUserNow respeita o cooldown de 10s — segunda chamada rápida não bate no Spotify de novo', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      spotify_secrets: { uidA: { refresh_token: 'rtA' } },
+      usuarios: { uidA: { squads: {} } },
+    },
+  });
+  let spotifyCalls = 0;
+  global.fetch = async (url) => {
+    spotifyCalls++;
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'atA', expires_in: 3600 }) };
+    }
+    return { ok: true, status: 204 };
+  };
+
+  const r1 = await syncOneUserNow(db, 'fake-secret', 'uidA');
+  const callsAfterFirst = spotifyCalls;
+  const r2 = await syncOneUserNow(db, 'fake-secret', 'uidA');
+
+  assert.deepEqual(r1, { skipped: false });
+  assert.deepEqual(r2, { skipped: true, reason: 'cooldown' });
+  assert.equal(spotifyCalls, callsAfterFirst, 'segunda chamada não gerou nenhuma requisição nova ao Spotify');
+});
+
+test('syncOneUserNow: cooldown é por uid — outra pessoa não é bloqueada pelo cooldown de alguém', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      spotify_secrets: { uidA: { refresh_token: 'rtA' }, uidB: { refresh_token: 'rtB' } },
+      usuarios: { uidA: { squads: {} }, uidB: { squads: {} } },
+    },
+  });
+  global.fetch = async (url) => {
+    if (String(url).includes('accounts.spotify.com/api/token')) {
+      return { ok: true, json: async () => ({ access_token: 'at', expires_in: 3600 }) };
+    }
+    return { ok: true, status: 204 };
+  };
+
+  const r1 = await syncOneUserNow(db, 'fake-secret', 'uidA');
+  const r2 = await syncOneUserNow(db, 'fake-secret', 'uidB');
+
+  assert.deepEqual(r1, { skipped: false });
+  assert.deepEqual(r2, { skipped: false }, 'uidB não é afetado pelo cooldown de uidA' );
 });
