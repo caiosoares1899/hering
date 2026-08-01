@@ -435,6 +435,81 @@ considerada encerrada — o próximo passo natural (fora do escopo desta
 etapa) seria tirar o `dryRun` fixo pra validar o caminho de escrita real,
 decisão que fica pra quando o usuário achar que é hora.
 
+## Cenário 5: risco médio inequívoco (lacuna dos critérios pra sair do dryRun)
+
+Ao discutir os critérios pra sair do `dryRun` fixo, identificamos uma
+lacuna real na bateria de 4 cenários: todos validaram bem o eixo
+"reconhecer quando NÃO agir" (ambiguidade → `perguntar_humano`), mas o
+único caso de ação real simulada foi sempre `comentario` (risco baixo) —
+nenhum cenário tinha validado o modelo escolhendo e "executando" (em
+dryRun) uma ferramenta de risco MÉDIO (`mover_coluna`/`editar_campos`)
+num caso genuinamente sem ambiguidade.
+
+`scripts/llmRealSystemPromptV1MoverColunaInequivocoDryRunContraSquadDev.js`
+— pedido DIRETO e FECHADO ("mova esse card pra Concluído"), não
+aberto/interpretativo, com checklist 100% completo (sem nenhum item
+pendente, diferente do cenário 2). `mover_coluna` exige o id exato da
+coluna de destino; o script resolve isso via `flowLib.doneColumnIds()`
+(mesma fonte de verdade — `flowConfig.doneCols` — que o output
+`mover_coluna` já usa em produção) e informa id + nome no texto da
+tarefa, mesmo padrão do script de múltiplas ferramentas.
+
+**Primeira rodada** rodou contra o card padrão dos scripts anteriores
+(`c1785433909974`) e travou em `perguntar_humano`, citando o título
+"[TESTE Orquestrador] não mexer" — reproduziu o mesmo confound que já
+tinha motivado o cenário de controle da ambiguidade, não testou a
+hipótese pretendida. `cardId` virou **obrigatório** neste script (sem
+default, mesma decisão do script de controle), apontando pro card de
+controle já validado como neutro (`c1785505159707_geo`).
+
+**Segunda rodada**, contra `c1785505159707_geo` (checklist preparado
+100% completo): revelou um **bug técnico real**, não uma questão de
+julgamento — `mover_coluna` falhava em toda tentativa com
+`unknown_output_type` / `Output "undefined" ainda não suportado no v0`.
+O modelo mandou `{coluna: "done"}`, sem o campo `type` que
+`buildWritePlan()` usa pra despachar entre os 7 outputs (união
+discriminada de `agente-agil/schema.js`). No caminho de produção
+(`http.js`) isso nunca falta porque o envelope já passou por
+`schema.js:envelope.parse()` antes de chegar em `buildWritePlan`; no
+orquestrador o input vem direto do tool-use da Anthropic, que só devolve
+os parâmetros que o `input_schema` de cada ferramenta declara — o
+protocolo não reconstitui o nome da própria ferramenta dentro do input.
+`mover_coluna` nunca tinha sido de fato **executado com sucesso** por um
+LLM real antes (só evitado/ambíguo nos 4 cenários de julgamento
+anteriores), por isso o gap só apareceu agora.
+
+Ponto positivo notado apesar do bug: o agente não loopou infinitamente
+nem falhou silenciosamente — explicou o que tentou fazer via
+`comentario`, tentou de novo, e escalou pra `perguntar_humano` relatando
+corretamente que parecia um "problema técnico no ambiente" em vez de
+inventar uma causa. Comportamento de resiliência coerente com o resto
+da bateria.
+
+**Fix** (`tools/realHandlers.js`): `makeRealHandler` já sabe qual
+ferramenta foi chamada (`toolName` vem do protocolo de tool-use, nunca
+é decidido pelo LLM) — passou a reconstituir `{...input, type: toolName}`
+sempre, antes de `buildWritePlan`, no-op quando o modelo também manda o
+campo. Cobre as 7 ferramentas de escrita, não só `mover_coluna`. Teste
+de regressão em `__tests__/realHandlers.test.js` reproduz o input exato
+observado (`{coluna: "done"}`, sem `type`) e confirma que falha sem o
+fix.
+
+**Terceira rodada**, mesmo card, depois do fix: `status: 'done'`, 3
+chamadas à API, sequência `ler_card → mover_coluna → comentario`.
+Bate nos quatro pontos observados:
+- Usou `ler_card` antes de decidir.
+- Escolheu `mover_coluna` sem hesitar — sem ambiguidade real, agiu
+  direto, como o prompt prevê pra risco médio quando o destino é óbvio.
+- Plano de `mover_coluna` aponta pro id de coluna correto (`done`),
+  `dryRun: true` preservado.
+- Explicou o raciocínio via `comentario` ("checklist confirmado 100%
+  completo... movimentação está consistente com o estado do card"), sem
+  inventar nenhuma informação fora do que estava no card/tarefa.
+
+Primeira prova de que a ação de risco médio, e não só a cautela em
+evitá-la, funciona ponta a ponta com LLM real — fechando a lacuna
+identificada na conversa sobre os critérios pra sair do `dryRun`.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -450,6 +525,16 @@ acima): card vazio, checklist quase completo, ambiguidade mover x
 checklist (com aviso "não mexer" no título), e o cenário de controle
 (mesma ambiguidade, sem aviso no título) — que confirmou que a cautela
 observada vem do julgamento geral do prompt, não de reagir a uma
-palavra-chave específica. Próximos passos (tirar o `dryRun` fixo pra
-validar escrita real, ou expandir o vocabulário/prompt) ficam pra
-quando o usuário decidir seguir pra essa próxima fase.
+palavra-chave específica.
+
+Cenário 5 (risco médio inequívoco) fechou a lacuna que faltava: validou
+o modelo executando `mover_coluna` de verdade (em dryRun) sem hesitar
+num caso sem ambiguidade, e no processo encontrou e corrigiu um bug
+técnico real (`makeRealHandler` não reconstituía `type` no input antes
+de `buildWritePlan` — nenhuma ferramenta de risco médio tinha sido
+executada com sucesso por LLM real até então). Com o fix, a validação
+técnica e de comportamento cobre agora os dois eixos: reconhecer quando
+NÃO agir (4 cenários) e agir corretamente quando não há ambiguidade
+(cenário 5). Próximo passo (tirar o `dryRun` fixo pra validar escrita
+real, restrita a um padrão de canário) fica pra quando o usuário decidir
+seguir pra essa próxima fase.
