@@ -56,12 +56,26 @@
 // pontos objetivos (ferramenta escolhida, ordem, conteúdo do plano); a
 // qualidade da explicação do raciocínio exige leitura humana do texto.
 //
+// ACHADO da primeira rodada: o card de teste padrão dos scripts anteriores
+// (c1785433909974) tem título "[TESTE Orquestrador] não mexer" — o mesmo
+// confound que motivou o cenário de controle da ambiguidade (ver README).
+// Rodar ESTE cenário contra ele reintroduz o sinal de cautela que o
+// cenário quer eliminar (o modelo parou em perguntar_humano citando o
+// aviso do título, não a tarefa em si) — não valida a hipótese, só repete
+// o achado do controle anterior. Por isso `cardId` é OBRIGATÓRIO aqui, sem
+// default (mesma decisão de
+// llmRealSystemPromptV1AmbiguidadeControleSemAvisoDryRunContraSquadDev.js,
+// pelo mesmo motivo): use o card de controle já validado como neutro,
+// c1785505159707_geo ("Revisão de conteúdo do blog", sem responsável nem
+// aviso no título — mais limpo que o card padrão pra ESTE cenário
+// especificamente, que não quer nenhum sinal concorrente à tarefa).
+//
 // Pré-requisito: prepare o checklist do card MANUALMENTE antes de rodar —
 // TODOS os itens marcados (0 pendentes). Este script não mexe no card.
 //
 // Uso:
 //   cd functions
-//   ANTHROPIC_API_KEY=sk-ant-... node agente-agil-orquestrador/scripts/llmRealSystemPromptV1MoverColunaInequivocoDryRunContraSquadDev.js [cardId]
+//   ANTHROPIC_API_KEY=sk-ant-... node agente-agil-orquestrador/scripts/llmRealSystemPromptV1MoverColunaInequivocoDryRunContraSquadDev.js <cardId>
 //
 // Custo esperado (ordem de grandeza): ler_card + mover_coluna (+ talvez
 // comentario) — 2-3 tool calls + resposta final, ordem de centavos de
@@ -78,7 +92,10 @@ const { createAnthropicLlmClient } = require('../llmClient');
 const { SYSTEM_PROMPT_V1 } = require('../systemPrompt');
 
 const SQUAD_ID = 'dev';
-const DEFAULT_CARD_ID = 'c1785433909974'; // mesmo card de teste dos scripts anteriores
+// Sem default de propósito — ver nota "ACHADO da primeira rodada" acima.
+// O card padrão dos outros scripts (c1785433909974) tem "não mexer" no
+// título, que confunde o resultado deste cenário especificamente.
+const CARD_ID_SUGERIDO = 'c1785505159707_geo'; // card de controle, título neutro, sem responsável
 const DATABASE_URL = process.env.FIREBASE_DATABASE_URL || 'https://hering-onboarding-default-rtdb.firebaseio.com';
 
 const BAIXO_RISCO = new Set(['comentario', 'checklist_item', 'agent_status']);
@@ -107,7 +124,13 @@ async function pickColunaConcluida(db, squadId, cardKey) {
 }
 
 async function main() {
-  const cardId = process.argv[2] || DEFAULT_CARD_ID;
+  const cardId = process.argv[2];
+  if (!cardId) {
+    console.error(`Uso: node ${__filename.split(require('path').sep).pop()} <cardId>`);
+    console.error(`cardId é obrigatório, sem default — evita repetir sem querer contra o card "não mexer" dos scripts anteriores.`);
+    console.error(`Card sugerido (controle, título neutro, sem responsável): ${CARD_ID_SUGERIDO}`);
+    process.exit(1);
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
