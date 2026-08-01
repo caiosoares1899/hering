@@ -10,7 +10,7 @@
 // estamos validando se o modelo consegue escolher a ferramenta certa dado
 // um pedido claro, não só se o encanamento aceita uma tool call.
 //
-// dryRun continua FIXO em true (tools/realHandlers.js, DRY_RUN_FIXO) — nada
+// dryRun continua true por padrão (tools/realHandlers.js — este script não passa dryRun:false) — nada
 // é escrito de verdade, mesmo com o LLM real decidindo.
 //
 // O system prompt aqui é deliberadamente mínimo: só o suficiente pra

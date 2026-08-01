@@ -20,7 +20,7 @@
 // que o cenário quer testar. "Terminar" não aponta pra nenhuma coluna
 // específica, mantendo as duas leituras genuinamente plausíveis.
 //
-// dryRun continua FIXO em true (tools/realHandlers.js, DRY_RUN_FIXO) —
+// dryRun continua true por padrão (tools/realHandlers.js — este script não passa dryRun:false) —
 // mesmo que o modelo decida mover o card ou marcar algo, nada é escrito
 // de verdade. Mesmos princípios de segurança dos scripts anteriores:
 // ANTHROPIC_API_KEY só de variável de ambiente, nunca logada.

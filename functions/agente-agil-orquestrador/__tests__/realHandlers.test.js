@@ -1,9 +1,12 @@
 // functions/agente-agil-orquestrador/__tests__/realHandlers.test.js
 //
-// Cobertura dos handlers reais (Etapa 2): buildTools({mode:'real', ...}) tem
-// que chamar o mesmo motor de escrita de agente-agil/board.js, mas nunca
-// aplicar nada de verdade nesta fase (DRY_RUN_FIXO). Usa o mesmo fake db de
-// agente-agil/__tests__/fakeDb.js — não duplica a implementação.
+// Cobertura dos handlers reais (Etapa 2 + Etapa 3): buildTools({mode:'real',
+// ...}) tem que chamar o mesmo motor de escrita de agente-agil/board.js.
+// dryRun é parâmetro de verdade desde a Etapa 3, default true — sem passar
+// dryRun explicitamente (Etapa 2, maioria dos testes abaixo), nada é
+// aplicado de verdade; com dryRun:false, aplica de verdade (ver teste
+// dedicado). Usa o mesmo fake db de agente-agil/__tests__/fakeDb.js — não
+// duplica a implementação.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -54,6 +57,36 @@ test('handler real devolve card_not_found quando o cardId não existe no squad',
   const result = await comentario.handler({ type: 'comentario', texto: 'Oi' });
 
   assert.deepEqual(result, { ok: false, error: 'card_not_found', cardId: 'card-que-nao-existe', squadId: 'dev' });
+});
+
+test('handler real com dryRun:false escreve DE VERDADE no db (Etapa 3 — default continua true quando omitido)', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const comentario = tools.find((t) => t.name === 'comentario');
+
+  const result = await comentario.handler({ type: 'comentario', texto: 'Escrita real de teste' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.dryRun, false);
+  assert.equal(result.applied, 1);
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  const comments = Object.values(cardAfter.comments || {});
+  assert.equal(comments.length, 1, 'dryRun:false deveria ter escrito o comentário de verdade no fake db');
+  assert.equal(comments[0].text, 'Escrita real de teste');
+  assert.ok(cardAfter.updatedAt, 'applyWritePlan deveria carimbar updatedAt do card');
+});
+
+test('omitir dryRun continua default true (comportamento de todos os scripts/testes anteriores preservado)', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' }); // sem dryRun explícito
+  const comentario = tools.find((t) => t.name === 'comentario');
+
+  const result = await comentario.handler({ type: 'comentario', texto: 'Não deveria escrever' });
+
+  assert.equal(result.dryRun, true);
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.deepEqual(cardAfter.comments, {}, 'sem dryRun explícito, nada deveria ser escrito de verdade');
 });
 
 test('handler real de mover_coluna funciona mesmo quando o LLM não manda "type" no input (achado real: protocolo de tool-use da Anthropic não reconstitui o nome da ferramenta dentro do input)', async () => {

@@ -12,8 +12,8 @@
 // call -> handler real -> buildWritePlan) contra o FORMATO REAL dos dados do
 // squad 'dev' — card de verdade, criado manualmente pelo painel/board — em
 // vez de um fake db montado à mão (isso já está coberto em
-// __tests__/realHandlers.test.js). dryRun continua fixo em true
-// (DRY_RUN_FIXO, ver tools/realHandlers.js): NADA é escrito de verdade,
+// __tests__/realHandlers.test.js). dryRun continua true por padrão$
+// (este script não passa dryRun:false, ver tools/realHandlers.js): NADA é escrito de verdade,
 // mesmo rodando contra o Firebase real. O cliente LLM também continua
 // scriptado (não o real) — decisão deliberada, ligar o LLM de verdade é um
 // passo futuro separado, com system prompt e visão de produto ainda por

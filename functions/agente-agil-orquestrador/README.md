@@ -510,6 +510,57 @@ Primeira prova de que a ação de risco médio, e não só a cautela em
 evitá-la, funciona ponta a ponta com LLM real — fechando a lacuna
 identificada na conversa sobre os critérios pra sair do `dryRun`.
 
+## Etapa 3: `dryRun` vira parâmetro de verdade
+
+Com o cenário 5 validado (e o bug de `type` corrigido), o usuário
+autorizou explicitamente tirar o `dryRun` fixo — com um desenho
+específico combinado antes de qualquer código, não uma liberação geral:
+
+1. `dryRun` vira parâmetro de verdade em `makeRealHandler`/`buildTools`,
+   mesmo padrão do kill switch (`enabled` em `loop.js`/`limits.js`):
+   default `true`, nunca lido de um global escondido — quem quer escrita
+   real precisa passar `dryRun: false` explicitamente em CADA chamada.
+   `DRY_RUN_FIXO` (a constante antiga) deixou de existir; todo script
+   anterior a este commit não passa `dryRun` nenhum, então continua se
+   comportando exatamente como antes (plano montado, nunca aplicado).
+   Quando `dryRun: false`, o handler chama `applyWritePlan()` de verdade
+   (mesmo padrão de `http.js`: monta `cardMeta` com `cardPath`/`cardId`/
+   `squadId` pra carimbar `updatedAt`/`cards_updated_at`, senão o
+   delta-sync do cliente nunca percebe a escrita).
+2. Primeira escrita real restrita a um padrão de canário, não uma
+   liberação pro squad `dev` inteiro:
+   `scripts/escritaReal1ComentarioContraSquadDev.js` — mesmo card
+   combinado (`c1785505159707_geo`), invocação manual (gatilho automático
+   é decisão futura separada), e o toolset passado ao loop é FILTRADO em
+   código pra só `ler_card` + `comentario` + `perguntar_humano` —
+   `mover_coluna`/`editar_campos`/etc. nem aparecem como opção pro modelo
+   nesta rodada. Não é uma questão de confiar no julgamento do modelo pra
+   se auto-restringir a baixo risco (isso já foi validado no cenário 5) —
+   é a PRIMEIRA escrita real de qualquer tipo, então a restrição fica
+   reforçada em código, não só no system prompt. O pedido em si é real
+   ("resume o status desse card"), não uma instrução sintética tipo "chame
+   a ferramenta comentario" — a ideia é ver o modelo escolher `comentario`
+   porque é a ação certa pro pedido.
+3. O script exige confirmação interativa (`readline`, precisa digitar
+   `ESCREVER` — não só Enter) antes de chamar o LLM, lembrando
+   explicitamente de deixar `kanban-dev.html?squad=dev` aberto e olhando
+   ao vivo enquanto roda.
+4. `mover_coluna` real (toolset completo, mesmo padrão canário do cenário
+   5) fica pra um próximo script, só depois deste primeiro sair limpo —
+   decisão sequencial, não implementado ainda de propósito.
+5. Continua restrito ao squad `dev` — nenhuma mudança toca `SQUAD_ID`
+   default (`'ecomm'`) nem `http.js`.
+
+Verificado contra fake db + cliente scriptado antes de entregar pro
+usuário rodar: toolset filtrado corretamente (sem `mover_coluna`/
+`editar_campos` vazando pro modelo), `comentario` com `dryRun:false`
+escreve de verdade no fake db, `updatedAt`/`cards_updated_at`
+carimbados. Dois testes novos em `__tests__/realHandlers.test.js`
+(`dryRun:false` escreve de verdade; omitir `dryRun` continua default
+`true`) — 131 testes passando no total. Ainda não rodado contra o
+Firebase real com LLM real — isso fica pro usuário, com o card aberto ao
+vivo, como combinado.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -535,6 +586,11 @@ de `buildWritePlan` — nenhuma ferramenta de risco médio tinha sido
 executada com sucesso por LLM real até então). Com o fix, a validação
 técnica e de comportamento cobre agora os dois eixos: reconhecer quando
 NÃO agir (4 cenários) e agir corretamente quando não há ambiguidade
-(cenário 5). Próximo passo (tirar o `dryRun` fixo pra validar escrita
-real, restrita a um padrão de canário) fica pra quando o usuário decidir
-seguir pra essa próxima fase.
+(cenário 5).
+
+Etapa 3 (ver seção acima) tirou o `dryRun` fixo — agora é parâmetro de
+verdade, default `true`. Primeira escrita real (canário: toolset
+restrito a baixo risco, confirmação interativa, mesmo card conhecido)
+implementada e verificada contra fake db; rodar contra o Firebase real
+fica pro usuário. `mover_coluna` real fica pra um próximo script, só
+depois deste primeiro sair limpo.

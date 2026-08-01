@@ -21,7 +21,7 @@
 //   - Qual ferramenta escolhe no fim: comentario (relata o que viu) ou
 //     mover_coluna (decide agir).
 //
-// dryRun continua FIXO em true (tools/realHandlers.js, DRY_RUN_FIXO) —
+// dryRun continua true por padrão (tools/realHandlers.js — este script não passa dryRun:false) —
 // mesmo que o modelo decida mover o card, nada é escrito de verdade.
 // Mesmos princípios de segurança dos scripts anteriores:
 // ANTHROPIC_API_KEY só de variável de ambiente, nunca logada.

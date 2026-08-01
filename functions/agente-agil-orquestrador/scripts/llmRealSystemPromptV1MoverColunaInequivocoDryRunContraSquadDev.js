@@ -37,7 +37,7 @@
 //   - Se o plano de escrita (`output.plan`) gerado pra mover_coluna está
 //     correto: campo/coluna de destino batem com o id informado na tarefa.
 //
-// dryRun continua FIXO em true (tools/realHandlers.js, DRY_RUN_FIXO) —
+// dryRun continua true por padrão (tools/realHandlers.js — este script não passa dryRun:false) —
 // mesmo que o modelo mova o card, nada é escrito de verdade. Mesmos
 // princípios de segurança dos scripts anteriores: ANTHROPIC_API_KEY só de
 // variável de ambiente, nunca logada.
