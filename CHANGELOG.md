@@ -377,6 +377,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.246-dev — 2026-08-01
+Corrige outro bug real reportado testando o `v8.30.245-dev`: arquivar
+um card funcionava na hora (aparecia certo em Arquivados), mas depois
+de recarregar a página o card voltava pro board como se nunca tivesse
+sido arquivado.
+
+**Causa raiz**: `_twoPhaseCardsLoad()` usa o cache local (IndexedDB)
+como fallback pra qualquer id que não esteja em `toFetch` — e, desde o
+`v8.30.244-dev`, arquivado NUNCA entra em `toFetch` (de propósito, ver
+entrada anterior). Só que um card que ERA ativo (e por isso já tinha
+sido cacheado nesse device, com `archived` falso/ausente) e DEPOIS foi
+arquivado continuava usando essa versão ANTIGA do cache — o
+recarregamento nunca ia buscar a versão atual (com `archived:true`)
+porque, sendo arquivado agora, ele foi excluído de `toFetch` também.
+Resultado: o card "ressuscitava" como ativo a cada reload, mesmo já
+arquivado de verdade no Firebase.
+
+**Fix**: ao decidir se usa a cópia em cache pra um id atualmente
+arquivado, `_twoPhaseCardsLoad()` agora só aceita o cache se ELE MESMO
+já reflete `archived:true` — senão, fica de fora (deferido de verdade,
+como deveria), buscado sob demanda por `_ensureArchivedCardsLoaded()`
+quando alguém abrir Arquivados. Cards ativos continuam usando o cache
+normalmente (sem mudança nesse caminho). De quebra,
+`_ensureArchivedCardsLoaded()` agora também regrava o cache local
+depois de buscar um arquivado — sem isso, o mesmo card ficaria pedindo
+a rede de novo toda sessão que alguém abrisse Arquivados, pra sempre.
+
+Testado via Playwright (7 cenários) reproduzindo o cenário exato
+relatado: card ativo carregado e cacheado → arquivado (remoto muda,
+cache local fica desatualizado de propósito no teste) → reload
+simulado confirma que NÃO reaparece no board → abrir Arquivados busca
+a versão correta → reload seguinte confirma que o cache já corrigido
+não gera fetch de rede de novo E o card continua corretamente fora do
+board ativo.
+
 ### v8.30.245-dev — 2026-08-01
 Corrige bug real reportado ao testar o `v8.30.244-dev`: clicar em
 "📦 Arquivados" quebrava com `Uncaught ReferenceError:

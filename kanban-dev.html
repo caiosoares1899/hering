@@ -4289,7 +4289,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.245-dev</div>
+<div class="version">v8.30.246-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6083,7 +6083,18 @@ let _cardsSyncDebounce = null;
     _liveArchivedIds = new Set(Object.keys(remoteArchived));
     _cardsByKey = {};
     remoteIds.forEach(id=>{
-      const card = fetched[id] || cachedCardsById[id];
+      let card = fetched[id];
+      if(!card && cachedCardsById[id]){
+        // BUG DE PRODUÇÃO: um card que MUDOU pra arquivado nunca mais entra em
+        // toFetch (ver _planCardsDelta) -- mas se ele já estava em cache de
+        // QUANDO ERA ATIVO (cachedCardsById[id].archived ainda falso/ausente),
+        // usar esse cache aqui faria o card reaparecer no board como ativo
+        // depois de um reload, mesmo já arquivado no Firebase. Só usa o cache
+        // de um id atualmente arquivado se ELE MESMO já reflete archived:true
+        // -- senão fica de fora (deferido de verdade, buscado sob demanda por
+        // _ensureArchivedCardsLoaded quando alguém abrir Arquivados).
+        if(!(remoteArchived||{})[id] || cachedCardsById[id].archived) card = cachedCardsById[id];
+      }
       if(card) _cardsByKey[remoteIndex[id]] = card;
     });
     window._cardsByKey = _cardsByKey;
@@ -6187,6 +6198,11 @@ let _cardsSyncDebounce = null;
         // suprimiria justamente a atualização que precisamos garantir aqui.
         const existingIds = new Set(cards.map(c=>c&&c.id));
         fetchedCards.forEach(c=>{ if(c && c.id && !existingIds.has(c.id)) cards.push(c); });
+        // Regrava o cache local JÁ com a versão correta (archived:true) --
+        // sem isso, um card que só existia em cache de QUANDO ERA ATIVO
+        // (ver checagem em _twoPhaseCardsLoad) continuaria sendo buscado de
+        // novo pela rede TODA sessão que abrir Arquivados, pra sempre.
+        _persistCardsCacheFromCurrent();
       }
     })();
     try{ await _archivedLoadInFlight; }
