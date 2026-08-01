@@ -377,6 +377,58 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.244-dev — 2026-08-01
+Deixa os cards arquivados de fora da carga inicial do board — só busca
+sob demanda quando alguém realmente abre a tela de Arquivados. Segunda
+etapa da investigação de consumo de banda iniciada no `v8.30.243-dev`
+(fix de contagem em dobro): mesmo sem a duplicação, o volume real de
+leituras continuava alto numa squad real (`outlet-crm`) por causa do
+caminho de fallback (usado quando não há cache local no device — 1ª
+visita, aba anônima, cache limpo) baixar **todos** os cards de uma vez
+via listener bruto, arquivados inclusos, toda vez que roda.
+
+**O que mudou**:
+- `_planCardsDelta()`: arquivado nunca mais entra em `toFetch` — nem
+  "na primeira vez que este device vê", como era antes. Só é buscado
+  sob demanda (ver abaixo).
+- `_twoPhaseCardsLoad()`: não desiste mais pro fallback completo só
+  por não ter cache local ainda — o caminho em duas etapas (índice
+  pequeno + fetch avulso por card) agora funciona também na 1ª visita,
+  e como arquivado nunca entra em `toFetch`, o fallback caro
+  praticamente deixa de ser necessário pra squads com muito histórico
+  arquivado. A proporção de "mudou demais, mais barato baixar tudo"
+  (só relevante quando JÁ havia cache) agora é calculada só sobre os
+  cards ativos.
+- `_ensureArchivedCardsLoaded()` (nova): busca os arquivados que
+  faltam sob demanda. Chamada em 3 pontos: `openArquivados()` (preencher
+  a tela quando pedido), `fbSaveAll()` e `buildBackupPayload()`/
+  `previewBackupStats()` — ver nota de segurança abaixo.
+
+**Nota de segurança (o motivo de tocar em `fbSaveAll`)**: `fbSaveAll()`
+reescreve o node `/cards` inteiro no Firebase a partir do array local
+`cards`. Se arquivados ficassem de fora desse array sem nenhuma
+garantia, QUALQUER operação estrutural (criar card, arquivar/excluir em
+lote, reordenar, recorrências) apagaria de verdade do Firebase todo
+arquivado que aquele device não tinha baixado — silenciosamente, sem
+erro visível. `fbSaveAll()` agora sempre chama
+`_ensureArchivedCardsLoaded()` primeiro, garantindo que o array nunca
+sai incompleto. Pelo mesmo motivo, `_diffCardsIndex()`/
+`_diffCardsUpdatedAt()` (reconciliação automática do índice, roda 4s
+após toda carga) ganharam uma exceção pra não tratar arquivado-ainda-não-
+baixado como "órfão" e apagar sua entrada de `cards_index` — sem essa
+exceção, o card ficaria inalcançável por id pra sempre, mesmo sem o
+payload em si ser apagado.
+
+Testado via Playwright (17 cenários): carga a frio baixa só os ativos,
+zero fetch de payload de arquivado; `_ensureArchivedCardsLoaded` busca
+o que falta e mescla no array global sem duplicar; `fbSaveAll` chamado
+ANTES de qualquer tela de Arquivados ter sido aberta ainda assim escreve
+todos os cards (nenhum arquivado se perde); reconciliação do índice não
+apaga entrada de arquivado não baixado mas segue apagando órfão de
+verdade; cache existente e stale demais entre os ativos ainda cai pro
+fallback (comportamento antigo preservado); `openArquivados()` renderiza
+os arquivados buscados sob demanda.
+
 ### v8.30.243-dev — 2026-07-31
 Corrige bug de contagem em dobro no medidor de bytes (`debugBytesRemote`),
 achado investigando um `debugBytesRemote(72)` real de uma squad
