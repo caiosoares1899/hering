@@ -56,6 +56,41 @@ test('handler real devolve card_not_found quando o cardId não existe no squad',
   assert.deepEqual(result, { ok: false, error: 'card_not_found', cardId: 'card-que-nao-existe', squadId: 'dev' });
 });
 
+test('handler real de mover_coluna funciona mesmo quando o LLM não manda "type" no input (achado real: protocolo de tool-use da Anthropic não reconstitui o nome da ferramenta dentro do input)', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dev: {
+          dados: {
+            cards: { 9: { id: 'c9', title: 'Card no dev', col: 'todo', history: [], flow: {} } },
+            cards_index: { c9: '9' },
+            columns: [
+              { id: 'todo', name: 'A Fazer' },
+              { id: 'done', name: 'Concluído' },
+            ],
+            config: { flow: { startCols: [], doneCols: ['done'], reportCols: [] } },
+            cards_updated_at: {},
+          },
+        },
+      },
+    },
+  });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });
+  const moverColuna = tools.find((t) => t.name === 'mover_coluna');
+
+  // Sem "type" de propósito — exatamente o que o Claude real mandou no
+  // cenário 5 (agente-agil-orquestrador/scripts/..MoverColunaInequivoco..):
+  // {coluna: "done"}, sem reconstituir o nome da própria ferramenta.
+  const result = await moverColuna.handler({ coluna: 'done' });
+
+  assert.equal(result.ok, true, `esperava ok:true, veio: ${JSON.stringify(result)}`);
+  assert.equal(result.dryRun, true);
+  assert.equal(result.plan[0].path, 'kanban/squads/dev/dados/cards/9/col');
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.equal(cardAfter.col, 'todo', 'dryRun fixo não deveria ter movido o card de verdade');
+});
+
 test('perguntar_humano continua sem handler real em nenhum modo — nunca toca o board', async () => {
   const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });
