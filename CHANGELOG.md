@@ -377,6 +377,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.245-dev — 2026-08-01
+Corrige bug real reportado ao testar o `v8.30.244-dev`: clicar em
+"📦 Arquivados" quebrava com `Uncaught ReferenceError:
+_ensureArchivedCardsLoaded is not defined`.
+
+**Causa raiz**: `_ensureArchivedCardsLoaded()` (assim como
+`_twoPhaseCardsLoad()`, `_planCardsDelta()` etc.) é definida DENTRO de
+`fbLoadAll()` — uma função que roda 1x na inicialização, e cujas
+funções internas são invisíveis pra código de fora dela (mesmo motivo
+por trás de `window._cardsByKey` já existir: é o padrão usado no
+próprio arquivo pra atravessar essa fronteira de escopo). `fbSaveAll()`,
+`openArquivados()`, `buildBackupPayload()` e `previewBackupStats()`
+ficam FORA de `fbLoadAll()` — chamavam a função local diretamente, que
+nunca existiu nesse escopo.
+
+**Fix**: `_ensureArchivedCardsLoaded` agora também é espelhada em
+`window._ensureArchivedCardsLoaded` (mesmo padrão de
+`window._cardsByKey`), e os 4 pontos de chamada externos passam a usar
+essa referência, com guarda (`if(window._ensureArchivedCardsLoaded)`)
+pro caso raro de serem chamados antes de `fbLoadAll()` ter rodado
+(nesse caso, vira no-op seguro — não tem cards carregados ainda de
+qualquer forma).
+
+Achado porque o teste anterior extraía as funções isoladas (sem o
+`fbLoadAll()` real por volta), então não reproduzia esse problema de
+escopo. Reescrito pra rodar contra o `fbLoadAll()` inteiro de verdade —
+12 cenários Playwright, incluindo o caso exato do bug relatado
+(`openArquivados()` chamado depois de um `fbLoadAll()` real, sem
+lançar erro e renderizando os arquivados corretamente) e uma
+verificação de que `fbSaveAll()`/`openArquivados()` chamados mesmo
+ANTES de `fbLoadAll()` ter rodado (guarda) não quebram.
+
 ### v8.30.244-dev — 2026-08-01
 Deixa os cards arquivados de fora da carga inicial do board — só busca
 sob demanda quando alguém realmente abre a tela de Arquivados. Segunda
