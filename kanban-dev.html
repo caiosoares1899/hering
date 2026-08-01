@@ -4289,7 +4289,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.244-dev</div>
+<div class="version">v8.30.245-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5616,7 +5616,10 @@ async function fbSaveAll(extra){
   // todo card arquivado que este device não tinha carregado. Roda antes de
   // marcar _lastLocalSave/_hasLocalSession de propósito -- ver comentário em
   // _ensureArchivedCardsLoaded sobre a guarda de debounce de _applyCardsSync.
-  await _ensureArchivedCardsLoaded();
+  // window._ensureArchivedCardsLoaded (não a variável local -- ela é definida
+  // dentro de fbLoadAll(), inacessível daqui; só existe depois que fbLoadAll
+  // rodou pelo menos 1x, por isso a checagem).
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady){
@@ -6189,6 +6192,12 @@ let _cardsSyncDebounce = null;
     try{ await _archivedLoadInFlight; }
     finally{ _archivedLoadInFlight = null; }
   }
+  // Exposta em window: _ensureArchivedCardsLoaded (junto com _liveArchivedIds/
+  // _liveCardsIndexById que ela fecha por closure) é local a fbLoadAll() --
+  // mesmo motivo de _cardsByKey já ser espelhada em window._cardsByKey.
+  // fbSaveAll()/openArquivados()/buildBackupPayload() ficam FORA de
+  // fbLoadAll() e precisam chamar pela referência em window.
+  window._ensureArchivedCardsLoaded = _ensureArchivedCardsLoaded;
   if(window._fbReady){
     _twoPhaseCardsLoad().catch(e=>{ console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e); return false; }).then(usedTwoPhase=>{
       if(usedTwoPhase) return;
@@ -12129,7 +12138,7 @@ function _renderArquivadosBody(){
 async function openArquivados(){
   document.getElementById('arch-ov').classList.add('open');
   _renderArquivadosBody();
-  await _ensureArchivedCardsLoaded();
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _renderArquivadosBody();
 }
 function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard(); openArquivados(); }
@@ -19638,7 +19647,7 @@ async function buildBackupPayload(){
   // Um backup "esquecendo" os arquivados que este device nunca baixou (ver
   // _planCardsDelta) seria um backup incompleto sem nenhum aviso -- garante
   // que estão todos em `cards` antes de montar o payload.
-  await _ensureArchivedCardsLoaded();
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   return {
     version: document.querySelector('.version')?.textContent?.trim() || '',
     squad: ACTIVE_SQUAD,
@@ -19685,7 +19694,7 @@ async function copyBackupJSON(){
 
 async function previewBackupStats(){
   const el = document.getElementById('backup-stats'); if(!el) return;
-  await _ensureArchivedCardsLoaded(); // senão a contagem de arquivados sai errada na primeira visita
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded(); // senão a contagem de arquivados sai errada na primeira visita
   const ativos = cards.filter(c=>!c.archived);
   const arquivados = cards.filter(c=>c.archived);
   const byCol = columns.reduce((acc,col)=>{
