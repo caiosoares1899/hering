@@ -18,6 +18,35 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.199 — 2026-08-01 · PR #123, #124, #125, #126
+Promove pra prod toda a investigação de consumo de banda do RTDB,
+validada no dev — quatro entregas acumuladas desde a última promoção:
+
+- **PR #123** — corrige contagem em dobro no medidor de bytes
+  (`debugBytesRemote`): 4 pontos chamavam `fbGet()` (que já rastreia
+  sob o path bruto) e depois rastreavam a mesma leitura de novo
+  manualmente sob um rótulo agregado.
+- **PR #124** — cards arquivados deixam de entrar na carga inicial do
+  board; só são buscados quando alguém abre a tela de Arquivados. Era
+  a causa real do consumo alto: o fallback usado quando não há cache
+  local (1ª visita, aba anônima, cache limpo) baixava TUDO de uma vez,
+  arquivados inclusos.
+- **PR #125** — corrige `ReferenceError: _ensureArchivedCardsLoaded is
+  not defined` (bug de escopo — função local a `fbLoadAll()`,
+  chamada de fora sem passar por `window.`).
+- **PR #126** — corrige card arquivado "ressuscitando" como ativo após
+  reload (usava cache local desatualizado de quando o card ainda era
+  ativo).
+
+Detalhes completos nas entradas `kanban-dev.html v8.30.243-dev` a
+`v8.30.246-dev` abaixo. `diff kanban.html kanban-dev.html` antes desta
+mudança mostrou só essas quatro entregas mais a string de
+versão/`VERSION_KEY` — promoção limpa.
+
+Promovido após validação manual do usuário em produção-equivalente no
+dev (os dois bugs reais dos PRs #125/#126 foram encontrados e
+corrigidos justamente por causa dessa validação).
+
 ### v8.30.198 — 2026-07-31 · PR #121
 Promove pra prod a limpeza visual da barra de botões do rodapé do modal
 do card, validada no dev (`v8.30.242-dev`) — Arquivar e Milanote

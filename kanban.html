@@ -4289,7 +4289,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.198</div>
+<div class="version">v8.30.199</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5607,7 +5607,19 @@ function toggleHistory(){
   if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
 }
 
-function fbSaveAll(extra){
+async function fbSaveAll(extra){
+  // Garante que os arquivados que este device nunca baixou (ficaram de fora
+  // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
+  // `cards` ANTES de ler o array abaixo -- fbSaveAll reescreve /cards por
+  // COMPLETO; sem essa garantia, qualquer save estrutural (criar card,
+  // arquivar/excluir em lote, reordenar) apagaria de verdade do Firebase
+  // todo card arquivado que este device não tinha carregado. Roda antes de
+  // marcar _lastLocalSave/_hasLocalSession de propósito -- ver comentário em
+  // _ensureArchivedCardsLoaded sobre a guarda de debounce de _applyCardsSync.
+  // window._ensureArchivedCardsLoaded (não a variável local -- ela é definida
+  // dentro de fbLoadAll(), inacessível daqui; só existe depois que fbLoadAll
+  // rodou pelo menos 1x, por isso a checagem).
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady){
@@ -6005,7 +6017,13 @@ let _cardsSyncDebounce = null;
   function _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAt, remoteArchived){
     const remoteIds = Object.keys(remoteIndex||{});
     const toFetch = remoteIds.filter(id=>{
-      if((remoteArchived||{})[id]) return (cachedUpdatedAt||{})[id] === undefined;
+      // Arquivado NUNCA entra na carga inicial (nem "primeira vez neste
+      // device" como antes) -- só é buscado sob demanda, quando a pessoa
+      // realmente abre a tela de Arquivados (ver _ensureArchivedCardsLoaded).
+      // Se já tiver em cache de uma visita anterior à tela, o card continua
+      // disponível localmente (linha "cache.cardsById[id]" em
+      // _twoPhaseCardsLoad) -- só não busca de novo pela rede à toa.
+      if((remoteArchived||{})[id]) return false;
       const remoteTs = (remoteUpdatedAt||{})[id];
       if(remoteTs == null) return true; // ainda não migrado — trata como "mudou"
       return (cachedUpdatedAt||{})[id] !== remoteTs;
@@ -6015,8 +6033,15 @@ let _cardsSyncDebounce = null;
   let _liveCardsIndexById = {};
   let _liveArchivedIds = new Set();
   async function _twoPhaseCardsLoad(){
+    // Sem cache local ainda (1ª visita neste device/navegador/aba anônima)
+    // NÃO cai mais direto pro fallback completo -- ver comentário abaixo, na
+    // checagem de "cache demais desatualizado". Sem cache = trata como
+    // updatedAtById vazio (tudo ativo conta como "precisa buscar", igual
+    // sempre foi), só que agora, mesmo aqui, arquivado nunca entra em
+    // toFetch (ver _planCardsDelta) -- é isso que evita o fallback caro.
     const cache = await _loadCardsCache();
-    if(!cache) return false;
+    const cachedUpdatedAtById = cache ? cache.updatedAtById : {};
+    const cachedCardsById = cache ? cache.cardsById : {};
     const [idxSnap, uaSnap, archSnap] = await Promise.all([
       fbGet(FB+'/cards_index'),
       fbGet(FB+'/cards_updated_at'),
@@ -6025,13 +6050,31 @@ let _cardsSyncDebounce = null;
     const remoteIndex = idxSnap.val() || {};
     const remoteUpdatedAt = uaSnap.val() || {};
     const remoteArchived = archSnap.val() || {};
-    const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cache.updatedAtById, remoteArchived);
+    const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAtById, remoteArchived);
     if(!remoteIds.length) return false;
-    if(toFetch.length > remoteIds.length * _CARDS_CACHE_STALE_RATIO) return false;
+    // Essa desistência (cai pro fallback completo, que baixa TUDO de uma vez
+    // via listener bruto) só faz sentido quando JÁ havia cache e mesmo assim
+    // ficou stale demais (ex.: fbSaveAll estrutural carimbou tudo de novo) --
+    // nesse caso ler tudo junto é mais barato que centenas de leituras
+    // avulsas. Sem cache (1ª visita), o caminho em duas etapas SEMPRE
+    // compensa, porque -- diferente do fallback -- ele nunca baixa os
+    // arquivados à toa. A proporção é calculada só sobre os ativos: um board
+    // com muito histórico arquivado (comum) não pode contar arquivado como
+    // "não mudou" só porque ele nunca entra em toFetch.
+    if(cache){
+      const activeCount = remoteIds.filter(id=>!(remoteArchived||{})[id]).length;
+      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO) return false;
+    }
 
     const fetched = {};
     await Promise.all(toFetch.map(async id=>{
-      const snap = await fbGet(FB+'/cards/'+remoteIndex[id]);
+      // window._get() bruto (não fbGet()) -- fbGet() já rastreia sob o path
+      // INTEIRO (ex.: kanban_squads_{squad}_dados_cards_4677), o que pulveriza
+      // o relatório em milhares de linhas por card individual E conta cada
+      // leitura duas vezes (uma sob o path bruto, outra sob o rótulo agregado
+      // abaixo). Usando window._get() direto, só existe UM registro, sob o
+      // rótulo agregado que realmente importa pro diagnóstico.
+      const snap = await window._get(fb(FB+'/cards/'+remoteIndex[id]));
       _dbgTrack('/cards:targeted_get', snap.val());
       if(snap.val()) fetched[id] = snap.val();
     }));
@@ -6040,7 +6083,18 @@ let _cardsSyncDebounce = null;
     _liveArchivedIds = new Set(Object.keys(remoteArchived));
     _cardsByKey = {};
     remoteIds.forEach(id=>{
-      const card = fetched[id] || cache.cardsById[id];
+      let card = fetched[id];
+      if(!card && cachedCardsById[id]){
+        // BUG DE PRODUÇÃO: um card que MUDOU pra arquivado nunca mais entra em
+        // toFetch (ver _planCardsDelta) -- mas se ele já estava em cache de
+        // QUANDO ERA ATIVO (cachedCardsById[id].archived ainda falso/ausente),
+        // usar esse cache aqui faria o card reaparecer no board como ativo
+        // depois de um reload, mesmo já arquivado no Firebase. Só usa o cache
+        // de um id atualmente arquivado se ELE MESMO já reflete archived:true
+        // -- senão fica de fora (deferido de verdade, buscado sob demanda por
+        // _ensureArchivedCardsLoaded quando alguém abrir Arquivados).
+        if(!(remoteArchived||{})[id] || cachedCardsById[id].archived) card = cachedCardsById[id];
+      }
       if(card) _cardsByKey[remoteIndex[id]] = card;
     });
     window._cardsByKey = _cardsByKey;
@@ -6091,7 +6145,9 @@ let _cardsSyncDebounce = null;
       }
       if(key==null) return; // sem posição resolvível — a reconciliação periódica corrige depois
       if(_cardsByKey[key] && _cardsByKey[key].updatedAt === ts) return; // já está atual (replay do burst inicial)
-      const snapCard = await fbGet(FB+'/cards/'+key);
+      // window._get() bruto -- ver comentário equivalente em _twoPhaseCardsLoad()
+      // acima: evita path bruto por card poluindo o relatório + contagem em dobro.
+      const snapCard = await window._get(fb(FB+'/cards/'+key));
       _dbgTrack('/cards:targeted_get(live)', snapCard.val());
       if(snapCard.val()){ _cardsByKey[key] = snapCard.val(); _scheduleCardsSync(); }
     }
@@ -6100,6 +6156,64 @@ let _cardsSyncDebounce = null;
 
     return true;
   }
+  // Busca sob demanda os arquivados que este device ainda não tem em
+  // _cardsByKey (ficaram de fora da carga inicial de propósito -- ver
+  // _planCardsDelta). Chamada em vários pontos: openArquivados() (preencher
+  // a tela quando a pessoa realmente pede), fbSaveAll() (NUNCA sobrescrever
+  // /cards no Firebase com um array que "esqueceu" os arquivados que este
+  // device nunca baixou -- isso apagaria eles de verdade pra todo mundo) e
+  // o backup (mesmo motivo).
+  //
+  // Recalcula "o que falta" do zero a cada chamada (comparação pura, sem
+  // I/O -- barato) em vez de guardar "já rodei uma vez" permanentemente:
+  // sem isso, uma chamada bem no início da sessão (antes do carregamento
+  // em duas etapas terminar, _liveArchivedIds ainda vazio) marcaria "nada
+  // faltando" pra sempre, e um card arquivado DEPOIS por outra pessoa
+  // durante a sessão (chega via o listener ao vivo de cards_archived, mas
+  // sem baixar o conteúdo -- ver comentário nesse listener) nunca seria
+  // buscado. _archivedLoadInFlight só evita duas buscas simultâneas do
+  // MESMO lote (ex.: teclas rápidas no filtro de Arquivados).
+  let _archivedLoadInFlight = null;
+  async function _ensureArchivedCardsLoaded(){
+    if(_archivedLoadInFlight) return _archivedLoadInFlight;
+    const missingIds = [..._liveArchivedIds].filter(id=>{
+      const key = _liveCardsIndexById[id];
+      return key!=null && !_cardsByKey[key];
+    });
+    if(!missingIds.length) return;
+    _archivedLoadInFlight = (async ()=>{
+      const fetchedCards = [];
+      await Promise.all(missingIds.map(async id=>{
+        const key = _liveCardsIndexById[id];
+        const snap = await window._get(fb(FB+'/cards/'+key));
+        _dbgTrack('/cards:targeted_get(archived_on_demand)', snap.val());
+        if(snap.val()){ _cardsByKey[key] = snap.val(); fetchedCards.push(snap.val()); }
+      }));
+      if(fetchedCards.length){
+        window._cardsByKey = _cardsByKey;
+        // Mescla direto no array global `cards`, sem passar por
+        // _applyCardsSync() -- ela tem uma guarda de debounce baseada em
+        // _lastLocalSave/_hasLocalSession que fbSaveAll() acabou de marcar
+        // bem antes de chamar esta função (ver fbSaveAll), e essa guarda
+        // suprimiria justamente a atualização que precisamos garantir aqui.
+        const existingIds = new Set(cards.map(c=>c&&c.id));
+        fetchedCards.forEach(c=>{ if(c && c.id && !existingIds.has(c.id)) cards.push(c); });
+        // Regrava o cache local JÁ com a versão correta (archived:true) --
+        // sem isso, um card que só existia em cache de QUANDO ERA ATIVO
+        // (ver checagem em _twoPhaseCardsLoad) continuaria sendo buscado de
+        // novo pela rede TODA sessão que abrir Arquivados, pra sempre.
+        _persistCardsCacheFromCurrent();
+      }
+    })();
+    try{ await _archivedLoadInFlight; }
+    finally{ _archivedLoadInFlight = null; }
+  }
+  // Exposta em window: _ensureArchivedCardsLoaded (junto com _liveArchivedIds/
+  // _liveCardsIndexById que ela fecha por closure) é local a fbLoadAll() --
+  // mesmo motivo de _cardsByKey já ser espelhada em window._cardsByKey.
+  // fbSaveAll()/openArquivados()/buildBackupPayload() ficam FORA de
+  // fbLoadAll() e precisam chamar pela referência em window.
+  window._ensureArchivedCardsLoaded = _ensureArchivedCardsLoaded;
   if(window._fbReady){
     _twoPhaseCardsLoad().catch(e=>{ console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e); return false; }).then(usedTwoPhase=>{
       if(usedTwoPhase) return;
@@ -6127,7 +6241,7 @@ let _cardsSyncDebounce = null;
   // Função pura: compara o espelho local (_cardsByKey, chave->card) com o
   // índice remoto (cardId->chave) e devolve o que precisa corrigir. Sem
   // I/O — testável sem emulador.
-  function _diffCardsIndex(cardsByKey, remoteIndex){
+  function _diffCardsIndex(cardsByKey, remoteIndex, archivedIds){
     const toWrite = {};   // cardId -> chave, precisa gravar/corrigir
     const toRemove = [];  // cardId órfão no índice remoto (card não existe mais)
     const liveIds = new Set();
@@ -6138,7 +6252,11 @@ let _cardsSyncDebounce = null;
       if(remoteIndex[card.id] !== key) toWrite[card.id] = key;
     });
     Object.keys(remoteIndex||{}).forEach(cardId=>{
-      if(!liveIds.has(cardId)) toRemove.push(cardId);
+      // Arquivado de propósito fora de cardsByKey (ver _planCardsDelta) --
+      // NÃO é órfão, só nunca foi baixado neste device. Sem essa exceção,
+      // a reconciliação apagaria o cards_index de todo card arquivado que
+      // este device não carregou, tornando-o inalcançável por id.
+      if(!liveIds.has(cardId) && !(archivedIds && archivedIds.has(cardId))) toRemove.push(cardId);
     });
     return { toWrite, toRemove };
   }
@@ -6154,7 +6272,7 @@ let _cardsSyncDebounce = null;
   // (ver _twoPhaseCardsLoad) e nunca converge pro carregamento barato —
   // carimbar aqui é o que deixa o índice se auto-completar com o uso
   // normal, sem precisar que alguém edite cada card na mão.
-  function _diffCardsUpdatedAt(cardsByKey, remoteUpdatedAt, nowIso){
+  function _diffCardsUpdatedAt(cardsByKey, remoteUpdatedAt, nowIso, archivedIds){
     const toWrite = {};
     const toRemove = [];
     const liveIds = new Set();
@@ -6166,7 +6284,9 @@ let _cardsSyncDebounce = null;
       if(remoteUpdatedAt[card.id] !== ts) toWrite[card.id] = ts;
     });
     Object.keys(remoteUpdatedAt||{}).forEach(cardId=>{
-      if(!liveIds.has(cardId)) toRemove.push(cardId);
+      // Mesma exceção de _diffCardsIndex acima -- arquivado não baixado
+      // neste device não é órfão.
+      if(!liveIds.has(cardId) && !(archivedIds && archivedIds.has(cardId))) toRemove.push(cardId);
     });
     return { toWrite, toRemove };
   }
@@ -6181,9 +6301,9 @@ let _cardsSyncDebounce = null;
       ]);
       const remoteIndex = indexSnap.val() || {};
       const remoteUpdatedAt = updatedAtSnap.val() || {};
-      const { toWrite, toRemove } = _diffCardsIndex(_cardsByKey, remoteIndex);
+      const { toWrite, toRemove } = _diffCardsIndex(_cardsByKey, remoteIndex, _liveArchivedIds);
       const _nowIso = new Date().toISOString();
-      const { toWrite:toWriteUA, toRemove:toRemoveUA } = _diffCardsUpdatedAt(_cardsByKey, remoteUpdatedAt, _nowIso);
+      const { toWrite:toWriteUA, toRemove:toRemoveUA } = _diffCardsUpdatedAt(_cardsByKey, remoteUpdatedAt, _nowIso, _liveArchivedIds);
       const updates = {};
       Object.keys(toWrite).forEach(cardId=>{ updates['cards_index/'+cardId] = toWrite[cardId]; });
       toRemove.forEach(cardId=>{ updates['cards_index/'+cardId] = null; });
@@ -9965,7 +10085,7 @@ let _lastKudosSquadRefresh = 0;
 let _lastKudosGeralRefresh = 0;
 function _refreshKudosSquad(){
   _lastKudosSquadRefresh = Date.now();
-  fbGet('kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos').then(snap=>{
+  window._get(fb('kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos')).then(snap=>{
     _dbgTrack('kudos_squad', snap.val());
     const val=snap.val();
     kudosSquad = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
@@ -9975,7 +10095,7 @@ function _refreshKudosSquad(){
 }
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
-  fbGet('kanban/painel/kudos_geral').then(snap=>{
+  window._get(fb('kanban/painel/kudos_geral')).then(snap=>{
     _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
@@ -11991,7 +12111,7 @@ function _renderCampCardsGrid(){
   }).join('');
 }
 
-function openArquivados(){
+function _renderArquivadosBody(){
   const body=document.getElementById('arch-body'); body.innerHTML='';
   const purgeBar=document.getElementById('arch-purge-bar'); if(purgeBar) purgeBar.style.display=(typeof canBulkDelete==='function' && canBulkDelete())?'flex':'none';
   let archived=cards.filter(c=>c.archived);
@@ -12025,7 +12145,17 @@ function openArquivados(){
     row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
+}
+// Arquivados ficam de fora da carga inicial do board de propósito (ver
+// _planCardsDelta) -- essa função busca sob demanda os que ainda faltam
+// antes de renderizar. Renderiza uma vez na hora com o que já tem (evita
+// tela em branco enquanto a busca roda) e de novo quando ela terminar --
+// a segunda chamada é barata/idempotente se nada novo chegou.
+async function openArquivados(){
   document.getElementById('arch-ov').classList.add('open');
+  _renderArquivadosBody();
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
+  _renderArquivadosBody();
 }
 function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard(); openArquivados(); }
 function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
@@ -19529,7 +19659,11 @@ function resyncColumnsAndTags(){
 // BACKUP & EXPORT
 // ═══════════════════════════════════════════════════════
 
-function buildBackupPayload(){
+async function buildBackupPayload(){
+  // Um backup "esquecendo" os arquivados que este device nunca baixou (ver
+  // _planCardsDelta) seria um backup incompleto sem nenhum aviso -- garante
+  // que estão todos em `cards` antes de montar o payload.
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   return {
     version: document.querySelector('.version')?.textContent?.trim() || '',
     squad: ACTIVE_SQUAD,
@@ -19548,8 +19682,8 @@ function buildBackupPayload(){
   };
 }
 
-function exportBackupJSON(){
-  const payload = buildBackupPayload();
+async function exportBackupJSON(){
+  const payload = await buildBackupPayload();
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -19564,8 +19698,8 @@ function exportBackupJSON(){
   saveSnapshotToFirebase(payload, 'manual');
 }
 
-function copyBackupJSON(){
-  const json = JSON.stringify(buildBackupPayload(), null, 2);
+async function copyBackupJSON(){
+  const json = JSON.stringify(await buildBackupPayload(), null, 2);
   navigator.clipboard.writeText(json).then(()=>{
     const btn = document.getElementById('btn-copy-json');
     const orig = btn.textContent;
@@ -19574,8 +19708,9 @@ function copyBackupJSON(){
   }).catch(()=> showToast('❌ Erro ao copiar — tente baixar o JSON'));
 }
 
-function previewBackupStats(){
+async function previewBackupStats(){
   const el = document.getElementById('backup-stats'); if(!el) return;
+  if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded(); // senão a contagem de arquivados sai errada na primeira visita
   const ativos = cards.filter(c=>!c.archived);
   const arquivados = cards.filter(c=>c.archived);
   const byCol = columns.reduce((acc,col)=>{
@@ -19683,7 +19818,7 @@ async function sendBackupEmail(isTest=false){
     }
     emailjs.init(cfg.pubkey);
   }
-  const payload = buildBackupPayload();
+  const payload = await buildBackupPayload();
   const ativos = cards.filter(c=>!c.archived);
   const summary = [
     'Squad: '+ACTIVE_SQUAD,
