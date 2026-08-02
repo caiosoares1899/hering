@@ -740,6 +740,59 @@ que `dryRun:true` protege contra escrita real mesmo nesse caso. 131
 testes continuam passando. Ainda não rodado contra LLM real — próximo
 passo depende do usuário.
 
+**Rodado pelo usuário** contra o LLM real: `status: 'awaiting_human'`,
+`ler_card -> perguntar_humano`, 2 chamadas. Sem URL fornecida em lugar
+nenhum, o modelo usou `perguntar_humano` em vez de inventar um link —
+pergunta clara e específica pedindo o endereço exato. Comportamento
+esperado confirmado; a ressalva anti-invenção do prompt se traduziu em
+julgamento coerente na prática, não só no papel.
+
+## Canário 5: `link` com URL real fornecida
+
+Caminho inverso do cenário 6: agora uma URL REAL é fornecida
+explicitamente no pedido (link pro próprio README do módulo no GitHub,
+não uma URL fabricada pelo script), e o esperado é que o modelo use
+exatamente essa URL, sem alterar nem inventar nada a mais.
+
+`scripts/escritaReal5LinkContraSquadDev.js` — mesmo padrão de segurança
+dos canários anteriores (card conhecido, invocação manual, confirmação
+interativa, monitoramento ao vivo), toolset filtrado pra `ler_card` +
+`link` + `comentario` + `perguntar_humano`, `dryRun:false`. O script
+compara a URL que o modelo de fato enviou contra a URL real fornecida no
+pedido — sinaliza explicitamente se houver qualquer divergência.
+
+Verificado contra fake db + cliente scriptado: toolset filtrado
+corretamente, `link` com `dryRun:false` escreve de verdade (`transaction`
+escopada em `{cardPath}/links`, nunca sobrescreve links existentes),
+URL/título gravados batem exatamente com os fornecidos, `updatedAt`/
+`cards_updated_at` carimbados. 131 testes continuam passando (nenhuma
+mudança em código de produção — só o script). Ainda não rodado contra o
+Firebase real.
+
+## Lacuna identificada: `perguntar_humano` não tem mecanismo de entrega
+
+Ao usar os canários pra observar `perguntar_humano` de perto, o usuário
+notou que a pergunta só aparece no terminal de quem roda o script — não
+é postada como comentário no card, não dispara notificação (sino/push)
+pro responsável. Confirmado no código: `tools/index.js` sempre usa
+`makeHandler('perguntar_humano')` (o handler FAKE) pra essa ferramenta,
+em QUALQUER modo — diferente das 7 ferramentas de escrita, `dryRun` nem
+chega a ser um parâmetro relevante pra ela. `loop.js` só devolve
+`status:'awaiting_human'` com a pergunta dentro de `result.steps` — pura
+memória, sem I/O nenhum. A única razão de isso "funcionar" até agora é
+que toda invocação foi manual, com um humano literalmente lendo o
+stdout na hora.
+
+Não é uma decisão deliberada de produto — é uma lacuna real que ficou
+mascarada pelo jeito como testamos até aqui, e que precisa de solução
+antes do orquestrador ser considerado pronto pra qualquer uso sem um
+humano de olho no terminal (ex.: gatilho automático, que já não estava
+autorizado por outros motivos). Caminho provável de fix: postar a
+pergunta como `comentario` de verdade no card (reaproveitando
+`applyWritePlan`) e/ou notificar o responsável (reaproveitando
+`notifications.js`, mesmo padrão que `mover_coluna`/`checklist_item` já
+usam) — decisão de produto do usuário, não implementada ainda.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +

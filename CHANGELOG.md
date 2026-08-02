@@ -1942,6 +1942,45 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Lacuna identificada: `perguntar_humano` sem mecanismo de entrega
+Usuário notou, ao observar os canários de perto: quando `perguntar_humano`
+roda, a pergunta só aparece no terminal de quem roda o script — nunca é
+postada como comentário no card nem dispara notificação real. Confirmado
+no código: `tools/index.js` sempre usa o handler FAKE pra essa
+ferramenta, em qualquer modo — `dryRun` nem é parâmetro relevante pra
+ela. `loop.js` só devolve a pergunta dentro de `result.steps`, em
+memória, sem I/O nenhum.
+
+Não é decisão deliberada — é lacuna real que ficou mascarada porque toda
+invocação até aqui foi manual, com um humano lendo o stdout na hora.
+Precisa de solução (provavelmente comentário real + notificação ao
+responsável, reaproveitando os mesmos mecanismos que `mover_coluna`/
+`checklist_item` já usam) antes do orquestrador ser considerado pronto
+pra qualquer uso sem humano de olho no terminal. Decisão de produto
+ainda pendente com o usuário — não implementado.
+
+### 2026-08-02 · Canário 5: `link` com URL real fornecida
+Caminho inverso do cenário 6 (entrada anterior): URL real fornecida
+explicitamente no pedido (link pro próprio README do módulo), esperado
+que o modelo use exatamente essa URL sem alterar/inventar nada a mais.
+
+Adiciona `scripts/escritaReal5LinkContraSquadDev.js` — mesmo padrão de
+segurança dos canários anteriores, toolset restrito a `ler_card`/`link`/
+`comentario`/`perguntar_humano`, `dryRun:false`. Script compara a URL
+enviada pelo modelo contra a fornecida no pedido, sinaliza qualquer
+divergência.
+
+Verificado contra fake db + cliente scriptado: toolset correto, `link`
+escreve de verdade (transaction escopada, nunca sobrescreve), URL/título
+batem exatamente, `updatedAt`/`cards_updated_at` carimbados. 131 testes
+passando. Ainda não rodado contra o Firebase real.
+
+### 2026-08-02 · Cenário 6 confirmado: modelo não inventa URL
+Rodado pelo usuário contra o LLM real: `status: 'awaiting_human'`,
+`ler_card -> perguntar_humano`, 2 chamadas. Sem URL fornecida em lugar
+nenhum, usou `perguntar_humano` com pergunta clara e específica em vez
+de inventar um link. Comportamento esperado confirmado.
+
 ### 2026-08-02 · Cenário 6: `link` sem URL disponível (teste anti-alucinação)
 Depois de classificar `link`/`relatorio_html` no prompt (entrada
 anterior), valida a ressalva nova de `link` ("nunca invente uma URL")
