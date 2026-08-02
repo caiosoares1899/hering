@@ -1942,6 +1942,37 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Canário 3: `checklist_item` + `agent_status` (aguardando revisão)
+Primeira expansão de toolset depois dos canários 1/2. Antes de qualquer
+código, releu `outputs/checklistItem.js`, `agentStatus.js`, `link.js`,
+`editarCampos.js` e `relatorioHtml.js` e trouxe dois achados pro usuário
+decidir a ordem: `link`/`relatorio_html` não estão classificados no
+`SYSTEM_PROMPT_V1` (precisa corrigir o prompt antes de liberar); e
+`editar_campos` concentra o risco quase todo em `desc` (sobrescreve
+conteúdo, sem undo real) — `tags`/`priority` são seguros (aditivo /
+enum reversível). Usuário aprovou a ordem: `agent_status` +
+`checklist_item` (canário direto, sem cenário dedicado) → corrigir
+prompt pra `link`/`relatorio_html` → `link` → `editar_campos`
+tags/priority → `editar_campos` desc (sub-passo separado) →
+`relatorio_html` só quando houver necessidade real.
+
+Adiciona `scripts/escritaReal3ChecklistAgentStatusContraSquadDev.js` —
+mesmo padrão de segurança dos canários anteriores, toolset filtrado pra
+`ler_card`/`checklist_item`/`agent_status`/`comentario`/
+`perguntar_humano`. Pedido real cria um item de checklist NOVO
+(exercita o caminho de criação, não de casamento com item existente).
+
+Verificado contra fake db + cliente scriptado: toolset filtrado
+corretamente, `checklist_item` cria o item de verdade (grupo próprio do
+agente), `agent_status` marca status + promove `executorType`,
+histórico registrado, sem notificação indevida de checklist concluída,
+`updatedAt`/`cards_updated_at` carimbados. 131 testes passando (sem
+mudança em `realHandlers.js`/`tools/index.js` — só script novo).
+
+Diferente dos canários 1/2 (rodados pelo usuário direto na branch, PR
+aberta só depois): desta vez o usuário pediu revisão da PR **antes** de
+rodar o canário real — ainda não executado contra o Firebase real.
+
 ### 2026-08-02 · Canário 2 confirmado: `mover_coluna` real (risco médio)
 Rodado pelo usuário contra o Firebase real, card `c1785505159707_geo`:
 `status: 'done'`, 3 chamadas à API, `ler_card -> mover_coluna ->

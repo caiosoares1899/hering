@@ -619,6 +619,64 @@ automático, ou qualquer outro squad além de `dev`) continuam **não**
 autorizados — cada um é uma decisão nova e separada, não implícita por
 este resultado.
 
+## Expansão de toolset: plano combinado com o usuário
+
+Depois dos dois canários, o usuário aprovou expandir gradualmente o
+toolset real além de `comentario`/`mover_coluna`, mantendo a mesma
+disciplina incremental — não liberar as 5 ferramentas restantes
+(`checklist_item`, `agent_status`, `editar_campos`, `link`,
+`relatorio_html`) de uma vez só, mesmo com o mecanismo dryRun→real e o
+fix do bug de `type` já validados genericamente. Dois achados guiaram a
+ordem, ao reler `outputs/checklistItem.js`, `agentStatus.js`, `link.js`,
+`editarCampos.js` e `relatorioHtml.js`:
+
+- `link` e `relatorio_html` **não estão classificados** no
+  `SYSTEM_PROMPT_V1` (a lista de risco só cobre as 5 ferramentas
+  originais) — precisa corrigir o prompt antes de liberar qualquer uma
+  das duas.
+- `editar_campos` não é um risco só: `tags` é sempre aditivo (nunca
+  remove tag existente), `priority` é um swap de enum trivialmente
+  reversível, mas `desc` **sobrescreve** conteúdo (o valor antigo só
+  sobrevive truncado em 40 caracteres no histórico, não é undo de
+  verdade) — o "risco médio" do prompt está concentrado quase todo em
+  `desc`.
+
+Ordem combinada: `agent_status` + `checklist_item` juntas (canário
+direto, sem cenário dedicado — ambas já "baixo risco, age direto" no
+prompt, estruturalmente incapazes de destruir conteúdo) → corrigir
+classificação de risco no prompt pra `link`/`relatorio_html` → `link`
+(teste leve anti-alucinação de URL + canário) → `editar_campos`
+tags/priority (cenário dedicado + canário) → `editar_campos` desc como
+sub-passo separado → `relatorio_html` só quando houver necessidade real
+(desenhado originalmente pro especialista Databricks via `http.js`, não
+óbvio que seja uma ação natural do orquestrador).
+
+## Canário 3: `checklist_item` + `agent_status`
+
+`scripts/escritaReal3ChecklistAgentStatusContraSquadDev.js` — primeira
+expansão de toolset desde os canários 1/2. Mesmo padrão de segurança
+(card conhecido, invocação manual, confirmação interativa, monitoramento
+ao vivo), toolset filtrado pra `ler_card` + `checklist_item` +
+`agent_status` + `comentario` + `perguntar_humano`. Pedido real pede um
+item de checklist NOVO (não tenta marcar um dos 5 já existentes) — testa
+o caminho de criação do `checklist_item` (casamento por texto exato
+contra itens existentes; cria se não achar) sem depender do modelo
+copiar um texto existente perfeitamente.
+
+Verificado contra fake db + cliente scriptado antes de abrir PR:
+toolset filtrado corretamente (sem `mover_coluna`/`editar_campos`/
+`link`/`relatorio_html`), `checklist_item` cria o item novo de verdade
+(`done:false`, grupo próprio do agente "🤖 Processo automatizado" por
+não ter `grupo` especificado), `agent_status` marca `agentStatus:'done'`
+e promove `executorType` pra `'agent'`, histórico registrado pras duas
+ações, **sem** disparar a notificação de "checklist concluída" (correto
+— o item novo fica pendente, checklist não bate 100%), `updatedAt`/
+`cards_updated_at` carimbados. 131 testes continuam passando (nenhuma
+mudança em `realHandlers.js`/`tools/index.js` desta vez — só o script
+novo). Ainda não rodado contra o Firebase real — usuário pediu revisão
+da PR antes desta vez, diferente dos canários 1/2 (que rodaram antes da
+PR existir).
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
