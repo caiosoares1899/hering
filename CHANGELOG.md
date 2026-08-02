@@ -1942,6 +1942,57 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Cenário 6: `link` sem URL disponível (teste anti-alucinação)
+Depois de classificar `link`/`relatorio_html` no prompt (entrada
+anterior), valida a ressalva nova de `link` ("nunca invente uma URL")
+contra o LLM real antes de cogitar escrita real pra essa ferramenta.
+Pedido pede um link, mas nenhuma URL real está disponível em lugar
+nenhum — comportamento esperado: `perguntar_humano`/`comentario`
+relatando a falta de informação, nunca `link` com URL fabricada.
+
+Adiciona
+`scripts/llmRealSystemPromptV1LinkSemUrlDryRunContraSquadDev.js`, mais
+leve que o cenário 5 (não é bateria completa). Toolset restrito a
+`ler_card`/`link`/`comentario`/`perguntar_humano`. `dryRun` continua
+default `true`.
+
+Verificado contra fake db + cliente scriptado nos DOIS desfechos
+possíveis: cenário de comportamento esperado E cenário de comportamento
+ruim (URL inventada) — confirma que o script detecta e reporta o caso
+ruim corretamente, não só passa batido, e que `dryRun` protege mesmo
+se o modelo alucinar. 131 testes passando. Ainda não rodado contra LLM
+real.
+
+### 2026-08-02 · Corrige classificação de risco: `link` e `relatorio_html`
+Achado ao planejar a expansão de toolset pós-canário 2: `link` e
+`relatorio_html` nunca tinham sido classificadas no `SYSTEM_PROMPT_V1` —
+o modelo não tinha orientação explícita sobre quando usar as duas com
+cautela, diferente das outras 5 ferramentas.
+
+`link` entra em baixo risco (mecanismo sempre aditivo, `outputs/link.js`
+confirma que nunca sobrescreve nada) com a mesma ressalva anti-invenção
+que `editar_campos` já tinha pra `desc` — nunca inventar uma URL.
+`relatorio_html` entra em risco médio (`outputs/relatorioHtml.js`: gera
+e hospeda conteúdo extenso de verdade no Storage, desenhado
+originalmente pro especialista Databricks via `http.js`, não é ação
+óbvia pra um pedido comum de PO) com a ressalva de só usar quando o
+pedido pedir claramente um relatório formatado.
+
+Segunda exceção pontual ao texto verbatim aprovado pelo usuário
+(documentada no cabeçalho de `systemPrompt.js`; a primeira foi
+acrescentar `ler_card`). 131 testes continuam passando.
+
+### 2026-08-02 · Canário 3 confirmado: `checklist_item` + `agent_status`
+Rodado pelo usuário contra o Firebase real, mesmo card
+(`c1785505159707_geo`): confirmado ao vivo — item "Divulgar o post nas
+redes sociais" apareceu no checklist (desmarcado), status do agente
+mudou pra "concluído". `dryRun:false`/`applied:2` nas duas ferramentas.
+
+Toolset com escrita real validada agora em 4 das 7 ferramentas:
+`comentario`, `mover_coluna`, `checklist_item`, `agent_status`. Faltam
+`link`, `editar_campos`, `relatorio_html` — próximos na ordem combinada
+com o usuário.
+
 ### 2026-08-02 · Canário 3: `checklist_item` + `agent_status` (aguardando revisão)
 Primeira expansão de toolset depois dos canários 1/2. Antes de qualquer
 código, releu `outputs/checklistItem.js`, `agentStatus.js`, `link.js`,

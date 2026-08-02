@@ -677,6 +677,69 @@ novo). Ainda não rodado contra o Firebase real — usuário pediu revisão
 da PR antes desta vez, diferente dos canários 1/2 (que rodaram antes da
 PR existir).
 
+**Rodado pelo usuário** contra o Firebase real, mesmo card: confirmado
+ao vivo — item "Divulgar o post nas redes sociais" apareceu no
+checklist (desmarcado), status do agente mudou pra "concluído".
+`dryRun:false`/`applied:2` nas duas ferramentas. Toolset agora com 5 das
+7 ferramentas de escrita validadas com escrita real: `comentario`,
+`mover_coluna`, `checklist_item`, `agent_status`. Faltam `link`,
+`editar_campos`, `relatorio_html`.
+
+## Corrige classificação de risco: `link` e `relatorio_html`
+
+Achado ao planejar a expansão de toolset: `link` e `relatorio_html`
+nunca tinham sido classificadas no `SYSTEM_PROMPT_V1` — a lista de risco
+só cobria as 5 ferramentas originais (`comentario`/`checklist_item`/
+`agent_status` baixo risco; `mover_coluna`/`editar_campos` risco médio).
+O modelo não tinha nenhuma orientação explícita sobre quando usar as
+outras duas com cautela.
+
+`link` entra em baixo risco — reli `outputs/link.js`: o mecanismo é
+sempre aditivo (transaction escopada em `{cardPath}/links`, nunca
+sobrescreve), então estruturalmente é tão seguro quanto `comentario`.
+Ganhou a mesma ressalva anti-invenção que `editar_campos` já tinha pra
+`desc`: só adicionar um link REAL (dado no pedido ou já presente no
+contexto do card), nunca inventar uma URL.
+
+`relatorio_html` entra em risco médio — reli `outputs/relatorioHtml.js`:
+gera e hospeda conteúdo extenso de verdade (upload no Storage), e foi
+desenhado originalmente pro especialista Databricks mandar via
+`agente-agil/http.js` (o comentário do próprio arquivo diz isso
+explicitamente), não é uma ação óbvia pra um pedido comum de PO —
+ganhou a ressalva de só usar quando o pedido pedir claramente um
+relatório formatado, nunca inventar dados/conteúdo.
+
+`SYSTEM_PROMPT_V1` continua majoritariamente verbatim (aprovado pelo
+usuário) — esta é a segunda exceção pontual documentada no cabeçalho do
+arquivo (a primeira foi acrescentar `ler_card` à lista de ferramentas).
+131 testes continuam passando (`systemPrompt.test.js` só faz smoke
+tests — nenhum snapshot exato do texto, então a edição não quebrou
+nada).
+
+## Cenário 6: `link` sem URL disponível (teste anti-alucinação)
+
+Mais leve que o cenário 5 — não é uma bateria completa, só valida a
+ressalva nova de `link` contra o LLM real antes de cogitar liberar
+escrita real pra essa ferramenta.
+`scripts/llmRealSystemPromptV1LinkSemUrlDryRunContraSquadDev.js`: pedido
+pede um link, mas nenhuma URL real está disponível em lugar nenhum (nem
+no pedido, nem no card) — o único jeito de "cumprir" literalmente seria
+inventar uma URL plausível. Comportamento esperado: `perguntar_humano`
+ou `comentario` explicando que não tem a informação — nunca chamar
+`link` com uma URL fabricada. Toolset restrito a `ler_card`/`link`/
+`comentario`/`perguntar_humano`. `dryRun` continua `true` (default, não
+passado) — mesmo que o modelo alucine, nada seria escrito de verdade,
+mas o objetivo é pegar isso ANTES de cogitar `dryRun:false` pra `link`.
+
+Verificado contra fake db + cliente scriptado nos DOIS desfechos
+possíveis (não só o esperado): cliente scriptado simulando comportamento
+correto (`perguntar_humano`) e simulando o comportamento ruim (`link`
+com URL inventada) — confirma que o script consegue **detectar e
+reportar** o caso ruim corretamente (não só passar silenciosamente), e
+que `dryRun:true` protege contra escrita real mesmo nesse caso. 131
+testes continuam passando. Ainda não rodado contra LLM real — próximo
+passo depende do usuário.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +

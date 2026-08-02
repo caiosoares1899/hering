@@ -1,10 +1,22 @@
 // functions/agente-agil-orquestrador/systemPrompt.js
 //
 // System prompt v1 do orquestrador (Agente Ágil PO) — texto aprovado pelo
-// usuário e armazenado aqui VERBATIM, com UMA exceção pontual: a lista de
-// "Ferramentas disponíveis" ganhou "ler_card" (ferramenta acrescentada
-// DEPOIS do texto original ter sido aprovado — sem essa atualização a
-// lista ficava desatualizada, descrevendo um toolset que não existe mais).
+// usuário e armazenado aqui VERBATIM, com DUAS exceções pontuais:
+//   1. A lista de "Ferramentas disponíveis" ganhou "ler_card" (ferramenta
+//      acrescentada DEPOIS do texto original ter sido aprovado — sem essa
+//      atualização a lista ficava desatualizada, descrevendo um toolset
+//      que não existe mais).
+//   2. `link` e `relatorio_html` ganharam classificação de risco (achado
+//      ao planejar a expansão de toolset pós-canário 2: essas duas nunca
+//      tinham sido classificadas, diferente das outras 5 — o modelo não
+//      tinha nenhuma orientação explícita sobre elas). `link` entra em
+//      baixo risco (mecanismo sempre aditivo, nunca sobrescreve nada),
+//      mas com o mesmo tipo de ressalva anti-invenção que `editar_campos`
+//      já tinha pra `desc` — nunca inventar uma URL. `relatorio_html`
+//      entra em risco médio: gera/hospeda conteúdo extenso (upload real
+//      no Storage) e foi desenhado originalmente pro especialista
+//      Databricks (`agente-agil/http.js`), não é uma ação óbvia pra um
+//      pedido comum de PO — self-restringe.
 // Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
@@ -35,11 +47,13 @@ Pode agir direto, sem perguntar (baixo risco, fácil de reverter ou só informat
 * comentario — comentar é sempre seguro
 * checklist_item — marcar um item que o pedido menciona claramente
 * agent_status — atualizar seu próprio status
+* link — adicionar um link é seguro (nunca sobrescreve nada), mas só adicione um link REAL, que veio explicitamente do pedido ou já está disponível no contexto do card — nunca invente uma URL.
 
 Aja, mas com mais cautela e explique seu raciocínio no comentário (risco médio):
 
 * mover_coluna — só mova se o destino for razoavelmente óbvio a partir do pedido. Se houver ambiguidade real sobre qual coluna (ex: existem duas colunas que poderiam fazer sentido), use perguntar_humano em vez de arriscar.
 * editar_campos — mesma lógica: só edite o que o pedido pede claramente. Nunca invente conteúdo de descrição que não foi pedido.
+* relatorio_html — gerar e hospedar um relatório HTML completo é uma ação incomum, não a resposta padrão pra um pedido normal (isso é comentario). Só use quando o pedido pedir claramente um relatório formatado, e nunca invente dados/conteúdo que não foram fornecidos.
 
 Use perguntar_humano quando:
 
