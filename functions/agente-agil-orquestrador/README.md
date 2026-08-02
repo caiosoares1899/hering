@@ -595,6 +595,30 @@ de notificação `done`/`moved` NÃO está em `PUSH_TYPES`
 (`functions/index.js`) — mover o card gera notificação in-app, mas não
 dispara push pro celular/navegador de ninguém.
 
+**Rodado pelo usuário** contra o Firebase real, mesmo card
+(`c1785505159707_geo`): `status: 'done'`, 3 chamadas à API, sequência
+`ler_card -> mover_coluna -> comentario`. Bate no que foi verificado
+contra fake db:
+- `mover_coluna`: `output.dryRun: false`, `output.applied: 1` — moveu o
+  card de "Backlog" pra "Concluído" de verdade.
+- `comentario` em seguida, explicando a ação ("checklist 100%
+  completo... confirmando que o trabalho foi finalizado"), também
+  `dryRun: false`, `applied: 1`.
+- `ler_card` (primeira ferramenta chamada) mostrou o comentário do
+  canário 1 já presente no card — confirma que a leitura reflete o
+  estado real acumulado das rodadas anteriores, não um snapshot velho.
+
+**Segunda escrita real do orquestrador, confirmada bem-sucedida** — a
+primeira envolvendo uma ação de risco médio de verdade (não só
+`comentario`). Com os dois canários fechados, a validação incremental
+combinada com o usuário (dryRun fixo -> parâmetro de verdade -> canário
+de baixo risco -> canário de risco médio, cada passo com sign-off
+explícito antes do próximo) está completa. Próximos passos (toolset
+real mais amplo, squad `dev` sem restrição de ferramentas, gatilho
+automático, ou qualquer outro squad além de `dev`) continuam **não**
+autorizados — cada um é uma decisão nova e separada, não implícita por
+este resultado.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -622,9 +646,18 @@ técnica e de comportamento cobre agora os dois eixos: reconhecer quando
 NÃO agir (4 cenários) e agir corretamente quando não há ambiguidade
 (cenário 5).
 
-Etapa 3 (ver seção acima) tirou o `dryRun` fixo — agora é parâmetro de
-verdade, default `true`. Primeira escrita real (canário: toolset
-restrito a baixo risco, confirmação interativa, mesmo card conhecido)
-implementada e verificada contra fake db; rodar contra o Firebase real
-fica pro usuário. `mover_coluna` real fica pra um próximo script, só
-depois deste primeiro sair limpo.
+Etapa 3 tirou o `dryRun` fixo — agora é parâmetro de verdade, default
+`true`. Dois canários rodados pelo usuário contra o Firebase real, squad
+`dev`, ambos confirmados bem-sucedidos: canário 1 (`comentario` real,
+toolset restrito a baixo risco) e canário 2 (`mover_coluna` real, risco
+médio, toolset ampliado só pro necessário pro cenário). Cada passo teve
+sign-off explícito do usuário antes do próximo — nada foi automatizado
+ou liberado por inércia.
+
+**Estado atual**: escrita real validada ponta a ponta pras duas ações já
+testadas (`comentario`, `mover_coluna`), restrita ao squad `dev`,
+invocação sempre manual (scripts standalone, nunca gatilho automático).
+Qualquer expansão — mais ferramentas em modo real, squad `dev` sem
+restrição de toolset, gatilho automático, ou qualquer squad além de
+`dev` (`ecomm` = produção) — é uma decisão nova, separada, ainda não
+tomada.
