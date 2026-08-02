@@ -1942,6 +1942,124 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Canário 2 confirmado: `mover_coluna` real (risco médio)
+Rodado pelo usuário contra o Firebase real, card `c1785505159707_geo`:
+`status: 'done'`, 3 chamadas à API, `ler_card -> mover_coluna ->
+comentario`. `mover_coluna` com `output.dryRun: false` e
+`output.applied: 1` moveu o card de "Backlog" pra "Concluído" de
+verdade; `comentario` em seguida explicou a ação. Bate no que foi
+verificado contra fake db antes de entregar (histórico, `flow.doneAt`,
+notificação real ao dono/participante, `updatedAt`/`cards_updated_at`
+carimbados).
+
+Segunda escrita real do orquestrador — a primeira envolvendo uma ação de
+risco médio de verdade, não só `comentario`. Fecha a validação
+incremental combinada com o usuário (dryRun fixo → parâmetro de verdade
+→ canário baixo risco → canário risco médio, sign-off explícito antes de
+cada passo). Próximas expansões (toolset mais amplo, squad sem
+restrição de ferramentas, gatilho automático, ou qualquer squad além de
+`dev`) continuam não autorizadas — decisões futuras separadas.
+
+### 2026-08-02 · Canário 2: script de `mover_coluna` real
+Adiciona `scripts/escritaReal2MoverColunaContraSquadDev.js` — mesmo
+padrão de segurança do canário 1 (card conhecido `c1785505159707_geo`,
+confirmação interativa digitando `ESCREVER`, monitoramento ao vivo
+combinado com o usuário), agora validando a ação de risco MÉDIO
+(`mover_coluna`) com escrita real — mesmo cenário já validado em dryRun
+no cenário 5. Toolset filtrado em código pra `ler_card` + `mover_coluna`
++ `comentario` + `perguntar_humano`; as outras 4 ferramentas de escrita
+continuam de fora, sem motivo pra estarem acessíveis neste cenário.
+
+Verificado contra fake db + cliente scriptado antes de entregar —
+exercitando o caminho mais complexo que `comentario` (só update
+simples): `mover_coluna` com `dryRun:false` moveu a coluna de verdade,
+escreveu histórico, carimbou `flow.doneAt`, gerou notificação real pro
+owner/participante, e carimbou `updatedAt`/`cards_updated_at`. Notou-se
+que notificação tipo `done`/`moved` não está em `PUSH_TYPES`
+(`functions/index.js`) — não dispara push real pro celular/navegador de
+ninguém.
+
+### 2026-08-02 · Canário 1 confirmado: primeira escrita real (`comentario`)
+Rodado pelo usuário contra o Firebase real, card `c1785505159707_geo`:
+`status: 'done'`, `ler_card -> comentario`, `output.dryRun: false`,
+`output.applied: 1`. Comentário conferido ao vivo no
+`kanban-dev.html?squad=dev`. Texto preciso (citou os 5 itens do
+checklist corretamente, notou a ausência de descrição) e calibrado ao
+toolset restrito — reconheceu explicitamente que mover o card seria
+"risco médio" e só relatou a inconsistência, sem tentar contornar a
+restrição de ferramentas.
+
+Primeira escrita real do orquestrador de qualquer tipo, confirmada
+bem-sucedida.
+
+### 2026-08-01 · Etapa 3: `dryRun` vira parâmetro de verdade + canário 1
+Autorizado explicitamente pelo usuário, com desenho combinado antes do
+código: `dryRun` explícito por chamada em `makeRealHandler`/
+`buildTools`, default `true`, mesmo padrão do kill switch (`enabled` em
+`loop.js`/`limits.js`) — nunca lido de um global escondido.
+`DRY_RUN_FIXO` removido; nenhum script/teste anterior passa `dryRun`
+explicitamente, então continuam se comportando exatamente como antes.
+Quando `dryRun:false`, o handler chama `applyWritePlan()` de verdade,
+mesmo padrão de `cardMeta` que `http.js` já usa (carimba
+`updatedAt`/`cards_updated_at`).
+
+Adiciona `scripts/escritaReal1ComentarioContraSquadDev.js` — primeira
+escrita real, restrita a um padrão de canário: mesmo card conhecido
+(`c1785505159707_geo`), invocação manual, toolset FILTRADO em código pra
+só `ler_card`/`comentario`/`perguntar_humano` (`mover_coluna`/
+`editar_campos` nem aparecem como opção — reforço em código, não só
+confiança no julgamento do modelo), pedido real (não instrução
+sintética), e confirmação interativa (`readline`, digitar `ESCREVER`)
+lembrando de acompanhar `kanban-dev.html?squad=dev` ao vivo.
+
+Verificado contra fake db + cliente scriptado antes de entregar pro
+usuário rodar. Dois testes novos em `realHandlers.test.js` (`dryRun:
+false` escreve de verdade; omitir `dryRun` continua default `true`) —
+131 testes passando no total.
+
+### 2026-08-01 · Corrige bug real: `mover_coluna` falhava sem "type" no input
+Achado ao rodar o cenário 5 (entrada abaixo) com LLM real: o modelo
+mandou `{coluna: "done"}` pra `mover_coluna`, sem o campo `type` que
+`buildWritePlan()` usa pra despachar entre os 7 outputs (união
+discriminada de `agente-agil/schema.js`). No caminho de produção
+(`http.js`) isso nunca falta porque o envelope já passou por
+`schema.js:envelope.parse()` antes; no orquestrador o input vem direto
+do tool-use da Anthropic, que só devolve os parâmetros que o
+`input_schema` de cada ferramenta declara — o protocolo não reconstitui
+o nome da própria ferramenta dentro do input. `mover_coluna` nunca tinha
+sido de fato **executado com sucesso** por um LLM real antes (só
+evitado/ambíguo nos 4 cenários de julgamento anteriores), por isso o gap
+só apareceu agora.
+
+Apesar do erro, o agente não loopou nem falhou silenciosamente —
+explicou o que tentou via `comentario`, tentou de novo, e escalou pra
+`perguntar_humano` relatando corretamente um "problema técnico no
+ambiente" em vez de inventar uma causa.
+
+Fix em `tools/realHandlers.js`: `makeRealHandler` já sabe qual
+ferramenta foi chamada (`toolName` vem do protocolo de tool-use, nunca
+do LLM) — reconstitui `{...input, type: toolName}` sempre, antes de
+`buildWritePlan`, cobrindo as 7 ferramentas de escrita. Teste de
+regressão reproduz o input exato observado. 129 testes passando.
+
+### 2026-08-01 · Cenário 5: risco médio inequívoco (`mover_coluna`)
+Adiciona
+`scripts/llmRealSystemPromptV1MoverColunaInequivocoDryRunContraSquadDev.js`
+— os 4 cenários anteriores só validaram o eixo "reconhecer quando NÃO
+agir"; nenhum validou o modelo executando (em dryRun) uma ação de risco
+MÉDIO num caso sem ambiguidade nenhuma, lacuna identificada ao discutir
+com o usuário os critérios pra sair do `dryRun` fixo. Pedido direto e
+fechado ("mova esse card pra Concluído") + checklist 100% completo, sem
+nenhum item pendente.
+
+Primeira rodada reproduziu o confound já conhecido do cenário de
+controle — rodou contra o card padrão dos scripts anteriores
+(`c1785433909974`, título "[TESTE Orquestrador] não mexer") e travou em
+`perguntar_humano` citando o aviso do título, não validando a hipótese
+pretendida. `cardId` virou obrigatório neste script (sem default),
+apontando pro card de controle já validado como neutro
+(`c1785505159707_geo`).
+
 ### 2026-07-30 · Encerra bateria de validação de comportamento (4 cenários)
 Confirma a execução do cenário de controle (entrada anterior): rodado
 pelo usuário contra o card `c1785505159707_geo` (título neutro "Revisão
