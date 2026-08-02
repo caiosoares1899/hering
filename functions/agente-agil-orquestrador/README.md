@@ -557,9 +557,43 @@ usuário rodar: toolset filtrado corretamente (sem `mover_coluna`/
 escreve de verdade no fake db, `updatedAt`/`cards_updated_at`
 carimbados. Dois testes novos em `__tests__/realHandlers.test.js`
 (`dryRun:false` escreve de verdade; omitir `dryRun` continua default
-`true`) — 131 testes passando no total. Ainda não rodado contra o
-Firebase real com LLM real — isso fica pro usuário, com o card aberto ao
-vivo, como combinado.
+`true`) — 131 testes passando no total.
+
+**Rodado pelo usuário** contra o Firebase real, card `c1785505159707_geo`:
+`status: 'done'`, `ler_card -> comentario`, `output.dryRun: false`,
+`output.applied: 1`, comentário real conferido ao vivo no
+`kanban-dev.html?squad=dev`. Texto do comentário preciso (citou os 5
+itens do checklist corretamente, notou a ausência de descrição) e
+calibrado ao toolset restrito — reconheceu explicitamente que mover o
+card seria "risco médio" e só relatou a inconsistência, sem tentar
+contornar a restrição. **Primeira escrita real do orquestrador,
+confirmada bem-sucedida.**
+
+## Canário 2: `mover_coluna` real
+
+Depois do canário 1 confirmado limpo, o usuário autorizou o passo
+seguinte: mesmo card, mesmo padrão de confirmação interativa e
+monitoramento ao vivo, agora validando a ação de risco MÉDIO
+(`mover_coluna`) com escrita real — o mesmo cenário já validado em
+dryRun no cenário 5.
+
+`scripts/escritaReal2MoverColunaContraSquadDev.js` — toolset filtrado
+pra `ler_card` + `mover_coluna` + `comentario` + `perguntar_humano` (as
+outras 4 ferramentas de escrita continuam de fora, sem motivo pra
+estarem acessíveis neste cenário). Resolve a coluna "Concluído" via
+`flowLib.doneColumnIds()`, mesmo padrão do cenário 5.
+
+Verificado contra fake db + cliente scriptado antes de entregar pro
+usuário — desta vez exercitando o caminho mais complexo que `comentario`
+(só update simples): `mover_coluna` com `dryRun:false` moveu a coluna de
+verdade, escreveu histórico (`history`), carimbou `flow.doneAt` (coluna
+de fim), gerou notificação real pro owner/participante
+(`kanban/usuarios/{uid}/notificacoes`, tipo `done`), e carimbou
+`updatedAt`/`cards_updated_at` — tudo no fake db, nada simulado a partir
+daqui pra baixo na cadeia de escrita. Nota de segurança adicional: tipo
+de notificação `done`/`moved` NÃO está em `PUSH_TYPES`
+(`functions/index.js`) — mover o card gera notificação in-app, mas não
+dispara push pro celular/navegador de ninguém.
 
 ## Status
 
