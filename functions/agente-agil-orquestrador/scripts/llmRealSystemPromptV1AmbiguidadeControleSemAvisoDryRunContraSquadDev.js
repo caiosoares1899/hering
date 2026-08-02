@@ -25,7 +25,7 @@
 // julgamento geral do prompt (baixo risco médio, ambiguidade real →
 // perguntar), não de um reflexo a uma palavra-chave específica.
 //
-// dryRun continua FIXO em true (tools/realHandlers.js, DRY_RUN_FIXO) —
+// dryRun continua true por padrão (tools/realHandlers.js — este script não passa dryRun:false) —
 // mesmo que o modelo decida mover o card ou marcar algo, nada é escrito
 // de verdade. Mesmos princípios de segurança dos scripts anteriores:
 // ANTHROPIC_API_KEY só de variável de ambiente, nunca logada.

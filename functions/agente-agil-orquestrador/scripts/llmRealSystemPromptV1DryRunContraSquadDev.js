@@ -13,7 +13,7 @@
 // olhada nesse card e vê se falta algo" — em vez de um pedido específico
 // como os dois scripts anteriores ("adicione um comentário dizendo X").
 //
-// dryRun continua FIXO em true (tools/realHandlers.js, DRY_RUN_FIXO) —
+// dryRun continua true por padrão (tools/realHandlers.js — este script não passa dryRun:false) —
 // mesmo que o modelo decida mover o card ou editar campos, nada é escrito
 // de verdade. Mesmos princípios de segurança dos scripts anteriores:
 // ANTHROPIC_API_KEY só de variável de ambiente, nunca logada.

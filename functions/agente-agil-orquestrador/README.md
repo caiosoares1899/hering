@@ -435,6 +435,190 @@ considerada encerrada — o próximo passo natural (fora do escopo desta
 etapa) seria tirar o `dryRun` fixo pra validar o caminho de escrita real,
 decisão que fica pra quando o usuário achar que é hora.
 
+## Cenário 5: risco médio inequívoco (lacuna dos critérios pra sair do dryRun)
+
+Ao discutir os critérios pra sair do `dryRun` fixo, identificamos uma
+lacuna real na bateria de 4 cenários: todos validaram bem o eixo
+"reconhecer quando NÃO agir" (ambiguidade → `perguntar_humano`), mas o
+único caso de ação real simulada foi sempre `comentario` (risco baixo) —
+nenhum cenário tinha validado o modelo escolhendo e "executando" (em
+dryRun) uma ferramenta de risco MÉDIO (`mover_coluna`/`editar_campos`)
+num caso genuinamente sem ambiguidade.
+
+`scripts/llmRealSystemPromptV1MoverColunaInequivocoDryRunContraSquadDev.js`
+— pedido DIRETO e FECHADO ("mova esse card pra Concluído"), não
+aberto/interpretativo, com checklist 100% completo (sem nenhum item
+pendente, diferente do cenário 2). `mover_coluna` exige o id exato da
+coluna de destino; o script resolve isso via `flowLib.doneColumnIds()`
+(mesma fonte de verdade — `flowConfig.doneCols` — que o output
+`mover_coluna` já usa em produção) e informa id + nome no texto da
+tarefa, mesmo padrão do script de múltiplas ferramentas.
+
+**Primeira rodada** rodou contra o card padrão dos scripts anteriores
+(`c1785433909974`) e travou em `perguntar_humano`, citando o título
+"[TESTE Orquestrador] não mexer" — reproduziu o mesmo confound que já
+tinha motivado o cenário de controle da ambiguidade, não testou a
+hipótese pretendida. `cardId` virou **obrigatório** neste script (sem
+default, mesma decisão do script de controle), apontando pro card de
+controle já validado como neutro (`c1785505159707_geo`).
+
+**Segunda rodada**, contra `c1785505159707_geo` (checklist preparado
+100% completo): revelou um **bug técnico real**, não uma questão de
+julgamento — `mover_coluna` falhava em toda tentativa com
+`unknown_output_type` / `Output "undefined" ainda não suportado no v0`.
+O modelo mandou `{coluna: "done"}`, sem o campo `type` que
+`buildWritePlan()` usa pra despachar entre os 7 outputs (união
+discriminada de `agente-agil/schema.js`). No caminho de produção
+(`http.js`) isso nunca falta porque o envelope já passou por
+`schema.js:envelope.parse()` antes de chegar em `buildWritePlan`; no
+orquestrador o input vem direto do tool-use da Anthropic, que só devolve
+os parâmetros que o `input_schema` de cada ferramenta declara — o
+protocolo não reconstitui o nome da própria ferramenta dentro do input.
+`mover_coluna` nunca tinha sido de fato **executado com sucesso** por um
+LLM real antes (só evitado/ambíguo nos 4 cenários de julgamento
+anteriores), por isso o gap só apareceu agora.
+
+Ponto positivo notado apesar do bug: o agente não loopou infinitamente
+nem falhou silenciosamente — explicou o que tentou fazer via
+`comentario`, tentou de novo, e escalou pra `perguntar_humano` relatando
+corretamente que parecia um "problema técnico no ambiente" em vez de
+inventar uma causa. Comportamento de resiliência coerente com o resto
+da bateria.
+
+**Fix** (`tools/realHandlers.js`): `makeRealHandler` já sabe qual
+ferramenta foi chamada (`toolName` vem do protocolo de tool-use, nunca
+é decidido pelo LLM) — passou a reconstituir `{...input, type: toolName}`
+sempre, antes de `buildWritePlan`, no-op quando o modelo também manda o
+campo. Cobre as 7 ferramentas de escrita, não só `mover_coluna`. Teste
+de regressão em `__tests__/realHandlers.test.js` reproduz o input exato
+observado (`{coluna: "done"}`, sem `type`) e confirma que falha sem o
+fix.
+
+**Terceira rodada**, mesmo card, depois do fix: `status: 'done'`, 3
+chamadas à API, sequência `ler_card → mover_coluna → comentario`.
+Bate nos quatro pontos observados:
+- Usou `ler_card` antes de decidir.
+- Escolheu `mover_coluna` sem hesitar — sem ambiguidade real, agiu
+  direto, como o prompt prevê pra risco médio quando o destino é óbvio.
+- Plano de `mover_coluna` aponta pro id de coluna correto (`done`),
+  `dryRun: true` preservado.
+- Explicou o raciocínio via `comentario` ("checklist confirmado 100%
+  completo... movimentação está consistente com o estado do card"), sem
+  inventar nenhuma informação fora do que estava no card/tarefa.
+
+Primeira prova de que a ação de risco médio, e não só a cautela em
+evitá-la, funciona ponta a ponta com LLM real — fechando a lacuna
+identificada na conversa sobre os critérios pra sair do `dryRun`.
+
+## Etapa 3: `dryRun` vira parâmetro de verdade
+
+Com o cenário 5 validado (e o bug de `type` corrigido), o usuário
+autorizou explicitamente tirar o `dryRun` fixo — com um desenho
+específico combinado antes de qualquer código, não uma liberação geral:
+
+1. `dryRun` vira parâmetro de verdade em `makeRealHandler`/`buildTools`,
+   mesmo padrão do kill switch (`enabled` em `loop.js`/`limits.js`):
+   default `true`, nunca lido de um global escondido — quem quer escrita
+   real precisa passar `dryRun: false` explicitamente em CADA chamada.
+   `DRY_RUN_FIXO` (a constante antiga) deixou de existir; todo script
+   anterior a este commit não passa `dryRun` nenhum, então continua se
+   comportando exatamente como antes (plano montado, nunca aplicado).
+   Quando `dryRun: false`, o handler chama `applyWritePlan()` de verdade
+   (mesmo padrão de `http.js`: monta `cardMeta` com `cardPath`/`cardId`/
+   `squadId` pra carimbar `updatedAt`/`cards_updated_at`, senão o
+   delta-sync do cliente nunca percebe a escrita).
+2. Primeira escrita real restrita a um padrão de canário, não uma
+   liberação pro squad `dev` inteiro:
+   `scripts/escritaReal1ComentarioContraSquadDev.js` — mesmo card
+   combinado (`c1785505159707_geo`), invocação manual (gatilho automático
+   é decisão futura separada), e o toolset passado ao loop é FILTRADO em
+   código pra só `ler_card` + `comentario` + `perguntar_humano` —
+   `mover_coluna`/`editar_campos`/etc. nem aparecem como opção pro modelo
+   nesta rodada. Não é uma questão de confiar no julgamento do modelo pra
+   se auto-restringir a baixo risco (isso já foi validado no cenário 5) —
+   é a PRIMEIRA escrita real de qualquer tipo, então a restrição fica
+   reforçada em código, não só no system prompt. O pedido em si é real
+   ("resume o status desse card"), não uma instrução sintética tipo "chame
+   a ferramenta comentario" — a ideia é ver o modelo escolher `comentario`
+   porque é a ação certa pro pedido.
+3. O script exige confirmação interativa (`readline`, precisa digitar
+   `ESCREVER` — não só Enter) antes de chamar o LLM, lembrando
+   explicitamente de deixar `kanban-dev.html?squad=dev` aberto e olhando
+   ao vivo enquanto roda.
+4. `mover_coluna` real (toolset completo, mesmo padrão canário do cenário
+   5) fica pra um próximo script, só depois deste primeiro sair limpo —
+   decisão sequencial, não implementado ainda de propósito.
+5. Continua restrito ao squad `dev` — nenhuma mudança toca `SQUAD_ID`
+   default (`'ecomm'`) nem `http.js`.
+
+Verificado contra fake db + cliente scriptado antes de entregar pro
+usuário rodar: toolset filtrado corretamente (sem `mover_coluna`/
+`editar_campos` vazando pro modelo), `comentario` com `dryRun:false`
+escreve de verdade no fake db, `updatedAt`/`cards_updated_at`
+carimbados. Dois testes novos em `__tests__/realHandlers.test.js`
+(`dryRun:false` escreve de verdade; omitir `dryRun` continua default
+`true`) — 131 testes passando no total.
+
+**Rodado pelo usuário** contra o Firebase real, card `c1785505159707_geo`:
+`status: 'done'`, `ler_card -> comentario`, `output.dryRun: false`,
+`output.applied: 1`, comentário real conferido ao vivo no
+`kanban-dev.html?squad=dev`. Texto do comentário preciso (citou os 5
+itens do checklist corretamente, notou a ausência de descrição) e
+calibrado ao toolset restrito — reconheceu explicitamente que mover o
+card seria "risco médio" e só relatou a inconsistência, sem tentar
+contornar a restrição. **Primeira escrita real do orquestrador,
+confirmada bem-sucedida.**
+
+## Canário 2: `mover_coluna` real
+
+Depois do canário 1 confirmado limpo, o usuário autorizou o passo
+seguinte: mesmo card, mesmo padrão de confirmação interativa e
+monitoramento ao vivo, agora validando a ação de risco MÉDIO
+(`mover_coluna`) com escrita real — o mesmo cenário já validado em
+dryRun no cenário 5.
+
+`scripts/escritaReal2MoverColunaContraSquadDev.js` — toolset filtrado
+pra `ler_card` + `mover_coluna` + `comentario` + `perguntar_humano` (as
+outras 4 ferramentas de escrita continuam de fora, sem motivo pra
+estarem acessíveis neste cenário). Resolve a coluna "Concluído" via
+`flowLib.doneColumnIds()`, mesmo padrão do cenário 5.
+
+Verificado contra fake db + cliente scriptado antes de entregar pro
+usuário — desta vez exercitando o caminho mais complexo que `comentario`
+(só update simples): `mover_coluna` com `dryRun:false` moveu a coluna de
+verdade, escreveu histórico (`history`), carimbou `flow.doneAt` (coluna
+de fim), gerou notificação real pro owner/participante
+(`kanban/usuarios/{uid}/notificacoes`, tipo `done`), e carimbou
+`updatedAt`/`cards_updated_at` — tudo no fake db, nada simulado a partir
+daqui pra baixo na cadeia de escrita. Nota de segurança adicional: tipo
+de notificação `done`/`moved` NÃO está em `PUSH_TYPES`
+(`functions/index.js`) — mover o card gera notificação in-app, mas não
+dispara push pro celular/navegador de ninguém.
+
+**Rodado pelo usuário** contra o Firebase real, mesmo card
+(`c1785505159707_geo`): `status: 'done'`, 3 chamadas à API, sequência
+`ler_card -> mover_coluna -> comentario`. Bate no que foi verificado
+contra fake db:
+- `mover_coluna`: `output.dryRun: false`, `output.applied: 1` — moveu o
+  card de "Backlog" pra "Concluído" de verdade.
+- `comentario` em seguida, explicando a ação ("checklist 100%
+  completo... confirmando que o trabalho foi finalizado"), também
+  `dryRun: false`, `applied: 1`.
+- `ler_card` (primeira ferramenta chamada) mostrou o comentário do
+  canário 1 já presente no card — confirma que a leitura reflete o
+  estado real acumulado das rodadas anteriores, não um snapshot velho.
+
+**Segunda escrita real do orquestrador, confirmada bem-sucedida** — a
+primeira envolvendo uma ação de risco médio de verdade (não só
+`comentario`). Com os dois canários fechados, a validação incremental
+combinada com o usuário (dryRun fixo -> parâmetro de verdade -> canário
+de baixo risco -> canário de risco médio, cada passo com sign-off
+explícito antes do próximo) está completa. Próximos passos (toolset
+real mais amplo, squad `dev` sem restrição de ferramentas, gatilho
+automático, ou qualquer outro squad além de `dev`) continuam **não**
+autorizados — cada um é uma decisão nova e separada, não implícita por
+este resultado.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -450,6 +634,30 @@ acima): card vazio, checklist quase completo, ambiguidade mover x
 checklist (com aviso "não mexer" no título), e o cenário de controle
 (mesma ambiguidade, sem aviso no título) — que confirmou que a cautela
 observada vem do julgamento geral do prompt, não de reagir a uma
-palavra-chave específica. Próximos passos (tirar o `dryRun` fixo pra
-validar escrita real, ou expandir o vocabulário/prompt) ficam pra
-quando o usuário decidir seguir pra essa próxima fase.
+palavra-chave específica.
+
+Cenário 5 (risco médio inequívoco) fechou a lacuna que faltava: validou
+o modelo executando `mover_coluna` de verdade (em dryRun) sem hesitar
+num caso sem ambiguidade, e no processo encontrou e corrigiu um bug
+técnico real (`makeRealHandler` não reconstituía `type` no input antes
+de `buildWritePlan` — nenhuma ferramenta de risco médio tinha sido
+executada com sucesso por LLM real até então). Com o fix, a validação
+técnica e de comportamento cobre agora os dois eixos: reconhecer quando
+NÃO agir (4 cenários) e agir corretamente quando não há ambiguidade
+(cenário 5).
+
+Etapa 3 tirou o `dryRun` fixo — agora é parâmetro de verdade, default
+`true`. Dois canários rodados pelo usuário contra o Firebase real, squad
+`dev`, ambos confirmados bem-sucedidos: canário 1 (`comentario` real,
+toolset restrito a baixo risco) e canário 2 (`mover_coluna` real, risco
+médio, toolset ampliado só pro necessário pro cenário). Cada passo teve
+sign-off explícito do usuário antes do próximo — nada foi automatizado
+ou liberado por inércia.
+
+**Estado atual**: escrita real validada ponta a ponta pras duas ações já
+testadas (`comentario`, `mover_coluna`), restrita ao squad `dev`,
+invocação sempre manual (scripts standalone, nunca gatilho automático).
+Qualquer expansão — mais ferramentas em modo real, squad `dev` sem
+restrição de toolset, gatilho automático, ou qualquer squad além de
+`dev` (`ecomm` = produção) — é uma decisão nova, separada, ainda não
+tomada.

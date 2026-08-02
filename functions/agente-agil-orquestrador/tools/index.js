@@ -53,14 +53,15 @@ const perguntarHumanoSchema = z.object({
 // tools/fakeHandlers.js. Usado pelos testes e por qualquer chamada que não
 // passe explicitamente pra 'real'.
 // mode:'real' — handlers de verdade (tools/realHandlers.js), precisa de
-// {db, squadId, cardId}; dryRun fica sempre fixo pras 7 de escrita (ver
-// DRY_RUN_FIXO em realHandlers.js, não é opção aqui) — ler_card não escreve
-// nada, então não tem dryRun nenhum pra travar, real ou fake sempre lê.
-// perguntar_humano nunca tem handler real — não existe escrita nenhuma
-// associada a ela, real ou fake, em nenhum modo: é só o sinal que para o
-// loop (ver loop.js, status 'awaiting_human').
+// {db, squadId, cardId}; dryRun é opção explícita, default `true` (ver
+// makeRealHandler em realHandlers.js) — quem quer escrita real precisa
+// passar `dryRun: false` aqui, nunca um default escondido. ler_card não
+// escreve nada, então não tem dryRun nenhum pra travar, real ou fake
+// sempre lê. perguntar_humano nunca tem handler real — não existe escrita
+// nenhuma associada a ela, real ou fake, em nenhum modo: é só o sinal que
+// para o loop (ver loop.js, status 'awaiting_human').
 function buildTools(options = {}) {
-  const { mode = 'fake', db, squadId, cardId } = options;
+  const { mode = 'fake', db, squadId, cardId, dryRun = true } = options;
   if (mode === 'real' && (!db || !squadId || !cardId)) {
     throw new Error('buildTools({mode:"real"}) precisa de db, squadId e cardId.');
   }
@@ -69,10 +70,10 @@ function buildTools(options = {}) {
     name,
     description:
       mode === 'real'
-        ? `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Monta o plano de escrita de verdade contra o board, mas em dryRun — nunca aplica.`
+        ? `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). ${dryRun ? 'Monta o plano de escrita de verdade contra o board, mas em dryRun — nunca aplica.' : 'Escreve DE VERDADE no board.'}`
         : `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Execução simulada, não escreve no board.`,
     input_schema: zodToJsonSchema(schema),
-    handler: mode === 'real' ? makeRealHandler(name, { db, squadId, cardId }) : makeHandler(name),
+    handler: mode === 'real' ? makeRealHandler(name, { db, squadId, cardId, dryRun }) : makeHandler(name),
   }));
 
   tools.push({
