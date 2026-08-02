@@ -21,7 +21,7 @@ const {
   outputEditarCampos,
 } = require('../../agente-agil/schema');
 const { makeHandler } = require('./fakeHandlers');
-const { makeRealHandler } = require('./realHandlers');
+const { makeRealHandler, makeRealPerguntarHumanoHandler } = require('./realHandlers');
 const { lerCardSchema, makeFakeLerCardHandler, makeRealLerCardHandler } = require('./lerCard');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
@@ -57,9 +57,13 @@ const perguntarHumanoSchema = z.object({
 // makeRealHandler em realHandlers.js) — quem quer escrita real precisa
 // passar `dryRun: false` aqui, nunca um default escondido. ler_card não
 // escreve nada, então não tem dryRun nenhum pra travar, real ou fake
-// sempre lê. perguntar_humano nunca tem handler real — não existe escrita
-// nenhuma associada a ela, real ou fake, em nenhum modo: é só o sinal que
-// para o loop (ver loop.js, status 'awaiting_human').
+// sempre lê. perguntar_humano TEM handler real desde que a lacuna de
+// entrega foi identificada (a pergunta só existia em memória, visível só
+// pra quem rodava o script) — ver makeRealPerguntarHumanoHandler em
+// realHandlers.js: posta a pergunta como comentário + marca
+// agent_status:'awaiting_validation', respeitando dryRun igual às outras
+// 7 (importante pra não sujar os cenários de julgamento 1-6, que dependem
+// dela não escrever nada em dryRun).
 function buildTools(options = {}) {
   const { mode = 'fake', db, squadId, cardId, dryRun = true } = options;
   if (mode === 'real' && (!db || !squadId || !cardId)) {
@@ -78,9 +82,12 @@ function buildTools(options = {}) {
 
   tools.push({
     name: 'perguntar_humano',
-    description: 'Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir.',
+    description:
+      mode === 'real'
+        ? `Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir. ${dryRun ? 'Monta o plano de verdade (comentário + agent_status), mas em dryRun — nunca aplica.' : 'Posta a pergunta como comentário DE VERDADE no card e marca agent_status como "awaiting_validation".'}`
+        : 'Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir.',
     input_schema: zodToJsonSchema(perguntarHumanoSchema),
-    handler: makeHandler('perguntar_humano'),
+    handler: mode === 'real' ? makeRealPerguntarHumanoHandler({ db, squadId, cardId, dryRun }) : makeHandler('perguntar_humano'),
   });
 
   tools.push({

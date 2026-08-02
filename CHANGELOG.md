@@ -1942,6 +1942,36 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Cenário 7 + canário 6: handler real de `perguntar_humano`
+Resolve a lacuna de entrega identificada na entrada anterior — usuário
+decidiu priorizar isso antes de continuar `link` (pausado, não urgente).
+Design combinado antes do código: `dryRun` simétrico às outras 7 (não
+sujar os 6 cenários de julgamento já rodados, que dependem de
+`perguntar_humano` não escrever nada em dryRun); reaproveita
+`agent_status:'awaiting_validation'` em vez de campo novo no card;
+composição via `buildWritePlan` com dois outputs já existentes
+(`comentario` prefixado com `❓` + `agent_status`); loop confirmado que
+NÃO retoma sozinho (cada pergunta é fim de execução, exige nova
+invocação manual com a resposta embutida).
+
+`tools/realHandlers.js`: `makeRealPerguntarHumanoHandler` novo,
+compartilha helper `runWritePlan` extraído de `makeRealHandler` (evita
+duplicar resolver-card/montar-plano/aplicar). `tools/index.js`: em
+`mode:'real'`, `perguntar_humano` usa o handler real (antes: sempre fake
+em qualquer modo). Modo fake inalterado.
+
+Adiciona
+`scripts/llmRealSystemPromptV1PerguntarHumanoPrazoDryRunContraSquadDev.js`
+(cenário 7) e `scripts/escritaReal6PerguntarHumanoContraSquadDev.js`
+(canário 6) — mesma tarefa nos dois (prazo de entrega, informação que
+`ler_card` não expõe, garante resposta honesta = perguntar). Toolset
+restrito a `ler_card`/`perguntar_humano`/`comentario`.
+
+Testes novos em `realHandlers.test.js` (plano composto em dryRun, 3
+steps; escrita real em `dryRun:false`; modo fake inalterado) +
+verificação contra fake db do canário 6. 133 testes passando. Ainda não
+rodado contra LLM real.
+
 ### 2026-08-02 · Lacuna identificada: `perguntar_humano` sem mecanismo de entrega
 Usuário notou, ao observar os canários de perto: quando `perguntar_humano`
 roda, a pergunta só aparece no terminal de quem roda o script — nunca é
