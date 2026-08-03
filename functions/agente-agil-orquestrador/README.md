@@ -907,6 +907,50 @@ Reverificado contra fake db (toolset ampliado, mesma garantia de plano
 composto correto). 133 testes passando. Ainda não rodado contra LLM
 real com este 3º desenho.
 
+**Rodado pelo usuário com o 3º desenho — sucesso**: `status:
+'awaiting_human'`, `ler_card -> perguntar_humano`. O modelo leu o card
+(coluna "Concluído", checklist com 1 item pendente), reconheceu que não
+tinha como saber se a divulgação já tinha acontecido nem qual seria a
+coluna de destino correta, e chamou `perguntar_humano` com uma pergunta
+clara apresentando as duas opções concretas (marcar o item vs mover o
+card) e pedindo a confirmação. Plano composto retornado com os 3 steps
+esperados (`comentario`=1 + `agent_status`=2), `output.dryRun: true`
+confirmado — nada escrito de verdade, exatamente como projetado. Handler
+real de `perguntar_humano` validado ponta a ponta em dryRun; falta só o
+canário 6 (`dryRun:false`) pra confirmar a escrita de verdade no
+Firebase.
+
+**Canário 6 rodado — escrita real confirmada, mas achado de produto
+real**: `output.dryRun: false`, `applied: 3`, comentário com prefixo `❓`
+apareceu certinho no card. Confirmado visualmente pelo usuário: **nenhuma
+notificação chegou pro responsável**. Causa: `outputs/comentario.js`
+(Sprint 3, `agente-agil/notifications.js`) só dispara
+`notify.buildMentionSteps()` quando o TEXTO do comentário tem uma
+`@menção` de verdade — o texto que `makeRealPerguntarHumanoHandler`
+montava era só o prefixo `❓` + a pergunta, sem `@` nenhum, então nunca
+entrava nesse caminho. Mesmo pipeline de notificação que já funciona pra
+`comentario`/`editar_campos` com `@menção` manual — só que aqui a menção
+tinha que ser automática, já que o LLM nunca escreve `@alguém` sozinho
+numa pergunta.
+
+**Corrigido**: o handler agora resolve o `owner` (responsável) do card
+via `resolveCardKey`/`cardsPath` (mesmo caminho que `ler_card` já usa)
+ANTES de montar o comentário, e injeta `@INIT` no texto (ex.: "❓ Agente
+Ágil precisa de uma resposta de @CO:"). Só o responsável é mencionado
+(não participantes) — mesmo público de `notifAssigned`/checklist
+(`buildOwnerNotifStep`), já que é quem decide, não o de
+`notifDone`/`unblocked` (que notifica responsável + participantes). Se o
+card não tem responsável, o comentário sai sem `@menção` (mesmo silêncio
+que o resto do sistema já tem pra card sem owner — comportamento
+existente, não uma regressão nova).
+
+Testes novos em `realHandlers.test.js`: plano em dryRun já tem o texto
+com `@INIT` (o step de notificação em si vem como `noop` — visível no
+plano pra inspeção, não aplicado, mesmo padrão que `applyWritePlan`
+sempre teve pra `noop`); `dryRun:false` cria a notificação de verdade em
+`kanban/usuarios/{uid}/notificacoes` (`type:'mention'`); card sem
+`owner` não quebra, só sai sem `@menção`. 134 testes passando.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +

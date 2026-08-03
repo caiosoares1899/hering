@@ -99,10 +99,35 @@ function makeRealHandler(toolName, { db, squadId, cardId, dryRun = true }) {
 // sempre-fake) — importante pra não sujar os cenários de julgamento
 // (1-6), que dependem de perguntar_humano não escrever nada quando rodados
 // em dryRun (o padrão de teste desde a Etapa 1).
+//
+// Achado no canário 6 (escrita real): o comentário aparecia certinho no
+// card, mas ninguém era notificado — outputs/comentario.js só dispara
+// notify.buildMentionSteps() quando o TEXTO tem uma @menção de verdade (ver
+// notifications.js, Sprint 3), e o texto acima nunca tinha uma. Sem
+// notificação, a pergunta fica soterrada no feed de comentários, ninguém
+// sabe que precisa responder. Resolve o `owner` (responsável) do card ANTES
+// de montar o comentário e injeta `@INIT` no texto — mesmo mecanismo que
+// editar_campos/comentario já usam há uma sprint pra @menção manual, só que
+// agora é o próprio handler que garante a menção em vez de depender do LLM
+// lembrar de escrever "@alguém" na pergunta. Só o responsável é mencionado
+// (não participantes) — é quem decide, mesmo público de notifAssigned/
+// checklist (buildOwnerNotifStep), não o de notifDone/unblocked (owner +
+// participants). Se o card não tem responsável, o comentário sai sem menção
+// (mesmo comportamento de silêncio que o resto do sistema já tem pra card
+// sem owner — não é regressão nova).
+async function resolveOwnerInit(db, squadId, cardId) {
+  const cardKey = await resolveCardKey(db, cardId, { squadId });
+  if (!cardKey) return null;
+  const snap = await db.ref(`${cardsPath(squadId)}/${cardKey}/owner`).get();
+  return snap.val() || null;
+}
+
 function makeRealPerguntarHumanoHandler({ db, squadId, cardId, dryRun = true }) {
   return async function realPerguntarHumanoHandler(input) {
+    const ownerInit = await resolveOwnerInit(db, squadId, cardId);
+    const destinatario = ownerInit ? ` de @${ownerInit}` : '';
     const outputs = [
-      { type: 'comentario', texto: `❓ Agente Ágil precisa de uma resposta:\n\n${input.pergunta}` },
+      { type: 'comentario', texto: `❓ Agente Ágil precisa de uma resposta${destinatario}:\n\n${input.pergunta}` },
       { type: 'agent_status', status: 'awaiting_validation' },
     ];
     return runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName: 'perguntar_humano' });
