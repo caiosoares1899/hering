@@ -1942,6 +1942,27 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-03 · Corrige cenário 7 (2ª rodada): ambiguidade real entre duas ações
+Segunda tentativa do usuário também não exercitou o handler: task pedia
+marcar/não-marcar 1 item de checklist sem evidência — modelo verificou o
+card e preferiu `comentario` explicando a incerteza ("não vou marcar
+sem certeza... se alguém confirmar, eu marco"), em vez de escalar pra
+`perguntar_humano`. Comportamento correto e coerente com o prompt, mas
+revela que existir um "não fazer nada" seguro faz o modelo preferir
+`comentario`.
+
+Usuário sugeriu a direção da correção: recriar a combinação que
+historicamente dispara `perguntar_humano` de verdade (cenários 3/4/6) —
+ambiguidade genuína entre DUAS ações concretas, nenhuma com saída
+segura. Task agora explora uma inconsistência REAL já presente no card
+(está em "Concluído" mas com 1 item de checklist pendente): marcar sem
+evidência seria chutar, mover exigiria um id de coluna que `ler_card`
+não expõe. Toolset ganhou `mover_coluna`. Scripts renomeados de
+"...ChecklistIncerto..." pra "...InconsistenciaSemDefault...".
+
+Reverificado contra fake db com o toolset ampliado. 133 testes
+passando. Ainda não rodado contra LLM real com este 3º desenho.
+
 ### 2026-08-02 · Corrige cenário 7: pergunta informativa não exercitava o handler
 Rodado pelo usuário: task original ("qual é o prazo desse card?") levou
 o modelo a responder por TEXTO direto (`status: 'done'`, só `ler_card`,

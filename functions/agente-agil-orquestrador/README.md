@@ -869,8 +869,43 @@ de verdade, marca `agentStatus:'awaiting_validation'`, promove
 `executorType` pra `'agent'`, `updatedAt`/`cards_updated_at`
 carimbados — e confirma que `checklist_item` estar disponível no
 toolset não interfere no plano composto quando `perguntar_humano` é a
-ferramenta escolhida. 133 testes continuam passando. Ainda não rodado
-contra LLM real com o cenário corrigido.
+ferramenta escolhida. 133 testes continuam passando.
+
+**Rodado pelo usuário com o cenário corrigido**: `status: 'done'`,
+`ler_card -> comentario` — o modelo verificou o card, não achou nenhuma
+evidência de que a divulgação tinha acontecido, e **preferiu comentar**
+("não vou marcar esse item como concluído sem certeza... se alguém
+confirmar, eu marco") em vez de marcar o item ou escalar pra
+`perguntar_humano`. Resposta honesta e segura (não chutou `done`), mas
+de novo não exercitou o handler — achado, não bug, ver seção "Corrige
+cenário 7" abaixo pra próxima iteração.
+
+## Corrige cenário 7: pergunta informativa não exercitava o handler (2ª rodada)
+
+Duas tentativas reais, dois resultados defensáveis mas que não
+exercitaram o handler novo:
+- **v1** (pergunta informativa, "qual o prazo?"): modelo respondeu só em
+  texto — sem tentativa de escrita nenhuma.
+- **v2** (marcar/não-marcar 1 item de checklist, sem evidência): modelo
+  preferiu `comentario` explicando a incerteza — comportamento coerente
+  com o próprio prompt ("é melhor comentar... do que mover o card
+  errado"), mas revelou que existir um "não fazer nada" seguro faz o
+  modelo preferir `comentario` a escalar pra `perguntar_humano`.
+
+**v3** (atual, usuário sugeriu a direção): combina os dois ingredientes
+que historicamente dispararam `perguntar_humano` de verdade nos
+cenários 3/4/6 — ambiguidade genuína entre DUAS ações concretas
+(`checklist_item` vs `mover_coluna`, mesmo par do cenário 3/4) E nenhuma
+delas com saída segura. Explora uma inconsistência REAL já presente no
+card (não inventada): está em "Concluído" mas tem 1 item de checklist
+pendente. Marcar sem evidência seria chutar; mover exigiria um id de
+coluna que `ler_card` não expõe (só mostra a coluna atual). Scripts
+renomeados de "...ChecklistIncerto..." pra
+"...InconsistenciaSemDefault...", toolset ganhou `mover_coluna`.
+
+Reverificado contra fake db (toolset ampliado, mesma garantia de plano
+composto correto). 133 testes passando. Ainda não rodado contra LLM
+real com este 3º desenho.
 
 ## Status
 
