@@ -837,23 +837,40 @@ modo fake confirmado inalterado. 133 testes passando.
 
 ## Cenário 7 + canário 6: `perguntar_humano` real
 
-`scripts/llmRealSystemPromptV1PerguntarHumanoPrazoDryRunContraSquadDev.js`
+`scripts/llmRealSystemPromptV1PerguntarHumanoChecklistIncertoDryRunContraSquadDev.js`
 (cenário 7, dryRun) e
 `scripts/escritaReal6PerguntarHumanoContraSquadDev.js` (canário 6,
 `dryRun:false`, mesmo padrão de confirmação/monitoramento ao vivo dos
-canários anteriores) — mesma tarefa nos dois: pergunta sobre o prazo de
-entrega do card, informação que `ler_card` **não expõe** (garante que a
-única resposta honesta é perguntar, não inventar uma data). Toolset
-restrito a `ler_card`/`perguntar_humano`/`comentario` — sem
-`mover_coluna`/`link`/etc., pra não dar nenhuma ação alternativa
-plausível.
+canários anteriores).
 
-Verificado contra fake db + cliente scriptado (canário 6): toolset
-filtrado corretamente, `perguntar_humano` com `dryRun:false` posta o
-comentário com prefixo `❓` de verdade, marca `agentStatus:
-'awaiting_validation'`, promove `executorType` pra `'agent'`,
-`updatedAt`/`cards_updated_at` carimbados. 133 testes continuam
-passando. Ainda não rodado contra LLM real.
+**Achado da primeira versão do cenário 7**: task original era puramente
+informativa ("qual é o prazo desse card?"), toolset restrito a
+`ler_card`/`perguntar_humano`/`comentario`. Rodado pelo usuário contra o
+LLM real: `status: 'done'`, só `ler_card`, o modelo respondeu **por
+texto direto** ("não tem prazo registrado... confirme com o Caio") sem
+chamar ferramenta nenhuma — resposta honesta (não inventou data), mas
+não exercitou o handler novo (nenhuma tentativa de escrita). Pelos
+cenários 3/4, `perguntar_humano` só aparece quando o pedido é orientado
+a AÇÃO com incerteza genuína, nunca em pergunta puramente informativa —
+faltava dar ao modelo uma escolha real entre agir e perguntar.
+
+**Corrigido**: task agora pede uma escrita concreta (marcar o item de
+checklist "Divulgar o post nas redes sociais", criado no canário 3,
+como feito ou não) sem nenhuma informação que confirme o valor — "só
+marque como concluído se tiver certeza". Toolset ganhou `checklist_item`
+(a ação que o pedido pede), dando ao modelo uma escolha real entre
+arriscar errar (chutar `done`) e perguntar. Scripts renomeados de
+"...Prazo..." pra "...ChecklistIncerto...".
+
+Verificado contra fake db + cliente scriptado (canário 6, com o cenário
+revisado): toolset filtrado corretamente (incluindo `checklist_item`),
+`perguntar_humano` com `dryRun:false` posta o comentário com prefixo `❓`
+de verdade, marca `agentStatus:'awaiting_validation'`, promove
+`executorType` pra `'agent'`, `updatedAt`/`cards_updated_at`
+carimbados — e confirma que `checklist_item` estar disponível no
+toolset não interfere no plano composto quando `perguntar_humano` é a
+ferramenta escolhida. 133 testes continuam passando. Ainda não rodado
+contra LLM real com o cenário corrigido.
 
 ## Status
 
