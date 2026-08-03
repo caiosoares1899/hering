@@ -1942,6 +1942,25 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-03 · Corrige perguntar_humano: comentário real não notificava ninguém
+Achado no canário 6 (escrita real): o comentário `❓` do
+`perguntar_humano` aparecia certinho no card, mas ninguém era
+notificado, porque `outputs/comentario.js` só dispara notificação
+(`notify.buildMentionSteps`, Sprint 3) quando o texto tem uma `@menção`
+de verdade, e o texto montado pelo handler nunca tinha uma.
+
+Corrigido: `makeRealPerguntarHumanoHandler` agora resolve o `owner`
+(responsável) do card antes de montar o comentário e injeta `@INIT` no
+texto automaticamente — reaproveita 100% o pipeline de notificação que
+`comentario`/`editar_campos` já usam pra `@menção` manual. Só o
+responsável é mencionado (mesmo público de `notifAssigned`/checklist).
+Card sem responsável: comentário sai sem `@menção`, sem quebrar.
+
+Testes novos em `realHandlers.test.js` cobrindo dryRun (texto já com
+`@INIT`, notificação como `noop` no plano), `dryRun:false` (notificação
+real criada em `kanban/usuarios/{uid}/notificacoes`) e card sem `owner`.
+134 testes passando.
+
 ### 2026-08-03 · Cenário 7 (3ª versão) confirmado: handler real de perguntar_humano exercitado
 Rodado pelo usuário contra o LLM real com o 3º desenho da task
 (inconsistência real no card: coluna "Concluído" com 1 item de checklist

@@ -13,8 +13,10 @@ const assert = require('node:assert/strict');
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
 const { buildTools } = require('../tools');
 const { runLoop } = require('../loop');
+const membersLib = require('../../agente-agil/members');
 
-function seedDevSquadDb(cardKey, card) {
+function seedDevSquadDb(cardKey, card, usuariosPublicos) {
+  membersLib._resetCacheForTests();
   return makeFakeDb({
     kanban: {
       squads: {
@@ -26,6 +28,7 @@ function seedDevSquadDb(cardKey, card) {
           },
         },
       },
+      ...(usuariosPublicos ? { usuarios_publicos: usuariosPublicos } : {}),
     },
   });
 }
@@ -135,8 +138,16 @@ test('perguntar_humano em modo fake continua simulado (não afetado pela mudanç
   assert.deepEqual(db._data().kanban.squads.dev.dados.cards['9'], { id: 'c9', title: 'Card no dev', col: 'progress' });
 });
 
-test('perguntar_humano real em dryRun (default) monta o plano composto (comentario + agent_status) mas não escreve', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {}, agentStatus: null, executorType: null, history: [] });
+const RESPONSAVEL_SEED = {
+  uidCaio: { nome: 'Caio Oliveira', email: 'caio.oliveira@ciahering.com.br', init: 'CO', squads: { dev: true } },
+};
+
+test('perguntar_humano real em dryRun (default) monta o plano composto (comentario + agent_status + menção ao responsável) mas não escreve', async () => {
+  const db = seedDevSquadDb(
+    '9',
+    { id: 'c9', title: 'Card no dev', col: 'progress', owner: 'CO', comments: {}, agentStatus: null, executorType: null, history: [] },
+    RESPONSAVEL_SEED,
+  );
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' }); // sem dryRun explícito
   const perguntar = tools.find((t) => t.name === 'perguntar_humano');
 
@@ -145,17 +156,29 @@ test('perguntar_humano real em dryRun (default) monta o plano composto (comentar
   assert.equal(result.ok, true, `esperava ok:true, veio: ${JSON.stringify(result)}`);
   assert.equal(result.dryRun, true);
   assert.equal(result.tool, 'perguntar_humano');
-  // 1 output de comentario (1 step) + 1 output de agent_status (2 steps:
-  // update do campo agentStatus + transaction de executorType) = 3 steps.
-  assert.equal(result.plan.length, 3);
+  // 1 output de comentario (1 step de comentário + 1 step de notificação,
+  // já que o texto tem @menção) + 1 output de agent_status (2 steps: update
+  // do campo agentStatus + transaction de executorType) = 4 steps. Em
+  // dryRun o step de notificação vem como {kind:'noop'} (notify.buildNotifStep
+  // devolve noop quando dryRun) — ainda aparece no PLANO pra poder inspecionar
+  // o que SERIA notificado, só não é aplicado por _applySteps (ver
+  // applyWritePlan, que pula kind:'noop' de propósito).
+  assert.equal(result.plan.length, 4);
+  assert.equal(result.plan[1].kind, 'noop', 'step de notificação da @menção deveria vir como noop em dryRun, sem ser aplicado');
+  assert.ok(result.plan[0].data[Object.keys(result.plan[0].data)[0]].text.includes('@CO'), 'texto do comentário (mesmo em dryRun) já deveria ter a @menção ao responsável');
 
   const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
   assert.deepEqual(cardAfter.comments, {}, 'dryRun (default) não deveria ter escrito nada de verdade');
   assert.equal(cardAfter.agentStatus, null, 'dryRun (default) não deveria ter mudado agentStatus de verdade');
+  assert.deepEqual(db._data().kanban.usuarios || {}, {}, 'dryRun (default) não deveria ter criado notificação nenhuma');
 });
 
-test('perguntar_humano real com dryRun:false posta a pergunta como comentário (prefixo ❓) e marca agent_status:awaiting_validation', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {}, agentStatus: null, executorType: null, history: [] });
+test('perguntar_humano real com dryRun:false posta a pergunta como comentário (prefixo ❓ + @menção ao responsável), marca agent_status:awaiting_validation e notifica de verdade', async () => {
+  const db = seedDevSquadDb(
+    '9',
+    { id: 'c9', title: 'Card no dev', col: 'progress', owner: 'CO', comments: {}, agentStatus: null, executorType: null, history: [] },
+    RESPONSAVEL_SEED,
+  );
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
   const perguntar = tools.find((t) => t.name === 'perguntar_humano');
 
@@ -169,8 +192,8 @@ test('perguntar_humano real com dryRun:false posta a pergunta como comentário (
   const comments = Object.values(cardAfter.comments || {});
   assert.equal(comments.length, 1, 'deveria ter escrito o comentário de verdade');
   assert.ok(
-    comments[0].text.startsWith('❓ Agente Ágil precisa de uma resposta:'),
-    'comentário deveria ter o prefixo que distingue de um comentário normal do agente',
+    comments[0].text.startsWith('❓ Agente Ágil precisa de uma resposta de @CO:'),
+    'comentário deveria ter o prefixo + @menção ao responsável, achado real do canário 6: sem @menção, outputs/comentario.js nunca dispara notificação (ver notifications.js)',
   );
   assert.ok(comments[0].text.includes('Qual prioridade uso pra esse card?'), 'comentário deveria conter a pergunta em si');
   assert.equal(comments[0].author, 'Agente Ágil');
@@ -179,6 +202,25 @@ test('perguntar_humano real com dryRun:false posta a pergunta como comentário (
   assert.equal(cardAfter.executorType, 'agent', 'agent_status sem executorType explícito promove human/vazio -> agent (comportamento já existente do builder, não suprimido)');
   assert.ok(cardAfter.updatedAt, 'applyWritePlan deveria carimbar updatedAt do card');
   assert.ok(db._data().kanban.squads.dev.dados.cards_updated_at && db._data().kanban.squads.dev.dados.cards_updated_at['c9'], 'deveria carimbar cards_updated_at pro delta-sync do cliente perceber a mudança');
+
+  const notifs = Object.values(db._data().kanban.usuarios.uidCaio.notificacoes || {});
+  assert.equal(notifs.length, 1, 'a @menção deveria ter disparado UMA notificação de verdade pro responsável — achado do canário 6, sem isso a pergunta ficava soterrada no feed');
+  assert.equal(notifs[0].type, 'mention');
+  assert.equal(notifs[0].cardId, 'c9');
+});
+
+test('perguntar_humano real sem responsável no card (owner vazio) posta o comentário sem @menção, sem quebrar', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card sem dono', col: 'progress', comments: {}, agentStatus: null, executorType: null, history: [] });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const perguntar = tools.find((t) => t.name === 'perguntar_humano');
+
+  const result = await perguntar.handler({ pergunta: 'Card sem responsável, alguém decide?' });
+
+  assert.equal(result.ok, true);
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  const comments = Object.values(cardAfter.comments || {});
+  assert.equal(comments.length, 1);
+  assert.equal(comments[0].text, '❓ Agente Ágil precisa de uma resposta:\n\nCard sem responsável, alguém decide?', 'sem owner, mesmo texto de antes — sem @menção pendurada em branco');
 });
 
 test('integração ponta a ponta: runLoop com tools reais nunca muta o fake db (dryRun fixo em true)', async () => {
