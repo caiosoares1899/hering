@@ -1942,6 +1942,26 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Corrige cenário 7: pergunta informativa não exercitava o handler
+Rodado pelo usuário: task original ("qual é o prazo desse card?") levou
+o modelo a responder por TEXTO direto (`status: 'done'`, só `ler_card`,
+sem chamar nenhuma ferramenta) — resposta honesta (não inventou uma
+data), mas não exercitou o handler real de `perguntar_humano` recém-
+implementado, porque a pergunta não envolvia nenhuma tentativa de
+escrita. Achado: `perguntar_humano` só aparece quando o pedido é
+orientado a ação com incerteza genuína (padrão dos cenários 3/4), nunca
+em pergunta puramente informativa.
+
+Corrigido: task agora pede uma escrita concreta (marcar item de
+checklist "Divulgar o post nas redes sociais" — criado no canário 3 —
+como feito ou não), sem informação que confirme o valor. Toolset ganhou
+`checklist_item` (a ação que o pedido pede), dando ao modelo escolha
+real entre agir e perguntar. Scripts renomeados de "...Prazo..." pra
+"...ChecklistIncerto...". Reverificado contra fake db: `checklist_item`
+disponível no toolset não interfere no plano composto de
+`perguntar_humano`. 133 testes passando. Ainda não rodado contra LLM
+real com o cenário corrigido.
+
 ### 2026-08-02 · Cenário 7 + canário 6: handler real de `perguntar_humano`
 Resolve a lacuna de entrega identificada na entrada anterior — usuário
 decidiu priorizar isso antes de continuar `link` (pausado, não urgente).
