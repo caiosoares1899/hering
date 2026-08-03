@@ -5714,6 +5714,13 @@ function loadComunicados(){
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_modelo_card_aberto_duplicar_coluna_2026_08',
+    titulo: '📥 Novidades: usar modelo no card já aberto + escolher coluna ao duplicar',
+    corpo: '<p>Duas melhorias novas no board, direto no modal do card:</p><p><b>📥 Usar modelo num card já aberto</b><br>Antes, aplicar um modelo sempre abria um card novo do zero. Agora tem um botão "📥 Usar modelo" no rodapé do card que você já está editando — ele aplica o modelo <b>sem apagar nada</b> do que você já preencheu: checklist e riscos do modelo são somados aos que já existem (sem duplicar), tags são somadas, e descrição/PO só entram se ainda estiverem vazios.</p><p><b>⧉ Escolher a coluna ao duplicar</b><br>O modal de "Duplicar" agora deixa escolher em qual coluna a cópia deve nascer (antes ela sempre repetia a coluna do card original, sem opção). E depois de duplicar, a cópia já abre sozinha pra edição — não precisa mais procurar ela no board.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_backup_automatico_2026_07',
     titulo: '🔧 Backup automático agora funciona de verdade',
     corpo: '<p>Encontramos e corrigimos um problema sério: o backup semanal automático (board e painel) dependia de manter uma aba do navegador aberta ininterruptamente por até 7 dias — o que na prática nunca acontecia.</p><p>Agora a checagem roda toda vez que alguém abre o board ou o painel: se já passaram 7+ dias desde o último backup, ele dispara na hora. A configuração (email, chaves do EmailJS) também deixou de ficar presa a um navegador específico — agora fica salva no Firebase, compartilhada entre qualquer dispositivo.</p><p><b>Ação sugerida:</b> se você já tinha configurado o backup antes, abra a aba Backup (no board e no painel) e reconfigure uma vez — a config antiga estava só no seu navegador local e não migra sozinha.</p>',
