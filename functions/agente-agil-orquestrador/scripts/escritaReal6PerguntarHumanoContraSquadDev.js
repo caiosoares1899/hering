@@ -11,15 +11,18 @@
 //   1. Mesmo card conhecido: c1785505159707_geo (squad 'dev').
 //   2. Invocação manual.
 //   3. Toolset filtrado em código pra `ler_card` + `perguntar_humano` +
-//      `comentario` + `checklist_item` — mesmo conjunto do cenário 7,
-//      agora com dryRun:false. `checklist_item` incluído de propósito
-//      (achado do cenário 7, primeira versão: um pedido sem nenhuma ação
-//      concorrente disponível não exercitava perguntar_humano de verdade —
-//      o modelo só respondia em texto) — dá ao modelo uma escolha real
-//      entre agir (arriscando errar) e perguntar.
-//   4. Pedido real: marcar no checklist se um item foi feito, sem nenhuma
-//      informação que confirme isso — força perguntar_humano em vez de
-//      chutar done:true/false.
+//      `comentario` + `checklist_item` + `mover_coluna` — mesmo conjunto
+//      do cenário 7 (3ª versão, ver histórico no cabeçalho daquele
+//      script): duas tentativas anteriores de task não exercitaram o
+//      handler (uma puramente informativa, sem escrita nenhuma; outra com
+//      "não fazer nada" como default seguro, resultando em `comentario`
+//      em vez de `perguntar_humano`) — esta versão usa uma ambiguidade
+//      real entre DUAS ações concretas, nenhuma com saída segura.
+//   4. Pedido real: o card está em "Concluído" mas tem um item de
+//      checklist pendente — inconsistência real, resolver exige marcar o
+//      item (sem evidência) OU mover o card (sem saber o id de destino,
+//      já que `ler_card` só expõe a coluna atual) — sem default seguro em
+//      nenhuma das duas.
 //   5. Confirmação interativa (`ESCREVER`) + lembrete de acompanhar
 //      `kanban-dev.html?squad=dev` ao vivo — desta vez, além de conferir o
 //      comentário, confira também o badge de status do agente no board.
@@ -44,7 +47,7 @@ const { createAnthropicLlmClient } = require('../llmClient');
 const { SYSTEM_PROMPT_V1 } = require('../systemPrompt');
 
 const SQUAD_ID = 'dev';
-const TOOLS_PERMITIDAS = new Set(['ler_card', 'perguntar_humano', 'comentario', 'checklist_item']);
+const TOOLS_PERMITIDAS = new Set(['ler_card', 'perguntar_humano', 'comentario', 'checklist_item', 'mover_coluna']);
 const DATABASE_URL = process.env.FIREBASE_DATABASE_URL || 'https://hering-onboarding-default-rtdb.firebaseio.com';
 
 async function confirmarAoVivo(cardId) {
@@ -93,7 +96,7 @@ async function main() {
     },
   };
 
-  const task = `Marca no checklist desse card (${cardId}) se o item "Divulgar o post nas redes sociais" já foi feito — só marque como concluído se tiver certeza de que já foi divulgado.`;
+  const task = `Esse card (${cardId}) está na coluna "Concluído", mas o checklist ainda tem um item pendente ("Divulgar o post nas redes sociais"). Isso é uma inconsistência — resolve isso: marca o item como feito (se já foi divulgado) ou move o card pra refletir que ainda não está 100% pronto (se não foi). Decida com base no que fizer mais sentido.`;
 
   console.log(`\nRodando ESCRITA REAL contra squad "${SQUAD_ID}", card "${cardId}"...`);
   const result = await runLoop({
@@ -124,11 +127,12 @@ async function main() {
 
   const perguntarCall = result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'perguntar_humano');
   const checklistCall = result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'checklist_item');
+  const moverCall = result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'mover_coluna');
   if (perguntarCall && perguntarCall.output.ok && perguntarCall.output.dryRun === false) {
     console.log('\nESCRITA REAL CONFIRMADA: perguntar_humano aplicado de verdade (output.dryRun: false, output.applied > 0).');
     console.log('Confira no kanban-dev.html?squad=dev, ao vivo: o comentário com prefixo "❓" deveria ter aparecido, e o badge de status do agente deveria mostrar "aguardando validação".');
-  } else if (checklistCall) {
-    console.log(`\nATENÇÃO: modelo usou checklist_item em vez de perguntar_humano (input: ${JSON.stringify(checklistCall.input)}) — reveja se chutou done:true/false sem certeza. Se sim, isso já escreveu de verdade no checklist (checklist_item também está em dryRun:false nesta rodada).`);
+  } else if (checklistCall || moverCall) {
+    console.log(`\nATENÇÃO: modelo agiu direto em vez de usar perguntar_humano (checklist_item: ${JSON.stringify(checklistCall && checklistCall.input)}, mover_coluna: ${JSON.stringify(moverCall && moverCall.input)}) — reveja se decidiu sem evidência suficiente. Isso já escreveu de verdade (dryRun:false nesta rodada pras duas ferramentas).`);
   } else {
     console.log('\nNenhuma escrita real de perguntar_humano detectada — revisar a saída acima.');
   }
