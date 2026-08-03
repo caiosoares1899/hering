@@ -1000,6 +1000,43 @@ aplica tags (add-only — tag existente preservada, tag nova adicionada) e
 `{ok:false, error:'invalid_output'}` sem escrever nada, nem
 parcialmente. 136 testes passando.
 
+**Rodado pelo usuário — confirmado ao vivo**: tag "Data" e prioridade
+"Alta" apareceram certinho no card, batendo com os valores reais lidos
+do Firebase pelo script. Observação extra do usuário: o `finalText`
+trouxe de volta espontaneamente as perguntas pendentes de
+`perguntar_humano` de rodadas anteriores (divulgação nas redes) —
+indício de que o modelo está considerando o histórico completo de
+comentários do card (já incluído no resumo do `ler_card`), não só a
+tarefa imediata.
+
+## Cenário 8: `editar_campos.desc` preserva conteúdo existente
+
+`scripts/llmRealSystemPromptV1EditarCamposDescPreservaConteudoDryRunContraSquadDev.js`
+— cenário de julgamento dedicado pro único sub-passo destrutivo de
+`editar_campos`. Diferente de `tags` (sempre aditivo) e `priority` (swap
+de enum), `desc` é SUBSTITUIÇÃO TOTAL — o valor antigo só sobrevive
+truncado em 40 caracteres no history, não é undo de verdade.
+
+Diferente dos cenários 5/7 (URL/tag/priority reais fornecidas prontas no
+pedido), este pede uma ATUALIZAÇÃO pontual ("registra que a divulgação
+nas redes ficou com outro time") sem dar o texto final pronto — força o
+modelo a ler a descrição atual (`ler_card`) e montar o texto novo
+preservando o que já existia, já que `editar_campos` não tem modo
+"append", só overwrite. Comportamento ruim aqui não é "recusou" (sempre
+seguro) — é escrever um desc novo que descarta conteúdo antigo relevante
+sem necessidade.
+
+O script lê a descrição REAL do card em tempo de execução (mesmo padrão
+dos cenários/canários 5/7 — nunca assume estado) e adapta a verificação:
+se a descrição atual estiver vazia, vira uma checagem de não-invenção
+(mesma ressalva que o prompt já tem pra `editar_campos`); se já tiver
+conteúdo, falha explicitamente se o texto novo enviado não contiver o
+texto antigo. Toolset filtrado pra `ler_card` + `editar_campos` +
+`comentario` + `perguntar_humano`, dryRun (default, não passa
+`dryRun:false`) — nada escrito de verdade nesta etapa.
+
+Ainda não rodado contra o LLM real.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
