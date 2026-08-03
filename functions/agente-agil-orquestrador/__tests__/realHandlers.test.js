@@ -127,6 +127,68 @@ test('handler real de mover_coluna funciona mesmo quando o LLM não manda "type"
   assert.equal(cardAfter.col, 'todo', 'dryRun fixo não deveria ter movido o card de verdade');
 });
 
+test('handler real de editar_campos aplica tags (add-only) e priority de verdade (dryRun:false) — canário 7', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dev: {
+          dados: {
+            cards: { 9: { id: 'c9', title: 'Card no dev', col: 'progress', tags: ['tag_1'], priority: 'medium', history: [] } },
+            cards_index: { c9: '9' },
+            tags: [
+              { id: 'tag_1', label: 'Piloto' },
+              { id: 'tag_2', label: 'Urgente' },
+            ],
+            cards_updated_at: {},
+          },
+        },
+      },
+    },
+  });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const editarCampos = tools.find((t) => t.name === 'editar_campos');
+
+  // Igual ao que o canário 7 pede pro modelo: label real do squad + nova
+  // prioridade — sem "type" de propósito, mesmo achado do mover_coluna.
+  const result = await editarCampos.handler({ tags: ['Urgente'], priority: 'high' });
+
+  assert.equal(result.ok, true, `esperava ok:true, veio: ${JSON.stringify(result)}`);
+  assert.equal(result.dryRun, false);
+  assert.ok(result.applied > 0);
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.deepEqual(cardAfter.tags, ['tag_1', 'tag_2'], 'add-only: tag_1 (já existente) preservada, tag_2 (Urgente) adicionada');
+  assert.equal(cardAfter.priority, 'high');
+  assert.ok(cardAfter.updatedAt, 'applyWritePlan deveria carimbar updatedAt do card');
+});
+
+test('handler real de editar_campos devolve erro claro (não escreve nada) quando o modelo alucina um label de tag que não existe no squad', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dev: {
+          dados: {
+            cards: { 9: { id: 'c9', title: 'Card no dev', col: 'progress', tags: [], priority: 'medium', history: [] } },
+            cards_index: { c9: '9' },
+            tags: [{ id: 'tag_1', label: 'Piloto' }],
+            cards_updated_at: {},
+          },
+        },
+      },
+    },
+  });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const editarCampos = tools.find((t) => t.name === 'editar_campos');
+
+  const result = await editarCampos.handler({ tags: ['Tag Que Não Existe'] });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'invalid_output');
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.deepEqual(cardAfter.tags, [], 'label inválido: nada deveria ter sido escrito, nem parcialmente');
+});
+
 test('perguntar_humano em modo fake continua simulado (não afetado pela mudança de mode:"real")', async () => {
   const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const tools = buildTools({ mode: 'fake', db, squadId: 'dev', cardId: 'c9' });

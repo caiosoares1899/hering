@@ -646,10 +646,19 @@ direto, sem cenário dedicado — ambas já "baixo risco, age direto" no
 prompt, estruturalmente incapazes de destruir conteúdo) → corrigir
 classificação de risco no prompt pra `link`/`relatorio_html` → `link`
 (teste leve anti-alucinação de URL + canário) → `editar_campos`
-tags/priority (cenário dedicado + canário) → `editar_campos` desc como
-sub-passo separado → `relatorio_html` só quando houver necessidade real
-(desenhado originalmente pro especialista Databricks via `http.js`, não
-óbvio que seja uma ação natural do orquestrador).
+tags/priority → `editar_campos` desc como sub-passo separado →
+`relatorio_html` só quando houver necessidade real (desenhado
+originalmente pro especialista Databricks via `http.js`, não óbvio que
+seja uma ação natural do orquestrador).
+
+`editar_campos` tags/priority acabou seguindo o mesmo padrão de
+`agent_status`/`checklist_item` — canário direto, sem cenário de
+julgamento dedicado (ver "Canário 7" abaixo): não há ambiguidade pra
+testar (o pedido já diz exatamente qual tag/prioridade usar, mesmo
+espírito do canário 5 de `link` com URL real), e o único risco técnico
+real (alucinar um label de tag que não existe no squad) já é bloqueado
+com um erro limpo (`invalid_output`) pelo próprio `outputs/editarCampos.js`
+— não é um "escreveu errado silenciosamente", é "recusou escrever".
 
 ## Canário 3: `checklist_item` + `agent_status`
 
@@ -766,8 +775,12 @@ corretamente, `link` com `dryRun:false` escreve de verdade (`transaction`
 escopada em `{cardPath}/links`, nunca sobrescreve links existentes),
 URL/título gravados batem exatamente com os fornecidos, `updatedAt`/
 `cards_updated_at` carimbados. 131 testes continuam passando (nenhuma
-mudança em código de produção — só o script). Ainda não rodado contra o
-Firebase real.
+mudança em código de produção — só o script).
+
+**Rodado pelo usuário (depois de fechar a lacuna de `perguntar_humano`,
+ver seção abaixo) — confirmado ao vivo**: o link apareceu certinho no
+card, apontando pro README do orquestrador, sem alteração nem invenção
+de URL/título.
 
 ## Lacuna identificada: `perguntar_humano` não tem mecanismo de entrega
 
@@ -950,6 +963,42 @@ plano pra inspeção, não aplicado, mesmo padrão que `applyWritePlan`
 sempre teve pra `noop`); `dryRun:false` cria a notificação de verdade em
 `kanban/usuarios/{uid}/notificacoes` (`type:'mention'`); card sem
 `owner` não quebra, só sai sem `@menção`. 134 testes passando.
+
+Com o fix, o usuário reexecutou o canário 6 e confirmou ao vivo o
+mecanismo completo: comentário com prefixo `❓` + `@menção` ao
+responsável (badge visual `@CO` confirmado), notificação de verdade
+recebida, `agent_status: awaiting_validation` (badge no board). Lacuna
+de entrega considerada fechada.
+
+## Canário 7: `editar_campos` tags + priority
+
+`scripts/escritaReal7EditarCamposTagsPrioridadeContraSquadDev.js` —
+primeira parte de `editar_campos` (tags + priority; `desc` fica pro
+sub-passo separado combinado com o usuário, por ser destrutivo). Mesmo
+padrão de `checklist_item`/`agent_status` (canários 3/4): canário
+direto, sem cenário de julgamento dedicado — não há ambiguidade real pra
+testar (o pedido já informa exatamente qual tag e qual prioridade usar,
+mesmo espírito do canário 5 de `link` com URL real), e o único risco
+técnico (alucinar um label de tag que não existe no squad) já é
+bloqueado com um erro limpo (`invalid_output`) por
+`outputs/editarCampos.js:resolveTagId` — recusa escrever, não escreve
+errado silenciosamente.
+
+`ler_card` não expõe a lista completa de tags do squad (só as que já
+estão NO card, ver `tools/lerCard.js`) — o modelo não teria como
+adivinhar um label válido sozinho. Por isso o script lê a lista de tags
+REAL do squad `dev` direto do Firebase em tempo de execução (mesmo
+padrão do cenário 5, que leu a coluna de destino via
+`flowLib.doneColumnIds()` em vez de hardcodar) e embute um label real no
+pedido, além de ler a prioridade ATUAL do card pra escolher um alvo
+diferente (before/depois verificável). Toolset filtrado pra `ler_card` +
+`editar_campos` + `comentario` + `perguntar_humano`, `dryRun:false`.
+
+Testes novos em `realHandlers.test.js`: `editar_campos` com `dryRun:false`
+aplica tags (add-only — tag existente preservada, tag nova adicionada) e
+`priority` de verdade; label de tag inexistente devolve
+`{ok:false, error:'invalid_output'}` sem escrever nada, nem
+parcialmente. 136 testes passando.
 
 ## Status
 

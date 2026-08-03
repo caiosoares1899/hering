@@ -1942,6 +1942,28 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-03 · Canário 7: editar_campos (tags + priority) validado com escrita real
+Canário direto (sem cenário de julgamento dedicado, mesmo padrão de
+`checklist_item`/`agent_status`): o pedido já informa qual tag e qual
+prioridade usar, sem ambiguidade pra testar. Script
+(`escritaReal7EditarCamposTagsPrioridadeContraSquadDev.js`) lê a lista
+de tags real do squad `dev` direto do Firebase em tempo de execução
+(evita alucinação —
+`ler_card` não expõe a lista completa de tags do squad) e a prioridade
+atual do card, pra montar um pedido com valores reais e um before/depois
+verificável.
+
+Testes novos em `realHandlers.test.js`: `dryRun:false` aplica tags
+(add-only) e priority de verdade; label de tag inexistente devolve
+`invalid_output` sem escrever nada. 136 testes passando.
+
+Também confirmado ao vivo pelo usuário: canário 5 (`link` com URL real)
+e canário 6 (`perguntar_humano`, com a correção de notificação) —
+toolset real agora cobre `ler_card`, `comentario`, `mover_coluna`,
+`checklist_item`, `agent_status`, `perguntar_humano` (com notificação) e
+`link`. Falta só `editar_campos` desc (sub-passo separado, destrutivo) e
+`relatorio_html` (adiado até necessidade real).
+
 ### 2026-08-03 · Corrige perguntar_humano: comentário real não notificava ninguém
 Achado no canário 6 (escrita real): o comentário `❓` do
 `perguntar_humano` aparecia certinho no card, mas ninguém era
