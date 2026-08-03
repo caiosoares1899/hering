@@ -406,6 +406,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.247-dev — 2026-08-03
+Investigação de consumo de banda (squads `outlet-crm`/`outlet`, ~1GB em
+24h): o medidor de bytes (`_dbgTrack`/`debugBytesRemote`) mostrou que
+80-90% do consumo vinha de `_cards:child_added`/`_cards:child_changed`
+— a listener bruta em cima de `/cards` inteiro (sem filtro de
+arquivados), que só existe quando `_twoPhaseCardsLoad()` desiste do
+caminho em duas etapas e cai no fallback completo. Quebrando esse
+consumo por pessoa/sessão: 5 pessoas diferentes em `outlet-crm`, 4 em
+`outlet`, nenhuma dominando sozinha — descarta "sessão zumbi presa" e
+aponta pra algo sistemático, mas o único rastro de "por que caiu no
+fallback" era um `console.warn` que ninguém via (se perde ao fechar a
+aba).
+
+**Adiciona diagnóstico, sem mudar comportamento**: os dois pontos onde
+`_twoPhaseCardsLoad()` desiste (índice remoto vazio; cache desatualizado
+demais — mais de 40% dos cards ativos precisando revalidar, ver
+`_CARDS_CACHE_STALE_RATIO`) e o `catch` de exceção agora chamam
+`_logFallbackReason()`, que grava o motivo (+ números exatos: proporção
+calculada, limite, ou a mensagem de erro) em
+`kanban/squads/{squad}/dados/_debug_fallback_log` — mesmo espírito do
+`_debug_bytes_log`, mas registrando a CAUSA, não só o custo. Novos
+comandos de console: `debugFallbackLog()`/`debugFallbackLog(72)` (lê o
+log da squad ativa) e `debugFallbackLogClear()`.
+
+Só instrumentação — nenhuma lógica de decisão mudou. Objetivo:
+da próxima vez que isso acontecer, o motivo exato fica registrado
+automaticamente, sem precisar reconstruir manualmente com o medidor de
+bytes genérico (como foi feito desta vez).
+
 ### v8.30.246-dev — 2026-08-01
 Corrige outro bug real reportado testando o `v8.30.245-dev`: arquivar
 um card funcionava na hora (aparecia certo em Arquivados), mas depois
