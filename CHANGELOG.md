@@ -406,6 +406,49 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.248-dev — 2026-08-03
+Dois pedidos do time do board (badges/bordas + trava de edição
+concorrente):
+
+- **Badge 🚧 de impedimento** — mesmo padrão do 🎯 de OKR, agora aparece
+  no título do card sempre que `_cardIsBlocked(card)` for true — usa
+  esse helper (não `card.blocker` cru) porque no modo "coluna" quem
+  manda é a COLUNA do card, não a flag (`card.blocker` pode estar
+  desatualizado nesse modo, ver comentário em `_cardIsBlocked`). Badge
+  aparece nos dois modos (`col`/`tag`), conforme pedido.
+- **Bordas mais grossas** — `.has-blocker-tag` (vermelha) e `.okr-card`
+  (dourada) ganharam `border-width:2px` (eram 1px, herdado do card
+  normal — time achou fino demais pra notar de relance).
+- **Trava de edição concorrente** — novo nó por card,
+  `kanban/squads/{squad}/dados/card_locks/{cardId}`, criado quando o
+  modal do card abre (`openCard` → `_checkCardLock`). Se ninguém mais
+  estiver editando (ou o lock for do próprio uid, ou estiver velho
+  demais — mais de 10min sem heartbeat, considerado abandonado), assume
+  o lock normalmente. Se outra pessoa já estiver editando (lock
+  recente, uid diferente), mostra um banner ("🔒 Fulano está editando
+  este card agora") e trava o formulário em modo leitura
+  (`pointer-events:none` no corpo do modal) — trava de verdade, não só
+  aviso, a pedido do time. Um listener ao vivo no lock atualiza a UI
+  automaticamente se a outra pessoa soltar o lock enquanto o modal
+  segue aberto, sem precisar reabrir o card. Sem `onDisconnect()` de
+  propósito — mesmo padrão que `presence` já usa neste arquivo
+  (`beforeunload` + timeout de staleness, não a API de disconnect do
+  Realtime Database).
+
+Corrigido durante a implementação: um bug de corrida onde duas pessoas
+abrindo o mesmo card quase ao mesmo tempo assumiam o lock
+otimisticamente as duas — sem o fix, quem "perdia" a corrida continuava
+com o próprio heartbeat rodando, sobrescrevendo o lock de quem
+realmente ganhou a cada minuto (as duas pessoas travando uma à outra em
+loop). Agora, ao detectar que o lock pertence a outra pessoa (via
+`.get()` inicial ou o listener ao vivo), para o próprio heartbeat de
+verdade antes de mostrar o modo leitura.
+
+Validado por leitura de código + checagem de sintaxe
+(`node --check`) — este arquivo não tem suíte automatizada (ver
+`CLAUDE.md`); validação manual no navegador ainda pendente antes de
+promover pra prod.
+
 ### v8.30.247-dev — 2026-08-03
 Investigação de consumo de banda (squads `outlet-crm`/`outlet`, ~1GB em
 24h): o medidor de bytes (`_dbgTrack`/`debugBytesRemote`) mostrou que

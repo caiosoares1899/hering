@@ -918,7 +918,7 @@ input[type="date"]{-moz-appearance:textfield;}
   cursor:pointer;transition:all .15s;
 }
 .tag-blocker:hover{background:rgba(255,107,107,.25);}
-.card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;}
+.card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;border-width:2px!important;}
 
 
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
@@ -1453,7 +1453,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .fi-mention-wrap{position:relative;width:100%;}
 
 
-.card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+.card.okr-card{border-color:rgba(255,215,0,.4)!important;border-width:2px!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
 .cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -2622,6 +2622,10 @@ input[type="date"]{-moz-appearance:textfield;}
     </button>
     <button class="x-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
+  </div>
+
+  <div id="m-lock-row" style="display:none;align-items:center;gap:8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:12.5px;color:var(--accent);">
+    <span id="m-lock-text"></span>
   </div>
 
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
@@ -4289,7 +4293,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.247-dev</div>
+<div class="version">v8.30.248-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7201,6 +7205,13 @@ function makeCardEl(card){
   }
   div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
+  // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
+  // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
+  // desatualizado nesse modo, a coluna nunca mente. Time achou a borda
+  // vermelha/dourada fina demais pra notar de relance — ver .has-blocker-tag/
+  // .okr-card (CSS) pela largura aumentada.
+  const blockedBadge=_cardIsBlocked(card)?'<span style="font-size:10px;margin-right:2px;">🚧</span>':'';
   // Chip de executor — só aparece pra agent/hybrid (humano é o default silencioso, não polui boards que não usam a feature)
   const _execMap={agent:{ico:'🤖',lbl:'Agente',bg:'rgba(167,139,250,.14)',bd:'rgba(167,139,250,.35)',tx:'#c4b5fd'},hybrid:{ico:'🤝',lbl:'Híbrido',bg:'rgba(29,233,182,.12)',bd:'rgba(29,233,182,.3)',tx:'var(--teal)'}};
   const _execInfo=_execMap[card.executorType];
@@ -7212,7 +7223,7 @@ function makeCardEl(card){
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${execChip}${agentStatusChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}${agentStatusChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -7968,6 +7979,122 @@ function _stopDirtyWatch(){
   _cardManualSnap = null;
   const btn=document.getElementById('btn-save-card'); if(btn){ btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
 }
+
+// ═══ TRAVA DE EDIÇÃO CONCORRENTE ═══════════════════════════════════════
+// Pedido do time: evitar duas pessoas editando o mesmo card ao mesmo tempo
+// (perdiam alteração uma da outra, sem aviso nenhum — e boa parte dos campos
+// tem autosave via scheduleAutoSave(), então nem precisa de "Salvar" pra
+// pisar no trabalho alheio). Um nó por CARD (não por pessoa, diferente de
+// presence) em kanban/squads/{squad}/dados/card_locks/{cardId} — responde
+// "quem está editando ESSE card" sem escanear todo mundo online.
+//
+// Trava de verdade, não só aviso: quem abre um card já travado por outra
+// pessoa vê o formulário em modo leitura (pointer-events:none no corpo do
+// modal, ver _setCardLockUI) + banner dizendo quem está editando. O mesmo
+// uid em outra aba não é travado contra si mesmo (checagem por uid, não por
+// aba).
+//
+// Sem onDisconnect() de propósito — mesmo padrão que presence já usa nesse
+// arquivo (beforeunload, não a API de disconnect do Realtime Database) — um
+// lock só trava se o timestamp for recente (CARD_LOCK_STALE_MS); mais velho
+// que isso conta como abandonado (aba fechou sem disparar beforeunload,
+// navegador crashou, etc.) e quem abrir agora assume o lock normalmente, sem
+// ficar preso pra sempre.
+const CARD_LOCK_STALE_MS = 10*60*1000; // 10min sem heartbeat = abandonado
+const CARD_LOCK_HEARTBEAT_MS = 60*1000; // 1min — mantém o lock "quente" com o modal aberto
+let _cardLockHeartbeatTimer = null;
+let _cardLockUnsub = null;
+let _cardLockOwnedId = null; // id do card cujo lock ESTE cliente detém agora (null = nenhum)
+
+function _cardLockPath(cardId){ return FB+'/card_locks/'+cardId; }
+function _cardLockPayload(){
+  return {
+    uid: window._currentUser?.uid||'',
+    who: window._currentUser?.displayName||window._currentUser?.email||'?',
+    init: window._currentUserInit||'',
+    ts: Date.now(),
+  };
+}
+function _setCardLockUI(lockedByOther, who){
+  const row=document.getElementById('m-lock-row');
+  const body=document.querySelector('#card-ov .modal-body');
+  if(row) row.style.display = lockedByOther ? 'flex' : 'none';
+  if(row && lockedByOther){
+    const txt=document.getElementById('m-lock-text');
+    if(txt) txt.textContent = '🔒 '+(who||'Alguém')+' está editando este card agora — modo leitura até liberar.';
+  }
+  if(body){ body.style.pointerEvents = lockedByOther ? 'none' : ''; body.style.opacity = lockedByOther ? '.55' : ''; }
+  if(lockedByOther && document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
+function _startCardLockHeartbeat(cardId){
+  _stopCardLockHeartbeat();
+  _cardLockHeartbeatTimer=setInterval(()=>{
+    if(!window._fbReady || _cardLockOwnedId!==cardId) return;
+    fbSet(_cardLockPath(cardId), _cardLockPayload());
+  }, CARD_LOCK_HEARTBEAT_MS);
+}
+// Chamada de dentro de openCard(id) — lê o lock atual e decide: assume (se
+// livre/próprio/velho demais) ou trava a UI em leitura (se de outra pessoa,
+// recente). Também assina o nó pra reagir se a outra pessoa soltar o lock
+// enquanto este modal segue aberto, sem precisar reabrir o card.
+function _checkCardLock(cardId){
+  if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
+  _stopCardLockHeartbeat();
+  _cardLockOwnedId=null;
+  if(!window._fbReady){ _setCardLockUI(false); return; }
+  const myUid=window._currentUser?.uid;
+  const ref=window._ref(window._db, _cardLockPath(cardId));
+  const _apply=(lock)=>{
+    const isStale = !lock || !lock.ts || (Date.now()-lock.ts > CARD_LOCK_STALE_MS);
+    const isMine = !!(lock && lock.uid===myUid);
+    if(!lock || isStale || isMine){
+      _setCardLockUI(false);
+      _cardLockOwnedId=cardId;
+      fbSet(_cardLockPath(cardId), _cardLockPayload());
+      _startCardLockHeartbeat(cardId);
+    } else {
+      // Perdemos a corrida (duas pessoas abriram o card quase junto — as
+      // duas assumem o lock otimisticamente, e o listener abaixo resolve
+      // sozinho quando o Firebase converge no último write). Precisa parar
+      // DE VERDADE o próprio heartbeat aqui, senão ele continua sobrescrevendo
+      // o lock de quem realmente ganhou a cada minuto, fazendo as duas pessoas
+      // ficarem se travando uma à outra em loop.
+      _cardLockOwnedId=null;
+      _stopCardLockHeartbeat();
+      _setCardLockUI(true, lock.who);
+    }
+  };
+  window._get(ref).then(snap=>_apply(snap.val())).catch(()=>_setCardLockUI(false));
+  _cardLockUnsub=window._onValue(ref, snap=>{
+    const lock=snap.val();
+    // Se o lock ainda é nosso (é só o nosso próprio heartbeat voltando),
+    // não precisa reprocessar — evita achar que "alguém mudou o lock" a
+    // cada minuto por causa do próprio _startCardLockHeartbeat.
+    if(_cardLockOwnedId===cardId && lock && lock.uid===myUid) return;
+    _apply(lock);
+  });
+}
+// Chamada ao fechar o modal (_finishCloseOv) e no beforeunload — só remove
+// se o lock ainda for NOSSO (evita apagar o lock de quem assumiu depois de
+// nós, numa corrida rara caso o nosso lock já tivesse ficado stale).
+function _releaseCardLock(cardId){
+  if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
+  _stopCardLockHeartbeat();
+  if(!cardId || _cardLockOwnedId!==cardId){ _cardLockOwnedId=null; return; }
+  _cardLockOwnedId=null;
+  if(!window._fbReady) return;
+  const myUid=window._currentUser?.uid;
+  const ref=window._ref(window._db, _cardLockPath(cardId));
+  window._get(ref).then(snap=>{
+    const lock=snap.val();
+    if(lock && lock.uid===myUid) window._remove(ref);
+  }).catch(()=>{});
+}
+if(!window._cardLockBeforeUnloadSet){
+  window._cardLockBeforeUnloadSet=true;
+  window.addEventListener('beforeunload', ()=>{ if(_cardLockOwnedId) _releaseCardLock(_cardLockOwnedId); });
+}
 // Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
 // distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro
 // lugar (drag-and-drop de outra aba/pessoa) enquanto este modal ficou aberto" —
@@ -8213,6 +8340,7 @@ function openCard(id){
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
+  _checkCardLock(id);
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
     // ⚡ Trava contra corrida: se o usuário fechou este card e abriu outro
@@ -17975,6 +18103,8 @@ function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
     _stopDirtyWatch();
+    if(editingId) _releaseCardLock(editingId);
+    _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
