@@ -4289,7 +4289,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.246-dev</div>
+<div class="version">v8.30.247-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5262,6 +5262,9 @@ function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); retu
 //   debugBytesHistory(90)     → idem, últimos 90 dias (limite de retenção)
 //   debugBytesExportCSV(90)   → mesmos dados de debugBytesHistory(), em CSV pra colar numa planilha
 //   debugBytesOff()           → desliga só nesta aba (não afeta outras pessoas)
+//   debugFallbackLog()        → por que ESTA squad caiu no fallback completo de /cards, últimas 24h (ver _logFallbackReason)
+//   debugFallbackLog(72)      → idem, últimas 72h
+//   debugFallbackLogClear()   → limpa o log de fallback desta squad
 const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
 const _DBG_LOG_PATH = FB+'/_debug_bytes_log';
 const _DBG_DAILY_PATH = FB+'/_debug_bytes_daily';
@@ -5380,6 +5383,26 @@ window.debugBytesRemote=function(hoursBack){
 };
 window.debugBytesClearRemote=function(){
   return fbSet(_DBG_LOG_PATH, null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+// Motivo registrado toda vez que _twoPhaseCardsLoad() desiste e cai no
+// fallback completo (ver _logFallbackReason, dentro de fbLoadAll) — evita
+// ter que reconstruir manualmente "por que caiu no fallback" na base de
+// medição de bytes por path (que mostra O CUSTO, não a causa).
+window.debugFallbackLog=function(hoursBack){
+  hoursBack = hoursBack || 24;
+  return window._get(fb(FB+'/_debug_fallback_log')).then(snap=>{
+    const val = snap.val() || {};
+    const cutoff = Date.now() - hoursBack*3600000;
+    const rows = Object.values(val)
+      .filter(e=>{ const t = e?.ts ? new Date(e.ts).getTime() : 0; return t && t>=cutoff; })
+      .sort((a,b)=>a.ts.localeCompare(b.ts));
+    console.log('%c🔬 Fallback registrado nas últimas '+hoursBack+'h (squad "'+ACTIVE_SQUAD+'"):', 'color:#ffd166;font-weight:bold;');
+    console.table(rows);
+    return rows;
+  });
+};
+window.debugFallbackLogClear=function(){
+  return fbSet(FB+'/_debug_fallback_log', null).then(()=>console.log('🔬 Log de fallback limpo (squad "'+ACTIVE_SQUAD+'").'));
 };
 // Rollup diário (retenção de 90 dias) — pra "acompanhar" tendência ao longo
 // de semanas/meses, não só as últimas 72h que o log horário cobre.
@@ -6032,6 +6055,24 @@ let _cardsSyncDebounce = null;
   }
   let _liveCardsIndexById = {};
   let _liveArchivedIds = new Set();
+  // Achado real (2026-08-03, squads outlet-crm/outlet): ~80-90% do consumo
+  // de banda dessas squads vinha do fallback completo abaixo (listener bruta
+  // em /cards inteiro, sem filtro de arquivados) disparando pra VÁRIAS
+  // pessoas diferentes ao longo do dia -- não uma sessão presa isolada.
+  // Investigado só com o medidor de bytes (_dbgTrack) já existente, sem
+  // nenhum rastro de "por que caiu no fallback" -- o único indício era um
+  // console.warn (ninguém via, se perde ao fechar a aba). Grava o motivo em
+  // kanban/squads/{squad}/dados/_debug_fallback_log -- mesmo espírito do
+  // _debug_bytes_log, mas pra CAUSA, não só custo -- pra não precisar
+  // reconstruir tudo manualmente da próxima vez que isso acontecer.
+  function _logFallbackReason(reason, details){
+    console.warn('%c[cards] caindo no fallback completo — motivo: '+reason, 'color:#ffd166;font-weight:bold;', details);
+    if(!window._fbReady) return;
+    const id = 'fb'+Date.now()+Math.random().toString(36).slice(2,6);
+    const who = (window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+    const uidShort = (window._currentUser?.uid||'anon').slice(0,8);
+    fbSet(FB+'/_debug_fallback_log/'+id, Object.assign({ts:new Date().toISOString(), who, uid:uidShort, reason}, details));
+  }
   async function _twoPhaseCardsLoad(){
     // Sem cache local ainda (1ª visita neste device/navegador/aba anônima)
     // NÃO cai mais direto pro fallback completo -- ver comentário abaixo, na
@@ -6051,7 +6092,7 @@ let _cardsSyncDebounce = null;
     const remoteUpdatedAt = uaSnap.val() || {};
     const remoteArchived = archSnap.val() || {};
     const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAtById, remoteArchived);
-    if(!remoteIds.length) return false;
+    if(!remoteIds.length){ _logFallbackReason('sem_cards_index', {}); return false; }
     // Essa desistência (cai pro fallback completo, que baixa TUDO de uma vez
     // via listener bruto) só faz sentido quando JÁ havia cache e mesmo assim
     // ficou stale demais (ex.: fbSaveAll estrutural carimbou tudo de novo) --
@@ -6063,7 +6104,14 @@ let _cardsSyncDebounce = null;
     // "não mudou" só porque ele nunca entra em toFetch.
     if(cache){
       const activeCount = remoteIds.filter(id=>!(remoteArchived||{})[id]).length;
-      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO) return false;
+      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO){
+        _logFallbackReason('cache_desatualizado_demais', {
+          activeCount, toFetch: toFetch.length,
+          proporcao: +(toFetch.length/activeCount).toFixed(3),
+          limite: _CARDS_CACHE_STALE_RATIO,
+        });
+        return false;
+      }
     }
 
     const fetched = {};
@@ -6215,7 +6263,11 @@ let _cardsSyncDebounce = null;
   // fbLoadAll() e precisam chamar pela referência em window.
   window._ensureArchivedCardsLoaded = _ensureArchivedCardsLoaded;
   if(window._fbReady){
-    _twoPhaseCardsLoad().catch(e=>{ console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e); return false; }).then(usedTwoPhase=>{
+    _twoPhaseCardsLoad().catch(e=>{
+      console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e);
+      _logFallbackReason('excecao', { erro: String((e && e.message) || e) });
+      return false;
+    }).then(usedTwoPhase=>{
       if(usedTwoPhase) return;
       const _cardsRef = fb(FB+'/cards');
       window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
