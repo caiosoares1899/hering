@@ -1942,6 +1942,20 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-03 · Cenário 8: editar_campos.desc, teste de preservação de conteúdo
+Confirmado ao vivo pelo usuário: canário 7 (`editar_campos` tags +
+priority) — tag e prioridade reais aplicadas certinho no card.
+
+Próximo sub-passo, o único destrutivo de `editar_campos`: `desc`
+(substituição total, sem undo de verdade). Cenário dedicado de
+julgamento (script novo em `scripts/`, dryRun) pede uma atualização
+pontual sem dar o texto final pronto — força o modelo a ler a descrição
+atual e preservá-la ao montar o texto novo, já que `editar_campos` não
+tem modo "append". O script lê a descrição real do card em tempo de
+execução e adapta a verificação (checagem de não-invenção se vazia,
+checagem de preservação se já tiver conteúdo). Ainda não rodado contra o
+LLM real.
+
 ### 2026-08-03 · Canário 7: editar_campos (tags + priority) validado com escrita real
 Canário direto (sem cenário de julgamento dedicado, mesmo padrão de
 `checklist_item`/`agent_status`): o pedido já informa qual tag e qual
