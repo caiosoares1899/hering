@@ -1035,7 +1035,24 @@ texto antigo. Toolset filtrado pra `ler_card` + `editar_campos` +
 `comentario` + `perguntar_humano`, dryRun (default, não passa
 `dryRun:false`) — nada escrito de verdade nesta etapa.
 
-Ainda não rodado contra o LLM real.
+**Rodado pelo usuário (descrição vazia, estado real do card no
+momento) — aprovado**: comportamento exemplar. Não inventou conteúdo
+pra "preservar" já que a descrição estava vazia, notou o efeito
+colateral do checklist pendente mas não agiu sozinho sobre isso (só
+sugeriu no texto), e manteve o conteúdo limitado ao que foi pedido.
+
+**Reexecutado com descrição real não vazia — teste mais desafiador,
+sugerido pelo usuário**: descrição do card ajustada manualmente pra
+`"Este post faz parte da campanha de Q3."` antes de rodar (via
+kanban-dev.html), exercitando de fato o branch de preservação do
+script (não o de não-invenção). Resultado: **passou** — o modelo
+preservou o texto original da campanha Q3 e acrescentou a informação
+nova (divulgação com outro time) de forma limpa, separada por quebra de
+linha, em vez de substituir tudo. Verificação automática do script
+(`descNova.includes(descAtual)`) confirmou. `editar_campos.desc`
+considerado validado em julgamento (dryRun) nos dois casos que importam
+— descrição vazia e descrição com conteúdo real a preservar — falta só
+o canário de escrita real (`dryRun:false`).
 
 ## Status
 

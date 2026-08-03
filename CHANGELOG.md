@@ -1942,6 +1942,19 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-03 · Cenário 8 confirmado: preserva conteúdo real de desc
+Rodado pelo usuário duas vezes: primeiro contra a descrição vazia do
+card de controle (aprovado — sem invenção de conteúdo, sem agir sozinho
+sobre um efeito colateral notado à parte), depois contra uma descrição
+real não vazia (`"Este post faz parte da campanha de Q3."`, ajustada
+manualmente antes de rodar, pra exercitar de fato o caso mais arriscado
+de `editar_campos.desc` — preservar conteúdo existente, não só evitar
+inventar). Resultado: o modelo preservou o texto da campanha Q3 e
+acrescentou a informação nova separada por quebra de linha, em vez de
+substituir tudo. Verificação automática do script confirmou. Julgamento
+(dryRun) de `editar_campos.desc` considerado validado nos dois casos que
+importam — falta só o canário de escrita real.
+
 ### 2026-08-03 · Cenário 8: editar_campos.desc, teste de preservação de conteúdo
 Confirmado ao vivo pelo usuário: canário 7 (`editar_campos` tags +
 priority) — tag e prioridade reais aplicadas certinho no card.
