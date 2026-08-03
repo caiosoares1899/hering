@@ -124,15 +124,61 @@ test('handler real de mover_coluna funciona mesmo quando o LLM não manda "type"
   assert.equal(cardAfter.col, 'todo', 'dryRun fixo não deveria ter movido o card de verdade');
 });
 
-test('perguntar_humano continua sem handler real em nenhum modo — nunca toca o board', async () => {
+test('perguntar_humano em modo fake continua simulado (não afetado pela mudança de mode:"real")', async () => {
   const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
-  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });
+  const tools = buildTools({ mode: 'fake', db, squadId: 'dev', cardId: 'c9' });
   const perguntar = tools.find((t) => t.name === 'perguntar_humano');
 
   const result = await perguntar.handler({ pergunta: 'Qual prioridade uso?' });
 
   assert.equal(result.simulated, true);
   assert.deepEqual(db._data().kanban.squads.dev.dados.cards['9'], { id: 'c9', title: 'Card no dev', col: 'progress' });
+});
+
+test('perguntar_humano real em dryRun (default) monta o plano composto (comentario + agent_status) mas não escreve', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {}, agentStatus: null, executorType: null, history: [] });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' }); // sem dryRun explícito
+  const perguntar = tools.find((t) => t.name === 'perguntar_humano');
+
+  const result = await perguntar.handler({ pergunta: 'Qual prioridade uso?' });
+
+  assert.equal(result.ok, true, `esperava ok:true, veio: ${JSON.stringify(result)}`);
+  assert.equal(result.dryRun, true);
+  assert.equal(result.tool, 'perguntar_humano');
+  // 1 output de comentario (1 step) + 1 output de agent_status (2 steps:
+  // update do campo agentStatus + transaction de executorType) = 3 steps.
+  assert.equal(result.plan.length, 3);
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.deepEqual(cardAfter.comments, {}, 'dryRun (default) não deveria ter escrito nada de verdade');
+  assert.equal(cardAfter.agentStatus, null, 'dryRun (default) não deveria ter mudado agentStatus de verdade');
+});
+
+test('perguntar_humano real com dryRun:false posta a pergunta como comentário (prefixo ❓) e marca agent_status:awaiting_validation', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {}, agentStatus: null, executorType: null, history: [] });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const perguntar = tools.find((t) => t.name === 'perguntar_humano');
+
+  const result = await perguntar.handler({ pergunta: 'Qual prioridade uso pra esse card?' });
+
+  assert.equal(result.ok, true, `esperava ok:true, veio: ${JSON.stringify(result)}`);
+  assert.equal(result.dryRun, false);
+  assert.ok(result.applied > 0);
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  const comments = Object.values(cardAfter.comments || {});
+  assert.equal(comments.length, 1, 'deveria ter escrito o comentário de verdade');
+  assert.ok(
+    comments[0].text.startsWith('❓ Agente Ágil precisa de uma resposta:'),
+    'comentário deveria ter o prefixo que distingue de um comentário normal do agente',
+  );
+  assert.ok(comments[0].text.includes('Qual prioridade uso pra esse card?'), 'comentário deveria conter a pergunta em si');
+  assert.equal(comments[0].author, 'Agente Ágil');
+
+  assert.equal(cardAfter.agentStatus, 'awaiting_validation', 'deveria reaproveitar o campo/badge existente em vez de campo novo');
+  assert.equal(cardAfter.executorType, 'agent', 'agent_status sem executorType explícito promove human/vazio -> agent (comportamento já existente do builder, não suprimido)');
+  assert.ok(cardAfter.updatedAt, 'applyWritePlan deveria carimbar updatedAt do card');
+  assert.ok(db._data().kanban.squads.dev.dados.cards_updated_at && db._data().kanban.squads.dev.dados.cards_updated_at['c9'], 'deveria carimbar cards_updated_at pro delta-sync do cliente perceber a mudança');
 });
 
 test('integração ponta a ponta: runLoop com tools reais nunca muta o fake db (dryRun fixo em true)', async () => {

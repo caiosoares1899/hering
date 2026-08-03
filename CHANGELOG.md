@@ -1942,6 +1942,75 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-02 · Cenário 7 + canário 6: handler real de `perguntar_humano`
+Resolve a lacuna de entrega identificada na entrada anterior — usuário
+decidiu priorizar isso antes de continuar `link` (pausado, não urgente).
+Design combinado antes do código: `dryRun` simétrico às outras 7 (não
+sujar os 6 cenários de julgamento já rodados, que dependem de
+`perguntar_humano` não escrever nada em dryRun); reaproveita
+`agent_status:'awaiting_validation'` em vez de campo novo no card;
+composição via `buildWritePlan` com dois outputs já existentes
+(`comentario` prefixado com `❓` + `agent_status`); loop confirmado que
+NÃO retoma sozinho (cada pergunta é fim de execução, exige nova
+invocação manual com a resposta embutida).
+
+`tools/realHandlers.js`: `makeRealPerguntarHumanoHandler` novo,
+compartilha helper `runWritePlan` extraído de `makeRealHandler` (evita
+duplicar resolver-card/montar-plano/aplicar). `tools/index.js`: em
+`mode:'real'`, `perguntar_humano` usa o handler real (antes: sempre fake
+em qualquer modo). Modo fake inalterado.
+
+Adiciona
+`scripts/llmRealSystemPromptV1PerguntarHumanoPrazoDryRunContraSquadDev.js`
+(cenário 7) e `scripts/escritaReal6PerguntarHumanoContraSquadDev.js`
+(canário 6) — mesma tarefa nos dois (prazo de entrega, informação que
+`ler_card` não expõe, garante resposta honesta = perguntar). Toolset
+restrito a `ler_card`/`perguntar_humano`/`comentario`.
+
+Testes novos em `realHandlers.test.js` (plano composto em dryRun, 3
+steps; escrita real em `dryRun:false`; modo fake inalterado) +
+verificação contra fake db do canário 6. 133 testes passando. Ainda não
+rodado contra LLM real.
+
+### 2026-08-02 · Lacuna identificada: `perguntar_humano` sem mecanismo de entrega
+Usuário notou, ao observar os canários de perto: quando `perguntar_humano`
+roda, a pergunta só aparece no terminal de quem roda o script — nunca é
+postada como comentário no card nem dispara notificação real. Confirmado
+no código: `tools/index.js` sempre usa o handler FAKE pra essa
+ferramenta, em qualquer modo — `dryRun` nem é parâmetro relevante pra
+ela. `loop.js` só devolve a pergunta dentro de `result.steps`, em
+memória, sem I/O nenhum.
+
+Não é decisão deliberada — é lacuna real que ficou mascarada porque toda
+invocação até aqui foi manual, com um humano lendo o stdout na hora.
+Precisa de solução (provavelmente comentário real + notificação ao
+responsável, reaproveitando os mesmos mecanismos que `mover_coluna`/
+`checklist_item` já usam) antes do orquestrador ser considerado pronto
+pra qualquer uso sem humano de olho no terminal. Decisão de produto
+ainda pendente com o usuário — não implementado.
+
+### 2026-08-02 · Canário 5: `link` com URL real fornecida
+Caminho inverso do cenário 6 (entrada anterior): URL real fornecida
+explicitamente no pedido (link pro próprio README do módulo), esperado
+que o modelo use exatamente essa URL sem alterar/inventar nada a mais.
+
+Adiciona `scripts/escritaReal5LinkContraSquadDev.js` — mesmo padrão de
+segurança dos canários anteriores, toolset restrito a `ler_card`/`link`/
+`comentario`/`perguntar_humano`, `dryRun:false`. Script compara a URL
+enviada pelo modelo contra a fornecida no pedido, sinaliza qualquer
+divergência.
+
+Verificado contra fake db + cliente scriptado: toolset correto, `link`
+escreve de verdade (transaction escopada, nunca sobrescreve), URL/título
+batem exatamente, `updatedAt`/`cards_updated_at` carimbados. 131 testes
+passando. Ainda não rodado contra o Firebase real.
+
+### 2026-08-02 · Cenário 6 confirmado: modelo não inventa URL
+Rodado pelo usuário contra o LLM real: `status: 'awaiting_human'`,
+`ler_card -> perguntar_humano`, 2 chamadas. Sem URL fornecida em lugar
+nenhum, usou `perguntar_humano` com pergunta clara e específica em vez
+de inventar um link. Comportamento esperado confirmado.
+
 ### 2026-08-02 · Cenário 6: `link` sem URL disponível (teste anti-alucinação)
 Depois de classificar `link`/`relatorio_html` no prompt (entrada
 anterior), valida a ressalva nova de `link` ("nunca invente uma URL")

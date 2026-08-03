@@ -740,6 +740,121 @@ que `dryRun:true` protege contra escrita real mesmo nesse caso. 131
 testes continuam passando. Ainda não rodado contra LLM real — próximo
 passo depende do usuário.
 
+**Rodado pelo usuário** contra o LLM real: `status: 'awaiting_human'`,
+`ler_card -> perguntar_humano`, 2 chamadas. Sem URL fornecida em lugar
+nenhum, o modelo usou `perguntar_humano` em vez de inventar um link —
+pergunta clara e específica pedindo o endereço exato. Comportamento
+esperado confirmado; a ressalva anti-invenção do prompt se traduziu em
+julgamento coerente na prática, não só no papel.
+
+## Canário 5: `link` com URL real fornecida
+
+Caminho inverso do cenário 6: agora uma URL REAL é fornecida
+explicitamente no pedido (link pro próprio README do módulo no GitHub,
+não uma URL fabricada pelo script), e o esperado é que o modelo use
+exatamente essa URL, sem alterar nem inventar nada a mais.
+
+`scripts/escritaReal5LinkContraSquadDev.js` — mesmo padrão de segurança
+dos canários anteriores (card conhecido, invocação manual, confirmação
+interativa, monitoramento ao vivo), toolset filtrado pra `ler_card` +
+`link` + `comentario` + `perguntar_humano`, `dryRun:false`. O script
+compara a URL que o modelo de fato enviou contra a URL real fornecida no
+pedido — sinaliza explicitamente se houver qualquer divergência.
+
+Verificado contra fake db + cliente scriptado: toolset filtrado
+corretamente, `link` com `dryRun:false` escreve de verdade (`transaction`
+escopada em `{cardPath}/links`, nunca sobrescreve links existentes),
+URL/título gravados batem exatamente com os fornecidos, `updatedAt`/
+`cards_updated_at` carimbados. 131 testes continuam passando (nenhuma
+mudança em código de produção — só o script). Ainda não rodado contra o
+Firebase real.
+
+## Lacuna identificada: `perguntar_humano` não tem mecanismo de entrega
+
+Ao usar os canários pra observar `perguntar_humano` de perto, o usuário
+notou que a pergunta só aparece no terminal de quem roda o script — não
+é postada como comentário no card, não dispara notificação (sino/push)
+pro responsável. Confirmado no código: `tools/index.js` sempre usa
+`makeHandler('perguntar_humano')` (o handler FAKE) pra essa ferramenta,
+em QUALQUER modo — diferente das 7 ferramentas de escrita, `dryRun` nem
+chega a ser um parâmetro relevante pra ela. `loop.js` só devolve
+`status:'awaiting_human'` com a pergunta dentro de `result.steps` — pura
+memória, sem I/O nenhum. A única razão de isso "funcionar" até agora é
+que toda invocação foi manual, com um humano literalmente lendo o
+stdout na hora.
+
+Não é uma decisão deliberada de produto — é uma lacuna real que ficou
+mascarada pelo jeito como testamos até aqui, e que precisa de solução
+antes do orquestrador ser considerado pronto pra qualquer uso sem um
+humano de olho no terminal (ex.: gatilho automático, que já não estava
+autorizado por outros motivos). Caminho provável de fix: postar a
+pergunta como `comentario` de verdade no card (reaproveitando
+`applyWritePlan`) e/ou notificar o responsável (reaproveitando
+`notifications.js`, mesmo padrão que `mover_coluna`/`checklist_item` já
+usam) — decisão de produto do usuário, não implementada ainda.
+
+## Handler real de `perguntar_humano`
+
+Usuário decidiu resolver a lacuna de entrega ANTES de continuar o resto
+do toolset (`link` pausado, não urgente). Design combinado antes do
+código, respondendo 4 perguntas:
+
+1. **`dryRun` simétrico às outras 7** — não sempre-real nem sempre-fake.
+   Motivo: os 6 cenários de julgamento já rodados dependem de
+   `perguntar_humano` não escrever nada quando testados em dryRun (o
+   padrão desde a Etapa 1); tratar diferente sujaria esses testes com
+   comentários/notificações reais toda vez que rodados de novo.
+2. **Reaproveita `agent_status:'awaiting_validation'`** em vez de campo
+   novo no card — já é "o campo por trás do badge" que a UI renderiza
+   (`outputs/agentStatus.js`), evita schema novo só pra isso.
+3. **Composição via `buildWritePlan`**, não um handler do zero: dois
+   outputs que já existem — `comentario` (pergunta com prefixo `❓
+   Agente Ágil precisa de uma resposta:`, distingue de um comentário
+   normal do agente) + `agent_status` (sem `executorType` explícito —
+   deixa o builder promover `human`/vazio pra `agent` como já faz em
+   qualquer outra chamada, não suprimido de propósito).
+4. **Loop não retoma sozinho** — confirmado, não implementado: cada
+   `perguntar_humano` é o fim de uma execução; uma resposta humana exige
+   nova invocação manual do script com a resposta embutida na tarefa.
+   Vira requisito real só quando/se existir gatilho automático (não
+   autorizado).
+
+`tools/realHandlers.js`: `makeRealPerguntarHumanoHandler` (novo,
+compartilha um helper `runWritePlan` extraído de `makeRealHandler` pra
+não duplicar a lógica de resolver card/montar plano/aplicar). Diferente
+de `makeRealHandler`, não reconstitui `type` a partir do nome da
+ferramenta — monta os dois outputs (`comentario` + `agent_status`)
+direto a partir de `input.pergunta`. `tools/index.js` atualizado: em
+`mode:'real'`, `perguntar_humano` agora usa esse handler (antes: sempre
+`makeHandler` fake, em qualquer modo). Modo `fake` continua 100%
+inalterado.
+
+Testes novos em `realHandlers.test.js`: plano composto em dryRun (3
+steps: `comentario`=1 + `agent_status`=2, nada escrito), escrita real em
+`dryRun:false` (comentário com prefixo correto, `agentStatus`
+`executorType` promovido, `updatedAt`/`cards_updated_at` carimbados), e
+modo fake confirmado inalterado. 133 testes passando.
+
+## Cenário 7 + canário 6: `perguntar_humano` real
+
+`scripts/llmRealSystemPromptV1PerguntarHumanoPrazoDryRunContraSquadDev.js`
+(cenário 7, dryRun) e
+`scripts/escritaReal6PerguntarHumanoContraSquadDev.js` (canário 6,
+`dryRun:false`, mesmo padrão de confirmação/monitoramento ao vivo dos
+canários anteriores) — mesma tarefa nos dois: pergunta sobre o prazo de
+entrega do card, informação que `ler_card` **não expõe** (garante que a
+única resposta honesta é perguntar, não inventar uma data). Toolset
+restrito a `ler_card`/`perguntar_humano`/`comentario` — sem
+`mover_coluna`/`link`/etc., pra não dar nenhuma ação alternativa
+plausível.
+
+Verificado contra fake db + cliente scriptado (canário 6): toolset
+filtrado corretamente, `perguntar_humano` com `dryRun:false` posta o
+comentário com prefixo `❓` de verdade, marca `agentStatus:
+'awaiting_validation'`, promove `executorType` pra `'agent'`,
+`updatedAt`/`cards_updated_at` carimbados. 133 testes continuam
+passando. Ainda não rodado contra LLM real.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
