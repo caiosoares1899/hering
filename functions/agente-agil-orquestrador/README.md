@@ -907,6 +907,19 @@ Reverificado contra fake db (toolset ampliado, mesma garantia de plano
 composto correto). 133 testes passando. Ainda não rodado contra LLM
 real com este 3º desenho.
 
+**Rodado pelo usuário com o 3º desenho — sucesso**: `status:
+'awaiting_human'`, `ler_card -> perguntar_humano`. O modelo leu o card
+(coluna "Concluído", checklist com 1 item pendente), reconheceu que não
+tinha como saber se a divulgação já tinha acontecido nem qual seria a
+coluna de destino correta, e chamou `perguntar_humano` com uma pergunta
+clara apresentando as duas opções concretas (marcar o item vs mover o
+card) e pedindo a confirmação. Plano composto retornado com os 3 steps
+esperados (`comentario`=1 + `agent_status`=2), `output.dryRun: true`
+confirmado — nada escrito de verdade, exatamente como projetado. Handler
+real de `perguntar_humano` validado ponta a ponta em dryRun; falta só o
+canário 6 (`dryRun:false`) pra confirmar a escrita de verdade no
+Firebase.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
