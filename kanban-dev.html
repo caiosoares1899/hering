@@ -3400,6 +3400,13 @@ input[type="date"]{-moz-appearance:textfield;}
         <span style="font-size:10px;color:var(--txt3);">(desmarcado = substituir tudo)</span>
       </div>
 
+      <div class="field" style="margin-bottom:10px;">
+        <label class="fl">Aplicar uma tag a todos os cards deste import <span style="font-weight:400;color:var(--txt3);">(opcional — útil pra marcar de qual board do Trello cada card veio, ex.: importando vários boards de submarca pro mesmo squad)</span></label>
+        <select class="fi" id="trello-tag-all">
+          <option value="">— nenhuma —</option>
+        </select>
+      </div>
+
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button class="btn btn-sm" onclick="previewTrelloImport()">👁 Pré-visualizar</button>
         <button class="btn btn-p btn-sm" id="btn-confirm-import" onclick="confirmTrelloImport()" disabled style="opacity:.4;cursor:not-allowed;">📥 Importar</button>
@@ -4321,7 +4328,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.249-dev</div>
+<div class="version">v8.30.250-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14493,6 +14500,18 @@ async function _recalcularDatasTrello(){
   fbSaveAll(); renderBoard();
   showToast('🕐 '+mudancas.length+' card(s) com data corrigida.');
 }
+// Select "aplicar tag a todos os cards deste import" — pedido pra distinguir
+// de qual board do Trello cada card veio quando vários boards são
+// importados pro mesmo squad (ex.: migração de submarcas do Site Hering:
+// 4 boards do Trello -> 1 squad só, uma tag de submarca por import). Lista
+// as tags já existentes no squad — se a tag desejada (ex.: submarca) ainda
+// não existe, crie em Configurações > Tags antes de importar.
+function _populateTrelloTagSelect(){
+  const sel=document.getElementById('trello-tag-all'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— nenhuma —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+  sel.value=tags.some(t=>t.id===cur)?cur:'';
+}
 function previewTrelloImport(){
   const raw=document.getElementById('trello-json').value.trim();
   const preview=document.getElementById('trello-preview');
@@ -14523,6 +14542,7 @@ function previewTrelloImport(){
     preview.style.color='var(--teal)';
     preview.innerHTML=`✅ <strong>${esc(_trelloParsed.boardName)}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span><br><span style="font-size:10px;opacity:.7;">${extraStats}</span>${warnings}`;
     btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
+    _populateTrelloTagSelect();
 
     // Render column mapping UI
     const mapDiv = document.getElementById('trello-mapping');
@@ -14680,6 +14700,16 @@ async function doTrelloImport(){
     selects.forEach(s=>{ if(s.dataset.listId) manualMap[s.dataset.listId]=s.value; });
     _trelloParsed.cards.forEach(c=>{ if(manualMap[c._trelloListId]) c.col=manualMap[c._trelloListId]; });
   }
+  // Tag aplicada a TODOS os cards deste import (opcional) — pedido pra
+  // distinguir de qual board do Trello cada card veio quando vários boards
+  // são importados pro mesmo squad, sem precisar marcar card por card depois.
+  const tagAllId = document.getElementById('trello-tag-all')?.value || '';
+  if(tagAllId){
+    _trelloParsed.cards.forEach(c=>{
+      if(!Array.isArray(c.tags)) c.tags=[];
+      if(!c.tags.includes(tagAllId)) c.tags.push(tagAllId);
+    });
+  }
   const merge=document.getElementById('trello-merge').checked;
   const total=_trelloParsed.total;
   const boardName=_trelloParsed.boardName;
@@ -14710,9 +14740,10 @@ async function doTrelloImport(){
   _trelloParsed=null;
   const mapDiv=document.getElementById('trello-mapping');
   if(mapDiv) mapDiv.style.display='none';
+  const tagAllSel=document.getElementById('trello-tag-all'); if(tagAllSel) tagAllSel.value='';
   closeOv('cfg-ov');
   // Toast de sucesso
-  showToast(`✅ ${total} cards importados de "${boardName}"`);
+  showToast(`✅ ${total} cards importados de "${boardName}"`+(tagAllId?` com a tag aplicada`:''));
 }
 // ═══════════════════════════════════════════════════════
 
