@@ -18,6 +18,30 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.206 — 2026-08-04 · hotfix
+**"🗑 Excluir todos os cards" (`zerarBoard()`) não excluía de verdade.**
+Reportado pelo usuário: precisava limpar o squad "site" (Hering) antes
+de um import do Trello, e os cards voltavam depois de excluir.
+
+Causa raiz: o fix de banda desta mesma sessão (`fbSaveAll` com
+`touchedIds`, ver v8.30.201/203) introduziu `cards_index` /
+`cards_updated_at` / `cards_archived` como os índices que o
+carregamento em duas etapas (`_twoPhaseCardsLoad`) usa pra decidir
+quais cards existem — mas `zerarBoard()` só zerava `/cards`, sem tocar
+nesses três índices paralelos. Resultado: `cards_index` continuava
+listando todos os ids antigos, então qualquer reload (ou outro device
+com cache local em IndexedDB) reconstruía o board a partir do cache ou
+re-buscava os cards "fantasma", fazendo o botão parecer quebrado.
+
+- `zerarBoard()`: agora zera `cards` + `cards_index` +
+  `cards_updated_at` + `cards_archived` num único `update()` atômico
+  (mesmo padrão do `fbSaveAll`), e limpa o espelho local
+  `window._cardsByKey` na hora — sem esperar o próximo evento remoto
+  pra sumir de fato da tela.
+
+Hotfix urgente (usuário bloqueado num import em andamento) — aplicado
+direto em dev e prod juntos, sem esperar o ciclo normal de validação.
+
 ### v8.30.205 — 2026-08-04 · pausa de custo
 **Spotify pausado** — a pedido direto do usuário, por causa do custo de
 Cloud Function acima do esperado. `functions/spotify/sync.js`
@@ -590,6 +614,13 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.265-dev — 2026-08-04
+Mesmo hotfix da entrada `kanban.html v8.30.206` acima — `zerarBoard()`
+("🗑 Excluir todos os cards") agora zera `cards_index` /
+`cards_updated_at` / `cards_archived` junto com `/cards`, não só
+`/cards`. Aplicado nos dois arquivos ao mesmo tempo (usuário bloqueado
+num import do Trello em andamento).
 
 ### v8.30.264-dev — 2026-08-04
 Mesmo pause de Spotify da entrada `kanban.html v8.30.205` acima —
