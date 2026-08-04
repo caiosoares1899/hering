@@ -2696,17 +2696,20 @@ input[type="date"]{-moz-appearance:textfield;}
             </select>
           </div>
         </div>
+        <!-- Story Points removido do modal — não é usado pelos times. Mantido só como
+             campo de dados legado (card.sp) para não quebrar cards antigos; sem UI. -->
+        <input type="hidden" id="m-sp" value="">
+        <!-- Submarca + Executor na mesma linha (pedido direto do time) — .card-attr-row
+             é grid 2 colunas, então com os 3 campos aqui (Submarca, Executor, Status do
+             Agente) o grid flui sozinho: Submarca+Executor na 1ª linha, Status do Agente
+             (display:none na maioria dos cards) cai pra 2ª linha só quando visível —
+             sem precisar de JS extra pra reorganizar. -->
         <div class="card-attr-row">
-          <div class="field" id="m-submarca-field" style="flex:1;display:none;"><label class="fl">🏷️ Submarca</label>
+          <div class="field" id="m-submarca-field" style="display:none;"><label class="fl">🏷️ Submarca</label>
             <select class="fi" id="m-submarca" onchange="setCardSubmarca(this.value)">
               <option value="">— sem submarca —</option>
             </select>
           </div>
-        </div>
-        <!-- Story Points removido do modal — não é usado pelos times. Mantido só como
-             campo de dados legado (card.sp) para não quebrar cards antigos; sem UI. -->
-        <input type="hidden" id="m-sp" value="">
-        <div class="card-attr-row">
           <div class="field"><label class="fl">Executor</label>
             <select class="fi" id="m-exectype" onchange="scheduleAutoSave();updateAgentStatusVisibility();">
               <option value="human">👤 Humano</option>
@@ -4333,7 +4336,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.251-dev</div>
+<div class="version">v8.30.252-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

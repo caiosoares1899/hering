@@ -406,6 +406,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.252-dev — 2026-08-03
+Pedido direto: campo "Executor" ao lado de "Submarca" no modal do
+card, em vez de cada um na própria linha. `.card-attr-row` é grid de 2
+colunas — mesclado Submarca + Executor + Status do Agente num único
+`.card-attr-row`: Submarca/Executor ficam lado a lado sempre; Status
+do Agente (escondido na maioria dos cards — só aparece com executor
+agente/híbrido) flui sozinho pra 2ª linha do grid quando visível, sem
+precisar de JS novo pra reorganizar layout. Sem mudança de
+comportamento, só posição dos campos.
+
 ### v8.30.251-dev — 2026-08-03
 Corrige feedback direto do time: os botões de filtro rápido de
 submarca (v8.30.249-dev) como fileira própria acima da toolbar
