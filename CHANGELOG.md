@@ -454,6 +454,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.255-dev — 2026-08-04
+Pedido direto: no import do Trello, membro sem match no board (`resolveOwner`
+não encontra ninguém no squad com nome parecido) deixava de virar
+responsável/participante e o vínculo simplesmente sumia, sem deixar rastro
+no card. Agora, além de continuar sem responsável, o card ganha uma tag
+"👤 Nome da Pessoa" (criada automaticamente, uma por pessoa não encontrada,
+reaproveitada entre todos os cards dela no mesmo import) — quando ela se
+cadastrar de verdade no squad, dá pra filtrar pela tag e reatribuir os
+cards em lote, em vez de caçar card por card. Vale tanto pro responsável
+principal quanto pra participantes adicionais (antes, participantes sem
+match eram descartados até sem aviso — agora também geram warning + tag).
+A tag entra no mesmo mecanismo de "tags novas serão criadas" que as tags
+de label do Trello já usavam (preview do import + criação em `doTrelloImport`),
+nenhum código novo de persistência.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`) —
+este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação manual
+no navegador (import de um board de teste com membro propositalmente sem
+match) ainda pendente antes de promover pra prod.
+
 ### v8.30.254-dev — 2026-08-04
 Feedback direto do time sobre os filtros rápidos de submarca (squad `site`,
 v8.30.251-dev): duas correções.

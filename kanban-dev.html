@@ -4346,7 +4346,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.254-dev</div>
+<div class="version">v8.30.255-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14450,6 +14450,36 @@ function parseTrelloJSON(raw){
     return bestScore>=60 ? (bestMatch?.init||'') : '';
   }
 
+  // Membro do Trello sem match no board → em vez de só deixar sem
+  // responsável, cria (ou reaproveita) uma tag com o nome dela e marca em
+  // todo card que ela está vinculada (dono ou participante). Assim, quando
+  // essa pessoa se cadastrar de verdade no squad, dá pra filtrar pela tag
+  // e reatribuir os cards em lote (Reatribuir cards não serve aqui — ele
+  // migra por inicial, e essa pessoa nunca teve inicial nenhuma no board).
+  // Reaproveita a mesma tag entre múltiplos cards da mesma pessoa (cache
+  // por trelloMemberId) e a mesma paleta cíclica das tags de label acima.
+  const personTagMap={}; // trelloMemberId → tagId
+  function resolvePersonTag(trelloMemberId){
+    if(personTagMap[trelloMemberId]) return personTagMap[trelloMemberId];
+    const tm=memberMap[trelloMemberId]; if(!tm) return '';
+    const nome=tm.fullName||tm.username||'?';
+    const slug=nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'_').substring(0,16);
+    // Tenta reaproveitar uma tag já existente no board com o mesmo nome
+    // (ex.: import repetido do mesmo board, ou alguém já criou a tag manualmente)
+    const lname=('👤 '+nome).toLowerCase();
+    const existing=tags.find(t=>t.label.toLowerCase()===lname);
+    let tagId;
+    if(existing){
+      tagId=existing.id;
+    } else {
+      tagId='tag_pessoa_'+slug+'_'+trelloMemberId.substring(0,4);
+      const pi=PALETTE_CYCLE[paletteIdx++ % PALETTE_CYCLE.length];
+      newTagsToCreate.push({id:tagId, label:'👤 '+nome, pi});
+    }
+    personTagMap[trelloMemberId]=tagId;
+    return tagId;
+  }
+
   // ── 5. CONVERTE CARDS ──────────────────────────────────────────
   const warnings=[];
   const imported=(data.cards||[]).filter(card=>{
@@ -14471,19 +14501,34 @@ function parseTrelloJSON(raw){
 const cardTags = (card.idLabels || [])
   .map(lid => labelTagMap[lid])
   .filter(Boolean);
-const tagId = cardTags[0] || '';
 
     // Responsável: primeiro membro resolvido
     const ownerInit=card.idMembers?.length?resolveOwner(card.idMembers[0]):'';
     if(card.idMembers?.length&&!ownerInit){
       const tm=memberMap[card.idMembers[0]];
       warnings.push(`Membro "${tm?.fullName||'?'}" não encontrado no board — card "${card.name.substring(0,30)}"`);
+      // Sem match → marca com uma tag "👤 Nome" pra achar fácil depois que
+      // ela se cadastrar de verdade (ver resolvePersonTag acima).
+      const pTag=resolvePersonTag(card.idMembers[0]);
+      if(pTag&&!cardTags.includes(pTag)) cardTags.push(pTag);
     }
 
-    // Participantes: membros adicionais resolvidos
+    // Participantes: membros adicionais resolvidos; os sem match também
+    // ganham a tag "👤 Nome" (mesma lógica do responsável acima) em vez de
+    // simplesmente desaparecerem do card.
     const participants=(card.idMembers||[]).slice(1)
-      .map(mid=>resolveOwner(mid))
+      .map(mid=>{
+        const init=resolveOwner(mid);
+        if(!init){
+          const tm=memberMap[mid];
+          warnings.push(`Membro "${tm?.fullName||'?'}" não encontrado no board — card "${card.name.substring(0,30)}"`);
+          const pTag=resolvePersonTag(mid);
+          if(pTag&&!cardTags.includes(pTag)) cardTags.push(pTag);
+        }
+        return init;
+      })
       .filter(Boolean);
+    const tagId = cardTags[0] || '';
 
     // Bloqueio: lista Bloqueado OU label especial de bloqueio
     const hasBlocList=colInfo.col==='blocker';
@@ -14617,7 +14662,7 @@ function previewTrelloImport(){
       warnings+=`<div style="margin-top:6px;padding:5px 8px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);border-radius:6px;color:var(--warn);font-size:10px;">⚠ ${_trelloParsed.unmappedLists.length} lista(s) sem coluna correspondente foram para <strong>Backlog</strong>: ${esc(_trelloParsed.unmappedLists.join(', '))}</div>`;
     }
     if(_trelloParsed.warnings?.length>0){
-      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:6px;color:var(--danger);font-size:10px;">👤 ${_trelloParsed.warnings.length} membro(s) não encontrado(s) no board — esses cards ficaram sem responsável:<br>${esc(_trelloParsed.warnings.slice(0,5).join('<br>'))}</div>`;
+      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:6px;color:var(--danger);font-size:10px;">👤 ${_trelloParsed.warnings.length} membro(s) não encontrado(s) no board — esses cards ficaram sem responsável, mas ganharam uma tag "👤 Nome" pra facilitar reatribuir quando a pessoa se cadastrar:<br>${esc(_trelloParsed.warnings.slice(0,5).join('<br>'))}</div>`;
     }
     if(_trelloParsed.newTags.length>0){
       warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:6px;color:var(--accent);font-size:10px;">✦ ${_trelloParsed.newTags.length} tag(s) nova(s) serão criadas: ${esc(_trelloParsed.newTags.map(t=>t.label).join(', '))}</div>`;
