@@ -860,6 +860,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.272-dev — 2026-08-04
+Pedido direto: pessoas relatando dificuldade de leitura no board.
+
+- Novo botão **🔍 Fonte** na toolbar (logo depois de ↕ Ordenação) — menu
+  suspenso com 4 tamanhos: Pequena, Padrão, Grande, Muito grande. Aplica
+  `zoom` só no `#board` (colunas/cards — não no header/toolbar).
+  `zoom` em vez de `transform:scale()`: escala fonte + padding + cards
+  proporcionalmente, igual um zoom de navegador de verdade, mas sem
+  desalinhar coordenadas de mouse/drag-and-drop (`transform:scale()` tem
+  esse problema conhecido).
+- Preferência pessoal, salva só neste navegador (`localStorage`, mesmo
+  padrão de `colSortMode`/`fish_bg_off`) — não sincroniza entre pessoas
+  nem dispositivos.
+- Documentado na Central de Ajuda (aba Board).
+
+Só em dev por enquanto — segue o processo normal de release (aguardando
+validação antes de promover pra prod).
+
 ### v8.30.271-dev — 2026-08-04
 Mesma revisão de código da entrada `kanban.html v8.30.212` acima —
 `delColumn()`/`saveAgilCfg()` agora persistem os cards reatribuídos ao
