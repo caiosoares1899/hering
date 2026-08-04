@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.203 — 2026-08-04 · hotfix
+**Hotfix de emergência**: a CSS do PR #147 (filtros rápidos de submarca
+não quebrarem linha, promovido em v8.30.201) quebrava o header inteiro
+— reportado ao vivo pelo usuário ("quebrou foi tudo no layout agora").
+`flex-grow:1;flex-shrink:0;flex-basis:auto` em `#submarca-quickfilters`
+colapsava a distribuição de espaço do `.hd`: tudo (filtros + avatares
++ botões) empilhava no canto direito, com um vão vazio enorme entre o
+nome da squad e os filtros.
+
+Revertido pra `flex:1` (o que já funcionava pra centralizar/crescer a
+div), mantendo só `flex-wrap:nowrap` (pílulas não quebram linha) e
+`overflow-x:auto` (rede de segurança).
+
+Promovido direto, sem esperar o ciclo normal de validação em dev — bug
+visível afetando todo mundo com o board aberto. Só essa linha de CSS
+mudou; o resto do dev (Central de Ajuda, PR #153) fica pra promoção
+separada depois de validado.
+
 ### v8.30.202 — 2026-08-04 · PR #150
 Promove pra prod, a pedido direto do usuário: card não salva mais sem
 prazo nem sem submarca (quando o squad usa Submarca).
@@ -508,6 +526,48 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.258-dev — 2026-08-04
+**Hotfix**: a CSS do PR #147 (filtros rápidos de submarca não quebrarem
+linha) quebrou o header inteiro em produção — reportado ao vivo pelo
+usuário ("quebrou foi tudo no layout agora"). A combinação
+`flex-grow:1;flex-shrink:0;flex-basis:auto` em `#submarca-quickfilters`
+fazia a distribuição de espaço do `.hd` colapsar: tudo (filtros +
+avatares + botões) empilhava no canto direito, com um vão vazio enorme
+entre o nome da squad e os filtros, em vez dos filtros ficarem
+centralizados como antes.
+
+Revertido pra `flex:1` (o que já funcionava pra centralizar/crescer),
+mantendo só as duas mudanças que realmente eram necessárias:
+`flex-wrap:nowrap` (pílulas não quebram linha) e `overflow-x:auto`
+(rede de segurança se não couber tudo mesmo depois de crescer).
+
+Promovido direto pra prod também (ver entrada `kanban.html`), sem
+esperar validação — bug visível afetando todo mundo com o board
+aberto agora.
+
+### v8.30.257-dev — 2026-08-04
+Atualiza a Central de Ajuda (❓), que estava defasada em relação às
+últimas entregas — sem nenhuma dessas cinco coisas documentadas:
+
+- **Badge de impedimento no card** — o 🚧 ao lado do 🎯 de OKR e as
+  bordas mais grossas (dica nova em "cards").
+- **Trava de edição concorrente** — banner + modo leitura quando outra
+  pessoa já está editando o mesmo card (dica nova em "cards").
+- **Prazo e Submarca obrigatórios** — inclui o botão "Sem prazo
+  definido" como escape hatch (dica nova em "cards").
+- **Submarca (marca do produto)** — toggle por squad, visibilidade por
+  marca, filtros rápidos no header, multi-seleção (dica nova em
+  "config", no mesmo espírito da dica já existente de "Tamanho").
+- **Importar do Trello** — dica atualizada com as duas entregas mais
+  recentes: aplicar uma tag a todos os cards do import, e a tag
+  automática "👤 Nome" pra membro sem match no board.
+
+Só conteúdo de ajuda (`HELP_CONTENT`), nenhuma mudança de
+comportamento. Validado por leitura de código + checagem de sintaxe
+(`node --check`) — este arquivo não tem suíte automatizada (ver
+`CLAUDE.md`); validação manual no navegador ainda pendente antes de
+promover pra prod.
 
 ### v8.30.256-dev — 2026-08-04
 Pedido direto: dois campos passam a ser obrigatórios ao salvar um card
