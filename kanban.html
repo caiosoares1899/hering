@@ -141,10 +141,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:20;}
-.hd-l{display:flex;align-items:center;gap:8px;}
+.hd-l{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .hd-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
-.hd-filter-btn{font-size:10px;white-space:nowrap;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
+.hd-filter-btn{font-size:10px;white-space:nowrap;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;flex-shrink:0;}
 .hd-filter-btn:hover{background:var(--glass-h);border-color:var(--accent);color:var(--txt);}
 .hd-filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;font-weight:600;}
 .squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
@@ -156,7 +156,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .squad-switcher-item.active{background:rgba(56,182,255,.15);font-weight:700;cursor:default;pointer-events:none;}
 .squad-switcher-tag{font-size:10px;color:var(--txt3);font-weight:400;margin-left:auto;}
 .squad-switcher-msg{padding:10px;font-size:12px;color:var(--txt2);}
-.hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
+/* Filtros rápidos de submarca nunca quebram linha (cada pílula fica inteira);
+   quando o espaço aperta, é a barra de avatares online (.hd-btns, flex-shrink
+   normal) que cede — não os filtros (flex-shrink:0). Se mesmo assim não
+   couber tudo, rola horizontalmente em vez de quebrar. */
+#submarca-quickfilters{scrollbar-width:none;}
+#submarca-quickfilters::-webkit-scrollbar{display:none;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{background:var(--glass-h);border-color:var(--accent);}
 .btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
@@ -2307,10 +2313,14 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <!-- Filtros rápidos de submarca — só aparece com submarcaAtivo (squad "site"), botões
        pré-prontos pra pular direto pra cada marca sem abrir o drawer de Filtros. Reaproveita
-       o MESMO estado (#f-submarca + applyFilters()) — não é um filtro paralelo. Fica na
-       MESMA linha do header (entre o nome da squad e os avatares online) — colocar como
-       fileira própria acima da toolbar quebrava o layout (feedback direto do time). -->
-  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:wrap;min-width:0;"></div>
+       o MESMO estado (activeFilters.submarca, agora um array — ver setSubmarcaQuickFilter)
+       — não é um filtro paralelo. Fica na MESMA linha do header (entre o nome da squad e os
+       avatares online) — colocar como fileira própria acima da toolbar quebrava o layout
+       (feedback direto do time). Permite selecionar mais de uma submarca ao mesmo tempo
+       (pedido direto) — os botões não podem quebrar linha (flex-shrink:0 nas pílulas +
+       flex-wrap:nowrap aqui); quem cede espaço quando aperta é a barra de avatares online
+       (.hd-btns), nunca os filtros — daí o overflow-x:auto como rede de segurança. -->
+  <div id="submarca-quickfilters" style="display:none;flex-grow:1;flex-shrink:0;flex-basis:auto;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;"></div>
   <div class="hd-btns">
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -2360,7 +2370,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <option value="tag_tam_g">👕 G</option>
     <option value="tag_tam_gg">👕 GG</option>
   </select>
-  <select id="f-submarca" onchange="applyFilters()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+  <select id="f-submarca" onchange="setSubmarcaFromDrawer()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">🏷️ Qualquer submarca</option>
   </select>
   <select id="f-subteam" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
@@ -4336,7 +4346,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.200</div>
+<div class="version">v8.30.201</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4936,8 +4946,13 @@ function _bulkPopover(html){
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
-function _bulkFinish(msg, keepSelection){
-  fbSaveAll(); 
+function _bulkFinish(msg, keepSelection, extraIds){
+  // touchedIds = os selecionados (todo bulk action opera sobre eles) + ids
+  // extras que a própria operação criou por fora da seleção (ex.:
+  // bulkDuplicate — as CÓPIAS não estão em selectedCards, que só tem os
+  // originais). Captura ANTES de fbSaveAll (que ainda não mexeu em
+  // selectedCards) e antes de selectedCards.clear() logo abaixo.
+  fbSaveAll(undefined, [...selectedCards, ...(extraIds||[])]);
   if(!keepSelection){
     const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
     selectedCards.clear(); selectMode=false;
@@ -5196,17 +5211,20 @@ async function bulkDuplicate(){
   const user=window._currentUser?.displayName||'Usuário';
   const td=new Date().toISOString().split('T')[0];
   let count=0;
+  const novosIds=[];
   _selectedList().forEach(c=>{
     const novo=JSON.parse(JSON.stringify(c));
     novo.id='c'+Date.now()+'_'+(count++);
     novo.title=(c.title||'')+' (cópia)';
     novo.archived=false;
     novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
+    novo.updatedAt=new Date().toISOString(); // clone trazia o updatedAt do original — carimba de novo, é conteúdo novo
     novo.history=[]; novo.moveLog=[];
     recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
     cards.push(novo);
+    novosIds.push(novo.id);
   });
-  _bulkFinish('⧉ '+count+' card(s) duplicados.');
+  _bulkFinish('⧉ '+count+' card(s) duplicados.', false, novosIds);
 }
 async function bulkArchive(){
   if(!selectedCards.size) return;
@@ -5226,7 +5244,7 @@ async function bulkDeleteSelected(){
   if(!await uiConfirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
   const ids=new Set(selectedCards);
   cards=cards.filter(c=>!ids.has(c.id));
-  fbSaveAll();
+  fbSaveAll(undefined, []); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
   selectedCards.clear();
   selectMode=false;
   const btn=document.getElementById('btn-select');
@@ -5688,7 +5706,27 @@ function toggleHistory(){
   if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
 }
 
-async function fbSaveAll(extra){
+// touchedIds (opcional): array/Set dos ids REALMENTE modificados por quem
+// chamou. Achado real (2026-08-04, squad outlet-crm, ~1GB/dia de banda):
+// fbSaveAll() sempre carimbava updatedAt de TODOS os cards do squad, não só
+// os tocados pela operação — comentário antigo achava que isso era de
+// graça ("já reescreve o array inteiro mesmo"), mas o custo de verdade não é
+// aqui, é em TODO CLIENTE ALHEIO: qualquer fbSaveAll() (até duplicar 1 card)
+// fazia cards_updated_at de TODOS os cards mudar pro mesmo timestamp, o que
+// invalida o cache local (_twoPhaseCardsLoad) de QUALQUER outra pessoa com
+// o board aberto de uma vez só — 100% dos cards ativos pareciam "mudados",
+// estourando o limite de staleness sempre, forçando todo mundo pro fallback
+// caro (listener bruta em /cards inteiro). Isso explicava o padrão
+// encontrado: consumo alto sustentado o dia todo, espalhado entre várias
+// pessoas, não uma sessão presa.
+//
+// Com touchedIds informado, só os ids da lista (+ qualquer card que ainda
+// não tinha updatedAt nenhum — criação nova/legado, mesmo espírito do
+// comentário original) ganham timestamp novo; o resto preserva o que já
+// tinha, sem invalidar cache de ninguém à toa. Omitir touchedIds mantém o
+// comportamento antigo (carimba tudo) — fallback seguro pra quem ainda não
+// foi migrado; nunca INVENTA um touchedIds errado por conta própria.
+async function fbSaveAll(extra, touchedIds){
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
   // `cards` ANTES de ler o array abaixo -- fbSaveAll reescreve /cards por
@@ -5727,6 +5765,7 @@ async function fbSaveAll(extra){
   const cardsIndex = {};
   const cardsUpdatedAt = {};
   const cardsArchived = {};
+  const _touched = touchedIds ? new Set(touchedIds) : null;
   cards.forEach((c,i)=>{
     if(!c || !c.id) return;
     cardsIndex[c.id] = String(i);
@@ -5735,12 +5774,20 @@ async function fbSaveAll(extra){
     // string simples — ver fbSaveCard). Usado só pelo carregamento em duas
     // etapas (ver fbLoadAll): baixar esse índice pequeno primeiro permite
     // saber quais cards realmente mudaram desde a última visita, sem ler
-    // /cards inteiro de novo. Carimba TODOS os cards do array (não só os
-    // que essa operação de fato tocou) — fbSaveAll já reescreve o array
-    // inteiro mesmo, então marcar tudo como "fresco" não muda a ordem de
-    // grandeza do custo, e evita esconder uma mudança por engano.
-    c.updatedAt = _nowIso;
-    cardsUpdatedAt[c.id] = _nowIso;
+    // /cards inteiro de novo.
+    //
+    // Sem touchedIds: carimba TODOS os cards do array (comportamento antigo,
+    // ver comentário grande em fbSaveAll sobre o custo real disso pra quem
+    // não chamou este save). Com touchedIds: só quem está na lista (ou quem
+    // ainda não tinha updatedAt nenhum — criação nova/legado) ganha
+    // timestamp NOVO; o resto preserva o que já tinha, sem invalidar cache
+    // alheio à toa.
+    if(_touched && c.updatedAt && !_touched.has(c.id)){
+      cardsUpdatedAt[c.id] = c.updatedAt;
+    } else {
+      c.updatedAt = _nowIso;
+      cardsUpdatedAt[c.id] = _nowIso;
+    }
     // cards_archived/{cardId}->true: só existe pra cards arquivados (ausente
     // = ativo). Índice leve que _twoPhaseCardsLoad() usa pra parar de
     // reverificar cards arquivados a cada carga do board (ver fbLoadAll) —
@@ -5791,7 +5838,7 @@ async function fbSaveAll(extra){
         // Fallback: snapshot espelhado ainda não tem esse card (ex.: acabou
         // de ser criado) — tenta pela posição local antes do fbSaveAll.
         const idx = cards.indexOf(card);
-        if(idx < 0) return fbSaveAll();
+        if(idx < 0) return fbSaveAll(undefined, [card.id]);
         key = String(idx);
         // PONTE TEMPORÁRIA: card não estava no espelho -> é criação. O
         // índice cards_index/{cardId}->chave (que o Agente Ágil usa pra
@@ -7100,7 +7147,7 @@ function confirmarInscricao(){
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
   window._currentUserInit=init;
-  fbSaveAll();
+  fbSaveAll(undefined, []); // só inscreve membro, nenhum card muda
   closeOv('insc-ov');
   renderBoard();
 }
@@ -7601,7 +7648,7 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',tamanho:'',submarca:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+let activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -7626,7 +7673,11 @@ function applyFilters(){
     owner:document.getElementById('f-owner').value,
     tag:document.getElementById('f-tag').value,
     tamanho:document.getElementById('f-tamanho')?.value||'',
-    submarca:document.getElementById('f-submarca')?.value||'',
+    // submarca é multi-seleção (array) — não vem de um <select> de valor único,
+    // por isso preserva o que já estava lá (gerenciado por setSubmarcaQuickFilter/
+    // setSubmarcaFromDrawer). Chamar applyFilters() por causa de outro filtro
+    // (dono, tag, prazo...) não pode apagar a seleção de submarca.
+    submarca:activeFilters.submarca||[],
     due:document.getElementById('f-due').value,
     priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
@@ -7647,7 +7698,7 @@ function clearFilters(){
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
-  activeFilters={owner:'',tag:'',tamanho:'',submarca:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+  activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
   renderSubmarcaQuickFilters();
   renderBoard();
 }
@@ -7663,7 +7714,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
-  if(activeFilters.submarca&&!cardHasTag(card, activeFilters.submarca)) return false;
+  if(activeFilters.submarca&&activeFilters.submarca.length&&!activeFilters.submarca.some(id=>cardHasTag(card, id))) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
@@ -7886,6 +7937,7 @@ function maybeAutoArchiveOldCards(){
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
   const now=Date.now();
   let n=0;
+  const touchedIds=[];
   cards.forEach(c=>{
     if(c.archived || !c.createdAt) return;
     const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
@@ -7901,9 +7953,10 @@ function maybeAutoArchiveOldCards(){
       c.archived=true; c.archivedAt=new Date().toISOString();
       recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
       n++;
+      touchedIds.push(c.id);
     }
   });
-  if(n>0){ fbSaveAll(); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
+  if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
 }
 function fillArchiveCfgTab(){
   const c=archiveCfg||{};
@@ -8459,8 +8512,9 @@ function _prioTierCards(colId, prio){
 async function resetColSubPrio(colId){
   if(!await uiConfirm('Remover a ordem manual desta coluna? Os cards voltam pra ordem padrão (prioridade + criação).')) return;
   let mudou=false;
-  cards.filter(c=>c.col===colId).forEach(c=>{ if(typeof c.subPrio==='number'){ delete c.subPrio; mudou=true; } });
-  if(mudou){ fbSaveAll(); renderBoard(); showToast('↩ Ordem manual removida.'); }
+  const touchedIds=[];
+  cards.filter(c=>c.col===colId).forEach(c=>{ if(typeof c.subPrio==='number'){ delete c.subPrio; mudou=true; touchedIds.push(c.id); } });
+  if(mudou){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('↩ Ordem manual removida.'); }
 }
 
 // ── Configuração da coluna (⚙ no cabeçalho) ───────────────────────
@@ -8551,7 +8605,7 @@ function _renderSubPrioDragList(listElId, colId, tierKey){
       const ordered=_prioTierCards(colId, tierKey);
       const [moved]=ordered.splice(from,1); ordered.splice(to,0,moved);
       ordered.forEach((cc,idx)=>{ cc.subPrio=idx; });
-      fbSaveAll();
+      fbSaveAll(undefined, ordered.map(cc=>cc.id));
       renderColCfgSubPrio(colId);
       renderBoard();
     });
@@ -8725,7 +8779,7 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
   }
-  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll();
+  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
   // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
   // (ex.: instabilidade do SDK de auth já corrigida antes, ou queda de rede), o card fechava mesmo
@@ -8746,7 +8800,7 @@ async function deleteCard(){
   saveUndo('excluir card');
   cards=cards.filter(x=>x.id!==editingId);
   _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
-  fbSaveAll(); renderBoard(); closeOv('card-ov');
+  fbSaveAll(undefined, []); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -9202,19 +9256,46 @@ function _populateSubmarcaFilterSelect(){
 }
 // Botões de atalho no topo do board (acima da toolbar) — mesmo estado do
 // filtro do drawer (#f-submarca + activeFilters.submarca), só um jeito mais
-// rápido de aplicar sem abrir Filtros. Realça o botão da submarca ativa.
+// rápido de aplicar sem abrir Filtros. Realça os botões das submarcas ativas
+// — suporta mais de uma marca marcada ao mesmo tempo (pedido direto).
 function renderSubmarcaQuickFilters(){
   const wrap=document.getElementById('submarca-quickfilters'); if(!wrap) return;
   const visiveis=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id));
   if(!submarcaAtivo || !visiveis.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
   wrap.style.display='flex';
-  const cur=activeFilters.submarca||'';
-  wrap.innerHTML = `<button class="hd-filter-btn${cur?'':' active'}" onclick="setSubmarcaQuickFilter('')">Todas</button>`
-    + visiveis.map(st=>`<button class="hd-filter-btn${cur===st.id?' active':''}" onclick="setSubmarcaQuickFilter('${st.id}')">${esc(st.label)}</button>`).join('');
+  const cur=activeFilters.submarca||[];
+  wrap.innerHTML = `<button class="hd-filter-btn${cur.length?'':' active'}" onclick="setSubmarcaQuickFilter('')">Todas</button>`
+    + visiveis.map(st=>`<button class="hd-filter-btn${cur.includes(st.id)?' active':''}" onclick="setSubmarcaQuickFilter('${st.id}')">${esc(st.label)}</button>`).join('');
 }
+// Clique num botão de submarca ALTERNA ele na seleção (multi-select) — clicar
+// numa marca já marcada desmarca só ela, as outras continuam. "Todas" limpa
+// tudo de uma vez. Sincroniza o <select> do drawer só quando dá pra
+// representar em valor único (0 ou 1 selecionada); com 2+ o select volta pro
+// "Qualquer submarca" (não existe seleção múltipla nativa nesse controle).
 function setSubmarcaQuickFilter(tagId){
-  const f=document.getElementById('f-submarca'); if(f) f.value=tagId;
-  applyFilters();
+  if(!tagId){
+    activeFilters.submarca=[];
+  } else {
+    const arr=(activeFilters.submarca||[]).slice();
+    const idx=arr.indexOf(tagId);
+    if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
+    activeFilters.submarca=arr;
+  }
+  const f=document.getElementById('f-submarca');
+  if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
+  _colRenderLimit={};
+  renderSubmarcaQuickFilters();
+  renderBoard();
+}
+// Select do drawer de Filtros: escolha única, substitui a seleção inteira
+// (mesmo padrão de antes de existir multi-seleção). Pra marcar mais de uma
+// submarca de uma vez, usar os botões rápidos do header (setSubmarcaQuickFilter).
+function setSubmarcaFromDrawer(){
+  const v=document.getElementById('f-submarca')?.value||'';
+  activeFilters.submarca = v ? [v] : [];
+  _colRenderLimit={};
+  renderSubmarcaQuickFilters();
+  renderBoard();
 }
 // Lista de checkboxes (Configurações > Tags) — uma por submarca, ligada por
 // padrão (submarcasVisiveis[id]!==false, ver _submarcaIsVisivel).
@@ -12514,7 +12595,7 @@ async function deleteSelectedArchived(){
   if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
   const idSet=new Set(ids);
   cards=cards.filter(c=>!idSet.has(c.id));
-  fbSaveAll();
+  fbSaveAll(undefined, []);
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
   openArquivados();
 }
@@ -12574,7 +12655,7 @@ async function deleteSelectedOldCards(){
   if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
   const idSet=new Set(ids);
   cards=cards.filter(c=>!idSet.has(c.id));
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, []); renderBoard();
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
   renderCleanupList();
 }
@@ -12583,9 +12664,9 @@ async function bulkArchiveOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Arquivar '+ids.length+' card(s) antigo(s)? Eles somem do board ativo mas continuam salvos — dá pra restaurar em Arquivados.',{title:'Arquivar cards antigos',okText:'Arquivar'})) return;
-  const idSet=new Set(ids); let n=0;
-  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); n++; } });
-  fbSaveAll(); renderBoard();
+  const idSet=new Set(ids); let n=0; const touchedIds=[];
+  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); n++; touchedIds.push(c.id); } });
+  fbSaveAll(undefined, touchedIds); renderBoard();
   showToast('📦 '+n+' card(s) arquivado(s).');
   renderCleanupList();
 }
@@ -12606,12 +12687,12 @@ async function purgeOldArchived(){
   if((digitado||'').trim().toUpperCase()!=='EXCLUIR'){ if(digitado!==null) showToast('Cancelado — texto não confere.'); return; }
   const ids=new Set(alvo.map(c=>c.id));
   cards=cards.filter(c=>!ids.has(c.id));
-  fbSaveAll();
+  fbSaveAll(undefined, []);
   showToast('🗑 '+alvo.length+' card(s) excluído(s) permanentemente.');
   openArquivados();
 }
 // ── FIM LIMPEZA DE CARDS ANTIGOS ─────────────────────────────────────
-async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(); openArquivados(); }
+async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(undefined, []); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
@@ -12880,7 +12961,7 @@ function processRecorrentes(){
       if(card.recorrenteDe && card.recorrenteData)
         recIdxUpdates['recorrentes_index/'+card.recorrenteDe+'/'+card.recorrenteData] = card.id;
     });
-    fbSaveAll(recIdxUpdates);
+    fbSaveAll(recIdxUpdates, criados.map(c=>c.id));
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     // Avisa: lembrete + notificação + toast
@@ -12951,7 +13032,7 @@ function processAgendamentos(){
     }
   });
   if(mudou){
-    fbSaveAll();
+    fbSaveAll(undefined, criados.map(c=>c.id));
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     let lemPropMudou=false;
@@ -13423,7 +13504,7 @@ async function executarReatribuir(){
       if(idx>=0){ if(c.participants.includes(to)) c.participants.splice(idx,1); else c.participants[idx]=to; }
     }
   });
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, alvos.map(c=>c.id)); renderBoard();
   closeOv('reassign-ov');
   showToast('✅ '+alvos.length+' card(s) reatribuídos de '+from+' para '+to+'.');
 }
@@ -13466,7 +13547,7 @@ async function editarInicial(uid, initAtual, nome){
       if(c.owner===initAtual) c.owner=novaInit;
       if(Array.isArray(c.participants)){ const idx=c.participants.indexOf(initAtual); if(idx>=0) c.participants[idx]=novaInit; }
     });
-    fbSaveAll(); renderBoard();
+    fbSaveAll(undefined, cardsAfetados.map(c=>c.id)); renderBoard();
     showToast('✅ Iniciais alteradas para '+novaInit+' e '+cardsAfetados.length+' card(s) migrados.');
   } else {
     showToast('✅ Iniciais alteradas para '+novaInit+(cardsAfetados.length?'. Os cards "'+initAtual+'" NÃO foram migrados.':'.'));
@@ -13872,7 +13953,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       const titulo=c.title;
       cards=cards.filter(x=>x.id!==input.card_id);
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveAll(undefined, []);
       return{ok:true,msg:`Card "${titulo}" excluído permanentemente`};
     }
     case 'atualizar_descricao':{
@@ -14369,6 +14450,36 @@ function parseTrelloJSON(raw){
     return bestScore>=60 ? (bestMatch?.init||'') : '';
   }
 
+  // Membro do Trello sem match no board → em vez de só deixar sem
+  // responsável, cria (ou reaproveita) uma tag com o nome dela e marca em
+  // todo card que ela está vinculada (dono ou participante). Assim, quando
+  // essa pessoa se cadastrar de verdade no squad, dá pra filtrar pela tag
+  // e reatribuir os cards em lote (Reatribuir cards não serve aqui — ele
+  // migra por inicial, e essa pessoa nunca teve inicial nenhuma no board).
+  // Reaproveita a mesma tag entre múltiplos cards da mesma pessoa (cache
+  // por trelloMemberId) e a mesma paleta cíclica das tags de label acima.
+  const personTagMap={}; // trelloMemberId → tagId
+  function resolvePersonTag(trelloMemberId){
+    if(personTagMap[trelloMemberId]) return personTagMap[trelloMemberId];
+    const tm=memberMap[trelloMemberId]; if(!tm) return '';
+    const nome=tm.fullName||tm.username||'?';
+    const slug=nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'_').substring(0,16);
+    // Tenta reaproveitar uma tag já existente no board com o mesmo nome
+    // (ex.: import repetido do mesmo board, ou alguém já criou a tag manualmente)
+    const lname=('👤 '+nome).toLowerCase();
+    const existing=tags.find(t=>t.label.toLowerCase()===lname);
+    let tagId;
+    if(existing){
+      tagId=existing.id;
+    } else {
+      tagId='tag_pessoa_'+slug+'_'+trelloMemberId.substring(0,4);
+      const pi=PALETTE_CYCLE[paletteIdx++ % PALETTE_CYCLE.length];
+      newTagsToCreate.push({id:tagId, label:'👤 '+nome, pi});
+    }
+    personTagMap[trelloMemberId]=tagId;
+    return tagId;
+  }
+
   // ── 5. CONVERTE CARDS ──────────────────────────────────────────
   const warnings=[];
   const imported=(data.cards||[]).filter(card=>{
@@ -14390,19 +14501,34 @@ function parseTrelloJSON(raw){
 const cardTags = (card.idLabels || [])
   .map(lid => labelTagMap[lid])
   .filter(Boolean);
-const tagId = cardTags[0] || '';
 
     // Responsável: primeiro membro resolvido
     const ownerInit=card.idMembers?.length?resolveOwner(card.idMembers[0]):'';
     if(card.idMembers?.length&&!ownerInit){
       const tm=memberMap[card.idMembers[0]];
       warnings.push(`Membro "${tm?.fullName||'?'}" não encontrado no board — card "${card.name.substring(0,30)}"`);
+      // Sem match → marca com uma tag "👤 Nome" pra achar fácil depois que
+      // ela se cadastrar de verdade (ver resolvePersonTag acima).
+      const pTag=resolvePersonTag(card.idMembers[0]);
+      if(pTag&&!cardTags.includes(pTag)) cardTags.push(pTag);
     }
 
-    // Participantes: membros adicionais resolvidos
+    // Participantes: membros adicionais resolvidos; os sem match também
+    // ganham a tag "👤 Nome" (mesma lógica do responsável acima) em vez de
+    // simplesmente desaparecerem do card.
     const participants=(card.idMembers||[]).slice(1)
-      .map(mid=>resolveOwner(mid))
+      .map(mid=>{
+        const init=resolveOwner(mid);
+        if(!init){
+          const tm=memberMap[mid];
+          warnings.push(`Membro "${tm?.fullName||'?'}" não encontrado no board — card "${card.name.substring(0,30)}"`);
+          const pTag=resolvePersonTag(mid);
+          if(pTag&&!cardTags.includes(pTag)) cardTags.push(pTag);
+        }
+        return init;
+      })
       .filter(Boolean);
+    const tagId = cardTags[0] || '';
 
     // Bloqueio: lista Bloqueado OU label especial de bloqueio
     const hasBlocList=colInfo.col==='blocker';
@@ -14505,7 +14631,7 @@ async function _recalcularDatasTrello(){
   const maisAntiga=datas[0].split('-').reverse().join('/');
   if(!await uiConfirm(mudancas.length+' card(s) importado(s) do Trello terão a data de criação corrigida pra data real (a mais antiga encontrada: '+maisAntiga+'). Isso só corrige a data — não move, arquiva nem exclui nada. Confirma?',{title:'Corrigir datas do Trello',okText:'Corrigir'})) return;
   mudancas.forEach(({c,nova})=>{ c.createdAt=nova; recordHistory(c,'data de criação corrigida (import Trello)'); });
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, mudancas.map(x=>x.c.id)); renderBoard();
   showToast('🕐 '+mudancas.length+' card(s) com data corrigida.');
 }
 // Select "aplicar tag a todos os cards deste import" — pedido pra distinguir
@@ -14536,7 +14662,7 @@ function previewTrelloImport(){
       warnings+=`<div style="margin-top:6px;padding:5px 8px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.25);border-radius:6px;color:var(--warn);font-size:10px;">⚠ ${_trelloParsed.unmappedLists.length} lista(s) sem coluna correspondente foram para <strong>Backlog</strong>: ${esc(_trelloParsed.unmappedLists.join(', '))}</div>`;
     }
     if(_trelloParsed.warnings?.length>0){
-      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:6px;color:var(--danger);font-size:10px;">👤 ${_trelloParsed.warnings.length} membro(s) não encontrado(s) no board — esses cards ficaram sem responsável:<br>${esc(_trelloParsed.warnings.slice(0,5).join('<br>'))}</div>`;
+      warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:6px;color:var(--danger);font-size:10px;">👤 ${_trelloParsed.warnings.length} membro(s) não encontrado(s) no board — esses cards ficaram sem responsável, mas ganharam uma tag "👤 Nome" pra facilitar reatribuir quando a pessoa se cadastrar:<br>${esc(_trelloParsed.warnings.slice(0,5).join('<br>'))}</div>`;
     }
     if(_trelloParsed.newTags.length>0){
       warnings+=`<div style="margin-top:5px;padding:5px 8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.2);border-radius:6px;color:var(--accent);font-size:10px;">✦ ${_trelloParsed.newTags.length} tag(s) nova(s) serão criadas: ${esc(_trelloParsed.newTags.map(t=>t.label).join(', '))}</div>`;
@@ -14739,7 +14865,7 @@ async function doTrelloImport(){
   // Sem isto, tags novas do import ficavam só na memória e viravam "tags fantasma"
   // (referenciadas pelos cards, mas inexistentes no Firebase) no primeiro reload.
   if(_novasTagsCriadas) fbSet(FB+'/tags', tags);
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, cleanCards.map(c=>c.id)); renderBoard();
   // Limpa e fecha
   document.getElementById('trello-json').value='';
   document.getElementById('trello-preview').style.display='none';
@@ -17812,8 +17938,14 @@ function hideUndoBtn(){
 function doUndo(){
   if(!_undoStack.length) return;
   const prev=_undoStack.pop();
+  const before=cards;
   cards=prev.cards;
-  fbSaveAll(); renderBoard();
+  // touchedIds: diferença de conteúdo entre o estado atual (before, que está
+  // sendo descartado) e o estado restaurado (cards) — só esses ids precisam
+  // de updatedAt novo pra outros clientes perceberem a mudança real.
+  const beforeById={}; before.forEach(c=>{ if(c&&c.id) beforeById[c.id]=c; });
+  const touchedIds=cards.filter(c=>c&&c.id && JSON.stringify(c)!==JSON.stringify(beforeById[c.id])).map(c=>c.id);
+  fbSaveAll(undefined, touchedIds); renderBoard();
   // Se o modal do card estava aberto, os campos em tela (descrição, checklist, etc.)
   // não se atualizam sozinhos com o renderBoard() — sem isso, o "Desfazer" parecia não
   // fazer nada (o Firebase voltava, mas a tela continuava com o texto novo, e qualquer
@@ -18084,7 +18216,7 @@ async function ctxDelete(){
   hideCtxMenu();
   if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   cards=cards.filter(x=>x.id!==cardId);
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, []); renderBoard();
   showToast('Card excluído');
 }
 // ═══════════════════════════════════════════════════════
@@ -18783,7 +18915,7 @@ function setDependsOn(parentId){
     if(!parent.dependents) parent.dependents=[];
     if(!parent.dependents.includes(editingId)) parent.dependents.push(editingId);
   }
-  fbSaveAll();
+  fbSaveAll(undefined, [editingId, parentId].filter(Boolean));
   closeOv('depends-picker-ov');
   renderDependsBar(card);
   renderCardDepMini(editingId);
@@ -18793,10 +18925,11 @@ function setDependsOn(parentId){
 
 function unlinkDependsOn(){
   const card = cards.find(c=>c.id===editingId); if(!card||!card.dependsOn) return;
-  const parent = cards.find(c=>c.id===card.dependsOn);
+  const parentId=card.dependsOn;
+  const parent = cards.find(c=>c.id===parentId);
   if(parent && parent.dependents) parent.dependents=parent.dependents.filter(id=>id!==editingId);
   card.dependsOn=null;
-  fbSaveAll();
+  fbSaveAll(undefined, [editingId, parentId].filter(Boolean));
   closeOv('depends-picker-ov');
   renderDependsBar(card);
   renderBoard();
