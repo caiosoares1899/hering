@@ -3460,6 +3460,8 @@ input[type="date"]{-moz-appearance:textfield;}
         <p style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:8px;">Cards importados do Trello antes desta correção podem ter ficado com "tags fantasma" (um ID de tag que não existe mais na configuração — aparece como texto cru no Relatório de Tempo). Clique abaixo para detectar e reparar automaticamente.</p>
         <button class="btn btn-sm" onclick="_repararTagsFantasmas()" style="color:var(--warn);border-color:rgba(255,209,102,.35);">🔧 Detectar e reparar tags fantasma</button>
         <button class="btn btn-sm" onclick="_recalcularDatasTrello()" style="color:var(--accent);border-color:rgba(56,182,255,.35);margin-left:6px;margin-top:6px;">🕐 Corrigir datas de criação (Trello)</button>
+        <button class="btn btn-sm" onclick="_repararCardsIndex()" style="color:var(--danger);border-color:rgba(255,107,107,.35);margin-left:6px;margin-top:6px;">🔧 Reparar cards "sumidos" (reconstruir índice)</button>
+        <p style="font-size:10px;color:var(--txt3);line-height:1.5;margin-top:6px;">Corrige cards que sumiram do board mas continuam existindo no Firebase (bug de reconciliação corrigido na v8.30.210 — ver CHANGELOG). Não apaga nem altera nenhum card, só reconstrói o índice que aponta pra eles.</p>
       </div>
     </div>
 
@@ -4375,7 +4377,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.268-dev</div>
+<div class="version">v8.30.269-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6489,15 +6491,44 @@ let _cardsSyncDebounce = null;
       _logFallbackReason('excecao', { erro: String((e && e.message) || e) });
       return false;
     }).then(usedTwoPhase=>{
-      if(usedTwoPhase) return;
-      const _cardsRef = fb(FB+'/cards');
-      window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-      window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
-      window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+      if(!usedTwoPhase){
+        const _cardsRef = fb(FB+'/cards');
+        window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+        window._onChildChanged(_cardsRef, snap=>{ _dbgTrack('/cards:child_changed', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
+        window._onChildRemoved(_cardsRef, snap=>{ _dbgTrack('/cards:child_removed', snap.val()); delete _cardsByKey[snap.key]; _scheduleCardsSync(); });
+        // Fallback completo: /cards inteiro já é a fonte de verdade aqui
+        // (listener bruto, sem depender de cards_index/cards_updated_at) --
+        // pula a reconciliação abaixo, que é específica do caminho em duas
+        // etapas.
+        return;
+      }
+      // BUG CRÍTICO DE PRODUÇÃO — PERDA DE DADO REAL (2026-08-04, squad
+      // site, ~2886 cards): isto ANTES rodava num setTimeout(4000) fixo,
+      // numa corrida contra o burst de fetches individuais que
+      // _twoPhaseCardsLoad() acabou de disparar (Promise.all de um
+      // window._get() POR CARD que precisava rebaixar). Num squad grande
+      // (centenas/milhares de cards), esse burst legitimamente demora
+      // MAIS que 4s pra terminar -- e quando o timer vencia a corrida
+      // primeiro, _reconcileCardsIndexOnce() via os cards AINDA
+      // carregando como "órfãos" (não estavam em _cardsByKey ainda,
+      // apesar de existirem de verdade) e ESCREVIA null em
+      // cards_index/cards_updated_at pra eles -- apagando de verdade o
+      // único caminho pra achar esses cards no carregamento em duas
+      // etapas. Na PRÓXIMA carga (F5), esses cards nunca mais apareciam
+      // (o dado ficava órfão, intacto mas inalcançável, em
+      // /cards/{chave antiga}) -- e squads grandes perdiam MAIS cards a
+      // CADA reload, porque o mesmo timer voltava a perder a corrida
+      // (agora contra um carregamento ainda maior, já que tinha menos
+      // cache válido). Isso bate exatamente com o relato: contagem de
+      // "excluir todos" caindo sozinha entre uma checagem e outra
+      // (2886 → 2874), mesmo sem ninguém mais mexendo no board.
+      //
+      // Fix: só agenda a reconciliação DEPOIS que _twoPhaseCardsLoad()
+      // JÁ terminou de verdade (este .then() só roda depois do
+      // Promise.all interno resolver) -- nunca mais um timer fixo
+      // correndo contra um carregamento de tamanho desconhecido.
+      setTimeout(_reconcileCardsIndexOnce, 500);
     });
-    // cards_index (ver fbSaveAll/fbSaveCard): dá tempo do burst inicial de
-    // child_added popular _cardsByKey antes de comparar contra o remoto.
-    setTimeout(_reconcileCardsIndexOnce, 4000);
   }
 
   // ── cards_index: reconciliação de carga (autocorreção) ─────────────────
@@ -13949,6 +13980,43 @@ function _repararTagsFantasmas(){
   fbSet(FB+'/tags', tags);
   renderBoard();
   uiAlert('🔧 '+criadas.length+' tag(s) fantasma reparada(s):\n\n'+criadas.join('\n')+'\n\nAs tags foram recriadas com nomes derivados do ID interno — se quiser, renomeie em Config → Tags pra algo mais amigável.');
+}
+// Repara cards_index/cards_updated_at/cards_archived reconstruindo-os do
+// zero a partir do /cards inteiro (fonte de verdade real) — corrige o dano
+// do bug corrigido em v8.30.210 (ver CHANGELOG): a reconciliação rodava
+// num timer fixo de 4s, que perdia a corrida contra squads grandes ainda
+// carregando, e chegava a ESCREVER null em cards_index/cards_updated_at
+// pra cards que só estavam demorando a carregar, não órfãos de verdade.
+// Isso nunca tocou em /cards/{chave} em si (só o índice que aponta pra
+// ele) — então nenhum card foi perdido de verdade, só ficou inalcançável
+// pelo carregamento em duas etapas. Ler /cards inteiro aqui é a única
+// forma de achar TODOS os cards de novo (inclusive os já órfãos do
+// índice) — mais caro que o normal, mas é um reparo pontual, não algo
+// que roda toda hora.
+async function _repararCardsIndex(){
+  if(!window._fbReady){ uiAlert('Firebase indisponível.'); return; }
+  const ok = await uiConfirm('Isso lê TODOS os cards deste squad direto do Firebase (pode ser pesado num squad grande) e reconstrói cards_index/cards_updated_at/cards_archived do zero, a partir do que realmente existe em /cards — corrige cards que ficaram "órfãos" do índice (bug corrigido na v8.30.210, ver CHANGELOG). Nenhum card é apagado ou alterado, só o índice é reconstruído. Continuar?');
+  if(!ok) return;
+  try{
+    const snap = await fbGet(FB+'/cards');
+    const rawCards = snap.val();
+    const arr = Array.isArray(rawCards) ? rawCards : Object.values(rawCards||{});
+    const cardsIndex={}, cardsUpdatedAt={}, cardsArchived={};
+    const nowIso=new Date().toISOString();
+    let total=0;
+    arr.forEach((c,i)=>{
+      if(!c || !c.id) return;
+      total++;
+      cardsIndex[c.id]=String(i);
+      cardsUpdatedAt[c.id]=c.updatedAt||nowIso;
+      if(c.archived) cardsArchived[c.id]=true;
+    });
+    await window._update(fb(FB), { cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived });
+    uiAlert('🔧 Índice reconstruído: '+total+' card(s) re-indexados a partir de /cards.\n\nRecarregue a página (F5) pra ver o board com todos os cards de volta.');
+  }catch(e){
+    console.warn('[_repararCardsIndex] falhou:', e);
+    uiAlert('❌ Falha ao reparar: '+String((e&&e.message)||e));
+  }
 }
 
 

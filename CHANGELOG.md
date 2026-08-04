@@ -18,6 +18,47 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.210 — 2026-08-04 · hotfix CRÍTICO: perda de dado real (não só render)
+Depois da v8.30.209, usuário reportou que a contagem de "excluir todos"
+continuava caindo SOZINHA entre uma checagem e outra (2886 → 2874, -12),
+mesmo sem ninguém mais mexendo no board e já na versão com o fix
+anterior. Investigação achou uma causa DIFERENTE e mais grave: não era
+mais só renderização, era escrita real de `null` no índice.
+
+Causa: `_reconcileCardsIndexOnce()` (autocorreção do índice, roda 1x por
+carga do board) disparava num `setTimeout` fixo de **4 segundos**,
+numa corrida contra o carregamento inicial em duas etapas
+(`_twoPhaseCardsLoad`), que precisa buscar cada card individualmente
+(`window._get()`, um request por card) que mudou desde o último cache.
+Num squad grande (este tinha ~2886 cards ativos, muitos re-buscados
+depois do import), esse carregamento legitimamente demora MAIS que 4s.
+Quando o timer vencia a corrida, a reconciliação via os cards AINDA EM
+CARREGAMENTO como "órfãos" (não estavam no espelho local ainda, apesar
+de existirem de verdade) e **escrevia `null` em `cards_index` e
+`cards_updated_at`** pra eles — apagando de verdade o único caminho pra
+achar esses cards no carregamento em duas etapas. Na PRÓXIMA carga
+(F5), esses cards nunca mais apareciam — o dado ficava órfão, intacto
+mas inalcançável, em `/cards/{chave antiga}` — e squads grandes
+perdiam MAIS cards a cada reload, porque o mesmo timer voltava a
+perder a corrida (agora contra um carregamento ainda maior, com menos
+cache válido).
+
+- `fbLoadAll()`: a reconciliação agora só é agendada DEPOIS que
+  `_twoPhaseCardsLoad()` realmente terminou de carregar tudo (encadeada
+  no `.then()` da própria promise, nunca mais um timer correndo contra
+  um carregamento de tamanho desconhecido).
+- Nova ferramenta de reparo em Config → Trello → Diagnóstico:
+  **"🔧 Reparar cards 'sumidos' (reconstruir índice)"** — lê `/cards`
+  inteiro (a fonte de verdade real, nunca tocada por este bug) e
+  reconstrói `cards_index`/`cards_updated_at`/`cards_archived` do zero.
+  Não apaga nem altera nenhum card — só o índice, então é seguro rodar
+  em qualquer squad que suspeite ter sido afetado (mesmo antes deste
+  fix, já que é read-then-rebuild, não incremental).
+
+Recomendação: qualquer squad grande (centenas+ de cards) deve rodar o
+reparo pelo menos uma vez depois de atualizar, pra recuperar qualquer
+card que já tenha ficado órfão do índice antes deste fix.
+
 ### v8.30.209 — 2026-08-04 · hotfix crítico GERAL (cards sumindo — não é só import)
 Usuário reportou que cards continuavam sumindo mesmo fora do import do
 Trello — "aconteceu comigo agora na coluna Upload do site Hering, tinha
@@ -734,6 +775,17 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.269-dev — 2026-08-04
+Mesmo hotfix CRÍTICO da entrada `kanban.html v8.30.210` acima —
+`_reconcileCardsIndexOnce()` rodava num timer fixo de 4s que perdia a
+corrida contra o carregamento de squads grandes e chegava a escrever
+`null` em `cards_index`/`cards_updated_at` pra cards ainda carregando,
+apagando de verdade o índice deles (não só a renderização). Agora só
+roda depois que o carregamento realmente termina. Nova ferramenta de
+reparo "🔧 Reparar cards 'sumidos'" em Config → Trello → Diagnóstico,
+reconstrói o índice do zero a partir de `/cards`. Aplicado nos dois
+arquivos ao mesmo tempo.
 
 ### v8.30.268-dev — 2026-08-04
 Mesmo hotfix crítico GERAL da entrada `kanban.html v8.30.209` acima —
