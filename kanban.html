@@ -199,6 +199,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   overflow-y:visible;
 }
 .board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;min-width:max-content;}
+/* Tamanho de fonte do board — pedido direto (dificuldade de leitura). `zoom`
+   em vez de `transform:scale()`: escala tudo (fonte, padding, cards)
+   proporcionalmente igual um zoom de navegador de verdade, mas SEM os
+   problemas de transform:scale() com drag-and-drop (getBoundingClientRect()/
+   coordenadas de mouse continuam corretas com zoom — não ficam com um
+   "desalinhamento" entre onde o card aparece e onde o drag registra o clique,
+   como aconteceria com transform). Aplicado só no #board (colunas/cards),
+   não no header/toolbar — a área de leitura pesada é ali. */
+#board.fontsize-sm{zoom:0.85;}
+#board.fontsize-lg{zoom:1.15;}
+#board.fontsize-xl{zoom:1.3;}
 /* coluna no modo expandido ocupa a altura do wrap e deixa o corpo rolar (exceto raia) */
 .mode-expanded-wrap .board.mode-expanded:not(.raia-mode){height:100%;align-items:flex-start;}
 .mode-expanded-wrap .board.mode-expanded:not(.raia-mode) .col{max-height:100%;display:flex;flex-direction:column;}
@@ -2427,6 +2438,29 @@ input[type="date"]{-moz-appearance:textfield;}
       </button>
     </div>
   </div>
+  <div style="position:relative;" id="fontsize-menu-wrap">
+    <button class="btn btn-sm" onclick="toggleFontSizeMenu()" id="btn-fontsize" title="Tamanho da fonte do board (cards, tags, títulos) — preferência salva só neste navegador">🔍 <span id="btn-fontsize-lbl">Fonte</span></button>
+    <div id="fontsize-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
+      background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
+      box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:170px;z-index:500;overflow:hidden;">
+      <button onclick="setBoardFontSize('sm')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔎 Pequena
+      </button>
+      <button onclick="setBoardFontSize('md')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔍 Padrão
+      </button>
+      <button onclick="setBoardFontSize('lg')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔍 Grande
+      </button>
+      <button onclick="setBoardFontSize('xl')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔍 Muito grande
+      </button>
+    </div>
+  </div>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
   <!-- Menu suspenso de Submarcas — só aparece com submarcaAtivo (squad "site"), pedido
@@ -4377,7 +4411,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.212</div>
+<div class="version">v8.30.213</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7596,6 +7630,11 @@ function renderBoard(){
   updateMetrics();
   // Garante a classe de modo correta após render (síncrono, sem timing frágil)
   if(!raiaMode) setViewMode(viewMode);
+  // Reaplica a classe de tamanho de fonte -- renderRaiaOwner/Tag/Subteam
+  // sobrescrevem board.className inteiro (não usam classList), então
+  // qualquer classe fontsize-* precisa ser reposta a cada render, não só
+  // uma vez no load.
+  _applyBoardFontSize();
   board.scrollLeft=_scrollBoardX;
   Object.keys(_scrollColY).forEach(elId=>{ const elx=document.getElementById(elId); if(elx) elx.scrollTop=_scrollColY[elId]; });
   if(_scrollWinY) window.scrollTo(0,_scrollWinY);
@@ -7927,6 +7966,51 @@ function closeSortMenu(){
 }
 document.addEventListener('click', e=>{
   if(!e.target.closest('#sort-menu-wrap')) closeSortMenu();
+});
+// Tamanho de fonte do board — pedido direto (relato de dificuldade de
+// leitura). Preferência pessoal, salva só neste navegador (mesmo espírito de
+// colSortMode/fish_bg_off) — não sincroniza entre pessoas nem dispositivos.
+// position:fixed com getBoundingClientRect() (não position:absolute) —
+// mesmo padrão do sort-menu/submarca, evita o bug de clipping por overflow
+// de ancestral já corrigido nesta sessão pro menu de Submarcas.
+const FONTSIZE_LABELS = {sm:'Pequena', md:'Padrão', lg:'Grande', xl:'Muito grande'};
+let boardFontSize = (function(){
+  const v = safeLS.getItem('board_font_size');
+  return (v && FONTSIZE_LABELS[v]) ? v : 'md';
+})();
+function _applyBoardFontSize(){
+  const board = document.getElementById('board'); if(!board) return;
+  board.classList.remove('fontsize-sm','fontsize-lg','fontsize-xl');
+  if(boardFontSize!=='md') board.classList.add('fontsize-'+boardFontSize);
+  const lbl = document.getElementById('btn-fontsize-lbl');
+  if(lbl) lbl.textContent = 'Fonte'+(boardFontSize!=='md' ? ' · '+FONTSIZE_LABELS[boardFontSize] : '');
+}
+function setBoardFontSize(size){
+  if(!FONTSIZE_LABELS[size]) return;
+  boardFontSize = size;
+  safeLS.setItem('board_font_size', size);
+  _applyBoardFontSize();
+  closeFontSizeMenu();
+}
+function toggleFontSizeMenu(){
+  const menu = document.getElementById('fontsize-menu');
+  if(!menu) return;
+  const willShow = menu.style.display==='none' || menu.style.display==='';
+  if(willShow){
+    const btn = document.getElementById('btn-fontsize');
+    const r = btn.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = (r.bottom+6)+'px';
+    menu.style.left = r.left+'px';
+  }
+  menu.style.display = willShow ? 'block' : 'none';
+}
+function closeFontSizeMenu(){
+  const menu = document.getElementById('fontsize-menu');
+  if(menu) menu.style.display = 'none';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#fontsize-menu-wrap')) closeFontSizeMenu();
 });
 
 function setColSortMode(mode){
@@ -15432,6 +15516,7 @@ const HELP_CONTENT = {
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
+    { icon:'🔍', title:'Tamanho da fonte do board', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular).' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
