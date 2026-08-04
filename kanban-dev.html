@@ -4375,7 +4375,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.266-dev</div>
+<div class="version">v8.30.267-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6074,6 +6074,16 @@ function fbLoadAll(){
     const incoming = Array.isArray(val) ? val : Object.values(val);
     if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
   });
+  // BUG REAL (2026-08-04, squad site): submarca foi ligada (submarcaAtivo)
+  // ANTES do split 5→10 tags (Comercial/Cadastro) existir no código — o
+  // backfill de tags novas só roda dentro de toggleSubmarcaAtivo() (ao
+  // MARCAR o checkbox), então squads que já tinham a Submarca ativada de
+  // antes nunca ganharam as 10 tags novas, só continuaram com as 5
+  // antigas. Resultado: editor de tags mostrava só as 5 antigas, filtro por
+  // Comercial/Cadastro não achava card nenhum (cards usam ids novos que
+  // não existem em `tags`). Roda 1x por squad por sessão, só quem pode
+  // editar tags (_isPOorOrg) — ver _ensureSubmarcaTagsBackfilled abaixo.
+  _ensureSubmarcaTagsBackfilled();
 
   // Cards — via listeners granulares (child_added/child_changed/child_removed) em vez
   // de onValue no array inteiro. onValue reenviava o node /cards COMPLETO pra CADA
@@ -9297,6 +9307,38 @@ function setCardTamanho(tagId){
 // 4. Desativar uma submarca aqui NUNCA apaga a tag de cards que já a usam
 // (mesma filosofia não-destrutiva do resto do app) — só tira do campo do
 // modal, do filtro rápido e do filtro do drawer pra escolha em cards NOVOS.
+// Backfill de correção (2026-08-04): garante que as 10 tags de Submarca
+// (SUBMARCA_TAGS) existem em `tags`, mesmo pra squads que ativaram o
+// recurso ANTES do split 5→10 (Comercial/Cadastro) e nunca mais
+// re-marcaram o checkbox (que é o único outro lugar que faz esse
+// backfill, ver toggleSubmarcaAtivo). Lê direto do Firebase (não confia
+// no `tags` local, que pode ainda não ter chegado quando isto roda) pra
+// nunca sobrescrever tags de outra pessoa com um estado local incompleto.
+// Guard por squad+sessão evita rodar de novo à toa a cada fbLoadAll()
+// (troca de squad, re-login) já verificado nesta sessão do navegador.
+let _submarcaBackfillCheckedSquad=null;
+async function _ensureSubmarcaTagsBackfilled(){
+  if(_submarcaBackfillCheckedSquad===ACTIVE_SQUAD) return;
+  _submarcaBackfillCheckedSquad=ACTIVE_SQUAD;
+  if(!window._fbReady || !_isPOorOrg()) return;
+  try{
+    const [ativoSnap, tagsSnap] = await Promise.all([
+      fbGet(FB+'/config/submarca_ativo'),
+      fbGet(FB+'/tags'),
+    ]);
+    if(!ativoSnap.val()) return; // squad não usa Submarca — nada a fazer
+    const rawTags = tagsSnap.val();
+    const remoteTags = Array.isArray(rawTags) ? rawTags.filter(Boolean) : Object.values(rawTags||{});
+    const missing = SUBMARCA_TAGS.filter(st=>!remoteTags.find(t=>t && t.id===st.id));
+    if(!missing.length) return;
+    const merged = remoteTags.concat(missing.map(st=>Object.assign({}, st)));
+    await window._update(fb(FB), { tags: merged });
+    tags = merged;
+    renderTagEditor();
+    renderBoard();
+    console.log(`[submarca] backfill: ${missing.length} tag(s) de Submarca (Comercial/Cadastro) que faltavam foram adicionadas.`);
+  }catch(e){ console.warn('[submarca] backfill de tags falhou:', e); }
+}
 function toggleSubmarcaAtivo(checked){
   if(!_isPOorOrg()) return;
   submarcaAtivo = !!checked;

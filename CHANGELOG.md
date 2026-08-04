@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.208 — 2026-08-04 · hotfix (tags de Submarca faltando)
+Achado a partir de um print do usuário: o editor de tags do squad "site"
+mostrava só as 5 tags ANTIGAS de Submarca (Hering Adulto, Hering Kids,
+Hering Sports, Hering Intimates, Hering Teens) — nenhuma das 10 novas
+(Comercial/Cadastro, ver v8.30.201/204). Por isso os filtros por
+Comercial/Cadastro não achavam nenhum card.
+
+Causa: o backfill que cria as tags de Submarca que estão faltando só
+roda dentro de `toggleSubmarcaAtivo()` — ou seja, só executa no momento
+em que alguém MARCA o checkbox "Ativar campo de Submarca". Squads como o
+"site", que já tinham o recurso ativado ANTES do split 5→10 tags
+existir, nunca tiveram esse checkbox re-marcado depois — então nunca
+ganharam as 10 tags novas, só ficaram com as 5 antigas presas no board
+pra sempre.
+
+- Nova função `_ensureSubmarcaTagsBackfilled()`: roda automaticamente 1x
+  por squad por sessão (só pra quem pode editar tags — PO/Organizador),
+  lê `config/submarca_ativo` e `tags` direto do Firebase (não confia no
+  estado local, que pode não ter carregado ainda) e adiciona qualquer
+  uma das 10 tags de Submarca que estiver faltando. Não mexe nas 5 tags
+  antigas nem nos cards que já as usam (mesma filosofia não-destrutiva
+  do resto do app) — só garante que as novas passam a existir.
+
+Aplicado direto em dev e prod — usuário aguardando pra poder filtrar
+por Comercial/Cadastro no import em andamento.
+
 ### v8.30.207 — 2026-08-04 · hotfix crítico (import Trello)
 Dois bugs reais reportados ao vivo depois do import de 4 boards do Trello
 (Hering Kids Digital, Cadastro Conteúdo, Intimates/Sports, Hering Adulto
@@ -671,6 +697,13 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.267-dev — 2026-08-04
+Mesmo hotfix da entrada `kanban.html v8.30.208` acima — nova
+`_ensureSubmarcaTagsBackfilled()`, roda 1x por squad/sessão e adiciona
+qualquer uma das 10 tags de Submarca (Comercial/Cadastro) que estiver
+faltando em `tags` (squads que ativaram o recurso antes do split 5→10
+nunca tinham ganho as novas). Aplicado nos dois arquivos ao mesmo tempo.
 
 ### v8.30.266-dev — 2026-08-04
 Mesmo hotfix crítico da entrada `kanban.html v8.30.207` acima — cards
