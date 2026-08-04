@@ -18,6 +18,43 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.209 — 2026-08-04 · hotfix crítico GERAL (cards sumindo — não é só import)
+Usuário reportou que cards continuavam sumindo mesmo fora do import do
+Trello — "aconteceu comigo agora na coluna Upload do site Hering, tinha
+um card de Kids ali e sumiu", e outros squads reclamando do mesmo. O
+fix da v8.30.207 (popular `window._cardsByKey` direto no `fbSaveAll`)
+só resolve pra quem FEZ o save, na própria aba — esta é a causa raiz
+**geral**, que afeta qualquer aba já aberta assistindo o board quando
+OUTRA pessoa faz qualquer operação estrutural.
+
+Causa: `cards_index/{cardId}` guarda a POSIÇÃO do card no array
+`/cards`. Toda vez que um `fbSaveAll()` estrutural roda (criar,
+arquivar, excluir, duplicar card, drag que reordena — não precisa ser
+import), a posição de TODOS os cards que vêm depois do ponto da
+mudança desloca — mesmo os que ninguém tocou de verdade. Isso dispara
+`child_changed` em `/cards_index` pra esses cards deslocados. O
+listener, ao ver a posição mudar, apagava a entrada da posição antiga
+em `_cardsByKey` e esperava um `child_changed` em `/cards_updated_at`
+pra "re-baixar" o card na posição nova — MAS com `touchedIds` (ver
+v8.30.201), `cards_updated_at` só muda de VALOR pra cards realmente
+tocados; pra um card só deslocado (não tocado), o valor gravado é
+idêntico ao anterior, e o Firebase não dispara `child_changed` pra um
+valor idêntico. Resultado: a posição nova nunca era populada, e o card
+— intacto no Firebase — ficava permanentemente ausente do board de
+qualquer aba que já estivesse aberta (só um F5 resolvia, porque o
+carregamento inicial não depende desse listener incremental).
+
+- `_cardsByKey`: ao ver a posição de um card mudar, agora MOVE o
+  conteúdo já conhecido (que não mudou, só a posição) da chave antiga
+  pra nova, em vez de só apagar e esperar um fetch que talvez nunca
+  chegasse. Se o conteúdo também mudou de verdade, o `child_changed` de
+  `cards_updated_at` (que aí sim dispara) sobrescreve depois com a
+  versão fresca — idempotente.
+
+Esta é provavelmente a causa raiz real por trás da maioria dos relatos
+de "sumiu um card" desde que o fix de banda (v8.30.201, touchedIds)
+entrou no ar — não só do import do Trello.
+
 ### v8.30.208 — 2026-08-04 · hotfix (tags de Submarca faltando)
 Achado a partir de um print do usuário: o editor de tags do squad "site"
 mostrava só as 5 tags ANTIGAS de Submarca (Hering Adulto, Hering Kids,
@@ -697,6 +734,15 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.268-dev — 2026-08-04
+Mesmo hotfix crítico GERAL da entrada `kanban.html v8.30.209` acima —
+causa raiz real de cards sumindo em QUALQUER aba já aberta quando
+alguém faz uma operação estrutural (criar/arquivar/excluir/duplicar/
+reordenar card), não só no import do Trello. `_cardsByKey` agora MOVE
+o card pra nova posição em vez de apagar e esperar um fetch que não
+disparava pra cards não tocados (touchedIds). Aplicado nos dois
+arquivos ao mesmo tempo.
 
 ### v8.30.267-dev — 2026-08-04
 Mesmo hotfix da entrada `kanban.html v8.30.208` acima — nova
