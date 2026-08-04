@@ -18,6 +18,54 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.200 — 2026-08-03 · PR #139, #140, #141, #142, #143, #144
+Promove pra prod tudo que estava acumulado no dev — seis entregas, a
+pedido direto do usuário:
+
+- **PR #139** — diagnóstico do fallback bruto de `/cards` (nenhuma
+  mudança de comportamento): registra o motivo exato toda vez que
+  `_twoPhaseCardsLoad()` desiste do caminho barato, em
+  `_debug_fallback_log`. Relevante direto pra produção: a investigação
+  de banda que motivou isso (`outlet-crm`/`outlet`, ~1GB/dia) é em
+  squads de produção, não dev.
+- **PR #140** — badge 🚧 de impedimento no título do card (mesmo padrão
+  do 🎯 de OKR, via `_cardIsBlocked()` — funciona nos dois modos de
+  impedimento) + bordas vermelha/dourada de 1px pra 2px (fino demais
+  pra notar de relance, feedback do time) + trava de edição concorrente
+  (lock por card, banner + modo leitura quando outra pessoa já está
+  editando, libera sozinha quando fica obsoleta ou a outra pessoa
+  fecha o modal).
+- **PR #141** — campo dedicado "🏷️ Submarca" no card (Hering
+  Adulto/Kids/Sports/Intimates/Teens), toggle por squad + visibilidade
+  individual por marca em Configurações, filtros rápidos no board —
+  peça que faltava pra migração do Site Hering (1 board só, em vez de
+  vários por submarca).
+- **PR #142** — select opcional em Configurações > Importar: aplica
+  uma tag a todos os cards de um import do Trello (evita marcar
+  submarca card por card ao importar vários boards pro mesmo squad).
+- **PR #143** — corrige os filtros rápidos de submarca quebrando o
+  layout (fileira própria) — movidos pra dentro do header, mesma linha
+  do nome da squad e avatares online.
+- **PR #144** — campo "Executor" ao lado de "Submarca" no modal do
+  card (pedido direto), em vez de cada um na própria linha.
+
+Detalhes completos nas entradas `kanban-dev.html v8.30.247-dev` a
+`v8.30.252-dev` abaixo. `diff kanban.html kanban-dev.html` antes desta
+mudança mostrou só essas seis entregas mais a string de versão/
+`VERSION_KEY` — promoção limpa.
+
+**Ressalva**: promovido a pedido direto do usuário ("pode subir tudo
+que tá pendente pra prod"). Validação manual explícita no dev só
+existe pra uma das seis entregas (a trava de edição concorrente, PR
+#140 — "funcionou!", confirmado ao vivo em duas abas); as outras cinco
+foram revisadas por leitura de código + checagem de sintaxe, sem teste
+manual no navegador antes desta promoção. Duas delas nascem
+desligadas por padrão em toda squad, inclusive `site` — ainda
+precisam ser ativadas manualmente em Configurações antes de fazerem
+qualquer diferença: o campo de Submarca (PR #141) e, por consequência,
+o select de tag do import do Trello (PR #142) só faz sentido depois
+disso.
+
 ### v8.30.199 — 2026-08-01 · PR #123, #124, #125, #126
 Promove pra prod toda a investigação de consumo de banda do RTDB,
 validada no dev — quatro entregas acumuladas desde a última promoção:

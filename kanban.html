@@ -144,6 +144,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-l{display:flex;align-items:center;gap:8px;}
 .hd-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+.hd-filter-btn{font-size:10px;white-space:nowrap;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
+.hd-filter-btn:hover{background:var(--glass-h);border-color:var(--accent);color:var(--txt);}
+.hd-filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;font-weight:600;}
 .squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
 .squad-switcher-caret{cursor:pointer;font-size:9px;color:var(--txt3);user-select:none;}
 .squad-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;background:rgb(10,26,44);border:1px solid var(--accent,#38b6ff);border-radius:10px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column;gap:2px;}
@@ -918,7 +921,7 @@ input[type="date"]{-moz-appearance:textfield;}
   cursor:pointer;transition:all .15s;
 }
 .tag-blocker:hover{background:rgba(255,107,107,.25);}
-.card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;}
+.card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;border-width:2px!important;}
 
 
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
@@ -1453,7 +1456,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .fi-mention-wrap{position:relative;width:100%;}
 
 
-.card.okr-card{border-color:rgba(255,215,0,.4)!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+.card.okr-card{border-color:rgba(255,215,0,.4)!important;border-width:2px!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
 .cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -2302,6 +2305,12 @@ input[type="date"]{-moz-appearance:textfield;}
     </span>
 
   </div>
+  <!-- Filtros rápidos de submarca — só aparece com submarcaAtivo (squad "site"), botões
+       pré-prontos pra pular direto pra cada marca sem abrir o drawer de Filtros. Reaproveita
+       o MESMO estado (#f-submarca + applyFilters()) — não é um filtro paralelo. Fica na
+       MESMA linha do header (entre o nome da squad e os avatares online) — colocar como
+       fileira própria acima da toolbar quebrava o layout (feedback direto do time). -->
+  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:wrap;min-width:0;"></div>
   <div class="hd-btns">
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -2350,6 +2359,9 @@ input[type="date"]{-moz-appearance:textfield;}
     <option value="tag_tam_m">👕 M</option>
     <option value="tag_tam_g">👕 G</option>
     <option value="tag_tam_gg">👕 GG</option>
+  </select>
+  <select id="f-submarca" onchange="applyFilters()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">🏷️ Qualquer submarca</option>
   </select>
   <select id="f-subteam" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os subtimes</option>
@@ -2624,6 +2636,10 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
+  <div id="m-lock-row" style="display:none;align-items:center;gap:8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:12.5px;color:var(--accent);">
+    <span id="m-lock-text"></span>
+  </div>
+
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
 
     <!-- Título -->
@@ -2683,7 +2699,17 @@ input[type="date"]{-moz-appearance:textfield;}
         <!-- Story Points removido do modal — não é usado pelos times. Mantido só como
              campo de dados legado (card.sp) para não quebrar cards antigos; sem UI. -->
         <input type="hidden" id="m-sp" value="">
+        <!-- Submarca + Executor na mesma linha (pedido direto do time) — .card-attr-row
+             é grid 2 colunas, então com os 3 campos aqui (Submarca, Executor, Status do
+             Agente) o grid flui sozinho: Submarca+Executor na 1ª linha, Status do Agente
+             (display:none na maioria dos cards) cai pra 2ª linha só quando visível —
+             sem precisar de JS extra pra reorganizar. -->
         <div class="card-attr-row">
+          <div class="field" id="m-submarca-field" style="display:none;"><label class="fl">🏷️ Submarca</label>
+            <select class="fi" id="m-submarca" onchange="setCardSubmarca(this.value)">
+              <option value="">— sem submarca —</option>
+            </select>
+          </div>
           <div class="field"><label class="fl">Executor</label>
             <select class="fi" id="m-exectype" onchange="scheduleAutoSave();updateAgentStatusVisibility();">
               <option value="human">👤 Humano</option>
@@ -3234,6 +3260,20 @@ input[type="date"]{-moz-appearance:textfield;}
           <input type="checkbox" id="cfg-tamanho-ativo" onchange="toggleTamanhoAtivo(this.checked)"> Ativar tags de tamanho (👕 P/M/G/GG) neste squad
         </label>
       </div>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--glass-b);">
+        <div class="cfg-sec-title">🏷️ Submarca</div>
+        <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
+          Campo dedicado "Submarca" no card (Hering Adulto/Kids/Sports/Intimates/Teens) — um board só, com filtros rápidos pra cada marca, no lugar de boards separados por submarca.
+        </p>
+        <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.25);border-radius:var(--r);">
+          <input type="checkbox" id="cfg-submarca-ativo" onchange="toggleSubmarcaAtivo(this.checked)"> Ativar campo de submarca neste squad
+        </label>
+        <div id="submarca-visiveis-cfg-wrap" style="display:none;margin-top:10px;padding-left:4px;">
+          <div style="font-size:10.5px;color:var(--txt3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Marcadas aparecem no card e nos filtros rápidos — todas ligadas por padrão</div>
+          <div id="submarca-visiveis-cfg-body" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ABA SUBTIMES -->
@@ -3366,6 +3406,13 @@ input[type="date"]{-moz-appearance:textfield;}
           <input type="checkbox" id="trello-merge" style="accent-color:var(--teal);"> Mesclar com cards existentes
         </label>
         <span style="font-size:10px;color:var(--txt3);">(desmarcado = substituir tudo)</span>
+      </div>
+
+      <div class="field" style="margin-bottom:10px;">
+        <label class="fl">Aplicar uma tag a todos os cards deste import <span style="font-weight:400;color:var(--txt3);">(opcional — útil pra marcar de qual board do Trello cada card veio, ex.: importando vários boards de submarca pro mesmo squad)</span></label>
+        <select class="fi" id="trello-tag-all">
+          <option value="">— nenhuma —</option>
+        </select>
       </div>
 
       <div style="display:flex;justify-content:flex-end;gap:8px;">
@@ -4289,7 +4336,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.199</div>
+<div class="version">v8.30.200</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5224,6 +5271,17 @@ const SIZE_TAGS = [
   {id:'tag_tam_g',  label:'👕 G',  pi:2, sizeLevel:3},
   {id:'tag_tam_gg', label:'👕 GG', pi:2, sizeLevel:4},
 ];
+let submarcaAtivo=false; // toggle por squad: mostra o campo dedicado "Submarca" no card + filtros rápidos no toolbar (squad "site")
+let submarcasVisiveis={}; // {tagId:boolean} — visibilidade individual de cada submarca; ausente = visível (default: todas aparecem, PO desmarca as que não usa)
+// Tags de submarca — ids fixos (idempotência: reativar não duplica, mesmo espírito de SIZE_TAGS).
+const SUBMARCA_TAGS = [
+  {id:'tag_sm_adulto',    label:'Hering Adulto',    pi:4},
+  {id:'tag_sm_kids',      label:'Hering Kids',      pi:4},
+  {id:'tag_sm_sports',    label:'Hering Sports',    pi:4},
+  {id:'tag_sm_intimates', label:'Hering Intimates', pi:4},
+  {id:'tag_sm_teens',     label:'Hering Teens',     pi:4},
+];
+function _submarcaIsVisivel(tagId){ return submarcasVisiveis[tagId]!==false; }
 
 // ═══════════════════════════════════════════════════════
 // FIREBASE HELPERS
@@ -5262,6 +5320,9 @@ function fbUpdate(path,val){ if(!window._fbReady) return Promise.resolve(); retu
 //   debugBytesHistory(90)     → idem, últimos 90 dias (limite de retenção)
 //   debugBytesExportCSV(90)   → mesmos dados de debugBytesHistory(), em CSV pra colar numa planilha
 //   debugBytesOff()           → desliga só nesta aba (não afeta outras pessoas)
+//   debugFallbackLog()        → por que ESTA squad caiu no fallback completo de /cards, últimas 24h (ver _logFallbackReason)
+//   debugFallbackLog(72)      → idem, últimas 72h
+//   debugFallbackLogClear()   → limpa o log de fallback desta squad
 const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
 const _DBG_LOG_PATH = FB+'/_debug_bytes_log';
 const _DBG_DAILY_PATH = FB+'/_debug_bytes_daily';
@@ -5380,6 +5441,26 @@ window.debugBytesRemote=function(hoursBack){
 };
 window.debugBytesClearRemote=function(){
   return fbSet(_DBG_LOG_PATH, null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+// Motivo registrado toda vez que _twoPhaseCardsLoad() desiste e cai no
+// fallback completo (ver _logFallbackReason, dentro de fbLoadAll) — evita
+// ter que reconstruir manualmente "por que caiu no fallback" na base de
+// medição de bytes por path (que mostra O CUSTO, não a causa).
+window.debugFallbackLog=function(hoursBack){
+  hoursBack = hoursBack || 24;
+  return window._get(fb(FB+'/_debug_fallback_log')).then(snap=>{
+    const val = snap.val() || {};
+    const cutoff = Date.now() - hoursBack*3600000;
+    const rows = Object.values(val)
+      .filter(e=>{ const t = e?.ts ? new Date(e.ts).getTime() : 0; return t && t>=cutoff; })
+      .sort((a,b)=>a.ts.localeCompare(b.ts));
+    console.log('%c🔬 Fallback registrado nas últimas '+hoursBack+'h (squad "'+ACTIVE_SQUAD+'"):', 'color:#ffd166;font-weight:bold;');
+    console.table(rows);
+    return rows;
+  });
+};
+window.debugFallbackLogClear=function(){
+  return fbSet(FB+'/_debug_fallback_log', null).then(()=>console.log('🔬 Log de fallback limpo (squad "'+ACTIVE_SQUAD+'").'));
 };
 // Rollup diário (retenção de 90 dias) — pra "acompanhar" tendência ao longo
 // de semanas/meses, não só as últimas 72h que o log horário cobre.
@@ -5826,6 +5907,15 @@ function fbLoadAll(){
     const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
     _applyTamanhoUIVisibility();
   });
+  fbListen(FB+'/config/submarca_ativo', val=>{
+    submarcaAtivo = !!val;
+    const el=document.getElementById('cfg-submarca-ativo'); if(el) el.checked=submarcaAtivo;
+    _applySubmarcaUIVisibility();
+  });
+  fbListen(FB+'/config/submarcas_visiveis', val=>{
+    submarcasVisiveis = val||{};
+    _applySubmarcaUIVisibility();
+  });
   fbListen(FB+'/config/criativos_listas', val=>{
     criativosListas = val||{};
     renderCriativosListasCfg();
@@ -6032,6 +6122,24 @@ let _cardsSyncDebounce = null;
   }
   let _liveCardsIndexById = {};
   let _liveArchivedIds = new Set();
+  // Achado real (2026-08-03, squads outlet-crm/outlet): ~80-90% do consumo
+  // de banda dessas squads vinha do fallback completo abaixo (listener bruta
+  // em /cards inteiro, sem filtro de arquivados) disparando pra VÁRIAS
+  // pessoas diferentes ao longo do dia -- não uma sessão presa isolada.
+  // Investigado só com o medidor de bytes (_dbgTrack) já existente, sem
+  // nenhum rastro de "por que caiu no fallback" -- o único indício era um
+  // console.warn (ninguém via, se perde ao fechar a aba). Grava o motivo em
+  // kanban/squads/{squad}/dados/_debug_fallback_log -- mesmo espírito do
+  // _debug_bytes_log, mas pra CAUSA, não só custo -- pra não precisar
+  // reconstruir tudo manualmente da próxima vez que isso acontecer.
+  function _logFallbackReason(reason, details){
+    console.warn('%c[cards] caindo no fallback completo — motivo: '+reason, 'color:#ffd166;font-weight:bold;', details);
+    if(!window._fbReady) return;
+    const id = 'fb'+Date.now()+Math.random().toString(36).slice(2,6);
+    const who = (window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+    const uidShort = (window._currentUser?.uid||'anon').slice(0,8);
+    fbSet(FB+'/_debug_fallback_log/'+id, Object.assign({ts:new Date().toISOString(), who, uid:uidShort, reason}, details));
+  }
   async function _twoPhaseCardsLoad(){
     // Sem cache local ainda (1ª visita neste device/navegador/aba anônima)
     // NÃO cai mais direto pro fallback completo -- ver comentário abaixo, na
@@ -6051,7 +6159,7 @@ let _cardsSyncDebounce = null;
     const remoteUpdatedAt = uaSnap.val() || {};
     const remoteArchived = archSnap.val() || {};
     const { remoteIds, toFetch } = _planCardsDelta(remoteIndex, remoteUpdatedAt, cachedUpdatedAtById, remoteArchived);
-    if(!remoteIds.length) return false;
+    if(!remoteIds.length){ _logFallbackReason('sem_cards_index', {}); return false; }
     // Essa desistência (cai pro fallback completo, que baixa TUDO de uma vez
     // via listener bruto) só faz sentido quando JÁ havia cache e mesmo assim
     // ficou stale demais (ex.: fbSaveAll estrutural carimbou tudo de novo) --
@@ -6063,7 +6171,14 @@ let _cardsSyncDebounce = null;
     // "não mudou" só porque ele nunca entra em toFetch.
     if(cache){
       const activeCount = remoteIds.filter(id=>!(remoteArchived||{})[id]).length;
-      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO) return false;
+      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO){
+        _logFallbackReason('cache_desatualizado_demais', {
+          activeCount, toFetch: toFetch.length,
+          proporcao: +(toFetch.length/activeCount).toFixed(3),
+          limite: _CARDS_CACHE_STALE_RATIO,
+        });
+        return false;
+      }
     }
 
     const fetched = {};
@@ -6215,7 +6330,11 @@ let _cardsSyncDebounce = null;
   // fbLoadAll() e precisam chamar pela referência em window.
   window._ensureArchivedCardsLoaded = _ensureArchivedCardsLoaded;
   if(window._fbReady){
-    _twoPhaseCardsLoad().catch(e=>{ console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e); return false; }).then(usedTwoPhase=>{
+    _twoPhaseCardsLoad().catch(e=>{
+      console.warn('[cards] carregamento em duas etapas falhou, caindo pro completo:', e);
+      _logFallbackReason('excecao', { erro: String((e && e.message) || e) });
+      return false;
+    }).then(usedTwoPhase=>{
       if(usedTwoPhase) return;
       const _cardsRef = fb(FB+'/cards');
       window._onChildAdded(_cardsRef, snap=>{ _dbgTrack('/cards:child_added', snap.val()); _cardsByKey[snap.key]=snap.val(); _scheduleCardsSync(); });
@@ -7149,6 +7268,13 @@ function makeCardEl(card){
   }
   div.ondblclick=e=>{e.stopPropagation();};
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
+  // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
+  // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
+  // desatualizado nesse modo, a coluna nunca mente. Time achou a borda
+  // vermelha/dourada fina demais pra notar de relance — ver .has-blocker-tag/
+  // .okr-card (CSS) pela largura aumentada.
+  const blockedBadge=_cardIsBlocked(card)?'<span style="font-size:10px;margin-right:2px;">🚧</span>':'';
   // Chip de executor — só aparece pra agent/hybrid (humano é o default silencioso, não polui boards que não usam a feature)
   const _execMap={agent:{ico:'🤖',lbl:'Agente',bg:'rgba(167,139,250,.14)',bd:'rgba(167,139,250,.35)',tx:'#c4b5fd'},hybrid:{ico:'🤝',lbl:'Híbrido',bg:'rgba(29,233,182,.12)',bd:'rgba(29,233,182,.3)',tx:'var(--teal)'}};
   const _execInfo=_execMap[card.executorType];
@@ -7160,7 +7286,7 @@ function makeCardEl(card){
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${execChip}${agentStatusChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}${agentStatusChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -7475,7 +7601,7 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+let activeFilters={owner:'',tag:'',tamanho:'',submarca:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -7500,6 +7626,7 @@ function applyFilters(){
     owner:document.getElementById('f-owner').value,
     tag:document.getElementById('f-tag').value,
     tamanho:document.getElementById('f-tamanho')?.value||'',
+    submarca:document.getElementById('f-submarca')?.value||'',
     due:document.getElementById('f-due').value,
     priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
@@ -7507,18 +7634,21 @@ function applyFilters(){
     subteam:document.getElementById('f-subteam')?.value||'',
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
+  renderSubmarcaQuickFilters(); // realça o botão certo se o filtro mudou pelo drawer, não só pelo botão rápido
   renderBoard();
 }
 function clearFilters(){
   document.getElementById('f-owner').value='';
   document.getElementById('f-tag').value='';
   const ftm=document.getElementById('f-tamanho'); if(ftm) ftm.value='';
+  const fsm=document.getElementById('f-submarca'); if(fsm) fsm.value='';
   document.getElementById('f-due').value='';
   const fp=document.getElementById('f-priority'); if(fp) fp.value='';
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
-  activeFilters={owner:'',tag:'',tamanho:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+  activeFilters={owner:'',tag:'',tamanho:'',submarca:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+  renderSubmarcaQuickFilters();
   renderBoard();
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
@@ -7533,6 +7663,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
+  if(activeFilters.submarca&&!cardHasTag(card, activeFilters.submarca)) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
@@ -7916,6 +8047,122 @@ function _stopDirtyWatch(){
   _cardManualSnap = null;
   const btn=document.getElementById('btn-save-card'); if(btn){ btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
 }
+
+// ═══ TRAVA DE EDIÇÃO CONCORRENTE ═══════════════════════════════════════
+// Pedido do time: evitar duas pessoas editando o mesmo card ao mesmo tempo
+// (perdiam alteração uma da outra, sem aviso nenhum — e boa parte dos campos
+// tem autosave via scheduleAutoSave(), então nem precisa de "Salvar" pra
+// pisar no trabalho alheio). Um nó por CARD (não por pessoa, diferente de
+// presence) em kanban/squads/{squad}/dados/card_locks/{cardId} — responde
+// "quem está editando ESSE card" sem escanear todo mundo online.
+//
+// Trava de verdade, não só aviso: quem abre um card já travado por outra
+// pessoa vê o formulário em modo leitura (pointer-events:none no corpo do
+// modal, ver _setCardLockUI) + banner dizendo quem está editando. O mesmo
+// uid em outra aba não é travado contra si mesmo (checagem por uid, não por
+// aba).
+//
+// Sem onDisconnect() de propósito — mesmo padrão que presence já usa nesse
+// arquivo (beforeunload, não a API de disconnect do Realtime Database) — um
+// lock só trava se o timestamp for recente (CARD_LOCK_STALE_MS); mais velho
+// que isso conta como abandonado (aba fechou sem disparar beforeunload,
+// navegador crashou, etc.) e quem abrir agora assume o lock normalmente, sem
+// ficar preso pra sempre.
+const CARD_LOCK_STALE_MS = 10*60*1000; // 10min sem heartbeat = abandonado
+const CARD_LOCK_HEARTBEAT_MS = 60*1000; // 1min — mantém o lock "quente" com o modal aberto
+let _cardLockHeartbeatTimer = null;
+let _cardLockUnsub = null;
+let _cardLockOwnedId = null; // id do card cujo lock ESTE cliente detém agora (null = nenhum)
+
+function _cardLockPath(cardId){ return FB+'/card_locks/'+cardId; }
+function _cardLockPayload(){
+  return {
+    uid: window._currentUser?.uid||'',
+    who: window._currentUser?.displayName||window._currentUser?.email||'?',
+    init: window._currentUserInit||'',
+    ts: Date.now(),
+  };
+}
+function _setCardLockUI(lockedByOther, who){
+  const row=document.getElementById('m-lock-row');
+  const body=document.querySelector('#card-ov .modal-body');
+  if(row) row.style.display = lockedByOther ? 'flex' : 'none';
+  if(row && lockedByOther){
+    const txt=document.getElementById('m-lock-text');
+    if(txt) txt.textContent = '🔒 '+(who||'Alguém')+' está editando este card agora — modo leitura até liberar.';
+  }
+  if(body){ body.style.pointerEvents = lockedByOther ? 'none' : ''; body.style.opacity = lockedByOther ? '.55' : ''; }
+  if(lockedByOther && document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
+function _startCardLockHeartbeat(cardId){
+  _stopCardLockHeartbeat();
+  _cardLockHeartbeatTimer=setInterval(()=>{
+    if(!window._fbReady || _cardLockOwnedId!==cardId) return;
+    fbSet(_cardLockPath(cardId), _cardLockPayload());
+  }, CARD_LOCK_HEARTBEAT_MS);
+}
+// Chamada de dentro de openCard(id) — lê o lock atual e decide: assume (se
+// livre/próprio/velho demais) ou trava a UI em leitura (se de outra pessoa,
+// recente). Também assina o nó pra reagir se a outra pessoa soltar o lock
+// enquanto este modal segue aberto, sem precisar reabrir o card.
+function _checkCardLock(cardId){
+  if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
+  _stopCardLockHeartbeat();
+  _cardLockOwnedId=null;
+  if(!window._fbReady){ _setCardLockUI(false); return; }
+  const myUid=window._currentUser?.uid;
+  const ref=window._ref(window._db, _cardLockPath(cardId));
+  const _apply=(lock)=>{
+    const isStale = !lock || !lock.ts || (Date.now()-lock.ts > CARD_LOCK_STALE_MS);
+    const isMine = !!(lock && lock.uid===myUid);
+    if(!lock || isStale || isMine){
+      _setCardLockUI(false);
+      _cardLockOwnedId=cardId;
+      fbSet(_cardLockPath(cardId), _cardLockPayload());
+      _startCardLockHeartbeat(cardId);
+    } else {
+      // Perdemos a corrida (duas pessoas abriram o card quase junto — as
+      // duas assumem o lock otimisticamente, e o listener abaixo resolve
+      // sozinho quando o Firebase converge no último write). Precisa parar
+      // DE VERDADE o próprio heartbeat aqui, senão ele continua sobrescrevendo
+      // o lock de quem realmente ganhou a cada minuto, fazendo as duas pessoas
+      // ficarem se travando uma à outra em loop.
+      _cardLockOwnedId=null;
+      _stopCardLockHeartbeat();
+      _setCardLockUI(true, lock.who);
+    }
+  };
+  window._get(ref).then(snap=>_apply(snap.val())).catch(()=>_setCardLockUI(false));
+  _cardLockUnsub=window._onValue(ref, snap=>{
+    const lock=snap.val();
+    // Se o lock ainda é nosso (é só o nosso próprio heartbeat voltando),
+    // não precisa reprocessar — evita achar que "alguém mudou o lock" a
+    // cada minuto por causa do próprio _startCardLockHeartbeat.
+    if(_cardLockOwnedId===cardId && lock && lock.uid===myUid) return;
+    _apply(lock);
+  });
+}
+// Chamada ao fechar o modal (_finishCloseOv) e no beforeunload — só remove
+// se o lock ainda for NOSSO (evita apagar o lock de quem assumiu depois de
+// nós, numa corrida rara caso o nosso lock já tivesse ficado stale).
+function _releaseCardLock(cardId){
+  if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
+  _stopCardLockHeartbeat();
+  if(!cardId || _cardLockOwnedId!==cardId){ _cardLockOwnedId=null; return; }
+  _cardLockOwnedId=null;
+  if(!window._fbReady) return;
+  const myUid=window._currentUser?.uid;
+  const ref=window._ref(window._db, _cardLockPath(cardId));
+  window._get(ref).then(snap=>{
+    const lock=snap.val();
+    if(lock && lock.uid===myUid) window._remove(ref);
+  }).catch(()=>{});
+}
+if(!window._cardLockBeforeUnloadSet){
+  window._cardLockBeforeUnloadSet=true;
+  window.addEventListener('beforeunload', ()=>{ if(_cardLockOwnedId) _releaseCardLock(_cardLockOwnedId); });
+}
 // Guarda o valor de card.col no momento em que o modal foi aberto. Usado pra
 // distinguir "usuário mudou a coluna no dropdown" de "coluna mudou em outro
 // lugar (drag-and-drop de outra aba/pessoa) enquanto este modal ficou aberto" —
@@ -8154,6 +8401,7 @@ function openCard(id){
   const _sizeIds=SIZE_TAGS.map(t=>t.id);
   const _mTam=document.getElementById('m-tamanho'); if(_mTam) _mTam.value=getCardTags(c).find(id=>_sizeIds.includes(id))||'';
   _applyTamanhoUIVisibility();
+  _applySubmarcaUIVisibility();
   renderDependsBar(c);
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
@@ -8161,6 +8409,7 @@ function openCard(id){
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
+  _checkCardLock(id);
   // Inicia mention dropdowns e carrega comentários
   setTimeout(()=>{
     // ⚡ Trava contra corrida: se o usuário fechou este card e abriu outro
@@ -8382,6 +8631,7 @@ function openNewCard(col){
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   _applyTamanhoUIVisibility();
+  _applySubmarcaUIVisibility();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
@@ -8879,6 +9129,105 @@ function setCardTamanho(tagId){
   populateTagSelect();
   scheduleAutoSave();
 }
+
+// ═══ SUBMARCA (squad "site" — Adulto/Kids/Sports/Intimates/Teens) ══════
+// Pedido do time depois da conversa sobre migração do Site Hering: em vez de
+// 3-5 squads separadas (1 por submarca), um board SÓ, usando subtimes +
+// filtros — este campo é a peça que faltava: qual submarca cada card é.
+// Mesmo espírito de SIZE_TAGS (tags de id fixo, idempotentes), mas com uma
+// diferença de propósito: tamanho é on/off pro recurso inteiro
+// (tamanhoAtivo); submarca precisa de visibilidade INDIVIDUAL por marca
+// (submarcasVisiveis) — desativar "Hering Teens" não deve esconder as outras
+// 4. Desativar uma submarca aqui NUNCA apaga a tag de cards que já a usam
+// (mesma filosofia não-destrutiva do resto do app) — só tira do campo do
+// modal, do filtro rápido e do filtro do drawer pra escolha em cards NOVOS.
+function toggleSubmarcaAtivo(checked){
+  if(!_isPOorOrg()) return;
+  submarcaAtivo = !!checked;
+  fbSet(FB+'/config/submarca_ativo', submarcaAtivo);
+  if(submarcaAtivo){
+    let mudou=false;
+    SUBMARCA_TAGS.forEach(st=>{ if(!tags.find(t=>t.id===st.id)){ tags.push(Object.assign({},st)); mudou=true; } });
+    if(mudou){ fbSet(FB+'/tags', tags); renderTagEditor(); }
+  }
+  showToast(submarcaAtivo?'🏷️ Campo de submarca ativado neste squad.':'Campo de submarca desativado (tags já usadas em cards continuam disponíveis).');
+  _applySubmarcaUIVisibility();
+}
+function toggleSubmarcaVisivel(tagId, checked){
+  if(!_isPOorOrg()) return;
+  submarcasVisiveis[tagId] = !!checked;
+  fbSet(FB+'/config/submarcas_visiveis/'+tagId, !!checked);
+  _applySubmarcaUIVisibility();
+}
+// Mostra/esconde o campo dedicado "🏷️ Submarca" (modal), o filtro dedicado
+// (drawer de Filtros) e os botões de filtro rápido (toolbar) conforme os
+// toggles do squad — mesmo padrão de _applyTamanhoUIVisibility.
+function _applySubmarcaUIVisibility(){
+  const field=document.getElementById('m-submarca-field'); if(field) field.style.display=submarcaAtivo?'':'none';
+  const f=document.getElementById('f-submarca'); if(f) f.style.display=submarcaAtivo?'':'none';
+  _populateSubmarcaFilterSelect();
+  _populateSubmarcaSelect();
+  renderSubmarcaQuickFilters();
+  renderSubmarcaCfgList();
+}
+// Troca a tag de submarca do card sendo editado — exclusivo (nunca 2
+// submarcas ao mesmo tempo, mesmo padrão de setCardTamanho).
+function setCardSubmarca(tagId){
+  const smIds = SUBMARCA_TAGS.map(t=>t.id);
+  editingTags = editingTags.filter(id=>!smIds.includes(id));
+  if(tagId) editingTags.push(tagId);
+  populateTagSelect();
+  scheduleAutoSave();
+}
+// Opções do <select> do modal: submarcas visíveis + a submarca ATUAL do
+// card mesmo se tiver sido desativada depois (senão o campo "esconderia"
+// silenciosamente qual submarca o card já tinha).
+function _populateSubmarcaSelect(){
+  const sel=document.getElementById('m-submarca'); if(!sel) return;
+  const smIds=SUBMARCA_TAGS.map(t=>t.id);
+  const c=editingId?cards.find(x=>x.id===editingId):null;
+  const currentTagId=c?getCardTags(c).find(id=>smIds.includes(id))||'':'';
+  const opts=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id)||st.id===currentTagId);
+  sel.innerHTML='<option value="">— sem submarca —</option>'+opts.map(st=>`<option value="${st.id}">${esc(st.label)}</option>`).join('');
+  sel.value=currentTagId;
+}
+// Opções do <select> do drawer de Filtros — só submarcas visíveis (filtrar
+// por uma marca desativada não faz sentido pra descoberta de card novo).
+function _populateSubmarcaFilterSelect(){
+  const sel=document.getElementById('f-submarca'); if(!sel) return;
+  const cur=sel.value;
+  const visiveis=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id));
+  sel.innerHTML='<option value="">🏷️ Qualquer submarca</option>'+visiveis.map(st=>`<option value="${st.id}">${esc(st.label)}</option>`).join('');
+  sel.value=visiveis.some(st=>st.id===cur)?cur:'';
+}
+// Botões de atalho no topo do board (acima da toolbar) — mesmo estado do
+// filtro do drawer (#f-submarca + activeFilters.submarca), só um jeito mais
+// rápido de aplicar sem abrir Filtros. Realça o botão da submarca ativa.
+function renderSubmarcaQuickFilters(){
+  const wrap=document.getElementById('submarca-quickfilters'); if(!wrap) return;
+  const visiveis=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id));
+  if(!submarcaAtivo || !visiveis.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
+  wrap.style.display='flex';
+  const cur=activeFilters.submarca||'';
+  wrap.innerHTML = `<button class="hd-filter-btn${cur?'':' active'}" onclick="setSubmarcaQuickFilter('')">Todas</button>`
+    + visiveis.map(st=>`<button class="hd-filter-btn${cur===st.id?' active':''}" onclick="setSubmarcaQuickFilter('${st.id}')">${esc(st.label)}</button>`).join('');
+}
+function setSubmarcaQuickFilter(tagId){
+  const f=document.getElementById('f-submarca'); if(f) f.value=tagId;
+  applyFilters();
+}
+// Lista de checkboxes (Configurações > Tags) — uma por submarca, ligada por
+// padrão (submarcasVisiveis[id]!==false, ver _submarcaIsVisivel).
+function renderSubmarcaCfgList(){
+  const wrap=document.getElementById('submarca-visiveis-cfg-wrap'); if(wrap) wrap.style.display=submarcaAtivo?'':'none';
+  const body=document.getElementById('submarca-visiveis-cfg-body'); if(!body) return;
+  body.innerHTML = SUBMARCA_TAGS.map(st=>
+    `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
+    +`<input type="checkbox" ${_submarcaIsVisivel(st.id)?'checked':''} onchange="toggleSubmarcaVisivel('${st.id}',this.checked)"> ${esc(st.label)}`
+    +`</label>`
+  ).join('');
+}
+
 // ── Listas de Criativos (CRUD) ──
 function renderCriativosListasCfg(){
   const wrap=document.getElementById('crv-listas-cfg-wrap'); if(wrap) wrap.style.display = criativosAtivo?'':'none';
@@ -12865,7 +13214,12 @@ function swCfgTab(tab){
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
-  if(tab==='tags'){ renderTagEditor(); const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo; }
+  if(tab==='tags'){
+    renderTagEditor();
+    const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
+    const elSm=document.getElementById('cfg-submarca-ativo'); if(elSm) elSm.checked=submarcaAtivo;
+    renderSubmarcaCfgList();
+  }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
@@ -14154,6 +14508,18 @@ async function _recalcularDatasTrello(){
   fbSaveAll(); renderBoard();
   showToast('🕐 '+mudancas.length+' card(s) com data corrigida.');
 }
+// Select "aplicar tag a todos os cards deste import" — pedido pra distinguir
+// de qual board do Trello cada card veio quando vários boards são
+// importados pro mesmo squad (ex.: migração de submarcas do Site Hering:
+// 4 boards do Trello -> 1 squad só, uma tag de submarca por import). Lista
+// as tags já existentes no squad — se a tag desejada (ex.: submarca) ainda
+// não existe, crie em Configurações > Tags antes de importar.
+function _populateTrelloTagSelect(){
+  const sel=document.getElementById('trello-tag-all'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— nenhuma —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+  sel.value=tags.some(t=>t.id===cur)?cur:'';
+}
 function previewTrelloImport(){
   const raw=document.getElementById('trello-json').value.trim();
   const preview=document.getElementById('trello-preview');
@@ -14184,6 +14550,7 @@ function previewTrelloImport(){
     preview.style.color='var(--teal)';
     preview.innerHTML=`✅ <strong>${esc(_trelloParsed.boardName)}</strong> — ${_trelloParsed.total} cards<br><span style="font-size:10px;opacity:.8;">${colSummary}</span><br><span style="font-size:10px;opacity:.7;">${extraStats}</span>${warnings}`;
     btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
+    _populateTrelloTagSelect();
 
     // Render column mapping UI
     const mapDiv = document.getElementById('trello-mapping');
@@ -14341,6 +14708,16 @@ async function doTrelloImport(){
     selects.forEach(s=>{ if(s.dataset.listId) manualMap[s.dataset.listId]=s.value; });
     _trelloParsed.cards.forEach(c=>{ if(manualMap[c._trelloListId]) c.col=manualMap[c._trelloListId]; });
   }
+  // Tag aplicada a TODOS os cards deste import (opcional) — pedido pra
+  // distinguir de qual board do Trello cada card veio quando vários boards
+  // são importados pro mesmo squad, sem precisar marcar card por card depois.
+  const tagAllId = document.getElementById('trello-tag-all')?.value || '';
+  if(tagAllId){
+    _trelloParsed.cards.forEach(c=>{
+      if(!Array.isArray(c.tags)) c.tags=[];
+      if(!c.tags.includes(tagAllId)) c.tags.push(tagAllId);
+    });
+  }
   const merge=document.getElementById('trello-merge').checked;
   const total=_trelloParsed.total;
   const boardName=_trelloParsed.boardName;
@@ -14371,9 +14748,10 @@ async function doTrelloImport(){
   _trelloParsed=null;
   const mapDiv=document.getElementById('trello-mapping');
   if(mapDiv) mapDiv.style.display='none';
+  const tagAllSel=document.getElementById('trello-tag-all'); if(tagAllSel) tagAllSel.value='';
   closeOv('cfg-ov');
   // Toast de sucesso
-  showToast(`✅ ${total} cards importados de "${boardName}"`);
+  showToast(`✅ ${total} cards importados de "${boardName}"`+(tagAllId?` com a tag aplicada`:''));
 }
 // ═══════════════════════════════════════════════════════
 
@@ -17923,6 +18301,8 @@ function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
     _stopDirtyWatch();
+    if(editingId) _releaseCardLock(editingId);
+    _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
