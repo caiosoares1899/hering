@@ -18,6 +18,39 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.204 — 2026-08-04 · PR #154, #155, #156, #157, #158
+Promove pra prod, a pedido direto do usuário — cinco entregas
+acumuladas no dev desde a v8.30.203:
+
+- **PR #154** — Submarca vira 10 tags (5 marcas × Comercial/Cadastro,
+  antes só 5). O filtro rápido do header virou um menu suspenso
+  "🏷️ Submarcas ▾" (não cabia mais como fileira de botões); também
+  move `⏱ Relatórios de Tempo` da toolbar pra dentro de `📊 Dados do
+  Board`. Cards com as 5 tags antigas (`tag_sm_adulto` etc.) ficam
+  órfãos — reatribuir manualmente se algum já tiver sido usado.
+- **PR #155** — hotfix: o menu de Submarcas não abria (painel
+  `position:absolute` cortado por um ancestral com `overflow-x:auto`)
+  e foi movido do header pra toolbar, logo depois de Filtros.
+- **PR #156** — import do Trello vincula direto na tag de Submarca
+  quando a label bate exato com uma das 10 opções; peixinhos do fundo
+  viram preferência pessoal (clique no 🐟 do título liga/desliga,
+  salvo por navegador).
+- **PR #157** — hotfix: `ReferenceError` de temporal dead zone no
+  toggle dos peixinhos travava o carregamento do board inteiro.
+- **PR #158** — visual do menu de Submarcas melhorado: agrupado por
+  marca (nome em destaque, Comercial/Cadastro indentado embaixo em
+  vez de repetir "Hering X" dez vezes), hover nas linhas, "Todos"
+  destacado.
+
+Detalhes completos nas entradas `kanban-dev.html v8.30.259-dev` a
+`v8.30.263-dev` abaixo. `diff kanban.html kanban-dev.html` antes desta
+mudança mostrou só essas cinco entregas mais a string de versão/
+`VERSION_KEY` — promoção limpa.
+
+**Ressalva**: promovido a pedido explícito do usuário. Checagem de
+sintaxe (`node --check`) passou limpa; este arquivo não tem suíte
+automatizada (ver `CLAUDE.md`).
+
 ### v8.30.203 — 2026-08-04 · hotfix
 **Hotfix de emergência**: a CSS do PR #147 (filtros rápidos de submarca
 não quebrarem linha, promovido em v8.30.201) quebrava o header inteiro
