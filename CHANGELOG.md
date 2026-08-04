@@ -18,6 +18,46 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.211 — 2026-08-04 · hotfix CRÍTICO: card virando outro card + F5 cortando o salvamento
+Dois bugs a mais, achados a partir de um relato bem específico: um card
+"Atualizar" (tag Hering Kids Comercial), importado na coluna Upload,
+depois de um F5 apareceu como um card completamente diferente — com
+título e coluna "Concluído". Não era mais "sumir", era **um card
+mostrando o conteúdo de outro**.
+
+**1. O próprio fix da v8.30.209 tinha um bug.** Ele "movia" o conteúdo
+já conhecido de `_cardsByKey[posição antiga]` pra `_cardsByKey[posição
+nova]` quando um card mudava de posição no array — rápido, mas errado:
+quando VÁRIOS cards deslocam de posição na MESMA escrita (o caso comum
+— qualquer criar/excluir/arquivar desloca todo mundo depois dele no
+array), os eventos chegam em sequência, e a "posição antiga" de um
+card podia já ter sido roubada por outro card que acabou de mover PRA
+lá — misturando o conteúdo dos dois. `_cardsByKey` é indexado por
+POSIÇÃO, não por id; "mover por posição" nunca foi seguro no meio de um
+lote de deslocamentos em cadeia.
+- Fix definitivo: nunca reaproveita conteúdo por posição — sempre busca
+  o card fresco (`window._get`) na posição nova pelo id, mesmo padrão
+  já comprovado do listener de `cards_updated_at`. Custa uma leitura de
+  rede por deslocamento, mas elimina de vez o risco de misturar dois
+  cards. Esse bug era só de renderização local (nunca escreveu nada
+  errado no Firebase) — um F5 já resolve pra quem foi afetado.
+
+**2. Import do Trello não esperava a escrita terminar antes de dizer
+"sucesso".** `fbSaveAll()` era chamado fire-and-forget — o toast de
+sucesso e o fechamento do modal apareciam na hora, mesmo com a escrita
+real (o array inteiro de cards, pode ser vários MB num import grande)
+ainda subindo pro Firebase. Se a pessoa desse F5 rápido demais
+(confiando no toast), a aba fechava a conexão ANTES da escrita ser
+confirmada pelo servidor — os cards recém-importados nunca chegavam a
+ser salvos de verdade.
+- `doTrelloImport()` agora `await` a escrita antes de fechar o modal ou
+  mostrar o toast — só diz "importado" depois de confirmado de verdade.
+- Proteção geral nova: `_pendingFbWrites` conta escritas em voo
+  (`fbSaveAll`/`fbSaveCard`, qualquer lugar do app) e um `beforeunload`
+  mostra o aviso nativo do navegador ("sair mesmo assim?") se ainda
+  houver alguma pendente — rede de segurança pra QUALQUER save
+  fire-and-forget do app, não só o import.
+
 ### v8.30.210 — 2026-08-04 · hotfix CRÍTICO: perda de dado real (não só render)
 Depois da v8.30.209, usuário reportou que a contagem de "excluir todos"
 continuava caindo SOZINHA entre uma checagem e outra (2886 → 2874, -12),
@@ -775,6 +815,16 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.270-dev — 2026-08-04
+Mesmo hotfix CRÍTICO da entrada `kanban.html v8.30.211` acima: (1) o fix
+de posição da v8.30.209/268-dev tinha um bug próprio — "mover" conteúdo
+por posição podia misturar o conteúdo de dois cards diferentes quando
+vários deslocavam na mesma escrita; agora sempre busca fresco pelo id.
+(2) `doTrelloImport()` agora espera a escrita confirmar antes de
+mostrar sucesso/fechar o modal; novo `_pendingFbWrites` + `beforeunload`
+avisa se der F5 com alguma escrita ainda em voo. Aplicado nos dois
+arquivos ao mesmo tempo.
 
 ### v8.30.269-dev — 2026-08-04
 Mesmo hotfix CRÍTICO da entrada `kanban.html v8.30.210` acima —
