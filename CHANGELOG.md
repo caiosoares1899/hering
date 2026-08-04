@@ -18,6 +18,89 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.208 — 2026-08-04 · hotfix (tags de Submarca faltando)
+Achado a partir de um print do usuário: o editor de tags do squad "site"
+mostrava só as 5 tags ANTIGAS de Submarca (Hering Adulto, Hering Kids,
+Hering Sports, Hering Intimates, Hering Teens) — nenhuma das 10 novas
+(Comercial/Cadastro, ver v8.30.201/204). Por isso os filtros por
+Comercial/Cadastro não achavam nenhum card.
+
+Causa: o backfill que cria as tags de Submarca que estão faltando só
+roda dentro de `toggleSubmarcaAtivo()` — ou seja, só executa no momento
+em que alguém MARCA o checkbox "Ativar campo de Submarca". Squads como o
+"site", que já tinham o recurso ativado ANTES do split 5→10 tags
+existir, nunca tiveram esse checkbox re-marcado depois — então nunca
+ganharam as 10 tags novas, só ficaram com as 5 antigas presas no board
+pra sempre.
+
+- Nova função `_ensureSubmarcaTagsBackfilled()`: roda automaticamente 1x
+  por squad por sessão (só pra quem pode editar tags — PO/Organizador),
+  lê `config/submarca_ativo` e `tags` direto do Firebase (não confia no
+  estado local, que pode não ter carregado ainda) e adiciona qualquer
+  uma das 10 tags de Submarca que estiver faltando. Não mexe nas 5 tags
+  antigas nem nos cards que já as usam (mesma filosofia não-destrutiva
+  do resto do app) — só garante que as novas passam a existir.
+
+Aplicado direto em dev e prod — usuário aguardando pra poder filtrar
+por Comercial/Cadastro no import em andamento.
+
+### v8.30.207 — 2026-08-04 · hotfix crítico (import Trello)
+Dois bugs reais reportados ao vivo depois do import de 4 boards do Trello
+(Hering Kids Digital, Cadastro Conteúdo, Intimates/Sports, Hering Adulto
+Site — 3077 cards no total) pro squad **site**: "alguns cards sumiram" e
+"o match automático das tags de submarca bugou".
+
+**1. Cards "sumindo" depois de um import grande — não era perda de dado,
+era um bug de renderização.** `fbSaveAll()` reescreve `cards_index` e
+`cards_updated_at` por completo, e quem salva TAMBÉM está ouvindo esses
+mesmos nós (dois-etapas de carregamento, ver v8.30.201/203) — cada
+entrada nova dispara um `child_added` que busca aquele card individual
+via `window._get()`, um request POR CARD. Num import de centenas/milhares
+de cards isso é uma enxurrada de requests concorrentes; `_applyCardsSync()`
+só protege o array local `cards` por 2 segundos — se nem todos os
+requests voltarem dentro desses 2s (extremamente provável com uma base
+dessas), o próximo sync reconstrói o board a partir de um mapa local
+AINDA PARCIAL e derruba (visualmente) qualquer card cujo fetch
+individual não tinha voltado ainda. O Firebase continuava com todos os
+cards — só a renderização local é que ficava incompleta.
+- `fbSaveAll()`: agora popula `window._cardsByKey` (o espelho usado pra
+  reconstruir o board) diretamente e de forma síncrona, com o que já está
+  sendo salvo — não depende mais de esperar o próprio eco via listener
+  pra saber o que acabou de gravar. Os eventos que chegam depois só
+  confirmam o que já está certo.
+- Quem foi afetado: **um F5 (recarregar a página) já resolve** — o
+  carregamento inicial (dois-etapas) espera TODOS os fetches antes de
+  renderizar, diferente do caminho ao vivo que tinha o bug. Nenhum dado
+  foi perdido de verdade no Firebase.
+
+**2. Match automático de tag de Submarca no import do Trello errava o
+time (Comercial/Cadastro).** O match "Prioridade 1" (label com o nome
+EXATO de uma das 10 opções, ex.: "Hering Adulto Comercial") só cobria
+boards que já escrevem marca+time juntos na label — na prática, a
+maioria dos boards reais só tem a MARCA na label (ex.: "HERING ADULTO",
+"ADULTO", "Hering Kids") porque o board INTEIRO já é de um time só. Sem
+match exato, essas labels caíam no fuzzy `includes()` genérico, que
+casava com QUALQUER uma das duas tags Comercial/Cadastro daquela marca
+(ambas contêm "adulto"/"kids"/etc. como substring) — pegando sempre a
+que existisse primeiro no array de tags do squad, virando praticamente
+uma moeda ao ar.
+- Novo seletor **"Time deste import"** (Comercial/Cadastro) na tela de
+  import — labels só-marca (sem time explícito) agora usam esse time
+  escolhido, em vez de adivinhar.
+- Override por card: se um card tiver uma label solta "COMERCIAL" ou
+  "CADASTRO" junto de uma label de marca (achado real no board "Hering
+  Kids Digital" — mistura os dois times no mesmo board via uma label
+  extra), esse card específico usa o time da label, não o padrão do
+  import.
+- O fuzzy `includes()` genérico nunca mais compara contra as 10 tags
+  fixas de Submarca — evita esse "roubo" de match por acidente; sem um
+  match de Prioridade 1/2, a label vira uma tag nova de verdade
+  (visível, corrigível na mão) em vez de silenciosamente cair no time
+  errado.
+
+Hotfix urgente — usuário no meio de um import real quando os dois bugs
+apareceram. Aplicado direto em dev e prod juntos.
+
 ### v8.30.206 — 2026-08-04 · hotfix
 **"🗑 Excluir todos os cards" (`zerarBoard()`) não excluía de verdade.**
 Reportado pelo usuário: precisava limpar o squad "site" (Hering) antes
@@ -614,6 +697,22 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.267-dev — 2026-08-04
+Mesmo hotfix da entrada `kanban.html v8.30.208` acima — nova
+`_ensureSubmarcaTagsBackfilled()`, roda 1x por squad/sessão e adiciona
+qualquer uma das 10 tags de Submarca (Comercial/Cadastro) que estiver
+faltando em `tags` (squads que ativaram o recurso antes do split 5→10
+nunca tinham ganho as novas). Aplicado nos dois arquivos ao mesmo tempo.
+
+### v8.30.266-dev — 2026-08-04
+Mesmo hotfix crítico da entrada `kanban.html v8.30.207` acima — cards
+"sumindo" depois de import grande (bug de renderização em
+`_applyCardsSync`, corrigido populando `window._cardsByKey` direto no
+`fbSaveAll`) + match de tag de Submarca no import Trello errando o time
+(novo seletor "Time deste import" + override por card via label solta
+"COMERCIAL"/"CADASTRO"). Aplicado nos dois arquivos ao mesmo tempo —
+usuário no meio de um import real de 4 boards (3077 cards).
 
 ### v8.30.265-dev — 2026-08-04
 Mesmo hotfix da entrada `kanban.html v8.30.206` acima — `zerarBoard()`

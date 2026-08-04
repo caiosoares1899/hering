@@ -3435,6 +3435,15 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
 
       <div class="field" style="margin-bottom:10px;">
+        <label class="fl">Time deste import (Comercial/Cadastro) <span style="font-weight:400;color:var(--txt3);">(a maioria dos boards do Trello só tem a MARCA na label, ex.: "HERING ADULTO" — sem isso o card vira genérico ou "casa" com o time errado por acaso. Escolha o time real deste board do Trello — todo label que for só marca, sem "Comercial"/"Cadastro" explícito, usa este time. Depois de mudar, clique em Pré-visualizar de novo.)</span></label>
+        <select class="fi" id="trello-default-team">
+          <option value="">— detectar só pelo texto da label (padrão antigo) —</option>
+          <option value="com">Comercial</option>
+          <option value="cad">Cadastro</option>
+        </select>
+      </div>
+
+      <div class="field" style="margin-bottom:10px;">
         <label class="fl">Aplicar uma tag a todos os cards deste import <span style="font-weight:400;color:var(--txt3);">(opcional — útil pra marcar de qual board do Trello cada card veio, ex.: importando vários boards de submarca pro mesmo squad)</span></label>
         <select class="fi" id="trello-tag-all">
           <option value="">— nenhuma —</option>
@@ -4366,7 +4375,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.265-dev</div>
+<div class="version">v8.30.267-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5829,6 +5838,32 @@ async function fbSaveAll(extra, touchedIds){
     // cards_updated_at) porque fbSaveAll já reescreve o array inteiro mesmo.
     if(c.archived) cardsArchived[c.id] = true;
   });
+  // BUG CRÍTICO DE PRODUÇÃO (2026-08-04, import Trello em massa — vários
+  // cards "sumiam" depois de importar): fbSaveAll reescreve /cards_index e
+  // /cards_updated_at por completo, e QUEM ESCREVEU também está OUVINDO
+  // esses mesmos nós (ver fbLoadAll/_twoPhaseCardsLoad) — cada entrada nova
+  // dispara um child_added em cards_updated_at que busca o card individual
+  // via window._get(), UM REQUEST POR CARD. Num import de centenas de
+  // cards, isso é centena(s) de requests concorrentes; _applyCardsSync()
+  // só protege o array local `cards` por 2s (_lastLocalSave) — se nem
+  // todos os requests individuais voltarem dentro desses 2s (bem provável
+  // com >100-200 cards de uma vez), o próximo _applyCardsSync() reconstrói
+  // `incoming` a partir de _cardsByKey AINDA PARCIAL e sobrescreve `cards`,
+  // derrubando do board (visualmente, mas o Firebase continua com todos)
+  // qualquer card cujo fetch individual não tinha voltado ainda.
+  //
+  // Fix: quem está salvando JÁ TEM o estado completo e correto em `cards`
+  // -- não precisa esperar o próprio eco via listener pra reconstruí-lo.
+  // Popula window._cardsByKey (mesma referência usada por _applyCardsSync)
+  // AGORA, síncrono, com exatamente o que está sendo gravado -- os
+  // child_added/child_changed que chegarem depois (eco do próprio save)
+  // só confirmam o que já está certo, sem risco de faltar nada no meio.
+  if(window._cardsByKey){
+    const freshByKey={};
+    cards.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
+    Object.keys(window._cardsByKey).forEach(k=>delete window._cardsByKey[k]);
+    Object.assign(window._cardsByKey, freshByKey);
+  }
   // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
@@ -6039,6 +6074,16 @@ function fbLoadAll(){
     const incoming = Array.isArray(val) ? val : Object.values(val);
     if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
   });
+  // BUG REAL (2026-08-04, squad site): submarca foi ligada (submarcaAtivo)
+  // ANTES do split 5→10 tags (Comercial/Cadastro) existir no código — o
+  // backfill de tags novas só roda dentro de toggleSubmarcaAtivo() (ao
+  // MARCAR o checkbox), então squads que já tinham a Submarca ativada de
+  // antes nunca ganharam as 10 tags novas, só continuaram com as 5
+  // antigas. Resultado: editor de tags mostrava só as 5 antigas, filtro por
+  // Comercial/Cadastro não achava card nenhum (cards usam ids novos que
+  // não existem em `tags`). Roda 1x por squad por sessão, só quem pode
+  // editar tags (_isPOorOrg) — ver _ensureSubmarcaTagsBackfilled abaixo.
+  _ensureSubmarcaTagsBackfilled();
 
   // Cards — via listeners granulares (child_added/child_changed/child_removed) em vez
   // de onValue no array inteiro. onValue reenviava o node /cards COMPLETO pra CADA
@@ -9262,6 +9307,38 @@ function setCardTamanho(tagId){
 // 4. Desativar uma submarca aqui NUNCA apaga a tag de cards que já a usam
 // (mesma filosofia não-destrutiva do resto do app) — só tira do campo do
 // modal, do filtro rápido e do filtro do drawer pra escolha em cards NOVOS.
+// Backfill de correção (2026-08-04): garante que as 10 tags de Submarca
+// (SUBMARCA_TAGS) existem em `tags`, mesmo pra squads que ativaram o
+// recurso ANTES do split 5→10 (Comercial/Cadastro) e nunca mais
+// re-marcaram o checkbox (que é o único outro lugar que faz esse
+// backfill, ver toggleSubmarcaAtivo). Lê direto do Firebase (não confia
+// no `tags` local, que pode ainda não ter chegado quando isto roda) pra
+// nunca sobrescrever tags de outra pessoa com um estado local incompleto.
+// Guard por squad+sessão evita rodar de novo à toa a cada fbLoadAll()
+// (troca de squad, re-login) já verificado nesta sessão do navegador.
+let _submarcaBackfillCheckedSquad=null;
+async function _ensureSubmarcaTagsBackfilled(){
+  if(_submarcaBackfillCheckedSquad===ACTIVE_SQUAD) return;
+  _submarcaBackfillCheckedSquad=ACTIVE_SQUAD;
+  if(!window._fbReady || !_isPOorOrg()) return;
+  try{
+    const [ativoSnap, tagsSnap] = await Promise.all([
+      fbGet(FB+'/config/submarca_ativo'),
+      fbGet(FB+'/tags'),
+    ]);
+    if(!ativoSnap.val()) return; // squad não usa Submarca — nada a fazer
+    const rawTags = tagsSnap.val();
+    const remoteTags = Array.isArray(rawTags) ? rawTags.filter(Boolean) : Object.values(rawTags||{});
+    const missing = SUBMARCA_TAGS.filter(st=>!remoteTags.find(t=>t && t.id===st.id));
+    if(!missing.length) return;
+    const merged = remoteTags.concat(missing.map(st=>Object.assign({}, st)));
+    await window._update(fb(FB), { tags: merged });
+    tags = merged;
+    renderTagEditor();
+    renderBoard();
+    console.log(`[submarca] backfill: ${missing.length} tag(s) de Submarca (Comercial/Cadastro) que faltavam foram adicionadas.`);
+  }catch(e){ console.warn('[submarca] backfill de tags falhou:', e); }
+}
 function toggleSubmarcaAtivo(checked){
   if(!_isPOorOrg()) return;
   submarcaAtivo = !!checked;
@@ -14429,7 +14506,7 @@ function _trelloRealCreatedAt(rawId){
   return d.toISOString().split('T')[0];
 }
 
-function parseTrelloJSON(raw){
+function parseTrelloJSON(raw, defaultTeam){
   const data=JSON.parse(raw);
   const today=new Date().toISOString().split('T')[0];
 
@@ -14512,10 +14589,36 @@ function parseTrelloJSON(raw){
   const labelTagMap={}; // labelId → tagId
   const newTagsToCreate=[];
   const processedLabels=new Set();
+  // marca-base (ex.: "hering adulto") → {com:tagId, cad:tagId} — usado tanto
+  // na Prioridade 2 (label só-marca + time padrão do import) quanto no
+  // override por card logo abaixo (label solta "COMERCIAL"/"CADASTRO" no
+  // MESMO card de uma label só-marca, ver bareTeamLabelTeam).
+  const MARCA_BASE_BY_TAGID={};
+  SUBMARCA_TAGS.forEach(st=>{
+    const base=st.label.replace(/\s+(Comercial|Cadastro)$/,'');
+    MARCA_BASE_BY_TAGID[st.id]={
+      com: SUBMARCA_TAGS.find(s=>s.label===base+' Comercial')?.id,
+      cad: SUBMARCA_TAGS.find(s=>s.label===base+' Cadastro')?.id,
+    };
+  });
+  // labelId → 'com'/'cad' pra labels que são SÓ o time, sem marca (ex.:
+  // board "Hering Kids Digital" real: cards levam "Hering Kids" + label
+  // solta "CADASTRO" junto, indicando que ESSE card específico é do time
+  // Cadastro mesmo que o resto do board seja Comercial por padrão). Não vira
+  // tag própria (não faz sentido uma tag "Cadastro" solta) — só um
+  // marcador consultado no pós-processamento por card, mais abaixo.
+  const bareTeamLabelTeam={};
 
   (data.labels||[]).filter(lb=>lb.name).forEach(lb=>{
     if(processedLabels.has(lb.id)) return;
     processedLabels.add(lb.id);
+
+    // Marcador solto de time (sem marca) — ver bareTeamLabelTeam acima
+    const lnameBare=lb.name.toLowerCase().trim();
+    if(lnameBare==='comercial'||lnameBare==='cadastro'){
+      bareTeamLabelTeam[lb.id]=lnameBare==='comercial'?'com':'cad';
+      return;
+    }
 
     // Labels especiais → NÃO viram tag
     if(blockerLabelIds.has(lb.id)||riscoLabelIds.has(lb.id)) return;
@@ -14541,11 +14644,52 @@ function parseTrelloJSON(raw){
       return;
     }
 
-    // Tenta match com tag existente no board (case-insensitive)
+    // Prioridade 2: label só com a MARCA, sem time (ex.: "HERING ADULTO",
+    // "ADULTO", "Hering Kids") — achado real (2026-08-04, import de 4 boards
+    // reais): a maioria dos boards do Trello não repete o time na label, só
+    // a marca (o time é o próprio board inteiro). Sem isto, essas labels
+    // caíam no fuzzy includes() de baixo, que casava com QUALQUER tag de
+    // Submarca cujo nome contivesse a marca (ex.: "adulto" é substring tanto
+    // de "Hering Adulto Comercial" quanto "Hering Adulto Cadastro") —
+    // pegando sempre a primeira que existisse no array `tags`, template
+    // errado na prática mais da metade das vezes. `defaultTeam` ('com'/
+    // 'cad') vem do seletor "Time deste import" na UI — precisa ser
+    // escolhido manualmente porque não tem como adivinhar time só pelo
+    // texto da label; vazio = mantém o comportamento antigo (não força
+    // nada, cai pro fuzzy de baixo).
+    if(defaultTeam){
+      const bareMarca = lname.replace(/^hering\s+/,'').trim();
+      const marcaMatch = SUBMARCA_TAGS.find(st=>{
+        const stBare = st.label.toLowerCase().replace(/^hering\s+/,'').replace(/\s+(comercial|cadastro)$/,'').trim();
+        return stBare===bareMarca;
+      });
+      if(marcaMatch){
+        const teamSuffix = defaultTeam==='com' ? 'Comercial' : 'Cadastro';
+        const marcaBase = marcaMatch.label.replace(/\s+(Comercial|Cadastro)$/,'');
+        const target = SUBMARCA_TAGS.find(st=>st.label===marcaBase+' '+teamSuffix);
+        if(target){
+          if(!tags.find(t=>t.id===target.id) && !newTagsToCreate.find(t=>t.id===target.id)){
+            newTagsToCreate.push(Object.assign({}, target));
+          }
+          labelTagMap[lb.id]=target.id;
+          return;
+        }
+      }
+    }
+
+    // Tenta match com tag existente no board (case-insensitive) — NUNCA
+    // contra uma tag de Submarca (SUBMARCA_TAGS): esse fuzzy includes() é
+    // pensado pra tags genéricas (canal, tipo...), e "adulto"/"kids" sendo
+    // substring de "Hering X Comercial/Cadastro" faria ele "roubar" o match
+    // que as Prioridades 1/2 acima deveriam decidir com mais certeza (ou
+    // deliberadamente deixar como tag nova, pra corrigir na mão, em vez de
+    // adivinhar o time errado em silêncio).
     const existing=tags.find(t=>
-      t.label.toLowerCase()===lname ||
-      t.label.toLowerCase().includes(lname) ||
-      lname.includes(t.label.toLowerCase())
+      !SUBMARCA_TAGS.find(st=>st.id===t.id) && (
+        t.label.toLowerCase()===lname ||
+        t.label.toLowerCase().includes(lname) ||
+        lname.includes(t.label.toLowerCase())
+      )
     );
     if(existing){
       labelTagMap[lb.id]=existing.id;
@@ -14674,6 +14818,33 @@ function parseTrelloJSON(raw){
 const cardTags = (card.idLabels || [])
   .map(lid => labelTagMap[lid])
   .filter(Boolean);
+
+    // Override de time POR CARD: se este card tem uma label solta
+    // "COMERCIAL"/"CADASTRO" (ver bareTeamLabelTeam acima) junto de uma tag
+    // de Submarca já resolvida (Prioridade 1/2), troca pro time indicado —
+    // vence o `defaultTeam` do import inteiro. Cobre o caso real do board
+    // "Hering Kids Digital": maioria dos cards é Comercial (padrão do
+    // import), mas alguns levam "Hering Kids"/"Hering Teen" + "CADASTRO"
+    // juntos no mesmo card, sinalizando que ESSE card específico é do time
+    // Cadastro.
+    const cardTeamOverride=(card.idLabels||[]).map(lid=>bareTeamLabelTeam[lid]).find(Boolean);
+    if(cardTeamOverride){
+      for(let i=0;i<cardTags.length;i++){
+        const variant=MARCA_BASE_BY_TAGID[cardTags[i]];
+        const swappedId=variant && variant[cardTeamOverride];
+        if(swappedId && swappedId!==cardTags[i]){
+          cardTags[i]=swappedId;
+          // Defensivo: garante que a variante pra qual trocou também existe
+          // como tag de verdade (normalmente já existe — Submarca ativada
+          // no squad cria as 10 juntas — mas não custa garantir aqui, senão
+          // o card ficaria com um id de tag "fantasma").
+          const swappedDef=SUBMARCA_TAGS.find(st=>st.id===swappedId);
+          if(swappedDef && !tags.find(t=>t.id===swappedId) && !newTagsToCreate.find(t=>t.id===swappedId)){
+            newTagsToCreate.push(Object.assign({}, swappedDef));
+          }
+        }
+      }
+    }
 
     // Responsável: primeiro membro resolvido
     const ownerInit=card.idMembers?.length?resolveOwner(card.idMembers[0]):'';
@@ -14825,7 +14996,8 @@ function previewTrelloImport(){
   const btn=document.getElementById('btn-confirm-import');
   if(!raw){ preview.style.display='none'; return; }
   try{
-    _trelloParsed=parseTrelloJSON(raw);
+    const defaultTeam=document.getElementById('trello-default-team')?.value||'';
+    _trelloParsed=parseTrelloJSON(raw, defaultTeam);
     const s=_trelloParsed.stats;
     const colNames={backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
     const colSummary=Object.entries(s.byCol).map(([col,n])=>`${colNames[col]||col}: ${n}`).join(' · ');
