@@ -4366,7 +4366,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.205</div>
+<div class="version">v8.30.206</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11285,7 +11285,22 @@ async function zerarBoard(){
   if(!await uiConfirm('⚠ Isso vai excluir TODOS os cards de '+sq+' permanentemente. Tem certeza?')) return;
   if(!await uiConfirm('Segunda confirmação: excluir todos os '+cards.length+' cards?')) return;
   cards=[];
-  fbSet(FB+'/cards',[]);
+  _lastLocalSave=Date.now();
+  _hasLocalSession=true;
+  if(window._fbReady){
+    // Zera TAMBÉM cards_index/cards_updated_at/cards_archived, não só
+    // /cards -- ver comentário grande em fbSaveAll (achado 2026-08-04):
+    // esses índices paralelos são a fonte que o carregamento em duas etapas
+    // (_twoPhaseCardsLoad) usa pra decidir o que existe. Zerando só /cards,
+    // cards_index continuava com todos os ids antigos -- o board "vazio"
+    // aqui reaparecia cheio pra qualquer device com cache local (IndexedDB)
+    // ou na próxima carga, fazendo o botão parecer quebrado.
+    await window._update(fb(FB), { cards:[], cards_index:null, cards_updated_at:null, cards_archived:null }).catch(()=>{});
+  }
+  // Espelho local granular (ver fbLoadAll) -- limpa em lugar (mesma
+  // referência de window._cardsByKey) pra não deixar cards fantasma até o
+  // próximo child_removed remoto chegar.
+  if(window._cardsByKey){ Object.keys(window._cardsByKey).forEach(k=>delete window._cardsByKey[k]); }
   renderBoard();
   closeOv('cfg-ov');
   showToast('🗑 Board zerado com sucesso');
