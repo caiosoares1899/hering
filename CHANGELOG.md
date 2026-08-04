@@ -454,6 +454,48 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.253-dev — 2026-08-04
+Corrige a causa raiz do consumo alto de banda em produção (`outlet-crm`/
+`outlet`, ~1GB/dia — investigado via `debugFallbackLog()`, PR #139):
+`fbSaveAll()` sempre carimbava `updatedAt` novo em **todos** os cards do
+squad a cada save estrutural, não só nos que a operação de fato tocou.
+O custo real não é local — é em todo cliente alheio: qualquer
+`fbSaveAll()` (até duplicar 1 card) fazia `cards_updated_at` de todos os
+cards mudarem pro mesmo timestamp, invalidando de uma vez o cache local
+(`_twoPhaseCardsLoad`) de qualquer outra pessoa com o board aberto, e
+forçando todo mundo pro fallback caro (listener bruta em `/cards`
+inteiro) — o padrão exato encontrado na investigação (consumo alto
+sustentado, espalhado entre várias pessoas). Confirmado comparando
+cache local (IndexedDB) vs remoto: cards diferentes com timestamp
+*idêntico*, a assinatura desse comportamento.
+
+`fbSaveAll(extra, touchedIds)` ganhou um segundo parâmetro opcional:
+com `touchedIds`, só os cards da lista (+ qualquer card ainda sem
+`updatedAt` nenhum — criação nova/legado) ganham timestamp novo; o
+resto preserva o que já tinha. Omitir `touchedIds` mantém o
+comportamento antigo (carimba tudo).
+
+Todos os call sites de `fbSaveAll()` no arquivo foram convertidos pra
+passar o `touchedIds` correto (mapeados por leitura de código,
+call site a call site — nenhum ficou no comportamento antigo):
+`fbSaveCard` (fallback), `_bulkFinish` (cobre os ~10 bulk actions:
+mover, atribuir, prazo, tag, bloqueio/desbloqueio, arquivar),
+`bulkDuplicate`, `bulkDeleteSelected`, inscrição de membro,
+`maybeAutoArchiveOldCards`, `resetColSubPrio`, reorder de subprioridade
+por drag-and-drop, `saveCard` (criação), `deleteCard`,
+`deleteSelectedArchived`, `deleteSelectedOldCards`,
+`bulkArchiveOldCards`, `purgeOldArchived`, `excluirArquivado`,
+`processRecorrentes`, `processAgendamentos`, `executarReatribuir`,
+`editarInicial` (migração de cards), a ferramenta legada `excluir_card`
+do chat do Agente Ágil, `_recalcularDatasTrello`, `doTrelloImport`,
+`doUndo` (diff de conteúdo entre estado atual e restaurado),
+`ctxDelete`, `setDependsOn` e `unlinkDependsOn`.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador e confirmação de queda de banda em produção ainda
+pendentes antes de promover pra prod.
+
 ### v8.30.252-dev — 2026-08-03
 Pedido direto: campo "Executor" ao lado de "Submarca" no modal do
 card, em vez de cada um na própria linha. `.card-attr-row` é grid de 2

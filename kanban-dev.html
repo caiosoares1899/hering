@@ -4336,7 +4336,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.252-dev</div>
+<div class="version">v8.30.253-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4936,8 +4936,13 @@ function _bulkPopover(html){
   return pop;
 }
 function _selectedList(){ return cards.filter(c=>selectedCards.has(c.id)); }
-function _bulkFinish(msg, keepSelection){
-  fbSaveAll(); 
+function _bulkFinish(msg, keepSelection, extraIds){
+  // touchedIds = os selecionados (todo bulk action opera sobre eles) + ids
+  // extras que a própria operação criou por fora da seleção (ex.:
+  // bulkDuplicate — as CÓPIAS não estão em selectedCards, que só tem os
+  // originais). Captura ANTES de fbSaveAll (que ainda não mexeu em
+  // selectedCards) e antes de selectedCards.clear() logo abaixo.
+  fbSaveAll(undefined, [...selectedCards, ...(extraIds||[])]);
   if(!keepSelection){
     const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
     selectedCards.clear(); selectMode=false;
@@ -5196,17 +5201,20 @@ async function bulkDuplicate(){
   const user=window._currentUser?.displayName||'Usuário';
   const td=new Date().toISOString().split('T')[0];
   let count=0;
+  const novosIds=[];
   _selectedList().forEach(c=>{
     const novo=JSON.parse(JSON.stringify(c));
     novo.id='c'+Date.now()+'_'+(count++);
     novo.title=(c.title||'')+' (cópia)';
     novo.archived=false;
     novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
+    novo.updatedAt=new Date().toISOString(); // clone trazia o updatedAt do original — carimba de novo, é conteúdo novo
     novo.history=[]; novo.moveLog=[];
     recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
     cards.push(novo);
+    novosIds.push(novo.id);
   });
-  _bulkFinish('⧉ '+count+' card(s) duplicados.');
+  _bulkFinish('⧉ '+count+' card(s) duplicados.', false, novosIds);
 }
 async function bulkArchive(){
   if(!selectedCards.size) return;
@@ -5226,7 +5234,7 @@ async function bulkDeleteSelected(){
   if(!await uiConfirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
   const ids=new Set(selectedCards);
   cards=cards.filter(c=>!ids.has(c.id));
-  fbSaveAll();
+  fbSaveAll(undefined, []); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
   selectedCards.clear();
   selectMode=false;
   const btn=document.getElementById('btn-select');
@@ -5688,7 +5696,27 @@ function toggleHistory(){
   if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
 }
 
-async function fbSaveAll(extra){
+// touchedIds (opcional): array/Set dos ids REALMENTE modificados por quem
+// chamou. Achado real (2026-08-04, squad outlet-crm, ~1GB/dia de banda):
+// fbSaveAll() sempre carimbava updatedAt de TODOS os cards do squad, não só
+// os tocados pela operação — comentário antigo achava que isso era de
+// graça ("já reescreve o array inteiro mesmo"), mas o custo de verdade não é
+// aqui, é em TODO CLIENTE ALHEIO: qualquer fbSaveAll() (até duplicar 1 card)
+// fazia cards_updated_at de TODOS os cards mudar pro mesmo timestamp, o que
+// invalida o cache local (_twoPhaseCardsLoad) de QUALQUER outra pessoa com
+// o board aberto de uma vez só — 100% dos cards ativos pareciam "mudados",
+// estourando o limite de staleness sempre, forçando todo mundo pro fallback
+// caro (listener bruta em /cards inteiro). Isso explicava o padrão
+// encontrado: consumo alto sustentado o dia todo, espalhado entre várias
+// pessoas, não uma sessão presa.
+//
+// Com touchedIds informado, só os ids da lista (+ qualquer card que ainda
+// não tinha updatedAt nenhum — criação nova/legado, mesmo espírito do
+// comentário original) ganham timestamp novo; o resto preserva o que já
+// tinha, sem invalidar cache de ninguém à toa. Omitir touchedIds mantém o
+// comportamento antigo (carimba tudo) — fallback seguro pra quem ainda não
+// foi migrado; nunca INVENTA um touchedIds errado por conta própria.
+async function fbSaveAll(extra, touchedIds){
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
   // `cards` ANTES de ler o array abaixo -- fbSaveAll reescreve /cards por
@@ -5727,6 +5755,7 @@ async function fbSaveAll(extra){
   const cardsIndex = {};
   const cardsUpdatedAt = {};
   const cardsArchived = {};
+  const _touched = touchedIds ? new Set(touchedIds) : null;
   cards.forEach((c,i)=>{
     if(!c || !c.id) return;
     cardsIndex[c.id] = String(i);
@@ -5735,12 +5764,20 @@ async function fbSaveAll(extra){
     // string simples — ver fbSaveCard). Usado só pelo carregamento em duas
     // etapas (ver fbLoadAll): baixar esse índice pequeno primeiro permite
     // saber quais cards realmente mudaram desde a última visita, sem ler
-    // /cards inteiro de novo. Carimba TODOS os cards do array (não só os
-    // que essa operação de fato tocou) — fbSaveAll já reescreve o array
-    // inteiro mesmo, então marcar tudo como "fresco" não muda a ordem de
-    // grandeza do custo, e evita esconder uma mudança por engano.
-    c.updatedAt = _nowIso;
-    cardsUpdatedAt[c.id] = _nowIso;
+    // /cards inteiro de novo.
+    //
+    // Sem touchedIds: carimba TODOS os cards do array (comportamento antigo,
+    // ver comentário grande em fbSaveAll sobre o custo real disso pra quem
+    // não chamou este save). Com touchedIds: só quem está na lista (ou quem
+    // ainda não tinha updatedAt nenhum — criação nova/legado) ganha
+    // timestamp NOVO; o resto preserva o que já tinha, sem invalidar cache
+    // alheio à toa.
+    if(_touched && c.updatedAt && !_touched.has(c.id)){
+      cardsUpdatedAt[c.id] = c.updatedAt;
+    } else {
+      c.updatedAt = _nowIso;
+      cardsUpdatedAt[c.id] = _nowIso;
+    }
     // cards_archived/{cardId}->true: só existe pra cards arquivados (ausente
     // = ativo). Índice leve que _twoPhaseCardsLoad() usa pra parar de
     // reverificar cards arquivados a cada carga do board (ver fbLoadAll) —
@@ -5791,7 +5828,7 @@ async function fbSaveAll(extra){
         // Fallback: snapshot espelhado ainda não tem esse card (ex.: acabou
         // de ser criado) — tenta pela posição local antes do fbSaveAll.
         const idx = cards.indexOf(card);
-        if(idx < 0) return fbSaveAll();
+        if(idx < 0) return fbSaveAll(undefined, [card.id]);
         key = String(idx);
         // PONTE TEMPORÁRIA: card não estava no espelho -> é criação. O
         // índice cards_index/{cardId}->chave (que o Agente Ágil usa pra
@@ -7100,7 +7137,7 @@ function confirmarInscricao(){
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
   window._currentUserInit=init;
-  fbSaveAll();
+  fbSaveAll(undefined, []); // só inscreve membro, nenhum card muda
   closeOv('insc-ov');
   renderBoard();
 }
@@ -7886,6 +7923,7 @@ function maybeAutoArchiveOldCards(){
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
   const now=Date.now();
   let n=0;
+  const touchedIds=[];
   cards.forEach(c=>{
     if(c.archived || !c.createdAt) return;
     const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
@@ -7901,9 +7939,10 @@ function maybeAutoArchiveOldCards(){
       c.archived=true; c.archivedAt=new Date().toISOString();
       recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
       n++;
+      touchedIds.push(c.id);
     }
   });
-  if(n>0){ fbSaveAll(); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
+  if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
 }
 function fillArchiveCfgTab(){
   const c=archiveCfg||{};
@@ -8459,8 +8498,9 @@ function _prioTierCards(colId, prio){
 async function resetColSubPrio(colId){
   if(!await uiConfirm('Remover a ordem manual desta coluna? Os cards voltam pra ordem padrão (prioridade + criação).')) return;
   let mudou=false;
-  cards.filter(c=>c.col===colId).forEach(c=>{ if(typeof c.subPrio==='number'){ delete c.subPrio; mudou=true; } });
-  if(mudou){ fbSaveAll(); renderBoard(); showToast('↩ Ordem manual removida.'); }
+  const touchedIds=[];
+  cards.filter(c=>c.col===colId).forEach(c=>{ if(typeof c.subPrio==='number'){ delete c.subPrio; mudou=true; touchedIds.push(c.id); } });
+  if(mudou){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('↩ Ordem manual removida.'); }
 }
 
 // ── Configuração da coluna (⚙ no cabeçalho) ───────────────────────
@@ -8551,7 +8591,7 @@ function _renderSubPrioDragList(listElId, colId, tierKey){
       const ordered=_prioTierCards(colId, tierKey);
       const [moved]=ordered.splice(from,1); ordered.splice(to,0,moved);
       ordered.forEach((cc,idx)=>{ cc.subPrio=idx; });
-      fbSaveAll();
+      fbSaveAll(undefined, ordered.map(cc=>cc.id));
       renderColCfgSubPrio(colId);
       renderBoard();
     });
@@ -8725,7 +8765,7 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
   }
-  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll();
+  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
   // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
   // (ex.: instabilidade do SDK de auth já corrigida antes, ou queda de rede), o card fechava mesmo
@@ -8746,7 +8786,7 @@ async function deleteCard(){
   saveUndo('excluir card');
   cards=cards.filter(x=>x.id!==editingId);
   _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
-  fbSaveAll(); renderBoard(); closeOv('card-ov');
+  fbSaveAll(undefined, []); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -12514,7 +12554,7 @@ async function deleteSelectedArchived(){
   if(!await uiConfirm('Excluir permanentemente '+ids.length+' card(s) arquivado(s)? Não dá pra desfazer.',{title:'Excluir arquivados selecionados',danger:true,okText:'Excluir'})) return;
   const idSet=new Set(ids);
   cards=cards.filter(c=>!idSet.has(c.id));
-  fbSaveAll();
+  fbSaveAll(undefined, []);
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
   openArquivados();
 }
@@ -12574,7 +12614,7 @@ async function deleteSelectedOldCards(){
   if(!await uiConfirm('Excluir PERMANENTEMENTE '+ids.length+' card(s) antigo(s)? Essa ação não arquiva, apaga de vez e não dá pra desfazer.',{title:'Excluir cards antigos',danger:true,okText:'Excluir'})) return;
   const idSet=new Set(ids);
   cards=cards.filter(c=>!idSet.has(c.id));
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, []); renderBoard();
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
   renderCleanupList();
 }
@@ -12583,9 +12623,9 @@ async function bulkArchiveOldCards(){
   const ids=[...document.querySelectorAll('.cleanup-chk:checked')].map(cb=>cb.dataset.id);
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Arquivar '+ids.length+' card(s) antigo(s)? Eles somem do board ativo mas continuam salvos — dá pra restaurar em Arquivados.',{title:'Arquivar cards antigos',okText:'Arquivar'})) return;
-  const idSet=new Set(ids); let n=0;
-  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); n++; } });
-  fbSaveAll(); renderBoard();
+  const idSet=new Set(ids); let n=0; const touchedIds=[];
+  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); n++; touchedIds.push(c.id); } });
+  fbSaveAll(undefined, touchedIds); renderBoard();
   showToast('📦 '+n+' card(s) arquivado(s).');
   renderCleanupList();
 }
@@ -12606,12 +12646,12 @@ async function purgeOldArchived(){
   if((digitado||'').trim().toUpperCase()!=='EXCLUIR'){ if(digitado!==null) showToast('Cancelado — texto não confere.'); return; }
   const ids=new Set(alvo.map(c=>c.id));
   cards=cards.filter(c=>!ids.has(c.id));
-  fbSaveAll();
+  fbSaveAll(undefined, []);
   showToast('🗑 '+alvo.length+' card(s) excluído(s) permanentemente.');
   openArquivados();
 }
 // ── FIM LIMPEZA DE CARDS ANTIGOS ─────────────────────────────────────
-async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(); openArquivados(); }
+async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(undefined, []); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
@@ -12880,7 +12920,7 @@ function processRecorrentes(){
       if(card.recorrenteDe && card.recorrenteData)
         recIdxUpdates['recorrentes_index/'+card.recorrenteDe+'/'+card.recorrenteData] = card.id;
     });
-    fbSaveAll(recIdxUpdates);
+    fbSaveAll(recIdxUpdates, criados.map(c=>c.id));
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     // Avisa: lembrete + notificação + toast
@@ -12951,7 +12991,7 @@ function processAgendamentos(){
     }
   });
   if(mudou){
-    fbSaveAll();
+    fbSaveAll(undefined, criados.map(c=>c.id));
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     let lemPropMudou=false;
@@ -13423,7 +13463,7 @@ async function executarReatribuir(){
       if(idx>=0){ if(c.participants.includes(to)) c.participants.splice(idx,1); else c.participants[idx]=to; }
     }
   });
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, alvos.map(c=>c.id)); renderBoard();
   closeOv('reassign-ov');
   showToast('✅ '+alvos.length+' card(s) reatribuídos de '+from+' para '+to+'.');
 }
@@ -13466,7 +13506,7 @@ async function editarInicial(uid, initAtual, nome){
       if(c.owner===initAtual) c.owner=novaInit;
       if(Array.isArray(c.participants)){ const idx=c.participants.indexOf(initAtual); if(idx>=0) c.participants[idx]=novaInit; }
     });
-    fbSaveAll(); renderBoard();
+    fbSaveAll(undefined, cardsAfetados.map(c=>c.id)); renderBoard();
     showToast('✅ Iniciais alteradas para '+novaInit+' e '+cardsAfetados.length+' card(s) migrados.');
   } else {
     showToast('✅ Iniciais alteradas para '+novaInit+(cardsAfetados.length?'. Os cards "'+initAtual+'" NÃO foram migrados.':'.'));
@@ -13872,7 +13912,7 @@ function executeTool(name,input){
       if(!c) return{ok:false,msg:'Card não encontrado'};
       const titulo=c.title;
       cards=cards.filter(x=>x.id!==input.card_id);
-      renderBoard(); fbSaveAll();
+      renderBoard(); fbSaveAll(undefined, []);
       return{ok:true,msg:`Card "${titulo}" excluído permanentemente`};
     }
     case 'atualizar_descricao':{
@@ -14505,7 +14545,7 @@ async function _recalcularDatasTrello(){
   const maisAntiga=datas[0].split('-').reverse().join('/');
   if(!await uiConfirm(mudancas.length+' card(s) importado(s) do Trello terão a data de criação corrigida pra data real (a mais antiga encontrada: '+maisAntiga+'). Isso só corrige a data — não move, arquiva nem exclui nada. Confirma?',{title:'Corrigir datas do Trello',okText:'Corrigir'})) return;
   mudancas.forEach(({c,nova})=>{ c.createdAt=nova; recordHistory(c,'data de criação corrigida (import Trello)'); });
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, mudancas.map(x=>x.c.id)); renderBoard();
   showToast('🕐 '+mudancas.length+' card(s) com data corrigida.');
 }
 // Select "aplicar tag a todos os cards deste import" — pedido pra distinguir
@@ -14739,7 +14779,7 @@ async function doTrelloImport(){
   // Sem isto, tags novas do import ficavam só na memória e viravam "tags fantasma"
   // (referenciadas pelos cards, mas inexistentes no Firebase) no primeiro reload.
   if(_novasTagsCriadas) fbSet(FB+'/tags', tags);
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, cleanCards.map(c=>c.id)); renderBoard();
   // Limpa e fecha
   document.getElementById('trello-json').value='';
   document.getElementById('trello-preview').style.display='none';
@@ -17812,8 +17852,14 @@ function hideUndoBtn(){
 function doUndo(){
   if(!_undoStack.length) return;
   const prev=_undoStack.pop();
+  const before=cards;
   cards=prev.cards;
-  fbSaveAll(); renderBoard();
+  // touchedIds: diferença de conteúdo entre o estado atual (before, que está
+  // sendo descartado) e o estado restaurado (cards) — só esses ids precisam
+  // de updatedAt novo pra outros clientes perceberem a mudança real.
+  const beforeById={}; before.forEach(c=>{ if(c&&c.id) beforeById[c.id]=c; });
+  const touchedIds=cards.filter(c=>c&&c.id && JSON.stringify(c)!==JSON.stringify(beforeById[c.id])).map(c=>c.id);
+  fbSaveAll(undefined, touchedIds); renderBoard();
   // Se o modal do card estava aberto, os campos em tela (descrição, checklist, etc.)
   // não se atualizam sozinhos com o renderBoard() — sem isso, o "Desfazer" parecia não
   // fazer nada (o Firebase voltava, mas a tela continuava com o texto novo, e qualquer
@@ -18084,7 +18130,7 @@ async function ctxDelete(){
   hideCtxMenu();
   if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   cards=cards.filter(x=>x.id!==cardId);
-  fbSaveAll(); renderBoard();
+  fbSaveAll(undefined, []); renderBoard();
   showToast('Card excluído');
 }
 // ═══════════════════════════════════════════════════════
@@ -18783,7 +18829,7 @@ function setDependsOn(parentId){
     if(!parent.dependents) parent.dependents=[];
     if(!parent.dependents.includes(editingId)) parent.dependents.push(editingId);
   }
-  fbSaveAll();
+  fbSaveAll(undefined, [editingId, parentId].filter(Boolean));
   closeOv('depends-picker-ov');
   renderDependsBar(card);
   renderCardDepMini(editingId);
@@ -18793,10 +18839,11 @@ function setDependsOn(parentId){
 
 function unlinkDependsOn(){
   const card = cards.find(c=>c.id===editingId); if(!card||!card.dependsOn) return;
-  const parent = cards.find(c=>c.id===card.dependsOn);
+  const parentId=card.dependsOn;
+  const parent = cards.find(c=>c.id===parentId);
   if(parent && parent.dependents) parent.dependents=parent.dependents.filter(id=>id!==editingId);
   card.dependsOn=null;
-  fbSaveAll();
+  fbSaveAll(undefined, [editingId, parentId].filter(Boolean));
   closeOv('depends-picker-ov');
   renderDependsBar(card);
   renderBoard();
