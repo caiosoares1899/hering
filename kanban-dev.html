@@ -2297,7 +2297,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="app" id="app-root" style="display:none;">
 <div class="hd">
   <div class="hd-l">
-    <div class="hd-title">🐟 Maré Digital</div>
+    <div class="hd-title"><span id="fish-toggle-btn" onclick="toggleFishBackground()" style="cursor:pointer;" title="Clique pra mostrar/esconder os peixinhos do fundo">🐟</span> Maré Digital</div>
     <span class="squad-switcher-wrap">
       <span class="hd-badge" id="sprint-badge" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad">Carregando...</span>
       <span class="squad-switcher-caret" onclick="toggleSquadSwitcher(event)">▾</span>
@@ -4348,7 +4348,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.260-dev</div>
+<div class="version">v8.30.261-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14472,8 +14472,28 @@ function parseTrelloJSON(raw){
     // Labels especiais → NÃO viram tag
     if(blockerLabelIds.has(lb.id)||riscoLabelIds.has(lb.id)) return;
 
-    // Tenta match com tag existente no board (case-insensitive)
+    // Prioridade 1: label do Trello com o MESMO nome de uma opção de Submarca
+    // (ex.: label "Hering Adulto Comercial" → tag_sm_adulto_com) vincula direto
+    // na tag fixa da Submarca, em vez de virar uma tag genérica nova — pedido
+    // direto, pra já nascer plugado no campo dedicado/filtro de Submarca, sem
+    // precisar remapear manualmente depois do import. Match exato (case-
+    // insensitive, trim) — não usa o fuzzy includes() de baixo, pra não
+    // arriscar "Hering Adulto" (sem time) casando com "Hering Adulto Comercial"
+    // por engano.
     const lname=lb.name.toLowerCase().trim();
+    const smMatch=SUBMARCA_TAGS.find(st=>st.label.toLowerCase()===lname);
+    if(smMatch){
+      // Só entra em newTagsToCreate se o squad ainda não tem essa tag (ex.:
+      // Submarca nunca foi ativada nesse squad ainda) — mesma lógica de
+      // idempotência do resto do import, evita duplicar.
+      if(!tags.find(t=>t.id===smMatch.id) && !newTagsToCreate.find(t=>t.id===smMatch.id)){
+        newTagsToCreate.push(Object.assign({}, smMatch));
+      }
+      labelTagMap[lb.id]=smMatch.id;
+      return;
+    }
+
+    // Tenta match com tag existente no board (case-insensitive)
     const existing=tags.find(t=>
       t.label.toLowerCase()===lname ||
       t.label.toLowerCase().includes(lname) ||
@@ -15009,6 +15029,7 @@ const HELP_CONTENT = {
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
+    { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
@@ -15066,7 +15087,7 @@ const HELP_CONTENT = {
     { icon:'🎬', title:'Ficha de Criativo', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha de Criativo neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações), e um painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado.\n\nDá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas — cada card escolhe uma lista, e o painel filtra por ela. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
-    { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
+    { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
@@ -18617,7 +18638,27 @@ document.querySelectorAll('.ov').forEach(ov=>{
   ];
   for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
   for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
+  _applyFishBgVisibility();
 })();
+// Liga/desliga os peixinhos+bolhas do fundo — preferência pessoal (pedido
+// direto), salva por navegador (mesmo espírito das outras preferências
+// puramente visuais deste app, ex.: ordenação de coluna — não sincroniza
+// entre dispositivos, não é dado de squad). Sem UI nova na tela: o próprio
+// emoji 🐟 do título "Maré Digital" vira o botão (clique pra alternar).
+// Default continua ligado (comportamento de sempre) — só quem não curte
+// desliga.
+let _fishBgOn = safeLS.getItem('fish_bg_off')!=='1';
+function _applyFishBgVisibility(){
+  const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
+  if(fw) fw.style.display = _fishBgOn ? '' : 'none';
+  if(bw) bw.style.display = _fishBgOn ? '' : 'none';
+}
+function toggleFishBackground(){
+  _fishBgOn = !_fishBgOn;
+  safeLS.setItem('fish_bg_off', _fishBgOn ? '0' : '1');
+  _applyFishBgVisibility();
+  showToast(_fishBgOn ? '🐟 Peixinhos de volta!' : '🐟 Peixinhos escondidos — clique no 🐟 de novo pra trazer de volta.');
+}
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });

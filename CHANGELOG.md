@@ -527,6 +527,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.261-dev — 2026-08-04
+Duas entregas pedidas direto:
+
+- **Import do Trello vincula direto na tag de Submarca.** Quando uma
+  label do Trello tem o MESMO nome de uma das 10 opções de Submarca
+  (ex.: "Hering Adulto Comercial"), o import agora casa ela direto na
+  tag fixa (`tag_sm_adulto_com`) em vez de criar uma tag genérica nova
+  — o card já nasce plugado no campo dedicado e no filtro de Submarca,
+  sem precisar remapear manualmente depois. Match exato (case-
+  insensitive), checado antes do fuzzy-match genérico existente, pra
+  não arriscar "Hering Adulto" (sem time) casando por engano com
+  "Hering Adulto Comercial".
+- **Peixinhos do fundo viram preferência pessoal.** Clicar no 🐟 do
+  título "Maré Digital" liga/desliga os peixinhos e bolhas animados —
+  sem adicionar nenhum botão novo na tela, o próprio emoji já
+  existente virou o toggle. Salvo por navegador (`localStorage`, mesmo
+  padrão de outras preferências puramente visuais como ordenação de
+  coluna) — não sincroniza entre dispositivos, não é dado de squad.
+  Default continua ligado (comportamento de sempre); só quem desligar
+  deixa de ver.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.260-dev — 2026-08-04
 Corrige dois problemas reportados ao vivo no menu 🏷️ Submarcas
 (v8.30.259-dev, ainda não tinha ido pra prod):
