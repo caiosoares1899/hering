@@ -527,6 +527,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.263-dev — 2026-08-04
+Pedido direto: visual do menu 🏷️ Submarcas melhorado, mais dentro do
+estilo do resto do app.
+
+- **Agrupado por marca.** Em vez de repetir "Hering X" nas 10 linhas
+  (Hering Adulto Comercial, Hering Adulto Cadastro, Hering Kids
+  Comercial...), agora mostra o nome da marca como cabeçalho (destaque
+  em ciano) com só "Comercial"/"Cadastro" embaixo, indentado — reduz
+  bastante a repetição visual e fica mais rápido de escanear.
+- **Linhas com hover** (mesmo padrão do seletor de squad —
+  `.squad-switcher-item`), cantos arredondados, checkbox um pouco maior.
+- **"Todos" destacado** com fundo sutil (verde-água), separado do
+  resto por uma linha divisória, e um título "🏷️ Filtrar por submarca"
+  no topo do painel.
+
+Puramente visual — nenhuma mudança na lógica de seleção múltipla
+(`activeFilters.submarca`) nem no mecanismo de abertura/posicionamento
+(`position:fixed`, corrigido em v8.30.260-dev).
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.262-dev — 2026-08-04
 **Hotfix**: v8.30.261-dev quebrou o board inteiro (tela em branco, só
 o fundo animado aparecia) — reportado ao vivo com o erro `Uncaught
