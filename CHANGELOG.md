@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.213 — 2026-08-04 · promove pra prod (PR #169)
+Promove pra produção o tamanho de fonte do board, validado em dev na
+v8.30.272-dev — ver entrada `kanban-dev.html` correspondente.
+
+- Novo botão **🔍 Fonte** na toolbar — menu suspenso com 4 tamanhos:
+  Pequena, Padrão, Grande, Muito grande. Aplica `zoom` só no `#board`
+  (colunas/cards). Preferência pessoal, salva só neste navegador.
+
 ### v8.30.212 — 2026-08-04 · revisão de código: excluir/esconder card
 Pedido direto (depois de uma sequência de bugs reais de card sumindo):
 revisão focada em todo caminho que exclui ou esconde card, mais uma
