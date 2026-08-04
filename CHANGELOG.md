@@ -509,6 +509,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.258-dev — 2026-08-04
+**Hotfix**: a CSS do PR #147 (filtros rápidos de submarca não quebrarem
+linha) quebrou o header inteiro em produção — reportado ao vivo pelo
+usuário ("quebrou foi tudo no layout agora"). A combinação
+`flex-grow:1;flex-shrink:0;flex-basis:auto` em `#submarca-quickfilters`
+fazia a distribuição de espaço do `.hd` colapsar: tudo (filtros +
+avatares + botões) empilhava no canto direito, com um vão vazio enorme
+entre o nome da squad e os filtros, em vez dos filtros ficarem
+centralizados como antes.
+
+Revertido pra `flex:1` (o que já funcionava pra centralizar/crescer),
+mantendo só as duas mudanças que realmente eram necessárias:
+`flex-wrap:nowrap` (pílulas não quebram linha) e `overflow-x:auto`
+(rede de segurança se não couber tudo mesmo depois de crescer).
+
+Promovido direto pra prod também (ver entrada `kanban.html`), sem
+esperar validação — bug visível afetando todo mundo com o board
+aberto agora.
+
 ### v8.30.257-dev — 2026-08-04
 Atualiza a Central de Ajuda (❓), que estava defasada em relação às
 últimas entregas — sem nenhuma dessas cinco coisas documentadas:

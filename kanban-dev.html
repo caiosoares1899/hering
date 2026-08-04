@@ -2321,9 +2321,12 @@ input[type="date"]{-moz-appearance:textfield;}
        avatares online) — colocar como fileira própria acima da toolbar quebrava o layout
        (feedback direto do time). Permite selecionar mais de uma submarca ao mesmo tempo
        (pedido direto) — os botões não podem quebrar linha (flex-shrink:0 nas pílulas +
-       flex-wrap:nowrap aqui); quem cede espaço quando aperta é a barra de avatares online
-       (.hd-btns), nunca os filtros — daí o overflow-x:auto como rede de segurança. -->
-  <div id="submarca-quickfilters" style="display:none;flex-grow:1;flex-shrink:0;flex-basis:auto;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;"></div>
+       flex-wrap:nowrap aqui). flex:1 (não flex-grow isolado — combo com flex-shrink:0 +
+       flex-basis:auto quebrou o header inteiro: a distribuição de espaço do .hd sumia e
+       tudo colapsava pro canto direito, feedback direto do time) continua fazendo esta
+       div crescer e ocupar o meio do header; overflow-x:auto é só a rede de segurança
+       pro caso raro de nem tudo caber mesmo depois de crescer. -->
+  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;"></div>
   <div class="hd-btns">
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -4350,7 +4353,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.257-dev</div>
+<div class="version">v8.30.258-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
