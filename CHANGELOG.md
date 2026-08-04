@@ -527,6 +527,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.262-dev — 2026-08-04
+**Hotfix**: v8.30.261-dev quebrou o board inteiro (tela em branco, só
+o fundo animado aparecia) — reportado ao vivo com o erro `Uncaught
+ReferenceError: Cannot access '_fishBgOn' before initialization`.
+
+Causa: a IIFE "Fish & Bubbles" chamava `_applyFishBgVisibility()`
+(que lê `_fishBgOn`) antes da linha `let _fishBgOn = ...` — que vinha
+DEPOIS da IIFE no arquivo. `let`/`const` ficam em "temporal dead zone"
+até a própria linha de declaração rodar (diferente de `function`, que
+é hoisted por completo); chamar algo que depende de um `let` ainda não
+inicializado estoura `ReferenceError` sem capturar, o que interrompe
+todo o resto daquele `<script>` — inclusive o carregamento do board.
+
+Corrigido só reordenando: `let _fishBgOn` e as duas funções
+(`_applyFishBgVisibility`/`toggleFishBackground`) agora vêm ANTES da
+IIFE que as usa. Nenhuma mudança de comportamento.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador (confirmar que o board volta a carregar) ainda
+pendente antes de promover pra prod — o que não é urgente aqui, já
+que v8.30.261-dev nunca chegou a ser promovido.
+
 ### v8.30.261-dev — 2026-08-04
 Duas entregas pedidas direto:
 
