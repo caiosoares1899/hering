@@ -328,6 +328,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .panel{background:rgba(6,26,46,.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
+.no-due-btn{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 9px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
+.no-due-btn:hover{background:var(--glass-h);border-color:var(--accent);color:var(--txt);}
+.no-due-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;font-weight:600;}
 /* Esconde o iconezinho nativo do navegador dentro do <input type=date> —
    fica só o nosso botão 📅 (.dp-btn) temático, sem o calendário pretinho
    padrão do Chrome/Edge embutido no campo. */
@@ -2683,7 +2686,8 @@ input[type="date"]{-moz-appearance:textfield;}
             <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
           </div>
           <div class="field"><label class="fl">Prazo</label>
-            <input class="fi" id="m-due" type="date" onchange="scheduleAutoSave()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
+            <input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
+            <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
           </div>
         </div>
         <div class="card-attr-row">
@@ -4346,7 +4350,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.255-dev</div>
+<div class="version">v8.30.256-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8005,7 +8009,7 @@ function scheduleAutoSave(){
     const _colToSave=(_selCol===_modalOpenCol)?c.col:_selCol;
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,
-      due:document.getElementById('m-due').value,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
+      due:document.getElementById('m-due').value,noDue:_mNoDue,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       // blockerReason faltava aqui — o autosave nunca capturava esse campo
       // (só o botão "Salvar" manual fazia isso), então uma edição do motivo
@@ -8394,6 +8398,26 @@ function populateOwnerSelect(){
     document.getElementById('m-owner').innerHTML+=`<optgroup label="🤖 Agentes">`+agentes.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('')+`</optgroup>`;
 }
 function populateColSelect(){ document.getElementById('m-col').innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); }
+// ── Prazo obrigatório (todo squad) com escape hatch "sem prazo definido" ──
+// Regra pedida direto: card precisa ter uma data OU marcar explicitamente
+// que não tem prazo ainda — nunca fica em branco por esquecimento. Mutuamente
+// exclusivo com a data (escolher uma data desliga o botão, e vice-versa).
+let _mNoDue=false;
+function _renderNoDueBtn(){
+  const btn=document.getElementById('m-nodue-btn'); if(!btn) return;
+  btn.classList.toggle('active', _mNoDue);
+  btn.textContent = _mNoDue ? '✅ Sem prazo definido' : '🚫 Sem prazo definido';
+}
+function toggleNoDue(){
+  _mNoDue=!_mNoDue;
+  if(_mNoDue) document.getElementById('m-due').value='';
+  _renderNoDueBtn();
+  scheduleAutoSave();
+}
+function _onDueDateChange(){
+  if(document.getElementById('m-due').value && _mNoDue){ _mNoDue=false; _renderNoDueBtn(); }
+  scheduleAutoSave();
+}
 // ── executorType / agentStatus: mostra o status do agente só quando faz sentido ──
 function updateAgentStatusVisibility(){
   const et=document.getElementById('m-exectype')?.value||'human';
@@ -8425,6 +8449,7 @@ function openCard(id){
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-due').value=c.due||'';
+  _mNoDue=!!c.noDue; _renderNoDueBtn();
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
   _editingDescIdx=new Set(); editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
   document.getElementById('m-po').value=c.po||'';
@@ -8669,6 +8694,7 @@ function openNewCard(col){
   _modalOpenCol=null;
   document.getElementById('m-owner').value=window._currentUserInit||'';
   document.getElementById('m-due').value='';
+  _mNoDue=false; _renderNoDueBtn();
   document.getElementById('m-meta-c').textContent='';
   document.getElementById('m-meta-e').textContent='';
   document.getElementById('m-sp').value='';
@@ -8732,6 +8758,20 @@ function saveCard(){
       return;
     }
   }
+  // Regras globais obrigatórias (todo squad, criação E edição — não depende
+  // de modelo): Prazo (ou "Sem prazo definido" explícito, ver toggleNoDue) e,
+  // quando o squad usa Submarca, qual submarca é. Pedido direto — sem isso os
+  // dois campos ficavam opcionais e cards saíam sem prazo/sem submarca
+  // silenciosamente.
+  const alwaysMissing=[];
+  if(!document.getElementById('m-due').value && !_mNoDue) alwaysMissing.push('due');
+  if(submarcaAtivo && !document.getElementById('m-submarca')?.value) alwaysMissing.push('submarca');
+  if(alwaysMissing.length){
+    _highlightMissingFields(alwaysMissing);
+    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':'Submarca');
+    showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
+    return;
+  }
   const td=new Date().toISOString().split('T')[0];
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
@@ -8743,7 +8783,7 @@ function saveCard(){
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
-      owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,
+      owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -8767,7 +8807,7 @@ function saveCard(){
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
-      due:document.getElementById('m-due').value,po:document.getElementById('m-po').value,
+      due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
       agentStatus:document.getElementById('m-agentstatus')?.value||'',
@@ -13220,7 +13260,7 @@ function _reqFieldFilled(key){
   switch(key){
     case 'title': return !!document.getElementById('m-title').value.trim();
     case 'owner': return !!document.getElementById('m-owner').value;
-    case 'due': return !!document.getElementById('m-due').value;
+    case 'due': return !!document.getElementById('m-due').value || _mNoDue;
     case 'tags': return editingTags.length>0;
     case 'desc': return !!document.getElementById('m-desc').value.trim() || _cleanExtraDescs().length>0;
     case 'po': return !!document.getElementById('m-po').value.trim();
@@ -13234,7 +13274,7 @@ function _missingRequired(){
   return _pendingRequired.filter(k=>!_reqFieldFilled(k));
 }
 // Destaca visualmente os campos obrigatórios faltando
-const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority'};
+const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority',submarca:'m-submarca'};
 function _highlightMissingFields(missing){
   // limpa destaques antigos
   document.querySelectorAll('.req-missing').forEach(el=>el.classList.remove('req-missing'));
