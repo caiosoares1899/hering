@@ -127,8 +127,17 @@ exports.spotifyOauthCallback = require('./spotify/oauth').spotifyOauthCallback;
 exports.spotifyDisconnect = require('./spotify/disconnect').spotifyDisconnect;
 
 // Spotify — sync agendado do "ouvindo agora" (a cada minuto, ver
-// functions/spotify/sync.js). Deploy isolado: firebase deploy --only functions:spotifySync
-exports.spotifySync = require('./spotify/sync').spotifySync;
+// functions/spotify/sync.js) — PAUSADO (2026-08-04): era a única function
+// agendada de todo o projeto (roda 24h/dia, sempre, mesmo sem ninguém
+// conectado — as outras só custam quando alguém de fato usa) e o custo
+// ficou acima do esperado. Painel do Spotify também escondido no board
+// (kanban.html/kanban-dev.html, ver #spotify-tab) — sem o sync alimentando
+// dado fresco, mostrar o painel só exibiria presença desatualizada.
+// Pra religar (depois de uma análise de custo — ex.: cadência maior que
+// 30s, ou só rodar quando tiver alguém conectado): descomenta a linha
+// abaixo + o botão #spotify-tab no HTML, e roda
+// `firebase deploy --only functions:spotifySync`.
+// exports.spotifySync = require('./spotify/sync').spotifySync;
 
 // Spotify — sync sob demanda de 1 pessoa só (disparado ao abrir o painel,
 // ver functions/spotify/syncNow.js). Deploy isolado: firebase deploy --only functions:spotifySyncNow

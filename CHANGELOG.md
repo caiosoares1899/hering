@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.205 — 2026-08-04 · pausa de custo
+**Spotify pausado** — a pedido direto do usuário, por causa do custo de
+Cloud Function acima do esperado. `functions/spotify/sync.js`
+(`spotifySync`) era a ÚNICA function agendada de todo o projeto: rodava
+a cada minuto, 24h/dia, todo dia, com um `_sleep(30000)` interno
+(simulando cadência de 30s já que o Cloud Scheduler não agenda abaixo
+de 1 minuto) — na prática ficava ativamente rodando ~30-35s de cada
+60s, o dia inteiro, **mesmo sem ninguém com o Spotify conectado**.
+Nenhuma outra function do projeto é agendada; todas as outras só
+custam quando alguém de fato usa.
+
+- `functions/index.js`: export de `spotifySync` comentado (não
+  deletado — fica pronto pra religar depois de uma análise de custo,
+  ex.: cadência maior ou só rodar com gente conectada). **Só entra em
+  vigor de verdade quando alguém rodar `firebase deploy --only
+  functions` numa máquina com Firebase CLI autenticado** — esta sessão
+  não tem credencial de deploy de Cloud Functions. Até lá, a function
+  continua rodando (e cobrando) em produção; a ação mais rápida pra
+  parar o gasto AGORA é pausar o job do Cloud Scheduler
+  (`firebase-schedule-spotifySync-us-central1`) direto no console do
+  Google Cloud — reversível com 1 clique, sem precisar de deploy.
+- Botão "🎧 Spotify" escondido do board (`#spotify-tab`, e a aba
+  correspondente na Central de Ajuda) — sem o sync alimentando dado
+  fresco, o painel só mostraria presença desatualizada. Código/UI do
+  Spotify continuam intactos (só escondidos), prontos pra reativar.
+
+Achado incidental: o `CLAUDE.md` descrevia "a única Cloud Function"
+como sendo só `sendPushOnNotification` — na verdade o projeto tem 11
+functions exportadas (push, Agente Ágil, e 8 relacionadas a Spotify).
+Vale corrigir a documentação numa próxima passada.
+
 ### v8.30.204 — 2026-08-04 · PR #154, #155, #156, #157, #158
 Promove pra prod, a pedido direto do usuário — cinco entregas
 acumuladas no dev desde a v8.30.203:
@@ -559,6 +590,13 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.264-dev — 2026-08-04
+Mesmo pause de Spotify da entrada `kanban.html v8.30.205` acima —
+aplicado nos dois arquivos ao mesmo tempo (pedido direto, urgência de
+custo), sem esperar o ciclo normal de validação em dev. Botão
+"🎧 Spotify" escondido (`#spotify-tab`); `functions/spotify/sync.js`
+(`spotifySync`) comentado em `functions/index.js`.
 
 ### v8.30.263-dev — 2026-08-04
 Pedido direto: visual do menu 🏷️ Submarcas melhorado, mais dentro do
