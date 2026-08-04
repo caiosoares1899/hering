@@ -486,6 +486,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.256-dev — 2026-08-04
+Pedido direto: dois campos passam a ser obrigatórios ao salvar um card
+(criação E edição, em qualquer squad).
+
+- **Submarca obrigatória** (só quando o squad usa Submarca —
+  `submarcaAtivo`): não dá mais pra salvar um card sem escolher qual
+  submarca é. Reaproveita o mesmo mecanismo de destaque/aviso que já
+  existia pros campos obrigatórios de modelo (`.req-missing`, toast).
+- **Prazo obrigatório em todo squad**, com escape hatch: se a pessoa
+  ainda não sabe o prazo, um botão novo embaixo do campo Prazo —
+  "🚫 Sem prazo definido" — satisfaz a exigência sem precisar chutar
+  uma data. Mutuamente exclusivo com escolher uma data de verdade
+  (marcar uma limpa o outro). Persiste como `card.noDue`.
+
+Essas duas regras rodam em cima do mecanismo já existente de campos
+obrigatórios (antes só disparado por modelo, e só na criação) — agora
+rodam sempre, independente de modelo, tanto ao criar quanto ao editar
+um card pelo modal. Não afeta autosave (que continua salvando outras
+mudanças em cards antigos sem prazo/submarca já preenchidos, evitando
+travar edição de cards legados só porque um campo novo ficou faltando)
+nem criação de cards fora do modal (import Trello, recorrentes/
+agendamentos automáticos, ferramentas do Agente Ágil) — a exigência é
+da UI do modal, não uma regra de dados no Firebase.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.255-dev — 2026-08-04
 Pedido direto: no import do Trello, membro sem match no board (`resolveOwner`
 não encontra ninguém no squad com nome parecido) deixava de virar
