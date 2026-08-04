@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.203 — 2026-08-04 · hotfix
+**Hotfix de emergência**: a CSS do PR #147 (filtros rápidos de submarca
+não quebrarem linha, promovido em v8.30.201) quebrava o header inteiro
+— reportado ao vivo pelo usuário ("quebrou foi tudo no layout agora").
+`flex-grow:1;flex-shrink:0;flex-basis:auto` em `#submarca-quickfilters`
+colapsava a distribuição de espaço do `.hd`: tudo (filtros + avatares
++ botões) empilhava no canto direito, com um vão vazio enorme entre o
+nome da squad e os filtros.
+
+Revertido pra `flex:1` (o que já funcionava pra centralizar/crescer a
+div), mantendo só `flex-wrap:nowrap` (pílulas não quebram linha) e
+`overflow-x:auto` (rede de segurança).
+
+Promovido direto, sem esperar o ciclo normal de validação em dev — bug
+visível afetando todo mundo com o board aberto. Só essa linha de CSS
+mudou; o resto do dev (Central de Ajuda, PR #153) fica pra promoção
+separada depois de validado.
+
 ### v8.30.202 — 2026-08-04 · PR #150
 Promove pra prod, a pedido direto do usuário: card não salva mais sem
 prazo nem sem submarca (quando o squad usa Submarca).
