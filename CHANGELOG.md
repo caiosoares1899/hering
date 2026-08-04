@@ -18,6 +18,29 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.202 — 2026-08-04 · PR #150
+Promove pra prod, a pedido direto do usuário: card não salva mais sem
+prazo nem sem submarca (quando o squad usa Submarca).
+
+- **Submarca obrigatória** (só quando `submarcaAtivo`) — não dá pra
+  salvar um card sem escolher qual submarca é.
+- **Prazo obrigatório em todo squad**, com escape hatch: botão "🚫 Sem
+  prazo definido" embaixo do campo Prazo satisfaz a exigência sem
+  precisar chutar uma data (mutuamente exclusivo com escolher uma data
+  de verdade). Persiste como `card.noDue`.
+
+Vale pra criação E edição pelo modal; não afeta autosave (cards antigos
+sem esses campos continuam salvando outras mudanças normalmente) nem
+criação de cards fora do modal (Trello, recorrentes/agendamentos,
+Agente Ágil). Detalhes completos na entrada `kanban-dev.html
+v8.30.256-dev` abaixo. `diff kanban.html kanban-dev.html` antes desta
+mudança mostrou só essa entrega mais a string de versão/`VERSION_KEY`
+— promoção limpa.
+
+**Ressalva**: promovido a pedido explícito do usuário. Checagem de
+sintaxe (`node --check`) passou limpa; este arquivo não tem suíte
+automatizada (ver `CLAUDE.md`).
+
 ### v8.30.201 — 2026-08-04 · PR #146, #147, #148
 Promove pra prod tudo que estava acumulado no dev, a pedido direto do
 usuário ("pode subir tudo que tá pendente pro prod, já aprovei") — três
