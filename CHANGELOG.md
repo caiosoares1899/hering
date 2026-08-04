@@ -454,6 +454,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.254-dev — 2026-08-04
+Feedback direto do time sobre os filtros rápidos de submarca (squad `site`,
+v8.30.251-dev): duas correções.
+
+- **Não quebra mais linha.** Antes, quando não cabiam todos os botões na
+  mesma linha do header, a fileira de pílulas quebrava no meio (ex.: "Hering
+  Teens" ia sozinha pra uma 2ª linha). Agora `#submarca-quickfilters` é
+  `flex-wrap:nowrap` (com `overflow-x:auto` como rede de segurança) e cada
+  pílula tem `flex-shrink:0` — os filtros são priorizados sobre a barra de
+  avatares online: quando o espaço aperta, é `.hd-btns` que cede (encolhe/
+  quebra internamente, já suportava isso), não os filtros de submarca.
+- **Seleção múltipla.** Clicar numa submarca já marcada agora só desmarca
+  ela — dá pra marcar várias ao mesmo tempo (ex.: Kids + Teens juntas).
+  "Todas" limpa a seleção inteira. `activeFilters.submarca` deixou de ser
+  uma string única e virou array; `passesFilter()` passa o card se ele bate
+  com QUALQUER uma das submarcas selecionadas (OR, não AND). O `<select>`
+  do drawer de Filtros continua escolha única (substitui a seleção
+  inteira) — pra marcar mais de uma, usar os botões do header.
+  `applyFilters()` (chamada por todo outro filtro do drawer) agora preserva
+  a seleção de submarca em vez de tentar derivá-la de um `<select>` de
+  valor único, senão mudar qualquer outro filtro apagava a multi-seleção.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`) —
+este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação manual
+no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.253-dev — 2026-08-04
 Corrige a causa raiz do consumo alto de banda em produção (`outlet-crm`/
 `outlet`, ~1GB/dia — investigado via `debugFallbackLog()`, PR #139):

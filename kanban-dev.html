@@ -141,10 +141,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:20;}
-.hd-l{display:flex;align-items:center;gap:8px;}
+.hd-l{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .hd-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
-.hd-filter-btn{font-size:10px;white-space:nowrap;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
+.hd-filter-btn{font-size:10px;white-space:nowrap;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;flex-shrink:0;}
 .hd-filter-btn:hover{background:var(--glass-h);border-color:var(--accent);color:var(--txt);}
 .hd-filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;font-weight:600;}
 .squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
@@ -156,7 +156,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .squad-switcher-item.active{background:rgba(56,182,255,.15);font-weight:700;cursor:default;pointer-events:none;}
 .squad-switcher-tag{font-size:10px;color:var(--txt3);font-weight:400;margin-left:auto;}
 .squad-switcher-msg{padding:10px;font-size:12px;color:var(--txt2);}
-.hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
+/* Filtros rápidos de submarca nunca quebram linha (cada pílula fica inteira);
+   quando o espaço aperta, é a barra de avatares online (.hd-btns, flex-shrink
+   normal) que cede — não os filtros (flex-shrink:0). Se mesmo assim não
+   couber tudo, rola horizontalmente em vez de quebrar. */
+#submarca-quickfilters{scrollbar-width:none;}
+#submarca-quickfilters::-webkit-scrollbar{display:none;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{background:var(--glass-h);border-color:var(--accent);}
 .btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
@@ -2307,10 +2313,14 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <!-- Filtros rápidos de submarca — só aparece com submarcaAtivo (squad "site"), botões
        pré-prontos pra pular direto pra cada marca sem abrir o drawer de Filtros. Reaproveita
-       o MESMO estado (#f-submarca + applyFilters()) — não é um filtro paralelo. Fica na
-       MESMA linha do header (entre o nome da squad e os avatares online) — colocar como
-       fileira própria acima da toolbar quebrava o layout (feedback direto do time). -->
-  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:wrap;min-width:0;"></div>
+       o MESMO estado (activeFilters.submarca, agora um array — ver setSubmarcaQuickFilter)
+       — não é um filtro paralelo. Fica na MESMA linha do header (entre o nome da squad e os
+       avatares online) — colocar como fileira própria acima da toolbar quebrava o layout
+       (feedback direto do time). Permite selecionar mais de uma submarca ao mesmo tempo
+       (pedido direto) — os botões não podem quebrar linha (flex-shrink:0 nas pílulas +
+       flex-wrap:nowrap aqui); quem cede espaço quando aperta é a barra de avatares online
+       (.hd-btns), nunca os filtros — daí o overflow-x:auto como rede de segurança. -->
+  <div id="submarca-quickfilters" style="display:none;flex-grow:1;flex-shrink:0;flex-basis:auto;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;"></div>
   <div class="hd-btns">
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -2360,7 +2370,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <option value="tag_tam_g">👕 G</option>
     <option value="tag_tam_gg">👕 GG</option>
   </select>
-  <select id="f-submarca" onchange="applyFilters()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+  <select id="f-submarca" onchange="setSubmarcaFromDrawer()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">🏷️ Qualquer submarca</option>
   </select>
   <select id="f-subteam" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(3,13,26,.8);color:var(--txt);font-family:DM Sans,sans-serif;">
@@ -4336,7 +4346,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.253-dev</div>
+<div class="version">v8.30.254-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7638,7 +7648,7 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',tamanho:'',submarca:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+let activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -7663,7 +7673,11 @@ function applyFilters(){
     owner:document.getElementById('f-owner').value,
     tag:document.getElementById('f-tag').value,
     tamanho:document.getElementById('f-tamanho')?.value||'',
-    submarca:document.getElementById('f-submarca')?.value||'',
+    // submarca é multi-seleção (array) — não vem de um <select> de valor único,
+    // por isso preserva o que já estava lá (gerenciado por setSubmarcaQuickFilter/
+    // setSubmarcaFromDrawer). Chamar applyFilters() por causa de outro filtro
+    // (dono, tag, prazo...) não pode apagar a seleção de submarca.
+    submarca:activeFilters.submarca||[],
     due:document.getElementById('f-due').value,
     priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
@@ -7684,7 +7698,7 @@ function clearFilters(){
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
-  activeFilters={owner:'',tag:'',tamanho:'',submarca:'',due:'',priority:'',blocker:false,risco:false,subteam:''};
+  activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
   renderSubmarcaQuickFilters();
   renderBoard();
 }
@@ -7700,7 +7714,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   }
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
-  if(activeFilters.submarca&&!cardHasTag(card, activeFilters.submarca)) return false;
+  if(activeFilters.submarca&&activeFilters.submarca.length&&!activeFilters.submarca.some(id=>cardHasTag(card, id))) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
@@ -9242,19 +9256,46 @@ function _populateSubmarcaFilterSelect(){
 }
 // Botões de atalho no topo do board (acima da toolbar) — mesmo estado do
 // filtro do drawer (#f-submarca + activeFilters.submarca), só um jeito mais
-// rápido de aplicar sem abrir Filtros. Realça o botão da submarca ativa.
+// rápido de aplicar sem abrir Filtros. Realça os botões das submarcas ativas
+// — suporta mais de uma marca marcada ao mesmo tempo (pedido direto).
 function renderSubmarcaQuickFilters(){
   const wrap=document.getElementById('submarca-quickfilters'); if(!wrap) return;
   const visiveis=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id));
   if(!submarcaAtivo || !visiveis.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
   wrap.style.display='flex';
-  const cur=activeFilters.submarca||'';
-  wrap.innerHTML = `<button class="hd-filter-btn${cur?'':' active'}" onclick="setSubmarcaQuickFilter('')">Todas</button>`
-    + visiveis.map(st=>`<button class="hd-filter-btn${cur===st.id?' active':''}" onclick="setSubmarcaQuickFilter('${st.id}')">${esc(st.label)}</button>`).join('');
+  const cur=activeFilters.submarca||[];
+  wrap.innerHTML = `<button class="hd-filter-btn${cur.length?'':' active'}" onclick="setSubmarcaQuickFilter('')">Todas</button>`
+    + visiveis.map(st=>`<button class="hd-filter-btn${cur.includes(st.id)?' active':''}" onclick="setSubmarcaQuickFilter('${st.id}')">${esc(st.label)}</button>`).join('');
 }
+// Clique num botão de submarca ALTERNA ele na seleção (multi-select) — clicar
+// numa marca já marcada desmarca só ela, as outras continuam. "Todas" limpa
+// tudo de uma vez. Sincroniza o <select> do drawer só quando dá pra
+// representar em valor único (0 ou 1 selecionada); com 2+ o select volta pro
+// "Qualquer submarca" (não existe seleção múltipla nativa nesse controle).
 function setSubmarcaQuickFilter(tagId){
-  const f=document.getElementById('f-submarca'); if(f) f.value=tagId;
-  applyFilters();
+  if(!tagId){
+    activeFilters.submarca=[];
+  } else {
+    const arr=(activeFilters.submarca||[]).slice();
+    const idx=arr.indexOf(tagId);
+    if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
+    activeFilters.submarca=arr;
+  }
+  const f=document.getElementById('f-submarca');
+  if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
+  _colRenderLimit={};
+  renderSubmarcaQuickFilters();
+  renderBoard();
+}
+// Select do drawer de Filtros: escolha única, substitui a seleção inteira
+// (mesmo padrão de antes de existir multi-seleção). Pra marcar mais de uma
+// submarca de uma vez, usar os botões rápidos do header (setSubmarcaQuickFilter).
+function setSubmarcaFromDrawer(){
+  const v=document.getElementById('f-submarca')?.value||'';
+  activeFilters.submarca = v ? [v] : [];
+  _colRenderLimit={};
+  renderSubmarcaQuickFilters();
+  renderBoard();
 }
 // Lista de checkboxes (Configurações > Tags) — uma por submarca, ligada por
 // padrão (submarcasVisiveis[id]!==false, ver _submarcaIsVisivel).
