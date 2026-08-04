@@ -4353,6 +4353,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="ql-filter-bar" style="flex-wrap:wrap;gap:8px;">
     <button class="btn btn-sm" onclick="_archSelectAll(true)">☑ Todos</button>
     <button class="btn btn-sm" onclick="_archSelectAll(false)">☐ Nenhum</button>
+    <button class="btn btn-sm" style="color:var(--teal);border-color:rgba(29,233,182,.4);" onclick="restoreSelectedArchived()">↩ Restaurar selecionados</button>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.4);" onclick="deleteSelectedArchived()">🗑 Excluir selecionados</button>
   </div>
   <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;" id="arch-body"></div>
@@ -4411,7 +4412,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.272-dev</div>
+<div class="version">v8.30.273-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13000,6 +13001,17 @@ async function deleteSelectedArchived(){
   cards=cards.filter(c=>!idSet.has(c.id));
   fbSaveAll(undefined, []);
   showToast('🗑 '+ids.length+' card(s) excluído(s) permanentemente.');
+  openArquivados();
+}
+async function restoreSelectedArchived(){
+  const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
+  if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
+  if(!await uiConfirm('Restaurar '+ids.length+' card(s) arquivado(s) de volta pro board?',{title:'Restaurar arquivados selecionados',okText:'Restaurar'})) return;
+  const idSet=new Set(ids);
+  const touchedIds=[];
+  cards.forEach(c=>{ if(c && idSet.has(c.id) && c.archived){ c.archived=false; delete c.archivedAt; touchedIds.push(c.id); } });
+  fbSaveAll(undefined, touchedIds);
+  showToast('↩ '+touchedIds.length+' card(s) restaurado(s).');
   openArquivados();
 }
 

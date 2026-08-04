@@ -868,6 +868,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.273-dev — 2026-08-04
+Pedido direto: tela de "📦 Cards arquivados" tinha "☑ Todos"/"☐ Nenhum"
++ "🗑 Excluir selecionados", mas nenhum jeito de restaurar em lote —
+só um por um.
+
+- Novo botão **↩ Restaurar selecionados** — restaura de volta pro board
+  todos os cards marcados nos checkboxes. Usa `fbSaveAll` com os ids
+  restaurados como `touchedIds` (mesmo padrão de `bulkArchive`).
+
 ### v8.30.272-dev — 2026-08-04
 Pedido direto: pessoas relatando dificuldade de leitura no board.
 
