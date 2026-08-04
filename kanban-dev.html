@@ -4377,7 +4377,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.269-dev</div>
+<div class="version">v8.30.270-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5568,6 +5568,29 @@ function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>{ co
 
 let _lastLocalSave = 0;
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
+// Contador de escritas em voo (fbSaveAll/fbSaveCard) + aviso ao sair da
+// página enquanto alguma ainda não confirmou. ACHADO REAL (2026-08-04,
+// import Trello): fbSaveAll()/fbSaveCard() são chamados fire-and-forget
+// (sem await) na maioria dos call sites -- o toast de "sucesso"/fechar
+// modal aparece IMEDIATAMENTE, sem esperar a escrita de verdade chegar
+// no Firebase. Pra um import grande (payload de MB, array de milhares de
+// cards inteiro), a escrita pode legitimamente levar alguns segundos pra
+// subir -- se a pessoa der F5 rápido demais (confiando no toast), a aba
+// fecha a conexão ANTES da escrita ser confirmada pelo servidor, e o
+// card nunca chega a ser salvo de verdade (parece "sumido", mas nunca
+// existiu no Firebase). `beforeunload` com escrita pendente mostra o
+// aviso nativo do navegador ("sair mesmo assim?"), dando a chance de
+// cancelar e esperar.
+let _pendingFbWrites = 0;
+function _trackFbWrite(promise){
+  _pendingFbWrites++;
+  const done = ()=>{ _pendingFbWrites=Math.max(0,_pendingFbWrites-1); };
+  promise.then(done, done);
+  return promise;
+}
+window.addEventListener('beforeunload', (e)=>{
+  if(_pendingFbWrites>0){ e.preventDefault(); e.returnValue=''; }
+});
 // ═══════════════════════════════════════════════════════════════════
 // MÉTRICAS DE FLUXO (Flow Metrics) — instrumentação de movimentação
 // ───────────────────────────────────────────────────────────────────
@@ -5870,13 +5893,13 @@ async function fbSaveAll(extra, touchedIds){
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
-  return Promise.all([
+  return _trackFbWrite(Promise.all([
     window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
     throw err; // re-throw so handleDrop .catch can revert
-  });
+  }));
 }
  function fbSaveCard(card){
       // Salva SOMENTE este card (update num path especifico), em vez de
@@ -5925,11 +5948,11 @@ async function fbSaveAll(extra, touchedIds){
       // OU `null` (remove) explicitamente conforme o estado atual do card,
       // nunca deixar a entrada velha pra trás quando alguém desarquiva.
       updates['cards_archived/'+card.id] = card.archived ? true : null;
-      return window._update(fb(FB), updates).catch(err=>{
+      return _trackFbWrite(window._update(fb(FB), updates).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
-      });
+      }));
     }
 // Wrapper de fbSaveCard() com aviso visível + 1 retentativa em caso de falha.
 // Chamadores "fire-and-forget" de fbSaveCard() (autosave, salvar descrição
@@ -6353,35 +6376,39 @@ let _cardsSyncDebounce = null;
       const newKey = snap.val();
       _liveCardsIndexById[snap.key] = newKey;
       if(oldKey!=null && oldKey!==newKey){
+        delete _cardsByKey[oldKey];
         // BUG DE PRODUÇÃO GERAL (2026-08-04, "sumiu um card" fora de
         // import — várias squads reportaram): cards_index[id] muda de
         // posição toda vez que QUALQUER fbSaveAll() estrutural reordena o
         // array /cards (criar, arquivar, excluir, duplicar, drag —
         // qualquer coisa que insere/remove um card em posição != o fim).
         // Isso dispara child_changed aqui pra TODO card cuja posição
-        // deslocou, mesmo os que ninguém tocou de verdade. Antes: só
-        // apagava _cardsByKey[oldKey] e esperava um child_changed em
-        // /cards_updated_at pra repopular na newKey — mas com touchedIds
-        // (ver fbSaveAll), cards_updated_at NÃO muda de valor pra cards
-        // não tocados, e o Firebase não dispara child_changed pra um
-        // valor idêntico ao que já tinha -- então a newKey nunca era
-        // populada. Resultado: card válido, intacto no Firebase, mas
-        // PERMANENTEMENTE ausente do board de qualquer aba que já estava
-        // aberta (só um F5 recarregava certo, via _twoPhaseCardsLoad, que
-        // não depende desse listener incremental).
+        // deslocou, mesmo os que ninguém tocou de verdade.
         //
-        // Fix: já temos o conteúdo do card em _cardsByKey[oldKey] (nada
-        // nele mudou, só a posição) -- move pra newKey em vez de só
-        // apagar. Se o conteúdo TAMBÉM mudou, o child_changed de
-        // /cards_updated_at (que ainda dispara nesse caso) sobrescreve
-        // depois com a versão fresca -- idempotente, sem risco de duplicar.
-        if(_cardsByKey[oldKey]){
-          _cardsByKey[newKey] = _cardsByKey[oldKey];
-          delete _cardsByKey[oldKey];
-          _scheduleCardsSync();
-        } else {
-          delete _cardsByKey[oldKey];
-        }
+        // 1ª tentativa de fix (nesta mesma sessão) foi "mover" o conteúdo
+        // já conhecido de _cardsByKey[oldKey] pra newKey, achando que era
+        // barato e seguro — MAS causou um bug pior: quando VÁRIOS cards
+        // deslocam de posição na MESMA escrita (o caso comum — qualquer
+        // insert/remove desloca todo mundo depois), os eventos chegam em
+        // sequência, e o oldKey de um card pode já ter sido "roubado" por
+        // outro card que moveu PRA lá antes deste evento processar —
+        // resultado real observado: o conteúdo de um card virou
+        // visualmente o de outro (um card foi importado em "Upload" e
+        // apareceu como "Concluído" depois de um F5). _cardsByKey é
+        // indexado por POSIÇÃO, não por id — "mover" confia que a posição
+        // antiga ainda pertence ao mesmo card, o que não é garantido no
+        // meio de um lote de deslocamentos em cadeia.
+        //
+        // Fix definitivo: nunca reaproveita conteúdo por posição — sempre
+        // busca o card fresco na posição nova pelo id (mesmo padrão,
+        // comprovadamente correto, do listener de /cards_updated_at
+        // abaixo). Custa uma leitura de rede por deslocamento, mas
+        // elimina de vez o risco de misturar o conteúdo de dois cards
+        // diferentes.
+        window._get(fb(FB+'/cards/'+newKey)).then(snapCard=>{
+          _dbgTrack('/cards:targeted_get(index_changed)', snapCard.val());
+          if(snapCard.val()){ _cardsByKey[newKey] = snapCard.val(); _scheduleCardsSync(); }
+        });
       }
     });
     window._onChildRemoved(_idxRef, snap=>{
@@ -15309,18 +15336,39 @@ async function doTrelloImport(){
   // Sem isto, tags novas do import ficavam só na memória e viravam "tags fantasma"
   // (referenciadas pelos cards, mas inexistentes no Firebase) no primeiro reload.
   if(_novasTagsCriadas) fbSet(FB+'/tags', tags);
-  fbSaveAll(undefined, cleanCards.map(c=>c.id)); renderBoard();
+  renderBoard();
+  // BUG REAL (2026-08-04): fbSaveAll() era fire-and-forget aqui — o toast
+  // de "sucesso" e o fechamento do modal apareciam IMEDIATAMENTE, antes da
+  // escrita de verdade (payload de todo o array de cards, pode ser vários
+  // MB num import grande) terminar de subir pro Firebase. Isso deixava a
+  // pessoa livre pra dar F5 achando que já tinha salvo — se o F5
+  // acontecesse antes da escrita ser confirmada pelo servidor, a conexão
+  // fechava no meio, e os cards recém-importados nunca chegavam a ser
+  // salvos de verdade (pareciam "sumidos" depois do reload, mas na
+  // verdade nunca existiram no Firebase). Agora ESPERA a escrita
+  // confirmar antes de fechar o modal/mostrar sucesso — e o
+  // beforeunload (ver _pendingFbWrites) barra um F5 acidental nesse meio
+  // tempo, mesmo se a pessoa tentar antes do await terminar.
+  const btn=document.getElementById('btn-confirm-import');
+  btn.disabled=true; btn.style.opacity='.4'; btn.textContent='💾 Salvando...';
+  try{
+    await fbSaveAll(undefined, cleanCards.map(c=>c.id));
+  }catch(e){
+    console.warn('[doTrelloImport] falha ao salvar:', e);
+    btn.disabled=false; btn.style.opacity='1'; btn.textContent='📥 Importar';
+    uiAlert('❌ Falha ao salvar o import no Firebase — nada foi perdido localmente, mas tente novamente (verifique sua conexão). Detalhe: '+String((e&&e.message)||e));
+    return;
+  }
   // Limpa e fecha
   document.getElementById('trello-json').value='';
   document.getElementById('trello-preview').style.display='none';
-  const btn=document.getElementById('btn-confirm-import');
-  btn.disabled=true; btn.style.opacity='.4';
+  btn.textContent='📥 Importar';
   _trelloParsed=null;
   const mapDiv=document.getElementById('trello-mapping');
   if(mapDiv) mapDiv.style.display='none';
   const tagAllSel=document.getElementById('trello-tag-all'); if(tagAllSel) tagAllSel.value='';
   closeOv('cfg-ov');
-  // Toast de sucesso
+  // Toast de sucesso — só aparece AGORA, com a escrita já confirmada.
   showToast(`✅ ${total} cards importados de "${boardName}"`+(tagAllId?` com a tag aplicada`:''));
 }
 // ═══════════════════════════════════════════════════════
