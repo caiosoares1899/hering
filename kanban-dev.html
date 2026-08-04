@@ -2314,19 +2314,16 @@ input[type="date"]{-moz-appearance:textfield;}
     </span>
 
   </div>
-  <!-- Filtros rápidos de submarca — só aparece com submarcaAtivo (squad "site"), botões
-       pré-prontos pra pular direto pra cada marca sem abrir o drawer de Filtros. Reaproveita
-       o MESMO estado (activeFilters.submarca, agora um array — ver setSubmarcaQuickFilter)
-       — não é um filtro paralelo. Fica na MESMA linha do header (entre o nome da squad e os
-       avatares online) — colocar como fileira própria acima da toolbar quebrava o layout
-       (feedback direto do time). Permite selecionar mais de uma submarca ao mesmo tempo
-       (pedido direto) — os botões não podem quebrar linha (flex-shrink:0 nas pílulas +
-       flex-wrap:nowrap aqui). flex:1 (não flex-grow isolado — combo com flex-shrink:0 +
-       flex-basis:auto quebrou o header inteiro: a distribuição de espaço do .hd sumia e
-       tudo colapsava pro canto direito, feedback direto do time) continua fazendo esta
-       div crescer e ocupar o meio do header; overflow-x:auto é só a rede de segurança
-       pro caso raro de nem tudo caber mesmo depois de crescer. -->
-  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;"></div>
+  <!-- Filtro rápido de submarca — só aparece com submarcaAtivo (squad "site"). Com as 5
+       marcas viradas em 10 (cada uma dividida em Comercial/Cadastro, pedido direto), uma
+       fileira de botões não cabe mais (eram só 6 antes e já quase quebrou o header — ver
+       hotfix v8.30.203/258-dev). Virou um único botão "🏷️ Submarcas ▾" que abre um menu
+       suspenso com checkbox pra cada uma das 10 + "Todos" (mesmo padrão visual/JS do
+       squad-switcher-dd — position:relative aqui, position:absolute no painel). Reaproveita
+       o MESMO estado (activeFilters.submarca, array — ver toggleSubmarcaDropdownItem).
+       flex:1 continua fazendo esta div crescer e centralizar o botão no meio do header;
+       overflow-x:auto é rede de segurança (não deveria ser necessário com só 1 botão). -->
+  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;position:relative;"></div>
   <div class="hd-btns">
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -2446,7 +2443,9 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
-  <button class="btn btn-sm" onclick="openTempoReport()" title="Relatório de tempo por tag" style="color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo</button>
+  <!-- ⏱ Relatórios de Tempo saiu daqui e foi pra dentro de 📊 Dados do Board (botão de
+       entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
+       menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
@@ -3934,6 +3933,10 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
     <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
+    <!-- Antes era um botão próprio na toolbar (⏱ Relatórios de Tempo) — movido pra
+         dentro daqui pra desafogar a toolbar (pedido direto). Fecha este modal e abre
+         o relatório por cima, mesmo padrão de "entrar" em outra tela a partir desta. -->
+    <button class="btn btn-sm" onclick="closeOv('boarddata-ov');openTempoReport();" title="Lead/cycle time por tag" style="margin-bottom:16px;color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo (lead/cycle time por tag) ▸</button>
     <div class="met-g" id="boarddata-met-grid" style="grid-template-columns:repeat(auto-fit,minmax(148px,1fr));"></div>
     <div style="margin-top:22px;">
       <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cards ativos por coluna</div>
@@ -4353,7 +4356,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.258-dev</div>
+<div class="version">v8.30.259-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4665,7 +4668,10 @@ function toggleSquadSwitcher(e){
   loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
+  if(e.key==='Escape'){
+    document.getElementById('squad-switcher-dd')?.classList.remove('open');
+    document.getElementById('submarca-dd-panel')?.classList.remove('open');
+  }
 });
 
 // Fecha qualquer picker de reação ao clicar fora
@@ -4673,6 +4679,7 @@ document.addEventListener('click', (e)=>{
   if(!e.target.closest('.cmt-react')){ document.querySelectorAll('.rx-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.squad-switcher-wrap')){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
+  if(!e.target.closest('#submarca-quickfilters')){ document.getElementById('submarca-dd-panel')?.classList.remove('open'); }
 });
 // ── FIM SQUAD ────────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
@@ -5299,12 +5306,23 @@ const SIZE_TAGS = [
 let submarcaAtivo=false; // toggle por squad: mostra o campo dedicado "Submarca" no card + filtros rápidos no toolbar (squad "site")
 let submarcasVisiveis={}; // {tagId:boolean} — visibilidade individual de cada submarca; ausente = visível (default: todas aparecem, PO desmarca as que não usa)
 // Tags de submarca — ids fixos (idempotência: reativar não duplica, mesmo espírito de SIZE_TAGS).
+// Cada marca se divide em Comercial e Cadastro (os dois times que atuam no squad
+// site) — pedido direto, substitui a versão anterior de 5 tags (uma por marca,
+// sem distinguir o time). Cards já marcados com os ids antigos (tag_sm_adulto,
+// tag_sm_kids, tag_sm_sports, tag_sm_intimates, tag_sm_teens) ficam com uma tag
+// "órfã" (não reconhecida mais pelo campo dedicado nem pelos filtros) — só
+// precisa reatribuir manualmente se algum card real já tinha sido marcado.
 const SUBMARCA_TAGS = [
-  {id:'tag_sm_adulto',    label:'Hering Adulto',    pi:4},
-  {id:'tag_sm_kids',      label:'Hering Kids',      pi:4},
-  {id:'tag_sm_sports',    label:'Hering Sports',    pi:4},
-  {id:'tag_sm_intimates', label:'Hering Intimates', pi:4},
-  {id:'tag_sm_teens',     label:'Hering Teens',     pi:4},
+  {id:'tag_sm_adulto_com',    label:'Hering Adulto Comercial',    pi:4},
+  {id:'tag_sm_adulto_cad',    label:'Hering Adulto Cadastro',     pi:4},
+  {id:'tag_sm_kids_com',      label:'Hering Kids Comercial',      pi:4},
+  {id:'tag_sm_kids_cad',      label:'Hering Kids Cadastro',       pi:4},
+  {id:'tag_sm_sports_com',    label:'Hering Sports Comercial',    pi:4},
+  {id:'tag_sm_sports_cad',    label:'Hering Sports Cadastro',     pi:4},
+  {id:'tag_sm_intimates_com', label:'Hering Intimates Comercial', pi:4},
+  {id:'tag_sm_intimates_cad', label:'Hering Intimates Cadastro',  pi:4},
+  {id:'tag_sm_teen_com',      label:'Hering Teen Comercial',      pi:4},
+  {id:'tag_sm_teen_cad',      label:'Hering Teen Cadastro',       pi:4},
 ];
 function _submarcaIsVisivel(tagId){ return submarcasVisiveis[tagId]!==false; }
 
@@ -7681,7 +7699,7 @@ function applyFilters(){
     tag:document.getElementById('f-tag').value,
     tamanho:document.getElementById('f-tamanho')?.value||'',
     // submarca é multi-seleção (array) — não vem de um <select> de valor único,
-    // por isso preserva o que já estava lá (gerenciado por setSubmarcaQuickFilter/
+    // por isso preserva o que já estava lá (gerenciado por toggleSubmarcaDropdownItem/
     // setSubmarcaFromDrawer). Chamar applyFilters() por causa de outro filtro
     // (dono, tag, prazo...) não pode apagar a seleção de submarca.
     submarca:activeFilters.submarca||[],
@@ -9297,33 +9315,60 @@ function _populateSubmarcaFilterSelect(){
   sel.innerHTML='<option value="">🏷️ Qualquer submarca</option>'+visiveis.map(st=>`<option value="${st.id}">${esc(st.label)}</option>`).join('');
   sel.value=visiveis.some(st=>st.id===cur)?cur:'';
 }
-// Botões de atalho no topo do board (acima da toolbar) — mesmo estado do
-// filtro do drawer (#f-submarca + activeFilters.submarca), só um jeito mais
-// rápido de aplicar sem abrir Filtros. Realça os botões das submarcas ativas
-// — suporta mais de uma marca marcada ao mesmo tempo (pedido direto).
+// Menu suspenso "🏷️ Submarcas ▾" no header — mesmo estado do filtro do
+// drawer (#f-submarca + activeFilters.submarca), só um jeito mais rápido de
+// aplicar sem abrir Filtros. Virou dropdown (em vez de uma fileira de botões)
+// porque com as 10 submarcas (5 marcas × Comercial/Cadastro, pedido direto)
+// uma fileira de pílulas não cabe mais no header de jeito nenhum. Preserva o
+// estado "aberto" entre re-renders (senão cada clique num checkbox fechava o
+// próprio menu, já que innerHTML é reconstruído do zero a cada render).
 function renderSubmarcaQuickFilters(){
   const wrap=document.getElementById('submarca-quickfilters'); if(!wrap) return;
   const visiveis=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id));
   if(!submarcaAtivo || !visiveis.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
   wrap.style.display='flex';
+  const wasOpen = document.getElementById('submarca-dd-panel')?.classList.contains('open');
   const cur=activeFilters.submarca||[];
-  wrap.innerHTML = `<button class="hd-filter-btn${cur.length?'':' active'}" onclick="setSubmarcaQuickFilter('')">Todas</button>`
-    + visiveis.map(st=>`<button class="hd-filter-btn${cur.includes(st.id)?' active':''}" onclick="setSubmarcaQuickFilter('${st.id}')">${esc(st.label)}</button>`).join('');
+  const label = cur.length ? `🏷️ Submarcas (${cur.length}) ▾` : '🏷️ Submarcas ▾';
+  wrap.innerHTML = `
+    <button type="button" class="hd-filter-btn${cur.length?' active':''}" id="submarca-dd-trigger" onclick="toggleSubmarcaDropdown(event)">${esc(label)}</button>
+    <div id="submarca-dd-panel" class="squad-switcher-dd" style="max-height:360px;overflow-y:auto;">
+      <label class="squad-switcher-item" style="cursor:pointer;">
+        <input type="checkbox" ${cur.length?'':'checked'} onchange="setSubmarcaDropdownTodos()" style="margin-right:6px;accent-color:var(--teal);"> Todos
+      </label>
+      <div style="border-top:1px solid var(--glass-b);margin:4px 2px;"></div>
+      ${visiveis.map(st=>`<label class="squad-switcher-item" style="cursor:pointer;">
+        <input type="checkbox" ${cur.includes(st.id)?'checked':''} onchange="toggleSubmarcaDropdownItem('${st.id}')" style="margin-right:6px;accent-color:var(--teal);"> ${esc(st.label)}
+      </label>`).join('')}
+    </div>`;
+  if(wasOpen) document.getElementById('submarca-dd-panel')?.classList.add('open');
 }
-// Clique num botão de submarca ALTERNA ele na seleção (multi-select) — clicar
-// numa marca já marcada desmarca só ela, as outras continuam. "Todas" limpa
-// tudo de uma vez. Sincroniza o <select> do drawer só quando dá pra
-// representar em valor único (0 ou 1 selecionada); com 2+ o select volta pro
-// "Qualquer submarca" (não existe seleção múltipla nativa nesse controle).
-function setSubmarcaQuickFilter(tagId){
-  if(!tagId){
-    activeFilters.submarca=[];
-  } else {
-    const arr=(activeFilters.submarca||[]).slice();
-    const idx=arr.indexOf(tagId);
-    if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
-    activeFilters.submarca=arr;
-  }
+function toggleSubmarcaDropdown(e){
+  e.stopPropagation();
+  const panel=document.getElementById('submarca-dd-panel'); if(!panel) return;
+  panel.classList.toggle('open');
+}
+// "Todos" limpa a seleção inteira (mesmo significado de antes: array vazio =
+// sem filtro = mostra tudo). Marcar uma submarca específica desmarca "Todos"
+// sozinho (são estados mutuamente exclusivos — ver render acima, o checkbox
+// "Todos" só aparece marcado quando cur.length===0).
+function setSubmarcaDropdownTodos(){
+  activeFilters.submarca=[];
+  const f=document.getElementById('f-submarca'); if(f) f.value='';
+  _colRenderLimit={};
+  renderSubmarcaQuickFilters();
+  renderBoard();
+}
+// Marcar/desmarcar uma submarca no menu — multi-seleção (marca quantas
+// quiser, ex.: "Hering Kids Comercial" + "Hering Teen Cadastro" juntas).
+// Sincroniza o <select> do drawer só quando dá pra representar em valor
+// único (0 ou 1 selecionada); com 2+ o select volta pro "Qualquer submarca"
+// (não existe seleção múltipla nativa nesse controle).
+function toggleSubmarcaDropdownItem(tagId){
+  const arr=(activeFilters.submarca||[]).slice();
+  const idx=arr.indexOf(tagId);
+  if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
+  activeFilters.submarca=arr;
   const f=document.getElementById('f-submarca');
   if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
   _colRenderLimit={};
@@ -9332,7 +9377,7 @@ function setSubmarcaQuickFilter(tagId){
 }
 // Select do drawer de Filtros: escolha única, substitui a seleção inteira
 // (mesmo padrão de antes de existir multi-seleção). Pra marcar mais de uma
-// submarca de uma vez, usar os botões rápidos do header (setSubmarcaQuickFilter).
+// submarca de uma vez, usar o menu 🏷️ Submarcas do header (toggleSubmarcaDropdownItem).
 function setSubmarcaFromDrawer(){
   const v=document.getElementById('f-submarca')?.value||'';
   activeFilters.submarca = v ? [v] : [];
@@ -14949,7 +14994,7 @@ const HELP_CONTENT = {
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
-    { icon:'⏱', title:'Relatório Tempo por Tag', text:'Clique em ⏱ Tempo por tag na toolbar para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
+    { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
@@ -15003,7 +15048,7 @@ const HELP_CONTENT = {
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'🎬', title:'Ficha de Criativo', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha de Criativo neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações), e um painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado.\n\nDá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas — cada card escolhe uma lista, e o painel filtra por ela. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
-    { icon:'🏷️', title:'Submarca (marca do produto)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 5 opções fixas: Hering Adulto, Hering Kids, Hering Sports, Hering Intimates e Hering Teens.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade por marca: ainda em Config → Tags, cada uma das 5 marcas tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e dos filtros (sem apagar o que já foi marcado nos cards antigos).\n\nFiltros rápidos: no topo do board (mesma linha do nome da squad e dos avatares online) aparecem botões de atalho — um por marca visível, mais "Todas" — que filtram o board na hora, sem precisar abrir o drawer de Filtros. Dá pra marcar mais de uma marca ao mesmo tempo (clique alternando cada botão).' },
+    { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: no topo do board (mesma linha do nome da squad e dos avatares online) tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },

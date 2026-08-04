@@ -527,6 +527,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.259-dev — 2026-08-04
+Pedido direto: no squad Site Hering, cada marca tem dois times atuando
+(Comercial e Cadastro) — as 5 tags de Submarca viraram 10 (cada marca
+dividida em Comercial/Cadastro: Adulto, Kids, Sports, Intimates, Teen).
+Cards já marcados com os 5 ids antigos (`tag_sm_adulto`, `tag_sm_kids`,
+`tag_sm_sports`, `tag_sm_intimates`, `tag_sm_teens`) ficam órfãos —
+precisam reatribuir manualmente se algum já tiver sido usado de
+verdade (a feature só foi pra prod ontem, então é pouco provável).
+
+Com 10 opções + "Todos", a fileira de botões no header não cabia mais
+de jeito nenhum (já quase quebrou com só 6 — ver hotfix v8.30.203).
+Trocado por um menu suspenso "🏷️ Submarcas ▾" (mesmo padrão visual/JS
+do seletor de squad): abre um checkbox por opção visível + "Todos",
+multi-seleção, mostra quantas estão marcadas no próprio botão (ex.:
+"🏷️ Submarcas (2) ▾"). Fecha ao clicar fora ou Esc.
+
+Também pedido direto: `⏱ Relatórios de Tempo` saiu da toolbar (que
+estava lotada) e agora é acessado de dentro de `📊 Dados do Board`
+(botão no topo do painel, fecha um modal e abre o outro).
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador (abrir squad `site`, testar o menu de Submarcas e
+o novo caminho do Relatório de Tempo) ainda pendente antes de
+promover pra prod.
+
 ### v8.30.258-dev — 2026-08-04
 **Hotfix**: a CSS do PR #147 (filtros rápidos de submarca não quebrarem
 linha) quebrou o header inteiro em produção — reportado ao vivo pelo
