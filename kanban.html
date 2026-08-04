@@ -4377,7 +4377,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.211</div>
+<div class="version">v8.30.212</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13671,6 +13671,15 @@ function saveAgilCfg(){
     fbSet(FB+'/columns', merged);
     // Persiste os IDs de colunas excluídas pra elas não voltarem em outro device/reload
     fbSet(FB+'/deleted_cols', Array.from(_deletedColIds));
+    // BUG REAL corrigido (2026-08-04): delColumn() reatribui c.col dos
+    // cards da coluna excluída só localmente -- precisa entrar no MESMO
+    // save, senão o card volta com .col órfão (coluna já excluída) pra
+    // qualquer outra aba/reload e some do board (nenhuma coluna bate mais
+    // com aquele .col). Ver comentário grande em delColumn().
+    if(_colDeleteReassignedCardIds.size){
+      fbSaveAll(undefined, Array.from(_colDeleteReassignedCardIds));
+      _colDeleteReassignedCardIds.clear();
+    }
     applyAgilCfg();
     renderBoard();
     closeOv('cfg-ov');
@@ -13678,6 +13687,10 @@ function saveAgilCfg(){
   }).catch(()=>{
     // Fallback: se a leitura falhar, salva como está (comportamento anterior)
     fbSet(FB+'/columns',columns);
+    if(_colDeleteReassignedCardIds.size){
+      fbSaveAll(undefined, Array.from(_colDeleteReassignedCardIds));
+      _colDeleteReassignedCardIds.clear();
+    }
     applyAgilCfg();
     renderBoard();
     closeOv('cfg-ov');
@@ -13712,7 +13725,29 @@ function renderColEditor(){
 }
 function addColumn(){ const name=document.getElementById('new-col-name').value.trim(); if(!name) return; const color=document.getElementById('new-col-color').value; columns.push({id:'col_'+Date.now(),name,color,collapsible:false}); document.getElementById('new-col-name').value=''; renderColEditor(); }
 let _deletedColIds = new Set(); // IDs de colunas excluídas de propósito (não devem voltar no merge)
-async function delColumn(i){ if(columns.length<=1) return; if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return; const oldId=columns[i].id; _deletedColIds.add(oldId); cards.forEach(c=>{ if(c.col===oldId) c.col=columns[0].id; }); columns.splice(i,1); renderColEditor(); }
+// Cards reatribuídos por delColumn() nesta sessão de edição, ainda não
+// persistidos — saveAgilCfg() precisa salvá-los junto (ver bug real
+// 2026-08-04 abaixo).
+let _colDeleteReassignedCardIds = new Set();
+async function delColumn(i){
+  if(columns.length<=1) return;
+  if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return;
+  const oldId=columns[i].id;
+  _deletedColIds.add(oldId);
+  // BUG REAL (2026-08-04, achado em revisão): isto reatribui c.col só
+  // localmente. saveAgilCfg() (único caminho de save da edição de
+  // colunas) salva `columns`/`agil_cfg`/`tags`, mas NUNCA `cards` — sem
+  // marcar esses cards como precisando salvar, o card.col reatribuído
+  // ficava só na memória desta aba: no próximo reload (ou pra qualquer
+  // outro device/aba), o card voltava com o .col da coluna JÁ EXCLUÍDA
+  // (que não existe mais em `columns`) — e como renderNormal() filtra
+  // cards por `c.col===col.id` pra cada coluna, um card com .col órfão
+  // não bate com NENHUMA coluna e simplesmente some do board (sem
+  // arquivar, sem erro — só fica invisível, ainda intacto em /cards).
+  cards.forEach(c=>{ if(c.col===oldId){ c.col=columns[0].id; _colDeleteReassignedCardIds.add(c.id); } });
+  columns.splice(i,1);
+  renderColEditor();
+}
 function moveCol(i,dir){ const ni=i+dir; if(ni<0||ni>=columns.length) return; [columns[i],columns[ni]]=[columns[ni],columns[i]]; renderColEditor(); }
 
 

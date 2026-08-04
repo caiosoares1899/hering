@@ -18,6 +18,50 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.212 — 2026-08-04 · revisão de código: excluir/esconder card
+Pedido direto (depois de uma sequência de bugs reais de card sumindo):
+revisão focada em todo caminho que exclui ou esconde card, mais uma
+passada de otimização.
+
+**Achado e corrigido — excluir coluna perdia cards.** `delColumn()`
+reatribui o `.col` dos cards da coluna excluída pra primeira coluna,
+mas só na memória local — `saveAgilCfg()` (único caminho de save da
+edição de colunas) salvava `columns`/`agil_cfg`/`tags`, nunca `cards`.
+Resultado: depois de excluir uma coluna com cards e clicar Salvar, a
+coluna sumia de verdade de `/columns`, mas os cards que estavam nela
+voltavam com o `.col` antigo (órfão) em qualquer outro reload/aba — e
+como o board filtra cards por coluna (`c.col===col.id`), um card com
+`.col` órfão não bate com NENHUMA coluna e simplesmente some (sem
+arquivar, sem erro, ainda intacto em `/cards`). Afetava board normal E
+os modos de raia (pessoa/tipo/subtime), que usam o mesmo filtro por
+coluna. Fix: `saveAgilCfg()` agora salva os cards reatribuídos
+(`fbSaveAll`) no mesmo save que persiste a exclusão da coluna.
+
+**Auditoria dos demais caminhos de exclusão** (`deleteCard`,
+`bulkDeleteSelected`, `ctxDelete`, `deleteSelectedArchived`,
+`deleteSelectedOldCards`, `purgeOldArchived`, `excluirArquivado`,
+Agente Ágil `excluir_card`) — todos já passam `touchedIds` corretos
+(array vazio pra exclusão pura, já que nenhum card sobrevivente muda de
+conteúdo) e agora se beneficiam dos fixes de listener das versões
+anteriores (v8.30.209/210/211). Nenhum problema novo encontrado nesses
+caminhos.
+
+**Filtros e raia** (`passesFilter`, `renderRaiaOwner/Tag/Subteam`) —
+revisados, sem bug de esconder card incorreto encontrado (raia sem
+responsável/tag tem lane dedicada, não descarta).
+
+**Otimização — já adequada, sem mudança necessária:** o cap de 80
+cards renderizados por coluna (com "Ver mais") já limita o custo de
+render do DOM mesmo em squads com milhares de cards. O padrão de 1
+`window._get()` por card em mudanças estruturais (cards_index/
+cards_updated_at) é uma troca deliberada da arquitetura de banda desta
+sessão — já mitigado pro autor da escrita (que popula o espelho local
+direto, sem esperar eco) e aceitável pros demais clientes (custo só
+quando algo de fato muda). Arquitetura de `/cards` como array indexado
+por posição (em vez de objeto chaveado por id) continua sendo uma
+dívida técnica documentada (`fbSaveCard`) — funcional hoje, mas seria a
+próxima fronteira de uma reescrita maior, não um fix pontual.
+
 ### v8.30.211 — 2026-08-04 · hotfix CRÍTICO: card virando outro card + F5 cortando o salvamento
 Dois bugs a mais, achados a partir de um relato bem específico: um card
 "Atualizar" (tag Hering Kids Comercial), importado na coluna Upload,
@@ -815,6 +859,14 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.271-dev — 2026-08-04
+Mesma revisão de código da entrada `kanban.html v8.30.212` acima —
+`delColumn()`/`saveAgilCfg()` agora persistem os cards reatribuídos ao
+excluir uma coluna (antes só reatribuía localmente, e o card sumia do
+board em qualquer reload). Auditoria dos demais caminhos de exclusão e
+dos filtros/raia sem novos problemas encontrados. Aplicado nos dois
+arquivos ao mesmo tempo.
 
 ### v8.30.270-dev — 2026-08-04
 Mesmo hotfix CRÍTICO da entrada `kanban.html v8.30.211` acima: (1) o fix
