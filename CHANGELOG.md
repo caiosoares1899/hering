@@ -509,6 +509,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.257-dev — 2026-08-04
+Atualiza a Central de Ajuda (❓), que estava defasada em relação às
+últimas entregas — sem nenhuma dessas cinco coisas documentadas:
+
+- **Badge de impedimento no card** — o 🚧 ao lado do 🎯 de OKR e as
+  bordas mais grossas (dica nova em "cards").
+- **Trava de edição concorrente** — banner + modo leitura quando outra
+  pessoa já está editando o mesmo card (dica nova em "cards").
+- **Prazo e Submarca obrigatórios** — inclui o botão "Sem prazo
+  definido" como escape hatch (dica nova em "cards").
+- **Submarca (marca do produto)** — toggle por squad, visibilidade por
+  marca, filtros rápidos no header, multi-seleção (dica nova em
+  "config", no mesmo espírito da dica já existente de "Tamanho").
+- **Importar do Trello** — dica atualizada com as duas entregas mais
+  recentes: aplicar uma tag a todos os cards do import, e a tag
+  automática "👤 Nome" pra membro sem match no board.
+
+Só conteúdo de ajuda (`HELP_CONTENT`), nenhuma mudança de
+comportamento. Validado por leitura de código + checagem de sintaxe
+(`node --check`) — este arquivo não tem suíte automatizada (ver
+`CLAUDE.md`); validação manual no navegador ainda pendente antes de
+promover pra prod.
+
 ### v8.30.256-dev — 2026-08-04
 Pedido direto: dois campos passam a ser obrigatórios ao salvar um card
 (criação E edição, em qualquer squad).
