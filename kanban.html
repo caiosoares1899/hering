@@ -4375,7 +4375,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.208</div>
+<div class="version">v8.30.209</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6348,8 +6348,39 @@ let _cardsSyncDebounce = null;
     window._onChildChanged(_idxRef, snap=>{
       _dbgTrack('/cards_index:child_changed(live)', snap.val());
       const oldKey = _liveCardsIndexById[snap.key];
-      _liveCardsIndexById[snap.key] = snap.val();
-      if(oldKey!=null && oldKey!==snap.val()) delete _cardsByKey[oldKey];
+      const newKey = snap.val();
+      _liveCardsIndexById[snap.key] = newKey;
+      if(oldKey!=null && oldKey!==newKey){
+        // BUG DE PRODUÇÃO GERAL (2026-08-04, "sumiu um card" fora de
+        // import — várias squads reportaram): cards_index[id] muda de
+        // posição toda vez que QUALQUER fbSaveAll() estrutural reordena o
+        // array /cards (criar, arquivar, excluir, duplicar, drag —
+        // qualquer coisa que insere/remove um card em posição != o fim).
+        // Isso dispara child_changed aqui pra TODO card cuja posição
+        // deslocou, mesmo os que ninguém tocou de verdade. Antes: só
+        // apagava _cardsByKey[oldKey] e esperava um child_changed em
+        // /cards_updated_at pra repopular na newKey — mas com touchedIds
+        // (ver fbSaveAll), cards_updated_at NÃO muda de valor pra cards
+        // não tocados, e o Firebase não dispara child_changed pra um
+        // valor idêntico ao que já tinha -- então a newKey nunca era
+        // populada. Resultado: card válido, intacto no Firebase, mas
+        // PERMANENTEMENTE ausente do board de qualquer aba que já estava
+        // aberta (só um F5 recarregava certo, via _twoPhaseCardsLoad, que
+        // não depende desse listener incremental).
+        //
+        // Fix: já temos o conteúdo do card em _cardsByKey[oldKey] (nada
+        // nele mudou, só a posição) -- move pra newKey em vez de só
+        // apagar. Se o conteúdo TAMBÉM mudou, o child_changed de
+        // /cards_updated_at (que ainda dispara nesse caso) sobrescreve
+        // depois com a versão fresca -- idempotente, sem risco de duplicar.
+        if(_cardsByKey[oldKey]){
+          _cardsByKey[newKey] = _cardsByKey[oldKey];
+          delete _cardsByKey[oldKey];
+          _scheduleCardsSync();
+        } else {
+          delete _cardsByKey[oldKey];
+        }
+      }
     });
     window._onChildRemoved(_idxRef, snap=>{
       _dbgTrack('/cards_index:child_removed(live)', snap.val());
