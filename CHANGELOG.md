@@ -527,6 +527,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.260-dev — 2026-08-04
+Corrige dois problemas reportados ao vivo no menu 🏷️ Submarcas
+(v8.30.259-dev, ainda não tinha ido pra prod):
+
+- **Não abria.** O painel usava `position:absolute` dentro de
+  `#submarca-quickfilters`, que tinha `overflow-x:auto` — o overflow
+  cortava o painel inteiro (altura efetiva zero), então clicar no
+  botão parecia não fazer nada. Trocado pro mesmo padrão já usado
+  pelo menu de Ordenação (↕) nesta mesma toolbar: `position:fixed`
+  calculado via `getBoundingClientRect()` do botão, que não sofre
+  corte por overflow de nenhum ancestral.
+- **Local errado.** Pedido direto: o menu sai do header (onde tinha
+  ido em v8.30.259-dev) e volta pra toolbar, logo depois do botão
+  Filtros — mesma linha de Raia, Ordenação, Selecionar etc.
+
+Sem mudança de comportamento além da posição/mecanismo de abertura —
+a lógica de seleção múltipla e o estado (`activeFilters.submarca`)
+continuam os mesmos.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.259-dev — 2026-08-04
 Pedido direto: no squad Site Hering, cada marca tem dois times atuando
 (Comercial e Cadastro) — as 5 tags de Submarca viraram 10 (cada marca

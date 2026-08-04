@@ -144,9 +144,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-l{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .hd-title{font-family:"Syne",sans-serif;font-size:17px;font-weight:700;}
 .hd-badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
-.hd-filter-btn{font-size:10px;white-space:nowrap;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 10px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;flex-shrink:0;}
-.hd-filter-btn:hover{background:var(--glass-h);border-color:var(--accent);color:var(--txt);}
-.hd-filter-btn.active{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;font-weight:600;}
 .squad-switcher-wrap{position:relative;display:inline-flex;align-items:center;gap:3px;}
 .squad-switcher-caret{cursor:pointer;font-size:9px;color:var(--txt3);user-select:none;}
 .squad-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;max-width:280px;background:rgb(10,26,44);border:1px solid var(--accent,#38b6ff);border-radius:10px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column;gap:2px;}
@@ -157,12 +154,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .squad-switcher-tag{font-size:10px;color:var(--txt3);font-weight:400;margin-left:auto;}
 .squad-switcher-msg{padding:10px;font-size:12px;color:var(--txt2);}
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
-/* Filtros rápidos de submarca nunca quebram linha (cada pílula fica inteira);
-   quando o espaço aperta, é a barra de avatares online (.hd-btns, flex-shrink
-   normal) que cede — não os filtros (flex-shrink:0). Se mesmo assim não
-   couber tudo, rola horizontalmente em vez de quebrar. */
-#submarca-quickfilters{scrollbar-width:none;}
-#submarca-quickfilters::-webkit-scrollbar{display:none;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{background:var(--glass-h);border-color:var(--accent);}
 .btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
@@ -2314,16 +2305,6 @@ input[type="date"]{-moz-appearance:textfield;}
     </span>
 
   </div>
-  <!-- Filtro rápido de submarca — só aparece com submarcaAtivo (squad "site"). Com as 5
-       marcas viradas em 10 (cada uma dividida em Comercial/Cadastro, pedido direto), uma
-       fileira de botões não cabe mais (eram só 6 antes e já quase quebrou o header — ver
-       hotfix v8.30.203/258-dev). Virou um único botão "🏷️ Submarcas ▾" que abre um menu
-       suspenso com checkbox pra cada uma das 10 + "Todos" (mesmo padrão visual/JS do
-       squad-switcher-dd — position:relative aqui, position:absolute no painel). Reaproveita
-       o MESMO estado (activeFilters.submarca, array — ver toggleSubmarcaDropdownItem).
-       flex:1 continua fazendo esta div crescer e centralizar o botão no meio do header;
-       overflow-x:auto é rede de segurança (não deveria ser necessário com só 1 botão). -->
-  <div id="submarca-quickfilters" style="display:none;flex:1;justify-content:center;gap:5px;flex-wrap:nowrap;overflow-x:auto;min-width:0;position:relative;"></div>
   <div class="hd-btns">
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -2434,6 +2415,17 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
   <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
+  <!-- Menu suspenso de Submarcas — só aparece com submarcaAtivo (squad "site"), pedido
+       direto pra ficar na toolbar, logo depois de Filtros (não mais no header — lá com
+       10 opções não coube nem como fileira de botões nem como dropdown ancorado por
+       position:absolute, porque o pai tinha overflow-x:auto e cortava o painel). Usa o
+       MESMO padrão do menu de Ordenação (position:fixed calculado por
+       getBoundingClientRect(), não relative/absolute) — evita esse tipo de corte por
+       qualquer ancestral com overflow, e é um padrão já testado nesta mesma toolbar. -->
+  <div style="position:relative;display:inline-block;" id="submarca-dd-wrap">
+    <button class="btn btn-sm" onclick="toggleSubmarcaDropdown()" id="submarca-dd-trigger" style="display:none;">🏷️ Submarcas ▾</button>
+    <div id="submarca-dd-panel" style="display:none;background:rgba(6,26,46,.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;max-width:300px;max-height:360px;overflow-y:auto;z-index:500;padding:6px;"></div>
+  </div>
   <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
@@ -4356,7 +4348,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.259-dev</div>
+<div class="version">v8.30.260-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4668,10 +4660,7 @@ function toggleSquadSwitcher(e){
   loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){
-    document.getElementById('squad-switcher-dd')?.classList.remove('open');
-    document.getElementById('submarca-dd-panel')?.classList.remove('open');
-  }
+  if(e.key==='Escape'){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
 });
 
 // Fecha qualquer picker de reação ao clicar fora
@@ -4679,7 +4668,6 @@ document.addEventListener('click', (e)=>{
   if(!e.target.closest('.cmt-react')){ document.querySelectorAll('.rx-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.squad-switcher-wrap')){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
-  if(!e.target.closest('#submarca-quickfilters')){ document.getElementById('submarca-dd-panel')?.classList.remove('open'); }
 });
 // ── FIM SQUAD ────────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
@@ -9315,39 +9303,68 @@ function _populateSubmarcaFilterSelect(){
   sel.innerHTML='<option value="">🏷️ Qualquer submarca</option>'+visiveis.map(st=>`<option value="${st.id}">${esc(st.label)}</option>`).join('');
   sel.value=visiveis.some(st=>st.id===cur)?cur:'';
 }
-// Menu suspenso "🏷️ Submarcas ▾" no header — mesmo estado do filtro do
-// drawer (#f-submarca + activeFilters.submarca), só um jeito mais rápido de
-// aplicar sem abrir Filtros. Virou dropdown (em vez de uma fileira de botões)
-// porque com as 10 submarcas (5 marcas × Comercial/Cadastro, pedido direto)
-// uma fileira de pílulas não cabe mais no header de jeito nenhum. Preserva o
-// estado "aberto" entre re-renders (senão cada clique num checkbox fechava o
-// próprio menu, já que innerHTML é reconstruído do zero a cada render).
+// Menu suspenso "🏷️ Submarcas ▾" na toolbar (logo depois de Filtros, pedido
+// direto) — mesmo estado do filtro do drawer (#f-submarca +
+// activeFilters.submarca), só um jeito mais rápido de aplicar sem abrir
+// Filtros. É dropdown (não fileira de botões) porque com as 10 submarcas
+// (5 marcas × Comercial/Cadastro, pedido direto) uma fileira de pílulas não
+// cabia de jeito nenhum. Só reconstrói o CONTEÚDO do painel (innerHTML) —
+// nunca mexe em display/posição dele, que é controlado por
+// toggleSubmarcaDropdown()/closeSubmarcaDropdown(); senão um clique num
+// checkbox (que chama isto de novo pra atualizar os "checked") fecharia o
+// próprio menu a cada marcação.
 function renderSubmarcaQuickFilters(){
-  const wrap=document.getElementById('submarca-quickfilters'); if(!wrap) return;
+  const trigger=document.getElementById('submarca-dd-trigger');
+  const panel=document.getElementById('submarca-dd-panel');
+  if(!trigger||!panel) return;
   const visiveis=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id));
-  if(!submarcaAtivo || !visiveis.length){ wrap.style.display='none'; wrap.innerHTML=''; return; }
-  wrap.style.display='flex';
-  const wasOpen = document.getElementById('submarca-dd-panel')?.classList.contains('open');
+  if(!submarcaAtivo || !visiveis.length){
+    trigger.style.display='none';
+    closeSubmarcaDropdown();
+    return;
+  }
   const cur=activeFilters.submarca||[];
-  const label = cur.length ? `🏷️ Submarcas (${cur.length}) ▾` : '🏷️ Submarcas ▾';
-  wrap.innerHTML = `
-    <button type="button" class="hd-filter-btn${cur.length?' active':''}" id="submarca-dd-trigger" onclick="toggleSubmarcaDropdown(event)">${esc(label)}</button>
-    <div id="submarca-dd-panel" class="squad-switcher-dd" style="max-height:360px;overflow-y:auto;">
-      <label class="squad-switcher-item" style="cursor:pointer;">
-        <input type="checkbox" ${cur.length?'':'checked'} onchange="setSubmarcaDropdownTodos()" style="margin-right:6px;accent-color:var(--teal);"> Todos
-      </label>
-      <div style="border-top:1px solid var(--glass-b);margin:4px 2px;"></div>
-      ${visiveis.map(st=>`<label class="squad-switcher-item" style="cursor:pointer;">
-        <input type="checkbox" ${cur.includes(st.id)?'checked':''} onchange="toggleSubmarcaDropdownItem('${st.id}')" style="margin-right:6px;accent-color:var(--teal);"> ${esc(st.label)}
-      </label>`).join('')}
-    </div>`;
-  if(wasOpen) document.getElementById('submarca-dd-panel')?.classList.add('open');
+  trigger.style.display='';
+  trigger.textContent = cur.length ? `🏷️ Submarcas (${cur.length}) ▾` : '🏷️ Submarcas ▾';
+  trigger.style.color = cur.length ? 'var(--accent)' : '';
+  trigger.style.borderColor = cur.length ? 'var(--accent)' : '';
+  panel.innerHTML = `
+    <label style="display:flex;align-items:center;gap:6px;padding:8px 10px;font-size:12px;color:var(--txt2);cursor:pointer;border-radius:6px;">
+      <input type="checkbox" ${cur.length?'':'checked'} onchange="setSubmarcaDropdownTodos()" style="accent-color:var(--teal);"> Todos
+    </label>
+    <div style="border-top:1px solid var(--glass-b);margin:4px 2px;"></div>
+    ${visiveis.map(st=>`<label style="display:flex;align-items:center;gap:6px;padding:8px 10px;font-size:12px;color:var(--txt2);cursor:pointer;border-radius:6px;">
+      <input type="checkbox" ${cur.includes(st.id)?'checked':''} onchange="toggleSubmarcaDropdownItem('${st.id}')" style="accent-color:var(--teal);"> ${esc(st.label)}
+    </label>`).join('')}`;
 }
-function toggleSubmarcaDropdown(e){
-  e.stopPropagation();
-  const panel=document.getElementById('submarca-dd-panel'); if(!panel) return;
-  panel.classList.toggle('open');
+// Mesmo padrão do menu de Ordenação (toggleSortMenu/closeSortMenu) — position:fixed
+// calculado a partir do botão via getBoundingClientRect(), não position:absolute
+// relativo a um ancestral. Evita o bug do header (v8.30.259-dev): lá o painel usava
+// position:absolute dentro de um wrapper com overflow-x:auto, e o overflow cortava
+// o menu inteiro — parecia simplesmente "não abrir".
+function toggleSubmarcaDropdown(){
+  const panel=document.getElementById('submarca-dd-panel');
+  if(!panel) return;
+  const willShow = panel.style.display==='none' || panel.style.display==='';
+  if(willShow){
+    const btn=document.getElementById('submarca-dd-trigger');
+    const r=btn.getBoundingClientRect();
+    panel.style.position='fixed';
+    panel.style.top=(r.bottom+6)+'px';
+    panel.style.left=r.left+'px';
+  }
+  panel.style.display = willShow ? 'block' : 'none';
 }
+function closeSubmarcaDropdown(){
+  const panel=document.getElementById('submarca-dd-panel');
+  if(panel) panel.style.display='none';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#submarca-dd-wrap')) closeSubmarcaDropdown();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeSubmarcaDropdown();
+});
 // "Todos" limpa a seleção inteira (mesmo significado de antes: array vazio =
 // sem filtro = mostra tudo). Marcar uma submarca específica desmarca "Todos"
 // sozinho (são estados mutuamente exclusivos — ver render acima, o checkbox
@@ -9377,7 +9394,7 @@ function toggleSubmarcaDropdownItem(tagId){
 }
 // Select do drawer de Filtros: escolha única, substitui a seleção inteira
 // (mesmo padrão de antes de existir multi-seleção). Pra marcar mais de uma
-// submarca de uma vez, usar o menu 🏷️ Submarcas do header (toggleSubmarcaDropdownItem).
+// submarca de uma vez, usar o menu 🏷️ Submarcas da toolbar (toggleSubmarcaDropdownItem).
 function setSubmarcaFromDrawer(){
   const v=document.getElementById('f-submarca')?.value||'';
   activeFilters.submarca = v ? [v] : [];
@@ -15048,7 +15065,7 @@ const HELP_CONTENT = {
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'🎬', title:'Ficha de Criativo', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha de Criativo neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações), e um painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado.\n\nDá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas — cada card escolhe uma lista, e o painel filtra por ela. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
-    { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: no topo do board (mesma linha do nome da squad e dos avatares online) tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
+    { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
