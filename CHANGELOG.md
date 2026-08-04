@@ -406,6 +406,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.250-dev — 2026-08-03
+Import do Trello (`Configurações > Importar`) ganhou um select "Aplicar
+uma tag a todos os cards deste import" (opcional) — pedido direto por
+causa da migração do Site Hering: importando 4 boards do Trello pro
+mesmo squad (`site`), sem isso seria preciso marcar a submarca card por
+card depois do import. Lista as tags já existentes no squad (crie a tag
+antes de importar, em Configurações > Tags — inclusive combina direto
+com o campo de Submarca do release anterior). Aplicado em
+`doTrelloImport()`, depois do mapeamento de colunas/membros e antes de
+`cards.push(...)` — mesmo card final, só com a tag extra já no array
+`tags`.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.249-dev — 2026-08-03
 Decisão do time do Site Hering (depois da conversa sobre migrar do
 Trello): em vez de 3-5 squads separadas (1 por submarca), **um board
