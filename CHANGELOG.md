@@ -406,6 +406,42 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.249-dev — 2026-08-03
+Decisão do time do Site Hering (depois da conversa sobre migrar do
+Trello): em vez de 3-5 squads separadas (1 por submarca), **um board
+só** (squad `site`), usando subtimes + filtros — este release entrega a
+peça que faltava pra isso funcionar: um campo dedicado "Submarca".
+
+- **Campo "🏷️ Submarca" no card** — mesmo padrão de "👕 Tamanho"
+  (`SIZE_TAGS`): 5 tags de id fixo (`SUBMARCA_TAGS` — Hering
+  Adulto/Kids/Sports/Intimates/Teens), select exclusivo no modal
+  (`setCardSubmarca`, nunca 2 submarcas ao mesmo tempo), autosave ao
+  trocar.
+- **Toggle por squad** (`Configurações > Tags`, mesmo lugar de
+  Tamanho) — `submarcaAtivo`: desligado por padrão em toda squad, PO
+  ativa manualmente onde fizer sentido (squad `site`).
+- **Visibilidade individual por marca** (`submarcasVisiveis`) —
+  diferente de Tamanho (on/off pro recurso inteiro), aqui cada uma das
+  5 submarcas tem o próprio checkbox, todas ligadas por padrão; PO
+  desmarca as que não usa e elas somem do campo do card, do filtro do
+  drawer e dos botões rápidos — sem apagar a tag de cards que já usam
+  (mesma filosofia não-destrutiva de Tamanho/Ficha de Criativo).
+- **Filtros rápidos de submarca** — nova fileira de botões centralizada
+  acima da toolbar principal (só aparece com `submarcaAtivo`), um por
+  submarca visível + "Todas". Reaproveita o MESMO estado do filtro do
+  drawer (`#f-submarca` + `activeFilters.submarca`) — não é um filtro
+  paralelo, então filtrar por um dos dois jeitos mantém o outro em
+  sincronia (botão certo realçado mesmo se o filtro foi trocado pelo
+  drawer).
+
+Ativação pendente: o toggle nasce desligado em todas as squads,
+inclusive `site` — precisa ser ligado manualmente em Configurações >
+Tags depois do merge.
+
+Validado por leitura de código + checagem de sintaxe (`node --check`)
+— este arquivo não tem suíte automatizada (ver `CLAUDE.md`); validação
+manual no navegador ainda pendente antes de promover pra prod.
+
 ### v8.30.248-dev — 2026-08-03
 Dois pedidos do time do board (badges/bordas + trava de edição
 concorrente):
