@@ -4348,7 +4348,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.261-dev</div>
+<div class="version">v8.30.262-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18628,25 +18628,18 @@ document.querySelectorAll('.ov').forEach(ov=>{
 // ══ FIM AUTO-UPDATE ══
 
 
-// Fish & Bubbles
-(function(){
-  const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
-  const svgs=[
-    `<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>`,
-    `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
-    `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
-  ];
-  for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
-  for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
-  _applyFishBgVisibility();
-})();
 // Liga/desliga os peixinhos+bolhas do fundo — preferência pessoal (pedido
 // direto), salva por navegador (mesmo espírito das outras preferências
 // puramente visuais deste app, ex.: ordenação de coluna — não sincroniza
 // entre dispositivos, não é dado de squad). Sem UI nova na tela: o próprio
 // emoji 🐟 do título "Maré Digital" vira o botão (clique pra alternar).
 // Default continua ligado (comportamento de sempre) — só quem não curte
-// desliga.
+// desliga. Declarado ANTES da IIFE "Fish & Bubbles" abaixo, que chama
+// _applyFishBgVisibility() assim que cria os elementos — um `let` fica em
+// temporal dead zone até a linha de declaração rodar, então chamar a
+// função antes disso (com a declaração depois) estourava
+// "Cannot access '_fishBgOn' before initialization" e travava a página
+// inteira (nada depois desse ponto no mesmo <script> chegava a rodar).
 let _fishBgOn = safeLS.getItem('fish_bg_off')!=='1';
 function _applyFishBgVisibility(){
   const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
@@ -18659,6 +18652,18 @@ function toggleFishBackground(){
   _applyFishBgVisibility();
   showToast(_fishBgOn ? '🐟 Peixinhos de volta!' : '🐟 Peixinhos escondidos — clique no 🐟 de novo pra trazer de volta.');
 }
+// Fish & Bubbles
+(function(){
+  const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
+  const svgs=[
+    `<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>`,
+    `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
+    `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
+  ];
+  for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
+  for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
+  _applyFishBgVisibility();
+})();
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });
