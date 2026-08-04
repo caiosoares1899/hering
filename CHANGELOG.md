@@ -406,6 +406,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.251-dev — 2026-08-03
+Corrige feedback direto do time: os botões de filtro rápido de
+submarca (v8.30.249-dev) como fileira própria acima da toolbar
+quebrava o layout. Movidos pra dentro do header (`.hd`), na mesma
+linha do nome/seletor de squad e dos avatares online — novo
+`#submarca-quickfilters` como filho flex entre `.hd-l` e `.hd-btns`
+(`flex:1;justify-content:center`, com `min-width:0` pra poder encolher
+em vez de estourar a largura). Botões trocaram de `.btn.btn-sm`
+(tamanho de toolbar) pra uma classe nova e mais compacta
+(`.hd-filter-btn`), no mesmo peso visual dos outros elementos do
+header. Nenhuma mudança de comportamento — só posição/estilo.
+
 ### v8.30.250-dev — 2026-08-03
 Import do Trello (`Configurações > Importar`) ganhou um select "Aplicar
 uma tag a todos os cards deste import" (opcional) — pedido direto por
