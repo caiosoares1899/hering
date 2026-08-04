@@ -2774,6 +2774,37 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.94 · painel / painel-dev.html v2.95 · painel-dev — 2026-08-04
+Achado investigando um relatório real: 3h depois de promover o fix de
+banda do `kanban.html` (`fbSaveAll` com `touchedIds`, v8.30.201),
+`debugFallbackLog(2)` no squad "outlet-crm" mostrou 2 eventos NOVOS de
+`cache_desatualizado_demais` com `proporcao: 1` — ou seja, 100% dos 543
+cards ativos apareciam como "mudados" pra quem tinha acabado de abrir o
+board, não uma fração pequena (o padrão esperado de aba antiga).
+
+Causa: duas ferramentas de admin do Painel — **"Resolver todos os
+bloqueios"** (`resolveAllBlockers()`) e **"Zerar contagem de fluxo"**
+(`resetSquadFlow()`) — escrevem `/dados/cards` inteiro direto no
+Firebase, mas NUNCA tocavam `/dados/cards_updated_at`, o índice paralelo
+que `kanban.html` usa (desde o fix de banda) pra decidir, no
+carregamento em duas etapas, quais cards precisam ser rebaixados de
+novo. Sem atualizar esse índice:
+
+- Pra quem JÁ tinha esses cards em cache: o timestamp cacheado batia com
+  o remoto (que nunca mudava) — o board continuava mostrando o card
+  ANTIGO (ex.: ainda bloqueado, ou com o flow velho) silenciosamente,
+  até um fallback completo acontecer por outro motivo.
+- Pra quem tinha PARTE dos cards em cache (o caso real observado): como
+  o conteúdo real mudou mas o timestamp não, o cálculo de "quanto do
+  cache está desatualizado" ficava incoerente — plausível pra gerar
+  exatamente esse padrão de "100% precisa buscar de novo" reportado.
+
+**Fix:** as duas funções agora usam `update()` multi-path atômico
+(mesmo padrão do `fbSaveCard()` em `kanban.html`) — gravam `/cards`
+inteiro (igual antes) JUNTO com `/cards_updated_at/{id}` de cada card
+realmente tocado (chave com barra = caminho profundo, não substitui o
+nó inteiro, preserva os demais cards intactos).
+
 ### painel-dev.html v2.94 · painel-dev — 2026-07-31
 Correções irmãs de `kanban-dev.html v8.30.241-dev` (ver entrada acima
 pro contexto completo dos dois bugs de usuário externo reportados:
