@@ -18,6 +18,38 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.201 — 2026-08-04 · PR #146, #147, #148
+Promove pra prod tudo que estava acumulado no dev, a pedido direto do
+usuário ("pode subir tudo que tá pendente pro prod, já aprovei") — três
+entregas:
+
+- **PR #146** — corrige a causa raiz do consumo alto de banda (~1GB/dia
+  em `outlet-crm`/`outlet`): `fbSaveAll()` carimbava `updatedAt` novo em
+  todos os cards do squad a cada save estrutural, não só nos tocados
+  pela operação, invalidando de uma vez o cache local de qualquer outro
+  cliente com o board aberto e forçando fallback caro pra todo mundo.
+  Ganhou um segundo parâmetro (`touchedIds`) e todos os call sites do
+  arquivo foram convertidos pra passar a lista certa.
+- **PR #147** — dois ajustes nos filtros rápidos de submarca (squad
+  `site`, feedback direto do time): a fileira de pílulas parou de
+  quebrar linha quando não cabia tudo (agora é a barra de avatares
+  online que cede espaço primeiro) e passou a permitir marcar mais de
+  uma submarca ao mesmo tempo.
+- **PR #148** — import do Trello: membro sem match no board agora
+  ganha uma tag "👤 Nome" nos cards em que está vinculado (responsável
+  ou participante), em vez do vínculo simplesmente desaparecer —
+  facilita reatribuir em lote quando essa pessoa se cadastrar de
+  verdade no squad.
+
+Detalhes completos nas entradas `kanban-dev.html v8.30.253-dev` a
+`v8.30.255-dev` abaixo. `diff kanban.html kanban-dev.html` antes desta
+mudança mostrou só essas três entregas mais a string de versão/
+`VERSION_KEY` — promoção limpa.
+
+**Ressalva**: promovido a pedido explícito do usuário ("já aprovei").
+Checagem de sintaxe (`node --check`) passou limpa; este arquivo não tem
+suíte automatizada (ver `CLAUDE.md`).
+
 ### v8.30.200 — 2026-08-03 · PR #139, #140, #141, #142, #143, #144
 Promove pra prod tudo que estava acumulado no dev — seis entregas, a
 pedido direto do usuário:
