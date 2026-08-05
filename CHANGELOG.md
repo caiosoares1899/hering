@@ -992,6 +992,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.302-dev — 2026-08-05
+Bug real, visto num link vindo do Vimeo: `.../file.mp4 (1080p).mp4?loc=...`
+tem um espaço cru no meio da URL — a sintaxe de link `[texto](url)` do app
+exigia que a URL não tivesse espaço (`[^\s)]+`), então o parser truncava
+bem ali e sobrava o resto pendurado como texto solto do lado do link
+("quebrado"). Duas frentes:
+
+- **Campos de texto (hiperlink)**: nova `_sanitizeLinkUrl()` troca espaço/
+  parênteses crus por `%20`/`%28`/`%29` (sem re-encodar tudo, pra não dar
+  `%25` duplo em URL que já vem com `%XX` de verdade) — aplicada no botão
+  🔗 de inserir link (Descrição/Comentários), no campo de Anexos e no campo
+  do Milanote. `renderMd()`/`_mdToExportHtml()` também ficaram mais
+  tolerantes (aceitam espaço cru na URL, só exigem não ter `(`/`)` cru) —
+  cobre links já digitados à mão sem passar pelo botão.
+- **Preview de Vimeo nos Anexos**: novo botão 🎬 por link reconhecido como
+  Vimeo — embeda um `<video>` direto pros links de arquivo
+  (`player.vimeo.com/progressive_redirect/...`, que É o binário do vídeo,
+  não dá pra iframe) ou um `<iframe>` do player pros links normais
+  (`vimeo.com/{id}`), mesmo padrão lazy-load do preview do Milanote.
+
 ### v8.30.301-dev — 2026-08-05
 Reclamação real via WhatsApp: "já aconteceu 2 vezes de alguém esquecer
 o card aberto, daí mostra que tá editando pra mim, mas na vdd não tá,

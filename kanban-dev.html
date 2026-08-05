@@ -4718,7 +4718,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.301-dev</div>
+<div class="version">v8.30.302-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15013,9 +15013,13 @@ function renderMd(txt){
   txt = txt.replace(/\[\[CARD:([^:]+):([^\]]+)\]\]/g, function(m, id, title){
     return '<span class="mention-card" data-cid="'+id.replace(/"/g,'&quot;')+'" onclick="openCardMention(this)" title="Abrir card">📎 '+title+'</span>';
   });
-  // Links nomeados: [texto](url) → <a> com o texto visível (estilo Word)
-  txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function(m, label, url){
-    return '<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+esc(url)+'">'+esc(label)+'</a>';
+  // Links nomeados: [texto](url) → <a> com o texto visível (estilo Word).
+  // URL aceita espaço cru (não só [^\s)]) — link real visto vindo do Vimeo
+  // tinha espaço sem escapar no meio (".../file.mp4 (1080p).mp4?loc=...");
+  // com [^\s)] o parser truncava a URL bem ali, sobrando o resto como texto
+  // solto do lado do link. Só exige não ter '(' / ')' cru (delimitam o fim).
+  txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^()]+)\)/g, function(m, label, url){
+    return '<a href="'+esc(url.trim())+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+esc(url.trim())+'">'+esc(label)+'</a>';
   });
   // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
   // Evita mexer em URLs que já estão dentro de atributos HTML (href/src/onclick) já gerados.
@@ -20652,8 +20656,7 @@ async function _fmtText(taId, type, arg){
     // Pede a URL; o texto visível é a seleção (ou pergunta também)
     let url=await uiPrompt('URL do link:', 'https://',{title:'🔗 Inserir link',placeholder:'https://...'});
     if(url===null) return;
-    url=url.trim(); if(!url) return;
-    if(!/^https?:\/\//i.test(url)) url='https://'+url.replace(/^\/+/,'');
+    url=_sanitizeLinkUrl(url); if(!url) return;
     let label=sel;
     if(!label){ label=await uiPrompt('Texto do link (deixe vazio para mostrar a URL):','',{title:'🔗 Nome do link',placeholder:'Ex.: Board do Bolão'})||url; }
     const md='['+label+']('+url+')';
@@ -20743,7 +20746,7 @@ function _mdToExportHtml(txt){
     .replace(/\{cor:(#[0-9a-fA-F]{3,6}|[a-z]+)\|(.+?)\}/g,'<span style="color:$1;">$2</span>')
     .replace(/`(.+?)`/g,'<code>$1</code>')
     .replace(/\[\[CARD:[^:]+:([^\]]+)\]\]/g,'$1')
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2">$1</a>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^()]+)\)/g,'<a href="$2">$1</a>')
     .replace(/^[\-\*] (.+)$/gm,'<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/gs, m=>'<ul>'+m+'</ul>')
     .replace(/\n/g,'<br>');
@@ -20763,7 +20766,7 @@ async function copyFormatted(taId){
     .replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/__(.+?)__/g,'$1')
     .replace(/\{cor:[^|]+\|(.+?)\}/g,'$1')
     .replace(/\[\[CARD:[^:]+:([^\]]+)\]\]/g,'$1')
-    .replace(/\[([^\]]+)\]\(https?:\/\/[^\s)]+\)/g,'$1');
+    .replace(/\[([^\]]+)\]\(https?:\/\/[^()]+\)/g,'$1');
   try{
     if(navigator.clipboard && window.ClipboardItem){
       await navigator.clipboard.write([new ClipboardItem({
@@ -20934,7 +20937,35 @@ const KNOWN_SERVICES = [
   { pattern: /sharepoint\.com|onedrive\.live/i, icon:'☁', label:'Microsoft', color:'#0078D4'},
   { pattern: /canva\.com/i,           icon: '🎨', label: 'Canva',         color: '#00C4CC' },
   { pattern: /vercel\.com/i,          icon: '▲', label: 'Vercel',         color: '#fff' },
+  { pattern: /vimeo\.com/i,           icon: '🎬', label: 'Vimeo',         color: '#1AB7EA' },
 ];
+
+// Espaço e parênteses crus dentro de uma URL quebram a sintaxe [texto](url)
+// do app (o parser pra de ler a URL no primeiro espaço/parêntese) — link real
+// visto vindo do Vimeo (rendition de progressive_redirect) tinha um trecho tipo
+// ".../file.mp4 (1080p).mp4?loc=..." colado cru, que truncava o link bem no
+// meio. Troca só esses dois caracteres por %20/%28/%29 (não faz um encodeURI
+// geral pra não dar %25 duplo em URLs que já vêm com %XX de verdade).
+function _sanitizeLinkUrl(url){
+  url = (url||'').trim();
+  if(!url) return url;
+  if(!/^https?:\/\//i.test(url)) url = 'https://'+url.replace(/^\/+/,'');
+  return url.replace(/ /g,'%20').replace(/\(/g,'%28').replace(/\)/g,'%29');
+}
+
+// Reconhece links de Vimeo que dá pra embedar como preview: o player normal
+// (vimeo.com/{id} ou player.vimeo.com/video/{id}, via iframe) e o link direto
+// de arquivo .mp4 (player.vimeo.com/progressive_redirect/..., que É o vídeo
+// em si — dá pra tocar direto numa tag <video>, sem iframe nenhum).
+function _vimeoEmbedInfo(url){
+  if(!url) return null;
+  if(/player\.vimeo\.com\/progressive_redirect\//i.test(url)){
+    return { type:'video', src:url };
+  }
+  const m = url.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i);
+  if(m) return { type:'iframe', src:'https://player.vimeo.com/video/'+m[1] };
+  return null;
+}
 
 function getServiceInfo(url){
   // Refina o reconhecimento de links do Google Drive pelo formato da URL.
@@ -20971,9 +21002,8 @@ function attachToggleAdd(){
 
 function attachSave(){
   const inp = document.getElementById('m-attach-url'); if(!inp) return;
-  let url = inp.value.trim();
+  let url = _sanitizeLinkUrl(inp.value);
   if(!url) return;
-  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
   if(!card) return;
   if(!card.links) card.links=[];
@@ -21073,10 +21103,50 @@ function renderAttachList(links){
     rmBtn.textContent = '✕';
     rmBtn.onclick = ()=>attachRemove(lnk.id);
 
+    const vimeo = _vimeoEmbedInfo(lnk.url);
+    let previewBtn = null, embedBox = null;
+    if(vimeo){
+      previewBtn = document.createElement('button');
+      previewBtn.className = 'attach-open';
+      previewBtn.title = 'Ver preview aqui';
+      previewBtn.textContent = '🎬';
+      const embedId = 'attach-embed-'+lnk.id;
+      previewBtn.onclick = ()=>_toggleAttachEmbed(embedId, vimeo, previewBtn);
+      item.appendChild(previewBtn);
+    }
+
     item.appendChild(openBtn);
     item.appendChild(rmBtn);
     list.appendChild(item);
+
+    if(vimeo){
+      embedBox = document.createElement('div');
+      embedBox.id = 'attach-embed-'+lnk.id;
+      embedBox.style.display = 'none';
+      list.appendChild(embedBox);
+    }
   });
+}
+// Preview lazy (só carrega quando clicado) de um link do Vimeo direto na lista
+// de anexos — iframe pro player normal, <video> pro link direto de arquivo
+// (progressive_redirect), que não dá pra iframe porque é o binário do vídeo,
+// não uma página.
+function _toggleAttachEmbed(boxId, vimeo, btn){
+  const box = document.getElementById(boxId); if(!box) return;
+  const jaAberto = box.style.display !== 'none' && box.innerHTML;
+  if(jaAberto){
+    box.style.display = 'none';
+    box.innerHTML = '';
+    if(btn) btn.textContent = '🎬';
+    return;
+  }
+  if(vimeo.type === 'video'){
+    box.innerHTML = `<video src="${esc(vimeo.src)}" controls preload="metadata" style="width:100%;max-height:360px;border-radius:8px;border:1px solid rgba(56,182,255,.15);background:#000;display:block;margin-top:4px;"></video>`;
+  } else {
+    box.innerHTML = `<iframe src="${esc(vimeo.src)}" width="100%" height="280" frameborder="0" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" title="Preview do Vimeo" style="border:1px solid rgba(56,182,255,.15);border-radius:8px;background:#000;display:block;margin-top:4px;"></iframe>`;
+  }
+  box.style.display = 'block';
+  if(btn) btn.textContent = '✖️';
 }
 
 function loadAttachments(card){
@@ -21142,9 +21212,8 @@ function toggleMilanotePreview(){
 
 function saveMilanoteLink(){
   const inp = document.getElementById('m-milanote-url'); if(!inp) return;
-  let url = inp.value.trim();
+  let url = _sanitizeLinkUrl(inp.value);
   if(!url) return;
-  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
   if(!card) return;
   card.milanoteLink = url;
