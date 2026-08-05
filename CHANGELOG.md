@@ -873,6 +873,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.275-dev — 2026-08-05
+Hotfix de acabamento do fix anterior (v8.30.274-dev): combinar
+Executor+Status num chip só não bastou — o print mostrou que ainda
+ficava tudo grudado. Causa raiz real: `margin-bottom` não tem efeito
+NENHUM em `<span>` comum (`display:inline`) — só a tag (`.card-tag`,
+que já tinha `display:inline-block` no CSS) respirava de verdade da
+linha de baixo; os badges de prioridade, risco, OKR, impedimento e o
+chip de executor eram `<span>` puro, então o `margin-bottom` que eu
+tinha acabado de adicionar no chip de executor era ignorado
+silenciosamente pelo navegador.
+
+- Todos os badges do topo do card agora têm `display:inline-block` +
+  `margin-bottom:4px` (mesmo valor da tag), garantindo espaço de
+  verdade entre linhas quando eles quebram — e antes do título.
+
 ### v8.30.274-dev — 2026-08-05
 Achado a partir de um print (cards fictícios de teste do Agente Ágil):
 com uma tag longa + prioridade + chip de Executor + chip de Status do
