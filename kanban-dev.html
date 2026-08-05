@@ -405,7 +405,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* card */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);}
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);margin-top:9px;}
+/* Selo "seu card" — pedido direto pra aparecer nos dois temas, não só
+   no claro (onde foi criado junto com o tingimento mais forte, ver
+   [data-theme="light"] .card.card-mine::before mais acima nesse
+   <style>, que sobrescreve cor/fundo do selo pro claro). */
+.card.card-mine::before{
+  content:"👤 seu card";
+  position:absolute;
+  top:-9px;
+  left:9px;
+  font-size:8.5px;
+  font-weight:700;
+  background:var(--accent);
+  color:#04182b;
+  padding:1px 7px;
+  border-radius:999px;
+  letter-spacing:.02em;
+  box-shadow:0 1px 3px rgba(0,0,0,.4);
+}
 /* Pulso do botão "💡 Meus cards" — glow suave (não blink literal, é gatilho
    conhecido de fotosensibilidade) pra achar seus cards no board sem precisar
    filtrar/esconder o resto. */
@@ -4589,7 +4607,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.286-dev</div>
+<div class="version">v8.30.287-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

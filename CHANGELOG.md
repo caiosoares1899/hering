@@ -906,6 +906,13 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.287-dev — 2026-08-05
+Feedback direto: "faltou criar o selo no modo escuro tb" — o selinho
+"👤 seu card" (v8.30.286-dev) só tinha sido criado pro claro. Movido
+pra regra base `.card.card-mine::before` (vale pros dois temas por
+padrão); o `[data-theme="light"] .card.card-mine::before` continua só
+sobrescrevendo a cor pro claro.
+
 ### v8.30.286-dev — 2026-08-05
 Destaque do "seu card" no claro, feedback direto: "o card atribuido a
 pessoa ainda n ta c tanto destaque". Passou por um protótipo com 4
