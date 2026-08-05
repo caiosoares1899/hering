@@ -231,6 +231,32 @@
 [data-theme="light"] .card-tag{
   filter:brightness(.5) saturate(1.4);
 }
+/* Mesmo problema do .card-tag acima, em outros 3 badges do topo do card
+   que NÃO passam por tagHtml() e por isso ficaram de fora daquele fix:
+   status do executor/agente (.exec-chip), prazo (.due-badge) e risco
+   (.risco-badge, sem classe própria até agora — adicionada só pra dar
+   um gancho de CSS aqui). Todos usam a mesma paleta clara/saturada
+   pensada pro fundo escuro. Feedback direto: "status dos agentes, prazo
+   e o badge de risco ainda sem leitura, aumenta o contraste". */
+[data-theme="light"] .exec-chip,
+[data-theme="light"] .due-badge,
+[data-theme="light"] .risco-badge{
+  filter:brightness(.5) saturate(1.4);
+}
+/* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
+   due date): fundo é um tint de 15% da cor da coluna, texto era um
+   #fff hardcoded — em cima do fundo quase-branco do modo claro ficava
+   invisível (só funcionava por acidente no escuro, onde o mesmo tint
+   de 15% sobre um fundo quase-preto ainda contrasta com branco).
+   Trocado o texto pra usar a própria cor da coluna (mesmo padrão de
+   "fundo pálido + texto saturado" que .card-tag já usa) — e como isso
+   tem o mesmo problema de contraste no claro, ganha o mesmo filter.
+   Feedback direto: "calendário n da pra ler nada". Pílulas de Evento
+   (.cal-event sem essa subclasse) não são afetadas — usam fundo opaco
+   com texto já escolhido pra contraste, não dependem de tema. */
+[data-theme="light"] .cal-event-prazo{
+  filter:brightness(.5) saturate(1.4);
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -4540,7 +4566,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.284-dev</div>
+<div class="version">v8.30.285-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7653,7 +7679,7 @@ function makeCardEl(card){
   // acima E no título, mesmo com margin-bottom no CSS (ignorado silenciosamente
   // pelo navegador). Achado real, a partir de um print com cards de teste do
   // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
   // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
   // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
   // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
@@ -17242,7 +17268,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const colInfo = columns.find(x => x.id === c.col);
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
-        return `<div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
+        return `<div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
       }
     }).join('')
     +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
@@ -17287,7 +17313,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
         return `
-          <div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
+          <div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
             📎 ${esc(c.title)} <span style="font-size:9.5px;color:var(--txt3);margin-left:4px;">(${esc(colInfo?.name||c.col)})</span>
           </div>`;
       }

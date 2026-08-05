@@ -906,6 +906,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.285-dev — 2026-08-05
+Mais badges sem leitura no claro, achados fora do `.card-tag` (que já
+tinha sido corrigido): "status dos agentes, prazo e o badge de risco
+ainda sem leitura" + "calendário n da pra ler nada".
+
+- `.exec-chip` (status do executor/agente), `.due-badge` (prazo do
+  card) e o badge de risco (⚠, sem classe própria até agora — ganhou
+  `.risco-badge`) usam a mesma paleta clara pensada pro escuro que os
+  tags tinham — não passam por `tagHtml()`, por isso ficaram de fora do
+  fix anterior. Mesmo filter aplicado.
+- **Pílulas de "Prazo" no Calendário**: usavam `color:#fff` fixo em
+  cima de um fundo com só 15% de opacidade da cor da coluna — só
+  funcionava por acidente no escuro (mesmo tint sobre fundo quase-preto
+  ainda contrasta com branco). Texto trocado pra usar a própria cor da
+  coluna (mesmo padrão "fundo pálido + texto saturado" que as tags já
+  usam) + filter no claro. Pílulas de Evento (fundo opaco, cor
+  pré-escolhida) não foram afetadas.
+
 ### v8.30.284-dev — 2026-08-05
 2ª rodada de contraste nas tags do claro (v8.30.283-dev). Testado lado
 a lado num protótipo comparando escuro / filtro atual / cor do escuro
