@@ -968,6 +968,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.301-dev — 2026-08-05
+Reclamação real via WhatsApp: "já aconteceu 2 vezes de alguém esquecer
+o card aberto, daí mostra que tá editando pra mim, mas na vdd não tá,
+e daí não consigo clicar em nada". O lock de edição (`card_locks/{id}`,
+heartbeat a cada 1min, expira sozinho depois de 10min sem heartbeat)
+segue existindo — mas até então, enquanto travado, o modal inteiro
+ficava com `pointer-events:none`, bloqueando até ações que não mexem
+em nada (abrir um anexo, o link do Milanote, expandir/recolher as
+seções novas). Agora o modo leitura libera especificamente essas ações
+não-destrutivas (`.attach-info`, `.attach-open`, link/preview do
+Milanote, cabeçalhos de seção) via `pointer-events:auto` nelas mesmas,
+mantendo os campos de edição de fato bloqueados.
+
 ### v8.30.300-dev — 2026-08-05
 Sugestão trazida pelo usuário (mockup externo): seções do modal de
 card meio que expansíveis/recolhíveis, pra facilitar a rolagem em

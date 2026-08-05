@@ -1311,6 +1311,17 @@ input[type="date"]{-moz-appearance:textfield;}
   transition:background .12s;}
 .attach-add-btn:hover{background:rgba(56,182,255,.15);}
 .attach-list{display:flex;flex-direction:column;gap:5px;}
+/* card travado por outra pessoa: bloqueia edição, mas libera ações de
+   só-leitura (abrir anexo/Milanote, expandir/recolher seções) — antes o
+   modal inteiro ficava com pointer-events:none, e quem esquecia o card
+   aberto travava até quem só queria abrir um link. */
+#card-ov .modal-body.locked-ro{pointer-events:none;opacity:.55;}
+#card-ov .modal-body.locked-ro .attach-info,
+#card-ov .modal-body.locked-ro .attach-open,
+#card-ov .modal-body.locked-ro #m-milanote-link,
+#card-ov .modal-body.locked-ro #m-milanote-preview-btn,
+#card-ov .modal-body.locked-ro .cfg-sec-title,
+#card-ov .modal-body.locked-ro #m-history-wrap>div:first-child{pointer-events:auto;}
 .attach-item{display:flex;align-items:center;gap:8px;padding:6px 10px;
   background:rgba(var(--surface2-rgb),.7);border:1px solid rgba(56,182,255,.1);
   border-radius:8px;transition:border-color .12s;}
@@ -4707,7 +4718,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.300-dev</div>
+<div class="version">v8.30.301-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8777,9 +8788,9 @@ function _setCardLockUI(lockedByOther, who){
   if(row) row.style.display = lockedByOther ? 'flex' : 'none';
   if(row && lockedByOther){
     const txt=document.getElementById('m-lock-text');
-    if(txt) txt.textContent = '🔒 '+(who||'Alguém')+' está editando este card agora — modo leitura até liberar.';
+    if(txt) txt.textContent = '🔒 '+(who||'Alguém')+' está editando este card agora — modo leitura até liberar (dá pra abrir anexos e links normalmente).';
   }
-  if(body){ body.style.pointerEvents = lockedByOther ? 'none' : ''; body.style.opacity = lockedByOther ? '.55' : ''; }
+  if(body) body.classList.toggle('locked-ro', !!lockedByOther);
   if(lockedByOther && document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
 function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
