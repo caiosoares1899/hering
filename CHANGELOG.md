@@ -18,6 +18,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.221 — 2026-08-05 · promove pra prod (PRs #199–#201)
+Promove pra produção mais 2 ajustes finos, validados em dev
+(v8.30.296-dev a v8.30.297-dev):
+
+- **Texto do "seu card" no claro**: trocado de `var(--txt)` (lia como
+  cinza em cima do fundo azul do card) pra um azul escuro saturado,
+  testado lado a lado num protótipo antes de decidir.
+- **Tela de login acompanha o tema**: o card de login já mudava de cor
+  com o tema, mas o fundo ficava sempre num preto fixo, dando um card
+  claro flutuando num fundo escuro no modo claro. Fundo agora
+  acompanha o tema também.
+
 ### v8.30.220 — 2026-08-05 · promove pra prod (PRs #195–#198)
 Promove pra produção mais uma leva de ajustes, validados em dev
 (v8.30.292-dev a v8.30.295-dev):
