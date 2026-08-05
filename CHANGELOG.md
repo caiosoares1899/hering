@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.215 — 2026-08-05 · promove pra prod (PRs #173, #174)
+Promove pra produção o ajuste visual dos badges no topo do card
+(combina chip de Executor + Status do agente num só, e corrige o
+espaçamento entre badges com `display:inline-block` — `margin-bottom`
+não tinha efeito nenhum sem isso), validado em dev nas v8.30.274-dev e
+v8.30.275-dev — ver entradas `kanban-dev.html` correspondentes.
+
 ### v8.30.214 — 2026-08-05 · promove pra prod (PR #171)
 Promove pra produção o botão "↩ Restaurar selecionados" na tela de
 Cards arquivados, validado em dev na v8.30.273-dev — ver entrada

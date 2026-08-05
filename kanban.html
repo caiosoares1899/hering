@@ -4412,7 +4412,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.214</div>
+<div class="version">v8.30.215</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7514,26 +7514,46 @@ function makeCardEl(card){
     addTouchDnD(div,card.id);
   }
   div.ondblclick=e=>{e.stopPropagation();};
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  // NOTA sobre display:inline-block nos badges abaixo: margin-top/bottom NÃO
+  // tem efeito nenhum em <span> comum (display:inline) — só .card-tag já
+  // tinha isso certo (CSS: display:inline-block + margin-bottom). Os outros
+  // badges (prioridade, risco, OKR, impedimento, executor) eram <span> puro
+  // sem display, então o margin-bottom que eu tentei adicionar antes pro
+  // chip de executor não fazia ELE ficar mais espaçado da linha de baixo —
+  // sem essa propriedade, quando o badge quebra pra uma linha nova (comum
+  // com várias tags + prioridade + chip juntos), ele fica colado na linha
+  // acima E no título, mesmo com margin-bottom no CSS (ignorado silenciosamente
+  // pelo navegador). Achado real, a partir de um print com cards de teste do
+  // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
   // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
   // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
   // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
   // desatualizado nesse modo, a coluna nunca mente. Time achou a borda
   // vermelha/dourada fina demais pra notar de relance — ver .has-blocker-tag/
   // .okr-card (CSS) pela largura aumentada.
-  const blockedBadge=_cardIsBlocked(card)?'<span style="font-size:10px;margin-right:2px;">🚧</span>':'';
-  // Chip de executor — só aparece pra agent/hybrid (humano é o default silencioso, não polui boards que não usam a feature)
+  const blockedBadge=_cardIsBlocked(card)?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🚧</span>':'';
+  // Chip de executor — só aparece pra agent/hybrid (humano é o default silencioso, não polui boards que não usam a feature).
+  // Combina Executor + Status do agente NUM SÓ chip quando os dois existem
+  // juntos (achado real: com uma tag longa + prioridade + os dois chips
+  // separados, o topo do card ficava visualmente apertado, quase colando no
+  // título — ver relato com cards fictícios do Agente Ágil). Sem status
+  // ainda (card agent/hybrid recém-criado), mostra só o chip de executor.
   const _execMap={agent:{ico:'🤖',lbl:'Agente',bg:'rgba(167,139,250,.14)',bd:'rgba(167,139,250,.35)',tx:'#c4b5fd'},hybrid:{ico:'🤝',lbl:'Híbrido',bg:'rgba(29,233,182,.12)',bd:'rgba(29,233,182,.3)',tx:'var(--teal)'}};
   const _execInfo=_execMap[card.executorType];
-  const execChip=_execInfo?`<span class="exec-chip" style="font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;white-space:nowrap;" title="Executor: ${_execInfo.lbl}">${_execInfo.ico} ${_execInfo.lbl}</span>`:'';
   const _agentStatusMap={queued:{ico:'⏳',lbl:'Na fila'},running:{ico:'⚙️',lbl:'Em execução'},awaiting_validation:{ico:'👀',lbl:'Aguardando validação'},done:{ico:'✅',lbl:'Concluído'},error:{ico:'⚠️',lbl:'Erro'}};
-  const _asInfo=card.executorType&&card.executorType!=='human'?_agentStatusMap[card.agentStatus]:null;
-  const agentStatusChip=_asInfo?`<span class="exec-chip" style="font-size:9px;background:rgba(56,182,255,.1);color:var(--accent);border:1px solid rgba(56,182,255,.25);padding:1px 6px;border-radius:999px;margin-left:4px;white-space:nowrap;" title="Status do agente">${_asInfo.ico} ${_asInfo.lbl}</span>`:'';
+  const _asInfo=_execInfo?_agentStatusMap[card.agentStatus]:null;
+  let execChip='';
+  if(_execInfo){
+    const _statusPart=_asInfo?` · ${_asInfo.ico} ${_asInfo.lbl}`:'';
+    const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
+    execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
+  }
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}${agentStatusChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
