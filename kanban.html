@@ -598,6 +598,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .cl-copy-all{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:2px 4px;border-radius:4px;transition:all .12s;}
 .cl-copy-all:hover{color:var(--cyan);background:rgba(56,182,255,.1);}
 .cl-items{display:flex;flex-direction:column;gap:4px;margin-bottom:7px;}
+#m-checklist{max-height:340px;overflow-y:auto;}
 .cl-item{display:flex;align-items:center;gap:6px;font-size:12px;border-radius:6px;padding:2px 4px;transition:background .15s;cursor:grab;}
 .cl-item:hover{background:rgba(56,182,255,.07);}
 .cl-item.drag-over{background:rgba(29,233,182,.12);border:1px dashed rgba(29,233,182,.4);}
@@ -1310,6 +1311,17 @@ input[type="date"]{-moz-appearance:textfield;}
   transition:background .12s;}
 .attach-add-btn:hover{background:rgba(56,182,255,.15);}
 .attach-list{display:flex;flex-direction:column;gap:5px;}
+/* card travado por outra pessoa: bloqueia edição, mas libera ações de
+   só-leitura (abrir anexo/Milanote, expandir/recolher seções) — antes o
+   modal inteiro ficava com pointer-events:none, e quem esquecia o card
+   aberto travava até quem só queria abrir um link. */
+#card-ov .modal-body.locked-ro{pointer-events:none;opacity:.55;}
+#card-ov .modal-body.locked-ro .attach-info,
+#card-ov .modal-body.locked-ro .attach-open,
+#card-ov .modal-body.locked-ro #m-milanote-link,
+#card-ov .modal-body.locked-ro #m-milanote-preview-btn,
+#card-ov .modal-body.locked-ro .cfg-sec-title,
+#card-ov .modal-body.locked-ro #m-history-wrap>div:first-child{pointer-events:auto;}
 .attach-item{display:flex;align-items:center;gap:8px;padding:6px 10px;
   background:rgba(var(--surface2-rgb),.7);border:1px solid rgba(56,182,255,.1);
   border-radius:8px;transition:border-color .12s;}
@@ -2967,6 +2979,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
+    <button class="x-btn" id="m-toggle-all-secs" onclick="toggleAllModalSecs()" title="Expandir/recolher seções" style="margin-right:6px;">⇕</button>
     <button class="x-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
@@ -3160,7 +3173,11 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div>
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;">📝 Conteúdo</div>
+    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
+      <span style="flex:1;">📝 Conteúdo</span>
+      <span id="m-sec-conteudo-caret" style="font-size:10px;transition:transform .2s;">▼</span>
+    </div>
+    <div id="m-sec-conteudo" style="display:flex;flex-direction:column;gap:10px;">
     <!-- Descrição full-width -->
     <div class="field" id="desc-field" style="scroll-margin-top:60px;">
       <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
@@ -3215,8 +3232,13 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="po-lbl">🎯 Insights do PO</div>
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..." oninput="scheduleAutoSave()" onblur="if(editingId)parseMentions(this.value,editingId)"></textarea></div>
     </div>
+    </div><!-- /m-sec-conteudo -->
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;">🔗 Vínculos &amp; anexos</div>
+    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('vinculos')">
+      <span style="flex:1;">🔗 Vínculos &amp; anexos</span>
+      <span id="m-sec-vinculos-caret" style="font-size:10px;transition:transform .2s;">▼</span>
+    </div>
+    <div id="m-sec-vinculos" style="display:flex;flex-direction:column;gap:10px;">
     <!-- Peça vinculada no Milanote (campo dedicado, separado dos links genéricos) -->
     <div class="attach-wrap" id="m-milanote-wrap" style="border-color:rgba(232,70,70,.25);">
       <div class="attach-hd">
@@ -3254,8 +3276,13 @@ input[type="date"]{-moz-appearance:textfield;}
         <button class="attach-save-btn" onclick="attachSave()">Salvar</button>
       </div>
     </div>
+    </div><!-- /m-sec-vinculos -->
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;">💬 Colaboração</div>
+    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('colaboracao')">
+      <span style="flex:1;">💬 Colaboração</span>
+      <span id="m-sec-colaboracao-caret" style="font-size:10px;transition:transform .2s;">▼</span>
+    </div>
+    <div id="m-sec-colaboracao" style="display:flex;flex-direction:column;gap:10px;">
     <!-- Comentários e Atividade -->
     <div class="comments-wrap" id="m-comments-wrap">
       <div class="comments-hd">
@@ -3298,6 +3325,7 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
     </div>
+    </div><!-- /m-sec-colaboracao -->
 
     <!-- Impedimento (oculto por padrão) -->
     <div id="m-blocker-row" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:var(--r);padding:10px;">
@@ -4690,7 +4718,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.221</div>
+<div class="version">v8.30.222</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6082,6 +6110,30 @@ function toggleHistory(){
   const open=list.style.display!=='none';
   list.style.display=open?'none':'flex';
   if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+
+const MODAL_SEC_KEYS=['conteudo','vinculos','colaboracao'];
+function toggleModalSec(key){
+  const body=document.getElementById('m-sec-'+key);
+  const caret=document.getElementById('m-sec-'+key+'-caret');
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'flex';
+  if(caret) caret.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
+function toggleAllModalSecs(){
+  const anyOpen=MODAL_SEC_KEYS.some(k=>{
+    const el=document.getElementById('m-sec-'+k);
+    return el && el.style.display!=='none';
+  });
+  const collapse=anyOpen;
+  MODAL_SEC_KEYS.forEach(k=>{
+    const body=document.getElementById('m-sec-'+k);
+    const caret=document.getElementById('m-sec-'+k+'-caret');
+    if(!body) return;
+    body.style.display=collapse?'none':'flex';
+    if(caret) caret.style.transform=collapse?'rotate(0deg)':'rotate(180deg)';
+  });
 }
 
 // touchedIds (opcional): array/Set dos ids REALMENTE modificados por quem
@@ -8173,6 +8225,16 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
+// Nome curto pra dropdown/rótulo de identificação (filtro de usuário, raia
+// por owner...) — primeiro + último nome, em vez de só o primeiro. Pedido
+// direto (mesma reclamação de antes, pros participantes): só primeiro nome
+// não dá pra distinguir times com vários "Maria"/"João" diferentes. Não usa
+// o nome completo (pode não caber no dropdown) nem só iniciais.
+function _shortName(name){
+  const parts=(name||'').trim().split(/\s+/).filter(Boolean);
+  if(parts.length<=1) return parts[0]||'';
+  return parts[0]+' '+parts[parts.length-1];
+}
 // Filtro de submarca começa restaurando a última seleção salva neste
 // navegador pra esse squad (pedido direto: "sempre abre em Todos, eles
 // tem que ficar refazendo o filtro") — mesmo espírito de col_sort_/
@@ -8194,7 +8256,7 @@ function toggleFilters(){
   // Combina members + owners de cards que não estão em members
   const cardOwners=cards.filter(c=>c.owner).map(c=>c.owner);
   const extraOwners=[...new Set(cardOwners)].filter(o=>!members.find(m=>m.init===o));
-  const allOwnerOptions=members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`)
+  const allOwnerOptions=members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`)
     .concat(extraOwners.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`));
   document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+allOwnerOptions.join('');
   document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
@@ -8726,9 +8788,9 @@ function _setCardLockUI(lockedByOther, who){
   if(row) row.style.display = lockedByOther ? 'flex' : 'none';
   if(row && lockedByOther){
     const txt=document.getElementById('m-lock-text');
-    if(txt) txt.textContent = '🔒 '+(who||'Alguém')+' está editando este card agora — modo leitura até liberar.';
+    if(txt) txt.textContent = '🔒 '+(who||'Alguém')+' está editando este card agora — modo leitura até liberar (dá pra abrir anexos e links normalmente).';
   }
-  if(body){ body.style.pointerEvents = lockedByOther ? 'none' : ''; body.style.opacity = lockedByOther ? '.55' : ''; }
+  if(body) body.classList.toggle('locked-ro', !!lockedByOther);
   if(lockedByOther && document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
 function _stopCardLockHeartbeat(){ clearInterval(_cardLockHeartbeatTimer); _cardLockHeartbeatTimer=null; }
@@ -12136,7 +12198,7 @@ function _computeTempoData(){
       if(tag && (tag.hex || tag.pi >= 0)) p = getPal(tag);
     } else {
       const membro = members.find(m => m.init === groupId);
-      label = membro ? `${membro.init} · ${membro.name.split(' ')[0]}` : (groupId==='__sem_dono__' ? '(sem responsável)' : groupId);
+      label = membro ? `${membro.init} · ${_shortName(membro.name)}` : (groupId==='__sem_dono__' ? '(sem responsável)' : groupId);
       if(groupId!=='__sem_dono__') p = {bg:'rgba(56,182,255,.15)', b:'rgba(56,182,255,.3)', c:'#38b6ff'}; // azul para usuários
     }
 
@@ -12344,8 +12406,16 @@ function loadCampanhas(){
     _campanhas = Object.fromEntries(
       Object.entries(raw).filter(([_,c])=>{
         const sq = c.squads||[];
-        // Exclui campanhas cujos squads são TODOS fictícios
-        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s))) return false;
+        // Exclui campanhas cujos squads são TODOS fictícios — MAS só quando
+        // o squad ativo agora não é um deles. Bug real: a exclusão original
+        // era incondicional, então uma campanha de demonstração criada com
+        // squads:['dev'] ficava escondida até de quem tava vendo o board da
+        // própria squad dev (não só das squads reais, que é a intenção real
+        // — "não vazar campanha de teste pro board de produção"). Squad
+        // fictícia continua vendo campanha de OUTRA squad fictícia (ex.:
+        // dev não vê campanha só de omnichannel) — só a própria squad ganha
+        // a exceção.
+        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s)) && !sq.includes(ACTIVE_SQUAD)) return false;
         return true;
       })
     );
@@ -13303,7 +13373,7 @@ function _renderArquivadosBody(){
   if(fOwner){
     const prev=fOwner.value;
     const ownersUsados=[...new Set(archived.map(c=>c.owner).filter(Boolean))];
-    fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(m.name.split(' ')[0]):''}</option>`}).join('');
+    fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(_shortName(m.name)):''}</option>`}).join('');
     fOwner.value=prev;
   }
   // Aplica filtros
@@ -17230,7 +17300,7 @@ function populateCalFilters() {
   if(ownerSel) {
     const cardOwners = cards.filter(c => c.owner).map(c => c.owner);
     const extraOwners = [...new Set(cardOwners)].filter(o => !members.find(m => m.init === o));
-    const allOwnerOptions = members.map(m => `<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`)
+    const allOwnerOptions = members.map(m => `<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`)
       .concat(extraOwners.map(o => `<option value="${esc(o)}">${esc(o)}</option>`));
     ownerSel.innerHTML = '<option value="">👤 Usuário</option>' + allOwnerOptions.join('');
   }
@@ -18743,7 +18813,7 @@ function populateAutoSelects(){
       : '<option value="">— sem tags —</option>';
   } else if(action==='assign_owner'){
     av.innerHTML='<option value="">— manter atual —</option>'
-      +members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`).join('');
+      +members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
   } else if(action==='notify_agent'){
     av.innerHTML=`
       <option value="daily">Aba Daily</option>
