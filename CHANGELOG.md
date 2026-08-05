@@ -18,6 +18,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.217 — 2026-08-05 · promove pra prod (PRs #182–#184)
+Promove pra produção mais 2 rodadas de ajuste fino do modo claro,
+validadas em dev (v8.30.281-dev a v8.30.283-dev):
+
+- **Distinção dos cards**: sombra + borda mais firmes (2 rodadas de
+  feedback até o tom ficar escuro o suficiente pra diferenciar bem),
+  card do modo escuro também ganhou um pouco mais de contraste.
+- **Tags do card escurecidas no claro**: cores de fundo/borda/texto das
+  tags (mais de 10 variantes geradas por JS) estavam pensadas pro fundo
+  escuro e ficavam sem leitura no claro — `filter` escurece o pill
+  inteiro de uma vez, incluindo cores customizadas por usuário.
+
 ### v8.30.216 — 2026-08-05 · promove pra prod (PRs #176–#180)
 Promove pra produção o **modo claro** (validado em dev nas v8.30.276-dev
 a v8.30.280-dev — ver entradas `kanban-dev.html` correspondentes):
