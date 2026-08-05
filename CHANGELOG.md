@@ -992,6 +992,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.304-dev — 2026-08-05
+Achado ao investigar por que até a URL crua (sem espaço/parêntese, já
+percent-encoded do jeito certo) continuava não funcionando: `renderMd()`
+escapa `&`/`<`/`>` da Descrição/Comentário inteiros logo no topo da função
+(pra virar HTML seguro) — mas os dois handlers que constroem `<a href="...">`
+(link nomeado `[texto](url)` e auto-link de URL solta) chamavam `esc()` de
+novo em cima do texto que JÁ tinha passado por esse escape. Resultado: um
+`&` da URL virava `&amp;` no passo do topo, e a segunda passada trocava o
+`&` DENTRO de "&amp;" por `&amp;` de novo, sobrando `&amp;amp;` no HTML —
+o navegador só decodifica entidade uma vez, então o href de verdade ficava
+com um `&amp;` literal em vez de um `&`. Isso quebra qualquer URL com mais
+de um parâmetro na query (o `&amp;` não separa parâmetro nenhum, todo
+o resto vira um pedaço só do parâmetro anterior) — inclusive o link
+assinado do Vimeo (`...&signature=...`) e o link do CDN direto
+(`...&r=...`) que o usuário testou. Removida a segunda chamada de `esc()`
+nos dois handlers — confirmado com uma simulação isolada (`node -e`) que o
+href resolvido agora bate exatamente com a URL original, byte a byte.
+
 ### v8.30.303-dev — 2026-08-05
 Regressão da v8.30.302-dev: "colocar esse % deu erro! só funciona com a
 URL crua mesmo". A correção anterior trocava espaço/parêntese cru da URL

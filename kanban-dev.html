@@ -4718,7 +4718,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.303-dev</div>
+<div class="version">v8.30.304-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15024,14 +15024,23 @@ function renderMd(txt){
   // "(?:[^()]|\([^()]*\))+" = qualquer trecho sem parêntese, OU um grupo
   // "(...)" balanceado de UM nível (cobre casos como "(1080p)"; parênteses
   // aninhados mais fundo não são um caso real visto até aqui).
+  // NÃO chama esc() de novo aqui: label/url já vieram do &/</>-escape lá no
+  // topo da função. Escapar outra vez é o que causava "&amp;signature=..."
+  // aparecendo LITERAL na URL de verdade (◦o & já virava "&amp;" no passo
+  // do topo; escapar de novo trocava o & DENTRO de "&amp;" por "&amp;",
+  // sobrando "&amp;amp;" no HTML — o navegador só decodifica entidade uma
+  // vez, então o href final ficava com "&amp;" cru em vez de "&") — isso
+  // quebrava qualquer URL assinada com mais de um parâmetro na query
+  // (a query para de fato separar no primeiro "&", vira tudo um param só).
   txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()]|\([^()]*\))+)\)/g, function(m, label, url){
-    return '<a href="'+esc(url.trim())+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+esc(url.trim())+'">'+esc(label)+'</a>';
+    url = url.trim();
+    return '<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+url+'">'+label+'</a>';
   });
   // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
   // Evita mexer em URLs que já estão dentro de atributos HTML (href/src/onclick) já gerados.
+  // Mesmo motivo do bloco acima pra não chamar esc() de novo: url já veio escapada.
   txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
-    const safe=esc(url);
-    return pre + '<a href="'+safe+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+safe+'</a>';
+    return pre + '<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+url+'</a>';
   });
   return txt;
 }
