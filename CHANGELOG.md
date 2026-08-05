@@ -992,6 +992,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.303-dev — 2026-08-05
+Regressão da v8.30.302-dev: "colocar esse % deu erro! só funciona com a
+URL crua mesmo". A correção anterior trocava espaço/parêntese cru da URL
+por `%20`/`%28`/`%29` — mas esse link do Vimeo é assinado (`signature=...`
+na query), e o servidor valida a assinatura contra os bytes EXATOS que
+foram emitidos; reescrever qualquer caractere (mesmo só espaço/parêntese)
+invalida a assinatura e o Vimeo passa a recusar. Confirmado: em Anexos e
+links (armazena a URL crua, sem passar por sintaxe de markdown) o mesmo
+link já funcionava certinho, embed incluso — só quebrava dentro da
+Descrição/Comentários, que passam a URL pelo parser `[texto](url)`.
+
+Correção de verdade: **para de mexer nos caracteres da URL** — em vez
+disso, o parser de `[texto](url)` (`renderMd()`, `_mdToExportHtml()`,
+`copyFormatted()`) ficou tolerante a espaço cru **e** um nível de
+parênteses balanceados dentro da URL, então a mesma URL crua e assinada
+funciona também colada direto num comentário/descrição.
+
 ### v8.30.302-dev — 2026-08-05
 Bug real, visto num link vindo do Vimeo: `.../file.mp4 (1080p).mp4?loc=...`
 tem um espaço cru no meio da URL — a sintaxe de link `[texto](url)` do app

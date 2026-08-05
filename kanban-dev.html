@@ -4718,7 +4718,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.302-dev</div>
+<div class="version">v8.30.303-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15014,11 +15014,17 @@ function renderMd(txt){
     return '<span class="mention-card" data-cid="'+id.replace(/"/g,'&quot;')+'" onclick="openCardMention(this)" title="Abrir card">📎 '+title+'</span>';
   });
   // Links nomeados: [texto](url) → <a> com o texto visível (estilo Word).
-  // URL aceita espaço cru (não só [^\s)]) — link real visto vindo do Vimeo
-  // tinha espaço sem escapar no meio (".../file.mp4 (1080p).mp4?loc=...");
-  // com [^\s)] o parser truncava a URL bem ali, sobrando o resto como texto
-  // solto do lado do link. Só exige não ter '(' / ')' cru (delimitam o fim).
-  txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/[^()]+)\)/g, function(m, label, url){
+  // URL aceita espaço cru E um nível de parênteses balanceados — link real
+  // vindo do Vimeo tem os dois no meio, sem escapar (".../file.mp4
+  // (1080p).mp4?loc=...&signature=..."), e não dá pra reescrever esse tipo
+  // de URL assinada (o servidor valida a assinatura byte-a-byte; %20/%28/%29
+  // no lugar do espaço/parêntese cru faz a assinatura não bater mais e o
+  // Vimeo recusar). Sem esse alívio, [^\s)]+ truncava a URL no primeiro
+  // espaço/parêntese, sobrando o resto como texto solto do lado do link.
+  // "(?:[^()]|\([^()]*\))+" = qualquer trecho sem parêntese, OU um grupo
+  // "(...)" balanceado de UM nível (cobre casos como "(1080p)"; parênteses
+  // aninhados mais fundo não são um caso real visto até aqui).
+  txt = txt.replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()]|\([^()]*\))+)\)/g, function(m, label, url){
     return '<a href="'+esc(url.trim())+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+esc(url.trim())+'">'+esc(label)+'</a>';
   });
   // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
@@ -20746,7 +20752,7 @@ function _mdToExportHtml(txt){
     .replace(/\{cor:(#[0-9a-fA-F]{3,6}|[a-z]+)\|(.+?)\}/g,'<span style="color:$1;">$2</span>')
     .replace(/`(.+?)`/g,'<code>$1</code>')
     .replace(/\[\[CARD:[^:]+:([^\]]+)\]\]/g,'$1')
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^()]+)\)/g,'<a href="$2">$1</a>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()]|\([^()]*\))+)\)/g,'<a href="$2">$1</a>')
     .replace(/^[\-\*] (.+)$/gm,'<li>$1</li>')
     .replace(/(<li>.*<\/li>\n?)+/gs, m=>'<ul>'+m+'</ul>')
     .replace(/\n/g,'<br>');
@@ -20766,7 +20772,7 @@ async function copyFormatted(taId){
     .replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*(.+?)\*/g,'$1').replace(/__(.+?)__/g,'$1')
     .replace(/\{cor:[^|]+\|(.+?)\}/g,'$1')
     .replace(/\[\[CARD:[^:]+:([^\]]+)\]\]/g,'$1')
-    .replace(/\[([^\]]+)\]\(https?:\/\/[^()]+\)/g,'$1');
+    .replace(/\[([^\]]+)\]\(https?:\/\/(?:[^()]|\([^()]*\))+\)/g,'$1');
   try{
     if(navigator.clipboard && window.ClipboardItem){
       await navigator.clipboard.write([new ClipboardItem({
@@ -20940,17 +20946,19 @@ const KNOWN_SERVICES = [
   { pattern: /vimeo\.com/i,           icon: '🎬', label: 'Vimeo',         color: '#1AB7EA' },
 ];
 
-// Espaço e parênteses crus dentro de uma URL quebram a sintaxe [texto](url)
-// do app (o parser pra de ler a URL no primeiro espaço/parêntese) — link real
-// visto vindo do Vimeo (rendition de progressive_redirect) tinha um trecho tipo
-// ".../file.mp4 (1080p).mp4?loc=..." colado cru, que truncava o link bem no
-// meio. Troca só esses dois caracteres por %20/%28/%29 (não faz um encodeURI
-// geral pra não dar %25 duplo em URLs que já vêm com %XX de verdade).
+// NÃO mexe nos caracteres da URL (só garante o prefixo https://) — link real
+// visto vindo do Vimeo (rendition de progressive_redirect) tem espaço e
+// parênteses CRUS no meio (".../file.mp4 (1080p).mp4?loc=...&signature=...").
+// Chegou a trocar por %20/%28/%29 numa primeira versão, mas isso muda os
+// bytes que a assinatura da URL valida — Vimeo passa a recusar (link
+// assinado só funciona byte-a-byte igual ao que foi emitido). Quem resolve o
+// espaço/parêntese cru é o parser de [texto](url) (ver renderMd()), não uma
+// reescrita da URL.
 function _sanitizeLinkUrl(url){
   url = (url||'').trim();
   if(!url) return url;
   if(!/^https?:\/\//i.test(url)) url = 'https://'+url.replace(/^\/+/,'');
-  return url.replace(/ /g,'%20').replace(/\(/g,'%28').replace(/\)/g,'%29');
+  return url;
 }
 
 // Reconhece links de Vimeo que dá pra embedar como preview: o player normal
