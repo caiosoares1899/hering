@@ -18,6 +18,30 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.222 — 2026-08-05 · promove pra prod (PRs #202–#206)
+Promove pra produção a leva de ajustes validada em dev
+(v8.30.298-dev a v8.30.301-dev):
+
+- **Sobrenome nos dropdowns de usuário**: filtro "Todos os usuários" da
+  toolbar, filtro de responsável em Cards arquivados, filtro de
+  usuário do Calendário, dropdown de "atribuir responsável" em massa e
+  rótulo das raias por responsável agora mostram primeiro + último
+  nome (`_shortName()`), não só o primeiro — mesmo ajuste que já tinha
+  sido feito pra participantes.
+- **Campanhas/coleções de squad fictícia voltam a aparecer no próprio
+  board**: bug em que a exclusão de campanhas de demo escondia até de
+  quem via o board da própria squad fictícia, não só de squads reais.
+- **Seções do modal de card ficam expansíveis**: "Conteúdo", "Vínculos
+  & anexos" e "Colaboração" ganham cabeçalho clicável com seta (igual
+  o Histórico, que continua fixo no fim) — botão ⇕ no topo do modal
+  expande/recolhe as 3 de uma vez. Checklist não virou recolhível, mas
+  ganhou altura máxima com rolagem interna.
+- **Modo leitura do lock de card libera anexos/links**: card travado
+  (por edição real de outra pessoa, ou lock esquecido) não bloqueia
+  mais o modal inteiro — dá pra abrir anexos, o link do Milanote e
+  expandir/recolher seções mesmo travado; só os campos de edição de
+  fato continuam bloqueados.
+
 ### v8.30.221 — 2026-08-05 · promove pra prod (PRs #199–#201)
 Promove pra produção mais 2 ajustes finos, validados em dev
 (v8.30.296-dev a v8.30.297-dev):
