@@ -880,6 +880,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.280-dev — 2026-08-05
+Correções de leitura no modo claro (v8.30.279-dev), feedback direto com
+3 pontos:
+
+- **Avatares de iniciais** (comentários, Estrelas do Mar, Spotify,
+  Equipe do quadro, @menções, seletor de responsável...) — texto azul
+  em cima de fundo azul claro/translúcido ficava com contraste baixo.
+  Trocado por um círculo azul sólido (`rgba(37,99,201,.85)`) + texto
+  branco em TODOS os avatares de iniciais do arquivo (mais de 10 pontos
+  diferentes usavam o mesmo padrão) — não afeta avatares com foto
+  (`<img>`), só o fallback de iniciais.
+- **Anexos/Links e Comentários dentro do card, e os painéis
+  Lembretes/Estrelas do Mar/Spotify/Central de Dados** ficavam com um
+  fundo azul-marinho escuro chapado no meio do modo claro. Causa: a
+  varredura de regex da v8.30.276-dev que trocou os literais
+  `rgba(6,26,46,X)`/`rgba(3,13,26,X)`/`rgba(10,37,64,X)` por
+  `var(--surface-rgb)`/`var(--surface2-rgb)`/`var(--glass-rgb)` não
+  pegou uma dúzia de cores "quase iguais mas não exatamente" espalhadas
+  pelo arquivo (`rgba(6,20,44,X)`, `rgba(6,18,36,X)`, `rgba(6,22,42,X)`,
+  `rgba(10,30,55,X)` etc.) usadas em `.comment-text`, `.attach-item`,
+  `.lem-drawer`, `.dnd-menu`, `.camp-panel` e outros ~15 seletores.
+  Todas migradas pras mesmas variáveis de tema — scrims/backdrops de
+  modal (`.ov`, `.cal-ov`, `.ui-modal-ov` etc.) foram deixados de
+  propósito escuros nos dois temas (dimming de fundo, não é conteúdo
+  legível).
+
 ### v8.30.279-dev — 2026-08-05
 Ajuste fino no ☀️ Mar Cristalino (v8.30.278-dev), depois de feedback bem
 positivo ("ficou muito melhor do que eu imaginava... água cristalina, dá
