@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.216 — 2026-08-05 · promove pra prod (PRs #176–#180)
+Promove pra produção o **modo claro** (validado em dev nas v8.30.276-dev
+a v8.30.280-dev — ver entradas `kanban-dev.html` correspondentes):
+
+- Botão 🌙/☀️ no canto superior direito alterna entre **🌙 Mar Profundo**
+  (escuro, o de sempre) e **☀️ Mar Cristalino** (claro, paleta
+  Caribe/Maldivas — fundo azulado, nunca branco puro). Preferência
+  pessoal, salva só no navegador.
+- Correções de leitura no claro: avatares de iniciais (círculo azul
+  sólido + texto branco em vez de azul-em-azul) e ~15 seletores com
+  cores "quase iguais" que a varredura inicial do CSS tinha deixado
+  escuros chapados (comentários, anexos/links do card, painéis de
+  Lembretes/Estrelas do Mar/Spotify/Central de Dados).
+
 ### v8.30.215 — 2026-08-05 · promove pra prod (PRs #173, #174)
 Promove pra produção o ajuste visual dos badges no topo do card
 (combina chip de Executor + Status do agente num só, e corrige o
