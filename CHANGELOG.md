@@ -940,6 +940,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.293-dev — 2026-08-05
+Feedback direto com print: os "piscas" amarelos (campo obrigatório e o
+pulso de "achar meus cards") somem de vista no claro, e o aviso de
+campo obrigatório na base do modal também tava sem contraste.
+
+- **Pulso amarelo → azul escuro no claro**: `.card-pulse-highlight`
+  (botão 💡 Meus cards) e `.req-missing` (campo obrigatório) usavam um
+  glow amarelo fixo, pensado pro fundo escuro — em cima de um
+  card/input já claro, simplesmente sumia. Cor movida pra uma variável
+  de tema (`--pulse-rgb`); no claro vira um azul bem escuro, sugestão
+  direta.
+- **Toast de campo obrigatório sem contraste**: o pill do aviso
+  ("🔒 Preencha os campos obrigatórios...") ficava quase branco em
+  cima de um modal também quase branco, sem borda visível. Ganhou
+  borda mais forte + sombra só no claro.
+
 ### v8.30.292-dev — 2026-08-05
 Pedido direto: "lembra que a gente colocou submarca e prazo como
 obrigatório? coloca também o título como obrigatório". Antes, salvar
