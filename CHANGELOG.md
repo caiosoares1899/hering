@@ -920,6 +920,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.291-dev — 2026-08-05
+Bug real encontrado ao confirmar com o usuário se a ordenação 🖐 Manual
+(v8.30.290-dev) funcionava com filtro ativo (ex.: submarca): soltar um
+card no FINAL da lista usava o final da COLUNA INTEIRA, não o final da
+lista filtrada visível — com um filtro ativo, o card podia pular por
+cima de outros cards escondidos pelo filtro, fora do que a pessoa via
+na hora de arrastar. Corrigido: o caso "soltar no final" agora ancora
+no último card VISÍVEL (lido do DOM, que só tem os cards que passam no
+filtro atual) e insere logo depois dele. Sem filtro nenhum, dá
+exatamente no mesmo lugar de antes (final da coluna) — a mudança só
+importa com algum filtro ativo.
+
 ### v8.30.290-dev — 2026-08-05
 Três pedidos diretos:
 

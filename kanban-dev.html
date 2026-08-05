@@ -4618,7 +4618,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.290-dev</div>
+<div class="version">v8.30.291-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18353,14 +18353,25 @@ function handleDragLeave(e){
 }
 
 // Recalcula manualOrder sequencial (0,1,2...) de todos os cards ATIVOS de
-// uma coluna no modo 'manual', inserindo `movedCard` logo antes do card
-// `beforeId` (ou no final, se null/undefined) — mesmo padrão de
-// _renderSubPrioDragList (splice + reindex + fbSaveAll com touchedIds).
-// Retorna os ids tocados, pra passar direto pro fbSaveAll.
-function _reorderManualColumn(colId, movedCard, beforeId){
+// uma coluna no modo 'manual' (a coluna INTEIRA, não só os visíveis num
+// filtro — precisa reindexar todo mundo pra manter a ordem consistente
+// pra quem não tem filtro nenhum). `anchorId` é o card de referência pro
+// ponto de inserção: `movedCard` entra imediatamente ANTES dele (padrão)
+// ou IMEDIATAMENTE DEPOIS, se `after` for true — ver handleDrop pra por
+// que o caso "depois" existe (soltar no final de uma lista FILTRADA não
+// pode virar "no final da coluna inteira"). Sem anchorId = vai pro final
+// mesmo (coluna sem nenhum card visível no filtro atual, nada melhor a
+// ancorar). Mesmo padrão de _renderSubPrioDragList (splice + reindex +
+// fbSaveAll com touchedIds). Retorna os ids tocados, pra passar direto
+// pro fbSaveAll.
+function _reorderManualColumn(colId, movedCard, anchorId, after){
   const rest=_sortCards(cards.filter(c=>c.col===colId && !c.archived && c.id!==movedCard.id), colId);
-  const idx=beforeId ? rest.findIndex(c=>c.id===beforeId) : -1;
-  if(idx>=0) rest.splice(idx,0,movedCard); else rest.push(movedCard);
+  let idx=rest.length;
+  if(anchorId){
+    const aIdx=rest.findIndex(c=>c.id===anchorId);
+    if(aIdx>=0) idx = after ? aIdx+1 : aIdx;
+  }
+  rest.splice(idx,0,movedCard);
   rest.forEach((c,i)=>{ c.manualOrder=i; });
   return rest.map(c=>c.id);
 }
@@ -18383,7 +18394,20 @@ function handleDrop(e, colId){
     // faz sentido (e sempre foi um no-op antes desse modo existir).
     if((colSortOverrides[colId]||colSortMode)==='manual'){
       const afterEl=getDragAfterElement(body, e.clientY);
-      const touchedIds=_reorderManualColumn(colId, card, afterEl?.dataset?.id);
+      let anchorId=afterEl?.dataset?.id, after=false;
+      if(!anchorId){
+        // Soltou no final da lista VISÍVEL — com um filtro ativo (ex.:
+        // submarca), isso NÃO é o final da coluna inteira: pode existir
+        // gente escondida pelo filtro depois do último card que a pessoa
+        // via. Ancora no último card VISÍVEL (lido do DOM, que só tem os
+        // cards que passam no filtro atual) e insere logo depois dele —
+        // sem filtro nenhum, isso dá exatamente no final da coluna, igual
+        // antes; com filtro, não pula por cima de quem tá escondido.
+        const visiveis=[...body.querySelectorAll('.card:not(.dragging):not(.archived)')];
+        anchorId=visiveis[visiveis.length-1]?.dataset?.id;
+        after=true;
+      }
+      const touchedIds=_reorderManualColumn(colId, card, anchorId, after);
       fbSaveAll(undefined, touchedIds);
       renderBoard();
     }
