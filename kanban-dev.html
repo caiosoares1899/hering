@@ -4690,7 +4690,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.298-dev</div>
+<div class="version">v8.30.299-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12354,8 +12354,16 @@ function loadCampanhas(){
     _campanhas = Object.fromEntries(
       Object.entries(raw).filter(([_,c])=>{
         const sq = c.squads||[];
-        // Exclui campanhas cujos squads são TODOS fictícios
-        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s))) return false;
+        // Exclui campanhas cujos squads são TODOS fictícios — MAS só quando
+        // o squad ativo agora não é um deles. Bug real: a exclusão original
+        // era incondicional, então uma campanha de demonstração criada com
+        // squads:['dev'] ficava escondida até de quem tava vendo o board da
+        // própria squad dev (não só das squads reais, que é a intenção real
+        // — "não vazar campanha de teste pro board de produção"). Squad
+        // fictícia continua vendo campanha de OUTRA squad fictícia (ex.:
+        // dev não vê campanha só de omnichannel) — só a própria squad ganha
+        // a exceção.
+        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s)) && !sq.includes(ACTIVE_SQUAD)) return false;
         return true;
       })
     );

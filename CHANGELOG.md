@@ -968,6 +968,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.299-dev — 2026-08-05
+Bug real: "campanhas não rolou! os cards foram criados mas as
+campanhas não" — não era falha de gravação (o `window._set` direto no
+Firebase funcionou normalmente), era o filtro client-side de
+`loadCampanhas()`. A exclusão de "campanhas de squad fictício não
+aparecem fora dali" era incondicional — escondia até de quem tava
+vendo o board da própria squad fictícia (ex.: uma campanha criada com
+`squads:['dev']` ficava invisível mesmo dentro do board da squad dev).
+Corrigido pra só excluir quando o squad ativo não é um dos squads da
+campanha — squad fictícia continua sem ver campanha de OUTRA squad
+fictícia, mas volta a ver a própria. Dados já gravados no Firebase
+pela seed anterior devem aparecer sozinhos assim que essa versão
+carregar, sem precisar rodar o script de novo.
+
 ### v8.30.298-dev — 2026-08-05
 Mesma reclamação de antes (participantes), agora nos dropdowns/rótulos
 de usuário: "talvez não caiba o nome todo, mas coloca pelo menos um
