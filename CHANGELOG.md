@@ -18,6 +18,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.220 — 2026-08-05 · promove pra prod (PRs #195–#198)
+Promove pra produção mais uma leva de ajustes, validados em dev
+(v8.30.292-dev a v8.30.295-dev):
+
+- **Título obrigatório pra salvar card** — mesmo tratamento que
+  Prazo/Submarca já tinham (antes, título vazio dava um "não acontece
+  nada" silencioso).
+- **Contraste no modo claro**: pulso de campo obrigatório/"achar meus
+  cards" (amarelo → azul escuro), toast de campos obrigatórios (borda
+  e sombra mais fortes), borda de card bloqueado (menos "rosinha", com
+  um ajuste fino depois pra não ficar vermelhão demais) e borda de OKR
+  (amarelo → dourado escuro).
+- **"Seu card" mais aceso no escuro** — tingimento, borda e um glow
+  leve mais fortes, pra divergir de verdade dos cards normais da
+  coluna (no claro já estava bem destacado).
+
 ### v8.30.219 — 2026-08-05 · promove pra prod (PRs #190–#193)
 Promove pra produção uma leva de melhorias validadas em dev
 (v8.30.288-dev a v8.30.291-dev):

@@ -136,6 +136,7 @@
   --surface-rgb:6,26,46;
   --surface2-rgb:3,13,26;
   --ocean-op:1; --fish-op:1;
+  --pulse-rgb:255,209,102;
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -183,6 +184,11 @@
   --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
   --warn:#F6B73C;--danger:#F15B6C;
   --ocean-op:1; --fish-op:1;
+  /* Pulso de "achar meus cards" e o glow de campo obrigatório (.req-missing,
+     mais abaixo) usavam um amarelo pensado pro fundo escuro — em cima de
+     um card/input já claro, o glow simplesmente some de vista. Feedback
+     direto: "talvez pudesse piscar azul escuro". */
+  --pulse-rgb:10,77,120;
 }
 [data-theme="light"] .ocean{
   background:
@@ -406,7 +412,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* card */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);margin-top:9px;}
+/* Tingimento e borda mais fortes que a 1ª versão (rgba(...,.14)/.5) —
+   feedback direto: no escuro o "seu card" ficava discreto demais,
+   quase igual aos outros cards da coluna; no claro (ver override mais
+   abaixo) já tinha ficado bem mais aceso. Ganhou um glow leve também,
+   pra reforçar a divergência mesmo em telas mais escuras/mal
+   calibradas. */
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);margin-top:9px;}
 /* Selo "seu card" — pedido direto pra aparecer nos dois temas, não só
    no claro (onde foi criado junto com o tingimento mais forte, ver
    [data-theme="light"] .card.card-mine::before mais acima nesse
@@ -427,10 +439,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 }
 /* Pulso do botão "💡 Meus cards" — glow suave (não blink literal, é gatilho
    conhecido de fotosensibilidade) pra achar seus cards no board sem precisar
-   filtrar/esconder o resto. */
+   filtrar/esconder o resto. Cor em variável (--pulse-rgb, definida no
+   :root/:root[data-theme="light"] lá em cima) — feedback direto: um glow
+   amarelo claro simplesmente some de vista num card/fundo já claro; no
+   modo claro vira um azul bem escuro, que continua saltando aos olhos. */
 @keyframes cardPulseHighlight{
-  0%,100%{ box-shadow:0 0 0 0 rgba(255,209,102,0); }
-  50%{ box-shadow:0 0 0 6px rgba(255,209,102,.55); }
+  0%,100%{ box-shadow:0 0 0 0 rgba(var(--pulse-rgb),0); }
+  50%{ box-shadow:0 0 0 6px rgba(var(--pulse-rgb),.55); }
 }
 .card-pulse-highlight{ animation:cardPulseHighlight .7s ease-in-out 3; }
 .card-selected{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(56,182,255,.3);background:rgba(56,182,255,.08);}
@@ -1129,6 +1144,15 @@ input[type="date"]{-moz-appearance:textfield;}
 }
 .tag-blocker:hover{background:rgba(255,107,107,.25);}
 .card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;border-width:2px!important;}
+/* No claro, 40% de opacidade dessa mesma cor vermelha em cima de um card
+   quase-branco dilui pra um rosinha pastel — perde o "alerta" que a
+   borda mais grossa deveria dar. Feedback direto com print comparando
+   os dois temas. 1ª tentativa (rgba(200,16,46,.85), bem saturado e
+   opaco) resolveu o "rosinha" mas destoou demais do resto do layout
+   pastel ("gostei mas tá vermelhão demais") — ajustado pra um vermelho
+   mais discreto (menos saturado, menos opaco), ainda claramente
+   vermelho (não rosa), sem gritar tanto. */
+[data-theme="light"] .card.has-blocker-tag{border-color:rgba(196,64,74,.6)!important;}
 
 
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
@@ -1430,9 +1454,35 @@ input[type="date"]{-moz-appearance:textfield;}
 .reqf-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s;}
 .reqf-row:hover{background:rgba(56,182,255,.07);}
 .reqf-row input{width:16px;height:16px;accent-color:var(--warn);cursor:pointer;}
-.req-missing, .req-missing.fi, input.req-missing, textarea.req-missing{border-color:var(--warn)!important;box-shadow:0 0 0 1px var(--warn), 0 0 10px rgba(255,209,102,.25)!important;animation:reqShake .4s;}
+.req-missing, .req-missing.fi, input.req-missing, textarea.req-missing{border-color:var(--warn)!important;box-shadow:0 0 0 1px var(--warn), 0 0 10px rgba(var(--pulse-rgb),.25)!important;animation:reqShake .4s;}
 .req-missing .eoc-display{border-color:var(--warn)!important;}
+/* No claro, --warn (usado acima na borda) já é escuro o bastante, mas o
+   glow externo (rgba(var(--pulse-rgb),X)) e o próprio --warn combinados
+   ainda ficavam pouco visíveis contra um input claro — troca a borda
+   também pro mesmo azul escuro do pulso, consistente com o resto do
+   feedback de campo obrigatório no claro. */
+[data-theme="light"] .req-missing,
+[data-theme="light"] .req-missing.fi,
+[data-theme="light"] input.req-missing,
+[data-theme="light"] textarea.req-missing{
+  border-color:rgb(var(--pulse-rgb))!important;
+  box-shadow:0 0 0 1px rgb(var(--pulse-rgb)), 0 0 10px rgba(var(--pulse-rgb),.35)!important;
+}
+[data-theme="light"] .req-missing .eoc-display{border-color:rgb(var(--pulse-rgb))!important;}
 @keyframes reqShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+/* #kb-toast (showToast — inclusive o aviso "Preencha os campos
+   obrigatórios") é criado via JS com estilo inline, então a borda/fundo
+   já usam var(--surface-rgb)/var(--glass-b) e trocam de cor sozinhos —
+   mas no claro isso dava um pill quase branco flutuando em cima de um
+   modal também quase branco, sem nenhuma definição de borda visível.
+   Feedback direto: "tem que por um contraste". !important porque as
+   propriedades de borda já vêm de estilo inline (mais específico que
+   qualquer seletor CSS comum); box-shadow não estava inline, então essa
+   parte nem precisaria, mas fica junto por clareza. */
+[data-theme="light"] #kb-toast{
+  border-color:rgba(0,120,175,.55)!important;
+  box-shadow:0 6px 22px rgba(0,50,80,.28)!important;
+}
 .eoc-display{
   min-height:44px;padding:8px 10px;border-radius:8px;
   border:1px solid rgba(56,182,255,.08);
@@ -1664,6 +1714,12 @@ input[type="date"]{-moz-appearance:textfield;}
 
 
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;border-width:2px!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+/* Mesmo problema do .has-blocker-tag: 40% de opacidade de um amarelo puro
+   em cima de um card quase-branco no claro dilui demais e some de vista.
+   Feedback direto: "tem que ser um amarelo mais próximo do dourado pra
+   aparecer". Troca pra um dourado escurecido/saturado (dark goldenrod),
+   bem mais opaco, só no claro. */
+[data-theme="light"] .card.okr-card{border-color:rgba(184,134,11,.85)!important;box-shadow:0 0 8px rgba(184,134,11,.25);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
 .cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -4618,7 +4674,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.219</div>
+<div class="version">v8.30.220</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9226,9 +9282,12 @@ function openNewCard(col){
 }
 function saveCard(){
   if(!checkEditPermission()) return;
-  const title=document.getElementById('m-title').value.trim(); if(!title) return;
+  const title=document.getElementById('m-title').value.trim();
   // ── Modo edição de item recorrente/modelo/agendamento ──
+  // (fora do fluxo de "campos obrigatórios" abaixo — segue silencioso como
+  // sempre foi, mesmo escopo que due/submarca também não cobrem aqui)
   if(_editingQLItem){
+    if(!title) return;
     const {tipo, idx} = _editingQLItem;
     const item = (qlItems[tipo]||[])[idx];
     if(item){
@@ -9267,16 +9326,18 @@ function saveCard(){
     }
   }
   // Regras globais obrigatórias (todo squad, criação E edição — não depende
-  // de modelo): Prazo (ou "Sem prazo definido" explícito, ver toggleNoDue) e,
-  // quando o squad usa Submarca, qual submarca é. Pedido direto — sem isso os
-  // dois campos ficavam opcionais e cards saíam sem prazo/sem submarca
-  // silenciosamente.
+  // de modelo): Título, Prazo (ou "Sem prazo definido" explícito, ver
+  // toggleNoDue) e, quando o squad usa Submarca, qual submarca é. Pedido
+  // direto — sem isso os campos ficavam opcionais e cards saíam sem
+  // título/prazo/submarca silenciosamente (título em especial só dava um
+  // "não acontece nada" sem explicação nenhuma ao clicar Salvar).
   const alwaysMissing=[];
+  if(!title) alwaysMissing.push('title');
   if(!document.getElementById('m-due').value && !_mNoDue) alwaysMissing.push('due');
   if(submarcaAtivo && !document.getElementById('m-submarca')?.value) alwaysMissing.push('submarca');
   if(alwaysMissing.length){
     _highlightMissingFields(alwaysMissing);
-    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':'Submarca');
+    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':(k==='submarca'?'Submarca':'Título'));
     showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
     return;
   }
