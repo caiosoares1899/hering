@@ -906,6 +906,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.286-dev — 2026-08-05
+Destaque do "seu card" no claro, feedback direto: "o card atribuido a
+pessoa ainda n ta c tanto destaque". Passou por um protótipo com 4
+opções (cor do card normal do escuro / tingimento bem mais forte /
+faixa+selo / mistura de tingimento+selo) — escolhida a mistura:
+
+- `.card.card-mine` no claro: tingimento e borda bem mais fortes que o
+  original (quase invisível em cima de um card quase-branco).
+- Selinho "👤 seu card" saindo por cima do card — não depende só de
+  cor pra chamar atenção.
+
 ### v8.30.285-dev — 2026-08-05
 Mais badges sem leitura no claro, achados fora do `.card-tag` (que já
 tinha sido corrigido): "status dos agentes, prazo e o badge de risco

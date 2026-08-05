@@ -212,9 +212,32 @@
 [data-theme="light"] .card:hover{
   box-shadow:0 5px 18px rgba(0,50,80,.28),0 2px 6px rgba(0,50,80,.16);
 }
+/* "Seu card" no claro: passou por um protótipo com 4 opções (cor do
+   card normal do escuro / tingimento bem mais forte / faixa+selo /
+   mistura de tingimento+selo) — escolhida a mistura (opção D): fundo e
+   borda bem mais fortes que o "quase invisível" tingimento de 8%
+   original, mais um selinho "seu card" saindo por cima do card (não
+   depende só de cor pra chamar atenção). margin-top abre espaço pro
+   selo não colar no card/coluna de cima. */
 [data-theme="light"] .card.card-mine{
-  background:linear-gradient(rgba(0,120,175,.2),rgba(0,120,175,.2)),rgba(var(--surface-rgb),.95);
-  border-color:rgba(0,120,175,.7);
+  background:linear-gradient(rgba(0,120,175,.38),rgba(0,120,175,.38)),rgba(var(--surface-rgb),.95);
+  border-color:rgba(0,120,175,.9);
+  box-shadow:0 2px 10px rgba(0,120,175,.3),0 1px 3px rgba(0,50,80,.18);
+  margin-top:9px;
+}
+[data-theme="light"] .card.card-mine::before{
+  content:"👤 seu card";
+  position:absolute;
+  top:-9px;
+  left:9px;
+  font-size:8.5px;
+  font-weight:700;
+  background:#00577e;
+  color:#fff;
+  padding:1px 7px;
+  border-radius:999px;
+  letter-spacing:.02em;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
 }
 /* Tags do card (.card-tag): cor de fundo/borda/texto vêm todas de estilo
    inline gerado por JS (tagHtml() e ~10 variantes — OKR, cal_gestao,
@@ -4566,7 +4589,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.285-dev</div>
+<div class="version">v8.30.286-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
