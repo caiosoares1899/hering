@@ -940,6 +940,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.295-dev — 2026-08-05
+Três ajustes finos, feedback direto:
+
+- **OKR mais dourado no claro**: mesmo problema do `.has-blocker-tag`
+  — 40% de opacidade de amarelo puro em cima de um card quase-branco
+  dilui e some. Trocado por um dourado escurecido/saturado (dark
+  goldenrod), bem mais opaco, só no claro.
+- **Vermelho de bloqueio, menos intenso**: a correção anterior
+  (v8.30.294-dev) resolveu o "rosinha" mas ficou "vermelhão demais"
+  pro resto do layout — tom mais discreto (menos saturado, menos
+  opaco), ainda claramente vermelho.
+- **"Seu card" mais aceso no escuro**: no claro já tinha ficado bem
+  destacado; no escuro continuava discreto perto dos outros cards da
+  coluna. Tingimento e borda mais fortes + um glow leve, pra divergir
+  de verdade dos cards normais nos dois temas.
+
 ### v8.30.294-dev — 2026-08-05
 Feedback direto com print: a borda vermelha de card bloqueado
 (`.has-blocker-tag`) fica "quase um rosinha" no claro, perde o
