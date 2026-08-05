@@ -920,6 +920,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.288-dev — 2026-08-05
+Renomeia os temas — de "🌙 Mar Profundo" / "☀️ Mar Cristalino" (genérico
+demais) pra dois nomes de paisagens brasileiras, sugestão direta:
+
+- **🌙 Abrolhos** (escuro) — maior banco de corais do Atlântico Sul,
+  mar azul profundo, identidade forte.
+- **☀️ Lençóis Maranhenses** (claro) — associação imediata com água
+  cristalina.
+
+Atualizado em todo lugar que citava os nomes antigos: `title` do botão
+de toggle, toast ao alternar, e comentários no CSS/JS.
+
 ### v8.30.287-dev — 2026-08-05
 Feedback direto: "faltou criar o selo no modo escuro tb" — o selinho
 "👤 seu card" (v8.30.286-dev) só tinha sido criado pro claro. Movido
