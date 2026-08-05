@@ -873,6 +873,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.274-dev — 2026-08-05
+Achado a partir de um print (cards fictícios de teste do Agente Ágil):
+com uma tag longa + prioridade + chip de Executor + chip de Status do
+agente, o topo do card ficava visualmente apertado, quase colando no
+título.
+
+- `makeCardEl()`: chip de **Executor** (🤖 Agente / 🤝 Híbrido) e chip
+  de **Status do agente** (⏳ Na fila, ⚙️ Em execução, 👀 Aguardando
+  validação, ✅ Concluído, ⚠️ Erro) agora aparecem **combinados num só
+  chip** (ex.: "🤖 Agente · ⏳ Na fila") em vez de duas pills separadas
+  — reduz a quantidade de elementos empilhados no topo do card. Sem
+  status ainda definido, mostra só o chip de executor, como antes.
+
 ### v8.30.273-dev — 2026-08-04
 Pedido direto: tela de "📦 Cards arquivados" tinha "☑ Todos"/"☐ Nenhum"
 + "🗑 Excluir selecionados", mas nenhum jeito de restaurar em lote —
