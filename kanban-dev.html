@@ -4608,7 +4608,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.288-dev</div>
+<div class="version">v8.30.289-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8069,7 +8069,17 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
+// Filtro de submarca começa restaurando a última seleção salva neste
+// navegador pra esse squad (pedido direto: "sempre abre em Todos, eles
+// tem que ficar refazendo o filtro") — mesmo espírito de col_sort_/
+// hybrid_view_ (preferência pessoal por squad, não sincroniza entre
+// pessoas). Só o campo submarca é restaurado; os demais filtros
+// continuam começando limpos, como sempre foi. Ver _saveSubmarcaFiltroPadrao(),
+// chamado nos 3 pontos que mudam activeFilters.submarca.
+let activeFilters={owner:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:''};
+function _saveSubmarcaFiltroPadrao(){
+  safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca||[]));
+}
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -8120,6 +8130,7 @@ function clearFilters(){
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
+  _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
 }
@@ -9871,6 +9882,7 @@ document.addEventListener('keydown', e=>{
 // "Todos" só aparece marcado quando cur.length===0).
 function setSubmarcaDropdownTodos(){
   activeFilters.submarca=[];
+  _saveSubmarcaFiltroPadrao();
   const f=document.getElementById('f-submarca'); if(f) f.value='';
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
@@ -9886,6 +9898,7 @@ function toggleSubmarcaDropdownItem(tagId){
   const idx=arr.indexOf(tagId);
   if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
   activeFilters.submarca=arr;
+  _saveSubmarcaFiltroPadrao();
   const f=document.getElementById('f-submarca');
   if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
   _colRenderLimit={};
@@ -9898,6 +9911,7 @@ function toggleSubmarcaDropdownItem(tagId){
 function setSubmarcaFromDrawer(){
   const v=document.getElementById('f-submarca')?.value||'';
   activeFilters.submarca = v ? [v] : [];
+  _saveSubmarcaFiltroPadrao();
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
   renderBoard();
