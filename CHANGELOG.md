@@ -880,6 +880,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.279-dev — 2026-08-05
+Ajuste fino no ☀️ Mar Cristalino (v8.30.278-dev), depois de feedback bem
+positivo ("ficou muito melhor do que eu imaginava... água cristalina, dá
+vontade de usar") com 3 pontos pontuais:
+
+- **Glow das bordas reduzido ~40%** — os radiais do `.ocean` estavam
+  fortes demais ("parece um glow vindo de trás da tela"); opacidade
+  baixada de `.28`/`.24` pra `.17`/`.14`.
+- **Cards com 1-2% de azul** (`--surface-rgb: #FCFEFF` em vez de branco
+  puro `#FFFFFF`) — imperceptível conscientemente, mas reforça a
+  sensação de que tudo faz parte da água.
+- **Header/toolbar/dropdowns um tom mais vivo** (`--glass-rgb: #C6EDFF`
+  em vez de `#DDF7FF`) — se diferencia melhor do fundo, que antes
+  estava quase da mesma cor.
+
 ### v8.30.278-dev — 2026-08-05
 Revisão de identidade do modo claro (v8.30.277-dev): feedback direto —
 "ainda tá mt claro", seguido de uma sugestão de paleta completa e

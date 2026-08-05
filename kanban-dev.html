@@ -148,16 +148,20 @@
    rgba(var(--surface2-rgb),X) / rgba(var(--glass-rgb),X) em todo o arquivo —
    preserva a MESMA opacidade que cada regra já tinha, só troca a cor base
    aqui, uma vez.
-   Paleta: passou por 2 rodadas de ajuste puramente de tom (cinza/branco
-   demais, depois ainda clara/lavada demais) até virar uma sugestão de
-   paleta completa e nomeada — os dois temas viram "horários do mar" em
-   vez de um dark/light genérico: 🌙 Mar Profundo (escuro, já era bem
-   perto disso) e ☀️ Mar Cristalino (claro, inspirado em Caribe/Maldivas —
-   fundo levemente azulado tipo #F2FCFF/#DDF7FF, NUNCA branco puro, com
-   cards brancos por cima pra dar contraste sem precisar escurecer o
-   fundo). O degradê do oceano (.ocean) NÃO fica escondido no modo claro —
-   ganha uma versão própria em água cristalina (ver regra
-   [data-theme="light"] .ocean logo abaixo), preservando a identidade
+   Paleta: passou por 3 rodadas de ajuste até virar uma sugestão de
+   paleta completa e nomeada, muito bem recebida ("água cristalina, dá
+   vontade de usar") — os dois temas viram "horários do mar" em vez de
+   um dark/light genérico: 🌙 Mar Profundo (escuro, já era bem perto
+   disso) e ☀️ Mar Cristalino (claro, inspirado em Caribe/Maldivas —
+   fundo levemente azulado tipo #F2FCFF, NUNCA branco puro; cards com só
+   1-2% de azul (#FCFEFF, --surface-rgb) em vez de branco puro, pra
+   "parecer que tudo faz parte da água"; header/toolbar/dropdowns um
+   tom mais vivo (#C6EDFF, --glass-rgb) pra se diferenciar melhor do
+   fundo). O degradê do oceano (.ocean) NÃO fica escondido no modo claro
+   — ganha uma versão própria em água cristalina, com a "névoa"/glow das
+   bordas mais sutil (radiais reduzidos ~40% depois do feedback "parece
+   um glow forte vindo de trás da tela") — ver regra
+   [data-theme="light"] .ocean logo abaixo, preservando a identidade
    "mar" do app. Peixinhos/bolhas voltam a aparecer no claro também
    (--fish-op:1) — como as SVGs deles usam cores fixas pensadas pro fundo
    escuro, ganham um filter (saturate+brightness) só no modo claro pra
@@ -169,10 +173,10 @@
    nos dois temas sem alteração. */
 :root[data-theme="light"]{
   --deep:#F2FCFF;
-  --surface-rgb:255,255,255;
+  --surface-rgb:252,254,255;
   --surface2-rgb:221,247,255;
-  --glass-rgb:221,247,255;
-  --glass:rgba(221,247,255,0.65);
+  --glass-rgb:198,237,255;
+  --glass:rgba(198,237,255,0.65);
   --glass-b:rgba(0,169,230,0.28);
   --glass-h:rgba(0,169,230,0.14);
   --blue:#00A9E6;--accent:#00A9E6;--cyan:#4FC3F7;--teal:#33D6D0;
@@ -182,8 +186,8 @@
 }
 [data-theme="light"] .ocean{
   background:
-    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.28) 0%,transparent 60%),
-    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.24) 0%,transparent 55%),
+    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.17) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.14) 0%,transparent 55%),
     linear-gradient(180deg,#F2FCFF 0%,#DDF7FF 100%);
 }
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
@@ -4498,7 +4502,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.278-dev</div>
+<div class="version">v8.30.279-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
