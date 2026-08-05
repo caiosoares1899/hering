@@ -956,6 +956,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.296-dev — 2026-08-05
+Texto do "seu card" no claro, testado lado a lado num protótipo
+(atual/preto/branco) antes de decidir. Feedback direto: "o atual eu
+acho que tá mais acinzentado, azul escuro eu acho que funcionaria" —
+`var(--txt)` (#14324A) é pouco saturado, lê como cinza em cima do
+fundo azul de saturação média do "seu card". Trocado por um azul bem
+mais escuro e saturado (`#072747`), só nesse card.
+
 ### v8.30.295-dev — 2026-08-05
 Três ajustes finos, feedback direto:
 
