@@ -880,6 +880,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.277-dev — 2026-08-05
+Ajuste de acabamento do modo claro (v8.30.276-dev): feedback direto —
+"ficou branco demais", pediu um azul claro tipo "mar do Caribe,
+Maldivas".
+
+- Paleta trocada de cinza/branco pra azul-turquesa claro (`--deep`,
+  `--surface-rgb`, `--surface2-rgb`, `--glass-b`, `--accent`/`--cyan`/
+  `--teal`, `--txt` todos ajustados pro tom).
+- O fundo "oceano" (degradê de base) **não fica mais escondido** no
+  modo claro como na 1ª versão — ganha um degradê próprio em tons de
+  água tropical rasa (turquesa/ciano sobre uma base clara), preservando
+  a identidade "mar" do app em vez de só apagá-la.
+- Peixinhos/bolhas continuam desligados no claro por enquanto — as
+  cores das SVGs deles foram desenhadas pro fundo escuro; ajustar isso
+  fica pra uma próxima passada se fizer sentido.
+
 ### v8.30.276-dev — 2026-08-05
 Pedido direto: modo claro, além do escuro atual (que continua sendo o
 padrão).

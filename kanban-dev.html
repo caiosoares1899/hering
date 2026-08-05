@@ -135,7 +135,7 @@
      rgba(...) um por um no CSS inteiro). */
   --surface-rgb:6,26,46;
   --surface2-rgb:3,13,26;
-  --ocean-op:1; --fish-op:1; /* opacidade do fundo oceano/peixinhos — 0 no modo claro */
+  --ocean-op:1; --fish-op:1; /* peixinhos desligados no modo claro (--fish-op:0) — oceano ganha degradê próprio lá, não fica escondido */
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -147,34 +147,50 @@
    rgba(10,37,64,X) pro glass) foram trocadas por rgba(var(--surface-rgb),X) /
    rgba(var(--surface2-rgb),X) / rgba(var(--glass-rgb),X) em todo o arquivo —
    preserva a MESMA opacidade que cada regra já tinha, só troca a cor base
-   aqui, uma vez. Fundo do oceano + peixinhos/bolhas (decoração "mar
-   profundo") não faz sentido visual num tema claro — ver --ocean-op/--fish-op
-   e a regra .ocean/.fish-wrap abaixo. Ativado via [data-theme="light"] no
-   <html>, alternado por toggleTheme() (ver <script>), persistido em
-   localStorage — preferência pessoal, não sincroniza entre pessoas.
-   Cores de tags/prioridade/status (translúcidas, com texto saturado próprio)
-   ficaram de fora de propósito — já legíveis nos dois temas sem alteração. */
+   aqui, uma vez.
+   Paleta: 1ª versão saiu cinza/branco demais (feedback direto) — trocada
+   por um azul-turquesa claro (referência: mar do Caribe/Maldivas). O
+   degradê do oceano (.ocean) NÃO fica escondido no modo claro como antes —
+   ganha uma versão própria em tons de água tropical rasa (ver regra
+   [data-theme="light"] .ocean logo abaixo), preservando a identidade "mar"
+   do app em vez de só apagá-la. Peixinhos/bolhas continuam desligados no
+   claro por enquanto (as cores das SVGs deles foram desenhadas pro fundo
+   escuro — ficariam claros demais/pouco visíveis em cima da água clara sem
+   um ajuste de cor próprio, que fica pra uma próxima passada).
+   Ativado via [data-theme="light"] no <html>, alternado por toggleTheme()
+   (ver <script>), persistido em localStorage — preferência pessoal, não
+   sincroniza entre pessoas. Cores de tags/prioridade/status (translúcidas,
+   com texto saturado próprio) ficaram de fora de propósito — já legíveis
+   nos dois temas sem alteração. */
 :root[data-theme="light"]{
-  --deep:#eef2f7;
-  --surface-rgb:255,255,255;
-  --surface2-rgb:237,241,246;
+  --deep:#d7f0ec;
+  --surface-rgb:245,252,251;
+  --surface2-rgb:221,240,236;
   --glass-rgb:255,255,255;
-  --glass:rgba(255,255,255,0.72);
-  --glass-b:rgba(37,99,201,0.16);
-  --glass-h:rgba(37,99,201,0.08);
-  --blue:#2563c9;--accent:#1f7fd6;--cyan:#0f6fa8;--teal:#0f9c7d;
-  --txt:#132437;--txt2:rgba(19,36,55,0.68);--txt3:rgba(19,36,55,0.45);
-  --warn:#b8790a;--danger:#d9384f;
-  --ocean-op:0; --fish-op:0;
+  --glass:rgba(255,255,255,0.55);
+  --glass-b:rgba(13,120,108,0.22);
+  --glass-h:rgba(13,120,108,0.1);
+  --blue:#2563c9;--accent:#0e9c95;--cyan:#0a7f8c;--teal:#0c8f74;
+  --txt:#0c2b28;--txt2:rgba(12,43,40,0.7);--txt3:rgba(12,43,40,0.48);
+  --warn:#a86a08;--danger:#c93250;
+  --ocean-op:1; --fish-op:0;
+}
+[data-theme="light"] .ocean{
+  background:
+    radial-gradient(ellipse at 20% 80%,rgba(0,196,173,.4) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(45,196,224,.32) 0%,transparent 55%),
+    linear-gradient(180deg,#e9fbf7 0%,#cdf0e8 100%);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
-/* Fundo "mar profundo" (gradiente + bolhas + peixinhos) é uma decoração do
-   tema ESCURO especificamente — não existe versão clara equivalente que
-   faça sentido visual, então some por completo no modo claro (--ocean-op/
-   --fish-op, ver :root[data-theme="light"] acima), independente da
-   preferência pessoal de peixinhos ligados/desligados (fish_bg_off) — as
-   duas coisas se somam (ambas precisam estar "on" pra aparecer).*/
+/* Fundo "oceano" (gradiente de base) ganha uma versão própria em água
+   tropical clara no modo claro — ver [data-theme="light"] .ocean acima,
+   que substitui o gradiente inteiro (referência: mar do Caribe/Maldivas,
+   pedido direto depois da 1ª versão ter saído cinza/branco demais).
+   Peixinhos/bolhas continuam desligados no claro por enquanto (--fish-op),
+   independente da preferência pessoal de peixinhos ligados/desligados
+   (fish_bg_off) — as duas coisas se somam (ambas precisam estar "on" pra
+   aparecer); as cores das SVGs deles foram pensadas pro fundo escuro. */
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--ocean-op);background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
 .bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
 @keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
@@ -4471,7 +4487,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.276-dev</div>
+<div class="version">v8.30.277-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
