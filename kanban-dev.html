@@ -4618,7 +4618,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.291-dev</div>
+<div class="version">v8.30.292-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9226,9 +9226,12 @@ function openNewCard(col){
 }
 function saveCard(){
   if(!checkEditPermission()) return;
-  const title=document.getElementById('m-title').value.trim(); if(!title) return;
+  const title=document.getElementById('m-title').value.trim();
   // ── Modo edição de item recorrente/modelo/agendamento ──
+  // (fora do fluxo de "campos obrigatórios" abaixo — segue silencioso como
+  // sempre foi, mesmo escopo que due/submarca também não cobrem aqui)
   if(_editingQLItem){
+    if(!title) return;
     const {tipo, idx} = _editingQLItem;
     const item = (qlItems[tipo]||[])[idx];
     if(item){
@@ -9267,16 +9270,18 @@ function saveCard(){
     }
   }
   // Regras globais obrigatórias (todo squad, criação E edição — não depende
-  // de modelo): Prazo (ou "Sem prazo definido" explícito, ver toggleNoDue) e,
-  // quando o squad usa Submarca, qual submarca é. Pedido direto — sem isso os
-  // dois campos ficavam opcionais e cards saíam sem prazo/sem submarca
-  // silenciosamente.
+  // de modelo): Título, Prazo (ou "Sem prazo definido" explícito, ver
+  // toggleNoDue) e, quando o squad usa Submarca, qual submarca é. Pedido
+  // direto — sem isso os campos ficavam opcionais e cards saíam sem
+  // título/prazo/submarca silenciosamente (título em especial só dava um
+  // "não acontece nada" sem explicação nenhuma ao clicar Salvar).
   const alwaysMissing=[];
+  if(!title) alwaysMissing.push('title');
   if(!document.getElementById('m-due').value && !_mNoDue) alwaysMissing.push('due');
   if(submarcaAtivo && !document.getElementById('m-submarca')?.value) alwaysMissing.push('submarca');
   if(alwaysMissing.length){
     _highlightMissingFields(alwaysMissing);
-    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':'Submarca');
+    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':(k==='submarca'?'Submarca':'Título'));
     showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
     return;
   }

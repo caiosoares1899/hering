@@ -940,6 +940,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.292-dev — 2026-08-05
+Pedido direto: "lembra que a gente colocou submarca e prazo como
+obrigatório? coloca também o título como obrigatório". Antes, salvar
+com título vazio simplesmente não fazia nada — clique em "Salvar" sem
+feedback nenhum, sem explicação. Título agora entra na mesma checagem
+global de campos obrigatórios que Prazo/Submarca já tinham: destaca o
+campo e mostra o toast "🔒 Preencha os campos obrigatórios: Título".
+Vale tanto pra criar quanto pra editar um card — mesmo escopo de
+antes (não cobre o fluxo de editar item recorrente/modelo, que
+continua com a checagem silenciosa que sempre teve).
+
 ### v8.30.291-dev — 2026-08-05
 Bug real encontrado ao confirmar com o usuário se a ordenação 🖐 Manual
 (v8.30.290-dev) funcionava com filtro ativo (ex.: submarca): soltar um
