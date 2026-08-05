@@ -4412,7 +4412,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.274-dev</div>
+<div class="version">v8.30.275-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7514,14 +7514,25 @@ function makeCardEl(card){
     addTouchDnD(div,card.id);
   }
   div.ondblclick=e=>{e.stopPropagation();};
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="font-size:9px;margin-left:3px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="font-size:10px;margin-right:2px;">🎯</span>':'';
+  // NOTA sobre display:inline-block nos badges abaixo: margin-top/bottom NÃO
+  // tem efeito nenhum em <span> comum (display:inline) — só .card-tag já
+  // tinha isso certo (CSS: display:inline-block + margin-bottom). Os outros
+  // badges (prioridade, risco, OKR, impedimento, executor) eram <span> puro
+  // sem display, então o margin-bottom que eu tentei adicionar antes pro
+  // chip de executor não fazia ELE ficar mais espaçado da linha de baixo —
+  // sem essa propriedade, quando o badge quebra pra uma linha nova (comum
+  // com várias tags + prioridade + chip juntos), ele fica colado na linha
+  // acima E no título, mesmo com margin-bottom no CSS (ignorado silenciosamente
+  // pelo navegador). Achado real, a partir de um print com cards de teste do
+  // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
   // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
   // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
   // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
   // desatualizado nesse modo, a coluna nunca mente. Time achou a borda
   // vermelha/dourada fina demais pra notar de relance — ver .has-blocker-tag/
   // .okr-card (CSS) pela largura aumentada.
-  const blockedBadge=_cardIsBlocked(card)?'<span style="font-size:10px;margin-right:2px;">🚧</span>':'';
+  const blockedBadge=_cardIsBlocked(card)?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🚧</span>':'';
   // Chip de executor — só aparece pra agent/hybrid (humano é o default silencioso, não polui boards que não usam a feature).
   // Combina Executor + Status do agente NUM SÓ chip quando os dois existem
   // juntos (achado real: com uma tag longa + prioridade + os dois chips
@@ -7536,7 +7547,7 @@ function makeCardEl(card){
   if(_execInfo){
     const _statusPart=_asInfo?` · ${_asInfo.ico} ${_asInfo.lbl}`:'';
     const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
-    execChip=`<span class="exec-chip" style="font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
+    execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
   }
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
