@@ -18,6 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.214 — 2026-08-05 · promove pra prod (PR #171)
+Promove pra produção o botão "↩ Restaurar selecionados" na tela de
+Cards arquivados, validado em dev na v8.30.273-dev — ver entrada
+`kanban-dev.html` correspondente.
+
 ### v8.30.213 — 2026-08-04 · promove pra prod (PR #169)
 Promove pra produção o tamanho de fonte do board, validado em dev na
 v8.30.272-dev — ver entrada `kanban-dev.html` correspondente.
