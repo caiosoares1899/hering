@@ -4718,7 +4718,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.304-dev</div>
+<div class="version">v8.30.305-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15036,12 +15036,30 @@ function renderMd(txt){
     url = url.trim();
     return '<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();" title="'+url+'">'+label+'</a>';
   });
-  // Links automáticos: URLs http(s) viram <a> clicável (abre em nova aba, seguro).
-  // Evita mexer em URLs que já estão dentro de atributos HTML (href/src/onclick) já gerados.
+  // Links automáticos: URLs http(s) soltas na frase viram <a> clicável.
+  // Protege o que os passos acima já geraram (menções, [[CARD]], [texto](url))
+  // ANTES de rodar — bug real: a exclusão antiga era "não prefixado por >",
+  // pra evitar linkar de novo o texto visível de um link [url](url) (que fica
+  // logo depois do '>' de fechamento da tag <a> aberta). Só que \n já virou
+  // <br> lá no topo desta função, então QUALQUER URL solta começando uma
+  // linha nova (a mais comum: link colado na própria linha) também vinha
+  // logo depois de um '>' — do <br> — e ficava injustamente de fora,
+  // aparecendo como texto puro, não clicável. Troca a heurística de "não
+  // depois de >" por proteger de verdade o HTML já gerado com um
+  // placeholder (bytes NUL — impossível de vir de digitação normal, não
+  // colide com nada real; um marcador tipo " N " bateria sozinho num
+  // número solto qualquer no texto, ex.: "comprei 5 unidades"),
+  // restaurado no final — sem excluir nada por posição.
+  const _autoLinkGuard = [];
+  txt = txt.replace(/<a\b[^>]*>.*?<\/a>|<span\b[^>]*>.*?<\/span>/gs, m=>{
+    _autoLinkGuard.push(m);
+    return ' '+(_autoLinkGuard.length-1)+' ';
+  });
   // Mesmo motivo do bloco acima pra não chamar esc() de novo: url já veio escapada.
-  txt = txt.replace(/(^|[^"'=\/>])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
+  txt = txt.replace(/(^|[^"'=\/])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]}])/g, function(m, pre, url){
     return pre + '<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="desc-link" onclick="event.stopPropagation();">'+url+'</a>';
   });
+  txt = txt.replace(/ (\d+) /g, (m,i)=>_autoLinkGuard[Number(i)]);
   return txt;
 }
 // Handler único pros links [[CARD:id:title]] gerados por renderMd() (comentários,
