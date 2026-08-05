@@ -1138,6 +1138,12 @@ input[type="date"]{-moz-appearance:textfield;}
 }
 .tag-blocker:hover{background:rgba(255,107,107,.25);}
 .card.has-blocker-tag{border-color:rgba(255,107,107,.4)!important;border-width:2px!important;}
+/* No claro, 40% de opacidade dessa mesma cor vermelha em cima de um card
+   quase-branco dilui pra um rosinha pastel — perde o "alerta" que a
+   borda mais grossa deveria dar. Feedback direto com print comparando
+   os dois temas. Vermelho mais escurado/saturado e bem mais opaco só no
+   claro, pra continuar parecendo urgente. */
+[data-theme="light"] .card.has-blocker-tag{border-color:rgba(200,16,46,.85)!important;}
 
 
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
@@ -4653,7 +4659,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.293-dev</div>
+<div class="version">v8.30.294-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

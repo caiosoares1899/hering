@@ -940,6 +940,13 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.294-dev — 2026-08-05
+Feedback direto com print: a borda vermelha de card bloqueado
+(`.has-blocker-tag`) fica "quase um rosinha" no claro, perde o
+destaque. Causa: 40% de opacidade da mesma cor vermelha em cima de um
+card quase-branco dilui bastante. Vermelho mais escuro/saturado e bem
+mais opaco só no claro.
+
 ### v8.30.293-dev — 2026-08-05
 Feedback direto com print: os "piscas" amarelos (campo obrigatório e o
 pulso de "achar meus cards") somem de vista no claro, e o aviso de
