@@ -880,6 +880,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.278-dev — 2026-08-05
+Revisão de identidade do modo claro (v8.30.277-dev): feedback direto —
+"ainda tá mt claro", seguido de uma sugestão de paleta completa e
+nomeada. Os dois temas agora são tratados como "horários do mar" em
+vez de um dark/light genérico:
+
+- **🌙 Mar Profundo** (escuro, o de sempre) e **☀️ Mar Cristalino**
+  (claro, paleta Caribe/Maldivas) — nome refletido no `title` do botão
+  de toggle e num toast ao alternar.
+- Paleta do claro reformulada: fundo levemente azulado (`#F2FCFF`/
+  `#DDF7FF`), nunca branco puro, com **cards brancos** por cima pra dar
+  contraste sem precisar escurecer o fundo. Azul principal saturado
+  (`#00A9E6`) + turquesa (`#33D6D0`) puxam a identidade "água" mesmo
+  com um fundo claro.
+- O degradê do oceano (`.ocean`) ganha sua própria versão em água
+  cristalina no claro (não fica escondido).
+- **Peixinhos/bolhas voltam a aparecer no modo claro** (antes ficavam
+  desligados) — como as cores das SVGs foram pensadas pro fundo escuro,
+  ganham um `filter` (saturate/brightness/contrast) só no claro pra
+  manter contraste.
+
 ### v8.30.277-dev — 2026-08-05
 Ajuste de acabamento do modo claro (v8.30.276-dev): feedback direto —
 "ficou branco demais", pediu um azul claro tipo "mar do Caribe,
