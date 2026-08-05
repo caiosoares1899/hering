@@ -992,6 +992,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.305-dev — 2026-08-05
+Terceiro achado testando os links do Vimeo: um link solto (sem
+`[texto](url)`) colado numa linha em branco depois de outro parágrafo não
+virava clicável — sobrava como texto puro. Causa: o auto-link de URL solta
+excluía qualquer ocorrência "logo depois de um `>`", pra não linkar de novo
+o texto visível de um `[url](url)` que já tinha acabado de virar `<a>...
+</a>` (o texto dele fica logo após o `>` de fechamento da tag aberta). Só
+que `\n` já virou `<br>` bem antes desse passo — então QUALQUER link colado
+começando uma linha nova (o caso mais comum de todos: link na própria
+linha) também ficava logo depois de um `>` (o do `<br>`) e caía nessa
+mesma exclusão, por engano. Trocada a heurística "não depois de `>`" por
+proteção de verdade: os `<a>`/`<span>` já gerados (menções, `[[CARD]]`,
+`[texto](url)`) são extraídos pra um placeholder antes do auto-link rodar,
+e devolvidos no lugar depois — sem excluir nada por posição.
+
+Continua **não** dando pra auto-detectar um link solto que tenha espaço
+cru no meio (ex.: o link puro do Vimeo, sem colchetes) — isso exigiria
+adivinhar onde a URL termina e o texto normal começa, o que quebraria
+frases comuns tipo "olha esse link https://x.com e me fala o que acha".
+Pra esse caso, o jeito é usar o botão 🔗 (ou colchetes `[texto](url)` na
+mão) — aí a URL fica delimitada de propósito, sem ambiguidade.
+
 ### v8.30.304-dev — 2026-08-05
 Achado ao investigar por que até a URL crua (sem espaço/parêntese, já
 percent-encoded do jeito certo) continuava não funcionando: `renderMd()`
