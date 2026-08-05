@@ -216,6 +216,18 @@
   background:linear-gradient(rgba(0,120,175,.2),rgba(0,120,175,.2)),rgba(var(--surface-rgb),.95);
   border-color:rgba(0,120,175,.7);
 }
+/* Tags do card (.card-tag): cor de fundo/borda/texto vêm todas de estilo
+   inline gerado por JS (tagHtml() e ~10 variantes — OKR, cal_gestao,
+   tamanho, submarca, cor custom...), pensadas pro fundo escuro (texto
+   num tom claro/saturado tipo #38b6ff, #ffd166 — pouco contraste em cima
+   de um card branco). Em vez de reescrever cada cor de cada variante,
+   um filter no modo claro escurece o pill inteiro (fundo+borda+texto) de
+   uma vez só, incluindo cores customizadas escolhidas pelo usuário.
+   Feedback direto: "as tags eu acho q tao mt claras no claro, n ta dando
+   leitura". */
+[data-theme="light"] .card-tag{
+  filter:brightness(.68) saturate(1.35);
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -4525,7 +4537,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.282-dev</div>
+<div class="version">v8.30.283-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
