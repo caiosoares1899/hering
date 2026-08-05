@@ -894,6 +894,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.283-dev — 2026-08-05
+Feedback direto com print: "as tags eu acho q tao mt claras no claro,
+n ta dando leitura".
+
+- As cores de fundo/borda/texto das tags do card vêm todas de estilo
+  inline gerado por JS (mais de 10 variantes — OKR, cal_gestao,
+  tamanho, submarca, cor customizada por usuário...), pensadas pro
+  fundo escuro (texto num tom claro/saturado, baixo contraste em cima
+  de um card branco). Em vez de reescrever cada variante, um `filter`
+  (`brightness`+`saturate`) escurece o pill inteiro — fundo, borda e
+  texto — de uma vez só no modo claro, cobrindo até cores customizadas
+  escolhidas por cada pessoa.
+
 ### v8.30.282-dev — 2026-08-05
 Mais um round de feedback direto na distinção de cards (v8.30.281-dev):
 "tem que ser um tom mais escuro ainda, pra diferenciar bem" no claro, e
