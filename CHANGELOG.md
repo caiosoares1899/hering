@@ -880,6 +880,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.276-dev — 2026-08-05
+Pedido direto: modo claro, além do escuro atual (que continua sendo o
+padrão).
+
+- **Botão 🌙/☀️ no canto superior direito** (primeiro item do cluster
+  de botões do header) — alterna entre os dois temas. Preferência
+  pessoal, salva só neste navegador (não sincroniza entre pessoas nem
+  dispositivos), aplicada bem cedo (script pequeno logo após o
+  `</style>` no `<head>`, direto no `localStorage`) pra não dar o
+  "flash" de escuro→claro antes do resto do JS carregar.
+- **Sistema de variáveis CSS**: a maioria das cores já usava
+  `var(--txt)`/`var(--glass)`/etc. — essas simplesmente trocam de
+  valor com `:root[data-theme="light"]`. As que usavam `rgba(...)` cru
+  com a mesma cor-base repetida em opacidades diferentes
+  (`rgba(6,26,46,X)` pra modais/dropdowns/cards, `rgba(3,13,26,X)` pra
+  inputs/sub-painéis "afundados", `rgba(10,37,64,X)` pro glass) foram
+  trocadas, em TODO o arquivo (CSS estático e HTML gerado por JS —
+  `var()` funciona igual em `style="..."` inline), por
+  `rgba(var(--surface-rgb),X)` / `rgba(var(--surface2-rgb),X)` /
+  `rgba(var(--glass-rgb),X)` — preserva a opacidade exata de cada
+  regra, só troca a cor base num lugar só.
+- Fundo "mar profundo" (gradiente + bolhas + peixinhos) some por
+  completo no modo claro (não faz sentido visual nesse tema) —
+  independente da preferência pessoal de peixinhos ligados/desligados.
+- Cores de tags/prioridade/status de agente (translúcidas, com texto
+  saturado próprio) ficaram de fora de propósito — já são legíveis nos
+  dois temas sem alteração.
+
+Escopo: cobre as superfícies principais (board, cards, colunas,
+modais, dropdowns, inputs, toolbar, header). Pode ter algum canto
+específico que ainda não ficou 100% refinado no modo claro — reportar
+se achar algo estranho.
+
 ### v8.30.275-dev — 2026-08-05
 Hotfix de acabamento do fix anterior (v8.30.274-dev): combinar
 Executor+Status num chip só não bastou — o print mostrou que ainda
