@@ -135,7 +135,7 @@
      rgba(...) um por um no CSS inteiro). */
   --surface-rgb:6,26,46;
   --surface2-rgb:3,13,26;
-  --ocean-op:1; --fish-op:1; /* peixinhos desligados no modo claro (--fish-op:0) — oceano ganha degradê próprio lá, não fica escondido */
+  --ocean-op:1; --fish-op:1;
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -148,49 +148,60 @@
    rgba(var(--surface2-rgb),X) / rgba(var(--glass-rgb),X) em todo o arquivo —
    preserva a MESMA opacidade que cada regra já tinha, só troca a cor base
    aqui, uma vez.
-   Paleta: 1ª versão saiu cinza/branco demais (feedback direto) — trocada
-   por um azul-turquesa claro (referência: mar do Caribe/Maldivas). O
-   degradê do oceano (.ocean) NÃO fica escondido no modo claro como antes —
-   ganha uma versão própria em tons de água tropical rasa (ver regra
-   [data-theme="light"] .ocean logo abaixo), preservando a identidade "mar"
-   do app em vez de só apagá-la. Peixinhos/bolhas continuam desligados no
-   claro por enquanto (as cores das SVGs deles foram desenhadas pro fundo
-   escuro — ficariam claros demais/pouco visíveis em cima da água clara sem
-   um ajuste de cor próprio, que fica pra uma próxima passada).
+   Paleta: passou por 2 rodadas de ajuste puramente de tom (cinza/branco
+   demais, depois ainda clara/lavada demais) até virar uma sugestão de
+   paleta completa e nomeada — os dois temas viram "horários do mar" em
+   vez de um dark/light genérico: 🌙 Mar Profundo (escuro, já era bem
+   perto disso) e ☀️ Mar Cristalino (claro, inspirado em Caribe/Maldivas —
+   fundo levemente azulado tipo #F2FCFF/#DDF7FF, NUNCA branco puro, com
+   cards brancos por cima pra dar contraste sem precisar escurecer o
+   fundo). O degradê do oceano (.ocean) NÃO fica escondido no modo claro —
+   ganha uma versão própria em água cristalina (ver regra
+   [data-theme="light"] .ocean logo abaixo), preservando a identidade
+   "mar" do app. Peixinhos/bolhas voltam a aparecer no claro também
+   (--fish-op:1) — como as SVGs deles usam cores fixas pensadas pro fundo
+   escuro, ganham um filter (saturate+brightness) só no modo claro pra
+   continuarem visíveis (ver regra .fish-wrap/.bubble logo abaixo).
    Ativado via [data-theme="light"] no <html>, alternado por toggleTheme()
    (ver <script>), persistido em localStorage — preferência pessoal, não
    sincroniza entre pessoas. Cores de tags/prioridade/status (translúcidas,
    com texto saturado próprio) ficaram de fora de propósito — já legíveis
    nos dois temas sem alteração. */
 :root[data-theme="light"]{
-  --deep:#d7f0ec;
-  --surface-rgb:245,252,251;
-  --surface2-rgb:221,240,236;
-  --glass-rgb:255,255,255;
-  --glass:rgba(255,255,255,0.55);
-  --glass-b:rgba(13,120,108,0.22);
-  --glass-h:rgba(13,120,108,0.1);
-  --blue:#2563c9;--accent:#0e9c95;--cyan:#0a7f8c;--teal:#0c8f74;
-  --txt:#0c2b28;--txt2:rgba(12,43,40,0.7);--txt3:rgba(12,43,40,0.48);
-  --warn:#a86a08;--danger:#c93250;
-  --ocean-op:1; --fish-op:0;
+  --deep:#F2FCFF;
+  --surface-rgb:255,255,255;
+  --surface2-rgb:221,247,255;
+  --glass-rgb:221,247,255;
+  --glass:rgba(221,247,255,0.65);
+  --glass-b:rgba(0,169,230,0.28);
+  --glass-h:rgba(0,169,230,0.14);
+  --blue:#00A9E6;--accent:#00A9E6;--cyan:#4FC3F7;--teal:#33D6D0;
+  --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
+  --warn:#F6B73C;--danger:#F15B6C;
+  --ocean-op:1; --fish-op:1;
 }
 [data-theme="light"] .ocean{
   background:
-    radial-gradient(ellipse at 20% 80%,rgba(0,196,173,.4) 0%,transparent 60%),
-    radial-gradient(ellipse at 80% 20%,rgba(45,196,224,.32) 0%,transparent 55%),
-    linear-gradient(180deg,#e9fbf7 0%,#cdf0e8 100%);
+    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.28) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.24) 0%,transparent 55%),
+    linear-gradient(180deg,#F2FCFF 0%,#DDF7FF 100%);
+}
+[data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
+  filter:saturate(1.3) brightness(0.9) contrast(1.05);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
-/* Fundo "oceano" (gradiente de base) ganha uma versão própria em água
-   tropical clara no modo claro — ver [data-theme="light"] .ocean acima,
-   que substitui o gradiente inteiro (referência: mar do Caribe/Maldivas,
-   pedido direto depois da 1ª versão ter saído cinza/branco demais).
-   Peixinhos/bolhas continuam desligados no claro por enquanto (--fish-op),
-   independente da preferência pessoal de peixinhos ligados/desligados
-   (fish_bg_off) — as duas coisas se somam (ambas precisam estar "on" pra
-   aparecer); as cores das SVGs deles foram pensadas pro fundo escuro. */
+/* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
+   cristalina do ☀️ Mar Cristalino — no modo claro, ver [data-theme="light"]
+   .ocean acima, que substitui o gradiente inteiro (paleta sugerida:
+   Caribe/Maldivas, fundo levemente azulado #F2FCFF/#DDF7FF, nunca branco
+   puro). Peixinhos/bolhas também aparecem no claro (--fish-op:1) — como
+   as cores fixas das SVGs foram pensadas pro 🌙 Mar Profundo (fundo
+   escuro), levam um filter (saturate+brightness) só no modo claro pra
+   manter contraste (ver regra [data-theme="light"] .fish-wrap/.bubble
+   acima). Isso é independente da preferência pessoal de peixinhos ligados/
+   desligados (fish_bg_off) — as duas coisas se somam (ambas precisam
+   estar "on" pra aparecer). */
 .ocean{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--ocean-op);background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
 .bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
 @keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
@@ -2405,7 +2416,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
   </div>
   <div class="hd-btns">
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="toggleTheme()" title="Alternar entre modo escuro e claro — preferência salva só neste navegador" style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="toggleTheme()" title="Alternar entre 🌙 Mar Profundo e ☀️ Mar Cristalino — preferência salva só neste navegador" style="padding:5px 9px;">🌙</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -4487,7 +4498,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.277-dev</div>
+<div class="version">v8.30.278-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -19250,6 +19261,9 @@ function toggleFishBackground(){
 // Pedido direto: alternar entre o visual escuro (padrão) e um modo claro.
 // Preferência pessoal, salva só neste navegador (mesmo espírito de
 // fish_bg_off/colSortMode) — não sincroniza entre pessoas nem dispositivos.
+// Os dois temas viram "horários do mar" (sugestão direta) em vez de um
+// dark/light genérico: 🌙 Mar Profundo (escuro) e ☀️ Mar Cristalino
+// (claro, Caribe/Maldivas) — daí o toast abaixo, não só o ícone.
 // O tema em si é aplicado bem mais cedo, num <script> pequeno logo após o
 // </style> no <head> (ver lá) — direto no localStorage, pra evitar o flash
 // de escuro→claro antes do JS principal (este arquivo) carregar. Aqui só
@@ -19265,6 +19279,7 @@ function toggleTheme(){
   else document.documentElement.removeAttribute('data-theme');
   safeLS.setItem('mare_theme', next);
   _applyThemeButtonIcon();
+  showToast(next==='light' ? '☀️ Mar Cristalino' : '🌙 Mar Profundo');
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
 // Fish & Bubbles
