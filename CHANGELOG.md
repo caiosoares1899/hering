@@ -894,6 +894,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.282-dev — 2026-08-05
+Mais um round de feedback direto na distinção de cards (v8.30.281-dev):
+"tem que ser um tom mais escuro ainda, pra diferenciar bem" no claro, e
+"no escuro dá pra clarear mais também".
+
+- **Claro**: sombra e borda do card escurecidas de novo (tom mais forte
+  e saturado, `rgba(0,50,80,X)`/`rgba(0,120,175,X)` em vez do tom mais
+  claro da rodada anterior).
+- **Escuro**: card ganhou um pouco mais de contraste — leve
+  clareamento (5% branco sobre a superfície) e borda um pouco mais
+  visível.
+- `.card-mine` (destaque de "meu card") acompanhou o ajuste nos dois
+  temas.
+
 ### v8.30.281-dev — 2026-08-05
 Feedback direto com prints comparando os dois temas: no modo claro os
 cards perdiam a distinção que tinham no escuro (não dava pra ver onde
