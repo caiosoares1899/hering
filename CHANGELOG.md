@@ -968,6 +968,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.298-dev — 2026-08-05
+Mesma reclamação de antes (participantes), agora nos dropdowns/rótulos
+de usuário: "talvez não caiba o nome todo, mas coloca pelo menos um
+sobrenome". Nova função `_shortName()` (primeiro + último nome, cabe
+melhor que o nome completo) aplicada em todo lugar que só mostrava o
+primeiro nome pra identificar alguém numa lista: filtro de usuário da
+toolbar, filtro de responsável em Cards arquivados, filtro de usuário
+do Calendário, dropdown de "atribuir responsável" em massa (barra de
+seleção), e o rótulo das raias quando agrupado por responsável.
+
 ### v8.30.297-dev — 2026-08-05
 Feedback direto (com print bem-humorado): "a página de login tá feita
 no modo claro kkk" — no modo claro, o card de login (já usava
