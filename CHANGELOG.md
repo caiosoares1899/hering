@@ -894,6 +894,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.281-dev — 2026-08-05
+Feedback direto com prints comparando os dois temas: no modo claro os
+cards perdiam a distinção que tinham no escuro (não dava pra ver onde
+um card terminava e a coluna/o próximo card começava).
+
+- **Sombra sutil nos cards** só no modo claro — no escuro a distinção
+  vinha de contraste/brilho de borda, truque que não funciona quando os
+  dois lados (card e coluna) são claros. Borda também ficou um pouco
+  mais firme.
+- **`.card-mine`** (destaque de "meu card") também ganhou ajuste — o
+  tingimento azul de 8% que já existia ficava quase invisível em cima
+  de um card quase-branco; subiu a opacidade e a borda só no claro.
+
 ### v8.30.280-dev — 2026-08-05
 Correções de leitura no modo claro (v8.30.279-dev), feedback direto com
 3 pontos:
