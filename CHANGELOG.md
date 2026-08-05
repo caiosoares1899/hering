@@ -956,6 +956,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.297-dev — 2026-08-05
+Feedback direto (com print bem-humorado): "a página de login tá feita
+no modo claro kkk" — no modo claro, o card de login (já usava
+`var(--glass)`, então mudava de cor com o tema) aparecia flutuando em
+cima de um fundo sempre preto (`.login-ov` tinha um `rgba(1,8,16,X)`
+fixo, nunca trocado — era o mesmo padrão dos backdrops de modal que
+ficam escuros de propósito, mas ali faz sentido porque tem um board
+por trás pra escurecer; a tela de login não tem nada atrás, ela É a
+página inteira). Fundo agora acompanha o tema também (nova variável
+`--deep-rgb`) — tela de login fica coerente nos dois temas.
+
 ### v8.30.296-dev — 2026-08-05
 Texto do "seu card" no claro, testado lado a lado num protótipo
 (atual/preto/branco) antes de decidir. Feedback direto: "o atual eu
