@@ -197,20 +197,24 @@
    no claro esse mesmo truque não funciona (os dois ficam claros demais
    perto um do outro), faltava a pista de profundidade que o olho espera
    nesse caso: sombra. Feedback direto com print comparando os dois temas
-   ("não tem aquela distinção entre os cards"). Borda também um pouco mais
-   firme que a padrão pra ajudar a demarcar. .card-mine (destaque de "meu
-   card") ganha o mesmo tratamento — o tingimento azul de 8% que já existia
-   ficava quase invisível em cima de um card quase-branco. */
+   ("não tem aquela distinção entre os cards"), seguido de mais um round
+   ("tem que ser um tom mais escuro ainda, pra diferenciar bem") — sombra/
+   borda escurecidas de novo, e o card do modo escuro também ganhou um
+   pouco mais de contraste (pedido direto: "no escuro dá pra clarear
+   mais também") — ver ajuste direto na regra base .card (não precisa de
+   um bloco [data-theme] próprio pro escuro, já é o :root padrão). .card-
+   mine (destaque de "meu card") ganha o mesmo tratamento nos dois temas
+   — o tingimento azul de 8% original ficava quase invisível. */
 [data-theme="light"] .card{
-  box-shadow:0 1px 4px rgba(0,105,150,.14),0 1px 2px rgba(0,105,150,.08);
-  border-color:rgba(0,169,230,.35);
+  box-shadow:0 1px 5px rgba(0,50,80,.22),0 1px 3px rgba(0,50,80,.14);
+  border-color:rgba(0,120,175,.55);
 }
 [data-theme="light"] .card:hover{
-  box-shadow:0 4px 14px rgba(0,105,150,.18),0 2px 5px rgba(0,105,150,.1);
+  box-shadow:0 5px 18px rgba(0,50,80,.28),0 2px 6px rgba(0,50,80,.16);
 }
 [data-theme="light"] .card.card-mine{
-  background:linear-gradient(rgba(0,169,230,.16),rgba(0,169,230,.16)),rgba(var(--surface-rgb),.95);
-  border-color:rgba(0,169,230,.55);
+  background:linear-gradient(rgba(0,120,175,.2),rgba(0,120,175,.2)),rgba(var(--surface-rgb),.95);
+  border-color:rgba(0,120,175,.7);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -336,8 +340,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;}
 
 /* card */
-.card{background:rgba(var(--surface-rgb),.95);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.08),rgba(56,182,255,.08)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.35);}
+.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);}
 /* Pulso do botão "💡 Meus cards" — glow suave (não blink literal, é gatilho
    conhecido de fotosensibilidade) pra achar seus cards no board sem precisar
    filtrar/esconder o resto. */
@@ -4521,7 +4525,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.281-dev</div>
+<div class="version">v8.30.282-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
