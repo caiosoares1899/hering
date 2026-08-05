@@ -2622,7 +2622,11 @@ input[type="date"]{-moz-appearance:textfield;}
       </button>
       <button onclick="setColSortMode('doneAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-        📅 Prazo (data prevista)
+        📅 Prazo (mais antigos primeiro)
+      </button>
+      <button onclick="setColSortMode('dueDesc')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        📅 Prazo (mais novos primeiro)
       </button>
       <button onclick="setColSortMode('movedAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
@@ -2631,6 +2635,10 @@ input[type="date"]{-moz-appearance:textfield;}
       <button onclick="setColSortMode('size')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         👕 Tamanho (P → GG)
+      </button>
+      <button onclick="setColSortMode('manual')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🖐 Manual (arraste do jeito que quiser)
       </button>
     </div>
   </div>
@@ -3882,9 +3890,11 @@ input[type="date"]{-moz-appearance:textfield;}
         <option value="">Usar padrão do board</option>
         <option value="priority">🔥 Prioridade</option>
         <option value="createdAt">🕐 Data de criação</option>
-        <option value="doneAt">📅 Prazo</option>
+        <option value="doneAt">📅 Prazo (mais antigos primeiro)</option>
+        <option value="dueDesc">📅 Prazo (mais novos primeiro)</option>
         <option value="movedAt">🕓 Movimentação (mais recente)</option>
         <option value="size">👕 Tamanho (P → GG)</option>
+        <option value="manual">🖐 Manual (arraste do jeito que quiser)</option>
       </select>
     </div>
     <div>
@@ -4608,7 +4618,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.289-dev</div>
+<div class="version">v8.30.290-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7804,6 +7814,28 @@ function _sortCards(arr, colId){
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
     });
   }
+  if(mode==='dueDesc'){
+    // Mesma lógica de 'doneAt', invertida — pedido direto ("default mostra
+    // dos mais antigos pros mais novos, precisa de uma opção de inverter").
+    // Sem prazo continua indo pro final nos dois sentidos (não é "nem cedo
+    // nem tarde", é indefinido).
+    const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
+    return arr.slice().sort((a,b)=>{
+      const da=a.due, db=b.due;
+      if(da && db) return db.localeCompare(da); // prazo mais distante primeiro
+      if(da && !db) return -1;
+      if(!da && db) return 1;
+      return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
+    });
+  }
+  if(mode==='manual'){
+    // Ordenação 100% livre — pedido direto. card.manualOrder é atribuído só
+    // quando o card é arrastado dentro de uma coluna nesse modo (ver
+    // handleDrop/_reorderManualColumn); cards que nunca foram tocados não
+    // têm o campo, caem todos empatados em Infinity e mantêm a ordem
+    // original entre si (sort é estável).
+    return arr.slice().sort((a,b)=>(typeof a.manualOrder==='number'?a.manualOrder:Infinity)-(typeof b.manualOrder==='number'?b.manualOrder:Infinity));
+  }
   // 'priority' (padrão)
   const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
   return arr.slice().sort((a,b)=>{
@@ -8305,12 +8337,15 @@ function renderBoardDataGrid(){
 
 
 // ── PARTICIPANTES ──────────────────────────────────────────────────
+// Nome completo (não só o primeiro nome) — pedido direto: com só o
+// primeiro nome, times com vários "João"/"Ana" diferentes não davam pra
+// distinguir na lista.
 function populatePartSelect(excludeInits=[]){
   const sel=document.getElementById('m-part-select'); if(!sel) return;
   sel.innerHTML='<option value="">+ Adicionar participante...</option>';
   members.forEach(m=>{
     if(!excludeInits.includes(m.init))
-      sel.innerHTML+=`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`;
+      sel.innerHTML+=`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`;
   });
   // Adiciona usuário logado se não estiver na lista
   const init=window._currentUserInit; const u=window._currentUser;
@@ -8337,7 +8372,7 @@ function renderParticipants(parts){
   w.innerHTML=editingParticipants.map((init,i)=>{
     const m=allIdentities().find(x=>x.init===init);
     const foto=m?.isAgent?'':(safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}">`:'');
-    const nome=m?.isAgent?(m.avatarEmoji+' '+m.name):(m?.name?.split(' ')[0]||init);
+    const nome=m?.isAgent?(m.avatarEmoji+' '+m.name):(m?.name||init);
     return `<span class="part-chip">${foto}${esc(init)} · ${esc(nome)}
       <button class="part-chip-del" onclick="removeParticipant(${i})">✕</button>
     </span>`;
@@ -15742,7 +15777,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
+    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
@@ -18317,10 +18352,22 @@ function handleDragLeave(e){
   }
 }
 
+// Recalcula manualOrder sequencial (0,1,2...) de todos os cards ATIVOS de
+// uma coluna no modo 'manual', inserindo `movedCard` logo antes do card
+// `beforeId` (ou no final, se null/undefined) — mesmo padrão de
+// _renderSubPrioDragList (splice + reindex + fbSaveAll com touchedIds).
+// Retorna os ids tocados, pra passar direto pro fbSaveAll.
+function _reorderManualColumn(colId, movedCard, beforeId){
+  const rest=_sortCards(cards.filter(c=>c.col===colId && !c.archived && c.id!==movedCard.id), colId);
+  const idx=beforeId ? rest.findIndex(c=>c.id===beforeId) : -1;
+  if(idx>=0) rest.splice(idx,0,movedCard); else rest.push(movedCard);
+  rest.forEach((c,i)=>{ c.manualOrder=i; });
+  return rest.map(c=>c.id);
+}
 function handleDrop(e, colId){
   e.preventDefault();
   e.stopPropagation(); // Protege a coluna alvo
-  
+
   const body = e.currentTarget;
   body.classList.remove('drag-over','drag-over-blocked');
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
@@ -18328,7 +18375,20 @@ function handleDrop(e, colId){
   const card = cards.find(x=>x.id===_dragCardId);
   if(!card) return;
   const sourceCol = _dragSourceCol;
-  if(sourceCol === colId) return; // mesma coluna, nada a fazer
+  if(sourceCol === colId){
+    // Arrastar dentro da MESMA coluna só reordena de verdade no modo
+    // 'manual' (pedido direto: "ordenação 100% livre, do jeito que o
+    // usuário ordenar") — nos outros modos o card se reordenaria sozinho
+    // no próximo render de qualquer forma, então mexer na posição não
+    // faz sentido (e sempre foi um no-op antes desse modo existir).
+    if((colSortOverrides[colId]||colSortMode)==='manual'){
+      const afterEl=getDragAfterElement(body, e.clientY);
+      const touchedIds=_reorderManualColumn(colId, card, afterEl?.dataset?.id);
+      fbSaveAll(undefined, touchedIds);
+      renderBoard();
+    }
+    return;
+  }
   saveUndo('mover card');
   const prevColDrop = sourceCol;
   const prevBlockerDrop = card.blocker||false;

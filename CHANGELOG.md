@@ -920,6 +920,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.290-dev — 2026-08-05
+Três pedidos diretos:
+
+- **Ordenação por prazo invertida**: o botão ↕ Ordenação só tinha
+  "mais antigos primeiro" (prazo mais próximo/urgente primeiro). Nova
+  opção 📅 **Prazo (mais novos primeiro)** — mesma lógica invertida
+  (prazos mais distantes primeiro; sem prazo continua indo pro final
+  nos dois sentidos). Disponível no menu geral e no override por
+  coluna (⚙ da coluna).
+- **Participantes com nome completo**: a lista "+ Adicionar
+  participante..." e os chips de participantes já adicionados
+  mostravam só o primeiro nome — times com vários "João"/"Ana"
+  diferentes não davam pra distinguir. Agora mostra o nome completo.
+- **Ordenação 100% livre (🖐 Manual)**: nova opção no menu ↕
+  Ordenação — arraste os cards pra qualquer posição dentro da coluna,
+  do jeito que quiser. Antes, arrastar um card dentro da MESMA coluna
+  não fazia nada (só funcionava entre colunas) — agora, só nesse modo,
+  o drop recalcula a posição de todos os cards da coluna a partir de
+  onde a linha-fantasma indicou. A ordem fica salva no próprio card
+  (não só no navegador de quem arrastou), então todo mundo com esse
+  modo ativo vê a mesma posição. Diferente da já existente "Posição
+  dentro da prioridade" (que só reordena o desempate DENTRO de uma
+  mesma prioridade) — o modo Manual reordena a coluna inteira, sem
+  regra nenhuma por trás.
+
 ### v8.30.289-dev — 2026-08-05
 Pedido direto: "o filtro de submarca sempre abre em Todos, eles tem
 que ficar refazendo o filtro". Squad site (5 marcas, 10 submarcas) —
