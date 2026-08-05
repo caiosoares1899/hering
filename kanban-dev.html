@@ -224,9 +224,12 @@
    um filter no modo claro escurece o pill inteiro (fundo+borda+texto) de
    uma vez só, incluindo cores customizadas escolhidas pelo usuário.
    Feedback direto: "as tags eu acho q tao mt claras no claro, n ta dando
-   leitura". */
+   leitura". 2ª rodada, testado lado a lado num protótipo (mesma cor do
+   escuro sem filtro vs. o filtro de baixo) — cores mais claras da
+   paleta (Feature #ffd166, OKR #ffd700) ainda ficavam fracas com
+   brightness(.68); baixado mais um degrau. */
 [data-theme="light"] .card-tag{
-  filter:brightness(.68) saturate(1.35);
+  filter:brightness(.5) saturate(1.4);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -4537,7 +4540,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.283-dev</div>
+<div class="version">v8.30.284-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

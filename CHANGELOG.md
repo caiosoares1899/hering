@@ -906,6 +906,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.284-dev — 2026-08-05
+2ª rodada de contraste nas tags do claro (v8.30.283-dev). Testado lado
+a lado num protótipo comparando escuro / filtro atual / cor do escuro
+sem filtro — as tags mais claras da paleta (`Feature` `#ffd166`, `OKR`
+`#ffd700`) ainda ficavam fracas com `brightness(.68)`. Feedback direto
+confirmando: "tem que escurecer mais esses aqui, dar mais contraste".
+
+- `filter` do `.card-tag` no claro: `brightness(.68) saturate(1.35)` →
+  `brightness(.5) saturate(1.4)`.
+
 ### v8.30.283-dev — 2026-08-05
 Feedback direto com print: "as tags eu acho q tao mt claras no claro,
 n ta dando leitura".
