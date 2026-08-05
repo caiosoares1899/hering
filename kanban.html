@@ -212,9 +212,32 @@
 [data-theme="light"] .card:hover{
   box-shadow:0 5px 18px rgba(0,50,80,.28),0 2px 6px rgba(0,50,80,.16);
 }
+/* "Seu card" no claro: passou por um protótipo com 4 opções (cor do
+   card normal do escuro / tingimento bem mais forte / faixa+selo /
+   mistura de tingimento+selo) — escolhida a mistura (opção D): fundo e
+   borda bem mais fortes que o "quase invisível" tingimento de 8%
+   original, mais um selinho "seu card" saindo por cima do card (não
+   depende só de cor pra chamar atenção). margin-top abre espaço pro
+   selo não colar no card/coluna de cima. */
 [data-theme="light"] .card.card-mine{
-  background:linear-gradient(rgba(0,120,175,.2),rgba(0,120,175,.2)),rgba(var(--surface-rgb),.95);
-  border-color:rgba(0,120,175,.7);
+  background:linear-gradient(rgba(0,120,175,.38),rgba(0,120,175,.38)),rgba(var(--surface-rgb),.95);
+  border-color:rgba(0,120,175,.9);
+  box-shadow:0 2px 10px rgba(0,120,175,.3),0 1px 3px rgba(0,50,80,.18);
+  margin-top:9px;
+}
+[data-theme="light"] .card.card-mine::before{
+  content:"👤 seu card";
+  position:absolute;
+  top:-9px;
+  left:9px;
+  font-size:8.5px;
+  font-weight:700;
+  background:#00577e;
+  color:#fff;
+  padding:1px 7px;
+  border-radius:999px;
+  letter-spacing:.02em;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
 }
 /* Tags do card (.card-tag): cor de fundo/borda/texto vêm todas de estilo
    inline gerado por JS (tagHtml() e ~10 variantes — OKR, cal_gestao,
@@ -224,9 +247,38 @@
    um filter no modo claro escurece o pill inteiro (fundo+borda+texto) de
    uma vez só, incluindo cores customizadas escolhidas pelo usuário.
    Feedback direto: "as tags eu acho q tao mt claras no claro, n ta dando
-   leitura". */
+   leitura". 2ª rodada, testado lado a lado num protótipo (mesma cor do
+   escuro sem filtro vs. o filtro de baixo) — cores mais claras da
+   paleta (Feature #ffd166, OKR #ffd700) ainda ficavam fracas com
+   brightness(.68); baixado mais um degrau. */
 [data-theme="light"] .card-tag{
-  filter:brightness(.68) saturate(1.35);
+  filter:brightness(.5) saturate(1.4);
+}
+/* Mesmo problema do .card-tag acima, em outros 3 badges do topo do card
+   que NÃO passam por tagHtml() e por isso ficaram de fora daquele fix:
+   status do executor/agente (.exec-chip), prazo (.due-badge) e risco
+   (.risco-badge, sem classe própria até agora — adicionada só pra dar
+   um gancho de CSS aqui). Todos usam a mesma paleta clara/saturada
+   pensada pro fundo escuro. Feedback direto: "status dos agentes, prazo
+   e o badge de risco ainda sem leitura, aumenta o contraste". */
+[data-theme="light"] .exec-chip,
+[data-theme="light"] .due-badge,
+[data-theme="light"] .risco-badge{
+  filter:brightness(.5) saturate(1.4);
+}
+/* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
+   due date): fundo é um tint de 15% da cor da coluna, texto era um
+   #fff hardcoded — em cima do fundo quase-branco do modo claro ficava
+   invisível (só funcionava por acidente no escuro, onde o mesmo tint
+   de 15% sobre um fundo quase-preto ainda contrasta com branco).
+   Trocado o texto pra usar a própria cor da coluna (mesmo padrão de
+   "fundo pálido + texto saturado" que .card-tag já usa) — e como isso
+   tem o mesmo problema de contraste no claro, ganha o mesmo filter.
+   Feedback direto: "calendário n da pra ler nada". Pílulas de Evento
+   (.cal-event sem essa subclasse) não são afetadas — usam fundo opaco
+   com texto já escolhido pra contraste, não dependem de tema. */
+[data-theme="light"] .cal-event-prazo{
+  filter:brightness(.5) saturate(1.4);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -353,7 +405,25 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* card */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);}
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);margin-top:9px;}
+/* Selo "seu card" — pedido direto pra aparecer nos dois temas, não só
+   no claro (onde foi criado junto com o tingimento mais forte, ver
+   [data-theme="light"] .card.card-mine::before mais acima nesse
+   <style>, que sobrescreve cor/fundo do selo pro claro). */
+.card.card-mine::before{
+  content:"👤 seu card";
+  position:absolute;
+  top:-9px;
+  left:9px;
+  font-size:8.5px;
+  font-weight:700;
+  background:var(--accent);
+  color:#04182b;
+  padding:1px 7px;
+  border-radius:999px;
+  letter-spacing:.02em;
+  box-shadow:0 1px 3px rgba(0,0,0,.4);
+}
 /* Pulso do botão "💡 Meus cards" — glow suave (não blink literal, é gatilho
    conhecido de fotosensibilidade) pra achar seus cards no board sem precisar
    filtrar/esconder o resto. */
@@ -4537,7 +4607,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.217</div>
+<div class="version">v8.30.218</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7650,7 +7720,7 @@ function makeCardEl(card){
   // acima E no título, mesmo com margin-bottom no CSS (ignorado silenciosamente
   // pelo navegador). Achado real, a partir de um print com cards de teste do
   // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
-  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
+  const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
   // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
   // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
   // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
@@ -17239,7 +17309,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const colInfo = columns.find(x => x.id === c.col);
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
-        return `<div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
+        return `<div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
       }
     }).join('')
     +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
@@ -17284,7 +17354,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
         return `
-          <div class="cal-event" style="background:${bg};color:#fff;border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
+          <div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
             📎 ${esc(c.title)} <span style="font-size:9.5px;color:var(--txt3);margin-left:4px;">(${esc(colInfo?.name||c.col)})</span>
           </div>`;
       }

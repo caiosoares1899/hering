@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.218 — 2026-08-05 · promove pra prod (PRs #187–#188)
+Promove pra produção mais uma rodada de leitura/contraste do modo
+claro, validada em dev (v8.30.285-dev a v8.30.287-dev):
+
+- **Mais badges legíveis no claro**: status do executor/agente, prazo
+  do card e badge de risco — não passavam pelo mesmo fix de tags por
+  usarem classes próprias, agora corrigidos.
+- **Pílulas de "Prazo" no Calendário**: texto branco fixo em cima de
+  fundo pálido só funcionava por acidente no escuro; corrigido pra
+  usar a cor da própria coluna, legível nos dois temas.
+- **Destaque do "seu card"**: tingimento e borda bem mais fortes +
+  selinho "👤 seu card" — testado com protótipo antes de implementar,
+  disponível nos dois temas.
+
 ### v8.30.217 — 2026-08-05 · promove pra prod (PRs #182–#184)
 Promove pra produção mais 2 rodadas de ajuste fino do modo claro,
 validadas em dev (v8.30.281-dev a v8.30.283-dev):
