@@ -412,7 +412,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* card */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.14),rgba(56,182,255,.14)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.5);margin-top:9px;}
+/* Tingimento e borda mais fortes que a 1ª versão (rgba(...,.14)/.5) —
+   feedback direto: no escuro o "seu card" ficava discreto demais,
+   quase igual aos outros cards da coluna; no claro (ver override mais
+   abaixo) já tinha ficado bem mais aceso. Ganhou um glow leve também,
+   pra reforçar a divergência mesmo em telas mais escuras/mal
+   calibradas. */
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);margin-top:9px;}
 /* Selo "seu card" — pedido direto pra aparecer nos dois temas, não só
    no claro (onde foi criado junto com o tingimento mais forte, ver
    [data-theme="light"] .card.card-mine::before mais acima nesse
@@ -1141,9 +1147,12 @@ input[type="date"]{-moz-appearance:textfield;}
 /* No claro, 40% de opacidade dessa mesma cor vermelha em cima de um card
    quase-branco dilui pra um rosinha pastel — perde o "alerta" que a
    borda mais grossa deveria dar. Feedback direto com print comparando
-   os dois temas. Vermelho mais escurado/saturado e bem mais opaco só no
-   claro, pra continuar parecendo urgente. */
-[data-theme="light"] .card.has-blocker-tag{border-color:rgba(200,16,46,.85)!important;}
+   os dois temas. 1ª tentativa (rgba(200,16,46,.85), bem saturado e
+   opaco) resolveu o "rosinha" mas destoou demais do resto do layout
+   pastel ("gostei mas tá vermelhão demais") — ajustado pra um vermelho
+   mais discreto (menos saturado, menos opaco), ainda claramente
+   vermelho (não rosa), sem gritar tanto. */
+[data-theme="light"] .card.has-blocker-tag{border-color:rgba(196,64,74,.6)!important;}
 
 
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
@@ -1705,6 +1714,12 @@ input[type="date"]{-moz-appearance:textfield;}
 
 
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;border-width:2px!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+/* Mesmo problema do .has-blocker-tag: 40% de opacidade de um amarelo puro
+   em cima de um card quase-branco no claro dilui demais e some de vista.
+   Feedback direto: "tem que ser um amarelo mais próximo do dourado pra
+   aparecer". Troca pra um dourado escurecido/saturado (dark goldenrod),
+   bem mais opaco, só no claro. */
+[data-theme="light"] .card.okr-card{border-color:rgba(184,134,11,.85)!important;box-shadow:0 0 8px rgba(184,134,11,.25);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
 .cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -4659,7 +4674,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.294-dev</div>
+<div class="version">v8.30.295-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
