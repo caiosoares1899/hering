@@ -136,6 +136,7 @@
   --surface-rgb:6,26,46;
   --surface2-rgb:3,13,26;
   --ocean-op:1; --fish-op:1;
+  --pulse-rgb:255,209,102;
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -183,6 +184,11 @@
   --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
   --warn:#F6B73C;--danger:#F15B6C;
   --ocean-op:1; --fish-op:1;
+  /* Pulso de "achar meus cards" e o glow de campo obrigatório (.req-missing,
+     mais abaixo) usavam um amarelo pensado pro fundo escuro — em cima de
+     um card/input já claro, o glow simplesmente some de vista. Feedback
+     direto: "talvez pudesse piscar azul escuro". */
+  --pulse-rgb:10,77,120;
 }
 [data-theme="light"] .ocean{
   background:
@@ -427,10 +433,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 }
 /* Pulso do botão "💡 Meus cards" — glow suave (não blink literal, é gatilho
    conhecido de fotosensibilidade) pra achar seus cards no board sem precisar
-   filtrar/esconder o resto. */
+   filtrar/esconder o resto. Cor em variável (--pulse-rgb, definida no
+   :root/:root[data-theme="light"] lá em cima) — feedback direto: um glow
+   amarelo claro simplesmente some de vista num card/fundo já claro; no
+   modo claro vira um azul bem escuro, que continua saltando aos olhos. */
 @keyframes cardPulseHighlight{
-  0%,100%{ box-shadow:0 0 0 0 rgba(255,209,102,0); }
-  50%{ box-shadow:0 0 0 6px rgba(255,209,102,.55); }
+  0%,100%{ box-shadow:0 0 0 0 rgba(var(--pulse-rgb),0); }
+  50%{ box-shadow:0 0 0 6px rgba(var(--pulse-rgb),.55); }
 }
 .card-pulse-highlight{ animation:cardPulseHighlight .7s ease-in-out 3; }
 .card-selected{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(56,182,255,.3);background:rgba(56,182,255,.08);}
@@ -1430,9 +1439,35 @@ input[type="date"]{-moz-appearance:textfield;}
 .reqf-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--txt);transition:background .15s;}
 .reqf-row:hover{background:rgba(56,182,255,.07);}
 .reqf-row input{width:16px;height:16px;accent-color:var(--warn);cursor:pointer;}
-.req-missing, .req-missing.fi, input.req-missing, textarea.req-missing{border-color:var(--warn)!important;box-shadow:0 0 0 1px var(--warn), 0 0 10px rgba(255,209,102,.25)!important;animation:reqShake .4s;}
+.req-missing, .req-missing.fi, input.req-missing, textarea.req-missing{border-color:var(--warn)!important;box-shadow:0 0 0 1px var(--warn), 0 0 10px rgba(var(--pulse-rgb),.25)!important;animation:reqShake .4s;}
 .req-missing .eoc-display{border-color:var(--warn)!important;}
+/* No claro, --warn (usado acima na borda) já é escuro o bastante, mas o
+   glow externo (rgba(var(--pulse-rgb),X)) e o próprio --warn combinados
+   ainda ficavam pouco visíveis contra um input claro — troca a borda
+   também pro mesmo azul escuro do pulso, consistente com o resto do
+   feedback de campo obrigatório no claro. */
+[data-theme="light"] .req-missing,
+[data-theme="light"] .req-missing.fi,
+[data-theme="light"] input.req-missing,
+[data-theme="light"] textarea.req-missing{
+  border-color:rgb(var(--pulse-rgb))!important;
+  box-shadow:0 0 0 1px rgb(var(--pulse-rgb)), 0 0 10px rgba(var(--pulse-rgb),.35)!important;
+}
+[data-theme="light"] .req-missing .eoc-display{border-color:rgb(var(--pulse-rgb))!important;}
 @keyframes reqShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+/* #kb-toast (showToast — inclusive o aviso "Preencha os campos
+   obrigatórios") é criado via JS com estilo inline, então a borda/fundo
+   já usam var(--surface-rgb)/var(--glass-b) e trocam de cor sozinhos —
+   mas no claro isso dava um pill quase branco flutuando em cima de um
+   modal também quase branco, sem nenhuma definição de borda visível.
+   Feedback direto: "tem que por um contraste". !important porque as
+   propriedades de borda já vêm de estilo inline (mais específico que
+   qualquer seletor CSS comum); box-shadow não estava inline, então essa
+   parte nem precisaria, mas fica junto por clareza. */
+[data-theme="light"] #kb-toast{
+  border-color:rgba(0,120,175,.55)!important;
+  box-shadow:0 6px 22px rgba(0,50,80,.28)!important;
+}
 .eoc-display{
   min-height:44px;padding:8px 10px;border-radius:8px;
   border:1px solid rgba(56,182,255,.08);
@@ -4618,7 +4653,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.292-dev</div>
+<div class="version">v8.30.293-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
