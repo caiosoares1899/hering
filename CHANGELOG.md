@@ -920,6 +920,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.289-dev — 2026-08-05
+Pedido direto: "o filtro de submarca sempre abre em Todos, eles tem
+que ficar refazendo o filtro". Squad site (5 marcas, 10 submarcas) —
+o filtro rápido 🏷️ Submarcas da toolbar agora lembra a última seleção,
+salva por navegador e por squad (mesmo espírito de `col_sort_`/
+`hybrid_view_` — preferência pessoal, não sincroniza entre pessoas).
+
+- Restaurado automaticamente ao abrir o board — não precisa de um passo
+  extra de "salvar como padrão", a última seleção já vira o próximo
+  padrão.
+- "Limpar filtros" também limpa o padrão salvo (senão o filtro
+  "voltaria sozinho" no próximo load, contra a intenção de quem limpou).
+
 ### v8.30.288-dev — 2026-08-05
 Renomeia os temas — de "🌙 Mar Profundo" / "☀️ Mar Cristalino" (genérico
 demais) pra dois nomes de paisagens brasileiras, sugestão direta:
