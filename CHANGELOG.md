@@ -968,6 +968,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.300-dev — 2026-08-05
+Sugestão trazida pelo usuário (mockup externo): seções do modal de
+card meio que expansíveis/recolhíveis, pra facilitar a rolagem em
+cards grandes. Escopo fechado como: "📝 Conteúdo" (Descrição,
+Descrições adicionais, Insights do PO), "🔗 Vínculos & anexos" (peça no
+Milanote, Anexos e links) e "💬 Colaboração" (Comentários e atividade)
+ganham cabeçalho clicável com seta, igual ao "📜 Histórico" que já
+tinha esse comportamento — mas Histórico foi propositalmente mantido
+como está (fixo no fim, sem entrar nesse novo mecanismo). Checklist
+**não** virou recolhível — em vez disso ganhou altura máxima fixa
+(340px) com rolagem interna própria, pra não esticar o modal quando
+tem muito item. Novo botão ⇕ no cabeçalho do modal, do lado do botão
+de "ir pra Descrição", expande/recolhe as 3 seções de uma vez.
+
 ### v8.30.299-dev — 2026-08-05
 Bug real: "campanhas não rolou! os cards foram criados mas as
 campanhas não" — não era falha de gravação (o `window._set` direto no
