@@ -18,6 +18,28 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.223 — 2026-08-05 · promove pra prod (PRs #208–#211)
+Promove pra produção a leva de correções de link validada em dev
+(v8.30.302-dev a v8.30.305-dev), toda motivada por um caso real: um
+link assinado do Vimeo (`.../file.mp4 (1080p).mp4?loc=...&signature=...`)
+colado na Descrição/Comentário de um card:
+
+- **Link com espaço/parêntese cru na URL não quebra mais**: `[texto](url)`
+  aceita espaço cru e um nível de parênteses balanceados — a URL de um
+  link assinado não pode ser reescrita (o servidor valida a assinatura
+  byte-a-byte; chegou a ser tentado percent-encode numa primeira versão,
+  mas isso invalidava a assinatura e o Vimeo passava a recusar).
+- **Corrigido double-escape de `&`**: um `&` da URL virava `&amp;amp;` no
+  meio do pipeline de escape e sobrava `&amp;` literal no link de
+  verdade — quebrava qualquer URL com mais de um parâmetro na query.
+- **Corrigido auto-link de URL solta começando uma linha nova**: caía
+  numa exclusão pensada pra outra coisa (evitar linkar de novo o texto
+  de um `[url](url)` já processado) e ficava como texto puro, não
+  clicável.
+- **Preview de Vimeo nos Anexos**: link reconhecido como Vimeo ganha um
+  botão 🎬 que embeda um `<video>` (link direto de arquivo) ou `<iframe>`
+  (player normal), mesmo padrão do preview do Milanote.
+
 ### v8.30.222 — 2026-08-05 · promove pra prod (PRs #202–#206)
 Promove pra produção a leva de ajustes validada em dev
 (v8.30.298-dev a v8.30.301-dev):
