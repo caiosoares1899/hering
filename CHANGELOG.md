@@ -18,6 +18,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.219 — 2026-08-05 · promove pra prod (PRs #190–#193)
+Promove pra produção uma leva de melhorias validadas em dev
+(v8.30.288-dev a v8.30.291-dev):
+
+- **Temas renomeados**: "🌙 Mar Profundo"/"☀️ Mar Cristalino" viram
+  "🌙 Abrolhos"/"☀️ Lençóis Maranhenses" — paisagens brasileiras com
+  identidade própria.
+- **Filtro de submarca persistente**: a última seleção do filtro
+  rápido 🏷️ Submarcas agora fica salva por navegador e por squad,
+  restaurada automaticamente (antes sempre abria em "Todos").
+- **Prazo invertido**: nova opção "📅 Prazo (mais novos primeiro)" no
+  menu de Ordenação.
+- **Participantes com nome completo**: lista e chips de participantes
+  mostram o nome completo, não só o primeiro nome.
+- **Ordenação 100% livre (🖐 Manual)**: novo modo de ordenação onde
+  arrastar um card dentro da mesma coluna reordena de verdade (antes
+  era sempre um no-op). Corrigido pra respeitar filtros ativos —
+  soltar no final da lista filtrada não pula mais por cima de cards
+  escondidos pelo filtro.
+
 ### v8.30.218 — 2026-08-05 · promove pra prod (PRs #187–#188)
 Promove pra produção mais uma rodada de leitura/contraste do modo
 claro, validada em dev (v8.30.285-dev a v8.30.287-dev):

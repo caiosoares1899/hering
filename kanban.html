@@ -151,8 +151,8 @@
    Paleta: passou por 3 rodadas de ajuste até virar uma sugestão de
    paleta completa e nomeada, muito bem recebida ("água cristalina, dá
    vontade de usar") — os dois temas viram "horários do mar" em vez de
-   um dark/light genérico: 🌙 Mar Profundo (escuro, já era bem perto
-   disso) e ☀️ Mar Cristalino (claro, inspirado em Caribe/Maldivas —
+   um dark/light genérico: 🌙 Abrolhos (escuro, já era bem perto
+   disso) e ☀️ Lençóis Maranhenses (claro, inspirado em Caribe/Maldivas —
    fundo levemente azulado tipo #F2FCFF, NUNCA branco puro; cards com só
    1-2% de azul (#FCFEFF, --surface-rgb) em vez de branco puro, pra
    "parecer que tudo faz parte da água"; header/toolbar/dropdowns um
@@ -283,13 +283,14 @@
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
-   cristalina do ☀️ Mar Cristalino — no modo claro, ver [data-theme="light"]
-   .ocean acima, que substitui o gradiente inteiro (paleta sugerida:
-   Caribe/Maldivas, fundo levemente azulado #F2FCFF/#DDF7FF, nunca branco
-   puro). Peixinhos/bolhas também aparecem no claro (--fish-op:1) — como
-   as cores fixas das SVGs foram pensadas pro 🌙 Mar Profundo (fundo
-   escuro), levam um filter (saturate+brightness) só no modo claro pra
-   manter contraste (ver regra [data-theme="light"] .fish-wrap/.bubble
+   cristalina do ☀️ Lençóis Maranhenses — no modo claro, ver
+   [data-theme="light"] .ocean acima, que substitui o gradiente inteiro
+   (paleta sugerida: Caribe/Maldivas, fundo levemente azulado
+   #F2FCFF/#DDF7FF, nunca branco puro). Peixinhos/bolhas também
+   aparecem no claro (--fish-op:1) — como as cores fixas das SVGs foram
+   pensadas pro 🌙 Abrolhos (fundo escuro), levam um filter
+   (saturate+brightness) só no modo claro pra manter contraste (ver
+   regra [data-theme="light"] .fish-wrap/.bubble
    acima). Isso é independente da preferência pessoal de peixinhos ligados/
    desligados (fish_bg_off) — as duas coisas se somam (ambas precisam
    estar "on" pra aparecer). */
@@ -2525,7 +2526,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
   </div>
   <div class="hd-btns">
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="toggleTheme()" title="Alternar entre 🌙 Mar Profundo e ☀️ Mar Cristalino — preferência salva só neste navegador" style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="toggleTheme()" title="Alternar entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses — preferência salva só neste navegador" style="padding:5px 9px;">🌙</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -2621,7 +2622,11 @@ input[type="date"]{-moz-appearance:textfield;}
       </button>
       <button onclick="setColSortMode('doneAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-        📅 Prazo (data prevista)
+        📅 Prazo (mais antigos primeiro)
+      </button>
+      <button onclick="setColSortMode('dueDesc')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        📅 Prazo (mais novos primeiro)
       </button>
       <button onclick="setColSortMode('movedAt')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
@@ -2630,6 +2635,10 @@ input[type="date"]{-moz-appearance:textfield;}
       <button onclick="setColSortMode('size')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         👕 Tamanho (P → GG)
+      </button>
+      <button onclick="setColSortMode('manual')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🖐 Manual (arraste do jeito que quiser)
       </button>
     </div>
   </div>
@@ -3881,9 +3890,11 @@ input[type="date"]{-moz-appearance:textfield;}
         <option value="">Usar padrão do board</option>
         <option value="priority">🔥 Prioridade</option>
         <option value="createdAt">🕐 Data de criação</option>
-        <option value="doneAt">📅 Prazo</option>
+        <option value="doneAt">📅 Prazo (mais antigos primeiro)</option>
+        <option value="dueDesc">📅 Prazo (mais novos primeiro)</option>
         <option value="movedAt">🕓 Movimentação (mais recente)</option>
         <option value="size">👕 Tamanho (P → GG)</option>
+        <option value="manual">🖐 Manual (arraste do jeito que quiser)</option>
       </select>
     </div>
     <div>
@@ -4607,7 +4618,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.218</div>
+<div class="version">v8.30.219</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7803,6 +7814,28 @@ function _sortCards(arr, colId){
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
     });
   }
+  if(mode==='dueDesc'){
+    // Mesma lógica de 'doneAt', invertida — pedido direto ("default mostra
+    // dos mais antigos pros mais novos, precisa de uma opção de inverter").
+    // Sem prazo continua indo pro final nos dois sentidos (não é "nem cedo
+    // nem tarde", é indefinido).
+    const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
+    return arr.slice().sort((a,b)=>{
+      const da=a.due, db=b.due;
+      if(da && db) return db.localeCompare(da); // prazo mais distante primeiro
+      if(da && !db) return -1;
+      if(!da && db) return 1;
+      return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
+    });
+  }
+  if(mode==='manual'){
+    // Ordenação 100% livre — pedido direto. card.manualOrder é atribuído só
+    // quando o card é arrastado dentro de uma coluna nesse modo (ver
+    // handleDrop/_reorderManualColumn); cards que nunca foram tocados não
+    // têm o campo, caem todos empatados em Infinity e mantêm a ordem
+    // original entre si (sort é estável).
+    return arr.slice().sort((a,b)=>(typeof a.manualOrder==='number'?a.manualOrder:Infinity)-(typeof b.manualOrder==='number'?b.manualOrder:Infinity));
+  }
   // 'priority' (padrão)
   const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
   return arr.slice().sort((a,b)=>{
@@ -8068,7 +8101,17 @@ function _hexA(hex,a){
   try{ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);
     return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }catch(e){ return hex; }
 }
-let activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
+// Filtro de submarca começa restaurando a última seleção salva neste
+// navegador pra esse squad (pedido direto: "sempre abre em Todos, eles
+// tem que ficar refazendo o filtro") — mesmo espírito de col_sort_/
+// hybrid_view_ (preferência pessoal por squad, não sincroniza entre
+// pessoas). Só o campo submarca é restaurado; os demais filtros
+// continuam começando limpos, como sempre foi. Ver _saveSubmarcaFiltroPadrao(),
+// chamado nos 3 pontos que mudam activeFilters.submarca.
+let activeFilters={owner:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:''};
+function _saveSubmarcaFiltroPadrao(){
+  safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca||[]));
+}
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -8119,6 +8162,7 @@ function clearFilters(){
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
+  _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
 }
@@ -8293,12 +8337,15 @@ function renderBoardDataGrid(){
 
 
 // ── PARTICIPANTES ──────────────────────────────────────────────────
+// Nome completo (não só o primeiro nome) — pedido direto: com só o
+// primeiro nome, times com vários "João"/"Ana" diferentes não davam pra
+// distinguir na lista.
 function populatePartSelect(excludeInits=[]){
   const sel=document.getElementById('m-part-select'); if(!sel) return;
   sel.innerHTML='<option value="">+ Adicionar participante...</option>';
   members.forEach(m=>{
     if(!excludeInits.includes(m.init))
-      sel.innerHTML+=`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name.split(' ')[0])}</option>`;
+      sel.innerHTML+=`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`;
   });
   // Adiciona usuário logado se não estiver na lista
   const init=window._currentUserInit; const u=window._currentUser;
@@ -8325,7 +8372,7 @@ function renderParticipants(parts){
   w.innerHTML=editingParticipants.map((init,i)=>{
     const m=allIdentities().find(x=>x.init===init);
     const foto=m?.isAgent?'':(safeUrl(m?.foto)?`<img src="${safeUrl(m.foto)}">`:'');
-    const nome=m?.isAgent?(m.avatarEmoji+' '+m.name):(m?.name?.split(' ')[0]||init);
+    const nome=m?.isAgent?(m.avatarEmoji+' '+m.name):(m?.name||init);
     return `<span class="part-chip">${foto}${esc(init)} · ${esc(nome)}
       <button class="part-chip-del" onclick="removeParticipant(${i})">✕</button>
     </span>`;
@@ -9870,6 +9917,7 @@ document.addEventListener('keydown', e=>{
 // "Todos" só aparece marcado quando cur.length===0).
 function setSubmarcaDropdownTodos(){
   activeFilters.submarca=[];
+  _saveSubmarcaFiltroPadrao();
   const f=document.getElementById('f-submarca'); if(f) f.value='';
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
@@ -9885,6 +9933,7 @@ function toggleSubmarcaDropdownItem(tagId){
   const idx=arr.indexOf(tagId);
   if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
   activeFilters.submarca=arr;
+  _saveSubmarcaFiltroPadrao();
   const f=document.getElementById('f-submarca');
   if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
   _colRenderLimit={};
@@ -9897,6 +9946,7 @@ function toggleSubmarcaDropdownItem(tagId){
 function setSubmarcaFromDrawer(){
   const v=document.getElementById('f-submarca')?.value||'';
   activeFilters.submarca = v ? [v] : [];
+  _saveSubmarcaFiltroPadrao();
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
   renderBoard();
@@ -15727,7 +15777,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (data prevista) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização. Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem.' },
+    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos ou com riscos mapeados. Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
@@ -18302,10 +18352,33 @@ function handleDragLeave(e){
   }
 }
 
+// Recalcula manualOrder sequencial (0,1,2...) de todos os cards ATIVOS de
+// uma coluna no modo 'manual' (a coluna INTEIRA, não só os visíveis num
+// filtro — precisa reindexar todo mundo pra manter a ordem consistente
+// pra quem não tem filtro nenhum). `anchorId` é o card de referência pro
+// ponto de inserção: `movedCard` entra imediatamente ANTES dele (padrão)
+// ou IMEDIATAMENTE DEPOIS, se `after` for true — ver handleDrop pra por
+// que o caso "depois" existe (soltar no final de uma lista FILTRADA não
+// pode virar "no final da coluna inteira"). Sem anchorId = vai pro final
+// mesmo (coluna sem nenhum card visível no filtro atual, nada melhor a
+// ancorar). Mesmo padrão de _renderSubPrioDragList (splice + reindex +
+// fbSaveAll com touchedIds). Retorna os ids tocados, pra passar direto
+// pro fbSaveAll.
+function _reorderManualColumn(colId, movedCard, anchorId, after){
+  const rest=_sortCards(cards.filter(c=>c.col===colId && !c.archived && c.id!==movedCard.id), colId);
+  let idx=rest.length;
+  if(anchorId){
+    const aIdx=rest.findIndex(c=>c.id===anchorId);
+    if(aIdx>=0) idx = after ? aIdx+1 : aIdx;
+  }
+  rest.splice(idx,0,movedCard);
+  rest.forEach((c,i)=>{ c.manualOrder=i; });
+  return rest.map(c=>c.id);
+}
 function handleDrop(e, colId){
   e.preventDefault();
   e.stopPropagation(); // Protege a coluna alvo
-  
+
   const body = e.currentTarget;
   body.classList.remove('drag-over','drag-over-blocked');
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
@@ -18313,7 +18386,33 @@ function handleDrop(e, colId){
   const card = cards.find(x=>x.id===_dragCardId);
   if(!card) return;
   const sourceCol = _dragSourceCol;
-  if(sourceCol === colId) return; // mesma coluna, nada a fazer
+  if(sourceCol === colId){
+    // Arrastar dentro da MESMA coluna só reordena de verdade no modo
+    // 'manual' (pedido direto: "ordenação 100% livre, do jeito que o
+    // usuário ordenar") — nos outros modos o card se reordenaria sozinho
+    // no próximo render de qualquer forma, então mexer na posição não
+    // faz sentido (e sempre foi um no-op antes desse modo existir).
+    if((colSortOverrides[colId]||colSortMode)==='manual'){
+      const afterEl=getDragAfterElement(body, e.clientY);
+      let anchorId=afterEl?.dataset?.id, after=false;
+      if(!anchorId){
+        // Soltou no final da lista VISÍVEL — com um filtro ativo (ex.:
+        // submarca), isso NÃO é o final da coluna inteira: pode existir
+        // gente escondida pelo filtro depois do último card que a pessoa
+        // via. Ancora no último card VISÍVEL (lido do DOM, que só tem os
+        // cards que passam no filtro atual) e insere logo depois dele —
+        // sem filtro nenhum, isso dá exatamente no final da coluna, igual
+        // antes; com filtro, não pula por cima de quem tá escondido.
+        const visiveis=[...body.querySelectorAll('.card:not(.dragging):not(.archived)')];
+        anchorId=visiveis[visiveis.length-1]?.dataset?.id;
+        after=true;
+      }
+      const touchedIds=_reorderManualColumn(colId, card, anchorId, after);
+      fbSaveAll(undefined, touchedIds);
+      renderBoard();
+    }
+    return;
+  }
   saveUndo('mover card');
   const prevColDrop = sourceCol;
   const prevBlockerDrop = card.blocker||false;
@@ -19370,9 +19469,11 @@ function toggleFishBackground(){
 // Pedido direto: alternar entre o visual escuro (padrão) e um modo claro.
 // Preferência pessoal, salva só neste navegador (mesmo espírito de
 // fish_bg_off/colSortMode) — não sincroniza entre pessoas nem dispositivos.
-// Os dois temas viram "horários do mar" (sugestão direta) em vez de um
-// dark/light genérico: 🌙 Mar Profundo (escuro) e ☀️ Mar Cristalino
-// (claro, Caribe/Maldivas) — daí o toast abaixo, não só o ícone.
+// Os dois temas viram nomes de paisagens brasileiras (sugestão direta)
+// em vez de um dark/light genérico: 🌙 Abrolhos (escuro, maior banco
+// de corais do Atlântico Sul, mar azul profundo) e ☀️ Lençóis
+// Maranhenses (claro, água cristalina) — daí o toast abaixo, não só o
+// ícone (esses nomes não são autoexplicativos de cara, o emoji ajuda).
 // O tema em si é aplicado bem mais cedo, num <script> pequeno logo após o
 // </style> no <head> (ver lá) — direto no localStorage, pra evitar o flash
 // de escuro→claro antes do JS principal (este arquivo) carregar. Aqui só
@@ -19388,7 +19489,7 @@ function toggleTheme(){
   else document.documentElement.removeAttribute('data-theme');
   safeLS.setItem('mare_theme', next);
   _applyThemeButtonIcon();
-  showToast(next==='light' ? '☀️ Mar Cristalino' : '🌙 Mar Profundo');
+  showToast(next==='light' ? '☀️ Lençóis Maranhenses' : '🌙 Abrolhos');
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
 // Fish & Bubbles
