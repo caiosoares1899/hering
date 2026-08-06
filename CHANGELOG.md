@@ -1014,6 +1014,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.307-dev — 2026-08-06
+Feedback direto testando a aba de Notas (v8.30.306-dev), três ajustes:
+
+- **Ctrl+Z**: faltava desfazer — Notas não tinha nenhum, diferente do
+  resto do app (checklist do card, por exemplo, já tinha). Nova pilha
+  de undo por nota (snapshot do mapa de blocos antes de cada operação,
+  até 20 passos) — Ctrl+Z num bloco ou o botão ↩ na toolbar restauram o
+  estado anterior.
+- **"Formatação não tava salvando"**: na verdade salvava — só nunca
+  era desenhada. Os blocos mostravam sempre a sintaxe crua
+  (`**negrito**`), mesmo depois de aplicar B/I/U pela toolbar, porque
+  não existia visualização renderizada nenhuma. Corrigido: bloco fora
+  de edição agora mostra o texto renderizado de verdade (mesmo motor
+  `renderMd()` de Descrição/Comentário — negrito realmente em negrito,
+  link clicável) e só volta a mostrar a sintaxe crua quando você clica
+  nele pra editar (mesmo princípio do "clique pra editar" que a
+  Descrição do card já usa).
+- **Indentar (Tab) e a seta que aparece "na linha de cima"**: não era
+  bug — é assim mesmo que outliners tipo Notion/Workflowy funcionam
+  (Tab faz o bloco virar filho do irmão imediatamente acima; se esse
+  irmão estava recolhido, ele reabre sozinho pra não sumir com o bloco
+  que você acabou de indentar — por isso a seta aparece nele, não no
+  bloco que você editou). Comentário no código explicando esse
+  comportamento pra próxima vez que alguém for mexer ali.
+
 ### v8.30.306-dev — 2026-08-06
 Feature nova, sugestão do usuário: aba **📝 Notas** (mesmo padrão de
 Dados/Lembretes na lateral do board) — bloco de notas pessoal e da
