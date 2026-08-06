@@ -4828,7 +4828,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.311-dev</div>
+<div class="version">v8.30.312-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6548,6 +6548,7 @@ function fbLoadAll(){
   // Agentes de IA (piloto híbrido humano+agente) — identidades selecionáveis como responsável/participante/@menção
   fbListen(FB+'/agentes',val=>{
     agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
     renderBoard();
   });
@@ -7274,6 +7275,11 @@ let _cardsSyncDebounce = null;
     // reatribuir, etc.): garante uid único em members mesmo se algum caminho secundário
     // (ex.: timing entre autoRegistrar() e este listener) tiver introduzido duplicata.
     { const _seenUids=new Set(); members = members.filter(m=>{ if(_seenUids.has(m.uid)) return false; _seenUids.add(m.uid); return true; }); }
+    // Ordem alfabética por nome — todo select/filtro/@menção que lê de `members`
+    // (responsável, participantes, filtros de card/calendário/arquivados/campanhas...)
+    // herda essa ordem automaticamente, já que todos fazem members.map()/.forEach()
+    // direto neste array, sem reordenar por conta própria.
+    members.sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR',{sensitivity:'base'}));
     // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
     window._allUsers = [];
     Object.entries(val).forEach(([uid,u])=>{
@@ -7281,6 +7287,7 @@ let _cardsSyncDebounce = null;
         window._allUsers.push({init:u.init, name:u.nome||u.email||u.init, email:u.email||'', foto:u.foto||'', uid});
       }
     });
+    window._allUsers.sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR',{sensitivity:'base'}));
     // Re-popula select de kudos se o drawer estiver aberto
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) _populateKudosPara();
     // Re-popula selects se modal estiver aberto
@@ -14163,7 +14170,11 @@ function _renderArquivadosBody(){
   }
   if(fOwner){
     const prev=fOwner.value;
-    const ownersUsados=[...new Set(archived.map(c=>c.owner).filter(Boolean))];
+    const ownersUsados=[...new Set(archived.map(c=>c.owner).filter(Boolean))]
+      .sort((a,b)=>{
+        const ma=members.find(x=>x.init===a), mb=members.find(x=>x.init===b);
+        return (ma?ma.name:a).localeCompare(mb?mb.name:b,'pt-BR',{sensitivity:'base'});
+      });
     fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(_shortName(m.name)):''}</option>`}).join('');
     fOwner.value=prev;
   }
@@ -15095,7 +15106,7 @@ function renderUsuarios(){
       // Aceita: novo formato (squads.dados=true) OU legado (inscrito=true sem squads)
       if(u.squads) return u.squads[ACTIVE_SQUAD]===true;
       return (u.inscrito===true||u.inscrito==='true')&&u.init;
-    });
+    }).sort(([,a],[,b])=>(a.nome||a.email||'').localeCompare(b.nome||b.email||'','pt-BR',{sensitivity:'base'}));
     if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito neste squad ainda.</div>'; return; }
     entries.forEach(([uid,u])=>{
       const row=document.createElement('div'); row.className='user-row';
