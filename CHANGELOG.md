@@ -1014,6 +1014,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.308-dev — 2026-08-06
+Duas melhorias pedidas depois de testar a aba de Notas:
+
+- **Listener de Notas passa a ser sob demanda de verdade**: a 1ª versão
+  montava o listener na primeira vez que a aba era aberta e nunca mais
+  soltava, mesmo com o painel fechado — consumia leitura do Firebase o
+  resto da sessão à toa. Agora anexa ao abrir e **desanexa ao fechar**
+  (mesmo padrão que o Spotify já usa), com um "Carregando notas..." no
+  lugar do conteúdo enquanto o 1º snapshot não chega de novo — pequeno
+  atraso ao reabrir, aceito de propósito em troca de economizar leitura.
+- **Modo livre**: cada nota agora pode alternar entre o outliner de
+  blocos (padrão) e um modo texto corrido só, tipo o Notas do
+  computador — sem marcador, sem indentação, sem filhos. Botão 🧱/📄 na
+  toolbar alterna. Trocar de estruturado pra livre **é destrutivo pra
+  hierarquia** (junta tudo num texto só, na ordem em que aparece) — avisa
+  antes com confirmação se a nota tiver mais de um bloco; Ctrl+Z desfaz
+  logo em seguida se for engano. Trocar de livre pra estruturado nunca
+  perde nada (o texto vira o bloco raiz).
+
 ### v8.30.307-dev — 2026-08-06
 Feedback direto testando a aba de Notas (v8.30.306-dev), três ajustes:
 
