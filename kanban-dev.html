@@ -939,6 +939,37 @@ input[type="date"]{-moz-appearance:textfield;}
 .kudos-btn{background:rgba(255,209,102,.16)!important;border-color:rgba(255,209,102,.4)!important;color:#ffd166!important;}
 .kudos-btn:hover{background:rgba(255,209,102,.26)!important;}
 .kudos-empty{text-align:center;color:var(--txt3);font-size:12px;padding:40px 20px;line-height:1.6;}
+/* ═══ NOTAS (bloco de notas pessoal/squad — outliner colapsável) ═══ */
+.notas-drawer .lem-hd-title{color:var(--teal);}
+.notas-scope-tabs{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.notas-stab{flex:1;font-size:11px;font-weight:600;color:var(--txt2);background:rgba(29,233,182,.05);
+  border:1px solid var(--glass-b);border-radius:9px;padding:8px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.notas-stab:hover{border-color:rgba(29,233,182,.4);}
+.notas-stab.on{background:rgba(29,233,182,.16);border-color:rgba(29,233,182,.5);color:var(--teal);}
+.notas-new-btn{width:100%;padding:9px;font-family:"Syne",sans-serif;font-weight:700;font-size:12px;
+  background:rgba(29,233,182,.14);border:1px solid rgba(29,233,182,.4);border-radius:8px;color:var(--teal);cursor:pointer;transition:all .2s;}
+.notas-new-btn:hover{background:rgba(29,233,182,.22);}
+.notas-item{position:relative;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:10px;padding:10px 34px 10px 12px;cursor:pointer;transition:border-color .15s;}
+.notas-item:hover{border-color:rgba(29,233,182,.4);}
+.notas-item-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px;word-break:break-word;}
+.notas-item-meta{font-size:10.5px;color:var(--txt3);}
+.notas-item-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:none;background:none;color:var(--txt3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.notas-item-del:hover{background:rgba(255,107,107,.15);color:var(--danger);}
+.notas-editor-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.notas-editor-title-inp{flex:1;min-width:0;background:none;border:none;color:var(--txt);font-family:"Syne",sans-serif;font-weight:700;font-size:15px;padding:4px 2px;}
+.notas-editor-title-inp:focus{outline:none;border-bottom:1px solid rgba(29,233,182,.4);}
+.nb-toolbar{display:flex;align-items:center;gap:3px;padding:6px 12px;border-bottom:1px solid var(--glass-b);flex-shrink:0;background:rgba(var(--surface2-rgb),.4);}
+.nb-tree{display:flex;flex-direction:column;}
+.nb-row{display:flex;align-items:flex-start;gap:3px;}
+.nb-collapse{width:14px;flex-shrink:0;font-size:9px;color:var(--txt3);cursor:pointer;user-select:none;text-align:center;padding-top:3px;}
+.nb-collapse-spacer{cursor:default;}
+.nb-bullet{width:14px;flex-shrink:0;text-align:center;color:var(--txt3);font-size:14px;line-height:1.8;user-select:none;}
+.nb-chk{width:14px;flex-shrink:0;margin-top:6px;accent-color:var(--teal);cursor:pointer;}
+.nb-text{flex:1;min-width:0;background:none;border:none;resize:none;color:var(--txt);font-size:12.5px;font-family:"DM Sans",sans-serif;line-height:1.6;padding:2px 0;overflow:hidden;}
+.nb-text:focus{outline:none;}
+.nb-done{text-decoration:line-through;opacity:.5;}
+.nb-children{display:flex;flex-direction:column;}
+.nb-hint{flex-shrink:0;padding:6px 14px;font-size:9.5px;color:var(--txt3);text-align:center;border-top:1px solid var(--glass-b);}
 /* ═══ SPOTIFY (ouvindo agora) ═══ */
 .spotify-drawer .lem-hd-title{color:#1DB954;}
 .spotify-scope-tabs{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
@@ -2835,6 +2866,9 @@ input[type="date"]{-moz-appearance:textfield;}
   📌 Lembretes
   <span class="lem-badge" id="lem-badge" style="display:none;">0</span>
 </button>
+<button class="lem-tab" id="notas-tab" onclick="toggleNotas()" title="Bloco de notas pessoal e da squad" style="position:static;top:auto;transform:none;background:rgba(29,233,182,.85);border-color:rgba(29,233,182,.45);box-shadow:-4px 0 24px rgba(29,233,182,.3);">
+  📝 Notas
+</button>
 <!-- Spotify pausado (custo de Cloud Function acima do esperado — spotifySync
      roda a cada minuto, 24h, mesmo sem ninguém conectado; ver functions/index.js).
      Botão escondido (não removido) — o resto do código/UI fica intacto pra
@@ -2916,6 +2950,45 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="spotify-ctab" id="spctab-playlist" onclick="setSpotifyContent('playlist')">🎵 Playlist</button>
   </div>
   <div class="lem-body" id="spotify-body"></div>
+</div>
+
+<!-- ═══ NOTAS (bloco de notas pessoal/squad) ═══ -->
+<div class="lem-drawer notas-drawer" id="notas-drawer">
+  <div class="lem-hd">
+    <div class="lem-hd-title">📝 Notas</div>
+    <button class="x-btn" onclick="toggleNotas()">✕</button>
+  </div>
+  <div class="notas-scope-tabs">
+    <button class="notas-stab on" id="nstab-pessoal" onclick="setNotasScope('pessoal')">🐠 Minhas notas</button>
+    <button class="notas-stab" id="nstab-squad" onclick="setNotasScope('squad')">👥 Da squad</button>
+  </div>
+  <div id="notas-list-view" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <div style="padding:12px 20px 0;flex-shrink:0;">
+      <button class="notas-new-btn" onclick="createNota()">+ Nova nota</button>
+    </div>
+    <div class="lem-body" id="notas-list-body"></div>
+  </div>
+  <div id="notas-editor-view" style="display:none;flex-direction:column;flex:1;min-height:0;">
+    <div class="notas-editor-hd">
+      <button class="x-btn" onclick="closeNotaEditor()" title="Voltar pra lista">← Voltar</button>
+      <input id="notas-editor-title" class="notas-editor-title-inp" placeholder="Título da nota..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onblur="renameNotaFromInput(this.value)">
+      <button class="x-btn" onclick="deleteNota(_notasOpenId)" title="Excluir nota" style="color:var(--danger);">🗑</button>
+    </div>
+    <div class="nb-toolbar">
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('bold')" title="Negrito"><b>B</b></button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('italic')" title="Itálico"><i>I</i></button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('underline')" title="Sublinhado"><u>U</u></button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('link')" title="Link">🔗</button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="toggleFocusedBlocoChecklist()" title="Virar/desfazer item de checklist">☑</button>
+      <span style="flex:1;"></span>
+      <button type="button" class="fmt-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;" onmousedown="event.preventDefault()" onclick="_addBlocoNoFinal()">+ Bloco</button>
+    </div>
+    <div class="lem-body" id="notas-tree-wrap" style="padding:10px 14px;">
+      <div class="nb-tree" id="notas-tree"></div>
+    </div>
+    <div class="nb-hint">Enter = novo bloco · Tab/Shift+Tab = indentar/recuar · Backspace no início mescla com o bloco anterior</div>
+  </div>
 </div>
 
 <!-- AGENTE ÁGIL -->
@@ -4718,7 +4791,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.305-dev</div>
+<div class="version">v8.30.306-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11489,6 +11562,339 @@ function updKudosBadge(){
   }).length;
   if(novos>0){ badge.textContent=novos>9?'9+':novos; badge.style.display=''; }
   else badge.style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════
+// NOTAS (bloco de notas pessoal/squad — outliner colapsável)
+// ═══════════════════════════════════════════════════════
+// Pedido direto: "bloco de notas" tipo Central de Dados/Lembretes, com
+// anotações pessoais E da squad, checklist e organização hierárquica
+// colapsável (estilo RemNote). Sem anexos/arquivos de propósito (pedido
+// explícito, "pra não pesar").
+//
+// Modelo de dados: cada nota é {id, titulo, criadoPor, criadoEm,
+// atualizadoEm, blocos:{blocoId:{id,texto,parentId,ordem,colapsado,
+// checklist,done}}}. `blocos` é um MAPA achatado (parentId + ordem), não
+// uma árvore aninhada de verdade — edições em UM bloco viram um update()
+// pontual só naquele path (mesmo princípio de fbSaveCard(): nunca
+// reescrever a estrutura inteira por causa de uma tecla), em vez de
+// reescrever a nota inteira a cada letra digitada.
+//
+// Squad: kanban/squads/{squad}/dados/notas/{notaId}
+// Pessoal: kanban/squads/{squad}/dados/notas_pessoais/{uid}/{notaId}
+// Os dois já caem dentro da regra existente de `dados` no
+// database.rules.json (sem regra nova necessária) — mesmo modelo de
+// confiança que kanban/.../lembretes_prop/{uid} já usa (squad inteira
+// TEM acesso de escrita ao node pessoal de qualquer membro pelas regras;
+// só o client-side impede escrever na nota de outra pessoa. Aceito o
+// mesmo trade-off que já existe pros Lembretes, não é regressão).
+//
+// Listener só é montado quando o drawer é aberto pela 1ª vez (nunca no
+// carregamento da página) — mesmo princípio do lazy-load de arquivados
+// (PR #124): não gasta banda com algo que a pessoa pode nunca abrir.
+let _notasSquad = {};
+let _notasPessoais = {};
+let _notasScope = 'pessoal';
+let _notasOpenId = null;
+let _notasFocusedBlockId = null;
+let _notasListenersOn = false;
+let _notasMergeCaret = null;
+const _notasSaveTimers = {};
+
+function _notasStore(){ return _notasScope==='squad' ? _notasSquad : _notasPessoais; }
+function _notasBasePath(){
+  const uid=window._currentUser?.uid;
+  return _notasScope==='squad' ? (FB+'/notas') : (FB+'/notas_pessoais/'+uid);
+}
+function _ensureNotasListeners(){
+  if(_notasListenersOn || !window._fbReady) return;
+  _notasListenersOn=true;
+  window._onValue(window._ref(window._db, FB+'/notas'), snap=>{ _dbgTrack('notas', snap.val());
+    _notasSquad = snap.val()||{};
+    if(_notasOpenId && _notasScope==='squad' && !_notasSquad[_notasOpenId]) _notasOpenId=null; // apagada em outra aba
+    _renderNotasCurrentView();
+  });
+  const uid=window._currentUser?.uid;
+  if(uid){
+    window._onValue(window._ref(window._db, FB+'/notas_pessoais/'+uid), snap=>{ _dbgTrack('notas_pessoais', snap.val());
+      _notasPessoais = snap.val()||{};
+      if(_notasOpenId && _notasScope==='pessoal' && !_notasPessoais[_notasOpenId]) _notasOpenId=null;
+      _renderNotasCurrentView();
+    });
+  }
+}
+function _renderNotasCurrentView(){ if(_notasOpenId) renderNotaEditor(); else renderNotasList(); }
+function toggleNotas(){
+  const dr=document.getElementById('notas-drawer'); if(!dr) return;
+  const wasOpen=dr.classList.contains('open');
+  ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+  dr.classList.toggle('open');
+  if(!wasOpen){ _ensureNotasListeners(); _notasOpenId=null; renderNotasList(); }
+}
+function setNotasScope(s){
+  _notasScope = s;
+  document.getElementById('nstab-pessoal')?.classList.toggle('on', s==='pessoal');
+  document.getElementById('nstab-squad')?.classList.toggle('on', s==='squad');
+  _notasOpenId = null;
+  renderNotasList();
+}
+function renderNotasList(){
+  const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
+  if(listView) listView.style.display='flex';
+  if(edView) edView.style.display='none';
+  const body=document.getElementById('notas-list-body'); if(!body) return;
+  const store=_notasStore();
+  const list=Object.values(store).filter(Boolean).sort((a,b)=>String(b.atualizadoEm||'').localeCompare(String(a.atualizadoEm||'')));
+  if(!list.length){
+    body.innerHTML='<div class="lem-empty">'+(_notasScope==='pessoal'?'Nenhuma nota pessoal ainda.':'Nenhuma nota da squad ainda.')+'<br>Clique em "+ Nova nota" pra criar a primeira.</div>';
+    return;
+  }
+  body.innerHTML = list.map(n=>{
+    const nBlocos = Object.keys(n.blocos||{}).length;
+    const quando = n.atualizadoEm ? new Date(n.atualizadoEm).toLocaleDateString('pt-BR') : '';
+    return `<div class="notas-item" onclick="openNota('${esc(n.id)}')">
+      <div class="notas-item-title">📄 ${esc(n.titulo||'Sem título')}</div>
+      <div class="notas-item-meta">${nBlocos} bloco${nBlocos===1?'':'s'} · ${esc(quando)}${n.criadoPor?' · '+esc(n.criadoPor):''}</div>
+      <button class="notas-item-del" onclick="event.stopPropagation();deleteNota('${esc(n.id)}')" title="Excluir nota">✕</button>
+    </div>`;
+  }).join('');
+}
+async function createNota(){
+  const titulo = await uiPrompt('Título da nota:', '', {title:'📝 Nova nota', placeholder:'Ex.: Ideias de campanha'});
+  if(titulo===null) return;
+  const t=titulo.trim(); if(!t) return;
+  const id='nt'+Date.now()+Math.random().toString(36).slice(2,6);
+  const blocoId='b'+Date.now();
+  const agora=new Date().toISOString();
+  const nota={
+    id, titulo:t,
+    criadoPor: window._currentUser?.displayName||window._currentUser?.email||'Usuário',
+    criadoEm: agora, atualizadoEm: agora,
+    blocos:{ [blocoId]: {id:blocoId, texto:'', parentId:null, ordem:0, colapsado:false, checklist:false, done:false} }
+  };
+  await window._set(window._ref(window._db, _notasBasePath()+'/'+id), nota);
+  openNota(id);
+}
+function openNota(id){ _notasOpenId=id; renderNotaEditor(); }
+function closeNotaEditor(){ _notasOpenId=null; renderNotasList(); }
+async function deleteNota(id){
+  const store=_notasStore();
+  const n=store[id]; if(!n) return;
+  if(!await uiConfirm('Excluir a nota "'+(n.titulo||'')+'"? Essa ação não pode ser desfeita.',{title:'Excluir nota'})) return;
+  await window._set(window._ref(window._db, _notasBasePath()+'/'+id), null);
+  if(_notasOpenId===id){ _notasOpenId=null; renderNotasList(); }
+}
+async function renameNotaFromInput(v){
+  const t=(v||'').trim(); if(!t || !_notasOpenId) return;
+  const nota=_notasStore()[_notasOpenId]; if(!nota || nota.titulo===t) return;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/titulo']: t,
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+}
+function _siblingsOf(nota, parentId){
+  return Object.values(nota.blocos||{}).filter(b=>b && (b.parentId||null)===(parentId||null)).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+}
+function _notaBlocosArvore(nota){
+  const blocos = nota?.blocos||{};
+  const byParent={};
+  Object.values(blocos).forEach(b=>{
+    if(!b) return;
+    const p = b.parentId||'__root__';
+    (byParent[p]=byParent[p]||[]).push(b);
+  });
+  Object.values(byParent).forEach(arr=>arr.sort((a,b)=>(a.ordem||0)-(b.ordem||0)));
+  return byParent;
+}
+function renderNotaEditor(){
+  const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
+  if(listView) listView.style.display='none';
+  if(edView) edView.style.display='flex';
+  const store=_notasStore();
+  const nota=store[_notasOpenId];
+  if(!nota){ closeNotaEditor(); return; }
+  const titleInp=document.getElementById('notas-editor-title');
+  if(titleInp && document.activeElement!==titleInp) titleInp.value = nota.titulo||'';
+  const tree=document.getElementById('notas-tree'); if(!tree) return;
+  const byParent=_notaBlocosArvore(nota);
+  const focusedId=_notasFocusedBlockId;
+  let caret=null;
+  if(focusedId){
+    const el=document.getElementById('nb-ta-'+focusedId);
+    if(el) caret={start:el.selectionStart, end:el.selectionEnd};
+  }
+  function renderLevel(parentId, depth){
+    const kids=byParent[parentId||'__root__']||[];
+    return kids.map(b=>{
+      const hasKids = (byParent[b.id]||[]).length>0;
+      const childrenHtml = (hasKids && !b.colapsado) ? `<div class="nb-children">${renderLevel(b.id, depth+1)}</div>` : '';
+      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso('${esc(b.id)}')">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
+      const marker = b.checklist
+        ? `<input type="checkbox" class="nb-chk" ${b.done?'checked':''} onchange="toggleBlocoChecklistDone('${esc(b.id)}')">`
+        : `<span class="nb-bullet">•</span>`;
+      return `<div class="nb-row" style="padding-left:${depth*20}px;" data-bid="${esc(b.id)}">
+        ${collapseArrow}${marker}
+        <textarea id="nb-ta-${esc(b.id)}" class="nb-text ${b.checklist&&b.done?'nb-done':''}" rows="1"
+          oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
+          onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>
+      </div>${childrenHtml}`;
+    }).join('');
+  }
+  tree.innerHTML = renderLevel(null, 0);
+  tree.querySelectorAll('.nb-text').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
+  if(focusedId){
+    const el=document.getElementById('nb-ta-'+focusedId);
+    if(el){
+      el.focus();
+      if(_notasMergeCaret!=null){ el.setSelectionRange(_notasMergeCaret,_notasMergeCaret); _notasMergeCaret=null; }
+      else if(caret) el.setSelectionRange(caret.start, caret.end);
+    }
+  }
+}
+function onBlocoInput(blocoId, ta){
+  ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+  clearTimeout(_notasSaveTimers[blocoId]);
+  _notasSaveTimers[blocoId]=setTimeout(()=>saveBlocoTexto(blocoId, ta.value), 700);
+}
+async function saveBlocoTexto(blocoId, texto){
+  if(!_notasOpenId) return;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/texto']: texto,
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+}
+function onBlocoKeydown(e, blocoId){
+  if(e.key==='Enter' && !e.shiftKey){
+    e.preventDefault();
+    criarBlocoIrmao(blocoId, e.target.value, e.target.selectionStart);
+  } else if(e.key==='Tab'){
+    e.preventDefault();
+    if(e.shiftKey) outdentBloco(blocoId); else indentBloco(blocoId);
+  } else if(e.key==='Backspace' && e.target.selectionStart===0 && e.target.selectionEnd===0){
+    e.preventDefault();
+    mergeComAnterior(blocoId);
+  }
+}
+async function criarBlocoIrmao(blocoId, textoAtual, cursorPos){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const atual=nota.blocos[blocoId]; if(!atual) return;
+  clearTimeout(_notasSaveTimers[blocoId]);
+  const antes = textoAtual.slice(0, cursorPos);
+  const depois = textoAtual.slice(cursorPos);
+  const novoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
+  const siblings=_siblingsOf(nota, atual.parentId);
+  const idx=siblings.findIndex(s=>s.id===blocoId);
+  const agora=new Date().toISOString();
+  const updates={};
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/texto']=antes;
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+novoId]={id:novoId, texto:depois, parentId:atual.parentId||null, ordem:idx+1, colapsado:false, checklist:atual.checklist||false, done:false};
+  siblings.slice(idx+1).forEach((s,i)=>{
+    updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+s.id+'/ordem']=idx+2+i;
+  });
+  updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
+  _notasFocusedBlockId=novoId;
+  _notasMergeCaret=0;
+  await window._update(window._ref(window._db), updates);
+}
+async function indentBloco(blocoId){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const atual=nota.blocos[blocoId]; if(!atual) return;
+  const siblings=_siblingsOf(nota, atual.parentId);
+  const idx=siblings.findIndex(s=>s.id===blocoId);
+  if(idx<=0) return; // primeiro da lista não tem irmão anterior pra virar pai
+  const novoPai=siblings[idx-1];
+  const filhosDoNovoPai=_siblingsOf(nota, novoPai.id);
+  const agora=new Date().toISOString();
+  const updates={};
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/parentId']=novoPai.id;
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/ordem']=filhosDoNovoPai.length;
+  if(novoPai.colapsado) updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+novoPai.id+'/colapsado']=false;
+  siblings.slice(idx+1).forEach((s,i)=>{
+    updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+s.id+'/ordem']=idx+i;
+  });
+  updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
+  _notasFocusedBlockId=blocoId;
+  await window._update(window._ref(window._db), updates);
+}
+async function outdentBloco(blocoId){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const atual=nota.blocos[blocoId]; if(!atual || !atual.parentId) return; // já é raiz
+  const pai=nota.blocos[atual.parentId]; if(!pai) return;
+  const avoId=pai.parentId||null;
+  const siblingsDoAvo=_siblingsOf(nota, avoId);
+  const idxPai=siblingsDoAvo.findIndex(s=>s.id===pai.id);
+  const agora=new Date().toISOString();
+  const updates={};
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/parentId']=avoId;
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/ordem']=idxPai+1;
+  siblingsDoAvo.slice(idxPai+1).forEach((s,i)=>{
+    updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+s.id+'/ordem']=idxPai+2+i;
+  });
+  updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
+  _notasFocusedBlockId=blocoId;
+  await window._update(window._ref(window._db), updates);
+}
+async function mergeComAnterior(blocoId){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const atual=nota.blocos[blocoId]; if(!atual) return;
+  const siblings=_siblingsOf(nota, atual.parentId);
+  const idx=siblings.findIndex(s=>s.id===blocoId);
+  let alvo=null;
+  if(idx>0) alvo=siblings[idx-1];
+  else if(atual.parentId) alvo=nota.blocos[atual.parentId];
+  if(!alvo) return; // primeiro bloco da nota inteira — nada pra mesclar
+  clearTimeout(_notasSaveTimers[blocoId]);
+  const taAtual=document.getElementById('nb-ta-'+blocoId);
+  const textoAtual = taAtual ? taAtual.value : (atual.texto||'');
+  const taAlvo=document.getElementById('nb-ta-'+alvo.id);
+  const textoAlvoAtual = taAlvo ? taAlvo.value : (alvo.texto||'');
+  const novoTextoAlvo = textoAlvoAtual + textoAtual;
+  const agora=new Date().toISOString();
+  const updates={};
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+alvo.id+'/texto']=novoTextoAlvo;
+  updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId]=null;
+  // filhos do bloco apagado (se algum) sobem pra virar filhos do alvo
+  const filhosDoAtual=_siblingsOf(nota, blocoId);
+  const filhosJaNoAlvo=_siblingsOf(nota, alvo.id).length;
+  filhosDoAtual.forEach((f,i)=>{
+    updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+f.id+'/parentId']=alvo.id;
+    updates[_notasBasePath()+'/'+_notasOpenId+'/blocos/'+f.id+'/ordem']=filhosJaNoAlvo+i;
+  });
+  updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
+  _notasFocusedBlockId=alvo.id;
+  _notasMergeCaret=textoAlvoAtual.length;
+  await window._update(window._ref(window._db), updates);
+}
+async function toggleBlocoColapso(blocoId){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const b=nota.blocos[blocoId]; if(!b) return;
+  await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/colapsado'), !b.colapsado);
+}
+async function toggleBlocoChecklistDone(blocoId){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const b=nota.blocos[blocoId]; if(!b) return;
+  await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/done'), !b.done);
+}
+function toggleFocusedBlocoChecklist(){
+  const blocoId=_notasFocusedBlockId; if(!blocoId) return;
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const b=nota.blocos[blocoId]; if(!b) return;
+  window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/checklist'), !b.checklist);
+}
+function notasFmtApply(type, arg){
+  if(!_notasFocusedBlockId) return;
+  _fmtText('nb-ta-'+_notasFocusedBlockId, type, arg);
+}
+async function _addBlocoNoFinal(){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const roots=_siblingsOf(nota, null);
+  const novoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
+  const agora=new Date().toISOString();
+  _notasFocusedBlockId=novoId;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/blocos/'+novoId]: {id:novoId, texto:'', parentId:null, ordem:roots.length, colapsado:false, checklist:false, done:false},
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
+  });
 }
 
 // ═══════════════════════════════════════════════════════

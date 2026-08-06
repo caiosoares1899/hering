@@ -1014,6 +1014,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.306-dev — 2026-08-06
+Feature nova, sugestão do usuário: aba **📝 Notas** (mesmo padrão de
+Dados/Lembretes na lateral do board) — bloco de notas pessoal e da
+squad, sem anexos/arquivos (pedido explícito, "pra não pesar"), com
+checklist e organização hierárquica colapsável estilo RemNote.
+
+- **Duas abas**: "🐠 Minhas notas" (pessoal, só a própria pessoa vê) e
+  "👥 Da squad" (compartilhada com todo mundo do board).
+- **Outliner de blocos**: cada nota é uma árvore de blocos, não um texto
+  corrido — Enter cria um bloco irmão (dividindo o texto no cursor se
+  não estiver no fim), Tab/Shift+Tab indenta/recua (vira filho do bloco
+  acima / volta a ser irmão do pai), Backspace no início do bloco
+  mescla com o anterior (herda os filhos do bloco apagado). Blocos com
+  filhos ganham uma seta ▸/▾ pra recolher/expandir a ramificação.
+- **Checklist embutido**: botão ☑ na barra de formatação vira o bloco
+  focado num item de checklist (☐/☑, clicável, risca o texto quando
+  marcado) — não é uma seção separada, qualquer bloco pode virar
+  checklist.
+- **Formatação**: reaproveita a mesma barra (B/I/U/🔗) e o mesmo motor
+  de link (`_fmtText()`) já usados em Descrição/Comentário — mesma
+  sintaxe markdown, mesmo parser.
+- **Custo controlado**: cada bloco grava só o próprio path no Firebase
+  (nunca reescreve a nota inteira a cada tecla — mesmo princípio do
+  `fbSaveCard()`), autosave com debounce de 700ms, e o listener só é
+  montado na primeira vez que a pessoa abre a aba (nunca no carregamento
+  da página — mesmo princípio do lazy-load de arquivados, PR #124).
+- Escopo deliberadamente cortado: sem anexos, sem WYSIWYG (os blocos
+  mostram a sintaxe markdown crua, igual comentário/descrição sempre
+  mostraram antes de renderizar), sem drag-and-drop pra reordenar (só
+  teclado por enquanto).
+
 ### v8.30.305-dev — 2026-08-05
 Terceiro achado testando os links do Vimeo: um link solto (sem
 `[texto](url)`) colado numa linha em branco depois de outro parágrafo não
