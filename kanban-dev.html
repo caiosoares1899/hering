@@ -967,6 +967,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .nb-chk{width:14px;flex-shrink:0;margin-top:6px;accent-color:var(--teal);cursor:pointer;}
 .nb-text{flex:1;min-width:0;background:none;border:none;resize:none;color:var(--txt);font-size:12.5px;font-family:"DM Sans",sans-serif;line-height:1.6;padding:2px 0;overflow:hidden;}
 .nb-text:focus{outline:none;}
+.nb-view{cursor:text;min-height:19px;border-radius:5px;word-break:break-word;}
+.nb-view:hover{background:rgba(29,233,182,.06);}
+.nb-placeholder{color:var(--txt3);font-style:italic;}
 .nb-done{text-decoration:line-through;opacity:.5;}
 .nb-children{display:flex;flex-direction:column;}
 .nb-hint{flex-shrink:0;padding:6px 14px;font-size:9.5px;color:var(--txt3);text-align:center;border-top:1px solid var(--glass-b);}
@@ -2981,6 +2984,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('underline')" title="Sublinhado"><u>U</u></button>
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('link')" title="Link">🔗</button>
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="toggleFocusedBlocoChecklist()" title="Virar/desfazer item de checklist">☑</button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasUndo()" title="Desfazer última ação (Ctrl+Z)">↩</button>
       <span style="flex:1;"></span>
       <button type="button" class="fmt-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;" onmousedown="event.preventDefault()" onclick="_addBlocoNoFinal()">+ Bloco</button>
     </div>
@@ -4791,7 +4795,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.306-dev</div>
+<div class="version">v8.30.307-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11706,6 +11710,27 @@ function _notaBlocosArvore(nota){
   Object.values(byParent).forEach(arr=>arr.sort((a,b)=>(a.ordem||0)-(b.ordem||0)));
   return byParent;
 }
+// Pilha de undo por nota — snapshot raso do mapa `blocos` inteiro tirado
+// ANTES de cada operação que muda estrutura/texto (_notasPushUndo, chamada
+// no início de cada função abaixo que escreve no Firebase). Ctrl+Z restaura
+// o snapshot mais recente com um único _set no nó `blocos` inteiro — mais
+// simples e mais confiável que tentar desfazer operação por operação (Enter/
+// Tab/merge mexem em vários blocos ao mesmo tempo).
+const _notasUndoStack = {};
+function _notasPushUndo(){
+  if(!_notasOpenId) return;
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const stack = _notasUndoStack[_notasOpenId] = _notasUndoStack[_notasOpenId]||[];
+  stack.push(JSON.parse(JSON.stringify(nota.blocos||{})));
+  if(stack.length>20) stack.shift();
+}
+async function notasUndo(){
+  if(!_notasOpenId) return;
+  const stack = _notasUndoStack[_notasOpenId];
+  if(!stack || !stack.length) return;
+  const prev = stack.pop();
+  await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos'), prev);
+}
 function renderNotaEditor(){
   const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
   if(listView) listView.style.display='none';
@@ -11728,28 +11753,53 @@ function renderNotaEditor(){
     return kids.map(b=>{
       const hasKids = (byParent[b.id]||[]).length>0;
       const childrenHtml = (hasKids && !b.colapsado) ? `<div class="nb-children">${renderLevel(b.id, depth+1)}</div>` : '';
-      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso('${esc(b.id)}')">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
+      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso('${esc(b.id)}')" title="Recolher/expandir">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
       const marker = b.checklist
         ? `<input type="checkbox" class="nb-chk" ${b.done?'checked':''} onchange="toggleBlocoChecklistDone('${esc(b.id)}')">`
         : `<span class="nb-bullet">•</span>`;
+      // Bloco focado (sendo editado) mostra a sintaxe crua num textarea;
+      // os demais mostram RENDERIZADO (renderMd — mesmo motor de Descrição/
+      // Comentário), clicável pra entrar em edição. Sem isso, **negrito**
+      // ficava sempre visível como texto cru, parecendo que a formatação
+      // "não salvava" (ela salvava — só nunca era desenhada).
+      const isEditing = (b.id===focusedId);
+      const body = isEditing
+        ? `<textarea id="nb-ta-${esc(b.id)}" class="nb-text ${b.checklist&&b.done?'nb-done':''}" rows="1"
+            oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
+            onblur="onBlocoBlur('${esc(b.id)}')" onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>`
+        : (b.texto
+            ? `<div class="nb-text nb-view ${b.checklist&&b.done?'nb-done':''}" onclick="focarBloco('${esc(b.id)}')">${renderMd(b.texto)}</div>`
+            : `<div class="nb-text nb-view" onclick="focarBloco('${esc(b.id)}')"><span class="nb-placeholder">Escreva algo...</span></div>`);
       return `<div class="nb-row" style="padding-left:${depth*20}px;" data-bid="${esc(b.id)}">
-        ${collapseArrow}${marker}
-        <textarea id="nb-ta-${esc(b.id)}" class="nb-text ${b.checklist&&b.done?'nb-done':''}" rows="1"
-          oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
-          onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>
+        ${collapseArrow}${marker}${body}
       </div>${childrenHtml}`;
     }).join('');
   }
   tree.innerHTML = renderLevel(null, 0);
-  tree.querySelectorAll('.nb-text').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
+  tree.querySelectorAll('textarea.nb-text').forEach(ta=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; });
   if(focusedId){
     const el=document.getElementById('nb-ta-'+focusedId);
     if(el){
       el.focus();
       if(_notasMergeCaret!=null){ el.setSelectionRange(_notasMergeCaret,_notasMergeCaret); _notasMergeCaret=null; }
       else if(caret) el.setSelectionRange(caret.start, caret.end);
+      else { const fim=el.value.length; el.setSelectionRange(fim,fim); } // clicou num bloco renderizado — cursor no fim
     }
   }
+}
+// Clique num bloco renderizado (não focado) → entra em modo edição, cursor no fim.
+function focarBloco(blocoId){
+  _notasFocusedBlockId=blocoId;
+  renderNotaEditor();
+}
+// Blur do textarea → some o textarea, volta o bloco pra visualização renderizada.
+// O toolbar (B/I/U/🔗) usa onmousedown="event.preventDefault()" de propósito
+// pra NUNCA disparar esse blur ao clicar nos botões (mesmo padrão já usado
+// no fmt-toolbar de Descrição/Comentário) — sem isso, clicar em "B" perderia
+// a seleção de texto antes do _fmtText conseguir usá-la.
+function onBlocoBlur(blocoId){
+  if(_notasFocusedBlockId===blocoId) _notasFocusedBlockId=null;
+  renderNotaEditor();
 }
 function onBlocoInput(blocoId, ta){
   ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
@@ -11758,13 +11808,17 @@ function onBlocoInput(blocoId, ta){
 }
 async function saveBlocoTexto(blocoId, texto){
   if(!_notasOpenId) return;
+  _notasPushUndo();
   await window._update(window._ref(window._db), {
     [_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/texto']: texto,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
 }
 function onBlocoKeydown(e, blocoId){
-  if(e.key==='Enter' && !e.shiftKey){
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z' && !e.shiftKey){
+    e.preventDefault();
+    notasUndo();
+  } else if(e.key==='Enter' && !e.shiftKey){
     e.preventDefault();
     criarBlocoIrmao(blocoId, e.target.value, e.target.selectionStart);
   } else if(e.key==='Tab'){
@@ -11779,6 +11833,7 @@ async function criarBlocoIrmao(blocoId, textoAtual, cursorPos){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
   const atual=nota.blocos[blocoId]; if(!atual) return;
   clearTimeout(_notasSaveTimers[blocoId]);
+  _notasPushUndo();
   const antes = textoAtual.slice(0, cursorPos);
   const depois = textoAtual.slice(cursorPos);
   const novoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
@@ -11796,12 +11851,19 @@ async function criarBlocoIrmao(blocoId, textoAtual, cursorPos){
   _notasMergeCaret=0;
   await window._update(window._ref(window._db), updates);
 }
+// Indenta o bloco: vira FILHO do irmão imediatamente acima (mesma
+// convenção de Notion/Workflowy/RemNote — não tem "irmão anterior" pra
+// virar pai de outro jeito). Se esse irmão estava recolhido, reabre ele
+// automaticamente — senão o bloco que você acabou de indentar sumiria da
+// tela sem explicação nenhuma (viraria filho escondido). É esperado que
+// uma seta ▸/▾ apareça no bloco DE CIMA depois disso: é ele virando pai.
 async function indentBloco(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
   const atual=nota.blocos[blocoId]; if(!atual) return;
   const siblings=_siblingsOf(nota, atual.parentId);
   const idx=siblings.findIndex(s=>s.id===blocoId);
   if(idx<=0) return; // primeiro da lista não tem irmão anterior pra virar pai
+  _notasPushUndo();
   const novoPai=siblings[idx-1];
   const filhosDoNovoPai=_siblingsOf(nota, novoPai.id);
   const agora=new Date().toISOString();
@@ -11820,6 +11882,7 @@ async function outdentBloco(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
   const atual=nota.blocos[blocoId]; if(!atual || !atual.parentId) return; // já é raiz
   const pai=nota.blocos[atual.parentId]; if(!pai) return;
+  _notasPushUndo();
   const avoId=pai.parentId||null;
   const siblingsDoAvo=_siblingsOf(nota, avoId);
   const idxPai=siblingsDoAvo.findIndex(s=>s.id===pai.id);
@@ -11844,6 +11907,7 @@ async function mergeComAnterior(blocoId){
   else if(atual.parentId) alvo=nota.blocos[atual.parentId];
   if(!alvo) return; // primeiro bloco da nota inteira — nada pra mesclar
   clearTimeout(_notasSaveTimers[blocoId]);
+  _notasPushUndo();
   const taAtual=document.getElementById('nb-ta-'+blocoId);
   const textoAtual = taAtual ? taAtual.value : (atual.texto||'');
   const taAlvo=document.getElementById('nb-ta-'+alvo.id);
@@ -11868,25 +11932,30 @@ async function mergeComAnterior(blocoId){
 async function toggleBlocoColapso(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
   const b=nota.blocos[blocoId]; if(!b) return;
+  _notasPushUndo();
   await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/colapsado'), !b.colapsado);
 }
 async function toggleBlocoChecklistDone(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
   const b=nota.blocos[blocoId]; if(!b) return;
+  _notasPushUndo();
   await window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/done'), !b.done);
 }
 function toggleFocusedBlocoChecklist(){
   const blocoId=_notasFocusedBlockId; if(!blocoId) return;
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
   const b=nota.blocos[blocoId]; if(!b) return;
+  _notasPushUndo();
   window._set(window._ref(window._db, _notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/checklist'), !b.checklist);
 }
 function notasFmtApply(type, arg){
   if(!_notasFocusedBlockId) return;
+  _notasPushUndo();
   _fmtText('nb-ta-'+_notasFocusedBlockId, type, arg);
 }
 async function _addBlocoNoFinal(){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  _notasPushUndo();
   const roots=_siblingsOf(nota, null);
   const novoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
   const agora=new Date().toISOString();
