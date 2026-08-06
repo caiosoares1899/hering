@@ -1033,6 +1033,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.310-dev — 2026-08-06
+Primeira parte de "vincular notas a cards" (a segunda, menção de
+pessoas/cards dentro do texto das notas, fica pra um próximo lote):
+
+- Cada nota (livre ou estruturada) agora pode ser **vinculada a um ou
+  mais cards** — campo de busca no topo do editor da nota, resultado
+  vira um chip clicável (abre o card) com botão de desvincular. Vínculo
+  é armazenado do lado da nota (`nota.cardIds`), sem duplicar nada no
+  card.
+- O card, em **🔗 Vínculos & anexos**, ganha uma seção **📝 Notas
+  vinculadas** mostrando o reflexo — squad e pessoais do usuário atual
+  que apontam pra aquele card, clicável pra abrir a nota direto. Se o
+  painel de Notas ainda não tiver sido aberto nesta sessão (sem
+  listener ligado), mostra um botão "Ver notas vinculadas" em vez de
+  puxar os dados sozinho — mesmo princípio de leitura sob demanda já
+  usado no resto da feature (só busca quando alguém realmente pede).
+
 ### v8.30.309-dev — 2026-08-06
 Pedido direto: inverte a ordem — nota nova nasce em **modo livre**
 (texto corrido, tipo Notas do computador) em vez de modo estruturado.
