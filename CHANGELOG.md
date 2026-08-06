@@ -1014,6 +1014,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.309-dev — 2026-08-06
+Pedido direto: inverte a ordem — nota nova nasce em **modo livre**
+(texto corrido, tipo Notas do computador) em vez de modo estruturado.
+Quem quiser organizar em blocos/hierarquia agora ativa isso pelo botão
+🧱 da toolbar, em vez do caminho inverso.
+
 ### v8.30.308-dev — 2026-08-06
 Duas melhorias pedidas depois de testar a aba de Notas:
 
