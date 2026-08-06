@@ -1033,6 +1033,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.312-dev — 2026-08-06
+Listas de usuários em ordem alfabética (antes seguiam a ordem crua do
+Firebase, basicamente aleatória). Corrigido no ponto único de origem
+(`members`, ordenado ao carregar) — cascateia sozinho pra praticamente
+todo select/filtro que lê dali: responsável (card, calendário,
+arquivados), participantes (adicionar), filtro de responsável na
+toolbar do board, e o import do Trello (lado "responsável no board").
+Também ordenados separadamente: agentes de IA (@menção/seletor),
+"Todos responsáveis" dos cards arquivados (lista derivada, não vem de
+`members` direto) e a lista de usuários em Config → Usuários.
+
 ### v8.30.311-dev — 2026-08-06
 Busca dentro de Notas: campo "🔍 Buscar em título e conteúdo..." acima
 da lista (dentro do escopo selecionado — pessoal ou squad). Não olha só
