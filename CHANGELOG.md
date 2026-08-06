@@ -18,6 +18,25 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.224 — 2026-08-06 · promove pra prod (PRs #213–#216)
+Promove pra produção a feature nova de Notas, validada em dev
+(v8.30.306-dev a v8.30.309-dev):
+
+- **Nova aba 📝 Notas** na lateral do board (mesmo padrão de
+  Dados/Lembretes) — notas pessoais e da squad, sem anexos/arquivos.
+- **Dois modos por nota**: livre (texto corrido, tipo Notas do
+  computador — é o padrão pra nota nova) ou estruturado (outliner de
+  blocos colapsável, estilo RemNote — Enter/Tab/Shift+Tab/Backspace,
+  checklist embutido em qualquer bloco). Troca pelo botão 🧱/📄 na
+  toolbar; trocar de estruturado pra livre avisa antes (é destrutivo
+  pra hierarquia) e dá pra desfazer com Ctrl+Z.
+- **Ctrl+Z** funciona nos blocos (pilha de undo por nota).
+- Blocos mostram o texto formatado de verdade (negrito/itálico/link)
+  quando não estão sendo editados — só a sintaxe crua aparece no modo
+  edição.
+- Listener do Firebase só existe com o painel aberto — desanexa ao
+  fechar, não fica consumindo leitura à toa o resto da sessão.
+
 ### v8.30.223 — 2026-08-05 · promove pra prod (PRs #208–#211)
 Promove pra produção a leva de correções de link validada em dev
 (v8.30.302-dev a v8.30.305-dev), toda motivada por um caso real: um
