@@ -4802,7 +4802,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.308-dev</div>
+<div class="version">v8.30.309-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11700,7 +11700,7 @@ async function createNota(){
   const blocoId='b'+Date.now();
   const agora=new Date().toISOString();
   const nota={
-    id, titulo:t, modo:'estruturado',
+    id, titulo:t, modo:'livre',
     criadoPor: window._currentUser?.displayName||window._currentUser?.email||'Usuário',
     criadoEm: agora, atualizadoEm: agora,
     blocos:{ [blocoId]: {id:blocoId, texto:'', parentId:null, ordem:0, colapsado:false, checklist:false, done:false} }
