@@ -1647,9 +1647,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .linked-chip-col{font-size:9px;padding:1px 6px;border-radius:999px;
   background:rgba(56,182,255,.1);color:var(--accent);flex-shrink:0;}
 .linked-chip-title{flex:1;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.linked-chip-rm{background:none;border:none;color:var(--txt3);cursor:pointer;
+.linked-chip-rm,.nota-chip-rm{background:none;border:none;color:var(--txt3);cursor:pointer;
   font-size:12px;padding:0 2px;flex-shrink:0;line-height:1;}
-.linked-chip-rm:hover{color:var(--danger);}
+.linked-chip-rm:hover,.nota-chip-rm:hover{color:var(--danger);}
+.notas-linked-wrap{padding:8px 14px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .link-search{position:relative;}
 .link-search-input{width:100%;padding:6px 10px;font-size:11px;
   border:1px solid var(--glass-b);border-radius:8px;
@@ -2980,6 +2981,14 @@ input[type="date"]{-moz-appearance:textfield;}
         onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onblur="renameNotaFromInput(this.value)">
       <button class="x-btn" onclick="deleteNota(_notasOpenId)" title="Excluir nota" style="color:var(--danger);">🗑</button>
     </div>
+    <div class="notas-linked-wrap">
+      <div class="link-search notas-link-search" style="margin-bottom:6px;">
+        <input id="notas-link-search-inp" class="link-search-input" placeholder="🔗 Vincular a um card..."
+          oninput="notaSearchCards(this.value)" onkeydown="if(event.key==='Escape'){this.value='';hideNotaLinkDropdown();}">
+        <div class="link-dropdown" id="notas-link-dropdown"></div>
+      </div>
+      <div id="notas-linked-cards-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
     <div class="nb-toolbar">
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('bold')" title="Negrito"><b>B</b></button>
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('italic')" title="Itálico"><i>I</i></button>
@@ -3358,6 +3367,16 @@ input[type="date"]{-moz-appearance:textfield;}
           onkeydown="if(event.key==='Enter'){event.preventDefault();attachSave();}
             else if(event.key==='Escape'){attachToggleAdd();}">
         <button class="attach-save-btn" onclick="attachSave()">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Notas vinculadas (vínculo criado do lado da nota, em Notas) -->
+    <div class="attach-wrap" id="m-notas-vinc-attach-wrap">
+      <div class="attach-hd">
+        <span class="attach-lbl">📝 Notas vinculadas</span>
+      </div>
+      <div id="m-notas-vinc-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">
+        <div style="font-size:10px;color:var(--txt3);">Nenhuma nota vinculada a este card.</div>
       </div>
     </div>
     </div><!-- /m-sec-vinculos -->
@@ -4802,7 +4821,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.309-dev</div>
+<div class="version">v8.30.310-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9193,7 +9212,8 @@ function openCard(id){
   const blockerRow=document.getElementById('m-blocker-row');
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
-  if(blockerRow){ 
+  renderNotasVinculadasNoCard(c);
+  if(blockerRow){
     blockerRow.style.display=(_cardIsBlocked(c)||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
   }
@@ -11725,6 +11745,138 @@ async function renameNotaFromInput(v){
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
 }
+
+// ── Notas ↔ cards vinculados ──────────────────────────────────────
+// nota.cardIds = {cardId:true,...} — map (não array) pra permitir
+// add/remove pontual sem reescrever a lista inteira, mesmo princípio
+// do resto das Notas. Vínculo é criado só do lado da nota (aqui); o
+// card mostra o reflexo em "🔗 Vínculos & anexos" mas não guarda
+// nada em `card.cardIds`/etc — evita ter que manter as duas pontas em
+// sincronia a cada add/remove.
+function _notaLinkedCardIds(nota){ return Object.keys(nota?.cardIds||{}); }
+
+function renderNotaLinkedCards(){
+  const list=document.getElementById('notas-linked-cards-list'); if(!list) return;
+  const nota=_notasOpenId ? _notasStore()[_notasOpenId] : null;
+  if(!nota){ list.innerHTML=''; return; }
+  const ids=_notaLinkedCardIds(nota);
+  if(!ids.length){ list.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhum card vinculado.</div>'; return; }
+  list.innerHTML = ids.map(id=>{
+    const c=cards.find(x=>x.id===id);
+    const col=c ? columns.find(cc=>cc.id===c.col) : null;
+    const title=c ? c.title : '(card removido)';
+    return '<div class="linked-chip" onclick="notaOpenLinkedCard(\''+id+'\')">'
+      + (col ? '<span class="linked-chip-col">'+esc(col.name)+'</span>' : '')
+      + '<span class="linked-chip-title">'+esc(title)+'</span>'
+      + '<button class="nota-chip-rm" title="Desvincular" onclick="event.stopPropagation();notaRemoveCardLink(\''+id+'\')">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function notaSearchCards(q){
+  const dd=document.getElementById('notas-link-dropdown'); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const nota=_notasOpenId ? _notasStore()[_notasOpenId] : null; if(!nota) return;
+  const already=new Set(_notaLinkedCardIds(nota));
+  const lower=q.toLowerCase();
+  const results=cards.filter(c=>!c.archived && !already.has(c.id) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML='';
+  results.forEach(c=>{
+    const col=columns.find(cc=>cc.id===c.col);
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+esc(col?.name||c.col)+'</span><span style="flex:1;color:var(--txt);">'+esc(c.title)+'</span>';
+    opt.onclick=()=>notaAddCardLink(c.id);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+
+async function notaAddCardLink(cardId){
+  if(!_notasOpenId) return;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: true,
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+  const inp=document.getElementById('notas-link-search-inp'); if(inp) inp.value='';
+  hideNotaLinkDropdown();
+}
+async function notaRemoveCardLink(cardId){
+  if(!_notasOpenId) return;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: null,
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+}
+function hideNotaLinkDropdown(){ document.getElementById('notas-link-dropdown')?.classList.remove('show'); }
+function notaOpenLinkedCard(cardId){ openCard(cardId); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.notas-link-search')) hideNotaLinkDropdown();
+});
+
+// Lado do card: mostra quais notas (squad + pessoais do usuário atual)
+// referenciam este card. Se o listener das Notas ainda não foi ligado
+// nesta sessão (drawer nunca aberto), NÃO puxa nada sozinho — mesmo
+// princípio de "só carrega quando o usuário estiver usando" já usado
+// pro resto de Notas: mostra um botão, e o fetch (get() avulso, sem
+// listener persistente) só roda se a pessoa clicar.
+function renderNotasVinculadasNoCard(card){
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  if(_notasLoaded){ _paintNotasVinculadas(card.id); return; }
+  wrap.innerHTML='<button class="btn btn-sm" onclick="_checkNotasVinculadas(\''+card.id+'\')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">🔗 Ver notas vinculadas a este card</button>';
+}
+async function _checkNotasVinculadas(cardId){
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  wrap.innerHTML='<div style="font-size:10px;color:var(--txt3);">Carregando...</div>';
+  const uid=window._currentUser?.uid;
+  const [squadSnap, pessoalSnap] = await Promise.all([
+    window._get(window._ref(window._db, FB+'/notas')),
+    uid ? window._get(window._ref(window._db, FB+'/notas_pessoais/'+uid)) : Promise.resolve(null),
+  ]);
+  if(!_notasLoaded){ // não sobrescreve dado mais fresco se o drawer foi aberto nesse meio-tempo
+    _notasSquad = squadSnap?.val()||{};
+    _notasPessoais = pessoalSnap?.val()||{};
+  }
+  _paintNotasVinculadas(cardId);
+}
+function _paintNotasVinculadas(cardId){
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  const squadMatches=Object.values(_notasSquad||{}).filter(n=>n&&n.cardIds&&n.cardIds[cardId]).map(n=>({...n,_scope:'squad'}));
+  const pessoalMatches=Object.values(_notasPessoais||{}).filter(n=>n&&n.cardIds&&n.cardIds[cardId]).map(n=>({...n,_scope:'pessoal'}));
+  const all=[...squadMatches,...pessoalMatches];
+  if(!all.length){ wrap.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhuma nota vinculada a este card.</div>'; return; }
+  wrap.innerHTML=all.map(n=>
+    '<div class="linked-chip" onclick="abrirNotaVinculada(\''+n.id+'\',\''+n._scope+'\')">'
+    + '<span class="linked-chip-col">'+(n._scope==='squad'?'👥 Squad':'🐠 Pessoal')+'</span>'
+    + '<span class="linked-chip-title">📝 '+esc(n.titulo||'Sem título')+'</span>'
+    + '</div>'
+  ).join('');
+}
+// Abre a nota vinculada a partir do card (fecha o modal do card, abre o
+// drawer de Notas já na nota certa). Reaproveita _attachNotasListeners()
+// (idempotente — no-op se já ligado) em vez de duplicar a lógica de
+// toggleNotas(), e força um render imediato se os dados já estiverem em
+// cache (não espera um novo snapshot que talvez nunca chegue).
+function abrirNotaVinculada(notaId, scope){
+  closeOv('card-ov', ()=>{
+    _notasScope = scope;
+    document.getElementById('nstab-pessoal')?.classList.toggle('on', scope==='pessoal');
+    document.getElementById('nstab-squad')?.classList.toggle('on', scope==='squad');
+    ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(x=>document.getElementById(x)?.classList.remove('open'));
+    document.getElementById('notas-drawer')?.classList.add('open');
+    _notasOpenId = notaId;
+    const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
+    if(listView) listView.style.display='none';
+    if(edView) edView.style.display='flex';
+    const tree=document.getElementById('notas-tree'); if(tree) tree.innerHTML='<div class="lem-empty">Carregando nota...</div>';
+    _attachNotasListeners();
+    if(_notasLoaded) _renderNotasCurrentView();
+  });
+}
 function _siblingsOf(nota, parentId){
   return Object.values(nota.blocos||{}).filter(b=>b && (b.parentId||null)===(parentId||null)).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
 }
@@ -11769,6 +11921,7 @@ function renderNotaEditor(){
   if(!nota){ closeNotaEditor(); return; }
   const titleInp=document.getElementById('notas-editor-title');
   if(titleInp && document.activeElement!==titleInp) titleInp.value = nota.titulo||'';
+  renderNotaLinkedCards();
   const isLivre = nota.modo==='livre';
   const modoBtn=document.getElementById('notas-modo-btn');
   if(modoBtn){ modoBtn.textContent = isLivre?'📄':'🧱'; modoBtn.title = isLivre?'Modo livre — clique pra organizar em blocos':'Modo estruturado — clique pra virar texto livre'; }
