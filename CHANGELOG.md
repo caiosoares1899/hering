@@ -1033,6 +1033,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.311-dev — 2026-08-06
+Busca dentro de Notas: campo "🔍 Buscar em título e conteúdo..." acima
+da lista (dentro do escopo selecionado — pessoal ou squad). Não olha só
+o título — varre o texto de todos os blocos de cada nota (funciona
+igual em modo livre e estruturado). Resultado só por conteúdo mostra um
+trechinho de contexto ao redor do termo encontrado, com o termo
+destacado (igual título, quando o match é lá); sem digitar nada, a
+lista continua exatamente como era antes.
+
 ### v8.30.310-dev — 2026-08-06
 Primeira parte de "vincular notas a cards" (a segunda, menção de
 pessoas/cards dentro do texto das notas, fica pra um próximo lote):

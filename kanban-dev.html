@@ -953,6 +953,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .notas-item:hover{border-color:rgba(29,233,182,.4);}
 .notas-item-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px;word-break:break-word;}
 .notas-item-meta{font-size:10.5px;color:var(--txt3);}
+.notas-item-snippet{font-size:11px;color:var(--txt2);margin-top:5px;padding-top:5px;border-top:1px solid var(--glass-b);line-height:1.4;word-break:break-word;}
+.notas-item-snippet mark,.notas-item-title mark{background:rgba(29,233,182,.3);color:var(--txt);border-radius:2px;padding:0 1px;}
 .notas-item-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:none;background:none;color:var(--txt3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .notas-item-del:hover{background:rgba(255,107,107,.15);color:var(--danger);}
 .notas-editor-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
@@ -2972,6 +2974,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="padding:12px 20px 0;flex-shrink:0;">
       <button class="notas-new-btn" onclick="createNota()">+ Nova nota</button>
     </div>
+    <div style="padding:8px 20px 0;flex-shrink:0;">
+      <input id="notas-search-inp" class="link-search-input" style="width:100%;"
+        placeholder="🔍 Buscar em título e conteúdo..." oninput="renderNotasList()"
+        onkeydown="if(event.key==='Escape'){this.value='';renderNotasList();}">
+    </div>
     <div class="lem-body" id="notas-list-body"></div>
   </div>
   <div id="notas-editor-view" style="display:none;flex-direction:column;flex:1;min-height:0;">
@@ -4821,7 +4828,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.310-dev</div>
+<div class="version">v8.30.311-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11687,6 +11694,34 @@ function setNotasScope(s){
   _notasOpenId = null;
   renderNotasList();
 }
+// Busca por título E conteúdo dos blocos (não só título) — junta o texto
+// de todos os blocos da nota numa string só pra comparar. Nota "livre" só
+// tem 1 bloco, então cai no mesmo caminho sem precisar de caso especial.
+function _notaEscRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function _notaMatchesQuery(nota, q){
+  if((nota.titulo||'').toLowerCase().includes(q)) return true;
+  return Object.values(nota.blocos||{}).some(b=>b && (b.texto||'').toLowerCase().includes(q));
+}
+// Se o match foi só no conteúdo (não no título, que já aparece no card do
+// item), monta um trechinho ao redor da ocorrência pra dar contexto —
+// mesma ideia de preview de busca do Google/Notion.
+function _notaSearchSnippet(nota, q){
+  if((nota.titulo||'').toLowerCase().includes(q)) return null;
+  const blocos=Object.values(nota.blocos||{}).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+  for(const b of blocos){
+    const texto=b.texto||''; const idx=texto.toLowerCase().indexOf(q);
+    if(idx>=0){
+      const start=Math.max(0, idx-30), end=Math.min(texto.length, idx+q.length+30);
+      return (start>0?'…':'')+texto.slice(start,end)+(end<texto.length?'…':'');
+    }
+  }
+  return null;
+}
+function _notaHighlight(text, q){
+  const esced=esc(text);
+  if(!q) return esced;
+  return esced.replace(new RegExp('('+_notaEscRe(esc(q))+')','ig'), '<mark>$1</mark>');
+}
 function renderNotasList(){
   const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
   if(listView) listView.style.display='flex';
@@ -11697,17 +11732,24 @@ function renderNotasList(){
     return;
   }
   const store=_notasStore();
-  const list=Object.values(store).filter(Boolean).sort((a,b)=>String(b.atualizadoEm||'').localeCompare(String(a.atualizadoEm||'')));
+  const q=(document.getElementById('notas-search-inp')?.value||'').trim().toLowerCase();
+  let list=Object.values(store).filter(Boolean);
+  if(q) list=list.filter(n=>_notaMatchesQuery(n,q));
+  list.sort((a,b)=>String(b.atualizadoEm||'').localeCompare(String(a.atualizadoEm||'')));
   if(!list.length){
-    body.innerHTML='<div class="lem-empty">'+(_notasScope==='pessoal'?'Nenhuma nota pessoal ainda.':'Nenhuma nota da squad ainda.')+'<br>Clique em "+ Nova nota" pra criar a primeira.</div>';
+    body.innerHTML = q
+      ? '<div class="lem-empty">Nenhuma nota encontrada para "'+esc(q)+'".</div>'
+      : '<div class="lem-empty">'+(_notasScope==='pessoal'?'Nenhuma nota pessoal ainda.':'Nenhuma nota da squad ainda.')+'<br>Clique em "+ Nova nota" pra criar a primeira.</div>';
     return;
   }
   body.innerHTML = list.map(n=>{
     const nBlocos = Object.keys(n.blocos||{}).length;
     const quando = n.atualizadoEm ? new Date(n.atualizadoEm).toLocaleDateString('pt-BR') : '';
+    const snippet = q ? _notaSearchSnippet(n,q) : null;
     return `<div class="notas-item" onclick="openNota('${esc(n.id)}')">
-      <div class="notas-item-title">📄 ${esc(n.titulo||'Sem título')}</div>
+      <div class="notas-item-title">📄 ${q?_notaHighlight(n.titulo||'Sem título',q):esc(n.titulo||'Sem título')}</div>
       <div class="notas-item-meta">${nBlocos} bloco${nBlocos===1?'':'s'} · ${esc(quando)}${n.criadoPor?' · '+esc(n.criadoPor):''}</div>
+      ${snippet?`<div class="notas-item-snippet">${_notaHighlight(snippet,q)}</div>`:''}
       <button class="notas-item-del" onclick="event.stopPropagation();deleteNota('${esc(n.id)}')" title="Excluir nota">✕</button>
     </div>`;
   }).join('');
