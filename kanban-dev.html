@@ -971,6 +971,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .nb-view:hover{background:rgba(29,233,182,.06);}
 .nb-placeholder{color:var(--txt3);font-style:italic;}
 .nb-done{text-decoration:line-through;opacity:.5;}
+.nb-livre-ta,.nb-livre-view{width:100%;min-height:160px;font-size:13px;padding:6px 2px;}
+.nb-livre-view{white-space:pre-wrap;}
 .nb-children{display:flex;flex-direction:column;}
 .nb-hint{flex-shrink:0;padding:6px 14px;font-size:9.5px;color:var(--txt3);text-align:center;border-top:1px solid var(--glass-b);}
 /* ═══ SPOTIFY (ouvindo agora) ═══ */
@@ -2983,10 +2985,15 @@ input[type="date"]{-moz-appearance:textfield;}
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('italic')" title="Itálico"><i>I</i></button>
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('underline')" title="Sublinhado"><u>U</u></button>
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('link')" title="Link">🔗</button>
-      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="toggleFocusedBlocoChecklist()" title="Virar/desfazer item de checklist">☑</button>
+      <span id="notas-toolbar-struct-only" style="display:contents;">
+        <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="toggleFocusedBlocoChecklist()" title="Virar/desfazer item de checklist">☑</button>
+      </span>
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasUndo()" title="Desfazer última ação (Ctrl+Z)">↩</button>
+      <button type="button" class="fmt-btn" id="notas-modo-btn" onmousedown="event.preventDefault()" onclick="toggleNotaModo()" title="Alternar entre modo estruturado e modo livre">🧱</button>
       <span style="flex:1;"></span>
-      <button type="button" class="fmt-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;" onmousedown="event.preventDefault()" onclick="_addBlocoNoFinal()">+ Bloco</button>
+      <span id="notas-addbloco-wrap">
+        <button type="button" class="fmt-btn" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;" onmousedown="event.preventDefault()" onclick="_addBlocoNoFinal()">+ Bloco</button>
+      </span>
     </div>
     <div class="lem-body" id="notas-tree-wrap" style="padding:10px 14px;">
       <div class="nb-tree" id="notas-tree"></div>
@@ -4795,7 +4802,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.307-dev</div>
+<div class="version">v8.30.308-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11593,15 +11600,19 @@ function updKudosBadge(){
 // só o client-side impede escrever na nota de outra pessoa. Aceito o
 // mesmo trade-off que já existe pros Lembretes, não é regressão).
 //
-// Listener só é montado quando o drawer é aberto pela 1ª vez (nunca no
-// carregamento da página) — mesmo princípio do lazy-load de arquivados
-// (PR #124): não gasta banda com algo que a pessoa pode nunca abrir.
+// Listener SÓ existe enquanto o drawer está aberto — anexado em
+// toggleNotas() ao abrir, desanexado ao fechar (mesmo padrão do Spotify,
+// ver _spotifyAttach/_spotifyDetach). Diferente da 1ª versão (que anexava
+// só na primeira abertura e nunca soltava mais): pedido direto pra não
+// ficar consumindo leitura do Firebase o resto da sessão só porque a
+// pessoa abriu a aba uma vez — aceita um pequeno delay ao reabrir em troca.
 let _notasSquad = {};
 let _notasPessoais = {};
 let _notasScope = 'pessoal';
 let _notasOpenId = null;
 let _notasFocusedBlockId = null;
-let _notasListenersOn = false;
+let _notasUnsubs = [];
+let _notasLoaded = false;
 let _notasMergeCaret = null;
 const _notasSaveTimers = {};
 
@@ -11610,22 +11621,30 @@ function _notasBasePath(){
   const uid=window._currentUser?.uid;
   return _notasScope==='squad' ? (FB+'/notas') : (FB+'/notas_pessoais/'+uid);
 }
-function _ensureNotasListeners(){
-  if(_notasListenersOn || !window._fbReady) return;
-  _notasListenersOn=true;
-  window._onValue(window._ref(window._db, FB+'/notas'), snap=>{ _dbgTrack('notas', snap.val());
+function _attachNotasListeners(){
+  if(_notasUnsubs.length || !window._fbReady) return;
+  const unsubSquad = window._onValue(window._ref(window._db, FB+'/notas'), snap=>{ _dbgTrack('notas', snap.val());
     _notasSquad = snap.val()||{};
+    _notasLoaded = true;
     if(_notasOpenId && _notasScope==='squad' && !_notasSquad[_notasOpenId]) _notasOpenId=null; // apagada em outra aba
     _renderNotasCurrentView();
   });
+  _notasUnsubs.push(unsubSquad);
   const uid=window._currentUser?.uid;
   if(uid){
-    window._onValue(window._ref(window._db, FB+'/notas_pessoais/'+uid), snap=>{ _dbgTrack('notas_pessoais', snap.val());
+    const unsubPessoal = window._onValue(window._ref(window._db, FB+'/notas_pessoais/'+uid), snap=>{ _dbgTrack('notas_pessoais', snap.val());
       _notasPessoais = snap.val()||{};
+      _notasLoaded = true;
       if(_notasOpenId && _notasScope==='pessoal' && !_notasPessoais[_notasOpenId]) _notasOpenId=null;
       _renderNotasCurrentView();
     });
+    _notasUnsubs.push(unsubPessoal);
   }
+}
+function _detachNotasListeners(){
+  _notasUnsubs.forEach(fn=>{ try{ fn && fn(); }catch(e){} });
+  _notasUnsubs = [];
+  _notasLoaded = false;
 }
 function _renderNotasCurrentView(){ if(_notasOpenId) renderNotaEditor(); else renderNotasList(); }
 function toggleNotas(){
@@ -11633,7 +11652,13 @@ function toggleNotas(){
   const wasOpen=dr.classList.contains('open');
   ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
   dr.classList.toggle('open');
-  if(!wasOpen){ _ensureNotasListeners(); _notasOpenId=null; renderNotasList(); }
+  if(!wasOpen){
+    _notasOpenId=null;
+    renderNotasList(); // mostra "carregando..." até o listener trazer o 1º snapshot
+    _attachNotasListeners();
+  } else {
+    _detachNotasListeners();
+  }
 }
 function setNotasScope(s){
   _notasScope = s;
@@ -11647,6 +11672,10 @@ function renderNotasList(){
   if(listView) listView.style.display='flex';
   if(edView) edView.style.display='none';
   const body=document.getElementById('notas-list-body'); if(!body) return;
+  if(!_notasLoaded){
+    body.innerHTML='<div class="lem-empty">Carregando notas...</div>';
+    return;
+  }
   const store=_notasStore();
   const list=Object.values(store).filter(Boolean).sort((a,b)=>String(b.atualizadoEm||'').localeCompare(String(a.atualizadoEm||'')));
   if(!list.length){
@@ -11671,7 +11700,7 @@ async function createNota(){
   const blocoId='b'+Date.now();
   const agora=new Date().toISOString();
   const nota={
-    id, titulo:t,
+    id, titulo:t, modo:'estruturado',
     criadoPor: window._currentUser?.displayName||window._currentUser?.email||'Usuário',
     criadoEm: agora, atualizadoEm: agora,
     blocos:{ [blocoId]: {id:blocoId, texto:'', parentId:null, ordem:0, colapsado:false, checklist:false, done:false} }
@@ -11740,7 +11769,45 @@ function renderNotaEditor(){
   if(!nota){ closeNotaEditor(); return; }
   const titleInp=document.getElementById('notas-editor-title');
   if(titleInp && document.activeElement!==titleInp) titleInp.value = nota.titulo||'';
+  const isLivre = nota.modo==='livre';
+  const modoBtn=document.getElementById('notas-modo-btn');
+  if(modoBtn){ modoBtn.textContent = isLivre?'📄':'🧱'; modoBtn.title = isLivre?'Modo livre — clique pra organizar em blocos':'Modo estruturado — clique pra virar texto livre'; }
+  const structOnly=document.getElementById('notas-toolbar-struct-only');
+  if(structOnly) structOnly.style.display = isLivre?'none':'contents';
+  const addWrap=document.getElementById('notas-addbloco-wrap');
+  if(addWrap) addWrap.style.display = isLivre?'none':'';
   const tree=document.getElementById('notas-tree'); if(!tree) return;
+  // Modo livre: nota vira um único bloco de texto corrido, sem marcador/
+  // indentação/filhos — tipo o Notas do computador. Reaproveita os mesmos
+  // handlers de bloco (onBlocoInput/focarBloco/onBlocoBlur), só muda o HTML
+  // ao redor (sem .nb-row/bullet/collapse) e o textarea vem maior.
+  if(isLivre){
+    const blocos=Object.values(nota.blocos||{});
+    const b = blocos[0] || {id:'b'+Date.now(), texto:''};
+    const focusedId=_notasFocusedBlockId;
+    let caretLivre=null;
+    if(focusedId){ const el=document.getElementById('nb-ta-'+focusedId); if(el) caretLivre={start:el.selectionStart, end:el.selectionEnd}; }
+    const isEditing = (b.id===focusedId);
+    tree.innerHTML = isEditing
+      ? `<textarea id="nb-ta-${esc(b.id)}" class="nb-text nb-livre-ta" rows="8"
+          oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
+          onblur="onBlocoBlur('${esc(b.id)}')" onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>`
+      : (b.texto
+          ? `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco('${esc(b.id)}')">${renderMd(b.texto)}</div>`
+          : `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco('${esc(b.id)}')"><span class="nb-placeholder">Escreva à vontade...</span></div>`);
+    const taLivre=tree.querySelector('textarea.nb-text');
+    if(taLivre){ taLivre.style.height='auto'; taLivre.style.height=Math.max(taLivre.scrollHeight,160)+'px'; }
+    if(focusedId){
+      const el=document.getElementById('nb-ta-'+focusedId);
+      if(el){
+        el.focus();
+        if(_notasMergeCaret!=null){ el.setSelectionRange(_notasMergeCaret,_notasMergeCaret); _notasMergeCaret=null; }
+        else if(caretLivre) el.setSelectionRange(caretLivre.start, caretLivre.end);
+        else { const fim=el.value.length; el.setSelectionRange(fim,fim); }
+      }
+    }
+    return;
+  }
   const byParent=_notaBlocosArvore(nota);
   const focusedId=_notasFocusedBlockId;
   let caret=null;
@@ -11818,7 +11885,13 @@ function onBlocoKeydown(e, blocoId){
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z' && !e.shiftKey){
     e.preventDefault();
     notasUndo();
-  } else if(e.key==='Enter' && !e.shiftKey){
+    return;
+  }
+  // Modo livre não tem hierarquia — Enter/Tab/Backspace se comportam como
+  // num textarea comum (quebra de linha, indentação de espaço, apagar letra).
+  const nota=_notasStore()[_notasOpenId];
+  if(nota && nota.modo==='livre') return;
+  if(e.key==='Enter' && !e.shiftKey){
     e.preventDefault();
     criarBlocoIrmao(blocoId, e.target.value, e.target.selectionStart);
   } else if(e.key==='Tab'){
@@ -11962,6 +12035,54 @@ async function _addBlocoNoFinal(){
   _notasFocusedBlockId=novoId;
   await window._update(window._ref(window._db), {
     [_notasBasePath()+'/'+_notasOpenId+'/blocos/'+novoId]: {id:novoId, texto:'', parentId:null, ordem:roots.length, colapsado:false, checklist:false, done:false},
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
+  });
+}
+// Achata a árvore de blocos num texto só, na mesma ordem em que aparece na
+// tela (profundidade primeiro) — usado ao trocar pra modo livre.
+function _notasTextoLinearizado(nota){
+  const byParent=_notaBlocosArvore(nota);
+  const linhas=[];
+  function walk(parentId){
+    (byParent[parentId||'__root__']||[]).forEach(b=>{
+      if(b.texto) linhas.push(b.texto);
+      walk(b.id);
+    });
+  }
+  walk(null);
+  return linhas.join('\n');
+}
+// Alterna entre modo estruturado (árvore de blocos) e modo livre (texto
+// corrido só, tipo o Notas do computador). Estruturado → livre é COM PERDA
+// (a hierarquia/recolhimento não sobrevive, só a ordem do texto) — avisa
+// antes se tiver mais de um bloco. Livre → estruturado nunca perde nada
+// (o único bloco vira a raiz). Ctrl+Z desfaz a troca se der ruim.
+async function toggleNotaModo(){
+  const nota=_notasStore()[_notasOpenId]; if(!nota) return;
+  const agora=new Date().toISOString();
+  if(nota.modo==='livre'){
+    _notasPushUndo();
+    await window._update(window._ref(window._db), {
+      [_notasBasePath()+'/'+_notasOpenId+'/modo']: 'estruturado',
+      [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
+    });
+    return;
+  }
+  const blocos=Object.values(nota.blocos||{}).filter(Boolean);
+  if(blocos.length>1){
+    const ok=await uiConfirm(
+      'Mudar pra modo livre junta todo o conteúdo num texto corrido só, na ordem em que aparece — a hierarquia (o que é filho de quê, o que tava recolhido) se perde. Dá pra desfazer com Ctrl+Z logo em seguida, mas não depois de mais edições. Quer continuar?',
+      {title:'⚠️ Trocar pra modo livre'}
+    );
+    if(!ok) return;
+  }
+  _notasPushUndo();
+  const textoFinal=_notasTextoLinearizado(nota);
+  const novoBlocoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
+  _notasFocusedBlockId=null;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/blocos']: { [novoBlocoId]: {id:novoBlocoId, texto:textoFinal, parentId:null, ordem:0, colapsado:false, checklist:false, done:false} },
+    [_notasBasePath()+'/'+_notasOpenId+'/modo']: 'livre',
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
   });
 }
