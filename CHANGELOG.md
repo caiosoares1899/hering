@@ -1098,6 +1098,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.328-dev — 2026-08-07
+Padroniza o horário de disparo diário das automações/notificações de
+prazo — pedido direto depois do teste da v8.30.327-dev.
+
+- ⏰ **Horário fixo: 09:00, horário de São Paulo** — os gatilhos
+  "Card vence hoje", "Card atrasado (1º dia)" e "Card parado há muito
+  tempo" (automações), e os avisos de prazo pro responsável
+  (notificações), agora só disparam a partir das 09:00 (America/
+  Sao_Paulo), calculado com `Intl.DateTimeFormat` — funciona igual
+  não importa o fuso do computador de quem está com o board aberto.
+  Antes, o disparo (1x/dia) acontecia em qualquer horário em que
+  alguém abrisse/recarregasse o board, dependendo do fuso do sistema
+  de cada um.
+- Se o board já estiver aberto antes das 9h, não precisa recarregar a
+  página: um retry a cada 5 minutos cobre esse caso e dispara sozinho
+  assim que a hora chegar.
+- Ajustada a aba ⚡ Automações da Central de Ajuda pra explicar o novo
+  horário fixo.
+
 ### v8.30.327-dev — 2026-08-07
 Bugfix reportado depois de testar as 5 automações da v8.30.325-dev: só
 a de "Card foi marcado como impedido" disparou.

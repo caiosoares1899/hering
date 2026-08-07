@@ -4923,7 +4923,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.327-dev</div>
+<div class="version">v8.30.328-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -17381,7 +17381,7 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
 <div>💤 <b>Card parado há muito tempo sem editar</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 </div>
 
-"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia (mesmo horário em que o sino de prazo já avisa o responsável). Como é 1x/dia, se você criar a regra depois desse horário já ter passado hoje, ela só entra em ação amanhã. "Prioridade virou Crítica" também tinha um bug parecido — nunca disparava de verdade ao salvar o card, foi corrigido, agora dispara na hora (não é 1x/dia como os outros dois). "Card parado há muito tempo" dispara 1x, exatamente no dia em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
+"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia, sempre às <b>09:00 (horário de São Paulo)</b> — o mesmo horário padrão do aviso de prazo pro responsável. Se o board estiver aberto antes das 9h, dispara sozinho quando a hora chegar, sem precisar recarregar a página; se você criar a regra depois das 9h de hoje, ela só entra em ação amanhã às 9h. "Prioridade virou Crítica" também tinha um bug parecido — nunca disparava de verdade ao salvar o card, foi corrigido, e esse dispara na hora (não é 1x/dia como os de prazo). "Card parado há muito tempo" segue o mesmo horário padrão de 09:00, e dispara só 1x, no dia exato em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
     { icon:'🎬', title:'Ações — o que a regra faz sozinha (ENTÃO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
 <div>📦 <b>Mover card para coluna</b></div>
 <div>🔴 <b>Definir prioridade</b></div>
@@ -18366,19 +18366,36 @@ function notifChecklistDone(card){
     card.id);
 }
 
-// 7. Prazo — roda 1x/dia via localStorage. Pedido direto: só 2 avisos por
-// card, não um trecho inteiro de dias "próximo do prazo" — no DIA do prazo
+// Horário padrão de disparo diário de notificações/automações: 09:00,
+// horário de São Paulo (America/Sao_Paulo) — pedido direto, pra não disparar
+// de madrugada/manhã cedo só porque alguém abriu o board fora de hora, e pra
+// todo mundo (qualquer timezone do navegador) disparar no mesmo horário real.
+// Se a aba for aberta/ficar aberta antes das 9h, o setInterval de retry (ver
+// bootstrap) tenta de novo periodicamente até passar da hora, sem precisar
+// recarregar a página.
+const DAILY_TRIGGER_HOUR_SP = 9;
+function _todaySP(d){
+  return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(d||new Date());
+}
+function _pastDailyTriggerSP(){
+  const h=parseInt(new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
+  return h>=DAILY_TRIGGER_HOUR_SP;
+}
+
+// 7. Prazo — roda 1x/dia via localStorage, a partir das 09:00 (horário de
+// SP, ver _pastDailyTriggerSP acima). Pedido direto: só 2 avisos por card,
+// não um trecho inteiro de dias "próximo do prazo" — no DIA do prazo
 // (due_today) e no dia seguinte, se ninguém resolveu (due_overdue, 1º dia
 // atrasado). Como isso roda 1x/dia e a comparação é "due === ontem" (não
 // "due <= ontem"), due_overdue dispara só nesse 1º dia — não repete todo
 // dia enquanto o card seguir atrasado.
 function checkDueNotifs(){
-  const today=new Date().toISOString().split('T')[0];
+  const today=_todaySP();
   const lastCheck=safeLS.getItem('lastDueCheck_'+ACTIVE_SQUAD);
   if(lastCheck===today) return;
+  if(!_pastDailyTriggerSP()) return; // ainda não passou das 9h (SP) hoje — tenta de novo mais tarde
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
-  const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
-  const ontemStr=ontem.toISOString().split('T')[0];
+  const ontemStr=_todaySP(new Date(Date.now()-86400000));
   cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
     // Automações due_today/due_overdue (Fase 1 da revisão de Automações):
     // antes desses triggers existirem no dropdown mas nunca serem checados
@@ -18397,18 +18414,20 @@ function checkDueNotifs(){
 }
 
 // 8. Card parado há muito tempo (trigger "aging" de Automações, Fase 2) —
-// roda 1x/dia, mesmo padrão de checkDueNotifs(). Reaproveita o MESMO
-// cálculo de idade já usado pra esmaecer o card visualmente (aged-1/aged-2
-// em makeCardEl()) — sprintDays sem edição = 1 "sprint parado". Dispara só
-// no dia EXATO em que o card cruza o limiar (ageDays===sprintLen), não
-// repete todo dia enquanto continuar parado — mesmo espírito do
-// due_overdue ("due === ontem", não "due <= ontem"). Só calcula a idade de
-// todo card se houver pelo menos 1 regra ativa com esse trigger — squads
-// que não usam a automação não pagam o custo desse loop todo dia.
+// roda 1x/dia a partir das 09:00 (horário de SP), mesmo padrão de
+// checkDueNotifs(). Reaproveita o MESMO cálculo de idade já usado pra
+// esmaecer o card visualmente (aged-1/aged-2 em makeCardEl()) — sprintDays
+// sem edição = 1 "sprint parado". Dispara só no dia EXATO em que o card
+// cruza o limiar (ageDays===sprintLen), não repete todo dia enquanto
+// continuar parado — mesmo espírito do due_overdue ("due === ontem", não
+// "due <= ontem"). Só calcula a idade de todo card se houver pelo menos 1
+// regra ativa com esse trigger — squads que não usam a automação não pagam
+// o custo desse loop todo dia.
 function checkAgingAutomations(){
-  const todayStr=new Date().toISOString().split('T')[0];
+  const todayStr=_todaySP();
   const lastCheck=safeLS.getItem('lastAgingCheck_'+ACTIVE_SQUAD);
   if(lastCheck===todayStr) return;
+  if(!_pastDailyTriggerSP()) return; // ainda não passou das 9h (SP) hoje — tenta de novo mais tarde
   safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
   if(!autoRules.some(r=>r.active && r.trigger==='aging')) return;
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
@@ -21356,6 +21375,13 @@ _onFbReady(()=>{
       if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
+  // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
+  // 09:00 (horário de SP, ver DAILY_TRIGGER_HOUR_SP) — sem isso, quem abre o
+  // board de madrugada/manhã cedo e não recarrega depois das 9h nunca via a
+  // notificação/automação do dia. Este retry periódico cobre esse caso sem
+  // precisar de F5: cada chamada é barata quando ainda não passou da hora ou
+  // já rodou hoje (retorna cedo, ver os `if` dentro das duas funções).
+  setInterval(()=>{ if(window._currentUser){ checkDueNotifs(); checkAgingAutomations(); } }, 5*60*1000);
   loadCampanhas();
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
