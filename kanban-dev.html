@@ -3108,6 +3108,12 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
 
+    <!-- Padrão de card (só aparece se a squad já tiver algum criado em Configurações) -->
+    <div class="field" id="m-card-pattern-field" style="display:none;">
+      <label class="fl">📐 Padrão de card <span style="font-size:9px;color:var(--txt3);font-weight:400;">define quais seções opcionais aparecem abaixo</span></label>
+      <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"></select>
+    </div>
+
     <!-- Grid 2 colunas: atributos | lado direito -->
     <div class="modal-grid">
 
@@ -3669,9 +3675,12 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <!-- ABA PADRÕES DE CARD -->
     <div class="tab-c" id="cfgtab-padroes">
-      <div class="cfg-sec-title">📐 Padrões de card</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:0;">📐 Padrões de card</div>
+        <button class="btn btn-sm" onclick="criarPadraoCard()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Novo padrão</button>
+      </div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Escolha quais seções <b>opcionais</b> aparecem no modal do card pra squad inteira. Campos estruturais (título, tag, coluna, responsável, prazo, descrição) sempre ficam visíveis — aqui é só o que for dispensável pro seu time (ex.: Insights do PO, Comentários).
+        Crie um ou mais padrões escolhendo, em cada um, quais seções <b>opcionais</b> aparecem no modal do card (ex.: um padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Marque um como ★ padrão da squad — vale pros cards que não escolherem nenhum. Dentro de cada card, o campo "📐 Padrão de card" deixa escolher outro. Campos estruturais (título, tag, coluna, responsável, prazo, descrição) sempre ficam visíveis, em qualquer padrão.
       </p>
       <div id="padroes-cfg-list" style="display:flex;flex-direction:column;gap:2px;"></div>
     </div>
@@ -4855,7 +4864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.313-dev</div>
+<div class="version">v8.30.314-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5338,14 +5347,15 @@ let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
 let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
-// "Padrões de card": organizador/PO escolhe quais seções OPCIONAIS do
-// modal do card ficam visíveis pra squad inteira (ex.: time que não usa
-// Insights do PO ou não quer Comentários visíveis). Objeto {chave:false}
-// — chave AUSENTE = visível (mantém o comportamento atual pra squads que
-// nunca mexeram nisso, sem precisar escrever um "tudo true" gigante).
-// Campos "core" (título, tag, coluna, responsável, prazo, descrição) não
-// entram aqui de propósito — são estruturais, não just "opcionais".
-let cardSectionsCfg={};
+// "Padrões de card": organizador/PO cria um ou mais PADRÕES nomeados —
+// cada um escolhe quais seções OPCIONAIS do modal ficam visíveis (ex.: um
+// padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Um padrão
+// pode ser marcado como padrão-da-squad (usado quando o card não tem
+// nenhum escolhido); cada CARD pode também escolher o seu próprio, pelo
+// seletor "📐 Padrão de card" dentro do modal (campo card.padraoId).
+// cardPatterns = {patId: {nome, sections:{chave:false,...}, isDefault}}
+// sections: chave AUSENTE = visível (mesma convenção de antes).
+let cardPatterns={};
 const CARD_SECTIONS=[
   {key:'po', id:'m-po-box', label:'🎯 Insights do PO'},
   {key:'descsExtra', id:'extra-descs-field', label:'📝 Descrições adicionais'},
@@ -5358,15 +5368,29 @@ const CARD_SECTIONS=[
   {key:'notasVinculadas', id:'m-notas-vinc-attach-wrap', label:'📝 Notas vinculadas'},
   {key:'comentarios', id:'m-comments-wrap', label:'💬 Comentários e atividade'},
 ];
-function _cardSectionVisible(key){ return cardSectionsCfg[key]!==false; }
+function _defaultPatternId(){
+  const found=Object.entries(cardPatterns).find(([,p])=>p&&p.isDefault);
+  return found ? found[0] : null;
+}
+// Resolve o padrão que vale pra um card: o dele mesmo (se ainda existir),
+// senão o marcado como padrão-da-squad, senão nenhum (tudo visível).
+function _activePatternFor(card){
+  const pid=card?.padraoId;
+  if(pid && cardPatterns[pid]) return cardPatterns[pid];
+  const defId=_defaultPatternId();
+  return defId ? cardPatterns[defId] : null;
+}
+function _cardSectionVisible(key, card){
+  const pat=_activePatternFor(card);
+  return !pat || pat.sections?.[key]!==false;
+}
 // Só ESCONDE (nunca força reabrir) — roda por último em openCard(), depois
 // de toda lógica normal de visibilidade por card já ter rodado (ex.:
-// m-criativo-sec segue criativosAtivo independente disto). Como a config é
-// por squad (não por card), não existe cenário de "reabrir no próximo
-// card" — se está desligado, fica desligado até alguém reconfigurar.
+// m-criativo-sec segue criativosAtivo independente disto).
 function _applyCardSectionsVisibility(){
+  const card=editingId ? cards.find(c=>c.id===editingId) : null;
   CARD_SECTIONS.forEach(s=>{
-    if(_cardSectionVisible(s.key)) return;
+    if(_cardSectionVisible(s.key, card)) return;
     const el=document.getElementById(s.id); if(el) el.style.display='none';
   });
 }
@@ -7379,11 +7403,11 @@ let _cardsSyncDebounce = null;
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
   });
-  // Padrões de card (quais seções opcionais do modal ficam visíveis pra squad)
-  fbListen(FB+'/config/cardSections',val=>{
-    cardSectionsCfg = (val && typeof val==='object') ? val : {};
-    if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
-    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderCardSectionsCfg();
+  // Padrões de card (vários padrões nomeados, cada um com suas seções)
+  fbListen(FB+'/config/cardPatterns',val=>{
+    cardPatterns = (val && typeof val==='object') ? val : {};
+    if(document.getElementById('card-ov')?.classList.contains('open')){ _applyCardSectionsVisibility(); populateCardPatternSelect(); }
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderCardPatternsCfg();
   });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
@@ -9306,6 +9330,7 @@ function openCard(id){
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
   renderDependsBar(c);
+  populateCardPatternSelect();
   _applyCardSectionsVisibility();
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
@@ -15077,7 +15102,7 @@ function swCfgTab(tab){
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
-  if(tab==='padroes') renderCardSectionsCfg();
+  if(tab==='padroes') renderCardPatternsCfg();
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
@@ -15581,22 +15606,102 @@ async function resetFluxoCfg(){
   renderFluxoCfg();
   showToast('↺ Voltou para a detecção automática.');
 }
-function renderCardSectionsCfg(){
+let _padroesCfgAberto=null; // id do padrão com o editor de seções expandido (só 1 por vez)
+function renderCardPatternsCfg(){
   const box=document.getElementById('padroes-cfg-list'); if(!box) return;
-  box.innerHTML = CARD_SECTIONS.map(s=>
-    `<label class="reqf-row">
-      <input type="checkbox" ${_cardSectionVisible(s.key)?'checked':''} onchange="toggleCardSection('${s.key}',this.checked)">
-      ${esc(s.label)}
-    </label>`
-  ).join('');
+  const ids=Object.keys(cardPatterns);
+  if(!ids.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum padrão criado ainda. Sem nenhum, o modal do card mostra tudo (comportamento atual).</div>';
+    return;
+  }
+  box.innerHTML=ids.map(id=>{
+    const p=cardPatterns[id];
+    const aberto=_padroesCfgAberto===id;
+    const secoesHtml = CARD_SECTIONS.map(s=>
+      `<label class="reqf-row" style="padding:6px 10px;font-size:12px;">
+        <input type="checkbox" ${_cardSectionVisible2(p,s.key)?'checked':''} onchange="togglePadraoSecao('${id}','${s.key}',this.checked)">
+        ${esc(s.label)}
+      </label>`
+    ).join('');
+    return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_padroesCfgAberto=_padroesCfgAberto==='${id}'?null:'${id}';renderCardPatternsCfg();">
+        <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">📐 ${esc(p.nome||'Sem nome')}${p.isDefault?' <span style="font-size:9px;color:var(--teal);font-weight:700;">★ PADRÃO DA SQUAD</span>':''}</span>
+        <button class="btn btn-sm" onclick="event.stopPropagation();renomearPadraoCard('${id}')" title="Renomear" style="font-size:10px;">✎</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();definirPadraoDefault('${id}')" title="Marcar como padrão da squad" style="font-size:10px;${p.isDefault?'color:var(--teal);border-color:rgba(29,233,182,.4);':''}">★</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirPadraoCard('${id}')" title="Excluir padrão" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
+      </div>
+      ${aberto?`<div style="padding:0 12px 10px;border-top:1px solid var(--glass-b);">${secoesHtml}</div>`:''}
+    </div>`;
+  }).join('');
 }
-function toggleCardSection(key, visible){
-  const next={...cardSectionsCfg};
-  if(visible) delete next[key]; else next[key]=false; // ausente = visível (default), evita objeto crescendo à toa
-  cardSectionsCfg=next;
-  fbSet(FB+'/config/cardSections', cardSectionsCfg);
+function _cardSectionVisible2(pattern, key){ return pattern?.sections?.[key]!==false; }
+async function criarPadraoCard(){
+  const nome=await uiPrompt('Nome do padrão:', '', {title:'📐 Novo padrão de card', placeholder:'Ex.: Bug, Campanha, Simples...'});
+  if(nome===null) return;
+  const t=nome.trim(); if(!t) return;
+  const id='pat'+Date.now();
+  cardPatterns={...cardPatterns, [id]:{nome:t, sections:{}, isDefault:false}};
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  _padroesCfgAberto=id;
+  renderCardPatternsCfg();
+}
+async function renomearPadraoCard(id){
+  const p=cardPatterns[id]; if(!p) return;
+  const nome=await uiPrompt('Novo nome do padrão:', p.nome||'', {title:'✎ Renomear padrão'});
+  if(nome===null) return;
+  const t=nome.trim(); if(!t) return;
+  cardPatterns={...cardPatterns, [id]:{...p, nome:t}};
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  renderCardPatternsCfg();
+}
+function definirPadraoDefault(id){
+  const next={};
+  Object.entries(cardPatterns).forEach(([pid,p])=>{ next[pid]={...p, isDefault:pid===id}; });
+  cardPatterns=next;
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  renderCardPatternsCfg();
+  showToast('★ Padrão da squad atualizado.');
+}
+async function excluirPadraoCard(id){
+  const p=cardPatterns[id]; if(!p) return;
+  if(!await uiConfirm('Excluir o padrão "'+(p.nome||'')+'"? Cards que usavam ele voltam a mostrar tudo (ou o padrão da squad, se houver outro).',{title:'Excluir padrão'})) return;
+  const next={...cardPatterns}; delete next[id];
+  cardPatterns=next;
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  if(_padroesCfgAberto===id) _padroesCfgAberto=null;
+  renderCardPatternsCfg();
+}
+function togglePadraoSecao(id, key, visible){
+  const p=cardPatterns[id]; if(!p) return;
+  const sections={...(p.sections||{})};
+  if(visible) delete sections[key]; else sections[key]=false;
+  cardPatterns={...cardPatterns, [id]:{...p, sections}};
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
   if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
-  showToast(visible ? '👁 Seção reativada pra squad inteira' : '🙈 Seção desativada pra squad inteira');
+}
+// Seletor "📐 Padrão de card" DENTRO do modal do card — cada card escolhe o
+// seu (card.padraoId). Sem padrão nenhum criado na squad ainda, o campo
+// fica escondido (nada pra escolher).
+function populateCardPatternSelect(){
+  const field=document.getElementById('m-card-pattern-field');
+  const sel=document.getElementById('m-card-pattern');
+  if(!field || !sel) return;
+  const ids=Object.keys(cardPatterns);
+  if(!ids.length){ field.style.display='none'; return; }
+  field.style.display='';
+  const card=editingId ? cards.find(c=>c.id===editingId) : null;
+  const defId=_defaultPatternId();
+  sel.innerHTML='<option value="">'+(defId?'— usar padrão da squad ('+esc(cardPatterns[defId].nome)+') —':'— nenhum (mostra tudo) —')+'</option>'
+    + ids.map(id=>`<option value="${id}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join('');
+  sel.value = (card?.padraoId && cardPatterns[card.padraoId]) ? card.padraoId : '';
+}
+function setCardPattern(patId){
+  if(!editingId) return;
+  const card=cards.find(c=>c.id===editingId); if(!card) return;
+  card.padraoId = patId||null;
+  fbSaveCard(card);
+  _applyCardSectionsVisibility();
 }
 function renderSubteamEditor(){
   const box=document.getElementById('subteam-editor'); if(!box) return;
@@ -20372,7 +20477,12 @@ function aplicarModeloNoCard(idx){
   saveUndo('aplicar modelo');
 
   const descEl=document.getElementById('m-desc');
-  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=modelo.desc; renderDescPreview(); }
+  // BUGFIX: chamava renderDescPreview() (só atualiza o preview de @menção,
+  // que só aparece quando há menção no texto) em vez de redesenhar o card
+  // visível da Descrição (#m-desc-display, padrão eoc/"clique pra editar").
+  // O valor era salvo certo por baixo dos panos, mas visualmente parecia
+  // que nada tinha acontecido — daí "usar modelo não preenche o card".
+  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=modelo.desc; eocInitDisplay('desc-eoc', descEl.value, 'Adicionar descrição...'); }
   const poEl=document.getElementById('m-po');
   if(poEl && !poEl.value.trim() && modelo.po) poEl.value=modelo.po;
 
