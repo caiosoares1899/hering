@@ -1098,6 +1098,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.330-dev — 2026-08-07
+Mais 7 gatilhos novos, pedidos direto: 5 espelhando ações que já
+existiam ("tag adicionada", "definir submarca", "marcar como OKR",
+"definir capa de cor", "definir padrão de card") e 2 conceitos novos
+("modelo usado", "card recorrente criado").
+
+- 🏷 **Tag adicionada ao card** — dispara com qualquer tag nova
+  (adicionada pelo campo do modal, seleção em massa, etc.).
+- 🏷️ **Submarca definida como X** — reaproveita a mesma detecção de
+  "Tag adicionada" (submarca é uma tag por baixo dos panos); só
+  aparece no dropdown se o squad usa o campo Submarca.
+- 🎯 **Card marcado como OKR** — dispara só ao marcar (não ao
+  desmarcar), pelo menu de contexto ou pelo checkbox do modal.
+- 🎨 **Capa de cor definida como X** — inclusive "sem capa" como valor,
+  pra reagir quando alguém remove a capa.
+- 📐 **Padrão de card definido como X** — só aparece se existir algum
+  Padrão criado no squad.
+- 📋 **Modelo X usado** / 🔁 **Card recorrente X criado** — conceitos
+  que só existiam como AÇÃO disponível em "Salvar como modelo/
+  recorrente" antes; agora um modelo/recorrente específico pode
+  disparar uma regra quando é usado. "Card recorrente criado" cobre
+  tanto o "✅ Usar" manual quanto a recriação automática (Recorrência
+  automática, ao abrir o board). Cada gatilho só aparece se existir
+  pelo menos 1 modelo/recorrente cadastrado.
+- Lista de gatilhos (QUANDO) passou a esconder/mostrar opções
+  dinamicamente conforme o squad (mesmo comportamento que a lista de
+  ações já tinha) — antes só se aplicava ao ENTÃO.
+- Aba ⚡ Automações da Central de Ajuda atualizada com os 7 gatilhos
+  novos e mais 3 receitas de exemplo.
+
 ### v8.30.329-dev — 2026-08-07
 Generaliza "Prioridade" e adiciona gatilho de atribuição, pedidos
 depois do teste da v8.30.327/328-dev.

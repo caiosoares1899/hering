@@ -4923,7 +4923,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.329-dev</div>
+<div class="version">v8.30.330-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5427,10 +5427,12 @@ function setCardCover(colorId){
     return;
   }
   const card=cards.find(c=>c.id===editingId); if(!card) return;
+  const _prevCover=card.coverColor||'';
   card.coverColor = colorId||null;
   fbSaveCard(card);
   _applyCoverStripToModal(colorId);
   renderCoverSwatches();
+  if((card.coverColor||'')!==_prevCover) runAutoRules('cover_set', card.id, card.coverColor||'');
 }
 let members=[];
 // Deriva iniciais de um nome ou email (mesma lógica do login)
@@ -5795,6 +5797,7 @@ function _doBulkTagMulti(mode){
   const n = selectedCards.size;
   const list = _selectedList();
   list.forEach(c => {
+    const _prevTags = (c.tags||[]).slice();
     let current = getCardTags(c);
     if(mode === 'set'){
       current = [...selectedTags];
@@ -5805,6 +5808,11 @@ function _doBulkTagMulti(mode){
     c.tags = current;
     c.tag = current[0] || '';
     recordHistory(c, (mode==='set'?'substituiu tags por: ':'adicionou tags: ') + selectedTags.map(id=>getTag(id)?.label).join(', '));
+    // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
+    current.filter(t=>!_prevTags.includes(t)).forEach(t=>{
+      runAutoRules('tag_added', c.id, t);
+      if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
+    });
   });
   
   window._bulkSelectedTags = [];
@@ -8999,7 +9007,7 @@ function scheduleAutoSave(){
     // pelo botão "Salvar", então esses gatilhos precisam existir aqui também).
     const _prevOwner=c.owner||'', _prevBlocker=c.blocker||false,
       _prevRiscosLen=c.riscos?.length||0, _prevChecklist=(c.checklist||[]).slice(),
-      _prevCol=c.col;
+      _prevCol=c.col, _prevTags=(c.tags||[]).slice();
     // Só grava a coluna do <select> se o usuário de fato mexeu nela nesta sessão
     // do modal — senão preserva c.col (que pode ter sido atualizado por outra
     // aba/pessoa via drag-and-drop enquanto este modal ficou aberto).
@@ -9054,6 +9062,14 @@ function scheduleAutoSave(){
       const _prevDone=_prevChecklist.filter(i=>i.done).length;
       if(_prevDone < c.checklist.length){ notifChecklistDone(c); runAutoRules('checklist_complete', c.id); }
     }
+    // Triggers "Tag adicionada"/"Submarca definida como" — qualquer tag nova
+    // no card desde o snapshot; submarca é uma tag como outra qualquer por
+    // baixo (ver setCardSubmarca), então uma tag nova que bater com
+    // SUBMARCA_TAGS dispara os dois triggers.
+    (c.tags||[]).filter(t=>!_prevTags.includes(t)).forEach(t=>{
+      runAutoRules('tag_added', c.id, t);
+      if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
+    });
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
     if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
@@ -9694,6 +9710,7 @@ function checkEditPermission(){
 function openNewCard(col){
   if(!checkEditPermission()) return;
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
+  _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
   editingLinkedCards=[];
   renderLinkedChips();
   editingId=null;
@@ -9810,6 +9827,7 @@ function saveCard(){
     const _selCol=document.getElementById('m-col').value;
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
+    const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
@@ -9840,6 +9858,17 @@ function saveCard(){
     // em QUALQUER transição de nível (não só pra "crítica") — cabe à regra
     // (rule.triggerVal) decidir se o nível bate ou não, ver AUTO_TRIGGERS.
     if(c.priority!==_histBefore.priority) runAutoRules('priority', c.id);
+    // Trigger "Card marcado como OKR" — isOKR também é campo manual (só
+    // grava aqui, não no autosave, ver comentário acima); dispara só ao
+    // MARCAR (false→true), não ao desmarcar.
+    if(c.isOKR && !_histBefore.isOKR) runAutoRules('marked_okr', c.id);
+    // Triggers "Tag adicionada"/"Submarca definida como" — cobre o caso de
+    // clicar Salvar rápido, antes do debounce do autosave (800ms) disparar
+    // (ver mesmo bloco em scheduleAutoSave()).
+    (c.tags||[]).filter(t=>!_prevTagsSave.includes(t)).forEach(t=>{
+      runAutoRules('tag_added', c.id, t);
+      if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
+    });
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
@@ -9858,6 +9887,12 @@ function saveCard(){
     cards.push(_newCard);
     _pendingCoverColor=null;
     if(_newCard.priority) runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
+    // Triggers "Modelo usado"/"Card recorrente criado" (Automações) — só dispara
+    // se este card novo veio de fato de um "+ Usar" em Modelos/Recorrentes (ver
+    // usarQLItem/_pendingQLSource), não em toda criação de card comum.
+    if(_pendingQLSource?.tipo==='modelos') runAutoRules('template_used', _newCard.id, String(_pendingQLSource.idx));
+    else if(_pendingQLSource?.tipo==='recorrentes') runAutoRules('recorrente_created', _newCard.id, _pendingQLSource.slug);
+    _pendingQLSource=null;
   }
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
@@ -14961,6 +14996,11 @@ function processRecorrentes(){
         recIdxUpdates['recorrentes_index/'+card.recorrenteDe+'/'+card.recorrenteData] = card.id;
     });
     fbSaveAll(recIdxUpdates, criados.map(c=>c.id));
+    // Trigger "Card recorrente criado" (Automações) — mesma via automática,
+    // sem passar pelo modal/saveCard(); recorrenteDe já é o slug do título
+    // (ver _criarCardRecorrente), reaproveitado como valor do trigger pra
+    // não depender de índice de array (que desalinha se o item for excluído).
+    criados.forEach(card=>{ if(card.recorrenteDe) runAutoRules('recorrente_created', card.id, card.recorrenteDe); });
     fbSet(FB+'/ql_items',qlItems);
     renderBoard();
     // Avisa: lembrete + notificação + toast
@@ -15187,10 +15227,17 @@ function salvarRecorrencia(){
   closeOv('rec-ov');
   showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec));
 }
+// Guarda de onde veio a "Usar" (modelo/recorrente) até o card ser de fato
+// criado (clique em Salvar) — usarQLItem() só PRÉ-PREENCHE o modal, quem
+// cria o card de verdade é saveCard(). Disparo dos triggers "Modelo usado"/
+// "Card recorrente criado" (Automações) acontece lá, não aqui.
+let _pendingQLSource=null; // {tipo:'modelos'|'recorrentes', idx, slug}
 function usarQLItem(i){
   const item=qlItems[currentQL][i]; if(!item) return;
   closeOv('ql-ov');
   openNewCard();
+  _pendingQLSource = (currentQL==='modelos'||currentQL==='recorrentes')
+    ? {tipo:currentQL, idx:i, slug:_slugifyRecorrente(item.title)} : null;
   document.getElementById('m-title').value=item.title;
   document.getElementById('m-title-disp').textContent=item.title;
   editingTags = Array.isArray(item.tags) ? item.tags.slice() : (item.tag?[item.tag]:[]);
@@ -15909,9 +15956,11 @@ function populateCardPatternSelect(){
 function setCardPattern(patId){
   if(!editingId) return;
   const card=cards.find(c=>c.id===editingId); if(!card) return;
+  const _prevPadrao=card.padraoId||'';
   card.padraoId = patId||null;
   fbSaveCard(card);
   _applyCardSectionsVisibility();
+  if((card.padraoId||'')!==_prevPadrao) runAutoRules('padrao_set', card.id, card.padraoId||'');
 }
 function renderSubteamEditor(){
   const box=document.getElementById('subteam-editor'); if(!box) return;
@@ -17376,6 +17425,13 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
 <div>✨ <b>Card foi criado na coluna X</b></div>
 <div>👤 <b>Card foi atribuído a X</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 <div>🔴 <b>Prioridade definida como X</b> <span style="font-size:10px;color:var(--txt3);">— qualquer nível (Baixa/Média/Alta/Crítica), não só Crítica</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
+<div>🏷 <b>Tag adicionada ao card</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🏷️ <b>Submarca definida como X</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Submarca</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🎯 <b>Card marcado como OKR</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🎨 <b>Capa de cor definida como X</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>📐 <b>Padrão de card definido como X</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Padrão criado</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>📋 <b>Modelo X usado</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Modelo criado</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🔁 <b>Card recorrente X criado</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Recorrente criado; dispara tanto no "✅ Usar" manual quanto na recriação automática</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 <div>📅 <b>Card vence hoje</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>⏰ <b>Card atrasado (1º dia)</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>🔥 <b>WIP excedeu o limite</b></div>
@@ -17464,6 +17520,21 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 <div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #ffd166;border-radius:8px;font-size:11.5px;line-height:1.9;">
 <div><b style="color:var(--accent);">QUANDO</b> prioridade definida como Alta</div>
 <div><b style="color:#3ddc97;">ENTÃO</b> adicionar tag "Foco"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #3ddc97;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> tag "Campanha" adicionada ao card</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir capa de cor (roxo) <b>+</b> marcar como OKR</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #38b6ff;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> modelo "Post Institucional" usado</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir padrão de card "Simplificado" <b>+</b> atribuir responsável</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #b28dff;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card recorrente "Relatório semanal" criado</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir prioridade Alta <b>+</b> adicionar item de checklist "Revisar dados antes de enviar"</div>
 </div>` },
     { icon:'❓', title:'Dúvidas frequentes (Q&A)', text:`<div style="display:flex;flex-direction:column;gap:12px;">
 
@@ -20331,6 +20402,28 @@ const AUTO_TRIGGERS = [
     // ver makeCardEl(). Ver dedupe em checkAgingAutomations() pra não
     // disparar todo dia enquanto o card continuar parado.
     matches:(rule,ev)=> ev==='aging' },
+  // ── Novos (pedido direto: espelhar do lado QUANDO o que já existia só do
+  // lado ENTÃO, onde faz sentido de verdade acontecer) ──
+  { key:'tag_added', label:'Tag adicionada ao card', valueType:'tag',
+    matches:(rule,ev,card,extra)=> ev==='tag_added' && extra===rule.triggerVal },
+  { key:'submarca_set', label:'Submarca definida como', valueType:'submarca', visible:()=>submarcaAtivo,
+    matches:(rule,ev,card,extra)=> ev==='submarca_set' && extra===rule.triggerVal },
+  { key:'marked_okr', label:'Card marcado como OKR', valueType:'none',
+    matches:(rule,ev)=> ev==='marked_okr' },
+  { key:'cover_set', label:'Capa de cor definida como', valueType:'cover',
+    matches:(rule,ev,card,extra)=> ev==='cover_set' && (rule.triggerVal||'')===(extra||'') },
+  { key:'padrao_set', label:'Padrão de card definido como', valueType:'padrao', visible:()=>Object.keys(cardPatterns||{}).length>0,
+    matches:(rule,ev,card,extra)=> ev==='padrao_set' && extra===rule.triggerVal },
+  // ── Novos (conceitos que só existiam como valor de outros triggers antes) ──
+  { key:'template_used', label:'Modelo usado', valueType:'template', visible:()=>(qlItems.modelos||[]).length>0,
+    // triggerVal/extra = índice em qlItems.modelos (lista referenciada por
+    // índice em todo o resto do app, ver openReqFields/openQLEdit/delQLItem).
+    matches:(rule,ev,card,extra)=> ev==='template_used' && String(extra)===String(rule.triggerVal) },
+  { key:'recorrente_created', label:'Card recorrente criado', valueType:'recorrente', visible:()=>(qlItems.recorrentes||[]).length>0,
+    // triggerVal/extra = slug do título (_slugifyRecorrente), o MESMO
+    // identificador que card.recorrenteDe já usa (ver _criarCardRecorrente) —
+    // mais estável que índice de array, sobrevive a exclusão/reordenação.
+    matches:(rule,ev,card,extra)=> ev==='recorrente_created' && extra===rule.triggerVal },
 ];
 const AUTO_ACTIONS = [
   { key:'move_card', label:'Mover card para coluna', valueType:'column',
@@ -20375,6 +20468,8 @@ function _autoValLabel(valueType, val){
     case 'tamanho': return SIZE_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'padrao': return cardPatterns[val]?.nome || val;
     case 'cover': return CARD_COVER_COLORS.find(c=>c.id===val)?.label || val;
+    case 'template': return (qlItems.modelos||[])[val]?.title || val;
+    case 'recorrente': return (qlItems.recorrentes||[]).find(it=>_slugifyRecorrente(it.title)===val)?.title || val;
     case 'text': return '"'+val+'"';
     default: return val;
   }
@@ -20398,6 +20493,8 @@ function _autoRenderValueOptions(valueType){
     case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'padrao': { const ids=Object.keys(cardPatterns||{}); return '<option value="">— nenhum —</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join(''); }
     case 'cover': return '<option value="">— sem capa —</option>'+CARD_COVER_COLORS.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
+    case 'template': { const items=qlItems.modelos||[]; return items.length ? items.map((it,i)=>`<option value="${i}">${esc(it.title)}</option>`).join('') : '<option value="">— nenhum modelo criado —</option>'; }
+    case 'recorrente': { const items=qlItems.recorrentes||[]; return items.length ? items.map(it=>`<option value="${esc(_slugifyRecorrente(it.title))}">${esc(it.title)}</option>`).join('') : '<option value="">— nenhum recorrente criado —</option>'; }
     default: return '';
   }
 }
@@ -20414,9 +20511,12 @@ function populateAutoSelects(){
   // Preenche as duas listas (Quando/Então) a partir da config, escondendo
   // o que não se aplica ao squad atual (visible()) — evita oferecer uma
   // ação que não faz nada (ex.: Notificar Agente Ágil desativado).
-  if(!triggerSel.dataset.filled){
-    triggerSel.innerHTML=AUTO_TRIGGERS.map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
-    triggerSel.dataset.filled='1';
+  const triggerOptsHtml=AUTO_TRIGGERS.filter(t=>!t.visible||t.visible()).map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
+  if(triggerSel.dataset.optsHtml!==triggerOptsHtml){
+    const prevVal=triggerSel.value;
+    triggerSel.innerHTML=triggerOptsHtml;
+    triggerSel.dataset.optsHtml=triggerOptsHtml;
+    if([...triggerSel.options].some(o=>o.value===prevVal)) triggerSel.value=prevVal;
   }
   // Condição extra opcional (E a tag do card é ___) — mesma lista de tags
   // usada em "Adicionar tag", só que aqui é sempre opcional (1ª opção vazia).
@@ -20872,6 +20972,7 @@ function ctxToggleOKR(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   card.isOKR = !card.isOKR;
   fbSaveCard(card); renderBoard();
+  if(card.isOKR) runAutoRules('marked_okr', card.id); // só ao marcar (false→true), ver comentário no saveCard()
   showToast(card.isOKR ? '🎯 Card marcado como OKR!' : 'OKR removido');
 }
 function ctxMove(colId){
