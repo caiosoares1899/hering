@@ -18,6 +18,44 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.227 — 2026-08-07 · promove pra prod (PRs #234–#238)
+Promove pra produção o lote de Automações + ajustes de tema, validado
+em dev (v8.30.325-dev a v8.30.331-dev):
+
+- ⚡ **Automações do board revisadas** (Config → ⚡ Auto), em 3 fases:
+  motor data-driven (substitui if/else espalhado por 3 funções),
+  correção de 2 triggers mortos (`due_today`/`due_overdue` nunca
+  disparavam; "Notificar Agente Ágil" não fazia nada — agora só
+  aparece quando o Agente Ágil está ativo), 7 ações novas (definir
+  submarca/tamanho/demandante/padrão de card/capa de cor, marcar como
+  OKR, adicionar item de checklist); 5 triggers novos (checklist
+  100%, risco adicionado, bloqueado/desbloqueado, card parado há
+  muito tempo); condição extra opcional ("E a tag é X") e múltiplas
+  ações na mesma regra. Regras salvas antes desta versão continuam
+  funcionando sem migração.
+- 🐛 **Outro trigger morto corrigido**: "Prioridade definida como X"
+  nunca disparava de verdade (evento genérico não escutado por nenhum
+  trigger) — corrigido nos 3 pontos onde a prioridade é definida
+  (Salvar do modal, menu de contexto, Ficha de Criativo), e
+  generalizado pra aceitar qualquer nível (Baixa/Média/Alta/Crítica),
+  não só Crítica.
+- ⏰ **Horário fixo pras automações/notificações de prazo**: "Card
+  vence hoje", "Card atrasado" e "Card parado há muito tempo" (e o
+  aviso de prazo pro responsável) agora disparam sempre às 09:00,
+  horário de São Paulo — independente do fuso do navegador de quem
+  abriu o board. Se a aba já estiver aberta antes das 9h, dispara
+  sozinho quando a hora chegar, sem precisar recarregar.
+- 🔀 **7 gatilhos novos**, ampliando o QUANDO pra espelhar o ENTÃO: tag
+  adicionada, submarca definida, card marcado como OKR, capa de cor
+  definida, padrão de card definido, modelo usado, card recorrente
+  criado.
+- ❓ **Nova aba "⚡ Automações" na Central de Ajuda**, com exemplos
+  visuais (blocos QUANDO/E/ENTÃO), lista completa de gatilhos/ações e
+  uma seção de dúvidas frequentes.
+- 🌤️ **Tema claro mais escuro (2ª rodada)**: nome da squad no header
+  (e outros rótulos que usavam `--cyan`) estava praticamente ilegível
+  no tema claro — corrigido; fundo/glass escurecidos mais uma vez.
+
 ### v8.30.226 — 2026-08-07 · promove pra prod (PRs #227–#232)
 Promove pra produção o lote seguinte, validado em dev (v8.30.319-dev a
 v8.30.324-dev):
