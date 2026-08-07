@@ -4923,7 +4923,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.328-dev</div>
+<div class="version">v8.30.329-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5707,10 +5707,12 @@ function _doBulkAssign(init){
   const m=members.find(x=>x.init===init);
   const n = selectedCards.size;
   _selectedList().forEach(c=>{
+    const _prevOwner=c.owner;
     c.owner=init;
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c, init?('atribuiu para '+(m?.name||init)):'removeu responsável');
+    if(init && init!==_prevOwner) runAutoRules('assigned', c.id, init); // ver comentário no saveCard()/scheduleAutoSave()
   });
   _bulkFinish('👤 ' + n + ' card(s) ' + (init?('atribuídos a '+(m?.name?.split(' ')[0]||init)):'sem responsável') + '.', true);
 }
@@ -9039,7 +9041,7 @@ function scheduleAutoSave(){
     parseMentions(c.po, c.id);
     parseMentions(c.blockerReason, c.id);
     (c.descsExtra||[]).forEach(d=>parseMentions(d?.text, c.id));
-    if(c.owner && c.owner!==_prevOwner) notifAssigned(c.owner, c.id, c.title);
+    if(c.owner && c.owner!==_prevOwner){ notifAssigned(c.owner, c.id, c.title); runAutoRules('assigned', c.id, c.owner); }
     if(_prevBlocker && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
     else if(!_prevBlocker && c.blocker) runAutoRules('blocked', c.id);
     const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
@@ -9830,12 +9832,14 @@ function saveCard(){
     _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
-    // Trigger "Prioridade definida como crítica" (Automações) — prioridade só é
+    // Trigger "Prioridade definida como X" (Automações) — prioridade só é
     // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
     // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)
     // logo abaixo dispara com eventType 'edit', que nenhum trigger escuta — sem
-    // esta chamada dedicada, "priority_set" nunca disparava de verdade.
-    if(c.priority==='critical' && _histBefore.priority!=='critical') runAutoRules('priority', c.id);
+    // esta chamada dedicada, "priority_set" nunca disparava de verdade. Dispara
+    // em QUALQUER transição de nível (não só pra "crítica") — cabe à regra
+    // (rule.triggerVal) decidir se o nível bate ou não, ver AUTO_TRIGGERS.
+    if(c.priority!==_histBefore.priority) runAutoRules('priority', c.id);
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
@@ -9853,7 +9857,7 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
     _pendingCoverColor=null;
-    if(_newCard.priority==='critical') runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
+    if(_newCard.priority) runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
   }
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
@@ -10869,7 +10873,7 @@ function _crvEditCell(td, cardId, field){
     fbSaveCard(card);
     renderBoard();
     renderCriativosTable();
-    if(field==='priority' && card.priority==='critical' && _prevPriorityCrv!=='critical') runAutoRules('priority', card.id); // ver comentário no saveCard()
+    if(field==='priority' && card.priority!==_prevPriorityCrv) runAutoRules('priority', card.id); // ver comentário no saveCard()
   };
   if(field==='vinculo'){
     const boardCards=cards.filter(c=>!c.archived);
@@ -17370,7 +17374,8 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
     { icon:'📥', title:'Gatilhos — o que faz a regra disparar (QUANDO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
 <div>📥 <b>Card mudou para a coluna X</b></div>
 <div>✨ <b>Card foi criado na coluna X</b></div>
-<div>🔴 <b>Prioridade virou Crítica</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
+<div>👤 <b>Card foi atribuído a X</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🔴 <b>Prioridade definida como X</b> <span style="font-size:10px;color:var(--txt3);">— qualquer nível (Baixa/Média/Alta/Crítica), não só Crítica</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>📅 <b>Card vence hoje</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>⏰ <b>Card atrasado (1º dia)</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>🔥 <b>WIP excedeu o limite</b></div>
@@ -17381,7 +17386,7 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
 <div>💤 <b>Card parado há muito tempo sem editar</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 </div>
 
-"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia, sempre às <b>09:00 (horário de São Paulo)</b> — o mesmo horário padrão do aviso de prazo pro responsável. Se o board estiver aberto antes das 9h, dispara sozinho quando a hora chegar, sem precisar recarregar a página; se você criar a regra depois das 9h de hoje, ela só entra em ação amanhã às 9h. "Prioridade virou Crítica" também tinha um bug parecido — nunca disparava de verdade ao salvar o card, foi corrigido, e esse dispara na hora (não é 1x/dia como os de prazo). "Card parado há muito tempo" segue o mesmo horário padrão de 09:00, e dispara só 1x, no dia exato em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
+"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia, sempre às <b>09:00 (horário de São Paulo)</b> — o mesmo horário padrão do aviso de prazo pro responsável. Se o board estiver aberto antes das 9h, dispara sozinho quando a hora chegar, sem precisar recarregar a página; se você criar a regra depois das 9h de hoje, ela só entra em ação amanhã às 9h. "Prioridade definida como X" também tinha um bug parecido (antes só existia pra "Crítica", e nem essa disparava de verdade ao salvar o card) — foi corrigido e generalizado: agora dá pra escolher qualquer nível (Baixa/Média/Alta/Crítica), e dispara na hora (não é 1x/dia como os de prazo). "Card parado há muito tempo" segue o mesmo horário padrão de 09:00, e dispara só 1x, no dia exato em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
     { icon:'🎬', title:'Ações — o que a regra faz sozinha (ENTÃO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
 <div>📦 <b>Mover card para coluna</b></div>
 <div>🔴 <b>Definir prioridade</b></div>
@@ -17449,6 +17454,16 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 <div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #8d99ff;border-radius:8px;font-size:11.5px;line-height:1.9;">
 <div><b style="color:var(--accent);">QUANDO</b> card parado há muito tempo sem editar</div>
 <div><b style="color:#3ddc97;">ENTÃO</b> adicionar tag "Esquecido?"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #ff9f43;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card é atribuído a Fulano</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> mover card para "Em andamento"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #ffd166;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> prioridade definida como Alta</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> adicionar tag "Foco"</div>
 </div>` },
     { icon:'❓', title:'Dúvidas frequentes (Q&A)', text:`<div style="display:flex;flex-direction:column;gap:12px;">
 
@@ -17467,6 +17482,8 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 <div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Como eu pauso uma regra sem apagar ela?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Na lista de regras em Config → Auto tem um interruptor ao lado de cada uma — desliga sem perder a configuração.</div></div>
 
 <div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Uma automação pode mover o card pra uma coluna que eu já excluí?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Não — o dropdown só mostra as colunas que existem no board hoje.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Por que "Mover para coluna" está nos dois lados (QUANDO e ENTÃO), mas "Atribuir responsável" só aparece em ENTÃO?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Cada gatilho/ação é adicionado à lista de um lado (ou dos dois) conforme faz sentido de verdade acontecer — "mover" e "prioridade" já existem nos dois lados porque tanto disparar quanto executar fazem sentido pra eles; "atribuído a" virou gatilho também (QUANDO o card for atribuído a alguém). Toda vez que um gatilho novo passa a fazer sentido como ação (ou vice-versa), ele é adicionado — sem quebrar as regras que você já tem.</div></div>
 
 </div>` },
   ],
@@ -20281,8 +20298,13 @@ const AUTO_TRIGGERS = [
     matches:(rule,ev,card,extra)=> ev==='move' && extra===rule.triggerVal },
   { key:'card_created', label:'Card criado em', valueType:'column',
     matches:(rule,ev,card,extra)=> ev==='create' },
-  { key:'priority_set', label:'Prioridade definida como crítica', valueType:'any',
-    matches:(rule,ev,card)=> ev==='priority' && card.priority==='critical' },
+  { key:'priority_set', label:'Prioridade definida como', valueType:'priority',
+    // rule.triggerVal 'any'/vazio = regra salva antes desta generalização
+    // (só existia "crítica", sem seletor de nível) — trata como 'critical'
+    // pra continuar disparando exatamente como antes, sem migração de dados.
+    matches:(rule,ev,card)=> ev==='priority' && card.priority===((rule.triggerVal&&rule.triggerVal!=='any')?rule.triggerVal:'critical') },
+  { key:'assigned', label:'Card atribuído a', valueType:'member',
+    matches:(rule,ev,card,extra)=> ev==='assigned' && extra===rule.triggerVal },
   { key:'due_today', label:'Card vence hoje', valueType:'any',
     // Disparado 1x/dia por checkDueNotifs() (não por uma ação do usuário) —
     // ver chamada runAutoRules('due_today', card.id) lá.
@@ -20347,7 +20369,7 @@ function _autoValLabel(valueType, val){
     case 'column': return columns.find(c=>c.id===val)?.name || val;
     case 'priority': return ({critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'})[val] || val;
     case 'tag': return getTag(val)?.label || val;
-    case 'member_optional': { const m=members.find(x=>x.init===val); return m?(m.init+' · '+_shortName(m.name)):val; }
+    case 'member_optional': case 'member': { const m=members.find(x=>x.init===val); return m?(m.init+' · '+_shortName(m.name)):val; }
     case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva'})[val] || val;
     case 'submarca': return SUBMARCA_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'tamanho': return SIZE_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
@@ -20367,6 +20389,10 @@ function _autoRenderValueOptions(valueType){
     case 'priority': return `<option value="critical">🔥 Crítica</option><option value="high">🔴 Alta</option><option value="medium">🟡 Média</option><option value="low">🟢 Baixa</option>`;
     case 'tag': return tags.length ? tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('') : '<option value="">— sem tags —</option>';
     case 'member_optional': return '<option value="">— manter atual —</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
+    // 'member' (sem opção em branco) — pro seletor de valor de TRIGGER, onde
+    // "atribuído a ___" precisa de uma pessoa de verdade escolhida, diferente
+    // de 'member_optional' (usado em ações, onde "— manter atual —" faz sentido).
+    case 'member': return members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
     case 'agent_tab': return `<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>`;
     case 'submarca': { const opts=tags.filter(t=>SUBMARCA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhuma —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
@@ -20879,7 +20905,7 @@ function ctxSetPriority(p){
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveCard(card);
-  if(p==='critical' && _prevPriority!=='critical') runAutoRules('priority', card.id); // ver comentário no saveCard()
+  if(p!==_prevPriority) runAutoRules('priority', card.id); // ver comentário no saveCard()
   showToast(p ? `Prioridade ${p} definida` : 'Prioridade removida');
   hideCtxMenu();
 }
@@ -20888,12 +20914,14 @@ function ctxAssignMe(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   const init=window._currentUserInit||'';
   if(!init){ showToast('Faça login para se atribuir'); hideCtxMenu(); return; }
+  const _prevOwner=card.owner;
   card.owner=init;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveCard(card);
+  if(init!==_prevOwner) runAutoRules('assigned', card.id, init); // ver comentário no saveCard()/scheduleAutoSave()
   showToast(`Card atribuído a ${window._currentUser?.displayName||init}`);
   hideCtxMenu();
 }

@@ -1098,6 +1098,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.329-dev — 2026-08-07
+Generaliza "Prioridade" e adiciona gatilho de atribuição, pedidos
+depois do teste da v8.30.327/328-dev.
+
+- 🔴 **"Prioridade definida como X" generalizado** — antes só existia
+  travado em "Crítica"; agora aceita qualquer nível (Baixa/Média/Alta/
+  Crítica), igual ao seletor de coluna do "Card movido para". Regras
+  antigas (só "crítica") continuam funcionando sem migração — se a
+  regra não tiver um nível salvo, o sistema assume "crítica" como
+  antes. **Corrige também um resquício do bug anterior**: os 3 pontos
+  onde a prioridade é definida (Salvar do modal, menu de contexto,
+  Ficha de Criativo) agora disparam a automação em qualquer troca de
+  nível, não só quando vira Crítica.
+- 👤 **Novo gatilho "Card foi atribuído a X"** — dispara quando um
+  responsável específico é atribuído ao card, seja pelo campo
+  Responsável no modal, "Atribuir a mim" (menu de contexto) ou a ação
+  em massa "👤 Responsável" (seleção múltipla). Junto com a ação
+  "Mover card para coluna" já existente, cobre o caso pedido: "quando
+  atribuído a Fulano, mover pra Em andamento".
+- Aba ⚡ Automações da Central de Ajuda atualizada com os dois itens
+  acima, incluindo 2 receitas novas e uma pergunta no Q&A sobre por
+  que alguns gatilhos/ações aparecem só de um lado (QUANDO ou ENTÃO) e
+  outros nos dois.
+
 ### v8.30.328-dev — 2026-08-07
 Padroniza o horário de disparo diário das automações/notificações de
 prazo — pedido direto depois do teste da v8.30.327-dev.
