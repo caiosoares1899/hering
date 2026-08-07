@@ -3158,9 +3158,13 @@ input[type="date"]{-moz-appearance:textfield;}
             <input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
             <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
           </div>
-        </div>
-        <div class="card-attr-row" id="m-demandante-row" style="display:none;">
-          <div class="field"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
+          <!-- 3º item do grid 2 colunas: cai sozinho pra linha de baixo, na
+               coluna do Responsável — pedido direto, "sobe o demandante pra
+               ficar ao lado do sem prazo definido" (a coluna do Prazo é mais
+               alta por causa do botão calendário + sem prazo, então o
+               Demandante acaba alinhado ao lado dele, sem precisar de uma
+               .card-attr-row própria). -->
+          <div class="field" id="m-demandante-row" style="display:none;"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
             <select class="fi" id="m-demandante" onchange="scheduleAutoSave()"></select>
           </div>
         </div>
@@ -4895,7 +4899,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.320-dev</div>
+<div class="version">v8.30.321-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

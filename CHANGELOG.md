@@ -1067,6 +1067,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.321-dev — 2026-08-06
+Pedido direto vendo o layout: campo Demandante sai da linha própria
+(cheia, isolada) e sobe pra dentro da mesma linha de Responsável/Prazo
+— vira o 3º item do grid de 2 colunas, o que naturalmente cai alinhado
+ao lado do botão "Sem prazo definido" (a coluna do Prazo é mais alta
+por causa do input de data + botão calendário + esse botão). Deixa o
+layout mais compacto, sem espaço vazio sobrando embaixo do Responsável.
+
 ### v8.30.320-dev — 2026-08-06
 Fix de legibilidade no tema claro: os botões da toolbar (❓ Ajuda, ⚡
 Funções de card, 🔗 Links, ⛓ Dependências, 📅 Calendários, 📊 Dados do
