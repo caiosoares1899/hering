@@ -1136,6 +1136,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.333-dev — 2026-08-07
+Nova ação de automação pedida pelo time: "Remover tag".
+
+- 🏷 **Ação "Remover tag"** — espelha a "Adicionar tag" já existente.
+- 🏷 **Gatilho "Tag removida do card"** (novo) — mesma lógica da "Tag
+  adicionada ao card": dispara em qualquer remoção de tag, seja pelo
+  campo do modal, seleção em massa ("Substituir"/"Remover todas as
+  tags"), etc.
+- Aba ⚡ Automações da Central de Ajuda atualizada com os dois itens
+  e mais 1 receita de exemplo.
+
 ### v8.30.332-dev — 2026-08-07
 1ª rodada de otimização de bytes/performance, pedida direto ("olhar
 os códigos e diagnosticar/resolver questões de otimização de código +
