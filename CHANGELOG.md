@@ -1098,6 +1098,49 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.325-dev — 2026-08-07
+Revisão completa de Automações do board (Config → ⚡ Auto), pedida
+depois de perceber que o recurso estava defasado em relação ao resto
+do app. Feita em 3 fases, todas neste lote:
+
+**Fase 1 — motor data-driven + bugs corrigidos + ações novas.**
+`populateAutoSelects`/`saveAutoRule`/`runAutoRules` deixaram de ser um
+`if/else` repetido em 3 lugares (fácil de esquecer um — foi exatamente
+o que causou os 2 bugs abaixo) e viraram uma config só (`AUTO_TRIGGERS`/
+`AUTO_ACTIONS`), cada trigger/ação com sua própria lógica.
+- 🐛 **`due_today`/`due_overdue` eram triggers mortos**: apareciam no
+  dropdown e no rótulo da regra, mas nunca eram checados de verdade em
+  `runAutoRules`. Agora disparam de verdade, 1x/dia, junto do aviso de
+  prazo que já existia.
+- 🐛 **"Notificar Agente Ágil" não fazia nada** — o Agente Ágil está
+  temporariamente desativado (`AGENTE_AGIL_ATIVO=false`) e essa ação
+  só mostrava um toast de "desativado". Agora essa opção só aparece no
+  dropdown quando o Agente Ágil estiver ativo — evita configurar uma
+  automação que não faz nada.
+- Ações novas, fechando o gap com os campos que o card já tem:
+  definir Submarca, Tamanho, Demandante, Padrão de card, Capa de cor,
+  marcar como OKR, adicionar item de checklist. Cada uma só aparece no
+  dropdown se o squad usa aquele recurso (ex.: "Definir submarca" só
+  se `submarcaAtivo`).
+
+**Fase 2 — triggers novos**, cobrindo eventos que já geravam
+notificação dedicada mas nunca tinham automação: checklist chegou a
+100%, risco foi adicionado, card foi bloqueado, card foi desbloqueado,
+e card parado há muito tempo sem edição (reaproveita o mesmo cálculo
+de "sprint parada" já usado pra esmaecer o card no board — checado
+1x/dia, dispara só no dia exato em que cruza o limiar, não repete todo
+dia).
+
+**Fase 3 — regras mais expressivas**: condição extra opcional ("E a
+tag do card é X") e mais de uma ação por regra (botão "+ Ação" antes
+de salvar) — cobre o caso de "mover pra Done E definir prioridade",
+por exemplo. Regras salvas antes desta versão continuam funcionando
+sem nenhuma migração (formato antigo é lido on-the-fly).
+
+Cuidado com bytes/layout: nada disso baixa dado novo do Firebase (só
+reorganiza lógica que já rodava local); dropdowns continuam com o
+mesmo tamanho visual, só escondem opção que não se aplica ao squad.
+
 ### v8.30.324-dev — 2026-08-06
 Remove o campo de capa de cor debaixo do Título — ficou redundante
 depois do botão 🎨 no header (pedido direto: "aí tira debaixo do

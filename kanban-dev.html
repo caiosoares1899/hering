@@ -2225,6 +2225,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .rule-on{background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);}
 .rule-off{background:rgba(255,107,107,.12);color:var(--danger);border:1px solid rgba(255,107,107,.25);}
 .rule-sel{flex:1;min-width:100px;padding:5px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:"DM Sans",sans-serif;}
+.auto-action-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:3px 4px 3px 9px;border-radius:999px;background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);}
+.auto-action-chip button{background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;line-height:1;padding:2px;}
+.auto-action-chip button:hover{color:var(--danger);}
 
 
 /* Card aging */
@@ -3895,27 +3898,22 @@ input[type="date"]{-moz-appearance:textfield;}
         <div style="display:flex;flex-direction:column;gap:7px;">
           <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
             <span style="font-size:11px;color:var(--cyan);font-weight:700;min-width:60px;">Quando</span>
-            <select class="rule-sel" id="auto-trigger" onchange="populateAutoSelects()">
-              <option value="move_to">Card movido para coluna</option>
-              <option value="due_today">Card vence hoje</option>
-              <option value="due_overdue">Card atrasado</option>
-              <option value="wip_exceeded">WIP excede o limite</option>
-              <option value="card_created">Card criado</option>
-              <option value="priority_set">Prioridade definida como crítica</option>
-            </select>
+            <select class="rule-sel" id="auto-trigger" onchange="populateAutoSelects()"></select>
             <select class="rule-sel" id="auto-trigger-val" style="max-width:140px;"></select>
           </div>
           <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
-            <span style="font-size:11px;color:var(--teal);font-weight:700;min-width:60px;">Então</span>
-            <select class="rule-sel" id="auto-action" onchange="populateAutoSelects()">
-              <option value="move_card">Mover card para coluna</option>
-              <option value="set_priority">Definir prioridade</option>
-              <option value="notify_agent">Notificar Agente Ágil</option>
-              <option value="add_tag">Adicionar tag</option>
-              <option value="assign_owner">Atribuir responsável</option>
-            </select>
-            <select class="rule-sel" id="auto-action-val" style="max-width:140px;"></select>
+            <span style="font-size:11px;color:var(--txt3);font-weight:700;min-width:60px;">E (opcional)</span>
+            <span style="font-size:11px;color:var(--txt2);">a tag do card é</span>
+            <select class="rule-sel" id="auto-cond-tag" style="max-width:160px;"><option value="">— sem condição extra —</option></select>
           </div>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--teal);font-weight:700;min-width:60px;">Então</span>
+            <select class="rule-sel" id="auto-action" onchange="populateAutoSelects()"></select>
+            <select class="rule-sel" id="auto-action-val" style="max-width:140px;"></select>
+            <input type="text" class="rule-sel" id="auto-action-val-text" style="display:none;max-width:180px;" placeholder="Texto do item de checklist...">
+            <button class="btn btn-sm" onclick="addPendingAutoAction()" title="Adicionar mais uma ação a esta mesma regra" style="color:var(--teal);border-color:rgba(29,233,182,.3);">+ Ação</button>
+          </div>
+          <div id="auto-pending-actions" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
           <div style="display:flex;justify-content:flex-end;gap:7px;">
             <button class="btn btn-sm" onclick="testAutoRule()">🧪 Testar no AutoLab</button>
             <button class="btn btn-p btn-sm" onclick="saveAutoRule()">+ Adicionar regra</button>
@@ -4924,7 +4922,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.324-dev</div>
+<div class="version">v8.30.325-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9041,16 +9039,17 @@ function scheduleAutoSave(){
     parseMentions(c.blockerReason, c.id);
     (c.descsExtra||[]).forEach(d=>parseMentions(d?.text, c.id));
     if(c.owner && c.owner!==_prevOwner) notifAssigned(c.owner, c.id, c.title);
-    if(_prevBlocker && !c.blocker) notifUnblocked(c);
+    if(_prevBlocker && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
+    else if(!_prevBlocker && c.blocker) runAutoRules('blocked', c.id);
     const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
     if(_prevCol!==c.col){
       if(c.col===_doneCol?.id) notifDone(c);
       else notifMoved(c, columns.find(cc=>cc.id===c.col)?.name);
     }
-    if((c.riscos?.length||0) > _prevRiscosLen) notifRisk(c);
+    if((c.riscos?.length||0) > _prevRiscosLen){ notifRisk(c); runAutoRules('risk_added', c.id); }
     if(c.checklist?.length>0 && c.checklist.every(i=>i.done)){
       const _prevDone=_prevChecklist.filter(i=>i.done).length;
-      if(_prevDone < c.checklist.length) notifChecklistDone(c);
+      if(_prevDone < c.checklist.length){ notifChecklistDone(c); runAutoRules('checklist_complete', c.id); }
     }
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
@@ -16171,7 +16170,7 @@ CAPACIDADES DO SISTEMA (Maré Digital v8.0):
 - Checklist com barra de progresso visual por card
 - Riscos mapeados por card com badge ⚠ e notificação automática ao PO
 - Notificações (🔔): atribuição, desbloqueio, conclusão, riscos, checklist completo, prazo próximo, @menções
-- Automações configuráveis: regras "se evento → então ação" (mover, notificar, bloquear WIP)
+- Automações configuráveis: regras "quando evento [+ condição opcional] → então 1+ ações" (mover, prioridade, tag, responsável/submarca/tamanho/demandante, padrão de card, capa de cor, OKR, item de checklist, notificar agente)
 - Snapshots diários automáticos do board para histórico de tendência
 - Itens Recorrentes e Modelos: cards pré-configurados reutilizáveis
 - Importação do Trello com mapeamento semântico de listas e labels
@@ -17295,7 +17294,7 @@ const HELP_CONTENT = {
     { icon:'🔤', title:'Iniciais únicas e reatribuição', text:'Cada pessoa tem iniciais (ex.: CS) que vinculam os cards a ela. Se duas pessoas teriam as mesmas iniciais no squad, o sistema gera uma única automaticamente e avisa. Na lista de usuários, iniciais repetidas piscam em vermelho — clique na pílula para corrigir. O botão "🔄 Reatribuir cards" move todos os cards de uma pessoa para outra de uma vez.' },
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
-    { icon:'⚡', title:'Automações', text:'Em Config → Auto, crie regras que disparam ações automaticamente. Exemplos: quando card mover para Impedimentos, notificar PO. Quando WIP exceder o limite, bloquear criação em Progresso.' },
+    { icon:'⚡', title:'Automações', text:'Em Config → Auto, crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, ou notificar o Agente Ágil.' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
@@ -18258,12 +18257,43 @@ function checkDueNotifs(){
   const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
   const ontemStr=ontem.toISOString().split('T')[0];
   cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
+    // Automações due_today/due_overdue (Fase 1 da revisão de Automações):
+    // antes desses triggers existirem no dropdown mas nunca serem checados
+    // de verdade em runAutoRules — ver AUTO_TRIGGERS. Dispara pra TODO card
+    // vencendo/atrasado, mesmo sem responsável com uid (diferente da
+    // notificação abaixo, que precisa de alguém pra avisar).
+    if(card.due===today) runAutoRules('due_today', card.id);
+    else if(card.due===ontemStr) runAutoRules('due_overdue', card.id);
     const uid=getUidByInit(card.owner); if(!uid) return;
     if(card.due===today){
       createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
     } else if(card.due===ontemStr){
       createNotif(uid,'due_overdue','Prazo atrasado! 🔴',card.title?.substring(0,60),card.id);
     }
+  });
+}
+
+// 8. Card parado há muito tempo (trigger "aging" de Automações, Fase 2) —
+// roda 1x/dia, mesmo padrão de checkDueNotifs(). Reaproveita o MESMO
+// cálculo de idade já usado pra esmaecer o card visualmente (aged-1/aged-2
+// em makeCardEl()) — sprintDays sem edição = 1 "sprint parado". Dispara só
+// no dia EXATO em que o card cruza o limiar (ageDays===sprintLen), não
+// repete todo dia enquanto continuar parado — mesmo espírito do
+// due_overdue ("due === ontem", não "due <= ontem"). Só calcula a idade de
+// todo card se houver pelo menos 1 regra ativa com esse trigger — squads
+// que não usam a automação não pagam o custo desse loop todo dia.
+function checkAgingAutomations(){
+  const todayStr=new Date().toISOString().split('T')[0];
+  const lastCheck=safeLS.getItem('lastAgingCheck_'+ACTIVE_SQUAD);
+  if(lastCheck===todayStr) return;
+  safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
+  if(!autoRules.some(r=>r.active && r.trigger==='aging')) return;
+  const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  cards.filter(c=>!c.archived && !_isColDone(c.col) && c.editedAt).forEach(card=>{
+    const editedD=new Date(card.editedAt+'T00:00:00');
+    const ageDays=Math.round((hoje-editedD)/86400000);
+    if(ageDays===sprintLen) runAutoRules('aging', card.id);
   });
 }
 
@@ -18304,8 +18334,10 @@ saveCard = function(){
     notifAssigned(card.owner, cardId, card.title);
 
   // Desbloqueado
-  if(prevBlocker && !card.blocker)
+  if(prevBlocker && !card.blocker){
     notifUnblocked(card);
+    runAutoRules('unblocked', card.id);
+  } else if(!prevBlocker && card.blocker) runAutoRules('blocked', card.id);
 
   // Movido para feito (ou pra qualquer outra coluna)
   const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
@@ -18315,14 +18347,18 @@ saveCard = function(){
   }
 
   // Risco novo
-  if((card.riscos?.length||0) > prevRiscos)
+  if((card.riscos?.length||0) > prevRiscos){
     notifRisk(card);
+    runAutoRules('risk_added', card.id);
+  }
 
   // Checklist 100%
   if(card.checklist?.length>0 && card.checklist.every(i=>i.done)){
     const prevDone=prevChecklist.filter(i=>i.done).length;
-    if(prevDone < card.checklist.length)
+    if(prevDone < card.checklist.length){
       notifChecklistDone(card);
+      runAutoRules('checklist_complete', card.id);
+    }
   }
 };
 // ── FIM NOTIFICAÇÕES ─────────────────────────────────────────────
@@ -20084,70 +20120,230 @@ function addTouchColDnD(el, colId){
 }
 
 // ═══════════════════════════════════════════════════════
-// AUTOMAÇÕES (Butler-style)
+// AUTOMAÇÕES (Butler-style) — motor data-driven (Fase 1 da revisão)
 // ═══════════════════════════════════════════════════════
+// Antes disso, cada trigger/ação novo exigia mexer em 3 lugares separados
+// (populateAutoSelects/saveAutoRule/runAutoRules) como if/else solto — fácil
+// de esquecer um dos três (foi exatamente o que aconteceu: due_today/
+// due_overdue apareciam no dropdown e no rótulo da regra, mas nunca eram
+// checados de verdade em runAutoRules — trigger morto). Agora cada
+// trigger/ação é UMA entrada de config com sua própria lógica de match/
+// execução, então adicionar um novo não tem como esquecer o "fiação".
+// `visible` (opcional) esconde a opção quando não faz sentido pro squad —
+// ex.: "Definir submarca" só aparece se submarcaAtivo, "Notificar Agente
+// Ágil" só se AGENTE_AGIL_ATIVO (senão a ação não faz nada, ver bug antigo).
 let autoRules = [];
 
+const AUTO_TRIGGERS = [
+  { key:'move_to', label:'Card movido para coluna', valueType:'column',
+    matches:(rule,ev,card,extra)=> ev==='move' && extra===rule.triggerVal },
+  { key:'card_created', label:'Card criado em', valueType:'column',
+    matches:(rule,ev,card,extra)=> ev==='create' },
+  { key:'priority_set', label:'Prioridade definida como crítica', valueType:'any',
+    matches:(rule,ev,card)=> ev==='priority' && card.priority==='critical' },
+  { key:'due_today', label:'Card vence hoje', valueType:'any',
+    // Disparado 1x/dia por checkDueNotifs() (não por uma ação do usuário) —
+    // ver chamada runAutoRules('due_today', card.id) lá.
+    matches:(rule,ev)=> ev==='due_today' },
+  { key:'due_overdue', label:'Card atrasado (1º dia)', valueType:'any',
+    matches:(rule,ev)=> ev==='due_overdue' },
+  { key:'wip_exceeded', label:'WIP excede o limite', valueType:'none',
+    matches:()=>false }, // tratado à parte abaixo (agregado do board, não de 1 card)
+  // ── Novos (Fase 2) — cobrem eventos que já existiam como notificação
+  // dedicada (notifUnblocked/notifRisk/notifChecklistDone) mas nunca tinham
+  // um gancho de automação; disparados dos mesmos pontos que essas
+  // notificações (ver scheduleAutoSave() e o hook de saveCard). ──
+  { key:'checklist_complete', label:'Checklist chegou a 100%', valueType:'any',
+    matches:(rule,ev)=> ev==='checklist_complete' },
+  { key:'risk_added', label:'Risco adicionado ao card', valueType:'any',
+    matches:(rule,ev)=> ev==='risk_added' },
+  { key:'blocked', label:'Card foi marcado como impedido', valueType:'any',
+    matches:(rule,ev)=> ev==='blocked' },
+  { key:'unblocked', label:'Card foi desbloqueado', valueType:'any',
+    matches:(rule,ev)=> ev==='unblocked' },
+  { key:'aging', label:'Card parado há muito tempo (sem edição)', valueType:'none',
+    // Disparado 1x/dia por checkAgingAutomations() — mesmo cálculo de
+    // "sprint parada" já usado pro esmaecimento visual do card (aged-1),
+    // ver makeCardEl(). Ver dedupe em checkAgingAutomations() pra não
+    // disparar todo dia enquanto o card continuar parado.
+    matches:(rule,ev)=> ev==='aging' },
+];
+const AUTO_ACTIONS = [
+  { key:'move_card', label:'Mover card para coluna', valueType:'column',
+    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); card.col=rule.actionVal; recordHistory(card,'moveu para '+(cn?cn.name:rule.actionVal),'⚙ Automação'); return true; } },
+  { key:'set_priority', label:'Definir prioridade', valueType:'priority',
+    run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
+  { key:'add_tag', label:'Adicionar tag', valueType:'tag',
+    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false; ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou tag (automação)','⚙ Automação'); return true; } },
+  { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
+    run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
+  { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab', visible:()=>AGENTE_AGIL_ATIVO,
+    run:(rule,card)=>{ const tab=rule.actionVal||'daily'; openAgent(); swAgTab(tab); qa(tab,`[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`); return false; } },
+  // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
+  { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
+    run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
+  { key:'set_tamanho', label:'Definir tamanho', valueType:'tamanho', visible:()=>tamanhoAtivo,
+    run:(rule,card)=>{ const ids=SIZE_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu tamanho (automação)','⚙ Automação'); return true; } },
+  { key:'set_demandante', label:'Definir demandante', valueType:'member_optional', visible:()=>demandanteAtivo,
+    run:(rule,card)=>{ card.demandante=rule.actionVal||''; recordHistory(card,'definiu demandante (automação)','⚙ Automação'); return true; } },
+  { key:'set_padrao', label:'Definir padrão de card', valueType:'padrao', visible:()=>Object.keys(cardPatterns||{}).length>0,
+    run:(rule,card)=>{ card.padraoId=rule.actionVal||null; recordHistory(card,'definiu padrão de card (automação)','⚙ Automação'); return true; } },
+  { key:'set_cover', label:'Definir capa de cor', valueType:'cover',
+    run:(rule,card)=>{ card.coverColor=rule.actionVal||null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
+  { key:'toggle_okr', label:'Marcar como OKR', valueType:'none',
+    run:(rule,card)=>{ if(card.isOKR) return false; card.isOKR=true; recordHistory(card,'marcou como OKR (automação)','⚙ Automação'); return true; } },
+  { key:'add_checklist_item', label:'Adicionar item de checklist', valueType:'text',
+    run:(rule,card)=>{ const txt=(rule.actionVal||'').trim(); if(!txt) return false; card.checklist=Array.isArray(card.checklist)?card.checklist.slice():[]; card.checklist.push({t:txt,done:false}); recordHistory(card,'adicionou item de checklist (automação)','⚙ Automação'); return true; } },
+];
+function _autoTrigger(key){ return AUTO_TRIGGERS.find(t=>t.key===key); }
+function _autoAction(key){ return AUTO_ACTIONS.find(a=>a.key===key); }
+// Texto legível do valor escolhido, pro rótulo da regra na lista — cada
+// valueType sabe resolver seu próprio id/código pra um nome de gente.
+function _autoValLabel(valueType, val){
+  if(val==null || val===''||val==='any') return '';
+  switch(valueType){
+    case 'column': return columns.find(c=>c.id===val)?.name || val;
+    case 'priority': return ({critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'})[val] || val;
+    case 'tag': return getTag(val)?.label || val;
+    case 'member_optional': { const m=members.find(x=>x.init===val); return m?(m.init+' · '+_shortName(m.name)):val; }
+    case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva'})[val] || val;
+    case 'submarca': return SUBMARCA_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
+    case 'tamanho': return SIZE_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
+    case 'padrao': return cardPatterns[val]?.nome || val;
+    case 'cover': return CARD_COVER_COLORS.find(c=>c.id===val)?.label || val;
+    case 'text': return '"'+val+'"';
+    default: return val;
+  }
+}
+// Popula um <select> conforme o valueType — reaproveitado tanto pro valor
+// do trigger (Quando) quanto da ação (Então), já que os tipos são os mesmos
+// vocabulário (coluna, tag, membro, prioridade...) dos dois lados.
+function _autoRenderValueOptions(valueType){
+  switch(valueType){
+    case 'column': return columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+    case 'any': return '<option value="any">— qualquer card —</option>';
+    case 'priority': return `<option value="critical">🔥 Crítica</option><option value="high">🔴 Alta</option><option value="medium">🟡 Média</option><option value="low">🟢 Baixa</option>`;
+    case 'tag': return tags.length ? tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('') : '<option value="">— sem tags —</option>';
+    case 'member_optional': return '<option value="">— manter atual —</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
+    case 'agent_tab': return `<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>`;
+    case 'submarca': { const opts=tags.filter(t=>SUBMARCA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhuma —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
+    case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
+    case 'padrao': { const ids=Object.keys(cardPatterns||{}); return '<option value="">— nenhum —</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join(''); }
+    case 'cover': return '<option value="">— sem capa —</option>'+CARD_COVER_COLORS.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
+    default: return '';
+  }
+}
+
 function populateAutoSelects(){
+  const triggerSel=document.getElementById('auto-trigger');
+  const actionSel=document.getElementById('auto-action');
   const tv=document.getElementById('auto-trigger-val');
   const av=document.getElementById('auto-action-val');
-  const trigger=document.getElementById('auto-trigger')?.value;
-  const action=document.getElementById('auto-action')?.value;
-  if(!tv||!av) return;
+  const avText=document.getElementById('auto-action-val-text');
+  const condTagSel=document.getElementById('auto-cond-tag');
+  if(!triggerSel||!actionSel||!tv||!av) return;
+
+  // Preenche as duas listas (Quando/Então) a partir da config, escondendo
+  // o que não se aplica ao squad atual (visible()) — evita oferecer uma
+  // ação que não faz nada (ex.: Notificar Agente Ágil desativado).
+  if(!triggerSel.dataset.filled){
+    triggerSel.innerHTML=AUTO_TRIGGERS.map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
+    triggerSel.dataset.filled='1';
+  }
+  // Condição extra opcional (E a tag do card é ___) — mesma lista de tags
+  // usada em "Adicionar tag", só que aqui é sempre opcional (1ª opção vazia).
+  if(condTagSel){
+    const condOptsHtml='<option value="">— sem condição extra —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+    if(condTagSel.dataset.optsHtml!==condOptsHtml){
+      const prevVal=condTagSel.value;
+      condTagSel.innerHTML=condOptsHtml;
+      condTagSel.dataset.optsHtml=condOptsHtml;
+      if([...condTagSel.options].some(o=>o.value===prevVal)) condTagSel.value=prevVal;
+    }
+  }
+  const actionOptsHtml=AUTO_ACTIONS.filter(a=>!a.visible||a.visible()).map(a=>`<option value="${a.key}">${esc(a.label)}</option>`).join('');
+  if(actionSel.dataset.optsHtml!==actionOptsHtml){
+    const prevVal=actionSel.value;
+    actionSel.innerHTML=actionOptsHtml;
+    actionSel.dataset.optsHtml=actionOptsHtml;
+    if([...actionSel.options].some(o=>o.value===prevVal)) actionSel.value=prevVal;
+  }
+
+  const trigger=_autoTrigger(triggerSel.value);
+  const action=_autoAction(actionSel.value);
 
   // ── Valor do TRIGGER ──────────────────────────────────────────
-  if(trigger==='move_to'||trigger==='card_created'){
-    tv.innerHTML=columns.map(col=>`<option value="${esc(col.id)}">${esc(col.name)}</option>`).join('');
+  if(trigger && trigger.valueType!=='none'){
+    tv.innerHTML=_autoRenderValueOptions(trigger.valueType);
     tv.style.display='block';
-  } else if(trigger==='due_today'||trigger==='due_overdue'||trigger==='priority_set'){
-    tv.innerHTML='<option value="any">— qualquer card —</option>';
-    tv.style.display='block';
-  } else if(trigger==='wip_exceeded'){
+  } else {
     tv.innerHTML='<option value="any">— quando exceder —</option>';
     tv.style.display='none';
-  } else {
-    tv.innerHTML=''; tv.style.display='none';
   }
 
   // ── Valor da AÇÃO (depende da ação escolhida) ─────────────────
-  av.style.display='block';
-  if(action==='move_card'){
-    av.innerHTML=columns.map(col=>`<option value="${esc(col.id)}">${esc(col.name)}</option>`).join('');
-  } else if(action==='set_priority'){
-    av.innerHTML=`
-      <option value="critical">🔥 Crítica</option>
-      <option value="high">🔴 Alta</option>
-      <option value="medium">🟡 Média</option>
-      <option value="low">🟢 Baixa</option>`;
-  } else if(action==='add_tag'){
-    av.innerHTML=tags.length
-      ? tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('')
-      : '<option value="">— sem tags —</option>';
-  } else if(action==='assign_owner'){
-    av.innerHTML='<option value="">— manter atual —</option>'
-      +members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
-  } else if(action==='notify_agent'){
-    av.innerHTML=`
-      <option value="daily">Aba Daily</option>
-      <option value="metricas">Aba Métricas</option>
-      <option value="retro">Aba Retrospectiva</option>`;
+  if(action && action.valueType==='text'){
+    av.style.display='none'; av.innerHTML='';
+    if(avText){ avText.style.display='block'; }
+  } else if(action && action.valueType!=='none'){
+    if(avText) avText.style.display='none';
+    av.style.display='block';
+    av.innerHTML=_autoRenderValueOptions(action.valueType);
   } else {
+    if(avText) avText.style.display='none';
     av.innerHTML=''; av.style.display='none';
   }
+}
+
+// Ações "pendentes" de uma regra em construção — pedido direto (Fase 3):
+// dá pra encadear MAIS DE UMA ação na mesma regra (ex.: mover pra Done E
+// definir prioridade), clicando "+ Ação" a cada uma antes de salvar. Se a
+// pessoa nunca clicar em "+ Ação" e for direto em "Adicionar regra", a
+// ação atualmente selecionada vira a única da regra sozinha — não obriga
+// um clique extra pro caso comum de 1 ação só.
+let _autoPendingActions = []; // [{action, actionVal, label}]
+function addPendingAutoAction(){
+  const action=document.getElementById('auto-action')?.value;
+  const actionDef=_autoAction(action); if(!actionDef) return false;
+  const actionVal=(actionDef.valueType==='text')
+    ? document.getElementById('auto-action-val-text')?.value||''
+    : document.getElementById('auto-action-val')?.value;
+  if(actionDef.valueType==='text' && !actionVal.trim()){ showToast('Preencha o texto do item de checklist.'); return false; }
+  const valLbl=_autoValLabel(actionDef.valueType,actionVal);
+  _autoPendingActions.push({action, actionVal, label:actionDef.label+(valLbl?' ('+valLbl+')':'')});
+  renderPendingAutoActions();
+  const avText=document.getElementById('auto-action-val-text'); if(avText) avText.value='';
+  return true;
+}
+function removePendingAutoAction(i){ _autoPendingActions.splice(i,1); renderPendingAutoActions(); }
+function renderPendingAutoActions(){
+  const box=document.getElementById('auto-pending-actions'); if(!box) return;
+  box.innerHTML=_autoPendingActions.map((a,i)=>
+    `<span class="auto-action-chip">${esc(a.label)}<button onclick="removePendingAutoAction(${i})" title="Remover">✕</button></span>`
+  ).join('');
 }
 
 function saveAutoRule(){
   const trigger=document.getElementById('auto-trigger')?.value;
   const triggerVal=document.getElementById('auto-trigger-val')?.value;
-  const action=document.getElementById('auto-action')?.value;
-  const actionVal=document.getElementById('auto-action-val')?.value;
-  if(!trigger||!action) return;
-  const triggerLabels={move_to:'Card movido para',due_today:'Card vence hoje',due_overdue:'Card atrasado',wip_exceeded:'WIP excede limite',card_created:'Card criado em',priority_set:'Prioridade crítica'};
-  const actionLabels={move_card:'Mover para',set_priority:'Definir prioridade',notify_agent:'Notificar agente',add_tag:'Adicionar tag',assign_owner:'Atribuir a'};
-  autoRules.push({id:'r'+Date.now(),trigger,triggerVal,action,actionVal,active:true,
-    label:`${triggerLabels[trigger]||trigger} ${triggerVal||''} → ${actionLabels[action]||action} ${actionVal||''}`});
+  const condTag=document.getElementById('auto-cond-tag')?.value||'';
+  if(!trigger) return;
+  if(!_autoPendingActions.length){ if(!addPendingAutoAction()) return; }
+  if(!_autoPendingActions.length) return;
+  const triggerDef=_autoTrigger(trigger);
+  const tLbl=(triggerDef?.label||trigger) + (triggerDef&&_autoValLabel(triggerDef.valueType,triggerVal)?' ('+_autoValLabel(triggerDef.valueType,triggerVal)+')':'');
+  const condLbl = condTag ? ' E tag='+(getTag(condTag)?.label||condTag) : '';
+  const aLbl=_autoPendingActions.map(a=>a.label).join(' + ');
+  autoRules.push({
+    id:'r'+Date.now(), trigger, triggerVal, condTag,
+    actions:_autoPendingActions.map(a=>({action:a.action, actionVal:a.actionVal})),
+    active:true,
+    label:`${tLbl}${condLbl} → ${aLbl}`,
+  });
   fbSet(FB+'/auto_rules', autoRules);
   renderAutoRules();
+  _autoPendingActions=[];
+  renderPendingAutoActions();
 }
 
 function renderAutoRules(){
@@ -20172,7 +20368,9 @@ function testAutoRule(){
   const trigger=document.getElementById('auto-trigger')?.value;
   const triggerVal=document.getElementById('auto-trigger-val')?.value;
   const action=document.getElementById('auto-action')?.value;
-  const actionVal=document.getElementById('auto-action-val')?.value;
+  const actionDef=_autoAction(action);
+  const actionVal=(actionDef?.valueType==='text') ? document.getElementById('auto-action-val-text')?.value : document.getElementById('auto-action-val')?.value;
+  if(!AGENTE_AGIL_ATIVO){ showToast('🤖 O Agente Ágil (e o AutoLab) está temporariamente desativado.'); return; }
   closeOv('cfg-ov');
   openAgent(); swAgTab('daily');
   const q=`[AutoLab] Simule e explique o que aconteceria se eu ativasse esta automação no board atual: QUANDO "${trigger}" (coluna/valor: ${triggerVal||'qualquer'}) → ENTÃO "${action}" (valor: ${actionVal||'padrão'}). Liste os cards que seriam afetados agora e se faz sentido para o contexto da sprint.`;
@@ -20180,39 +20378,49 @@ function testAutoRule(){
   qa('daily',q);
 }
 
-// Executa automações após mudanças no board
+// Normaliza rule.actions — regras novas (Fase 3) já salvam um array; regras
+// antigas (de antes da Fase 3) salvaram action/actionVal direto no objeto.
+// Lido aqui em vez de migrar os dados salvos, então regra velha continua
+// funcionando sem precisar de nenhum script de migração no Firebase.
+function _autoRuleActions(rule){
+  if(Array.isArray(rule.actions)) return rule.actions;
+  if(rule.action) return [{action:rule.action, actionVal:rule.actionVal}];
+  return [];
+}
+
+// Executa automações após mudanças no board. eventType: 'move'|'create'|
+// 'priority'|'due_today'|'due_overdue'|'checklist_complete'|'risk_added'|
+// 'blocked'|'unblocked'|'aging' — cada AUTO_TRIGGERS.matches() decide se a
+// regra bate com esse evento; rule.condTag (opcional) é uma condição E
+// extra, checada à parte do matches() pra não duplicar essa lógica em
+// todo trigger.
 function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
   let _anyTriggered=false; // true se alguma regra mudou o card -- usado no final pra persistir no Firebase (antes so mudava em memoria e sumia no reload)
+  const card=cards.find(c=>c.id===cardId); if(!card) return;
   activeRules.forEach(rule=>{
-    const card=cards.find(c=>c.id===cardId); if(!card) return;
-    let triggered=false;
-    if(rule.trigger==='move_to' && eventType==='move' && extraVal===rule.triggerVal) triggered=true;
-    if(rule.trigger==='card_created' && eventType==='create') triggered=true;
-    if(rule.trigger==='priority_set' && eventType==='priority' && card.priority==='critical') triggered=true;
-    if(!triggered) return;
-    _anyTriggered=true;
+    const triggerDef=_autoTrigger(rule.trigger);
+    if(!triggerDef) return; // regra salva com trigger que não existe mais
+    if(!triggerDef.matches(rule,eventType,card,extraVal)) return;
+    if(rule.condTag && !getCardTags(card).includes(rule.condTag)) return; // condição E extra, opcional
     const td=new Date().toISOString().split('T')[0];
-    const user='Automação';
-    if(rule.action==='move_card'){ card.col=rule.actionVal; card.edited=user; card.editedAt=td; const _cn=columns.find(x=>x.id===rule.actionVal); recordHistory(card, 'moveu para '+(_cn?_cn.name:rule.actionVal), '⚙ Automação'); }
-    if(rule.action==='set_priority'){ card.priority=rule.actionVal; card.edited=user; card.editedAt=td; recordHistory(card, 'alterou prioridade: '+(rule.actionVal||'—'), '⚙ Automação'); }
-    if(rule.action==='add_tag'){ const _ct=getCardTags(card); if(!_ct.includes(rule.actionVal)){ _ct.push(rule.actionVal); } card.tags=_ct; card.tag=_ct[0]||''; card.edited=user; card.editedAt=td; recordHistory(card, 'adicionou tag', '⚙ Automação'); }
-    if(rule.action==='assign_owner' && rule.actionVal){ card.owner=rule.actionVal; card.edited=user; card.editedAt=td; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card, 'definiu responsável: '+(m?m.name:rule.actionVal), '⚙ Automação'); }
-    if(rule.action==='notify_agent'){
-      const tab=rule.actionVal||'daily';
-      openAgent(); swAgTab(tab);
-      qa(tab, `[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`);
-    }
+    let ruleChanged=false;
+    _autoRuleActions(rule).forEach(a=>{
+      const actionDef=_autoAction(a.action); if(!actionDef) return;
+      if(actionDef.run({actionVal:a.actionVal, label:rule.label}, card)) ruleChanged=true;
+    });
+    if(ruleChanged){ card.edited='Automação'; card.editedAt=td; _anyTriggered=true; }
   });
-  // Checa WIP
+  // Checa WIP — condição agregada do board inteiro, não de 1 card específico,
+  // por isso fica de fora do loop por-regra acima (não tem "o card" que
+  // disparou; roda de qualquer forma toda vez que runAutoRules é chamado).
   const wipRule=activeRules.find(r=>r.trigger==='wip_exceeded');
-  if(wipRule){
+  if(wipRule && AGENTE_AGIL_ATIVO){
     const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
-    if(wip>parseInt(agilCfg.wip||3)){
-      if(wipRule.action==='notify_agent'){
-        const tab=wipRule.actionVal||'metricas';
-        setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
-      }
+    const wipAction=_autoRuleActions(wipRule)[0];
+    if(wip>parseInt(agilCfg.wip||3) && wipAction?.action==='notify_agent'){
+      const tab=wipAction.actionVal||'metricas';
+      setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
     }
   }
 
@@ -20220,15 +20428,14 @@ function runAutoRules(eventType, cardId, extraVal){
   // so mexia em memoria (card.col/priority/tags/owner) e a mudanca sumia no proximo reload
   // porque nenhum fbSave* era chamado depois da automacao rodar.
   if(_anyTriggered){
-    const _autoCard=cards.find(c=>c.id===cardId);
-    if(_autoCard){ fbSaveCard(_autoCard).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err)); }
+    fbSaveCard(card).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
     renderBoard();
   }
 }
 // Carrega regras do Firebase com listener contínuo
 function loadAutoRules(){
-  fbListen(FB+'/auto_rules',val=>{ 
-    if(val){ 
+  fbListen(FB+'/auto_rules',val=>{
+    if(val){
       autoRules=Array.isArray(val)?val:Object.values(val);
       // Re-renderiza lista se painel estiver aberto
       if(document.getElementById('cfgtab-auto')?.classList.contains('on')) renderAutoRules();
@@ -21017,11 +21224,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   loadCampanhas();
