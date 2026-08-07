@@ -174,14 +174,19 @@
    com texto saturado próprio) ficaram de fora de propósito — já legíveis
    nos dois temas sem alteração. */
 :root[data-theme="light"]{
-  --deep:#F2FCFF;
-  --deep-rgb:242,252,255;
+  /* Fundo mais escuro que o branco-quase-puro original ("lençóis
+     maranhenses" — feedback direto: "ainda tá muito claro"). Só o fundo
+     de página (--deep/.ocean) e o glass mudam de tom; --surface-rgb (os
+     cards) fica como estava, pra manter o contraste card-vs-fundo que já
+     tinha sido ajustado antes. */
+  --deep:#DCEFF9;
+  --deep-rgb:220,239,249;
   --surface-rgb:252,254,255;
-  --surface2-rgb:221,247,255;
-  --glass-rgb:198,237,255;
-  --glass:rgba(198,237,255,0.65);
-  --glass-b:rgba(0,169,230,0.28);
-  --glass-h:rgba(0,169,230,0.14);
+  --surface2-rgb:210,240,251;
+  --glass-rgb:180,227,248;
+  --glass:rgba(180,227,248,0.65);
+  --glass-b:rgba(0,169,230,0.32);
+  --glass-h:rgba(0,169,230,0.16);
   --blue:#00A9E6;--accent:#00A9E6;--cyan:#4FC3F7;--teal:#33D6D0;
   --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
   --warn:#F6B73C;--danger:#F15B6C;
@@ -194,12 +199,25 @@
 }
 [data-theme="light"] .ocean{
   background:
-    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.17) 0%,transparent 60%),
-    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.14) 0%,transparent 55%),
-    linear-gradient(180deg,#F2FCFF 0%,#DDF7FF 100%);
+    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.2) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
+    linear-gradient(180deg,#DCEFF9 0%,#BFE4F6 100%);
 }
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
   filter:saturate(1.3) brightness(0.9) contrast(1.05);
+}
+/* Botões da toolbar (Ajuda, Funções de card, Links, Dependências,
+   Calendários, Dados do Board, Campanhas, Controle de Criativos) usam
+   `color` inline pra se diferenciar no escuro (roxo/teal/rosa claros,
+   que pulam bem num fundo escuro) — no claro, essas mesmas cores pálidas
+   ficam quase ilegíveis contra o fundo azul claro. Força de volta pro
+   texto escuro padrão (--txt) só no tema claro; !important necessário
+   pra vencer o `style="color:..."` inline. Fica de fora o badge de
+   pendência do Google Calendar (id próprio) — aquele usa --warn como
+   sinalização de estado, não só diferenciação visual, e already tem
+   contraste melhor (laranja) que os tons pastel dos outros. */
+[data-theme="light"] .toolbar > button.btn:not(#gcal-pending-badge-btn){
+  color:var(--txt)!important;
 }
 /* No escuro, o card se destaca da coluna por brilho/contraste de borda —
    no claro esse mesmo truque não funciona (os dois ficam claros demais
@@ -420,6 +438,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* card */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
+/* Capa de cor (testeira) — tira de cor no topo do card, tipo Trello, pra
+   organização visual além das tags (pedido direto: "as tags parecem não
+   ser suficiente visualmente"). Usa margin negativo pra "vazar" até a
+   borda do card (que tem padding:10px) e border-radius levemente menor
+   que --r pra acompanhar o arredondamento do card sem sobrar quina viva. */
+.card-cover-strip{height:5px;border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;margin:-10px -10px 8px -10px;}
+.cover-swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.cover-swatch{width:28px;height:28px;border-radius:7px;cursor:pointer;border:2px solid transparent;padding:0;transition:transform .12s,border-color .12s;}
+.cover-swatch:hover{transform:scale(1.08);}
+.cover-swatch.on{border-color:var(--txt);}
+.cover-swatch.none{background:var(--glass);border:1px dashed var(--glass-b);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--txt3);}
+.cover-swatch.none.on{border-style:solid;border-color:var(--txt);}
 /* Tingimento e borda mais fortes que a 1ª versão (rgba(...,.14)/.5) —
    feedback direto: no escuro o "seu card" ficava discreto demais,
    quase igual aos outros cards da coluna; no claro (ver override mais
@@ -2698,6 +2728,9 @@ input[type="date"]{-moz-appearance:textfield;}
   <select id="f-owner" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os usuários</option>
   </select>
+  <select id="f-demandante" onchange="applyFilters()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">📢 Qualquer demandante</option>
+  </select>
   <select id="f-tag" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todas as tags</option>
   </select>
@@ -3078,6 +3111,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CARD MODAL -->
 <div class="ov" id="card-ov">
 <div class="panel card-panel">
+  <div id="m-cover-strip-modal" style="display:none;height:6px;border-radius:calc(var(--r2) - 1px) calc(var(--r2) - 1px) 0 0;margin:-1px -1px 0 -1px;"></div>
   <div id="m-depends-bar" class="card-parent-bar" style="display:none;">
     <span style="color:var(--txt3);font-size:10px;">Depende de:</span>
     <a id="m-depends-link" onclick="openDependsOnCard()"></a>
@@ -3088,6 +3122,12 @@ input[type="date"]{-moz-appearance:textfield;}
     <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
       title="Padrão de card — define quais seções opcionais aparecem no modal"
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
+    <div style="position:relative;display:inline-block;margin-right:6px;">
+      <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor">🎨</button>
+      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;">
+        <div class="cover-swatches cover-swatches-target"></div>
+      </div>
+    </div>
     <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -3130,8 +3170,23 @@ input[type="date"]{-moz-appearance:textfield;}
           </div>
         </div>
         <div class="card-attr-row">
-          <div class="field"><label class="fl">Responsável</label>
-            <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
+          <!-- Responsável + Demandante empilhados na MESMA coluna do grid —
+               precisa ser um wrapper próprio (não um 3º item solto): grid
+               auto-flow põe o 3º item numa linha NOVA depois que a linha
+               inteira (a mais alta das duas colunas) termina, não "encaixado"
+               ao lado do que sobrou de espaço na coluna mais curta (1ª
+               tentativa errada — Demandante saía abaixo de tudo, não do lado
+               do "Sem prazo definido"). Com os dois dentro do mesmo wrapper
+               flex, o Demandante nasce logo abaixo do Responsável, na altura
+               aproximada de onde a coluna do Prazo (mais alta, por causa do
+               botão calendário + Sem prazo) também está. -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="field"><label class="fl">Responsável</label>
+              <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
+            </div>
+            <div class="field" id="m-demandante-row" style="display:none;"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
+              <select class="fi" id="m-demandante" onchange="scheduleAutoSave()"></select>
+            </div>
           </div>
           <div class="field"><label class="fl">Prazo</label>
             <input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
@@ -3561,6 +3616,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('lembretes')">📌 Lembretes</div>
     <div class="ag-tab" onclick="swCfgTab('tags')">🏷️ Tags</div>
     <div class="ag-tab" onclick="swCfgTab('subtimes')">👥 Subtimes</div>
+    <div class="ag-tab" onclick="swCfgTab('padroes')">📐 Padrões de card</div>
     <div class="ag-tab" onclick="swCfgTab('fluxo')">⚙️ Fluxo</div>
     <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
@@ -3569,7 +3625,6 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
-    <div class="ag-tab" onclick="swCfgTab('padroes')">📐 Padrões de card</div>
   </div>
   <div class="cfg-body">
 
@@ -3672,6 +3727,13 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <!-- ABA PADRÕES DE CARD -->
     <div class="tab-c" id="cfgtab-padroes">
+      <div class="cfg-sec-title">📢 Campo Demandante</div>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
+        Adiciona ao card um campo separado do Responsável: <b>quem solicitou</b> o card. Pensado pra ficar estável durante toda a execução mesmo quando o Responsável muda de mão (ex.: passa de designer pra redator) — o demandante normalmente não muda. Fica disponível como campo no card, filtro na toolbar, e conta pras notificações de conclusão/desbloqueio (junto com Responsável e Participantes) e pro contexto que o Agente Ágil enxerga.
+      </p>
+      <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:var(--r);margin-bottom:18px;">
+        <input type="checkbox" id="cfg-demandante-ativo" onchange="toggleDemandanteAtivo(this.checked)"> Ativar campo de Demandante neste squad
+      </label>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
         <div class="cfg-sec-title" style="margin-bottom:0;">📐 Padrões de card</div>
         <button class="btn btn-sm" onclick="criarPadraoCard()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Novo padrão</button>
@@ -4350,6 +4412,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-priority" checked> Prioridade</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-riscos" checked> Riscos</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-links" checked> Anexos/Links</label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-comments" checked> Comentários</label>
     </div>
     <button class="btn btn-teal" onclick="confirmarDuplicar()" style="margin-top:16px;width:100%;">⧉ Duplicar</button>
   </div>
@@ -4861,7 +4924,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.225</div>
+<div class="version">v8.30.226</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5309,6 +5372,67 @@ function cardDescText(card){
   return parts.join('\n\n');
 }
 
+// Capa de cor (testeira) — organização visual do board além das tags,
+// baseado no recurso de capa do Trello. Paleta fixa (não é tag, não some
+// se alguém apagar uma tag) — card.coverColor guarda só o id.
+const CARD_COVER_COLORS = [
+  {id:'green',  hex:'#4BCE97', label:'Verde'},
+  {id:'yellow', hex:'#F5CD47', label:'Amarelo'},
+  {id:'orange', hex:'#FAA53D', label:'Laranja'},
+  {id:'red',    hex:'#F87168', label:'Vermelho'},
+  {id:'purple', hex:'#9F8FEF', label:'Roxo'},
+  {id:'blue',   hex:'#579DFF', label:'Azul'},
+  {id:'sky',    hex:'#6CC3E0', label:'Céu'},
+  {id:'pink',   hex:'#E774BB', label:'Rosa'},
+  {id:'gray',   hex:'#8590A2', label:'Cinza'},
+];
+// Card ainda não salvo (editingId=null): não tem onde persistir ainda —
+// mesma lição aprendida com "usar modelo" e Padrão de card (ver histórico
+// de bugs). Guarda aqui até o 1º Salvar criar o card de verdade.
+let _pendingCoverColor = null;
+// Popula TODOS os alvos de swatch (o campo abaixo do Título + o popover do
+// botão 🎨 no header) — pedido direto pra ter acesso rápido no header além
+// do campo já existente. Os dois ficam sincronizados por lerem o mesmo
+// estado (card.coverColor / _pendingCoverColor) a cada render.
+function renderCoverSwatches(){
+  const targets=document.querySelectorAll('.cover-swatches-target');
+  if(!targets.length) return;
+  const card=editingId ? cards.find(c=>c.id===editingId) : null;
+  const current = editingId ? (card?.coverColor||'') : (_pendingCoverColor||'');
+  const html = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
+    + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover('${c.id}')"></button>`).join('');
+  targets.forEach(el=>el.innerHTML=html);
+}
+function toggleCoverMenu(){
+  const menu=document.getElementById('m-cover-menu'); if(!menu) return;
+  const isOpen=menu.style.display!=='none';
+  menu.style.display=isOpen?'none':'block';
+  if(!isOpen) setTimeout(()=>document.addEventListener('click', _closeCoverMenuOutside, {once:true}), 10);
+}
+function _closeCoverMenuOutside(e){
+  if(e.target.closest('#m-cover-menu')||e.target.closest('#m-cover-btn')) return;
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
+}
+function _applyCoverStripToModal(colorId){
+  const strip=document.getElementById('m-cover-strip-modal'); if(!strip) return;
+  const col=CARD_COVER_COLORS.find(c=>c.id===colorId);
+  if(col){ strip.style.background=col.hex; strip.style.display='block'; }
+  else { strip.style.display='none'; }
+}
+function setCardCover(colorId){
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none'; // fecha o popover do header, se veio de lá
+  if(!editingId){
+    _pendingCoverColor = colorId||null;
+    _applyCoverStripToModal(colorId);
+    renderCoverSwatches();
+    return;
+  }
+  const card=cards.find(c=>c.id===editingId); if(!card) return;
+  card.coverColor = colorId||null;
+  fbSaveCard(card);
+  _applyCoverStripToModal(colorId);
+  renderCoverSwatches();
+}
 let members=[];
 // Deriva iniciais de um nome ou email (mesma lógica do login)
 function deriveInit(nameOrEmail){
@@ -5357,6 +5481,7 @@ const CARD_SECTIONS=[
   {key:'po', id:'m-po-box', label:'🎯 Insights do PO'},
   {key:'descsExtra', id:'extra-descs-field', label:'📝 Descrições adicionais'},
   {key:'participantes', id:'m-participantes-field', label:'👥 Participantes'},
+  {key:'demandante', id:'m-demandante-row', label:'📢 Demandante'},
   {key:'checklist', id:'m-checklist-sec', label:'☑ Checklist'},
   {key:'riscos', id:'m-riscos-sec', label:'⚠ Riscos'},
   {key:'criativo', id:'m-criativo-sec', label:'🎬 Campos de produção criativa'},
@@ -5388,15 +5513,16 @@ function _cardSectionVisible(key, card){
 // MESMO elemento reaproveitado entre cards, um card novo herdava o que
 // tivesse ficado escondido no card anterior (em vez do padrão da squad).
 // Agora AMBOS os sentidos rodam — exceto m-criativo-sec, que também segue
-// criativosAtivo (lógica própria, roda antes desta função em
-// openCard()/openNewCard()): aqui só pode ESCONDER por cima dele, nunca
-// forçar reabrir (senão vazaria com criativosAtivo desligado).
+// criativosAtivo/demandanteAtivo (lógica própria, roda antes desta função
+// em openCard()/openNewCard()): aqui só pode ESCONDER por cima delas, nunca
+// forçar reabrir (senão vazaria com o toggle da squad desligado).
+const _CARD_SECTIONS_COM_TOGGLE_PROPRIO = new Set(['criativo','demandante']);
 function _applyCardSectionsVisibility(){
   const card=editingId ? cards.find(c=>c.id===editingId) : null;
   CARD_SECTIONS.forEach(s=>{
     const el=document.getElementById(s.id); if(!el) return;
     const visible=_cardSectionVisible(s.key, card);
-    if(s.key==='criativo'){ if(!visible) el.style.display='none'; return; }
+    if(_CARD_SECTIONS_COM_TOGGLE_PROPRIO.has(s.key)){ if(!visible) el.style.display='none'; return; }
     el.style.display = visible ? '' : 'none';
   });
 }
@@ -5851,6 +5977,11 @@ let agilCfg={};
 let criativosAtivo=false; // toggle por squad: mostra a Ficha de Criativo no card + botão Controle de Criativos
 let criativosListas={}; // {id:{id,nome,createdAt}} — listas de segmentação do Controle de Criativos
 let archiveCfg={};
+// Demandante: quem SOLICITOU o card — diferente do Responsável, que executa
+// e pode mudar ao longo do card (ex.: passa de designer pra redator). O
+// demandante normalmente não muda durante a execução. Pedido direto,
+// opcional/configurável igual Tamanho/Submarca (toggle por squad).
+let demandanteAtivo=false;
 let tamanhoAtivo=false; // toggle por squad: disponibiliza as tags de tamanho de camiseta (👕 P/M/G/GG)
 // Tags de tamanho — ids fixos (idempotência: reativar não duplica), cor/pi combinando com o
 // tema teal do app. sizeLevel (1-4) é usado só por tagHtml() pra fazer o 👕 crescer por tamanho.
@@ -6613,6 +6744,11 @@ function fbLoadAll(){
     submarcaAtivo = !!val;
     const el=document.getElementById('cfg-submarca-ativo'); if(el) el.checked=submarcaAtivo;
     _applySubmarcaUIVisibility();
+  });
+  fbListen(FB+'/config/demandante_ativo', val=>{
+    demandanteAtivo = !!val;
+    const el=document.getElementById('cfg-demandante-ativo'); if(el) el.checked=demandanteAtivo;
+    _applyDemandanteUIVisibility();
   });
   fbListen(FB+'/config/submarcas_visiveis', val=>{
     submarcasVisiveis = val||{};
@@ -8095,7 +8231,9 @@ function makeCardEl(card){
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
+  const coverStripHtml=_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'';
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -8454,7 +8592,7 @@ function _shortName(name){
 // pessoas). Só o campo submarca é restaurado; os demais filtros
 // continuam começando limpos, como sempre foi. Ver _saveSubmarcaFiltroPadrao(),
 // chamado nos 3 pontos que mudam activeFilters.submarca.
-let activeFilters={owner:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:''};
+let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:''};
 function _saveSubmarcaFiltroPadrao(){
   safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca||[]));
 }
@@ -8471,6 +8609,8 @@ function toggleFilters(){
   const allOwnerOptions=members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`)
     .concat(extraOwners.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`));
   document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+allOwnerOptions.join('');
+  const fDem=document.getElementById('f-demandante');
+  if(fDem) fDem.innerHTML='<option value="">📢 Qualquer demandante</option>'+allOwnerOptions.join('');
   document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
   const fSub=document.getElementById('f-subteam');
   if(fSub) fSub.innerHTML='<option value="">Todos os subtimes</option>'+subteams.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
@@ -8480,6 +8620,7 @@ function toggleFilters(){
 function applyFilters(){
   activeFilters={
     owner:document.getElementById('f-owner').value,
+    demandante:document.getElementById('f-demandante')?.value||'',
     tag:document.getElementById('f-tag').value,
     tamanho:document.getElementById('f-tamanho')?.value||'',
     // submarca é multi-seleção (array) — não vem de um <select> de valor único,
@@ -8499,6 +8640,7 @@ function applyFilters(){
 }
 function clearFilters(){
   document.getElementById('f-owner').value='';
+  const fDem=document.getElementById('f-demandante'); if(fDem) fDem.value='';
   document.getElementById('f-tag').value='';
   const ftm=document.getElementById('f-tamanho'); if(ftm) ftm.value='';
   const fsm=document.getElementById('f-submarca'); if(fsm) fsm.value='';
@@ -8507,7 +8649,7 @@ function clearFilters(){
   document.getElementById('f-blocker').checked=false;
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
-  activeFilters={owner:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
+  activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:''};
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
@@ -8522,6 +8664,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
     const isInvolved = card.owner===activeFilters.owner || cardParticipants.includes(activeFilters.owner);
     if(!isInvolved) return false;
   }
+  if(activeFilters.demandante&&card.demandante!==activeFilters.demandante) return false;
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
   if(activeFilters.submarca&&activeFilters.submarca.length&&!activeFilters.submarca.some(id=>cardHasTag(card, id))) return false;
@@ -8862,7 +9005,7 @@ function scheduleAutoSave(){
     const _selCol=document.getElementById('m-col').value;
     const _colToSave=(_selCol===_modalOpenCol)?c.col:_selCol;
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
-      col:_colToSave,owner:document.getElementById('m-owner').value,
+      col:_colToSave,owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',
       due:document.getElementById('m-due').value,noDue:_mNoDue,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       // blockerReason faltava aqui — o autosave nunca capturava esse campo
@@ -9251,6 +9394,15 @@ function populateOwnerSelect(){
   if(agentes.length)
     document.getElementById('m-owner').innerHTML+=`<optgroup label="🤖 Agentes">`+agentes.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('')+`</optgroup>`;
 }
+// Demandante usa a mesma lista de pessoas do Responsável — mas SEM agentes
+// de IA no optgroup: um agente nunca é quem "pede" o card, só quem executa.
+function populateDemandanteSelect(){
+  const sel=document.getElementById('m-demandante'); if(!sel) return;
+  sel.innerHTML='<option value="">— sem demandante —</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
+  const u=window._currentUser; const init=window._currentUserInit;
+  if(u&&init&&!members.find(m=>m.init===init))
+    sel.innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName||u.email||'')}</option>`;
+}
 function populateColSelect(){ document.getElementById('m-col').innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); }
 // ── Prazo obrigatório (todo squad) com escape hatch "sem prazo definido" ──
 // Regra pedida direto: card precisa ter uma data OU marcar explicitamente
@@ -9295,13 +9447,15 @@ function openCard(id){
   } else {
     _cov?.classList.remove('above-camp');
   }
-  populateTagSelect(); populateOwnerSelect(); populateColSelect();
+  populateTagSelect(); populateOwnerSelect(); populateDemandanteSelect(); populateColSelect();
   document.getElementById('m-title').value=c.title;
   document.getElementById('m-title-disp').textContent=c.title;
   editingTags=getCardTags(c).slice(); populateTagSelect();
   document.getElementById('m-col').value=c.col;
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
+  document.getElementById('m-demandante').value=c.demandante||'';
+  _applyCoverStripToModal(c.coverColor); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
   _mNoDue=!!c.noDue; _renderNoDueBtn();
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
@@ -9335,6 +9489,7 @@ function openCard(id){
   const _mTam=document.getElementById('m-tamanho'); if(_mTam) _mTam.value=getCardTags(c).find(id=>_sizeIds.includes(id))||'';
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
+  _applyDemandanteUIVisibility();
   renderDependsBar(c);
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
@@ -9540,7 +9695,7 @@ function openNewCard(col){
   editingLinkedCards=[];
   renderLinkedChips();
   editingId=null;
-  populateTagSelect(); populateOwnerSelect(); populateColSelect();
+  populateTagSelect(); populateOwnerSelect(); populateDemandanteSelect(); populateColSelect();
   document.getElementById('m-title').value='';
   document.getElementById('m-po').value='';
   eocInitDisplay('desc-eoc','','Adicionar descrição...');
@@ -9567,8 +9722,11 @@ function openNewCard(col){
   setCriativoFields({});
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
+  const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
+  _pendingCoverColor=null; _applyCoverStripToModal(null); renderCoverSwatches();
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
+  _applyDemandanteUIVisibility();
   // BUGFIX: faltava aqui — sem isso, um card novo herdava a visibilidade de
   // seções que tivesse ficado do ÚLTIMO card aberto (mesmo modal, elemento
   // reaproveitado), em vez de vir com o padrão da squad (editingId=null
@@ -9651,7 +9809,7 @@ function saveCard(){
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
-      owner:document.getElementById('m-owner').value,due:document.getElementById('m-due').value,noDue:_mNoDue,
+      owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -9675,6 +9833,8 @@ function saveCard(){
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
+      demandante:document.getElementById('m-demandante')?.value||'',
+      coverColor:_pendingCoverColor||null,
       due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -9686,6 +9846,7 @@ function saveCard(){
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
+    _pendingCoverColor=null;
   }
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
@@ -9746,13 +9907,14 @@ function _duplicarCardObj(card, opts){
   if(opts.priority===false){ novo.priority=''; }
   if(opts.riscos===false){ novo.riscos=[]; }
   if(opts.links===false){ novo.links=[]; }
+  if(opts.comments===false){ novo.comments={}; }
   recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
   cards.push(novo);
   return novo;
 }
 // ── Modal de duplicar: deixa escolher quais campos entram na cópia ──────
 let _dupCardId = null;
-const _DUP_CAMPOS = ['desc','checklist','tags','owner','participants','due','priority','riscos','links'];
+const _DUP_CAMPOS = ['desc','checklist','tags','owner','participants','due','priority','riscos','links','comments'];
 function abrirDuplicarModal(cardId){
   const card=cards.find(x=>x.id===cardId); if(!card) return;
   _dupCardId = cardId;
@@ -10146,6 +10308,20 @@ function toggleSubmarcaAtivo(checked){
   }
   showToast(submarcaAtivo?'🏷️ Campo de submarca ativado neste squad.':'Campo de submarca desativado (tags já usadas em cards continuam disponíveis).');
   _applySubmarcaUIVisibility();
+}
+function toggleDemandanteAtivo(checked){
+  if(!_isPOorOrg()) return;
+  demandanteAtivo = !!checked;
+  fbSet(FB+'/config/demandante_ativo', demandanteAtivo);
+  showToast(demandanteAtivo?'📢 Campo de demandante ativado neste squad.':'Campo de demandante desativado (cards que já tinham o dado preenchido não perdem nada, só fica escondido).');
+  _applyDemandanteUIVisibility();
+}
+// Mostra/esconde o campo "📢 Demandante" (modal) e o filtro dedicado
+// (toolbar) conforme o toggle do squad — mesmo padrão de
+// _applyTamanhoUIVisibility/_applySubmarcaUIVisibility.
+function _applyDemandanteUIVisibility(){
+  const row=document.getElementById('m-demandante-row'); if(row) row.style.display=demandanteAtivo?'':'none';
+  const f=document.getElementById('f-demandante'); if(f) f.style.display=demandanteAtivo?'':'none';
 }
 function toggleSubmarcaVisivel(tagId, checked){
   if(!_isPOorOrg()) return;
@@ -15104,7 +15280,7 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','padroes'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); }
@@ -15120,7 +15296,10 @@ function swCfgTab(tab){
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
-  if(tab==='padroes') renderCardPatternsCfg();
+  if(tab==='padroes'){
+    const elDem=document.getElementById('cfg-demandante-ativo'); if(elDem) elDem.checked=demandanteAtivo;
+    renderCardPatternsCfg();
+  }
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
@@ -15968,7 +16147,7 @@ function agCtx(){
   const oldDoneCount = cards.filter(c=>!c.archived && c.col===doneCol.id && c.doneAt && new Date(c.doneAt).getTime()<cutoff).length;
   const snap=activeSnap.map(c=>{
     const cp=clProg(c.checklist);
-    return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'}${c.participants?.length?' participantes:'+c.participants.join(','): ''} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
+    return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'}${c.demandante?' demandante:'+c.demandante:''}${c.participants?.length?' participantes:'+c.participants.join(','): ''} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
   }).join('\n');
   const doneNote = oldDoneCount > 0 ? `\n[+${oldDoneCount} card(s) concluídos há mais de 7 dias omitidos do snapshot]` : '';
   return `Você é o Agente Ágil do time de ${_squadMeta.agentRole} da Digital Hering (Grupo Azzas 2154).
@@ -15998,6 +16177,7 @@ CAPACIDADES DO SISTEMA (Maré Digital v8.0):
 - Importação do Trello com mapeamento semântico de listas e labels
 - Histórico do agente com resumo de ações executadas (preservado entre mensagens)
 - Snapshot do board omite cards concluídos há mais de 7 dias (eficiência de tokens)
+- Demandante (campo opcional, por squad): quem SOLICITOU o card — separado do Responsável, que executa e pode mudar de mão ao longo do card (o demandante normalmente não muda)
 
 AÇÕES QUE POSSO EXECUTAR:
 - mover_card: mover card para outra coluna
@@ -17975,8 +18155,8 @@ function notifAssigned(newOwnerInit, cardId, cardTitle){
 
 // 3. Card desbloqueado
 function notifUnblocked(card){
-  // Notifica owner e participantes
-  const targets=[card.owner,...(card.participants||[])].filter(Boolean);
+  // Notifica owner, participantes e o demandante (se o squad usa o campo)
+  const targets=[card.owner,...(card.participants||[]),card.demandante].filter(Boolean);
   const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
   uids.forEach(uid=>{
     if(uid===window._currentUser?.uid) return;
@@ -17989,7 +18169,9 @@ function notifUnblocked(card){
 
 // 4. Card movido para Feito
 function notifDone(card){
-  const targets=[card.owner,...(card.participants||[])].filter(Boolean);
+  // Demandante entra aqui de propósito — é quem mais quer saber que o
+  // pedido dele foi concluído (pedido direto ao criar o campo Demandante).
+  const targets=[card.owner,...(card.participants||[]),card.demandante].filter(Boolean);
   const uids=[...new Set(targets.map(getUidByInit).filter(Boolean))];
   uids.forEach(uid=>{
     if(uid===window._currentUser?.uid) return;
