@@ -1033,6 +1033,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.318-dev — 2026-08-06
+Bugfix reportado direto: trocar de padrão de card "acumulava" seções
+escondidas (padrão A esconde Checklist, padrão B esconde Riscos →
+trocar de A pra B deixava os dois escondidos) e cards novos vinham com
+o último padrão aplicado em vez do padrão da squad. Causa: duas peças
+faltando desde a v8.30.314-dev —
+1. `_applyCardSectionsVisibility()` só ESCONDIA, nunca reexibia (fazia
+   sentido com 1 padrão fixo por squad; quebrou com padrão por card).
+2. `openNewCard()` nunca chamava essa função — o modal é o MESMO
+   elemento reaproveitado entre cards, então um card novo simplesmente
+   herdava o que tivesse ficado escondido do card anterior.
+Corrigido nos dois pontos (exceto Campos de criativo, que também
+depende do toggle "Ativar Ficha de Criativo" — esse continua só
+podendo esconder por cima, nunca forçar reabrir, senão vazaria com o
+toggle desligado).
+
 ### v8.30.317-dev — 2026-08-06
 Move o seletor "📐 Padrão de card" — pedido direto: em vez de ficar
 como campo próprio logo abaixo do título, agora fica compacto no
