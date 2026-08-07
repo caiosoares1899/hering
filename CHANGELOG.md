@@ -1033,6 +1033,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.316-dev — 2026-08-06
+Terceira e (esperamos) última parte do "usar modelo": a causa real do
+"clica e nada acontece" era mais básica que os dois bugs visuais já
+corrigidos — `aplicarModeloNoCard()` (botão "📥 Usar modelo" dentro do
+card) exigia `editingId`, mas um card **novo** só ganha `editingId`
+depois do 1º "Salvar" manual (`scheduleAutoSave()` nem roda antes
+disso). Ou seja: criar um card novo e usar o modelo **antes** de
+salvar saía da função sem fazer nada — nem toast. Agora funciona nos
+dois casos: com o card já salvo (como antes) ou ainda novo (aplica só
+no formulário em memória; salva quando a pessoa clicar em Salvar).
+
 ### v8.30.315-dev — 2026-08-06
 Segunda parte do fix de "usar modelo" — o feedback "clica e nada
 acontece" apontava pro botão **"+ Usar"** dentro do drawer ⚡ Funções de
