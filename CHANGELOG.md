@@ -18,6 +18,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.228 — 2026-08-07 · promove pra prod (PRs #240–#241)
+Promove pra produção o lote validado em dev (v8.30.332-dev a
+v8.30.333-dev):
+
+- 🖼️ **Otimização de bytes**: o favicon/logo/ícone do PWA estava
+  embutido como base64 em 4 lugares do HTML (~75KB repetidos,
+  re-baixados a cada atualização de versão). Extraído pra
+  `favicon.png`, cacheável separadamente. Adicionado `preconnect`
+  pros domínios de fonte/Firebase.
+- 🏷 **Automação "Remover tag"**: nova ação (espelha "Adicionar tag")
+  e novo gatilho "Tag removida do card" (espelha "Tag adicionada ao
+  card"), pedidos pelo time.
+- ❓ Skill de projeto `/otimizaçãoderotina` adicionada (não afeta o
+  board em si — é uma rotina reaproveitável pra sessões futuras de
+  desenvolvimento).
+
 ### v8.30.227 — 2026-08-07 · promove pra prod (PRs #234–#238)
 Promove pra produção o lote de Automações + ajustes de tema, validado
 em dev (v8.30.325-dev a v8.30.331-dev):
