@@ -4240,6 +4240,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swHelpTab('kudos')">⭐ Estrelas</div>
     <!-- Spotify pausado, ver comentário no botão #spotify-tab -->
     <div class="ag-tab" onclick="swHelpTab('agil')">Conceitos Ágeis</div>
+    <div class="ag-tab" onclick="swHelpTab('automacoes')">⚡ Automações</div>
   </div>
   <div style="padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px;" id="help-body">
   </div>
@@ -4922,7 +4923,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.325-dev</div>
+<div class="version">v8.30.326-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -17347,6 +17348,119 @@ const HELP_CONTENT = {
     { icon:'🎵', title:'Rádio do Maré (playlist colaborativa)', text:'Aba "🎵 Playlist" dentro do painel Spotify — uma playlist de verdade, uma pra empresa toda ("Geral") e uma por squad. Diferente do "Ouvindo agora", isso NÃO é ao vivo: é só uma playlist que qualquer pessoa pode abrir no próprio Spotify e ouvir no próprio ritmo, sem sincronia entre quem está ouvindo. Busque uma música e clique "+ Sugerir" pra adicionar direto na playlist — não precisa ter conectado o próprio Spotify pra sugerir, só estar logada no Maré. Entra direto, sem aprovação.' },
     { icon:'▶️', title:'Controlar a própria reprodução', text:'Na sua linha, os botões ▶️/⏸️ e ⏭️ tocam/pausam/pulam a faixa direto pelo painel, sem precisar abrir o Spotify. É só um atalho pra SUA reprodução — não afeta o que mais ninguém está ouvindo. Precisa de: (1) ter reconectado depois desse recurso existir (conexões antigas não têm a permissão nova — reconecte com "🔁 Trocar" se aparecer um aviso), (2) ter Spotify Premium, e (3) estar com o Spotify aberto em algum aparelho (celular, computador, alto-falante) — sem isso, o controle não tem onde tocar.' },
   ],
+  automacoes: [
+    { icon:'⚡', title:'O que é uma automação', text:`Uma automação é uma regra "QUANDO algo acontece → ENTÃO o card muda sozinho", sem ninguém precisar clicar. Cada regra tem até 3 partes:
+
+<div style="margin:8px 0;padding:10px 12px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.25);border-radius:10px;font-size:12px;line-height:2;">
+<div><b style="color:var(--accent);">QUANDO</b> — o gatilho, ex.: card movido para Concluído</div>
+<div><b style="color:#ffd166;">E</b> (opcional) — uma condição extra, ex.: a tag do card é "Campanha"</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> — uma ou mais ações, ex.: marcar como OKR + adicionar item de checklist</div>
+</div>
+
+Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda regra pode ser pausada a qualquer momento (sem precisar excluir) pelo interruptor ao lado dela na lista.` },
+    { icon:'📥', title:'Gatilhos — o que faz a regra disparar (QUANDO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
+<div>📥 <b>Card mudou para a coluna X</b></div>
+<div>✨ <b>Card foi criado na coluna X</b></div>
+<div>🔴 <b>Prioridade virou Crítica</b></div>
+<div>📅 <b>Card vence hoje</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
+<div>⏰ <b>Card atrasado (1º dia)</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
+<div>🔥 <b>WIP excedeu o limite</b></div>
+<div>☑️ <b>Checklist chegou a 100%</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>⚠️ <b>Risco adicionado ao card</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🚧 <b>Card foi bloqueado</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🔓 <b>Card foi desbloqueado</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>💤 <b>Card parado há muito tempo sem editar</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+</div>
+
+"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia (mesmo horário em que o sino de prazo já avisa o responsável). "Card parado há muito tempo" dispara 1x, exatamente no dia em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
+    { icon:'🎬', title:'Ações — o que a regra faz sozinha (ENTÃO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
+<div>📦 <b>Mover card para coluna</b></div>
+<div>🔴 <b>Definir prioridade</b></div>
+<div>🏷 <b>Adicionar tag</b></div>
+<div>👤 <b>Atribuir responsável</b></div>
+<div>🏷️ <b>Definir submarca</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Submarca</span></div>
+<div>👕 <b>Definir tamanho</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Tamanho</span></div>
+<div>📢 <b>Definir demandante</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Demandante</span></div>
+<div>📐 <b>Definir padrão de card</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Padrão criado</span></div>
+<div>🎨 <b>Definir capa de cor</b></div>
+<div>🎯 <b>Marcar como OKR</b></div>
+<div>☑️ <b>Adicionar item de checklist</b> <span style="font-size:10px;color:var(--txt3);">— pede um texto livre, ex.: "Revisar com o time"</span></div>
+<div>🤖 <b>Notificar Agente Ágil</b> <span style="font-size:10px;color:var(--txt3);">— só aparece quando o Agente Ágil estiver ativo</span></div>
+</div>
+
+Todas as ações marcadas "só aparece se..." ficam escondidas do dropdown pra quem não usa aquele recurso — não polui a lista de quem não precisa. Se o recurso for ativado depois, a ação aparece sozinha, sem precisar recriar nada.` },
+    { icon:'🧩', title:'Condição extra e múltiplas ações numa regra', text:`<b>Condição extra (E, opcional)</b> — restringe a regra a cards com uma tag específica:
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid var(--accent);border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card é movido para "Concluído"</div>
+<div><b style="color:#ffd166;">E</b> a tag do card é "Campanha"</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> marcar como OKR</div>
+</div>
+
+Sem a condição, TODO card movido pra Concluído seria marcado como OKR — com ela, só os de campanha.
+
+<b>Múltiplas ações</b> — empilhe quantas quiser antes de salvar: escolha a ação → clique "+ Ação" (vira um chip removível com ✕) → escolha a próxima → "+ Ação" de novo → e assim por diante. Só clique em "+ Adicionar regra" no final.
+
+Se você esquecer de clicar "+ Ação" e for direto em "Adicionar regra", sem problema: a ação que estava selecionada na hora vira a única da regra, do jeito simples de sempre.
+
+Regras que você já tinha criado antes continuam funcionando sem precisar recriar — o sistema lê o formato antigo automaticamente.` },
+    { icon:'📖', title:'Receitas prontas (exemplos)', text:`Alguns exemplos reais pra copiar a ideia e adaptar pro seu squad:
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #3ddc97;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card é movido para "Concluído"</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> marcar como OKR <b>+</b> adicionar item de checklist "Avisar cliente"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #ff6b6b;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card vence hoje</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir capa de cor (vermelho)</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #ffd166;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card foi bloqueado</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir prioridade Crítica</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #38b6ff;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> risco é adicionado ao card</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir prioridade Crítica <b>+</b> adicionar tag "Atenção"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #3ddc97;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> checklist chegou a 100%</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> mover card para "Revisão"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #b28dff;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card criado em "Solicitações"</div>
+<div><b style="color:#ffd166;">E</b> a tag do card é "Urgente"</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir prioridade Crítica <b>+</b> atribuir responsável</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #8d99ff;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> card parado há muito tempo sem editar</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> adicionar tag "Esquecido?"</div>
+</div>` },
+    { icon:'❓', title:'Dúvidas frequentes (Q&A)', text:`<div style="display:flex;flex-direction:column;gap:12px;">
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Preciso recriar minhas regras antigas com o novo formato?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Não. O sistema reconhece o formato antigo automaticamente — suas regras continuam disparando do jeito que já disparavam.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Por que "Notificar Agente Ágil" não aparece no dropdown de ações?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Porque o Agente Ágil está temporariamente desativado no board. A opção reaparece sozinha, sem precisar mexer em nada, se ele for reativado.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Por que não vejo "Definir submarca/tamanho/demandante" na lista de ações?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Essas ações só aparecem se o squad tiver ativado aquele campo em Configurações. Ative o recurso primeiro e a ação aparece sozinha, sem precisar recriar regras.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Posso ter mais de uma ação na mesma regra?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Sim. Escolha a ação, clique "+ Ação" (vira um chip), escolha a próxima e repita. Se esquecer de clicar "+ Ação" e for direto em "Adicionar regra", a ação selecionada na hora vira a única da regra — nada trava.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Criei uma regra com "Card vence hoje" mas ela não disparou. O que fazer?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Esse gatilho (e "Card atrasado") roda 1x por dia, não na hora exata — o check acontece alguns segundos depois de abrir/recarregar o board. Se já rodou hoje nesse navegador, só dispara de novo amanhã.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Dá pra combinar mais de uma condição (E) na mesma regra?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Por enquanto só uma condição extra por regra, e só por tag. Combine com múltiplas ações pra cobrir cenários mais ricos.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Como eu pauso uma regra sem apagar ela?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Na lista de regras em Config → Auto tem um interruptor ao lado de cada uma — desliga sem perder a configuração.</div></div>
+
+<div><div style="font-weight:700;color:var(--accent);font-size:12px;margin-bottom:3px;">P: Uma automação pode mover o card pra uma coluna que eu já excluí?</div><div style="font-size:12px;color:var(--txt2);line-height:1.6;">R: Não — o dropdown só mostra as colunas que existem no board hoje.</div></div>
+
+</div>` },
+  ],
 }
 let _helpTab = 'board';
 
@@ -17366,7 +17480,7 @@ function openHelp(tab, searchTerm){
 
 function swHelpTab(tab){
   _helpTab = tab;
-  const TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil'];
+  const TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil','automacoes'];
   document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i) => t.classList.toggle('on', TABS[i]===tab));
   renderHelp();
 }
@@ -17385,7 +17499,7 @@ function renderHelp(){
   if(searching){
     // Busca em todas as seções
     if(tabs) tabs.style.opacity = '.45';
-    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil'];
+    const ALL_TABS = ['board','cards','agente','config','comunicacao','kudos','spotify','agil','automacoes'];
     ALL_TABS.forEach(t => { (HELP_CONTENT[t]||[]).forEach(item => items.push({...item, _tab:t})); });
     items = items.filter(item =>
       item.title.toLowerCase().includes(query) ||
@@ -17414,7 +17528,7 @@ function renderHelp(){
 
   body.innerHTML = items.map(item => `
     <div style="background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:var(--r);padding:13px 14px;">
-      ${searching && item._tab ? `<div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-weight:600;">${{board:'Board',cards:'Cards',agente:'Agente Ágil',config:'Configurações',comunicacao:'Comunicação',kudos:'Estrelas',agil:'Conceitos Ágeis'}[item._tab]||item._tab}</div>` : ''}
+      ${searching && item._tab ? `<div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-weight:600;">${{board:'Board',cards:'Cards',agente:'Agente Ágil',config:'Configurações',comunicacao:'Comunicação',kudos:'Estrelas',agil:'Conceitos Ágeis',automacoes:'⚡ Automações'}[item._tab]||item._tab}</div>` : ''}
       <div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--txt);margin-bottom:6px;">${hl(item.icon+' '+item.title)}</div>
       <div style="font-size:12px;color:var(--txt2);line-height:1.7;white-space:pre-line;">${hl(item.text)}</div>
     </div>
