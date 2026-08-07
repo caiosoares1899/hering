@@ -1098,6 +1098,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.327-dev — 2026-08-07
+Bugfix reportado depois de testar as 5 automações da v8.30.325-dev: só
+a de "Card foi marcado como impedido" disparou.
+
+- 🐛 **"Prioridade definida como crítica" era um trigger morto** — igual
+  ao bug do `due_today`/`due_overdue` corrigido na v8.30.325-dev, mas
+  não pego na hora: prioridade só é gravada no card pelo botão Salvar
+  manual do modal (não tem autosave, ver `_manualFieldsNow()`), e o
+  `runAutoRules()` chamado nesse ponto dispara com o evento genérico
+  `'edit'`/`'create'` — que nenhum trigger escuta. Resultado: essa
+  automação nunca disparava de verdade em lugar nenhum. Corrigido
+  disparando explicitamente `runAutoRules('priority', ...)` sempre que
+  a prioridade vira Crítica, nos 3 lugares onde ela pode ser definida:
+  botão Salvar do card (criação e edição), "Definir prioridade" do
+  menu de contexto (clique direito no card) e a edição inline na
+  tabela de 🎬 Controle de Criativos. Guarda contra prioridade que já
+  estava Crítica (evita disparar de novo a cada edição não relacionada
+  e duplicar ações não-idempotentes, como "Adicionar item de
+  checklist").
+- As outras 3 regras que não dispararam no teste (2x "Card vence hoje",
+  1x "Card movido para coluna") não tinham bug de código — "Card vence
+  hoje"/"Card atrasado" já eram, por design, checados só 1x por dia por
+  navegador (mesmo horário do aviso de prazo); se a regra foi criada
+  depois desse horário já ter passado no dia, só entra em ação amanhã.
+  "Card movido para coluna" só dispara num movimento de verdade
+  *depois* da regra ficar ativa — não retroage pra cards que já
+  estavam parados na coluna antes da regra existir.
+- Ajustada a aba ⚡ Automações da Central de Ajuda (adicionada na
+  v8.30.326-dev) pra refletir a correção: selo "CORRIGIDO" no gatilho
+  "Prioridade virou Crítica" e nota explicando o timing de 1x/dia dos
+  gatilhos de prazo.
+
 ### v8.30.326-dev — 2026-08-07
 Nova aba **⚡ Automações** na Central de Ajuda (❓, dentro do board),
 dedicada ao recurso revisado na v8.30.325-dev — pedida pra ensinar o

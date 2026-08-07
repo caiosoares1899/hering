@@ -4923,7 +4923,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.326-dev</div>
+<div class="version">v8.30.327-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9830,6 +9830,12 @@ function saveCard(){
     _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
+    // Trigger "Prioridade definida como crítica" (Automações) — prioridade só é
+    // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
+    // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)
+    // logo abaixo dispara com eventType 'edit', que nenhum trigger escuta — sem
+    // esta chamada dedicada, "priority_set" nunca disparava de verdade.
+    if(c.priority==='critical' && _histBefore.priority!=='critical') runAutoRules('priority', c.id);
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
@@ -9847,6 +9853,7 @@ function saveCard(){
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
     _pendingCoverColor=null;
+    if(_newCard.priority==='critical') runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
   }
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
@@ -10854,6 +10861,7 @@ function _crvEditCell(td, cardId, field){
     saveUndo('editar controle de criativos');
     const who=(window._currentUser && (window._currentUser.displayName||window._currentUser.email)) || 'Usuário';
     const td2=new Date().toISOString().split('T')[0];
+    const _prevPriorityCrv=card.priority;
     if(field==='due'){ card.due=newVal||null; }
     else if(field==='priority'){ card.priority=newVal||''; }
     else { const c2=Object.assign({},card.criativo||{}); c2[field]=newVal; card.criativo=c2; }
@@ -10861,6 +10869,7 @@ function _crvEditCell(td, cardId, field){
     fbSaveCard(card);
     renderBoard();
     renderCriativosTable();
+    if(field==='priority' && card.priority==='critical' && _prevPriorityCrv!=='critical') runAutoRules('priority', card.id); // ver comentário no saveCard()
   };
   if(field==='vinculo'){
     const boardCards=cards.filter(c=>!c.archived);
@@ -17361,7 +17370,7 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
     { icon:'📥', title:'Gatilhos — o que faz a regra disparar (QUANDO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
 <div>📥 <b>Card mudou para a coluna X</b></div>
 <div>✨ <b>Card foi criado na coluna X</b></div>
-<div>🔴 <b>Prioridade virou Crítica</b></div>
+<div>🔴 <b>Prioridade virou Crítica</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>📅 <b>Card vence hoje</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>⏰ <b>Card atrasado (1º dia)</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>🔥 <b>WIP excedeu o limite</b></div>
@@ -17372,7 +17381,7 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
 <div>💤 <b>Card parado há muito tempo sem editar</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 </div>
 
-"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia (mesmo horário em que o sino de prazo já avisa o responsável). "Card parado há muito tempo" dispara 1x, exatamente no dia em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
+"Card vence hoje" e "Card atrasado" existiam antes, mas por um bug nunca disparavam de verdade — foi corrigido, agora disparam 1x/dia (mesmo horário em que o sino de prazo já avisa o responsável). Como é 1x/dia, se você criar a regra depois desse horário já ter passado hoje, ela só entra em ação amanhã. "Prioridade virou Crítica" também tinha um bug parecido — nunca disparava de verdade ao salvar o card, foi corrigido, agora dispara na hora (não é 1x/dia como os outros dois). "Card parado há muito tempo" dispara 1x, exatamente no dia em que o card completa 1 sprint (ver Config → Ágil) sem ser editado — não fica repetindo o aviso todo dia.` },
     { icon:'🎬', title:'Ações — o que a regra faz sozinha (ENTÃO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
 <div>📦 <b>Mover card para coluna</b></div>
 <div>🔴 <b>Definir prioridade</b></div>
@@ -20844,12 +20853,14 @@ function ctxBlock(){ ctxMove('blocker'); }
 
 function ctxSetPriority(p){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  const _prevPriority=card.priority;
   card.priority=p;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveCard(card);
+  if(p==='critical' && _prevPriority!=='critical') runAutoRules('priority', card.id); // ver comentário no saveCard()
   showToast(p ? `Prioridade ${p} definida` : 'Prioridade removida');
   hideCtxMenu();
 }
