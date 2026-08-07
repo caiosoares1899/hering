@@ -1033,6 +1033,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.313-dev — 2026-08-06
+Quatro pedidos diretos neste lote:
+
+- **Vincular nota ↔ card no sentido contrário**: antes só dava pra vincular de dentro da nota; agora o card também tem "+ Vincular nota" em 🔗 Vínculos & anexos, com busca por título (suas notas + as da squad) e chip com ✕ pra desvincular dali mesmo.
+- **Descrição x Insights do PO rebalanceados**: feedback direto — "Insights do PO" (campo opcional do PO) chamava mais atenção visual que a Descrição (campo principal do card). A caixa colorida do PO virou neutra e ganhou "(opcional)" no rótulo; a Descrição ganhou um destaque sutil (fundo/borda um pouco mais fortes) condizente com ser o campo principal.
+- **"Padrões de card" (nova aba em Configurações)**: organizador/PO agora escolhe quais seções opcionais do modal do card ficam visíveis pra squad inteira — Insights do PO, Descrições adicionais, Participantes, Checklist, Riscos, Campos de criativo, Milanote, Anexos, Notas vinculadas e Comentários. Campos estruturais (título, tag, coluna, responsável, prazo, descrição) não entram — sempre visíveis. Config squad-wide, aplica pra todo mundo.
+- **Notificação de prazo revista**: pedido direto — trocado o aviso "amanhã" (véspera) por um só no dia do prazo + um no dia seguinte (1º dia atrasado), sem repetir todo dia enquanto seguir atrasado.
+
 ### v8.30.312-dev — 2026-08-06
 Listas de usuários em ordem alfabética (antes seguiam a ordem crua do
 Firebase, basicamente aleatória). Corrigido no ponto único de origem

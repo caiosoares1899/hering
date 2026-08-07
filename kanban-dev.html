@@ -588,8 +588,18 @@ input[type="date"]{-moz-appearance:textfield;}
 .fi:focus{outline:none;border-color:var(--accent);}
 .fi-ta{resize:vertical;min-height:56px;line-height:1.5;width:100%;box-sizing:border-box;}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.po-box{background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:10px;}
-.po-lbl{font-size:9px;color:#7eb3ff;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.po-box{background:rgba(var(--surface2-rgb),.35);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
+.po-lbl{font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.po-lbl-opt{font-weight:400;text-transform:none;letter-spacing:0;opacity:.75;}
+/* Descrição é o campo principal do card — antes tinha praticamente o
+   mesmo peso visual do Insights do PO (opcional), o que fazia o PO
+   "chamar mais atenção" segundo feedback direto. Reforça só aqui (via
+   #desc-field, não .eoc-display genérico — Comentários continuam
+   discretos) sem duplicar toda a regra de base. */
+#desc-field .eoc-display{background:rgba(56,182,255,.09);border-color:rgba(56,182,255,.22);}
+#desc-field .eoc-display:hover{background:rgba(56,182,255,.14);border-color:rgba(56,182,255,.34);}
+#desc-field .eoc-textarea{border-color:rgba(56,182,255,.45);}
+#desc-field > .fl{font-size:11px;color:var(--accent);}
 .po-ta{width:100%;background:transparent;border:none;color:var(--txt);font-family:"DM Sans",sans-serif;font-size:12px;line-height:1.6;resize:none;min-height:56px;}
 .po-ta:focus{outline:none;}
 .cl-sec{background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
@@ -3177,7 +3187,7 @@ input[type="date"]{-moz-appearance:textfield;}
             </select>
           </div>
         </div>
-        <div class="field">
+        <div class="field" id="m-participantes-field">
           <label class="fl">Participantes</label>
           <div class="part-list" id="m-participants"></div>
           <div style="display:flex;gap:5px;">
@@ -3191,7 +3201,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
       <!-- Coluna direita: checklist + riscos + links -->
       <div class="modal-col">
-        <div class="cl-sec">
+        <div class="cl-sec" id="m-checklist-sec">
           <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div><button type="button" class="cl-copy-all" onclick="copyAllChecklist()" title="Copiar todos os itens do checklist">📋</button></div>
           <div id="m-agent-sim" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.28);border-radius:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -3209,7 +3219,7 @@ input[type="date"]{-moz-appearance:textfield;}
             <button class="btn btn-sm" onclick="doUndo()" title="Desfazer última ação (Ctrl+Z)" style="padding:4px 8px;font-size:13px;color:rgba(150,200,240,.5);border-color:rgba(56,182,255,.2);border-radius:var(--r);">↩</button>
           </div>
         </div>
-        <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
+        <div class="cl-sec" id="m-riscos-sec" style="border-color:rgba(255,209,102,.25);">
           <div class="cl-hd-row"><div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div></div>
           <div class="cl-items" id="m-riscos"></div>
           <div class="cl-add-r">
@@ -3328,8 +3338,8 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
 
     <!-- Insights do PO full-width -->
-    <div class="po-box">
-      <div class="po-lbl">🎯 Insights do PO</div>
+    <div class="po-box" id="m-po-box">
+      <div class="po-lbl">🎯 Insights do PO <span class="po-lbl-opt">(opcional)</span></div>
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..." oninput="scheduleAutoSave()" onblur="if(editingId)parseMentions(this.value,editingId)"></textarea></div>
     </div>
     </div><!-- /m-sec-conteudo -->
@@ -3377,10 +3387,18 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div>
 
-    <!-- Notas vinculadas (vínculo criado do lado da nota, em Notas) -->
+    <!-- Notas vinculadas -->
     <div class="attach-wrap" id="m-notas-vinc-attach-wrap">
       <div class="attach-hd">
         <span class="attach-lbl">📝 Notas vinculadas</span>
+        <button class="attach-add-btn" onclick="toggleCardNotaLinkSearch()">+ Vincular nota</button>
+      </div>
+      <div id="m-notas-link-search-wrap" style="display:none;margin-bottom:8px;">
+        <div class="link-search notas-card-link-search">
+          <input id="m-notas-link-search-inp" class="link-search-input" placeholder="Buscar nota pelo título (suas e da squad)..."
+            oninput="cardSearchNotas(this.value)" onkeydown="if(event.key==='Escape'){this.value='';hideCardNotaLinkDropdown();}">
+          <div class="link-dropdown" id="m-notas-link-dropdown"></div>
+        </div>
       </div>
       <div id="m-notas-vinc-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">
         <div style="font-size:10px;color:var(--txt3);">Nenhuma nota vinculada a este card.</div>
@@ -3548,6 +3566,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
+    <div class="ag-tab" onclick="swCfgTab('padroes')">📐 Padrões de card</div>
   </div>
   <div class="cfg-body">
 
@@ -3647,6 +3666,14 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="crv-listas-cfg-body" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
         <button class="btn btn-sm" onclick="_criativosListaNova()" style="color:#ffb3d9;border-color:rgba(255,179,217,.35);">+ Nova lista</button>
       </div>
+    </div>
+    <!-- ABA PADRÕES DE CARD -->
+    <div class="tab-c" id="cfgtab-padroes">
+      <div class="cfg-sec-title">📐 Padrões de card</div>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Escolha quais seções <b>opcionais</b> aparecem no modal do card pra squad inteira. Campos estruturais (título, tag, coluna, responsável, prazo, descrição) sempre ficam visíveis — aqui é só o que for dispensável pro seu time (ex.: Insights do PO, Comentários).
+      </p>
+      <div id="padroes-cfg-list" style="display:flex;flex-direction:column;gap:2px;"></div>
     </div>
     <div class="tab-c" id="cfgtab-usuarios">
       <div class="usr-view-toggle">
@@ -4828,7 +4855,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.312-dev</div>
+<div class="version">v8.30.313-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5311,6 +5338,38 @@ let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
 let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
+// "Padrões de card": organizador/PO escolhe quais seções OPCIONAIS do
+// modal do card ficam visíveis pra squad inteira (ex.: time que não usa
+// Insights do PO ou não quer Comentários visíveis). Objeto {chave:false}
+// — chave AUSENTE = visível (mantém o comportamento atual pra squads que
+// nunca mexeram nisso, sem precisar escrever um "tudo true" gigante).
+// Campos "core" (título, tag, coluna, responsável, prazo, descrição) não
+// entram aqui de propósito — são estruturais, não just "opcionais".
+let cardSectionsCfg={};
+const CARD_SECTIONS=[
+  {key:'po', id:'m-po-box', label:'🎯 Insights do PO'},
+  {key:'descsExtra', id:'extra-descs-field', label:'📝 Descrições adicionais'},
+  {key:'participantes', id:'m-participantes-field', label:'👥 Participantes'},
+  {key:'checklist', id:'m-checklist-sec', label:'☑ Checklist'},
+  {key:'riscos', id:'m-riscos-sec', label:'⚠ Riscos'},
+  {key:'criativo', id:'m-criativo-sec', label:'🎬 Campos de produção criativa'},
+  {key:'milanote', id:'m-milanote-wrap', label:'📌 Peça no Milanote'},
+  {key:'anexos', id:'m-attach-wrap', label:'🔗 Anexos e links'},
+  {key:'notasVinculadas', id:'m-notas-vinc-attach-wrap', label:'📝 Notas vinculadas'},
+  {key:'comentarios', id:'m-comments-wrap', label:'💬 Comentários e atividade'},
+];
+function _cardSectionVisible(key){ return cardSectionsCfg[key]!==false; }
+// Só ESCONDE (nunca força reabrir) — roda por último em openCard(), depois
+// de toda lógica normal de visibilidade por card já ter rodado (ex.:
+// m-criativo-sec segue criativosAtivo independente disto). Como a config é
+// por squad (não por card), não existe cenário de "reabrir no próximo
+// card" — se está desligado, fica desligado até alguém reconfigurar.
+function _applyCardSectionsVisibility(){
+  CARD_SECTIONS.forEach(s=>{
+    if(_cardSectionVisible(s.key)) return;
+    const el=document.getElementById(s.id); if(el) el.style.display='none';
+  });
+}
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 // Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
 // não é dado do board (cada pessoa pode preferir ver diferente).
@@ -7320,6 +7379,12 @@ let _cardsSyncDebounce = null;
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
   });
+  // Padrões de card (quais seções opcionais do modal ficam visíveis pra squad)
+  fbListen(FB+'/config/cardSections',val=>{
+    cardSectionsCfg = (val && typeof val==='object') ? val : {};
+    if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderCardSectionsCfg();
+  });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
     fbListen(FB+'/agent_msgs/'+tab,val=>{
@@ -9241,6 +9306,7 @@ function openCard(id){
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
   renderDependsBar(c);
+  _applyCardSectionsVisibility();
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
@@ -11868,19 +11934,23 @@ document.addEventListener('click', e=>{
 });
 
 // Lado do card: mostra quais notas (squad + pessoais do usuário atual)
-// referenciam este card. Se o listener das Notas ainda não foi ligado
-// nesta sessão (drawer nunca aberto), NÃO puxa nada sozinho — mesmo
-// princípio de "só carrega quando o usuário estiver usando" já usado
+// referenciam este card, e permite vincular no sentido contrário (antes só
+// dava pra vincular de dentro da nota). Se o listener das Notas ainda não
+// foi ligado nesta sessão (drawer nunca aberto), NÃO puxa nada sozinho —
+// mesmo princípio de "só carrega quando o usuário estiver usando" já usado
 // pro resto de Notas: mostra um botão, e o fetch (get() avulso, sem
-// listener persistente) só roda se a pessoa clicar.
+// listener persistente) só roda se a pessoa clicar (ou usar a busca).
 function renderNotasVinculadasNoCard(card){
+  const searchWrap=document.getElementById('m-notas-link-search-wrap');
+  if(searchWrap) searchWrap.style.display='none';
+  const inp=document.getElementById('m-notas-link-search-inp'); if(inp) inp.value='';
+  hideCardNotaLinkDropdown();
   const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
   if(_notasLoaded){ _paintNotasVinculadas(card.id); return; }
   wrap.innerHTML='<button class="btn btn-sm" onclick="_checkNotasVinculadas(\''+card.id+'\')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">🔗 Ver notas vinculadas a este card</button>';
 }
-async function _checkNotasVinculadas(cardId){
-  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
-  wrap.innerHTML='<div style="font-size:10px;color:var(--txt3);">Carregando...</div>';
+async function _ensureNotasDataForCard(){
+  if(_notasLoaded) return;
   const uid=window._currentUser?.uid;
   const [squadSnap, pessoalSnap] = await Promise.all([
     window._get(window._ref(window._db, FB+'/notas')),
@@ -11890,6 +11960,11 @@ async function _checkNotasVinculadas(cardId){
     _notasSquad = squadSnap?.val()||{};
     _notasPessoais = pessoalSnap?.val()||{};
   }
+}
+async function _checkNotasVinculadas(cardId){
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  wrap.innerHTML='<div style="font-size:10px;color:var(--txt3);">Carregando...</div>';
+  await _ensureNotasDataForCard();
   _paintNotasVinculadas(cardId);
 }
 function _paintNotasVinculadas(cardId){
@@ -11902,9 +11977,78 @@ function _paintNotasVinculadas(cardId){
     '<div class="linked-chip" onclick="abrirNotaVinculada(\''+n.id+'\',\''+n._scope+'\')">'
     + '<span class="linked-chip-col">'+(n._scope==='squad'?'👥 Squad':'🐠 Pessoal')+'</span>'
     + '<span class="linked-chip-title">📝 '+esc(n.titulo||'Sem título')+'</span>'
+    + '<button class="nota-chip-rm" title="Desvincular" onclick="event.stopPropagation();cardRemoveNotaLink(\''+n.id+'\',\''+n._scope+'\')">✕</button>'
     + '</div>'
   ).join('');
 }
+// Caminho Firebase de uma nota específica, dado seu escopo — usado só pelo
+// lado do card (que não tem uma "nota aberta" como _notasBasePath() assume).
+function _notaPathForScope(scope, notaId){
+  const uid=window._currentUser?.uid;
+  return (scope==='squad' ? (FB+'/notas') : (FB+'/notas_pessoais/'+uid)) + '/' + notaId;
+}
+async function toggleCardNotaLinkSearch(){
+  const wrap=document.getElementById('m-notas-link-search-wrap'); if(!wrap) return;
+  const opening = wrap.style.display==='none' || !wrap.style.display;
+  if(!opening){ wrap.style.display='none'; hideCardNotaLinkDropdown(); return; }
+  if(!_notasLoaded) await _ensureNotasDataForCard();
+  _paintNotasVinculadas(editingId); // troca o botão "Ver notas vinculadas" pelo conteúdo real, se ainda não tinha carregado
+  wrap.style.display='block';
+  document.getElementById('m-notas-link-search-inp')?.focus();
+}
+// Busca só por título (mesmo padrão da busca "vincular card" já usada em
+// Notas) — cruza notas da squad + pessoais do usuário atual, excluindo as
+// que já estão vinculadas a este card.
+function cardSearchNotas(q){
+  const dd=document.getElementById('m-notas-link-dropdown'); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const cardId=editingId; if(!cardId) return;
+  const lower=q.toLowerCase();
+  const squadList=Object.values(_notasSquad||{}).filter(n=>n&&!(n.cardIds&&n.cardIds[cardId])).map(n=>({...n,_scope:'squad'}));
+  const pessoalList=Object.values(_notasPessoais||{}).filter(n=>n&&!(n.cardIds&&n.cardIds[cardId])).map(n=>({...n,_scope:'pessoal'}));
+  const results=[...squadList,...pessoalList].filter(n=>(n.titulo||'').toLowerCase().includes(lower)).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhuma nota encontrada.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML='';
+  results.forEach(n=>{
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+(n._scope==='squad'?'👥 Squad':'🐠 Pessoal')+'</span><span style="flex:1;color:var(--txt);">'+esc(n.titulo||'Sem título')+'</span>';
+    opt.onclick=()=>cardAddNotaLink(n.id, n._scope);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+async function cardAddNotaLink(notaId, scope){
+  const cardId=editingId; if(!cardId) return;
+  await window._update(window._ref(window._db), {
+    [_notaPathForScope(scope,notaId)+'/cardIds/'+cardId]: true,
+    [_notaPathForScope(scope,notaId)+'/atualizadoEm']: new Date().toISOString(),
+  });
+  // Atualiza o cache local na hora (sem esperar o próximo listener/get) pra
+  // o chip aparecer de imediato.
+  const store = scope==='squad' ? _notasSquad : _notasPessoais;
+  if(store[notaId]){ store[notaId].cardIds = store[notaId].cardIds||{}; store[notaId].cardIds[cardId]=true; }
+  const inp=document.getElementById('m-notas-link-search-inp'); if(inp) inp.value='';
+  hideCardNotaLinkDropdown();
+  _paintNotasVinculadas(cardId);
+}
+async function cardRemoveNotaLink(notaId, scope){
+  const cardId=editingId; if(!cardId) return;
+  await window._update(window._ref(window._db), {
+    [_notaPathForScope(scope,notaId)+'/cardIds/'+cardId]: null,
+    [_notaPathForScope(scope,notaId)+'/atualizadoEm']: new Date().toISOString(),
+  });
+  const store = scope==='squad' ? _notasSquad : _notasPessoais;
+  if(store[notaId]?.cardIds) delete store[notaId].cardIds[cardId];
+  _paintNotasVinculadas(cardId);
+}
+function hideCardNotaLinkDropdown(){ document.getElementById('m-notas-link-dropdown')?.classList.remove('show'); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.notas-card-link-search')) hideCardNotaLinkDropdown();
+});
 // Abre a nota vinculada a partir do card (fecha o modal do card, abre o
 // drawer de Notas já na nota certa). Reaproveita _attachNotasListeners()
 // (idempotente — no-op se já ligado) em vez de duplicar a lógica de
@@ -14917,7 +15061,7 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','padroes'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); }
@@ -14933,6 +15077,7 @@ function swCfgTab(tab){
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
+  if(tab==='padroes') renderCardSectionsCfg();
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
@@ -15435,6 +15580,23 @@ async function resetFluxoCfg(){
   renderBoard(); // 🔧 aplica na hora
   renderFluxoCfg();
   showToast('↺ Voltou para a detecção automática.');
+}
+function renderCardSectionsCfg(){
+  const box=document.getElementById('padroes-cfg-list'); if(!box) return;
+  box.innerHTML = CARD_SECTIONS.map(s=>
+    `<label class="reqf-row">
+      <input type="checkbox" ${_cardSectionVisible(s.key)?'checked':''} onchange="toggleCardSection('${s.key}',this.checked)">
+      ${esc(s.label)}
+    </label>`
+  ).join('');
+}
+function toggleCardSection(key, visible){
+  const next={...cardSectionsCfg};
+  if(visible) delete next[key]; else next[key]=false; // ausente = visível (default), evita objeto crescendo à toa
+  cardSectionsCfg=next;
+  fbSet(FB+'/config/cardSections', cardSectionsCfg);
+  if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
+  showToast(visible ? '👁 Seção reativada pra squad inteira' : '🙈 Seção desativada pra squad inteira');
 }
 function renderSubteamEditor(){
   const box=document.getElementById('subteam-editor'); if(!box) return;
@@ -17200,6 +17362,7 @@ const NOTIF_ICONS = {
   unblocked:  '✅',
   due_today:  '📅',
   due_soon:   '⏰',
+  due_overdue: '🔴',
   done:       '🏁',
   risk:       '⚠️',
   checklist:  '☑️',
@@ -17776,20 +17939,25 @@ function notifChecklistDone(card){
     card.id);
 }
 
-// 7. Prazo vencendo — roda 1x/dia via localStorage
+// 7. Prazo — roda 1x/dia via localStorage. Pedido direto: só 2 avisos por
+// card, não um trecho inteiro de dias "próximo do prazo" — no DIA do prazo
+// (due_today) e no dia seguinte, se ninguém resolveu (due_overdue, 1º dia
+// atrasado). Como isso roda 1x/dia e a comparação é "due === ontem" (não
+// "due <= ontem"), due_overdue dispara só nesse 1º dia — não repete todo
+// dia enquanto o card seguir atrasado.
 function checkDueNotifs(){
   const today=new Date().toISOString().split('T')[0];
   const lastCheck=safeLS.getItem('lastDueCheck_'+ACTIVE_SQUAD);
   if(lastCheck===today) return;
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
-  const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomorrowStr=tomorrow.toISOString().split('T')[0];
+  const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
+  const ontemStr=ontem.toISOString().split('T')[0];
   cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
     const uid=getUidByInit(card.owner); if(!uid) return;
     if(card.due===today){
       createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
-    } else if(card.due===tomorrowStr){
-      createNotif(uid,'due_soon','Prazo amanhã',card.title?.substring(0,60),card.id);
+    } else if(card.due===ontemStr){
+      createNotif(uid,'due_overdue','Prazo atrasado! 🔴',card.title?.substring(0,60),card.id);
     }
   });
 }
