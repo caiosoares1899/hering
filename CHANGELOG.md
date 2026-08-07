@@ -1067,6 +1067,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.320-dev — 2026-08-06
+Fix de legibilidade no tema claro: os botões da toolbar (❓ Ajuda, ⚡
+Funções de card, 🔗 Links, ⛓ Dependências, 📅 Calendários, 📊 Dados do
+Board, 📣 Campanhas, 🎬 Controle de Criativos) usam cor de texto
+diferenciada pra se destacar no fundo escuro (roxo/teal/rosa claros) —
+no tema claro essas mesmas cores pálidas ficavam com contraste ruim
+contra o fundo azul claro. Forçados de volta pro texto escuro padrão
+só no tema claro. O badge de pendência do Google Calendar fica de fora
+(usa laranja como sinalização de estado, não só estética, e já tem
+contraste melhor).
+
 ### v8.30.319-dev — 2026-08-06
 Rodada de 4 pedidos diretos:
 

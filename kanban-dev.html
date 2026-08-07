@@ -206,6 +206,19 @@
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
   filter:saturate(1.3) brightness(0.9) contrast(1.05);
 }
+/* Botões da toolbar (Ajuda, Funções de card, Links, Dependências,
+   Calendários, Dados do Board, Campanhas, Controle de Criativos) usam
+   `color` inline pra se diferenciar no escuro (roxo/teal/rosa claros,
+   que pulam bem num fundo escuro) — no claro, essas mesmas cores pálidas
+   ficam quase ilegíveis contra o fundo azul claro. Força de volta pro
+   texto escuro padrão (--txt) só no tema claro; !important necessário
+   pra vencer o `style="color:..."` inline. Fica de fora o badge de
+   pendência do Google Calendar (id próprio) — aquele usa --warn como
+   sinalização de estado, não só diferenciação visual, e already tem
+   contraste melhor (laranja) que os tons pastel dos outros. */
+[data-theme="light"] .toolbar > button.btn:not(#gcal-pending-badge-btn){
+  color:var(--txt)!important;
+}
 /* No escuro, o card se destaca da coluna por brilho/contraste de borda —
    no claro esse mesmo truque não funciona (os dois ficam claros demais
    perto um do outro), faltava a pista de profundidade que o olho espera
@@ -4882,7 +4895,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.319-dev</div>
+<div class="version">v8.30.320-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
