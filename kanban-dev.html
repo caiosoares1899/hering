@@ -175,19 +175,23 @@
    nos dois temas sem alteração. */
 :root[data-theme="light"]{
   /* Fundo mais escuro que o branco-quase-puro original ("lençóis
-     maranhenses" — feedback direto: "ainda tá muito claro"). Só o fundo
-     de página (--deep/.ocean) e o glass mudam de tom; --surface-rgb (os
-     cards) fica como estava, pra manter o contraste card-vs-fundo que já
-     tinha sido ajustado antes. */
-  --deep:#DCEFF9;
-  --deep-rgb:220,239,249;
+     maranhenses" — feedback direto, 2 rodadas: "ainda tá muito claro" e
+     depois "pode escurecer um pouco mais"). Só o fundo de página
+     (--deep/.ocean) e o glass mudam de tom; --surface-rgb (os cards) fica
+     como estava, pra manter (e até reforçar) o contraste card-vs-fundo. */
+  --deep:#CBE3F2;
+  --deep-rgb:203,227,242;
   --surface-rgb:252,254,255;
-  --surface2-rgb:210,240,251;
-  --glass-rgb:180,227,248;
-  --glass:rgba(180,227,248,0.65);
+  --surface2-rgb:196,226,240;
+  --glass-rgb:155,205,230;
+  --glass:rgba(155,205,230,0.65);
   --glass-b:rgba(0,169,230,0.32);
   --glass-h:rgba(0,169,230,0.16);
-  --blue:#00A9E6;--accent:#00A9E6;--cyan:#4FC3F7;--teal:#33D6D0;
+  /* --cyan escurecido — usado como cor de TEXTO (rótulos de campo, títulos
+     de seção, badge do nome da squad no header etc.), o valor claro
+     original (#4FC3F7) ficava quase ilegível em cima do glass/fundo claros
+     (feedback direto: "o nome da squad tá apagado no modo claro"). */
+  --blue:#00A9E6;--accent:#00A9E6;--cyan:#0A6C8C;--teal:#33D6D0;
   --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
   --warn:#F6B73C;--danger:#F15B6C;
   --ocean-op:1; --fish-op:1;
@@ -201,7 +205,7 @@
   background:
     radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.2) 0%,transparent 60%),
     radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
-    linear-gradient(180deg,#DCEFF9 0%,#BFE4F6 100%);
+    linear-gradient(180deg,#CBE3F2 0%,#A9D3EA 100%);
 }
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
   filter:saturate(1.3) brightness(0.9) contrast(1.05);
@@ -4923,7 +4927,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.330-dev</div>
+<div class="version">v8.30.331-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

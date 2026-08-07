@@ -1098,6 +1098,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.331-dev — 2026-08-07
+Mais uma rodada de ajuste no tema claro ("lençóis maranhenses"),
+pedida direto por 2 problemas de contraste vistos no board:
+
+- 🐛 **Nome da squad ilegível no header** — o badge com o nome do
+  squad (e vários outros rótulos: título de campo, título de seção,
+  raia, contador de coluna...) usava `--cyan` num tom claro
+  (`#4FC3F7`) que ficava quase invisível em cima do fundo/glass claros
+  do tema (contraste ~1.6:1). Escurecido pra `#0A6C8C` (~4.5-4.8:1),
+  ainda reconhecível como "ciano" mas legível de verdade.
+- 🌤️ **Fundo mais escuro de novo** — 2ª rodada de escurecimento do
+  fundo de página/glass (a 1ª foi na promoção pra prod v8.30.226);
+  cards continuam como estavam (--surface-rgb intocado), o que reforça
+  ainda mais o contraste card-vs-fundo.
+
 ### v8.30.330-dev — 2026-08-07
 Mais 7 gatilhos novos, pedidos direto: 5 espelhando ações que já
 existiam ("tag adicionada", "definir submarca", "marcar como OKR",
