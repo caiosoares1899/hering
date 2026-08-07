@@ -438,6 +438,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* card */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
+/* Capa de cor (testeira) — tira de cor no topo do card, tipo Trello, pra
+   organização visual além das tags (pedido direto: "as tags parecem não
+   ser suficiente visualmente"). Usa margin negativo pra "vazar" até a
+   borda do card (que tem padding:10px) e border-radius levemente menor
+   que --r pra acompanhar o arredondamento do card sem sobrar quina viva. */
+.card-cover-strip{height:5px;border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;margin:-10px -10px 8px -10px;}
+.cover-swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.cover-swatch{width:28px;height:28px;border-radius:7px;cursor:pointer;border:2px solid transparent;padding:0;transition:transform .12s,border-color .12s;}
+.cover-swatch:hover{transform:scale(1.08);}
+.cover-swatch.on{border-color:var(--txt);}
+.cover-swatch.none{background:var(--glass);border:1px dashed var(--glass-b);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--txt3);}
+.cover-swatch.none.on{border-style:solid;border-color:var(--txt);}
 /* Tingimento e borda mais fortes que a 1ª versão (rgba(...,.14)/.5) —
    feedback direto: no escuro o "seu card" ficava discreto demais,
    quase igual aos outros cards da coluna; no claro (ver override mais
@@ -3099,6 +3111,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CARD MODAL -->
 <div class="ov" id="card-ov">
 <div class="panel card-panel">
+  <div id="m-cover-strip-modal" style="display:none;height:6px;border-radius:calc(var(--r2) - 1px) calc(var(--r2) - 1px) 0 0;margin:-1px -1px 0 -1px;"></div>
   <div id="m-depends-bar" class="card-parent-bar" style="display:none;">
     <span style="color:var(--txt3);font-size:10px;">Depende de:</span>
     <a id="m-depends-link" onclick="openDependsOnCard()"></a>
@@ -3132,6 +3145,13 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
 
+    <!-- Capa de cor — testeira no topo do card (board + este modal), pra
+         organização visual além das tags. -->
+    <div class="field">
+      <label class="fl">🎨 Capa <span style="font-size:9px;color:var(--txt3);font-weight:400;">tira de cor no topo do card, tipo Trello</span></label>
+      <div class="cover-swatches" id="m-cover-swatches"></div>
+    </div>
+
     <!-- Grid 2 colunas: atributos | lado direito -->
     <div class="modal-grid">
 
@@ -3151,21 +3171,27 @@ input[type="date"]{-moz-appearance:textfield;}
           </div>
         </div>
         <div class="card-attr-row">
-          <div class="field"><label class="fl">Responsável</label>
-            <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
+          <!-- Responsável + Demandante empilhados na MESMA coluna do grid —
+               precisa ser um wrapper próprio (não um 3º item solto): grid
+               auto-flow põe o 3º item numa linha NOVA depois que a linha
+               inteira (a mais alta das duas colunas) termina, não "encaixado"
+               ao lado do que sobrou de espaço na coluna mais curta (1ª
+               tentativa errada — Demandante saía abaixo de tudo, não do lado
+               do "Sem prazo definido"). Com os dois dentro do mesmo wrapper
+               flex, o Demandante nasce logo abaixo do Responsável, na altura
+               aproximada de onde a coluna do Prazo (mais alta, por causa do
+               botão calendário + Sem prazo) também está. -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="field"><label class="fl">Responsável</label>
+              <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
+            </div>
+            <div class="field" id="m-demandante-row" style="display:none;"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
+              <select class="fi" id="m-demandante" onchange="scheduleAutoSave()"></select>
+            </div>
           </div>
           <div class="field"><label class="fl">Prazo</label>
             <input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
             <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
-          </div>
-          <!-- 3º item do grid 2 colunas: cai sozinho pra linha de baixo, na
-               coluna do Responsável — pedido direto, "sobe o demandante pra
-               ficar ao lado do sem prazo definido" (a coluna do Prazo é mais
-               alta por causa do botão calendário + sem prazo, então o
-               Demandante acaba alinhado ao lado dele, sem precisar de uma
-               .card-attr-row própria). -->
-          <div class="field" id="m-demandante-row" style="display:none;"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
-            <select class="fi" id="m-demandante" onchange="scheduleAutoSave()"></select>
           </div>
         </div>
         <div class="card-attr-row">
@@ -4899,7 +4925,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.321-dev</div>
+<div class="version">v8.30.322-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5347,6 +5373,50 @@ function cardDescText(card){
   return parts.join('\n\n');
 }
 
+// Capa de cor (testeira) — organização visual do board além das tags,
+// baseado no recurso de capa do Trello. Paleta fixa (não é tag, não some
+// se alguém apagar uma tag) — card.coverColor guarda só o id.
+const CARD_COVER_COLORS = [
+  {id:'green',  hex:'#4BCE97', label:'Verde'},
+  {id:'yellow', hex:'#F5CD47', label:'Amarelo'},
+  {id:'orange', hex:'#FAA53D', label:'Laranja'},
+  {id:'red',    hex:'#F87168', label:'Vermelho'},
+  {id:'purple', hex:'#9F8FEF', label:'Roxo'},
+  {id:'blue',   hex:'#579DFF', label:'Azul'},
+  {id:'sky',    hex:'#6CC3E0', label:'Céu'},
+  {id:'pink',   hex:'#E774BB', label:'Rosa'},
+  {id:'gray',   hex:'#8590A2', label:'Cinza'},
+];
+// Card ainda não salvo (editingId=null): não tem onde persistir ainda —
+// mesma lição aprendida com "usar modelo" e Padrão de card (ver histórico
+// de bugs). Guarda aqui até o 1º Salvar criar o card de verdade.
+let _pendingCoverColor = null;
+function renderCoverSwatches(){
+  const wrap=document.getElementById('m-cover-swatches'); if(!wrap) return;
+  const card=editingId ? cards.find(c=>c.id===editingId) : null;
+  const current = editingId ? (card?.coverColor||'') : (_pendingCoverColor||'');
+  wrap.innerHTML = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
+    + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover('${c.id}')"></button>`).join('');
+}
+function _applyCoverStripToModal(colorId){
+  const strip=document.getElementById('m-cover-strip-modal'); if(!strip) return;
+  const col=CARD_COVER_COLORS.find(c=>c.id===colorId);
+  if(col){ strip.style.background=col.hex; strip.style.display='block'; }
+  else { strip.style.display='none'; }
+}
+function setCardCover(colorId){
+  if(!editingId){
+    _pendingCoverColor = colorId||null;
+    _applyCoverStripToModal(colorId);
+    renderCoverSwatches();
+    return;
+  }
+  const card=cards.find(c=>c.id===editingId); if(!card) return;
+  card.coverColor = colorId||null;
+  fbSaveCard(card);
+  _applyCoverStripToModal(colorId);
+  renderCoverSwatches();
+}
 let members=[];
 // Deriva iniciais de um nome ou email (mesma lógica do login)
 function deriveInit(nameOrEmail){
@@ -8145,7 +8215,9 @@ function makeCardEl(card){
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
-  div.innerHTML=`${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
+  const coverStripHtml=_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'';
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
   return div;
 }
 
@@ -9367,6 +9439,7 @@ function openCard(id){
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-demandante').value=c.demandante||'';
+  _applyCoverStripToModal(c.coverColor); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
   _mNoDue=!!c.noDue; _renderNoDueBtn();
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
@@ -9634,6 +9707,7 @@ function openNewCard(col){
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
+  _pendingCoverColor=null; _applyCoverStripToModal(null); renderCoverSwatches();
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
   _applyDemandanteUIVisibility();
@@ -9744,6 +9818,7 @@ function saveCard(){
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       demandante:document.getElementById('m-demandante')?.value||'',
+      coverColor:_pendingCoverColor||null,
       due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -9755,6 +9830,7 @@ function saveCard(){
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
+    _pendingCoverColor=null;
   }
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);

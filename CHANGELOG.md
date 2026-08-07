@@ -1067,6 +1067,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.322-dev — 2026-08-06
+- **Fix real do posicionamento do Demandante**: a v8.30.321-dev não
+  funcionou — o raciocínio sobre CSS Grid estava errado (a linha
+  inteira do grid fica com a altura da coluna mais alta, então o 3º
+  item só aparecia DEPOIS de tudo, não "do lado"). Corrigido de
+  verdade agrupando Responsável + Demandante num wrapper próprio
+  dentro da mesma coluna do grid, o que os empilha e faz o Demandante
+  nascer na altura aproximada de "Sem prazo definido".
+- **Nova feature: Capa de cor (testeira)** — baseado no recurso de
+  capa do Trello, pedido direto porque "as tags parecem não ser
+  suficiente visualmente" pra organizar o board. Uma tira de cor fina
+  no topo do card, visível tanto no board quanto no modal. Paleta fixa
+  de 9 cores + "sem capa", escolhida num seletor simples de swatches
+  logo abaixo do Título no modal. Funciona em card novo (ainda não
+  salvo) também.
+
 ### v8.30.321-dev — 2026-08-06
 Pedido direto vendo o layout: campo Demandante sai da linha própria
 (cheia, isolada) e sobe pra dentro da mesma linha de Responsável/Prazo
