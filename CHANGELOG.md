@@ -1136,6 +1136,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.332-dev — 2026-08-07
+1ª rodada de otimização de bytes/performance, pedida direto ("olhar
+os códigos e diagnosticar/resolver questões de otimização de código +
+mobile, pensando em economizar bytes de download").
+
+Diagnóstico: o arquivo é 1 página auto-contida (~1.5MB), sem build
+step por decisão de arquitetura (ver CLAUDE.md) — então minificar ou
+quebrar em múltiplos arquivos JS/CSS externos está fora de escopo
+(mudaria a arquitetura "cada página é standalone"). Dentro dessa
+restrição, achei e corrigi:
+
+- 🖼️ **Favicon duplicado 4x dentro do HTML**: o mesmo ícone (PNG
+  180×180) estava embutido como `data:image/png;base64,...` em 4
+  lugares (favicon, apple-touch-icon, logo da tela de login, ícone do
+  manifest do PWA) — ~75KB de base64 REPETIDOS no arquivo, e pior:
+  como o HTML inteiro é rebaixado a cada atualização de versão (o que
+  acontece com bastante frequência), esses bytes eram baixados de
+  novo toda vez, mesmo sem o ícone ter mudado. Extraído pra um arquivo
+  `favicon.png` (14KB, cacheável separadamente pelo browser) e
+  referenciado nos 4 lugares — **~75KB a menos no HTML** (~5% do
+  arquivo) e o ícone passa a ser baixado só 1x, não a cada deploy.
+- 🔌 **`<link rel="preconnect">`** pros domínios externos usados logo
+  no `<head>`/topo do módulo Firebase (`fonts.googleapis.com`,
+  `fonts.gstatic.com`, `www.gstatic.com`) — adianta o DNS/TLS desses
+  domínios em paralelo com o resto do carregamento, sem custo.
+
+Não fiz (ficam pra uma rodada futura, com mais contexto/aprovação,
+por mudarem a arquitetura atual em vez de só cortar bytes redundantes):
+dividir o `<script>` principal (~19 mil linhas, ~1MB) num arquivo
+`.js` externo cacheável à parte do HTML — o maior ganho de bytes
+possível no arquivo, mas contraria a decisão documentada de "cada
+página é 100% self-contained, sem imports entre arquivos".
+
 ### v8.30.331-dev — 2026-08-07
 Mais uma rodada de ajuste no tema claro ("lençóis maranhenses"),
 pedida direto por 2 problemas de contraste vistos no board:
