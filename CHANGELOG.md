@@ -1033,6 +1033,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.314-dev — 2026-08-06
+Dois ajustes, seguindo direto o feedback da v8.30.313-dev:
+
+- **"Padrões de card" agora suporta vários padrões nomeados** (antes era um único toggle global por squad). Organizador/PO cria quantos padrões quiser em Configurações → 📐 Padrões de card (ex.: "Bug" sem Insights do PO, "Campanha" com tudo), marca um como ★ padrão da squad, e cada CARD ganha um seletor "📐 Padrão de card" (logo abaixo do título) pra escolher outro padrão específico pra ele — sem precisar reabrir a squad inteira. Sem nenhum padrão criado, o modal continua mostrando tudo, igual sempre foi.
+- **Bugfix: "Usar modelo" não preenchia o card.** Causa raiz: `aplicarModeloNoCard()` atualizava o valor da Descrição por baixo dos panos, mas chamava a função errada pra redesenhar a tela (`renderDescPreview()`, que só existe pra mostrar @menções — não o card visível da Descrição). O valor salvava certo, só não aparecia. Corrigido pra usar o mesmo redraw que o resto do app usa (`eocInitDisplay`). *(Nota: Descrição/Insights do PO só são preenchidos pelo modelo se estiverem vazios no card — isso é por design, pra nunca sobrescrever o que alguém já escreveu; checklist/riscos/tags do modelo sempre são adicionados, independente de já ter conteúdo.)*
+
 ### v8.30.313-dev — 2026-08-06
 Quatro pedidos diretos neste lote:
 
