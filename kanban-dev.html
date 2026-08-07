@@ -3085,6 +3085,9 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="panel-hd">
     <div class="panel-title" id="m-title-disp" style="flex:1;min-width:0;">Card</div>
+    <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
+      title="Padrão de card — define quais seções opcionais aparecem no modal"
+      style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
     <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -3107,12 +3110,6 @@ input[type="date"]{-moz-appearance:textfield;}
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
     <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
-
-    <!-- Padrão de card (só aparece se a squad já tiver algum criado em Configurações) -->
-    <div class="field" id="m-card-pattern-field" style="display:none;">
-      <label class="fl">📐 Padrão de card <span style="font-size:9px;color:var(--txt3);font-weight:400;">define quais seções opcionais aparecem abaixo</span></label>
-      <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"></select>
-    </div>
 
     <!-- Grid 2 colunas: atributos | lado direito -->
     <div class="modal-grid">
@@ -4864,7 +4861,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.316-dev</div>
+<div class="version">v8.30.317-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -15686,20 +15683,20 @@ function togglePadraoSecao(id, key, visible){
   fbSet(FB+'/config/cardPatterns', cardPatterns);
   if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
 }
-// Seletor "📐 Padrão de card" DENTRO do modal do card — cada card escolhe o
-// seu (card.padraoId). Sem padrão nenhum criado na squad ainda, o campo
-// fica escondido (nada pra escolher).
+// Seletor "📐 Padrão de card" no HEADER do modal (ao lado de Compartilhar)
+// — cada card escolhe o seu (card.padraoId). Sem padrão nenhum criado na
+// squad ainda, o select fica escondido (nada pra escolher) — é assim que
+// "não aparece" até alguém criar o 1º padrão em Configurações.
 function populateCardPatternSelect(){
-  const field=document.getElementById('m-card-pattern-field');
   const sel=document.getElementById('m-card-pattern');
-  if(!field || !sel) return;
+  if(!sel) return;
   const ids=Object.keys(cardPatterns);
-  if(!ids.length){ field.style.display='none'; return; }
-  field.style.display='';
+  if(!ids.length){ sel.style.display='none'; return; }
+  sel.style.display='';
   const card=editingId ? cards.find(c=>c.id===editingId) : null;
   const defId=_defaultPatternId();
-  sel.innerHTML='<option value="">'+(defId?'— usar padrão da squad ('+esc(cardPatterns[defId].nome)+') —':'— nenhum (mostra tudo) —')+'</option>'
-    + ids.map(id=>`<option value="${id}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join('');
+  sel.innerHTML='<option value="">'+(defId?'📐 Padrão: '+esc(cardPatterns[defId].nome):'📐 Padrão')+'</option>'
+    + ids.map(id=>`<option value="${id}">📐 ${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join('');
   sel.value = (card?.padraoId && cardPatterns[card.padraoId]) ? card.padraoId : '';
 }
 function setCardPattern(patId){

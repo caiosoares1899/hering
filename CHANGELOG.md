@@ -1033,6 +1033,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.317-dev — 2026-08-06
+Move o seletor "📐 Padrão de card" — pedido direto: em vez de ficar
+como campo próprio logo abaixo do título, agora fica compacto no
+HEADER do modal, ao lado de "Compartilhar este card". Continua
+escondido até a squad ter pelo menos 1 padrão criado em Configurações
+→ 📐 Padrões de card (é assim que "não aparece" — nada pra escolher
+ainda; não é bug).
+
 ### v8.30.316-dev — 2026-08-06
 Terceira e (esperamos) última parte do "usar modelo": a causa real do
 "clica e nada acontece" era mais básica que os dois bugs visuais já
