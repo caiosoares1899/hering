@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.226 — 2026-08-07 · promove pra prod (PRs #227–#232)
+Promove pra produção o lote seguinte, validado em dev (v8.30.319-dev a
+v8.30.324-dev):
+
+- **Tema claro mais escuro**: fundo de página ("lençóis maranhenses")
+  e botões da toolbar (Ajuda, Funções de card, Links, Dependências,
+  Calendários, Dados do Board, Campanhas, Controle de Criativos) —
+  ambos estavam com contraste ruim no tema claro. Cards continuam como
+  estavam.
+- **Duplicar card: opção de excluir comentários** — novo checkbox no
+  modal de duplicar.
+- **Novo campo opcional "📢 Demandante"**: quem solicitou o card,
+  separado do Responsável (que executa e pode mudar de mão). Opcional
+  e configurável por squad (Config → 📐 Padrões de card): campo no
+  modal (ao lado de "Sem prazo definido"), filtro na toolbar, entra
+  nas notificações de concluído/desbloqueado, aparece pro Agente Ágil,
+  e é seção togglável em cada Padrão de card.
+- **"Padrões de card" agora suporta múltiplos padrões nomeados** (não
+  só 1 toggle global) — cada card escolhe o seu num seletor no modal;
+  aba movida pra logo depois de Subtimes em Configurações.
+- **Nova feature: Capa de cor (testeira)** — tira de cor fina no topo
+  do card (board + modal), baseada no recurso de capa do Trello, pra
+  organização visual além das tags. Paleta de 9 cores, acessível pelo
+  botão 🎨 no header do modal.
+- **Bugfix "Usar modelo"**: não preenchia a Descrição visualmente (em
+  dois pontos: botão dentro do card e "+ Usar" no drawer de Modelos) e
+  não funcionava em card ainda não salvo.
+- **Bugfix Padrões de card**: trocar de padrão "acumulava" seções
+  escondidas em vez de trocar; cards novos vinham com o último padrão
+  aplicado em vez do padrão da squad.
+
 ### v8.30.225 — 2026-08-06 · promove pra prod (PRs #218–#226)
 Promove pra produção o lote seguinte de Notas + card, validado em dev
 (v8.30.310-dev a v8.30.318-dev):
