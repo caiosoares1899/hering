@@ -1098,6 +1098,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.326-dev — 2026-08-07
+Nova aba **⚡ Automações** na Central de Ajuda (❓, dentro do board),
+dedicada ao recurso revisado na v8.30.325-dev — pedida pra ensinar o
+uso com bastante exemplo visual em vez de só texto corrido.
+
+- Explica o que é uma regra (QUANDO/E/ENTÃO) com um bloco visual
+  colorido em vez de só texto.
+- Lista todos os gatilhos e ações disponíveis hoje, com selos "NOVO"/
+  "CORRIGIDO" nos que mudaram na revisão anterior, e nota de quais
+  ações só aparecem se o squad usa aquele recurso.
+- Explica condição extra e múltiplas ações com exemplo lado a lado.
+- 7 "receitas prontas" (QUANDO → ENTÃO reais, prontas pra copiar a
+  ideia), em cartões coloridos.
+- Seção de dúvidas frequentes (Q&A) cobrindo as perguntas mais óbvias:
+  regra antiga continua funcionando?, por que uma ação não aparece no
+  dropdown?, por que "vence hoje" não disparou na hora?, etc.
+- Aba adicionada no fim de todas as listas relevantes (botão, array de
+  navegação por índice, busca global, rótulo do resultado de busca) —
+  não mexe na ordem das abas existentes.
+
 ### v8.30.325-dev — 2026-08-07
 Revisão completa de Automações do board (Config → ⚡ Auto), pedida
 depois de perceber que o recurso estava defasado em relação ao resto
