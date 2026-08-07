@@ -1033,6 +1033,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.315-dev — 2026-08-06
+Segunda parte do fix de "usar modelo" — o feedback "clica e nada
+acontece" apontava pro botão **"+ Usar"** dentro do drawer ⚡ Funções de
+card → 📋 Modelos (cria um card NOVO a partir do modelo), não só o
+"📥 Usar modelo" de dentro de um card já aberto (corrigido na
+v8.30.314-dev). Mesma causa raiz: `usarQLItem()` preenchia a Descrição
+por baixo dos panos (`#m-desc.value`) mas nunca redesenhava o card
+visível (`#m-desc-display`) — o modelo salvava certo, só continuava
+aparecendo como "Adicionar descrição..." vazio. Corrigido com o mesmo
+`eocInitDisplay()`.
+
 ### v8.30.314-dev — 2026-08-06
 Dois ajustes, seguindo direto o feedback da v8.30.313-dev:
 

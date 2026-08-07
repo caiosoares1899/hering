@@ -4864,7 +4864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.314-dev</div>
+<div class="version">v8.30.315-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14994,7 +14994,13 @@ function usarQLItem(i){
   document.getElementById('m-title-disp').textContent=item.title;
   editingTags = Array.isArray(item.tags) ? item.tags.slice() : (item.tag?[item.tag]:[]);
   populateTagSelect();
+  // BUGFIX (mesma causa do "usar modelo" dentro do card já aberto, ver
+  // aplicarModeloNoCard): setar #m-desc.value direto não atualiza o card
+  // visível da Descrição (#m-desc-display, padrão eoc/"clique pra editar")
+  // — precisa do redraw explícito, senão a Descrição do modelo fica
+  // salva por baixo dos panos mas continua aparecendo como "vazia".
   document.getElementById('m-desc').value=item.desc||'';
+  eocInitDisplay('desc-eoc', item.desc||'', 'Adicionar descrição...');
   document.getElementById('m-po').value=item.po||'';
   _clGroupsInit(item);
   if(item.checklist?.length) renderCL(item.checklist);
