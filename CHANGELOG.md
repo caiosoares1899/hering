@@ -1067,6 +1067,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.319-dev — 2026-08-06
+Rodada de 4 pedidos diretos:
+
+- **Tema claro mais escuro**: fundo de página ("lençóis maranhenses")
+  estava claro demais — trocado por um azul mais presente (`--deep`,
+  gradiente `.ocean`, glass). Os cards (`--surface-rgb`) continuam como
+  estavam, mantendo o contraste card-vs-fundo já ajustado antes.
+- **Duplicar card: opção de excluir comentários**. O modal de duplicar
+  (que já tinha checkboxes pra Descrição, Checklist, Tags etc.) ganhou
+  "Comentários" na lista — antes a cópia sempre levava os comentários
+  do card original, sem opção.
+- **Novo campo "📢 Demandante"** — quem *solicitou* o card, separado do
+  Responsável (que executa e pode mudar de mão ao longo do card, ex.:
+  designer → redator; o demandante normalmente não muda). Opcional e
+  configurável por squad (Configurações → 📐 Padrões de card, novo
+  toggle no topo da aba): campo no card (mesma lista de pessoas do
+  Responsável, sem agentes de IA), filtro dedicado na toolbar, entra
+  nas notificações de card concluído/desbloqueado (junto com
+  Responsável e Participantes), e no contexto que o Agente Ágil vê do
+  board. Também vira uma seção togglável dentro de cada Padrão de
+  card, igual as outras.
+- **Aba "Padrões de card" movida** pra logo depois de Subtimes (antes
+  ficava por último, depois de Criativos).
+
 ### v8.30.318-dev — 2026-08-06
 Bugfix reportado direto: trocar de padrão de card "acumulava" seções
 escondidas (padrão A esconde Checklist, padrão B esconde Riscos →
