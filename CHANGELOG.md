@@ -1067,6 +1067,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.324-dev — 2026-08-06
+Remove o campo de capa de cor debaixo do Título — ficou redundante
+depois do botão 🎨 no header (pedido direto: "aí tira debaixo do
+título"). O popover do header passa a ser o único lugar pra escolher a
+capa.
+
 ### v8.30.323-dev — 2026-08-06
 Pedido direto: botão 🎨 no header do modal (junto dos outros ícones,
 ao lado de Compartilhar) abrindo um popover com os mesmos swatches de
