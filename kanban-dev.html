@@ -4864,7 +4864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.315-dev</div>
+<div class="version">v8.30.316-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -20479,8 +20479,16 @@ function closeUsarModeloMenuOutside(e){
 // marcadas; descrição/PO só entram se estiverem vazios no card.
 function aplicarModeloNoCard(idx){
   const modelo=qlItems.modelos?.[idx];
-  if(!modelo || !editingId){ closeUsarModeloMenu(); return; }
-  saveUndo('aplicar modelo');
+  if(!modelo){ closeUsarModeloMenu(); return; }
+  // BUGFIX (causa real do "clica e nada acontece"): esta função exigia
+  // editingId, mas um card NOVO só ganha editingId depois do 1º "Salvar"
+  // manual — scheduleAutoSave() nem roda antes disso ("só auto-salva cards
+  // existentes"). Ou seja: abrir um card novo e usar o modelo ANTES de
+  // salvar saía daqui sem fazer nada, sem toast nem erro nenhum. Agora
+  // funciona nos dois casos — sem editingId, só mexe no formulário em
+  // memória (não tem undo de board nem autosave pra disparar, porque o
+  // card ainda não existe em `cards`/Firebase).
+  if(editingId) saveUndo('aplicar modelo');
 
   const descEl=document.getElementById('m-desc');
   // BUGFIX: chamava renderDescPreview() (só atualiza o preview de @menção,
@@ -20510,8 +20518,12 @@ function aplicarModeloNoCard(idx){
   }
 
   closeUsarModeloMenu();
-  scheduleAutoSave();
-  showToast('📥 Modelo "'+modelo.title+'" aplicado — revise e salve.');
+  if(editingId){
+    scheduleAutoSave();
+    showToast('📥 Modelo "'+modelo.title+'" aplicado — revise e salve.');
+  } else {
+    showToast('📥 Modelo "'+modelo.title+'" aplicado — clique em Salvar pra criar o card.');
+  }
 }
 // Gera a URL direta pra este card (mesmo mecanismo do ?opencard= usado pelo
 // multi-squad de campanhas) — reaproveitada por shareCardLink e exportToMilanote.
