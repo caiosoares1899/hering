@@ -4861,7 +4861,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.317-dev</div>
+<div class="version">v8.30.318-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5381,14 +5381,23 @@ function _cardSectionVisible(key, card){
   const pat=_activePatternFor(card);
   return !pat || pat.sections?.[key]!==false;
 }
-// Só ESCONDE (nunca força reabrir) — roda por último em openCard(), depois
-// de toda lógica normal de visibilidade por card já ter rodado (ex.:
-// m-criativo-sec segue criativosAtivo independente disto).
+// BUGFIX: antes só ESCONDIA, nunca reabria — funcionava com 1 padrão fixo
+// por squad, mas com padrão POR CARD isso "acumulava": trocar de padrão A
+// (esconde Checklist) pra padrão B (esconde Riscos) deixava os DOIS
+// escondidos, porque nada nunca voltava a aparecer. E como o modal é o
+// MESMO elemento reaproveitado entre cards, um card novo herdava o que
+// tivesse ficado escondido no card anterior (em vez do padrão da squad).
+// Agora AMBOS os sentidos rodam — exceto m-criativo-sec, que também segue
+// criativosAtivo (lógica própria, roda antes desta função em
+// openCard()/openNewCard()): aqui só pode ESCONDER por cima dele, nunca
+// forçar reabrir (senão vazaria com criativosAtivo desligado).
 function _applyCardSectionsVisibility(){
   const card=editingId ? cards.find(c=>c.id===editingId) : null;
   CARD_SECTIONS.forEach(s=>{
-    if(_cardSectionVisible(s.key, card)) return;
-    const el=document.getElementById(s.id); if(el) el.style.display='none';
+    const el=document.getElementById(s.id); if(!el) return;
+    const visible=_cardSectionVisible(s.key, card);
+    if(s.key==='criativo'){ if(!visible) el.style.display='none'; return; }
+    el.style.display = visible ? '' : 'none';
   });
 }
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
@@ -9560,6 +9569,12 @@ function openNewCard(col){
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
+  // BUGFIX: faltava aqui — sem isso, um card novo herdava a visibilidade de
+  // seções que tivesse ficado do ÚLTIMO card aberto (mesmo modal, elemento
+  // reaproveitado), em vez de vir com o padrão da squad (editingId=null
+  // nesse ponto, então _activePatternFor cai no padrão-da-squad certinho).
+  populateCardPatternSelect();
+  _applyCardSectionsVisibility();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
