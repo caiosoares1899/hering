@@ -139,6 +139,18 @@ page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
    summarizing what changed and linking the PR number. Keep entries
    user-facing (what changed and why), not a copy of the commit's internal
    diff description.
+6. **Send avisos + log the batch to the card.** Every time `kanban.html`
+   (prod) gets promoted, always: (a) draft the two announcements — a Mural
+   post (via console script against `painel.html`, or the
+   `COMUNICADO_RASCUNHOS_SEED` seed mechanism if GitHub/deploy access is
+   available) and a WhatsApp-ready text — summarizing what's new/changed in
+   user-facing terms; and (b) log the batch as a comment on the "Melhorias
+   Maré Digital" Firebase card (`c1783541085140`, squad `dados`), via a
+   console script. This is a standing rule, not something that needs to be
+   asked for each time. **Always use `ts: new Date().toISOString()` for any
+   comment written this way — never `ts: Date.now()`** — `loadComments()`
+   sorts with `a.ts.localeCompare(b.ts)`, which throws and silently breaks
+   the ENTIRE comment list for that card if `ts` isn't a string.
 
 Files without a `-dev` counterpart (`firebase-messaging-sw.js`,
 `database.rules.json`, `functions/`) skip the dev-first step — they're

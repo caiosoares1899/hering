@@ -18,6 +18,40 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.225 — 2026-08-06 · promove pra prod (PRs #218–#226)
+Promove pra produção o lote seguinte de Notas + card, validado em dev
+(v8.30.310-dev a v8.30.318-dev):
+
+- **Vincular nota ↔ card**, nos dois sentidos: de dentro da nota (busca por
+  card) e de dentro do card, em 🔗 Vínculos & anexos (busca por nota,
+  cruzando suas pessoais + as da squad). Reflexo mostra chip clicável dos
+  dois lados, com ✕ pra desvincular.
+- **Busca em Notas** por título e conteúdo (todos os blocos, livre ou
+  estruturado), com trecho de contexto destacado no resultado.
+- **Listas de usuários em ordem alfabética** — responsável, participantes,
+  filtros de board/calendário/arquivados, Config → Usuários.
+- **Descrição x Insights do PO rebalanceados**: PO (campo opcional) parava
+  de "roubar a cena" da Descrição (campo principal) — PO virou neutro +
+  "(opcional)" no rótulo, Descrição ganhou um realce sutil condizente.
+- **"Padrões de card"** (Configurações → 📐): organizador/PO cria vários
+  padrões nomeados, cada um escolhendo quais seções opcionais do modal
+  ficam visíveis (Insights do PO, Descrições adicionais, Participantes,
+  Checklist, Riscos, Criativo, Milanote, Anexos, Notas vinculadas,
+  Comentários). Um padrão pode ser marcado como padrão-da-squad; cada card
+  escolhe o seu pelo seletor no header do modal (ao lado de Compartilhar).
+  Campos estruturais nunca entram na lista.
+- **Notificação de prazo revista**: troca o aviso de véspera por um no dia
+  do prazo + um no 1º dia atrasado, sem repetir enquanto seguir atrasado.
+- **Bugfix "Usar modelo"**: tanto o botão dentro do card quanto o "+ Usar"
+  do drawer de Modelos deixavam de preencher a Descrição visualmente (o
+  valor salvava, só não redesenhava a tela) — e aplicar um modelo num card
+  **ainda não salvo** simplesmente não fazia nada (a função exigia um
+  `editingId` que só existe depois do 1º "Salvar" manual). Corrigido nos
+  dois pontos.
+- **Bugfix Padrões de card**: trocar de padrão num card "acumulava"
+  seções escondidas em vez de trocar, e cards novos vinham com o último
+  padrão aplicado em vez do padrão da squad.
+
 ### v8.30.224 — 2026-08-06 · promove pra prod (PRs #213–#216)
 Promove pra produção a feature nova de Notas, validada em dev
 (v8.30.306-dev a v8.30.309-dev):

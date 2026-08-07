@@ -588,8 +588,18 @@ input[type="date"]{-moz-appearance:textfield;}
 .fi:focus{outline:none;border-color:var(--accent);}
 .fi-ta{resize:vertical;min-height:56px;line-height:1.5;width:100%;box-sizing:border-box;}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.po-box{background:rgba(37,99,201,.1);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:10px;}
-.po-lbl{font-size:9px;color:#7eb3ff;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.po-box{background:rgba(var(--surface2-rgb),.35);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
+.po-lbl{font-size:9px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.po-lbl-opt{font-weight:400;text-transform:none;letter-spacing:0;opacity:.75;}
+/* Descrição é o campo principal do card — antes tinha praticamente o
+   mesmo peso visual do Insights do PO (opcional), o que fazia o PO
+   "chamar mais atenção" segundo feedback direto. Reforça só aqui (via
+   #desc-field, não .eoc-display genérico — Comentários continuam
+   discretos) sem duplicar toda a regra de base. */
+#desc-field .eoc-display{background:rgba(56,182,255,.09);border-color:rgba(56,182,255,.22);}
+#desc-field .eoc-display:hover{background:rgba(56,182,255,.14);border-color:rgba(56,182,255,.34);}
+#desc-field .eoc-textarea{border-color:rgba(56,182,255,.45);}
+#desc-field > .fl{font-size:11px;color:var(--accent);}
 .po-ta{width:100%;background:transparent;border:none;color:var(--txt);font-family:"DM Sans",sans-serif;font-size:12px;line-height:1.6;resize:none;min-height:56px;}
 .po-ta:focus{outline:none;}
 .cl-sec{background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;}
@@ -953,6 +963,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .notas-item:hover{border-color:rgba(29,233,182,.4);}
 .notas-item-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px;word-break:break-word;}
 .notas-item-meta{font-size:10.5px;color:var(--txt3);}
+.notas-item-snippet{font-size:11px;color:var(--txt2);margin-top:5px;padding-top:5px;border-top:1px solid var(--glass-b);line-height:1.4;word-break:break-word;}
+.notas-item-snippet mark,.notas-item-title mark{background:rgba(29,233,182,.3);color:var(--txt);border-radius:2px;padding:0 1px;}
 .notas-item-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:none;background:none;color:var(--txt3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .notas-item-del:hover{background:rgba(255,107,107,.15);color:var(--danger);}
 .notas-editor-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
@@ -1647,9 +1659,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .linked-chip-col{font-size:9px;padding:1px 6px;border-radius:999px;
   background:rgba(56,182,255,.1);color:var(--accent);flex-shrink:0;}
 .linked-chip-title{flex:1;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.linked-chip-rm{background:none;border:none;color:var(--txt3);cursor:pointer;
+.linked-chip-rm,.nota-chip-rm{background:none;border:none;color:var(--txt3);cursor:pointer;
   font-size:12px;padding:0 2px;flex-shrink:0;line-height:1;}
-.linked-chip-rm:hover{color:var(--danger);}
+.linked-chip-rm:hover,.nota-chip-rm:hover{color:var(--danger);}
+.notas-linked-wrap{padding:8px 14px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .link-search{position:relative;}
 .link-search-input{width:100%;padding:6px 10px;font-size:11px;
   border:1px solid var(--glass-b);border-radius:8px;
@@ -2971,6 +2984,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="padding:12px 20px 0;flex-shrink:0;">
       <button class="notas-new-btn" onclick="createNota()">+ Nova nota</button>
     </div>
+    <div style="padding:8px 20px 0;flex-shrink:0;">
+      <input id="notas-search-inp" class="link-search-input" style="width:100%;"
+        placeholder="🔍 Buscar em título e conteúdo..." oninput="renderNotasList()"
+        onkeydown="if(event.key==='Escape'){this.value='';renderNotasList();}">
+    </div>
     <div class="lem-body" id="notas-list-body"></div>
   </div>
   <div id="notas-editor-view" style="display:none;flex-direction:column;flex:1;min-height:0;">
@@ -2979,6 +2997,14 @@ input[type="date"]{-moz-appearance:textfield;}
       <input id="notas-editor-title" class="notas-editor-title-inp" placeholder="Título da nota..."
         onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onblur="renameNotaFromInput(this.value)">
       <button class="x-btn" onclick="deleteNota(_notasOpenId)" title="Excluir nota" style="color:var(--danger);">🗑</button>
+    </div>
+    <div class="notas-linked-wrap">
+      <div class="link-search notas-link-search" style="margin-bottom:6px;">
+        <input id="notas-link-search-inp" class="link-search-input" placeholder="🔗 Vincular a um card..."
+          oninput="notaSearchCards(this.value)" onkeydown="if(event.key==='Escape'){this.value='';hideNotaLinkDropdown();}">
+        <div class="link-dropdown" id="notas-link-dropdown"></div>
+      </div>
+      <div id="notas-linked-cards-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
     </div>
     <div class="nb-toolbar">
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="notasFmtApply('bold')" title="Negrito"><b>B</b></button>
@@ -3059,6 +3085,9 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="panel-hd">
     <div class="panel-title" id="m-title-disp" style="flex:1;min-width:0;">Card</div>
+    <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
+      title="Padrão de card — define quais seções opcionais aparecem no modal"
+      style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
     <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -3161,7 +3190,7 @@ input[type="date"]{-moz-appearance:textfield;}
             </select>
           </div>
         </div>
-        <div class="field">
+        <div class="field" id="m-participantes-field">
           <label class="fl">Participantes</label>
           <div class="part-list" id="m-participants"></div>
           <div style="display:flex;gap:5px;">
@@ -3175,7 +3204,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
       <!-- Coluna direita: checklist + riscos + links -->
       <div class="modal-col">
-        <div class="cl-sec">
+        <div class="cl-sec" id="m-checklist-sec">
           <div class="cl-hd-row"><div class="cl-hd">☑ Checklist</div><button type="button" class="cl-copy-all" onclick="copyAllChecklist()" title="Copiar todos os itens do checklist">📋</button></div>
           <div id="m-agent-sim" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.28);border-radius:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -3193,7 +3222,7 @@ input[type="date"]{-moz-appearance:textfield;}
             <button class="btn btn-sm" onclick="doUndo()" title="Desfazer última ação (Ctrl+Z)" style="padding:4px 8px;font-size:13px;color:rgba(150,200,240,.5);border-color:rgba(56,182,255,.2);border-radius:var(--r);">↩</button>
           </div>
         </div>
-        <div class="cl-sec" style="border-color:rgba(255,209,102,.25);">
+        <div class="cl-sec" id="m-riscos-sec" style="border-color:rgba(255,209,102,.25);">
           <div class="cl-hd-row"><div class="cl-hd" style="color:var(--warn);">⚠ Riscos</div></div>
           <div class="cl-items" id="m-riscos"></div>
           <div class="cl-add-r">
@@ -3312,8 +3341,8 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
 
     <!-- Insights do PO full-width -->
-    <div class="po-box">
-      <div class="po-lbl">🎯 Insights do PO</div>
+    <div class="po-box" id="m-po-box">
+      <div class="po-lbl">🎯 Insights do PO <span class="po-lbl-opt">(opcional)</span></div>
       <div class="fi-mention-wrap"><textarea class="po-ta" id="m-po" placeholder="Objetivo, contexto e critério de aceite (SMART)..." oninput="scheduleAutoSave()" onblur="if(editingId)parseMentions(this.value,editingId)"></textarea></div>
     </div>
     </div><!-- /m-sec-conteudo -->
@@ -3358,6 +3387,24 @@ input[type="date"]{-moz-appearance:textfield;}
           onkeydown="if(event.key==='Enter'){event.preventDefault();attachSave();}
             else if(event.key==='Escape'){attachToggleAdd();}">
         <button class="attach-save-btn" onclick="attachSave()">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Notas vinculadas -->
+    <div class="attach-wrap" id="m-notas-vinc-attach-wrap">
+      <div class="attach-hd">
+        <span class="attach-lbl">📝 Notas vinculadas</span>
+        <button class="attach-add-btn" onclick="toggleCardNotaLinkSearch()">+ Vincular nota</button>
+      </div>
+      <div id="m-notas-link-search-wrap" style="display:none;margin-bottom:8px;">
+        <div class="link-search notas-card-link-search">
+          <input id="m-notas-link-search-inp" class="link-search-input" placeholder="Buscar nota pelo título (suas e da squad)..."
+            oninput="cardSearchNotas(this.value)" onkeydown="if(event.key==='Escape'){this.value='';hideCardNotaLinkDropdown();}">
+          <div class="link-dropdown" id="m-notas-link-dropdown"></div>
+        </div>
+      </div>
+      <div id="m-notas-vinc-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;">
+        <div style="font-size:10px;color:var(--txt3);">Nenhuma nota vinculada a este card.</div>
       </div>
     </div>
     </div><!-- /m-sec-vinculos -->
@@ -3522,6 +3569,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
+    <div class="ag-tab" onclick="swCfgTab('padroes')">📐 Padrões de card</div>
   </div>
   <div class="cfg-body">
 
@@ -3621,6 +3669,17 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="crv-listas-cfg-body" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
         <button class="btn btn-sm" onclick="_criativosListaNova()" style="color:#ffb3d9;border-color:rgba(255,179,217,.35);">+ Nova lista</button>
       </div>
+    </div>
+    <!-- ABA PADRÕES DE CARD -->
+    <div class="tab-c" id="cfgtab-padroes">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:0;">📐 Padrões de card</div>
+        <button class="btn btn-sm" onclick="criarPadraoCard()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Novo padrão</button>
+      </div>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Crie um ou mais padrões escolhendo, em cada um, quais seções <b>opcionais</b> aparecem no modal do card (ex.: um padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Marque um como ★ padrão da squad — vale pros cards que não escolherem nenhum. Dentro de cada card, o campo "📐 Padrão de card" deixa escolher outro. Campos estruturais (título, tag, coluna, responsável, prazo, descrição) sempre ficam visíveis, em qualquer padrão.
+      </p>
+      <div id="padroes-cfg-list" style="display:flex;flex-direction:column;gap:2px;"></div>
     </div>
     <div class="tab-c" id="cfgtab-usuarios">
       <div class="usr-view-toggle">
@@ -4802,7 +4861,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.224</div>
+<div class="version">v8.30.225</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5285,6 +5344,62 @@ let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
 let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
+// "Padrões de card": organizador/PO cria um ou mais PADRÕES nomeados —
+// cada um escolhe quais seções OPCIONAIS do modal ficam visíveis (ex.: um
+// padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Um padrão
+// pode ser marcado como padrão-da-squad (usado quando o card não tem
+// nenhum escolhido); cada CARD pode também escolher o seu próprio, pelo
+// seletor "📐 Padrão de card" dentro do modal (campo card.padraoId).
+// cardPatterns = {patId: {nome, sections:{chave:false,...}, isDefault}}
+// sections: chave AUSENTE = visível (mesma convenção de antes).
+let cardPatterns={};
+const CARD_SECTIONS=[
+  {key:'po', id:'m-po-box', label:'🎯 Insights do PO'},
+  {key:'descsExtra', id:'extra-descs-field', label:'📝 Descrições adicionais'},
+  {key:'participantes', id:'m-participantes-field', label:'👥 Participantes'},
+  {key:'checklist', id:'m-checklist-sec', label:'☑ Checklist'},
+  {key:'riscos', id:'m-riscos-sec', label:'⚠ Riscos'},
+  {key:'criativo', id:'m-criativo-sec', label:'🎬 Campos de produção criativa'},
+  {key:'milanote', id:'m-milanote-wrap', label:'📌 Peça no Milanote'},
+  {key:'anexos', id:'m-attach-wrap', label:'🔗 Anexos e links'},
+  {key:'notasVinculadas', id:'m-notas-vinc-attach-wrap', label:'📝 Notas vinculadas'},
+  {key:'comentarios', id:'m-comments-wrap', label:'💬 Comentários e atividade'},
+];
+function _defaultPatternId(){
+  const found=Object.entries(cardPatterns).find(([,p])=>p&&p.isDefault);
+  return found ? found[0] : null;
+}
+// Resolve o padrão que vale pra um card: o dele mesmo (se ainda existir),
+// senão o marcado como padrão-da-squad, senão nenhum (tudo visível).
+function _activePatternFor(card){
+  const pid=card?.padraoId;
+  if(pid && cardPatterns[pid]) return cardPatterns[pid];
+  const defId=_defaultPatternId();
+  return defId ? cardPatterns[defId] : null;
+}
+function _cardSectionVisible(key, card){
+  const pat=_activePatternFor(card);
+  return !pat || pat.sections?.[key]!==false;
+}
+// BUGFIX: antes só ESCONDIA, nunca reabria — funcionava com 1 padrão fixo
+// por squad, mas com padrão POR CARD isso "acumulava": trocar de padrão A
+// (esconde Checklist) pra padrão B (esconde Riscos) deixava os DOIS
+// escondidos, porque nada nunca voltava a aparecer. E como o modal é o
+// MESMO elemento reaproveitado entre cards, um card novo herdava o que
+// tivesse ficado escondido no card anterior (em vez do padrão da squad).
+// Agora AMBOS os sentidos rodam — exceto m-criativo-sec, que também segue
+// criativosAtivo (lógica própria, roda antes desta função em
+// openCard()/openNewCard()): aqui só pode ESCONDER por cima dele, nunca
+// forçar reabrir (senão vazaria com criativosAtivo desligado).
+function _applyCardSectionsVisibility(){
+  const card=editingId ? cards.find(c=>c.id===editingId) : null;
+  CARD_SECTIONS.forEach(s=>{
+    const el=document.getElementById(s.id); if(!el) return;
+    const visible=_cardSectionVisible(s.key, card);
+    if(s.key==='criativo'){ if(!visible) el.style.display='none'; return; }
+    el.style.display = visible ? '' : 'none';
+  });
+}
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
 // Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
 // não é dado do board (cada pessoa pode preferir ver diferente).
@@ -6522,6 +6637,7 @@ function fbLoadAll(){
   // Agentes de IA (piloto híbrido humano+agente) — identidades selecionáveis como responsável/participante/@menção
   fbListen(FB+'/agentes',val=>{
     agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
     renderBoard();
   });
@@ -7248,6 +7364,11 @@ let _cardsSyncDebounce = null;
     // reatribuir, etc.): garante uid único em members mesmo se algum caminho secundário
     // (ex.: timing entre autoRegistrar() e este listener) tiver introduzido duplicata.
     { const _seenUids=new Set(); members = members.filter(m=>{ if(_seenUids.has(m.uid)) return false; _seenUids.add(m.uid); return true; }); }
+    // Ordem alfabética por nome — todo select/filtro/@menção que lê de `members`
+    // (responsável, participantes, filtros de card/calendário/arquivados/campanhas...)
+    // herda essa ordem automaticamente, já que todos fazem members.map()/.forEach()
+    // direto neste array, sem reordenar por conta própria.
+    members.sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR',{sensitivity:'base'}));
     // Lista global de TODOS os usuários (p/ Estrelas do Mar geral)
     window._allUsers = [];
     Object.entries(val).forEach(([uid,u])=>{
@@ -7255,6 +7376,7 @@ let _cardsSyncDebounce = null;
         window._allUsers.push({init:u.init, name:u.nome||u.email||u.init, email:u.email||'', foto:u.foto||'', uid});
       }
     });
+    window._allUsers.sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR',{sensitivity:'base'}));
     // Re-popula select de kudos se o drawer estiver aberto
     if(document.getElementById('kudos-drawer')?.classList.contains('open')) _populateKudosPara();
     // Re-popula selects se modal estiver aberto
@@ -7286,6 +7408,12 @@ let _cardsSyncDebounce = null;
       renderBoard(); // 🔧 sem isso o board só refletia a config depois de um reload
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
+  });
+  // Padrões de card (vários padrões nomeados, cada um com suas seções)
+  fbListen(FB+'/config/cardPatterns',val=>{
+    cardPatterns = (val && typeof val==='object') ? val : {};
+    if(document.getElementById('card-ov')?.classList.contains('open')){ _applyCardSectionsVisibility(); populateCardPatternSelect(); }
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderCardPatternsCfg();
   });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
@@ -9193,7 +9321,8 @@ function openCard(id){
   const blockerRow=document.getElementById('m-blocker-row');
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
-  if(blockerRow){ 
+  renderNotasVinculadasNoCard(c);
+  if(blockerRow){
     blockerRow.style.display=(_cardIsBlocked(c)||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
   }
@@ -9207,6 +9336,8 @@ function openCard(id){
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
   renderDependsBar(c);
+  populateCardPatternSelect();
+  _applyCardSectionsVisibility();
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
@@ -9438,6 +9569,12 @@ function openNewCard(col){
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
+  // BUGFIX: faltava aqui — sem isso, um card novo herdava a visibilidade de
+  // seções que tivesse ficado do ÚLTIMO card aberto (mesmo modal, elemento
+  // reaproveitado), em vez de vir com o padrão da squad (editingId=null
+  // nesse ponto, então _activePatternFor cai no padrão-da-squad certinho).
+  populateCardPatternSelect();
+  _applyCardSectionsVisibility();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
@@ -11667,6 +11804,34 @@ function setNotasScope(s){
   _notasOpenId = null;
   renderNotasList();
 }
+// Busca por título E conteúdo dos blocos (não só título) — junta o texto
+// de todos os blocos da nota numa string só pra comparar. Nota "livre" só
+// tem 1 bloco, então cai no mesmo caminho sem precisar de caso especial.
+function _notaEscRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function _notaMatchesQuery(nota, q){
+  if((nota.titulo||'').toLowerCase().includes(q)) return true;
+  return Object.values(nota.blocos||{}).some(b=>b && (b.texto||'').toLowerCase().includes(q));
+}
+// Se o match foi só no conteúdo (não no título, que já aparece no card do
+// item), monta um trechinho ao redor da ocorrência pra dar contexto —
+// mesma ideia de preview de busca do Google/Notion.
+function _notaSearchSnippet(nota, q){
+  if((nota.titulo||'').toLowerCase().includes(q)) return null;
+  const blocos=Object.values(nota.blocos||{}).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+  for(const b of blocos){
+    const texto=b.texto||''; const idx=texto.toLowerCase().indexOf(q);
+    if(idx>=0){
+      const start=Math.max(0, idx-30), end=Math.min(texto.length, idx+q.length+30);
+      return (start>0?'…':'')+texto.slice(start,end)+(end<texto.length?'…':'');
+    }
+  }
+  return null;
+}
+function _notaHighlight(text, q){
+  const esced=esc(text);
+  if(!q) return esced;
+  return esced.replace(new RegExp('('+_notaEscRe(esc(q))+')','ig'), '<mark>$1</mark>');
+}
 function renderNotasList(){
   const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
   if(listView) listView.style.display='flex';
@@ -11677,17 +11842,24 @@ function renderNotasList(){
     return;
   }
   const store=_notasStore();
-  const list=Object.values(store).filter(Boolean).sort((a,b)=>String(b.atualizadoEm||'').localeCompare(String(a.atualizadoEm||'')));
+  const q=(document.getElementById('notas-search-inp')?.value||'').trim().toLowerCase();
+  let list=Object.values(store).filter(Boolean);
+  if(q) list=list.filter(n=>_notaMatchesQuery(n,q));
+  list.sort((a,b)=>String(b.atualizadoEm||'').localeCompare(String(a.atualizadoEm||'')));
   if(!list.length){
-    body.innerHTML='<div class="lem-empty">'+(_notasScope==='pessoal'?'Nenhuma nota pessoal ainda.':'Nenhuma nota da squad ainda.')+'<br>Clique em "+ Nova nota" pra criar a primeira.</div>';
+    body.innerHTML = q
+      ? '<div class="lem-empty">Nenhuma nota encontrada para "'+esc(q)+'".</div>'
+      : '<div class="lem-empty">'+(_notasScope==='pessoal'?'Nenhuma nota pessoal ainda.':'Nenhuma nota da squad ainda.')+'<br>Clique em "+ Nova nota" pra criar a primeira.</div>';
     return;
   }
   body.innerHTML = list.map(n=>{
     const nBlocos = Object.keys(n.blocos||{}).length;
     const quando = n.atualizadoEm ? new Date(n.atualizadoEm).toLocaleDateString('pt-BR') : '';
+    const snippet = q ? _notaSearchSnippet(n,q) : null;
     return `<div class="notas-item" onclick="openNota('${esc(n.id)}')">
-      <div class="notas-item-title">📄 ${esc(n.titulo||'Sem título')}</div>
+      <div class="notas-item-title">📄 ${q?_notaHighlight(n.titulo||'Sem título',q):esc(n.titulo||'Sem título')}</div>
       <div class="notas-item-meta">${nBlocos} bloco${nBlocos===1?'':'s'} · ${esc(quando)}${n.criadoPor?' · '+esc(n.criadoPor):''}</div>
+      ${snippet?`<div class="notas-item-snippet">${_notaHighlight(snippet,q)}</div>`:''}
       <button class="notas-item-del" onclick="event.stopPropagation();deleteNota('${esc(n.id)}')" title="Excluir nota">✕</button>
     </div>`;
   }).join('');
@@ -11723,6 +11895,216 @@ async function renameNotaFromInput(v){
   await window._update(window._ref(window._db), {
     [_notasBasePath()+'/'+_notasOpenId+'/titulo']: t,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+}
+
+// ── Notas ↔ cards vinculados ──────────────────────────────────────
+// nota.cardIds = {cardId:true,...} — map (não array) pra permitir
+// add/remove pontual sem reescrever a lista inteira, mesmo princípio
+// do resto das Notas. Vínculo é criado só do lado da nota (aqui); o
+// card mostra o reflexo em "🔗 Vínculos & anexos" mas não guarda
+// nada em `card.cardIds`/etc — evita ter que manter as duas pontas em
+// sincronia a cada add/remove.
+function _notaLinkedCardIds(nota){ return Object.keys(nota?.cardIds||{}); }
+
+function renderNotaLinkedCards(){
+  const list=document.getElementById('notas-linked-cards-list'); if(!list) return;
+  const nota=_notasOpenId ? _notasStore()[_notasOpenId] : null;
+  if(!nota){ list.innerHTML=''; return; }
+  const ids=_notaLinkedCardIds(nota);
+  if(!ids.length){ list.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhum card vinculado.</div>'; return; }
+  list.innerHTML = ids.map(id=>{
+    const c=cards.find(x=>x.id===id);
+    const col=c ? columns.find(cc=>cc.id===c.col) : null;
+    const title=c ? c.title : '(card removido)';
+    return '<div class="linked-chip" onclick="notaOpenLinkedCard(\''+id+'\')">'
+      + (col ? '<span class="linked-chip-col">'+esc(col.name)+'</span>' : '')
+      + '<span class="linked-chip-title">'+esc(title)+'</span>'
+      + '<button class="nota-chip-rm" title="Desvincular" onclick="event.stopPropagation();notaRemoveCardLink(\''+id+'\')">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function notaSearchCards(q){
+  const dd=document.getElementById('notas-link-dropdown'); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const nota=_notasOpenId ? _notasStore()[_notasOpenId] : null; if(!nota) return;
+  const already=new Set(_notaLinkedCardIds(nota));
+  const lower=q.toLowerCase();
+  const results=cards.filter(c=>!c.archived && !already.has(c.id) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML='';
+  results.forEach(c=>{
+    const col=columns.find(cc=>cc.id===c.col);
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+esc(col?.name||c.col)+'</span><span style="flex:1;color:var(--txt);">'+esc(c.title)+'</span>';
+    opt.onclick=()=>notaAddCardLink(c.id);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+
+async function notaAddCardLink(cardId){
+  if(!_notasOpenId) return;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: true,
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+  const inp=document.getElementById('notas-link-search-inp'); if(inp) inp.value='';
+  hideNotaLinkDropdown();
+}
+async function notaRemoveCardLink(cardId){
+  if(!_notasOpenId) return;
+  await window._update(window._ref(window._db), {
+    [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: null,
+    [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
+  });
+}
+function hideNotaLinkDropdown(){ document.getElementById('notas-link-dropdown')?.classList.remove('show'); }
+function notaOpenLinkedCard(cardId){ openCard(cardId); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.notas-link-search')) hideNotaLinkDropdown();
+});
+
+// Lado do card: mostra quais notas (squad + pessoais do usuário atual)
+// referenciam este card, e permite vincular no sentido contrário (antes só
+// dava pra vincular de dentro da nota). Se o listener das Notas ainda não
+// foi ligado nesta sessão (drawer nunca aberto), NÃO puxa nada sozinho —
+// mesmo princípio de "só carrega quando o usuário estiver usando" já usado
+// pro resto de Notas: mostra um botão, e o fetch (get() avulso, sem
+// listener persistente) só roda se a pessoa clicar (ou usar a busca).
+function renderNotasVinculadasNoCard(card){
+  const searchWrap=document.getElementById('m-notas-link-search-wrap');
+  if(searchWrap) searchWrap.style.display='none';
+  const inp=document.getElementById('m-notas-link-search-inp'); if(inp) inp.value='';
+  hideCardNotaLinkDropdown();
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  if(_notasLoaded){ _paintNotasVinculadas(card.id); return; }
+  wrap.innerHTML='<button class="btn btn-sm" onclick="_checkNotasVinculadas(\''+card.id+'\')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">🔗 Ver notas vinculadas a este card</button>';
+}
+async function _ensureNotasDataForCard(){
+  if(_notasLoaded) return;
+  const uid=window._currentUser?.uid;
+  const [squadSnap, pessoalSnap] = await Promise.all([
+    window._get(window._ref(window._db, FB+'/notas')),
+    uid ? window._get(window._ref(window._db, FB+'/notas_pessoais/'+uid)) : Promise.resolve(null),
+  ]);
+  if(!_notasLoaded){ // não sobrescreve dado mais fresco se o drawer foi aberto nesse meio-tempo
+    _notasSquad = squadSnap?.val()||{};
+    _notasPessoais = pessoalSnap?.val()||{};
+  }
+}
+async function _checkNotasVinculadas(cardId){
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  wrap.innerHTML='<div style="font-size:10px;color:var(--txt3);">Carregando...</div>';
+  await _ensureNotasDataForCard();
+  _paintNotasVinculadas(cardId);
+}
+function _paintNotasVinculadas(cardId){
+  const wrap=document.getElementById('m-notas-vinc-wrap'); if(!wrap) return;
+  const squadMatches=Object.values(_notasSquad||{}).filter(n=>n&&n.cardIds&&n.cardIds[cardId]).map(n=>({...n,_scope:'squad'}));
+  const pessoalMatches=Object.values(_notasPessoais||{}).filter(n=>n&&n.cardIds&&n.cardIds[cardId]).map(n=>({...n,_scope:'pessoal'}));
+  const all=[...squadMatches,...pessoalMatches];
+  if(!all.length){ wrap.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhuma nota vinculada a este card.</div>'; return; }
+  wrap.innerHTML=all.map(n=>
+    '<div class="linked-chip" onclick="abrirNotaVinculada(\''+n.id+'\',\''+n._scope+'\')">'
+    + '<span class="linked-chip-col">'+(n._scope==='squad'?'👥 Squad':'🐠 Pessoal')+'</span>'
+    + '<span class="linked-chip-title">📝 '+esc(n.titulo||'Sem título')+'</span>'
+    + '<button class="nota-chip-rm" title="Desvincular" onclick="event.stopPropagation();cardRemoveNotaLink(\''+n.id+'\',\''+n._scope+'\')">✕</button>'
+    + '</div>'
+  ).join('');
+}
+// Caminho Firebase de uma nota específica, dado seu escopo — usado só pelo
+// lado do card (que não tem uma "nota aberta" como _notasBasePath() assume).
+function _notaPathForScope(scope, notaId){
+  const uid=window._currentUser?.uid;
+  return (scope==='squad' ? (FB+'/notas') : (FB+'/notas_pessoais/'+uid)) + '/' + notaId;
+}
+async function toggleCardNotaLinkSearch(){
+  const wrap=document.getElementById('m-notas-link-search-wrap'); if(!wrap) return;
+  const opening = wrap.style.display==='none' || !wrap.style.display;
+  if(!opening){ wrap.style.display='none'; hideCardNotaLinkDropdown(); return; }
+  if(!_notasLoaded) await _ensureNotasDataForCard();
+  _paintNotasVinculadas(editingId); // troca o botão "Ver notas vinculadas" pelo conteúdo real, se ainda não tinha carregado
+  wrap.style.display='block';
+  document.getElementById('m-notas-link-search-inp')?.focus();
+}
+// Busca só por título (mesmo padrão da busca "vincular card" já usada em
+// Notas) — cruza notas da squad + pessoais do usuário atual, excluindo as
+// que já estão vinculadas a este card.
+function cardSearchNotas(q){
+  const dd=document.getElementById('m-notas-link-dropdown'); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const cardId=editingId; if(!cardId) return;
+  const lower=q.toLowerCase();
+  const squadList=Object.values(_notasSquad||{}).filter(n=>n&&!(n.cardIds&&n.cardIds[cardId])).map(n=>({...n,_scope:'squad'}));
+  const pessoalList=Object.values(_notasPessoais||{}).filter(n=>n&&!(n.cardIds&&n.cardIds[cardId])).map(n=>({...n,_scope:'pessoal'}));
+  const results=[...squadList,...pessoalList].filter(n=>(n.titulo||'').toLowerCase().includes(lower)).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhuma nota encontrada.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML='';
+  results.forEach(n=>{
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+(n._scope==='squad'?'👥 Squad':'🐠 Pessoal')+'</span><span style="flex:1;color:var(--txt);">'+esc(n.titulo||'Sem título')+'</span>';
+    opt.onclick=()=>cardAddNotaLink(n.id, n._scope);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+async function cardAddNotaLink(notaId, scope){
+  const cardId=editingId; if(!cardId) return;
+  await window._update(window._ref(window._db), {
+    [_notaPathForScope(scope,notaId)+'/cardIds/'+cardId]: true,
+    [_notaPathForScope(scope,notaId)+'/atualizadoEm']: new Date().toISOString(),
+  });
+  // Atualiza o cache local na hora (sem esperar o próximo listener/get) pra
+  // o chip aparecer de imediato.
+  const store = scope==='squad' ? _notasSquad : _notasPessoais;
+  if(store[notaId]){ store[notaId].cardIds = store[notaId].cardIds||{}; store[notaId].cardIds[cardId]=true; }
+  const inp=document.getElementById('m-notas-link-search-inp'); if(inp) inp.value='';
+  hideCardNotaLinkDropdown();
+  _paintNotasVinculadas(cardId);
+}
+async function cardRemoveNotaLink(notaId, scope){
+  const cardId=editingId; if(!cardId) return;
+  await window._update(window._ref(window._db), {
+    [_notaPathForScope(scope,notaId)+'/cardIds/'+cardId]: null,
+    [_notaPathForScope(scope,notaId)+'/atualizadoEm']: new Date().toISOString(),
+  });
+  const store = scope==='squad' ? _notasSquad : _notasPessoais;
+  if(store[notaId]?.cardIds) delete store[notaId].cardIds[cardId];
+  _paintNotasVinculadas(cardId);
+}
+function hideCardNotaLinkDropdown(){ document.getElementById('m-notas-link-dropdown')?.classList.remove('show'); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.notas-card-link-search')) hideCardNotaLinkDropdown();
+});
+// Abre a nota vinculada a partir do card (fecha o modal do card, abre o
+// drawer de Notas já na nota certa). Reaproveita _attachNotasListeners()
+// (idempotente — no-op se já ligado) em vez de duplicar a lógica de
+// toggleNotas(), e força um render imediato se os dados já estiverem em
+// cache (não espera um novo snapshot que talvez nunca chegue).
+function abrirNotaVinculada(notaId, scope){
+  closeOv('card-ov', ()=>{
+    _notasScope = scope;
+    document.getElementById('nstab-pessoal')?.classList.toggle('on', scope==='pessoal');
+    document.getElementById('nstab-squad')?.classList.toggle('on', scope==='squad');
+    ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(x=>document.getElementById(x)?.classList.remove('open'));
+    document.getElementById('notas-drawer')?.classList.add('open');
+    _notasOpenId = notaId;
+    const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
+    if(listView) listView.style.display='none';
+    if(edView) edView.style.display='flex';
+    const tree=document.getElementById('notas-tree'); if(tree) tree.innerHTML='<div class="lem-empty">Carregando nota...</div>';
+    _attachNotasListeners();
+    if(_notasLoaded) _renderNotasCurrentView();
   });
 }
 function _siblingsOf(nota, parentId){
@@ -11769,6 +12151,7 @@ function renderNotaEditor(){
   if(!nota){ closeNotaEditor(); return; }
   const titleInp=document.getElementById('notas-editor-title');
   if(titleInp && document.activeElement!==titleInp) titleInp.value = nota.titulo||'';
+  renderNotaLinkedCards();
   const isLivre = nota.modo==='livre';
   const modoBtn=document.getElementById('notas-modo-btn');
   if(modoBtn){ modoBtn.textContent = isLivre?'📄':'🧱'; modoBtn.title = isLivre?'Modo livre — clique pra organizar em blocos':'Modo estruturado — clique pra virar texto livre'; }
@@ -13968,7 +14351,11 @@ function _renderArquivadosBody(){
   }
   if(fOwner){
     const prev=fOwner.value;
-    const ownersUsados=[...new Set(archived.map(c=>c.owner).filter(Boolean))];
+    const ownersUsados=[...new Set(archived.map(c=>c.owner).filter(Boolean))]
+      .sort((a,b)=>{
+        const ma=members.find(x=>x.init===a), mb=members.find(x=>x.init===b);
+        return (ma?ma.name:a).localeCompare(mb?mb.name:b,'pt-BR',{sensitivity:'base'});
+      });
     fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(_shortName(m.name)):''}</option>`}).join('');
     fOwner.value=prev;
   }
@@ -14619,7 +15006,13 @@ function usarQLItem(i){
   document.getElementById('m-title-disp').textContent=item.title;
   editingTags = Array.isArray(item.tags) ? item.tags.slice() : (item.tag?[item.tag]:[]);
   populateTagSelect();
+  // BUGFIX (mesma causa do "usar modelo" dentro do card já aberto, ver
+  // aplicarModeloNoCard): setar #m-desc.value direto não atualiza o card
+  // visível da Descrição (#m-desc-display, padrão eoc/"clique pra editar")
+  // — precisa do redraw explícito, senão a Descrição do modelo fica
+  // salva por baixo dos panos mas continua aparecendo como "vazia".
   document.getElementById('m-desc').value=item.desc||'';
+  eocInitDisplay('desc-eoc', item.desc||'', 'Adicionar descrição...');
   document.getElementById('m-po').value=item.po||'';
   _clGroupsInit(item);
   if(item.checklist?.length) renderCL(item.checklist);
@@ -14711,7 +15104,7 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','padroes'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); }
@@ -14727,6 +15120,7 @@ function swCfgTab(tab){
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
+  if(tab==='padroes') renderCardPatternsCfg();
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
@@ -14900,7 +15294,7 @@ function renderUsuarios(){
       // Aceita: novo formato (squads.dados=true) OU legado (inscrito=true sem squads)
       if(u.squads) return u.squads[ACTIVE_SQUAD]===true;
       return (u.inscrito===true||u.inscrito==='true')&&u.init;
-    });
+    }).sort(([,a],[,b])=>(a.nome||a.email||'').localeCompare(b.nome||b.email||'','pt-BR',{sensitivity:'base'}));
     if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum membro inscrito neste squad ainda.</div>'; return; }
     entries.forEach(([uid,u])=>{
       const row=document.createElement('div'); row.className='user-row';
@@ -15229,6 +15623,103 @@ async function resetFluxoCfg(){
   renderBoard(); // 🔧 aplica na hora
   renderFluxoCfg();
   showToast('↺ Voltou para a detecção automática.');
+}
+let _padroesCfgAberto=null; // id do padrão com o editor de seções expandido (só 1 por vez)
+function renderCardPatternsCfg(){
+  const box=document.getElementById('padroes-cfg-list'); if(!box) return;
+  const ids=Object.keys(cardPatterns);
+  if(!ids.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum padrão criado ainda. Sem nenhum, o modal do card mostra tudo (comportamento atual).</div>';
+    return;
+  }
+  box.innerHTML=ids.map(id=>{
+    const p=cardPatterns[id];
+    const aberto=_padroesCfgAberto===id;
+    const secoesHtml = CARD_SECTIONS.map(s=>
+      `<label class="reqf-row" style="padding:6px 10px;font-size:12px;">
+        <input type="checkbox" ${_cardSectionVisible2(p,s.key)?'checked':''} onchange="togglePadraoSecao('${id}','${s.key}',this.checked)">
+        ${esc(s.label)}
+      </label>`
+    ).join('');
+    return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_padroesCfgAberto=_padroesCfgAberto==='${id}'?null:'${id}';renderCardPatternsCfg();">
+        <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">📐 ${esc(p.nome||'Sem nome')}${p.isDefault?' <span style="font-size:9px;color:var(--teal);font-weight:700;">★ PADRÃO DA SQUAD</span>':''}</span>
+        <button class="btn btn-sm" onclick="event.stopPropagation();renomearPadraoCard('${id}')" title="Renomear" style="font-size:10px;">✎</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();definirPadraoDefault('${id}')" title="Marcar como padrão da squad" style="font-size:10px;${p.isDefault?'color:var(--teal);border-color:rgba(29,233,182,.4);':''}">★</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirPadraoCard('${id}')" title="Excluir padrão" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
+      </div>
+      ${aberto?`<div style="padding:0 12px 10px;border-top:1px solid var(--glass-b);">${secoesHtml}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function _cardSectionVisible2(pattern, key){ return pattern?.sections?.[key]!==false; }
+async function criarPadraoCard(){
+  const nome=await uiPrompt('Nome do padrão:', '', {title:'📐 Novo padrão de card', placeholder:'Ex.: Bug, Campanha, Simples...'});
+  if(nome===null) return;
+  const t=nome.trim(); if(!t) return;
+  const id='pat'+Date.now();
+  cardPatterns={...cardPatterns, [id]:{nome:t, sections:{}, isDefault:false}};
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  _padroesCfgAberto=id;
+  renderCardPatternsCfg();
+}
+async function renomearPadraoCard(id){
+  const p=cardPatterns[id]; if(!p) return;
+  const nome=await uiPrompt('Novo nome do padrão:', p.nome||'', {title:'✎ Renomear padrão'});
+  if(nome===null) return;
+  const t=nome.trim(); if(!t) return;
+  cardPatterns={...cardPatterns, [id]:{...p, nome:t}};
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  renderCardPatternsCfg();
+}
+function definirPadraoDefault(id){
+  const next={};
+  Object.entries(cardPatterns).forEach(([pid,p])=>{ next[pid]={...p, isDefault:pid===id}; });
+  cardPatterns=next;
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  renderCardPatternsCfg();
+  showToast('★ Padrão da squad atualizado.');
+}
+async function excluirPadraoCard(id){
+  const p=cardPatterns[id]; if(!p) return;
+  if(!await uiConfirm('Excluir o padrão "'+(p.nome||'')+'"? Cards que usavam ele voltam a mostrar tudo (ou o padrão da squad, se houver outro).',{title:'Excluir padrão'})) return;
+  const next={...cardPatterns}; delete next[id];
+  cardPatterns=next;
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  if(_padroesCfgAberto===id) _padroesCfgAberto=null;
+  renderCardPatternsCfg();
+}
+function togglePadraoSecao(id, key, visible){
+  const p=cardPatterns[id]; if(!p) return;
+  const sections={...(p.sections||{})};
+  if(visible) delete sections[key]; else sections[key]=false;
+  cardPatterns={...cardPatterns, [id]:{...p, sections}};
+  fbSet(FB+'/config/cardPatterns', cardPatterns);
+  if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
+}
+// Seletor "📐 Padrão de card" no HEADER do modal (ao lado de Compartilhar)
+// — cada card escolhe o seu (card.padraoId). Sem padrão nenhum criado na
+// squad ainda, o select fica escondido (nada pra escolher) — é assim que
+// "não aparece" até alguém criar o 1º padrão em Configurações.
+function populateCardPatternSelect(){
+  const sel=document.getElementById('m-card-pattern');
+  if(!sel) return;
+  const ids=Object.keys(cardPatterns);
+  if(!ids.length){ sel.style.display='none'; return; }
+  sel.style.display='';
+  const card=editingId ? cards.find(c=>c.id===editingId) : null;
+  const defId=_defaultPatternId();
+  sel.innerHTML='<option value="">'+(defId?'📐 Padrão: '+esc(cardPatterns[defId].nome):'📐 Padrão')+'</option>'
+    + ids.map(id=>`<option value="${id}">📐 ${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join('');
+  sel.value = (card?.padraoId && cardPatterns[card.padraoId]) ? card.padraoId : '';
+}
+function setCardPattern(patId){
+  if(!editingId) return;
+  const card=cards.find(c=>c.id===editingId); if(!card) return;
+  card.padraoId = patId||null;
+  fbSaveCard(card);
+  _applyCardSectionsVisibility();
 }
 function renderSubteamEditor(){
   const box=document.getElementById('subteam-editor'); if(!box) return;
@@ -16994,6 +17485,7 @@ const NOTIF_ICONS = {
   unblocked:  '✅',
   due_today:  '📅',
   due_soon:   '⏰',
+  due_overdue: '🔴',
   done:       '🏁',
   risk:       '⚠️',
   checklist:  '☑️',
@@ -17570,20 +18062,25 @@ function notifChecklistDone(card){
     card.id);
 }
 
-// 7. Prazo vencendo — roda 1x/dia via localStorage
+// 7. Prazo — roda 1x/dia via localStorage. Pedido direto: só 2 avisos por
+// card, não um trecho inteiro de dias "próximo do prazo" — no DIA do prazo
+// (due_today) e no dia seguinte, se ninguém resolveu (due_overdue, 1º dia
+// atrasado). Como isso roda 1x/dia e a comparação é "due === ontem" (não
+// "due <= ontem"), due_overdue dispara só nesse 1º dia — não repete todo
+// dia enquanto o card seguir atrasado.
 function checkDueNotifs(){
   const today=new Date().toISOString().split('T')[0];
   const lastCheck=safeLS.getItem('lastDueCheck_'+ACTIVE_SQUAD);
   if(lastCheck===today) return;
   safeLS.setItem('lastDueCheck_'+ACTIVE_SQUAD, today);
-  const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomorrowStr=tomorrow.toISOString().split('T')[0];
+  const ontem=new Date(); ontem.setDate(ontem.getDate()-1);
+  const ontemStr=ontem.toISOString().split('T')[0];
   cards.filter(c=>c.due&&!c.archived&&!_isColDone(c.col)).forEach(card=>{
     const uid=getUidByInit(card.owner); if(!uid) return;
     if(card.due===today){
       createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
-    } else if(card.due===tomorrowStr){
-      createNotif(uid,'due_soon','Prazo amanhã',card.title?.substring(0,60),card.id);
+    } else if(card.due===ontemStr){
+      createNotif(uid,'due_overdue','Prazo atrasado! 🔴',card.title?.substring(0,60),card.id);
     }
   });
 }
@@ -19994,11 +20491,24 @@ function closeUsarModeloMenuOutside(e){
 // marcadas; descrição/PO só entram se estiverem vazios no card.
 function aplicarModeloNoCard(idx){
   const modelo=qlItems.modelos?.[idx];
-  if(!modelo || !editingId){ closeUsarModeloMenu(); return; }
-  saveUndo('aplicar modelo');
+  if(!modelo){ closeUsarModeloMenu(); return; }
+  // BUGFIX (causa real do "clica e nada acontece"): esta função exigia
+  // editingId, mas um card NOVO só ganha editingId depois do 1º "Salvar"
+  // manual — scheduleAutoSave() nem roda antes disso ("só auto-salva cards
+  // existentes"). Ou seja: abrir um card novo e usar o modelo ANTES de
+  // salvar saía daqui sem fazer nada, sem toast nem erro nenhum. Agora
+  // funciona nos dois casos — sem editingId, só mexe no formulário em
+  // memória (não tem undo de board nem autosave pra disparar, porque o
+  // card ainda não existe em `cards`/Firebase).
+  if(editingId) saveUndo('aplicar modelo');
 
   const descEl=document.getElementById('m-desc');
-  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=modelo.desc; renderDescPreview(); }
+  // BUGFIX: chamava renderDescPreview() (só atualiza o preview de @menção,
+  // que só aparece quando há menção no texto) em vez de redesenhar o card
+  // visível da Descrição (#m-desc-display, padrão eoc/"clique pra editar").
+  // O valor era salvo certo por baixo dos panos, mas visualmente parecia
+  // que nada tinha acontecido — daí "usar modelo não preenche o card".
+  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=modelo.desc; eocInitDisplay('desc-eoc', descEl.value, 'Adicionar descrição...'); }
   const poEl=document.getElementById('m-po');
   if(poEl && !poEl.value.trim() && modelo.po) poEl.value=modelo.po;
 
@@ -20020,8 +20530,12 @@ function aplicarModeloNoCard(idx){
   }
 
   closeUsarModeloMenu();
-  scheduleAutoSave();
-  showToast('📥 Modelo "'+modelo.title+'" aplicado — revise e salve.');
+  if(editingId){
+    scheduleAutoSave();
+    showToast('📥 Modelo "'+modelo.title+'" aplicado — revise e salve.');
+  } else {
+    showToast('📥 Modelo "'+modelo.title+'" aplicado — clique em Salvar pra criar o card.');
+  }
 }
 // Gera a URL direta pra este card (mesmo mecanismo do ?opencard= usado pelo
 // multi-squad de campanhas) — reaproveitada por shareCardLink e exportToMilanote.
