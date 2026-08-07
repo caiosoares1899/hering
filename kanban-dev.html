@@ -4936,7 +4936,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.332-dev</div>
+<div class="version">v8.30.333-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5821,11 +5821,12 @@ function _doBulkTagMulti(mode){
     c.tags = current;
     c.tag = current[0] || '';
     recordHistory(c, (mode==='set'?'substituiu tags por: ':'adicionou tags: ') + selectedTags.map(id=>getTag(id)?.label).join(', '));
-    // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
+    // ver comentário no scheduleAutoSave() sobre tag_added/tag_removed/submarca_set
     current.filter(t=>!_prevTags.includes(t)).forEach(t=>{
       runAutoRules('tag_added', c.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
     });
+    _prevTags.filter(t=>!current.includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
   });
   
   window._bulkSelectedTags = [];
@@ -5834,9 +5835,11 @@ function _doBulkTagMulti(mode){
 
 function _doBulkTagClear(){
   _selectedList().forEach(c => {
+    const _prevTags=(c.tags||[]).slice();
     c.tags = [];
     c.tag = '';
     recordHistory(c, 'removeu todas as tags');
+    _prevTags.forEach(t=>runAutoRules('tag_removed', c.id, t)); // ver comentário no scheduleAutoSave()
   });
   _bulkFinish(`🚫 Tags removidas de ${selectedCards.size} cards.`, true);
 }
@@ -9075,14 +9078,15 @@ function scheduleAutoSave(){
       const _prevDone=_prevChecklist.filter(i=>i.done).length;
       if(_prevDone < c.checklist.length){ notifChecklistDone(c); runAutoRules('checklist_complete', c.id); }
     }
-    // Triggers "Tag adicionada"/"Submarca definida como" — qualquer tag nova
-    // no card desde o snapshot; submarca é uma tag como outra qualquer por
-    // baixo (ver setCardSubmarca), então uma tag nova que bater com
-    // SUBMARCA_TAGS dispara os dois triggers.
+    // Triggers "Tag adicionada"/"Tag removida"/"Submarca definida como" —
+    // qualquer tag nova ou que sumiu desde o snapshot; submarca é uma tag
+    // como outra qualquer por baixo (ver setCardSubmarca), então uma tag
+    // nova que bater com SUBMARCA_TAGS dispara os dois triggers.
     (c.tags||[]).filter(t=>!_prevTags.includes(t)).forEach(t=>{
       runAutoRules('tag_added', c.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
     });
+    _prevTags.filter(t=>!(c.tags||[]).includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
     // feedback sutil
     const btn=document.querySelector('#card-ov .btn-p');
     if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
@@ -9882,6 +9886,7 @@ function saveCard(){
       runAutoRules('tag_added', c.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
     });
+    _prevTagsSave.filter(t=>!(c.tags||[]).includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
@@ -17439,6 +17444,7 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
 <div>👤 <b>Card foi atribuído a X</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 <div>🔴 <b>Prioridade definida como X</b> <span style="font-size:10px;color:var(--txt3);">— qualquer nível (Baixa/Média/Alta/Crítica), não só Crítica</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,209,102,.2);color:#ffd166;margin-left:2px;">CORRIGIDO</span></div>
 <div>🏷 <b>Tag adicionada ao card</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
+<div>🏷 <b>Tag removida do card</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 <div>🏷️ <b>Submarca definida como X</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Submarca</span> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 <div>🎯 <b>Card marcado como OKR</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
 <div>🎨 <b>Capa de cor definida como X</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span></div>
@@ -17460,6 +17466,7 @@ Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda r
 <div>📦 <b>Mover card para coluna</b></div>
 <div>🔴 <b>Definir prioridade</b></div>
 <div>🏷 <b>Adicionar tag</b></div>
+<div>🏷 <b>Remover tag</b></div>
 <div>👤 <b>Atribuir responsável</b></div>
 <div>🏷️ <b>Definir submarca</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Submarca</span></div>
 <div>👕 <b>Definir tamanho</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se o squad usa o campo Tamanho</span></div>
@@ -17548,6 +17555,11 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 <div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #b28dff;border-radius:8px;font-size:11.5px;line-height:1.9;">
 <div><b style="color:var(--accent);">QUANDO</b> card recorrente "Relatório semanal" criado</div>
 <div><b style="color:#3ddc97;">ENTÃO</b> definir prioridade Alta <b>+</b> adicionar item de checklist "Revisar dados antes de enviar"</div>
+</div>
+
+<div style="margin:8px 0;padding:9px 11px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-left:3px solid #ff6b6b;border-radius:8px;font-size:11.5px;line-height:1.9;">
+<div><b style="color:var(--accent);">QUANDO</b> tag "Urgente" removida do card</div>
+<div><b style="color:#3ddc97;">ENTÃO</b> definir prioridade Média</div>
 </div>` },
     { icon:'❓', title:'Dúvidas frequentes (Q&A)', text:`<div style="display:flex;flex-direction:column;gap:12px;">
 
@@ -20419,6 +20431,8 @@ const AUTO_TRIGGERS = [
   // lado ENTÃO, onde faz sentido de verdade acontecer) ──
   { key:'tag_added', label:'Tag adicionada ao card', valueType:'tag',
     matches:(rule,ev,card,extra)=> ev==='tag_added' && extra===rule.triggerVal },
+  { key:'tag_removed', label:'Tag removida do card', valueType:'tag',
+    matches:(rule,ev,card,extra)=> ev==='tag_removed' && extra===rule.triggerVal },
   { key:'submarca_set', label:'Submarca definida como', valueType:'submarca', visible:()=>submarcaAtivo,
     matches:(rule,ev,card,extra)=> ev==='submarca_set' && extra===rule.triggerVal },
   { key:'marked_okr', label:'Card marcado como OKR', valueType:'none',
@@ -20445,6 +20459,8 @@ const AUTO_ACTIONS = [
     run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false; ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou tag (automação)','⚙ Automação'); return true; } },
+  { key:'remove_tag', label:'Remover tag', valueType:'tag',
+    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(!ct.includes(rule.actionVal)) return false; const nt=ct.filter(id=>id!==rule.actionVal); card.tags=nt; card.tag=nt[0]||''; recordHistory(card,'removeu tag (automação)','⚙ Automação'); return true; } },
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
     run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
   { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab', visible:()=>AGENTE_AGIL_ATIVO,
