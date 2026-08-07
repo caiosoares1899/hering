@@ -3122,6 +3122,12 @@ input[type="date"]{-moz-appearance:textfield;}
     <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
       title="Padrão de card — define quais seções opcionais aparecem no modal"
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
+    <div style="position:relative;display:inline-block;margin-right:6px;">
+      <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor">🎨</button>
+      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;">
+        <div class="cover-swatches cover-swatches-target"></div>
+      </div>
+    </div>
     <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
     <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -3149,7 +3155,7 @@ input[type="date"]{-moz-appearance:textfield;}
          organização visual além das tags. -->
     <div class="field">
       <label class="fl">🎨 Capa <span style="font-size:9px;color:var(--txt3);font-weight:400;">tira de cor no topo do card, tipo Trello</span></label>
-      <div class="cover-swatches" id="m-cover-swatches"></div>
+      <div class="cover-swatches cover-swatches-target" id="m-cover-swatches"></div>
     </div>
 
     <!-- Grid 2 colunas: atributos | lado direito -->
@@ -4925,7 +4931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.322-dev</div>
+<div class="version">v8.30.323-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5391,12 +5397,28 @@ const CARD_COVER_COLORS = [
 // mesma lição aprendida com "usar modelo" e Padrão de card (ver histórico
 // de bugs). Guarda aqui até o 1º Salvar criar o card de verdade.
 let _pendingCoverColor = null;
+// Popula TODOS os alvos de swatch (o campo abaixo do Título + o popover do
+// botão 🎨 no header) — pedido direto pra ter acesso rápido no header além
+// do campo já existente. Os dois ficam sincronizados por lerem o mesmo
+// estado (card.coverColor / _pendingCoverColor) a cada render.
 function renderCoverSwatches(){
-  const wrap=document.getElementById('m-cover-swatches'); if(!wrap) return;
+  const targets=document.querySelectorAll('.cover-swatches-target');
+  if(!targets.length) return;
   const card=editingId ? cards.find(c=>c.id===editingId) : null;
   const current = editingId ? (card?.coverColor||'') : (_pendingCoverColor||'');
-  wrap.innerHTML = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
+  const html = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
     + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover('${c.id}')"></button>`).join('');
+  targets.forEach(el=>el.innerHTML=html);
+}
+function toggleCoverMenu(){
+  const menu=document.getElementById('m-cover-menu'); if(!menu) return;
+  const isOpen=menu.style.display!=='none';
+  menu.style.display=isOpen?'none':'block';
+  if(!isOpen) setTimeout(()=>document.addEventListener('click', _closeCoverMenuOutside, {once:true}), 10);
+}
+function _closeCoverMenuOutside(e){
+  if(e.target.closest('#m-cover-menu')||e.target.closest('#m-cover-btn')) return;
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
 }
 function _applyCoverStripToModal(colorId){
   const strip=document.getElementById('m-cover-strip-modal'); if(!strip) return;
@@ -5405,6 +5427,7 @@ function _applyCoverStripToModal(colorId){
   else { strip.style.display='none'; }
 }
 function setCardCover(colorId){
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none'; // fecha o popover do header, se veio de lá
   if(!editingId){
     _pendingCoverColor = colorId||null;
     _applyCoverStripToModal(colorId);

@@ -1067,6 +1067,13 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.323-dev — 2026-08-06
+Pedido direto: botão 🎨 no header do modal (junto dos outros ícones,
+ao lado de Compartilhar) abrindo um popover com os mesmos swatches de
+capa de cor — acesso rápido sem precisar rolar até o campo abaixo do
+Título, que continua existindo também. Os dois lugares ficam
+sincronizados (mesmo estado, `card.coverColor`/`_pendingCoverColor`).
+
 ### v8.30.322-dev — 2026-08-06
 - **Fix real do posicionamento do Demandante**: a v8.30.321-dev não
   funcionou — o raciocínio sobre CSS Grid estava errado (a linha
