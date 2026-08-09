@@ -1272,7 +1272,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div class="sec-title">⚖️ Comparação entre squads</div>
       <div class="card" style="margin-bottom:20px;">
         <table class="cmp-table">
-          <thead><tr><th>Métrica</th><th>📊 Squad Dados</th><th>📱 Marketing de Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
+          <thead><tr><th>Métrica</th><th>📊 Squad Dados e IA</th><th>📱 Marketing de Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
           <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
         </table>
       </div>
@@ -1333,7 +1333,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
     <div class="grid-2" style="margin-bottom:20px;">
-      <div class="card"><div class="card-title">📊 Squad Dados — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
+      <div class="card"><div class="card-title">📊 Squad Dados e IA — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
       <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-prf" class="col-bar"></div></div>
     </div>
 
@@ -1514,7 +1514,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
     <div class="sec-title">🤖 Uso do Agente Ágil</div>
     <div class="grid-3" style="margin-bottom:12px;">
       <div class="met"><div class="met-lbl">Total consultas</div><div class="met-val" id="au-total">—</div><div class="met-sub">todos os squads</div></div>
-      <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
+      <div class="met"><div class="met-lbl">Squad Dados e IA</div><div class="met-val" id="au-dados">—</div><div class="met-sub">consultas</div></div>
       <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="au-prf">—</div><div class="met-sub">consultas</div></div>
     </div>
     <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
@@ -1532,7 +1532,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       </div>
       <div class="err-stats-grid">
         <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
-        <div class="met"><div class="met-lbl">Squad Dados</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
+        <div class="met"><div class="met-lbl">Squad Dados e IA</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
         <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="es-prf">—</div><div class="met-sub">total</div></div>
         <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
       </div>
@@ -2052,7 +2052,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
         <label class="pev-label">Squad / Origem</label>
         <select class="pev-input" id="pev-squad">
           <option value="gestao">🏢 Gestão Digital Hering</option>
-          <option value="dados">📊 Squad Dados</option>
+          <option value="dados">📊 Squad Dados e IA</option>
           <option value="prf">📱 Marketing de Performance</option>
           <option value="midiacriativa">🎨 Squad Mídia Criativa</option>
           <option value="geral">🌐 Geral (todos)</option>
@@ -2197,7 +2197,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.94 · painel</div>
+<div class="version">v2.95 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4216,7 +4216,7 @@ function checklistPct(c){
 
 // ── CALENDÁRIO DO PAINEL ─────────────────────────────────────────
 const PCAL_COLORS=[
-  {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados'},
+  {id:'dados',   bg:'rgba(56,182,255,.8)',  txt:'#003', label:'Squad Dados e IA'},
   {id:'prf',   bg:'rgba(29,233,182,.8)',  txt:'#003', label:'Marketing de Performance'},
   {id:'midiacriativa', bg:'rgba(244,114,182,.8)', txt:'#3a0018', label:'🎨 Squad Mídia Criativa'},
   {id:'gestao',  bg:'rgba(167,139,250,.8)', txt:'#1a0a3a', label:'Gestão Digital'},
@@ -6754,7 +6754,7 @@ function toggleSqCol(sqId, colId){
 
 // Squads base — sempre presentes
 let SQUADS = [
-  {id:'dados',         label:'Squad Dados',               icon:'📊', color:'#38b6ff', wipLimit:3},
+  {id:'dados',         label:'Squad Dados e IA',               icon:'📊', color:'#38b6ff', wipLimit:3},
   {id:'prf',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
   {id:'midiacriativa', label:'Squad Mídia Criativa',       icon:'🎨', color:'#a855f7', wipLimit:3},
 ];
