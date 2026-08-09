@@ -1374,11 +1374,11 @@ input[type="date"]{-moz-appearance:textfield;}
 .minicard:hover{border-color:rgba(56,182,255,.35);background:rgba(var(--glass-rgb),.9);}
 .minicard-left{width:4px;border-radius:4px;align-self:stretch;flex-shrink:0;}
 .minicard-body{flex:1;min-width:0;}
-.minicard-title{font-size:11px;color:var(--txt);font-weight:600;
+.minicard-title{font-size:12.5px;color:var(--txt);font-weight:500;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.minicard-meta{display:flex;gap:6px;align-items:center;margin-top:2px;}
-.minicard-col{font-size:9px;color:var(--txt3);}
-.minicard-owner{font-size:9px;color:var(--txt3);}
+.minicard-meta{display:flex;gap:6px;align-items:center;margin-top:3px;}
+.minicard-col{font-size:10.5px;color:var(--txt2);}
+.minicard-owner{font-size:10.5px;color:var(--txt2);}
 .minicard-rm{
   background:none;border:none;color:rgba(200,230,255,.25);
   cursor:pointer;font-size:13px;padding:0 2px;line-height:1;
@@ -1841,7 +1841,7 @@ input[type="date"]{-moz-appearance:textfield;}
    layout de grid novo). */
 .card.supercard{border-left:4px solid #a78bfa;padding-left:9px;}
 .super-rollup{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(167,139,250,.3);}
-.super-rollup-hd{font-size:9.5px;font-weight:700;color:#c4b5fd;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.super-rollup-hd{font-size:10px;font-weight:600;color:#c4b5fd;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
 .super-rollup-row{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--txt2);padding:2px 0;}
 .super-rollup-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .super-rollup-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -5004,7 +5004,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.338-dev</div>
+<div class="version">v8.30.339-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18247,9 +18247,9 @@ function _hideSuperChildrenForNewCard(){
 }
 function renderSuperChildrenList(){
   const list=document.getElementById('m-super-children-list'); if(!list) return;
-  if(!editingSuperChildren.length){ list.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhum card filho ainda.</div>'; return; }
+  if(!editingSuperChildren.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt2);">Nenhum card filho ainda.</div>'; return; }
   const doneN=editingSuperChildren.filter(lc=>_isColDone(lc.col)).length;
-  list.innerHTML = '<div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">'+doneN+'/'+editingSuperChildren.length+' concluído(s)</div>'
+  list.innerHTML = '<div style="font-size:11px;color:var(--txt2);margin-bottom:2px;">'+doneN+'/'+editingSuperChildren.length+' concluído(s)</div>'
     + editingSuperChildren.map(lc=>{
       const col=columns.find(c=>c.id===lc.col);
       const relCard=cards.find(c=>c.id===lc.id);
