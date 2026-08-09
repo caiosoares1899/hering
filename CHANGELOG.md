@@ -1170,6 +1170,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.336-dev — 2026-08-09
+Feedback direto depois de usar a aba 💡 Insights ao vivo: hoje ela é
+sempre uma **foto do board agora** (recalcula do zero a cada abertura,
+sem nenhum registro histórico) — passou a dar pra restringir essa foto
+por período e por tag, em vez de só oferecer os dados como estão.
+
+- ⏱ **Filtro de período**: por padrão continua olhando "🔵 Ativos
+  agora" (todos os cards ativos, sem restrição — comportamento
+  original, sem mudança pra quem não mexer no filtro). As outras
+  opções (Criados 7/14/30/90 dias) restringem aos cards ativos
+  **criados** dentro da janela — não muda a definição de "ativo"
+  (continua excluindo concluídos/arquivados), só adiciona um corte por
+  data de criação.
+- 🏷 **Filtro de tag**: clique numa ou mais tags do squad pra restringir
+  a análise só a cards com pelo menos uma delas marcada — útil pra
+  perguntas tipo "como está a prioridade só dos cards da campanha X".
+- Os dois filtros combinam entre si e com qualquer seção da aba
+  (prioridade, carga, riscos, OKR, aging, submarca). Resetam sozinhos
+  toda vez que o modal "📊 Dados do Board" é reaberto, pra ninguém
+  esquecer um filtro ligado de uma visita anterior e estranhar os
+  números.
+- Ajustada a linguagem da aba (texto de intro + Central de Ajuda) de
+  "PO/ADM" pra "PO/ADM/Organizador" — o botão "📊 Dados do Board" já
+  era visível pra qualquer papel (não tinha restrição de acesso),
+  então isso é só a descrição refletindo quem já podia ver.
+
 ### v8.30.335-dev — 2026-08-07
 Renomeia a squad "Dados" pra "Squad Dados e IA" (mesma mudança
 aplicada em `kanban.html`, `painel.html` e `painel-dev.html` — só o

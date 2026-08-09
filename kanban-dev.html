@@ -4535,7 +4535,8 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     </div>
     <div id="boarddata-view-insights" style="display:none;">
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Leitura pra PO/ADM entender rápido como a squad está — tudo calculado a partir dos dados que o board já tem carregado (nenhuma leitura extra do Firebase).</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Leitura pra PO/ADM/Organizador entenderem rápido como a squad está — tudo calculado a partir dos dados que o board já tem carregado (nenhuma leitura extra do Firebase).</div>
+      <div id="boarddata-insights-filters" style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-bottom:16px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;"></div>
       <div id="boarddata-insights-body"></div>
     </div>
   </div>
@@ -4949,7 +4950,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.335-dev</div>
+<div class="version">v8.30.336-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13324,6 +13325,7 @@ function openTempoReport(){
   renderTempoReport();
 }
 function openBoardData(){
+  _insightsPeriodDays = 0; _insightsTagFilter.clear(); // reseta filtros da aba Insights a cada abertura
   _boardDataSwitchTab('geral'); // sempre abre na Visão Geral, mesmo se ficou em Insights da última vez
   renderBoardDataGrid();
   _boardDataBarChart();
@@ -13342,7 +13344,45 @@ function _boardDataSwitchTab(tab){
   const ti=document.getElementById('boarddata-tab-insights'); if(ti) ti.classList.toggle('active', isInsights);
   if(isInsights) renderBoardDataInsights();
 }
-// ── Insights pra PO/ADM (Dados do Board → aba 💡 Insights) ──────────────
+// ── Filtros da aba Insights (período + tag) ─────────────────────────────
+// Estado em memória, reseta ao fechar/reabrir o modal de propósito (evita
+// "esquecer" um filtro ligado de uma visita anterior e o PO estranhar os
+// números). Pedido direto: "vale colocar a opção do usuário definir o tempo
+// que ele quer analisar... e filtros também, principalmente por tag".
+// Período NÃO troca a definição de "card ativo" (não-arquivado, não-done) —
+// só ADICIONA a restrição de terem sido criados na janela escolhida, pra não
+// bagunçar os cards de resumo (ex.: "Cards ativos") misturando concluídos.
+let _insightsPeriodDays = 0; // 0 = sem filtro de período (todos os ativos, comportamento original)
+let _insightsTagFilter = new Set(); // vazio = todas as tags
+function _insightsSetPeriod(days){ _insightsPeriodDays = days; renderBoardDataInsights(); }
+function _insightsToggleTag(tagId){
+  if(_insightsTagFilter.has(tagId)) _insightsTagFilter.delete(tagId); else _insightsTagFilter.add(tagId);
+  renderBoardDataInsights();
+}
+function _insightsClearTags(){ _insightsTagFilter.clear(); renderBoardDataInsights(); }
+function _renderInsightsFilterBar(){
+  const el=document.getElementById('boarddata-insights-filters'); if(!el) return;
+  const periods=[{d:0,l:'🔵 Ativos agora'},{d:7,l:'Criados 7d'},{d:14,l:'Criados 14d'},{d:30,l:'Criados 30d'},{d:90,l:'Criados 90d'}];
+  const chipStyle=(on,color)=>'padding:3px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;border:1px solid '+(on?(color||'var(--accent)'):'var(--glass-b)')+';background:'+(on?(_hexA(color||'#38b6ff',.15)):'transparent')+';color:'+(on?(color||'var(--accent)'):'var(--txt3)')+';';
+  const periodHtml = '<div>'
+    + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px;">⏱ Período</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:5px;">'
+    + periods.map(p=>'<span onclick="_insightsSetPeriod('+p.d+')" style="'+chipStyle(p.d===_insightsPeriodDays)+'">'+p.l+'</span>').join('')
+    + '</div></div>';
+  const tagHtml = (tags&&tags.length) ? ('<div style="flex:1;min-width:220px;">'
+    + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px;display:flex;align-items:center;gap:8px;">🏷 Tags'
+    + (_insightsTagFilter.size?' <span onclick="_insightsClearTags()" style="cursor:pointer;color:var(--accent);font-size:9.5px;text-transform:none;letter-spacing:0;">limpar ('+_insightsTagFilter.size+')</span>':'')
+    + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:5px;max-height:74px;overflow-y:auto;">'
+    + tags.map(t=>{
+        const on=_insightsTagFilter.has(t.id);
+        const p=getPal(t);
+        return '<span onclick="_insightsToggleTag(\''+t.id+'\')" style="'+chipStyle(on,p.c)+'">'+esc(t.label)+'</span>';
+      }).join('')
+    + '</div></div>') : '';
+  el.innerHTML = periodHtml + tagHtml;
+}
+// ── Insights pra PO/ADM/Organizador (Dados do Board → aba 💡 Insights) ──
 // Pedido direto: "faça um match com as funcionalidades que temos hoje e
 // traga insights legais" — tudo aqui é derivado do que já está carregado
 // em memória (cards/columns/tags/members/agilCfg), ZERO leitura nova do
@@ -13351,7 +13391,15 @@ function _boardDataSwitchTab(tab){
 // padrão novo de gráfico.
 function renderBoardDataInsights(){
   const body=document.getElementById('boarddata-insights-body'); if(!body) return;
-  const activeCards=cards.filter(c=>!c.archived && c.col!=='done');
+  _renderInsightsFilterBar();
+  let activeCards=cards.filter(c=>!c.archived && c.col!=='done');
+  if(_insightsPeriodDays>0){
+    const cutoffMs=_insightsPeriodDays*86400000;
+    activeCards=activeCards.filter(c=>c.createdAt && (Date.now()-new Date(c.createdAt+'T00:00:00').getTime())<=cutoffMs);
+  }
+  if(_insightsTagFilter.size){
+    activeCards=activeCards.filter(c=>getCardTags(c).some(tid=>_insightsTagFilter.has(tid)));
+  }
   const total=activeCards.length;
   const statCard=(icon,label,val,color)=>
     '<div style="flex:1;min-width:130px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;">'
@@ -13385,7 +13433,10 @@ function renderBoardDataInsights(){
     +'<span style="flex-shrink:0;color:var(--txt3);">'+esc(card._insightSub||'')+'</span></div>';
 
   if(!total){
-    body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card ativo (não concluído) no board ainda.</div>';
+    const filtroAtivo = _insightsPeriodDays>0 || _insightsTagFilter.size>0;
+    body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">'
+      +(filtroAtivo?'Nenhum card ativo bate com o filtro de período/tag escolhido.':'Nenhum card ativo (não concluído) no board ainda.')
+      +'</div>';
     return;
   }
 
@@ -17499,7 +17550,7 @@ const HELP_CONTENT = {
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
-    { icon:'💡', title:'Insights pra PO/ADM', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards ativos por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
+    { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
