@@ -4090,6 +4090,33 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v2.98 · painel-dev — 2026-08-09
+Nova seção **💡 Insights** na aba Visão, pra PO/ADM/gerente enxergar
+como o board (ou a gerência) está sem precisar abrir squad por squad —
+espelha o conteúdo da aba "💡 Insights" de `kanban.html` (Dados do
+Board), mas somando as squads atualmente visíveis em vez de uma só.
+
+- Reaproveita o filtro de squad/gerência já existente
+  (`squadVisible()`) — um gerente vendo só a própria gerência enxerga
+  os insights só das squads dela; a Visão Geral (`🏠 Todos`) soma
+  tudo. Zero leitura nova no Firebase: usa só `squadData` já carregado
+  pelo polling de 60s que já existia.
+- Seções: cards ativos/com risco/OKR/parados (cards de resumo), donut
+  de prioridade (com alerta se ≥30% estiver "Crítica"), carga por
+  responsável (com alerta de sobrecarga — chaveado por squad+iniciais
+  pra não misturar pessoas de squads diferentes que compartilhem
+  iniciais), top 5 cards com mais riscos mapeados, top 5 cards parados
+  há 1+ sprint (usando o `sprintDays` de cada squad), donut de OKR por
+  coluna (agrupado por nome — squads têm ids de coluna próprios) e,
+  quando pelo menos uma squad visível tem o campo de submarca ativo
+  (`config/submarca_ativo`, já vinha no payload do polling, só não era
+  lido), um donut "Por submarca".
+- Clique num card da lista abre o modal (`openPcModal`), mesmo padrão
+  já usado nas listas de Riscos/OKR do painel.
+- Validado com um smoke test em Node cobrindo filtro "Todos" vs.
+  gerência, não-mistura de iniciais entre squads, `mediaDono` sem
+  divisão por zero, aging por squad e o fallback do donut vazio.
+
 ### painel.html v2.95 · painel / painel-dev.html v2.97 · painel-dev — 2026-08-07 · rename de squad
 Renomeia a squad "Dados" pra **"Squad Dados e IA"** em todos os
 lugares (cabeçalhos de tabela, cards de métrica, dropdown, array de
