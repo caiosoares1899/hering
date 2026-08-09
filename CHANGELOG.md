@@ -1170,6 +1170,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.337-dev — 2026-08-09
+Primeira versão do **"supercard"** (cards filhos) — pedido direto do
+time de Mídia Alcance: um pedido do dia a dia (nem sempre é campanha
+formal) costuma virar vários cards por causa de formato/veículo/teste
+diferentes, e hoje isso fica solto no board sem nenhum agrupamento.
+
+- 🧩 Um card pode ganhar **cards filhos**: dentro dele, na seção
+  "🔗 Vínculos & anexos", tem "🧩 Cards filhos (supercard)" — vincula
+  um card já existente pela busca, ou digita um título novo e aperta
+  Enter pra criar um card filho na hora (herda coluna, prazo,
+  prioridade e demandante do pai, pra não repetir contexto).
+- No board, o card pai vira um **supercard**: borda esquerda roxa e
+  uma lista compacta dos filhos dentro do próprio card (bolinha da
+  cor da coluna de cada um + "X/N concluído(s)") — sem precisar abrir
+  nada pra saber como anda. Clique num filho da lista abre ele
+  direto.
+- Os filhos continuam cards **normais e independentes** — cada um
+  anda na sua própria coluna, tem seu próprio responsável/prazo. O
+  supercard só agrupa a visão, não move nem trava nada. Diferente de
+  "🔗 Vínculos" (referência solta) e "⛓ Dependências" (bloqueio/ordem
+  entre cards).
+- Trava simples contra bagunça: um card não pode virar filho de si
+  mesmo, e um supercard não pode ter outro supercard como filho
+  (profundidade 1 só, evita ciclo/recursão no rollup do board).
+- Reaproveita um toolkit visual (`.minicard`/`.link-dropdown`/
+  `.link-option`) que já existia pronto no CSS — sobra de uma versão
+  anterior de "cards vinculados" que nunca ganhou HTML — em vez de
+  inventar um padrão novo.
+- **Escopo desta 1ª versão**: só o núcleo (dado + board + modal). A
+  parte de configurar automações que criam os cards filhos sozinhas
+  (ex.: "supercard de campanha de mídia paga sempre gera Feed/Stories/
+  Reels") fica pra depois de validar o conceito visual com o time.
+
 ### v8.30.336-dev — 2026-08-09
 Feedback direto depois de usar a aba 💡 Insights ao vivo: hoje ela é
 sempre uma **foto do board agora** (recalcula do zero a cada abertura,

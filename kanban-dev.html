@@ -1834,6 +1834,18 @@ input[type="date"]{-moz-appearance:textfield;}
 
 
 .card.okr-card{border-color:rgba(255,215,0,.4)!important;border-width:2px!important;box-shadow:0 0 8px rgba(255,215,0,.1);}
+/* Supercard — card com filhos (card.childCardIds). Borda esquerda grossa em
+   vez de mudar a borda toda (menos conflito visual com okr-card/blocker/etc.,
+   que já competem por borda/cor); a altura extra vem naturalmente do rollup
+   de filhos dentro do card (cards já variam de altura, sem precisar de um
+   layout de grid novo). */
+.card.supercard{border-left:4px solid #a78bfa;padding-left:9px;}
+.super-rollup{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(167,139,250,.3);}
+.super-rollup-hd{font-size:9.5px;font-weight:700;color:#c4b5fd;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.super-rollup-row{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--txt2);padding:2px 0;}
+.super-rollup-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.super-rollup-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.super-rollup-row:hover .super-rollup-title{color:var(--txt);}
 /* Mesmo problema do .has-blocker-tag: 40% de opacidade de um amarelo puro
    em cima de um card quase-branco no claro dilui demais e some de vista.
    Feedback direto: "tem que ser um amarelo mais próximo do dourado pra
@@ -3478,6 +3490,35 @@ input[type="date"]{-moz-appearance:textfield;}
         <div style="font-size:10px;color:var(--txt3);">Nenhuma nota vinculada a este card.</div>
       </div>
     </div>
+
+    <!-- Cards filhos (Supercard) — pedido direto do time de mídia: um pedido do
+         dia a dia costuma virar vários cards (formato/veículo/teste diferentes);
+         em vez de espalhar isso solto no board, o card "pai" vira um supercard
+         que agrupa e mostra o progresso dos filhos. Reaproveita o toolkit visual
+         de .minicard/.link-dropdown/.link-option (já existia pronto no CSS, órfão
+         de uma versão antiga de "cards vinculados" sem HTML — ver comentário no
+         JS). Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e de
+         "⛓ Dependências" (bloqueio/ordem entre cards) — aqui é composição: os
+         filhos não bloqueiam ninguém, cada um anda no seu próprio ritmo. -->
+    <div class="attach-wrap" id="m-super-attach-wrap">
+      <div class="attach-hd">
+        <span class="attach-lbl">🧩 Cards filhos (supercard)</span>
+        <button class="attach-add-btn" onclick="toggleSuperChildSearch()">+ Adicionar</button>
+      </div>
+      <div id="m-super-parent-note" style="display:none;font-size:10px;color:var(--txt3);margin-bottom:6px;"></div>
+      <div id="m-super-search-wrap" style="display:none;margin-bottom:8px;">
+        <div class="link-search">
+          <input id="m-super-search-inp" class="link-search-input" placeholder="Buscar card existente pelo título..."
+            oninput="searchSuperChildren(this.value)"
+            onkeydown="if(event.key==='Escape'){this.value='';hideSuperChildDropdown();} else if(event.key==='Enter'){event.preventDefault();quickCreateSuperChild(this.value);}">
+          <div class="link-dropdown" id="m-super-link-dropdown"></div>
+        </div>
+        <div style="font-size:9.5px;color:var(--txt3);margin-top:4px;">Digite um título que ainda não existe e aperte Enter pra criar um card novo já como filho.</div>
+      </div>
+      <div id="m-super-children-list" style="display:flex;flex-direction:column;gap:6px;">
+        <div style="font-size:10px;color:var(--txt3);">Nenhum card filho ainda.</div>
+      </div>
+    </div>
     </div><!-- /m-sec-vinculos -->
 
     <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('colaboracao')">
@@ -4950,7 +4991,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.336-dev</div>
+<div class="version">v8.30.337-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8211,7 +8252,11 @@ function makeCardEl(card){
   const hasBlockerTag=card.blocker&&blockerMode==='tag';
   const _cardTagIds=getCardTags(card); const _cardTagObjs=_cardTagIds.map(id=>getTag(id)).filter(Boolean);
   const isOKR_=card.isOKR||_cardTagObjs.some(t=>t.isOKR||t.id==='okr'); const isCG_=_cardTagObjs.some(t=>t.isCalGestao||t.id==='cal_gestao');
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
+  // Supercard: card com card.childCardIds preenchido — mostra rollup dos
+  // filhos dentro do próprio card (ver bloco SUPERCARD mais abaixo no JS).
+  const _superChildren=(card.childCardIds||[]).map(id=>cards.find(c=>c.id===id&&!c.archived)).filter(Boolean);
+  const isSuper_=_superChildren.length>0;
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -8272,7 +8317,24 @@ function makeCardEl(card){
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
   const coverStripHtml=_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'';
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}`;
+  // Rollup do supercard — lista compacta dos filhos (título + bolinha da
+  // coluna deles), até 6 visíveis + contador do resto. Clique num filho abre
+  // ele direto (stopPropagation pra não abrir o pai por cima).
+  let superHtml='';
+  if(isSuper_){
+    const doneN=_superChildren.filter(c=>_isColDone(c.col)).length;
+    const rows=_superChildren.slice(0,6).map(c=>{
+      const col=columns.find(x=>x.id===c.col);
+      return `<div class="super-rollup-row" onclick="event.stopPropagation();openCard('${esc(c.id)}')">`
+        +`<span class="super-rollup-dot" style="background:${col?.color||'#888'};"></span>`
+        +`<span class="super-rollup-title">${esc(c.title)}</span>`
+        +`</div>`;
+    }).join('');
+    const moreN=_superChildren.length-6;
+    const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
+    superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
+  }
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -9525,6 +9587,7 @@ function openCard(id){
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   renderNotasVinculadasNoCard(c);
+  initSuperChildren(c);
   if(blockerRow){
     blockerRow.style.display=(_cardIsBlocked(c)||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
@@ -9744,6 +9807,7 @@ function openNewCard(col){
   _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
   editingLinkedCards=[];
   renderLinkedChips();
+  _hideSuperChildrenForNewCard();
   editingId=null;
   populateTagSelect(); populateOwnerSelect(); populateDemandanteSelect(); populateColSelect();
   document.getElementById('m-title').value='';
@@ -17554,6 +17618,7 @@ const HELP_CONTENT = {
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.' },
@@ -18106,6 +18171,159 @@ document.addEventListener('click', e=>{
   }
 });
 // ── FIM CARDS VINCULADOS ─────────────────────────────────────────
+
+// ── SUPERCARD (cards filhos) ──────────────────────────────────────
+// Pedido direto do time de Mídia Alcance: um pedido do dia a dia (nem sempre
+// é campanha formal) costuma virar vários cards por causa de formato/veículo/
+// teste diferentes. Um card pode virar "supercard" ganhando card.childCardIds
+// (ids de outros cards do mesmo squad) — o board mostra um rollup compacto dos
+// filhos dentro dele (título + coluna + progresso "X/N concluídos"), sem
+// precisar de um novo jeito de desenhar coluna nenhuma (cards já variam de
+// altura conforme o conteúdo). Reaproveita o toolkit .minicard/.link-dropdown/
+// .link-option que já existia pronto no CSS (órfão da tentativa anterior de
+// "Cards vinculados" logo acima, que nunca ganhou HTML) — ids próprios aqui
+// (m-super-*) pra não colidir com aquele código morto.
+// Escopo desta 1ª versão: só o núcleo (dado + board + modal). Fan-out via
+// automação/config ("supercard de campanha X sempre gera os cards A,B,C...")
+// fica pra depois de validar o conceito visual.
+let editingSuperChildren = []; // [{id,title,col}]
+
+function initSuperChildren(card){
+  const wrap=document.getElementById('m-super-attach-wrap');
+  if(wrap) wrap.style.display='';
+  editingSuperChildren = (card.childCardIds||[]).map(id=>{
+    const found = cards.find(c=>c.id===id);
+    return found ? {id:found.id, title:found.title, col:found.col} : null;
+  }).filter(Boolean);
+  renderSuperChildrenList();
+  const searchWrap=document.getElementById('m-super-search-wrap'); if(searchWrap) searchWrap.style.display='none';
+  const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
+  hideSuperChildDropdown();
+  // Se ESTE card é filho de algum outro supercard, mostra o vínculo reverso
+  // (calculado na hora — barato, cards já estão todos em memória).
+  const noteEl=document.getElementById('m-super-parent-note');
+  if(noteEl){
+    const parent = cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id));
+    if(parent){
+      noteEl.style.display='block';
+      noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();closeOv(\'card-ov\',()=>openCard(\''+esc(parent.id)+'\'))" style="color:var(--accent);">'+esc(parent.title)+'</a>';
+    } else {
+      noteEl.style.display='none';
+    }
+  }
+}
+// Card novo (ainda não existe no Firebase) não tem onde pendurar childCardIds
+// até ser salvo — esconde a seção em vez de deixar adicionar e perder tudo.
+function _hideSuperChildrenForNewCard(){
+  editingSuperChildren=[];
+  const wrap=document.getElementById('m-super-attach-wrap'); if(wrap) wrap.style.display='none';
+  const noteEl=document.getElementById('m-super-parent-note'); if(noteEl) noteEl.style.display='none';
+}
+function renderSuperChildrenList(){
+  const list=document.getElementById('m-super-children-list'); if(!list) return;
+  if(!editingSuperChildren.length){ list.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhum card filho ainda.</div>'; return; }
+  const doneN=editingSuperChildren.filter(lc=>_isColDone(lc.col)).length;
+  list.innerHTML = '<div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">'+doneN+'/'+editingSuperChildren.length+' concluído(s)</div>'
+    + editingSuperChildren.map(lc=>{
+      const col=columns.find(c=>c.id===lc.col);
+      const relCard=cards.find(c=>c.id===lc.id);
+      const colColor=col?.color||'var(--glass-b)';
+      const ownerTxt=relCard?.owner?'👤 '+relCard.owner:'';
+      return '<div class="minicard">'
+        +'<div class="minicard-left" style="background:'+colColor+';"></div>'
+        +'<div class="minicard-body" onclick="closeOv(\'card-ov\',()=>openCard(\''+esc(lc.id)+'\'))">'
+          +'<div class="minicard-title">'+esc(lc.title)+'</div>'
+          +'<div class="minicard-meta"><span class="minicard-col">'+esc(col?.name||lc.col)+'</span>'
+          +(ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>':'')+'</div>'
+        +'</div>'
+        +'<button class="minicard-rm" title="Remover do supercard" onclick="event.stopPropagation();removeSuperChild(\''+esc(lc.id)+'\')">✕</button>'
+      +'</div>';
+    }).join('');
+}
+function toggleSuperChildSearch(){
+  if(!editingId){ showToast('Salve o card antes de adicionar filhos.'); return; }
+  const wrap=document.getElementById('m-super-search-wrap'); if(!wrap) return;
+  const opening = wrap.style.display==='none' || !wrap.style.display;
+  wrap.style.display = opening ? 'block' : 'none';
+  if(opening) document.getElementById('m-super-search-inp')?.focus(); else hideSuperChildDropdown();
+}
+function searchSuperChildren(q){
+  const dd=document.getElementById('m-super-link-dropdown'); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const lower=q.toLowerCase();
+  const excludeIds=new Set([editingId, ...editingSuperChildren.map(l=>l.id)]);
+  // Não deixa aninhar supercard dentro de supercard (profundidade 1 só, pra
+  // não abrir espaço pra ciclo/recursão infinita no rollup do board).
+  const results=cards.filter(c=>!c.archived && !excludeIds.has(c.id) && !(c.childCardIds&&c.childCardIds.length) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  dd.innerHTML='';
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado — aperte Enter pra criar "'+esc(q.trim())+'" como novo card filho.</div>';
+    dd.classList.add('show'); return;
+  }
+  results.forEach(card=>{
+    const col=columns.find(c=>c.id===card.col);
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+esc(col?.name||card.col)+'</span><span style="flex:1;color:var(--txt);">'+esc(card.title)+'</span>';
+    opt.onclick=()=>addSuperChild(card);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+function addSuperChild(card){
+  if(!editingId || card.id===editingId) return;
+  if(editingSuperChildren.find(l=>l.id===card.id)) return;
+  editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
+  renderSuperChildrenList();
+  persistSuperChildren();
+  const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
+  hideSuperChildDropdown();
+}
+function removeSuperChild(id){
+  editingSuperChildren = editingSuperChildren.filter(l=>l.id!==id);
+  renderSuperChildrenList();
+  persistSuperChildren();
+}
+// Atalho pra fluxo de fan-out manual: digitar um título que ainda não existe
+// e apertar Enter já cria o card (herdando coluna/prazo/prioridade/demandante
+// do pai — mesmo espírito de "não fazer a pessoa repetir contexto") e liga
+// como filho, sem sair do modal do supercard.
+function quickCreateSuperChild(title){
+  title=(title||'').trim(); if(!title) return;
+  if(!checkEditPermission()) return;
+  if(!editingId){ showToast('Salve o card antes de adicionar filhos.'); return; }
+  const parent=cards.find(c=>c.id===editingId); if(!parent) return;
+  const td=new Date().toISOString().split('T')[0];
+  const user=window._currentUser?.displayName||'Usuário';
+  const novo={id:'c'+Date.now()+Math.random().toString(36).slice(2,4),col:parent.col,tags:[],tag:'',
+    title,desc:'',descsExtra:[],owner:'',demandante:parent.demandante||'',
+    due:parent.due||'',noDue:!parent.due,po:parent.po||'',
+    checklist:[],checklistGroups:[],riscos:[],sp:'',priority:parent.priority||'',
+    executorType:'human',agentStatus:'',participants:[],archived:false,
+    created:user,edited:user,createdAt:td,editedAt:td,
+    updatedAt:new Date().toISOString(),updatedBy:user};
+  recordHistory(novo,'criou o card (filho de supercard)');
+  recordMove(novo,novo.col);
+  cards.push(novo);
+  fbSaveCard(novo);
+  editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
+  renderSuperChildrenList();
+  persistSuperChildren();
+  const inp=document.getElementById('m-super-search-inp'); if(inp){ inp.value=''; }
+  hideSuperChildDropdown();
+  showToast('✅ Card filho criado: '+title);
+}
+function persistSuperChildren(){
+  const parent=cards.find(c=>c.id===editingId); if(!parent) return;
+  parent.childCardIds = editingSuperChildren.map(l=>l.id);
+  fbSaveCard(parent);
+  renderBoard(); // atualiza o rollup no board na hora
+}
+function hideSuperChildDropdown(){ document.getElementById('m-super-link-dropdown')?.classList.remove('show'); }
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#m-super-search-wrap')) hideSuperChildDropdown();
+});
+// ── FIM SUPERCARD ───────────────────────────────────────────────
 
 
 // ── NOTIFICAÇÕES ─────────────────────────────────────────────────
