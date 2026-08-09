@@ -1170,6 +1170,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.339-dev — 2026-08-09
+Fix de legibilidade reportado ao testar o supercard: a lista "🧩 Cards
+filhos" dentro do card estava difícil de ler (fonte pequena e em
+negrito — 11px/9px, bold — que borra/"neon" em telas escuras). Ajuste
+de tipografia na lista de filhos (modal) e no cabeçalho do rollup
+(board): fontes um pouco maiores, peso mais leve no título (600→500)
+e cor de apoio mais contrastante (`--txt3` → `--txt2`). Puramente
+visual, não muda nenhum dado nem comportamento.
+
 ### v8.30.338-dev — 2026-08-09
 Camada de automação do supercard (v8.30.337-dev validado, "seguir para
 automação"): pedido original também incluía uma tela pra configurar
