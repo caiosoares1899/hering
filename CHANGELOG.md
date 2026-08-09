@@ -1170,6 +1170,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.338-dev — 2026-08-09
+Camada de automação do supercard (v8.30.337-dev validado, "seguir para
+automação"): pedido original também incluía uma tela pra configurar
+receitas e disparar a criação dos cards filhos sozinha em casos já
+"meio programados" (ex.: campanha de mídia paga sempre gera os mesmos
+6 formatos).
+
+- 🧾 **Receitas de Supercard (fan-out)** — nova seção em ⚙ Config →
+  Automações: crie uma receita nomeada (ex.: "Campanha de mídia
+  paga") com a lista de cards filhos que ela sempre gera (ex.: Feed,
+  Stories, Reels, Display...). Cada filho nasce com o título
+  "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/
+  demandante do pai.
+- 🧩 **Botão manual "Aplicar receita"** — dentro de qualquer card, ao
+  lado de "+ Adicionar" na seção Cards filhos, escolha uma receita e
+  todos os filhos são criados de uma vez. Cobre o caso "pedido do dia
+  a dia" que não tem gatilho automático nenhum — a maioria dos casos
+  reais, segundo o relato original.
+- 🤖 **Ação de automação "Aplicar fan-out"** — nova opção em "Então"
+  nas regras de automação (Config → Automações), pra quando o
+  disparo É previsível (ex.: "Quando tag 'mídia paga' for adicionada
+  → Aplicar fan-out: Campanha de mídia paga"). Só dispara uma vez por
+  card (guarda de idempotência: card que já é supercard não aplica de
+  novo), então um trigger que repita não duplica os filhos.
+- Receita sem nenhum card filho configurado não faz nada (nem no
+  botão manual, nem na automação) — sem erro silencioso, avisa no
+  toast.
+
 ### v8.30.337-dev — 2026-08-09
 Primeira versão do **"supercard"** (cards filhos) — pedido direto do
 time de Mídia Alcance: um pedido do dia a dia (nem sempre é campanha
