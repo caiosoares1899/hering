@@ -323,6 +323,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cmp-table td{padding:7px 10px;border-bottom:1px solid rgba(56,182,255,.06);}
 .cmp-table tr:last-child td{border:none;}
 .cmp-table .winner{color:var(--teal);font-weight:700;}
+.pv-ins-donut{border-radius:50%;flex-shrink:0;position:relative;}
+.pv-ins-donut::after{content:'';position:absolute;inset:16px;border-radius:50%;background:var(--deep);}
+.pv-ins-donut span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--txt);z-index:1;}
 
 /* Modal evento do painel */
 .pev-modal-ov{position:fixed;inset:0;z-index:9200;background:rgba(1,8,16,.88);
@@ -1223,6 +1226,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
     <div class="sec-title" id="okr-section-title">🎯 Cards OKR <span class="badge" id="okr-count">0</span></div>
     <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+
+    <!-- INSIGHTS AGREGADOS — respeita o mesmo filtro de squad/gerência das seções
+         acima (squadVisible()), então um gerente vendo só sua gerência enxerga
+         os insights só das squads dela, sem perder a Visão Geral quando
+         activeFilter==='all'. Tudo calculado a partir de squadData já
+         carregado (mesmo poll de 60s que já existe) — nenhuma leitura nova. -->
+    <div class="sec-title">💡 Insights</div>
+    <div id="painel-insights-body" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
 
     <!-- CAMPANHAS -->
     <div id="painel-camp-section" style="margin-bottom:20px;">
@@ -2167,7 +2178,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.97 · painel-dev</div>
+<div class="version">v2.98 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4013,6 +4024,207 @@ function renderRiscos(){
       </div>
     </div>`;
     }).join('')+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// INSIGHTS AGREGADOS — visão pra PO/ADM/gerente, somando as squads
+// atualmente visíveis (respeita o filtro de squad/gerência, igual às
+// seções de Riscos/OKR acima). Espelha o mesmo conteúdo da aba
+// "💡 Insights" de kanban.html (Dados do Board), mas multi-squad: lá é
+// 1 squad só, aqui soma o que estiver visível — inclusive todas as
+// squads de uma gerência inteira quando esse filtro está ativo.
+// Zero leitura nova no Firebase: usa só squadData já carregado pelo
+// polling de 60s que já existe (_pollSquadDados).
+// ═══════════════════════════════════════════════════════
+
+// Tags de submarca — mesmo array fixo de kanban.html (ids/labels idênticos,
+// pensado pro squad "site"). Cor própria (SUBMARCA_COLORS, dentro da função
+// de render) porque todas compartilham pi:4 no kanban, o que deixaria um
+// donut monocromático.
+const SUBMARCA_TAGS = [
+  {id:'tag_sm_adulto_com',    label:'Hering Adulto Comercial'},
+  {id:'tag_sm_adulto_cad',    label:'Hering Adulto Cadastro'},
+  {id:'tag_sm_kids_com',      label:'Hering Kids Comercial'},
+  {id:'tag_sm_kids_cad',      label:'Hering Kids Cadastro'},
+  {id:'tag_sm_sports_com',    label:'Hering Sports Comercial'},
+  {id:'tag_sm_sports_cad',    label:'Hering Sports Cadastro'},
+  {id:'tag_sm_intimates_com', label:'Hering Intimates Comercial'},
+  {id:'tag_sm_intimates_cad', label:'Hering Intimates Cadastro'},
+  {id:'tag_sm_teen_com',      label:'Hering Teen Comercial'},
+  {id:'tag_sm_teen_cad',      label:'Hering Teen Cadastro'},
+];
+function _cardTagIds(c){ return (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]); }
+function _pvDonutGradient(segments){
+  const total = segments.reduce((s,x)=>s+x.value,0) || 1;
+  let acc = 0; const parts = [];
+  segments.forEach(seg=>{
+    if(!seg.value || seg.value<=0) return;
+    const start = acc/total*360; acc += seg.value;
+    const end = acc/total*360;
+    parts.push(seg.color+' '+start.toFixed(2)+'deg '+end.toFixed(2)+'deg');
+  });
+  return parts.length ? 'conic-gradient('+parts.join(',')+')' : 'conic-gradient(var(--glass-b) 0deg 360deg)';
+}
+function _pvBarRow(label, count, total, color){
+  const pct = total>0 ? Math.round(count/total*100) : 0;
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">'
+    + '<span style="width:150px;flex-shrink:0;font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+esc(label)+'">'+esc(label)+'</span>'
+    + '<div style="flex:1;height:13px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden;">'
+    +   '<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:7px;"></div>'
+    + '</div>'
+    + '<span style="width:30px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+count+'</span>'
+    + '</div>';
+}
+function renderPainelInsights(){
+  const body=document.getElementById('painel-insights-body'); if(!body) return;
+
+  const activeCards=[];
+  SQUADS.forEach(sq=>{
+    if(!squadVisible(sq.id)) return;
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
+    (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived && c.col!=='done')
+      .forEach(c=>activeCards.push({...c,_squad:sq}));
+  });
+  const total=activeCards.length;
+
+  const statCard=(icon,label,val,color)=>
+    '<div style="flex:1;min-width:130px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;">'
+    +'<div style="font-size:20px;font-weight:800;color:'+color+';">'+icon+' '+val+'</div>'
+    +'<div style="font-size:10.5px;color:var(--txt3);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
+    +'</div>';
+  const box=(title,inner)=>'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+    +'<div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:12px;">'+title+'</div>'+inner+'</div>';
+  const donutLegendRow=(label,n,pct,color)=>
+    '<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt2);margin-bottom:5px;">'
+    +'<span style="width:9px;height:9px;border-radius:50%;background:'+color+';flex-shrink:0;"></span>'
+    +'<span style="flex:1;">'+esc(label)+'</span>'
+    +'<b style="color:var(--txt);">'+n+'</b><span style="color:var(--txt3);margin-left:4px;">('+pct+'%)</span>'
+    +'</div>';
+  const donutBlock=(icon,title,segs,extraHtml)=>{
+    const segTotal=segs.reduce((s,x)=>s+x.count,0);
+    const grad=_pvDonutGradient(segs.map(s=>({color:s.color,value:s.count})));
+    const legend=segs.map(s=>donutLegendRow(s.label,s.count,segTotal>0?Math.round(s.count/segTotal*100):0,s.color)).join('');
+    return box(icon+' '+title,
+      '<div style="display:flex;align-items:center;gap:18px;">'
+      +'<div class="pv-ins-donut" style="width:96px;height:96px;background:'+grad+';"><span>'+segTotal+'</span></div>'
+      +'<div style="flex:1;">'+legend+'</div>'
+      +'</div>'
+      +(extraHtml||''));
+  };
+  const cardRow=(card)=>'<div onclick="openPcModal(\''+esc(card._squad.id)+'\',\''+esc(card.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
+    +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">'+card._squad.icon+' '+esc((card.title||'').substring(0,50))+'</span>'
+    +'<span style="flex-shrink:0;color:var(--txt3);">'+esc(card._insightSub||'')+'</span></div>';
+
+  if(!total){
+    body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card ativo (não concluído) nas squads visíveis.</div>';
+    return;
+  }
+
+  // ── Prioridade ──
+  const prioOrder=['critical','high','medium','low'];
+  const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
+  const prioColors={critical:'#e84646',high:'#ff6b6b',medium:'#ffd54f',low:'#4ade80',none:'#5b6472'};
+  const prioCounts={critical:0,high:0,medium:0,low:0}; let semPrio=0;
+  activeCards.forEach(c=>{ if(c.priority && prioCounts.hasOwnProperty(c.priority)) prioCounts[c.priority]++; else semPrio++; });
+  const prioSegs=prioOrder.map(p=>({label:prioLabels[p],count:prioCounts[p],color:prioColors[p]}));
+  if(semPrio>0) prioSegs.push({label:'Sem prioridade',count:semPrio,color:prioColors.none});
+  const pctCritica=Math.round((prioCounts.critical/total)*100);
+  const alertaCritica = pctCritica>=30 ? '<div style="margin-top:10px;font-size:11px;color:var(--warn);">⚠️ '+pctCritica+'% dos cards ativos está marcado como Crítica — quando quase tudo é urgente, nada é.</div>' : '';
+
+  // ── Carga por responsável (chaveado por squad+init pra não misturar
+  // pessoas de squads diferentes que por acaso compartilhem iniciais) ──
+  const porDono={};
+  activeCards.forEach(c=>{ const k=c._squad.id+'|'+(c.owner||'__sem__'); porDono[k]=(porDono[k]||0)+1; });
+  const donoRows=Object.entries(porDono).sort((a,b)=>b[1]-a[1]);
+  const ownerCount = donoRows.filter(([k])=>!k.endsWith('|__sem__')).length;
+  const mediaDono = ownerCount>0 ? total/ownerCount : 0;
+  const multiSquad = SQUADS.filter(sq=>squadVisible(sq.id)).length>1;
+  const donoBars=donoRows.map(([k,n])=>{
+    const [sqId,init]=k.split('|');
+    const sq=SQUADS.find(s=>s.id===sqId);
+    const nome = init==='__sem__' ? '(sem responsável)' : resolveOwnerName(init,sqId);
+    const label = multiSquad&&sq ? (sq.icon+' '+nome) : nome;
+    const cor = init==='__sem__' ? '#5b6472' : (n>mediaDono*1.5 ? '#ff6b6b' : '#38b6ff');
+    return _pvBarRow(label,n,total,cor);
+  }).join('');
+  const sobrecarregado = donoRows.find(([k,n])=>!k.endsWith('|__sem__') && n>mediaDono*1.5);
+  let alertaCarga='';
+  if(sobrecarregado){
+    const [sqId,init]=sobrecarregado[0].split('|');
+    alertaCarga='<div style="margin-top:10px;font-size:11px;color:var(--warn);">⚠️ '+esc(resolveOwnerName(init,sqId))+' tem '+sobrecarregado[1]+' card(s) ativo(s), bem acima da média ('+mediaDono.toFixed(1)+') — pode valer redistribuir.</div>';
+  }
+
+  // ── Riscos (por quantidade mapeada, riscos são texto livre sem nível estruturado) ──
+  const comRisco=activeCards.filter(c=>Array.isArray(c.riscos)&&c.riscos.length>0);
+  const riscoTop=comRisco.slice().sort((a,b)=>(b.riscos||[]).length-(a.riscos||[]).length).slice(0,5);
+  riscoTop.forEach(c=>c._insightSub=(c.riscos||[]).length+' risco(s)');
+
+  // ── OKR (agrupado por NOME de coluna — squads diferentes têm ids de
+  // coluna próprios, então agregar por id misturaria coisas diferentes) ──
+  const okrCards=activeCards.filter(c=>c.isOKR||c.tag==='okr'||squadData[c._squad.id]?.tags?.find(t=>t.id===c.tag)?.isOKR);
+  const okrPorColMap={};
+  okrCards.forEach(c=>{
+    const colObj=squadData[c._squad.id]?.columns?.find(col=>col.id===c.col);
+    const nome=colObj?.name||c.col;
+    if(!okrPorColMap[nome]) okrPorColMap[nome]={count:0,color:colObj?.color||'#38b6ff'};
+    okrPorColMap[nome].count++;
+  });
+  const okrPorCol=Object.entries(okrPorColMap).map(([label,v])=>({label,count:v.count,color:v.color}));
+
+  // ── Cards parados (aging) — sprint length por squad (agilCfg de cada uma) ──
+  const hojeAging=new Date(); hojeAging.setHours(0,0,0,0);
+  const parados=activeCards.filter(c=>c.editedAt).map(c=>{
+    const sprintLen=parseInt(squadData[c._squad.id]?.agilCfg?.sprintDays||14)||14;
+    const editedD=new Date(c.editedAt+'T00:00:00');
+    const ageDays=Math.round((hojeAging-editedD)/86400000);
+    return {c, ageDays, sprintLen};
+  }).filter(x=>x.ageDays>=x.sprintLen).sort((a,b)=>b.ageDays-a.ageDays).slice(0,5);
+  parados.forEach(({c,ageDays})=>c._insightSub=ageDays+'d parado');
+
+  let html='';
+
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+    + statCard('📋','Cards ativos',total,'var(--txt)')
+    + statCard('⚠️','Com risco mapeado',comRisco.length,comRisco.length?'#ffd54f':'var(--txt)')
+    + statCard('🎯','Marcados OKR',okrCards.length,'#ffd700')
+    + statCard('💤','Parados 1+ sprint',parados.length,parados.length?'#ff6b6b':'var(--txt)')
+    + '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+  html += donutBlock('🚦','Por prioridade',prioSegs,alertaCritica);
+  html += box('👤 Carga por responsável', donoBars + alertaCarga);
+  html += '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+  html += box('⚠️ Cards com mais riscos mapeados em aberto ('+comRisco.length+' no total)',
+    riscoTop.length ? riscoTop.map(c=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum risco mapeado no momento.</div>');
+  html += box('💤 Cards mais tempo sem edição (1+ sprint da squad)',
+    parados.length ? parados.map(({c})=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum card parado há mais de 1 sprint — fluxo saudável.</div>');
+  html += '</div>';
+
+  if(okrCards.length){
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🎯','OKR por coluna (onde as entregas estratégicas estão)',okrPorCol) + '</div>';
+  }
+
+  // ── Por submarca (só entra se pelo menos uma squad visível usa o campo) ──
+  const squadsComSubmarca = SQUADS.filter(sq=>squadVisible(sq.id) && squadData[sq.id]?.submarcaAtivo);
+  if(squadsComSubmarca.length){
+    const SUBMARCA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa'];
+    const porSubmarca={};
+    activeCards.filter(c=>squadsComSubmarca.some(sq=>sq.id===c._squad.id)).forEach(c=>{
+      const tagsDoCard=_cardTagIds(c);
+      const sm=SUBMARCA_TAGS.find(st=>tagsDoCard.includes(st.id));
+      const k=sm?sm.id:'__sem__';
+      porSubmarca[k]=(porSubmarca[k]||0)+1;
+    });
+    const smSegs=SUBMARCA_TAGS.map((st,i)=>({label:st.label,count:porSubmarca[st.id]||0,color:SUBMARCA_COLORS[i%SUBMARCA_COLORS.length]}))
+      .filter(s=>s.count>0)
+      .sort((a,b)=>b.count-a.count);
+    if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+  }
+
+  body.innerHTML=html;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -7266,6 +7478,11 @@ function _applySquadDados(sqId, val){
     // mesmo desalinhamento nos usos abaixo (ver renderBlockers/
     // resolveAllBlockers). Default 'col' bate com o default de kanban.html.
     blockerMode: val.config?.blockerMode || 'col',
+    // Mesmo path que kanban.html lê (config/submarca_ativo) — já vem dentro
+    // do payload que o polling de 60s busca, então ler aqui não soma custo
+    // novo de Firebase. Usado pra decidir se mostra o donut "Por submarca"
+    // nos Insights agregados.
+    submarcaAtivo: !!val.config?.submarca_ativo,
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
@@ -7324,6 +7541,7 @@ function renderAll(){
   renderColDist();
   renderOKR();
   renderRiscos();
+  renderPainelInsights();
   renderLembretesPainel();
   if(typeof renderKudosPainel==='function') renderKudosPainel();
 }
