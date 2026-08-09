@@ -4100,6 +4100,12 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.96 · painel — 2026-08-09 · rascunho de aviso (promoção do kanban v8.30.230)
+Adiciona ao `COMUNICADO_RASCUNHOS_SEED` o rascunho de aviso pra aba
+💡 Insights que acabou de ir pra produção no `kanban.html`
+(v8.30.230) — aparece pro ADM revisar/publicar em Pessoas → 📢
+Comunicados na próxima vez que abrir o painel autenticado.
+
 ### painel-dev.html v2.98 · painel-dev — 2026-08-09
 Nova seção **💡 Insights** na aba Visão, pra PO/ADM/gerente enxergar
 como o board (ou a gerência) está sem precisar abrir squad por squad —
