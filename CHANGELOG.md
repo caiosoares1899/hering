@@ -1152,6 +1152,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.334-dev — 2026-08-07
+Nova aba "💡 Insights" dentro de 📊 Dados do Board, pedida direto pra
+dar aos POs/ADMs uma leitura mais interpretativa da squad — sem
+nenhuma leitura nova do Firebase (tudo calculado a partir do que o
+board já tem carregado em memória).
+
+- 🚦 **Por prioridade** (donut) — com aviso se "Crítica" passar de 30%
+  do board ativo (priorização inflacionada).
+- 👤 **Carga por responsável** (barras) — com aviso quando alguém tem
+  bem mais cards ativos que a média do squad.
+- ⚠️ **Cards com mais riscos mapeados em aberto** (lista clicável,
+  top 5).
+- 🎯 **OKR por coluna** — só aparece se houver card marcado como OKR;
+  mostra se as entregas estratégicas estão de fato avançando ou
+  paradas no Backlog.
+- 💤 **Cards parados** — os com mais tempo sem edição (≥ 1 sprint),
+  mesmo cálculo que já esmaece o card visualmente no board.
+- 🏷️ **Por submarca** (donut) — só aparece se o squad usa o campo
+  Submarca.
+- Reaproveita o mesmo kit visual do dashboard de Controle de
+  Criativos (donut/barras/abas) em vez de inventar um padrão novo.
+- Aba de Ajuda atualizada com a explicação da nova aba.
+
 ### v8.30.333-dev — 2026-08-07
 Nova ação de automação pedida pelo time: "Remover tag".
 
