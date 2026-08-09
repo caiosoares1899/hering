@@ -2197,7 +2197,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.95 · painel</div>
+<div class="version">v2.96 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5713,6 +5713,13 @@ function loadComunicados(){
 // revisou/publicou ou descartou, ele nunca é recriado (checa se o ID já
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_insights_dados_board_2026_08_09',
+    titulo: '💡 Novidade: aba Insights em "Dados do Board"',
+    corpo: '<p>O painel "📊 Dados do Board" (botão no header do board) ganhou uma nova aba: <b>💡 Insights</b>, ao lado da Visão Geral já existente.</p><p>Pensada pra PO/ADM entenderem rápido como a squad está, sem precisar vasculhar card por card: distribuição dos cards ativos por <b>prioridade</b> (com aviso se a fatia de "Crítica" estiver desproporcional), <b>carga por responsável</b> (com aviso quando alguém está com bem mais cards que a média do time), os cards com <b>mais riscos mapeados</b> em aberto, cards marcados como <b>OKR</b> por coluna, e os cards <b>parados há mais tempo</b> sem edição (1+ sprint). Squads que usam o campo Submarca também veem a distribuição por submarca.</p><p>Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_tamanho_fonte_board_2026_08_04',
     titulo: '🔍 Novidade: tamanho da fonte do board agora é ajustável',
