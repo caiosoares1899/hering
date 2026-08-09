@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.229 — 2026-08-07 · rename de squad (pedido direto, fora do ciclo normal de promoção)
+Renomeia a squad "Dados" pra **"Squad Dados e IA"** em todos os
+lugares onde o nome aparece — pedido direto do usuário, aplicado
+como mudança de conteúdo isolada (não é uma promoção do lote
+acumulado em dev, que segue pendente/separado). Só o rótulo de
+exibição muda; o id interno da squad (`dados`, usado nos caminhos do
+Firebase) continua o mesmo, então não afeta nenhum dado existente.
+
 ### v8.30.228 — 2026-08-07 · promove pra prod (PRs #240–#241)
 Promove pra produção o lote validado em dev (v8.30.332-dev a
 v8.30.333-dev):
@@ -1151,6 +1159,11 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.335-dev — 2026-08-07
+Renomeia a squad "Dados" pra "Squad Dados e IA" (mesma mudança
+aplicada em `kanban.html`, `painel.html` e `painel-dev.html` — só o
+rótulo de exibição, o id interno `dados` não muda).
 
 ### v8.30.334-dev — 2026-08-07
 Nova aba "💡 Insights" dentro de 📊 Dados do Board, pedida direto pra
@@ -4076,6 +4089,14 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html v2.95 · painel / painel-dev.html v2.97 · painel-dev — 2026-08-07 · rename de squad
+Renomeia a squad "Dados" pra **"Squad Dados e IA"** em todos os
+lugares (cabeçalhos de tabela, cards de métrica, dropdown, array de
+squads, paleta de cores) — pedido direto, aplicado direto nos dois
+ambientes por ser conteúdo puro, sem risco de lógica. Mesma mudança
+espelhada em `kanban.html`/`kanban-dev.html` e `maredigital.html`. O
+id interno `dados` não muda.
 
 ### painel-dev.html v2.96 · painel-dev — 2026-08-07
 Nova filtragem por **Gerência** (grupo de squads), pedida direto:
