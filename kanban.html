@@ -4511,6 +4511,14 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('boarddata-ov')">✕</button>
   </div>
   <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
+    <!-- Visão Geral / Insights — mesmo padrão de abas do Controle de Criativos
+         (crv-tabs/_crvSwitchTab), reaproveitado aqui de propósito pra manter a
+         mesma linguagem visual em vez de inventar um padrão novo. -->
+    <div class="crv-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn btn-sm crv-tab-btn active" id="boarddata-tab-geral" onclick="_boardDataSwitchTab('geral')">📊 Visão Geral</button>
+      <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-insights" onclick="_boardDataSwitchTab('insights')">💡 Insights</button>
+    </div>
+    <div id="boarddata-view-geral">
     <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
     <!-- Antes era um botão próprio na toolbar (⏱ Relatórios de Tempo) — movido pra
          dentro daqui pra desafogar a toolbar (pedido direto). Fecha este modal e abre
@@ -4524,6 +4532,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="margin-top:22px;">
       <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📈 Tendência — últimos 14 dias</div>
       <div id="boarddata-trend"><div style="font-size:10.5px;color:var(--txt3);">Carregando…</div></div>
+    </div>
+    </div>
+    <div id="boarddata-view-insights" style="display:none;">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Leitura pra PO/ADM entender rápido como a squad está — tudo calculado a partir dos dados que o board já tem carregado (nenhuma leitura extra do Firebase).</div>
+      <div id="boarddata-insights-body"></div>
     </div>
   </div>
 </div>
@@ -4936,7 +4949,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.229</div>
+<div class="version">v8.30.230</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -13311,10 +13324,168 @@ function openTempoReport(){
   renderTempoReport();
 }
 function openBoardData(){
+  _boardDataSwitchTab('geral'); // sempre abre na Visão Geral, mesmo se ficou em Insights da última vez
   renderBoardDataGrid();
   _boardDataBarChart();
   _boardDataTrendChart();
   document.getElementById('boarddata-ov').classList.add('open');
+}
+// Abas Visão Geral / Insights — mesmo padrão de _crvSwitchTab (Controle de
+// Criativos): troca display + classe .active dos botões, e só renderiza
+// Insights na hora de entrar nela (lazy, evita recalcular à toa quando a
+// aba nem está visível).
+function _boardDataSwitchTab(tab){
+  const isInsights = tab==='insights';
+  const vg=document.getElementById('boarddata-view-geral'); if(vg) vg.style.display = isInsights?'none':'';
+  const vi=document.getElementById('boarddata-view-insights'); if(vi) vi.style.display = isInsights?'':'none';
+  const tg=document.getElementById('boarddata-tab-geral'); if(tg) tg.classList.toggle('active', !isInsights);
+  const ti=document.getElementById('boarddata-tab-insights'); if(ti) ti.classList.toggle('active', isInsights);
+  if(isInsights) renderBoardDataInsights();
+}
+// ── Insights pra PO/ADM (Dados do Board → aba 💡 Insights) ──────────────
+// Pedido direto: "faça um match com as funcionalidades que temos hoje e
+// traga insights legais" — tudo aqui é derivado do que já está carregado
+// em memória (cards/columns/tags/members/agilCfg), ZERO leitura nova do
+// Firebase. Reaproveita o mesmo kit visual do dashboard de Criativos
+// (_crvDonutGradient/_crvBarRow/.crv-dash-donut) em vez de inventar um
+// padrão novo de gráfico.
+function renderBoardDataInsights(){
+  const body=document.getElementById('boarddata-insights-body'); if(!body) return;
+  const activeCards=cards.filter(c=>!c.archived && c.col!=='done');
+  const total=activeCards.length;
+  const statCard=(icon,label,val,color)=>
+    '<div style="flex:1;min-width:130px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;">'
+    +'<div style="font-size:20px;font-weight:800;color:'+color+';">'+icon+' '+val+'</div>'
+    +'<div style="font-size:10.5px;color:var(--txt3);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
+    +'</div>';
+  const box=(title,inner)=>'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+    +'<div class="cfg-sec-title" style="margin-bottom:12px;">'+title+'</div>'+inner+'</div>';
+  const donutLegendRow=(label,n,pct,color)=>
+    '<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt2);margin-bottom:5px;">'
+    +'<span style="width:9px;height:9px;border-radius:50%;background:'+color+';flex-shrink:0;"></span>'
+    +'<span style="flex:1;">'+esc(label)+'</span>'
+    +'<b style="color:var(--txt);">'+n+'</b><span style="color:var(--txt3);margin-left:4px;">('+pct+'%)</span>'
+    +'</div>';
+  const donutBlock=(icon,title,segs,extraHtml)=>{ // segs: [{label,count,color}], extraHtml: opcional, aparece abaixo do donut+legenda
+    // Total do PRÓPRIO donut, não o total geral de cards ativos — nem todo
+    // donut representa 100% do board (ex.: "OKR por coluna" só cobre os
+    // cards marcados como OKR, um subconjunto).
+    const segTotal=segs.reduce((s,x)=>s+x.count,0);
+    const grad=_crvDonutGradient(segs.map(s=>({color:s.color,value:s.count})));
+    const legend=segs.map(s=>donutLegendRow(s.label,s.count,segTotal>0?Math.round(s.count/segTotal*100):0,s.color)).join('');
+    return box(icon+' '+title,
+      '<div style="display:flex;align-items:center;gap:18px;">'
+      +'<div class="crv-dash-donut" style="width:96px;height:96px;background:'+grad+';"><span>'+segTotal+'</span></div>'
+      +'<div style="flex:1;">'+legend+'</div>'
+      +'</div>'
+      +(extraHtml||''));
+  };
+  const cardRow=(card)=>'<div onclick="closeOv(\'boarddata-ov\');openCard(\''+esc(card.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
+    +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((card.title||'').substring(0,60))+'</span>'
+    +'<span style="flex-shrink:0;color:var(--txt3);">'+esc(card._insightSub||'')+'</span></div>';
+
+  if(!total){
+    body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card ativo (não concluído) no board ainda.</div>';
+    return;
+  }
+
+  // ── Prioridade ──
+  const prioOrder=['critical','high','medium','low'];
+  const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
+  const prioColors={critical:'#e84646',high:'#ff6b6b',medium:'#ffd54f',low:'#4ade80',none:'#5b6472'};
+  const prioCounts={critical:0,high:0,medium:0,low:0}; let semPrio=0;
+  activeCards.forEach(c=>{ if(c.priority && prioCounts.hasOwnProperty(c.priority)) prioCounts[c.priority]++; else semPrio++; });
+  const prioSegs=prioOrder.map(p=>({label:prioLabels[p],count:prioCounts[p],color:prioColors[p]}));
+  if(semPrio>0) prioSegs.push({label:'Sem prioridade',count:semPrio,color:prioColors.none});
+  const pctCritica=Math.round((prioCounts.critical/total)*100);
+  const alertaCritica = pctCritica>=30 ? '<div style="margin-top:10px;font-size:11px;color:var(--warn);">⚠️ '+pctCritica+'% do board ativo está marcado como Crítica — quando quase tudo é urgente, nada é. Vale revisar se a prioridade reflete a realidade.</div>' : '';
+
+  // ── Carga por responsável ──
+  const porDono={};
+  activeCards.forEach(c=>{ const k=c.owner||'__sem__'; porDono[k]=(porDono[k]||0)+1; });
+  const donoRows=Object.entries(porDono).sort((a,b)=>b[1]-a[1]);
+  const ownerCount = donoRows.filter(([k])=>k!=='__sem__').length;
+  const mediaDono = ownerCount>0 ? total/ownerCount : 0;
+  const donoBars=donoRows.map(([init,n])=>{
+    const m=members.find(x=>x.init===init);
+    const label = init==='__sem__' ? '(sem responsável)' : (m?(m.init+' · '+_shortName(m.name)):init);
+    const cor = init==='__sem__' ? '#5b6472' : (n>mediaDono*1.5 ? '#ff6b6b' : '#38b6ff');
+    return _crvBarRow(label,n,total,cor);
+  }).join('');
+  const sobrecarregado = donoRows.find(([k,n])=>k!=='__sem__' && n>mediaDono*1.5);
+  const alertaCarga = sobrecarregado ? '<div style="margin-top:10px;font-size:11px;color:var(--warn);">⚠️ '+esc(sobrecarregado[0])+' tem '+sobrecarregado[1]+' card(s) ativo(s), bem acima da média do squad ('+mediaDono.toFixed(1)+') — pode valer redistribuir.</div>' : '';
+
+  // ── Riscos ──
+  const comRisco=activeCards.filter(c=>Array.isArray(c.riscos)&&c.riscos.length>0);
+  // card.riscos é um array de texto livre (sem campo de nível estruturado —
+  // ver getRiscos()/renderRiscos() — "alto/médio/baixo" no Help é sobre COMO
+  // escrever o risco, não um campo separado), então a ordenação é por
+  // QUANTIDADE de riscos mapeados, não por nível.
+  const riscoTop=comRisco.slice().sort((a,b)=>(b.riscos||[]).length-(a.riscos||[]).length).slice(0,5);
+  riscoTop.forEach(c=>c._insightSub=(c.riscos||[]).length+' risco(s)');
+
+  // ── OKR ──
+  const okrCards=activeCards.filter(c=>c.isOKR);
+  const okrPorCol=columns.map(col=>({label:col.name||col.id,count:okrCards.filter(c=>c.col===col.id).length,color:col.color||'#38b6ff'}));
+
+  // ── Cards parados (aging) — mesmo cálculo de checkAgingAutomations()/aged-1/aged-2 ──
+  const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
+  const hojeAging=new Date(); hojeAging.setHours(0,0,0,0);
+  const parados=activeCards.filter(c=>c.editedAt).map(c=>{
+    const editedD=new Date(c.editedAt+'T00:00:00');
+    const ageDays=Math.round((hojeAging-editedD)/86400000);
+    return {c, ageDays};
+  }).filter(x=>x.ageDays>=sprintLen).sort((a,b)=>b.ageDays-a.ageDays).slice(0,5);
+  parados.forEach(({c,ageDays})=>c._insightSub=ageDays+'d parado');
+
+  let html='';
+
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+    + statCard('📋','Cards ativos',total,'var(--txt)')
+    + statCard('⚠️','Com risco mapeado',comRisco.length,comRisco.length?'#ffd54f':'var(--txt)')
+    + statCard('🎯','Marcados OKR',okrCards.length,'#ffd700')
+    + statCard('💤','Parados 1+ sprint',parados.length,parados.length?'#ff6b6b':'var(--txt)')
+    + '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+  html += donutBlock('🚦','Por prioridade',prioSegs,alertaCritica);
+  html += box('👤 Carga por responsável', donoBars + alertaCarga);
+  html += '</div>';
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+  html += box('⚠️ Cards com mais riscos mapeados em aberto ('+comRisco.length+' no total)',
+    riscoTop.length ? riscoTop.map(c=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum risco mapeado em cards ativos no momento.</div>');
+  html += box('💤 Cards mais tempo sem edição (≥ '+sprintLen+'d)',
+    parados.length ? parados.map(({c})=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum card parado há mais de 1 sprint — fluxo saudável.</div>');
+  html += '</div>';
+
+  if(okrCards.length){
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🎯','OKR por coluna (onde as entregas estratégicas estão)',okrPorCol) + '</div>';
+  }
+
+  // ── Por submarca (só se o squad usa o campo) ──
+  if(submarcaAtivo){
+    // Cores próprias, não reaproveita getPal(st) — todas as 10 entradas de
+    // SUBMARCA_TAGS compartilham o mesmo pi:4 (pensado pra pill de tag, onde
+    // não precisava distinguir entre si), o que deixaria o donut praticamente
+    // monocromático. Aqui a cor É o diferenciador principal, então usa uma
+    // paleta própria de 10 tons distintos, ciclando por índice.
+    const SUBMARCA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa'];
+    const porSubmarca={};
+    activeCards.forEach(c=>{
+      const tagsDoCard=getCardTags(c);
+      const sm=SUBMARCA_TAGS.find(st=>tagsDoCard.includes(st.id));
+      const k=sm?sm.id:'__sem__';
+      porSubmarca[k]=(porSubmarca[k]||0)+1;
+    });
+    const smSegs=SUBMARCA_TAGS.map((st,i)=>({label:st.label,count:porSubmarca[st.id]||0,color:SUBMARCA_COLORS[i%SUBMARCA_COLORS.length]}))
+      .filter(s=>s.count>0)
+      .sort((a,b)=>b.count-a.count);
+    if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+  }
+
+  body.innerHTML=html;
 }
 
 function _boardDataBarChart(){
@@ -17328,6 +17499,7 @@ const HELP_CONTENT = {
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
+    { icon:'💡', title:'Insights pra PO/ADM', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards ativos por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },

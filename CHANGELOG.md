@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.230 — 2026-08-09 · promove pra prod (PR #244)
+Promove pra produção a aba **💡 Insights** dentro de "📊 Dados do
+Board", validada em dev (v8.30.334-dev): distribuição por prioridade
+(com alerta se "Crítica" estiver desproporcional), carga por
+responsável (com alerta de sobrecarga), cards com mais riscos
+mapeados em aberto, OKR por coluna, cards parados há 1+ sprint e,
+quando o squad usa o campo, distribuição por submarca. Tudo calculado
+a partir do que o board já tem carregado — zero leitura nova do
+Firebase.
+
 ### v8.30.229 — 2026-08-07 · rename de squad (pedido direto, fora do ciclo normal de promoção)
 Renomeia a squad "Dados" pra **"Squad Dados e IA"** em todos os
 lugares onde o nome aparece — pedido direto do usuário, aplicado
