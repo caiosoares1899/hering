@@ -1184,6 +1184,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
     </div>
 
+    <!-- Filtro por GERÊNCIA (grupo de squads) — pedido direto: cada gerente vê
+         só as squads da própria gerência, sem excluir a Visão Geral (que
+         continua no filtro por squad logo abaixo, botão "🏠 Todos"). Mesmo
+         mecanismo de activeFilter/squadVisible() que já filtrava por squad —
+         só ganhou um novo formato de valor ('ger-xxx'), ver renderGerenciaBar()/
+         gerenciaSquadIds() no <script>. -->
+    <div class="sec-title" style="margin-bottom:8px;">👔 Ver por gerência</div>
+    <div class="filter-bar" id="gerencia-bar" style="margin-bottom:14px;"></div>
+
+    <div class="sec-title" style="margin-bottom:8px;">🐟 Ver por squad</div>
     <div class="filter-bar">
       <button class="filter-btn active" id="fb-all"           onclick="setFilter('all')">🏠 Todos</button>
       <button class="filter-btn"        id="fb-dados"         onclick="setFilter('dados')">📊 Dados</button>
@@ -2157,7 +2167,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.95 · painel-dev</div>
+<div class="version">v2.96 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2410,8 +2420,44 @@ function setFilter(id){
   renderAll();
 }
 
+// ── GERÊNCIAS (grupo de squads) ──────────────────────────────────────
+// Pedido direto: cada gerente precisa ver só as squads da própria gerência,
+// isolada, sem perder a Visão Geral (activeFilter==='all', já existia).
+// squadIds:null = "comercial"/catch-all — calculado em gerenciaSquadIds()
+// como "toda squad que não está em nenhuma outra gerência com lista
+// explícita", então uma squad nova criada depois (via painel de setup)
+// cai automaticamente em Comercial sem precisar editar nada aqui.
+//
+// ⚠️ PAINEL-DEV: como as squads fictícias daqui são só 'dev'/'omnichannel'
+// (ver SQUADS mais abaixo), o mapeamento abaixo é PLACEHOLDER só pra testar
+// a mecânica de filtro (1 squad por gerência + Comercial ficando vazia, um
+// bom teste do estado vazio). O mapeamento REAL (prf+midiacriativa =
+// Performance, dados = Digital) só entra na promoção pra painel.html.
+const GERENCIAS = [
+  { id:'ger-performance', label:'Gerência Marketing de Performance', icon:'📱', squadIds:['omnichannel'] },
+  { id:'ger-digital',     label:'Gerência Digital',                  icon:'💻', squadIds:['dev'] },
+  { id:'ger-comercial',   label:'Gerência Comercial',                icon:'🏢', squadIds:null },
+];
+function gerenciaSquadIds(gerId){
+  const g = GERENCIAS.find(x=>x.id===gerId);
+  if(!g) return [];
+  if(g.squadIds) return g.squadIds;
+  const outras = new Set(GERENCIAS.filter(x=>x.squadIds).flatMap(x=>x.squadIds));
+  return SQUADS.map(s=>s.id).filter(id=>!outras.has(id));
+}
+function renderGerenciaBar(){
+  const bar = document.getElementById('gerencia-bar');
+  if(!bar) return;
+  bar.innerHTML = GERENCIAS.map(g=>{
+    const n = gerenciaSquadIds(g.id).length;
+    return `<button class="filter-btn${activeFilter===g.id?' active':''}" id="fb-${esc(g.id)}" onclick="setFilter('${esc(g.id)}')" title="${n} squad(s) nesta gerência">${g.icon} ${esc(g.label)}</button>`;
+  }).join('');
+}
+
 function squadVisible(sqId){
-  return activeFilter === 'all' || activeFilter === sqId;
+  if(activeFilter === 'all') return true;
+  if(activeFilter.startsWith('ger-')) return gerenciaSquadIds(activeFilter).includes(sqId);
+  return activeFilter === sqId;
 }
 
 // ── CONFIG DO SQUAD ────────────────────────────────────────────────
@@ -6736,7 +6782,7 @@ function squadBoardUrl(squadId, cardId){ return 'kanban-dev.html?squad=' + squad
 
 // Painel-dev: squads fixas, não carrega squads_meta de produção
 function loadExtraSquads(callback){
-  renderFilterBar(); // painel-dev: SQUADS já fixo (não carrega squads_meta de produção) — ver early return abaixo
+  renderFilterBar(); renderGerenciaBar(); // painel-dev: SQUADS já fixo (não carrega squads_meta de produção) — ver early return abaixo
   if(callback) callback();
   return;
   let firstRun=true; // eslint-disable-line
@@ -6751,7 +6797,7 @@ function loadExtraSquads(callback){
       }
     });
     renderSquadLinks();
-    renderFilterBar();
+    renderFilterBar(); renderGerenciaBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
     else if(changed){ loadAll(); renderSquadCards(); }
   });
@@ -8013,6 +8059,7 @@ async function saveNewBoard(){
     renderSquadLinks();
     bsRenderExisting();
     if(typeof renderFilterBar === 'function') renderFilterBar();
+    if(typeof renderGerenciaBar === 'function') renderGerenciaBar(); // squad nova cai em Gerência Comercial por padrão (catch-all)
 
     // Inicia listener do novo squad no painel
     loadSquadData(id);

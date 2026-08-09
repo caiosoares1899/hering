@@ -4077,6 +4077,28 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v2.96 · painel-dev — 2026-08-07
+Nova filtragem por **Gerência** (grupo de squads), pedida direto:
+cada gerente precisa ver só as squads da própria gerência, isolada,
+sem perder a Visão Geral.
+
+- 👔 **Novo filtro "Ver por gerência"** na aba Visão, acima do filtro
+  por squad já existente (que continua intacto — inclusive o botão
+  "🏠 Todos" que já era a Visão Geral). Reaproveita o mesmo mecanismo
+  de `activeFilter`/`squadVisible()` que já filtrava por squad —
+  ganhou só um novo formato de valor (`ger-xxx`), então as 13
+  seções que já respeitavam `squadVisible()` (online agora, cards de
+  squad, riscos, lembretes, etc.) passam a respeitar o filtro de
+  gerência automaticamente, sem precisar tocar em cada uma.
+- Uma gerência (a "catch-all", ex.: Comercial) pode ser configurada
+  sem lista fixa de squads — nesse caso é calculada como "toda squad
+  que não está em nenhuma outra gerência", então uma squad nova
+  criada depois cai automaticamente nela, sem precisar editar nada.
+- **Neste `painel-dev.html`**, o mapeamento de gerência usa as squads
+  fictícias de teste (`dev`/`omnichannel`) como placeholder só pra
+  validar a mecânica do filtro — o mapeamento real (squads de
+  verdade) entra na promoção pra `painel.html`.
+
 ### painel.html v2.94 · painel / painel-dev.html v2.95 · painel-dev — 2026-08-04
 Achado investigando um relatório real: 3h depois de promover o fix de
 banda do `kanban.html` (`fbSaveAll` com `touchedIds`, v8.30.201),
