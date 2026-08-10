@@ -4240,6 +4240,24 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.97 · painel — 2026-08-09 · promove pra prod (mapeamento real de gerência)
+Promove pra produção o lote validado em `painel-dev.html` (v2.96 a
+v2.98): filtro "Ver por gerência" (👔) e a aba "💡 Insights" agregados
+por squad/gerência na Visão Geral.
+
+- 👔 **Mapeamento REAL de gerência** (substitui o placeholder
+  `dev`/`omnichannel` usado só pra testar a mecânica em
+  `painel-dev.html`): Gerência Marketing de Performance = Squad
+  Criativa (`midiacriativa`) + Squad Marketing de Performance
+  (`prf`); Gerência Digital = Squad Dados e IA (`dados`); Gerência
+  Comercial = catch-all (hoje vazia, já que as 3 squads existentes
+  estão todas mapeadas — qualquer squad nova criada depois cai
+  automaticamente aqui, sem precisar editar nada).
+- 💡 Aba **Insights** dentro da Visão Geral, somando as squads
+  atualmente visíveis (respeita o filtro de squad/gerência acima):
+  prioridade, carga por responsável, riscos, OKR por coluna, aging e
+  submarca — zero leitura nova do Firebase.
+
 ### painel.html v2.96 · painel — 2026-08-09 · rascunho de aviso (promoção do kanban v8.30.230)
 Adiciona ao `COMUNICADO_RASCUNHOS_SEED` o rascunho de aviso pra aba
 💡 Insights que acabou de ir pra produção no `kanban.html`
