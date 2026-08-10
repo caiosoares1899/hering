@@ -1310,6 +1310,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.364-dev — 2026-08-10
+Feedback direto (print): "ficou horrível kkkk" — a técnica de reforço de
+preenchimento aplicada em `#btn-meus-cards` na v8.30.363-dev (certa pra
+tags pequenas sem fundo visível) virou um bloco sólido pesado num
+`<button class="btn">`, que já tem fundo próprio (`var(--glass)`,
+herdado de `.btn`). Trocado por um ajuste bem mais simples: só escurece
+texto/borda (cor direta, sem filter/box-shadow) — o glass de fundo já
+dá contraste suficiente sozinho.
+
 ### v8.30.363-dev — 2026-08-10
 Feedback direto com print: "com esse novo fundo com filtro, a função
 meus cards tao muito claro nos dois modos claros".
