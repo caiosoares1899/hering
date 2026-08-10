@@ -1294,6 +1294,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.361-dev — 2026-08-10
+Feedback direto testando o double-click da v8.30.360-dev, com print do
+board: "funcionou bem! mas achei o card branco longe do tema e os
+títulos da coluna em preto ficou longe tb, tenta c um cinza ou branco".
+
+- **Título da coluna** (`.col-title`) não tinha `color` próprio — herdava
+  `var(--txt)` puro (bem escuro, quase preto em negrito/Syne). Agora usa
+  `var(--txt2)` (mesma cor, com menos opacidade — já existente na
+  paleta, sem inventar tom novo) — lê como cinza-azulado suave.
+- **Fundo dos cards** (`--surface-rgb`) era quase branco puro
+  (`252,254,255`) — tingido mais pra dentro da paleta azulada:
+  `238,246,250` no claro padrão, `235,244,248` na variante B (mesmo
+  delta proporcional de antes).
+- Ambos os ajustes valem nos dois: tema claro padrão e variante B.
+
 ### v8.30.360-dev — 2026-08-10
 Pedido direto: "guarda esse estilo B aí... coloca o anterior (da versão
 8.30.237) como default do claro mas se a pessoa clicar 2x, vai pra essa

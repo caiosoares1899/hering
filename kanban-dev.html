@@ -197,7 +197,11 @@
      vai pra essa opção B". */
   --deep:#CBE3F2;
   --deep-rgb:203,227,242;
-  --surface-rgb:252,254,255;
+  /* --surface-rgb (fundo dos cards) era quase branco puro (252,254,255)
+     — feedback direto: "achei o card branco longe do tema, tenta com um
+     cinza". Tingido mais pra dentro da paleta azulada em vez de ficar
+     "estourado" contra o resto do tema. */
+  --surface-rgb:238,246,250;
   --surface2-rgb:196,226,240;
   --glass-rgb:155,205,230;
   --glass:rgba(155,205,230,0.65);
@@ -237,7 +241,7 @@
 [data-theme="light"][data-theme-variant="b"]{
   --deep:#A9CCE3;
   --deep-rgb:169,204,227;
-  --surface-rgb:249,252,253;
+  --surface-rgb:235,244,248;
   --surface2-rgb:162,203,225;
   --glass-rgb:120,178,208;
   --glass:rgba(120,178,208,0.68);
@@ -290,6 +294,13 @@
 [data-theme="light"][data-theme-variant="b"] .card{
   border-color:rgba(0,90,135,.6);
 }
+/* Título da coluna (.col-title) não tinha `color` próprio — herdava
+   var(--txt) direto do body, que no claro é um azul-marinho bem escuro
+   (quase preto em negrito/Syne). Feedback direto: "os títulos da coluna
+   em preto ficou longe [do tema], tenta com um cinza". var(--txt2) já é
+   a mesma cor com menos opacidade (mesma paleta, sem inventar tom novo)
+   — lê como um cinza-azulado suave em vez de preto sólido. */
+[data-theme="light"] .col-title{color:var(--txt2);}
 /* "Seu card" no claro: passou por um protótipo com 4 opções (cor do
    card normal do escuro / tingimento bem mais forte / faixa+selo /
    mistura de tingimento+selo) — escolhida a mistura (opção D): fundo e
@@ -5103,7 +5114,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.360-dev</div>
+<div class="version">v8.30.361-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
