@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.233</div>
+<div class="version">v8.30.234</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6098,6 +6098,16 @@ function cardSubteams(card){
   return subteams.filter(s=>Array.isArray(s.members)&&s.members.some(m=>inits.has(m)));
 }
 let editingId=null;
+// Trava de reentrância do botão "💾 Salvar": true só entre o clique que
+// passou nas validações (card já empurrado em `cards`/editado) e a
+// confirmação do Firebase. Sem isso, cliques repetidos enquanto o modal
+// ainda não fechou (ex.: rede lenta) reexecutavam saveCard() do zero —
+// como editingId continua null até o modal fechar, cada clique extra
+// criava OUTRO card novo (bug reportado: "cliquei várias vezes, criou
+// vários cards"). Só protege a partir do commit; falhas de validação
+// (campo obrigatório faltando) continuam retornando cedo sem setar isso,
+// pra não travar a pessoa tentando corrigir e salvar de novo.
+let _savingCard=false;
 let currentQL=null; // 'recorrentes' | 'modelos'
 let qlItems={ recorrentes:[], modelos:[], agendamentos:[] };
 let links=[];
@@ -9940,6 +9950,7 @@ function openNewCard(col){
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
 }
 function saveCard(){
+  if(_savingCard) return; // já tem um salvamento em voo (ver comentário na declaração de _savingCard)
   if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim();
   // ── Modo edição de item recorrente/modelo/agendamento ──
@@ -10000,6 +10011,9 @@ function saveCard(){
     showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
     return;
   }
+  _savingCard=true;
+  const _saveBtn=document.getElementById('btn-save-card');
+  if(_saveBtn){ _saveBtn.disabled=true; _saveBtn.dataset.origLabel=_saveBtn.innerHTML; _saveBtn.innerHTML='💾 Salvando…'; }
   const td=new Date().toISOString().split('T')[0];
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
@@ -10091,10 +10105,13 @@ function saveCard(){
   // assim, dando a falsa impressão de que tinha salvo. Agora só fecha quando o Firebase confirma o
   // sucesso; se der erro, mantém o card aberto e avisa a pessoa em vez de fechar às cegas.
   Promise.resolve(_saveP).then(()=>{
+    _savingCard=false;
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     closeOv('card-ov');
     _clearPendingRequired();
   }).catch(err=>{
+    _savingCard=false;
+    if(_saveBtn){ _saveBtn.disabled=false; _saveBtn.innerHTML=_saveBtn.dataset.origLabel||'💾 Salvar'; }
     console.error('[saveCard] falha ao confirmar salvamento:', err);
     showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
   });
@@ -17712,7 +17729,7 @@ const HELP_CONTENT = {
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚙ Config → Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.' },
@@ -18281,6 +18298,17 @@ document.addEventListener('click', e=>{
 // automação/config ("supercard de campanha X sempre gera os cards A,B,C...")
 // fica pra depois de validar o conceito visual.
 let editingSuperChildren = []; // [{id,title,col}]
+// IDs dos filhos CRIADOS DE VERDADE (quickCreateSuperChild/fan-out) durante a
+// sessão atual do modal de um card AINDA NÃO SALVO — diferente de filhos
+// VINCULADOS a um card já existente (addSuperChild), que não devem ser
+// mexidos se o pai for cancelado. Bug reportado: "cancelei o card que tava
+// criando mas os cards filhos foram criados mesmo assim" — os filhos já
+// nascem como cards de verdade no Firebase (ver comentário em
+// quickCreateSuperChild), então cancelar o PAI antes de salvar deixava eles
+// órfãos, soltos no board, sem ninguém ter pedido isso. _finishCloseOv()
+// exclui de verdade os cards desta lista se o modal fechar sem o pai ter
+// sido salvo (editingId ainda null).
+let _newSuperChildIds = [];
 
 // card===null (card novo, ainda sem id real no Firebase): a seção continua
 // visível e usável — adicionar/criar filho fica "em memória" até o Salvar
@@ -18296,6 +18324,7 @@ function initSuperChildren(card){
     const found = cards.find(c=>c.id===id);
     return found ? {id:found.id, title:found.title, col:found.col} : null;
   }).filter(Boolean) : [];
+  _newSuperChildIds = []; // reseta a cada card aberto — ver comentário na declaração
   renderSuperChildrenList();
   const searchWrap=document.getElementById('m-super-search-wrap'); if(searchWrap) searchWrap.style.display='none';
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
@@ -18433,6 +18462,7 @@ function quickCreateSuperChild(title){
   cards.push(novo);
   fbSaveCard(novo);
   editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
+  if(!editingId) _newSuperChildIds.push(novo.id); // ver comentário na declaração — cancelar o pai remove este filho de verdade
   renderSuperChildrenList();
   persistSuperChildren();
   const inp=document.getElementById('m-super-search-inp'); if(inp){ inp.value=''; }
@@ -21032,6 +21062,19 @@ function setFanoutFilhoModelo(id, idx, modeloIdxStr){
   fbSet(FB+'/config/fanout_templates', fanoutTemplates);
   renderFanoutCfg();
 }
+// Vincula o CARD PAI da receita a um Modelo — antes só dava pra renomear a
+// receita em si (✎), sem jeito de estruturar o card pai (descrição,
+// checklist, tags, riscos). Pedido direto: "só dá pra alterar o nome... tem
+// que conseguir alterar o card todo!". Mesmo padrão do filho (setFanoutFilhoModelo):
+// guarda só o índice do modelo, quem aplica de fato é applyFanoutToCurrentCard()
+// (via aplicarModeloNoCard(), reaproveitado) ou a automação (via
+// _mergeModeloEmCardObj()) — nunca sobrescreve o que o card pai já tiver.
+function setFanoutPaiModelo(id, modeloIdxStr){
+  const f=fanoutTemplates[id]; if(!f) return;
+  fanoutTemplates={...fanoutTemplates, [id]:{...f, paiModeloIdx: modeloIdxStr===''?null:parseInt(modeloIdxStr)}};
+  fbSet(FB+'/config/fanout_templates', fanoutTemplates);
+  renderFanoutCfg();
+}
 function removeFanoutFilho(id, idx){
   const f=fanoutTemplates[id]; if(!f) return;
   const filhos=(f.filhos||[]).filter((_,i)=>i!==idx);
@@ -21061,6 +21104,17 @@ function renderFanoutCfg(){
           </div>`
         ).join('')
       : '<div style="font-size:11px;color:var(--txt3);padding:6px 10px;">Nenhum card filho ainda — adicione abaixo.</div>';
+    // Modelo do CARD PAI (opcional) — mesmo select dos filhos, mas aplicado
+    // no card que a pessoa já tem aberto (ou está criando) ao gerar a
+    // receita, não num filho novo. Antes só dava pra renomear a receita em
+    // si; pedido direto: "tem que conseguir alterar o card todo!".
+    const paiHtml=`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px 8px;font-size:12px;color:var(--txt2);border-bottom:1px dashed var(--glass-b);margin-bottom:4px;">
+      <span style="flex:1;">👑 Card pai <span style="color:var(--txt3);">(este card, ao gerar a receita)</span></span>
+      <select class="fi" onchange="setFanoutPaiModelo('${id}',this.value)" title="Modelo (opcional) — mescla descrição/checklist/tags/riscos no card pai sem apagar o que ele já tiver (mesma regra do 📥 Usar modelo)" style="font-size:10px;padding:3px 6px;max-width:160px;">
+        <option value="">— sem modelo —</option>
+        ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${f.paiModeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
+      </select>
+    </div>`;
     return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_fanoutCfgAberto=_fanoutCfgAberto==='${id}'?null:'${id}';renderFanoutCfg();">
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">🧩 ${esc(f.nome||'Sem nome')} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${(f.filhos||[]).length} card(s))</span></span>
@@ -21068,7 +21122,7 @@ function renderFanoutCfg(){
         <button class="btn btn-sm" onclick="event.stopPropagation();excluirFanoutTemplate('${id}')" title="Excluir receita" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
       </div>
-      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho('${id}')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
+      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho('${id}')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
     </div>`;
   }).join('');
 }
@@ -21112,6 +21166,31 @@ function _applyFanoutTemplate(parentCard, tpl, whoLabel){
   recordHistory(parentCard,'aplicou fan-out "'+tpl.nome+'" ('+novos.length+' card(s) filho(s))',user);
   return novos;
 }
+// Mescla um Modelo num card OBJETO (sem depender do form/DOM do modal) —
+// mesma regra de "nunca sobrescreve" do aplicarModeloNoCard() (que já existe
+// pra "Usar modelo" dentro de um card aberto): desc/PO só entram se
+// estiverem vazios, tags/checklist/riscos são somados sem duplicar. Usado só
+// pelo caminho de AUTOMAÇÃO do fan-out (ação "🧩 Aplicar fan-out"), que roda
+// sem nenhum modal aberto — o caminho manual (botão dentro do card) reusa o
+// aplicarModeloNoCard() de verdade, que também atualiza o form visível.
+function _mergeModeloEmCardObj(card, modelo){
+  if(!card || !modelo) return;
+  if(!(card.desc||'').trim() && modelo.desc) card.desc=modelo.desc;
+  if(!(card.po||'').trim() && modelo.po) card.po=modelo.po;
+  const modeloTags=(modelo.tags?.length ? modelo.tags : (modelo.tag?[modelo.tag]:[]));
+  if(modeloTags.length){
+    card.tags=card.tags||[];
+    modeloTags.forEach(t=>{ if(!card.tags.includes(t)) card.tags.push(t); });
+    card.tag=card.tags[0]||'';
+  }
+  if(modelo.checklist?.length){
+    card.checklist=[...(card.checklist||[]), ...modelo.checklist.map(it=>({t:it.t,done:false}))];
+  }
+  if(modelo.riscos?.length){
+    const atuais=card.riscos||[];
+    card.riscos=[...atuais, ...modelo.riscos.filter(r=>!atuais.includes(r))];
+  }
+}
 // Botão manual "🧩 Aplicar receita" dentro do card (independe de automação —
 // cobre o caso "pedido do dia a dia" que não tem gatilho automático nenhum).
 function toggleFanoutApplyMenu(){
@@ -21122,6 +21201,23 @@ function applyFanoutToCurrentCard(templateId){
   if(!checkEditPermission()) return;
   const tpl=fanoutTemplates[templateId]; if(!tpl) return;
   if(!tpl.filhos?.length){ showToast('Essa receita ainda não tem cards filhos configurados.'); return; }
+  // Modelo do card PAI (opcional, ver tpl.paiModeloIdx/setFanoutPaiModelo):
+  // reaproveita o aplicarModeloNoCard() que já existe pro botão "📥 Usar
+  // modelo" — mesma regra de nunca sobrescrever o que já tiver preenchido,
+  // e já cobre tanto card salvo (editingId) quanto ainda sendo criado.
+  // showToast() é um slot único (reescreve o mesmo elemento) — o toast que
+  // aplicarModeloNoCard() dispara aqui seria sobrescrito quase na hora pelo
+  // toast final de "N card(s) criado(s)" logo abaixo, sem a pessoa conseguir
+  // ler (bug real reportado: "não usou o modelo" — o modelo era aplicado
+  // certinho, só não tinha confirmação visível disso). Guarda o nome do
+  // modelo aqui pra mencionar no toast final único, em vez de dois toasts
+  // brigando pelo mesmo espaço.
+  let _paiModeloNome=null;
+  if(tpl.paiModeloIdx!=null){
+    const _paiModelo=(qlItems.modelos||[])[tpl.paiModeloIdx];
+    if(_paiModelo){ aplicarModeloNoCard(tpl.paiModeloIdx); _paiModeloNome=_paiModelo.title; }
+  }
+  const _modeloSuffix=_paiModeloNome?(' + modelo "'+_paiModeloNome+'" aplicado no card pai'):'';
   if(editingId){
     const parent=cards.find(c=>c.id===editingId); if(!parent) return;
     const novos=_applyFanoutTemplate(parent, tpl, _histWho());
@@ -21132,17 +21228,20 @@ function applyFanoutToCurrentCard(templateId){
     }).filter(Boolean);
     renderSuperChildrenList();
     renderBoard();
-    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"'+_modeloSuffix);
   } else {
     // Card ainda não existe: os filhos já nascem como cards de verdade (cada
     // um é independente), mas o VÍNCULO com o pai (childCardIds) fica em
-    // memória até o pai ser salvo de verdade — ver saveCard().
+    // memória até o pai ser salvo de verdade — ver saveCard(). Se o pai for
+    // cancelado antes disso, _finishCloseOv() exclui estes filhos de verdade
+    // (ver _newSuperChildIds) em vez de deixá-los órfãos no board.
     const novos=_applyFanoutTemplate(_superParentBasics(), tpl, _histWho());
+    _newSuperChildIds.push(...novos);
     const resolved=novos.map(id=>{ const c=cards.find(x=>x.id===id); return c?{id:c.id,title:c.title,col:c.col}:null; }).filter(Boolean);
     editingSuperChildren=editingSuperChildren.concat(resolved);
     renderSuperChildrenList();
     renderBoard();
-    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"'+_modeloSuffix);
   }
 }
 document.addEventListener('click', e=>{
@@ -21249,6 +21348,14 @@ const AUTO_ACTIONS = [
     run:(rule,card)=>{
       if(card.childCardIds && card.childCardIds.length) return false;
       const tpl=fanoutTemplates[rule.actionVal]; if(!tpl||!tpl.filhos?.length) return false;
+      // Modelo do card pai (ver tpl.paiModeloIdx): aqui não tem modal aberto
+      // (automação pode disparar em qualquer card do board), então mescla
+      // direto no objeto — ver _mergeModeloEmCardObj(). O caminho manual
+      // (botão dentro do card) usa aplicarModeloNoCard() no lugar disso.
+      if(tpl.paiModeloIdx!=null){
+        const paiModelo=(qlItems.modelos||[])[tpl.paiModeloIdx];
+        if(paiModelo) _mergeModeloEmCardObj(card, paiModelo);
+      }
       _applyFanoutTemplate(card, tpl, '⚙ Automação');
       return true;
     } },
@@ -21980,6 +22087,21 @@ function aplicarModeloNoCard(idx){
   if(Array.isArray(modelo.tags) && modelo.tags.length){
     modelo.tags.forEach(t=>{ if(!editingTags.includes(t)) editingTags.push(t); });
     populateTagSelect();
+    // BUGFIX: Submarca (quando ativa no squad) tem um <select id="m-submarca">
+    // DEDICADO, separado do picker geral de tags — populateTagSelect() acima
+    // não mexe nele. Como uma submarca é, por baixo dos panos, só mais uma
+    // tag (ver SUBMARCA_TAGS), ela entrava certinho em editingTags, mas o
+    // <select> continuava mostrando "— sem submarca —". Pior: saveCard()
+    // valida submarca obrigatória lendo o VALOR DO SELECT, não editingTags —
+    // então mesmo com a tag aplicada, salvar continuava bloqueado como se a
+    // submarca estivesse vazia. Bug reportado: "n pegou... submarcas" +
+    // (na prática) "deu erro, cancelei o card".
+    if(typeof SUBMARCA_TAGS!=='undefined'){
+      const smIds=SUBMARCA_TAGS.map(st=>st.id);
+      const smTag=modelo.tags.find(t=>smIds.includes(t));
+      const smSel=document.getElementById('m-submarca');
+      if(smTag && smSel) smSel.value=smTag;
+    }
   }
 
   if(Array.isArray(modelo.checklist) && modelo.checklist.length){
@@ -22134,6 +22256,13 @@ function voltarParaFuncoesCard(modalId){
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
+    // Rede de segurança: garante que o botão "💾 Salvar" nunca fique preso em
+    // "Salvando…"/desabilitado pro próximo card aberto, mesmo em caminho de
+    // fechamento que não passou pelo .then()/.catch() de saveCard() (ex.:
+    // fechar manualmente enquanto um save antigo ainda estava em voo).
+    _savingCard=false;
+    const _sb=document.getElementById('btn-save-card');
+    if(_sb){ _sb.disabled=false; if(_sb.dataset.origLabel) _sb.innerHTML=_sb.dataset.origLabel; }
     _stopDirtyWatch();
     if(editingId) _releaseCardLock(editingId);
     _setCardLockUI(false);
@@ -22143,6 +22272,21 @@ function _finishCloseOv(id){
       cards = cards.filter(c=>!c._isQLTemp);
       _editingQLItem = null; editingId = null;
     }
+    // Bug reportado: "cancelei o card que tava criando mas os cards filhos
+    // foram criados mesmo assim". Filhos criados via quickCreateSuperChild()/
+    // fan-out (ver _newSuperChildIds) já nascem como cards de verdade no
+    // Firebase, MESMO com o pai ainda não salvo — se o pai nunca chega a ser
+    // salvo (editingId continua null aqui), esses filhos ficam órfãos, soltos
+    // no board, sem ninguém ter pedido. Exclui de verdade nesse caso. Filhos
+    // apenas VINCULADOS a um card já existente (addSuperChild) não entram
+    // nesta lista — continuam intactos, cancelar o pai só desfaz o vínculo.
+    if(!editingId && _newSuperChildIds.length){
+      const _orfaos=new Set(_newSuperChildIds);
+      cards = cards.filter(c=>!_orfaos.has(c.id));
+      fbSaveAll(undefined, []).catch(err=>console.error('[supercard] falha ao excluir filhos órfãos:', err));
+      renderBoard();
+    }
+    _newSuperChildIds = [];
   }
 }
 document.querySelectorAll('.ov').forEach(ov=>{
