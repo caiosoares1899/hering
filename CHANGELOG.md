@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.232 — 2026-08-09 · promove pra prod (PR #255)
+Promove pra produção o ajuste no supercard validado em dev: cada
+filho de uma receita de fan-out pode ser vinculado a um **📋 Modelo**
+já existente (⚡ Funções de card → 📋 Modelos) — quando a receita
+gerar esse filho, ele nasce com descrição, checklist, tags e riscos
+do modelo escolhido, em vez de um card vazio só com título. Filho sem
+modelo vinculado continua igual a antes.
+
 ### v8.30.231 — 2026-08-09 · promove pra prod (PRs #249–#253)
 Promove pra produção o lote validado em dev:
 
