@@ -18,6 +18,33 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.231 — 2026-08-09 · promove pra prod (PRs #249–#253)
+Promove pra produção o lote validado em dev:
+
+- ⏱🏷 **Filtros de período e tag na aba Insights** (PR #249): a aba
+  💡 Insights de "📊 Dados do Board" ganha um filtro de período
+  (padrão "Ativos agora", ou só os criados nos últimos 7/14/30/90
+  dias) e um filtro por tag, combináveis, resetando a cada reabertura
+  do modal.
+- 🧩 **Supercard (cards filhos)** (PRs #250–#253) — pedido do time de
+  Mídia Alcance: um pedido do dia a dia costuma virar vários cards
+  (formato/veículo/teste diferentes). Um card pode ganhar cards
+  filhos — no board vira um "supercard" com rollup compacto dos
+  filhos (coluna + progresso "X/N concluído(s)"); no modal, seção
+  "Cards filhos" pra vincular um existente ou criar um novo já como
+  filho (funciona mesmo num card ainda sendo criado, antes de salvar
+  pela 1ª vez), herdando coluna/prazo/prioridade/demandante do pai.
+  Filhos continuam cards normais e independentes, sem bloqueio entre
+  eles.
+  - **Receitas de fan-out**: em ⚙ Config → Automações, cria receitas
+    nomeadas (ex.: "Campanha de mídia paga") com a lista de filhos
+    que ela sempre gera — aplica manualmente (botão "🧩 Aplicar
+    receita" no card) ou automaticamente (ação "🧩 Aplicar fan-out"
+    numa regra de automação, com guarda de idempotência).
+  - **← Voltar**: navegar entre cards relacionados (pai↔filho) ganha
+    um botão de volta rápida no topo do modal, sem precisar buscar de
+    novo.
+
 ### v8.30.230 — 2026-08-09 · promove pra prod (PR #244)
 Promove pra produção a aba **💡 Insights** dentro de "📊 Dados do
 Board", validada em dev (v8.30.334-dev): distribuição por prioridade
