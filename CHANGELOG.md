@@ -18,6 +18,33 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.231 — 2026-08-09 · promove pra prod (PRs #249–#253)
+Promove pra produção o lote validado em dev:
+
+- ⏱🏷 **Filtros de período e tag na aba Insights** (PR #249): a aba
+  💡 Insights de "📊 Dados do Board" ganha um filtro de período
+  (padrão "Ativos agora", ou só os criados nos últimos 7/14/30/90
+  dias) e um filtro por tag, combináveis, resetando a cada reabertura
+  do modal.
+- 🧩 **Supercard (cards filhos)** (PRs #250–#253) — pedido do time de
+  Mídia Alcance: um pedido do dia a dia costuma virar vários cards
+  (formato/veículo/teste diferentes). Um card pode ganhar cards
+  filhos — no board vira um "supercard" com rollup compacto dos
+  filhos (coluna + progresso "X/N concluído(s)"); no modal, seção
+  "Cards filhos" pra vincular um existente ou criar um novo já como
+  filho (funciona mesmo num card ainda sendo criado, antes de salvar
+  pela 1ª vez), herdando coluna/prazo/prioridade/demandante do pai.
+  Filhos continuam cards normais e independentes, sem bloqueio entre
+  eles.
+  - **Receitas de fan-out**: em ⚙ Config → Automações, cria receitas
+    nomeadas (ex.: "Campanha de mídia paga") com a lista de filhos
+    que ela sempre gera — aplica manualmente (botão "🧩 Aplicar
+    receita" no card) ou automaticamente (ação "🧩 Aplicar fan-out"
+    numa regra de automação, com guarda de idempotência).
+  - **← Voltar**: navegar entre cards relacionados (pai↔filho) ganha
+    um botão de volta rápida no topo do modal, sem precisar buscar de
+    novo.
+
 ### v8.30.230 — 2026-08-09 · promove pra prod (PR #244)
 Promove pra produção a aba **💡 Insights** dentro de "📊 Dados do
 Board", validada em dev (v8.30.334-dev): distribuição por prioridade
@@ -4212,6 +4239,35 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html v2.97 · painel — 2026-08-09 · promove pra prod (mapeamento real de gerência)
+Promove pra produção o lote validado em `painel-dev.html` (v2.96 a
+v2.98): filtro "Ver por gerência" (👔) e a aba "💡 Insights" agregados
+por squad/gerência na Visão Geral.
+
+- 👔 **Mapeamento REAL de gerência** (substitui o placeholder
+  `dev`/`omnichannel` usado só pra testar a mecânica em
+  `painel-dev.html`): Gerência Marketing de Performance = Squad
+  Criativa (`midiacriativa`) + Squad Marketing de Performance
+  (`prf`); Gerência Digital = Squad Dados e IA (`dados`); Gerência
+  Comercial = catch-all (hoje vazia, já que as 3 squads existentes
+  estão todas mapeadas — qualquer squad nova criada depois cai
+  automaticamente aqui, sem precisar editar nada).
+- 💡 Aba **Insights** dentro da Visão Geral, somando as squads
+  atualmente visíveis (respeita o filtro de squad/gerência acima):
+  prioridade, carga por responsável, riscos, OKR por coluna, aging e
+  submarca — zero leitura nova do Firebase.
+- 📢 **Rascunho de aviso do supercard** semeado em
+  `COMUNICADO_RASCUNHOS_SEED`, junto com o resto do lote de kanban.html
+  v8.30.231.
+- ⚠️ Nota interna: a 1ª tentativa de aplicar este diff (patch bruto do
+  `painel-dev.html`) trocou `COMUNICADO_RASCUNHOS_SEED` inteiro pelo
+  array de dev (que tem só um rascunho de teste) — `painel.html` e
+  `painel-dev.html` mantêm rascunhos DIFERENTES de propósito (prod
+  guarda o histórico real de avisos; dev só tem um de teste), então
+  esse campo nunca deveria ter entrado no diff de promoção. Corrigido
+  antes do merge — os 8 rascunhos reais de `painel.html` foram
+  restaurados, mais o novo do supercard.
 
 ### painel.html v2.96 · painel — 2026-08-09 · rascunho de aviso (promoção do kanban v8.30.230)
 Adiciona ao `COMUNICADO_RASCUNHOS_SEED` o rascunho de aviso pra aba
