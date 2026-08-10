@@ -1249,6 +1249,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.353-dev — 2026-08-10 — REGRESSÃO CRÍTICA
+Bug reportado: "aplico a receita ao card pai na criação, aparecem os
+filhos, mas não salva — não sei se foi aquele ponto de não salvar
+quando cancelar, mas agora não tá salvando NUNCA". Era exatamente
+isso — regressão do fix de filhos órfãos (v8.30.350-dev).
+
+- **Causa raiz**: `editingId` continua `null` mesmo depois de um card
+  NOVO salvar com SUCESSO (só passa a existir de verdade quando o card
+  é reaberto — é o mesmo comportamento que causava cards duplicados em
+  clique duplo, corrigido em v8.30.347-dev). O fix de filhos órfãos
+  usava `!editingId` em `_finishCloseOv()` como sinal de "pai
+  cancelado sem salvar" — mas esse mesmo `null` aparece TAMBÉM logo
+  depois de um salvamento bem-sucedido, então a limpeza apagava os
+  filhos de verdade (que tinham acabado de ser vinculados
+  corretamente) segundos depois de criados.
+- Corrigido: o `.then()` de sucesso de `saveCard()` agora limpa
+  `_newSuperChildIds` ANTES de fechar o modal — os filhos já estão
+  legitimamente vinculados no `childCardIds` que acabou de salvar, não
+  são mais "órfãos em risco". A limpeza em `_finishCloseOv()` só
+  dispara de verdade quando o modal fecha SEM ter passado por aqui
+  (cancelar de fato).
+- **Prioridade alta**: promover pro prod assim que validado — o fix
+  anterior (v8.30.350-dev/prod v8.30.234) já está em produção e
+  quebrando esse fluxo pra quem usa fan-out em card novo.
+
 ### v8.30.352-dev — 2026-08-10
 Refatoração pura (sem mudança de comportamento pretendida) pedida na
 revisão do supercard/fan-out — remove as 2 duplicações de código

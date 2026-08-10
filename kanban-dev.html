@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.352-dev</div>
+<div class="version">v8.30.353-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10106,6 +10106,17 @@ function saveCard(){
   // sucesso; se der erro, mantém o card aberto e avisa a pessoa em vez de fechar às cegas.
   Promise.resolve(_saveP).then(()=>{
     _savingCard=false;
+    // BUGFIX: editingId continua null mesmo depois de um card NOVO salvar
+    // com sucesso (só passa a existir de verdade na próxima vez que o card
+    // for reaberto) — é o mesmo motivo que causava cards duplicados em
+    // clique duplo (ver _savingCard acima). A limpeza de "filhos órfãos" em
+    // _finishCloseOv() usa `!editingId` como sinal de "pai cancelado sem
+    // salvar", mas sem isto aqui ela via esse mesmo null e apagava os
+    // filhos de verdade LOGO DEPOIS de salvar com sucesso (bug reportado:
+    // "aplico a receita, aparecem os filhos, mas não salva"). Limpa a lista
+    // de filhos "em risco" aqui — eles já estão legitimamente vinculados no
+    // childCardIds que acabou de ser salvo, não são mais órfãos.
+    _newSuperChildIds = [];
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     closeOv('card-ov');
     _clearPendingRequired();
