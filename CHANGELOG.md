@@ -1205,6 +1205,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.343-dev — 2026-08-09
+Pedido direto: "esse meu card pode ficar mais aceso, usa aquele
+recurso de dar brilho, meio que neon". O selo "👤 seu card" (card em
+que você é responsável/participante) ganha um brilho pulsante
+contínuo, nos dois temas — reaproveita o mesmo truque de glow em
+camadas (`box-shadow` com blur crescente) que outros destaques do
+board já usam, só que em loop infinito em vez de disparar uma vez só.
+Cor do brilho segue o mesmo azul que o "seu card" já usava em cada
+tema (`--card-mine-glow-rgb`, nova variável), então não precisou de
+uma animação separada por tema. Puramente visual.
+
 ### v8.30.342-dev — 2026-08-09
 Fix de contraste reportado com print: o supercard estava muito ruim
 de ler no tema claro — a borda esquerda roxa (`#a78bfa`) e o texto do
