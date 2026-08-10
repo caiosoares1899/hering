@@ -1278,6 +1278,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.356-dev — 2026-08-10
+Feedback direto sobre o filtro novo: "funcionou mas esse layout eu n
+gosto... fica feio e quebrado". Causa: o checkbox "🧩 Supercards" era o
+único com emoji na frente do texto — "Só impedidos" e "Com riscos" (os
+vizinhos na mesma linha) são só texto puro, sem ícone. Removido o
+emoji do label (mantém só a cor roxa no próprio checkbox, que já
+diferencia sem quebrar o padrão visual da linha). Central de Ajuda
+ajustada junto.
+
 ### v8.30.355-dev — 2026-08-10
 Pedido direto: "e os filtros? temos que ter filtros para os supercards
 quando ativos".
