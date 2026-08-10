@@ -4369,6 +4369,13 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html — 2026-08-10 · rascunho de comunicado (sem bump de versão)
+Adicionado 1 entrada em `COMUNICADO_RASCUNHOS_SEED`
+(`seed_legibilidade_tema_claro_2026_08_10`) sobre o lote de
+legibilidade do tema claro (kanban.html v8.30.233) — aparece pro ADM
+revisar em Pessoas → 📢 Comunicados → Rascunhos. Conteúdo apenas,
+sem mudança de código/UI — não bumpa versão do painel.
+
 ### painel.html v2.98 · painel — 2026-08-09 · INCIDENTE: reconstrução da promoção v2.97
 **O que aconteceu**: a promoção anterior (v2.97, "mapeamento real de
 gerência") usou patch bruto do diff `painel.html`/`painel-dev.html`
