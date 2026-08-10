@@ -1294,6 +1294,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.358-dev — 2026-08-10 — MODO CLARO
+Feedback direto: "time ainda ta achando o modo claro muitooo claro!
+da uma boa escurecida mas ainda dentro do modo claro, aumenta o
+contraste e traz um azul um pouco mais escuro!" — 3ª rodada de ajuste
+do tema claro (as 2 anteriores já tinham escurecido o fundo 2x).
+Testado com artefato visual (3 candidatas) antes de aplicar; esta é a
+"C" (mais escura das 3), escolhida pra testar.
+
+- `--deep` (fundo de página/oceano): `#CBE3F2` → `#8FB8D9`.
+- `--glass` (header/toolbar/colunas/dropdowns): `rgba(155,205,230,.65)`
+  → `rgba(96,155,190,.72)` — mais escuro e mais opaco.
+- `--blue`/`--accent` (azul de destaque): `#00A9E6` (ciano vivo) →
+  `#00729E` (azul mais fechado/profundo).
+- `--cyan` (texto de rótulos/badges): `#0A6C8C` → `#054459`.
+- `--txt`/`--txt2`/`--txt3`: `#14324A` → `#0A1D2E` (mais escuro, mais
+  contraste).
+- Borda do `.card` no tema claro: `rgba(0,120,175,.55)` →
+  `rgba(0,70,110,.65)`.
+- `--surface-rgb` (fundo dos cards) só ajustado de leve (`252,254,255`
+  → `246,250,253`) — de propósito: é o card ficando bem mais claro que
+  o fundo ao redor que reforça o contraste, escurecer os dois juntos
+  anularia o ganho.
+- Puramente visual, não muda nenhum dado/comportamento.
+
 ### v8.30.357-dev — 2026-08-10
 Feedback direto (mais amplo que o do v8.30.356-dev): "essas duas linhas
 do jeito que tão, achei feio, vazio!" — sobre a barra de Filtros como
