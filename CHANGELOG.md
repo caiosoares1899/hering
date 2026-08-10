@@ -1318,6 +1318,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.366-dev — 2026-08-10
+Feedback direto: "uma usuária aqui me informou que não está conseguindo
+abrir as notificações" → investigação apontou que a notificação de
+@menção apontava pra um comentário que já tinha sido excluído (o card
+ainda abria normalmente, mas a notificação "não levava a lugar nenhum"
+do ponto de vista da usuária). Pedido explícito: "acho melhor avisar q
+o comentário não exista mais ou excluir a notificação em si".
+
+- `createNotif`/`parseMentions` passam a aceitar um `commentId` opcional
+  — só preenchido quando a @menção vem de dentro de um comentário
+  (`submitComment`/`saveEditComment`); menções em outros campos
+  (descrição, PO, checklist etc.) continuam sem vínculo a comentário
+  nenhum, sem mudança de comportamento pra elas.
+- `openNotif()`: ao abrir uma notificação de menção com `commentId`,
+  confere se o comentário ainda existe no card. Se não existir mais
+  (foi excluído), mostra um toast avisando e apaga a notificação —
+  cobre as duas opções pedidas (avisar + limpar) numa ação só. Card
+  continua abrindo normalmente em seguida.
+- Limitação conhecida: como o id da notificação de menção é
+  determinístico por (card, pessoa) — pra não duplicar a mesma menção
+  a cada save — só a PRIMEIRA menção que gerou aquela notificação fica
+  de fato vinculada a um comentário; notificações já existentes (antes
+  desse fix) não têm `commentId` e continuam abrindo do jeito antigo.
+
 ### v8.30.365-dev — 2026-08-10
 Feedback direto: "voltou a ficar claro demais" — o fix da v8.30.364-dev
 não tinha efeito nenhum. Causa: o botão tem `style="color:var(--warn);

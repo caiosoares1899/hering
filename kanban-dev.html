@@ -5150,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.365-dev</div>
+<div class="version">v8.30.366-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18675,7 +18675,7 @@ document.addEventListener('click', e=>{
 // ── Cria uma notificação para um usuário ──────────────────────────
 // Deduplication: track recently created notifs (uid+type+cardId) within 5s
 const _recentNotifs = new Map();
-function createNotif(targetUid, type, title, sub, cardId, idOverride){
+function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId){
   if(!window._fbReady || !targetUid) return;
   // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
   // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
@@ -18691,6 +18691,10 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride){
     ts: new Date().toISOString(),
     squad: ACTIVE_SQUAD,
   };
+  // commentId: só setado quando a menção veio de um comentário (ver
+  // parseMentions/submitComment/saveEditComment). Usado em openNotif() pra
+  // avisar/limpar a notificação se o comentário for excluído depois.
+  if(commentId) notif.commentId = commentId;
   const path = 'kanban/usuarios/'+targetUid+'/notificacoes/'+notifId;
   // Loga falha de escrita em vez de engolir silenciosamente — nao interrompe o fluxo do app.
   const _notifWarn = err => { if(!String(err).includes('error_logs')&&!String(err).includes('error_stats')) console.warn('[createNotif] write failed:', err); };
@@ -19014,7 +19018,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -19025,7 +19029,7 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
-function openNotif(notifId, cardId, squad){
+function openNotif(notifId, cardId, squad, commentId){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
@@ -19048,7 +19052,18 @@ function openNotif(notifId, cardId, squad){
   const tentar = () => {
     tentativas++;
     const card = cards.find(c=>c.id===cardId);
-    if(card){ openCard(cardId); return; }
+    if(card){
+      // Notificação de menção num comentário que já foi excluído: avisa e
+      // remove a notificação em vez de abrir o card num comentário fantasma
+      // (relato: usuária "não consegue abrir" a notificação — o comentário
+      // que a gerou tinha sido apagado).
+      if(commentId && (!card.comments || !card.comments[commentId])){
+        showToast('Esse comentário não existe mais — foi excluído.');
+        window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
+      }
+      openCard(cardId);
+      return;
+    }
     if(tentativas < 15) setTimeout(tentar, 400);
   };
   tentar();
@@ -19099,7 +19114,7 @@ function timeAgo(ts){
 // iniciais maiúsculas — o regex antigo (@[A-Z]{2,3}) nunca dava match nesse formato e por
 // isso nenhuma menção real notificava ninguém. Aceita os dois formatos (handle novo e
 // iniciais legadas) para não quebrar cards antigos.
-function parseMentions(text, cardId){
+function parseMentions(text, cardId, commentId){
   if(!text) return;
   const re=/@([a-zA-Z][a-zA-Z0-9._-]{1,40})/g; let m;
   const notified=new Set();
@@ -19118,11 +19133,16 @@ function parseMentions(text, cardId){
     // mover a coluna) re-notificava a MESMA menção antiga de novo, dias
     // depois, como se fosse nova. createNotif já entende idOverride e só
     // cria se ainda não existe (mesmo mecanismo usado pra lembretes).
+    // commentId só chega aqui quando quem chamou é submitComment/saveEditComment
+    // (menção dentro de um comentário) — pros outros campos (descrição, PO,
+    // checklist etc.) fica undefined e a notificação não trava em nenhum
+    // comentário específico.
     createNotif(uid,'mention',
       '@'+(init||token)+' — você foi mencionado',
       text.substring(0,80)+(text.length>80?'…':''),
       cardId,
-      'mention_'+cardId+'_'+uid);
+      'mention_'+cardId+'_'+uid,
+      commentId);
   }
 }
 
@@ -23153,7 +23173,7 @@ function submitComment(){
   eocResetComment();
   loadComments(_commentCardId);
   // Fire @mention notifications from comment
-  parseMentions(text, _commentCardId);
+  parseMentions(text, _commentCardId, comment.id);
 }
 
 function deleteComment(cid){
@@ -23218,7 +23238,7 @@ function saveEditComment(cid){
   // comentário novo (submitComment) chamava parseMentions. Uma @menção
   // adicionada só na edição (ex.: corrigindo o handle de alguém) nunca
   // notificava ninguém.
-  parseMentions(newText, _commentCardId);
+  parseMentions(newText, _commentCardId, cid);
 }
 
 function cancelEditComment(cid){
