@@ -18,7 +18,30 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.234 — 2026-08-10 · promove pra prod (PRs #265–#268) — correções
+### v8.30.235 — 2026-08-10 · promove pra prod (PRs #270–#272) — CORRIGE REGRESSÃO
+Promove pra produção o lote que corrige uma regressão introduzida pela
+própria v8.30.234 (poucas horas antes):
+
+- 🚨 **Regressão crítica corrigida** (PR #272): aplicar uma receita de
+  fan-out num card AINDA NÃO SALVO e depois clicar "Salvar" não estava
+  vinculando os filhos — o fix de filhos órfãos da v8.30.234 (PR #268)
+  apagava os filhos de verdade logo depois do salvamento ter sucesso,
+  porque `editingId` continua `null` mesmo após um card novo salvar
+  (mesma peculiaridade que causava cards duplicados em clique duplo).
+  Corrigido: a lista de filhos "em risco" é limpa assim que o
+  salvamento confirma sucesso, antes do fechamento do modal.
+- 🧹 **Simplificações de UX** (PR #270): receitas sem filho configurado
+  somem do dropdown "Aplicar receita"; "+ Card filho" aceita vários
+  nomes separados por vírgula numa tacada só.
+- 🧹 **Dedup de código** (PR #271): unifica o molde de card filho
+  (`_blankSuperChildCard`) e a regra de mesclagem de Modelo
+  (`_mergeModeloEmCardObj`) numa fonte só, eliminando as duplicações
+  que causaram tanto o bug da submarca quanto esta regressão. Bônus:
+  filhos de fan-out sem modelo agora herdam o PO do card pai.
+
+Sem aviso externo — janela entre quebrar e corrigir foi de poucas
+horas no mesmo dia, e o fluxo (fan-out em card novo) é recente o
+suficiente pra não ter alcançado uso amplo ainda.
 Promove pra produção 4 correções de bug validadas em dev, todas
 reportadas com prints/feedback direto durante uso real:
 
