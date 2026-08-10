@@ -147,7 +147,6 @@
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:255,209,102;
   --deep-rgb:3,13,26;
-  --card-mine-glow-rgb:56,182,255;
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -210,7 +209,6 @@
      um card/input já claro, o glow simplesmente some de vista. Feedback
      direto: "talvez pudesse piscar azul escuro". */
   --pulse-rgb:10,77,120;
-  --card-mine-glow-rgb:0,120,175;
 }
 [data-theme="light"] .ocean{
   background:
@@ -298,8 +296,16 @@
    escuro sem filtro vs. o filtro de baixo) — cores mais claras da
    paleta (Feature #ffd166, OKR #ffd700) ainda ficavam fracas com
    brightness(.68); baixado mais um degrau. */
+/* drop-shadow(currentColor) usa a cor ORIGINAL do texto do pill (antes do
+   brightness/saturate acima escurecer o pixel renderizado — filter não
+   muda o valor computado de `color`, só o resultado pintado), então o
+   glow sai na cor viva de cada tag/badge — mesma pegada "neon" que elas
+   já tinham no escuro, sem abrir mão da legibilidade que os 2 rounds de
+   feedback anteriores pediram. Pedido direto: "as fontes/labels/tags no
+   claro tão meio escurecidas, no escuro elas têm uma pegada neon, mais
+   acesas". */
 [data-theme="light"] .card-tag{
-  filter:brightness(.5) saturate(1.4);
+  filter:brightness(.5) saturate(1.4) drop-shadow(0 0 2px currentColor);
 }
 /* Mesmo problema do .card-tag acima, em outros 3 badges do topo do card
    que NÃO passam por tagHtml() e por isso ficaram de fora daquele fix:
@@ -311,7 +317,7 @@
 [data-theme="light"] .exec-chip,
 [data-theme="light"] .due-badge,
 [data-theme="light"] .risco-badge{
-  filter:brightness(.5) saturate(1.4);
+  filter:brightness(.5) saturate(1.4) drop-shadow(0 0 2px currentColor);
 }
 /* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
    due date): fundo é um tint de 15% da cor da coluna, texto era um
@@ -325,7 +331,7 @@
    (.cal-event sem essa subclasse) não são afetadas — usam fundo opaco
    com texto já escolhido pra contraste, não dependem de tema. */
 [data-theme="light"] .cal-event-prazo{
-  filter:brightness(.5) saturate(1.4);
+  filter:brightness(.5) saturate(1.4) drop-shadow(0 0 2px currentColor);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -471,18 +477,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    abaixo) já tinha ficado bem mais aceso. Ganhou um glow leve também,
    pra reforçar a divergência mesmo em telas mais escuras/mal
    calibradas. */
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);margin-top:9px;animation:cardMineGlow 2.4s ease-in-out infinite;}
-/* Brilho neon contínuo do "seu card" — pedido direto ("acho que esse meu
-   card pode ficar mais aceso, meio que neon"), reaproveitando o mesmo
-   truque de glow em camadas que .cardPulseHighlight/.req-missing já usam
-   (box-shadow com blur crescente), só que em loop infinito em vez de
-   3x/uma vez — --card-mine-glow-rgb já muda de tom sozinho por tema
-   (azul claro no escuro, azul mais escuro/saturado no claro), então essa
-   única animação serve pros dois sem precisar duplicar. */
-@keyframes cardMineGlow{
-  0%,100%{ box-shadow:0 0 8px rgba(var(--card-mine-glow-rgb),.25),0 0 0 0 rgba(var(--card-mine-glow-rgb),0); }
-  50%{ box-shadow:0 0 18px rgba(var(--card-mine-glow-rgb),.55),0 0 26px 2px rgba(var(--card-mine-glow-rgb),.3); }
-}
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);margin-top:9px;}
 /* Selo "seu card" — pedido direto pra aparecer nos dois temas, não só
    no claro (onde foi criado junto com o tingimento mais forte, ver
    [data-theme="light"] .card.card-mine::before mais acima nesse
@@ -5033,7 +5028,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.343-dev</div>
+<div class="version">v8.30.344-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
