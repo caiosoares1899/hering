@@ -18,6 +18,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.237 — 2026-08-10 · promove pra prod (PRs #278–#280)
+Promove pra produção o filtro de Supercards e o redesenho da barra de
+Filtros, ambos validados em dev:
+
+- 🧩 **Filtro "Supercards"** (PR #278): novo checkbox no drawer de
+  Filtros — mostra só cards com pelo menos 1 card filho ainda ativo.
+  Combina com os outros filtros normalmente.
+- 🎨 **Painel + agrupamento na barra de Filtros** (PRs #279–#280):
+  feedback direto ("essas duas linhas... achei feio, vazio!") — a
+  barra ganhou um container próprio (mesmo tratamento visual do
+  `.goal-bar` já existente) e os campos agora ficam organizados em 3
+  grupos (filtros / opções rápidas / ações) com divisores, em vez de
+  soltos direto no fundo do board. Testado com artefato visual (3
+  candidatas comparadas lado a lado) antes de aplicar.
+- Central de Ajuda atualizada.
+
 ### v8.30.236 — 2026-08-10 · promove pra prod (PR #274) — Central de Ajuda
 Atualiza o item "🧾 Receitas prontas" do help de Supercard (❓, Ctrl+K)
 pra mencionar o batch de vários nomes de filho separados por vírgula
