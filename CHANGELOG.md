@@ -4266,6 +4266,46 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.98 · painel — 2026-08-09 · INCIDENTE: reconstrução da promoção v2.97
+**O que aconteceu**: a promoção anterior (v2.97, "mapeamento real de
+gerência") usou patch bruto do diff `painel.html`/`painel-dev.html`
+inteiro. Além dos rascunhos de aviso (já corrigido antes daquele
+merge — ver nota na entrada v2.97 abaixo), esse patch bruto também
+levou pra produção uma quantidade grande de conteúdo **exclusivo do
+ambiente de dev** que nunca deveria sair de lá: o banner fixo "🧪
+PAINEL DEV — dados fictícios", o array `SQUADS` inteiro trocado pelas
+squads fictícias (`dev`/`omnichannel`, em vez de
+`dados`/`prf`/`midiacriativa`), `loadExtraSquads()` com um
+`return;` que nunca carregava squads reais do Firebase, e várias
+URLs de "Abrir Board" apontando pra `kanban-dev.html` em vez de
+`kanban.html`. Ou seja: o painel de produção ficou, na prática,
+mostrando dados fictícios e mandando quem clicasse em "Abrir Board"
+pro board de teste — só descoberto porque um usuário reportou "por
+que o painel prod tá aparecendo como painel dev?" com print em mãos.
+
+**Causa raiz**: `painel.html` e `painel-dev.html` divergem de
+propósito em vários pontos (instrumentação de debug, paths `_dev`,
+squads fictícias — ver CLAUDE.md) — um diff/patch do arquivo inteiro
+não distingue "isso é uma feature nova que deveria ir pra prod" de
+"isso é conteúdo que só faz sentido em dev". O erro já tinha
+acontecido uma vez nessa mesma promoção (rascunhos de aviso) e foi
+corrigido antes do merge, mas o escopo real do problema era maior do
+que percebido naquele momento — a correção anterior tratou só o
+sintoma que eu tinha visto, não auditou o resto do diff.
+
+**Correção**: reconstruído a partir do último commit conhecido bom
+antes da promoção (`e25876b`), reaplicando manualmente só as duas
+features legítimas (filtro de gerência com mapeamento real + aba
+Insights agregados) e os rascunhos de aviso — sem trazer nada mais
+do diff bruto. Validado com `node --check`, chaves CSS balanceadas, e
+um diff linha-a-linha contra esse commit-base confirmando que a
+mudança final é exatamente as 2 features + versão + seeds, nada mais.
+
+**Lição pro processo**: promoção de `painel.html`/`painel-dev.html`
+não pode mais usar `diff arquivo-inteiro` + `patch` como faz com o
+par kanban (que não diverge estruturalmente do mesmo jeito) — precisa
+ser feature por feature, copiando os blocos específicos.
+
 ### painel.html v2.98 · painel — 2026-08-09 · atualiza rascunho de aviso do supercard
 Atualiza o texto do rascunho `seed_supercard_fanout_2026_08_09`
 (`COMUNICADO_RASCUNHOS_SEED`) mencionando o vínculo de filho da
