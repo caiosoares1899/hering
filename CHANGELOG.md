@@ -1170,6 +1170,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.340-dev — 2026-08-09
+Dois ajustes de feedback direto testando o supercard:
+
+- **← Voltar**: ao pular de um card pra outro relacionado (abrir um card
+  filho a partir do pai, ou voltar do filho pro pai pela nota "Este card
+  é filho de..."), o modal ganha um botão "← Voltar" no topo que retorna
+  pro card anterior sem precisar buscar de novo. Funciona encadeado
+  (pai → filho → outro filho → volta → volta) e reseta sozinho sempre
+  que um card é aberto "do zero" (clique direto no board, por exemplo) —
+  não fica um botão "fantasma" apontando pra um contexto antigo.
+- **Cards filhos ao criar um card novo**: antes a seção "🧩 Cards filhos"
+  só aparecia depois do card já estar salvo (sem id ainda não tinha onde
+  guardar o vínculo). Agora ela já funciona no card ainda sendo criado —
+  vincular um existente, criar um novo filho ou aplicar uma receita
+  funciona igual; os filhos já nascem como cards de verdade na hora, e o
+  vínculo com o pai entra no Firebase junto quando você clica em Salvar.
+
 ### v8.30.339-dev — 2026-08-09
 Fix de legibilidade reportado ao testar o supercard: a lista "🧩 Cards
 filhos" dentro do card estava difícil de ler (fonte pequena e em
