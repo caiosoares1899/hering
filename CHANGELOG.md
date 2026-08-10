@@ -1249,6 +1249,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.352-dev — 2026-08-10
+Refatoração pura (sem mudança de comportamento pretendida) pedida na
+revisão do supercard/fan-out — remove as 2 duplicações de código
+identificadas:
+
+- **Molde de card filho unificado**: `quickCreateSuperChild()` e
+  `_applyFanoutTemplate()` tinham o mesmo objeto de "card em branco"
+  (herda col/due/priority/demandante do pai) copiado em 2 lugares.
+  Extraído pra `_blankSuperChildCard(parentCard, title, {idx, modelo,
+  user})`. Bônus de consistência descoberto no processo: filhos de
+  fan-out sem modelo vinculado agora herdam o PO do card pai (mesmo
+  padrão de due/priority/demandante) — antes só herdavam PO quando
+  vinha de um Modelo, ficando vazio nos outros casos.
+- **Regra de mesclagem de Modelo unificada**: `aplicarModeloNoCard()`
+  (mexe no form/DOM) agora lê o form pra um objeto simples, chama
+  `_mergeModeloEmCardObj()` (mesma função que a automação já usava) e
+  escreve o resultado de volta — em vez de reimplementar a regra
+  "nunca sobrescreve" em paralelo. Foi essa duplicação que deixou o
+  bug da submarca escapar numa correção anterior (corrigido só numa
+  das duas cópias na 1ª rodada).
+- `fbSaveCard()` do filho criado por `quickCreateSuperChild()` ganha
+  `.catch()` (antes só o caminho de fan-out tinha).
+
 ### v8.30.351-dev — 2026-08-10
 Revisão pedida do fluxo de Supercard/fan-out inteiro, atrás de
 simplificação e melhoria de UX (não bug report). 3 ajustes de baixo
