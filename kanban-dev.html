@@ -184,24 +184,30 @@
    nos dois temas sem alteração. */
 :root[data-theme="light"]{
   /* Fundo mais escuro que o branco-quase-puro original ("lençóis
-     maranhenses" — feedback direto, 2 rodadas: "ainda tá muito claro" e
-     depois "pode escurecer um pouco mais"). Só o fundo de página
-     (--deep/.ocean) e o glass mudam de tom; --surface-rgb (os cards) fica
-     como estava, pra manter (e até reforçar) o contraste card-vs-fundo. */
-  --deep:#CBE3F2;
-  --deep-rgb:203,227,242;
-  --surface-rgb:252,254,255;
-  --surface2-rgb:196,226,240;
-  --glass-rgb:155,205,230;
-  --glass:rgba(155,205,230,0.65);
-  --glass-b:rgba(0,169,230,0.32);
-  --glass-h:rgba(0,169,230,0.16);
+     maranhenses" — feedback direto, 3 rodadas: "ainda tá muito claro",
+     "pode escurecer um pouco mais" e agora "time ainda ta achando muitooo
+     claro, aumenta o contraste e traz um azul um pouco mais escuro" — essa
+     3ª rodada também aprofunda --blue/--accent, antes um ciano bem vivo,
+     agora um azul mais fechado. Testado num artefato visual com 3
+     candidatas antes de aplicar; esta é a "C" (mais escura das 3). Só o
+     fundo de página (--deep/.ocean), o glass e o azul mudam de tom;
+     --surface-rgb (os cards) fica quase parado de propósito — é o card
+     ficando bem mais claro que o fundo ao redor que cria a sensação de
+     contraste; escurecer os dois juntos anularia o ganho. */
+  --deep:#8FB8D9;
+  --deep-rgb:143,184,217;
+  --surface-rgb:246,250,253;
+  --surface2-rgb:136,183,215;
+  --glass-rgb:96,155,190;
+  --glass:rgba(96,155,190,0.72);
+  --glass-b:rgba(0,98,140,0.46);
+  --glass-h:rgba(0,98,140,0.22);
   /* --cyan escurecido — usado como cor de TEXTO (rótulos de campo, títulos
      de seção, badge do nome da squad no header etc.), o valor claro
      original (#4FC3F7) ficava quase ilegível em cima do glass/fundo claros
      (feedback direto: "o nome da squad tá apagado no modo claro"). */
-  --blue:#00A9E6;--accent:#00A9E6;--cyan:#0A6C8C;--teal:#33D6D0;
-  --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
+  --blue:#00729E;--accent:#00729E;--cyan:#054459;--teal:#33D6D0;
+  --txt:#0A1D2E;--txt2:rgba(10,29,46,0.72);--txt3:rgba(10,29,46,0.48);
   --warn:#F6B73C;--danger:#F15B6C;
   --ocean-op:1; --fish-op:1;
   /* Pulso de "achar meus cards" e o glow de campo obrigatório (.req-missing,
@@ -212,9 +218,9 @@
 }
 [data-theme="light"] .ocean{
   background:
-    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.2) 0%,transparent 60%),
+    radial-gradient(ellipse at 20% 80%,rgba(0,114,158,.22) 0%,transparent 60%),
     radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
-    linear-gradient(180deg,#CBE3F2 0%,#A9D3EA 100%);
+    linear-gradient(180deg,#8FB8D9 0%,#699BC4 100%);
 }
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
   filter:saturate(1.3) brightness(0.9) contrast(1.05);
@@ -246,7 +252,7 @@
    — o tingimento azul de 8% original ficava quase invisível. */
 [data-theme="light"] .card{
   box-shadow:0 1px 5px rgba(0,50,80,.22),0 1px 3px rgba(0,50,80,.14);
-  border-color:rgba(0,120,175,.55);
+  border-color:rgba(0,70,110,.65);
 }
 [data-theme="light"] .card:hover{
   box-shadow:0 5px 18px rgba(0,50,80,.28),0 2px 6px rgba(0,50,80,.16);
@@ -5063,7 +5069,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.357-dev</div>
+<div class="version">v8.30.358-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
