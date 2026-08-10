@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.346-dev</div>
+<div class="version">v8.30.347-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6098,6 +6098,16 @@ function cardSubteams(card){
   return subteams.filter(s=>Array.isArray(s.members)&&s.members.some(m=>inits.has(m)));
 }
 let editingId=null;
+// Trava de reentrância do botão "💾 Salvar": true só entre o clique que
+// passou nas validações (card já empurrado em `cards`/editado) e a
+// confirmação do Firebase. Sem isso, cliques repetidos enquanto o modal
+// ainda não fechou (ex.: rede lenta) reexecutavam saveCard() do zero —
+// como editingId continua null até o modal fechar, cada clique extra
+// criava OUTRO card novo (bug reportado: "cliquei várias vezes, criou
+// vários cards"). Só protege a partir do commit; falhas de validação
+// (campo obrigatório faltando) continuam retornando cedo sem setar isso,
+// pra não travar a pessoa tentando corrigir e salvar de novo.
+let _savingCard=false;
 let currentQL=null; // 'recorrentes' | 'modelos'
 let qlItems={ recorrentes:[], modelos:[], agendamentos:[] };
 let links=[];
@@ -9940,6 +9950,7 @@ function openNewCard(col){
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
 }
 function saveCard(){
+  if(_savingCard) return; // já tem um salvamento em voo (ver comentário na declaração de _savingCard)
   if(!checkEditPermission()) return;
   const title=document.getElementById('m-title').value.trim();
   // ── Modo edição de item recorrente/modelo/agendamento ──
@@ -10000,6 +10011,9 @@ function saveCard(){
     showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
     return;
   }
+  _savingCard=true;
+  const _saveBtn=document.getElementById('btn-save-card');
+  if(_saveBtn){ _saveBtn.disabled=true; _saveBtn.dataset.origLabel=_saveBtn.innerHTML; _saveBtn.innerHTML='💾 Salvando…'; }
   const td=new Date().toISOString().split('T')[0];
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
@@ -10091,10 +10105,13 @@ function saveCard(){
   // assim, dando a falsa impressão de que tinha salvo. Agora só fecha quando o Firebase confirma o
   // sucesso; se der erro, mantém o card aberto e avisa a pessoa em vez de fechar às cegas.
   Promise.resolve(_saveP).then(()=>{
+    _savingCard=false;
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     closeOv('card-ov');
     _clearPendingRequired();
   }).catch(err=>{
+    _savingCard=false;
+    if(_saveBtn){ _saveBtn.disabled=false; _saveBtn.innerHTML=_saveBtn.dataset.origLabel||'💾 Salvar'; }
     console.error('[saveCard] falha ao confirmar salvamento:', err);
     showToast('⚠️ Não deu pra confirmar o salvamento (conexão instável) — o card continua aberto, tente salvar de novo.');
   });
@@ -22134,6 +22151,13 @@ function voltarParaFuncoesCard(modalId){
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
+    // Rede de segurança: garante que o botão "💾 Salvar" nunca fique preso em
+    // "Salvando…"/desabilitado pro próximo card aberto, mesmo em caminho de
+    // fechamento que não passou pelo .then()/.catch() de saveCard() (ex.:
+    // fechar manualmente enquanto um save antigo ainda estava em voo).
+    _savingCard=false;
+    const _sb=document.getElementById('btn-save-card');
+    if(_sb){ _sb.disabled=false; if(_sb.dataset.origLabel) _sb.innerHTML=_sb.dataset.origLabel; }
     _stopDirtyWatch();
     if(editingId) _releaseCardLock(editingId);
     _setCardLockUI(false);
