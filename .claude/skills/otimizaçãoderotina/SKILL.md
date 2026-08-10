@@ -243,6 +243,34 @@ não faz parte desta rotina por padrão, a menos que peçam.
   em arquivo externo foi sinalizado como oportunidade futura, não
   implementado (contraria a arquitetura self-contained).
 
+- **v8.30.354-dev / v8.30.236 (prod)**: rodada limpa, nada pra corrigir.
+  kanban.html e kanban-dev.html tinham acabado de sincronizar (mesma
+  base de código, só a versão diverge) depois de um lote grande de
+  trabalho no supercard/fan-out — nenhum asset novo, nenhum vazamento
+  novo. Conferido em detalhe:
+  - `data:image` embutido: 0 ocorrências nos dois arquivos (fix da
+    v8.30.332-dev continua valendo).
+  - Blocos reais do arquivo (por linha, não regex ingênuo): CSS
+    principal ~174KB, script módulo Firebase ~7KB, script principal
+    ~1.13MB (`kanban-dev.html`, 24961 linhas, 1.49MB total).
+  - `setInterval`/`clearInterval`: 14/14 nos dois arquivos. Rastreado
+    caso a caso — 9 timers com clear pareado (alguns com guard
+    "clear antes de re-setar" + o stop de verdade, por isso mais
+    clears que sets em alguns) e 5 timers intencionalmente "vida
+    inteira da sessão" (poll de versão/kudos/presença/lembrete de
+    reunião/sino) sem clear — bate exatamente com o padrão esperado,
+    zero vazamento novo.
+  - `backdrop-filter`: 29 ocorrências (novo baseline pra próxima
+    rodada comparar — informativo, não é problema).
+  - Preconnect (fonts.googleapis/fonts.gstatic/www.gstatic) e
+    `display=swap`: presentes. Import do Firebase: modular (app/
+    database/auth/messaging, sem Firestore/Storage/Analytics).
+  - Imagem referenciada fora do favicon: só `marinheiro.png` (ícone de
+    notificação do browser, carregado sob demanda — já é o
+    comportamento correto, sem ação).
+  - Viewport meta + `addTouchDnD` (drag por toque no celular):
+    intactos, sem sinal de regressão.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está limpo.
