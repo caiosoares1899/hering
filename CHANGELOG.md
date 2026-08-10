@@ -1197,6 +1197,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.341-dev — 2026-08-09
+Feedback direto testando as receitas de fan-out: os filhos nasciam só
+com um título, sem nenhuma estrutura — pedido pra deixá-los "o mais
+estruturado possível pra quando eu gerar a receita".
+
+- 📋 **Filhos vinculados a um Modelo**: em cada receita (Config →
+  Automações), cada card filho agora tem um seletor "📋 Modelo"
+  (opcional) — escolha um Modelo já existente (⚡ Funções de card →
+  📋 Modelos) e, quando a receita gerar esse filho, ele nasce com a
+  descrição, checklist (sempre desmarcado, mesmo que o modelo original
+  tivesse itens já concluídos — mesmo comportamento de "usar modelo"
+  num card normal), tags e riscos do modelo, em vez de um card vazio.
+- Reaproveita o sistema de Modelos que já existe (mesmos campos que
+  "✅ Usar modelo" aplica) em vez de um editor de descrição/checklist
+  novo só pra isso — "edite só o que for diferente".
+- Filho sem modelo vinculado continua funcionando exatamente como
+  antes (nasce só com o título).
+
 ### v8.30.340-dev — 2026-08-09
 Dois ajustes de feedback direto testando o supercard:
 
