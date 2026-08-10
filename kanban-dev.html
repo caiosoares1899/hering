@@ -147,6 +147,7 @@
   --ocean-op:1; --fish-op:1;
   --pulse-rgb:255,209,102;
   --deep-rgb:3,13,26;
+  --card-mine-glow-rgb:56,182,255;
 }
 /* ── MODO CLARO ────────────────────────────────────────────────────
    Pedido direto: alternar entre o visual escuro atual (padrão) e um modo
@@ -209,6 +210,7 @@
      um card/input já claro, o glow simplesmente some de vista. Feedback
      direto: "talvez pudesse piscar azul escuro". */
   --pulse-rgb:10,77,120;
+  --card-mine-glow-rgb:0,120,175;
 }
 [data-theme="light"] .ocean{
   background:
@@ -469,7 +471,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    abaixo) já tinha ficado bem mais aceso. Ganhou um glow leve também,
    pra reforçar a divergência mesmo em telas mais escuras/mal
    calibradas. */
-.card.card-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);margin-top:9px;}
+.card.card-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),rgba(var(--surface-rgb),.95);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);margin-top:9px;animation:cardMineGlow 2.4s ease-in-out infinite;}
+/* Brilho neon contínuo do "seu card" — pedido direto ("acho que esse meu
+   card pode ficar mais aceso, meio que neon"), reaproveitando o mesmo
+   truque de glow em camadas que .cardPulseHighlight/.req-missing já usam
+   (box-shadow com blur crescente), só que em loop infinito em vez de
+   3x/uma vez — --card-mine-glow-rgb já muda de tom sozinho por tema
+   (azul claro no escuro, azul mais escuro/saturado no claro), então essa
+   única animação serve pros dois sem precisar duplicar. */
+@keyframes cardMineGlow{
+  0%,100%{ box-shadow:0 0 8px rgba(var(--card-mine-glow-rgb),.25),0 0 0 0 rgba(var(--card-mine-glow-rgb),0); }
+  50%{ box-shadow:0 0 18px rgba(var(--card-mine-glow-rgb),.55),0 0 26px 2px rgba(var(--card-mine-glow-rgb),.3); }
+}
 /* Selo "seu card" — pedido direto pra aparecer nos dois temas, não só
    no claro (onde foi criado junto com o tingimento mais forte, ver
    [data-theme="light"] .card.card-mine::before mais acima nesse
@@ -5020,7 +5033,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.342-dev</div>
+<div class="version">v8.30.343-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
