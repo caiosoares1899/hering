@@ -187,10 +187,25 @@
      maranhenses" — feedback direto, 2 rodadas: "ainda tá muito claro" e
      depois "pode escurecer um pouco mais"). Só o fundo de página
      (--deep/.ocean) e o glass mudam de tom; --surface-rgb (os cards) fica
-     como estava, pra manter (e até reforçar) o contraste card-vs-fundo. */
+     como estava, pra manter (e até reforçar) o contraste card-vs-fundo.
+     Esta é a paleta PADRÃO do claro — ver [data-theme="light"]
+     [data-theme-variant="b"] logo abaixo pra uma versão ainda mais escura
+     (opcional, ativada com duplo-clique no botão de tema — ver
+     toggleThemeVariant()). Testada num artefato visual com 3 candidatas
+     antes de virar opção: pedido direto foi "guarda esse estilo B aí...
+     coloca o anterior como default do claro, mas se a pessoa clicar 2x,
+     vai pra essa opção B". */
   --deep:#CBE3F2;
   --deep-rgb:203,227,242;
-  --surface-rgb:252,254,255;
+  /* --surface-rgb (fundo dos cards) era quase branco puro (252,254,255)
+     — feedback direto: "achei o card branco longe do tema, tenta com um
+     cinza", seguido de mais uma rodada ("não mudou o branco dos cards!
+     acho que pode dar uma escurecida nele também") — 1ª tentativa saiu
+     pouco perceptível porque a regra base .card soma uma camada de 5%
+     de branco puro por cima (pensada pro tema escuro, ver [data-theme=
+     "light"] .card mais abaixo que remove essa camada só no claro).
+     Escurecido mais um degrau aqui, agora sem a camada branca diluindo. */
+  --surface-rgb:222,235,242;
   --surface2-rgb:196,226,240;
   --glass-rgb:155,205,230;
   --glass:rgba(155,205,230,0.65);
@@ -215,6 +230,35 @@
     radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.2) 0%,transparent 60%),
     radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
     linear-gradient(180deg,#CBE3F2 0%,#A9D3EA 100%);
+}
+/* Variante "mais escura" do claro — pedido direto: "time ainda ta
+   achando o modo claro muitooo claro, aumenta o contraste e traz um
+   azul um pouco mais escuro". Em vez de trocar o padrão pra todo mundo
+   (arriscado, o claro já passou por 2 rodadas antes desta), vira uma
+   OPÇÃO: duplo-clique no botão de tema (toggleThemeVariant()) alterna
+   pra esta paleta sem sair do claro nem mexer no padrão de ninguém.
+   Preferência pessoal, mesma persistência do tema (localStorage,
+   mare_theme_variant) — sobrevive a reload e não sincroniza entre
+   pessoas. Reaproveita as regras normais de [data-theme="light"] acima
+   (fish-wrap/bubble, toolbar > button, .card-mine etc.) — só os tokens
+   de cor abaixo, mais .ocean/.card, são sobrescritos. */
+[data-theme="light"][data-theme-variant="b"]{
+  --deep:#A9CCE3;
+  --deep-rgb:169,204,227;
+  --surface-rgb:219,233,240;
+  --surface2-rgb:162,203,225;
+  --glass-rgb:120,178,208;
+  --glass:rgba(120,178,208,0.68);
+  --glass-b:rgba(0,124,168,0.4);
+  --glass-h:rgba(0,124,168,0.2);
+  --blue:#0086BE;--accent:#0086BE;--cyan:#075674;
+  --txt:#0F2436;--txt2:rgba(15,36,54,0.72);--txt3:rgba(15,36,54,0.48);
+}
+[data-theme="light"][data-theme-variant="b"] .ocean{
+  background:
+    radial-gradient(ellipse at 20% 80%,rgba(0,134,190,.2) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
+    linear-gradient(180deg,#A9CCE3 0%,#86B4D4 100%);
 }
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
   filter:saturate(1.3) brightness(0.9) contrast(1.05);
@@ -245,12 +289,30 @@
    mine (destaque de "meu card") ganha o mesmo tratamento nos dois temas
    — o tingimento azul de 8% original ficava quase invisível. */
 [data-theme="light"] .card{
+  /* A regra base .card soma uma camada de 5% de branco puro por cima do
+     fundo (linear-gradient(rgba(255,255,255,.05)...)) — pensada como um
+     "sheen" sutil pro card do tema ESCURO, mas no claro só dilui o
+     tingimento de --surface-rgb, empurrando o card de volta pro branco
+     estourado. Sobrescrito aqui pra usar --surface-rgb puro, sem a
+     camada extra. Feedback direto: "não mudou o branco dos cards! acho
+     que pode dar uma escurecida nele também". */
+  background:rgba(var(--surface-rgb),.98);
   box-shadow:0 1px 5px rgba(0,50,80,.22),0 1px 3px rgba(0,50,80,.14);
   border-color:rgba(0,120,175,.55);
 }
 [data-theme="light"] .card:hover{
   box-shadow:0 5px 18px rgba(0,50,80,.28),0 2px 6px rgba(0,50,80,.16);
 }
+[data-theme="light"][data-theme-variant="b"] .card{
+  border-color:rgba(0,90,135,.6);
+}
+/* Título da coluna (.col-title) não tinha `color` próprio — herdava
+   var(--txt) direto do body, que no claro é um azul-marinho bem escuro
+   (quase preto em negrito/Syne). Feedback direto: "os títulos da coluna
+   em preto ficou longe [do tema], tenta com um cinza". var(--txt2) já é
+   a mesma cor com menos opacidade (mesma paleta, sem inventar tom novo)
+   — lê como um cinza-azulado suave em vez de preto sólido. */
+[data-theme="light"] .col-title{color:var(--txt2);}
 /* "Seu card" no claro: passou por um protótipo com 4 opções (cor do
    card normal do escuro / tingimento bem mais forte / faixa+selo /
    mistura de tingimento+selo) — escolhida a mistura (opção D): fundo e
@@ -2701,6 +2763,7 @@ input[type="date"]{-moz-appearance:textfield;}
 (function(){
   try{
     if(localStorage.getItem('mare_theme')==='light') document.documentElement.setAttribute('data-theme','light');
+    if(localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
 </script>
@@ -2766,7 +2829,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
   </div>
   <div class="hd-btns">
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="toggleTheme()" title="Alternar entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses — preferência salva só neste navegador" style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -5063,7 +5126,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.237</div>
+<div class="version">v8.30.238</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -22454,6 +22517,41 @@ function toggleTheme(){
   safeLS.setItem('mare_theme', next);
   _applyThemeButtonIcon();
   showToast(next==='light' ? '☀️ Lençóis Maranhenses' : '🌙 Abrolhos');
+}
+// Variante "mais escura" do tema claro (ver [data-theme="light"]
+// [data-theme-variant="b"] no CSS) — pedido direto: "guarda esse estilo B
+// aí... coloca o anterior como default do claro, mas se a pessoa clicar
+// 2x, vai pra essa opção B". Só faz sentido dentro do claro (não existe
+// versão "b" do escuro); no escuro só avisa. Persistência própria
+// (mare_theme_variant), independente do dark/light — trocar de tema não
+// reseta a variante escolhida, then volta claro-B ao voltar pro claro.
+function toggleThemeVariant(){
+  if(_currentTheme()!=='light'){
+    showToast('A versão mais escura só existe no tema claro ☀️ — troca pro claro primeiro.');
+    return;
+  }
+  const isB = document.documentElement.getAttribute('data-theme-variant')==='b';
+  if(isB){ document.documentElement.removeAttribute('data-theme-variant'); safeLS.setItem('mare_theme_variant',''); }
+  else{ document.documentElement.setAttribute('data-theme-variant','b'); safeLS.setItem('mare_theme_variant','b'); }
+  showToast(isB ? '☀️ Lençóis Maranhenses — padrão' : '☀️ Lençóis Maranhenses — mais escuro');
+}
+// Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
+// botão precisam ser diferenciados manualmente: o navegador dispara 2
+// eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
+// duplo-clique), então sem isso um duplo-clique de verdade alternaria o
+// tema pra escuro e de volta pro claro (2 toggles se cancelam, mas com um
+// flash visível no meio) antes de finalmente trocar a variante. Em vez
+// disso, atrasa a ação do clique único — se um 2º clique chegar dentro da
+// janela (virando duplo-clique), cancela a ação pendente do 1º e roda só
+// a troca de variante.
+let _themeClickTimer=null;
+function onThemeBtnClick(){
+  if(_themeClickTimer) return; // 2º clique de um duplo — o dblclick cuida disso
+  _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; toggleTheme(); }, 260);
+}
+function onThemeBtnDblClick(){
+  if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
+  toggleThemeVariant();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
 // Fish & Bubbles
