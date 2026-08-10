@@ -199,9 +199,13 @@
   --deep-rgb:203,227,242;
   /* --surface-rgb (fundo dos cards) era quase branco puro (252,254,255)
      — feedback direto: "achei o card branco longe do tema, tenta com um
-     cinza". Tingido mais pra dentro da paleta azulada em vez de ficar
-     "estourado" contra o resto do tema. */
-  --surface-rgb:238,246,250;
+     cinza", seguido de mais uma rodada ("não mudou o branco dos cards!
+     acho que pode dar uma escurecida nele também") — 1ª tentativa saiu
+     pouco perceptível porque a regra base .card soma uma camada de 5%
+     de branco puro por cima (pensada pro tema escuro, ver [data-theme=
+     "light"] .card mais abaixo que remove essa camada só no claro).
+     Escurecido mais um degrau aqui, agora sem a camada branca diluindo. */
+  --surface-rgb:222,235,242;
   --surface2-rgb:196,226,240;
   --glass-rgb:155,205,230;
   --glass:rgba(155,205,230,0.65);
@@ -241,7 +245,7 @@
 [data-theme="light"][data-theme-variant="b"]{
   --deep:#A9CCE3;
   --deep-rgb:169,204,227;
-  --surface-rgb:235,244,248;
+  --surface-rgb:219,233,240;
   --surface2-rgb:162,203,225;
   --glass-rgb:120,178,208;
   --glass:rgba(120,178,208,0.68);
@@ -285,6 +289,14 @@
    mine (destaque de "meu card") ganha o mesmo tratamento nos dois temas
    — o tingimento azul de 8% original ficava quase invisível. */
 [data-theme="light"] .card{
+  /* A regra base .card soma uma camada de 5% de branco puro por cima do
+     fundo (linear-gradient(rgba(255,255,255,.05)...)) — pensada como um
+     "sheen" sutil pro card do tema ESCURO, mas no claro só dilui o
+     tingimento de --surface-rgb, empurrando o card de volta pro branco
+     estourado. Sobrescrito aqui pra usar --surface-rgb puro, sem a
+     camada extra. Feedback direto: "não mudou o branco dos cards! acho
+     que pode dar uma escurecida nele também". */
+  background:rgba(var(--surface-rgb),.98);
   box-shadow:0 1px 5px rgba(0,50,80,.22),0 1px 3px rgba(0,50,80,.14);
   border-color:rgba(0,120,175,.55);
 }
@@ -5114,7 +5126,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.361-dev</div>
+<div class="version">v8.30.362-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

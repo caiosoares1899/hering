@@ -1294,6 +1294,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.362-dev — 2026-08-10
+Feedback direto: "nao mudou o branco dos cards! acho q pode dar uma
+escurecida nele tb" — o tingimento da v8.30.361-dev tinha efeito quase
+nenhum na prática.
+
+- **Causa raiz**: a regra base `.card` soma uma camada de 5% de branco
+  puro por cima do fundo (`linear-gradient(rgba(255,255,255,.05)...)`)
+  — um "sheen" sutil pensado pro tema ESCURO, que no claro diluía
+  qualquer tingimento de `--surface-rgb`, empurrando o card de volta
+  pro branco. `[data-theme="light"] .card` agora sobrescreve o
+  `background` inteiro pra usar `--surface-rgb` puro, sem essa camada.
+- `--surface-rgb` escurecido mais um degrau: `238,246,250` →
+  `222,235,242` (claro padrão), `235,244,248` → `219,233,240`
+  (variante B).
+
 ### v8.30.361-dev — 2026-08-10
 Feedback direto testando o double-click da v8.30.360-dev, com print do
 board: "funcionou bem! mas achei o card branco longe do tema e os
