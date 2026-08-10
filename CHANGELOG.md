@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.239 — 2026-08-10 · promove pra prod (PRs #289–#291)
+Promove pra produção o fix de legibilidade do botão "💡 Meus cards" no
+tema claro (barra de Filtros), validado em dev após 3 rodadas de
+feedback direto (a técnica certa acabou sendo a mais simples: escurecer
+texto/borda com `!important`, sem preencher o fundo do botão). Vale nos
+dois: claro padrão e a variante escura do duplo-clique. Puramente
+visual.
+
 ### v8.30.238 — 2026-08-10 · promove pra prod (PRs #282–#286) — tema claro
 Promove pra produção o ajuste de contraste do tema claro, validado em
 dev por várias rodadas de feedback direto:
