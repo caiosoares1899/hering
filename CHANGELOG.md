@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.232 — 2026-08-09 · promove pra prod (PR #255)
+Promove pra produção o ajuste no supercard validado em dev: cada
+filho de uma receita de fan-out pode ser vinculado a um **📋 Modelo**
+já existente (⚡ Funções de card → 📋 Modelos) — quando a receita
+gerar esse filho, ele nasce com descrição, checklist, tags e riscos
+do modelo escolhido, em vez de um card vazio só com título. Filho sem
+modelo vinculado continua igual a antes.
+
 ### v8.30.231 — 2026-08-09 · promove pra prod (PRs #249–#253)
 Promove pra produção o lote validado em dev:
 
@@ -4257,6 +4265,12 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html v2.98 · painel — 2026-08-09 · atualiza rascunho de aviso do supercard
+Atualiza o texto do rascunho `seed_supercard_fanout_2026_08_09`
+(`COMUNICADO_RASCUNHOS_SEED`) mencionando o vínculo de filho da
+receita com Modelo (kanban.html v8.30.232), junto com o resto do lote
+já descrito no rascunho.
 
 ### painel.html v2.97 · painel — 2026-08-09 · promove pra prod (mapeamento real de gerência)
 Promove pra produção o lote validado em `painel-dev.html` (v2.96 a

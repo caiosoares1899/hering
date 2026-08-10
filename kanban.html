@@ -3955,7 +3955,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div class="cfg-sec-title" style="margin-bottom:0;">🧩 Receitas de Supercard (fan-out)</div>
         <button class="btn btn-sm" onclick="criarFanoutTemplate()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova receita</button>
       </div>
-      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Defina de antemão os cards filhos que uma receita gera — ex.: "Campanha de mídia paga" → Feed, Stories, Reels, Display... Cada filho nasce com o título "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/demandante do pai. Use manualmente (botão "🧩 Aplicar receita" dentro de qualquer card) ou automaticamente, com a ação "🧩 Aplicar fan-out" numa regra abaixo.</p>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Defina de antemão os cards filhos que uma receita gera — ex.: "Campanha de mídia paga" → Feed, Stories, Reels, Display... Cada filho nasce com o título "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/demandante do pai. Opcionalmente, vincule cada filho a um <b>📋 Modelo</b> (crie um em ⚡ Funções de card → Modelos) pra ele nascer já estruturado — descrição, checklist, tags e riscos vêm do modelo. Use manualmente (botão "🧩 Aplicar receita" dentro de qualquer card) ou automaticamente, com a ação "🧩 Aplicar fan-out" numa regra abaixo.</p>
       <div id="fanout-cfg-list" style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px;"></div>
 
       <div class="cfg-sec-title">⚡ Automações do board</div>
@@ -5005,7 +5005,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.231</div>
+<div class="version">v8.30.232</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -17672,7 +17672,7 @@ const HELP_CONTENT = {
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.' },
@@ -20976,6 +20976,22 @@ async function addFanoutFilho(id){
   fbSet(FB+'/config/fanout_templates', fanoutTemplates);
   renderFanoutCfg();
 }
+// Vincula um filho da receita a um Modelo de card já existente (📐 Config →
+// Padrões, ou ⚡ Funções de card → 📋 Modelos) — pedido direto: "deixar eles
+// o mais estruturado possível pra quando eu gerar a receita". Em vez de
+// inventar um editor de descrição/checklist/tags novo só pra isso, reaproveita
+// o sistema de Modelos que já existe: quando a receita gerar esse filho,
+// _applyFanoutTemplate() copia desc/checklist/tags/riscos/po do modelo
+// escolhido (ver bloco abaixo).
+function setFanoutFilhoModelo(id, idx, modeloIdxStr){
+  const f=fanoutTemplates[id]; if(!f) return;
+  const filhos=(f.filhos||[]).slice();
+  if(!filhos[idx]) return;
+  filhos[idx]={...filhos[idx], modeloIdx: modeloIdxStr===''?null:parseInt(modeloIdxStr)};
+  fanoutTemplates={...fanoutTemplates, [id]:{...f, filhos}};
+  fbSet(FB+'/config/fanout_templates', fanoutTemplates);
+  renderFanoutCfg();
+}
 function removeFanoutFilho(id, idx){
   const f=fanoutTemplates[id]; if(!f) return;
   const filhos=(f.filhos||[]).filter((_,i)=>i!==idx);
@@ -20997,6 +21013,10 @@ function renderFanoutCfg(){
       ? (f.filhos||[]).map((filho,i)=>
           `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:12px;color:var(--txt2);">
             <span style="flex:1;">🧩 ${esc(filho.sufixo)}</span>
+            <select class="fi" onchange="setFanoutFilhoModelo('${id}',${i},this.value)" title="Modelo (opcional) — deixa o card filho mais estruturado: descrição, checklist, tags e riscos vêm do modelo escolhido" style="font-size:10px;padding:3px 6px;max-width:160px;">
+              <option value="">— sem modelo —</option>
+              ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${filho.modeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
+            </select>
             <button class="btn btn-sm" onclick="removeFanoutFilho('${id}',${i})" title="Remover" style="font-size:9px;color:var(--danger);border-color:rgba(255,107,107,.3);">✕</button>
           </div>`
         ).join('')
@@ -21024,14 +21044,25 @@ function _applyFanoutTemplate(parentCard, tpl, whoLabel){
   const td=new Date().toISOString().split('T')[0];
   const user=whoLabel||'⚙ Automação';
   const novos=tpl.filhos.map((filho,i)=>{
-    const novo={id:'c'+Date.now()+'_'+i+Math.random().toString(36).slice(2,4),col:parentCard.col,tags:[],tag:'',
-      title:parentCard.title+' — '+filho.sufixo,desc:'',descsExtra:[],owner:'',demandante:parentCard.demandante||'',
-      due:parentCard.due||'',noDue:!parentCard.due,po:parentCard.po||'',
-      checklist:[],checklistGroups:[],riscos:[],sp:'',priority:parentCard.priority||'',
+    // Filho vinculado a um Modelo (📋 Modelos) fica bem mais estruturado:
+    // descrição/checklist/tags/riscos/PO vêm do modelo, em vez de nascer
+    // vazio só com o título — pedido direto ("deixar eles o mais
+    // estruturado possível pra quando eu gerar a receita"). Reaproveita o
+    // sistema de Modelos que já existe (mesmos campos que usarQLItem()
+    // aplica), em vez de inventar um editor novo só pra isso.
+    const modelo = (filho.modeloIdx!=null) ? (qlItems.modelos||[])[filho.modeloIdx] : null;
+    const novo={id:'c'+Date.now()+'_'+i+Math.random().toString(36).slice(2,4),col:parentCard.col,
+      tags: modelo ? (modelo.tags||(modelo.tag?[modelo.tag]:[])).slice() : [],
+      tag: modelo ? (modelo.tag||(modelo.tags||[])[0]||'') : '',
+      title:parentCard.title+' — '+filho.sufixo,
+      desc: modelo?.desc||'',descsExtra:[],owner:'',demandante:parentCard.demandante||'',
+      due:parentCard.due||'',noDue:!parentCard.due,po:modelo?.po||'',
+      checklist:(modelo?.checklist||[]).map(it=>({t:it.t,done:false})),checklistGroups:[],
+      riscos:(modelo?.riscos||[]).slice(),sp:'',priority:parentCard.priority||'',
       executorType:'human',agentStatus:'',participants:[],archived:false,
       created:user,edited:user,createdAt:td,editedAt:td,
       updatedAt:new Date().toISOString(),updatedBy:user};
-    recordHistory(novo,'criou o card (fan-out "'+tpl.nome+'")',user);
+    recordHistory(novo,'criou o card (fan-out "'+tpl.nome+'"'+(modelo?' + modelo "'+modelo.title+'"':'')+')',user);
     recordMove(novo,novo.col);
     cards.push(novo);
     fbSaveCard(novo).catch(err=>console.error('[fanout] falha ao salvar card filho:', err));
