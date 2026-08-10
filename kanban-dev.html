@@ -3146,6 +3146,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <button onclick="unlinkDependsOn()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;margin-left:auto;" title="Remover dependência">✕</button>
   </div>
   <div class="panel-hd">
+    <button class="btn btn-sm" id="m-card-back-btn" onclick="voltarCardAnterior()" title="Voltar pro card anterior" style="display:none;flex-shrink:0;margin-right:8px;font-size:11px;">← Voltar</button>
     <div class="panel-title" id="m-title-disp" style="flex:1;min-width:0;">Card</div>
     <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
       title="Padrão de card — define quais seções opcionais aparecem no modal"
@@ -5004,7 +5005,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.339-dev</div>
+<div class="version">v8.30.340-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9556,7 +9557,40 @@ function updateAgentStatusVisibility(){
   _agentSimRefreshUI();
 }
 
+// ── NAVEGAÇÃO ENTRE CARDS RELACIONADOS (← Voltar) ───────────────────────
+// Pedido direto: "facilita quando você tá editando os cards filhos" — sem
+// isso, abrir um filho a partir do supercard te deixa "perdido", sem volta
+// rápida pro pai (precisava buscar ele nome por nome de novo). Pilha simples
+// de ids: _navigateToCard() empilha o card ATUAL antes de pular pro
+// relacionado; voltarCardAnterior() desempilha e reabre. openCard() reseta
+// a pilha sozinho sempre que é chamado "do zero" (clique direto no board,
+// busca, notificação etc.) — só NÃO reseta quando foi _navigateToCard/
+// voltarCardAnterior quem chamou (via a flag _cardNavSkipReset).
+let _cardNavStack = [];
+let _cardNavSkipReset = false;
+function _navigateToCard(cardId){
+  if(editingId) _cardNavStack.push(editingId);
+  _cardNavSkipReset = true;
+  closeOv('card-ov', ()=>openCard(cardId));
+}
+function voltarCardAnterior(){
+  let prevId;
+  while(_cardNavStack.length){
+    prevId = _cardNavStack.pop();
+    if(cards.find(c=>c.id===prevId)) break; // pula id de card que não existe mais (excluído nesse meio-tempo)
+    prevId = null;
+  }
+  if(!prevId) return;
+  _cardNavSkipReset = true;
+  closeOv('card-ov', ()=>openCard(prevId));
+}
+function _updateCardBackBtn(){
+  const btn=document.getElementById('m-card-back-btn');
+  if(btn) btn.style.display = _cardNavStack.length ? '' : 'none';
+}
 function openCard(id){
+  if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
+  _updateCardBackBtn();
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
   // Marca card automático (recorrente/agendado) como visto — para de relembrar
   if(c._autoVisto===false){
@@ -9820,7 +9854,8 @@ function openNewCard(col){
   _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
   editingLinkedCards=[];
   renderLinkedChips();
-  _hideSuperChildrenForNewCard();
+  initSuperChildren(null);
+  _cardNavStack=[]; _updateCardBackBtn();
   editingId=null;
   populateTagSelect(); populateOwnerSelect(); populateDemandanteSelect(); populateColSelect();
   document.getElementById('m-title').value='';
@@ -9989,6 +10024,12 @@ function saveCard(){
       agentStatus:document.getElementById('m-agentstatus')?.value||'',
       participants:getParticipants(),archived:false,created:user,edited:user,createdAt:td,editedAt:td,
       criativo:getCriativoData(),
+      // Filhos de supercard adicionados/criados ENQUANTO este card ainda
+      // estava sendo criado (ver _superParentBasics()/quickCreateSuperChild/
+      // applyFanoutToCurrentCard) — os filhos em si já existem como cards de
+      // verdade desde a hora que foram criados; só o vínculo ficava pendente
+      // até agora, que o pai finalmente ganha um id real.
+      childCardIds:editingSuperChildren.map(l=>l.id),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
@@ -17631,7 +17672,7 @@ const HELP_CONTENT = {
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.' },
@@ -18201,13 +18242,20 @@ document.addEventListener('click', e=>{
 // fica pra depois de validar o conceito visual.
 let editingSuperChildren = []; // [{id,title,col}]
 
+// card===null (card novo, ainda sem id real no Firebase): a seção continua
+// visível e usável — adicionar/criar filho fica "em memória" até o Salvar
+// (ver quickCreateSuperChild/addSuperChild/persistSuperChildren), quando
+// então childCardIds entra no card recém-criado junto com todo o resto do
+// formulário. Antes disso a seção ficava escondida até o card ser salvo uma
+// vez — pedido direto: "quando você tá criando um card novo não aparece a
+// opção de vincular um card pra criar um supercard".
 function initSuperChildren(card){
   const wrap=document.getElementById('m-super-attach-wrap');
   if(wrap) wrap.style.display='';
-  editingSuperChildren = (card.childCardIds||[]).map(id=>{
+  editingSuperChildren = card ? (card.childCardIds||[]).map(id=>{
     const found = cards.find(c=>c.id===id);
     return found ? {id:found.id, title:found.title, col:found.col} : null;
-  }).filter(Boolean);
+  }).filter(Boolean) : [];
   renderSuperChildrenList();
   const searchWrap=document.getElementById('m-super-search-wrap'); if(searchWrap) searchWrap.style.display='none';
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
@@ -18226,24 +18274,18 @@ function initSuperChildren(card){
     }).join('');
   }
   // Se ESTE card é filho de algum outro supercard, mostra o vínculo reverso
-  // (calculado na hora — barato, cards já estão todos em memória).
+  // (calculado na hora — barato, cards já estão todos em memória). Card
+  // novo nunca é filho de ninguém ainda, então nem checa.
   const noteEl=document.getElementById('m-super-parent-note');
   if(noteEl){
-    const parent = cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id));
+    const parent = card ? cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id)) : null;
     if(parent){
       noteEl.style.display='block';
-      noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();closeOv(\'card-ov\',()=>openCard(\''+esc(parent.id)+'\'))" style="color:var(--accent);">'+esc(parent.title)+'</a>';
+      noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
     } else {
       noteEl.style.display='none';
     }
   }
-}
-// Card novo (ainda não existe no Firebase) não tem onde pendurar childCardIds
-// até ser salvo — esconde a seção em vez de deixar adicionar e perder tudo.
-function _hideSuperChildrenForNewCard(){
-  editingSuperChildren=[];
-  const wrap=document.getElementById('m-super-attach-wrap'); if(wrap) wrap.style.display='none';
-  const noteEl=document.getElementById('m-super-parent-note'); if(noteEl) noteEl.style.display='none';
 }
 function renderSuperChildrenList(){
   const list=document.getElementById('m-super-children-list'); if(!list) return;
@@ -18257,7 +18299,7 @@ function renderSuperChildrenList(){
       const ownerTxt=relCard?.owner?'👤 '+relCard.owner:'';
       return '<div class="minicard">'
         +'<div class="minicard-left" style="background:'+colColor+';"></div>'
-        +'<div class="minicard-body" onclick="closeOv(\'card-ov\',()=>openCard(\''+esc(lc.id)+'\'))">'
+        +'<div class="minicard-body" onclick="_navigateToCard(\''+esc(lc.id)+'\')">'
           +'<div class="minicard-title">'+esc(lc.title)+'</div>'
           +'<div class="minicard-meta"><span class="minicard-col">'+esc(col?.name||lc.col)+'</span>'
           +(ownerTxt?'<span class="minicard-owner">'+esc(ownerTxt)+'</span>':'')+'</div>'
@@ -18266,8 +18308,23 @@ function renderSuperChildrenList(){
       +'</div>';
     }).join('');
 }
+// Campos "herdáveis" pra um card filho novo — usa o card de verdade se já
+// existe (editingId), ou lê direto dos campos do formulário quando ainda é
+// um card novo sendo criado (m-col/m-due/etc. já têm o que a pessoa
+// preencheu até agora, mesmo sem ter salvo nada ainda).
+function _superParentBasics(){
+  const parent = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(parent) return parent;
+  return {
+    title: document.getElementById('m-title')?.value || 'Novo card',
+    col: document.getElementById('m-col')?.value || columns[0]?.id,
+    due: document.getElementById('m-due')?.value || '',
+    priority: document.getElementById('m-priority')?.value || '',
+    demandante: document.getElementById('m-demandante')?.value || '',
+    po: document.getElementById('m-po')?.value || '',
+  };
+}
 function toggleSuperChildSearch(){
-  if(!editingId){ showToast('Salve o card antes de adicionar filhos.'); return; }
   const wrap=document.getElementById('m-super-search-wrap'); if(!wrap) return;
   const opening = wrap.style.display==='none' || !wrap.style.display;
   wrap.style.display = opening ? 'block' : 'none';
@@ -18297,11 +18354,11 @@ function searchSuperChildren(q){
   dd.classList.add('show');
 }
 function addSuperChild(card){
-  if(!editingId || card.id===editingId) return;
+  if(card.id===editingId) return;
   if(editingSuperChildren.find(l=>l.id===card.id)) return;
   editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
   renderSuperChildrenList();
-  persistSuperChildren();
+  persistSuperChildren(); // no-op se for card novo (ver função abaixo) — entra no childCardIds só ao Salvar
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
   hideSuperChildDropdown();
 }
@@ -18313,12 +18370,15 @@ function removeSuperChild(id){
 // Atalho pra fluxo de fan-out manual: digitar um título que ainda não existe
 // e apertar Enter já cria o card (herdando coluna/prazo/prioridade/demandante
 // do pai — mesmo espírito de "não fazer a pessoa repetir contexto") e liga
-// como filho, sem sair do modal do supercard.
+// como filho, sem sair do modal do supercard. Funciona tanto num card já
+// salvo (editingId) quanto num card ainda sendo criado (usa os valores já
+// preenchidos no formulário via _superParentBasics()) — o filho em si já
+// nasce como card de verdade nos dois casos; só o VÍNCULO com o pai fica
+// pendente em memória até o pai ser salvo, se ainda não existir.
 function quickCreateSuperChild(title){
   title=(title||'').trim(); if(!title) return;
   if(!checkEditPermission()) return;
-  if(!editingId){ showToast('Salve o card antes de adicionar filhos.'); return; }
-  const parent=cards.find(c=>c.id===editingId); if(!parent) return;
+  const parent=_superParentBasics();
   const td=new Date().toISOString().split('T')[0];
   const user=window._currentUser?.displayName||'Usuário';
   const novo={id:'c'+Date.now()+Math.random().toString(36).slice(2,4),col:parent.col,tags:[],tag:'',
@@ -18339,7 +18399,11 @@ function quickCreateSuperChild(title){
   hideSuperChildDropdown();
   showToast('✅ Card filho criado: '+title);
 }
+// Card ainda não existe (editingId null) → não tem onde pendurar
+// childCardIds ainda; fica só em editingSuperChildren, e saveCard() é quem
+// grava o vínculo junto com o resto do card novo.
 function persistSuperChildren(){
+  if(!editingId) return;
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
   parent.childCardIds = editingSuperChildren.map(l=>l.id);
   fbSaveCard(parent);
@@ -20871,7 +20935,7 @@ function loadFanoutTemplates(){
     // O dropdown "Então" de automação e o botão "Aplicar receita" do card
     // dependem de quantas receitas existem — repopula se estiverem visíveis.
     populateAutoSelects();
-    if(editingId) initSuperChildren(cards.find(c=>c.id===editingId)||{});
+    if(editingId) initSuperChildren(cards.find(c=>c.id===editingId)||null);
   });
 }
 async function criarFanoutTemplate(){
@@ -20984,19 +21048,31 @@ function toggleFanoutApplyMenu(){
 }
 function applyFanoutToCurrentCard(templateId){
   document.getElementById('m-super-fanout-dd')?.classList.remove('show');
-  if(!editingId || !checkEditPermission()) return;
+  if(!checkEditPermission()) return;
   const tpl=fanoutTemplates[templateId]; if(!tpl) return;
   if(!tpl.filhos?.length){ showToast('Essa receita ainda não tem cards filhos configurados.'); return; }
-  const parent=cards.find(c=>c.id===editingId); if(!parent) return;
-  const novos=_applyFanoutTemplate(parent, tpl, _histWho());
-  fbSaveCard(parent);
-  editingSuperChildren=(parent.childCardIds||[]).map(id=>{
-    const found=cards.find(c=>c.id===id);
-    return found?{id:found.id,title:found.title,col:found.col}:null;
-  }).filter(Boolean);
-  renderSuperChildrenList();
-  renderBoard();
-  showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+  if(editingId){
+    const parent=cards.find(c=>c.id===editingId); if(!parent) return;
+    const novos=_applyFanoutTemplate(parent, tpl, _histWho());
+    fbSaveCard(parent);
+    editingSuperChildren=(parent.childCardIds||[]).map(id=>{
+      const found=cards.find(c=>c.id===id);
+      return found?{id:found.id,title:found.title,col:found.col}:null;
+    }).filter(Boolean);
+    renderSuperChildrenList();
+    renderBoard();
+    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+  } else {
+    // Card ainda não existe: os filhos já nascem como cards de verdade (cada
+    // um é independente), mas o VÍNCULO com o pai (childCardIds) fica em
+    // memória até o pai ser salvo de verdade — ver saveCard().
+    const novos=_applyFanoutTemplate(_superParentBasics(), tpl, _histWho());
+    const resolved=novos.map(id=>{ const c=cards.find(x=>x.id===id); return c?{id:c.id,title:c.title,col:c.col}:null; }).filter(Boolean);
+    editingSuperChildren=editingSuperChildren.concat(resolved);
+    renderSuperChildrenList();
+    renderBoard();
+    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+  }
 }
 document.addEventListener('click', e=>{
   if(!e.target.closest('#m-super-fanout-btn') && !e.target.closest('#m-super-fanout-dd')) document.getElementById('m-super-fanout-dd')?.classList.remove('show');
