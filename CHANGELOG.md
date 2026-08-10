@@ -1224,6 +1224,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.348-dev — 2026-08-10
+Pedido direto: "o card pai 'supercard' lá nas configurações também em
+automação, só da pra alterar o nome... tem que conseguir alterar o
+card todo!" — no editor de receitas de fan-out (⚙ Config →
+Automações), só dava pra renomear a receita (✎); cada card FILHO já
+podia ser vinculado a um Modelo (descrição/checklist/tags/riscos), mas
+o card PAI não tinha jeito de ser estruturado igual.
+
+- Cada receita ganha um seletor "👑 Card pai" (mesmo lugar dos
+  filhos): vincula um Modelo que é mesclado no card pai ao aplicar a
+  receita — descrição/PO só entram se estiverem vazios, tags/checklist/
+  riscos são somados sem duplicar (nunca apaga o que o card já tinha).
+- Caminho manual (botão "🧩 Aplicar receita" dentro do card): reaproveita
+  o `aplicarModeloNoCard()` que já existe pro "📥 Usar modelo" — mesma
+  regra de mesclagem, já validada, funciona com o card salvo ou ainda
+  sendo criado.
+- Caminho automático (ação "🧩 Aplicar fan-out"): não tem modal aberto,
+  então mescla direto no objeto do card via `_mergeModeloEmCardObj()`
+  (mesma regra de mesclagem, versão sem DOM).
+- Help content atualizado.
+
 ### v8.30.347-dev — 2026-08-10
 Bug reportado com print: ao criar um card novo, o salvamento demorou,
 o modal não fechou na hora e vários cliques em "💾 Salvar" criaram
