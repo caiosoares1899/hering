@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.236 — 2026-08-10 · promove pra prod (PR #274) — Central de Ajuda
+Atualiza o item "🧾 Receitas prontas" do help de Supercard (❓, Ctrl+K)
+pra mencionar o batch de vários nomes de filho separados por vírgula
+(já valia desde a v8.30.235, só o texto estava desatualizado).
+Puramente texto de ajuda, sem mudança de comportamento.
+
 ### v8.30.235 — 2026-08-10 · promove pra prod (PRs #270–#272) — CORRIGE REGRESSÃO
 Promove pra produção o lote que corrige uma regressão introduzida pela
 própria v8.30.234 (poucas horas antes):
