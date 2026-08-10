@@ -1224,6 +1224,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.349-dev — 2026-08-10
+Feedback do teste do v8.30.348-dev: "quando apliquei a receita no
+card, ele não usou o modelo que eu implantei como card pai". Investigado
+a fundo — não era bug de lógica, era falta de confirmação: o modelo
+testado só tinha tags (sem checklist/riscos/descrição), e essas tags
+realmente foram aplicadas certinho, só que sem nenhum aviso visível.
+
+- **Causa raiz**: `showToast()` usa um único elemento reaproveitado
+  (não empilha mensagens). O toast "📥 Modelo aplicado" que
+  `aplicarModeloNoCard()` dispara era sobrescrito quase na hora pelo
+  toast final "✅ N card(s) criado(s)" — a pessoa nunca via a primeira
+  mensagem, dando a impressão de que o modelo do card pai não tinha
+  sido usado, mesmo tendo sido.
+- O toast final agora menciona os dois: "✅ N card(s) criado(s) a
+  partir de 'Receita' + modelo 'X' aplicado no card pai".
+- Não muda nenhum comportamento de dado, só a mensagem de confirmação.
+
 ### v8.30.348-dev — 2026-08-10
 Pedido direto: "o card pai 'supercard' lá nas configurações também em
 automação, só da pra alterar o nome... tem que conseguir alterar o

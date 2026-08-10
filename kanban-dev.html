@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.348-dev</div>
+<div class="version">v8.30.349-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -21192,7 +21192,19 @@ function applyFanoutToCurrentCard(templateId){
   // reaproveita o aplicarModeloNoCard() que já existe pro botão "📥 Usar
   // modelo" — mesma regra de nunca sobrescrever o que já tiver preenchido,
   // e já cobre tanto card salvo (editingId) quanto ainda sendo criado.
-  if(tpl.paiModeloIdx!=null) aplicarModeloNoCard(tpl.paiModeloIdx);
+  // showToast() é um slot único (reescreve o mesmo elemento) — o toast que
+  // aplicarModeloNoCard() dispara aqui seria sobrescrito quase na hora pelo
+  // toast final de "N card(s) criado(s)" logo abaixo, sem a pessoa conseguir
+  // ler (bug real reportado: "não usou o modelo" — o modelo era aplicado
+  // certinho, só não tinha confirmação visível disso). Guarda o nome do
+  // modelo aqui pra mencionar no toast final único, em vez de dois toasts
+  // brigando pelo mesmo espaço.
+  let _paiModeloNome=null;
+  if(tpl.paiModeloIdx!=null){
+    const _paiModelo=(qlItems.modelos||[])[tpl.paiModeloIdx];
+    if(_paiModelo){ aplicarModeloNoCard(tpl.paiModeloIdx); _paiModeloNome=_paiModelo.title; }
+  }
+  const _modeloSuffix=_paiModeloNome?(' + modelo "'+_paiModeloNome+'" aplicado no card pai'):'';
   if(editingId){
     const parent=cards.find(c=>c.id===editingId); if(!parent) return;
     const novos=_applyFanoutTemplate(parent, tpl, _histWho());
@@ -21203,7 +21215,7 @@ function applyFanoutToCurrentCard(templateId){
     }).filter(Boolean);
     renderSuperChildrenList();
     renderBoard();
-    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"'+_modeloSuffix);
   } else {
     // Card ainda não existe: os filhos já nascem como cards de verdade (cada
     // um é independente), mas o VÍNCULO com o pai (childCardIds) fica em
@@ -21213,7 +21225,7 @@ function applyFanoutToCurrentCard(templateId){
     editingSuperChildren=editingSuperChildren.concat(resolved);
     renderSuperChildrenList();
     renderBoard();
-    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"');
+    showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"'+_modeloSuffix);
   }
 }
 document.addEventListener('click', e=>{
