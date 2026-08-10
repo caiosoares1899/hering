@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.351-dev</div>
+<div class="version">v8.30.352-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18439,6 +18439,30 @@ function removeSuperChild(id){
   renderSuperChildrenList();
   persistSuperChildren();
 }
+// Molde de card "em branco" pra virar filho de supercard — herda col/due/
+// priority/demandante/po do card pai, igual nos dois lugares que criam um
+// filho de verdade: quickCreateSuperChild() (um digitado na hora) e
+// _applyFanoutTemplate() (vários de uma receita, cada um podendo vir de um
+// Modelo). Antes esse molde estava duplicado nos dois; unificado aqui.
+// modelo (opcional) estrutura desc/checklist/tags/riscos/po — quando
+// presente, tem prioridade sobre o po herdado do pai (mesma lógica do resto
+// do modelo: adiciona estrutura, não repete o que já é do pai).
+// idx entra no id só pra garantir unicidade quando vários filhos nascem no
+// mesmo milissegundo (Date.now() igual pra todos, no .map() de uma receita).
+function _blankSuperChildCard(parentCard, title, {idx=0, modelo=null, user=null}={}){
+  const td=new Date().toISOString().split('T')[0];
+  const who=user||window._currentUser?.displayName||'Usuário';
+  return {id:'c'+Date.now()+'_'+idx+Math.random().toString(36).slice(2,4),col:parentCard.col,
+    tags: modelo ? (modelo.tags||(modelo.tag?[modelo.tag]:[])).slice() : [],
+    tag: modelo ? (modelo.tag||(modelo.tags||[])[0]||'') : '',
+    title, desc: modelo?.desc||'', descsExtra:[], owner:'', demandante:parentCard.demandante||'',
+    due:parentCard.due||'', noDue:!parentCard.due, po: modelo?.po||parentCard.po||'',
+    checklist:(modelo?.checklist||[]).map(it=>({t:it.t,done:false})), checklistGroups:[],
+    riscos:(modelo?.riscos||[]).slice(), sp:'', priority:parentCard.priority||'',
+    executorType:'human', agentStatus:'', participants:[], archived:false,
+    created:who, edited:who, createdAt:td, editedAt:td,
+    updatedAt:new Date().toISOString(), updatedBy:who};
+}
 // Atalho pra fluxo de fan-out manual: digitar um título que ainda não existe
 // e apertar Enter já cria o card (herdando coluna/prazo/prioridade/demandante
 // do pai — mesmo espírito de "não fazer a pessoa repetir contexto") e liga
@@ -18451,19 +18475,11 @@ function quickCreateSuperChild(title){
   title=(title||'').trim(); if(!title) return;
   if(!checkEditPermission()) return;
   const parent=_superParentBasics();
-  const td=new Date().toISOString().split('T')[0];
-  const user=window._currentUser?.displayName||'Usuário';
-  const novo={id:'c'+Date.now()+Math.random().toString(36).slice(2,4),col:parent.col,tags:[],tag:'',
-    title,desc:'',descsExtra:[],owner:'',demandante:parent.demandante||'',
-    due:parent.due||'',noDue:!parent.due,po:parent.po||'',
-    checklist:[],checklistGroups:[],riscos:[],sp:'',priority:parent.priority||'',
-    executorType:'human',agentStatus:'',participants:[],archived:false,
-    created:user,edited:user,createdAt:td,editedAt:td,
-    updatedAt:new Date().toISOString(),updatedBy:user};
+  const novo=_blankSuperChildCard(parent, title);
   recordHistory(novo,'criou o card (filho de supercard)');
   recordMove(novo,novo.col);
   cards.push(novo);
-  fbSaveCard(novo);
+  fbSaveCard(novo).catch(err=>console.error('[supercard] falha ao salvar card filho:', err));
   editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
   if(!editingId) _newSuperChildIds.push(novo.id); // ver comentário na declaração — cancelar o pai remove este filho de verdade
   renderSuperChildrenList();
@@ -21144,7 +21160,6 @@ function renderFanoutCfg(){
 // misturar com filhos adicionados na mão.
 function _applyFanoutTemplate(parentCard, tpl, whoLabel){
   if(!parentCard || !tpl || !tpl.filhos?.length) return [];
-  const td=new Date().toISOString().split('T')[0];
   const user=whoLabel||'⚙ Automação';
   const novos=tpl.filhos.map((filho,i)=>{
     // Filho vinculado a um Modelo (📋 Modelos) fica bem mais estruturado:
@@ -21154,17 +21169,7 @@ function _applyFanoutTemplate(parentCard, tpl, whoLabel){
     // sistema de Modelos que já existe (mesmos campos que usarQLItem()
     // aplica), em vez de inventar um editor novo só pra isso.
     const modelo = (filho.modeloIdx!=null) ? (qlItems.modelos||[])[filho.modeloIdx] : null;
-    const novo={id:'c'+Date.now()+'_'+i+Math.random().toString(36).slice(2,4),col:parentCard.col,
-      tags: modelo ? (modelo.tags||(modelo.tag?[modelo.tag]:[])).slice() : [],
-      tag: modelo ? (modelo.tag||(modelo.tags||[])[0]||'') : '',
-      title:parentCard.title+' — '+filho.sufixo,
-      desc: modelo?.desc||'',descsExtra:[],owner:'',demandante:parentCard.demandante||'',
-      due:parentCard.due||'',noDue:!parentCard.due,po:modelo?.po||'',
-      checklist:(modelo?.checklist||[]).map(it=>({t:it.t,done:false})),checklistGroups:[],
-      riscos:(modelo?.riscos||[]).slice(),sp:'',priority:parentCard.priority||'',
-      executorType:'human',agentStatus:'',participants:[],archived:false,
-      created:user,edited:user,createdAt:td,editedAt:td,
-      updatedAt:new Date().toISOString(),updatedBy:user};
+    const novo=_blankSuperChildCard(parentCard, parentCard.title+' — '+filho.sufixo, {idx:i, modelo, user});
     recordHistory(novo,'criou o card (fan-out "'+tpl.nome+'"'+(modelo?' + modelo "'+modelo.title+'"':'')+')',user);
     recordMove(novo,novo.col);
     cards.push(novo);
@@ -21175,13 +21180,15 @@ function _applyFanoutTemplate(parentCard, tpl, whoLabel){
   recordHistory(parentCard,'aplicou fan-out "'+tpl.nome+'" ('+novos.length+' card(s) filho(s))',user);
   return novos;
 }
-// Mescla um Modelo num card OBJETO (sem depender do form/DOM do modal) —
-// mesma regra de "nunca sobrescreve" do aplicarModeloNoCard() (que já existe
-// pra "Usar modelo" dentro de um card aberto): desc/PO só entram se
-// estiverem vazios, tags/checklist/riscos são somados sem duplicar. Usado só
-// pelo caminho de AUTOMAÇÃO do fan-out (ação "🧩 Aplicar fan-out"), que roda
-// sem nenhum modal aberto — o caminho manual (botão dentro do card) reusa o
-// aplicarModeloNoCard() de verdade, que também atualiza o form visível.
+// Fonte única da regra de "aplicar um Modelo sem sobrescrever o que já
+// existe": desc/PO só entram se estiverem vazios, tags/checklist/riscos são
+// somados sem duplicar. Opera num objeto simples (não em DOM), então serve
+// tanto pra automação (ação "🧩 Aplicar fan-out", que roda sem modal aberto —
+// mescla direto no card de verdade) quanto pra aplicarModeloNoCard() (botão
+// "📥 Usar modelo" e o modelo do card pai do fan-out), que lê o form pra um
+// objeto, chama esta função, e escreve o resultado de volta no form. Antes a
+// regra vivia duplicada nos dois lugares — foi assim que um bug (submarca)
+// escapou, corrigido só numa das duas cópias na 1ª rodada.
 function _mergeModeloEmCardObj(card, modelo){
   if(!card || !modelo) return;
   if(!(card.desc||'').trim() && modelo.desc) card.desc=modelo.desc;
@@ -22083,18 +22090,31 @@ function aplicarModeloNoCard(idx){
   // card ainda não existe em `cards`/Firebase).
   if(editingId) saveUndo('aplicar modelo');
 
+  // Lê o estado atual do form pra um objeto simples, aplica a MESMA regra de
+  // mesclagem que a automação usa (_mergeModeloEmCardObj — nunca sobrescreve
+  // o que já tiver preenchido: desc/PO só se vazios, tags/checklist/riscos
+  // somados sem duplicar) e escreve o resultado de volta no form. Antes essa
+  // regra vivia duplicada aqui e em _mergeModeloEmCardObj(); foi assim que o
+  // bug da submarca escapou (corrigido só numa das duas cópias na 1ª
+  // rodada) — agora tem uma fonte só. Os `if` abaixo (só mexer na seção do
+  // form que o modelo realmente tem conteúdo) preservam o comportamento de
+  // sempre: não força um re-render de checklist/riscos à toa, o que
+  // interromperia uma edição em andamento nesses campos.
   const descEl=document.getElementById('m-desc');
+  const poEl=document.getElementById('m-po');
+  const estado={desc:descEl?.value||'', po:poEl?.value||'', tags:editingTags.slice(), checklist:getCL(), riscos:getRiscos()};
+  _mergeModeloEmCardObj(estado, modelo);
+
   // BUGFIX: chamava renderDescPreview() (só atualiza o preview de @menção,
   // que só aparece quando há menção no texto) em vez de redesenhar o card
   // visível da Descrição (#m-desc-display, padrão eoc/"clique pra editar").
   // O valor era salvo certo por baixo dos panos, mas visualmente parecia
   // que nada tinha acontecido — daí "usar modelo não preenche o card".
-  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=modelo.desc; eocInitDisplay('desc-eoc', descEl.value, 'Adicionar descrição...'); }
-  const poEl=document.getElementById('m-po');
-  if(poEl && !poEl.value.trim() && modelo.po) poEl.value=modelo.po;
+  if(descEl && !descEl.value.trim() && modelo.desc){ descEl.value=estado.desc; eocInitDisplay('desc-eoc', descEl.value, 'Adicionar descrição...'); }
+  if(poEl && !poEl.value.trim() && modelo.po) poEl.value=estado.po;
 
-  if(Array.isArray(modelo.tags) && modelo.tags.length){
-    modelo.tags.forEach(t=>{ if(!editingTags.includes(t)) editingTags.push(t); });
+  if((modelo.tags && modelo.tags.length) || modelo.tag){
+    editingTags=estado.tags;
     populateTagSelect();
     // BUGFIX: Submarca (quando ativa no squad) tem um <select id="m-submarca">
     // DEDICADO, separado do picker geral de tags — populateTagSelect() acima
@@ -22107,23 +22127,14 @@ function aplicarModeloNoCard(idx){
     // (na prática) "deu erro, cancelei o card".
     if(typeof SUBMARCA_TAGS!=='undefined'){
       const smIds=SUBMARCA_TAGS.map(st=>st.id);
-      const smTag=modelo.tags.find(t=>smIds.includes(t));
+      const smTag=estado.tags.find(t=>smIds.includes(t));
       const smSel=document.getElementById('m-submarca');
       if(smTag && smSel) smSel.value=smTag;
     }
   }
 
-  if(Array.isArray(modelo.checklist) && modelo.checklist.length){
-    const atual=getCL();
-    const novos=modelo.checklist.map(i=>({t:i.t, done:false}));
-    renderCL([...atual, ...novos]);
-  }
-
-  if(Array.isArray(modelo.riscos) && modelo.riscos.length){
-    const atuais=getRiscos();
-    const novos=modelo.riscos.filter(r=>!atuais.includes(r));
-    if(novos.length) renderRiscos([...atuais, ...novos]);
-  }
+  if(Array.isArray(modelo.checklist) && modelo.checklist.length) renderCL(estado.checklist);
+  if(Array.isArray(modelo.riscos) && modelo.riscos.length) renderRiscos(estado.riscos);
 
   closeUsarModeloMenu();
   if(editingId){
