@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
-<title>🧪 Maré Digital · Painel Dev</title>
+<title>🐟 Maré Digital · Painel Multi-Squad</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -1104,8 +1104,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 </style>
 </head>
 <body>
-<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(249,115,22,.12);border-bottom:1px solid rgba(249,115,22,.4);padding:4px 12px;font-size:10px;font-weight:700;color:#f97316;letter-spacing:.06em;text-align:center;pointer-events:none;">🧪 PAINEL DEV — dados fictícios (dev + omnichannel) · não reflete produção</div>
-<div style="height:24px;"></div>
 <div class="ocean"></div>
 
 <!-- LOGIN -->
@@ -1390,6 +1388,48 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <span id="comunicados-arquivados-caret">▶</span> 🗄 Avisos arquivados (<span id="comunicados-arquivados-count">0</span>)
         </button>
         <div id="comunicados-arquivados" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ═══ PUSH MANUAL (ADM → notificação no aparelho) ═══ -->
+    <!-- Reaproveita 100% a infra existente: escreve em kanban/usuarios/{uid}/notificacoes/{id}
+         igual qualquer outra notificação do sino — a Cloud Function sendPushOnNotification já
+         escuta esse path e dispara o push sozinha. Zero leitura nova (usa _globalUsersCache,
+         que já é carregado por um listener existente) e zero deploy novo — só precisa que o
+         tipo 'painel_broadcast' esteja na lista PUSH_TYPES da function (ver aviso no rodapé). -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🔔 Enviar push manual</div>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Manda uma notificação direto pro aparelho das pessoas selecionadas (respeita Não Perturbe e permissão ativada por cada um). Também fica salva no sino delas normalmente.</div>
+
+      <input id="pushm-title" type="text" placeholder="Título (ex: Manutenção hoje às 18h)" maxlength="60"
+        style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:12px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt1);margin-bottom:8px;">
+      <textarea id="pushm-msg" rows="2" maxlength="120" placeholder="Mensagem curta (até 120 caracteres)..."
+        style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:12px;background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt1);margin-bottom:10px;resize:vertical;font-family:inherit;"></textarea>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;">
+          <input type="checkbox" id="pushm-todos" onchange="_pushmToggleTodos(this.checked)"> Selecionar todos
+        </label>
+        <span id="pushm-count" style="font-size:10px;color:var(--txt3);">0 selecionado(s)</span>
+      </div>
+      <div id="pushm-users" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding:8px;background:rgba(0,0,0,.15);border-radius:8px;margin-bottom:10px;"></div>
+
+      <button id="pushm-btn" onclick="sendPainelPush()" disabled
+        style="padding:7px 16px;font-size:11px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);border-radius:8px;cursor:pointer;opacity:.5;">🔔 Enviar push</button>
+      <div style="font-size:9px;color:var(--txt3);margin-top:8px;">Só chega no aparelho de quem já ativou notificações push. Sem isso, a pessoa ainda vê no sino do board normalmente.</div>
+
+      <!-- Histórico: carregado SÓ quando expandido (não na abertura da aba) — quem nunca
+           abre isso não gasta nenhum byte com histórico de push. Depois de aberto uma vez,
+           fica em cache local (_pushHistCache) até a pessoa clicar em "🔄 Atualizar". -->
+      <div style="margin-top:14px;border-top:1px solid var(--glass-b);padding-top:10px;">
+        <button onclick="_togglePushHist()" style="display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;cursor:pointer;padding:4px 0;">
+          <span id="pushhist-caret">▶</span> 🗂 Histórico de pushes enviados
+        </button>
+        <div id="pushhist-wrap" style="display:none;margin-top:8px;">
+          <div id="pushhist-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
       </div>
     </div>
 
@@ -2237,30 +2277,20 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// 🔬 DEBUG: medidor de bytes por listener (diagnóstico de download)
+// 🔬 DEBUG: medidor de bytes por fetch (diagnóstico de download do Painel)
 // ───────────────────────────────────────────────────────────────────
-// Porta pro painel-dev o mesmo medidor que já existe em painel.html (prod)
-// e em kanban.html/kanban-dev.html — o painel-dev nunca teve isso, então
-// nenhuma leitura feita a partir daqui era visível em nenhum relatório.
-// Log próprio (sufixo _dev) — NUNCA mistura com o log de produção do
-// painel.html, senão sessão de dev/teste inflaria as métricas reais.
 // SEMPRE LIGADO, automaticamente. Mede o tamanho (via Blob) de CADA
-// payload recebido — onValue (listeners em tempo real) e get() (buscas
-// avulsas) — e acumula por "path". A cada 5 minutos escreve um resumo
-// pequeno em kanban/painel/_debug_bytes_log_dev/{hora}. Além do log
-// horário (fino, vida de 7 dias, auto-limpo), mantém também um rollup
-// DIÁRIO (grosso, retido por 90 dias) em _debug_bytes_daily_dev — sem
-// ele não dava pra comparar "esse mês" com "mês passado".
+// payload recebido pelo Painel — tanto onValue (listeners em tempo
+// real) quanto get() (buscas avulsas de _pollSquadDados/loadAll) — e
+// acumula por "path". A cada 5 minutos escreve um resumo pequeno em
+// kanban/painel/_debug_bytes_log/{hora} (permitido pelas regras atuais,
+// que já liberam leitura/escrita de kanban/painel pra @ciahering.com.br).
 // Uso no console (F12), a qualquer momento:
-//   debugBytesReport()        → tabela do que ESTA aba recebeu até agora
-//   debugBytesRemote()        → agregado de todas as sessões nas últimas 24h
-//   debugBytesRemote(72)      → agregado das últimas 72h, por path e por hora
-//   debugBytesHistory(30)     → rollup diário dos últimos 30 dias, por path e por dia
-//   debugBytesExportCSV(30)   → mesmos dados de debugBytesHistory(), em CSV pra colar numa planilha
-//   debugBytesOff()           → desliga só nesta aba
+//   debugBytesReport()      → tabela do que ESTA aba recebeu até agora
+//   debugBytesRemote()      → agregado de todas as sessões nas últimas 24h
+//   debugBytesRemote(72)    → agregado das últimas 72h, por path e por hora
+//   debugBytesOff()         → desliga só nesta aba
 const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
-const _DBG_LOG_PATH = 'kanban/painel/_debug_bytes_log_dev';
-const _DBG_DAILY_PATH = 'kanban/painel/_debug_bytes_daily_dev';
 function _dbgSize(val){
   try{ return val==null ? 0 : new Blob([JSON.stringify(val)]).size; }
   catch(e){ try{ return JSON.stringify(val||'').length; }catch(e2){ return 0; } }
@@ -2271,55 +2301,37 @@ function _dbgTrack(pathKey, val){
   const s=_dbg.stats[pathKey]||(_dbg.stats[pathKey]={count:0,bytes:0,lastAt:0,lastBytes:0});
   s.count++; s.bytes+=bytes; s.lastAt=Date.now(); s.lastBytes=bytes;
 }
-// Mescla `entries` (path -> {count,bytes}) no nó já existente em `path` (sem
-// sobrescrever o que outras flushes/abas já gravaram nesse mesmo bucket).
-function _dbgMerge(path, entries, extra){
-  return window._get(window._ref(window._db,path)).then(snap=>{
-    const existing=snap.val()||{};
-    const prev=Object.assign({}, existing, extra, {byPath:Object.assign({}, existing.byPath)});
+function _dbgFlush(){
+  if(!_dbg.on || !window._fbReady) return;
+  const entries=Object.entries(_dbg.stats);
+  if(!entries.length) return;
+  const d=new Date();
+  const hourKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
+  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
+  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+  const nodeKey=hourKey+'_'+uidShort;
+  const path='kanban/painel/_debug_bytes_log/'+nodeKey;
+  window._get(window._ref(window._db,path)).then(snap=>{
+    const _localTs=hourKey.slice(0,10)+'T'+hourKey.slice(11,13)+':00:00';
+    const prev=snap.val()||{ts:_localTs,who,byPath:{}};
     entries.forEach(([k,s])=>{
       const key=k.replace(/[.#$/\[\]]/g,'_');
       const acc=prev.byPath[key]||{count:0,bytes:0};
       acc.count+=s.count; acc.bytes+=s.bytes;
       prev.byPath[key]=acc;
     });
+    prev.ts=_localTs; prev.who=who;
     window._set(window._ref(window._db,path), prev).catch(()=>{});
   }).catch(()=>{});
-}
-function _dbgFlush(){
-  if(!_dbg.on || !window._fbReady) return;
-  // Snapshot em objetos NOVOS (não referências pras stats vivas) — _dbgMerge
-  // é assíncrono, e o reset de _dbg.stats logo abaixo é síncrono; sem esse
-  // snapshot, quando o .then() rodasse já ia encontrar count/bytes zerados.
-  const entries=Object.entries(_dbg.stats).map(([k,s])=>[k,{count:s.count,bytes:s.bytes}]);
-  if(!entries.length) return;
-  const d=new Date();
-  const dateKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  const hourKey=dateKey+'-'+String(d.getHours()).padStart(2,'0');
-  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
-  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
-  const hourLocalTs=dateKey+'T'+String(d.getHours()).padStart(2,'0')+':00:00';
-  _dbgMerge(_DBG_LOG_PATH+'/'+hourKey+'_'+uidShort, entries, {ts:hourLocalTs, who});
-  _dbgMerge(_DBG_DAILY_PATH+'/'+dateKey, entries, {date:dateKey});
   Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
-  // Limpeza leve: 1x por sessão. Log horário (fino) só vive 7 dias; o
-  // rollup diário (grosso) vive 90.
   if(!_dbg.cleaned){
     _dbg.cleaned=true;
-    window._get(window._ref(window._db,_DBG_LOG_PATH)).then(snap=>{
+    window._get(window._ref(window._db,'kanban/painel/_debug_bytes_log')).then(snap=>{
       const val=snap.val(); if(!val) return;
       const cutoff=Date.now()-7*86400000;
       Object.entries(val).forEach(([key,entry])=>{
         const t=entry?.ts?new Date(entry.ts).getTime():0;
-        if(t && t<cutoff) window._set(window._ref(window._db,_DBG_LOG_PATH+'/'+key), null).catch(()=>{});
-      });
-    }).catch(()=>{});
-    window._get(window._ref(window._db,_DBG_DAILY_PATH)).then(snap=>{
-      const val=snap.val(); if(!val) return;
-      const cutoff=Date.now()-90*86400000;
-      Object.entries(val).forEach(([key,entry])=>{
-        const t=entry?.date?new Date(entry.date+'T00:00:00').getTime():0;
-        if(t && t<cutoff) window._set(window._ref(window._db,_DBG_DAILY_PATH+'/'+key), null).catch(()=>{});
+        if(t && t<cutoff) window._set(window._ref(window._db,'kanban/painel/_debug_bytes_log/'+key), null).catch(()=>{});
       });
     }).catch(()=>{});
   }
@@ -2346,7 +2358,7 @@ window.debugBytesReport=function(){
 };
 window.debugBytesRemote=function(hoursBack){
   hoursBack = hoursBack || 24;
-  return window._get(window._ref(window._db,_DBG_LOG_PATH)).then(snap=>{
+  return window._get(window._ref(window._db,'kanban/painel/_debug_bytes_log')).then(snap=>{
     const val=snap.val()||{};
     const cutoff=Date.now()-hoursBack*3600000;
     const agg={}; const byHour={};
@@ -2373,45 +2385,7 @@ window.debugBytesRemote=function(hoursBack){
   });
 };
 window.debugBytesClearRemote=function(){
-  return window._set(window._ref(window._db,_DBG_LOG_PATH), null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
-};
-function _dbgDailyRows(daysBack){
-  return window._get(window._ref(window._db,_DBG_DAILY_PATH)).then(snap=>{
-    const val=snap.val()||{};
-    const cutoff=Date.now()-daysBack*86400000;
-    const rows=[]; const totalsByDate={};
-    Object.values(val).forEach(entry=>{
-      const t=entry?.date?new Date(entry.date+'T00:00:00').getTime():0;
-      if(!t || t<cutoff) return;
-      Object.entries(entry.byPath||{}).forEach(([path,s])=>{
-        rows.push({data:entry.date, path, chamadas:s.count||0, bytes:s.bytes||0});
-        const acc=totalsByDate[entry.date]||(totalsByDate[entry.date]={count:0,bytes:0});
-        acc.count+=s.count||0; acc.bytes+=s.bytes||0;
-      });
-    });
-    rows.sort((a,b)=> a.data===b.data ? b.bytes-a.bytes : a.data.localeCompare(b.data));
-    return {rows, totalsByDate};
-  });
-}
-window.debugBytesHistory=function(daysBack){
-  daysBack = daysBack || 30;
-  return _dbgDailyRows(daysBack).then(({rows, totalsByDate})=>{
-    console.log('%c🔬 Histórico diário — últimos '+daysBack+' dias, por path:','color:#38b6ff;font-weight:bold;');
-    console.table(rows.map(r=>({data:r.data, path:r.path, chamadas:r.chamadas, 'KB':(r.bytes/1024).toFixed(1)})));
-    const totalRows=Object.entries(totalsByDate).map(([data,s])=>({data, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1)})).sort((a,b)=>a.data.localeCompare(b.data));
-    console.log('%c🔬 Total por dia (todos os paths somados):','color:#38b6ff;font-weight:bold;');
-    console.table(totalRows);
-    return {rows, totalRows};
-  });
-};
-window.debugBytesExportCSV=function(daysBack){
-  daysBack = daysBack || 30;
-  return _dbgDailyRows(daysBack).then(({rows})=>{
-    const csv=['data,path,chamadas,bytes'].concat(rows.map(r=>[r.data,r.path,r.chamadas,r.bytes].join(','))).join('\n');
-    console.log('%c🔬 CSV (últimos '+daysBack+' dias) — copie o texto abaixo pra colar numa planilha:','color:#38b6ff;font-weight:bold;');
-    console.log(csv);
-    return csv;
-  });
+  return window._set(window._ref(window._db,'kanban/painel/_debug_bytes_log'), null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
 };
 // ═══════════════════════════════════════════════════════════════════
 
@@ -2601,7 +2575,7 @@ function _pGetCardTags(card){
 }
 function _pOpenCard(cardId, sqId){
   // abre board desse squad numa nova aba com o card já aberto
-  window.open('kanban-dev.html?squad='+sqId+'&opencard='+cardId,'_blank');
+  window.open('kanban.html?squad='+sqId+'&opencard='+cardId,'_blank');
 }
 function _pSafeUrl(u){ try{ return new URL(String(u)).href; }catch(e){ return '#'; } }
 
@@ -2673,9 +2647,9 @@ let _campEditTags  = [];       // tags selecionadas no edit modal
 let _campComposerLinks = [];   // links do composer ativo
 
 // Caminho Firebase: global (cross-squad configurado no painel)
-function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas_dev'+(sub?'/'+sub:'')); }
+function _campRef(sub){ return window._ref(window._db, 'kanban/campanhas'+(sub?'/'+sub:'')); }
 function _isPOorOrg(){ return ['po','organizador','adm'].includes(window._currentUserRole); }
-function _campLogRef(sub){ return window._ref(window._db, 'kanban/campanhas_log_dev'+(sub?'/'+sub:'')); }
+function _campLogRef(sub){ return window._ref(window._db, 'kanban/campanhas_log'+(sub?'/'+sub:'')); }
 function _logCampAction(action, camp){
   try{
     const u = window._currentUser;
@@ -2851,7 +2825,17 @@ const _pTag = (tid) => {
 
 function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
-    _campanhas = snap.val()||{};
+    const raw = snap.val()||{};
+    // Exclui campanhas cujos squads são todos fictícios (dev, omnichannel)
+    // — evita que dados de teste apareçam no painel de produção
+    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    _campanhas = Object.fromEntries(
+      Object.entries(raw).filter(([_,c])=>{
+        const sq = c.squads||[];
+        if(sq.length > 0 && sq.every(s=>SQUADS_FICTICIOS.has(s))) return false;
+        return true;
+      })
+    );
     // atualiza detalhe se estiver aberto
     if(_campAtual && document.getElementById('camp-view-detalhe')?.style.display!=='none'){
       _campAtual = _campanhas[_campAtual.id]||_campAtual;
@@ -3738,7 +3722,7 @@ let _pmsTab = 'auto';
 let _gruposCamp = {}; // grupos manuais carregados
 
 function loadGruposCamp(){
-  window._onValue(window._ref(window._db,'kanban/painel/grupos_campanha_dev'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/grupos_campanha'), snap=>{
     _gruposCamp = snap.val()||{};
     renderPainelCamp();
   });
@@ -3873,8 +3857,8 @@ async function painelCampActivateAll(){
   if(!updates.length){ showToast('Nenhuma alteração detectada.'); return; }
   try{
     for(const u of updates){
-      await window._set(window._ref(window._db,'kanban/campanhas_dev/'+u.id+'/multiSquad'), u.multiSquad);
-      await window._set(window._ref(window._db,'kanban/campanhas_dev/'+u.id+'/squads'), u.squads);
+      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/multiSquad'), u.multiSquad);
+      await window._set(window._ref(window._db,'kanban/campanhas/'+u.id+'/squads'), u.squads);
     }
     showToast('✅ '+updates.length+' campanha(s) atualizada(s)!');
     document.getElementById('painel-camp-ms-ov').classList.remove('open');
@@ -3925,21 +3909,7 @@ async function _pmsSalvarGrupo(gid, nome){
     atualizadoEm: new Date().toISOString(),
   };
   try{
-    // Nota: esta função lia de kanban/painel/grupos_campanha_dev (loadGruposCamp) mas escrevia
-    // em kanban/painel/grupos_campanha (sem sufixo) — grupo criado no dev nunca aparecia (lido
-    // de um node vazio) e ainda escrevia por engano no node de produção. Corrigido pro mesmo
-    // node _dev usado na leitura.
-    await window._set(window._ref(window._db,'kanban/painel/grupos_campanha_dev/'+id), grupo);
-    // Grava o grupoId em cada campanha vinculada — o board de cada squad (kanban.html) lê isso
-    // direto do próprio registro da campanha pra saber que ela faz parte de um grupo multi-squad,
-    // sem precisar conhecer o node grupos_campanha do painel. Limpa dos que saíram do grupo
-    // nesta edição. NUNCA mexe no campo `nome` — cada squad continua vendo o nome que criou.
-    const idsAnteriores = _gruposCamp[id]?.campanhaIds||[];
-    const removidos = idsAnteriores.filter(cid=>!ids.includes(cid));
-    await Promise.all([
-      ...ids.map(cid=>window._set(_campRef(cid+'/grupoId'), id).catch(()=>{})),
-      ...removidos.map(cid=>window._set(_campRef(cid+'/grupoId'), null).catch(()=>{})),
-    ]);
+    await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+id), grupo);
     showToast('✅ Grupo salvo!');
     _pmsSwitchTab('manual');
   } catch(e){ uiAlert('Erro: '+e.message); }
@@ -3948,8 +3918,7 @@ async function _pmsSalvarGrupo(gid, nome){
 async function _pmsDelGrupo(gid){
   const g = _gruposCamp[gid];
   if(!await uiConfirm('Desagrupar "'+esc(g?.nome||gid)+'"? As campanhas voltam a aparecer separadas.',{danger:true,okText:'Desagrupar'})) return;
-  await Promise.all((g?.campanhaIds||[]).map(cid=>window._set(_campRef(cid+'/grupoId'), null).catch(()=>{})));
-  await window._set(window._ref(window._db,'kanban/painel/grupos_campanha_dev/'+gid), null).catch(e=>uiAlert(e.message));
+  await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+gid), null).catch(e=>uiAlert(e.message));
   showToast('🗑 Grupo desagrupado.');
 }
 
@@ -4351,7 +4320,7 @@ function addLembretePainel(){
   const arr=[...lembretesGestao];
   arr.push({ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
     tipo:'gestao', text, autor:u?.displayName||u?.email||'Gestão', autorUid:u?.uid||'', ts:new Date().toISOString() });
-  window._set(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'), arr)
+  window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), arr)
     .then(()=>{ lembretesGestao=arr; showToast('🏛️ Aviso de gestão publicado em todos os quadros'); renderLembretesPainel(); })
     .catch(e=>showToast('❌ Erro: '+e.message));
   document.getElementById('lemp-text').value='';
@@ -4363,7 +4332,7 @@ function delLembretePainel(sqId, id){
   // sqId === '__gestao__' para avisos globais
   if(sqId==='__gestao__'){
     const arr=lembretesGestao.filter(l=>l.id!==id);
-    window._set(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'), arr)
+    window._set(window._ref(window._db,'kanban/painel/lembretes_gestao'), arr)
       .then(()=>{ lembretesGestao=arr; renderLembretesPainel(); })
       .catch(e=>showToast('❌ Erro: '+e.message));
     return;
@@ -4562,7 +4531,7 @@ function swPtab(tab){
   if(pane) pane.classList.add('on');
   // side-effects por aba
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
-  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); }
+  if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); if(typeof renderPushmUsers==='function') renderPushmUsers(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
@@ -4751,9 +4720,9 @@ async function _forcarLimpezaCacheGcal(){
   }
 
   // 1) Cache global de agendas do Google
-  await limpaPath('kanban/painel/config/gcal_cache_dev', 'obj');
+  await limpaPath('kanban/painel/config/gcal_cache', 'obj');
   // 2) Eventos manuais do painel
-  await limpaPath('kanban/painel/cal_events_dev', 'arr');
+  await limpaPath('kanban/painel/cal_events', 'arr');
   // 3) Eventos de cada squad (feriados podem ter sido gravados por squad)
   for(const sq of SQUADS){
     await limpaPath('kanban/squads/'+sq.id+'/dados/cal_events', 'arr');
@@ -4930,7 +4899,7 @@ function _applyGcalCacheCleaning(){
   // (senão arriscamos gravar um cache "limpo" que na verdade só estava com dados parciais).
   if(_isAdmPainel() && window._pcalCalendarsLoaded && (removidosOrfaos>0 || removidosDup>0)){
     const cacheLimpo = Object.fromEntries(eventos.map(ev=>[ev.id, ev]));
-    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), cacheLimpo).catch(()=>{});
+    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheLimpo).catch(()=>{});
   }
 }
 
@@ -5158,22 +5127,21 @@ function savePevEvent(){
   };
   if(pcalEditId){ const idx=pcalEvents.findIndex(e=>e.id===pcalEditId); if(idx>-1) pcalEvents[idx]=ev; }
   else pcalEvents.push(ev);
-  window._set(window._ref(window._db,'kanban/painel/cal_events_dev'),pcalEvents)
+  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
     .then(()=>{ showToast('✅ Evento salvo!'); closePevModal(); renderPcal(); renderPcalGestao(); })
     .catch(e=>showToast('❌ '+e.message));
 }
 function deletePevEvent(){
   if(!pcalEditId||!confirm('Excluir este evento?')) return;
   pcalEvents=pcalEvents.filter(e=>e.id!==pcalEditId);
-  window._set(window._ref(window._db,'kanban/painel/cal_events_dev'),pcalEvents)
+  window._set(window._ref(window._db,'kanban/painel/cal_events'),pcalEvents)
     .then(()=>{ showToast('🗑 Evento excluído'); closePevModal(); renderPcal(); renderPcalGestao(); });
 }
 
 
 function loadPcalEvents(){
   // Eventos do painel (gestão + geral)
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events_dev'),snap=>{
-    _dbgTrack('painel_cal_events_dev', snap.val());
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{ _dbgTrack('painel_cal_events', snap.val());
     const val=snap.val();
     pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
     if(_isPtab('pessoas')){ renderPcal(); renderPcalGestao(); }
@@ -5191,7 +5159,7 @@ function loadPcalEvents(){
 
   // Agendas do Google conectadas globalmente (todos os squads) — a LISTA de agendas é lida por todos,
   // mas só o ADM (que tem token) efetivamente busca na API do Google (ver carregarPcalAgendasGlobais).
-  window._onValue(window._ref(window._db,'kanban/painel/config/calendars_dev'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/calendars'),snap=>{
     window._pcalCalendars = snap.val() || {};
     window._pcalCalendarsLoaded = true;
     renderPcalAgendasList();
@@ -5199,16 +5167,16 @@ function loadPcalEvents(){
     _applyGcalCacheCleaning(); // agendas removidas: limpa eventos órfãos que sobraram no cache
   });
   // Cache dos eventos já processados — TODO MUNDO lê daqui, sem precisar de token próprio
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'),snap=>{
     window._pcalGcalCacheRaw = snap.val() || {};
     _applyGcalCacheCleaning();
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta_dev'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'),snap=>{
     window._pcalGcalCacheMeta = snap.val() || null;
     renderPcalAgendasList();
   });
   // Eventos ocultados (excluídos) pelo ADM
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed_dev'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_dismissed'),snap=>{
     const val = snap.val();
     window._pcalGcalDismissedIds = new Set(val ? Object.keys(val) : []);
     const wrap=document.getElementById('pcal-gcal-restore-wrap');
@@ -5288,7 +5256,7 @@ async function addPcalAgenda(){
   const key='cal_'+id.replace(/[^a-z0-9_-]/gi,'_');
   if(!window._pcalCalendars) window._pcalCalendars={};
   window._pcalCalendars[key]={id,label:finalLabel};
-  window._set(window._ref(window._db,'kanban/painel/config/calendars_dev'), window._pcalCalendars);
+  window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
   document.getElementById('pcal-agenda-id').value='';
   document.getElementById('pcal-agenda-label').value='';
   showToast('✅ Agenda adicionada para todos os squads!');
@@ -5303,15 +5271,15 @@ async function removePcalAgenda(id){
   const key=Object.keys(window._pcalCalendars).find(k=>window._pcalCalendars[k].id===id);
   if(key){
     delete window._pcalCalendars[key];
-    window._set(window._ref(window._db,'kanban/painel/config/calendars_dev'), window._pcalCalendars);
+    window._set(window._ref(window._db,'kanban/painel/config/calendars'), window._pcalCalendars);
     // Purga IMEDIATA dos eventos dessa agenda do cache — não espera o próximo refetch do ADM
     // (que só roda se o token do Google ainda estiver válido; sem isso os eventos ficariam
     // "fantasmas" no calendário até alguém atualizar manualmente).
     try{
-      const snap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'));
+      const snap = await window._get(window._ref(window._db,'kanban/painel/config/gcal_cache'));
       const cache = snap.val()||{};
       const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
-      await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), filtrado);
+      await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), filtrado);
     }catch(e){ console.warn('Não foi possível purgar cache imediatamente:', e); }
     renderPcalAgendasList();
     showToast('🗑 Agenda removida.');
@@ -5341,7 +5309,7 @@ async function carregarPcalAgendasGlobais(){
   const token=localStorage.getItem('gcal_token');
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
-    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), {});
+    window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), {});
     if(_isPtab('pessoas')) renderPcal();
     return;
   }
@@ -5408,8 +5376,8 @@ async function carregarPcalAgendasGlobais(){
     return true;
   });
   const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_dev'), cacheObj);
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta_dev'), {
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
     updatedAt: new Date().toISOString(),
     updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
   });
@@ -5425,7 +5393,7 @@ async function deletePcalGcalEvent(id){
   if(!window._pcalGcalDismissedIds) window._pcalGcalDismissedIds=new Set();
   window._pcalGcalDismissedIds.add(id);
   const obj=Object.fromEntries([...window._pcalGcalDismissedIds].map(k=>[k,true]));
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed_dev'), obj);
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed'), obj);
   pcalGcalEvents=pcalGcalEvents.filter(e=>e.id!==id);
   renderPcal();
   showToast('🗑 Evento excluído');
@@ -5435,7 +5403,7 @@ async function restorePcalGcalDismissed(){
   if(!n){ showToast('Nenhum evento oculto para restaurar.'); return; }
   if(!await uiConfirm(`Restaurar ${n} evento(s) ocultado(s)?`)) return;
   window._pcalGcalDismissedIds=new Set();
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed_dev'), {});
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_dismissed'), {});
   showToast('↩️ Eventos restaurados!');
   carregarPcalAgendasGlobais();
 }
@@ -5654,6 +5622,51 @@ function _fmtBytes(b){
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
   return (b/1048576).toFixed(2)+' MB';
 }
+
+// Escreve um timestamp global que todo cliente conectado (kanban-dev.html/kanban.html)
+// escuta -- quem logou antes desse timestamp se desloga sozinho. Pensado pra economizar
+// consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
+async function deslogarTodos(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  if(!await uiConfirm('Deslogar TODOS os usuários de TODAS as squads agora? Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos'})) return;
+  try{
+    await window._set(window._ref(window._db,'kanban/global/force_logout_after'), Date.now());
+    showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
+  }catch(e){
+    uiAlert('Erro ao deslogar todos: '+e.message);
+  }
+}
+
+async function carregarConfigInatividade(){
+  const elMin = document.getElementById('cfg-idle-minutos');
+  const elOn = document.getElementById('cfg-idle-enabled');
+  if(!elMin || !elOn) return;
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/global/idle_logout_config'));
+    const val = snap.val();
+    if(val && typeof val === 'object'){
+      elMin.value = Number(val.minutes) > 0 ? Number(val.minutes) : 180;
+      elOn.checked = val.enabled !== false;
+    } else {
+      elMin.value = 180;
+      elOn.checked = true;
+    }
+  }catch(e){ /* mantem os defaults do HTML se der erro (ex: regra ainda nao publicada) */ }
+}
+async function salvarConfigInatividade(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  const elMin = document.getElementById('cfg-idle-minutos');
+  const elOn = document.getElementById('cfg-idle-enabled');
+  const minutos = parseInt(elMin.value, 10);
+  if(!minutos || minutos < 5){ uiAlert('Coloque um número de minutos válido (mínimo 5).'); return; }
+  try{
+    await window._set(window._ref(window._db,'kanban/global/idle_logout_config'), { enabled: !!elOn.checked, minutes: minutos });
+    showToast('⚙️ Configuração salva.');
+  }catch(e){
+    uiAlert('Erro ao salvar: '+e.message);
+  }
+}
+
 async function loadStatusData(){
   carregarConfigInatividade();
   const listEl = document.getElementById('st-squad-list');
@@ -5699,7 +5712,7 @@ async function loadStatusData(){
   // Campanhas e grupos (globais)
   let campBytes=0;
   try{
-    const cs=await window._get(window._ref(window._db,'kanban/campanhas_dev'));
+    const cs=await window._get(window._ref(window._db,'kanban/campanhas'));
     campBytes=new Blob([JSON.stringify(cs.val()||{})]).size;
     totalBytes+=campBytes;
   }catch(e){}
@@ -5749,50 +5762,6 @@ async function loadStatusData(){
         </div>
       </div>`;
     }).join('') + (campBytes? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-b);font-size:11px;color:var(--txt3);">📣 Campanhas: ${_fmtBytes(campBytes)}</div>`:'');
-  }
-}
-
-// Escreve um timestamp global que todo cliente conectado (kanban-dev.html/kanban.html)
-// escuta -- quem logou antes desse timestamp se desloga sozinho. Pensado pra economizar
-// consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
-async function deslogarTodos(){
-  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
-  if(!await uiConfirm('[AMBIENTE DE TESTES] Deslogar TODOS os usuários de TODAS as squads DO DEV agora? Isso NÃO afeta o kanban.html de produção. Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos (dev)'})) return;
-  try{
-    await window._set(window._ref(window._db,'kanban/global/force_logout_after_dev'), Date.now());
-    showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
-  }catch(e){
-    uiAlert('Erro ao deslogar todos: '+e.message);
-  }
-}
-
-async function carregarConfigInatividade(){
-  const elMin = document.getElementById('cfg-idle-minutos');
-  const elOn = document.getElementById('cfg-idle-enabled');
-  if(!elMin || !elOn) return;
-  try{
-    const snap = await window._get(window._ref(window._db,'kanban/global/idle_logout_config'));
-    const val = snap.val();
-    if(val && typeof val === 'object'){
-      elMin.value = Number(val.minutes) > 0 ? Number(val.minutes) : 180;
-      elOn.checked = val.enabled !== false;
-    } else {
-      elMin.value = 180;
-      elOn.checked = true;
-    }
-  }catch(e){ /* mantem os defaults do HTML se der erro (ex: regra ainda nao publicada) */ }
-}
-async function salvarConfigInatividade(){
-  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
-  const elMin = document.getElementById('cfg-idle-minutos');
-  const elOn = document.getElementById('cfg-idle-enabled');
-  const minutos = parseInt(elMin.value, 10);
-  if(!minutos || minutos < 5){ uiAlert('Coloque um número de minutos válido (mínimo 5).'); return; }
-  try{
-    await window._set(window._ref(window._db,'kanban/global/idle_logout_config'), { enabled: !!elOn.checked, minutes: minutos });
-    showToast('⚙️ Configuração salva.');
-  }catch(e){
-    uiAlert('Erro ao salvar: '+e.message);
   }
 }
 
@@ -5856,6 +5825,8 @@ async function markAllPainelNotifsRead(){
   const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read);
   if(!naoLidas.length){ showToast('Nenhuma notificação não lida.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  // Lê fresco do Firebase antes de escrever — evita reverter mudanças
+  // concorrentes feitas pelo próprio board no mesmo instante.
   try {
     const snap = await window._get(ref);
     const val = snap.val() || {};
@@ -5905,7 +5876,7 @@ function renderPainelNotifs(){
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
     const openAttr = n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}swPtab('${n.link}');togglePainelNotif(event);" style="cursor:pointer;"`
-      : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
+      : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(10,30,55,.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(10,30,55,.4)\'"':''}>
       <span style="font-size:13px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
@@ -5978,8 +5949,7 @@ let _editingComunicadoId = null;
 function loadComunicados(){
   if(window._comunicadosListenerOn) return; // evita registrar o listener de novo a cada troca de aba
   window._comunicadosListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
-    _dbgTrack('comunicados', snap.val());
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{ _dbgTrack('comunicados', snap.val());
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
@@ -6391,8 +6361,7 @@ let _fbFilter = 'all';
 function loadFeedback(){
   if(window._fbListenerOn) return; // evita listener duplicado a cada troca de aba
   window._fbListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/feedback_dev'), snap=>{
-    _dbgTrack('feedback_dev', snap.val());
+  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{ _dbgTrack('feedback', snap.val());
     _fbCache = snap.val() || {};
     renderFbLista();
   });
@@ -6722,12 +6691,12 @@ function _fmtDateBR(dateStr){ const p=(dateStr||'').split('-'); return p.length=
 function _numVal(id){ const v=document.getElementById(id)?.value; return (v===''||v==null)? null : Number(v); }
 
 function loadDadosConfig(){
-  window._get(window._ref(window._db,'kanban/config/dados_editors_dev')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/config/dados_editors')).then(snap=>{
     const saved=snap.val();
     if(saved&&Array.isArray(saved)) DADOS_EDITORS=saved;
     renderDadosEditorList();
   }).catch(()=>{});
-  window._get(window._ref(window._db,'kanban/config/dados_apresentacoes_dev')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/config/dados_apresentacoes')).then(snap=>{
     const saved = snap.val();
     dadosApresentacoes = Array.isArray(saved) ? saved.filter(Boolean) : (saved ? Object.values(saved).filter(Boolean) : []);
     renderDadosApresList();
@@ -6735,7 +6704,7 @@ function loadDadosConfig(){
 }
 
 function loadDadosDiarios(){
-  window._onValue(window._ref(window._db,'kanban/dados_diarios_dev'),snap=>{
+  window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{
     dadosDiarios = snap.val()||{};
     if(_isPtab('dados')) renderDadosTab();
   });
@@ -6782,7 +6751,7 @@ async function uploadDadosPdf(){
   if(!file) return;
   if(file.type!=='application/pdf'){ showToast('⚠ Selecione um arquivo PDF'); inp.value=''; return; }
   const date = document.getElementById('dd-date')?.value || _todayStr();
-  const path = 'dados_diarios_dev/'+date+'/'+Date.now()+'_'+file.name;
+  const path = 'dados_diarios/'+date+'/'+Date.now()+'_'+file.name;
   const statusEl = document.getElementById('dd-pdf-status');
   if(statusEl) statusEl.textContent = '⏳ Enviando...';
   try{
@@ -6827,7 +6796,7 @@ function removeDadosApresentacao(id){
   saveDadosApresentacoes();
 }
 function saveDadosApresentacoes(){
-  window._set(window._ref(window._db,'kanban/config/dados_apresentacoes_dev'), dadosApresentacoes)
+  window._set(window._ref(window._db,'kanban/config/dados_apresentacoes'), dadosApresentacoes)
     .then(()=>{ showToast('✅ Apresentações atualizadas'); renderDadosApresList(); })
     .catch(e=>showToast('❌ '+e.message));
 }
@@ -6848,7 +6817,7 @@ function publishDadosPost(){
     pdfUrl: _dadosPendingPdf?.url || existing.pdfUrl || '',
     pdfName: _dadosPendingPdf?.name || existing.pdfName || '',
   };
-  window._set(window._ref(window._db,'kanban/dados_diarios_dev/'+date), obj)
+  window._set(window._ref(window._db,'kanban/dados_diarios/'+date), obj)
     .then(()=>{
       showToast('✅ Publicado no quadro pra todo o time');
       _dadosPendingPdf = null;
@@ -6866,7 +6835,7 @@ function editDadosPost(date){
 function deleteDadosPost(date){
   if(!isDadosEditor(window._currentUser)){ showToast('Sem permissão.'); return; }
   if(!confirm('Excluir o post de '+_fmtDateBR(date)+'?')) return;
-  window._set(window._ref(window._db,'kanban/dados_diarios_dev/'+date), null)
+  window._set(window._ref(window._db,'kanban/dados_diarios/'+date), null)
     .then(()=>showToast('🗑 Excluído'))
     .catch(e=>showToast('❌ '+e.message));
 }
@@ -6929,7 +6898,7 @@ function addDadosEditor(){
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
   if(DADOS_EDITORS.includes(email)){ showToast('Já tem acesso'); return; }
   DADOS_EDITORS.push(email);
-  window._set(window._ref(window._db,'kanban/config/dados_editors_dev'), DADOS_EDITORS)
+  window._set(window._ref(window._db,'kanban/config/dados_editors'), DADOS_EDITORS)
     .then(()=>{ showToast('✅ Acesso concedido'); renderDadosEditorList(); })
     .catch(e=>showToast('❌ '+e.message));
   if(inp) inp.value='';
@@ -6939,7 +6908,7 @@ function removeDadosEditor(email){
   if(!isAdmUser(window._currentUser)){ showToast('Só ADMs gerenciam quem publica.'); return; }
   if(!confirm('Remover acesso de publicação de '+email+'?')) return;
   DADOS_EDITORS=DADOS_EDITORS.filter(e=>e!==email);
-  window._set(window._ref(window._db,'kanban/config/dados_editors_dev'), DADOS_EDITORS)
+  window._set(window._ref(window._db,'kanban/config/dados_editors'), DADOS_EDITORS)
     .then(()=>{ showToast('✅ Removido'); renderDadosEditorList(); })
     .catch(e=>showToast('❌ '+e.message));
 }
@@ -7050,22 +7019,19 @@ function toggleSqCol(sqId, colId){
 // ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
 
 // Squads base — sempre presentes
-// ── PAINEL DEV: só exibe squads fictícias de teste ──────────────────────────
 let SQUADS = [
-  {id:'dev',         label:'Dev Sandbox',       icon:'🧪', color:'#38b6ff', wipLimit:3},
-  {id:'omnichannel', label:'Squad Omnichannel',  icon:'🛍️', color:'#f97316', wipLimit:3},
+  {id:'dados',         label:'Squad Dados e IA',               icon:'📊', color:'#38b6ff', wipLimit:3},
+  {id:'prf',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
+  {id:'midiacriativa', label:'Squad Mídia Criativa',       icon:'🎨', color:'#a855f7', wipLimit:3},
 ];
 // Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
 // URL helper: abre o board de um squad no kanban unificado
-function squadBoardUrl(squadId, cardId){ return 'kanban-dev.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
+function squadBoardUrl(squadId, cardId){ return 'kanban.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
 
-// Painel-dev: squads fixas, não carrega squads_meta de produção
+// Carrega squads criados via painel de setup do Firebase
 function loadExtraSquads(callback){
-  renderFilterBar(); renderGerenciaBar(); // painel-dev: SQUADS já fixo (não carrega squads_meta de produção) — ver early return abaixo
-  if(callback) callback();
-  return;
-  let firstRun=true; // eslint-disable-line
-  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{
+  let firstRun=true;
+  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{ _dbgTrack('squads_meta', snap.val());
     const val=snap.val()||{};
     let changed=false;
     Object.entries(val).forEach(([id,meta])=>{
@@ -7087,7 +7053,7 @@ function renderSquadLinks(){
   const wrap = document.getElementById('squad-links-wrap');
   if(!wrap) return;
   wrap.innerHTML = SQUADS.map(sq=>
-    `<a href="kanban-dev.html?squad=${sq.id}" target="_blank" class="btn" style="color:${sq.color};border-color:${sq.color}33;">${sq.icon} ${sq.label.replace('Squad ','')}</a>`
+    `<a href="kanban.html?squad=${sq.id}" target="_blank" class="btn" style="color:${sq.color};border-color:${sq.color}33;">${sq.icon} ${sq.label.replace('Squad ','')}</a>`
   ).join('');
 }
 // Renderiza os botões de filtro de squad (usados por squadVisible(), que já
@@ -7171,8 +7137,7 @@ window.addEventListener('fb-ready',()=>{
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
-  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao_dev'),snap=>{
-    _dbgTrack('lembretes_gestao_dev', snap.val());
+  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
     const val=snap.val();
     lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     if(typeof renderLembretesPainel==='function') renderLembretesPainel();
@@ -7186,8 +7151,9 @@ let kudosGeral = [];
 const KUDOS_GERAL_POLL_MS = 3*60000; // 3 minutos
 let _lastKudosGeralRefresh = 0;
 function loadKudosGeral(){
-  // ⚡ Mesmo padrão do path global do prod — convertido pra poll periódico
-  // (aba em primeiro plano) em vez de onValue em tempo real.
+  // ⚡ kudos_geral é GLOBAL e sem limpeza (só cresce) — antes era onValue,
+  // reenviando a lista inteira pra TODO painel/board aberto a cada kudos dado
+  // em QUALQUER squad. Trocado por poll periódico (aba em primeiro plano).
   _refreshKudosGeral();
   setInterval(()=>{ if(!document.hidden) _refreshKudosGeral(); }, KUDOS_GERAL_POLL_MS);
   document.addEventListener('visibilitychange', ()=>{
@@ -7197,7 +7163,8 @@ function loadKudosGeral(){
 }
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
-  window._get(window._ref(window._db,'kanban/painel/kudos_dev')).then(snap=>{
+  window._get(window._ref(window._db,'kanban/painel/kudos_geral')).then(snap=>{
+    _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     renderKudosPainel();
@@ -7269,7 +7236,7 @@ function addKudosPainel(){
     fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:'', fromFoto:u.photoURL||'',
     toInit:toU.init||'', toNome:toU.nome||'', texto, scope:'geral', ts:new Date().toISOString() };
   const arr=[...kudosGeral, obj];
-  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), arr)
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
     .then(()=>{ kudosGeral=arr; showToast('⭐ Estrela geral enviada!'); renderKudosPainel();
       // notifica o agraciado
       if(toUid && toUid!==u.uid){
@@ -7285,7 +7252,7 @@ function addKudosPainel(){
 }
 function delKudosPainel(id){
   const arr=kudosGeral.filter(k=>k.id!==id);
-  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), arr)
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
     .then(()=>{ kudosGeral=arr; renderKudosPainel(); }).catch(()=>{});
 }
 // ── Reações aos kudos no painel ──
@@ -7310,15 +7277,12 @@ function toggleKudospReaction(id, emoji){
   if(!k.reactions) k.reactions={};
   if(k.reactions[uid]===emoji) delete k.reactions[uid];
   else k.reactions[uid]=emoji;
-  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), kudosGeral).catch(()=>{});
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
   renderKudosPainel();
 }
 
 let _globalUsersCache = {}; // { uid: userObj }
 const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
-// Papéis atribuíveis POR SQUAD (mesmas 3 opções do dropdown de papel dentro do
-// próprio board) -- não inclui 'adm' (vem só da whitelist ADM_EMAILS) nem
-// 'convidado' (definido automaticamente pelo domínio do email).
 const SQUAD_ROLES = ['membro','organizador','po'];
 
 function openGlobalUsersModal(){
@@ -7330,13 +7294,146 @@ function closeGlobalUsersModal(){
 }
 
 function loadGlobalUsers(){
-  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
-    _dbgTrack('usuarios', snap.val());
+  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{ _dbgTrack('usuarios', snap.val());
     _globalUsersCache = snap.val() || {};
     renderGlobalUsers();
     if(typeof renderKudosPainel==='function') renderKudosPainel();
+    if(typeof renderPushmUsers==='function') renderPushmUsers();
   });
 }
+
+// ── PUSH MANUAL (aba Pessoas) ──────────────────────────────────────
+// Não faz NENHUMA leitura nova no Firebase: usa o _globalUsersCache que já é
+// mantido por um listener existente (loadGlobalUsers, acima). O envio em si é
+// só um write por pessoa selecionada em kanban/usuarios/{uid}/notificacoes/{id}
+// — a Cloud Function sendPushOnNotification já escuta esse path.
+let _pushmSelected = new Set();
+function renderPushmUsers(){
+  const wrap = document.getElementById('pushm-users');
+  if(!wrap) return;
+  const entries = Object.entries(_globalUsersCache||{})
+    .filter(([uid,u])=>u && (u.nome||u.email))
+    .sort((a,b)=>String(a[1].nome||a[1].email).localeCompare(String(b[1].nome||b[1].email)));
+  wrap.innerHTML = entries.map(([uid,u])=>{
+    const nome = esc(u.nome||u.email||u.init||uid);
+    const checked = _pushmSelected.has(uid) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:3px 4px;border-radius:5px;">
+      <input type="checkbox" ${checked} onchange="_pushmToggleUser('${esc(uid)}',this.checked)"> ${nome}
+    </label>`;
+  }).join('') || '<div style="font-size:10px;color:var(--txt3);">Nenhuma pessoa cadastrada ainda.</div>';
+  _pushmUpdateBtn();
+}
+function _pushmToggleUser(uid, checked){
+  if(checked) _pushmSelected.add(uid); else _pushmSelected.delete(uid);
+  const todosEl=document.getElementById('pushm-todos');
+  if(todosEl) todosEl.checked = _pushmSelected.size===Object.keys(_globalUsersCache||{}).length && _pushmSelected.size>0;
+  _pushmUpdateBtn();
+}
+function _pushmToggleTodos(checked){
+  _pushmSelected = checked ? new Set(Object.keys(_globalUsersCache||{})) : new Set();
+  renderPushmUsers();
+}
+function _pushmUpdateBtn(){
+  const count=_pushmSelected.size;
+  const countEl=document.getElementById('pushm-count');
+  if(countEl) countEl.textContent = count+' selecionado(s)';
+  const btn=document.getElementById('pushm-btn');
+  if(btn){ btn.disabled = count===0; btn.style.opacity = count===0 ? '.5' : '1'; }
+}
+async function sendPainelPush(){
+  if(!_isAdmPainel()){ showToast('🔒 Só administradores podem enviar push.'); return; }
+  const titulo=document.getElementById('pushm-title').value.trim();
+  const msg=document.getElementById('pushm-msg').value.trim();
+  if(!titulo || !msg){ showToast('⚠ Preencha título e mensagem.'); return; }
+  if(_pushmSelected.size===0){ showToast('⚠ Selecione ao menos uma pessoa.'); return; }
+  const alvo=[..._pushmSelected];
+  if(!await uiConfirm(`Enviar push pra ${alvo.length} pessoa(s)?\n\n"${titulo}" — ${msg}`, {title:'Confirmar envio', okText:'Enviar', cancelText:'Cancelar'})) return;
+  const btn=document.getElementById('pushm-btn'); if(btn){ btn.disabled=true; btn.textContent='Enviando...'; }
+  const ts=new Date().toISOString();
+  let ok=0, fail=0;
+  await Promise.all(alvo.map(async uid=>{
+    const nid='pm'+Date.now()+Math.random().toString(36).slice(2,6);
+    try{
+      await window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
+        id:nid, type:'painel_broadcast', title:titulo, sub:msg, read:false, ts, squad:'painel',
+      });
+      ok++;
+    }catch(e){ fail++; }
+  }));
+  // 1 registro só de histórico por envio, INDEPENDENTE de quantas pessoas — mandar pra
+  // 1 pessoa ou 200 custa a mesma coisa aqui. Guarda só os uids (strings), não os dados
+  // completos de cada pessoa, pra manter o registro pequeno.
+  const histId='ph'+Date.now()+Math.random().toString(36).slice(2,6);
+  window._set(window._ref(window._db,'kanban/pushes_historico/'+histId), {
+    id:histId, titulo, msg, alvoUids:alvo, count:ok, enviadoPor:window._currentUser?.displayName||window._currentUser?.email||'?', ts,
+  }).then(()=>{
+    // Se o histórico já foi carregado nesta sessão, atualiza o cache local em vez de
+    // re-buscar tudo do Firebase de novo.
+    if(_pushHistCache){
+      _pushHistCache[histId] = {id:histId, titulo, msg, alvoUids:alvo, count:ok, enviadoPor:window._currentUser?.displayName||window._currentUser?.email||'?', ts};
+      renderPushHist();
+    }
+  }).catch(()=>{});
+  if(btn){ btn.disabled=false; btn.textContent='🔔 Enviar push'; }
+  document.getElementById('pushm-title').value='';
+  document.getElementById('pushm-msg').value='';
+  _pushmSelected=new Set();
+  const todosEl=document.getElementById('pushm-todos'); if(todosEl) todosEl.checked=false;
+  renderPushmUsers();
+  showToast(fail===0 ? `🔔 Enviado pra ${ok} pessoa(s)!` : `🔔 ${ok} enviado(s), ${fail} falhou(aram).`);
+}
+
+// ── HISTÓRICO DE PUSHES (carregado sob demanda, não em toda abertura de aba) ──────
+let _pushHistCache = null; // null = ainda não carregado nesta sessão
+async function _togglePushHist(){
+  const wrap=document.getElementById('pushhist-wrap');
+  const caret=document.getElementById('pushhist-caret');
+  const opening = wrap.style.display==='none';
+  wrap.style.display = opening ? 'block' : 'none';
+  caret.textContent = opening ? '▼' : '▶';
+  if(opening && _pushHistCache===null){
+    document.getElementById('pushhist-list').innerHTML = '<div style="font-size:10px;color:var(--txt3);">Carregando...</div>';
+    // window._get = leitura ÚNICA (não é listener), não fica baixando de novo sozinha.
+    try{
+      const snap = await window._get(window._ref(window._db,'kanban/pushes_historico'));
+      _pushHistCache = snap.val() || {};
+    }catch(e){ _pushHistCache = {}; }
+    renderPushHist();
+  }
+}
+function renderPushHist(){
+  const el=document.getElementById('pushhist-list');
+  if(!el || !_pushHistCache) return;
+  const todos = Object.values(_pushHistCache).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))).slice(0,30);
+  if(!todos.length){ el.innerHTML='<div style="font-size:10px;color:var(--txt3);">Nenhum push enviado ainda.</div>'; return; }
+  el.innerHTML = todos.map(p=>{
+    const data = p.ts ? new Date(p.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:8px;padding:8px 10px;font-size:11px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:start;">
+        <div style="min-width:0;">
+          <div style="font-weight:600;color:var(--txt1);">${esc(p.titulo||'')}</div>
+          <div style="color:var(--txt3);font-size:10px;margin-top:2px;">${esc(p.msg||'')}</div>
+          <div style="color:var(--txt3);font-size:9px;margin-top:4px;">${data} · ${p.count||0} pessoa(s) · por ${esc(p.enviadoPor||'?')}</div>
+        </div>
+        <button onclick="_pushHistReenviar('${esc(p.id)}')" style="flex-shrink:0;padding:4px 10px;font-size:10px;background:rgba(29,233,182,.12);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:7px;cursor:pointer;white-space:nowrap;">↩ Reenviar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _pushHistReenviar(id){
+  const p = _pushHistCache?.[id]; if(!p) return;
+  document.getElementById('pushm-title').value = p.titulo||'';
+  document.getElementById('pushm-msg').value = p.msg||'';
+  // Só re-seleciona quem ainda existe no cadastro hoje — gente removida some da seleção
+  // silenciosamente (não dá erro, só não fica marcada).
+  const aindaExiste = (p.alvoUids||[]).filter(uid=>_globalUsersCache && _globalUsersCache[uid]);
+  _pushmSelected = new Set(aindaExiste);
+  renderPushmUsers();
+  const removidos = (p.alvoUids||[]).length - aindaExiste.length;
+  showToast(removidos>0 ? `↩ Preenchido (${removidos} pessoa(s) daquele envio não existem mais).` : '↩ Preenchido — revise e clique em Enviar.');
+  document.getElementById('pushm-title').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
 
 function renderGlobalUsers(){
   const list = document.getElementById('global-users-list');
@@ -7410,9 +7507,6 @@ function renderGlobalUsers(){
       chip.appendChild(cb);
       chip.appendChild(lbl);
 
-      // Papel DESTA pessoa NESTE squad especificamente -- squads_roles/{squadId}.
-      // Cada squad guarda seu próprio papel, então promover alguém aqui não
-      // afeta o papel dela em nenhum outro squad (mesma lógica usada no board).
       if(inSquad){
         const roleSel = document.createElement('select');
         roleSel.style.cssText = 'padding:1px 4px;font-size:9px;border:1px solid var(--glass-b);border-radius:5px;background:rgba(3,13,26,.9);color:var(--txt);cursor:pointer;margin-left:2px;';
@@ -7485,8 +7579,6 @@ function toggleUserSquad(uid, squadId, checked){
 }
 
 function updateSquadUserRole(uid, squadId, role){
-  // Grava só o papel PARA ESTE SQUAD (squads_roles/{squadId}) -- nunca mexe no
-  // campo global 'role', pra não vazar o papel de um squad pra outros da pessoa.
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+squadId), role)
     .then(()=>showToast('✅ Papel em '+squadId+' atualizado para '+role))
     .catch(e=>showToast('❌ '+e.message));
@@ -7570,16 +7662,27 @@ function _pollSquadSnapshots(sqId){
     .then(snap=>{ _dbgTrack('poll:squads/'+sqId+'/snapshots', snap.val()); snapshots[sqId]=snap.val()||{}; renderTrend(); })
     .catch(()=>{});
 }
-// Quando a aba volta a ficar visível, faz um refresh imediato de todos os
-// squads já rastreados (em vez de esperar até 60s pra atualizar de novo).
+// Quando a aba volta a ficar visível, faz um refresh de todos os squads já
+// rastreados — mas só se já tiver passado um tempo mínimo desde o último
+// refresh completo. Sem esse cooldown, cada troca de aba (ir olhar email,
+// Slack etc. e voltar) disparava um puxão do node /dados INTEIRO de TODOS
+// os squads de novo, mesmo que a pessoa tivesse saído e voltado há 5
+// segundos — isso foi identificado como uma fonte relevante de consumo de
+// download mesmo em uso de squad único, sem qualquer ação manual.
+const VISIBILITY_REFRESH_COOLDOWN_MS = 3*60000; // 3 minutos
+let _lastVisibilityRefresh = 0;
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden || !window._squadListeners) return;
+  const now = Date.now();
+  if(now - _lastVisibilityRefresh < VISIBILITY_REFRESH_COOLDOWN_MS) return; // ainda dentro do cooldown, ignora
+  _lastVisibilityRefresh = now;
   Object.keys(window._squadListeners).forEach(sqId=>{
     _pollSquadDados(sqId);
     _pollSquadSnapshots(sqId);
   });
 });
 function loadAll(){
+  _lastVisibilityRefresh = Date.now(); // conta como refresh recente, evita duplicar com o próximo visibilitychange
   // Antes disparava um setInterval por squad a cada POLL_MS (60s), rodando pra
   // sempre enquanto a aba do painel ficasse aberta em primeiro plano — isso
   // buscava o node /dados INTEIRO (cards+colunas+tags) de TODAS as squads a
@@ -8301,7 +8404,7 @@ function bsRenderExisting(){
         <div class="bs-board-id">kanban.html?squad=${sq.id}</div>
       </div>
       <div class="bs-board-actions">
-        <a href="kanban-dev.html?squad=${sq.id}" target="_blank"
+        <a href="kanban.html?squad=${sq.id}" target="_blank"
            style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(56,182,255,.3);border-radius:6px;">
           Abrir ↗
         </a>
@@ -8567,7 +8670,7 @@ function renderGlobalBackupStats(){
 // localStorage (mesmo motivo do board: era por navegador/dispositivo).
 let _gbCfgCache = {};
 function _initGbCfgListener(){
-  window._onValue(window._ref(window._db,'kanban/painel/config/backup_cfg_dev'), snap=>{
+  window._onValue(window._ref(window._db,'kanban/painel/config/backup_cfg'), snap=>{
     _gbCfgCache = snap.val() || {};
     updateGlobalBackupStatus();
     const lastEl = document.getElementById('gb-last-backup');
@@ -8588,7 +8691,7 @@ function saveGlobalBackupCfg(){
     lastRun:  _gbCfgCache.lastRun || null,
   };
   _gbCfgCache = cfg;
-  window._set(window._ref(window._db,'kanban/painel/config/backup_cfg_dev'), cfg).catch(()=>{});
+  window._set(window._ref(window._db,'kanban/painel/config/backup_cfg'), cfg).catch(()=>{});
   updateGlobalBackupStatus();
 }
 
@@ -8688,70 +8791,6 @@ window.addEventListener('auth-change', e=>{
 }, {once:true});
 
 // ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
-
-// ══ AUTO-UPDATE: detecta nova versão publicada e recarrega quando for seguro ══
-(function(){
-  const VERSION_KEY = 'painel';
-  const CHECK_INTERVAL_MS = 5*60*1000; // reconsulta a cada 5 min
-  const FIRST_CHECK_DELAY_MS = 20000;  // espera a app estabilizar antes da 1ª checagem
-  const IDLE_TIMEOUT_MS = 45*1000;     // precisa estar parado 45s pra recarregar sozinho
-  const IDLE_RECHECK_MS = 15*1000;
-  let lastActivity = Date.now();
-  ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt=>{
-    document.addEventListener(evt, ()=>{ lastActivity = Date.now(); }, {passive:true});
-  });
-  function _auGetCurrentVersion(){
-    const el = document.querySelector('.version');
-    return el ? el.textContent.trim() : '';
-  }
-  function _auModalOpen(){
-    if(document.querySelector('.ov.open, .cfg-ov.open, .pev-modal-ov.open, .pc-modal-ov.open, #board-setup-ov.open')) return true;
-    if(document.getElementById('global-backup-ov')?.style.display==='flex') return true;
-    return false;
-  }
-  function _auTyping(){
-    const a = document.activeElement;
-    if(!a) return false;
-    if(['INPUT','TEXTAREA','SELECT'].includes(a.tagName)) return true;
-    if(a.isContentEditable) return true;
-    return false;
-  }
-  let _auPollTimer=null, _auIdleTimer=null, _auBannerShown=false;
-  function _auShowBanner(){
-    if(_auBannerShown) return;
-    _auBannerShown = true;
-    const b = document.createElement('div');
-    b.id='_au-banner';
-    b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:rgba(4,22,39,.97);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);backdrop-filter:blur(14px);font-family:"DM Sans",sans-serif;font-size:12px;color:var(--txt,#e8f4fd);';
-    b.innerHTML = '<span>🔄 Nova versão disponível</span><button id="_au-banner-btn" style="background:rgba(56,182,255,.18);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600;font-family:inherit;">Atualizar agora</button>';
-    document.body.appendChild(b);
-    document.getElementById('_au-banner-btn').onclick=()=>location.reload();
-    _auIdleTimer = setInterval(_auTryIdleReload, IDLE_RECHECK_MS);
-  }
-  function _auTryIdleReload(){
-    const idleFor = Date.now()-lastActivity;
-    if(idleFor >= IDLE_TIMEOUT_MS && !_auModalOpen() && !_auTyping()){
-      location.reload();
-    }
-  }
-  async function _auCheckVersion(){
-    try{
-      const res = await fetch('version.json?_='+Date.now(), {cache:'no-store'});
-      if(!res.ok) return;
-      const data = await res.json();
-      const remote = data[VERSION_KEY];
-      const current = _auGetCurrentVersion();
-      if(remote && current && remote!==current){
-        if(_auPollTimer){ clearInterval(_auPollTimer); _auPollTimer=null; }
-        _auShowBanner();
-      }
-    }catch(e){ /* offline ou erro de rede — ignora silenciosamente */ }
-  }
-  setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
-  _auPollTimer = setInterval(_auCheckVersion, CHECK_INTERVAL_MS);
-})();
-// ══ FIM AUTO-UPDATE ══
-
 
 </script>
 
