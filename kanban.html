@@ -296,20 +296,43 @@
    escuro sem filtro vs. o filtro de baixo) — cores mais claras da
    paleta (Feature #ffd166, OKR #ffd700) ainda ficavam fracas com
    brightness(.68); baixado mais um degrau. */
+/* brightness()+drop-shadow(currentColor) (2 rodadas anteriores) só
+   escurecia o TEXTO/borda — o que continuava fraco era o PREENCHIMENTO:
+   o fundo de cada pill é a mesma cor clara mas com alpha baixo (ex.
+   rgba(255,209,102,.12) no 👕 tamanho), e alpha-blend de uma cor clara
+   a 12% sobre um card quase-branco já é quase invisível ANTES de
+   qualquer filter — escurecer essa mistura só troca "quase invisível
+   claro" por "quase invisível escuro". Comparei 4 técnicas num artefato
+   visual antes de mexer aqui (pedido direto: "testa e me traz como
+   artefato pra ver antes de subir"). A 1ª escolha (mix-blend-mode:
+   multiply, mantendo a cor viva original) saiu clara demais na prática
+   ("ficou mt claro agora kkkk") — trocado pela opção D do artefato:
+   reforça o ALPHA do preenchimento primeiro (inset box-shadow na
+   própria cor de cada tag, antes de qualquer escurecimento) e só
+   DEPOIS escurece fundo+borda+texto juntos de forma consistente
+   (brightness+saturate, já validado por legibilidade nos rounds
+   anteriores) — pill sólida e saturada em vez de um tingimento fraco.
+   drop-shadow(currentColor) por cima devolve o glow na cor viva de
+   cada tag. Pedido direto: "as fontes/labels/tags no claro tão meio
+   escurecidas, no escuro elas têm uma pegada neon, mais acesas" →
+   "elas tao apagadas... colocaria mais luz". */
 [data-theme="light"] .card-tag{
-  filter:brightness(.5) saturate(1.4);
+  box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
+  filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 /* Mesmo problema do .card-tag acima, em outros 3 badges do topo do card
    que NÃO passam por tagHtml() e por isso ficaram de fora daquele fix:
    status do executor/agente (.exec-chip), prazo (.due-badge) e risco
    (.risco-badge, sem classe própria até agora — adicionada só pra dar
    um gancho de CSS aqui). Todos usam a mesma paleta clara/saturada
-   pensada pro fundo escuro. Feedback direto: "status dos agentes, prazo
-   e o badge de risco ainda sem leitura, aumenta o contraste". */
+   pensada pro fundo escuro, mesma técnica de reforço de preenchimento
+   acima. Feedback direto: "status dos agentes, prazo e o badge de
+   risco ainda sem leitura, aumenta o contraste". */
 [data-theme="light"] .exec-chip,
 [data-theme="light"] .due-badge,
 [data-theme="light"] .risco-badge{
-  filter:brightness(.5) saturate(1.4);
+  box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
+  filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 /* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
    due date): fundo é um tint de 15% da cor da coluna, texto era um
@@ -318,12 +341,14 @@
    de 15% sobre um fundo quase-preto ainda contrasta com branco).
    Trocado o texto pra usar a própria cor da coluna (mesmo padrão de
    "fundo pálido + texto saturado" que .card-tag já usa) — e como isso
-   tem o mesmo problema de contraste no claro, ganha o mesmo filter.
-   Feedback direto: "calendário n da pra ler nada". Pílulas de Evento
-   (.cal-event sem essa subclasse) não são afetadas — usam fundo opaco
-   com texto já escolhido pra contraste, não dependem de tema. */
+   tem o mesmo problema de contraste no claro, ganha o mesmo reforço de
+   preenchimento. Feedback direto: "calendário n da pra ler nada".
+   Pílulas de Evento (.cal-event sem essa subclasse) não são afetadas —
+   usam fundo opaco com texto já escolhido pra contraste, não dependem
+   de tema. */
 [data-theme="light"] .cal-event-prazo{
-  filter:brightness(.5) saturate(1.4);
+  box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
+  filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -1852,6 +1877,21 @@ input[type="date"]{-moz-appearance:textfield;}
    aparecer". Troca pra um dourado escurecido/saturado (dark goldenrod),
    bem mais opaco, só no claro. */
 [data-theme="light"] .card.okr-card{border-color:rgba(184,134,11,.85)!important;box-shadow:0 0 8px rgba(184,134,11,.25);}
+/* Supercard — mesmo problema dos outros badges/bordas roxo-claro pensados
+   pro fundo escuro: a borda #a78bfa e o texto #c4b5fd de ".super-rollup-hd"
+   ficam quase invisíveis num card claro. Feedback direto ("muito ruim de
+   ler o supercard no modo claro"), print mostrando o rótulo "CARDS FILHOS"
+   e os itens da lista praticamente somem no claro. Borda: mesmo padrão de
+   .okr-card (cor mais escura/saturada, só no claro). Texto do cabeçalho:
+   mesmo filter usado em .exec-chip/.due-badge/.risco-badge acima. */
+[data-theme="light"] .card.supercard{border-left-color:#6d28d9;}
+[data-theme="light"] .super-rollup-hd{filter:brightness(.55) saturate(1.4);}
+/* Botão "✕" de remover filho (dentro do modal do card) — rgba(200,230,255,.25)
+   é um branco-azulado quase transparente, pensado pra "quase invisível até
+   passar o mouse" no fundo escuro; no claro isso já nasce invisível de
+   propósito errado. Troca pra um tom escuro equivalente (mesmo espírito de
+   --txt3 no claro), mantendo o hover em --danger (já funciona nos dois temas). */
+[data-theme="light"] .minicard-rm{color:rgba(20,50,74,.35);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
 .cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -5005,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.232</div>
+<div class="version">v8.30.233</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
