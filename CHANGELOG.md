@@ -1272,6 +1272,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.354-dev — 2026-08-10
+Central de Ajuda (❓, Ctrl+K) atualizada: o item "🧾 Receitas prontas"
+do help de Supercard agora menciona que dá pra digitar vários nomes de
+filho de uma vez, separados por vírgula (já valia desde a v8.30.351-dev,
+mas só o texto da aba Config tinha sido atualizado).
+
 ### v8.30.353-dev — 2026-08-10 — REGRESSÃO CRÍTICA
 Bug reportado: "aplico a receita ao card pai na criação, aparecem os
 filhos, mas não salva — não sei se foi aquele ponto de não salvar
