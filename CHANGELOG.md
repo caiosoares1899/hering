@@ -1205,6 +1205,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.345-dev — 2026-08-10
+Continuação do v8.30.344-dev: o `drop-shadow(currentColor)` melhorou
+texto/borda, mas as tags continuavam "apagadas" — feedback direto com
+print apontando o 👕 tamanho. Antes de mexer de novo às cegas, montei
+um artefato comparando 4 técnicas lado a lado (réplica pixel-a-pixel
+do card real) e o usuário escolheu a opção **C**.
+
+- Diagnóstico: o problema nunca foi o brilho do texto, e sim o
+  **preenchimento** — cada pill usa uma cor clara com alpha baixo (ex.
+  `rgba(255,209,102,.12)` no 👕), e alpha-blend de cor clara a 12%
+  sobre um card quase-branco já é quase invisível antes de qualquer
+  filter; escurecer essa mistura só troca "apagado claro" por
+  "apagado escuro".
+- Trocado `brightness(.5) saturate(1.4) drop-shadow(...)` por
+  `mix-blend-mode:multiply` (+ `isolation:isolate` + `saturate(1.15)`)
+  em `.card-tag`, `.exec-chip`, `.due-badge`, `.risco-badge` e
+  `.cal-event-prazo` no tema claro. Mantém a cor viva ORIGINAL de cada
+  tag (pensada pro escuro) e multiplica contra o fundo do card em vez
+  de diluir por alpha — mesma saturação do tema escuro, sem escurecer
+  o texto.
+- Puramente visual, não muda legibilidade nem dado nenhum.
+
 ### v8.30.344-dev — 2026-08-09
 Correção de rota: o pedido anterior (v8.30.343-dev) tinha entendido
 "deixa mais aceso, meio que neon" como um pulso animado no card "seu
