@@ -1310,6 +1310,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.363-dev — 2026-08-10
+Feedback direto com print: "com esse novo fundo com filtro, a função
+meus cards tao muito claro nos dois modos claros".
+
+- **Causa**: o botão "💡 Meus cards" usa `color:var(--warn)` (dourado,
+  pensado pro tema escuro) sem fundo próprio — com o painel novo da
+  barra de Filtros (v8.30.357-dev) por baixo, ficou ainda mais apagado
+  (mesma categoria de problema já corrigida nas tags/badges, v8.30.350-
+  dev — só que essa instância específica, sendo um `<button>` e não uma
+  `.card-tag`/`.exec-chip`/etc., tinha ficado de fora daquele fix).
+- Reaproveita a mesma técnica já validada (reforço de preenchimento +
+  escurecimento) em `#btn-meus-cards`, vale no claro padrão e na
+  variante B.
+
 ### v8.30.362-dev — 2026-08-10
 Feedback direto: "nao mudou o branco dos cards! acho q pode dar uma
 escurecida nele tb" — o tingimento da v8.30.361-dev tinha efeito quase
