@@ -3995,7 +3995,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div class="cfg-sec-title" style="margin-bottom:0;">🧩 Receitas de Supercard (fan-out)</div>
         <button class="btn btn-sm" onclick="criarFanoutTemplate()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova receita</button>
       </div>
-      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Defina de antemão os cards filhos que uma receita gera — ex.: "Campanha de mídia paga" → Feed, Stories, Reels, Display... Cada filho nasce com o título "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/demandante do pai. Opcionalmente, vincule cada filho a um <b>📋 Modelo</b> (crie um em ⚡ Funções de card → Modelos) pra ele nascer já estruturado — descrição, checklist, tags e riscos vêm do modelo. Use manualmente (botão "🧩 Aplicar receita" dentro de qualquer card) ou automaticamente, com a ação "🧩 Aplicar fan-out" numa regra abaixo.</p>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Defina de antemão os cards filhos que uma receita gera — ex.: "Campanha de mídia paga" → Feed, Stories, Reels, Display... (dá pra digitar vários de uma vez, separados por vírgula). Cada filho nasce com o título "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/demandante do pai. Opcionalmente, vincule cada filho — e também o <b>👑 card pai</b> — a um <b>📋 Modelo</b> (crie um em ⚡ Funções de card → Modelos) pra nascer/ficar já estruturado: descrição, checklist, tags e riscos vêm do modelo, sem apagar o que já estiver preenchido. Use manualmente (botão "🧩 Aplicar receita" dentro de qualquer card) ou automaticamente, com a ação "🧩 Aplicar fan-out" numa regra abaixo.</p>
       <div id="fanout-cfg-list" style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px;"></div>
 
       <div class="cfg-sec-title">⚡ Automações do board</div>
@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.350-dev</div>
+<div class="version">v8.30.351-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18330,10 +18330,13 @@ function initSuperChildren(card){
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
   hideSuperChildDropdown();
   // Botão "🧩 Aplicar receita" — só aparece se existir alguma receita de
-  // fan-out configurada (ver bloco RECEITAS DE FAN-OUT / cfgtab-auto).
+  // fan-out configurada com pelo menos 1 filho (uma receita vazia é clique
+  // morto: cai direto no toast "essa receita ainda não tem cards filhos
+  // configurados" dentro de applyFanoutToCurrentCard() — filtrado aqui pra
+  // nem aparecer na lista, em vez de deixar a pessoa descobrir clicando).
   const fanoutBtn=document.getElementById('m-super-fanout-btn');
   const fanoutDd=document.getElementById('m-super-fanout-dd');
-  const tplIds=Object.keys(fanoutTemplates||{});
+  const tplIds=Object.keys(fanoutTemplates||{}).filter(id=>(fanoutTemplates[id].filhos||[]).length>0);
   if(fanoutBtn) fanoutBtn.style.display = tplIds.length ? '' : 'none';
   if(fanoutDd){
     fanoutDd.classList.remove('show');
@@ -21038,10 +21041,16 @@ async function excluirFanoutTemplate(id){
 }
 async function addFanoutFilho(id){
   const f=fanoutTemplates[id]; if(!f) return;
-  const sufixo=await uiPrompt('Nome do card filho (some ao título do card pai — ex.: "Feed"):', '', {title:'+ Card filho da receita'});
-  if(sufixo===null) return;
-  const t=sufixo.trim(); if(!t) return;
-  const filhos=[...(f.filhos||[]), {sufixo:t}];
+  // Aceita vários nomes separados por vírgula numa tacada só — o caso de uso
+  // que originou a receita é "um pedido vira uns 6 cards" (Feed/Stories/
+  // Reels/Display/...); antes disso, cada filho exigia seu próprio "+ Card
+  // filho" clicado e digitado em separado. Simplificação de UX, não muda o
+  // dado (cada nome ainda vira um {sufixo} independente).
+  const texto=await uiPrompt('Nome do(s) card(s) filho(s) — separe por vírgula pra criar vários de uma vez (ex.: "Feed, Stories, Reels"):', '', {title:'+ Card(s) filho(s) da receita'});
+  if(texto===null) return;
+  const nomes=texto.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!nomes.length) return;
+  const filhos=[...(f.filhos||[]), ...nomes.map(sufixo=>({sufixo}))];
   fanoutTemplates={...fanoutTemplates, [id]:{...f, filhos}};
   fbSet(FB+'/config/fanout_templates', fanoutTemplates);
   renderFanoutCfg();

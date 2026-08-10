@@ -1249,6 +1249,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.351-dev — 2026-08-10
+Revisão pedida do fluxo de Supercard/fan-out inteiro, atrás de
+simplificação e melhoria de UX (não bug report). 3 ajustes de baixo
+risco aplicados; outros pontos (dedup de código, batch-input real com
+textarea) ficam de recomendação — ver conversa.
+
+- **Receitas vazias somem do dropdown "🧩 Aplicar receita"**: antes
+  toda receita cadastrada aparecia, mesmo sem nenhum filho configurado
+  — clicar caía direto num toast de erro ("essa receita ainda não tem
+  cards filhos"). Filtrado na origem.
+- **Adicionar vários filhos de uma vez**: "+ Card filho" aceita nomes
+  separados por vírgula (ex.: "Feed, Stories, Reels") em vez de exigir
+  um clique+prompt por filho — reduz o atrito de montar uma receita
+  com vários formatos, que era o próprio caso de uso original.
+- Texto de ajuda da aba Automações atualizado (menciona o modelo do
+  card pai, que ainda não estava documentado ali).
+
 ### v8.30.350-dev — 2026-08-10
 Dois bugs reais reportados no teste do modelo de card pai (2ª rodada):
 "n ta pegando... descrição, data e submarcas" + "cancelei o card mas
