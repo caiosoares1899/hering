@@ -5996,9 +5996,82 @@ function loadComunicados(){
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
   {
-    id: 'seed_teste_comunicados_dev_2026_07',
-    titulo: '🧪 Teste: sistema de comunicados funcionando',
-    corpo: '<p>Este é um rascunho de <b>teste</b> do ambiente dev. Clique em "Revisar e publicar" pra testar o fluxo completo.</p>',
+    id: 'seed_supercard_fanout_2026_08_09',
+    titulo: '🧩 Novidade: Supercard (cards filhos) + filtros na aba Insights',
+    corpo: '<p>Pedido direto do time de Mídia Alcance: quando um pedido vira vários cards (formato/veículo/teste diferentes), agora dá pra agrupar isso num <b>supercard</b> em vez de espalhar solto no board.</p><p>Dentro de qualquer card, na seção "🔗 Vínculos & anexos", tem "🧩 Cards filhos (supercard)" — vincula um card já existente, digita um título novo e aperta Enter pra criar um filho na hora, ou aplica uma <b>receita pronta</b> (configurável em ⚙ Config → Automações) que cria vários filhos de uma vez (ex.: Feed, Stories, Reels...). Funciona até num card ainda sendo criado, antes de salvar pela 1ª vez. O card pai passa a mostrar, direto no board, o progresso dos filhos ("3/6 concluído(s)"). Pra quem usa muito, um botão "← Voltar" no topo do card ajuda a navegar entre pai e filhos sem se perder.</p><p>Quem quiser, também dá pra configurar uma receita pra disparar sozinha via automação (ação "🧩 Aplicar fan-out").</p><p><b>Bônus:</b> a aba "💡 Insights" (dentro de 📊 Dados do Board) ganhou filtro de período (ativos agora, ou só os criados nos últimos 7/14/30/90 dias) e filtro por tag.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_insights_dados_board_2026_08_09',
+    titulo: '💡 Novidade: aba Insights em "Dados do Board"',
+    corpo: '<p>O painel "📊 Dados do Board" (botão no header do board) ganhou uma nova aba: <b>💡 Insights</b>, ao lado da Visão Geral já existente.</p><p>Pensada pra PO/ADM entenderem rápido como a squad está, sem precisar vasculhar card por card: distribuição dos cards ativos por <b>prioridade</b> (com aviso se a fatia de "Crítica" estiver desproporcional), <b>carga por responsável</b> (com aviso quando alguém está com bem mais cards que a média do time), os cards com <b>mais riscos mapeados</b> em aberto, cards marcados como <b>OKR</b> por coluna, e os cards <b>parados há mais tempo</b> sem edição (1+ sprint). Squads que usam o campo Submarca também veem a distribuição por submarca.</p><p>Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_tamanho_fonte_board_2026_08_04',
+    titulo: '🔍 Novidade: tamanho da fonte do board agora é ajustável',
+    corpo: '<p>Chegou um pedido de várias pessoas com dificuldade de leitura no board — resolvido!</p><p><b>🔍 Novo botão "Fonte" na barra de ferramentas</b> — clique nele e escolha entre <b>Pequena, Padrão, Grande ou Muito grande</b>. O tamanho escolhido aumenta os cards, tags, títulos e prazos proporcionalmente, deixando tudo mais fácil de ler.</p><p>É uma preferência <b>pessoal</b> — cada pessoa escolhe o tamanho que prefere, e fica salvo só no seu navegador (não muda o que os outros veem, e não sincroniza entre computador e celular).</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_submarca_10_tags_menu_2026_08_04b',
+    titulo: '🏷️ Novidades: Submarca agora separa Comercial e Cadastro',
+    corpo: '<p>Mais atualizações no board de hoje, pro squad Site Hering principalmente:</p><p><b>🏷️ Submarca virou 10 opções</b> — cada marca (Adulto, Kids, Sports, Intimates, Teen) agora se divide em <b>Comercial</b> e <b>Cadastro</b>, os dois times que atuam em cada uma. Ex.: em vez de só "Hering Kids", agora tem "Hering Kids Comercial" e "Hering Kids Cadastro" como opções separadas no campo do card.</p><p><b>🔍 Filtro de Submarca virou menu</b> — com 10 opções não cabia mais como fileira de botões, então agora é um menu suspenso "🏷️ Submarcas ▾" na barra de ferramentas do board (logo depois do botão Filtros). Clique pra abrir e marque quantas quiser — as opções vêm agrupadas por marca, pra ficar fácil de achar.</p><p><b>📥 Import do Trello mais esperto</b> — se uma label do Trello tem o mesmo nome de uma opção de Submarca (ex.: "Hering Adulto Comercial"), o card importado já nasce com a submarca certa marcada, sem precisar arrumar depois.</p><p><b>🐟 Bônus: os peixinhos do fundo agora são opcionais</b> — clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra ligar ou desligar a animação. É só sua preferência, fica salva no seu navegador.</p><p><b>Atenção:</b> se algum card já tinha sido marcado com uma das 5 submarcas antigas (sem Comercial/Cadastro), essa marcação ficou "órfã" — precisa reabrir o card e escolher a opção nova correspondente.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_prazo_submarca_obrigatorios_2026_08_04',
+    titulo: '⚠️ Novidades: Prazo obrigatório no card + filtros de Submarca melhorados',
+    corpo: '<p>Algumas mudanças no board a partir de hoje:</p><p><b>📅 Prazo agora é obrigatório</b><br>Não dá mais pra salvar um card (novo ou editado) sem definir um Prazo. Se ainda não tem uma data certa, tem um botão novo "🚫 Sem prazo definido" embaixo do campo Prazo — clique nele em vez de chutar uma data. É só um clique, e o card salva normalmente.</p><p><b>🏷️ Submarca também virou obrigatória</b> (só pra quem usa esse campo, hoje o squad Site Hering) — não dá mais pra salvar um card sem escolher qual submarca é (Adulto, Kids, Sports, Intimates ou Teens).</p><p><b>🔍 Filtros rápidos de Submarca melhorados</b> (Site Hering): os botões de filtro no topo do board não quebram mais linha, e agora dá pra marcar mais de uma submarca ao mesmo tempo (ex.: Kids + Teens juntas).</p><p>Também corrigimos, nos bastidores, uma causa de lentidão/consumo alto de dados em squads muito movimentados — não precisa fazer nada, foi um ajuste interno de performance.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_modelo_card_aberto_duplicar_coluna_2026_08',
+    titulo: '📥 Novidades: usar modelo no card já aberto + escolher coluna ao duplicar',
+    corpo: '<p>Duas melhorias novas no board, direto no modal do card:</p><p><b>📥 Usar modelo num card já aberto</b><br>Antes, aplicar um modelo sempre abria um card novo do zero. Agora tem um botão "📥 Usar modelo" no rodapé do card que você já está editando — ele aplica o modelo <b>sem apagar nada</b> do que você já preencheu: checklist e riscos do modelo são somados aos que já existem (sem duplicar), tags são somadas, e descrição/PO só entram se ainda estiverem vazios.</p><p><b>⧉ Escolher a coluna ao duplicar</b><br>O modal de "Duplicar" agora deixa escolher em qual coluna a cópia deve nascer (antes ela sempre repetia a coluna do card original, sem opção). E depois de duplicar, a cópia já abre sozinha pra edição — não precisa mais procurar ela no board.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_backup_automatico_2026_07',
+    titulo: '🔧 Backup automático agora funciona de verdade',
+    corpo: '<p>Encontramos e corrigimos um problema sério: o backup semanal automático (board e painel) dependia de manter uma aba do navegador aberta ininterruptamente por até 7 dias — o que na prática nunca acontecia.</p><p>Agora a checagem roda toda vez que alguém abre o board ou o painel: se já passaram 7+ dias desde o último backup, ele dispara na hora. A configuração (email, chaves do EmailJS) também deixou de ficar presa a um navegador específico — agora fica salva no Firebase, compartilhada entre qualquer dispositivo.</p><p><b>Ação sugerida:</b> se você já tinha configurado o backup antes, abra a aba Backup (no board e no painel) e reconfigure uma vez — a config antiga estava só no seu navegador local e não migra sozinha.</p>',
+    tipo: 'aviso',
+    squad: '*',
+  },
+  {
+    id: 'seed_rascunhos_comunicados_2026_07',
+    titulo: '🤖 Novidades agora chegam como rascunho pra você revisar',
+    corpo: '<p>A partir de agora, sempre que uma funcionalidade relevante for concluída, um rascunho de comunicado é preparado automaticamente — mas <b>nunca publicado sem sua revisão</b>.</p><p>Você vai encontrá-los na aba Pessoas → 📢 Comunicados, numa seção separada "🤖 Rascunhos aguardando sua revisão". De lá, é só clicar em "Revisar e publicar" pra abrir o editor já preenchido (ajuste o que quiser) ou "Descartar" se não fizer sentido avisar o time.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_novidades_semana_2026_07_07',
+    titulo: '🚀 Novidades do Maré Digital — semana de 04–05/jul',
+    corpo: `<p>Fizemos várias melhorias no board e no painel essa semana. Aqui o resumo do que chegou pra vocês:</p>
+
+<p><b>❓ Ajuda contextual em todo o board</b><br>
+Agora tem um botão <b>?</b> discreto em vários pontos do board — Calendário, Agendas, Relatório de Tempo, WIP, Mural, Impedimento, Recorrentes, Modelos e Estrelas. Passe o mouse pra ver uma explicação rápida da funcionalidade, com link pra ir direto no Help Content completo.</p>
+
+<p><b>🔍 Busca no Help (Ctrl+K)</b><br>
+A Central de Ajuda ganhou campo de busca. Use <b>Ctrl+K</b> (ou Cmd+K no Mac) pra abrir e já digitar o que procura — a busca funciona em todas as seções ao mesmo tempo, com destaque do termo encontrado.</p>
+
+<p><b>📢 Sistema de Comunicados (Mural)</b><br>
+Clique no botão 📢 no header do board pra ver avisos do ADM e novidades. Tem também a aba <b>"Fale com o ADM"</b> — use pra reportar problemas, dar sugestões ou tirar dúvidas sem precisar de mensagem no WhatsApp.</p>
+
+<p><b>🔔 Sino mais esperto</b><br>
+O sininho agora treme a cada 30 minutos enquanto você tiver notificações não lidas. E se você abrir o board num dia diferente com notificações pendentes, aparece um lembrete. O botão <b>"Limpar antigas"</b> também foi corrigido — agora remove todas as já lidas de uma vez.</p>
+
+<p><b>💾 Backup automático de verdade</b><br>
+O backup semanal agora funciona de fato — ele rodava só se a aba ficasse aberta por 7 dias, o que nunca acontecia. Agora verifica na abertura e roda se estiver atrasado, de qualquer dispositivo. Se você já tinha configurado, vale reconfigurar uma vez em <b>Config → Backup</b>.</p>
+
+<p>Qualquer dúvida ou problema, use o <b>Fale com o ADM</b> no Mural 📢 ou chama direto!</p>`,
     tipo: 'novidade',
     squad: '*',
   },

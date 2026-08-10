@@ -4257,6 +4257,17 @@ por squad/gerência na Visão Geral.
   atualmente visíveis (respeita o filtro de squad/gerência acima):
   prioridade, carga por responsável, riscos, OKR por coluna, aging e
   submarca — zero leitura nova do Firebase.
+- 📢 **Rascunho de aviso do supercard** semeado em
+  `COMUNICADO_RASCUNHOS_SEED`, junto com o resto do lote de kanban.html
+  v8.30.231.
+- ⚠️ Nota interna: a 1ª tentativa de aplicar este diff (patch bruto do
+  `painel-dev.html`) trocou `COMUNICADO_RASCUNHOS_SEED` inteiro pelo
+  array de dev (que tem só um rascunho de teste) — `painel.html` e
+  `painel-dev.html` mantêm rascunhos DIFERENTES de propósito (prod
+  guarda o histórico real de avisos; dev só tem um de teste), então
+  esse campo nunca deveria ter entrado no diff de promoção. Corrigido
+  antes do merge — os 8 rascunhos reais de `painel.html` foram
+  restaurados, mais o novo do supercard.
 
 ### painel.html v2.96 · painel — 2026-08-09 · rascunho de aviso (promoção do kanban v8.30.230)
 Adiciona ao `COMUNICADO_RASCUNHOS_SEED` o rascunho de aviso pra aba
