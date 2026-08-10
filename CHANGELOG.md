@@ -18,6 +18,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.238 — 2026-08-10 · promove pra prod (PRs #282–#286) — tema claro
+Promove pra produção o ajuste de contraste do tema claro, validado em
+dev por várias rodadas de feedback direto:
+
+- ☀️ **Tema claro padrão** continua a mesma paleta de sempre (a da
+  v8.30.237) — ninguém é afetado sem pedir.
+- 🌙☀️ **Duplo-clique no botão de tema, dentro do claro**, alterna pra
+  uma variante mais escura e com azul mais profundo (opcional,
+  persistente — fica salva no navegador de quem escolher). Clique único
+  continua alternando claro/escuro normalmente.
+- 🎨 Título das colunas ganha um tom mais suave (cinza-azulado em vez
+  de quase-preto) e o fundo dos cards perde a camada de branco puro que
+  diluía qualquer tingimento — os dois valem tanto no claro padrão
+  quanto na variante escura.
+- Puramente visual, não muda dado nenhum.
+
 ### v8.30.237 — 2026-08-10 · promove pra prod (PRs #278–#280)
 Promove pra produção o filtro de Supercards e o redesenho da barra de
 Filtros, ambos validados em dev:
