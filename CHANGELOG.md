@@ -1294,6 +1294,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.360-dev — 2026-08-10
+Pedido direto: "guarda esse estilo B aí... coloca o anterior (da versão
+8.30.237) como default do claro mas se a pessoa clicar 2x, vai pra essa
+opção B". Vira uma preferência opcional em vez de substituir o padrão:
+
+- Tema claro padrão volta a ser a paleta original (v8.30.237: `--deep
+  #CBE3F2`, `--blue #00A9E6`, `--txt #14324A`, etc.) — as 2 rodadas de
+  escurecimento (v8.30.358/359-dev) viram uma **variante opcional**,
+  não o padrão pra todo mundo.
+- Nova regra `[data-theme="light"][data-theme-variant="b"]` sobrescreve
+  só os tokens de cor (mesma paleta "B" testada) quando a variante está
+  ativa — reaproveita todo o resto do CSS do tema claro (fish/bubbles,
+  `.card-mine`, botões da toolbar etc.), sem duplicar nada.
+- **Duplo-clique** no botão de tema (🌙/☀️, header) alterna a variante,
+  só dentro do claro (no escuro, um toast avisa que a opção não existe
+  lá). Clique único continua alternando claro/escuro como sempre.
+- Clique único e duplo-clique no mesmo botão precisam de um pequeno
+  debounce (260ms) pra não disparar 2 toggles de tema (flash visível)
+  antes do duplo-clique real ser reconhecido — ver comentário em
+  `onThemeBtnClick()`.
+- Persistência própria (`mare_theme_variant` no localStorage),
+  independente do dark/light — trocar de tema não reseta a variante
+  escolhida.
+
 ### v8.30.359-dev — 2026-08-10
 Pedido direto: "bota o plano B" — troca a candidata "C" (v8.30.358-dev)
 pela "B" do mesmo artefato visual, um degrau mais clara que a C.
