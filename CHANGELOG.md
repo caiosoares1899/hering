@@ -1278,6 +1278,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.357-dev — 2026-08-10
+Feedback direto (mais amplo que o do v8.30.356-dev): "essas duas linhas
+do jeito que tão, achei feio, vazio!" — sobre a barra de Filtros como
+um todo, não só o checkbox novo.
+
+- **Causa**: `#filter-bar` não tinha fundo/borda própria — selects e
+  checkboxes ficavam soltos direto em cima do fundo translúcido do
+  board, com bastante espaço "vazio" se misturando com o fundo atrás.
+- Testado antes de aplicar (artefato visual, 3 candidatas comparadas
+  lado a lado no board real, dark e light) — escolhida a opção com
+  painel + agrupamento.
+- `#filter-bar` ganha um container próprio (`.filter-bar-panel`,
+  reaproveita o mesmo tratamento visual do `.goal-bar` já existente:
+  fundo translúcido + blur + borda). Campos de filtro, checkboxes
+  rápidos e botões de ação agora ficam agrupados em 3 blocos
+  (`.fb-group`) separados por divisores verticais (reaproveita o
+  `.tb-sep` que já existe no toolbar).
+- Nenhum `id`/`onchange` mudou — só a estrutura visual em volta.
+
 ### v8.30.356-dev — 2026-08-10
 Feedback direto sobre o filtro novo: "funcionou mas esse layout eu n
 gosto... fica feio e quebrado". Causa: o checkbox "🧩 Supercards" era o

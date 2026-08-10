@@ -412,6 +412,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* toolbar */
 .toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
+/* Painel da barra de Filtros — antes os selects/checkboxes ficavam soltos
+   direto em cima do fundo do board (translúcido, com peixinhos atrás),
+   sem nenhuma superfície própria. Feedback direto: "essas duas linhas do
+   jeito que tão, achei feio, vazio!". Reaproveita o mesmo tratamento do
+   .goal-bar acima (fundo translúcido + blur + borda) em vez de inventar
+   um estilo novo. .fb-group separa "campos de filtro" de "opções rápidas"
+   e "ações" (usa o .tb-sep já existente do toolbar como divisor). */
+.filter-bar-panel{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-b);border-radius:var(--r);padding:9px 12px;}
+.fb-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
 /* sprint goal bar — fundo opaco (era 12% de opacidade e deixava as bolhas/peixes
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
 .goal-bar{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;position:relative;z-index:2;}
@@ -2791,8 +2800,9 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
 
-<div id="filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
+<div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
+  <div class="fb-group">
   <select id="f-owner" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os usuários</option>
   </select>
@@ -2828,6 +2838,9 @@ input[type="date"]{-moz-appearance:textfield;}
     <option value="medium">🟡 Média</option>
     <option value="low">🟢 Baixa</option>
   </select>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="fb-group">
   <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;">
     <input type="checkbox" id="f-blocker" onchange="applyFilters()" style="accent-color:var(--danger);"> Só impedidos
   </label>
@@ -2837,7 +2850,9 @@ input[type="date"]{-moz-appearance:textfield;}
   <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;cursor:pointer;" title="Só cards que são supercard (têm pelo menos 1 card filho ativo)">
     <input type="checkbox" id="f-supercard" onchange="applyFilters()" style="accent-color:#a78bfa;"> Supercards
   </label>
-  <div style="display:flex;gap:6px;">
+  </div>
+  <div class="tb-sep"></div>
+  <div class="fb-group">
     <button class="btn btn-sm" style="color:var(--warn);border-color:rgba(255,209,102,.35);" onclick="highlightMyCards()" title="Destaca (e rola até) os cards que você é responsável ou participante">💡 Meus cards</button>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()" title="Limpar filtros">✕🗑️</button>
   </div>
@@ -5048,7 +5063,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.356-dev</div>
+<div class="version">v8.30.357-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
