@@ -297,7 +297,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v3.8</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v4.0</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -327,24 +327,30 @@ let DATA = {
     fonteCal: 15
   },
   squads:[
+    {name:"SITE & APP",impedimentos:[
+      "KVs de Verão com atraso: lançamento oficial hoje, mas materiais chegaram na sexta (07/08) — prazo era quarta (05/08). Home foi desenvolvida com materiais antigos e precisará ser refeita.",
+      "Página Warmup Cápsula Camadas: prazo de terça não cumprido, reescalonado para sexta. Na sexta recebemos só o desenho da página — materiais para teste ainda não liberados. Time de marketing cobrado para não travar ajustes de dimensão/peso.",
+      "Cor artigo KH6N1BSN (moletom sourcing verde): 4 contatos de estilo/modelagem Feminino sem resposta sobre o Pantone. Escalado para merchan para dar andamento na construção da foto.",
+      "Fotos modelo PDP Camiseta Brasil: time de foto não estava mapeado para o lançamento. Shooting será realizado essa semana com inclusão dos produtos."
+    ]},
     {name:"MÍDIA CRIATIVA",impedimentos:[
-      "Aguardando entrega de fornecedor de IA para seguir com Content — Pijamas."
+      "Fornecedor de IA com atraso na entrega de Pijamas e também em Jeans & Sarja."
     ]}
   ],
   insights:[
-    {tipo:"event",tag:"CHECK-IN OKR",texto:"Reunião de OKR da semana: Geral, Mídia, Comercial e Dados."},
-    {tipo:"alert",tag:"WEEKLYZONA",texto:"Forms da Weeklyzona rodando."},
-    {tipo:"alert",tag:"MARÉ DIGITAL",texto:"Migração do Site Hering para o Maré Digital em andamento."}
+    {tipo:"event",tag:"CHECK-IN OKR",texto:"Reunião de OKR da semana: CRM, CX e Tech."},
+    {tipo:"alert",tag:"COMITÊ DE IA",texto:"Início do Comitê de IA."}
   ],
   calDigital:[
-    {day:"05",mon:"AGO",name:"Big Review",type:"todos slots preenchidos"},
+    {day:"26",mon:"AGO",name:"Big Review",type:"todos slots preenchidos"},
     {day:"25",mon:"AGO",name:"Alinhamento Fritos",type:"Reunião interna"}
   ],
   calCIA:[
     {name:"Verão",            start:"2025-07-16",end:"2025-10-01"},
     {name:"Dia dos Pais",     start:"2025-07-16",end:"2025-08-09"},
     {name:"Verão I",          start:"2025-08-10",end:"2025-09-02"},
-    {name:"Camiseta Brasil",  start:"2025-09-03",end:"2025-10-01"}
+    {name:"Camiseta Brasil",  start:"2025-09-03",end:"2025-10-01"},
+    {name:"Alto Verão",       start:"2025-10-01",end:"2025-10-31"}
   ]
 };
 
@@ -359,7 +365,7 @@ updateClock();setInterval(updateClock,1000);
 
 /* ====== GANTT HELPERS ====== */
 const WIN_START=new Date('2025-06-01');
-const WIN_END  =new Date('2025-10-01');
+const WIN_END  =new Date('2025-11-01');
 const WIN_DAYS =(WIN_END-WIN_START)/(864e5);
 
 const GANTT_COLORS=[
@@ -374,7 +380,8 @@ function buildGanttHeader(){
     {label:'JUN',left:pct('2025-06-01'),right:pct('2025-07-01')},
     {label:'JUL',left:pct('2025-07-01'),right:pct('2025-08-01')},
     {label:'AGO',left:pct('2025-08-01'),right:pct('2025-09-01')},
-    {label:'SET',left:pct('2025-09-01'),right:100},
+    {label:'SET',left:pct('2025-09-01'),right:pct('2025-10-01')},
+    {label:'OUT',left:pct('2025-10-01'),right:100},
   ];
   const h=document.getElementById('gantt-header');
   if(!h)return;
@@ -608,7 +615,7 @@ function handleMarcaUpload(e){
     b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*18+12}s;animation-delay:${Math.random()*-20}s;`;
     bg.appendChild(b);
   }
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white"><ellipse cx="35" cy="15" rx="18" ry="10"/><polygon points="17,5 0,15 17,25 17,18 10,15 17,12"/><circle cx="48" cy="12" r="2.5" fill="#0a1628"/></svg>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30" fill="white"><ellipse cx="35" cy="15" rx="18" ry="10"/><polygon points="17,3 10,15 17,27 22,15"/><circle cx="48" cy="12" r="2.5" fill="#0a1628"/></svg>`;
   for(let i=0;i<7;i++){
     const f=document.createElement('div');f.className='bg-fish';
     const sc=Math.random()*.5+.35;
