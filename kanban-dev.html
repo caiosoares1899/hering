@@ -304,34 +304,35 @@
    qualquer filter — escurecer essa mistura só troca "quase invisível
    claro" por "quase invisível escuro". Comparei 4 técnicas num artefato
    visual antes de mexer aqui (pedido direto: "testa e me traz como
-   artefato pra ver antes de subir"); a escolhida foi mix-blend-mode:
-   multiply — mantém a cor viva ORIGINAL do pill (pensada pro escuro,
-   sem escurecer o texto) e MULTIPLICA contra o fundo do card em vez de
-   diluir por alpha, o que deixa o preenchimento tão saturado quanto no
-   tema escuro sem perder legibilidade. isolation:isolate garante que o
-   blend usa o fundo do card (não vaza pro conteúdo atrás dele). Pedido
-   direto: "as fontes/labels/tags no claro tão meio escurecidas, no
-   escuro elas têm uma pegada neon, mais acesas" → "elas tao apagadas...
-   colocaria mais luz". */
+   artefato pra ver antes de subir"). A 1ª escolha (mix-blend-mode:
+   multiply, mantendo a cor viva original) saiu clara demais na prática
+   ("ficou mt claro agora kkkk") — trocado pela opção D do artefato:
+   reforça o ALPHA do preenchimento primeiro (inset box-shadow na
+   própria cor de cada tag, antes de qualquer escurecimento) e só
+   DEPOIS escurece fundo+borda+texto juntos de forma consistente
+   (brightness+saturate, já validado por legibilidade nos rounds
+   anteriores) — pill sólida e saturada em vez de um tingimento fraco.
+   drop-shadow(currentColor) por cima devolve o glow na cor viva de
+   cada tag. Pedido direto: "as fontes/labels/tags no claro tão meio
+   escurecidas, no escuro elas têm uma pegada neon, mais acesas" →
+   "elas tao apagadas... colocaria mais luz". */
 [data-theme="light"] .card-tag{
-  isolation:isolate;
-  mix-blend-mode:multiply;
-  filter:saturate(1.15);
+  box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
+  filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 /* Mesmo problema do .card-tag acima, em outros 3 badges do topo do card
    que NÃO passam por tagHtml() e por isso ficaram de fora daquele fix:
    status do executor/agente (.exec-chip), prazo (.due-badge) e risco
    (.risco-badge, sem classe própria até agora — adicionada só pra dar
    um gancho de CSS aqui). Todos usam a mesma paleta clara/saturada
-   pensada pro fundo escuro, mesma técnica de multiply acima. Feedback
-   direto: "status dos agentes, prazo e o badge de risco ainda sem
-   leitura, aumenta o contraste". */
+   pensada pro fundo escuro, mesma técnica de reforço de preenchimento
+   acima. Feedback direto: "status dos agentes, prazo e o badge de
+   risco ainda sem leitura, aumenta o contraste". */
 [data-theme="light"] .exec-chip,
 [data-theme="light"] .due-badge,
 [data-theme="light"] .risco-badge{
-  isolation:isolate;
-  mix-blend-mode:multiply;
-  filter:saturate(1.15);
+  box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
+  filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 /* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
    due date): fundo é um tint de 15% da cor da coluna, texto era um
@@ -340,14 +341,14 @@
    de 15% sobre um fundo quase-preto ainda contrasta com branco).
    Trocado o texto pra usar a própria cor da coluna (mesmo padrão de
    "fundo pálido + texto saturado" que .card-tag já usa) — e como isso
-   tem o mesmo problema de contraste no claro, ganha o mesmo multiply.
-   Feedback direto: "calendário n da pra ler nada". Pílulas de Evento
-   (.cal-event sem essa subclasse) não são afetadas — usam fundo opaco
-   com texto já escolhido pra contraste, não dependem de tema. */
+   tem o mesmo problema de contraste no claro, ganha o mesmo reforço de
+   preenchimento. Feedback direto: "calendário n da pra ler nada".
+   Pílulas de Evento (.cal-event sem essa subclasse) não são afetadas —
+   usam fundo opaco com texto já escolhido pra contraste, não dependem
+   de tema. */
 [data-theme="light"] .cal-event-prazo{
-  isolation:isolate;
-  mix-blend-mode:multiply;
-  filter:saturate(1.15);
+  box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
+  filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -5044,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.345-dev</div>
+<div class="version">v8.30.346-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

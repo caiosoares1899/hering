@@ -1205,6 +1205,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.346-dev — 2026-08-10
+Correção de rota do v8.30.345-dev: `mix-blend-mode:multiply` (opção C
+do artefato) saiu clara demais na prática — "ficou mt claro agora
+kkkk". Trocado pela opção **D** do mesmo artefato, sem precisar de
+novo round de teste visual (já tinha sido comparada lado a lado).
+
+- `.card-tag`, `.exec-chip`, `.due-badge`, `.risco-badge` e
+  `.cal-event-prazo` no tema claro agora reforçam o ALPHA do
+  preenchimento primeiro (`box-shadow: inset 0 0 0 20px
+  color-mix(in srgb, currentColor 22%, transparent)`) e só depois
+  escurecem fundo+borda+texto juntos (`brightness(.48) saturate(1.55)
+  drop-shadow(0 0 2px currentColor)`) — pill sólida e saturada em vez
+  de um tingimento fraco.
+- Puramente visual, não muda legibilidade nem dado nenhum.
+
 ### v8.30.345-dev — 2026-08-10
 Continuação do v8.30.344-dev: o `drop-shadow(currentColor)` melhorou
 texto/borda, mas as tags continuavam "apagadas" — feedback direto com
