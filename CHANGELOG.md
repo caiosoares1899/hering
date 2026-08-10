@@ -18,7 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.233 — 2026-08-10 · promove pra prod (PRs #258, #260–#262)
+### v8.30.234 — 2026-08-10 · promove pra prod (PRs #265–#268) — correções
+Promove pra produção 4 correções de bug validadas em dev, todas
+reportadas com prints/feedback direto durante uso real:
+
+- 🐛 **Cards duplicados ao clicar Salvar várias vezes** (PR #265):
+  `saveCard()` não tinha trava de reentrância — clique repetido em
+  "💾 Salvar" enquanto um salvamento anterior ainda não tinha
+  confirmado (rede lenta) recriava o card do zero a cada clique.
+  Botão agora desabilita e mostra "Salvando…" até o Firebase confirmar.
+- 🧩 **Card pai da receita de fan-out pode ser vinculado a Modelo**
+  (PR #266): antes só dava pra renomear a receita; agora o card pai
+  também pode ser mesclado com um Modelo (descrição/checklist/tags/
+  riscos), igual já acontecia com os filhos.
+- 💬 **Confirmação clara do modelo aplicado** (PR #267): toast único
+  mencionando modelo + filhos criados, em vez de dois toasts
+  disputando o mesmo espaço (o 2º apagava o 1º antes de dar pra ler).
+- 🐛 **Submarca do modelo não sincronizava + filhos órfãos ao
+  cancelar** (PR #268): aplicar um modelo com submarca deixava o
+  campo de Submarca do formulário sem atualizar, bloqueando o Salvar
+  mesmo com a tag aplicada certinho por baixo dos panos — corrigido
+  (afeta também o botão clássico "📥 Usar modelo"). Cancelar a criação
+  de um card pai depois de aplicar uma receita de fan-out não deixa
+  mais os cards filhos órfãos soltos no board.
+
+Puramente correções de bug — sem aviso externo pra este lote (pedido
+direto do responsável, "como foi correção, n precisa gerar avisos").
 Promove pra produção o lote de legibilidade do tema claro, validado em
 dev por vários rounds de feedback direto (o mais recente incluiu um
 artefato visual comparando 4 técnicas antes de qualquer código subir):
