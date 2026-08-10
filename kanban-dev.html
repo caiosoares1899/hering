@@ -409,10 +409,16 @@
    herdado de .btn) — reforçar o preenchimento por cima virou um bloco
    sólido pesado. Feedback: "ficou horrível". Basta escurecer texto/borda
    (mesmo tom que os outros badges chegam depois do filter, só que como
-   valor direto — o glass de fundo já dá contraste suficiente sozinho). */
+   valor direto — o glass de fundo já dá contraste suficiente sozinho).
+   2ª rodada, feedback "voltou a ficar claro demais": esse ajuste não
+   tinha efeito NENHUM porque o botão tem `style="color:var(--warn);
+   border-color:..."` INLINE no HTML — inline sempre vence regra de CSS
+   externa, id ou não. !important necessário (mesmo padrão já usado pra
+   esse exato problema nos botões da toolbar, ver [data-theme="light"]
+   .toolbar > button.btn acima). */
 [data-theme="light"] #btn-meus-cards{
-  color:#8A5C00;
-  border-color:rgba(138,92,0,.4);
+  color:#8A5C00!important;
+  border-color:rgba(138,92,0,.4)!important;
 }
 /* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
    due date): fundo é um tint de 15% da cor da coluna, texto era um
@@ -5144,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.364-dev</div>
+<div class="version">v8.30.365-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

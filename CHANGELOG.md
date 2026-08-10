@@ -1310,6 +1310,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.365-dev — 2026-08-10
+Feedback direto: "voltou a ficar claro demais" — o fix da v8.30.364-dev
+não tinha efeito nenhum. Causa: o botão tem `style="color:var(--warn);
+border-color:..."` **inline** no HTML, que sempre vence qualquer regra
+de CSS externa (id ou não). Faltava `!important` — mesmo padrão já
+usado no arquivo pra esse exato problema nos botões da toolbar
+(`[data-theme="light"] .toolbar > button.btn`).
+
 ### v8.30.364-dev — 2026-08-10
 Feedback direto (print): "ficou horrível kkkk" — a técnica de reforço de
 preenchimento aplicada em `#btn-meus-cards` na v8.30.363-dev (certa pra
