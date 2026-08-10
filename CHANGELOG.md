@@ -18,6 +18,25 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.233 — 2026-08-10 · promove pra prod (PRs #258, #260–#262)
+Promove pra produção o lote de legibilidade do tema claro, validado em
+dev por vários rounds de feedback direto (o mais recente incluiu um
+artefato visual comparando 4 técnicas antes de qualquer código subir):
+
+- 🧩 **Supercard no tema claro** (PR #258): borda do card e cabeçalho
+  do rollup "Cards filhos" (cor roxo-clara, pensada pro tema escuro)
+  ganham contraste — estavam quase invisíveis no claro. Botão "✕" de
+  remover filho também.
+- 🏷 **Tags/labels/badges do card no tema claro** (PRs #260–#262):
+  tags, chip de executor/agente, badge de prazo, badge de risco e
+  pílula de prazo no calendário ganham a mesma pegada saturada/"neon"
+  que já tinham no tema escuro. Duas tentativas anteriores
+  (escurecimento simples, depois `mix-blend-mode`) não foram
+  suficientes — a versão final reforça o preenchimento de cada pill
+  (alpha baixo demais pra ler no claro) antes de escurecer tudo junto
+  de forma consistente.
+- Puramente visual, não muda legibilidade nem dado nenhum.
+
 ### v8.30.232 — 2026-08-09 · promove pra prod (PR #255)
 Promove pra produção o ajuste no supercard validado em dev: cada
 filho de uma receita de fan-out pode ser vinculado a um **📋 Modelo**
