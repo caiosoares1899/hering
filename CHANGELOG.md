@@ -1205,6 +1205,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.342-dev — 2026-08-09
+Fix de contraste reportado com print: o supercard estava muito ruim
+de ler no tema claro — a borda esquerda roxa (`#a78bfa`) e o texto do
+cabeçalho do rollup (`#c4b5fd`, "🧩 X/N concluído(s)") são cores
+pensadas pro fundo escuro, quase invisíveis num card claro.
+
+- Borda do supercard: cor mais escura/saturada só no tema claro (mesmo
+  padrão já usado em `.okr-card`).
+- Cabeçalho do rollup: mesmo `filter:brightness(.55) saturate(1.4)` já
+  usado nos outros badges pastel do card (`.exec-chip`, `.due-badge`,
+  `.risco-badge`).
+- Botão "✕" de remover filho (dentro do modal): cor clara pensada pra
+  "quase invisível até passar o mouse" no escuro trocada por um tom
+  escuro equivalente no claro.
+- Puramente visual, não muda nenhum dado nem comportamento.
+
 ### v8.30.341-dev — 2026-08-09
 Feedback direto testando as receitas de fan-out: os filhos nasciam só
 com um título, sem nenhuma estrutura — pedido pra deixá-los "o mais

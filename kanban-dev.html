@@ -1852,6 +1852,21 @@ input[type="date"]{-moz-appearance:textfield;}
    aparecer". Troca pra um dourado escurecido/saturado (dark goldenrod),
    bem mais opaco, só no claro. */
 [data-theme="light"] .card.okr-card{border-color:rgba(184,134,11,.85)!important;box-shadow:0 0 8px rgba(184,134,11,.25);}
+/* Supercard — mesmo problema dos outros badges/bordas roxo-claro pensados
+   pro fundo escuro: a borda #a78bfa e o texto #c4b5fd de ".super-rollup-hd"
+   ficam quase invisíveis num card claro. Feedback direto ("muito ruim de
+   ler o supercard no modo claro"), print mostrando o rótulo "CARDS FILHOS"
+   e os itens da lista praticamente somem no claro. Borda: mesmo padrão de
+   .okr-card (cor mais escura/saturada, só no claro). Texto do cabeçalho:
+   mesmo filter usado em .exec-chip/.due-badge/.risco-badge acima. */
+[data-theme="light"] .card.supercard{border-left-color:#6d28d9;}
+[data-theme="light"] .super-rollup-hd{filter:brightness(.55) saturate(1.4);}
+/* Botão "✕" de remover filho (dentro do modal do card) — rgba(200,230,255,.25)
+   é um branco-azulado quase transparente, pensado pra "quase invisível até
+   passar o mouse" no fundo escuro; no claro isso já nasce invisível de
+   propósito errado. Troca pra um tom escuro equivalente (mesmo espírito de
+   --txt3 no claro), mantendo o hover em --danger (já funciona nos dois temas). */
+[data-theme="light"] .minicard-rm{color:rgba(20,50,74,.35);}
 .cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-b);}
 .cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt2);}
 .cal-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -5005,7 +5020,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.341-dev</div>
+<div class="version">v8.30.342-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
