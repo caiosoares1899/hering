@@ -5045,7 +5045,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.349-dev</div>
+<div class="version">v8.30.350-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -18298,6 +18298,17 @@ document.addEventListener('click', e=>{
 // automação/config ("supercard de campanha X sempre gera os cards A,B,C...")
 // fica pra depois de validar o conceito visual.
 let editingSuperChildren = []; // [{id,title,col}]
+// IDs dos filhos CRIADOS DE VERDADE (quickCreateSuperChild/fan-out) durante a
+// sessão atual do modal de um card AINDA NÃO SALVO — diferente de filhos
+// VINCULADOS a um card já existente (addSuperChild), que não devem ser
+// mexidos se o pai for cancelado. Bug reportado: "cancelei o card que tava
+// criando mas os cards filhos foram criados mesmo assim" — os filhos já
+// nascem como cards de verdade no Firebase (ver comentário em
+// quickCreateSuperChild), então cancelar o PAI antes de salvar deixava eles
+// órfãos, soltos no board, sem ninguém ter pedido isso. _finishCloseOv()
+// exclui de verdade os cards desta lista se o modal fechar sem o pai ter
+// sido salvo (editingId ainda null).
+let _newSuperChildIds = [];
 
 // card===null (card novo, ainda sem id real no Firebase): a seção continua
 // visível e usável — adicionar/criar filho fica "em memória" até o Salvar
@@ -18313,6 +18324,7 @@ function initSuperChildren(card){
     const found = cards.find(c=>c.id===id);
     return found ? {id:found.id, title:found.title, col:found.col} : null;
   }).filter(Boolean) : [];
+  _newSuperChildIds = []; // reseta a cada card aberto — ver comentário na declaração
   renderSuperChildrenList();
   const searchWrap=document.getElementById('m-super-search-wrap'); if(searchWrap) searchWrap.style.display='none';
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
@@ -18450,6 +18462,7 @@ function quickCreateSuperChild(title){
   cards.push(novo);
   fbSaveCard(novo);
   editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
+  if(!editingId) _newSuperChildIds.push(novo.id); // ver comentário na declaração — cancelar o pai remove este filho de verdade
   renderSuperChildrenList();
   persistSuperChildren();
   const inp=document.getElementById('m-super-search-inp'); if(inp){ inp.value=''; }
@@ -21219,8 +21232,11 @@ function applyFanoutToCurrentCard(templateId){
   } else {
     // Card ainda não existe: os filhos já nascem como cards de verdade (cada
     // um é independente), mas o VÍNCULO com o pai (childCardIds) fica em
-    // memória até o pai ser salvo de verdade — ver saveCard().
+    // memória até o pai ser salvo de verdade — ver saveCard(). Se o pai for
+    // cancelado antes disso, _finishCloseOv() exclui estes filhos de verdade
+    // (ver _newSuperChildIds) em vez de deixá-los órfãos no board.
     const novos=_applyFanoutTemplate(_superParentBasics(), tpl, _histWho());
+    _newSuperChildIds.push(...novos);
     const resolved=novos.map(id=>{ const c=cards.find(x=>x.id===id); return c?{id:c.id,title:c.title,col:c.col}:null; }).filter(Boolean);
     editingSuperChildren=editingSuperChildren.concat(resolved);
     renderSuperChildrenList();
@@ -22071,6 +22087,21 @@ function aplicarModeloNoCard(idx){
   if(Array.isArray(modelo.tags) && modelo.tags.length){
     modelo.tags.forEach(t=>{ if(!editingTags.includes(t)) editingTags.push(t); });
     populateTagSelect();
+    // BUGFIX: Submarca (quando ativa no squad) tem um <select id="m-submarca">
+    // DEDICADO, separado do picker geral de tags — populateTagSelect() acima
+    // não mexe nele. Como uma submarca é, por baixo dos panos, só mais uma
+    // tag (ver SUBMARCA_TAGS), ela entrava certinho em editingTags, mas o
+    // <select> continuava mostrando "— sem submarca —". Pior: saveCard()
+    // valida submarca obrigatória lendo o VALOR DO SELECT, não editingTags —
+    // então mesmo com a tag aplicada, salvar continuava bloqueado como se a
+    // submarca estivesse vazia. Bug reportado: "n pegou... submarcas" +
+    // (na prática) "deu erro, cancelei o card".
+    if(typeof SUBMARCA_TAGS!=='undefined'){
+      const smIds=SUBMARCA_TAGS.map(st=>st.id);
+      const smTag=modelo.tags.find(t=>smIds.includes(t));
+      const smSel=document.getElementById('m-submarca');
+      if(smTag && smSel) smSel.value=smTag;
+    }
   }
 
   if(Array.isArray(modelo.checklist) && modelo.checklist.length){
@@ -22241,6 +22272,21 @@ function _finishCloseOv(id){
       cards = cards.filter(c=>!c._isQLTemp);
       _editingQLItem = null; editingId = null;
     }
+    // Bug reportado: "cancelei o card que tava criando mas os cards filhos
+    // foram criados mesmo assim". Filhos criados via quickCreateSuperChild()/
+    // fan-out (ver _newSuperChildIds) já nascem como cards de verdade no
+    // Firebase, MESMO com o pai ainda não salvo — se o pai nunca chega a ser
+    // salvo (editingId continua null aqui), esses filhos ficam órfãos, soltos
+    // no board, sem ninguém ter pedido. Exclui de verdade nesse caso. Filhos
+    // apenas VINCULADOS a um card já existente (addSuperChild) não entram
+    // nesta lista — continuam intactos, cancelar o pai só desfaz o vínculo.
+    if(!editingId && _newSuperChildIds.length){
+      const _orfaos=new Set(_newSuperChildIds);
+      cards = cards.filter(c=>!_orfaos.has(c.id));
+      fbSaveAll(undefined, []).catch(err=>console.error('[supercard] falha ao excluir filhos órfãos:', err));
+      renderBoard();
+    }
+    _newSuperChildIds = [];
   }
 }
 document.querySelectorAll('.ov').forEach(ov=>{

@@ -1224,6 +1224,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.350-dev — 2026-08-10
+Dois bugs reais reportados no teste do modelo de card pai (2ª rodada):
+"n ta pegando... descrição, data e submarcas" + "cancelei o card mas
+os cards filhos foram criados mesmo assim".
+
+- **Fix — Submarca não sincronizava**: `aplicarModeloNoCard()` (usado
+  tanto pelo botão "📥 Usar modelo" quanto pelo modelo do card pai do
+  fan-out) mesclava a tag de submarca do modelo em `editingTags`
+  certinho, mas o campo dedicado `<select id="m-submarca">` não é
+  populado pelo picker geral de tags — continuava mostrando "sem
+  submarca". Pior: `saveCard()` valida submarca obrigatória lendo o
+  VALOR DO SELECT, não `editingTags` — então salvar continuava
+  bloqueado mesmo com a tag aplicada (é o que gerou o "deu erro" do
+  2º bug abaixo). Agora sincroniza o select também. Afeta os DOIS
+  caminhos que usam essa função (botão "Usar modelo" isolado E o
+  modelo do card pai do fan-out).
+- **Sobre "data" não vir do modelo**: não é bug — Modelo nunca teve
+  campo de Prazo (nem no "Usar modelo" clássico). Prazo é específico
+  de cada card, não faz parte do que um Modelo guarda hoje.
+- **Fix — filhos órfãos ao cancelar**: cards filhos criados via
+  fan-out (ou "+ Adicionar" → título novo) já nascem como cards de
+  verdade no Firebase mesmo com o card PAI ainda não salvo. Cancelar a
+  criação do pai antes de salvar deixava esses filhos soltos no board,
+  sem vínculo com nada. Agora `_finishCloseOv()` exclui de verdade os
+  filhos criados nesta sessão (não os vinculados a partir de um card
+  já existente — esses continuam intactos) quando o modal fecha sem o
+  pai ter sido salvo.
+
 ### v8.30.349-dev — 2026-08-10
 Feedback do teste do v8.30.348-dev: "quando apliquei a receita no
 card, ele não usou o modelo que eu implantei como card pai". Investigado
