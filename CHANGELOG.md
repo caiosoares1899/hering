@@ -4266,6 +4266,12 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.98 · painel — 2026-08-09 · atualiza rascunho de aviso do supercard
+Atualiza o texto do rascunho `seed_supercard_fanout_2026_08_09`
+(`COMUNICADO_RASCUNHOS_SEED`) mencionando o vínculo de filho da
+receita com Modelo (kanban.html v8.30.232), junto com o resto do lote
+já descrito no rascunho.
+
 ### painel.html v2.97 · painel — 2026-08-09 · promove pra prod (mapeamento real de gerência)
 Promove pra produção o lote validado em `painel-dev.html` (v2.96 a
 v2.98): filtro "Ver por gerência" (👔) e a aba "💡 Insights" agregados
