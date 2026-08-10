@@ -4741,6 +4741,14 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html — 2026-08-10 · rascunhos de comunicado (sem bump de versão) #2
+Adicionadas 2 entradas em `COMUNICADO_RASCUNHOS_SEED`
+(`seed_filtro_supercard_e_barra_filtros_2026_08_10`,
+`seed_tema_claro_mais_escuro_2026_08_10`) sobre o filtro de Supercards
++ barra de Filtros reorganizada (kanban.html v8.30.237) e a variante
+mais escura do tema claro por duplo-clique (v8.30.238). Conteúdo
+apenas — não bumpa versão do painel.
+
 ### painel.html — 2026-08-10 · rascunho de comunicado (sem bump de versão)
 Adicionado 1 entrada em `COMUNICADO_RASCUNHOS_SEED`
 (`seed_legibilidade_tema_claro_2026_08_10`) sobre o lote de
