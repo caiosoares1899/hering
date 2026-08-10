@@ -1205,6 +1205,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.344-dev — 2026-08-09
+Correção de rota: o pedido anterior (v8.30.343-dev) tinha entendido
+"deixa mais aceso, meio que neon" como um pulso animado no card "seu
+card" — não era isso. Removido o pulso; o pedido real era sobre as
+**tags/labels/badges do card** (Data, Bloqueio, tamanho, submarca...)
+parecerem "escurecidas" no tema claro, sem a pegada neon que elas têm
+no escuro.
+
+- Tags/badges no tema claro ganham um `drop-shadow(currentColor)`
+  (glow sutil na cor original de cada uma) somado ao escurecimento já
+  existente (`brightness(.5) saturate(1.4)`, validado em 2 rounds de
+  feedback anteriores por legibilidade). `drop-shadow` com
+  `currentColor` pega a cor VIVA de cada tag antes do escurecimento
+  (filter não muda o valor computado de `color`, só o resultado
+  pintado), então o brilho sai na cor certa mesmo com o pill mais
+  escuro por baixo.
+- Aplica em `.card-tag`, `.exec-chip`, `.due-badge`, `.risco-badge` e
+  `.cal-event-prazo` (mesmo grupo que já tinha o fix de contraste).
+- Puramente visual, não muda legibilidade nem dado nenhum.
+
 ### v8.30.343-dev — 2026-08-09
 Pedido direto: "esse meu card pode ficar mais aceso, usa aquele
 recurso de dar brilho, meio que neon". O selo "👤 seu card" (card em
