@@ -396,6 +396,30 @@
   box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
   filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
+/* Mesmo problema de novo, num lugar diferente: o botão "💡 Meus cards"
+   (barra de Filtros) usa color:var(--warn) direto (dourado, pensado pro
+   fundo escuro) sem escurecer nada — antes ficava sobre o board comum,
+   agora fica dentro do .filter-bar-panel (mesmo tom de --glass por
+   baixo), o que apagou ainda mais o contraste. Feedback direto, com
+   print: "a função meus cards tao muito claro nos dois modos claros".
+   1ª tentativa reaproveitou a técnica de reforço de preenchimento das
+   tags/badges (box-shadow inset + filter) — errado pra este caso: ao
+   contrário de uma tag pequena (que não tinha fundo nenhum visível),
+   este é um <button class="btn"> que JÁ tem fundo próprio (var(--glass),
+   herdado de .btn) — reforçar o preenchimento por cima virou um bloco
+   sólido pesado. Feedback: "ficou horrível". Basta escurecer texto/borda
+   (mesmo tom que os outros badges chegam depois do filter, só que como
+   valor direto — o glass de fundo já dá contraste suficiente sozinho).
+   2ª rodada, feedback "voltou a ficar claro demais": esse ajuste não
+   tinha efeito NENHUM porque o botão tem `style="color:var(--warn);
+   border-color:..."` INLINE no HTML — inline sempre vence regra de CSS
+   externa, id ou não. !important necessário (mesmo padrão já usado pra
+   esse exato problema nos botões da toolbar, ver [data-theme="light"]
+   .toolbar > button.btn acima). */
+[data-theme="light"] #btn-meus-cards{
+  color:#8A5C00!important;
+  border-color:rgba(138,92,0,.4)!important;
+}
 /* Pílulas de "Prazo" no Calendário (📎 título do card, um por card com
    due date): fundo é um tint de 15% da cor da coluna, texto era um
    #fff hardcoded — em cima do fundo quase-branco do modo claro ficava
@@ -2916,7 +2940,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="tb-sep"></div>
   <div class="fb-group">
-    <button class="btn btn-sm" style="color:var(--warn);border-color:rgba(255,209,102,.35);" onclick="highlightMyCards()" title="Destaca (e rola até) os cards que você é responsável ou participante">💡 Meus cards</button>
+    <button id="btn-meus-cards" class="btn btn-sm" style="color:var(--warn);border-color:rgba(255,209,102,.35);" onclick="highlightMyCards()" title="Destaca (e rola até) os cards que você é responsável ou participante">💡 Meus cards</button>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()" title="Limpar filtros">✕🗑️</button>
   </div>
 </div>
@@ -5126,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.238</div>
+<div class="version">v8.30.239</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
