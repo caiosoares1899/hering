@@ -1224,6 +1224,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.347-dev — 2026-08-10
+Bug reportado com print: ao criar um card novo, o salvamento demorou,
+o modal não fechou na hora e vários cliques em "💾 Salvar" criaram
+vários cards duplicados ("teste" x4 no board).
+
+- **Causa raiz**: `saveCard()` não tinha nenhuma trava de reentrância.
+  Como `editingId` só é setado depois que o Firebase confirma (pra não
+  fechar o modal antes da hora — fix de uma sessão anterior), cada
+  clique extra enquanto o save original ainda estava em voo reexecutava
+  o branch de "card novo" do zero, criando outro card.
+- Adiciona flag `_savingCard` (só ativa a partir do commit, depois das
+  validações — não trava quem está corrigindo um campo obrigatório) +
+  desabilita o botão "💾 Salvar" com label "Salvando…" enquanto o
+  Firebase não confirma. Reset também numa rede de segurança em
+  `_finishCloseOv()`, cobrindo qualquer caminho de fechamento do modal.
+- Corrige duplicação de card; não afeta nenhum outro comportamento.
+
 ### v8.30.346-dev — 2026-08-10
 Correção de rota do v8.30.345-dev: `mix-blend-mode:multiply` (opção C
 do artefato) saiu clara demais na prática — "ficou mt claro agora
