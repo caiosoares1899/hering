@@ -1294,6 +1294,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.359-dev — 2026-08-10
+Pedido direto: "bota o plano B" — troca a candidata "C" (v8.30.358-dev)
+pela "B" do mesmo artefato visual, um degrau mais clara que a C.
+
+- `--deep`: `#8FB8D9` → `#A9CCE3`.
+- `--glass`: `rgba(96,155,190,.72)` → `rgba(120,178,208,.68)`.
+- `--blue`/`--accent`: `#00729E` → `#0086BE`.
+- `--cyan`: `#054459` → `#075674`.
+- `--txt`/`--txt2`/`--txt3`: `#0A1D2E` → `#0F2436`.
+- Borda do `.card`: `rgba(0,70,110,.65)` → `rgba(0,90,135,.6)`.
+- `--surface-rgb`: `246,250,253` → `249,252,253` (ajuste mínimo, mesma
+  lógica de sempre — mantém o card bem mais claro que o fundo).
+
 ### v8.30.358-dev — 2026-08-10 — MODO CLARO
 Feedback direto: "time ainda ta achando o modo claro muitooo claro!
 da uma boa escurecida mas ainda dentro do modo claro, aumenta o
