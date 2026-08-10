@@ -1278,6 +1278,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.355-dev — 2026-08-10
+Pedido direto: "e os filtros? temos que ter filtros para os supercards
+quando ativos".
+
+- Novo filtro "🧩 Supercards" no drawer de Filtros (junto de "Só
+  impedidos"/"Com riscos") — mostra só cards que têm pelo menos 1 card
+  filho ainda ativo. Combina com os outros filtros, normalmente.
+- Extraído `_cardIsSupercard(card)` (mesma regra que já decidia o
+  rollup roxo no board) pra reusar no filtro em vez de duplicar a
+  lógica.
+- Central de Ajuda (❓/Ctrl+K) atualizada — item "Filtros" menciona a
+  nova opção.
+
 ### v8.30.354-dev — 2026-08-10
 Central de Ajuda (❓, Ctrl+K) atualizada: o item "🧾 Receitas prontas"
 do help de Supercard agora menciona que dá pra digitar vários nomes de
