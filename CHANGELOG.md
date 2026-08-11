@@ -1318,6 +1318,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.381-dev — 2026-08-11
+Fase 5, item 1 aprovado: "Meu Dia" (visão pessoal cross-squad). Novo
+botão "🌅 Meu Dia" na toolbar (+ atalho Ctrl+D / Cmd+D).
+
+- Agrega os cards onde você é responsável OU participante, em TODOS os
+  squads (não só o quadro atual) — agrupados em Atrasado, Hoje, Esta
+  semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards
+  concluídos não entram — é uma lista do que ainda precisa de atenção.
+- Cross-squad reaproveita o MESMO padrão já usado pelas Campanhas
+  multi-squad (`_campCrossData`): fetch pontual (`_get`, nunca um
+  listener) de `cards`+`columns` por squad, só na abertura do painel,
+  cacheado em memória pra não rebuscar depois na mesma sessão.
+- Menções não lidas vêm de graça do listener de notificações que já
+  roda desde o boot (`loadNotifs()` passou a cachear a última lista
+  processada em `_activeNotifsCache`, sem nenhum fetch novo).
+- Clique num card de outro squad navega pra lá (mesmo mecanismo de
+  `?squad=&card=` já usado pelas notificações).
+- Limitação conhecida, documentada no código: pra squads que não são o
+  ativo, "coluna concluída" e "card bloqueado" usam uma heurística (nome
+  da coluna / `card.blocker`+coluna `blocker`) em vez do `flowConfig`/
+  `blockerMode` reais daquele squad — evita mais uma leitura por squad
+  só pra isso. Pode errar em squads com nomenclatura de coluna fora do
+  padrão.
+- HELP_CONTENT atualizado.
+
 ### v8.30.380-dev — 2026-08-11
 Fase 5, item 2 aprovado: aging visual de card ("parado há Xd").
 

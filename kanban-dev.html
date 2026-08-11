@@ -1942,6 +1942,14 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-dismiss{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:13px;padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .15s,color .15s;flex-shrink:0;line-height:1;}
 .notif-item:hover .notif-dismiss{opacity:1;}
 .notif-dismiss:hover{color:var(--danger,#ef4444);opacity:1!important;}
+/* 🌅 Meu Dia (Fase 5.1) */
+.meudia-sec{margin-bottom:16px;}
+.meudia-sec-hd{font-size:11.5px;font-weight:700;color:var(--txt2);border-left:3px solid;padding-left:8px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.meudia-sec-n{font-size:9.5px;font-weight:600;color:var(--txt3);background:rgba(var(--surface2-rgb),.6);border-radius:999px;padding:1px 7px;}
+.meudia-row{padding:8px 10px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:3px;background:rgba(var(--surface2-rgb),.4);}
+.meudia-row:hover{background:rgba(56,182,255,.1);}
+.meudia-row-title{font-size:12px;font-weight:600;color:var(--txt);line-height:1.4;}
+.meudia-row-meta{font-size:10px;color:var(--txt3);margin-top:2px;}
 .notif-ft{padding:8px 14px;border-top:1px solid var(--glass-b);
   display:flex;justify-content:flex-end;}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
@@ -3013,6 +3021,8 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
 </div>
 <div class="toolbar">
+  <button class="btn btn-sm" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
+  <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <div style="position:relative;" id="sort-menu-wrap">
     <button class="btn btn-sm" onclick="toggleSortMenu()" id="btn-sort" title="Ordenar cards dentro de cada coluna">↕ <span id="btn-sort-lbl">Ordenação</span></button>
@@ -4777,6 +4787,17 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <!-- RELATÓRIO DE TEMPO - fim -->
 
+<!-- MEU DIA (Fase 5.1) — visão pessoal agregada, cross-squad -->
+<div class="ov" id="meudia-ov">
+<div class="panel" style="width:min(640px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">🌅 Meu Dia</div>
+    <button class="x-btn" onclick="closeOv('meudia-ov')">✕</button>
+  </div>
+  <div id="meudia-body" style="padding:14px 18px 20px;overflow-y:auto;flex:1;"></div>
+</div>
+</div>
+
 <!-- DADOS DO BOARD (mini painel pros PO's) -->
 <div class="ov" id="boarddata-ov">
 <div class="panel" style="width:min(860px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -5224,7 +5245,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.380-dev</div>
+<div class="version">v8.30.381-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14927,6 +14948,127 @@ async function setCampViewMode(mode){
   if(_campAtual) renderCampDetalhe(_campAtual);
 }
 
+// ═══════════════════════════════════════════════════════
+// 🌅 MEU DIA (Fase 5, item 1) — visão pessoal agregada, cross-squad
+// Meus cards de TODOS os squads, agrupados por prazo (atrasado/hoje/
+// semana/sem prazo), bloqueios que me afetam, menções não lidas.
+// Reaproveita o MESMO padrão de _campCrossData logo acima (Campanhas
+// multi-squad): fetch pontual (one-shot _get, NUNCA um listener) de
+// cards+columns por squad, só quando a pessoa abre o painel, cacheado em
+// memória pra não rebuscar em aberturas seguintes na mesma sessão.
+// ═══════════════════════════════════════════════════════
+let _meuDiaCrossData = {}; // sqId -> {cards, columns}
+async function _loadMeuDiaCrossSquads(){
+  const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD && !_meuDiaCrossData[sq]);
+  if(!outros.length) return;
+  await Promise.all(outros.map(sq=>
+    window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
+      .then(snap=>{
+        const val=snap.val()||{};
+        _meuDiaCrossData[sq]={
+          cards:   val.cards   ?(Array.isArray(val.cards)   ?val.cards   :Object.values(val.cards))   :[],
+          columns: val.columns ?(Array.isArray(val.columns) ?val.columns :Object.values(val.columns)) :[],
+        };
+      }).catch(()=>{ _meuDiaCrossData[sq]={cards:[],columns:[]}; })
+  ));
+}
+// Heurísticas "coluna é fim"/"card bloqueado" pra squads QUE NÃO SÃO o
+// ativo — sem o flowConfig/blockerMode de cada squad (não faz parte deste
+// fetch, custaria mais uma leitura por squad), usa convenção de nome de
+// coluna (Concluído/Cancelado/...) e os dois sinais de bloqueio que juntos
+// cobrem os dois modos possíveis (tag OU coluna "blocker"), igual
+// _cardIsBlocked() cobre pro squad ativo — só que sem precisar saber QUAL
+// modo o outro squad usa.
+function _meuDiaIsDone(card){
+  if(card._squad===ACTIVE_SQUAD) return _isColDone(card.col);
+  const cols=_meuDiaCrossData[card._squad]?.columns||[];
+  const nome=(cols.find(c=>c.id===card.col)?.name||'').toLowerCase();
+  return /conclu|cancel|done|finaliz/.test(nome);
+}
+function _meuDiaIsBlocked(card){
+  return card.blocker===true || card.col==='blocker';
+}
+function _meuDiaAllCards(){
+  const local = cards.map(c=>({...c,_squad:ACTIVE_SQUAD}));
+  const cross = Object.entries(_meuDiaCrossData).flatMap(([sq,d])=>(d.cards||[]).map(c=>({...c,_squad:sq})));
+  return [...local, ...cross];
+}
+async function openMeuDia(){
+  const ov=document.getElementById('meudia-ov'); if(!ov) return;
+  ov.classList.add('open');
+  const body=document.getElementById('meudia-body');
+  if(body) body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--txt3);font-size:12px;">⏳ Carregando seus cards de todos os squads...</div>';
+  await _loadMeuDiaCrossSquads();
+  renderMeuDia();
+}
+function _meuDiaCardRow(card){
+  const cols = card._squad===ACTIVE_SQUAD ? columns : (_meuDiaCrossData[card._squad]?.columns||[]);
+  const colName = cols.find(c=>c.id===card.col)?.name || card.col;
+  const sqLabel = SQUAD_META_LIVE[card._squad]?.label || card._squad;
+  const dueLbl = card.due ? new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
+  return `<div class="meudia-row" onclick="_meuDiaOpenCard('${esc(card._squad)}','${esc(card.id)}')">
+    <div class="meudia-row-main">
+      <div class="meudia-row-title">${esc(card.title)}</div>
+      <div class="meudia-row-meta">${esc(sqLabel)} · ${esc(colName)}${dueLbl?' · 📅 '+dueLbl:''}</div>
+    </div>
+  </div>`;
+}
+function _meuDiaOpenCard(sq, cardId){
+  if(sq===ACTIVE_SQUAD){ closeOv('meudia-ov'); openCard(cardId); return; }
+  window.location.href = window.location.pathname+'?squad='+encodeURIComponent(sq)+'&card='+encodeURIComponent(cardId);
+}
+function renderMeuDia(){
+  const body=document.getElementById('meudia-body'); if(!body) return;
+  const meuInit = window._currentUserInit;
+  if(!meuInit){ body.innerHTML='<div style="color:var(--txt3);font-size:12px;">Não identifiquei suas iniciais — abra um card seu pra confirmar seu cadastro.</div>'; return; }
+  const all = _meuDiaAllCards().filter(c=>!c.archived);
+  const meus = all.filter(c=>c.owner===meuInit || (c.participants||[]).includes(meuInit));
+  const hojeStr = _localDateStrBoard(new Date());
+  const semanaLimite = new Date(); semanaLimite.setDate(semanaLimite.getDate()+7);
+  const semanaLimiteStr = _localDateStrBoard(semanaLimite);
+
+  const buckets = {atrasado:[], hoje:[], semana:[], semPrazo:[]};
+  meus.forEach(c=>{
+    if(_meuDiaIsDone(c)) return; // "Meu Dia" é sobre o que ainda precisa de atenção
+    if(!c.due){ buckets.semPrazo.push(c); return; }
+    if(c.due<hojeStr) buckets.atrasado.push(c);
+    else if(c.due===hojeStr) buckets.hoje.push(c);
+    else if(c.due<=semanaLimiteStr) buckets.semana.push(c);
+  });
+  const bloqueios = meus.filter(c=>!_meuDiaIsDone(c) && _meuDiaIsBlocked(c));
+  const mencoes = (_activeNotifsCache||[]).filter(n=>n.type==='mention' && !n.read);
+
+  const secao=(titulo,icone,lista,corBorda)=>{
+    if(!lista.length) return '';
+    return `<div class="meudia-sec">
+      <div class="meudia-sec-hd" style="border-left-color:${corBorda};">${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></div>
+      ${lista.map(_meuDiaCardRow).join('')}
+    </div>`;
+  };
+  const mencoesSecao = mencoes.length ? `<div class="meudia-sec">
+    <div class="meudia-sec-hd" style="border-left-color:#a78bfa;">💬 Menções não lidas <span class="meudia-sec-n">${mencoes.length}</span></div>
+    ${mencoes.map(n=>`<div class="meudia-row" onclick="closeOv('meudia-ov');openNotif('${esc(n.id)}','${esc(n.cardId||'')}','${esc(n.squad||ACTIVE_SQUAD)}','${esc(n.commentId||'')}')">
+      <div class="meudia-row-main">
+        <div class="meudia-row-title">${esc(n.title)}</div>
+        <div class="meudia-row-meta">${esc(n.sub||'')}</div>
+      </div>
+    </div>`).join('')}
+  </div>` : '';
+
+  const semNadaUrgente = !buckets.atrasado.length && !buckets.hoje.length && !buckets.semana.length && !bloqueios.length && !mencoes.length;
+
+  body.innerHTML = `
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Seus cards em todos os squads (${Object.keys(SQUAD_META_LIVE).length}), atualizado agora.</div>
+    ${secao('Atrasado',       '🔴',buckets.atrasado,'#ff6b6b')}
+    ${secao('Hoje',           '🟡',buckets.hoje,    '#ffd166')}
+    ${secao('Esta semana',    '🔵',buckets.semana,  '#38b6ff')}
+    ${mencoesSecao}
+    ${secao('Bloqueios que te afetam','🚧',bloqueios,'#ff6b6b')}
+    ${secao('Sem prazo',      '⚪',buckets.semPrazo,'var(--txt3)')}
+    ${semNadaUrgente ? '<div style="text-align:center;padding:30px 0;color:var(--txt3);font-size:13px;">🎉 Tudo em dia! Nada urgente pra hoje.</div>' : ''}
+  `;
+}
+
 function setCampSqFilter(sq){
   window._campSqFilter = sq;
   if(_campAtual) renderCampDetalhe(_campAtual);
@@ -18136,6 +18278,7 @@ async function doTrelloImport(){
 // ═══════════════════════════════════════════════════════
 const HELP_CONTENT = {
   board: [
+    { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.' },
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
@@ -19225,6 +19368,13 @@ window.addEventListener('fb-ready', ()=>{
 });
 // ═══════════════════════════════════════════════════════════════════
 
+// Cache da última lista processada por loadNotifs() — antes só existia
+// dentro do próprio onValue (passada direto pra renderNotifs, sem ficar em
+// nenhuma variável), então nada mais no app conseguia consultar "quais são
+// as notificações não lidas agora" sem reimplementar a leitura. Usado por
+// "Meu Dia" (Fase 5.1) pra listar menções não lidas sem precisar de outro
+// listener/fetch — o de loadNotifs() já roda o tempo todo desde o boot.
+let _activeNotifsCache = [];
 function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
@@ -19253,6 +19403,7 @@ function loadNotifs(){
     if(Object.keys(_toDelete).length){
       window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), _toDelete).catch(()=>{});
     }
+    _activeNotifsCache = active;
     renderNotifs(active);
   }, err=>{
     // Sem isso, uma queda silenciosa de conexão deixava o sino surdo pro resto da sessão
@@ -22378,6 +22529,7 @@ document.addEventListener('click', hideCtxMenu);
 document.addEventListener('keydown', e=>{ 
   if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='d'){ e.preventDefault(); openMeuDia(); } // 🌅 Meu Dia (Fase 5.1)
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){
     // Não intercepta Ctrl+Z dentro de campos de texto editáveis
     const tag=document.activeElement?.tagName;
