@@ -5165,7 +5165,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.373-dev</div>
+<div class="version">v8.30.374-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14246,7 +14246,15 @@ function loadCampanhas(){
 }
 
 // ── Abrir overlay ─────────────────────────────────────────────────
+// Lazy-init (Fase 2.4 do plano de otimização): loadCampanhas() registra um
+// onValue no nó kanban/campanhas INTEIRO (todas as squads) — antes rodava
+// no boot pra todo mundo, mesmo quem nunca abre o painel de Campanhas.
+// Diferente do Calendário (ver nota em openCal), Campanhas não tem nenhuma
+// automação de fundo que dependa de _campanhas fora do próprio painel —
+// seguro tornar lazy.
+let _campanhasLoaded=false;
 function openCamp(){
+  if(!_campanhasLoaded){ _campanhasLoaded=true; loadCampanhas(); }
   _campAtual = null;
   window._campViewMode = 'squad';
   window._campSqFilter = 'all';
@@ -19756,6 +19764,13 @@ function populateCalFilters() {
   }
 }
 
+// NOTA (Fase 2.4 do plano de otimização): cogitado tornar loadCalEvents()
+// lazy (só no 1º open do painel Calendário), mas checkUpcomingMeetings()
+// (setInterval de 60s, alerta "reunião em N minutos") depende de `calEvents`
+// já populado O TEMPO TODO, não só quando o painel está aberto — é gente que
+// nunca abre o Calendário mas quer o alerta de reunião próxima. Tornar
+// lazy quebraria esse alerta pra maioria das pessoas. Mantido eager de
+// propósito; só Campanhas (sem essa dependência de fundo) virou lazy abaixo.
 function openCal(){
   const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
@@ -22777,7 +22792,8 @@ _onFbReady(()=>{
   // precisar de F5: cada chamada é barata quando ainda não passou da hora ou
   // já rodou hoje (retorna cedo, ver os `if` dentro das duas funções).
   setInterval(()=>{ if(window._currentUser){ checkDueNotifs(); checkAgingAutomations(); } }, 5*60*1000);
-  loadCampanhas();
+  // loadCampanhas() saiu do boot — agora é lazy, só na 1ª abertura do painel
+  // de Campanhas (ver _campanhasLoaded/openCamp), Fase 2.4 do plano de otimização.
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
   // Agendamentos: cria cards agendados cuja data chegou
