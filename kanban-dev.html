@@ -5323,7 +5323,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.395-dev</div>
+<div class="version">v8.30.396-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7316,7 +7316,7 @@ function fbLoadAll(){
   fbListen(FB+'/config/criativos_ativo', val=>{
     criativosAtivo = !!val;
     const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
-    const sec=document.getElementById('m-criativo-sec'); if(sec) sec.style.display = criativosAtivo?'':'none';
+    if(typeof _crvUpdateFichaSecVisibility==='function') _crvUpdateFichaSecVisibility();
     // BUGFIX: squads que já tinham a Ficha ativada ANTES da Ficha Técnica
     // existir nunca passavam por toggleCriativosAtivo() (só quem liga na
     // hora aciona o provisionamento) — carregavam com criativoOpcoes vazio
@@ -10356,7 +10356,7 @@ function openCard(id){
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
   setCriativoFields(c.criativo||{});
-  const crvSec=document.getElementById('m-criativo-sec'); if(crvSec) crvSec.style.display=criativosAtivo?'':'none';
+  _crvUpdateFichaSecVisibility();
   const _sizeIds=SIZE_TAGS.map(t=>t.id);
   const _mTam=document.getElementById('m-tamanho'); if(_mTam) _mTam.value=getCardTags(c).find(id=>_sizeIds.includes(id))||'';
   _applyTamanhoUIVisibility();
@@ -10684,7 +10684,7 @@ function openNewCard(col){
   renderCL([]);
   renderRiscos([]);
   setCriativoFields({});
-  const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
+  _crvUpdateFichaSecVisibility();
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
   _pendingCoverColor=null; _pendingCoverImageUrl=null; _applyCoverStripToModal(null,null); renderCoverSwatches();
@@ -10767,8 +10767,10 @@ function saveCard(){
   // squad tem a Ficha Técnica ativada (pedido direto). Mesmo padrão de
   // bloqueio das regras acima (título/prazo/submarca) — só que aqui inteiro
   // dentro de um "if(criativosAtivo)", já que o resto do squad nem vê essa
-  // seção quando desativada.
-  if(criativosAtivo){
+  // seção quando desativada. Supercard fica de fora (editingSuperChildren.length>0)
+  // — ele já é a soma dos filhos, cada um com a própria ficha; a seção nem
+  // aparece pra ele no modal (ver _crvUpdateFichaSecVisibility).
+  if(criativosAtivo && editingSuperChildren.length===0){
     const crvMissing=[];
     // Direcional de Mídia é o único campo OPCIONAL da ficha (pedido
     // direto) — texto livre pra quando precisar, sem travar o save quando
@@ -11474,7 +11476,7 @@ function toggleCriativosAtivo(checked){
   fbSet(FB+'/config/criativos_ativo', criativosAtivo);
   if(criativosAtivo) _provisionCriativoOpcoes();
   const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
-  const sec=document.getElementById('m-criativo-sec'); if(sec && document.getElementById('card-ov')?.classList.contains('open')) sec.style.display = criativosAtivo?'':'none';
+  if(document.getElementById('card-ov')?.classList.contains('open') && typeof _crvUpdateFichaSecVisibility==='function') _crvUpdateFichaSecVisibility();
   const listasWrap=document.getElementById('crv-listas-cfg-wrap'); if(listasWrap) listasWrap.style.display = criativosAtivo?'':'none';
   const opcoesWrap=document.getElementById('crv-opcoes-cfg-wrap'); if(opcoesWrap) opcoesWrap.style.display = criativosAtivo?'':'none';
   if(criativosAtivo && typeof renderCriativoOpcoesCfg==='function') renderCriativoOpcoesCfg();
@@ -19221,7 +19223,7 @@ const HELP_CONTENT = {
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
-    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (escolhendo "Outros", abre um campo pra especificar), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só, ou várias se o card for Supercard), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
+    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (escolhendo "Outros", abre um campo pra especificar), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Supercard não tem ficha própria:</b> assim que um card ganha pelo menos um card filho, a seção Ficha Técnica some do modal dele e para de ser obrigatória pra salvar — ele já é a soma dos filhos, e cada filho tem sua própria ficha preenchida individualmente. Se ele já tinha uma ficha preenchida antes de virar supercard, o conteúdo continua salvo (só some da tela); voltar a ser um card comum (remover todos os filhos) traz a seção de volta.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
@@ -19802,7 +19804,19 @@ function initSuperChildren(card){
     }
   }
 }
+// Supercard não preenche Ficha Técnica própria — ele já é a soma dos
+// filhos, cada um com a ficha dele (pedido direto: "supercard não precisa
+// de ficha de criativos pq ele já vai ter cards filhos"). A seção some do
+// modal em vez de só virar opcional, pra não depender de ninguém lembrar
+// de pular — reavaliado toda vez que a lista de filhos muda (mesmo motivo
+// do _crvSyncPlataformaMode logo abaixo). Dado já preenchido antes de virar
+// supercard não é apagado, só some da tela.
+function _crvUpdateFichaSecVisibility(){
+  const sec=document.getElementById('m-criativo-sec');
+  if(sec) sec.style.display = (criativosAtivo && editingSuperChildren.length===0) ? '' : 'none';
+}
 function renderSuperChildrenList(){
+  _crvUpdateFichaSecVisibility();
   // Ficha Técnica: Plataforma vira múltipla escolha quando o card é
   // supercard (tem filhos) — reavalia toda vez que a lista de filhos muda,
   // não só na abertura do card (pedido direto: "Pode ser múltiplas
