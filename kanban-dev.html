@@ -725,6 +725,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
 .panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
+/* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
+   no mobile, ver @media(max-width:768px) .card-sheet-handle. */
+.card-sheet-handle{display:none;}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
 .no-due-btn{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 9px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
@@ -2114,7 +2117,7 @@ input[type="date"]{-moz-appearance:textfield;}
   .toolbar .btn-sm{
     white-space:nowrap;flex-shrink:0;
     padding:6px 11px;font-size:11px;
-    min-height:34px;
+    min-height:44px;
   }
 
   /* ── FILTER BAR ───────────────────────────────────────── */
@@ -2133,10 +2136,17 @@ input[type="date"]{-moz-appearance:textfield;}
   .board-wrap{
     overflow-x:auto;-webkit-overflow-scrolling:touch;
     margin:0 -.6rem;padding:0 .6rem 8px;scrollbar-width:none;
+    /* Scroll-snap por coluna — só mobile, não afeta o drag de reordenar
+       coluna no desktop (mousedown/dragstart nativo, sem scroll envolvido).
+       Convive bem com o long-press drag de card (addTouchDnD): antes de
+       "armar" (400ms parado), qualquer movimento >8px cancela o timer e
+       deixa o scroll nativo — incluindo o snap — rolar livremente; só
+       depois de armado é que touchmove passa a dar preventDefault(). */
+    scroll-snap-type:x mandatory;
   }
   .board-wrap::-webkit-scrollbar{display:none;}
   .board{display:flex!important;gap:10px;min-width:max-content;align-items:start;}
-  .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;}
+  .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;scroll-snap-align:start;}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
 .col-body{
@@ -2184,6 +2194,29 @@ input[type="date"]{-moz-appearance:textfield;}
   .ql-panel{max-height:88vh;}
   .modal-body{padding:10px 12px;gap:9px;}
 
+  /* ── Card modal como bottom-sheet (Fase 3.1) — só #card-ov, os demais
+     modais continuam como dialog centralizado acima. Sobe de baixo, cantos
+     superiores arredondados, alça de arrastar (swipe-down fecha — ver JS
+     em _initCardSheetDrag, que reusa closeOv('card-ov') e por tabela já
+     ganha a confirmação de "alterações não salvas" da Fase 2.2 de graça). ── */
+  #card-ov{align-items:flex-end;padding:0;}
+  #card-ov .card-panel{
+    max-height:92vh;
+    border-radius:20px 20px 0 0;
+    animation:cardSheetUp .28s cubic-bezier(.32,.72,0,1);
+    /* .card-sheet-handle (a alça) é o único gatilho do swipe-down — de
+       propósito, não o header inteiro, pra não brigar com os botões/abas que
+       moram lá (✕, tabs do modal etc.). Ver JS _initCardSheetDrag. */
+  }
+  @keyframes cardSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .card-sheet-handle{
+    display:flex;justify-content:center;padding:9px 0 3px;flex-shrink:0;
+    touch-action:none;cursor:grab;
+  }
+  .card-sheet-handle::before{
+    content:'';width:38px;height:5px;border-radius:999px;background:var(--glass-b);
+  }
+
   /* Grid 2 colunas → 1 coluna no mobile */
   .modal-grid{
     grid-template-columns:1fr!important;
@@ -2218,8 +2251,13 @@ input[type="date"]{-moz-appearance:textfield;}
   .eoc-display{min-height:48px;font-size:13px;}
   .eoc-textarea{font-size:16px;min-height:80px;}
   .eoc-actions{gap:8px;}
-  .eoc-save,.eoc-cancel{min-height:36px;padding:6px 14px;font-size:12px;}
+  .eoc-save,.eoc-cancel{min-height:44px;padding:6px 14px;font-size:12px;}
   .eoc-hint{display:none;}
+
+  /* ── Alvos de toque (Fase 3.3): mínimo 44×44px via padding, não ícone
+     maior — mesmo espírito do .x-btn/.notif-btn já existentes. .icon-btn é
+     usado em vários botões pequenos de ação (✕ remover, ✏️ editar etc.). ── */
+  .icon-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
 
   /* ── COMENTÁRIOS ─────────────────────────────────────── */
   .comment-inp-avatar{width:32px;height:32px;flex-shrink:0;}
@@ -2230,9 +2268,9 @@ input[type="date"]{-moz-appearance:textfield;}
   .comment-text{font-size:12px;}
 
   /* ── ANEXOS ──────────────────────────────────────────── */
-  .attach-add-btn{min-height:34px;padding:4px 12px;}
+  .attach-add-btn{min-height:44px;padding:4px 12px;}
   .attach-inp{font-size:16px;padding:9px 11px;}
-  .attach-save-btn{min-height:36px;}
+  .attach-save-btn{min-height:44px;}
 
   /* ── PARTICIPANTES ───────────────────────────────────── */
   #m-part-select{font-size:13px;}
@@ -2257,7 +2295,7 @@ input[type="date"]{-moz-appearance:textfield;}
   /* ── MURAL / COMUNICADO (novos overlays) ─────────────── */
   /* Botões de notificação/mural/kudos sempre visíveis e com bom alvo de toque */
   .notif-btn{
-    min-width:40px;min-height:40px;
+    min-width:44px;min-height:44px;
     display:flex;align-items:center;justify-content:center;
     font-size:17px;flex-shrink:0;
   }
@@ -2294,7 +2332,17 @@ input[type="date"]{-moz-appearance:textfield;}
   .bulk-bar > *{flex-shrink:0;}
 
   /* ── Botões de fechar (x): alvo de toque melhor ── */
-  .x-btn{min-width:40px;min-height:40px;font-size:20px;}
+  .x-btn{min-width:44px;min-height:44px;font-size:20px;}
+
+  /* ── Indicador de coluna atual (scroll-snap, Fase 3.2) ── */
+  .mobile-col-indicator{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(64px + env(safe-area-inset-bottom) + 8px);
+    background:rgba(var(--surface2-rgb),.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-b);border-radius:999px;
+    padding:4px 13px;font-size:11px;font-weight:600;color:var(--txt2);
+    z-index:40;pointer-events:none;white-space:nowrap;
+  }
 }
 
 /* Telas muito pequenas (<380px) */
@@ -3054,6 +3102,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="board-wrap" id="board-wrap">
   <div class="board" id="board"></div>
 </div>
+<div class="mobile-col-indicator" id="mobile-col-indicator" style="display:none;"></div>
 </div>
 
 <!-- NOTIFICAÇÕES -->
@@ -3299,6 +3348,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CARD MODAL -->
 <div class="ov" id="card-ov">
 <div class="panel card-panel">
+  <div class="card-sheet-handle" id="card-sheet-handle"></div>
   <div id="m-cover-strip-modal" style="display:none;height:6px;border-radius:calc(var(--r2) - 1px) calc(var(--r2) - 1px) 0 0;margin:-1px -1px 0 -1px;"></div>
   <div id="m-depends-bar" class="card-parent-bar" style="display:none;">
     <span style="color:var(--txt3);font-size:10px;">Depende de:</span>
@@ -5165,7 +5215,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.374-dev</div>
+<div class="version">v8.30.375-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8699,7 +8749,47 @@ function renderBoard(){
   board.scrollLeft=_scrollBoardX;
   Object.keys(_scrollColY).forEach(elId=>{ const elx=document.getElementById(elId); if(elx) elx.scrollTop=_scrollColY[elId]; });
   if(_scrollWinY) window.scrollTo(0,_scrollWinY);
+  _scheduleColIndicator();
 }
+
+// ── Fase 3.2 (mobile): indicador de coluna atual + scroll-snap ─────────────
+// Board vira 1 coluna por "tela" no mobile (scroll-snap-type:x mandatory, ver
+// CSS). Este indicador mostra nome+posição da coluna mais alinhada à
+// esquerda do board-wrap, atualizado por scroll (passivo, coalescido em rAF
+// — nunca mais de 1 cálculo por frame) e depois de todo renderBoard().
+// _mobileCurrentColId fica exposto pra outras features mobile reaproveitarem
+// (ver Fase 3.4 — criar card na coluna visível).
+let _mobileCurrentColId = null;
+let _mobileColIndicatorRaf = null;
+function _scheduleColIndicator(){
+  if(_mobileColIndicatorRaf) return;
+  _mobileColIndicatorRaf = requestAnimationFrame(()=>{ _mobileColIndicatorRaf=null; _mobileColIndicatorUpdate(); });
+}
+function _mobileColIndicatorUpdate(){
+  const ind = document.getElementById('mobile-col-indicator');
+  if(!ind) return;
+  const wrap = document.getElementById('board-wrap');
+  const isMobile = window.matchMedia('(max-width:768px)').matches;
+  if(!isMobile || !wrap || raiaMode){
+    ind.style.display='none';
+    return;
+  }
+  const cols = [...wrap.querySelectorAll(':scope > .board > .col')];
+  if(!cols.length){ ind.style.display='none'; return; }
+  const wrapLeft = wrap.getBoundingClientRect().left;
+  let idx=0, best=Infinity;
+  cols.forEach((c,i)=>{
+    const d = Math.abs(c.getBoundingClientRect().left - wrapLeft);
+    if(d<best){ best=d; idx=i; }
+  });
+  const colEl = cols[idx];
+  _mobileCurrentColId = colEl?.id?.replace(/^col-/,'') || null;
+  const nome = colEl?.querySelector('.col-title')?.textContent?.trim() || '?';
+  ind.textContent = `${nome} · ${idx+1}/${cols.length}`;
+  ind.style.display='';
+}
+document.getElementById('board-wrap')?.addEventListener('scroll', _scheduleColIndicator, {passive:true});
+window.addEventListener('resize', _scheduleColIndicator);
 
 function renderNormal(board,activeCards){
   // Usa classList ao invés de sobrescrever className inteira (evita oscilação)
@@ -22586,6 +22676,59 @@ document.querySelectorAll('.ov').forEach(ov=>{
     _downOnBackdrop=false;
   });
 });
+
+// ── Fase 3.1 (mobile): bottom-sheet do card modal ───────────────────────
+// Arrastar a alça (#card-sheet-handle) pra baixo fecha o modal — passa por
+// closeOv('card-ov'), então ganha de graça a confirmação de "alterações não
+// salvas" (Fase 2.2/_cardIsDirty). Só a alça responde ao arrasto, de
+// propósito — não o header inteiro, que tem botões/abas.
+(function _initCardSheetDrag(){
+  const handle = document.getElementById('card-sheet-handle');
+  const panel = document.querySelector('#card-ov .card-panel');
+  if(!handle || !panel) return;
+  const isMobile = () => window.matchMedia('(max-width:768px)').matches;
+  let startY=0, dy=0, dragging=false;
+  handle.addEventListener('touchstart', e=>{
+    if(!isMobile() || e.touches.length>1) return;
+    startY=e.touches[0].clientY; dy=0; dragging=true;
+    panel.style.transition='none';
+  }, {passive:true});
+  handle.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    dy = Math.max(0, e.touches[0].clientY-startY); // não deixa "esticar" pra cima
+    panel.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  handle.addEventListener('touchend', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    panel.style.transition='';
+    panel.style.transform='';
+    if(dy>110) closeOv('card-ov'); // arrastou o suficiente — fecha (com confirmação se dirty)
+  });
+  handle.addEventListener('touchcancel', ()=>{
+    dragging=false; panel.style.transition=''; panel.style.transform='';
+  });
+})();
+
+// ── Fase 3.1 (mobile): teclado virtual x bottom-sheet ───────────────────
+// Sem isso, o teclado do celular cobre o campo que a pessoa está editando
+// (o layout visual não sabe que perdeu espaço — só o visualViewport sabe).
+// Redimensiona a folha pra caber no espaço que sobrou e mantém o campo
+// focado visível, reaproveitando o mesmo scroll interno do modal.
+if(window.visualViewport){
+  const _onVVResize = () => {
+    const panel = document.querySelector('#card-ov.open .card-panel');
+    if(!panel || window.matchMedia('(max-width:768px)').matches===false) return;
+    const vv = window.visualViewport;
+    const kbOpen = (window.innerHeight - vv.height) > 100; // heurística: teclado ocupando >100px
+    panel.style.maxHeight = kbOpen ? (vv.height*0.98)+'px' : '';
+    if(kbOpen){
+      const el = document.activeElement;
+      if(el && panel.contains(el)) setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}), 60);
+    }
+  };
+  window.visualViewport.addEventListener('resize', _onVVResize);
+}
 
 // ══ AUTO-UPDATE: detecta nova versão publicada e BLOQUEIA a tela até atualizar ══
 // Funciona igual em desktop e mobile: assim que uma versao nova e publicada, a proxima

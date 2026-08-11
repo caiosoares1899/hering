@@ -1318,6 +1318,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.375-dev — 2026-08-11
+Fase 3.1-3.3 do plano mobile.
+
+**3.1 — Card modal como bottom-sheet (mobile)**
+- `#card-ov` (só o modal do card — os demais continuam dialog centralizado)
+  sobe de baixo, cantos superiores arredondados, com uma alça de arrastar
+  (`#card-sheet-handle`) no topo.
+- Arrastar a alça pra baixo além de ~110px fecha o modal — passa por
+  `closeOv('card-ov')`, então ganha de graça a confirmação de "alterações
+  não salvas" já existente (Fase 2.2). Só a alça responde ao arrasto, não
+  o header inteiro (que tem botões/abas).
+- `visualViewport.resize`: quando o teclado abre, redimensiona a folha pro
+  espaço que sobrou e rola o campo focado pro centro — sem isso o teclado
+  cobria o campo sendo editado.
+
+**3.2 — Navegação por coluna (scroll-snap)**
+- `scroll-snap-type:x mandatory` no `#board-wrap` + `scroll-snap-align:start`
+  nas colunas, só mobile — convive com o long-press drag existente (antes de
+  "armar" o drag, qualquer movimento cancela o timer e deixa o scroll nativo
+  rolar livremente).
+- Indicador fixo discreto ("Em Progresso · 2/5") acima da bottom-nav,
+  atualizado por scroll (passivo, coalescido em rAF) e depois de todo
+  `renderBoard()`. Escopo: só board padrão — modo raia (múltiplas faixas
+  horizontais independentes) ficou de fora por ora.
+
+**3.3 — Alvos de toque (auditoria + preenchimento de lacunas)**
+- Boa parte já estava OK (`.x-btn`, `.notif-btn`, `.mention-option`).
+  Ajustados pra 44×44px via padding: `.icon-btn` (botões pequenos de ação
+  tipo ✕/✏️, usado em vários lugares), `.toolbar .btn-sm`, `.eoc-save`/
+  `.eoc-cancel`, `.attach-add-btn`/`.attach-save-btn`, `.x-btn`/`.notif-btn`
+  (de 40 pra 44px).
+
 ### v8.30.374-dev — 2026-08-11
 Fase 2.4 do plano de otimização: lazy-init de painéis pesados. Auditados
 os 4 painéis listados (Relatório de Tempo, Campanhas, Calendário,
