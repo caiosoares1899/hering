@@ -3604,14 +3604,9 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
 
       <div class="card-attr-row">
-        <div class="field" style="grid-column:1/-1;"><label class="fl">Lista de Criativos</label>
-          <select class="fi" id="m-crv-lista" onchange="scheduleAutoSave()"><option value="">— sem lista —</option></select>
-        </div>
-      </div>
-
-      <div class="card-attr-row">
-        <div class="field"><label class="fl">Canal</label>
-          <select class="fi" id="m-crv-canal" onchange="scheduleAutoSave()"><option value="">— selecione —</option></select>
+        <div class="field" style="grid-column:1/-1;"><label class="fl">Canal</label>
+          <select class="fi" id="m-crv-canal" onchange="_crvCanalChange()"><option value="">— selecione —</option></select>
+          <input class="fi" id="m-crv-canal-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
         </div>
       </div>
 
@@ -3636,18 +3631,13 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
 
-      <div class="card-attr-row">
-        <div class="field" id="m-crv-variacoes-wrap"><label class="fl">Variações</label>
-          <div class="crv-radio-group">
-            <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="sim" onchange="_crvVariacoesChange()"> Sim</label>
-            <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="nao" onchange="_crvVariacoesChange()"> Não</label>
-          </div>
-          <input class="fi" id="m-crv-variacoes-qtd" type="number" min="1" placeholder="Qtd de variações" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;max-width:140px;">
+      <div class="field" id="m-crv-variacoes-wrap">
+        <label class="fl">Variações <span id="m-crv-qtd-hint" style="font-size:9px;color:var(--txt3);font-weight:400;"></span></label>
+        <div class="crv-radio-group">
+          <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="sim" onchange="_crvVariacoesChange()"> Sim</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="nao" onchange="_crvVariacoesChange()"> Não</label>
         </div>
-        <div class="field"><label class="fl">Quantidade de Criativos</label>
-          <input class="fi" id="m-crv-qtd" type="number" min="0" oninput="scheduleAutoSave()" placeholder="0">
-          <div id="m-crv-qtd-hint" style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.4;"></div>
-        </div>
+        <input class="fi" id="m-crv-variacoes-qtd" type="number" min="1" placeholder="Qtd de variações" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;max-width:140px;">
       </div>
 
       <div class="field" style="grid-column:1/-1;">
@@ -3670,9 +3660,6 @@ input[type="date"]{-moz-appearance:textfield;}
             <option value="Concluído">Concluído</option>
           </select>
         </div>
-      </div>
-      <div class="field"><label class="fl">Obs</label>
-        <input class="fi" id="m-crv-obs" oninput="scheduleAutoSave()" placeholder="Observações...">
       </div>
     </div>
 
@@ -4089,7 +4076,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="tab-c" id="cfgtab-criativos">
       <div class="cfg-sec-title">🎬 Controle de Criativos</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato, Variações, Quantidade de Criativos e Direcional de Mídia — todos obrigatórios pro demandante) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
+        Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato, Variações e Direcional de Mídia — todos obrigatórios pro demandante) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -5368,7 +5355,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.392-dev</div>
+<div class="version">v8.30.393-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7365,6 +7352,13 @@ function fbLoadAll(){
     criativosAtivo = !!val;
     const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
     const sec=document.getElementById('m-criativo-sec'); if(sec) sec.style.display = criativosAtivo?'':'none';
+    // BUGFIX: squads que já tinham a Ficha ativada ANTES da Ficha Técnica
+    // existir nunca passavam por toggleCriativosAtivo() (só quem liga na
+    // hora aciona o provisionamento) — carregavam com criativoOpcoes vazio
+    // pra sempre, e Canal/Objetivo/Plataforma/Tipo/Formato ficavam sem
+    // nenhuma opção pra escolher. Provisiona aqui também, no load normal,
+    // não só no toggle interativo — idempotente, só preenche o que falta.
+    if(criativosAtivo && typeof _provisionCriativoOpcoes==='function') _provisionCriativoOpcoes();
   });
   fbListen(FB+'/config/tamanho_ativo', val=>{
     tamanhoAtivo = !!val;
@@ -7388,7 +7382,10 @@ function fbLoadAll(){
   fbListen(FB+'/config/criativos_listas', val=>{
     criativosListas = val||{};
     renderCriativosListasCfg();
-    _populateCriativosListaSelect();
+    // "Lista de Criativos" saiu do campo por card na Ficha Técnica (pedido
+    // direto) — Config → Criativos → Listas e o filtro por lista na tabela
+    // do Controle de Criativos continuam existindo, só não populam mais
+    // nenhum select dentro do modal do card (ele não tem mais esse campo).
     _populateCriativosFilterLista();
     _populateCriativosImportLista();
     if(document.getElementById('criativos-ov')?.classList.contains('open')) renderCriativosTable();
@@ -10787,7 +10784,7 @@ function saveCard(){
   if(criativosAtivo){
     const crvMissing=[];
     const crvLabels={crvCampanha:'Campanha',crvFunil:'Funil',crvEtapa:'Etapa do Funil',crvCanal:'Canal',crvObjetivo:'Objetivo',
-      crvPlataforma:'Plataforma',crvTipo:'Tipo',crvFormato:'Formato',crvVariacoes:'Variações',crvQtd:'Quantidade de Criativos',crvDirecional:'Direcional de Mídia'};
+      crvPlataforma:'Plataforma',crvTipo:'Tipo',crvFormato:'Formato',crvVariacoes:'Variações',crvDirecional:'Direcional de Mídia'};
     if(!document.querySelector('input[name="crv-campanha-tipo"]:checked')) crvMissing.push('crvCampanha');
     if(!document.querySelector('input[name="crv-funil"]:checked')) crvMissing.push('crvFunil');
     if(!document.getElementById('m-crv-etapa')?.value) crvMissing.push('crvEtapa');
@@ -10797,7 +10794,6 @@ function saveCard(){
     if(!document.getElementById('m-crv-tipo')?.value) crvMissing.push('crvTipo');
     if(!document.getElementById('m-crv-formato')?.value) crvMissing.push('crvFormato');
     if(!document.querySelector('input[name="crv-variacoes"]:checked')) crvMissing.push('crvVariacoes');
-    if(!document.getElementById('m-crv-qtd')?.value) crvMissing.push('crvQtd');
     if(!document.getElementById('m-crv-direcional')?.value.trim()) crvMissing.push('crvDirecional');
     if(crvMissing.length){
       _highlightMissingFields(crvMissing);
@@ -11370,6 +11366,10 @@ function _crvTipoChange(){
   _crvUpdateQtdHint();
   scheduleAutoSave();
 }
+// Referência de quantidade da tabela real da Hering (por Tipo) — mostrada
+// ao lado do label "Variações" desde que o campo dedicado de Quantidade de
+// Criativos saiu da Ficha Técnica (pedido direto — a real só se sabe depois
+// que os designers entregam). Só orienta, não trava nada.
 function _crvUpdateQtdHint(){
   const hint=document.getElementById('m-crv-qtd-hint'); if(!hint) return;
   const tipoId=document.getElementById('m-crv-tipo')?.value||'';
@@ -11394,38 +11394,39 @@ function _crvVariacoesChange(){
   if(inp){ inp.style.display=sim?'':'none'; if(!sim) inp.value=''; }
   scheduleAutoSave();
 }
+// Canal "Outros" abre um campo pra especificar (pedido direto) — casa pela
+// LABEL (não pelo id), então continua funcionando mesmo se o PO recriar a
+// opção "Outros" com um id novo via Config → Criativos.
+function _crvCanalChange(){
+  const sel=document.getElementById('m-crv-canal');
+  const opt=(criativoOpcoes.canais||[]).find(o=>o.id===sel?.value);
+  const isOutros = !!opt && _norm(opt.label)==='outros';
+  const inp=document.getElementById('m-crv-canal-outros');
+  if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
+  scheduleAutoSave();
+}
 function getCriativoData(){
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
   const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
   const funil=(document.querySelector('input[name="crv-funil"]:checked')||{}).value||'';
   const etapaFunil=document.getElementById('m-crv-etapa')?.value||'';
   const canal=document.getElementById('m-crv-canal')?.value||'';
+  const canalOutros=document.getElementById('m-crv-canal-outros')?.value.trim()||'';
   const objetivos=_crvGetChecked('crv-objetivo');
   const plataformas=_crvGetSelectedPlataformas();
   const tipo=document.getElementById('m-crv-tipo')?.value||'';
   const formato=document.getElementById('m-crv-formato')?.value||'';
   const variacoes=(document.querySelector('input[name="crv-variacoes"]:checked')||{}).value||'';
   const variacoesQtd=document.getElementById('m-crv-variacoes-qtd')?.value||'';
-  const qtd=document.getElementById('m-crv-qtd')?.value||'';
   const direcional=document.getElementById('m-crv-direcional')?.value.trim()||'';
   const status=document.getElementById('m-crv-status')?.value||'';
-  const obs=document.getElementById('m-crv-obs')?.value.trim()||'';
-  const lista=document.getElementById('m-crv-lista')?.value||'';
   const vazio = !campanhaTipo && !funil && !etapaFunil && !canal && !objetivos.length && !plataformas.length
-    && !tipo && !formato && !variacoes && !qtd && !direcional && !status && !obs && !lista;
+    && !tipo && !formato && !variacoes && !direcional && !status;
   if(vazio) return null;
-  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,objetivos,plataformas,tipo,formato,variacoes,variacoesQtd,qtd,direcional,status,obs,lista};
-}
-function _populateCriativosListaSelect(){
-  const sel=document.getElementById('m-crv-lista'); if(!sel) return;
-  const cur=sel.value;
-  const opts=Object.values(criativosListas).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
-  sel.innerHTML='<option value="">— sem lista —</option>'+opts.map(l=>'<option value="'+esc(l.id)+'">'+esc(l.nome)+'</option>').join('');
-  sel.value=cur||'';
+  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,plataformas,tipo,formato,variacoes,variacoesQtd,direcional,status};
 }
 function setCriativoFields(crv){
   crv=crv||{};
-  _populateCriativosListaSelect();
   _refreshCriativoFichaSelects();
   const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
   // Campanha (radio + texto condicional)
@@ -11436,6 +11437,8 @@ function setCriativoFields(crv){
   document.querySelectorAll('input[name="crv-funil"]').forEach(r=>{ r.checked = r.value===(crv.funil||''); });
   set('m-crv-etapa', crv.etapaFunil);
   set('m-crv-canal', crv.canal);
+  _crvCanalChange();
+  set('m-crv-canal-outros', crv.canalOutros);
   _crvSetChecked('crv-objetivo', crv.objetivos||[]);
   // Plataforma: decide modo (single/multi) pelo supercard ANTES de setar o
   // valor, senão o valor pode ir pro elemento errado (escondido).
@@ -11449,11 +11452,8 @@ function setCriativoFields(crv){
   document.querySelectorAll('input[name="crv-variacoes"]').forEach(r=>{ r.checked = r.value===(crv.variacoes||''); });
   _crvVariacoesChange();
   set('m-crv-variacoes-qtd', crv.variacoesQtd);
-  set('m-crv-qtd', crv.qtd);
   set('m-crv-direcional', crv.direcional);
   set('m-crv-status', crv.status);
-  set('m-crv-obs', crv.obs);
-  set('m-crv-lista', crv.lista);
 }
 
 function _criativosRows(){
@@ -17182,7 +17182,7 @@ function _missingRequired(){
 }
 // Destaca visualmente os campos obrigatórios faltando
 const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority',submarca:'m-submarca',
-  crvEtapa:'m-crv-etapa',crvCanal:'m-crv-canal',crvTipo:'m-crv-tipo',crvFormato:'m-crv-formato',crvQtd:'m-crv-qtd',crvDirecional:'m-crv-direcional'};
+  crvEtapa:'m-crv-etapa',crvCanal:'m-crv-canal',crvTipo:'m-crv-tipo',crvFormato:'m-crv-formato',crvDirecional:'m-crv-direcional'};
 function _highlightMissingFields(missing){
   // limpa destaques antigos
   document.querySelectorAll('.req-missing').forEach(el=>el.classList.remove('req-missing'));
@@ -19306,7 +19306,7 @@ const HELP_CONTENT = {
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
-    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b>, <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só, ou várias se o card for Supercard), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b>, <b>Quantidade de Criativos</b> e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado do campo de Quantidade — não trava nada, só orienta.\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado. Dá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
+    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (escolhendo "Outros", abre um campo pra especificar), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só, ou várias se o card for Supercard), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
