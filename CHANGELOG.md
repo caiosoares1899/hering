@@ -18,6 +18,40 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.242 — 2026-08-11 · promove pra prod
+Promove pra produção todo o lote acumulado em dev desde a v8.30.241
+(v8.30.389-dev → v8.30.397-dev), validado em dev pelo usuário.
+
+**🎬 Ficha Técnica (produção criativa)** — reformulação grande do antigo
+"Ficha de Criativo" free-text: hierarquia fixa (Campanha, Funil, Etapa
+do Funil, Canal, Objetivo, Plataforma, Tipo, Formato, Variações), todos
+obrigatórios pro demandante exceto Direcional de Mídia (opcional).
+Canal/Objetivo/Plataforma/Tipo/Formato viram listas fechadas
+configuráveis em ⚙ Config → Criativos (igual tags — ninguém digita
+texto livre), com Tipo dependente da Plataforma escolhida e uma
+referência de quantidade sugerida por plataforma. "Status de produção"
+foi removido (redundante com a coluna do board, já visível em 📊 Dados
+do Board). Supercard não precisa de ficha própria — a seção some
+sozinha do modal assim que o card ganha o primeiro filho, sem depender
+de ninguém lembrar. Painéis de contagem (Controle de Criativos →
+Dashboard, Dados do Board) agora separam Total/Cards/Supercards.
+
+**🖼️ Capa de imagem** — dica de dimensão ideal recomenda subir em
+postimages.org/imgbb.com quando não há onde hospedar (link do Google
+Drive geralmente não funciona nas contas da Hering, política de
+Workspace bloqueia o compartilhamento público necessário).
+
+**📈 CFD** — filtro de colunas ocultas (⚙ Config → Fluxo → "Ocultar do
+CFD"), pra tirar Backlog/Arquivo/Bloqueios do gráfico.
+
+**📥 Intake** — vira opcional por squad (⚙ Config → Ágil), com opt-out
+explícito; desligar esconde o botão e a Cloud Function passa a
+rejeitar pedidos novos no link público.
+
+**💬 Comentários** — botão "↩ Responder" insere automaticamente
+"@handle" de quem comentou, reaproveitando a notificação de menção já
+existente.
+
 ### v8.30.241 — 2026-08-11 · promove pra prod (PR #319)
 Promove a dica de dimensão ideal pra capa de imagem de card, a partir
 de feedback direto testando a capa em produção ("nem todas as imagens
