@@ -1366,6 +1366,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.390-dev — 2026-08-11
+Feedback direto logo depois de v8.30.389-dev: "pela Hering não dá pra
+colocar 'Qualquer pessoa com o link pode ver'" — a política do Google
+Workspace da empresa bloqueia essa permissão, então o conversor de
+link do Drive (implementado na versão anterior) não serve pra ninguém
+na prática, mesmo funcionando tecnicamente.
+
+- Dica inline no menu 🎨 e HELP_CONTENT reescritos: a recomendação
+  principal agora é subir a imagem em **postimages.org** ou
+  **imgbb.com** (sem conta, sem custo, gera link direto na hora) —
+  Drive vira menção secundária, com o aviso claro de que geralmente
+  não funciona nas contas da Hering.
+- Toast do conversor de Drive (`setCardCoverImage`) atualizado com o
+  mesmo aviso + sugestão de alternativa, pra quem tentar mesmo assim.
+- Código do conversor de link do Drive (`_normalizeCoverImageUrl`)
+  mantido — inofensivo, e ainda útil pra quem tiver uma conta pessoal
+  ou parceiro externo sem essa restrição.
+- Decisão explícita (perguntada ao usuário): NÃO implementar upload de
+  imagem de verdade via Firebase Storage nesta rodada — ficaria mais
+  caro e reverteria a decisão original da Fase 5.6 de não usar Storage.
+
 ### v8.30.389-dev — 2026-08-11
 Pedido direto: time não tem onde hospedar imagem além do Google Drive,
 e o link normal de "Compartilhar" do Drive não funciona como capa —
