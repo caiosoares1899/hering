@@ -1318,6 +1318,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.372-dev — 2026-08-11
+Fase 2.2 do plano de otimização: `_updateSaveBtnDirtyState()` (indicador
+"alterações não salvas" no botão Salvar do card) rodava num
+`setInterval(400)` pra sempre — mesmo com o modal do card fechado.
+
+- Trocado por um listener delegado (`input`/`change`) em `document`,
+  filtrado pro modal do card (`#card-ov`), registrado UMA VEZ (não a
+  cada abertura de card). Com o modal fechado, `_cardManualSnap` é
+  `null` e `_cardIsDirty()` sai cedo — zero custo parado.
+  `_startDirtyWatch()`/`_stopDirtyWatch()` continuam existindo (mesmos
+  nomes, mesmos pontos de chamada), só que sem `setInterval`.
+- Um caso não cai em `input`/`change`: mostrar/esconder o campo de
+  impedimento é feito via `style.display` direto (`addBlockerTag`/
+  `removeBlockerTag`), não dispara evento nenhum — adicionada uma
+  chamada explícita a `_updateSaveBtnDirtyState()` nesses dois pontos
+  pra não perder esse caso.
+- Sem mudança de comportamento visível.
+
 ### v8.30.371-dev — 2026-08-11
 Fase 2.1 do plano de otimização: `renderBoard()` é chamado em ~102 pontos
 do código; cada um faz um re-render completo do board. Criado
