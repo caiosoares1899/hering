@@ -1366,6 +1366,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.392-dev — 2026-08-11
+Reformulação grande pedida direto: "Ficha do Criativo" vira **Ficha
+Técnica**, com uma hierarquia fixa de campos, todos obrigatórios pro
+demandante.
+
+**Novos campos** (Config → Criativos, opt-in por squad, como já era):
+Campanha (Campanha/Ação Comercial/Perene/Refresh — escolha única, os
+dois primeiros abrem um campo de texto pro nome), Funil (MKT/ECM),
+Etapa do Funil (AWS/CON/PRF), Canal, Objetivo (múltipla escolha),
+Plataforma (única — vira múltipla escolha automaticamente quando o
+card é Supercard, isto é, tem cards filhos), Tipo (depende da
+Plataforma escolhida), Formato (pré-preenchido pelo Tipo, editável),
+Variações (Sim/Não + quantidade), Quantidade de Criativos, e
+**Direcional de Mídia** (texto livre, com destaque visual — badge
+📌 amarelo no card e campo com fundo destacado na ficha).
+
+**Listas fechadas e configuráveis** — Canal/Objetivo/Plataforma/Tipo/
+Formato não aceitam mais texto livre (evita duplicata tipo "vídeo"/
+"vídeos"): agora são listas geridas pelo PO em Config → Criativos →
+"🗂️ Opções da Ficha Técnica" (mesmo espírito de gerenciar tags),
+pré-carregadas com o padrão real da Hering, inclusive a tabela de
+referência Tipo × Plataforma × Formato × Quantidade sugerida (ex.:
+Pmax → 15 criativos, ideal; mostrado como dica ao lado do campo de
+Quantidade, não trava nada).
+
+**Obrigatoriedade**: salvar um card com a Ficha Técnica ativada agora
+bloqueia (mesmo padrão de Título/Prazo/Submarca) se qualquer campo da
+ficha estiver vazio — toast lista o que falta, campo pisca em
+vermelho.
+
+**Controle de Criativos** (tabela/dashboard/filtros/CSV) adaptado pro
+novo modelo: Canal/Formato viram select (não mais texto+sugestão);
+Objetivo/Plataforma mostram os valores escolhidos (múltiplos) mas sem
+edição inline na tabela — abre o card pra ajustar; export CSV ganhou
+colunas Tipo e Direcional de Mídia. Import de planilha Excel continua
+funcionando, mas entra como texto bruto (não como opção da lista
+fechada) até alguém reabrir o card e escolher certo — limitação
+aceita, não valia reescrever o import inteiro nesta rodada.
+
+Cards com a ficha antiga (texto livre) não são apagados — ficam
+"legados" até alguém reabrir e preencher os campos novos.
+
+HELP_CONTENT atualizado.
+
 ### v8.30.391-dev — 2026-08-11
 Dois ajustes pedidos direto sobre Fase 5.3 (CFD) e 5.4 (intake):
 
