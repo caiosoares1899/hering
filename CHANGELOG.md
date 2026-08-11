@@ -1366,6 +1366,13 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.394-dev — 2026-08-11
+Pedido direto: Direcional de Mídia vira o único campo opcional da Ficha
+Técnica — não bloqueia mais salvar o card quando vazio. Label ganhou
+"(opcional)" pra deixar claro. Continua com o destaque visual (fundo
+amarelo na ficha + badge 📌 no card) quando alguém de fato preenche.
+HELP_CONTENT e descrição em Config → Criativos atualizados.
+
 ### v8.30.393-dev — 2026-08-11
 Ajustes na Ficha Técnica logo após o primeiro teste real, todos
 pedidos diretos:
