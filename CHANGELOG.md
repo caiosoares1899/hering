@@ -1400,6 +1400,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.398-dev — 2026-08-11
+Segunda rodada de feedback direto sobre a legibilidade do 🌅 Meu Dia
+("ainda tô achando essa fonte ruim de ler") — a 1ª passada (v8.30.382-dev)
+só tinha trocado a cor do texto secundário (`var(--txt3)`→`var(--txt2)`).
+Perguntado o que ainda incomodava: tamanho pequeno demais **e** contraste
+ainda fraco, os dois.
+
+- Título de cada card no painel: 12px → 14px.
+- Linha de baixo (squad/coluna/prazo): 11px → 12.5px, e cor
+  `var(--txt2)` (65% opacity) → `var(--txt)` (mesma cor de contraste
+  máximo do título, só com `opacity:.85` + peso 500 fazendo a
+  diferenciação visual, em vez de depender só da cor).
+- Título de cada seção (🚧 Bloqueios, ⏳ Atrasado etc.) e o contador
+  redondo ao lado: mesmo tratamento (`var(--txt2)`→`var(--txt)` no
+  título da seção, `var(--txt3)`→`var(--txt2)` no contador).
+- Espaçamento das linhas um pouco mais folgado (`padding`/`margin-bottom`
+  maiores), já que o texto maior precisava de mais respiro.
+
 ### v8.30.397-dev — 2026-08-11
 Pedido direto: botão "↩ Responder" nos comentários do card. Clicar nele
 abre a caixa de comentário já com "@" + o handle de quem fez o
