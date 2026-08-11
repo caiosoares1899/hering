@@ -4825,6 +4825,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="crv-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-sm crv-tab-btn active" id="boarddata-tab-geral" onclick="_boardDataSwitchTab('geral')">📊 Visão Geral</button>
       <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-insights" onclick="_boardDataSwitchTab('insights')">💡 Insights</button>
+      <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-fluxo" onclick="_boardDataSwitchTab('fluxo')">📈 CFD &amp; Burndown</button>
     </div>
     <div id="boarddata-view-geral">
     <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
@@ -4846,6 +4847,17 @@ input[type="date"]{-moz-appearance:textfield;}
       <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Leitura pra PO/ADM/Organizador entenderem rápido como a squad está — tudo calculado a partir dos dados que o board já tem carregado (nenhuma leitura extra do Firebase).</div>
       <div id="boarddata-insights-filters" style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-bottom:16px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;"></div>
       <div id="boarddata-insights-body"></div>
+    </div>
+    <div id="boarddata-view-fluxo" style="display:none;">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Reconstruído a partir do histórico de movimentação já gravado em cada card (<code>flow.log</code>) — nenhuma coleta nova, mas cards com muitas movimentações guardam só as últimas 40 (histórico bem antigo pode ficar incompleto).</div>
+      <div style="margin-bottom:22px;">
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias</div>
+        <div id="boarddata-cfd"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">🔥 Burndown — sprint ativa</div>
+        <div id="boarddata-burndown"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -5258,7 +5270,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.384-dev</div>
+<div class="version">v8.30.385-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -14047,11 +14059,16 @@ function openBoardData(){
 // aba nem está visível).
 function _boardDataSwitchTab(tab){
   const isInsights = tab==='insights';
-  const vg=document.getElementById('boarddata-view-geral'); if(vg) vg.style.display = isInsights?'none':'';
+  const isFluxo = tab==='fluxo';
+  const isGeral = !isInsights && !isFluxo;
+  const vg=document.getElementById('boarddata-view-geral'); if(vg) vg.style.display = isGeral?'':'none';
   const vi=document.getElementById('boarddata-view-insights'); if(vi) vi.style.display = isInsights?'':'none';
-  const tg=document.getElementById('boarddata-tab-geral'); if(tg) tg.classList.toggle('active', !isInsights);
+  const vf=document.getElementById('boarddata-view-fluxo'); if(vf) vf.style.display = isFluxo?'':'none';
+  const tg=document.getElementById('boarddata-tab-geral'); if(tg) tg.classList.toggle('active', isGeral);
   const ti=document.getElementById('boarddata-tab-insights'); if(ti) ti.classList.toggle('active', isInsights);
+  const tf=document.getElementById('boarddata-tab-fluxo'); if(tf) tf.classList.toggle('active', isFluxo);
   if(isInsights) renderBoardDataInsights();
+  if(isFluxo) renderBoardDataFluxo(); // lazy — só recalcula quando a aba é aberta
 }
 // ── Filtros da aba Insights (período + tag) ─────────────────────────────
 // Estado em memória, reseta ao fechar/reabrir o modal de propósito (evita
@@ -14302,6 +14319,124 @@ async function _boardDataTrendChart(){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Não foi possível carregar o histórico agora.</div>';
   }
 }
+
+// ── CFD (Cumulative Flow Diagram) + Burndown — Fase 5, item 3 ──────────
+// Reconstrói o estado histórico de cada card a partir de card.flow.log
+// (sequência de {from,to,at} já gravada em toda movimentação, ver
+// recordMove() mais acima) — zero coleta nova. Limitação aceita: flow.log
+// guarda só as últimas 40 movimentações por card, então cards MUITO
+// movimentados podem perder histórico bem antigo (ver comentário na UI).
+const CFD_DIAS = 21;
+// Em qual coluna um card estava no FIM de um dia `diaStr` (YYYY-MM-DD).
+// undefined = card ainda não existia nesse dia.
+function _cardColunaEmDia(card, diaStr){
+  const criadoEm = (card.createdAt||'').slice(0,10);
+  if(!criadoEm || diaStr < criadoEm) return undefined;
+  const log = card.flow?.log || [];
+  let colunaAtual = log.length ? (log[0].from||card.col) : card.col;
+  for(const mov of log){
+    const movDia = (mov.at||'').slice(0,10);
+    if(!movDia || movDia > diaStr) break; // movimentação é DEPOIS do dia em questão — para aqui
+    colunaAtual = mov.to;
+  }
+  return colunaAtual;
+}
+function renderBoardDataFluxo(){
+  _renderCFD();
+  _renderBurndown();
+}
+function _renderCFD(){
+  const el = document.getElementById('boarddata-cfd'); if(!el) return;
+  const lbl = document.getElementById('cfd-dias-lbl'); if(lbl) lbl.textContent = CFD_DIAS;
+  const ativos = cards.filter(c=>!c.archived);
+  if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; return; }
+  const hoje = new Date();
+  const dias = [];
+  for(let i=CFD_DIAS-1; i>=0; i--){ const d=new Date(hoje); d.setDate(d.getDate()-i); dias.push(_localDateStrBoard(d)); }
+  const colIds = columns.map(c=>c.id);
+  const colInfo = Object.fromEntries(columns.map(c=>[c.id,c]));
+  const serie = Object.fromEntries(colIds.map(id=>[id,[]]));
+  dias.forEach(dia=>{
+    const contagem = Object.fromEntries(colIds.map(id=>[id,0]));
+    ativos.forEach(card=>{
+      const colDia = _cardColunaEmDia(card, dia);
+      if(colDia!=null && contagem[colDia]!==undefined) contagem[colDia]++;
+    });
+    colIds.forEach(id=>serie[id].push(contagem[id]));
+  });
+  const maxTotal = Math.max(1, ...dias.map((_,i)=>colIds.reduce((s,id)=>s+serie[id][i],0)));
+  const W=Math.max(360,dias.length*26), H=180, padL=6, padR=6, padT=10, padB=22;
+  const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
+  const toY = v => padT + (H-padT-padB) - (v/maxTotal)*(H-padT-padB);
+  // Áreas empilhadas na ordem das colunas do board (a "de trás" acumula por
+  // baixo das seguintes — visual clássico de CFD).
+  let acumulado = dias.map(()=>0);
+  const areas = colIds.map(id=>{
+    const baseline = acumulado.slice();
+    acumulado = acumulado.map((v,i)=>v+serie[id][i]);
+    const top = acumulado;
+    const pathTop = top.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' L ');
+    const pathBottom = baseline.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).reverse().join(' L ');
+    return `<path d="M ${pathTop} L ${pathBottom} Z" fill="${colInfo[id]?.color||'#38b6ff'}" opacity=".72" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>`;
+  }).join('');
+  const everyN = Math.max(1, Math.ceil(dias.length/7));
+  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+  const legenda = columns.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;">${areas}${labels}</svg>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10px;color:var(--txt2);margin-top:8px;">${legenda}</div>`;
+}
+function _renderBurndown(){
+  const el = document.getElementById('boarddata-burndown'); if(!el) return;
+  const start = agilCfg?.sprintStart, end = agilCfg?.sprintEnd;
+  if(!start || !end){
+    el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Configure início e fim da sprint em ⚙ Config → Ágil pra ver o burndown.</div>';
+    return;
+  }
+  const dStart = new Date(start+'T00:00:00'), dEnd = new Date(end+'T00:00:00');
+  if(isNaN(dStart.getTime()) || isNaN(dEnd.getTime()) || dEnd<=dStart){
+    el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Datas de sprint inválidas em ⚙ Config → Ágil.</div>';
+    return;
+  }
+  const hojeStr = _localDateStrBoard(new Date());
+  const dias=[]; for(let d=new Date(dStart); d<=dEnd; d.setDate(d.getDate()+1)) dias.push(_localDateStrBoard(new Date(d)));
+  const startStr=_localDateStrBoard(dStart), endStr=_localDateStrBoard(dEnd);
+  // Escopo aproximado — o board não tem campo de "pertence à sprint X":
+  // cards não arquivados criados até o fim da sprint, ainda não concluídos
+  // OU concluídos dentro da janela da sprint.
+  const escopo = cards.filter(c=>{
+    if(c.archived) return false;
+    const criado=(c.createdAt||'').slice(0,10);
+    if(!criado || criado>endStr) return false;
+    const doneAt=(c.flow?.doneAt||'').slice(0,10);
+    return !doneAt || doneAt>=startStr;
+  });
+  const total = escopo.length;
+  if(!total){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhum card no escopo da sprint pra calcular o burndown.</div>'; return; }
+  const restantes = dias.map(dia=>{
+    if(dia>hojeStr) return null; // dias futuros: sem dado real ainda
+    return escopo.filter(c=>{
+      const doneAt=(c.flow?.doneAt||'').slice(0,10);
+      return !doneAt || doneAt>dia;
+    }).length;
+  });
+  const W=Math.max(360,dias.length*30), H=170, padL=8, padR=8, padT=14, padB=22;
+  const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
+  const toY = v => padT + (H-padT-padB) - (v/total)*(H-padT-padB);
+  const ptsReal = restantes.map((v,i)=>v==null?null:`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).filter(Boolean).join(' ');
+  const ptsIdeal = dias.map((_,i)=>`${(padL+i*stepX).toFixed(1)},${toY(total - (total/(dias.length-1||1))*i).toFixed(1)}`).join(' ');
+  const everyN = Math.max(1, Math.ceil(dias.length/7));
+  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:170px;display:block;">
+      <polyline points="${ptsIdeal}" fill="none" stroke="var(--txt3)" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polyline points="${ptsReal}" fill="none" stroke="var(--warn)" stroke-width="2.5"/>
+    </svg>
+    <div style="display:flex;gap:16px;font-size:10px;color:var(--txt2);margin-top:6px;">
+      <span><span style="display:inline-block;width:14px;height:2px;background:var(--warn);margin-right:4px;vertical-align:middle;"></span>Restante (real)</span>
+      <span><span style="display:inline-block;width:14px;height:2px;border-top:1px dashed var(--txt3);margin-right:4px;vertical-align:middle;"></span>Ideal (linear)</span>
+    </div>
+    <div style="font-size:9.5px;color:var(--txt3);margin-top:6px;">Escopo aproximado: ${total} card(s) criado(s) até o fim da sprint, ainda não concluídos ou concluídos dentro da janela. O board não tem um campo próprio de "pertence à sprint X" — ajuste as datas em ⚙ Ágil se o escopo parecer errado.</div>`;
+}
+
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
@@ -18409,6 +18544,7 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
+    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
