@@ -18,7 +18,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.240 — 2026-08-11 · promove pra prod (PR #TBD)
+### v8.30.240 — 2026-08-11 · promove pra prod (PR #316)
 Promove pra produção todo o lote de otimização, mobile, tema claro e
 novas features acumulado em dev desde a v8.30.239, validado em rodadas
 de teste ao vivo (incluindo um teste ponta a ponta do formulário de
