@@ -1318,6 +1318,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.380-dev — 2026-08-11
+Fase 5, item 2 aprovado: aging visual de card ("parado há Xd").
+
+- Badge `⏳ Xd` no card quando ele fica parado na MESMA coluna por mais
+  dias que o limiar configurado — usa `card.flow.enteredAt[coluna]`
+  (já gravado em toda movimentação, `recordMove()`), não precisa de
+  dado novo.
+- Limiar configurável POR COLUNA em ⚙ Config → Fluxo, seção nova "⏳
+  Aging" — campo de dias por coluna, vazio/0 desliga o aviso naquela
+  coluna. Sem configurar nada, o aviso fica desligado em todo lugar
+  (feature opt-in, não muda o board de quem não configurar).
+- Sinal diferente do esmaecimento automático que já existia (`aged-1`/
+  `aged-2`, baseado em dias desde a última EDIÇÃO) — esse é sobre tempo
+  parado NA COLUNA atual. Os dois convivem, sem conflito.
+- Corrigido de propósito: o listener de `config/flow` reconstruía
+  `flowConfig` do zero a cada mudança remota, sem o campo `agingDays` —
+  sem o fix, a configuração salva seria apagada de volta no próximo
+  evento do Firebase (inclusive o eco da própria escrita).
+- HELP_CONTENT atualizado.
+
 ### v8.30.379-dev — 2026-08-11 · TESTE — peixes/bolhas somem na candidata B
 Feedback direto com print: "essa versão está sem os peixinhos". Causa:
 os peixes/bolhas usam fills azul/teal de baixo alpha, pensados pro fundo
