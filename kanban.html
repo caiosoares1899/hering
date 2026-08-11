@@ -195,41 +195,35 @@
      antes de virar opção: pedido direto foi "guarda esse estilo B aí...
      coloca o anterior como default do claro, mas se a pessoa clicar 2x,
      vai pra essa opção B". */
-  --deep:#CBE3F2;
-  --deep-rgb:203,227,242;
-  /* --surface-rgb (fundo dos cards) era quase branco puro (252,254,255)
-     — feedback direto: "achei o card branco longe do tema, tenta com um
-     cinza", seguido de mais uma rodada ("não mudou o branco dos cards!
-     acho que pode dar uma escurecida nele também") — 1ª tentativa saiu
-     pouco perceptível porque a regra base .card soma uma camada de 5%
-     de branco puro por cima (pensada pro tema escuro, ver [data-theme=
-     "light"] .card mais abaixo que remove essa camada só no claro).
-     Escurecido mais um degrau aqui, agora sem a camada branca diluindo. */
-  --surface-rgb:222,235,242;
-  --surface2-rgb:196,226,240;
-  --glass-rgb:155,205,230;
-  --glass:rgba(155,205,230,0.65);
-  --glass-b:rgba(0,169,230,0.32);
-  --glass-h:rgba(0,169,230,0.16);
-  /* --cyan escurecido — usado como cor de TEXTO (rótulos de campo, títulos
-     de seção, badge do nome da squad no header etc.), o valor claro
-     original (#4FC3F7) ficava quase ilegível em cima do glass/fundo claros
-     (feedback direto: "o nome da squad tá apagado no modo claro"). */
-  --blue:#00A9E6;--accent:#00A9E6;--cyan:#0A6C8C;--teal:#33D6D0;
-  --txt:#14324A;--txt2:rgba(20,50,74,0.72);--txt3:rgba(20,50,74,0.48);
+  /* ☀️ Candidata B do artefato "Lençóis Maranhenses — duna vs. lagoa"
+     (Fase 4), validada em dev por várias rodadas de teste ao vivo (pedido
+     original: "implementa a B pra eu ver") e promovida como DEFAULT do
+     tema claro em 2026-08-11. Troca a direção do claro de "lagoa sobre
+     lagoa" (fundo e card quase indistinguíveis) pra "duna branca vs. lagoa
+     turquesa": card quase branco de verdade, fundo com a lagoa mais
+     presente/saturada, glass vira "areia molhada" (base branca, não mais
+     azulada). [data-theme="light"][data-theme-variant="b"] (a variante do
+     duplo-clique, mais escura, de uma rodada anterior) segue como está,
+     não reconciliada com esta paleta nova ainda. */
+  --deep:#0F87C4;
+  --deep-rgb:15,135,196;
+  --surface-rgb:251,253,255;
+  --surface2-rgb:235,245,250;
+  --glass-rgb:255,255,255;
+  --glass:rgba(255,255,255,0.55);
+  --glass-b:rgba(0,124,168,0.28);
+  --glass-h:rgba(0,124,168,0.16);
+  --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#33D6D0;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
   --warn:#F6B73C;--danger:#F15B6C;
   --ocean-op:1; --fish-op:1;
-  /* Pulso de "achar meus cards" e o glow de campo obrigatório (.req-missing,
-     mais abaixo) usavam um amarelo pensado pro fundo escuro — em cima de
-     um card/input já claro, o glow simplesmente some de vista. Feedback
-     direto: "talvez pudesse piscar azul escuro". */
   --pulse-rgb:10,77,120;
 }
 [data-theme="light"] .ocean{
   background:
-    radial-gradient(ellipse at 20% 80%,rgba(0,169,230,.2) 0%,transparent 60%),
-    radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
-    linear-gradient(180deg,#CBE3F2 0%,#A9D3EA 100%);
+    radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),
+    radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),
+    linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
 }
 /* Variante "mais escura" do claro — pedido direto: "time ainda ta
    achando o modo claro muitooo claro, aumenta o contraste e traz um
@@ -260,8 +254,16 @@
     radial-gradient(ellipse at 80% 20%,rgba(51,214,208,.17) 0%,transparent 55%),
     linear-gradient(180deg,#A9CCE3 0%,#86B4D4 100%);
 }
+/* ⚡ Reajustado junto com a candidata B (teste 2026-08-11): os peixes/bolhas
+   usam fills azul/teal de baixo alpha (pensados pro fundo pálido original).
+   Contra o novo fundo "lagoa" mais saturado (mesma família azul/teal), eles
+   praticamente somem — cor-sobre-cor-parecida sem contraste. Em vez de só
+   escurecer (o que piorava a camuflagem), clareia bastante e dessatura pra
+   virarem silhuetas quase brancas, com uma sombra escura sutil pra dar
+   definição de borda — mesmo espírito "duna clara contra a lagoa" do resto
+   do tema. Feedback direto: "essa versão está sem os peixinhos". */
 [data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{
-  filter:saturate(1.3) brightness(0.9) contrast(1.05);
+  filter:brightness(2.3) saturate(.5) drop-shadow(0 0 3px rgba(0,35,55,.4));
 }
 /* Botões da toolbar (Ajuda, Funções de card, Links, Dependências,
    Calendários, Dados do Board, Campanhas, Controle de Criativos) usam
@@ -297,11 +299,13 @@
      camada extra. Feedback direto: "não mudou o branco dos cards! acho
      que pode dar uma escurecida nele também". */
   background:rgba(var(--surface-rgb),.98);
-  box-shadow:0 1px 5px rgba(0,50,80,.22),0 1px 3px rgba(0,50,80,.14);
-  border-color:rgba(0,120,175,.55);
+  /* Sombra em camadas (duna) em vez do glow de borda — combina com o card
+     quase branco de verdade da candidata B (ver comentário no :root acima). */
+  box-shadow:0 1px 2px rgba(16,40,60,.08),0 4px 14px rgba(16,40,60,.06);
+  border-color:rgba(0,124,168,.16);
 }
 [data-theme="light"] .card:hover{
-  box-shadow:0 5px 18px rgba(0,50,80,.28),0 2px 6px rgba(0,50,80,.16);
+  box-shadow:0 1px 2px rgba(16,40,60,.08),0 8px 22px rgba(16,40,60,.14);
 }
 [data-theme="light"][data-theme-variant="b"] .card{
   border-color:rgba(0,90,135,.6);
@@ -392,7 +396,8 @@
    risco ainda sem leitura, aumenta o contraste". */
 [data-theme="light"] .exec-chip,
 [data-theme="light"] .due-badge,
-[data-theme="light"] .risco-badge{
+[data-theme="light"] .risco-badge,
+[data-theme="light"] .aging-col-badge{
   box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
   filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
@@ -458,6 +463,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
+/* Pausa peixes/bolhas quando a aba não está visível (document.hidden) — ver
+   o listener de visibilitychange no JS que alterna [data-anim-paused] no
+   <html>. Anima em background sem ninguém olhando é custo de bateria à toa. */
+[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble{
+  animation-play-state:paused;
+}
+/* prefers-reduced-motion: desliga as animações contínuas e "ambiente"
+   (peixinhos, bolhas, pulsos de alerta) — não mexe em animações curtas/
+   pontuais (popup de notificação, toast, abrir modal), que não são o tipo
+   de movimento que essa preferência do usuário pede pra evitar. */
+@media (prefers-reduced-motion: reduce){
+  .fish-ltr,.fish-rtl,.bubble,.init-pill.init-dup,.btn-unsaved,.raia-unowned-dot{
+    animation:none!important;
+  }
+}
 .app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:20;}
@@ -577,6 +597,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    borda do card (que tem padding:10px) e border-radius levemente menor
    que --r pra acompanhar o arredondamento do card sem sobrar quina viva. */
 .card-cover-strip{height:5px;border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;margin:-10px -10px 8px -10px;}
+.card-cover-strip.card-cover-img{height:64px;background-size:cover;background-position:center;background-repeat:no-repeat;}
 .cover-swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
 .cover-swatch{width:28px;height:28px;border-radius:7px;cursor:pointer;border:2px solid transparent;padding:0;transition:transform .12s,border-color .12s;}
 .cover-swatch:hover{transform:scale(1.08);}
@@ -710,6 +731,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
 .panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
+/* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
+   no mobile, ver @media(max-width:768px) .card-sheet-handle. */
+.card-sheet-handle{display:none;}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
 .no-due-btn{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 9px;color:var(--txt2);cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s;}
@@ -978,6 +1002,8 @@ input[type="date"]{-moz-appearance:textfield;}
   font-weight:800;font-family:"DM Sans",sans-serif;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;
   justify-content:center;padding:0 5px;line-height:1;box-shadow:0 2px 8px rgba(255,107,107,.5);
   font-variant-numeric:tabular-nums;letter-spacing:0;}
+#intake-badge{position:absolute;top:-7px;right:-7px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);box-shadow:-12px 0 48px rgba(0,0,0,.55);
@@ -1919,6 +1945,18 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-dismiss{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:13px;padding:2px 5px;border-radius:4px;opacity:0;transition:opacity .15s,color .15s;flex-shrink:0;line-height:1;}
 .notif-item:hover .notif-dismiss{opacity:1;}
 .notif-dismiss:hover{color:var(--danger,#ef4444);opacity:1!important;}
+/* 🌅 Meu Dia (Fase 5.1) */
+.meudia-sec{margin-bottom:16px;}
+.meudia-sec-hd{font-size:11.5px;font-weight:700;color:var(--txt2);border-left:3px solid;padding-left:8px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.meudia-sec-n{font-size:9.5px;font-weight:600;color:var(--txt3);background:rgba(var(--surface2-rgb),.6);border-radius:999px;padding:1px 7px;}
+.meudia-row{padding:8px 10px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:3px;background:rgba(var(--surface2-rgb),.4);}
+.meudia-row:hover{background:rgba(56,182,255,.1);}
+.meudia-row-title{font-size:12px;font-weight:600;color:var(--txt);line-height:1.4;}
+/* Feedback direto com print: "esse texto aqui ta ruim de leitura" — var(--txt3)
+   (baixo contraste, pensado pra texto bem secundário) em 10px ficava fraco
+   demais em cima do fundo já escuro de .meudia-row. Trocado por var(--txt2)
+   (mesmo tom mais claro usado no título das seções) + 11px. */
+.meudia-row-meta{font-size:11px;color:var(--txt2);margin-top:3px;}
 .notif-ft{padding:8px 14px;border-top:1px solid var(--glass-b);
   display:flex;justify-content:flex-end;}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
@@ -2099,7 +2137,7 @@ input[type="date"]{-moz-appearance:textfield;}
   .toolbar .btn-sm{
     white-space:nowrap;flex-shrink:0;
     padding:6px 11px;font-size:11px;
-    min-height:34px;
+    min-height:44px;
   }
 
   /* ── FILTER BAR ───────────────────────────────────────── */
@@ -2118,10 +2156,17 @@ input[type="date"]{-moz-appearance:textfield;}
   .board-wrap{
     overflow-x:auto;-webkit-overflow-scrolling:touch;
     margin:0 -.6rem;padding:0 .6rem 8px;scrollbar-width:none;
+    /* Scroll-snap por coluna — só mobile, não afeta o drag de reordenar
+       coluna no desktop (mousedown/dragstart nativo, sem scroll envolvido).
+       Convive bem com o long-press drag de card (addTouchDnD): antes de
+       "armar" (400ms parado), qualquer movimento >8px cancela o timer e
+       deixa o scroll nativo — incluindo o snap — rolar livremente; só
+       depois de armado é que touchmove passa a dar preventDefault(). */
+    scroll-snap-type:x mandatory;
   }
   .board-wrap::-webkit-scrollbar{display:none;}
   .board{display:flex!important;gap:10px;min-width:max-content;align-items:start;}
-  .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;}
+  .col{width:82vw;max-width:300px;min-width:240px;flex-shrink:0;scroll-snap-align:start;}
   .col-hd{padding:8px 10px;}
   .col-title{font-size:12px;}
 .col-body{
@@ -2169,6 +2214,29 @@ input[type="date"]{-moz-appearance:textfield;}
   .ql-panel{max-height:88vh;}
   .modal-body{padding:10px 12px;gap:9px;}
 
+  /* ── Card modal como bottom-sheet (Fase 3.1) — só #card-ov, os demais
+     modais continuam como dialog centralizado acima. Sobe de baixo, cantos
+     superiores arredondados, alça de arrastar (swipe-down fecha — ver JS
+     em _initCardSheetDrag, que reusa closeOv('card-ov') e por tabela já
+     ganha a confirmação de "alterações não salvas" da Fase 2.2 de graça). ── */
+  #card-ov{align-items:flex-end;padding:0;}
+  #card-ov .card-panel{
+    max-height:92vh;
+    border-radius:20px 20px 0 0;
+    animation:cardSheetUp .28s cubic-bezier(.32,.72,0,1);
+    /* .card-sheet-handle (a alça) é o único gatilho do swipe-down — de
+       propósito, não o header inteiro, pra não brigar com os botões/abas que
+       moram lá (✕, tabs do modal etc.). Ver JS _initCardSheetDrag. */
+  }
+  @keyframes cardSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .card-sheet-handle{
+    display:flex;justify-content:center;padding:9px 0 3px;flex-shrink:0;
+    touch-action:none;cursor:grab;
+  }
+  .card-sheet-handle::before{
+    content:'';width:38px;height:5px;border-radius:999px;background:var(--glass-b);
+  }
+
   /* Grid 2 colunas → 1 coluna no mobile */
   .modal-grid{
     grid-template-columns:1fr!important;
@@ -2203,8 +2271,13 @@ input[type="date"]{-moz-appearance:textfield;}
   .eoc-display{min-height:48px;font-size:13px;}
   .eoc-textarea{font-size:16px;min-height:80px;}
   .eoc-actions{gap:8px;}
-  .eoc-save,.eoc-cancel{min-height:36px;padding:6px 14px;font-size:12px;}
+  .eoc-save,.eoc-cancel{min-height:44px;padding:6px 14px;font-size:12px;}
   .eoc-hint{display:none;}
+
+  /* ── Alvos de toque (Fase 3.3): mínimo 44×44px via padding, não ícone
+     maior — mesmo espírito do .x-btn/.notif-btn já existentes. .icon-btn é
+     usado em vários botões pequenos de ação (✕ remover, ✏️ editar etc.). ── */
+  .icon-btn{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
 
   /* ── COMENTÁRIOS ─────────────────────────────────────── */
   .comment-inp-avatar{width:32px;height:32px;flex-shrink:0;}
@@ -2215,9 +2288,9 @@ input[type="date"]{-moz-appearance:textfield;}
   .comment-text{font-size:12px;}
 
   /* ── ANEXOS ──────────────────────────────────────────── */
-  .attach-add-btn{min-height:34px;padding:4px 12px;}
+  .attach-add-btn{min-height:44px;padding:4px 12px;}
   .attach-inp{font-size:16px;padding:9px 11px;}
-  .attach-save-btn{min-height:36px;}
+  .attach-save-btn{min-height:44px;}
 
   /* ── PARTICIPANTES ───────────────────────────────────── */
   #m-part-select{font-size:13px;}
@@ -2242,7 +2315,7 @@ input[type="date"]{-moz-appearance:textfield;}
   /* ── MURAL / COMUNICADO (novos overlays) ─────────────── */
   /* Botões de notificação/mural/kudos sempre visíveis e com bom alvo de toque */
   .notif-btn{
-    min-width:40px;min-height:40px;
+    min-width:44px;min-height:44px;
     display:flex;align-items:center;justify-content:center;
     font-size:17px;flex-shrink:0;
   }
@@ -2279,7 +2352,17 @@ input[type="date"]{-moz-appearance:textfield;}
   .bulk-bar > *{flex-shrink:0;}
 
   /* ── Botões de fechar (x): alvo de toque melhor ── */
-  .x-btn{min-width:40px;min-height:40px;font-size:20px;}
+  .x-btn{min-width:44px;min-height:44px;font-size:20px;}
+
+  /* ── Indicador de coluna atual (scroll-snap, Fase 3.2) ── */
+  .mobile-col-indicator{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(64px + env(safe-area-inset-bottom) + 8px);
+    background:rgba(var(--surface2-rgb),.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-b);border-radius:999px;
+    padding:4px 13px;font-size:11px;font-weight:600;color:var(--txt2);
+    z-index:40;pointer-events:none;white-space:nowrap;
+  }
 }
 
 /* Telas muito pequenas (<380px) */
@@ -2853,6 +2936,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
   </div>
   <div class="hd-btns">
+    <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
     <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -2945,6 +3029,8 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
 </div>
 <div class="toolbar">
+  <button class="btn btn-sm" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
+  <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <div style="position:relative;" id="sort-menu-wrap">
     <button class="btn btn-sm" onclick="toggleSortMenu()" id="btn-sort" title="Ordenar cards dentro de cada coluna">↕ <span id="btn-sort-lbl">Ordenação</span></button>
@@ -3030,6 +3116,7 @@ input[type="date"]{-moz-appearance:textfield;}
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
        menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
+  <button class="btn btn-sm" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);position:relative;">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
@@ -3039,6 +3126,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="board-wrap" id="board-wrap">
   <div class="board" id="board"></div>
 </div>
+<div class="mobile-col-indicator" id="mobile-col-indicator" style="display:none;"></div>
 </div>
 
 <!-- NOTIFICAÇÕES -->
@@ -3284,6 +3372,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CARD MODAL -->
 <div class="ov" id="card-ov">
 <div class="panel card-panel">
+  <div class="card-sheet-handle" id="card-sheet-handle"></div>
   <div id="m-cover-strip-modal" style="display:none;height:6px;border-radius:calc(var(--r2) - 1px) calc(var(--r2) - 1px) 0 0;margin:-1px -1px 0 -1px;"></div>
   <div id="m-depends-bar" class="card-parent-bar" style="display:none;">
     <span style="color:var(--txt3);font-size:10px;">Depende de:</span>
@@ -3297,9 +3386,17 @@ input[type="date"]{-moz-appearance:textfield;}
       title="Padrão de card — define quais seções opcionais aparecem no modal"
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
     <div style="position:relative;display:inline-block;margin-right:6px;">
-      <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor">🎨</button>
-      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;">
+      <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
+      <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
         <div class="cover-swatches cover-swatches-target"></div>
+        <div style="border-top:1px solid var(--glass-b);margin:9px 0 7px;padding-top:8px;">
+          <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);margin-bottom:5px;">🖼️ Ou imagem (só guarda o link)</div>
+          <input type="text" id="m-cover-img-inp" placeholder="Cole a URL de uma imagem..." class="fi" style="font-size:11px;padding:6px 8px;margin-bottom:6px;" onchange="setCardCoverImage(this.value.trim())">
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn btn-sm" style="font-size:10px;padding:4px 8px;flex:1;" onclick="_useFirstLinkAsCover()">🔗 Usar 1º link</button>
+            <button type="button" class="btn btn-sm" style="font-size:10px;padding:4px 8px;color:var(--danger);" onclick="setCardCoverImage('')">✕ Remover</button>
+          </div>
+        </div>
       </div>
     </div>
     <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
@@ -3320,7 +3417,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <!-- Título -->
     <div class="field">
       <label class="fl">Título</label>
-      <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()"
+      <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()" onblur="_quickAddApplyIfNew()"
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
     <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
@@ -4089,6 +4186,10 @@ input[type="date"]{-moz-appearance:textfield;}
         <div class="fluxo-cfg-label">📊 Etapas no relatório <span>(colunas intermediárias para medir tempo em cada fase — opcional)</span></div>
         <div id="fluxo-report-cols" class="fluxo-col-list"></div>
       </div>
+      <div class="fluxo-cfg-block">
+        <div class="fluxo-cfg-label">⏳ Aging — avisar quando parado <span>(dias parado na MESMA coluna até o card ganhar o aviso ⏳ Xd — vazio ou 0 desliga pra aquela coluna)</span></div>
+        <div id="fluxo-aging-cols" class="fluxo-col-list"></div>
+      </div>
       <button class="btn btn-teal" onclick="salvarFluxoCfg()" style="margin-top:8px;">💾 Salvar configuração de fluxo</button>
       <button class="btn btn-sm" onclick="resetFluxoCfg()" style="margin-top:8px;margin-left:8px;">↺ Voltar ao automático</button>
     </div>
@@ -4703,6 +4804,32 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <!-- RELATÓRIO DE TEMPO - fim -->
 
+<!-- MEU DIA (Fase 5.1) — visão pessoal agregada, cross-squad -->
+<div class="ov" id="meudia-ov">
+<div class="panel" style="width:min(640px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">🌅 Meu Dia</div>
+    <button class="x-btn" onclick="closeOv('meudia-ov')">✕</button>
+  </div>
+  <div id="meudia-body" style="padding:14px 18px 20px;overflow-y:auto;flex:1;"></div>
+</div>
+</div>
+
+<!-- INTAKE (Fase 5.4) — pedidos vindos de intake.html, revisão + conversão em card -->
+<div class="ov" id="intake-ov">
+<div class="panel" style="width:min(600px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">📥 Intake</div>
+    <button class="x-btn" onclick="closeOv('intake-ov')">✕</button>
+  </div>
+  <div style="padding:10px 18px 0;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Pedidos enviados pelo link público, sem login. Revise e crie o card (pré-preenchido) ou descarte.</div>
+    <button class="btn btn-sm" onclick="_copyIntakeLink()" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);margin-bottom:10px;">🔗 Copiar link de intake deste squad</button>
+  </div>
+  <div id="intake-body" style="padding:0 18px 20px;overflow-y:auto;flex:1;"></div>
+</div>
+</div>
+
 <!-- DADOS DO BOARD (mini painel pros PO's) -->
 <div class="ov" id="boarddata-ov">
 <div class="panel" style="width:min(860px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -4717,6 +4844,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="crv-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="btn btn-sm crv-tab-btn active" id="boarddata-tab-geral" onclick="_boardDataSwitchTab('geral')">📊 Visão Geral</button>
       <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-insights" onclick="_boardDataSwitchTab('insights')">💡 Insights</button>
+      <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-fluxo" onclick="_boardDataSwitchTab('fluxo')">📈 CFD &amp; Burndown</button>
     </div>
     <div id="boarddata-view-geral">
     <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
@@ -4738,6 +4866,17 @@ input[type="date"]{-moz-appearance:textfield;}
       <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Leitura pra PO/ADM/Organizador entenderem rápido como a squad está — tudo calculado a partir dos dados que o board já tem carregado (nenhuma leitura extra do Firebase).</div>
       <div id="boarddata-insights-filters" style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-bottom:16px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;"></div>
       <div id="boarddata-insights-body"></div>
+    </div>
+    <div id="boarddata-view-fluxo" style="display:none;">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Reconstruído a partir do histórico de movimentação já gravado em cada card (<code>flow.log</code>) — nenhuma coleta nova, mas cards com muitas movimentações guardam só as últimas 40 (histórico bem antigo pode ficar incompleto).</div>
+      <div style="margin-bottom:22px;">
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias</div>
+        <div id="boarddata-cfd"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">🔥 Burndown — sprint ativa</div>
+        <div id="boarddata-burndown"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -5133,7 +5272,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="mobile-nav-btn active" id="mnav-board" onclick="mnavGo('board')">
     <span class="mobile-nav-icon">📋</span><span class="mobile-nav-label">Board</span>
   </button>
-  <button class="mobile-nav-btn" id="mnav-add" onclick="openNewCard()">
+  <button class="mobile-nav-btn" id="mnav-add" onclick="openNewCard(_mobileCurrentColId||undefined)">
     <span class="mobile-nav-icon">➕</span><span class="mobile-nav-label">Card</span>
   </button>
   <button class="mobile-nav-btn" id="mnav-agent" onclick="mnavGo('agent')">
@@ -5150,12 +5289,12 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.239</div>
+<div class="version">v8.30.240</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -5198,6 +5337,7 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
+window._increment=increment;
 window._auth=auth; window._provider=provider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -5292,9 +5432,9 @@ let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 
 // ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
-// Estrutura: kanban/squads/{squad}/access_log/{YYYY-MM-DD}/{uid} = {init, ts, role}
-// Um registro por pessoa por dia (sobrescreve se acessar de novo no mesmo dia — não cresce sem limite).
-// Mantém só os últimos 60 dias (limpeza leve roda 1x a cada carregamento, throttled).
+// Estrutura: kanban/squads/{squad}/dados/access_stats/{YYYY-MM-DD}/{uid} =
+// {count, init, role, lastAt} — `count` incrementa a cada acesso (increment
+// atômico do servidor, sem ler o valor atual antes).
 // Data local (evita o bug de toISOString() jogar pra UTC — login à noite no Brasil
 // acabava contado no dia seguinte por causa do fuso -3h)
 function _localDateStrBoard(d){
@@ -5302,32 +5442,28 @@ function _localDateStrBoard(d){
   return y+'-'+m+'-'+day;
 }
 function _logAccess(user, role){
-  // ⏸️ TEMPORARIAMENTE DESATIVADO (2026-07-21) — suspeito de ser uma fonte
-  // relevante de consumo de download: o painel lia esse log inteiro, de
-  // TODOS os squads, toda vez que a aba Status abria. Reative removendo o
-  // "return" abaixo quando o painel também reativar a leitura (função
-  // loadUsoData em painel.html), senão fica escrevendo à toa sem ninguém ler.
-  return;
-  // eslint-disable-next-line no-unreachable
+  // Reativado (Fase 1.5 do plano de otimização) num formato mais barato que o
+  // access_log antigo (desativado em 2026-07-21 por custar caro pro painel ler
+  // o log bruto inteiro de todos os squads): agora é access_stats, agregado
+  // por dia+uid com increment atômico — 1 write pequeno, sem fbGet nenhum (nem
+  // pra escrever, nem pra limpar: a limpeza só tenta apagar a data exata de 60
+  // dias atrás, que existe ou não — delete é idempotente, não precisa listar
+  // o node inteiro pra descobrir o que apagar).
   if(!user || !user.uid || !window._fbReady) return;
   const today = _localDateStrBoard(new Date());
-  const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
-  window._set(window._ref(window._db, path), {
-    init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
+  const path = 'kanban/squads/'+ACTIVE_SQUAD+'/dados/access_stats/'+today+'/'+user.uid;
+  window._update(window._ref(window._db, path), {
+    count: window._increment(1), init: window._currentUserInit||'', role: role||'membro',
+    lastAt: new Date().toISOString(),
   }).catch(()=>{});
-  // Limpeza leve: 1x por sessão, remove dias com mais de 60 dias
-  if(!window._accessLogCleaned){
-    window._accessLogCleaned = true;
-    window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log')).then(snap=>{
-      const val = snap.val(); if(!val) return;
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
-      const cutoffStr = cutoff.toISOString().split('T')[0];
-      Object.keys(val).forEach(day=>{
-        if(day < cutoffStr){
-          window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+day), null).catch(()=>{});
-        }
-      });
-    }).catch(()=>{});
+  // TTL de 60 dias, sem fbGet: 1x por sessão, no máximo 1x por dia por cliente
+  // (throttle em localStorage — não adianta tentar de novo se já tentou hoje).
+  const throttleKey = 'accessStatsCleanedAt';
+  if(safeLS.getItem(throttleKey) !== today){
+    safeLS.setItem(throttleKey, today);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+    const cutoffStr = _localDateStrBoard(cutoff);
+    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/access_stats/'+cutoffStr), null).catch(()=>{});
   }
 }
 function getEffectiveRole(user, squadRole, legacyRole){
@@ -5616,6 +5752,11 @@ const CARD_COVER_COLORS = [
 // mesma lição aprendida com "usar modelo" e Padrão de card (ver histórico
 // de bugs). Guarda aqui até o 1º Salvar criar o card de verdade.
 let _pendingCoverColor = null;
+// Capa de imagem (Fase 5.6) — mesma ideia da capa de cor, mas guarda só a
+// URL de uma imagem (nunca o arquivo em si — sem upload, sem gasto de
+// Storage). Mutuamente exclusiva com a capa de cor: escolher uma limpa a
+// outra, pra não ter os dois tratamentos brigando no topo do card.
+let _pendingCoverImageUrl = null;
 // Popula TODOS os alvos de swatch (o campo abaixo do Título + o popover do
 // botão 🎨 no header) — pedido direto pra ter acesso rápido no header além
 // do campo já existente. Os dois ficam sincronizados por lerem o mesmo
@@ -5628,6 +5769,10 @@ function renderCoverSwatches(){
   const html = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
     + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover('${c.id}')"></button>`).join('');
   targets.forEach(el=>el.innerHTML=html);
+  const imgInp=document.getElementById('m-cover-img-inp');
+  if(imgInp && document.activeElement!==imgInp){ // não pisa no que a pessoa tá digitando
+    imgInp.value = editingId ? (card?.coverImageUrl||'') : (_pendingCoverImageUrl||'');
+  }
 }
 function toggleCoverMenu(){
   const menu=document.getElementById('m-cover-menu'); if(!menu) return;
@@ -5639,26 +5784,67 @@ function _closeCoverMenuOutside(e){
   if(e.target.closest('#m-cover-menu')||e.target.closest('#m-cover-btn')) return;
   const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
 }
-function _applyCoverStripToModal(colorId){
+function _applyCoverStripToModal(colorId, imageUrl){
   const strip=document.getElementById('m-cover-strip-modal'); if(!strip) return;
+  if(imageUrl){
+    strip.style.background='';
+    strip.style.backgroundImage=`url("${imageUrl.replace(/"/g,'')}")`;
+    strip.style.backgroundSize='cover'; strip.style.backgroundPosition='center';
+    strip.style.height='38px';
+    strip.style.display='block';
+    return;
+  }
+  strip.style.backgroundImage=''; strip.style.height='6px';
   const col=CARD_COVER_COLORS.find(c=>c.id===colorId);
   if(col){ strip.style.background=col.hex; strip.style.display='block'; }
   else { strip.style.display='none'; }
 }
-function setCardCover(colorId){
-  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none'; // fecha o popover do header, se veio de lá
+// URL de imagem inválida/fora do ar: melhor não mostrar uma capa quebrada
+// no card. Guarda a URL mesmo assim (não é o app que decide se tá certa),
+// só não desenha a testeira se a imagem não carregar.
+function setCardCoverImage(url){
+  url = (url||'').trim();
   if(!editingId){
-    _pendingCoverColor = colorId||null;
-    _applyCoverStripToModal(colorId);
+    _pendingCoverImageUrl = url||null;
+    if(url) _pendingCoverColor = null; // exclusivo com cor
+    _applyCoverStripToModal(url?null:_pendingCoverColor, url);
     renderCoverSwatches();
     return;
   }
   const card=cards.find(c=>c.id===editingId); if(!card) return;
+  card.coverImageUrl = url||null;
+  if(url) card.coverColor = null; // exclusivo com cor
+  fbSaveCard(card);
+  _applyCoverStripToModal(url?null:card.coverColor, url);
+  renderCoverSwatches();
+  renderBoard();
+}
+function _useFirstLinkAsCover(){
+  const card = editingId ? cards.find(c=>c.id===editingId) : null;
+  const firstUrl = card?.links?.[0]?.url;
+  if(!firstUrl){ showToast('⚠ Este card ainda não tem nenhum link em 🔗 Anexos.'); return; }
+  const inp=document.getElementById('m-cover-img-inp'); if(inp) inp.value=firstUrl;
+  setCardCoverImage(firstUrl);
+}
+function setCardCover(colorId){
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none'; // fecha o popover do header, se veio de lá
+  // "⊘ Sem capa" (colorId vazio) limpa TAMBÉM a capa de imagem — é o botão
+  // "sem capa nenhuma", não só "sem capa de COR".
+  if(!editingId){
+    _pendingCoverColor = colorId||null;
+    _pendingCoverImageUrl = null; // qualquer clique aqui (cor ou "sem capa") limpa a imagem
+    _applyCoverStripToModal(colorId, null);
+    renderCoverSwatches();
+    return;
+  }
+  const card=cards.find(c=>c.id===editingId); if(!card) return;
+  card.coverImageUrl = null; // qualquer clique aqui (cor ou "sem capa") limpa a imagem
   const _prevCover=card.coverColor||'';
   card.coverColor = colorId||null;
   fbSaveCard(card);
-  _applyCoverStripToModal(colorId);
+  _applyCoverStripToModal(colorId, null);
   renderCoverSwatches();
+  renderBoard();
   if((card.coverColor||'')!==_prevCover) runAutoRules('cover_set', card.id, card.coverColor||'');
 }
 let members=[];
@@ -5695,7 +5881,7 @@ function uniqueInitForSquad(desiredInit, allUsers, excludeUid, fullName){
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
-let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
+let flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{} }; // config de fluxo do PO (relatório de tempo) + limiares de aging por coluna (Fase 5.2). Vazio = heurística automática / aging desligado.
 // "Padrões de card": organizador/PO cria um ou mais PADRÕES nomeados —
 // cada um escolhe quais seções OPCIONAIS do modal ficam visíveis (ex.: um
 // padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Um padrão
@@ -6218,10 +6404,39 @@ let qlItems={ recorrentes:[], modelos:[], agendamentos:[] };
 let links=[];
 // ═══ LEMBRETES ═══ (manuais persistidos no Firebase; quadro = derivado dos cards)
 let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), text, autor, autorUid, init, ts, target?}
+let _lembretesBucket={}; // FB+'/lembretes' via listeners granulares — key = chave real no Firebase (pode ser o l.id ou, em item legado, o índice antigo do array)
+let _lembretesKeyById={};// l.id -> chave real no Firebase (necessário pra apagar itens legados, cuja chave não é o id)
 let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
 let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
 let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts visto (p/ badge de não-lidos), persistido
+// ═══ INTAKE (Fase 5, item 4) ═══ pedidos vindos de intake.html (link
+// público, sem login — ver functions/intake/submit.js), gravados em
+// FB+'/intake_pending/{id}', keyed por push-id (nunca array — ver o
+// comentário grande em fbSaveAll sobre por que /cards não pode receber
+// escrita de fora do fluxo normal do cliente). Listeners granulares, mesmo
+// padrão de _lembretesBucket.
+let _intakeBucket={};    // FB+'/intake_pending' — key = chave real no Firebase
+let intakePendentes=[];  // derivado de _intakeBucket, só status:'pending'
+// Setado por _intakeCriarCard() logo antes de abrir o modal de card novo já
+// pré-preenchido; consumido só no .then() de saveCard() (confirmação real do
+// Firebase) — assim, se a pessoa abrir o modal pré-preenchido e CANCELAR sem
+// salvar, o pedido de intake continua pendente (não é dado como atendido só
+// por ter sido aberto). Resetado no início de openNewCard()/openCard() pra
+// nunca vazar pro card errado numa sessão de edição não relacionada.
+let _intakeOrigemPendingId=null;
+// ═══ CONECTIVIDADE (Fase 5, item 7) ═══ indicador + trava de saída
+// acidental — ver listener em fbLoadAll() e o beforeunload logo abaixo de
+// _cardIsDirty(). NÃO é uma fila genérica de reenvio (ver justificativa no
+// CHANGELOG): o SDK do Realtime Database já reenvia sozinho qualquer
+// escrita feita enquanto offline assim que a conexão volta, DENTRO da
+// mesma sessão de página — o buraco real é só a pessoa fechar/recarregar a
+// aba sem saber que estava offline, perdendo o que nem chegou a sair da
+// memória. Um indicador visível + um aviso nativo do navegador antes de
+// sair resolvem esse buraco sem precisar duplicar o controle de estado de
+// toda escrita do app (dezenas de call sites, risco alto pra um item já
+// desde a proposta original marcado como baixa prioridade).
+let _isOnline=true;
 let agilCfg={};
 let criativosAtivo=false; // toggle por squad: mostra a Ficha de Criativo no card + botão Controle de Criativos
 let criativosListas={}; // {id:{id,nome,createdAt}} — listas de segmentação do Controle de Criativos
@@ -6331,6 +6546,19 @@ function _dbgMerge(path, entries, extra){
     fbSet(path, prev);
   }).catch(()=>{});
 }
+// Amostragem: a MEDIÇÃO local continua sempre ligada em toda aba (debugBytesReport
+// funciona pra qualquer um, a qualquer momento) — mas só ADM ou ~10% das sessões
+// (sorteio no boot, persistido em sessionStorage pra ficar estável durante a aba)
+// de fato ESCREVEM o log remoto a cada flush. O objetivo do log remoto é ver
+// tendência agregada entre sessões, não capturar 100% do tráfego de todo mundo.
+function _dbgWriteEnabled(){
+  if(isAdmUser(window._currentUser)) return true;
+  try{
+    let flag=sessionStorage.getItem('_dbgSample');
+    if(flag===null){ flag = Math.random()<0.10 ? '1' : '0'; sessionStorage.setItem('_dbgSample', flag); }
+    return flag==='1';
+  }catch(e){ return false; } // sessionStorage indisponível (aba anônima etc.) — não arrisca escrever sem controle
+}
 function _dbgFlush(){
   if(!_dbg.on || !window._fbReady) return;
   // Snapshot em objetos NOVOS (não referências pras stats vivas) — _dbgMerge
@@ -6339,6 +6567,10 @@ function _dbgFlush(){
   // encontrar count/bytes zerados (mesma referência mutável já resetada).
   const entries=Object.entries(_dbg.stats).map(([k,s])=>[k,{count:s.count,bytes:s.bytes}]);
   if(!entries.length) return;
+  if(!_dbgWriteEnabled()){
+    Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
+    return;
+  }
   const d=new Date();
   const dateKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const hourKey=dateKey+'-'+String(d.getHours()).padStart(2,'0');
@@ -6955,13 +7187,13 @@ function fbLoadAll(){
   fbListen(FB+'/columns',val=>{
     if(!val){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
-      renderBoard();
+      scheduleRender();
       return;
     }
     const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
     if(!cleaned.length){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
-      renderBoard();
+      scheduleRender();
       return;
     }
     // Merge: garante que colunas padrão e locais nunca sumam,
@@ -6974,11 +7206,11 @@ function fbLoadAll(){
     columns = missingFromFirebase.length
       ? [...cleaned, ...missingFromFirebase]
       : cleaned;
-    renderBoard();
+    scheduleRender();
   });
 
   // Agil cfg — segundo (WIP depende disso)
-  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); renderBoard(); }});
+  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); scheduleRender(); }});
   fbListen(FB+'/config/criativos_ativo', val=>{
     criativosAtivo = !!val;
     const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
@@ -7017,14 +7249,14 @@ function fbLoadAll(){
   fbListen(FB+'/subtimes',val=>{
     subteams = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderSubteamEditor();
-    renderBoard();
+    scheduleRender();
   });
   // Agentes de IA (piloto híbrido humano+agente) — identidades selecionáveis como responsável/participante/@menção
   fbListen(FB+'/agentes',val=>{
     agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
-    renderBoard();
+    scheduleRender();
   });
   fbListen(FB+'/tags',val=>{
     if(!val) return;
@@ -7047,7 +7279,7 @@ function fbLoadAll(){
     // normalmente).
     if(document.getElementById('cfg-ov')?.classList.contains('open') && document.querySelector('#tag-editor .tag-row')) return;
     const incoming = Array.isArray(val) ? val : Object.values(val);
-    if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
+    if(incoming.length){ tags=incoming.filter(Boolean); scheduleRender(); }
   });
   // BUG REAL (2026-08-04, squad site): submarca foi ligada (submarcaAtivo)
   // ANTES do split 5→10 tags (Comercial/Cadastro) existir no código — o
@@ -7635,7 +7867,7 @@ let _cardsSyncDebounce = null;
       const merged=missing.length?[...incoming,...missing]:incoming;
       if(JSON.stringify(merged.map(c=>c.id))!==JSON.stringify(columns.map(c=>c.id))){
         columns=merged;
-        renderBoard();
+        scheduleRender();
       }
     }).catch(()=>{});
     fbGet(FB+'/tags').then(snap=>{
@@ -7658,12 +7890,72 @@ let _cardsSyncDebounce = null;
     if(val) links=Array.isArray(val)?val:Object.values(val);
     if(document.getElementById('links-ov')?.classList.contains('open')) renderLinksBody();
   });
-  // Lembretes compartilhados (PO / organizador, escopo do squad)
-  fbListen(FB+'/lembretes',val=>{
-    lembretes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
-    updLemBadge(); 
-    if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
-  });
+  // Lembretes compartilhados (PO / organizador, escopo do squad) — listeners
+  // granulares em vez de onValue no nó cheio (mesmo padrão já usado em cards/
+  // presence/spotify): cada add/del antes reescrevia o array INTEIRO no
+  // Firebase e reenviava o payload inteiro pra todo mundo a cada mudança.
+  // _lembretesKeyById guarda a chave REAL de cada item no Firebase (que pra
+  // itens legados, gravados como array antes desse fix, é o índice antigo —
+  // não o l.id) — necessário pra apagar certo (ver delLembrete).
+  if(window._fbReady){
+    const _lemRef = window._ref(window._db, FB+'/lembretes');
+    const _syncLembretes = ()=>{
+      lembretes = Object.values(_lembretesBucket).filter(Boolean);
+      updLemBadge();
+      if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+    };
+    window._onChildAdded(_lemRef, snap=>{ _dbgTrack('/lembretes:child_added', snap.val());
+      const v=snap.val(); if(!v) return;
+      _lembretesBucket[snap.key]=v; if(v.id) _lembretesKeyById[v.id]=snap.key;
+      _syncLembretes();
+    });
+    window._onChildChanged(_lemRef, snap=>{ _dbgTrack('/lembretes:child_changed', snap.val());
+      const v=snap.val(); if(!v) return;
+      _lembretesBucket[snap.key]=v; if(v.id) _lembretesKeyById[v.id]=snap.key;
+      _syncLembretes();
+    });
+    window._onChildRemoved(_lemRef, snap=>{ _dbgTrack('/lembretes:child_removed', null);
+      const v=_lembretesBucket[snap.key];
+      delete _lembretesBucket[snap.key]; if(v?.id) delete _lembretesKeyById[v.id];
+      _syncLembretes();
+    });
+  }
+  // Intake (Fase 5.4) — pedidos gravados por functions/intake/submit.js em
+  // FB+'/intake_pending' (push-id, nunca array — ver comentário na
+  // declaração de _intakeBucket). Mesmo padrão granular de lembretes.
+  if(window._fbReady){
+    const _intakeRef = window._ref(window._db, FB+'/intake_pending');
+    const _syncIntake = ()=>{
+      intakePendentes = Object.values(_intakeBucket).filter(v=>v && v.status==='pending');
+      updIntakeBadge();
+      if(document.getElementById('intake-ov')?.classList.contains('open')) renderIntakeBody();
+    };
+    window._onChildAdded(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_added', snap.val());
+      const v=snap.val(); if(!v) return;
+      _intakeBucket[snap.key]=v;
+      _syncIntake();
+    });
+    window._onChildChanged(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_changed', snap.val());
+      const v=snap.val(); if(!v) return;
+      _intakeBucket[snap.key]=v;
+      _syncIntake();
+    });
+    window._onChildRemoved(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_removed', null);
+      delete _intakeBucket[snap.key];
+      _syncIntake();
+    });
+  }
+  // Conectividade (Fase 5.7) — .info/connected é um nó especial do próprio
+  // SDK (não fica sob /kanban), reflete se ESTE cliente tem uma conexão
+  // ativa com o Realtime Database agora. Ver comentário na declaração de
+  // _isOnline pro porquê disso não ser uma fila genérica de reenvio.
+  if(window._fbReady){
+    window._onValue(window._ref(window._db,'.info/connected'), snap=>{
+      _isOnline = snap.val()===true;
+      const badge=document.getElementById('conn-badge');
+      if(badge) badge.style.display = _isOnline ? 'none' : 'flex';
+    });
+  }
   // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
   if(window._fbReady){
     window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
@@ -7780,7 +8072,7 @@ let _cardsSyncDebounce = null;
   fbListen('kanban/usuarios_publicos', val=>{ _applyUsuariosData(val); });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
-    if(val){ blockerMode=val; applyBlockerMode(); renderBoard(); }
+    if(val){ blockerMode=val; applyBlockerMode(); scheduleRender(); }
   });
   // Config de fluxo (colunas início/fim/relatório do tempo por tag)
   fbListen(FB+'/config/flow',val=>{
@@ -7789,8 +8081,12 @@ let _cardsSyncDebounce = null;
         startCols: Array.isArray(val.startCols)?val.startCols:[],
         doneCols: Array.isArray(val.doneCols)?val.doneCols:[],
         reportCols: Array.isArray(val.reportCols)?val.reportCols:[],
+        // agingDays (Fase 5.2) — precisa entrar aqui também, senão esse
+        // listener (que reconstrói flowConfig do zero a cada mudança
+        // remota) apaga de volta o que salvarFluxoCfg() acabou de gravar.
+        agingDays: (val.agingDays && typeof val.agingDays==='object') ? val.agingDays : {},
       };
-      renderBoard(); // 🔧 sem isso o board só refletia a config depois de um reload
+      scheduleRender(); // 🔧 sem isso o board só refletia a config depois de um reload
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
   });
@@ -8480,12 +8776,36 @@ function makeCardEl(card){
     const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
     execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
   }
+  // Aging por COLUNA (Fase 5.2) — diferente do aging por edição acima
+  // (aged-1/aged-2, esmaece o card inteiro): este é sobre quanto tempo o
+  // card está parado na MESMA coluna (card.flow.enteredAt[card.col], já
+  // gravado em toda movimentação — ver recordMove()), com limiar
+  // configurável por coluna em ⚙ Fluxo (flowConfig.agingDays). Coluna sem
+  // limiar configurado (ou 0) nunca mostra o badge — desligado por padrão.
+  let agingColBadge='';
+  if(!isDone && card.flow?.enteredAt?.[card.col]){
+    const limiar=(flowConfig.agingDays||{})[card.col];
+    if(limiar>0){
+      const enteredD=new Date(card.flow.enteredAt[card.col]); enteredD.setHours(0,0,0,0);
+      const daysHere=Math.round((today-enteredD)/86400000);
+      if(daysHere>=limiar){
+        agingColBadge=`<span class="aging-col-badge" style="display:inline-block;font-size:9px;background:rgba(255,152,0,.12);color:#ff9800;border:1px solid rgba(255,152,0,.3);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="Parado nesta coluna há ${daysHere} dia${daysHere!==1?'s':''} (aviso a partir de ${limiar}d)">⏳ ${daysHere}d</span>`;
+      }
+    }
+  }
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
-  const coverStripHtml=_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'';
+  // Capa de imagem (Fase 5.6) tem prioridade sobre a de cor (mutuamente
+  // exclusivas na escrita, mas por segurança na leitura também). Usa
+  // background-image (não <img>) de propósito: se o link não carregar
+  // (imagem removida, link quebrado), o CSS simplesmente não desenha nada
+  // — sem o ícone de imagem quebrada que um <img> mostraria.
+  const coverStripHtml = card.coverImageUrl
+    ? `<div class="card-cover-strip card-cover-img" style="background-image:url('${esc(card.coverImageUrl)}');"></div>`
+    : (_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'');
   // Rollup do supercard — lista compacta dos filhos (título + bolinha da
   // coluna deles), até 6 visíveis + contador do resto. Clique num filho abre
   // ele direto (stopPropagation pra não abrir o pai por cima).
@@ -8503,7 +8823,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -8593,6 +8913,19 @@ function _sortCards(arr, colId){
   });
 }
 
+// Coalesce múltiplos renderBoard() no mesmo frame num só — usado pelos
+// listeners de configuração "de fundo" (columns/agil_cfg/tags/subteams/
+// agentes/blockerMode/flowConfig), que no boot ou numa reconexão costumam
+// disparar quase juntos, cada um chamando renderBoard() por conta própria.
+// NÃO usar em handlers de ação do usuário (clique, drag, salvar card) que
+// dependam do board já estar redesenhado na linha seguinte (scroll/foco/
+// fechar modal) — esses continuam chamando renderBoard() direto.
+let _renderScheduled=false;
+function scheduleRender(){
+  if(_renderScheduled) return;
+  _renderScheduled=true;
+  requestAnimationFrame(()=>{ _renderScheduled=false; renderBoard(); });
+}
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
   const _scrollBoardX=board.scrollLeft;
@@ -8631,7 +8964,47 @@ function renderBoard(){
   board.scrollLeft=_scrollBoardX;
   Object.keys(_scrollColY).forEach(elId=>{ const elx=document.getElementById(elId); if(elx) elx.scrollTop=_scrollColY[elId]; });
   if(_scrollWinY) window.scrollTo(0,_scrollWinY);
+  _scheduleColIndicator();
 }
+
+// ── Fase 3.2 (mobile): indicador de coluna atual + scroll-snap ─────────────
+// Board vira 1 coluna por "tela" no mobile (scroll-snap-type:x mandatory, ver
+// CSS). Este indicador mostra nome+posição da coluna mais alinhada à
+// esquerda do board-wrap, atualizado por scroll (passivo, coalescido em rAF
+// — nunca mais de 1 cálculo por frame) e depois de todo renderBoard().
+// _mobileCurrentColId fica exposto pra outras features mobile reaproveitarem
+// (ver Fase 3.4 — criar card na coluna visível).
+let _mobileCurrentColId = null;
+let _mobileColIndicatorRaf = null;
+function _scheduleColIndicator(){
+  if(_mobileColIndicatorRaf) return;
+  _mobileColIndicatorRaf = requestAnimationFrame(()=>{ _mobileColIndicatorRaf=null; _mobileColIndicatorUpdate(); });
+}
+function _mobileColIndicatorUpdate(){
+  const ind = document.getElementById('mobile-col-indicator');
+  if(!ind) return;
+  const wrap = document.getElementById('board-wrap');
+  const isMobile = window.matchMedia('(max-width:768px)').matches;
+  if(!isMobile || !wrap || raiaMode){
+    ind.style.display='none';
+    return;
+  }
+  const cols = [...wrap.querySelectorAll(':scope > .board > .col')];
+  if(!cols.length){ ind.style.display='none'; return; }
+  const wrapLeft = wrap.getBoundingClientRect().left;
+  let idx=0, best=Infinity;
+  cols.forEach((c,i)=>{
+    const d = Math.abs(c.getBoundingClientRect().left - wrapLeft);
+    if(d<best){ best=d; idx=i; }
+  });
+  const colEl = cols[idx];
+  _mobileCurrentColId = colEl?.id?.replace(/^col-/,'') || null;
+  const nome = colEl?.querySelector('.col-title')?.textContent?.trim() || '?';
+  ind.textContent = `${nome} · ${idx+1}/${cols.length}`;
+  ind.style.display='';
+}
+document.getElementById('board-wrap')?.addEventListener('scroll', _scheduleColIndicator, {passive:true});
+window.addEventListener('resize', _scheduleColIndicator);
 
 function renderNormal(board,activeCards){
   // Usa classList ao invés de sobrescrever className inteira (evita oscilação)
@@ -9362,7 +9735,6 @@ let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,
 // têm). Isso monitora esses campos "manuais" pra avisar visualmente quando há
 // algo pendente, e evita fechar o modal sem querer perdendo essa edição.
 let _cardManualSnap = null;
-let _cardDirtyTimer = null;
 function _manualFieldsNow(){
   return {
     sp: document.getElementById('m-sp')?.value||'',
@@ -9384,15 +9756,31 @@ function _updateSaveBtnDirtyState(){
   if(_cardIsDirty()){ btn.classList.add('btn-unsaved'); btn.textContent='💾 Salvar alterações'; }
   else { btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
 }
+// Antes rodava num setInterval de 400ms pra sempre (mesmo com o modal do
+// card fechado) — trocado por um listener delegado (input/change) em
+// document, filtrado pro modal do card, que só existe UMA VEZ (não é
+// registrado de novo a cada abertura). _cardManualSnap é null com o modal
+// fechado, então _cardIsDirty() já sai cedo — sem custo de polling parado.
+document.addEventListener('input', e=>{ if(e.target?.closest?.('#card-ov')) _updateSaveBtnDirtyState(); });
+document.addEventListener('change', e=>{ if(e.target?.closest?.('#card-ov')) _updateSaveBtnDirtyState(); });
 function _startDirtyWatch(){
-  clearInterval(_cardDirtyTimer);
-  _cardDirtyTimer = setInterval(_updateSaveBtnDirtyState, 400);
+  _updateSaveBtnDirtyState(); // estado inicial (limpo — o snapshot acabou de ser tirado)
 }
 function _stopDirtyWatch(){
-  clearInterval(_cardDirtyTimer); _cardDirtyTimer=null;
   _cardManualSnap = null;
   const btn=document.getElementById('btn-save-card'); if(btn){ btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
 }
+// Fase 5.7 — sem conexão + card com alteração não salva: avisa ANTES de
+// fechar/recarregar a aba, em vez de deixar a pessoa perder o que escreveu
+// sem perceber que estava offline. Prompt nativo do navegador (não dá pra
+// customizar o texto — todos os browsers modernos ignoram e mostram uma
+// mensagem genérica própria deles).
+window.addEventListener('beforeunload', e=>{
+  if(!_isOnline && document.getElementById('card-ov')?.classList.contains('open') && _cardIsDirty()){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 // ═══ TRAVA DE EDIÇÃO CONCORRENTE ═══════════════════════════════════════
 // Pedido do time: evitar duas pessoas editando o mesmo card ao mesmo tempo
@@ -9756,6 +10144,7 @@ function _updateCardBackBtn(){
   if(btn) btn.style.display = _cardNavStack.length ? '' : 'none';
 }
 function openCard(id){
+  _intakeOrigemPendingId=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
@@ -9780,7 +10169,7 @@ function openCard(id){
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-demandante').value=c.demandante||'';
-  _applyCoverStripToModal(c.coverColor); renderCoverSwatches();
+  _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
   _mNoDue=!!c.noDue; _renderNoDueBtn();
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
@@ -10015,8 +10404,97 @@ function checkEditPermission(){
   return true;
 }
 
+// ── Fase 5.5: quick-add com parsing natural ─────────────────────────────
+// No título de um card NOVO (nunca num card já existente — editar não deve
+// reescrever campos sozinho), reconhece !prioridade, @responsável, #tag e
+// datas ("hoje", "amanhã", dia da semana, "dd/mm") digitados junto do
+// título, tira esses tokens do texto e já preenche os campos correspondentes.
+// Disparado no blur do campo (ver onblur="_quickAddApplyIfNew()" no
+// #m-title) — dá tempo da pessoa terminar de digitar a frase inteira antes
+// de tentar entender ela.
+const _QA_PRIORITY_MAP = {alta:'high',media:'medium',baixa:'low',critica:'critical',urgente:'critical'};
+const _QA_WEEKDAYS = {domingo:0,dom:0,segunda:1,seg:1,terca:2,ter:2,quarta:3,qua:3,quinta:4,qui:4,sexta:5,sex:5,sabado:6,sab:6};
+function _qaNorm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function _qaParseDate(token){
+  const t = _qaNorm(token);
+  const hoje = new Date();
+  if(t==='hoje') return _localDateStrBoard(hoje);
+  if(t==='amanha'){ const d=new Date(hoje); d.setDate(d.getDate()+1); return _localDateStrBoard(d); }
+  if(t in _QA_WEEKDAYS){
+    const alvo=_QA_WEEKDAYS[t];
+    const d=new Date(hoje);
+    d.setDate(d.getDate() + ((alvo-d.getDay()+7)%7)); // 0 = a própria data de hoje, se cair no dia certo
+    return _localDateStrBoard(d);
+  }
+  const m = token.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+  if(m){
+    const dia=parseInt(m[1],10), mes=parseInt(m[2],10)-1;
+    let ano = m[3] ? parseInt(m[3],10) : hoje.getFullYear();
+    if(ano<100) ano+=2000;
+    const d=new Date(ano,mes,dia);
+    if(isNaN(d.getTime())) return null;
+    if(!m[3] && d < new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate())) d.setFullYear(ano+1); // sem ano explícito e já passou → assume o próximo
+    return _localDateStrBoard(d);
+  }
+  return null;
+}
+function _quickAddParse(rawTitle){
+  let title = rawTitle;
+  const result = {priority:null, ownerInit:null, tagIds:[], due:null};
+  title = title.replace(/(^|\s)!(\S+)/g, (m,pre,word)=>{
+    const p=_QA_PRIORITY_MAP[_qaNorm(word)];
+    if(p){ result.priority=p; return pre; }
+    return m;
+  });
+  title = title.replace(/(^|\s)@(\S+)/g, (m,pre,handle)=>{
+    const clean=handle.replace(/[.,;!?]+$/,'');
+    const found = getMemberByHandle(clean)
+      || members.find(mb=>mb.init && mb.init.toLowerCase()===clean.toLowerCase())
+      || members.find(mb=>(mb.name||'').toLowerCase().startsWith(clean.toLowerCase()));
+    if(found){ result.ownerInit=found.init; return pre; }
+    return m;
+  });
+  title = title.replace(/(^|\s)#(\S+)/g, (m,pre,tagName)=>{
+    const clean=tagName.replace(/[.,;!?]+$/,'');
+    const found = tags.find(t=>(t.label||'').toLowerCase()===clean.toLowerCase());
+    if(found){ result.tagIds.push(found.id); return pre; }
+    return m;
+  });
+  const dateRe = /(^|\s)(hoje|amanh[aã]|domingo|dom|segunda|seg|ter[çc]a|ter|quarta|qua|quinta|qui|sexta|sex|s[aá]bado|s[aá]b|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)(?=\s|$)/i;
+  const dm = title.match(dateRe);
+  if(dm){
+    const parsed=_qaParseDate(dm[2]);
+    if(parsed){ result.due=parsed; title=title.replace(dateRe,'$1'); }
+  }
+  result.title = title.replace(/\s+/g,' ').trim();
+  return result;
+}
+function _quickAddApplyIfNew(){
+  if(editingId) return; // só em criação — nunca reescreve campos de um card já existente
+  const el=document.getElementById('m-title'); if(!el) return;
+  const raw=el.value; if(!raw.trim()) return;
+  const parsed=_quickAddParse(raw);
+  if(parsed.title===raw && !parsed.priority && !parsed.ownerInit && !parsed.tagIds.length && !parsed.due) return; // nada reconhecido
+  el.value=parsed.title;
+  const applied=[];
+  if(parsed.priority){ const pSel=document.getElementById('m-priority'); if(pSel){ pSel.value=parsed.priority; applied.push('prioridade'); } }
+  if(parsed.ownerInit){ const oSel=document.getElementById('m-owner'); if(oSel){ oSel.value=parsed.ownerInit; applied.push('responsável'); } }
+  if(parsed.due){
+    const dEl=document.getElementById('m-due'); if(dEl) dEl.value=parsed.due;
+    _mNoDue=false; if(typeof _renderNoDueBtn==='function') _renderNoDueBtn();
+    applied.push('prazo');
+  }
+  if(parsed.tagIds.length){
+    parsed.tagIds.forEach(id=>{ if(!editingTags.includes(id)) editingTags.push(id); });
+    if(typeof populateTagSelect==='function') populateTagSelect();
+    applied.push('tag'+(parsed.tagIds.length>1?'s':''));
+  }
+  if(applied.length) showToast('✨ Detectei: '+applied.join(', ')+' — confere antes de salvar.');
+}
+
 function openNewCard(col){
   if(!checkEditPermission()) return;
+  _intakeOrigemPendingId=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
   _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
   editingLinkedCards=[];
@@ -10052,7 +10530,7 @@ function openNewCard(col){
   const crvSec2=document.getElementById('m-criativo-sec'); if(crvSec2) crvSec2.style.display=criativosAtivo?'':'none';
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
-  _pendingCoverColor=null; _applyCoverStripToModal(null); renderCoverSwatches();
+  _pendingCoverColor=null; _pendingCoverImageUrl=null; _applyCoverStripToModal(null,null); renderCoverSwatches();
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
   _applyDemandanteUIVisibility();
@@ -10154,7 +10632,11 @@ function saveCard(){
       dependsOn:c.dependsOn||null,
       dependents:c.dependents||[],
       links:c.links||[],
-      comments:c.comments||{},
+      // comments saiu daqui (Fase 1.1) — comentários vivem em card_comments/{id}
+      // agora, não mais em c.comments. Se `c` ainda tiver um c.comments legado
+      // (card não tocado desde a migração), Object.assign não mexe em chaves
+      // que não estão na lista — o campo antigo fica intacto até loadComments()
+      // migrá-lo em background na próxima vez que alguém abrir esse card.
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
@@ -10189,6 +10671,7 @@ function saveCard(){
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       demandante:document.getElementById('m-demandante')?.value||'',
       coverColor:_pendingCoverColor||null,
+      coverImageUrl:_pendingCoverImageUrl||null,
       due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -10206,7 +10689,7 @@ function saveCard(){
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
-    _pendingCoverColor=null;
+    _pendingCoverColor=null; _pendingCoverImageUrl=null;
     if(_newCard.priority) runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
     // Triggers "Modelo usado"/"Card recorrente criado" (Automações) — só dispara
     // se este card novo veio de fato de um "+ Usar" em Modelos/Recorrentes (ver
@@ -10215,6 +10698,8 @@ function saveCard(){
     else if(_pendingQLSource?.tipo==='recorrentes') runAutoRules('recorrente_created', _newCard.id, _pendingQLSource.slug);
     _pendingQLSource=null;
   }
+  const _savedIntakePendingId = _intakeOrigemPendingId; // snapshot — ver comentário na declaração
+  const _savedNewCardId = !editingId ? cards[cards.length-1]?.id : null;
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
   // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
@@ -10234,6 +10719,15 @@ function saveCard(){
     // de filhos "em risco" aqui — eles já estão legitimamente vinculados no
     // childCardIds que acabou de ser salvo, não são mais órfãos.
     _newSuperChildIds = [];
+    // Card veio de um "✅ Criar card" no painel de Intake e salvou de
+    // verdade: marca o pedido como atendido (soft — mantém o registro,
+    // status:'done' + cardId, pro histórico) e some da lista de pendentes.
+    // Só roda aqui, na confirmação real do Firebase — ver comentário na
+    // declaração de _intakeOrigemPendingId.
+    if(_savedIntakePendingId && window._fbReady){
+      window._update(fb(FB+'/intake_pending/'+_savedIntakePendingId), {status:'done', cardId:_savedNewCardId||null, doneAt:new Date().toISOString()});
+    }
+    _intakeOrigemPendingId=null;
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     closeOv('card-ov');
     _clearPendingRequired();
@@ -10288,7 +10782,24 @@ function _duplicarCardObj(card, opts){
   if(opts.priority===false){ novo.priority=''; }
   if(opts.riscos===false){ novo.riscos=[]; }
   if(opts.links===false){ novo.links=[]; }
-  if(opts.comments===false){ novo.comments={}; }
+  // Comentários (Fase 1.1): cards novos nunca usam o campo legado
+  // c.comments — mesmo se `card` (a origem) ainda tiver um (não migrado
+  // ainda), a cópia usa sempre o path novo. Se comments!==false, copia os
+  // comentários da origem pro card_comments/{novo.id} — direto do campo
+  // legado se ainda existir, senão busca do path novo (fire-and-forget,
+  // não atrasa a duplicação em si).
+  const _srcComments = novo.comments;
+  delete novo.comments;
+  if(opts.comments!==false){
+    if(_srcComments && Object.keys(_srcComments).length){
+      window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _srcComments).catch(()=>{});
+    } else {
+      window._get(window._ref(window._db, FB+'/card_comments/'+card.id)).then(snap=>{
+        const val=snap.val();
+        if(val && Object.keys(val).length) window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), val).catch(()=>{});
+      }).catch(()=>{});
+    }
+  }
   recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
   cards.push(novo);
   return novo;
@@ -11547,8 +12058,7 @@ function _agentPostComment(c, text){
     avatarEmoji:agent?.avatarEmoji||'🤖', cor:agent?.cor||'#a78bfa',
     text, ts:new Date().toISOString(),
   };
-  if(!c.comments) c.comments={};
-  c.comments[comment.id]=comment;
+  _pushCardComment(c.id, comment);
 }
 function _agentPostSystemComment(c, text){
   const comment = {
@@ -11556,8 +12066,23 @@ function _agentPostSystemComment(c, text){
     uid:'system', author:'Sistema', init:'⚙️', foto:'', isSystem:true,
     text, ts:new Date().toISOString(),
   };
-  if(!c.comments) c.comments={};
-  c.comments[comment.id]=comment;
+  _pushCardComment(c.id, comment);
+}
+// Escreve um comentário automático (agente/sistema) direto no path novo
+// (Fase 1.1) — antes só mutava c.comments em memória, contando com o
+// PRÓXIMO fbSaveCard(c) (de outra mudança no mesmo card, ex.: mover de
+// coluna) pra persistir; se nada mais salvasse o card, o comentário
+// automático nunca ia pro Firebase. Agora persiste sozinho, na hora, e
+// re-renderiza se o card estiver com o modal aberto.
+function _pushCardComment(cardId, comment){
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=comment;
+  window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment)
+    .catch(err=>console.warn('[comments] falha ao postar comentário automático:', err));
+  if(_commentCardId===cardId){
+    const list=document.getElementById('m-comment-list');
+    if(list) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  }
 }
 // Grava checklist + status atuais do DOM no card e salva (via fbSaveCard — grava só este
 // card, não a lista inteira, evitando pisar em edição concorrente de outra pessoa no board).
@@ -11928,8 +12453,11 @@ function addLembrete(){
     lembretesProprios.push(obj);
     const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
   } else {
+    // Escreve só o item novo (chave = obj.id), não o array inteiro — o
+    // listener granular (child_added) atualiza `lembretes` sozinho quando o
+    // Firebase confirmar; a mutação local abaixo já reflete na tela na hora.
     lembretes.push(obj);
-    fbSet(FB+'/lembretes', lembretes);
+    window._set(window._ref(window._db, FB+'/lembretes/'+obj.id), obj).catch(()=>{});
   }
   document.getElementById('lem-text').value='';
   updLemBtn();
@@ -11973,14 +12501,10 @@ function delLembrete(tipo, id){
     lembretes=lembretes.filter(l=>l.id!==id);
     renderLembretes(); updLemBadge();
     if(!window._fbReady) return;
-    window._get(fb(FB+'/lembretes')).then(snap=>{
-      const val=snap.val();
-      const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
-      const filtrado=arr.filter(l=>l.id!==id);
-      lembretes=filtrado;
-      fbSet(FB+'/lembretes', filtrado);
-      renderLembretes(); updLemBadge();
-    }).catch(()=>{});
+    // Apaga só o item (chave real pode não ser o id — ver _lembretesKeyById,
+    // que cobre itens legados gravados como array antes desse fix).
+    const realKey = _lembretesKeyById[id] || id;
+    window._set(window._ref(window._db, FB+'/lembretes/'+realKey), null).catch(()=>{});
     return;
   }
 }
@@ -12042,7 +12566,7 @@ function addLembreteCfg(){
     tipo:'po', text, target, targetLabel,
     autor:u?.displayName||'?', autorUid:u?.uid||'', init:window._currentUserInit||'', ts:new Date().toISOString() };
   lembretes.push(obj);
-  fbSet(FB+'/lembretes', lembretes);
+  window._set(window._ref(window._db, FB+'/lembretes/'+obj.id), obj).catch(()=>{});
   document.getElementById('lemcfg-text').value='';
   _updLemCfgBtn();
   renderLemCfg();
@@ -13641,11 +14165,16 @@ function openBoardData(){
 // aba nem está visível).
 function _boardDataSwitchTab(tab){
   const isInsights = tab==='insights';
-  const vg=document.getElementById('boarddata-view-geral'); if(vg) vg.style.display = isInsights?'none':'';
+  const isFluxo = tab==='fluxo';
+  const isGeral = !isInsights && !isFluxo;
+  const vg=document.getElementById('boarddata-view-geral'); if(vg) vg.style.display = isGeral?'':'none';
   const vi=document.getElementById('boarddata-view-insights'); if(vi) vi.style.display = isInsights?'':'none';
-  const tg=document.getElementById('boarddata-tab-geral'); if(tg) tg.classList.toggle('active', !isInsights);
+  const vf=document.getElementById('boarddata-view-fluxo'); if(vf) vf.style.display = isFluxo?'':'none';
+  const tg=document.getElementById('boarddata-tab-geral'); if(tg) tg.classList.toggle('active', isGeral);
   const ti=document.getElementById('boarddata-tab-insights'); if(ti) ti.classList.toggle('active', isInsights);
+  const tf=document.getElementById('boarddata-tab-fluxo'); if(tf) tf.classList.toggle('active', isFluxo);
   if(isInsights) renderBoardDataInsights();
+  if(isFluxo) renderBoardDataFluxo(); // lazy — só recalcula quando a aba é aberta
 }
 // ── Filtros da aba Insights (período + tag) ─────────────────────────────
 // Estado em memória, reseta ao fechar/reabrir o modal de propósito (evita
@@ -13896,6 +14425,124 @@ async function _boardDataTrendChart(){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Não foi possível carregar o histórico agora.</div>';
   }
 }
+
+// ── CFD (Cumulative Flow Diagram) + Burndown — Fase 5, item 3 ──────────
+// Reconstrói o estado histórico de cada card a partir de card.flow.log
+// (sequência de {from,to,at} já gravada em toda movimentação, ver
+// recordMove() mais acima) — zero coleta nova. Limitação aceita: flow.log
+// guarda só as últimas 40 movimentações por card, então cards MUITO
+// movimentados podem perder histórico bem antigo (ver comentário na UI).
+const CFD_DIAS = 21;
+// Em qual coluna um card estava no FIM de um dia `diaStr` (YYYY-MM-DD).
+// undefined = card ainda não existia nesse dia.
+function _cardColunaEmDia(card, diaStr){
+  const criadoEm = (card.createdAt||'').slice(0,10);
+  if(!criadoEm || diaStr < criadoEm) return undefined;
+  const log = card.flow?.log || [];
+  let colunaAtual = log.length ? (log[0].from||card.col) : card.col;
+  for(const mov of log){
+    const movDia = (mov.at||'').slice(0,10);
+    if(!movDia || movDia > diaStr) break; // movimentação é DEPOIS do dia em questão — para aqui
+    colunaAtual = mov.to;
+  }
+  return colunaAtual;
+}
+function renderBoardDataFluxo(){
+  _renderCFD();
+  _renderBurndown();
+}
+function _renderCFD(){
+  const el = document.getElementById('boarddata-cfd'); if(!el) return;
+  const lbl = document.getElementById('cfd-dias-lbl'); if(lbl) lbl.textContent = CFD_DIAS;
+  const ativos = cards.filter(c=>!c.archived);
+  if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; return; }
+  const hoje = new Date();
+  const dias = [];
+  for(let i=CFD_DIAS-1; i>=0; i--){ const d=new Date(hoje); d.setDate(d.getDate()-i); dias.push(_localDateStrBoard(d)); }
+  const colIds = columns.map(c=>c.id);
+  const colInfo = Object.fromEntries(columns.map(c=>[c.id,c]));
+  const serie = Object.fromEntries(colIds.map(id=>[id,[]]));
+  dias.forEach(dia=>{
+    const contagem = Object.fromEntries(colIds.map(id=>[id,0]));
+    ativos.forEach(card=>{
+      const colDia = _cardColunaEmDia(card, dia);
+      if(colDia!=null && contagem[colDia]!==undefined) contagem[colDia]++;
+    });
+    colIds.forEach(id=>serie[id].push(contagem[id]));
+  });
+  const maxTotal = Math.max(1, ...dias.map((_,i)=>colIds.reduce((s,id)=>s+serie[id][i],0)));
+  const W=Math.max(360,dias.length*26), H=180, padL=6, padR=6, padT=10, padB=22;
+  const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
+  const toY = v => padT + (H-padT-padB) - (v/maxTotal)*(H-padT-padB);
+  // Áreas empilhadas na ordem das colunas do board (a "de trás" acumula por
+  // baixo das seguintes — visual clássico de CFD).
+  let acumulado = dias.map(()=>0);
+  const areas = colIds.map(id=>{
+    const baseline = acumulado.slice();
+    acumulado = acumulado.map((v,i)=>v+serie[id][i]);
+    const top = acumulado;
+    const pathTop = top.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' L ');
+    const pathBottom = baseline.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).reverse().join(' L ');
+    return `<path d="M ${pathTop} L ${pathBottom} Z" fill="${colInfo[id]?.color||'#38b6ff'}" opacity=".72" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>`;
+  }).join('');
+  const everyN = Math.max(1, Math.ceil(dias.length/7));
+  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+  const legenda = columns.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;">${areas}${labels}</svg>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10px;color:var(--txt2);margin-top:8px;">${legenda}</div>`;
+}
+function _renderBurndown(){
+  const el = document.getElementById('boarddata-burndown'); if(!el) return;
+  const start = agilCfg?.sprintStart, end = agilCfg?.sprintEnd;
+  if(!start || !end){
+    el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Configure início e fim da sprint em ⚙ Config → Ágil pra ver o burndown.</div>';
+    return;
+  }
+  const dStart = new Date(start+'T00:00:00'), dEnd = new Date(end+'T00:00:00');
+  if(isNaN(dStart.getTime()) || isNaN(dEnd.getTime()) || dEnd<=dStart){
+    el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Datas de sprint inválidas em ⚙ Config → Ágil.</div>';
+    return;
+  }
+  const hojeStr = _localDateStrBoard(new Date());
+  const dias=[]; for(let d=new Date(dStart); d<=dEnd; d.setDate(d.getDate()+1)) dias.push(_localDateStrBoard(new Date(d)));
+  const startStr=_localDateStrBoard(dStart), endStr=_localDateStrBoard(dEnd);
+  // Escopo aproximado — o board não tem campo de "pertence à sprint X":
+  // cards não arquivados criados até o fim da sprint, ainda não concluídos
+  // OU concluídos dentro da janela da sprint.
+  const escopo = cards.filter(c=>{
+    if(c.archived) return false;
+    const criado=(c.createdAt||'').slice(0,10);
+    if(!criado || criado>endStr) return false;
+    const doneAt=(c.flow?.doneAt||'').slice(0,10);
+    return !doneAt || doneAt>=startStr;
+  });
+  const total = escopo.length;
+  if(!total){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhum card no escopo da sprint pra calcular o burndown.</div>'; return; }
+  const restantes = dias.map(dia=>{
+    if(dia>hojeStr) return null; // dias futuros: sem dado real ainda
+    return escopo.filter(c=>{
+      const doneAt=(c.flow?.doneAt||'').slice(0,10);
+      return !doneAt || doneAt>dia;
+    }).length;
+  });
+  const W=Math.max(360,dias.length*30), H=170, padL=8, padR=8, padT=14, padB=22;
+  const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
+  const toY = v => padT + (H-padT-padB) - (v/total)*(H-padT-padB);
+  const ptsReal = restantes.map((v,i)=>v==null?null:`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).filter(Boolean).join(' ');
+  const ptsIdeal = dias.map((_,i)=>`${(padL+i*stepX).toFixed(1)},${toY(total - (total/(dias.length-1||1))*i).toFixed(1)}`).join(' ');
+  const everyN = Math.max(1, Math.ceil(dias.length/7));
+  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:170px;display:block;">
+      <polyline points="${ptsIdeal}" fill="none" stroke="var(--txt3)" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <polyline points="${ptsReal}" fill="none" stroke="var(--warn)" stroke-width="2.5"/>
+    </svg>
+    <div style="display:flex;gap:16px;font-size:10px;color:var(--txt2);margin-top:6px;">
+      <span><span style="display:inline-block;width:14px;height:2px;background:var(--warn);margin-right:4px;vertical-align:middle;"></span>Restante (real)</span>
+      <span><span style="display:inline-block;width:14px;height:2px;border-top:1px dashed var(--txt3);margin-right:4px;vertical-align:middle;"></span>Ideal (linear)</span>
+    </div>
+    <div style="font-size:9.5px;color:var(--txt3);margin-top:6px;">Escopo aproximado: ${total} card(s) criado(s) até o fim da sprint, ainda não concluídos ou concluídos dentro da janela. O board não tem um campo próprio de "pertence à sprint X" — ajuste as datas em ⚙ Ágil se o escopo parecer errado.</div>`;
+}
+
 function _computeTempoData(){
   const periodo=document.getElementById('tempo-periodo')?.value||'all';
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
@@ -14175,7 +14822,15 @@ function loadCampanhas(){
 }
 
 // ── Abrir overlay ─────────────────────────────────────────────────
+// Lazy-init (Fase 2.4 do plano de otimização): loadCampanhas() registra um
+// onValue no nó kanban/campanhas INTEIRO (todas as squads) — antes rodava
+// no boot pra todo mundo, mesmo quem nunca abre o painel de Campanhas.
+// Diferente do Calendário (ver nota em openCal), Campanhas não tem nenhuma
+// automação de fundo que dependa de _campanhas fora do próprio painel —
+// seguro tornar lazy.
+let _campanhasLoaded=false;
 function openCamp(){
+  if(!_campanhasLoaded){ _campanhasLoaded=true; loadCampanhas(); }
   _campAtual = null;
   window._campViewMode = 'squad';
   window._campSqFilter = 'all';
@@ -14638,6 +15293,191 @@ async function setCampViewMode(mode){
     }
   }
   if(_campAtual) renderCampDetalhe(_campAtual);
+}
+
+// ═══════════════════════════════════════════════════════
+// 🌅 MEU DIA (Fase 5, item 1) — visão pessoal agregada, cross-squad
+// Meus cards de TODOS os squads, agrupados por prazo (atrasado/hoje/
+// semana/sem prazo), bloqueios que me afetam, menções não lidas.
+// Reaproveita o MESMO padrão de _campCrossData logo acima (Campanhas
+// multi-squad): fetch pontual (one-shot _get, NUNCA um listener) de
+// cards+columns por squad, só quando a pessoa abre o painel, cacheado em
+// memória pra não rebuscar em aberturas seguintes na mesma sessão.
+// ═══════════════════════════════════════════════════════
+let _meuDiaCrossData = {}; // sqId -> {cards, columns}
+async function _loadMeuDiaCrossSquads(){
+  const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD && !_meuDiaCrossData[sq]);
+  if(!outros.length) return;
+  await Promise.all(outros.map(sq=>
+    window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
+      .then(snap=>{
+        const val=snap.val()||{};
+        _meuDiaCrossData[sq]={
+          cards:   val.cards   ?(Array.isArray(val.cards)   ?val.cards   :Object.values(val.cards))   :[],
+          columns: val.columns ?(Array.isArray(val.columns) ?val.columns :Object.values(val.columns)) :[],
+        };
+      }).catch(()=>{ _meuDiaCrossData[sq]={cards:[],columns:[]}; })
+  ));
+}
+// Heurísticas "coluna é fim"/"card bloqueado" pra squads QUE NÃO SÃO o
+// ativo — sem o flowConfig/blockerMode de cada squad (não faz parte deste
+// fetch, custaria mais uma leitura por squad), usa convenção de nome de
+// coluna (Concluído/Cancelado/...) e os dois sinais de bloqueio que juntos
+// cobrem os dois modos possíveis (tag OU coluna "blocker"), igual
+// _cardIsBlocked() cobre pro squad ativo — só que sem precisar saber QUAL
+// modo o outro squad usa.
+function _meuDiaIsDone(card){
+  if(card._squad===ACTIVE_SQUAD) return _isColDone(card.col);
+  const cols=_meuDiaCrossData[card._squad]?.columns||[];
+  const nome=(cols.find(c=>c.id===card.col)?.name||'').toLowerCase();
+  return /conclu|cancel|done|finaliz/.test(nome);
+}
+function _meuDiaIsBlocked(card){
+  return card.blocker===true || card.col==='blocker';
+}
+function _meuDiaAllCards(){
+  const local = cards.map(c=>({...c,_squad:ACTIVE_SQUAD}));
+  const cross = Object.entries(_meuDiaCrossData).flatMap(([sq,d])=>(d.cards||[]).map(c=>({...c,_squad:sq})));
+  return [...local, ...cross];
+}
+async function openMeuDia(){
+  const ov=document.getElementById('meudia-ov'); if(!ov) return;
+  ov.classList.add('open');
+  const body=document.getElementById('meudia-body');
+  if(body) body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--txt3);font-size:12px;">⏳ Carregando seus cards de todos os squads...</div>';
+  await _loadMeuDiaCrossSquads();
+  renderMeuDia();
+}
+function _meuDiaCardRow(card){
+  const cols = card._squad===ACTIVE_SQUAD ? columns : (_meuDiaCrossData[card._squad]?.columns||[]);
+  const colName = cols.find(c=>c.id===card.col)?.name || card.col;
+  const sqLabel = SQUAD_META_LIVE[card._squad]?.label || card._squad;
+  const dueLbl = card.due ? new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
+  return `<div class="meudia-row" onclick="_meuDiaOpenCard('${esc(card._squad)}','${esc(card.id)}')">
+    <div class="meudia-row-main">
+      <div class="meudia-row-title">${esc(card.title)}</div>
+      <div class="meudia-row-meta">${esc(sqLabel)} · ${esc(colName)}${dueLbl?' · 📅 '+dueLbl:''}</div>
+    </div>
+  </div>`;
+}
+function _meuDiaOpenCard(sq, cardId){
+  if(sq===ACTIVE_SQUAD){ closeOv('meudia-ov'); openCard(cardId); return; }
+  window.location.href = window.location.pathname+'?squad='+encodeURIComponent(sq)+'&card='+encodeURIComponent(cardId);
+}
+function renderMeuDia(){
+  const body=document.getElementById('meudia-body'); if(!body) return;
+  const meuInit = window._currentUserInit;
+  if(!meuInit){ body.innerHTML='<div style="color:var(--txt3);font-size:12px;">Não identifiquei suas iniciais — abra um card seu pra confirmar seu cadastro.</div>'; return; }
+  const all = _meuDiaAllCards().filter(c=>!c.archived);
+  const meus = all.filter(c=>c.owner===meuInit || (c.participants||[]).includes(meuInit));
+  const hojeStr = _localDateStrBoard(new Date());
+  const semanaLimite = new Date(); semanaLimite.setDate(semanaLimite.getDate()+7);
+  const semanaLimiteStr = _localDateStrBoard(semanaLimite);
+
+  const buckets = {atrasado:[], hoje:[], semana:[], semPrazo:[]};
+  meus.forEach(c=>{
+    if(_meuDiaIsDone(c)) return; // "Meu Dia" é sobre o que ainda precisa de atenção
+    if(!c.due){ buckets.semPrazo.push(c); return; }
+    if(c.due<hojeStr) buckets.atrasado.push(c);
+    else if(c.due===hojeStr) buckets.hoje.push(c);
+    else if(c.due<=semanaLimiteStr) buckets.semana.push(c);
+  });
+  const bloqueios = meus.filter(c=>!_meuDiaIsDone(c) && _meuDiaIsBlocked(c));
+  const mencoes = (_activeNotifsCache||[]).filter(n=>n.type==='mention' && !n.read);
+
+  const secao=(titulo,icone,lista,corBorda)=>{
+    if(!lista.length) return '';
+    return `<div class="meudia-sec">
+      <div class="meudia-sec-hd" style="border-left-color:${corBorda};">${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></div>
+      ${lista.map(_meuDiaCardRow).join('')}
+    </div>`;
+  };
+  const mencoesSecao = mencoes.length ? `<div class="meudia-sec">
+    <div class="meudia-sec-hd" style="border-left-color:#a78bfa;">💬 Menções não lidas <span class="meudia-sec-n">${mencoes.length}</span></div>
+    ${mencoes.map(n=>`<div class="meudia-row" onclick="closeOv('meudia-ov');openNotif('${esc(n.id)}','${esc(n.cardId||'')}','${esc(n.squad||ACTIVE_SQUAD)}','${esc(n.commentId||'')}')">
+      <div class="meudia-row-main">
+        <div class="meudia-row-title">${esc(n.title)}</div>
+        <div class="meudia-row-meta">${esc(n.sub||'')}</div>
+      </div>
+    </div>`).join('')}
+  </div>` : '';
+
+  const semNadaUrgente = !buckets.atrasado.length && !buckets.hoje.length && !buckets.semana.length && !bloqueios.length && !mencoes.length;
+
+  body.innerHTML = `
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Seus cards em todos os squads (${Object.keys(SQUAD_META_LIVE).length}), atualizado agora.</div>
+    ${secao('Atrasado',       '🔴',buckets.atrasado,'#ff6b6b')}
+    ${secao('Hoje',           '🟡',buckets.hoje,    '#ffd166')}
+    ${secao('Esta semana',    '🔵',buckets.semana,  '#38b6ff')}
+    ${mencoesSecao}
+    ${secao('Bloqueios que te afetam','🚧',bloqueios,'#ff6b6b')}
+    ${secao('Sem prazo',      '⚪',buckets.semPrazo,'var(--txt3)')}
+    ${semNadaUrgente ? '<div style="text-align:center;padding:30px 0;color:var(--txt3);font-size:13px;">🎉 Tudo em dia! Nada urgente pra hoje.</div>' : ''}
+  `;
+}
+
+// ── Intake (Fase 5.4) ────────────────────────────────────────────────────
+function updIntakeBadge(){
+  const badge=document.getElementById('intake-badge'); if(!badge) return;
+  const n=intakePendentes.length;
+  if(n>0){ badge.textContent=n>9?'9+':n; badge.style.display=''; }
+  else badge.style.display='none';
+}
+function openIntakePanel(){
+  renderIntakeBody();
+  document.getElementById('intake-ov').classList.add('open');
+}
+function _copyIntakeLink(){
+  const url = window.location.origin + window.location.pathname.replace(/kanban(-dev)?\.html$/,'') + 'intake.html?squad=' + encodeURIComponent(ACTIVE_SQUAD);
+  navigator.clipboard?.writeText(url).then(()=>showToast('🔗 Link copiado! '+url), ()=>showToast('⚠️ Não deu pra copiar — copie manualmente: '+url));
+}
+function renderIntakeBody(){
+  const body=document.getElementById('intake-body'); if(!body) return;
+  if(!intakePendentes.length){
+    body.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--txt3);font-size:13px;">📭 Nenhum pedido pendente no momento.</div>';
+    return;
+  }
+  const ordenados = intakePendentes.slice().sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+  body.innerHTML = ordenados.map(item=>{
+    const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${esc(item.titulo)}</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''} · ${quando}${prazo}</div>
+      ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>
+        <button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _intakeCriarCard(id){
+  if(!checkEditPermission()) return;
+  const item = _intakeBucket[id]; if(!item) return;
+  closeOv('intake-ov');
+  openNewCard();
+  document.getElementById('m-title').value = '📥 '+item.titulo;
+  const partes = ['**Pedido via formulário de intake**', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
+  if(item.descricao){ partes.push(''); partes.push(item.descricao); }
+  eocInitDisplay('desc-eoc', partes.join('\n'), 'Adicionar descrição...');
+  if(item.prazo){
+    document.getElementById('m-due').value = item.prazo;
+    _mNoDue=false; _renderNoDueBtn();
+  }
+  // Setado DEPOIS de openNewCard() de propósito — openNewCard() zera este
+  // mesmo campo no início (ver comentário na declaração), então só marcar
+  // aqui garante que sobreviva até o saveCard() de verdade.
+  _intakeOrigemPendingId = id;
+  showToast('📥 Pedido carregado no card — revise e clique em Salvar.');
+}
+function _intakeDescartar(id){
+  if(!checkEditPermission()) return;
+  const item = _intakeBucket[id]; if(!item) return;
+  uiConfirm('Descartar o pedido "'+item.titulo+'"? Ele sai da lista de pendentes (fica registrado, mas não vira card).',{title:'Descartar pedido',danger:true,okText:'Descartar'}).then(ok=>{
+    if(!ok) return;
+    window._update(fb(FB+'/intake_pending/'+id), {status:'discarded', discardedAt:new Date().toISOString()});
+  });
 }
 
 function setCampSqFilter(sq){
@@ -16373,34 +17213,53 @@ function _fluxoColRow(col, group, checked){
     <span>${esc(col.name)}</span>
   </label>`;
 }
+// Linha do bloco "Aging" — não é checkbox como as outras (start/done/report),
+// é um número de dias por coluna (Fase 5.2). Vazio = desligado pra essa coluna.
+function _fluxoAgingRow(col, days){
+  return `<label class="fluxo-col-item" style="gap:8px;">
+    <span class="fluxo-col-dot" style="background:${col.color||'#38b6ff'}"></span>
+    <span style="flex:1;">${esc(col.name)}</span>
+    <input type="number" min="0" max="90" value="${days||''}" placeholder="—" data-aging-col="${esc(col.id)}"
+      style="width:52px;font-size:12px;padding:3px 6px;border-radius:6px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);color:var(--txt);"
+      title="Dias parado nesta coluna até avisar (vazio = desligado)">
+  </label>`;
+}
 function renderFluxoCfg(){
   // Se nada configurado, pré-seleciona o que a heurística detecta
   const autoStart = flowConfig.startCols.length? flowConfig.startCols : _flowStartColIds();
   const autoDone = flowConfig.doneCols.length? flowConfig.doneCols : _flowDoneColIds();
   const report = flowConfig.reportCols||[];
+  const agingDays = flowConfig.agingDays||{};
   const sEl=document.getElementById('fluxo-start-cols');
   const dEl=document.getElementById('fluxo-done-cols');
   const rEl=document.getElementById('fluxo-report-cols');
+  const aEl=document.getElementById('fluxo-aging-cols');
   if(sEl) sEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'start',autoStart.includes(c.id))).join('');
   if(dEl) dEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'done',autoDone.includes(c.id))).join('');
   if(rEl) rEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'report',report.includes(c.id))).join('');
+  if(aEl) aEl.innerHTML=(columns||[]).map(c=>_fluxoAgingRow(c,agingDays[c.id])).join('');
 }
 function salvarFluxoCfg(){
   const grab=g=>[...document.querySelectorAll(`#cfgtab-fluxo input[data-group="${g}"]:checked`)].map(i=>i.value);
-  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report') };
+  const agingDays={};
+  document.querySelectorAll('#cfgtab-fluxo input[data-aging-col]').forEach(inp=>{
+    const v=parseInt(inp.value,10);
+    if(v>0) agingDays[inp.dataset.agingCol]=v;
+  });
+  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report'), agingDays };
   if(!cfg.startCols.length || !cfg.doneCols.length){
     uiAlert('Marque pelo menos uma coluna de início e uma de fim para o cálculo funcionar.',{title:'Configuração incompleta'});
     return;
   }
   flowConfig=cfg;
   fbSet(FB+'/config/flow', cfg);
-  renderBoard(); // 🔧 aplica o dimming/checkmark na hora, sem precisar recarregar
+  renderBoard(); // 🔧 aplica o dimming/checkmark/aging na hora, sem precisar recarregar
   if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 corrige status retroativamente
   showToast('💾 Fluxo configurado. O relatório de tempo já usa as novas colunas.');
 }
 async function resetFluxoCfg(){
-  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada.',{title:'Resetar fluxo',okText:'Resetar'})) return;
-  flowConfig={ startCols:[], doneCols:[], reportCols:[] };
+  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada (inclui os limiares de aging).',{title:'Resetar fluxo',okText:'Resetar'})) return;
+  flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{} };
   fbSet(FB+'/config/flow', flowConfig);
   renderBoard(); // 🔧 aplica na hora
   renderFluxoCfg();
@@ -17830,6 +18689,7 @@ async function doTrelloImport(){
 // ═══════════════════════════════════════════════════════
 const HELP_CONTENT = {
   board: [
+    { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.' },
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
@@ -17854,9 +18714,13 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
+    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.' },
+    { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e (opcional) contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
+    { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
     { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚙ Config → Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
@@ -17869,6 +18733,7 @@ const HELP_CONTENT = {
     { icon:'🔗', title:'Links nas descrições', text:'Cole qualquer URL e ela vira um link clicável automaticamente. Para um link com nome bonito (estilo Word), clique no botão 🔗 da barra de ferramentas, informe a URL e o texto a exibir — ex.: mostrar "Board do Bolão" em vez do endereço completo.' },
     { icon:'📝', title:'Descrições adicionais', text:'Além da descrição principal do PO, cada time ou pessoa pode adicionar a sua própria visão no card (Brief do Design, Specs do Dev, etc.). Clique em "+ Nova descrição", escreva e salve. Depois de salva, ela fica em modo leitura com o rótulo, o autor e a data; o lápis ✏️ reabre para editar.' },
     { icon:'🏷', title:'Múltiplas tags por card', text:'Um card pode ter mais de uma tag ao mesmo tempo. Adicione quantas precisar no campo Tags. Na raia por tag, cards com várias tags aparecem em cada linha correspondente.' },
+    { icon:'🎨', title:'Capa do card (cor ou imagem)', text:'Botão 🎨 no topo do card abre o menu de capa: uma cor sólida (organização visual, tipo Trello) OU uma imagem — cole a URL de uma imagem, ou clique em "🔗 Usar 1º link" pra usar o primeiro link já salvo em 🔗 Anexos.\n\nCor e imagem são exclusivas — escolher uma limpa a outra. O app só guarda o ENDEREÇO da imagem (nunca faz upload nem guarda o arquivo) — se o link cair ou for removido, a capa some sozinha sem quebrar nada.' },
     { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. O histórico de comentários fica salvo no Firebase.' },
     { icon:'📋', title:'Salvar como modelo', text:'Clique no ícone 📋 no rodapé de qualquer card para salvá-lo como modelo. O modelo copia tag, descrição, PO, checklist (desmarcado) e riscos.' },
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
@@ -17906,6 +18771,7 @@ const HELP_CONTENT = {
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
+    { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
     { icon:'🎬', title:'Ficha de Criativo', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha de Criativo neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações), e um painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado.\n\nDá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas — cada card escolhe uma lista, e o painel filtra por ela. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
@@ -18675,7 +19541,7 @@ document.addEventListener('click', e=>{
 // ── Cria uma notificação para um usuário ──────────────────────────
 // Deduplication: track recently created notifs (uid+type+cardId) within 5s
 const _recentNotifs = new Map();
-function createNotif(targetUid, type, title, sub, cardId, idOverride){
+function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId){
   if(!window._fbReady || !targetUid) return;
   // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
   // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
@@ -18691,6 +19557,10 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride){
     ts: new Date().toISOString(),
     squad: ACTIVE_SQUAD,
   };
+  // commentId: só setado quando a menção veio de um comentário (ver
+  // parseMentions/submitComment/saveEditComment). Usado em openNotif() pra
+  // avisar/limpar a notificação se o comentário for excluído depois.
+  if(commentId) notif.commentId = commentId;
   const path = 'kanban/usuarios/'+targetUid+'/notificacoes/'+notifId;
   // Loga falha de escrita em vez de engolir silenciosamente — nao interrompe o fluxo do app.
   const _notifWarn = err => { if(!String(err).includes('error_logs')&&!String(err).includes('error_stats')) console.warn('[createNotif] write failed:', err); };
@@ -18913,6 +19783,13 @@ window.addEventListener('fb-ready', ()=>{
 });
 // ═══════════════════════════════════════════════════════════════════
 
+// Cache da última lista processada por loadNotifs() — antes só existia
+// dentro do próprio onValue (passada direto pra renderNotifs, sem ficar em
+// nenhuma variável), então nada mais no app conseguia consultar "quais são
+// as notificações não lidas agora" sem reimplementar a leitura. Usado por
+// "Meu Dia" (Fase 5.1) pra listar menções não lidas sem precisar de outro
+// listener/fetch — o de loadNotifs() já roda o tempo todo desde o boot.
+let _activeNotifsCache = [];
 function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
@@ -18941,6 +19818,7 @@ function loadNotifs(){
     if(Object.keys(_toDelete).length){
       window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), _toDelete).catch(()=>{});
     }
+    _activeNotifsCache = active;
     renderNotifs(active);
   }, err=>{
     // Sem isso, uma queda silenciosa de conexão deixava o sino surdo pro resto da sessão
@@ -19014,7 +19892,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -19025,7 +19903,7 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
-function openNotif(notifId, cardId, squad){
+function openNotif(notifId, cardId, squad, commentId){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
@@ -19048,10 +19926,37 @@ function openNotif(notifId, cardId, squad){
   const tentar = () => {
     tentativas++;
     const card = cards.find(c=>c.id===cardId);
-    if(card){ openCard(cardId); return; }
+    if(card){
+      // Notificação de menção num comentário que já foi excluído: avisa e
+      // remove a notificação em vez de abrir o card num comentário fantasma
+      // (relato: usuária "não consegue abrir" a notificação — o comentário
+      // que a gerou tinha sido apagado). Fase 1.1: comentários vivem em
+      // card_comments/{id} agora — checa lá, com fallback pro campo legado
+      // c.comments (card ainda não migrado).
+      if(commentId){
+        _commentStillExists(cardId, commentId, card).then(exists=>{
+          if(!exists){
+            showToast('Esse comentário não existe mais — foi excluído.');
+            window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
+          }
+          openCard(cardId);
+        });
+        return;
+      }
+      openCard(cardId);
+      return;
+    }
     if(tentativas < 15) setTimeout(tentar, 400);
   };
   tentar();
+}
+async function _commentStillExists(cardId, commentId, card){
+  if(_commentsCache[cardId]) return !!_commentsCache[cardId][commentId];
+  try{
+    const snap = await window._get(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+commentId));
+    if(snap.exists()) return true;
+  }catch(e){}
+  return !!(card?.comments && card.comments[commentId]); // fallback legado
 }
 
 function markAllRead(){
@@ -19099,7 +20004,7 @@ function timeAgo(ts){
 // iniciais maiúsculas — o regex antigo (@[A-Z]{2,3}) nunca dava match nesse formato e por
 // isso nenhuma menção real notificava ninguém. Aceita os dois formatos (handle novo e
 // iniciais legadas) para não quebrar cards antigos.
-function parseMentions(text, cardId){
+function parseMentions(text, cardId, commentId){
   if(!text) return;
   const re=/@([a-zA-Z][a-zA-Z0-9._-]{1,40})/g; let m;
   const notified=new Set();
@@ -19118,11 +20023,16 @@ function parseMentions(text, cardId){
     // mover a coluna) re-notificava a MESMA menção antiga de novo, dias
     // depois, como se fosse nova. createNotif já entende idOverride e só
     // cria se ainda não existe (mesmo mecanismo usado pra lembretes).
+    // commentId só chega aqui quando quem chamou é submitComment/saveEditComment
+    // (menção dentro de um comentário) — pros outros campos (descrição, PO,
+    // checklist etc.) fica undefined e a notificação não trava em nenhum
+    // comentário específico.
     createNotif(uid,'mention',
       '@'+(init||token)+' — você foi mencionado',
       text.substring(0,80)+(text.length>80?'…':''),
       cardId,
-      'mention_'+cardId+'_'+uid);
+      'mention_'+cardId+'_'+uid,
+      commentId);
   }
 }
 
@@ -19665,6 +20575,13 @@ function populateCalFilters() {
   }
 }
 
+// NOTA (Fase 2.4 do plano de otimização): cogitado tornar loadCalEvents()
+// lazy (só no 1º open do painel Calendário), mas checkUpcomingMeetings()
+// (setInterval de 60s, alerta "reunião em N minutos") depende de `calEvents`
+// já populado O TEMPO TODO, não só quando o painel está aberto — é gente que
+// nunca abre o Calendário mas quer o alerta de reunião próxima. Tornar
+// lazy quebraria esse alerta pra maioria das pessoas. Mantido eager de
+// propósito; só Campanhas (sem essa dependência de fundo) virou lazy abaixo.
 function openCal(){
   const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
@@ -20126,26 +21043,46 @@ function loadCalEvents(){
       if(localLimpo.length !== window._gcalLocalEvents.length){
         const cacheObj = Object.fromEntries(localLimpo.map(ev=>[ev.id, ev]));
         window._set(window._ref(window._db, FB+'/config/gcal_cache'), cacheObj).catch(()=>{});
+        _touchGcalCacheMeta(FB+'/config');
       }
     }
   }
-  fbListen(FB+'/config/gcal_cache', val => {
-    window._gcalLocalEvents = val ? Object.values(val) : [];
-    _mergeGcalSources();
+  // ── Cache do calendário lido sob demanda, não por listener direto no nó cheio ──
+  // Antes: fbListen(FB+'/config/gcal_cache', ...) mantinha TODO evento de TODA agenda
+  // conectada em memória viva pra TODO cliente o tempo todo, e qualquer escrita
+  // retransmitia o payload inteiro pra todo mundo. Agora só o meta (leve, {updatedAt,
+  // updatedBy}) fica com listener; o cache cheio só é buscado (fbGet, uma vez) quando
+  // o meta efetivamente muda — mesmo padrão de "escuta o ponteiro, busca o conteúdo"
+  // já usado noutros pontos do app. Todo caminho que escreve gcal_cache precisa tocar
+  // o meta também (ver _touchGcalCacheMeta), senão outros clientes não percebem a mudança.
+  let _gcalLocalCacheTs = undefined, _gcalGlobalCacheTs = undefined;
+  fbListen(FB+'/config/gcal_cache_meta', val => {
+    window._gcalCacheMeta = val || null;
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+    const ts = val?.updatedAt || null;
+    if(ts === _gcalLocalCacheTs) return;
+    _gcalLocalCacheTs = ts;
+    fbGet(FB+'/config/gcal_cache').then(snap=>{
+      const val2 = snap.val();
+      window._gcalLocalEvents = val2 ? Object.values(val2) : [];
+      _mergeGcalSources();
+    }).catch(()=>{});
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => { _dbgTrack('painel_gcal_cache', snap.val());
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), snap => { _dbgTrack('painel_gcal_cache_meta', snap.val());
     const val = snap.val();
-    window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
-    _mergeGcalSources();
+    const ts = val?.updatedAt || null;
+    if(ts === _gcalGlobalCacheTs) return;
+    _gcalGlobalCacheTs = ts;
+    fbGet('kanban/painel/config/gcal_cache').then(snap2=>{
+      const val2 = snap2.val();
+      window._gcalGlobalEvents = val2 ? Object.values(val2).map(e=>({...e,_global:true})) : [];
+      _mergeGcalSources();
+    }).catch(()=>{});
   });
   window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => { _dbgTrack('painel_gcal_calendars', snap.val());
     const val = snap.val();
     window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
     _mergeGcalSources();
-  });
-  fbListen(FB+'/config/gcal_cache_meta', val => {
-    window._gcalCacheMeta = val || null;
-    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
   });
 
   // ── Fila global de pedidos de agenda — cada um escuta e filtra os do PRÓPRIO squad,
@@ -20182,6 +21119,16 @@ function loadCalEvents(){
 // ── FIM CALENDÁRIO ────────────────────────────────────────────────
 // ── INTEGRAÇÃO MÚLTIPLA GOOGLE CALENDAR (PLANO B) ──────────────────────────
 window._squadCalendars = {};
+// Toda escrita em .../gcal_cache PRECISA tocar o .../gcal_cache_meta junto — os
+// listeners de calendário (kanban-dev.html) escutam só o meta e buscam o cache
+// cheio sob demanda quando ele muda; uma escrita em gcal_cache sem tocar o meta
+// fica invisível pros outros clientes até o próximo refetch completo do ADM.
+function _touchGcalCacheMeta(configBasePath){
+  window._set(window._ref(window._db, configBasePath+'/gcal_cache_meta'), {
+    updatedAt: new Date().toISOString(),
+    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
+  }).catch(()=>{});
+}
 
 function _relTimeCal(ts){
   try{
@@ -20330,6 +21277,7 @@ async function removeCalendarFromList(id) {
       const cache = snap2.val()||{};
       const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
       await window._set(window._ref(window._db, FB+'/config/gcal_cache'), filtrado);
+      _touchGcalCacheMeta(FB+'/config');
     }catch(e){ console.warn('Não foi possível purgar cache local imediatamente:', e); }
     renderCalendarList();
     carregarTodasAgendasSquad();
@@ -20413,6 +21361,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
 
   if (!calendarsList.length) {
     await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), {}).catch(()=>{});
+    _touchGcalCacheMeta(squadFB+'/config');
     return { ok:true, count:0 };
   }
   if (!token) { _gcalWarnBanner(true); return { ok:false, reason:'no_token' }; }
@@ -20489,10 +21438,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
   });
   const cacheObj = Object.fromEntries(todosEventosGoogleDedup.map(ev=>[ev.id, ev]));
   await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), cacheObj).catch(()=>{});
-  await window._set(window._ref(window._db, squadFB+'/config/gcal_cache_meta'), {
-    updatedAt: new Date().toISOString(),
-    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
-  }).catch(()=>{});
+  _touchGcalCacheMeta(squadFB+'/config');
 
   const temExpirado = Object.values(window._gcalErrors).some(e=>e.type==='expired');
   _gcalWarnBanner(temExpirado);
@@ -21821,6 +22767,9 @@ function addBlockerTag(cardId){
     document.getElementById('m-blocker-row').style.display='block';
     document.getElementById('m-blocker-reason').value = card.blockerReason||'';
     document.getElementById('m-blocker-reason').focus();
+    // m-blocker-row aparece via style.display direto (não dispara input/change) —
+    // o listener delegado de _startDirtyWatch não pega essa mudança sozinho.
+    _updateSaveBtnDirtyState();
   },100);
 }
 function removeBlockerTag(){
@@ -21831,6 +22780,7 @@ function removeBlockerTag(){
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
+  _updateSaveBtnDirtyState(); // idem addBlockerTag — display direto não dispara input/change
   fbSaveCard(c); renderBoard();
   showToast('Impedimento removido');
 }
@@ -22010,6 +22960,7 @@ document.addEventListener('click', hideCtxMenu);
 document.addEventListener('keydown', e=>{ 
   if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='d'){ e.preventDefault(); openMeuDia(); } // 🌅 Meu Dia (Fase 5.1)
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){
     // Não intercepta Ctrl+Z dentro de campos de texto editáveis
     const tag=document.activeElement?.tagName;
@@ -22448,6 +23399,59 @@ document.querySelectorAll('.ov').forEach(ov=>{
   });
 });
 
+// ── Fase 3.1 (mobile): bottom-sheet do card modal ───────────────────────
+// Arrastar a alça (#card-sheet-handle) pra baixo fecha o modal — passa por
+// closeOv('card-ov'), então ganha de graça a confirmação de "alterações não
+// salvas" (Fase 2.2/_cardIsDirty). Só a alça responde ao arrasto, de
+// propósito — não o header inteiro, que tem botões/abas.
+(function _initCardSheetDrag(){
+  const handle = document.getElementById('card-sheet-handle');
+  const panel = document.querySelector('#card-ov .card-panel');
+  if(!handle || !panel) return;
+  const isMobile = () => window.matchMedia('(max-width:768px)').matches;
+  let startY=0, dy=0, dragging=false;
+  handle.addEventListener('touchstart', e=>{
+    if(!isMobile() || e.touches.length>1) return;
+    startY=e.touches[0].clientY; dy=0; dragging=true;
+    panel.style.transition='none';
+  }, {passive:true});
+  handle.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    dy = Math.max(0, e.touches[0].clientY-startY); // não deixa "esticar" pra cima
+    panel.style.transform = `translateY(${dy}px)`;
+  }, {passive:true});
+  handle.addEventListener('touchend', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    panel.style.transition='';
+    panel.style.transform='';
+    if(dy>110) closeOv('card-ov'); // arrastou o suficiente — fecha (com confirmação se dirty)
+  });
+  handle.addEventListener('touchcancel', ()=>{
+    dragging=false; panel.style.transition=''; panel.style.transform='';
+  });
+})();
+
+// ── Fase 3.1 (mobile): teclado virtual x bottom-sheet ───────────────────
+// Sem isso, o teclado do celular cobre o campo que a pessoa está editando
+// (o layout visual não sabe que perdeu espaço — só o visualViewport sabe).
+// Redimensiona a folha pra caber no espaço que sobrou e mantém o campo
+// focado visível, reaproveitando o mesmo scroll interno do modal.
+if(window.visualViewport){
+  const _onVVResize = () => {
+    const panel = document.querySelector('#card-ov.open .card-panel');
+    if(!panel || window.matchMedia('(max-width:768px)').matches===false) return;
+    const vv = window.visualViewport;
+    const kbOpen = (window.innerHeight - vv.height) > 100; // heurística: teclado ocupando >100px
+    panel.style.maxHeight = kbOpen ? (vv.height*0.98)+'px' : '';
+    if(kbOpen){
+      const el = document.activeElement;
+      if(el && panel.contains(el)) setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}), 60);
+    }
+  };
+  window.visualViewport.addEventListener('resize', _onVVResize);
+}
+
 // ══ AUTO-UPDATE: detecta nova versão publicada e BLOQUEIA a tela até atualizar ══
 // Funciona igual em desktop e mobile: assim que uma versao nova e publicada, a proxima
 // checagem (a cada 5 min) mostra uma tela cheia com botao "Atualizar agora" -- nao da
@@ -22586,10 +23590,21 @@ _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicad
     `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
     `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
   ];
-  for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
-  for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
+  // Mobile (≤768px) fica com metade dos peixes/bolhas — mesma cena, menos
+  // elementos animados simultâneos (custo de bateria/CPU maior em celular).
+  const isMobile = window.matchMedia('(max-width:768px)').matches;
+  const nFish = isMobile ? 4 : 8;
+  const nBubbles = isMobile ? 8 : 16;
+  for(let i=0;i<nFish;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
+  for(let i=0;i<nBubbles;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
   _applyFishBgVisibility();
 })();
+// Pausa a animação de peixes/bolhas quando a aba vai pro background — não
+// tem sentido gastar CPU/bateria animando algo que ninguém está vendo.
+// Ver regra [data-anim-paused] .fish-ltr/.fish-rtl/.bubble no CSS.
+document.addEventListener('visibilitychange', ()=>{
+  document.documentElement.toggleAttribute('data-anim-paused', document.hidden);
+});
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });
@@ -22642,7 +23657,8 @@ _onFbReady(()=>{
   // precisar de F5: cada chamada é barata quando ainda não passou da hora ou
   // já rodou hoje (retorna cedo, ver os `if` dentro das duas funções).
   setInterval(()=>{ if(window._currentUser){ checkDueNotifs(); checkAgingAutomations(); } }, 5*60*1000);
-  loadCampanhas();
+  // loadCampanhas() saiu do boot — agora é lazy, só na 1ª abertura do painel
+  // de Campanhas (ver _campanhasLoaded/openCamp), Fase 2.4 do plano de otimização.
   // Recorrência automática: ao abrir o quadro, cria os cards recorrentes que venceram
   setTimeout(()=>{ try{ processRecorrentes(); }catch(e){ console.warn('Recorrência:', e); } }, 3500);
   // Agendamentos: cria cards agendados cuja data chegou
@@ -23032,9 +24048,34 @@ function openDependsOnCard(){
 // ═══════════════════════════════════════════════════════
 // COMENTÁRIOS E ATIVIDADE
 // ═══════════════════════════════════════════════════════
+// Fase 1.1 do plano de otimização: comentários saíram de dentro do card
+// (card.comments) pra um path próprio, squads/{squad}/dados/card_comments/
+// {cardId}/{commentId} — o motivo original de trazer comentários pra
+// dentro do card (ver histórico no comentário de loadComments logo abaixo)
+// era evitar 1 leitura extra ao abrir um card; o custo maior descoberto
+// depois foi o OPOSTO: TODA edição de QUALQUER campo de um card
+// retransmite os comentários dele inteiros pra TODO MUNDO com o board
+// aberto (child_changed em /cards), mesmo quem nunca abre aquele card.
+// Migração sem lote: _commentsCache é a fonte da verdade em memória
+// (populada por loadComments, mutada localmente pelas ações de
+// comentário); leitura tenta o path novo, com fallback pro campo legado
+// card.comments (cards ainda não tocados desde esta migração) — nesse
+// caso, migra em background (_migrateLegacyComments) e o campo legado
+// some do card na próxima vez que ele for salvo.
 let _commentCardId = null;
+let _commentsCache = {}; // cardId -> {commentId: commentObj}
+function _sortedComments(map){
+  return Object.values(map||{}).filter(Boolean).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+}
+function _migrateLegacyComments(cardObj){
+  if(!cardObj || !cardObj.comments || !Object.keys(cardObj.comments).length) return;
+  window._update(window._ref(window._db, FB+'/card_comments/'+cardObj.id), cardObj.comments).then(()=>{
+    delete cardObj.comments;
+    fbSaveCard(cardObj); // some do campo legado — a próxima retransmissão do card já não carrega mais os comentários
+  }).catch(err=>console.warn('[comments] migração de', cardObj.id, 'falhou:', err));
+}
 
-function loadComments(cardId){
+async function loadComments(cardId){
   _commentCardId = cardId;
   const list = document.getElementById('m-comment-list'); if(!list) return;
   // Update avatar
@@ -23046,16 +24087,31 @@ function loadComments(cardId){
       av.textContent = window._currentUserInit||'?';
     }
   }
-  // Le direto do array 'cards' ja carregado em memoria (via os listeners granulares de
-  // FB+'/cards') em vez de bater no Firebase de novo. Antes disso, TODA abertura de card
-  // fazia uma leitura em 'kanban/squads/{squad}/cards/{id}/comments' (caminho que nao
-  // existe mais nas regras de seguranca -> sempre da Permission denied) e, no catch,
-  // caia num fallback que baixava o node /cards INTEIRO so pra achar os comentarios de
-  // 1 card -- em squads com muitos cards isso multiplicava MUITO o consumo de download
-  // do Realtime Database (causa confirmada do estouro de cota reportado pelo Caio).
-  const cardObj = cards.find(c=>c.id===cardId);
-  const comments = cardObj && cardObj.comments ? Object.values(cardObj.comments).sort((a,b)=>a.ts.localeCompare(b.ts)) : [];
-  renderCommentList(comments);
+  // Mostra o que já tiver em cache desta sessão na hora (evita "piscar vazio"
+  // se o card já foi aberto antes); busca o path novo em paralelo.
+  if(_commentsCache[cardId]) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  else list.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Carregando comentários...</div>';
+  try{
+    const snap = await window._get(window._ref(window._db, FB+'/card_comments/'+cardId));
+    let val = snap.val();
+    if(!val){
+      // Path novo vazio — card ainda não migrado? Cai pro campo legado
+      // (card já está em memória via os listeners granulares de /cards,
+      // não precisa de outra leitura) e dispara a migração em background.
+      const cardObj = cards.find(c=>c.id===cardId);
+      if(cardObj && cardObj.comments && Object.keys(cardObj.comments).length){
+        val = cardObj.comments;
+        _migrateLegacyComments(cardObj);
+      }
+    }
+    _commentsCache[cardId] = val || {};
+    // Trava contra corrida: se a pessoa trocou de card enquanto a leitura
+    // estava em voo, não pisa no que já está na tela do card ATUAL.
+    if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  }catch(e){
+    console.warn('[comments] falha ao carregar:', e);
+    if(_commentCardId===cardId && list.innerHTML.includes('Carregando')) list.innerHTML='<div style="font-size:11px;color:var(--danger);padding:4px 0;">⚠ Não foi possível carregar os comentários.</div>';
+  }
 }
 
 function renderCommentList(comments){
@@ -23138,30 +24194,27 @@ function submitComment(){
     text,
     ts:new Date().toISOString(),
   };
-  // Save to Firebase under the card's data
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  if(cardObj){
-    if(!cardObj.comments) cardObj.comments={};
-    cardObj.comments[comment.id]=comment;
-    // Antes usava fbSaveAll() (reescreve o array /cards INTEIRO no Firebase a cada
-    // comentario postado); trocado por fbSaveCard() (update incremental so desse
-    // card) pra bater com o mesmo padrao ja usado no resto do app e nao inflar o
-    // trafego de escrita/leitura em squads com muitos cards.
-    fbSaveCard(cardObj);
-  }
+  // Escreve só o comentário (path próprio, ver Fase 1.1) — não o card
+  // inteiro. Antes usava fbSaveAll() (reescreve /cards INTEIRO a cada
+  // comentário), depois fbSaveCard() (update incremental do card, mas ainda
+  // carregando TODOS os comentários dele) — agora é 1 write pequeno,
+  // desacoplado de qualquer outro campo do card.
+  if(!_commentsCache[_commentCardId]) _commentsCache[_commentCardId]={};
+  _commentsCache[_commentCardId][comment.id]=comment;
+  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+comment.id), comment)
+    .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
   inp.value=''; inp.style.height='auto';
   eocResetComment();
-  loadComments(_commentCardId);
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // Fire @mention notifications from comment
-  parseMentions(text, _commentCardId);
+  parseMentions(text, _commentCardId, comment.id);
 }
 
 function deleteComment(cid){
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  if(!cardObj||!cardObj.comments) return;
-  delete cardObj.comments[cid];
-  fbSaveCard(cardObj);
-  loadComments(_commentCardId);
+  if(!_commentsCache[_commentCardId]) return;
+  delete _commentsCache[_commentCardId][cid];
+  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), null).catch(()=>{});
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
 }
 
 // ── Edição de comentário (só o autor pode editar) ───────────────────────
@@ -23170,8 +24223,7 @@ function deleteComment(cid){
 function startEditComment(cid){
   const el = document.getElementById('ctext-'+cid);
   if(!el) return;
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  const comment = cardObj?.comments?.[cid];
+  const comment = _commentsCache[_commentCardId]?.[cid];
   if(!comment) return;
   // NOTA: não usar a classe .eoc-textarea aqui — ela tem display:none por
   // padrão e só fica visível dentro do contexto .eoc-editing (usado no campo
@@ -23207,39 +24259,37 @@ function saveEditComment(cid){
   const ta = document.getElementById('cedit-ta-'+cid); if(!ta) return;
   const newText = ta.value.trim();
   if(!newText){ showToast('Comentário não pode ficar vazio.'); return; }
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  const comment = cardObj?.comments?.[cid];
+  const comment = _commentsCache[_commentCardId]?.[cid];
   if(!comment) return;
   comment.text = newText;
   comment.editedAt = new Date().toISOString();
-  fbSaveCard(cardObj);
-  loadComments(_commentCardId);
+  window._update(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), {text:newText, editedAt:comment.editedAt}).catch(()=>{});
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // Editar um comentário existente nunca disparava @menção — só criar um
   // comentário novo (submitComment) chamava parseMentions. Uma @menção
   // adicionada só na edição (ex.: corrigindo o handle de alguém) nunca
   // notificava ninguém.
-  parseMentions(newText, _commentCardId);
+  parseMentions(newText, _commentCardId, cid);
 }
 
 function cancelEditComment(cid){
-  loadComments(_commentCardId); // recarrega do estado salvo, descartando a edição
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId])); // volta pro estado salvo em cache, descartando a edição
 }
 
 // ── Reações rápidas em comentários ──
 const REACT_EMOJIS=['👍','👀','❤️','✅','🎉'];
 function toggleReaction(cid, emoji){
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  if(!cardObj||!cardObj.comments||!cardObj.comments[cid]) return;
+  const c = _commentsCache[_commentCardId]?.[cid];
+  if(!c) return;
   const uid=window._currentUser?.uid; if(!uid) return;
-  const c=cardObj.comments[cid];
   if(!c.reactions) c.reactions={};
   if(c.reactions[uid]===emoji){ delete c.reactions[uid]; } // toggle off
   else { c.reactions[uid]=emoji; }
-  fbSaveCard(cardObj);
-  loadComments(_commentCardId);
+  window._update(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), {reactions:c.reactions}).catch(()=>{});
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // notifica o autor do comentário que reagiram (se não for ele mesmo)
   if(c.reactions[uid] && c.uid && c.uid!==uid){
-    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,cardObj.id);
+    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,_commentCardId);
   }
 }
 function _renderReactions(c){
@@ -24686,13 +25736,27 @@ const COMUNICADO_TIPOS = {
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
+const COMUNICADOS_POLL_MS = 3*60000; // 3 minutos
+let _lastComunicadosRefresh = 0;
 
 function _initComunicados(){
-  // ⚡ Antes eram DOIS listeners onValue separados no MESMO path
-  // 'kanban/comunicados' (um aqui, outro em _initMural mais abaixo) — cada
-  // mudança nesse node baixava os dados DUAS VEZES pra cada pessoa. Unificado
-  // num só: processa tanto o popup quanto o mural/badge no mesmo callback.
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+  // ⚡ onValue em 'kanban/comunicados' reenviava a lista INTEIRA de comunicados
+  // pra TODO cliente conectado a cada alteração feita pelo ADM no painel
+  // (criar/editar/arquivar aviso). Comunicados só são escritos em painel.html
+  // — nunca daqui — então não existe mutação otimista local que dependa de
+  // reagir na hora; poll com a aba em primeiro plano é suficiente, mesmo
+  // padrão já usado nos kudos (ver _listenKudos).
+  _refreshComunicados();
+  setInterval(()=>{ if(!document.hidden) _refreshComunicados(); }, COMUNICADOS_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastComunicadosRefresh > COMUNICADOS_POLL_MS) _refreshComunicados();
+  });
+}
+
+function _refreshComunicados(){
+  _lastComunicadosRefresh = Date.now();
+  window._get(fb('kanban/comunicados')).then(snap=>{
     _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
@@ -24717,7 +25781,7 @@ function _initComunicados(){
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _updateMuralBadge();
     if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
-  });
+  }).catch(()=>{});
 }
 
 function _talvezMostrarComunicado(){
