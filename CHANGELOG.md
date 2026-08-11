@@ -1366,6 +1366,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.396-dev — 2026-08-11
+Pedido direto: supercard não precisa de Ficha Técnica própria, já que ele
+é só a soma dos cards filhos — cada filho já tem sua própria ficha
+preenchida individualmente, pedir uma ficha "agregada" no pai seria
+trabalho duplicado. Em vez de virar um padrão pra time seguir de
+memória (risco real de esquecer e travar o save à toa), foi automatizado:
+
+- Assim que um card ganha o primeiro filho, a seção Ficha Técnica **some
+  do modal** (não fica só opcional) e para de contar na validação de
+  campos obrigatórios do `saveCard()`.
+- Reavaliado toda vez que a lista de filhos muda (adicionar/remover
+  filho com o modal aberto já reflete na hora), reaproveitando o mesmo
+  hook (`renderSuperChildrenList()`) que já reavaliava o modo da
+  Plataforma.
+- Não destrutivo: se o card já tinha uma ficha preenchida antes de virar
+  supercard, o conteúdo continua salvo — só some da tela. Remover todos
+  os filhos (voltar a ser card comum) traz a seção de volta.
+- Novo helper `_crvUpdateFichaSecVisibility()`, chamado nos 4 pontos que
+  antes decidiam a visibilidade da seção só por `criativosAtivo`
+  (abertura de card, card novo, toggle da config, listener remoto).
+- HELP_CONTENT atualizado.
+
 ### v8.30.395-dev — 2026-08-11
 Dois pedidos diretos sobre a Ficha Técnica e seus painéis de contagem:
 
