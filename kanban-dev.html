@@ -1949,7 +1949,11 @@ input[type="date"]{-moz-appearance:textfield;}
 .meudia-row{padding:8px 10px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:3px;background:rgba(var(--surface2-rgb),.4);}
 .meudia-row:hover{background:rgba(56,182,255,.1);}
 .meudia-row-title{font-size:12px;font-weight:600;color:var(--txt);line-height:1.4;}
-.meudia-row-meta{font-size:10px;color:var(--txt3);margin-top:2px;}
+/* Feedback direto com print: "esse texto aqui ta ruim de leitura" — var(--txt3)
+   (baixo contraste, pensado pra texto bem secundário) em 10px ficava fraco
+   demais em cima do fundo já escuro de .meudia-row. Trocado por var(--txt2)
+   (mesmo tom mais claro usado no título das seções) + 11px. */
+.meudia-row-meta{font-size:11px;color:var(--txt2);margin-top:3px;}
 .notif-ft{padding:8px 14px;border-top:1px solid var(--glass-b);
   display:flex;justify-content:flex-end;}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
@@ -5245,7 +5249,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.381-dev</div>
+<div class="version">v8.30.382-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

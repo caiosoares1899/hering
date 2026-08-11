@@ -1318,6 +1318,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.382-dev — 2026-08-11
+Feedback direto com print: "esse texto aqui tá ruim de leitura" (meta de
+cada card em 🌅 Meu Dia — squad/coluna/prazo). `var(--txt3)` em 10px
+ficava fraco demais em cima do fundo já escuro de `.meudia-row`. Trocado
+por `var(--txt2)` (mesmo tom do título das seções) + 11px.
+
 ### v8.30.381-dev — 2026-08-11
 Fase 5, item 1 aprovado: "Meu Dia" (visão pessoal cross-squad). Novo
 botão "🌅 Meu Dia" na toolbar (+ atalho Ctrl+D / Cmd+D).
