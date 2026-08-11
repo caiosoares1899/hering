@@ -5150,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.371-dev</div>
+<div class="version">v8.30.372-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9415,7 +9415,6 @@ let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,
 // têm). Isso monitora esses campos "manuais" pra avisar visualmente quando há
 // algo pendente, e evita fechar o modal sem querer perdendo essa edição.
 let _cardManualSnap = null;
-let _cardDirtyTimer = null;
 function _manualFieldsNow(){
   return {
     sp: document.getElementById('m-sp')?.value||'',
@@ -9437,12 +9436,17 @@ function _updateSaveBtnDirtyState(){
   if(_cardIsDirty()){ btn.classList.add('btn-unsaved'); btn.textContent='💾 Salvar alterações'; }
   else { btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
 }
+// Antes rodava num setInterval de 400ms pra sempre (mesmo com o modal do
+// card fechado) — trocado por um listener delegado (input/change) em
+// document, filtrado pro modal do card, que só existe UMA VEZ (não é
+// registrado de novo a cada abertura). _cardManualSnap é null com o modal
+// fechado, então _cardIsDirty() já sai cedo — sem custo de polling parado.
+document.addEventListener('input', e=>{ if(e.target?.closest?.('#card-ov')) _updateSaveBtnDirtyState(); });
+document.addEventListener('change', e=>{ if(e.target?.closest?.('#card-ov')) _updateSaveBtnDirtyState(); });
 function _startDirtyWatch(){
-  clearInterval(_cardDirtyTimer);
-  _cardDirtyTimer = setInterval(_updateSaveBtnDirtyState, 400);
+  _updateSaveBtnDirtyState(); // estado inicial (limpo — o snapshot acabou de ser tirado)
 }
 function _stopDirtyWatch(){
-  clearInterval(_cardDirtyTimer); _cardDirtyTimer=null;
   _cardManualSnap = null;
   const btn=document.getElementById('btn-save-card'); if(btn){ btn.classList.remove('btn-unsaved'); btn.textContent='💾 Salvar'; }
 }
@@ -21922,6 +21926,9 @@ function addBlockerTag(cardId){
     document.getElementById('m-blocker-row').style.display='block';
     document.getElementById('m-blocker-reason').value = card.blockerReason||'';
     document.getElementById('m-blocker-reason').focus();
+    // m-blocker-row aparece via style.display direto (não dispara input/change) —
+    // o listener delegado de _startDirtyWatch não pega essa mudança sozinho.
+    _updateSaveBtnDirtyState();
   },100);
 }
 function removeBlockerTag(){
@@ -21932,6 +21939,7 @@ function removeBlockerTag(){
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
+  _updateSaveBtnDirtyState(); // idem addBlockerTag — display direto não dispara input/change
   fbSaveCard(c); renderBoard();
   showToast('Impedimento removido');
 }
