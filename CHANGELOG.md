@@ -5033,6 +5033,29 @@ inicial (URL relativa) tanto na Cloud Function quanto no fallback do
 manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
 
+## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
+
+### 2026-08-11 — corrige validação de squad rejeitando squads reais
+Primeiro teste manual pós-deploy (`intake.html?squad=dados`) voltou
+"link inválido ou squad não encontrado" pra um squad real e ativo.
+
+**Causa raiz**: a function validava a existência do squad checando só
+`kanban/squads_meta/{squad}.label` — mas esse nó só é populado pros
+squads criados dinamicamente pelo painel (mesma leitura que
+`loadSquadsFromFirebase()` faz no board); os squads originais (dados,
+prf, midiacriativa...) nunca tiveram entrada lá, e o board já lida com
+isso caindo num mapa fixo de labels quando `squads_meta` não cobre o
+squad. A function não tinha esse fallback, então rejeitava qualquer
+squad que nunca passou pelo painel — ou seja, a maioria dos squads
+reais em uso.
+
+**Fix**: existência agora é checada em `kanban/squads/{squad}/dados`
+(o path base real usado por todo o board) — `squads_meta` vira
+metadado opcional só pra label/emoji/cor bonitos, com fallback pro
+mesmo mapa fixo do cliente quando ausente. **Requer
+`firebase deploy --only functions:intakeSubmit` manual** (a versão
+anterior já tinha sido deployada com o bug).
+
 ## Cloud Functions — Spotify (`functions/spotify/`, sem versão própria em `version.json`)
 
 ### 2026-07-31 · PR #116 — corrige 401 no controle de playback + bug real de cache de token
