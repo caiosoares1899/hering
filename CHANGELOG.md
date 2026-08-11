@@ -1318,6 +1318,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.370-dev — 2026-08-11
+Fase 1.5 do plano de otimização: reativa "Engajamento & Uso Efetivo"
+(painel → Status), desativado desde 2026-07-21 por custar caro (lia o
+log bruto de acesso de todos os squads inteiro).
+
+- `_logAccess()` volta, mas grava em
+  `kanban/squads/{squad}/dados/access_stats/{yyyy-mm-dd}/{uid}` (dentro
+  de `dados/`, sem precisar de regra nova no Firebase — era esse o motivo
+  do erro de permissão antes: o `access_log` antigo vivia FORA de
+  `dados/`) em vez do `access_log` antigo. `count` incrementa via
+  `increment()` do próprio servidor — 1 write pequeno, sem `fbGet` antes
+  pra ler o valor atual.
+- Limpeza de TTL (60 dias) também sem `fbGet`: só tenta apagar a data
+  exata de 60 dias atrás (delete idempotente), throttled a 1x por dia
+  por cliente via localStorage — nunca lista o node inteiro.
+- `painel.html`/`painel-dev.html`: `loadUsoData()` reativado, lendo
+  `dados/access_stats` no lugar de `access_log`.
+
 ### v8.30.369-dev — 2026-08-11
 Fase 1.4 do plano de otimização: amostragem da instrumentação de bytes
 (`_dbg`/`_dbgFlush`). Antes, TODO cliente escrevia em `_debug_bytes_log`
@@ -4861,6 +4879,12 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html / painel-dev.html — 2026-08-11 · loadUsoData reativado (sem bump de versão)
+Fase 1.5 (ver kanban-dev.html v8.30.370-dev): "Engajamento & Uso Efetivo"
+(aba Status) reativado, lendo `dados/access_stats` (agregado, leve) em vez
+do `access_log` bruto antigo. Mensagem de erro de permissão atualizada
+pra citar o path novo.
 
 ### painel.html / painel-dev.html — 2026-08-11 · delLembretePainel apaga só o item (sem bump de versão)
 Fase 1.3 (ver kanban-dev.html v8.30.368-dev): lembretes de squad passaram a

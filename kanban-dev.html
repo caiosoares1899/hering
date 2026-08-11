@@ -5150,12 +5150,12 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.369-dev</div>
+<div class="version">v8.30.370-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -5198,6 +5198,7 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
+window._increment=increment;
 window._auth=auth; window._provider=provider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -5292,9 +5293,9 @@ let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 
 // ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
-// Estrutura: kanban/squads/{squad}/access_log/{YYYY-MM-DD}/{uid} = {init, ts, role}
-// Um registro por pessoa por dia (sobrescreve se acessar de novo no mesmo dia — não cresce sem limite).
-// Mantém só os últimos 60 dias (limpeza leve roda 1x a cada carregamento, throttled).
+// Estrutura: kanban/squads/{squad}/dados/access_stats/{YYYY-MM-DD}/{uid} =
+// {count, init, role, lastAt} — `count` incrementa a cada acesso (increment
+// atômico do servidor, sem ler o valor atual antes).
 // Data local (evita o bug de toISOString() jogar pra UTC — login à noite no Brasil
 // acabava contado no dia seguinte por causa do fuso -3h)
 function _localDateStrBoard(d){
@@ -5302,32 +5303,28 @@ function _localDateStrBoard(d){
   return y+'-'+m+'-'+day;
 }
 function _logAccess(user, role){
-  // ⏸️ TEMPORARIAMENTE DESATIVADO (2026-07-21) — suspeito de ser uma fonte
-  // relevante de consumo de download: o painel lia esse log inteiro, de
-  // TODOS os squads, toda vez que a aba Status abria. Reative removendo o
-  // "return" abaixo quando o painel também reativar a leitura (função
-  // loadUsoData em painel.html), senão fica escrevendo à toa sem ninguém ler.
-  return;
-  // eslint-disable-next-line no-unreachable
+  // Reativado (Fase 1.5 do plano de otimização) num formato mais barato que o
+  // access_log antigo (desativado em 2026-07-21 por custar caro pro painel ler
+  // o log bruto inteiro de todos os squads): agora é access_stats, agregado
+  // por dia+uid com increment atômico — 1 write pequeno, sem fbGet nenhum (nem
+  // pra escrever, nem pra limpar: a limpeza só tenta apagar a data exata de 60
+  // dias atrás, que existe ou não — delete é idempotente, não precisa listar
+  // o node inteiro pra descobrir o que apagar).
   if(!user || !user.uid || !window._fbReady) return;
   const today = _localDateStrBoard(new Date());
-  const path = 'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+today+'/'+user.uid;
-  window._set(window._ref(window._db, path), {
-    init: window._currentUserInit||'', role: role||'membro', ts: new Date().toISOString(),
+  const path = 'kanban/squads/'+ACTIVE_SQUAD+'/dados/access_stats/'+today+'/'+user.uid;
+  window._update(window._ref(window._db, path), {
+    count: window._increment(1), init: window._currentUserInit||'', role: role||'membro',
+    lastAt: new Date().toISOString(),
   }).catch(()=>{});
-  // Limpeza leve: 1x por sessão, remove dias com mais de 60 dias
-  if(!window._accessLogCleaned){
-    window._accessLogCleaned = true;
-    window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log')).then(snap=>{
-      const val = snap.val(); if(!val) return;
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
-      const cutoffStr = cutoff.toISOString().split('T')[0];
-      Object.keys(val).forEach(day=>{
-        if(day < cutoffStr){
-          window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/access_log/'+day), null).catch(()=>{});
-        }
-      });
-    }).catch(()=>{});
+  // TTL de 60 dias, sem fbGet: 1x por sessão, no máximo 1x por dia por cliente
+  // (throttle em localStorage — não adianta tentar de novo se já tentou hoje).
+  const throttleKey = 'accessStatsCleanedAt';
+  if(safeLS.getItem(throttleKey) !== today){
+    safeLS.setItem(throttleKey, today);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-60);
+    const cutoffStr = _localDateStrBoard(cutoff);
+    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/access_stats/'+cutoffStr), null).catch(()=>{});
   }
 }
 function getEffectiveRole(user, squadRole, legacyRole){
