@@ -5150,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.370-dev</div>
+<div class="version">v8.30.371-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6971,13 +6971,13 @@ function fbLoadAll(){
   fbListen(FB+'/columns',val=>{
     if(!val){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
-      renderBoard();
+      scheduleRender();
       return;
     }
     const cleaned = (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
     if(!cleaned.length){
       if(!columns.length) columns=[...DEFAULT_COLUMNS];
-      renderBoard();
+      scheduleRender();
       return;
     }
     // Merge: garante que colunas padrão e locais nunca sumam,
@@ -6990,11 +6990,11 @@ function fbLoadAll(){
     columns = missingFromFirebase.length
       ? [...cleaned, ...missingFromFirebase]
       : cleaned;
-    renderBoard();
+    scheduleRender();
   });
 
   // Agil cfg — segundo (WIP depende disso)
-  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); renderBoard(); }});
+  fbListen(FB+'/agil_cfg',val=>{ if(val){ agilCfg=val; applyAgilCfg(); scheduleRender(); }});
   fbListen(FB+'/config/criativos_ativo', val=>{
     criativosAtivo = !!val;
     const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
@@ -7033,14 +7033,14 @@ function fbLoadAll(){
   fbListen(FB+'/subtimes',val=>{
     subteams = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderSubteamEditor();
-    renderBoard();
+    scheduleRender();
   });
   // Agentes de IA (piloto híbrido humano+agente) — identidades selecionáveis como responsável/participante/@menção
   fbListen(FB+'/agentes',val=>{
     agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
-    renderBoard();
+    scheduleRender();
   });
   fbListen(FB+'/tags',val=>{
     if(!val) return;
@@ -7063,7 +7063,7 @@ function fbLoadAll(){
     // normalmente).
     if(document.getElementById('cfg-ov')?.classList.contains('open') && document.querySelector('#tag-editor .tag-row')) return;
     const incoming = Array.isArray(val) ? val : Object.values(val);
-    if(incoming.length){ tags=incoming.filter(Boolean); renderBoard(); }
+    if(incoming.length){ tags=incoming.filter(Boolean); scheduleRender(); }
   });
   // BUG REAL (2026-08-04, squad site): submarca foi ligada (submarcaAtivo)
   // ANTES do split 5→10 tags (Comercial/Cadastro) existir no código — o
@@ -7651,7 +7651,7 @@ let _cardsSyncDebounce = null;
       const merged=missing.length?[...incoming,...missing]:incoming;
       if(JSON.stringify(merged.map(c=>c.id))!==JSON.stringify(columns.map(c=>c.id))){
         columns=merged;
-        renderBoard();
+        scheduleRender();
       }
     }).catch(()=>{});
     fbGet(FB+'/tags').then(snap=>{
@@ -7820,7 +7820,7 @@ let _cardsSyncDebounce = null;
   fbListen('kanban/usuarios_publicos', val=>{ _applyUsuariosData(val); });
   // Config geral (blockerMode etc)
   fbListen(FB+'/config/blockerMode',val=>{
-    if(val){ blockerMode=val; applyBlockerMode(); renderBoard(); }
+    if(val){ blockerMode=val; applyBlockerMode(); scheduleRender(); }
   });
   // Config de fluxo (colunas início/fim/relatório do tempo por tag)
   fbListen(FB+'/config/flow',val=>{
@@ -7830,7 +7830,7 @@ let _cardsSyncDebounce = null;
         doneCols: Array.isArray(val.doneCols)?val.doneCols:[],
         reportCols: Array.isArray(val.reportCols)?val.reportCols:[],
       };
-      renderBoard(); // 🔧 sem isso o board só refletia a config depois de um reload
+      scheduleRender(); // 🔧 sem isso o board só refletia a config depois de um reload
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
   });
@@ -8633,6 +8633,19 @@ function _sortCards(arr, colId){
   });
 }
 
+// Coalesce múltiplos renderBoard() no mesmo frame num só — usado pelos
+// listeners de configuração "de fundo" (columns/agil_cfg/tags/subteams/
+// agentes/blockerMode/flowConfig), que no boot ou numa reconexão costumam
+// disparar quase juntos, cada um chamando renderBoard() por conta própria.
+// NÃO usar em handlers de ação do usuário (clique, drag, salvar card) que
+// dependam do board já estar redesenhado na linha seguinte (scroll/foco/
+// fechar modal) — esses continuam chamando renderBoard() direto.
+let _renderScheduled=false;
+function scheduleRender(){
+  if(_renderScheduled) return;
+  _renderScheduled=true;
+  requestAnimationFrame(()=>{ _renderScheduled=false; renderBoard(); });
+}
 function renderBoard(){
   const board=document.getElementById('board'); if(!board) return;
   const _scrollBoardX=board.scrollLeft;

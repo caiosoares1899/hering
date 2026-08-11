@@ -1318,6 +1318,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.371-dev — 2026-08-11
+Fase 2.1 do plano de otimização: `renderBoard()` é chamado em ~102 pontos
+do código; cada um faz um re-render completo do board. Criado
+`scheduleRender()` (coalesce via `requestAnimationFrame`, no máximo 1
+render por frame, flag de pendente).
+
+- **Escopo desta rodada, deliberadamente conservador**: só os ~11
+  listeners de configuração "de fundo" registrados em `fbLoadAll()`
+  (columns, agil_cfg, subteams, agentes, tags, blockerMode, flowConfig,
+  poll de columns/tags a cada 60s) passaram a usar `scheduleRender()` —
+  são exatamente os que, no boot ou numa reconexão, costumam disparar
+  quase juntos, cada um re-renderizando o board por conta própria.
+- O listener de `cards` (o mais frequente de todos) FICOU DE FORA de
+  propósito — já tem seu próprio coalescing (debounce de 150ms em
+  `_scheduleCardsSync`), mais agressivo que 1 frame; converter ali só
+  adicionaria uma camada redundante.
+- Os outros ~90 pontos (ações do usuário: clique, drag, salvar/arquivar
+  card, filtros, seleção em massa) continuam chamando `renderBoard()`
+  direto, de propósito — vários deles têm código logo depois que depende
+  do board já estar redesenhado (restaurar scroll, fechar modal, foco), e
+  sem uma sessão de teste visual ao vivo não dava pra auditar os ~90 com
+  segurança. Fica como possível próxima rodada, se quiser aprofundar.
+
 ### v8.30.370-dev — 2026-08-11
 Fase 1.5 do plano de otimização: reativa "Engajamento & Uso Efetivo"
 (painel → Status), desativado desde 2026-07-21 por custar caro (lia o
