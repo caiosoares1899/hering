@@ -1366,6 +1366,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.393-dev — 2026-08-11
+Ajustes na Ficha Técnica logo após o primeiro teste real, todos
+pedidos diretos:
+
+- **BUGFIX real** (causa provável do "faltou colocar" no Canal): squads
+  que já tinham a ficha antiga ativada ANTES desta reformulação nunca
+  passavam pelo fluxo que semeia as listas padrão (Canal/Objetivo/
+  Plataforma/Tipo/Formato) — só quem ativa o toggle NA HORA aciona
+  isso. Resultado: Canal (e as outras 4 listas) carregavam
+  completamente vazios pra sempre nesses squads. Agora o provisionamento
+  também roda no carregamento normal do board (idempotente, só
+  preenche o que falta) — não só no toggle interativo.
+- **Canal ganhou campo condicional**: escolher "Outros" abre um campo
+  de texto pra especificar, igual Campanha/Ação Comercial já tinham.
+- **Removido da Ficha Técnica**: "Lista de Criativos" (o Config →
+  Criativos → Listas e o filtro por lista na tabela do Controle de
+  Criativos continuam existindo, só não fazem mais parte do card),
+  "Obs" e "Quantidade de Criativos".
+- **Quantidade de Criativos**: saiu do campo obrigatório do demandante
+  (fazia sentido tirar — a quantidade real só se sabe depois que os
+  designers entregam, pedir pro demandante chutar não ajudava). A
+  referência de quantidade por Tipo (da tabela real da Hering) continua
+  visível, agora ao lado do campo Variações, só como dica. A coluna
+  Quantidade na tabela do Controle de Criativos foi mantida — segue
+  disponível pra registrar o total real depois da entrega, sem estar
+  mais atrelada à ficha do demandante.
+- HELP_CONTENT atualizado.
+
 ### v8.30.392-dev — 2026-08-11
 Reformulação grande pedida direto: "Ficha do Criativo" vira **Ficha
 Técnica**, com uma hierarquia fixa de campos, todos obrigatórios pro
