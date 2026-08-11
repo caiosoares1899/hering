@@ -5150,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.367-dev</div>
+<div class="version">v8.30.368-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6218,6 +6218,8 @@ let qlItems={ recorrentes:[], modelos:[], agendamentos:[] };
 let links=[];
 // ═══ LEMBRETES ═══ (manuais persistidos no Firebase; quadro = derivado dos cards)
 let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), text, autor, autorUid, init, ts, target?}
+let _lembretesBucket={}; // FB+'/lembretes' via listeners granulares — key = chave real no Firebase (pode ser o l.id ou, em item legado, o índice antigo do array)
+let _lembretesKeyById={};// l.id -> chave real no Firebase (necessário pra apagar itens legados, cuja chave não é o id)
 let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
 let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
@@ -7658,12 +7660,36 @@ let _cardsSyncDebounce = null;
     if(val) links=Array.isArray(val)?val:Object.values(val);
     if(document.getElementById('links-ov')?.classList.contains('open')) renderLinksBody();
   });
-  // Lembretes compartilhados (PO / organizador, escopo do squad)
-  fbListen(FB+'/lembretes',val=>{
-    lembretes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
-    updLemBadge(); 
-    if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
-  });
+  // Lembretes compartilhados (PO / organizador, escopo do squad) — listeners
+  // granulares em vez de onValue no nó cheio (mesmo padrão já usado em cards/
+  // presence/spotify): cada add/del antes reescrevia o array INTEIRO no
+  // Firebase e reenviava o payload inteiro pra todo mundo a cada mudança.
+  // _lembretesKeyById guarda a chave REAL de cada item no Firebase (que pra
+  // itens legados, gravados como array antes desse fix, é o índice antigo —
+  // não o l.id) — necessário pra apagar certo (ver delLembrete).
+  if(window._fbReady){
+    const _lemRef = window._ref(window._db, FB+'/lembretes');
+    const _syncLembretes = ()=>{
+      lembretes = Object.values(_lembretesBucket).filter(Boolean);
+      updLemBadge();
+      if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
+    };
+    window._onChildAdded(_lemRef, snap=>{ _dbgTrack('/lembretes:child_added', snap.val());
+      const v=snap.val(); if(!v) return;
+      _lembretesBucket[snap.key]=v; if(v.id) _lembretesKeyById[v.id]=snap.key;
+      _syncLembretes();
+    });
+    window._onChildChanged(_lemRef, snap=>{ _dbgTrack('/lembretes:child_changed', snap.val());
+      const v=snap.val(); if(!v) return;
+      _lembretesBucket[snap.key]=v; if(v.id) _lembretesKeyById[v.id]=snap.key;
+      _syncLembretes();
+    });
+    window._onChildRemoved(_lemRef, snap=>{ _dbgTrack('/lembretes:child_removed', null);
+      const v=_lembretesBucket[snap.key];
+      delete _lembretesBucket[snap.key]; if(v?.id) delete _lembretesKeyById[v.id];
+      _syncLembretes();
+    });
+  }
   // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
   if(window._fbReady){
     window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
@@ -11928,8 +11954,11 @@ function addLembrete(){
     lembretesProprios.push(obj);
     const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
   } else {
+    // Escreve só o item novo (chave = obj.id), não o array inteiro — o
+    // listener granular (child_added) atualiza `lembretes` sozinho quando o
+    // Firebase confirmar; a mutação local abaixo já reflete na tela na hora.
     lembretes.push(obj);
-    fbSet(FB+'/lembretes', lembretes);
+    window._set(window._ref(window._db, FB+'/lembretes/'+obj.id), obj).catch(()=>{});
   }
   document.getElementById('lem-text').value='';
   updLemBtn();
@@ -11973,14 +12002,10 @@ function delLembrete(tipo, id){
     lembretes=lembretes.filter(l=>l.id!==id);
     renderLembretes(); updLemBadge();
     if(!window._fbReady) return;
-    window._get(fb(FB+'/lembretes')).then(snap=>{
-      const val=snap.val();
-      const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
-      const filtrado=arr.filter(l=>l.id!==id);
-      lembretes=filtrado;
-      fbSet(FB+'/lembretes', filtrado);
-      renderLembretes(); updLemBadge();
-    }).catch(()=>{});
+    // Apaga só o item (chave real pode não ser o id — ver _lembretesKeyById,
+    // que cobre itens legados gravados como array antes desse fix).
+    const realKey = _lembretesKeyById[id] || id;
+    window._set(window._ref(window._db, FB+'/lembretes/'+realKey), null).catch(()=>{});
     return;
   }
 }
@@ -12042,7 +12067,7 @@ function addLembreteCfg(){
     tipo:'po', text, target, targetLabel,
     autor:u?.displayName||'?', autorUid:u?.uid||'', init:window._currentUserInit||'', ts:new Date().toISOString() };
   lembretes.push(obj);
-  fbSet(FB+'/lembretes', lembretes);
+  window._set(window._ref(window._db, FB+'/lembretes/'+obj.id), obj).catch(()=>{});
   document.getElementById('lemcfg-text').value='';
   _updLemCfgBtn();
   renderLemCfg();
@@ -24735,13 +24760,27 @@ const COMUNICADO_TIPOS = {
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
+const COMUNICADOS_POLL_MS = 3*60000; // 3 minutos
+let _lastComunicadosRefresh = 0;
 
 function _initComunicados(){
-  // ⚡ Antes eram DOIS listeners onValue separados no MESMO path
-  // 'kanban/comunicados' (um aqui, outro em _initMural mais abaixo) — cada
-  // mudança nesse node baixava os dados DUAS VEZES pra cada pessoa. Unificado
-  // num só: processa tanto o popup quanto o mural/badge no mesmo callback.
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+  // ⚡ onValue em 'kanban/comunicados' reenviava a lista INTEIRA de comunicados
+  // pra TODO cliente conectado a cada alteração feita pelo ADM no painel
+  // (criar/editar/arquivar aviso). Comunicados só são escritos em painel.html
+  // — nunca daqui — então não existe mutação otimista local que dependa de
+  // reagir na hora; poll com a aba em primeiro plano é suficiente, mesmo
+  // padrão já usado nos kudos (ver _listenKudos).
+  _refreshComunicados();
+  setInterval(()=>{ if(!document.hidden) _refreshComunicados(); }, COMUNICADOS_POLL_MS);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden) return;
+    if(Date.now()-_lastComunicadosRefresh > COMUNICADOS_POLL_MS) _refreshComunicados();
+  });
+}
+
+function _refreshComunicados(){
+  _lastComunicadosRefresh = Date.now();
+  window._get(fb('kanban/comunicados')).then(snap=>{
     _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
@@ -24766,7 +24805,7 @@ function _initComunicados(){
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _updateMuralBadge();
     if(document.getElementById('mural-ov')?.classList.contains('open')) renderMuralLista();
-  });
+  }).catch(()=>{});
 }
 
 function _talvezMostrarComunicado(){

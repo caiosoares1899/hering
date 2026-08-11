@@ -1318,6 +1318,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.368-dev — 2026-08-11
+Fase 1.3 do plano de otimização: comunicados e lembretes.
+
+- **Comunicados** (`kanban/comunicados`): `onValue` no nó cheio →
+  poll de 3 minutos (aba em primeiro plano), mesmo padrão já usado nos
+  kudos (`_listenKudos`). Comunicados só são criados/editados pelo ADM
+  via painel.html, nunca localmente aqui, então não há mutação otimista
+  que dependesse de tempo real. Efeito colateral aceito: um comunicado
+  novo pode levar até 3min pra aparecer pra quem já está com o board
+  aberto (antes era instantâneo).
+- **Lembretes do squad** (`FB+'/lembretes'`): `onValue` no nó cheio (cada
+  add/del reescrevia o ARRAY INTEIRO) → listeners granulares
+  (`child_added`/`child_changed`/`child_removed`), mesmo padrão já usado
+  em cards/presence/spotify. Escritas passam a ser por item
+  (`/lembretes/{id}`) em vez de regravar a lista toda.
+- `painel.html`/`painel-dev.html`: `delLembretePainel()` (ferramenta do
+  ADM pra apagar lembrete de qualquer squad) ajustado pra apagar só o
+  item, não reescrever o node inteiro — evita apagar de volta um
+  lembrete adicionado depois do snapshot local do painel.
+- Sem mudança de comportamento visível pros lembretes; comunicados têm
+  o delay de até 3min descrito acima.
+
 ### v8.30.367-dev — 2026-08-11
 Rodada de otimização (Fase 1.2 do plano "banda/custo Firebase"): cache de
 Google Agenda (local do squad + global do painel) parava de usar `onValue`
@@ -4824,6 +4846,14 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html / painel-dev.html — 2026-08-11 · delLembretePainel apaga só o item (sem bump de versão)
+Fase 1.3 (ver kanban-dev.html v8.30.368-dev): lembretes de squad passaram a
+ser gravados como filhos individuais (`/lembretes/{id}`), não mais um array
+regravado inteiro a cada mudança. `delLembretePainel()` (apagar lembrete de
+qualquer squad, na visão do ADM) ajustado pra apagar só o item — reescrever
+o array inteiro, como antes, apagaria de volta qualquer lembrete adicionado
+depois do snapshot local de `squadData` no painel.
 
 ### painel.html — 2026-08-11 · gcal_cache_meta tocado em toda escrita (sem bump de versão)
 Rodada de otimização (Fase 1.2, ver kanban-dev.html v8.30.367-dev):
