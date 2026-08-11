@@ -396,7 +396,8 @@
    risco ainda sem leitura, aumenta o contraste". */
 [data-theme="light"] .exec-chip,
 [data-theme="light"] .due-badge,
-[data-theme="light"] .risco-badge{
+[data-theme="light"] .risco-badge,
+[data-theme="light"] .aging-col-badge{
   box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
   filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
@@ -4158,6 +4159,10 @@ input[type="date"]{-moz-appearance:textfield;}
         <div class="fluxo-cfg-label">📊 Etapas no relatório <span>(colunas intermediárias para medir tempo em cada fase — opcional)</span></div>
         <div id="fluxo-report-cols" class="fluxo-col-list"></div>
       </div>
+      <div class="fluxo-cfg-block">
+        <div class="fluxo-cfg-label">⏳ Aging — avisar quando parado <span>(dias parado na MESMA coluna até o card ganhar o aviso ⏳ Xd — vazio ou 0 desliga pra aquela coluna)</span></div>
+        <div id="fluxo-aging-cols" class="fluxo-col-list"></div>
+      </div>
       <button class="btn btn-teal" onclick="salvarFluxoCfg()" style="margin-top:8px;">💾 Salvar configuração de fluxo</button>
       <button class="btn btn-sm" onclick="resetFluxoCfg()" style="margin-top:8px;margin-left:8px;">↺ Voltar ao automático</button>
     </div>
@@ -5219,7 +5224,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.379-dev</div>
+<div class="version">v8.30.380-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5761,7 +5766,7 @@ function uniqueInitForSquad(desiredInit, allUsers, excludeUid, fullName){
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
-let flowConfig={ startCols:[], doneCols:[], reportCols:[] }; // config de fluxo do PO (relatório de tempo). Vazio = heurística automática.
+let flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{} }; // config de fluxo do PO (relatório de tempo) + limiares de aging por coluna (Fase 5.2). Vazio = heurística automática / aging desligado.
 // "Padrões de card": organizador/PO cria um ou mais PADRÕES nomeados —
 // cada um escolhe quais seções OPCIONAIS do modal ficam visíveis (ex.: um
 // padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Um padrão
@@ -7898,6 +7903,10 @@ let _cardsSyncDebounce = null;
         startCols: Array.isArray(val.startCols)?val.startCols:[],
         doneCols: Array.isArray(val.doneCols)?val.doneCols:[],
         reportCols: Array.isArray(val.reportCols)?val.reportCols:[],
+        // agingDays (Fase 5.2) — precisa entrar aqui também, senão esse
+        // listener (que reconstrói flowConfig do zero a cada mudança
+        // remota) apaga de volta o que salvarFluxoCfg() acabou de gravar.
+        agingDays: (val.agingDays && typeof val.agingDays==='object') ? val.agingDays : {},
       };
       scheduleRender(); // 🔧 sem isso o board só refletia a config depois de um reload
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
@@ -8589,6 +8598,23 @@ function makeCardEl(card){
     const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
     execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
   }
+  // Aging por COLUNA (Fase 5.2) — diferente do aging por edição acima
+  // (aged-1/aged-2, esmaece o card inteiro): este é sobre quanto tempo o
+  // card está parado na MESMA coluna (card.flow.enteredAt[card.col], já
+  // gravado em toda movimentação — ver recordMove()), com limiar
+  // configurável por coluna em ⚙ Fluxo (flowConfig.agingDays). Coluna sem
+  // limiar configurado (ou 0) nunca mostra o badge — desligado por padrão.
+  let agingColBadge='';
+  if(!isDone && card.flow?.enteredAt?.[card.col]){
+    const limiar=(flowConfig.agingDays||{})[card.col];
+    if(limiar>0){
+      const enteredD=new Date(card.flow.enteredAt[card.col]); enteredD.setHours(0,0,0,0);
+      const daysHere=Math.round((today-enteredD)/86400000);
+      if(daysHere>=limiar){
+        agingColBadge=`<span class="aging-col-badge" style="display:inline-block;font-size:9px;background:rgba(255,152,0,.12);color:#ff9800;border:1px solid rgba(255,152,0,.3);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="Parado nesta coluna há ${daysHere} dia${daysHere!==1?'s':''} (aviso a partir de ${limiar}d)">⏳ ${daysHere}d</span>`;
+      }
+    }
+  }
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
@@ -8612,7 +8638,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -16634,34 +16660,53 @@ function _fluxoColRow(col, group, checked){
     <span>${esc(col.name)}</span>
   </label>`;
 }
+// Linha do bloco "Aging" — não é checkbox como as outras (start/done/report),
+// é um número de dias por coluna (Fase 5.2). Vazio = desligado pra essa coluna.
+function _fluxoAgingRow(col, days){
+  return `<label class="fluxo-col-item" style="gap:8px;">
+    <span class="fluxo-col-dot" style="background:${col.color||'#38b6ff'}"></span>
+    <span style="flex:1;">${esc(col.name)}</span>
+    <input type="number" min="0" max="90" value="${days||''}" placeholder="—" data-aging-col="${esc(col.id)}"
+      style="width:52px;font-size:12px;padding:3px 6px;border-radius:6px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);color:var(--txt);"
+      title="Dias parado nesta coluna até avisar (vazio = desligado)">
+  </label>`;
+}
 function renderFluxoCfg(){
   // Se nada configurado, pré-seleciona o que a heurística detecta
   const autoStart = flowConfig.startCols.length? flowConfig.startCols : _flowStartColIds();
   const autoDone = flowConfig.doneCols.length? flowConfig.doneCols : _flowDoneColIds();
   const report = flowConfig.reportCols||[];
+  const agingDays = flowConfig.agingDays||{};
   const sEl=document.getElementById('fluxo-start-cols');
   const dEl=document.getElementById('fluxo-done-cols');
   const rEl=document.getElementById('fluxo-report-cols');
+  const aEl=document.getElementById('fluxo-aging-cols');
   if(sEl) sEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'start',autoStart.includes(c.id))).join('');
   if(dEl) dEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'done',autoDone.includes(c.id))).join('');
   if(rEl) rEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'report',report.includes(c.id))).join('');
+  if(aEl) aEl.innerHTML=(columns||[]).map(c=>_fluxoAgingRow(c,agingDays[c.id])).join('');
 }
 function salvarFluxoCfg(){
   const grab=g=>[...document.querySelectorAll(`#cfgtab-fluxo input[data-group="${g}"]:checked`)].map(i=>i.value);
-  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report') };
+  const agingDays={};
+  document.querySelectorAll('#cfgtab-fluxo input[data-aging-col]').forEach(inp=>{
+    const v=parseInt(inp.value,10);
+    if(v>0) agingDays[inp.dataset.agingCol]=v;
+  });
+  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report'), agingDays };
   if(!cfg.startCols.length || !cfg.doneCols.length){
     uiAlert('Marque pelo menos uma coluna de início e uma de fim para o cálculo funcionar.',{title:'Configuração incompleta'});
     return;
   }
   flowConfig=cfg;
   fbSet(FB+'/config/flow', cfg);
-  renderBoard(); // 🔧 aplica o dimming/checkmark na hora, sem precisar recarregar
+  renderBoard(); // 🔧 aplica o dimming/checkmark/aging na hora, sem precisar recarregar
   if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 corrige status retroativamente
   showToast('💾 Fluxo configurado. O relatório de tempo já usa as novas colunas.');
 }
 async function resetFluxoCfg(){
-  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada.',{title:'Resetar fluxo',okText:'Resetar'})) return;
-  flowConfig={ startCols:[], doneCols:[], reportCols:[] };
+  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada (inclui os limiares de aging).',{title:'Resetar fluxo',okText:'Resetar'})) return;
+  flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{} };
   fbSet(FB+'/config/flow', flowConfig);
   renderBoard(); // 🔧 aplica na hora
   renderFluxoCfg();
@@ -18168,6 +18213,7 @@ const HELP_CONTENT = {
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
+    { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
     { icon:'🎬', title:'Ficha de Criativo', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha de Criativo neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações), e um painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado.\n\nDá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas — cada card escolhe uma lista, e o painel filtra por ela. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
