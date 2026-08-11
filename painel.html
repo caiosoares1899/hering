@@ -4338,9 +4338,15 @@ function delLembretePainel(sqId, id){
     return;
   }
   const d=squadData[sqId]; if(!d) return;
-  const arr=(d.lembretes||[]).filter(l=>l.id!==id);
-  window._set(window._ref(window._db,'kanban/squads/'+sqId+'/dados/lembretes'), arr)
-    .then(()=>{ d.lembretes=arr; renderLembretesPainel(); })
+  // Apaga só o item (chave = id), não o node inteiro — kanban-dev.html
+  // passou a gravar cada lembrete como filho individual (ver Fase 1.3);
+  // reescrever o array inteiro aqui apagaria de volta qualquer lembrete
+  // adicionado depois do snapshot local de squadData. Só não funciona pra
+  // itens legados (gravados como array antes desse fix, cuja chave real no
+  // Firebase é o índice antigo, não o id) — caso raro, some sozinho na
+  // próxima vez que alguém mexer nesse lembrete específico.
+  window._set(window._ref(window._db,'kanban/squads/'+sqId+'/dados/lembretes/'+id), null)
+    .then(()=>{ d.lembretes=(d.lembretes||[]).filter(l=>l.id!==id); renderLembretesPainel(); })
     .catch(e=>showToast('❌ Erro: '+e.message));
 }
 

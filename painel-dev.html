@@ -4375,9 +4375,11 @@ function delLembretePainel(sqId, id){
     return;
   }
   const d=squadData[sqId]; if(!d) return;
-  const arr=(d.lembretes||[]).filter(l=>l.id!==id);
-  window._set(window._ref(window._db,'kanban/squads/'+sqId+'/dados/lembretes'), arr)
-    .then(()=>{ d.lembretes=arr; renderLembretesPainel(); })
+  // Apaga só o item (chave = id), não o node inteiro — mesmo ajuste do
+  // painel.html (ver comentário lá), pra bater com o modelo de filhos
+  // individuais que kanban-dev.html passou a usar pra lembretes.
+  window._set(window._ref(window._db,'kanban/squads/'+sqId+'/dados/lembretes/'+id), null)
+    .then(()=>{ d.lembretes=(d.lembretes||[]).filter(l=>l.id!==id); renderLembretesPainel(); })
     .catch(e=>showToast('❌ Erro: '+e.message));
 }
 
