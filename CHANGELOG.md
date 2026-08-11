@@ -1400,6 +1400,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.399-dev — 2026-08-11
+Terceira rodada de feedback sobre o texto secundário do 🌅 Meu Dia, com
+print: a passada anterior (v8.30.398-dev, `var(--txt)` + peso 500 +
+opacity .85) resolveu contraste mas trouxe um efeito colateral —
+"aspecto meio neon, como se tivesse em negrito, que atrapalha a
+leitura". Texto quase branco e quase tão pesado quanto o título, contra
+o fundo escuro do card, criava esse halo/brilho.
+
+- `.meudia-row-meta`: peso 500 → 400 (normal), opacity .85 → .72.
+  Tamanho (12.5px) mantido — não era o que estava incomodando desta
+  vez. Ainda mais legível que o `var(--txt2)` original (pré-v8.30.382),
+  sem o efeito de brilho.
+
 ### v8.30.398-dev — 2026-08-11
 Segunda rodada de feedback direto sobre a legibilidade do 🌅 Meu Dia
 ("ainda tô achando essa fonte ruim de ler") — a 1ª passada (v8.30.382-dev)
