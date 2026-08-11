@@ -1318,6 +1318,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.369-dev — 2026-08-11
+Fase 1.4 do plano de otimização: amostragem da instrumentação de bytes
+(`_dbg`/`_dbgFlush`). Antes, TODO cliente escrevia em `_debug_bytes_log`
+a cada 5min, o tempo todo — agora que a economia das fases anteriores já
+foi confirmada com esses dados, não precisa mais medir 100% do tráfego.
+
+- Medição local continua sempre ligada (`debugBytesReport()` funciona
+  igual, em qualquer aba). Só a ESCRITA remota (o que alimenta
+  `debugBytesRemote()`/`debugBytesHistory()`) passa a rodar só se: (a) a
+  pessoa é ADM (`isAdmUser`), ou (b) a sessão caiu nos ~10% sorteados no
+  boot (sorteio persistido em `sessionStorage`, estável durante a aba).
+- `debugBytesRemote()`/`debugBytesHistory()`/`debugBytesExportCSV()`
+  continuam funcionando normalmente — passam a refletir uma amostra do
+  tráfego (ADM + ~10%), não mais 100% das sessões.
+
 ### v8.30.368-dev — 2026-08-11
 Fase 1.3 do plano de otimização: comunicados e lembretes.
 
