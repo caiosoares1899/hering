@@ -1318,6 +1318,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.384-dev — 2026-08-11
+Fase 5, item 6 aprovado: capa de card com imagem. A capa de COR sólida
+já existia (Trello-like); faltava a opção de imagem pedida no plano.
+
+- Menu 🎨 no topo do card ganhou uma seção nova: cole a URL de uma
+  imagem, ou clique "🔗 Usar 1º link" pra usar o primeiro link já salvo
+  em Anexos. Só guarda o endereço — nunca faz upload nem guarda o
+  arquivo (zero custo de Storage).
+- Cor e imagem são exclusivas — escolher uma limpa a outra. "⊘ Sem capa"
+  limpa as duas de uma vez.
+- Card face: `background-image` (não `<img>`) de propósito — se o link
+  cair ou for removido, a capa simplesmente some, sem ícone de imagem
+  quebrada.
+- HELP_CONTENT atualizado.
+
 ### v8.30.383-dev — 2026-08-11
 Fase 1.1 (aprovada): comentários saíram de dentro do card. Maior fonte
 de banda restante — cada edição de QUALQUER campo de um card
