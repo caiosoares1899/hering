@@ -1318,6 +1318,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.378-dev — 2026-08-11
+Fase 5, item 5 do plano: quick-add com parsing natural. Ao criar um card
+NOVO, digitar `!alta`, `@nome`, `#tag` ou uma data (`hoje`/`amanhã`/dia
+da semana/`dd/mm`) no título e sair do campo já preenche prioridade,
+responsável, tag e prazo — os tokens somem do título, e um toast mostra
+o que foi detectado. Só age em criação (nunca reescreve campos de um
+card já existente ao editar). 100% client-side, zero custo novo de
+Firebase. HELP_CONTENT atualizado.
+
 ### v8.30.377-dev — 2026-08-11 · TESTE — candidata B do tema claro (Fase 4)
 Pedido direto: "tô na dúvida! implementa a B pra eu ver" — depois de ver o
 artefato de preview (lencois-lab.html, 3 candidatas). Aplicada a candidata
