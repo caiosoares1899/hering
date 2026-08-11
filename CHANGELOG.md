@@ -1318,6 +1318,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.379-dev — 2026-08-11 · TESTE — peixes/bolhas somem na candidata B
+Feedback direto com print: "essa versão está sem os peixinhos". Causa:
+os peixes/bolhas usam fills azul/teal de baixo alpha, pensados pro fundo
+pálido original — contra o novo fundo "lagoa" da candidata B (mesma
+família de cor, mais saturada), viravam camuflagem quase perfeita.
+Filtro do claro trocado: em vez de só escurecer, agora clareia bastante
+e dessatura (viram silhuetas quase brancas) + sombra escura sutil pra
+definição de borda — mesmo espírito "duna clara contra a lagoa".
+
 ### v8.30.378-dev — 2026-08-11
 Fase 5, item 5 do plano: quick-add com parsing natural. Ao criar um card
 NOVO, digitar `!alta`, `@nome`, `#tag` ou uma data (`hoje`/`amanhã`/dia
