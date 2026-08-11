@@ -1689,7 +1689,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       <div style="font-size:10px;color:var(--txt3);margin-bottom:14px;">Análise de quem realmente colabora vs. quem apenas visualiza o board.</div>
       
       <div id="st-uso-erro-permissao" style="display:none;font-size:11px;color:var(--danger);background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:9px 12px;margin-bottom:12px;line-height:1.5;">
-        ⚠ Falta regra <code>access_log</code> no Firebase para medir acessos.
+        ⚠ Falta permissão de leitura em <code>dados/access_stats</code> pra medir acessos.
       </div>
 
       <!-- Métricas Principais -->
@@ -6458,18 +6458,14 @@ async function _fbDelete(id){
 }
 
 async function loadUsoData(){
-  // ⏸️ TEMPORARIAMENTE DESATIVADO (2026-07-21) — essa função lia access_log de
-  // TODOS os squads toda vez que a aba Status abria ou o período mudava,
-  // suspeita de ser uma fonte relevante de consumo de download. O lado que
-  // escreve (kanban.html/_logAccess) também foi desativado junto — reative os
-  // dois ao mesmo tempo, senão fica um lendo log vazio ou o outro escrevendo à toa.
+  // Reativado (Fase 1.5 do plano de otimização): a versão antiga lia
+  // access_log (bruto, um registro por acesso) de TODOS os squads toda vez
+  // que a aba Status abria ou o período mudava. Agora lê access_stats
+  // (agregado por dia+uid, escrito com increment atômico — ver kanban-dev.html
+  // _logAccess) — mesmo formato de leitura (dia -> {uid: {...}}), bem mais
+  // barato de escrever e do mesmo tamanho de ler.
   const elErro = document.getElementById('st-uso-erro-permissao');
-  if(elErro){
-    elErro.style.display = 'block';
-    elErro.innerHTML = '⏸ Engajamento & Uso Efetivo temporariamente desativado (economia de banda do Firebase). Fala com o Caio pra reativar.';
-  }
-  return;
-  // eslint-disable-next-line no-unreachable
+  if(elErro) elErro.style.display = 'none';
   const dias = parseInt(document.getElementById('st-uso-periodo')?.value||'30');
   const hoje = new Date();
   const datasRange = [];
@@ -6526,7 +6522,7 @@ async function loadUsoData(){
   // 2. Mapear Acessos (Log de visualização)
   await Promise.all(KNOWN.map(async sq=>{
     try{
-      const snap = await window._get(window._ref(window._db,'kanban/squads/'+sq+'/access_log'));
+      const snap = await window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados/access_stats'));
       const val = snap.val()||{};
       Object.entries(val).forEach(([dia, users])=>{
         if(dia < cutoffDate || !datasRange.includes(dia)) return;
