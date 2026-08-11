@@ -5150,7 +5150,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.366-dev</div>
+<div class="version">v8.30.367-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -20146,26 +20146,46 @@ function loadCalEvents(){
       if(localLimpo.length !== window._gcalLocalEvents.length){
         const cacheObj = Object.fromEntries(localLimpo.map(ev=>[ev.id, ev]));
         window._set(window._ref(window._db, FB+'/config/gcal_cache'), cacheObj).catch(()=>{});
+        _touchGcalCacheMeta(FB+'/config');
       }
     }
   }
-  fbListen(FB+'/config/gcal_cache', val => {
-    window._gcalLocalEvents = val ? Object.values(val) : [];
-    _mergeGcalSources();
+  // ── Cache do calendário lido sob demanda, não por listener direto no nó cheio ──
+  // Antes: fbListen(FB+'/config/gcal_cache', ...) mantinha TODO evento de TODA agenda
+  // conectada em memória viva pra TODO cliente o tempo todo, e qualquer escrita
+  // retransmitia o payload inteiro pra todo mundo. Agora só o meta (leve, {updatedAt,
+  // updatedBy}) fica com listener; o cache cheio só é buscado (fbGet, uma vez) quando
+  // o meta efetivamente muda — mesmo padrão de "escuta o ponteiro, busca o conteúdo"
+  // já usado noutros pontos do app. Todo caminho que escreve gcal_cache precisa tocar
+  // o meta também (ver _touchGcalCacheMeta), senão outros clientes não percebem a mudança.
+  let _gcalLocalCacheTs = undefined, _gcalGlobalCacheTs = undefined;
+  fbListen(FB+'/config/gcal_cache_meta', val => {
+    window._gcalCacheMeta = val || null;
+    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
+    const ts = val?.updatedAt || null;
+    if(ts === _gcalLocalCacheTs) return;
+    _gcalLocalCacheTs = ts;
+    fbGet(FB+'/config/gcal_cache').then(snap=>{
+      const val2 = snap.val();
+      window._gcalLocalEvents = val2 ? Object.values(val2) : [];
+      _mergeGcalSources();
+    }).catch(()=>{});
   });
-  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache'), snap => { _dbgTrack('painel_gcal_cache', snap.val());
+  window._onValue(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), snap => { _dbgTrack('painel_gcal_cache_meta', snap.val());
     const val = snap.val();
-    window._gcalGlobalEvents = val ? Object.values(val).map(e=>({...e,_global:true})) : [];
-    _mergeGcalSources();
+    const ts = val?.updatedAt || null;
+    if(ts === _gcalGlobalCacheTs) return;
+    _gcalGlobalCacheTs = ts;
+    fbGet('kanban/painel/config/gcal_cache').then(snap2=>{
+      const val2 = snap2.val();
+      window._gcalGlobalEvents = val2 ? Object.values(val2).map(e=>({...e,_global:true})) : [];
+      _mergeGcalSources();
+    }).catch(()=>{});
   });
   window._onValue(window._ref(window._db,'kanban/painel/config/calendars'), snap => { _dbgTrack('painel_gcal_calendars', snap.val());
     const val = snap.val();
     window._pcalValidGlobalIds = new Set(Object.values(val||{}).map(c=>c.id));
     _mergeGcalSources();
-  });
-  fbListen(FB+'/config/gcal_cache_meta', val => {
-    window._gcalCacheMeta = val || null;
-    if (document.getElementById('cfg-ov')?.classList.contains('open')) renderCalendarList();
   });
 
   // ── Fila global de pedidos de agenda — cada um escuta e filtra os do PRÓPRIO squad,
@@ -20202,6 +20222,16 @@ function loadCalEvents(){
 // ── FIM CALENDÁRIO ────────────────────────────────────────────────
 // ── INTEGRAÇÃO MÚLTIPLA GOOGLE CALENDAR (PLANO B) ──────────────────────────
 window._squadCalendars = {};
+// Toda escrita em .../gcal_cache PRECISA tocar o .../gcal_cache_meta junto — os
+// listeners de calendário (kanban-dev.html) escutam só o meta e buscam o cache
+// cheio sob demanda quando ele muda; uma escrita em gcal_cache sem tocar o meta
+// fica invisível pros outros clientes até o próximo refetch completo do ADM.
+function _touchGcalCacheMeta(configBasePath){
+  window._set(window._ref(window._db, configBasePath+'/gcal_cache_meta'), {
+    updatedAt: new Date().toISOString(),
+    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
+  }).catch(()=>{});
+}
 
 function _relTimeCal(ts){
   try{
@@ -20350,6 +20380,7 @@ async function removeCalendarFromList(id) {
       const cache = snap2.val()||{};
       const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
       await window._set(window._ref(window._db, FB+'/config/gcal_cache'), filtrado);
+      _touchGcalCacheMeta(FB+'/config');
     }catch(e){ console.warn('Não foi possível purgar cache local imediatamente:', e); }
     renderCalendarList();
     carregarTodasAgendasSquad();
@@ -20433,6 +20464,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
 
   if (!calendarsList.length) {
     await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), {}).catch(()=>{});
+    _touchGcalCacheMeta(squadFB+'/config');
     return { ok:true, count:0 };
   }
   if (!token) { _gcalWarnBanner(true); return { ok:false, reason:'no_token' }; }
@@ -20509,10 +20541,7 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
   });
   const cacheObj = Object.fromEntries(todosEventosGoogleDedup.map(ev=>[ev.id, ev]));
   await window._set(window._ref(window._db, squadFB+'/config/gcal_cache'), cacheObj).catch(()=>{});
-  await window._set(window._ref(window._db, squadFB+'/config/gcal_cache_meta'), {
-    updatedAt: new Date().toISOString(),
-    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
-  }).catch(()=>{});
+  _touchGcalCacheMeta(squadFB+'/config');
 
   const temExpirado = Object.values(window._gcalErrors).some(e=>e.type==='expired');
   _gcalWarnBanner(temExpirado);
