@@ -1318,6 +1318,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.367-dev — 2026-08-11
+Rodada de otimização (Fase 1.2 do plano "banda/custo Firebase"): cache de
+Google Agenda (local do squad + global do painel) parava de usar `onValue`
+no nó cheio de eventos (`config/gcal_cache`) — cada escrita retransmitia
+TODOS os eventos de TODAS as agendas conectadas pra TODO cliente com o
+board aberto.
+
+- Listener passa a escutar só `config/gcal_cache_meta` (leve:
+  `{updatedAt, updatedBy}`); quando o timestamp muda, busca o cache cheio
+  uma vez (`fbGet`), em vez de manter o payload inteiro sempre em memória
+  como listener ativo.
+- Mesmo padrão aplicado ao cache global (`kanban/painel/config/gcal_cache`)
+  — `painel.html` já escrevia o meta na busca principal; passou a tocar o
+  meta também nos 3 outros pontos que escrevem esse cache (purga imediata
+  ao remover agenda, lista vazia, dedup manual de duplicatas), senão essas
+  escritas ficariam invisíveis pros outros clientes sob o novo esquema.
+- Mesmo ajuste replicado em `kanban-dev.html` pros 3 pontos equivalentes
+  que escrevem o cache local do squad.
+- Sem mudança de comportamento visível — só reduz o volume de dados
+  retransmitido a cada alteração de agenda conectada.
+
 ### v8.30.366-dev — 2026-08-10
 Feedback direto: "uma usuária aqui me informou que não está conseguindo
 abrir as notificações" → investigação apontou que a notificação de
@@ -4803,6 +4824,18 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html — 2026-08-11 · gcal_cache_meta tocado em toda escrita (sem bump de versão)
+Rodada de otimização (Fase 1.2, ver kanban-dev.html v8.30.367-dev):
+kanban(-dev).html passou a ler o cache global de Google Agenda
+(`kanban/painel/config/gcal_cache`) sob demanda, via `gcal_cache_meta`,
+em vez de listener direto no nó cheio. `painel.html` já tocava o meta na
+busca principal (`carregarPcalAgendasGlobais`); passou a tocar também
+nos outros 3 pontos que escrevem esse cache (purga imediata ao remover
+agenda global, lista de agendas vazia, dedup manual de duplicatas via
+`_touchPcalCacheMeta()`) — sem isso essas escritas ficariam invisíveis
+pros clientes do board sob o novo esquema de leitura. Puramente interno,
+sem mudança de UI.
 
 ### painel.html — 2026-08-10 · rascunhos de comunicado (sem bump de versão) #2
 Adicionadas 2 entradas em `COMUNICADO_RASCUNHOS_SEED`

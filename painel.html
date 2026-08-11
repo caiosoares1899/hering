@@ -4720,7 +4720,9 @@ async function _forcarLimpezaCacheGcal(){
   }
 
   // 1) Cache global de agendas do Google
+  const _remGcal = totalRemovido;
   await limpaPath('kanban/painel/config/gcal_cache', 'obj');
+  if(totalRemovido !== _remGcal) _touchPcalCacheMeta();
   // 2) Eventos manuais do painel
   await limpaPath('kanban/painel/cal_events', 'arr');
   // 3) Eventos de cada squad (feriados podem ter sido gravados por squad)
@@ -4900,6 +4902,7 @@ function _applyGcalCacheCleaning(){
   if(_isAdmPainel() && window._pcalCalendarsLoaded && (removidosOrfaos>0 || removidosDup>0)){
     const cacheLimpo = Object.fromEntries(eventos.map(ev=>[ev.id, ev]));
     window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheLimpo).catch(()=>{});
+    _touchPcalCacheMeta();
   }
 }
 
@@ -5280,6 +5283,7 @@ async function removePcalAgenda(id){
       const cache = snap.val()||{};
       const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
       await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), filtrado);
+      _touchPcalCacheMeta();
     }catch(e){ console.warn('Não foi possível purgar cache imediatamente:', e); }
     renderPcalAgendasList();
     showToast('🗑 Agenda removida.');
@@ -5301,6 +5305,15 @@ async function reconectarPcalGCal(){
     showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
   }
 }
+// Toda escrita em kanban/painel/config/gcal_cache PRECISA tocar o gcal_cache_meta junto —
+// kanban.html/kanban-dev.html escutam só o meta e buscam o cache cheio sob demanda quando
+// ele muda; sem isso a escrita fica invisível pros outros clientes até o próximo refetch.
+function _touchPcalCacheMeta(){
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
+    updatedAt: new Date().toISOString(),
+    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
+  }).catch(()=>{});
+}
 // Só o ADM busca da API do Google — o resultado processado fica em cache no Firebase
 // (kanban/painel/config/gcal_cache) e todo mundo lê de lá, sem precisar autorizar nada.
 async function carregarPcalAgendasGlobais(){
@@ -5310,6 +5323,7 @@ async function carregarPcalAgendasGlobais(){
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
     window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), {});
+    _touchPcalCacheMeta();
     if(_isPtab('pessoas')) renderPcal();
     return;
   }
@@ -5377,10 +5391,7 @@ async function carregarPcalAgendasGlobais(){
   });
   const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
-    updatedAt: new Date().toISOString(),
-    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
-  });
+  _touchPcalCacheMeta();
 
   const temExpirado = Object.values(window._pcalGcalErrors).some(e=>e.type==='expired');
   _pcalGcalWarnBanner(temExpirado);
