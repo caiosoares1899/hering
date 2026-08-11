@@ -47,6 +47,25 @@ function clean(str, maxLen) {
   return String(str || '').trim().slice(0, maxLen);
 }
 
+// squads_meta (kanban/squads_meta) só existe pros squads criados
+// DINAMICAMENTE pelo painel (ver loadSquadsFromFirebase em
+// kanban-dev.html, mesmo nó) — os squads originais (dados, prf,
+// midiacriativa...) nunca ganharam entrada lá, e o próprio board trata
+// isso como esperado, caindo num mapa fixo (_SQ_LABELS/_SQ_FALLBACK em
+// kanban-dev.html) quando squads_meta não tem o squad. Espelhado aqui:
+// a primeira versão desta function validava existência confiando SÓ em
+// squads_meta, e rejeitava qualquer squad que não tivesse entrada lá —
+// bug real, achado em teste manual (intake.html?squad=dados voltava
+// "squad não encontrado" mesmo o squad dados sendo real e ativo, só por
+// nunca ter passado pelo painel).
+const SQUAD_FALLBACK = {
+  dados: { label: 'Dados', emoji: '📊' },
+  prf: { label: 'Marketing de Performance', emoji: '📱' },
+  midiacriativa: { label: 'Mídia Criativa', emoji: '🎨' },
+  dev: { label: 'Dev', emoji: '🧪' },
+  gestao: { label: 'Gestão', emoji: '🏛' },
+};
+
 const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   setCors(res);
   if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
@@ -55,16 +74,21 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   const squad = clean(req.query.squad || req.body?.squad, 40);
   if (!squad) { res.status(400).json({ error: 'missing_squad' }); return; }
 
-  // squads_meta é o mesmo nó que o board usa pra popular o seletor de
-  // squads (ver loadSquadsFromFirebase em kanban-dev.html) — reaproveitado
-  // aqui só pra validar que o squad existe e pegar o nome de exibição,
-  // sem manter uma lista hardcoded separada que ficaria desatualizada.
+  // Existência de verdade do squad: kanban/squads/{squad}/dados é o path
+  // base usado por TODO o board (const FB em kanban-dev.html) — se ele
+  // existe, o squad é real, independente de ter squads_meta ou não.
+  const dadosSnap = await db.ref(`kanban/squads/${squad}/dados`).get();
+  if (!dadosSnap.exists()) { res.status(404).json({ error: 'squad_not_found' }); return; }
+
   const metaSnap = await db.ref(`kanban/squads_meta/${squad}`).get();
-  const meta = metaSnap.val();
-  if (!meta || !meta.label) { res.status(404).json({ error: 'squad_not_found' }); return; }
+  const meta = metaSnap.val() || {};
+  const fallback = SQUAD_FALLBACK[squad] || {};
+  const label = meta.label || fallback.label || squad;
+  const emoji = meta.emoji || fallback.emoji || '🐟';
+  const color = meta.color || '#38b6ff';
 
   if (req.method === 'GET') {
-    res.status(200).json({ ok: true, squad: { id: squad, label: meta.label, emoji: meta.emoji || '🐟', color: meta.color || '#38b6ff' } });
+    res.status(200).json({ ok: true, squad: { id: squad, label, emoji, color } });
     return;
   }
 
