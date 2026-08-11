@@ -1318,6 +1318,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.377-dev — 2026-08-11 · TESTE — candidata B do tema claro (Fase 4)
+Pedido direto: "tô na dúvida! implementa a B pra eu ver" — depois de ver o
+artefato de preview (lencois-lab.html, 3 candidatas). Aplicada a candidata
+B ("Duna × Lagoa") como paleta padrão do `[data-theme="light"]`, só pra
+teste visual ao vivo — ainda não é decisão final.
+
+- `--deep`/`.ocean`: fundo vira gradiente lagoa (turquesa+azul mais
+  saturados) em vez do azul-claro uniforme atual.
+- `--surface-rgb`: cards quase brancos de verdade (251,253,255), com
+  sombra em camadas em vez do glow de borda.
+- `--glass`/`--glass-b`: glass vira base branca ("areia molhada") em vez
+  de azulada.
+- `[data-theme="light"][data-theme-variant="b"]` (a variante do
+  duplo-clique, de uma rodada anterior) **não foi tocada** — ainda usa a
+  paleta antiga, não reconciliada com esta paleta nova ainda.
+
 ### v8.30.376-dev — 2026-08-11
 Fase 3.4 do plano mobile: "criar card na coluna visível". Pedido original
 era um FAB flutuante novo no canto inferior direito — mas o mobile já
