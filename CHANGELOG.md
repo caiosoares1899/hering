@@ -18,6 +18,45 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.240 — 2026-08-11 · promove pra prod (PR #316)
+Promove pra produção todo o lote de otimização, mobile, tema claro e
+novas features acumulado em dev desde a v8.30.239, validado em rodadas
+de teste ao vivo (incluindo um teste ponta a ponta do formulário de
+intake, feito direto em produção do fluxo).
+
+**Performance & banda** — menos dados trafegados do Firebase sem mudar
+nada visível: listeners granulares (lembretes, comentários, cache do
+Google Calendar), coalescimento de re-render (`scheduleRender`),
+amostragem de telemetria interna, fim do polling de 400ms do estado
+"não salvo".
+
+**Mobile** — modal de card em bottom-sheet, navegação por coluna com
+scroll-snap, alvos de toque 44×44, botão "+ Card" agora sabe em qual
+coluna/squad você está.
+
+**☀️ Tema claro** — nova paleta padrão ("duna branca vs. lagoa
+turquesa"): card quase branco de verdade contra um fundo mais
+saturado, melhor contraste que a versão anterior. Peixinhos/bolhas do
+fundo ajustados pra continuarem visíveis contra o novo fundo.
+
+**Comentários** — saíram de dentro do card pra um path próprio
+(`card_comments/{cardId}`), fim do reenvio de comentários inteiros a
+cada edição de qualquer campo do card.
+
+**Features novas:**
+- 🌅 **Meu Dia** (`Ctrl+D`) — seus cards de todos os squads, agrupados por prazo/menções/bloqueios.
+- ⏳ **Aging visual** — badge no card quando ele passa tempo demais numa coluna (limite configurável).
+- ✨ **Criação rápida** — `!alta @fulano #tag amanhã` no título de um card novo já preenche tudo.
+- 📈 **CFD & Burndown** — nova aba em "📊 Dados do Board", reconstruída do histórico que cada card já guarda.
+- 📥 **Formulário de intake** (`intake.html?squad=X`) — link público, sem login, pra pedidos externos virarem card sob revisão do squad.
+- 🖼️ **Capa de card com imagem** — além da cor sólida que já existia.
+- 🔴 **Indicador de offline** — selo no header + aviso do navegador antes de fechar a aba com algo não salvo.
+
+Excluído desta rodada, por pedido direto: digest semanal por e-mail.
+
+Detalhe completo de cada mudança nas entradas de `kanban-dev.html`
+logo abaixo desta seção.
+
 ### v8.30.239 — 2026-08-10 · promove pra prod (PRs #289–#291)
 Promove pra produção o fix de legibilidade do botão "💡 Meus cards" no
 tema claro (barra de Filtros), validado em dev após 3 rodadas de
