@@ -1366,6 +1366,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.397-dev — 2026-08-11
+Pedido direto: botão "↩ Responder" nos comentários do card. Clicar nele
+abre a caixa de comentário já com "@" + o handle de quem fez o
+comentário clicado preenchido (mesmo formato `@nome.sobrenome` que o
+autocomplete manual insere), cursor no fim, pronto pra continuar
+digitando — some se o comentário for de alguém sem cadastro resolvível
+(ex.: sistema), sem quebrar nada. Reaproveita o pipeline de notificação
+de @menção que já existe (`parseMentions()`, disparado no envio do
+comentário) — nenhuma lógica de notificação nova, só um jeito mais
+rápido de preencher a menção certa. Nova função `replyToComment()`;
+`.comment-actions` ganhou `flex-wrap` pra não estourar em telas
+estreitas com o botão a mais. HELP_CONTENT atualizado.
+
 ### v8.30.396-dev — 2026-08-11
 Pedido direto: supercard não precisa de Ficha Técnica própria, já que ele
 é só a soma dos cards filhos — cada filho já tem sua própria ficha
