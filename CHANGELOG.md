@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.243 — 2026-08-11 · promove pra prod
+Ajuste de legibilidade no painel 🌅 Meu Dia, depois de 3 rodadas de
+feedback direto com print: título e texto secundário (squad/coluna/
+prazo) de cada card maiores, com contraste mais forte, sem cair no
+efeito "neon"/negrito que apareceu numa passada intermediária —
+`.meudia-row-meta` fechou em peso 400, `opacity:.72`, 12.5px.
+
 ### v8.30.242 — 2026-08-11 · promove pra prod
 Promove pra produção todo o lote acumulado em dev desde a v8.30.241
 (v8.30.389-dev → v8.30.397-dev), validado em dev pelo usuário.

@@ -1950,17 +1950,20 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-item:hover .notif-dismiss{opacity:1;}
 .notif-dismiss:hover{color:var(--danger,#ef4444);opacity:1!important;}
 /* 🌅 Meu Dia (Fase 5.1) */
-.meudia-sec{margin-bottom:16px;}
-.meudia-sec-hd{font-size:11.5px;font-weight:700;color:var(--txt2);border-left:3px solid;padding-left:8px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
-.meudia-sec-n{font-size:9.5px;font-weight:600;color:var(--txt3);background:rgba(var(--surface2-rgb),.6);border-radius:999px;padding:1px 7px;}
-.meudia-row{padding:8px 10px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:3px;background:rgba(var(--surface2-rgb),.4);}
+.meudia-sec{margin-bottom:18px;}
+.meudia-sec-hd{font-size:12.5px;font-weight:700;color:var(--txt);border-left:3px solid;padding-left:8px;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.meudia-sec-n{font-size:10.5px;font-weight:600;color:var(--txt2);background:rgba(var(--surface2-rgb),.6);border-radius:999px;padding:1px 7px;}
+.meudia-row{padding:10px 12px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:5px;background:rgba(var(--surface2-rgb),.4);}
 .meudia-row:hover{background:rgba(56,182,255,.1);}
-.meudia-row-title{font-size:12px;font-weight:600;color:var(--txt);line-height:1.4;}
-/* Feedback direto com print: "esse texto aqui ta ruim de leitura" — var(--txt3)
-   (baixo contraste, pensado pra texto bem secundário) em 10px ficava fraco
-   demais em cima do fundo já escuro de .meudia-row. Trocado por var(--txt2)
-   (mesmo tom mais claro usado no título das seções) + 11px. */
-.meudia-row-meta{font-size:11px;color:var(--txt2);margin-top:3px;}
+.meudia-row-title{font-size:14px;font-weight:600;color:var(--txt);line-height:1.4;}
+/* Terceira rodada: a 2ª passada (var(--txt) + peso 500 + opacity .85) tinha
+   contraste bom mas ficou "neon"/parecendo negrito — texto quase branco tão
+   brilhante quanto o título, no mesmo peso quase-bold, contra o fundo bem
+   escuro do .meudia-row cria esse halo. Mantém o tamanho (esse não era o
+   problema desta vez) e recua peso pro normal (400) + opacity mais baixa
+   (.72) — ainda bem mais legível que a var(--txt2) original (.65 de um tom
+   mais escuro que var(--txt)), sem o efeito de brilho/negrito. */
+.meudia-row-meta{font-size:12.5px;font-weight:400;color:var(--txt);opacity:.72;margin-top:4px;line-height:1.35;}
 .notif-ft{padding:8px 14px;border-top:1px solid var(--glass-b);
   display:flex;justify-content:flex-end;}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
@@ -5323,7 +5326,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.242</div>
+<div class="version">v8.30.243</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
