@@ -1357,6 +1357,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.388-dev — 2026-08-11
+Feedback direto depois de testar a capa de imagem (Fase 5.6, já em
+prod): "nem todas as imagens ficam boas como capa" — a capa é uma
+faixa fixa de 64px de altura com `background-size:cover`, então uma
+imagem "quadrada" ou de retrato só mostra uma faixinha fina do meio
+recortada, enquanto um banner largo com o assunto centralizado (como o
+exemplo que funcionou bem) mostra praticamente tudo.
+
+- Dica inline nova, direto no menu 🎨 → aba de imagem: explica a
+  proporção ideal (~4:1, tipo 1000×250px) antes da pessoa colar a URL,
+  em vez de só descobrir depois de ver o resultado cortado.
+- HELP_CONTENT ("Capa do card") expandido com a explicação completa —
+  o que funciona bem, o que não funciona, e uma alternativa (centralizar
+  a imagem original num fundo sólido mais largo) pra quem só tem uma
+  imagem quadrada/retrato à mão.
+
 ### v8.30.387-dev — 2026-08-11
 Fase 5, item 7 aprovado: indicador de conectividade — escopo
 deliberadamente reduzido em relação à proposta original de "fila
