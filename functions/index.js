@@ -160,3 +160,9 @@ exports.spotifyRadioSearch = require('./spotify/radioSearch').spotifyRadioSearch
 // Adiciona a faixa sugerida na playlist (token da conta dona). Deploy
 // isolado: firebase deploy --only functions:spotifyRadioSuggest
 exports.spotifyRadioSuggest = require('./spotify/radioSuggest').spotifyRadioSuggest;
+
+// Formulário de intake por squad — único ponto de escrita anônima
+// (sem login) permitido no sistema, ver functions/intake/submit.js pro
+// porquê de gravar em intake_pending em vez de /cards direto. Deploy
+// isolado: firebase deploy --only functions:intakeSubmit
+exports.intakeSubmit = require('./intake/submit').intakeSubmit;

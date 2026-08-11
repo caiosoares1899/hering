@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido — Maré Digital</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bg:#0b1622; --card:#101f30; --card-b:rgba(255,255,255,.08);
+    --txt:#eaf2f8; --txt2:#a9bccb; --txt3:#6f8598;
+    --accent:#38b6ff; --accent2:#2ecc9c; --danger:#ff5c7a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:linear-gradient(160deg,#0b1622,#0d2338 55%,#0b1622);
+    color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .wrap{ width:100%; max-width:480px; }
+  .card{
+    background:var(--card); border:1px solid var(--card-b); border-radius:16px;
+    padding:28px 26px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  h1{ font-size:19px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+  .sub{ font-size:12.5px; color:var(--txt3); margin:0 0 22px; line-height:1.5; }
+  label{ display:block; font-size:12px; color:var(--txt2); margin:14px 0 5px; font-weight:600; }
+  label .opt{ font-weight:400; color:var(--txt3); }
+  input[type=text], input[type=email], input[type=date], textarea{
+    width:100%; background:rgba(255,255,255,.04); border:1px solid var(--card-b); border-radius:10px;
+    color:var(--txt); font-size:14px; padding:10px 12px; font-family:inherit;
+  }
+  input:focus, textarea:focus{ outline:none; border-color:var(--accent); }
+  textarea{ min-height:90px; resize:vertical; }
+  .honeypot{ position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden; }
+  button{
+    margin-top:22px; width:100%; padding:12px; border:none; border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04141f; font-weight:700;
+    font-size:14.5px; cursor:pointer;
+  }
+  button:disabled{ opacity:.55; cursor:default; }
+  .msg{ margin-top:14px; font-size:13px; line-height:1.5; padding:10px 12px; border-radius:10px; display:none; }
+  .msg.ok{ display:block; background:rgba(46,204,156,.12); border:1px solid rgba(46,204,156,.35); color:#8ff0cf; }
+  .msg.err{ display:block; background:rgba(255,92,122,.12); border:1px solid rgba(255,92,122,.35); color:#ffb3c1; }
+  .state{ text-align:center; padding:40px 10px; color:var(--txt3); font-size:13.5px; }
+  .squad-tag{ font-size:12px; color:var(--accent); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div id="loading" class="state">Carregando…</div>
+    <div id="invalid" class="state" style="display:none;">
+      ⚠️ Link inválido ou squad não encontrado. Confirme o endereço com quem te passou este link.
+    </div>
+    <div id="form-area" style="display:none;">
+      <h1>🐟 Novo pedido</h1>
+      <p class="sub">Squad de destino: <span class="squad-tag" id="squad-label"></span><br>
+        Preencha os campos abaixo — não precisa de login. Alguém do time vai revisar e transformar em card.</p>
+      <form id="intake-form">
+        <label>Título do pedido *</label>
+        <input type="text" id="f-titulo" maxlength="200" required placeholder="Ex.: Banner para campanha X">
+        <label>Descrição <span class="opt">(opcional)</span></label>
+        <textarea id="f-descricao" maxlength="4000" placeholder="Detalhe o que precisa, referências, contexto..."></textarea>
+        <label>Seu nome *</label>
+        <input type="text" id="f-demandante" maxlength="120" required placeholder="Quem está pedindo">
+        <label>E-mail ou contato <span class="opt">(opcional)</span></label>
+        <input type="text" id="f-contato" maxlength="200" placeholder="Pra time entrar em contato se precisar">
+        <label>Prazo desejado <span class="opt">(opcional)</span></label>
+        <input type="date" id="f-prazo">
+        <div class="honeypot"><label>Website</label><input type="text" id="f-website" tabindex="-1" autocomplete="off"></div>
+        <button type="submit" id="btn-submit">Enviar pedido</button>
+      </form>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+</div>
+<script>
+const FN_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/intakeSubmit';
+const params = new URLSearchParams(window.location.search);
+const squad = params.get('squad') || '';
+
+const elLoading = document.getElementById('loading');
+const elInvalid = document.getElementById('invalid');
+const elFormArea = document.getElementById('form-area');
+const elMsg = document.getElementById('msg');
+
+function showMsg(text, ok){
+  elMsg.textContent = text;
+  elMsg.className = 'msg ' + (ok ? 'ok' : 'err');
+}
+
+if(!squad){
+  elLoading.style.display = 'none';
+  elInvalid.style.display = 'block';
+} else {
+  fetch(FN_URL + '?squad=' + encodeURIComponent(squad))
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      elLoading.style.display = 'none';
+      elFormArea.style.display = 'block';
+      document.getElementById('squad-label').textContent = (data.squad.emoji || '🐟') + ' ' + data.squad.label;
+    })
+    .catch(() => {
+      elLoading.style.display = 'none';
+      elInvalid.style.display = 'block';
+    });
+}
+
+document.getElementById('intake-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  elMsg.className = 'msg';
+
+  const payload = {
+    squad,
+    titulo: document.getElementById('f-titulo').value,
+    descricao: document.getElementById('f-descricao').value,
+    demandante: document.getElementById('f-demandante').value,
+    contato: document.getElementById('f-contato').value,
+    prazo: document.getElementById('f-prazo').value,
+    website: document.getElementById('f-website').value,
+  };
+
+  fetch(FN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if(ok && data.ok){
+        document.getElementById('intake-form').reset();
+        document.getElementById('intake-form').style.display = 'none';
+        showMsg('✅ Pedido enviado! O time vai revisar e transformar em card em breve.', true);
+      } else if(data.error === 'rate_limited'){
+        showMsg('⚠️ Muitos envios em pouco tempo. Tente novamente daqui a pouco.', false);
+      } else {
+        showMsg('⚠️ Preencha título e nome antes de enviar.', false);
+      }
+    })
+    .catch(() => showMsg('⚠️ Não deu pra enviar (conexão instável). Tente de novo.', false))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Enviar pedido'; });
+});
+</script>
+</body>
+</html>

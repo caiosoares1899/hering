@@ -1002,6 +1002,8 @@ input[type="date"]{-moz-appearance:textfield;}
   font-weight:800;font-family:"DM Sans",sans-serif;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;
   justify-content:center;padding:0 5px;line-height:1;box-shadow:0 2px 8px rgba(255,107,107,.5);
   font-variant-numeric:tabular-nums;letter-spacing:0;}
+#intake-badge{position:absolute;top:-7px;right:-7px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);box-shadow:-12px 0 48px rgba(0,0,0,.55);
@@ -3113,6 +3115,7 @@ input[type="date"]{-moz-appearance:textfield;}
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
        menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
+  <button class="btn btn-sm" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);position:relative;">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
@@ -4811,6 +4814,21 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 </div>
 
+<!-- INTAKE (Fase 5.4) — pedidos vindos de intake.html, revisão + conversão em card -->
+<div class="ov" id="intake-ov">
+<div class="panel" style="width:min(600px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">📥 Intake</div>
+    <button class="x-btn" onclick="closeOv('intake-ov')">✕</button>
+  </div>
+  <div style="padding:10px 18px 0;">
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Pedidos enviados pelo link público, sem login. Revise e crie o card (pré-preenchido) ou descarte.</div>
+    <button class="btn btn-sm" onclick="_copyIntakeLink()" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);margin-bottom:10px;">🔗 Copiar link de intake deste squad</button>
+  </div>
+  <div id="intake-body" style="padding:0 18px 20px;overflow-y:auto;flex:1;"></div>
+</div>
+</div>
+
 <!-- DADOS DO BOARD (mini painel pros PO's) -->
 <div class="ov" id="boarddata-ov">
 <div class="panel" style="width:min(860px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
@@ -5270,7 +5288,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.385-dev</div>
+<div class="version">v8.30.386-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6391,6 +6409,21 @@ let lembretesProprios=[];// próprios do usuário atual (privados, path por uid)
 let lembretesGestao=[];  // GESTÃO global (compartilhado entre squads) — kanban/painel/lembretes_gestao
 let lembretesDismiss=[]; // ids de lembretes que ESTE usuário dispensou (só esconde pra ele)
 let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts visto (p/ badge de não-lidos), persistido
+// ═══ INTAKE (Fase 5, item 4) ═══ pedidos vindos de intake.html (link
+// público, sem login — ver functions/intake/submit.js), gravados em
+// FB+'/intake_pending/{id}', keyed por push-id (nunca array — ver o
+// comentário grande em fbSaveAll sobre por que /cards não pode receber
+// escrita de fora do fluxo normal do cliente). Listeners granulares, mesmo
+// padrão de _lembretesBucket.
+let _intakeBucket={};    // FB+'/intake_pending' — key = chave real no Firebase
+let intakePendentes=[];  // derivado de _intakeBucket, só status:'pending'
+// Setado por _intakeCriarCard() logo antes de abrir o modal de card novo já
+// pré-preenchido; consumido só no .then() de saveCard() (confirmação real do
+// Firebase) — assim, se a pessoa abrir o modal pré-preenchido e CANCELAR sem
+// salvar, o pedido de intake continua pendente (não é dado como atendido só
+// por ter sido aberto). Resetado no início de openNewCard()/openCard() pra
+// nunca vazar pro card errado numa sessão de edição não relacionada.
+let _intakeOrigemPendingId=null;
 let agilCfg={};
 let criativosAtivo=false; // toggle por squad: mostra a Ficha de Criativo no card + botão Controle de Criativos
 let criativosListas={}; // {id:{id,nome,createdAt}} — listas de segmentação do Controle de Criativos
@@ -7872,6 +7905,31 @@ let _cardsSyncDebounce = null;
       const v=_lembretesBucket[snap.key];
       delete _lembretesBucket[snap.key]; if(v?.id) delete _lembretesKeyById[v.id];
       _syncLembretes();
+    });
+  }
+  // Intake (Fase 5.4) — pedidos gravados por functions/intake/submit.js em
+  // FB+'/intake_pending' (push-id, nunca array — ver comentário na
+  // declaração de _intakeBucket). Mesmo padrão granular de lembretes.
+  if(window._fbReady){
+    const _intakeRef = window._ref(window._db, FB+'/intake_pending');
+    const _syncIntake = ()=>{
+      intakePendentes = Object.values(_intakeBucket).filter(v=>v && v.status==='pending');
+      updIntakeBadge();
+      if(document.getElementById('intake-ov')?.classList.contains('open')) renderIntakeBody();
+    };
+    window._onChildAdded(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_added', snap.val());
+      const v=snap.val(); if(!v) return;
+      _intakeBucket[snap.key]=v;
+      _syncIntake();
+    });
+    window._onChildChanged(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_changed', snap.val());
+      const v=snap.val(); if(!v) return;
+      _intakeBucket[snap.key]=v;
+      _syncIntake();
+    });
+    window._onChildRemoved(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_removed', null);
+      delete _intakeBucket[snap.key];
+      _syncIntake();
     });
   }
   // Lembretes de GESTÃO (globais, fora do squad) — em kanban/painel/lembretes_gestao
@@ -10051,6 +10109,7 @@ function _updateCardBackBtn(){
   if(btn) btn.style.display = _cardNavStack.length ? '' : 'none';
 }
 function openCard(id){
+  _intakeOrigemPendingId=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
@@ -10400,6 +10459,7 @@ function _quickAddApplyIfNew(){
 
 function openNewCard(col){
   if(!checkEditPermission()) return;
+  _intakeOrigemPendingId=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
   _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
   editingLinkedCards=[];
@@ -10603,6 +10663,8 @@ function saveCard(){
     else if(_pendingQLSource?.tipo==='recorrentes') runAutoRules('recorrente_created', _newCard.id, _pendingQLSource.slug);
     _pendingQLSource=null;
   }
+  const _savedIntakePendingId = _intakeOrigemPendingId; // snapshot — ver comentário na declaração
+  const _savedNewCardId = !editingId ? cards[cards.length-1]?.id : null;
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
   // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
@@ -10622,6 +10684,15 @@ function saveCard(){
     // de filhos "em risco" aqui — eles já estão legitimamente vinculados no
     // childCardIds que acabou de ser salvo, não são mais órfãos.
     _newSuperChildIds = [];
+    // Card veio de um "✅ Criar card" no painel de Intake e salvou de
+    // verdade: marca o pedido como atendido (soft — mantém o registro,
+    // status:'done' + cardId, pro histórico) e some da lista de pendentes.
+    // Só roda aqui, na confirmação real do Firebase — ver comentário na
+    // declaração de _intakeOrigemPendingId.
+    if(_savedIntakePendingId && window._fbReady){
+      window._update(fb(FB+'/intake_pending/'+_savedIntakePendingId), {status:'done', cardId:_savedNewCardId||null, doneAt:new Date().toISOString()});
+    }
+    _intakeOrigemPendingId=null;
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     closeOv('card-ov');
     _clearPendingRequired();
@@ -15310,6 +15381,70 @@ function renderMeuDia(){
   `;
 }
 
+// ── Intake (Fase 5.4) ────────────────────────────────────────────────────
+function updIntakeBadge(){
+  const badge=document.getElementById('intake-badge'); if(!badge) return;
+  const n=intakePendentes.length;
+  if(n>0){ badge.textContent=n>9?'9+':n; badge.style.display=''; }
+  else badge.style.display='none';
+}
+function openIntakePanel(){
+  renderIntakeBody();
+  document.getElementById('intake-ov').classList.add('open');
+}
+function _copyIntakeLink(){
+  const url = window.location.origin + window.location.pathname.replace(/kanban(-dev)?\.html$/,'') + 'intake.html?squad=' + encodeURIComponent(ACTIVE_SQUAD);
+  navigator.clipboard?.writeText(url).then(()=>showToast('🔗 Link copiado! '+url), ()=>showToast('⚠️ Não deu pra copiar — copie manualmente: '+url));
+}
+function renderIntakeBody(){
+  const body=document.getElementById('intake-body'); if(!body) return;
+  if(!intakePendentes.length){
+    body.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--txt3);font-size:13px;">📭 Nenhum pedido pendente no momento.</div>';
+    return;
+  }
+  const ordenados = intakePendentes.slice().sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+  body.innerHTML = ordenados.map(item=>{
+    const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
+    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${esc(item.titulo)}</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''} · ${quando}${prazo}</div>
+      ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>
+        <button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function _intakeCriarCard(id){
+  if(!checkEditPermission()) return;
+  const item = _intakeBucket[id]; if(!item) return;
+  closeOv('intake-ov');
+  openNewCard();
+  document.getElementById('m-title').value = '📥 '+item.titulo;
+  const partes = ['**Pedido via formulário de intake**', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
+  if(item.descricao){ partes.push(''); partes.push(item.descricao); }
+  eocInitDisplay('desc-eoc', partes.join('\n'), 'Adicionar descrição...');
+  if(item.prazo){
+    document.getElementById('m-due').value = item.prazo;
+    _mNoDue=false; _renderNoDueBtn();
+  }
+  // Setado DEPOIS de openNewCard() de propósito — openNewCard() zera este
+  // mesmo campo no início (ver comentário na declaração), então só marcar
+  // aqui garante que sobreviva até o saveCard() de verdade.
+  _intakeOrigemPendingId = id;
+  showToast('📥 Pedido carregado no card — revise e clique em Salvar.');
+}
+function _intakeDescartar(id){
+  if(!checkEditPermission()) return;
+  const item = _intakeBucket[id]; if(!item) return;
+  uiConfirm('Descartar o pedido "'+item.titulo+'"? Ele sai da lista de pendentes (fica registrado, mas não vira card).',{title:'Descartar pedido',danger:true,okText:'Descartar'}).then(ok=>{
+    if(!ok) return;
+    window._update(fb(FB+'/intake_pending/'+id), {status:'discarded', discardedAt:new Date().toISOString()});
+  });
+}
+
 function setCampSqFilter(sq){
   window._campSqFilter = sq;
   if(_campAtual) renderCampDetalhe(_campAtual);
@@ -18545,6 +18680,7 @@ const HELP_CONTENT = {
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e (opcional) contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
