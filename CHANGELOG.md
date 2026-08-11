@@ -1318,6 +1318,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.387-dev — 2026-08-11
+Fase 5, item 7 aprovado: indicador de conectividade — escopo
+deliberadamente reduzido em relação à proposta original de "fila
+offline completa" (ver justificativa abaixo).
+
+- Selo "🔴 Offline" no topo (ao lado do botão de tema), ligado ao nó
+  `.info/connected` do próprio Realtime Database — aparece assim que a
+  conexão cai, some assim que volta.
+- Se a conexão está caindo E existe um card aberto com alteração não
+  salva, fechar ou recarregar a aba dispara o aviso nativo do navegador
+  ("sair mesmo assim?") — protege contra perder o que foi digitado sem
+  perceber que estava offline.
+- **Por que não uma fila genérica de reenvio:** o SDK do Realtime
+  Database já reenvia sozinho qualquer escrita feita offline assim que a
+  conexão volta, ENQUANTO a aba continua aberta (o autosave do card já
+  tinha retry próprio antes desta mudança — ver `_saveCardWithRetry`).
+  O buraco real era só a pessoa fechar/recarregar sem saber que estava
+  offline, perdendo o que nem chegou a sair da memória — indicador +
+  aviso de saída resolvem exatamente esse buraco, sem duplicar controle
+  de estado em dezenas de pontos de escrita do app (risco alto pra um
+  item que a própria proposta original já sinalizava como baixa
+  prioridade).
+- HELP_CONTENT atualizado.
+
 ### v8.30.386-dev — 2026-08-11
 Fase 5, item 4 aprovado: formulário de intake por squad — link público,
 sem login, pra quem está fora do squad (ou fora da empresa) pedir algo
