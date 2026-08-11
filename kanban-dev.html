@@ -3116,7 +3116,7 @@ input[type="date"]{-moz-appearance:textfield;}
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
        menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
-  <button class="btn btn-sm" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);position:relative;">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
+  <button class="btn btn-sm" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);position:relative;">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
@@ -3971,6 +3971,12 @@ input[type="date"]{-moz-appearance:textfield;}
       <p id="bmode-desc" style="font-size:11px;color:var(--txt3);margin-bottom:4px;line-height:1.5;"></p>
       <div style="margin-top:10px;" class="cfg-sec-title">Objetivo da sprint</div>
       <div class="field"><textarea class="fi fi-ta" id="cfg-sprint-goal" rows="2" placeholder="Descreva o objetivo..."></textarea></div>
+      <div style="margin-top:10px;" class="cfg-sec-title">📥 Formulário de intake</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;margin-bottom:4px;">
+        <input type="checkbox" id="cfg-intake-enabled" style="accent-color:var(--accent2,#2ecc9c);">
+        Permitir pedidos externos por link público (intake.html)
+      </label>
+      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Se desmarcar, o link de intake deste squad para de aceitar novos pedidos (quem tentar vê um aviso) e o botão "📥 Intake" some da toolbar. Pedidos já pendentes continuam disponíveis pra revisar.</p>
       <div style="margin-top:10px;" class="cfg-sec-title">Colunas do board <button class="btn btn-sm" onclick="toggleColEdit()" id="btn-col-edit" style="margin-left:8px;font-size:10px;">✏️ Editar</button></div>
       <div id="col-editor" style="display:none;margin-bottom:8px;">
         <div id="col-edit-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
@@ -4190,6 +4196,10 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="fluxo-cfg-block">
         <div class="fluxo-cfg-label">⏳ Aging — avisar quando parado <span>(dias parado na MESMA coluna até o card ganhar o aviso ⏳ Xd — vazio ou 0 desliga pra aquela coluna)</span></div>
         <div id="fluxo-aging-cols" class="fluxo-col-list"></div>
+      </div>
+      <div class="fluxo-cfg-block">
+        <div class="fluxo-cfg-label">📈 Ocultar do CFD <span>(colunas que não fazem parte do fluxo de trabalho de verdade — ex.: Backlog, Arquivo, Bloqueios — marque pra tirar do gráfico "📈 CFD & Burndown")</span></div>
+        <div id="fluxo-cfdhide-cols" class="fluxo-col-list"></div>
       </div>
       <button class="btn btn-teal" onclick="salvarFluxoCfg()" style="margin-top:8px;">💾 Salvar configuração de fluxo</button>
       <button class="btn btn-sm" onclick="resetFluxoCfg()" style="margin-top:8px;margin-left:8px;">↺ Voltar ao automático</button>
@@ -5290,7 +5300,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.390-dev</div>
+<div class="version">v8.30.391-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5903,7 +5913,7 @@ function uniqueInitForSquad(desiredInit, allUsers, excludeUid, fullName){
 let cards=[]; // carregado do Firebase
 let collapsedCols=new Set();
 let _colRenderLimit={}; // limite de cards renderizados por coluna (expande com "ver mais")
-let flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{} }; // config de fluxo do PO (relatório de tempo) + limiares de aging por coluna (Fase 5.2). Vazio = heurística automática / aging desligado.
+let flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{}, cfdHiddenCols:[] }; // config de fluxo do PO (relatório de tempo) + limiares de aging por coluna (Fase 5.2) + colunas fora do fluxo escondidas do CFD (Fase 5.3, pedido direto). Vazio = heurística automática / aging desligado / CFD mostra todas as colunas.
 // "Padrões de card": organizador/PO cria um ou mais PADRÕES nomeados —
 // cada um escolhe quais seções OPCIONAIS do modal ficam visíveis (ex.: um
 // padrão "Bug" sem Insights do PO, outro "Campanha" com tudo). Um padrão
@@ -8107,6 +8117,7 @@ let _cardsSyncDebounce = null;
         // listener (que reconstrói flowConfig do zero a cada mudança
         // remota) apaga de volta o que salvarFluxoCfg() acabou de gravar.
         agingDays: (val.agingDays && typeof val.agingDays==='object') ? val.agingDays : {},
+        cfdHiddenCols: Array.isArray(val.cfdHiddenCols)?val.cfdHiddenCols:[],
       };
       scheduleRender(); // 🔧 sem isso o board só refletia a config depois de um reload
       if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
@@ -14481,8 +14492,15 @@ function _renderCFD(){
   const hoje = new Date();
   const dias = [];
   for(let i=CFD_DIAS-1; i>=0; i--){ const d=new Date(hoje); d.setDate(d.getDate()-i); dias.push(_localDateStrBoard(d)); }
-  const colIds = columns.map(c=>c.id);
-  const colInfo = Object.fromEntries(columns.map(c=>[c.id,c]));
+  // Colunas fora do fluxo de verdade (ex.: Backlog, Arquivo, Bloqueios) não
+  // entram no gráfico — configurável em ⚙ Config → Fluxo → "Ocultar do
+  // CFD" (pedido direto: "tem coluna que não faz parte do fluxo"). Vazio =
+  // mostra todas, igual antes.
+  const cfdHidden = new Set(flowConfig.cfdHiddenCols||[]);
+  const visibleCols = columns.filter(c=>!cfdHidden.has(c.id));
+  if(!visibleCols.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Todas as colunas estão ocultas do CFD — ajuste em ⚙ Config → Fluxo.</div>'; return; }
+  const colIds = visibleCols.map(c=>c.id);
+  const colInfo = Object.fromEntries(visibleCols.map(c=>[c.id,c]));
   const serie = Object.fromEntries(colIds.map(id=>[id,[]]));
   dias.forEach(dia=>{
     const contagem = Object.fromEntries(colIds.map(id=>[id,0]));
@@ -14509,7 +14527,7 @@ function _renderCFD(){
   }).join('');
   const everyN = Math.max(1, Math.ceil(dias.length/7));
   const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
-  const legenda = columns.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
+  const legenda = visibleCols.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;">${areas}${labels}</svg>
     <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10px;color:var(--txt2);margin-top:8px;">${legenda}</div>`;
 }
@@ -16789,11 +16807,15 @@ function fillAgilTab(){
   document.getElementById('cfg-wip').value=s.wip||'3';
   document.getElementById('cfg-capacity').value=s.capacity||'80';
   document.getElementById('cfg-sprint-goal').value=s.goal||'';
+  // intakeEnabled ausente (squad nunca configurou) = tratado como ligado,
+  // já que o formulário já estava ativo em produção pra todo mundo antes
+  // deste toggle existir — precisa de opt-OUT explícito, não opt-in.
+  const intakeChk=document.getElementById('cfg-intake-enabled'); if(intakeChk) intakeChk.checked = s.intakeEnabled!==false;
   renderColEditor();
 }
 function saveAgilCfg(){
   calcSprintEnd();
-  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value};
+  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false};
   fbSet(FB+'/agil_cfg',agilCfg);
   fbSet(FB+'/tags',tags);
 
@@ -16847,6 +16869,10 @@ function applyAgilCfg(){
   const gb=document.getElementById('goal-bar');
   if(agilCfg.goal){ document.getElementById('goal-txt').textContent=agilCfg.goal; gb.classList.add('show'); }
   else gb.classList.remove('show');
+  // intakeEnabled ausente = ligado (mesma regra de fillAgilTab — squad
+  // nunca configurou = comportamento de antes do toggle existir).
+  const btnIntake=document.getElementById('btn-intake');
+  if(btnIntake) btnIntake.style.display = (agilCfg.intakeEnabled===false) ? 'none' : '';
 }
 
 // --- Col editor ---
@@ -17252,14 +17278,17 @@ function renderFluxoCfg(){
   const autoDone = flowConfig.doneCols.length? flowConfig.doneCols : _flowDoneColIds();
   const report = flowConfig.reportCols||[];
   const agingDays = flowConfig.agingDays||{};
+  const cfdHidden = flowConfig.cfdHiddenCols||[];
   const sEl=document.getElementById('fluxo-start-cols');
   const dEl=document.getElementById('fluxo-done-cols');
   const rEl=document.getElementById('fluxo-report-cols');
   const aEl=document.getElementById('fluxo-aging-cols');
+  const cEl=document.getElementById('fluxo-cfdhide-cols');
   if(sEl) sEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'start',autoStart.includes(c.id))).join('');
   if(dEl) dEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'done',autoDone.includes(c.id))).join('');
   if(rEl) rEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'report',report.includes(c.id))).join('');
   if(aEl) aEl.innerHTML=(columns||[]).map(c=>_fluxoAgingRow(c,agingDays[c.id])).join('');
+  if(cEl) cEl.innerHTML=(columns||[]).map(c=>_fluxoColRow(c,'cfdhide',cfdHidden.includes(c.id))).join('');
 }
 function salvarFluxoCfg(){
   const grab=g=>[...document.querySelectorAll(`#cfgtab-fluxo input[data-group="${g}"]:checked`)].map(i=>i.value);
@@ -17268,7 +17297,7 @@ function salvarFluxoCfg(){
     const v=parseInt(inp.value,10);
     if(v>0) agingDays[inp.dataset.agingCol]=v;
   });
-  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report'), agingDays };
+  const cfg={ startCols:grab('start'), doneCols:grab('done'), reportCols:grab('report'), agingDays, cfdHiddenCols:grab('cfdhide') };
   if(!cfg.startCols.length || !cfg.doneCols.length){
     uiAlert('Marque pelo menos uma coluna de início e uma de fim para o cálculo funcionar.',{title:'Configuração incompleta'});
     return;
@@ -17280,8 +17309,8 @@ function salvarFluxoCfg(){
   showToast('💾 Fluxo configurado. O relatório de tempo já usa as novas colunas.');
 }
 async function resetFluxoCfg(){
-  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada (inclui os limiares de aging).',{title:'Resetar fluxo',okText:'Resetar'})) return;
-  flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{} };
+  if(!await uiConfirm('Voltar à detecção automática de início/fim? Sua configuração manual será apagada (inclui os limiares de aging e as colunas ocultas do CFD).',{title:'Resetar fluxo',okText:'Resetar'})) return;
+  flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{}, cfdHiddenCols:[] };
   fbSet(FB+'/config/flow', flowConfig);
   renderBoard(); // 🔧 aplica na hora
   renderFluxoCfg();
@@ -18736,9 +18765,9 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
-    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.' },
+    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e (opcional) contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e (opcional) contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },

@@ -1366,6 +1366,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.391-dev — 2026-08-11
+Dois ajustes pedidos direto sobre Fase 5.3 (CFD) e 5.4 (intake):
+
+**📈 Filtro de colunas no CFD** — nem toda coluna do board é "fluxo de
+trabalho" de verdade (Backlog, Arquivo, Bloqueios...). Novo campo
+`flowConfig.cfdHiddenCols`, configurável em ⚙ Config → Fluxo → "Ocultar
+do CFD" (mesmo padrão de checkbox-por-coluna já usado pra início/fim/
+relatório/aging). Vazio = mostra todas as colunas, igual antes.
+
+**📥 Intake virou opcional por squad** — novo campo
+`agilCfg.intakeEnabled` em ⚙ Config → Ágil (checkbox, ligado por
+padrão — precisa de opt-OUT explícito, já que o formulário já estava
+ativo em produção pra todo mundo antes deste toggle existir). Desligar:
+- esconde o botão "📥 Intake" da toolbar;
+- a Cloud Function (`functions/intake/submit.js`) passa a rejeitar
+  POSTs novos com `intake_disabled` — não é só cosmético no board, o
+  link público de verdade para de aceitar pedido;
+- `intake.html` mostra um aviso ("squad desativou os pedidos") em vez
+  do formulário;
+- pedidos já pendentes de antes de desligar continuam disponíveis pra
+  revisar (nada é apagado).
+
+**Atenção — passo manual:** requer novo
+`firebase deploy --only functions:intakeSubmit` pra o opt-out valer
+de verdade no link público (sem o deploy, o board esconde o botão mas
+a function antiga continua aceitando pedido).
+
+HELP_CONTENT atualizado nas duas entradas ("CFD & Burndown" e
+"Formulário de intake").
+
 ### v8.30.390-dev — 2026-08-11
 Feedback direto logo depois de v8.30.389-dev: "pela Hering não dá pra
 colocar 'Qualquer pessoa com o link pode ver'" — a política do Google
