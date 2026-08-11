@@ -1366,6 +1366,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.395-dev — 2026-08-11
+Dois pedidos diretos sobre a Ficha Técnica e seus painéis de contagem:
+
+- **Removido "Status de produção"**: era um campo manual redundante —
+  a coluna do board já mostra em que etapa cada card está, e isso já
+  aparece em "📊 Dados do Board". Removido o campo do modal, a coluna e
+  o filtro da tabela do Controle de Criativos, o donut "Por status" e a
+  coluna no CSV/importação. Junto saiu toda a automação que tentava
+  espelhar a coluna nesse campo (`_crvComputeAutoStatus`/
+  `_crvApplyAutoStatus`/`_crvSweepAutoStatus`, ~17 pontos de chamada) —
+  ficava sempre defasada pros estados intermediários (Briefing OK,
+  Material pendente etc.) que não tinham como derivar sozinhos da
+  coluna. Os cards "Concluídos"/"Em andamento"/"Atrasados" do painel
+  🎬 Controle de Criativos → Dashboard agora calculam direto da coluna
+  do board, sem depender de nenhum campo salvo no card.
+- **Total/Cards/Supercards nas contagens**: supercards são só a junção
+  de vários cards filhos — não têm "vida própria" como demanda
+  independente. Sem tirar ninguém do total, os painéis que contam
+  cards agora também separam a composição: novo painel "🧩 Cards vs.
+  Supercards" no Dashboard do Controle de Criativos, e o sub-texto de
+  "Cards ativos" em 📊 Dados do Board → Visão Geral. Helper novo
+  `_cardIsSuperChild()` (reverso de `_cardIsSupercard()` já existente)
+  identifica um card filho varrendo `childCardIds` de todo mundo, já
+  que não existe campo `parentId` no filho.
+
 ### v8.30.394-dev — 2026-08-11
 Pedido direto: Direcional de Mídia vira o único campo opcional da Ficha
 Técnica — não bloqueia mais salvar o card quando vazio. Label ganhou

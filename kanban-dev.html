@@ -3645,22 +3645,6 @@ input[type="date"]{-moz-appearance:textfield;}
         <textarea class="fi" id="m-crv-direcional" rows="2" oninput="scheduleAutoSave()" placeholder="Instrução importante pra quem for produzir/mídia — se preencher, aparece com destaque pra quem pegar o card." style="background:rgba(255,209,102,.08);border-color:rgba(255,209,102,.4);"></textarea>
       </div>
 
-      <div class="card-attr-row">
-        <div class="field"><label class="fl">Status de produção</label>
-          <select class="fi" id="m-crv-status" onchange="scheduleAutoSave()">
-            <option value="">— sem status —</option>
-            <option value="Não iniciada">Não iniciada</option>
-            <option value="Briefing OK">Briefing OK</option>
-            <option value="Material pendente">Material pendente</option>
-            <option value="Em execução">Em execução</option>
-            <option value="Em aprovação">Em aprovação</option>
-            <option value="Stand by">Stand by</option>
-            <option value="Impedido">🚧 Impedido</option>
-            <option value="Atrasado">⏰ Atrasado</option>
-            <option value="Concluído">Concluído</option>
-          </select>
-        </div>
-      </div>
     </div>
 
     <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
@@ -4980,7 +4964,6 @@ input[type="date"]{-moz-appearance:textfield;}
             <th style="padding:6px 8px;">Objetivo</th>
             <th style="padding:6px 8px;">Plataforma</th>
             <th style="padding:6px 8px;">Formato</th>
-            <th style="padding:6px 8px;">Status</th>
             <th style="padding:6px 8px;">Prazo</th>
             <th style="padding:6px 8px;">Prioridade</th>
             <th style="padding:6px 8px;">Qtd</th>
@@ -4993,20 +4976,6 @@ input[type="date"]{-moz-appearance:textfield;}
             <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-objetivo" onchange="renderCriativosTable()"><option value="">Todos</option></select></th>
             <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-plataforma" onchange="renderCriativosTable()"><option value="">Todas</option></select></th>
             <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-formato" onchange="renderCriativosTable()"><option value="">Todos</option></select></th>
-            <th style="padding:3px 8px;">
-              <select class="fi crv-fh" id="crv-fh-status" onchange="renderCriativosTable()">
-                <option value="">Todos</option>
-                <option value="Não iniciada">Não iniciada</option>
-                <option value="Briefing OK">Briefing OK</option>
-                <option value="Material pendente">Material pendente</option>
-                <option value="Em execução">Em execução</option>
-                <option value="Em aprovação">Em aprovação</option>
-                <option value="Stand by">Stand by</option>
-                <option value="Impedido">🚧 Impedido</option>
-                <option value="Atrasado">⏰ Atrasado</option>
-                <option value="Concluído">Concluído</option>
-              </select>
-            </th>
             <th style="padding:3px 8px;">
               <select class="fi crv-fh" id="crv-fh-prazo" onchange="renderCriativosTable()">
                 <option value="">Todos</option>
@@ -5082,7 +5051,6 @@ input[type="date"]{-moz-appearance:textfield;}
             <th style="padding:5px 6px;">Objetivo</th>
             <th style="padding:5px 6px;">Plataforma</th>
             <th style="padding:5px 6px;">Formato</th>
-            <th style="padding:5px 6px;">Status</th>
             <th style="padding:5px 6px;">Qtd</th>
           </tr>
         </thead>
@@ -5355,7 +5323,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.394-dev</div>
+<div class="version">v8.30.395-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6190,7 +6158,6 @@ function _doBulkMove(colId){
     c.col=colId;
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    _crvApplyAutoStatus(c); // 🤖
     recordHistory(c,'moveu para '+(col?.name||colId));
   } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
@@ -6371,7 +6338,6 @@ function _doBulkBlockCol(){
     c.col='blocker';
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    _crvApplyAutoStatus(c); // 🤖
     recordHistory(c,'moveu para '+(col?.name||'Impedimentos'));
   });
   _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.');
@@ -6385,7 +6351,6 @@ function _doBulkUnblockCol(colId){
     c.col=colId;
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    _crvApplyAutoStatus(c); // 🤖
     recordHistory(c,'moveu para '+(col?.name||colId));
   });
   _bulkFinish('✅ '+n+' card(s) removidos de Impedimentos → '+(col?.name||colId)+'.');
@@ -8254,7 +8219,6 @@ let _cardsSyncDebounce = null;
         cfdHiddenCols: Array.isArray(val.cfdHiddenCols)?val.cfdHiddenCols:[],
       };
       scheduleRender(); // 🔧 sem isso o board só refletia a config depois de um reload
-      if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 recalcula status retroativamente
     }
   });
   // Padrões de card (vários padrões nomeados, cada um com suas seções)
@@ -9415,6 +9379,26 @@ function _cardIsSupercard(card){
     return c && !c.archived;
   });
 }
+// Reverso de _cardIsSupercard: é filho quando algum outro card ativo lista
+// seu id em childCardIds — não há campo parentId no filho, só a lista no
+// pai (mesmo padrão de reverse-scan usado na nota "filho de" do modal).
+function _cardIsSuperChild(card, allCards){
+  return (allCards||cards).some(p=>p.id!==card.id && !p.archived && (p.childCardIds||[]).includes(card.id));
+}
+// Total/Cards/Supercards: supercards são só a junção dos filhos (não têm
+// "vida própria" como demanda independente — pedido direto), então card
+// comum = nem supercard nem filho de um. Total inclui os 3, sem excluir
+// supercards da contagem — só separa pra não inflar "cards" com o que na
+// prática é agregação.
+function _crvCardCountBreakdown(rows){
+  const allCards=cards;
+  let supercards=0, superChildren=0;
+  rows.forEach(c=>{
+    if(_cardIsSupercard(c)) supercards++;
+    else if(_cardIsSuperChild(c, allCards)) superChildren++;
+  });
+  return { total: rows.length, cards: rows.length-supercards-superChildren, supercards, superChildren };
+}
 function _saveSubmarcaFiltroPadrao(){
   safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca||[]));
 }
@@ -9637,6 +9621,10 @@ function renderBoardDataGrid(){
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
   const naoConcluidos=activeCards.filter(c=>c.col!=='done');
   const totalAtivos=naoConcluidos.length;
+  // Supercards são só a junção dos filhos (não têm "vida própria" como
+  // demanda independente — pedido direto), então "Cards ativos" continua
+  // contando todos, mas o sub-texto separa a composição.
+  const compos=_crvCardCountBreakdown(naoConcluidos);
   const semDono=naoConcluidos.filter(c=>!c.owner).length;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   const vencidos=naoConcluidos.filter(c=>{
@@ -9644,7 +9632,7 @@ function renderBoardDataGrid(){
     const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
     return d<hoje;
   }).length;
-  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${'não concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div>`;
+  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div>`;
 }
 
 
@@ -9841,7 +9829,6 @@ function scheduleAutoSave(){
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
-    _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _asBefore); // 📜 registra o que mudou
     // ⚡ fbSaveCard() sem .catch() aqui era uma promise rejeitada e esquecida:
     // se a escrita falhasse (rede instável, sessão expirada, etc.), NADA
@@ -10841,7 +10828,6 @@ function saveCard(){
       edited:user,editedAt:td,
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
-    _crvApplyAutoStatus(c); // 🤖
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
     // Trigger "Prioridade definida como X" (Automações) — prioridade só é
@@ -11421,11 +11407,10 @@ function getCriativoData(){
   const variacoes=(document.querySelector('input[name="crv-variacoes"]:checked')||{}).value||'';
   const variacoesQtd=document.getElementById('m-crv-variacoes-qtd')?.value||'';
   const direcional=document.getElementById('m-crv-direcional')?.value.trim()||'';
-  const status=document.getElementById('m-crv-status')?.value||'';
   const vazio = !campanhaTipo && !funil && !etapaFunil && !canal && !objetivos.length && !plataformas.length
-    && !tipo && !formato && !variacoes && !direcional && !status;
+    && !tipo && !formato && !variacoes && !direcional;
   if(vazio) return null;
-  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,plataformas,tipo,formato,variacoes,variacoesQtd,direcional,status};
+  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,plataformas,tipo,formato,variacoes,variacoesQtd,direcional};
 }
 function setCriativoFields(crv){
   crv=crv||{};
@@ -11455,11 +11440,10 @@ function setCriativoFields(crv){
   _crvVariacoesChange();
   set('m-crv-variacoes-qtd', crv.variacoesQtd);
   set('m-crv-direcional', crv.direcional);
-  set('m-crv-status', crv.status);
 }
 
 function _criativosRows(){
-  return cards.filter(c=>!c.archived && c.criativo && (c.criativo.canal||(c.criativo.objetivos||[]).length||(c.criativo.plataformas||[]).length||c.criativo.tipo||c.criativo.formato||c.criativo.qtd||c.criativo.status||c.criativo.obs));
+  return cards.filter(c=>!c.archived && c.criativo && (c.criativo.canal||(c.criativo.objetivos||[]).length||(c.criativo.plataformas||[]).length||c.criativo.tipo||c.criativo.formato||c.criativo.qtd||c.criativo.obs));
 }
 // Resolve id → label numa das 5 listas da Ficha Técnica. Cai no próprio
 // valor bruto se não achar (cobre dado legado/importado que nunca foi um id
@@ -11919,40 +11903,6 @@ async function _criativosImportListaChange(sel){
   _populateCriativosImportLista();
   sel.value=id;
 }
-// 🤖 Automacao de Status do Controle de Criativos: recalcula o status do criativo
-// conforme o card anda no board. Prioridade: coluna de conclusao > impedimento > atrasado.
-// So mexe em cards com campo criativo preenchido. Sempre sobrescreve quando uma condicao
-// automatica bate (nao respeita edicao manual anterior); quando nenhuma condicao bate, nao
-// mexe em nada -- o status manual do usuario fica intacto.
-function _crvComputeAutoStatus(card){
-  if(!card || !card.criativo) return null;
-  if(_isColDone(card.col)) return 'Concluído';
-  const _crvCol = columns.find(cc=>cc.id===card.col);
-  const _crvColBlocked = _crvCol && /imped|bloque/i.test(_crvCol.name||'');
-  if(card.blocker || _crvColBlocked) return 'Impedido';
-  const today = new Date().toISOString().slice(0,10);
-  if(card.due && card.due < today) return 'Atrasado';
-  return null;
-}
-function _crvApplyAutoStatus(card){
-  if(!card || !card.criativo) return;
-  const auto = _crvComputeAutoStatus(card);
-  if(auto && card.criativo.status !== auto){
-    const before = card.criativo.status || '—';
-    card.criativo.status = auto;
-    recordHistory(card, '🤖 status do criativo mudou automaticamente de "'+before+'" para "'+auto+'"');
-  }
-}
-function _crvSweepAutoStatus(){
-  let changed=false;
-  (cards||[]).forEach(c=>{
-    if(c.archived || !c.criativo) return;
-    const before=c.criativo.status;
-    _crvApplyAutoStatus(c);
-    if(c.criativo.status!==before){ changed=true; fbSaveCard(c); }
-  });
-  if(changed && typeof renderCriativosTable==='function') renderCriativosTable();
-}
 // Popula os 4 selects de filtro (Canal/Objetivo/Plataforma/Formato) do
 // Controle de Criativos a partir de criativoOpcoes — chamado na abertura
 // do painel e sempre que a config muda remotamente.
@@ -11966,7 +11916,6 @@ function _populateCriativosFiltroOpcoes(){
   });
 }
 function openCriativos(){
-  _crvSweepAutoStatus();
   const ov=document.getElementById('criativos-ov'); if(!ov) return;
   ov.classList.add('open');
   _populateCriativosFilterLista();
@@ -12020,16 +11969,15 @@ function renderCriativosDashboard(){
     return;
   }
   const total=rows.length;
-  const statusOrder=['Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Impedido','Atrasado','Concluído'];
-  const statusColors={'Não iniciada':'#8a94a6','Briefing OK':'#38b6ff','Material pendente':'#ffab40','Em execução':'#a78bfa','Em aprovação':'#ffd54f','Stand by':'#5b6472','Impedido':'#e84646','Atrasado':'#ff9800','Concluído':'#4ade80'};
-  const statusCounts={}; statusOrder.forEach(s=>statusCounts[s]=0); let semStatus=0;
-  rows.forEach(c=>{ const st=(c.criativo&&c.criativo.status)||''; if(statusCounts.hasOwnProperty(st)) statusCounts[st]++; else semStatus++; });
-  const concluidos=statusCounts['Concluído']||0;
-  const paradas=(statusCounts['Não iniciada']||0)+(statusCounts['Stand by']||0);
-  const emAndamento=Math.max(0, total-concluidos-paradas-semStatus);
+  // Status de produção foi removido da Ficha Técnica (pedido direto: já é
+  // calculado pela coluna do board, redundante com "Dados do Board") —
+  // Concluídos/Atrasados aqui usam a coluna direto, mesma fonte de verdade.
+  const concluidos=rows.filter(c=>_isColDone(c.col)).length;
   const today=new Date().toISOString().split('T')[0];
-  const atrasados=rows.filter(c=>c.due && c.due<today && (!c.criativo || c.criativo.status!=='Concluído')).length;
+  const atrasados=rows.filter(c=>c.due && c.due<today && !_isColDone(c.col)).length;
+  const emAndamento=Math.max(0, total-concluidos-atrasados);
   const pctConcl = total>0?Math.round(concluidos/total*100):0;
+  const compos=_crvCardCountBreakdown(rows);
 
   const prioOrder=['critical','high','medium','low'];
   const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
@@ -12056,18 +12004,6 @@ function renderCriativosDashboard(){
   const listaMap=new Map();
   rows.forEach(c=>{ const lid=c.criativo&&c.criativo.lista; const nome=lid&&criativosListas[lid]?criativosListas[lid].nome:'Sem lista'; listaMap.set(nome,(listaMap.get(nome)||0)+1); });
   const byLista=[...listaMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
-
-  const statusSegs=statusOrder.map(s=>({color:statusColors[s],value:statusCounts[s]}));
-  if(semStatus>0) statusSegs.push({color:'#444',value:semStatus});
-  const statusGrad=_crvDonutGradient(statusSegs);
-  const statusLegend=statusOrder.map(s=>{
-    const n=statusCounts[s]; const pct=total>0?Math.round(n/total*100):0;
-    return '<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt2);margin-bottom:5px;">'
-      +'<span style="width:9px;height:9px;border-radius:50%;background:'+statusColors[s]+';flex-shrink:0;"></span>'
-      +'<span style="flex:1;">'+esc(s)+'</span>'
-      +'<b style="color:var(--txt);">'+n+'</b><span style="color:var(--txt3);margin-left:4px;">('+pct+'%)</span>'
-      +'</div>';
-  }).join('') + (semStatus>0? ('<div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--txt3);margin-bottom:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#444;flex-shrink:0;"></span><span style="flex:1;">Sem status</span><b>'+semStatus+'</b></div>') : '');
 
   const prioSegs=prioOrder.map(p=>({color:prioColors[p],value:prioCounts[p]}));
   if(semPrio>0) prioSegs.push({color:prioColors.none,value:semPrio});
@@ -12103,13 +12039,7 @@ function renderCriativosDashboard(){
       +statCard('⚠️','Atrasados',atrasados,'#ff6b6b')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
-      +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
-        +'<div class="cfg-sec-title" style="margin-bottom:12px;">📊 Por status</div>'
-        +'<div style="display:flex;align-items:center;gap:18px;">'
-          +'<div class="crv-dash-donut" style="width:96px;height:96px;background:'+statusGrad+';"><span>'+total+'</span></div>'
-          +'<div style="flex:1;">'+statusLegend+'</div>'
-        +'</div>'
-      +'</div>'
+      +barsBlock('🧩 Cards vs. Supercards', [['Cards',compos.cards],['Supercards',compos.supercards],['Cards filhos',compos.superChildren]])
       +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
         +'<div class="cfg-sec-title" style="margin-bottom:12px;">🚦 Por prioridade</div>'
         +'<div style="display:flex;align-items:center;gap:18px;">'
@@ -12127,7 +12057,7 @@ function renderCriativosDashboard(){
 }
 function _crvClearFilters(){
   ['crv-fh-canal','crv-fh-objetivo','crv-fh-plataforma','crv-fh-formato','crv-fh-qtd'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  ['crv-filter-lista','crv-fh-status','crv-fh-prazo','crv-fh-prioridade'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['crv-filter-lista','crv-fh-prazo','crv-fh-prioridade'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const s=document.getElementById('crv-search'); if(s) s.value='';
   renderCriativosTable();
 }
@@ -12144,7 +12074,6 @@ function _criativosFilteredRows(){
   const fObjetivo=document.getElementById('crv-fh-objetivo')?.value||'';
   const fPlataforma=document.getElementById('crv-fh-plataforma')?.value||'';
   const fFormato=document.getElementById('crv-fh-formato')?.value||'';
-  const fStatus=document.getElementById('crv-fh-status')?.value||'';
   const fPrazo=document.getElementById('crv-fh-prazo')?.value||'';
   const fPrioridade=document.getElementById('crv-fh-prioridade')?.value||'';
   const fQtdRaw=document.getElementById('crv-fh-qtd')?.value||'';
@@ -12155,7 +12084,6 @@ function _criativosFilteredRows(){
   if(fObjetivo) rows=rows.filter(c=>(c.criativo&&c.criativo.objetivos||[]).includes(fObjetivo));
   if(fPlataforma) rows=rows.filter(c=>(c.criativo&&c.criativo.plataformas||[]).includes(fPlataforma));
   if(fFormato) rows=rows.filter(c=>(c.criativo&&c.criativo.formato||'')===fFormato);
-  if(fStatus) rows=rows.filter(c=>(c.criativo&&c.criativo.status||'')===fStatus);
   if(fPrioridade){
     if(fPrioridade==='none') rows=rows.filter(c=>!c.priority);
     else rows=rows.filter(c=>c.priority===fPrioridade);
@@ -12184,7 +12112,7 @@ function renderCriativosTable(){
   const cEl=document.getElementById('crv-count'); if(cEl) cEl.textContent = rows.length+' pedido(s)';
   const tbody=document.getElementById('crv-tbody'); if(!tbody) return;
   if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha Técnica preenchida ainda (ou nenhum bate com os filtros).</td></tr>';
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha Técnica preenchida ainda (ou nenhum bate com os filtros).</td></tr>';
     return;
   }
   const prioMap={low:'🟢 Baixa',medium:'🟡 Média',high:'🔴 Alta',critical:'🔥 Crítica'};
@@ -12205,7 +12133,6 @@ function renderCriativosTable(){
       +'<td title="Múltipla escolha — abra o card pra editar">'+esc(objetivoTxt)+'</td>'
       +'<td title="Múltipla escolha — abra o card pra editar">'+esc(plataformaTxt)+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'formato\')">'+esc(_crvLabel('formatos',crv.formato)||'—')+'</td>'
-      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'status\')">'+esc(crv.status||'—')+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'due\')">'+(c.due?esc(_fmtDateBR2(c.due)):'—')+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'priority\')">'+(prioMap[c.priority]||'—')+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'qtd\')">'+esc(crv.qtd||'0')+'</td>'
@@ -12294,16 +12221,6 @@ function _crvEditCell(td, cardId, field){
     sel.onblur=()=>finish(false);
     return;
   }
-  if(field==='status'){
-    const statuses=['','Não iniciada','Briefing OK','Material pendente','Em execução','Em aprovação','Stand by','Impedido','Atrasado','Concluído'];
-    const sel=document.createElement('select');
-    sel.className='fi crv-edit-select';
-    sel.innerHTML=statuses.map(s=>'<option value="'+esc(s)+'"'+(s===(crv.status||'')?' selected':'')+'>'+(s?esc(s):'— sem status —')+'</option>').join('');
-    td.innerHTML=''; td.appendChild(sel); sel.focus();
-    sel.onchange=()=>finish(true,sel.value);
-    sel.onblur=()=>finish(false);
-    return;
-  }
   if(field==='priority'){
     const opts=[['','— sem prioridade —'],['low','🟢 Baixa'],['medium','🟡 Média'],['high','🔴 Alta'],['critical','🔥 Crítica']];
     const sel=document.createElement('select');
@@ -12377,13 +12294,13 @@ function exportCriativosCSV(){
   if(!_isPOorOrg()){ showToast('🔒 Exportar disponível só para ADM, PO e Organizador.'); return; }
   const rows=_criativosFilteredRows();
   if(!rows.length){ showToast('Nenhum dado para exportar.'); return; }
-  const headers=['Pedido','Lista','Canal','Objetivo','Plataforma','Tipo','Formato','Status','Prazo','Prioridade','Qtd Criativos','Direcional de Mídia','Responsável','Obs'];
+  const headers=['Pedido','Lista','Canal','Objetivo','Plataforma','Tipo','Formato','Prazo','Prioridade','Qtd Criativos','Direcional de Mídia','Responsável','Obs'];
   const csvRows=[headers.join(';')];
   rows.forEach(c=>{
     const crv=c.criativo||{};
     const owner=members.find(m=>m.init===c.owner);
     const listaNome = crv.lista && criativosListas[crv.lista] ? criativosListas[crv.lista].nome : '';
-    const line=[c.title,listaNome,_crvLabel('canais',crv.canal),_crvLabels('objetivos',crv.objetivos).join(', '),_crvLabels('plataformas',crv.plataformas).join(', '),_crvLabel('tipos',crv.tipo),_crvLabel('formatos',crv.formato),crv.status,c.due||'',c.priority||'',crv.qtd||'',crv.direcional||'',owner?owner.name:(c.owner||''),crv.obs||'']
+    const line=[c.title,listaNome,_crvLabel('canais',crv.canal),_crvLabels('objetivos',crv.objetivos).join(', '),_crvLabels('plataformas',crv.plataformas).join(', '),_crvLabel('tipos',crv.tipo),_crvLabel('formatos',crv.formato),c.due||'',c.priority||'',crv.qtd||'',crv.direcional||'',owner?owner.name:(c.owner||''),crv.obs||'']
       .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"');
     csvRows.push(line.join(';'));
   });
@@ -12454,7 +12371,6 @@ function _buildCriativosImportPreview(rows){
       plataforma: _colVal(row,[/plataforma/i]),
       formato: _colVal(row,[/formato/i]),
       qtd: _colVal(row,[/qtd/i,/quantidade/i]),
-      status: _colVal(row,[/status/i]),
       obs: _colVal(row,[/obs/i]),
       include: !!match,
     };
@@ -12487,7 +12403,6 @@ function renderCriativosImportPreview(){
       +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.objetivo)||'—')+'</td>'
       +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.plataforma)||'—')+'</td>'
       +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.formato)||'—')+'</td>'
-      +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.status)||'—')+'</td>'
       +'<td style="padding:5px 6px;color:var(--txt2);">'+(esc(r.qtd)||'—')+'</td>'
       +'</tr>';
   }).join('');
@@ -12512,7 +12427,6 @@ function _criativosImportConfirm(){
     if(r.objetivo) crv.objetivos=[r.objetivo];
     if(r.plataforma) crv.plataformas=[r.plataforma];
     if(r.formato) crv.formato=r.formato;
-    if(r.status) crv.status=r.status;
     if(r.qtd) crv.qtd=r.qtd;
     if(r.obs) crv.obs=r.obs;
     if(listaDestino) crv.lista=listaDestino;
@@ -17790,7 +17704,6 @@ function salvarFluxoCfg(){
   flowConfig=cfg;
   fbSet(FB+'/config/flow', cfg);
   renderBoard(); // 🔧 aplica o dimming/checkmark/aging na hora, sem precisar recarregar
-  if(typeof _crvSweepAutoStatus==='function') _crvSweepAutoStatus(); // 🤖 corrige status retroativamente
   showToast('💾 Fluxo configurado. O relatório de tempo já usa as novas colunas.');
 }
 async function resetFluxoCfg(){
@@ -22408,7 +22321,6 @@ function handleDrop(e, colId){
   card.editedAt = new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  _crvApplyAutoStatus(card); // 🤖
   if(prevColDrop!==colId){ const _cn=columns.find(x=>x.id===colId); recordHistory(card, 'moveu para '+(_cn?_cn.name:colId)); } // 📜
   recordMove(card, colId); // ← registra transição p/ métricas de fluxo
   card._savePending = true; // flag: ignora echo do Firebase durante o save
@@ -22525,7 +22437,6 @@ function addTouchDnD(el, cardId){
     card.editedAt=new Date().toISOString().split('T')[0];
     card.updatedAt = new Date().toISOString();
     card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    _crvApplyAutoStatus(card); // 🤖
     renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
     showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
   });
@@ -23317,7 +23228,6 @@ function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.blocker=false; c.blockerReason='';
-  _crvApplyAutoStatus(c); // 🤖
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
@@ -23530,7 +23440,6 @@ function ctxMove(colId){
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  _crvApplyAutoStatus(card); // 🤖
   renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
   // Notificações
   const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
