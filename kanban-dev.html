@@ -3381,7 +3381,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <!-- Título -->
     <div class="field">
       <label class="fl">Título</label>
-      <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()"
+      <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()" onblur="_quickAddApplyIfNew()"
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
     </div>
     <div id="req-hint" style="display:none;font-size:11px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;padding:7px 11px;margin-bottom:10px;line-height:1.5;"></div>
@@ -5211,7 +5211,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.377-dev</div>
+<div class="version">v8.30.378-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10171,6 +10171,94 @@ function checkEditPermission(){
   // com quem já chama checkEditPermission() e como trava única caso um papel mais
   // restritivo seja criado no futuro.
   return true;
+}
+
+// ── Fase 5.5: quick-add com parsing natural ─────────────────────────────
+// No título de um card NOVO (nunca num card já existente — editar não deve
+// reescrever campos sozinho), reconhece !prioridade, @responsável, #tag e
+// datas ("hoje", "amanhã", dia da semana, "dd/mm") digitados junto do
+// título, tira esses tokens do texto e já preenche os campos correspondentes.
+// Disparado no blur do campo (ver onblur="_quickAddApplyIfNew()" no
+// #m-title) — dá tempo da pessoa terminar de digitar a frase inteira antes
+// de tentar entender ela.
+const _QA_PRIORITY_MAP = {alta:'high',media:'medium',baixa:'low',critica:'critical',urgente:'critical'};
+const _QA_WEEKDAYS = {domingo:0,dom:0,segunda:1,seg:1,terca:2,ter:2,quarta:3,qua:3,quinta:4,qui:4,sexta:5,sex:5,sabado:6,sab:6};
+function _qaNorm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function _qaParseDate(token){
+  const t = _qaNorm(token);
+  const hoje = new Date();
+  if(t==='hoje') return _localDateStrBoard(hoje);
+  if(t==='amanha'){ const d=new Date(hoje); d.setDate(d.getDate()+1); return _localDateStrBoard(d); }
+  if(t in _QA_WEEKDAYS){
+    const alvo=_QA_WEEKDAYS[t];
+    const d=new Date(hoje);
+    d.setDate(d.getDate() + ((alvo-d.getDay()+7)%7)); // 0 = a própria data de hoje, se cair no dia certo
+    return _localDateStrBoard(d);
+  }
+  const m = token.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+  if(m){
+    const dia=parseInt(m[1],10), mes=parseInt(m[2],10)-1;
+    let ano = m[3] ? parseInt(m[3],10) : hoje.getFullYear();
+    if(ano<100) ano+=2000;
+    const d=new Date(ano,mes,dia);
+    if(isNaN(d.getTime())) return null;
+    if(!m[3] && d < new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate())) d.setFullYear(ano+1); // sem ano explícito e já passou → assume o próximo
+    return _localDateStrBoard(d);
+  }
+  return null;
+}
+function _quickAddParse(rawTitle){
+  let title = rawTitle;
+  const result = {priority:null, ownerInit:null, tagIds:[], due:null};
+  title = title.replace(/(^|\s)!(\S+)/g, (m,pre,word)=>{
+    const p=_QA_PRIORITY_MAP[_qaNorm(word)];
+    if(p){ result.priority=p; return pre; }
+    return m;
+  });
+  title = title.replace(/(^|\s)@(\S+)/g, (m,pre,handle)=>{
+    const clean=handle.replace(/[.,;!?]+$/,'');
+    const found = getMemberByHandle(clean)
+      || members.find(mb=>mb.init && mb.init.toLowerCase()===clean.toLowerCase())
+      || members.find(mb=>(mb.name||'').toLowerCase().startsWith(clean.toLowerCase()));
+    if(found){ result.ownerInit=found.init; return pre; }
+    return m;
+  });
+  title = title.replace(/(^|\s)#(\S+)/g, (m,pre,tagName)=>{
+    const clean=tagName.replace(/[.,;!?]+$/,'');
+    const found = tags.find(t=>(t.label||'').toLowerCase()===clean.toLowerCase());
+    if(found){ result.tagIds.push(found.id); return pre; }
+    return m;
+  });
+  const dateRe = /(^|\s)(hoje|amanh[aã]|domingo|dom|segunda|seg|ter[çc]a|ter|quarta|qua|quinta|qui|sexta|sex|s[aá]bado|s[aá]b|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)(?=\s|$)/i;
+  const dm = title.match(dateRe);
+  if(dm){
+    const parsed=_qaParseDate(dm[2]);
+    if(parsed){ result.due=parsed; title=title.replace(dateRe,'$1'); }
+  }
+  result.title = title.replace(/\s+/g,' ').trim();
+  return result;
+}
+function _quickAddApplyIfNew(){
+  if(editingId) return; // só em criação — nunca reescreve campos de um card já existente
+  const el=document.getElementById('m-title'); if(!el) return;
+  const raw=el.value; if(!raw.trim()) return;
+  const parsed=_quickAddParse(raw);
+  if(parsed.title===raw && !parsed.priority && !parsed.ownerInit && !parsed.tagIds.length && !parsed.due) return; // nada reconhecido
+  el.value=parsed.title;
+  const applied=[];
+  if(parsed.priority){ const pSel=document.getElementById('m-priority'); if(pSel){ pSel.value=parsed.priority; applied.push('prioridade'); } }
+  if(parsed.ownerInit){ const oSel=document.getElementById('m-owner'); if(oSel){ oSel.value=parsed.ownerInit; applied.push('responsável'); } }
+  if(parsed.due){
+    const dEl=document.getElementById('m-due'); if(dEl) dEl.value=parsed.due;
+    _mNoDue=false; if(typeof _renderNoDueBtn==='function') _renderNoDueBtn();
+    applied.push('prazo');
+  }
+  if(parsed.tagIds.length){
+    parsed.tagIds.forEach(id=>{ if(!editingTags.includes(id)) editingTags.push(id); });
+    if(typeof populateTagSelect==='function') populateTagSelect();
+    applied.push('tag'+(parsed.tagIds.length>1?'s':''));
+  }
+  if(applied.length) showToast('✨ Detectei: '+applied.join(', ')+' — confere antes de salvar.');
 }
 
 function openNewCard(col){
@@ -18022,6 +18110,7 @@ const HELP_CONTENT = {
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
+    { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
     { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚙ Config → Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
