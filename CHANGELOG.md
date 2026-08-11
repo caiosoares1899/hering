@@ -1318,6 +1318,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.383-dev — 2026-08-11
+Fase 1.1 (aprovada): comentários saíram de dentro do card. Maior fonte
+de banda restante — cada edição de QUALQUER campo de um card
+retransmitia os comentários dele inteiros pra todo mundo com o board
+aberto, mesmo quem nunca abre aquele card específico.
+
+- Novo path `squads/{squad}/dados/card_comments/{cardId}/{commentId}`
+  (sob `dados/`, sem regra nova no Firebase). `_commentsCache` em
+  memória é a fonte pro que a tela mostra.
+- Migração sem lote: `loadComments()` tenta o path novo; se vazio E o
+  card ainda tiver o campo legado `comments`, usa esse dado E migra em
+  background (grava no path novo, remove o campo do card, salva) — cards
+  só migram quando alguém realmente abre e vê os comentários deles.
+- Todas as ações de comentário (postar/editar/excluir/reagir, e os
+  comentários automáticos do Agente Ágil) escrevem só o item em si no
+  path novo, nunca mais o card inteiro via `fbSaveCard`.
+- Duplicar card: comentários da origem são copiados pro `card_comments`
+  do novo card (do campo legado se ainda existir, senão busca do path
+  novo) — cópia nunca nasce com o campo legado.
+- Notificação de menção com comentário apagado (fix recente): passa a
+  checar o path novo, com fallback pro legado.
+- Trade-off documentado: abrir um card agora faz 1 leitura extra
+  (`_get` no path novo) — antes era grátis (piggyback no card já
+  carregado). Mitigado por ser lazy (só ao abrir o card específico) e
+  por já existir um guard anti-corrida (`editingId!==id`) desenhado
+  exatamente pra esse tipo de leitura assíncrona.
+- Sem mudança de comportamento visível — comentários continuam
+  funcionando exatamente igual pra quem usa.
+
 ### v8.30.382-dev — 2026-08-11
 Feedback direto com print: "esse texto aqui tá ruim de leitura" (meta de
 cada card em 🌅 Meu Dia — squad/coluna/prazo). `var(--txt3)` em 10px
