@@ -87,12 +87,21 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   const emoji = meta.emoji || fallback.emoji || '🐟';
   const color = meta.color || '#38b6ff';
 
+  // Opt-out por squad (pedido direto: "intake tem que ser optativo"),
+  // configurado em ⚙ Config → Ágil no board (mesmo agil_cfg que já guarda
+  // sprint/WIP/etc). Ausente = ligado — precisa de opt-OUT explícito, não
+  // opt-in, já que o formulário já estava ativo em produção pra todo mundo
+  // antes desse toggle existir.
+  const agilSnap = await db.ref(`kanban/squads/${squad}/dados/agil_cfg`).get();
+  const intakeEnabled = agilSnap.val()?.intakeEnabled !== false;
+
   if (req.method === 'GET') {
-    res.status(200).json({ ok: true, squad: { id: squad, label, emoji, color } });
+    res.status(200).json({ ok: true, intakeEnabled, squad: { id: squad, label, emoji, color } });
     return;
   }
 
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+  if (!intakeEnabled) { res.status(403).json({ error: 'intake_disabled' }); return; }
 
   const body = req.body || {};
   // Honeypot: campo escondido por CSS no formulário público — humano nunca
