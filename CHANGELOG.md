@@ -5276,6 +5276,15 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html — 2026-08-11 · rascunho de comunicado (sem bump de versão)
+Adicionada 1 entrada em `COMUNICADO_RASCUNHOS_SEED`
+(`seed_fase1a5_otimizacao_mobile_tema_features_2026_08_11`) resumindo
+pro time o lote grande promovido em kanban.html v8.30.240 (performance,
+mobile, tema claro, Meu Dia, aging, quick-add, CFD/Burndown, intake,
+capa de card com imagem, indicador de offline) — aparece pro ADM
+revisar em Pessoas → 📢 Comunicados → Rascunhos. Conteúdo apenas, sem
+mudança de código/UI — não bumpa versão do painel.
+
 ### painel.html / painel-dev.html — 2026-08-11 · loadUsoData reativado (sem bump de versão)
 Fase 1.5 (ver kanban-dev.html v8.30.370-dev): "Engajamento & Uso Efetivo"
 (aba Status) reativado, lendo `dados/access_stats` (agregado, leve) em vez
