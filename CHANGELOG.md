@@ -1318,6 +1318,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.376-dev — 2026-08-11
+Fase 3.4 do plano mobile: "criar card na coluna visível". Pedido original
+era um FAB flutuante novo no canto inferior direito — mas o mobile já
+tem um botão "➕ Card" fixo na bottom-nav, e o próprio CSS já documentava
+a convenção do app ("FAB → bottom nav" no mobile, `.fab{display:none}`).
+Confirmado com o usuário: em vez de duplicar a função com um FAB
+separado, o botão "➕ Card" existente passou a criar o card na coluna
+atualmente visível (reaproveita `_mobileCurrentColId`, da Fase 3.2), em
+vez de sempre cair na primeira coluna.
+
 ### v8.30.375-dev — 2026-08-11
 Fase 3.1-3.3 do plano mobile.
 
