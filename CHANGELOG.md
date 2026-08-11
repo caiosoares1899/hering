@@ -1318,6 +1318,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.374-dev — 2026-08-11
+Fase 2.4 do plano de otimização: lazy-init de painéis pesados. Auditados
+os 4 painéis listados (Relatório de Tempo, Campanhas, Calendário,
+Controle de Criativos) — resultado por painel, cada um com motivo:
+
+- **Campanhas**: era lazy só na hora de RENDERIZAR, mas
+  `loadCampanhas()` (um `onValue` no nó `kanban/campanhas` INTEIRO, de
+  TODAS as squads) rodava no boot pra todo mundo, mesmo quem nunca abre
+  o painel. Agora só registra o listener na 1ª abertura (`openCamp()`,
+  guarda `_campanhasLoaded`). Auditado: `_campanhas` não é usado em
+  nenhuma automação de fundo, só dentro do próprio painel — seguro
+  tornar lazy.
+- **Calendário**: **mantido eager de propósito**, não é lazy. Motivo:
+  `checkUpcomingMeetings()` (`setInterval` de 60s, alerta "reunião em N
+  minutos") depende de `calEvents` já populado o tempo todo, pra quem
+  NUNCA abre o painel Calendário também receber o alerta. Tornar
+  `loadCalEvents()` lazy quebraria esse alerta pra maioria das pessoas.
+- **Relatório de Tempo** e **Controle de Criativos**: já eram lazy —
+  `openTempoReport()`/`openCriativos()` só calculam a partir do array
+  `cards` (já carregado de qualquer forma) na hora de abrir, sem
+  listener próprio registrado no boot. Nada a mudar.
+
 ### v8.30.373-dev — 2026-08-11
 Fase 2.3 do plano de otimização: animações conscientes (peixinhos,
 bolhas, pulsos de alerta).
