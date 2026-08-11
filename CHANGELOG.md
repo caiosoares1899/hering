@@ -1318,6 +1318,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.385-dev — 2026-08-11
+Fase 5, item 3 aprovado: CFD (Cumulative Flow Diagram) + Burndown, nova
+3ª aba "📈 CFD & Burndown" dentro de "📊 Dados do Board".
+
+- Reconstrói o estado histórico direto de `card.flow.log` (sequência de
+  `{from,to,at}` já gravada em toda movimentação) — zero coleta nova.
+  Limitação aceita, documentada na própria UI: o log guarda só as
+  últimas 40 movimentações por card, então histórico bem antigo de
+  cards muito movimentados pode ficar incompleto.
+- CFD: área empilhada (SVG desenhado na mão, sem lib externa) dos
+  últimos 21 dias, na ordem/cores reais das colunas do board.
+- Burndown: usa início/fim de sprint já configurados em ⚙ Config →
+  Ágil. Escopo é aproximado (cards não arquivados criados até o fim da
+  sprint, ainda não concluídos ou concluídos dentro da janela) — o
+  modelo de dados não tem campo próprio de "pertence à sprint X", e a
+  UI avisa disso explicitamente. Linha real (até hoje) vs. linha ideal
+  tracejada.
+- Aba lazy: só recalcula quando alguém realmente abre "CFD & Burndown".
+
 ### v8.30.384-dev — 2026-08-11
 Fase 5, item 6 aprovado: capa de card com imagem. A capa de COR sólida
 já existia (Trello-like); faltava a opção de imagem pedida no plano.
