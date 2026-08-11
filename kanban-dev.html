@@ -5249,7 +5249,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.382-dev</div>
+<div class="version">v8.30.383-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10459,7 +10459,11 @@ function saveCard(){
       dependsOn:c.dependsOn||null,
       dependents:c.dependents||[],
       links:c.links||[],
-      comments:c.comments||{},
+      // comments saiu daqui (Fase 1.1) — comentários vivem em card_comments/{id}
+      // agora, não mais em c.comments. Se `c` ainda tiver um c.comments legado
+      // (card não tocado desde a migração), Object.assign não mexe em chaves
+      // que não estão na lista — o campo antigo fica intacto até loadComments()
+      // migrá-lo em background na próxima vez que alguém abrir esse card.
       linkedCards:editingLinkedCards.map(l=>l.id),
       blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
@@ -10593,7 +10597,24 @@ function _duplicarCardObj(card, opts){
   if(opts.priority===false){ novo.priority=''; }
   if(opts.riscos===false){ novo.riscos=[]; }
   if(opts.links===false){ novo.links=[]; }
-  if(opts.comments===false){ novo.comments={}; }
+  // Comentários (Fase 1.1): cards novos nunca usam o campo legado
+  // c.comments — mesmo se `card` (a origem) ainda tiver um (não migrado
+  // ainda), a cópia usa sempre o path novo. Se comments!==false, copia os
+  // comentários da origem pro card_comments/{novo.id} — direto do campo
+  // legado se ainda existir, senão busca do path novo (fire-and-forget,
+  // não atrasa a duplicação em si).
+  const _srcComments = novo.comments;
+  delete novo.comments;
+  if(opts.comments!==false){
+    if(_srcComments && Object.keys(_srcComments).length){
+      window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), _srcComments).catch(()=>{});
+    } else {
+      window._get(window._ref(window._db, FB+'/card_comments/'+card.id)).then(snap=>{
+        const val=snap.val();
+        if(val && Object.keys(val).length) window._update(window._ref(window._db, FB+'/card_comments/'+novo.id), val).catch(()=>{});
+      }).catch(()=>{});
+    }
+  }
   recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
   cards.push(novo);
   return novo;
@@ -11852,8 +11873,7 @@ function _agentPostComment(c, text){
     avatarEmoji:agent?.avatarEmoji||'🤖', cor:agent?.cor||'#a78bfa',
     text, ts:new Date().toISOString(),
   };
-  if(!c.comments) c.comments={};
-  c.comments[comment.id]=comment;
+  _pushCardComment(c.id, comment);
 }
 function _agentPostSystemComment(c, text){
   const comment = {
@@ -11861,8 +11881,23 @@ function _agentPostSystemComment(c, text){
     uid:'system', author:'Sistema', init:'⚙️', foto:'', isSystem:true,
     text, ts:new Date().toISOString(),
   };
-  if(!c.comments) c.comments={};
-  c.comments[comment.id]=comment;
+  _pushCardComment(c.id, comment);
+}
+// Escreve um comentário automático (agente/sistema) direto no path novo
+// (Fase 1.1) — antes só mutava c.comments em memória, contando com o
+// PRÓXIMO fbSaveCard(c) (de outra mudança no mesmo card, ex.: mover de
+// coluna) pra persistir; se nada mais salvasse o card, o comentário
+// automático nunca ia pro Firebase. Agora persiste sozinho, na hora, e
+// re-renderiza se o card estiver com o modal aberto.
+function _pushCardComment(cardId, comment){
+  if(!_commentsCache[cardId]) _commentsCache[cardId]={};
+  _commentsCache[cardId][comment.id]=comment;
+  window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment)
+    .catch(err=>console.warn('[comments] falha ao postar comentário automático:', err));
+  if(_commentCardId===cardId){
+    const list=document.getElementById('m-comment-list');
+    if(list) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  }
 }
 // Grava checklist + status atuais do DOM no card e salva (via fbSaveCard — grava só este
 // card, não a lista inteira, evitando pisar em edição concorrente de outra pessoa no board).
@@ -19519,10 +19554,18 @@ function openNotif(notifId, cardId, squad, commentId){
       // Notificação de menção num comentário que já foi excluído: avisa e
       // remove a notificação em vez de abrir o card num comentário fantasma
       // (relato: usuária "não consegue abrir" a notificação — o comentário
-      // que a gerou tinha sido apagado).
-      if(commentId && (!card.comments || !card.comments[commentId])){
-        showToast('Esse comentário não existe mais — foi excluído.');
-        window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
+      // que a gerou tinha sido apagado). Fase 1.1: comentários vivem em
+      // card_comments/{id} agora — checa lá, com fallback pro campo legado
+      // c.comments (card ainda não migrado).
+      if(commentId){
+        _commentStillExists(cardId, commentId, card).then(exists=>{
+          if(!exists){
+            showToast('Esse comentário não existe mais — foi excluído.');
+            window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
+          }
+          openCard(cardId);
+        });
+        return;
       }
       openCard(cardId);
       return;
@@ -19530,6 +19573,14 @@ function openNotif(notifId, cardId, squad, commentId){
     if(tentativas < 15) setTimeout(tentar, 400);
   };
   tentar();
+}
+async function _commentStillExists(cardId, commentId, card){
+  if(_commentsCache[cardId]) return !!_commentsCache[cardId][commentId];
+  try{
+    const snap = await window._get(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+commentId));
+    if(snap.exists()) return true;
+  }catch(e){}
+  return !!(card?.comments && card.comments[commentId]); // fallback legado
 }
 
 function markAllRead(){
@@ -23621,9 +23672,34 @@ function openDependsOnCard(){
 // ═══════════════════════════════════════════════════════
 // COMENTÁRIOS E ATIVIDADE
 // ═══════════════════════════════════════════════════════
+// Fase 1.1 do plano de otimização: comentários saíram de dentro do card
+// (card.comments) pra um path próprio, squads/{squad}/dados/card_comments/
+// {cardId}/{commentId} — o motivo original de trazer comentários pra
+// dentro do card (ver histórico no comentário de loadComments logo abaixo)
+// era evitar 1 leitura extra ao abrir um card; o custo maior descoberto
+// depois foi o OPOSTO: TODA edição de QUALQUER campo de um card
+// retransmite os comentários dele inteiros pra TODO MUNDO com o board
+// aberto (child_changed em /cards), mesmo quem nunca abre aquele card.
+// Migração sem lote: _commentsCache é a fonte da verdade em memória
+// (populada por loadComments, mutada localmente pelas ações de
+// comentário); leitura tenta o path novo, com fallback pro campo legado
+// card.comments (cards ainda não tocados desde esta migração) — nesse
+// caso, migra em background (_migrateLegacyComments) e o campo legado
+// some do card na próxima vez que ele for salvo.
 let _commentCardId = null;
+let _commentsCache = {}; // cardId -> {commentId: commentObj}
+function _sortedComments(map){
+  return Object.values(map||{}).filter(Boolean).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+}
+function _migrateLegacyComments(cardObj){
+  if(!cardObj || !cardObj.comments || !Object.keys(cardObj.comments).length) return;
+  window._update(window._ref(window._db, FB+'/card_comments/'+cardObj.id), cardObj.comments).then(()=>{
+    delete cardObj.comments;
+    fbSaveCard(cardObj); // some do campo legado — a próxima retransmissão do card já não carrega mais os comentários
+  }).catch(err=>console.warn('[comments] migração de', cardObj.id, 'falhou:', err));
+}
 
-function loadComments(cardId){
+async function loadComments(cardId){
   _commentCardId = cardId;
   const list = document.getElementById('m-comment-list'); if(!list) return;
   // Update avatar
@@ -23635,16 +23711,31 @@ function loadComments(cardId){
       av.textContent = window._currentUserInit||'?';
     }
   }
-  // Le direto do array 'cards' ja carregado em memoria (via os listeners granulares de
-  // FB+'/cards') em vez de bater no Firebase de novo. Antes disso, TODA abertura de card
-  // fazia uma leitura em 'kanban/squads/{squad}/cards/{id}/comments' (caminho que nao
-  // existe mais nas regras de seguranca -> sempre da Permission denied) e, no catch,
-  // caia num fallback que baixava o node /cards INTEIRO so pra achar os comentarios de
-  // 1 card -- em squads com muitos cards isso multiplicava MUITO o consumo de download
-  // do Realtime Database (causa confirmada do estouro de cota reportado pelo Caio).
-  const cardObj = cards.find(c=>c.id===cardId);
-  const comments = cardObj && cardObj.comments ? Object.values(cardObj.comments).sort((a,b)=>a.ts.localeCompare(b.ts)) : [];
-  renderCommentList(comments);
+  // Mostra o que já tiver em cache desta sessão na hora (evita "piscar vazio"
+  // se o card já foi aberto antes); busca o path novo em paralelo.
+  if(_commentsCache[cardId]) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  else list.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Carregando comentários...</div>';
+  try{
+    const snap = await window._get(window._ref(window._db, FB+'/card_comments/'+cardId));
+    let val = snap.val();
+    if(!val){
+      // Path novo vazio — card ainda não migrado? Cai pro campo legado
+      // (card já está em memória via os listeners granulares de /cards,
+      // não precisa de outra leitura) e dispara a migração em background.
+      const cardObj = cards.find(c=>c.id===cardId);
+      if(cardObj && cardObj.comments && Object.keys(cardObj.comments).length){
+        val = cardObj.comments;
+        _migrateLegacyComments(cardObj);
+      }
+    }
+    _commentsCache[cardId] = val || {};
+    // Trava contra corrida: se a pessoa trocou de card enquanto a leitura
+    // estava em voo, não pisa no que já está na tela do card ATUAL.
+    if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  }catch(e){
+    console.warn('[comments] falha ao carregar:', e);
+    if(_commentCardId===cardId && list.innerHTML.includes('Carregando')) list.innerHTML='<div style="font-size:11px;color:var(--danger);padding:4px 0;">⚠ Não foi possível carregar os comentários.</div>';
+  }
 }
 
 function renderCommentList(comments){
@@ -23727,30 +23818,27 @@ function submitComment(){
     text,
     ts:new Date().toISOString(),
   };
-  // Save to Firebase under the card's data
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  if(cardObj){
-    if(!cardObj.comments) cardObj.comments={};
-    cardObj.comments[comment.id]=comment;
-    // Antes usava fbSaveAll() (reescreve o array /cards INTEIRO no Firebase a cada
-    // comentario postado); trocado por fbSaveCard() (update incremental so desse
-    // card) pra bater com o mesmo padrao ja usado no resto do app e nao inflar o
-    // trafego de escrita/leitura em squads com muitos cards.
-    fbSaveCard(cardObj);
-  }
+  // Escreve só o comentário (path próprio, ver Fase 1.1) — não o card
+  // inteiro. Antes usava fbSaveAll() (reescreve /cards INTEIRO a cada
+  // comentário), depois fbSaveCard() (update incremental do card, mas ainda
+  // carregando TODOS os comentários dele) — agora é 1 write pequeno,
+  // desacoplado de qualquer outro campo do card.
+  if(!_commentsCache[_commentCardId]) _commentsCache[_commentCardId]={};
+  _commentsCache[_commentCardId][comment.id]=comment;
+  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+comment.id), comment)
+    .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
   inp.value=''; inp.style.height='auto';
   eocResetComment();
-  loadComments(_commentCardId);
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // Fire @mention notifications from comment
   parseMentions(text, _commentCardId, comment.id);
 }
 
 function deleteComment(cid){
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  if(!cardObj||!cardObj.comments) return;
-  delete cardObj.comments[cid];
-  fbSaveCard(cardObj);
-  loadComments(_commentCardId);
+  if(!_commentsCache[_commentCardId]) return;
+  delete _commentsCache[_commentCardId][cid];
+  window._set(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), null).catch(()=>{});
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
 }
 
 // ── Edição de comentário (só o autor pode editar) ───────────────────────
@@ -23759,8 +23847,7 @@ function deleteComment(cid){
 function startEditComment(cid){
   const el = document.getElementById('ctext-'+cid);
   if(!el) return;
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  const comment = cardObj?.comments?.[cid];
+  const comment = _commentsCache[_commentCardId]?.[cid];
   if(!comment) return;
   // NOTA: não usar a classe .eoc-textarea aqui — ela tem display:none por
   // padrão e só fica visível dentro do contexto .eoc-editing (usado no campo
@@ -23796,13 +23883,12 @@ function saveEditComment(cid){
   const ta = document.getElementById('cedit-ta-'+cid); if(!ta) return;
   const newText = ta.value.trim();
   if(!newText){ showToast('Comentário não pode ficar vazio.'); return; }
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  const comment = cardObj?.comments?.[cid];
+  const comment = _commentsCache[_commentCardId]?.[cid];
   if(!comment) return;
   comment.text = newText;
   comment.editedAt = new Date().toISOString();
-  fbSaveCard(cardObj);
-  loadComments(_commentCardId);
+  window._update(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), {text:newText, editedAt:comment.editedAt}).catch(()=>{});
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // Editar um comentário existente nunca disparava @menção — só criar um
   // comentário novo (submitComment) chamava parseMentions. Uma @menção
   // adicionada só na edição (ex.: corrigindo o handle de alguém) nunca
@@ -23811,24 +23897,23 @@ function saveEditComment(cid){
 }
 
 function cancelEditComment(cid){
-  loadComments(_commentCardId); // recarrega do estado salvo, descartando a edição
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId])); // volta pro estado salvo em cache, descartando a edição
 }
 
 // ── Reações rápidas em comentários ──
 const REACT_EMOJIS=['👍','👀','❤️','✅','🎉'];
 function toggleReaction(cid, emoji){
-  const cardObj=cards.find(c=>c.id===_commentCardId);
-  if(!cardObj||!cardObj.comments||!cardObj.comments[cid]) return;
+  const c = _commentsCache[_commentCardId]?.[cid];
+  if(!c) return;
   const uid=window._currentUser?.uid; if(!uid) return;
-  const c=cardObj.comments[cid];
   if(!c.reactions) c.reactions={};
   if(c.reactions[uid]===emoji){ delete c.reactions[uid]; } // toggle off
   else { c.reactions[uid]=emoji; }
-  fbSaveCard(cardObj);
-  loadComments(_commentCardId);
+  window._update(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), {reactions:c.reactions}).catch(()=>{});
+  renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // notifica o autor do comentário que reagiram (se não for ele mesmo)
   if(c.reactions[uid] && c.uid && c.uid!==uid){
-    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,cardObj.id);
+    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,_commentCardId);
   }
 }
 function _renderReactions(c){
