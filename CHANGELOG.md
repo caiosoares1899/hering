@@ -18,7 +18,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.241 — 2026-08-11 · promove pra prod (PR #TBD)
+### v8.30.241 — 2026-08-11 · promove pra prod (PR #319)
 Promove a dica de dimensão ideal pra capa de imagem de card, a partir
 de feedback direto testando a capa em produção ("nem todas as imagens
 ficam boas como capa"). Dica inline no menu 🎨 → aba de imagem +
