@@ -1366,6 +1366,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.389-dev — 2026-08-11
+Pedido direto: time não tem onde hospedar imagem além do Google Drive,
+e o link normal de "Compartilhar" do Drive não funciona como capa —
+ele aponta pro visualizador em HTML do Drive, não pros bytes da
+imagem, então colado ali simplesmente não carrega nada.
+
+- `_normalizeCoverImageUrl()`: detecta um link do Drive (`/file/d/ID/...`,
+  `?id=ID`, ou já no formato `uc?...id=ID`) e reescreve sozinho pro
+  formato `drive.google.com/uc?export=view&id=ID`, que carrega como
+  imagem de verdade. Roda dentro de `setCardCoverImage()` — cobre tanto
+  colar a URL quanto "🔗 Usar 1º link". Qualquer URL que não seja do
+  Drive passa direto, sem alteração.
+- Toast avisando quando o link foi convertido, lembrando que o arquivo
+  precisa estar com "Qualquer pessoa com o link pode ver" — sem isso
+  não carrega mesmo convertido.
+- **Limitação aceita, documentada na UI e no HELP_CONTENT:** o Google
+  Drive não foi feito pra servir imagem em produção — o link pode
+  falhar ocasionalmente sob carga (não é um SLA garantido do Google).
+  Segue sendo, ainda assim, a opção mais prática pra quem não tem outro
+  lugar pra hospedar.
+- Dica inline no menu 🎨 → aba de imagem + HELP_CONTENT ("Capa do
+  card") atualizados.
+
 ### v8.30.388-dev — 2026-08-11
 Feedback direto depois de testar a capa de imagem (Fase 5.6, já em
 prod): "nem todas as imagens ficam boas como capa" — a capa é uma
