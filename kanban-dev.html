@@ -1413,6 +1413,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .modal-col{display:flex;flex-direction:column;gap:10px;}
 .modal-divider{border:none;border-top:1px solid var(--glass-b);margin:4px 0;}
 .card-attr-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.crv-radio-group,.crv-check-group{display:flex;flex-wrap:wrap;gap:6px 14px;padding:8px 10px;border:1px solid var(--glass-b);border-radius:10px;background:rgba(var(--surface2-rgb),.4);}
+.crv-radio-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;}
+.crv-radio-row input,.crv-check-group label input{accent-color:#ffb3d9;}
+.crv-check-group label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;}
 .okr-check-wrap{display:flex;align-items:center;gap:8px;padding:7px 10px;
   border:1px solid var(--glass-b);border-radius:10px;background:rgba(var(--surface2-rgb),.4);cursor:pointer;}
 .okr-check-wrap:hover{border-color:rgba(255,215,0,.3);}
@@ -3561,38 +3565,97 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div><!-- /modal-grid -->
 
-    <!-- FICHA DE CRIATIVO (opt-in por squad, ver Config → Criativos) -->
+    <!-- FICHA TÉCNICA (opt-in por squad, ver Config → Criativos) — reformulada,
+         hierarquia pedida direto: Campanha > Funil > Etapa > Canal > Objetivo >
+         Plataforma > Tipo > Formato > Variações > Qtd de Criativos > Direcional
+         de Mídia. Todos obrigatórios pro demandante quando ativa (ver validação
+         em saveCard()). Canal/Objetivo/Plataforma/Tipo/Formato são listas
+         fechadas e configuráveis (⚙ Config → Criativos), igual tags — ninguém
+         digita texto livre, evita duplicata tipo "vídeo"/"vídeos". -->
     <div class="cl-sec" id="m-criativo-sec" style="display:none;border-color:rgba(255,179,217,.3);margin:0 20px 14px;">
-      <div class="cl-hd-row"><div class="cl-hd" style="color:#ffb3d9;">🎬 Ficha de Criativo</div></div>
+      <div class="cl-hd-row"><div class="cl-hd" style="color:#ffb3d9;">🎬 Ficha Técnica</div></div>
+
+      <div class="field" id="m-crv-campanha-wrap" style="grid-column:1/-1;">
+        <label class="fl">Campanha</label>
+        <div class="crv-radio-group">
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="campanha" onchange="_crvCampanhaTipoChange()"> Campanha</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="acao" onchange="_crvCampanhaTipoChange()"> Ação Comercial</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="perene" onchange="_crvCampanhaTipoChange()"> Perene</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="refresh" onchange="_crvCampanhaTipoChange()"> Refresh</label>
+        </div>
+        <input class="fi" id="m-crv-campanha-nome" type="text" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;">
+      </div>
+
+      <div class="card-attr-row">
+        <div class="field" id="m-crv-funil-wrap"><label class="fl">Funil</label>
+          <div class="crv-radio-group">
+            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="mkt" onchange="scheduleAutoSave()"> MKT</label>
+            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="ecm" onchange="scheduleAutoSave()"> ECM</label>
+          </div>
+        </div>
+        <div class="field"><label class="fl">Etapa do Funil</label>
+          <select class="fi" id="m-crv-etapa" onchange="scheduleAutoSave()">
+            <option value="">— selecione —</option>
+            <option value="AWS">AWS</option>
+            <option value="CON">CON</option>
+            <option value="PRF">PRF</option>
+          </select>
+        </div>
+      </div>
+
       <div class="card-attr-row">
         <div class="field" style="grid-column:1/-1;"><label class="fl">Lista de Criativos</label>
           <select class="fi" id="m-crv-lista" onchange="scheduleAutoSave()"><option value="">— sem lista —</option></select>
         </div>
       </div>
+
       <div class="card-attr-row">
         <div class="field"><label class="fl">Canal</label>
-          <input class="fi" id="m-crv-canal" list="crv-canal-list" oninput="scheduleAutoSave()" placeholder="OOH, App, Site...">
-          <datalist id="crv-canal-list"><option value="OOH"><option value="App"><option value="Site"><option value="O2O"><option value="TV"><option value="Rádio"><option value="Outros"></datalist>
-        </div>
-        <div class="field"><label class="fl">Objetivo</label>
-          <input class="fi" id="m-crv-objetivo" list="crv-objetivo-list" oninput="scheduleAutoSave()" placeholder="Alcance, Conversão...">
-          <datalist id="crv-objetivo-list"><option value="Alcance e Reconhecimento"><option value="Tráfego"><option value="Engajamento"><option value="Conversão"><option value="Aquisição"><option value="Instalação"><option value="Remarketing"><option value="Impressões"><option value="Visita às lojas"></datalist>
+          <select class="fi" id="m-crv-canal" onchange="scheduleAutoSave()"><option value="">— selecione —</option></select>
         </div>
       </div>
+
+      <div class="field" id="m-crv-objetivo-wrap" style="grid-column:1/-1;"><label class="fl">Objetivo <span style="font-size:9px;color:var(--txt3);font-weight:400;">(múltipla escolha)</span></label>
+        <div class="crv-check-group" id="m-crv-objetivo-list"></div>
+      </div>
+
+      <div class="field" id="m-crv-plataforma-wrap" style="grid-column:1/-1;">
+        <label class="fl">Plataforma <span id="m-crv-plataforma-hint" style="font-size:9px;color:var(--txt3);font-weight:400;"></span></label>
+        <select class="fi" id="m-crv-plataforma-single" onchange="_crvPlataformaChange()"><option value="">— selecione —</option></select>
+        <div class="crv-check-group" id="m-crv-plataforma-multi" style="display:none;"></div>
+      </div>
+
       <div class="card-attr-row">
-        <div class="field"><label class="fl">Plataforma</label>
-          <input class="fi" id="m-crv-plataforma" list="crv-plataforma-list" oninput="scheduleAutoSave()" placeholder="Meta, Google, Tiktok...">
-          <datalist id="crv-plataforma-list"><option value="Meta"><option value="Google"><option value="Tiktok"><option value="Youtube"><option value="Pinterest"><option value="RTB / Criteo"><option value="Rocket Lab"><option value="Outros"></datalist>
+        <div class="field"><label class="fl">Tipo</label>
+          <select class="fi" id="m-crv-tipo" onchange="_crvTipoChange()"><option value="">— selecione a Plataforma primeiro —</option></select>
         </div>
         <div class="field"><label class="fl">Formato</label>
-          <input class="fi" id="m-crv-formato" list="crv-formato-list" oninput="scheduleAutoSave()" placeholder="Estático, Vídeo...">
-          <datalist id="crv-formato-list"><option value="Estático"><option value="Vídeo"><option value="Multiformatos"><option value="Carrossel"><option value="Texto"></datalist>
+          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave()">
+            <option value="">— selecione —</option>
+          </select>
         </div>
       </div>
+
       <div class="card-attr-row">
-        <div class="field"><label class="fl">Qtd Criativos</label>
-          <input class="fi" id="m-crv-qtd" type="number" min="0" oninput="scheduleAutoSave()" placeholder="0">
+        <div class="field" id="m-crv-variacoes-wrap"><label class="fl">Variações</label>
+          <div class="crv-radio-group">
+            <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="sim" onchange="_crvVariacoesChange()"> Sim</label>
+            <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="nao" onchange="_crvVariacoesChange()"> Não</label>
+          </div>
+          <input class="fi" id="m-crv-variacoes-qtd" type="number" min="1" placeholder="Qtd de variações" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;max-width:140px;">
         </div>
+        <div class="field"><label class="fl">Quantidade de Criativos</label>
+          <input class="fi" id="m-crv-qtd" type="number" min="0" oninput="scheduleAutoSave()" placeholder="0">
+          <div id="m-crv-qtd-hint" style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.4;"></div>
+        </div>
+      </div>
+
+      <div class="field" style="grid-column:1/-1;">
+        <label class="fl">📌 Direcional de Mídia</label>
+        <textarea class="fi" id="m-crv-direcional" rows="2" oninput="scheduleAutoSave()" placeholder="Instrução importante pra quem for produzir/mídia — se preencher, aparece com destaque pra quem pegar o card." style="background:rgba(255,209,102,.08);border-color:rgba(255,209,102,.4);"></textarea>
+      </div>
+
+      <div class="card-attr-row">
         <div class="field"><label class="fl">Status de produção</label>
           <select class="fi" id="m-crv-status" onchange="scheduleAutoSave()">
             <option value="">— sem status —</option>
@@ -4026,16 +4089,21 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="tab-c" id="cfgtab-criativos">
       <div class="cfg-sec-title">🎬 Controle de Criativos</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Ativa uma ficha extra no card (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações) pra times que produzem peças criativas — pensado pra substituir planilhas de controle. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
+        Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato, Variações, Quantidade de Criativos e Direcional de Mídia — todos obrigatórios pro demandante) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
-        <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha de Criativo neste squad
+        <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
       </label>
       <div id="crv-listas-cfg-wrap" style="margin-top:16px;display:none;">
         <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:4px;">📋 Listas de Criativos</div>
         <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 10px;">Crie listas pra segmentar as fichas (ex: "Dia dos Pais", "Institucional T1"). Cada card pode ser associado a uma lista, e o painel Controle de Criativos filtra por lista.</p>
         <div id="crv-listas-cfg-body" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
         <button class="btn btn-sm" onclick="_criativosListaNova()" style="color:#ffb3d9;border-color:rgba(255,179,217,.35);">+ Nova lista</button>
+      </div>
+      <div id="crv-opcoes-cfg-wrap" style="margin-top:20px;display:none;">
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:4px;">🗂️ Opções da Ficha Técnica</div>
+        <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 12px;">Canal, Objetivo, Plataforma, Tipo e Formato são listas fechadas — o demandante só escolhe, nunca digita — pra não acumular duplicata tipo "vídeo"/"vídeos". Vieram pré-carregadas com o padrão da Hering; edite/adicione à vontade.</p>
+        <div id="crv-opcoes-cfg-body"></div>
       </div>
     </div>
     <!-- ABA PADRÕES DE CARD -->
@@ -4934,10 +5002,10 @@ input[type="date"]{-moz-appearance:textfield;}
           <tr style="text-align:left;border-bottom:1px solid var(--glass-b);">
             <th style="padding:3px 8px;"></th>
             <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-filter-lista" onchange="renderCriativosTable()"><option value="">Todas</option></select></th>
-            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-canal" list="crv-canal-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
-            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-objetivo" list="crv-objetivo-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
-            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-plataforma" list="crv-plataforma-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
-            <th style="padding:3px 8px;"><input class="fi crv-fh" id="crv-fh-formato" list="crv-formato-list" placeholder="filtrar..." oninput="renderCriativosTable()"></th>
+            <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-canal" onchange="renderCriativosTable()"><option value="">Todos</option></select></th>
+            <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-objetivo" onchange="renderCriativosTable()"><option value="">Todos</option></select></th>
+            <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-plataforma" onchange="renderCriativosTable()"><option value="">Todas</option></select></th>
+            <th style="padding:3px 8px;"><select class="fi crv-fh" id="crv-fh-formato" onchange="renderCriativosTable()"><option value="">Todos</option></select></th>
             <th style="padding:3px 8px;">
               <select class="fi crv-fh" id="crv-fh-status" onchange="renderCriativosTable()">
                 <option value="">Todos</option>
@@ -5300,7 +5368,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.391-dev</div>
+<div class="version">v8.30.392-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6470,8 +6538,58 @@ let _intakeOrigemPendingId=null;
 // desde a proposta original marcado como baixa prioridade).
 let _isOnline=true;
 let agilCfg={};
-let criativosAtivo=false; // toggle por squad: mostra a Ficha de Criativo no card + botão Controle de Criativos
+let criativosAtivo=false; // toggle por squad: mostra a Ficha Técnica no card + botão Controle de Criativos
 let criativosListas={}; // {id:{id,nome,createdAt}} — listas de segmentação do Controle de Criativos
+// Ficha Técnica (reformulação pedida direto, substitui a antiga "Ficha de
+// Criativo" de texto livre) — 5 taxonomias configuráveis por squad, mesmo
+// espírito das tags (o PO mantém a lista em Config → Criativos, ninguém
+// digita texto livre — evita duplicata tipo "vídeo"/"vídeos"). Tipo é o
+// único campo dependente: cada entrada já sabe a Plataforma e o Formato
+// default (populados a partir da tabela real de referência da Hering).
+let criativoOpcoes={ canais:[], objetivos:[], plataformas:[], tipos:[], formatos:[] };
+const CANAL_OPCOES_DEFAULT=[
+  {id:'canal_site',label:'Site'},{id:'canal_app',label:'App'},{id:'canal_ooh',label:'OOH'},
+  {id:'canal_o2o',label:'O2O'},{id:'canal_tv',label:'TV'},{id:'canal_streaming',label:'Streaming'},
+  {id:'canal_outros',label:'Outros'},
+];
+const OBJETIVO_OPCOES_DEFAULT=[
+  {id:'obj_alcance',label:'Alcance e Reconhecimento'},{id:'obj_video',label:'Visualizações de vídeo'},
+  {id:'obj_trafego',label:'Tráfego'},{id:'obj_visitas',label:'Visita às lojas'},{id:'obj_aquisicao',label:'Aquisição'},
+  {id:'obj_instalacao',label:'Instalação'},{id:'obj_remarketing',label:'Remarketing'},{id:'obj_conversao',label:'Conversão'},
+  {id:'obj_engajamento',label:'Engajamento'},{id:'obj_outros',label:'Outros'},
+];
+const PLATAFORMA_OPCOES_DEFAULT=[
+  {id:'plat_youtube',label:'Youtube'},{id:'plat_google',label:'Google'},{id:'plat_meta',label:'Meta'},
+  {id:'plat_tiktok',label:'Tiktok'},{id:'plat_rtb',label:'RTB / Criteo'},{id:'plat_rocketlab',label:'Rocket Lab'},
+  {id:'plat_pinterest',label:'Pinterest'},{id:'plat_outros',label:'Outros'},
+];
+const FORMATO_OPCOES_DEFAULT=[
+  {id:'fmt_estatico',label:'Estático'},{id:'fmt_video',label:'Vídeo'},{id:'fmt_multi',label:'Multiformatos'},
+];
+// qtdRef/qtdObs vêm direto da tabela "Padrão de formatos e quantidades de
+// criativos" passada pelo time — mostrada como DICA (não trava nada) ao
+// lado do campo manual de Quantidade de Criativos.
+const TIPO_OPCOES_DEFAULT=[
+  {id:'tipo_template',label:'Template',plataformaId:'plat_meta',formatoId:'fmt_estatico',qtdRef:1,qtdObs:''},
+  {id:'tipo_template_plv',label:'Template PLV',plataformaId:'plat_meta',formatoId:'fmt_video',qtdRef:1,qtdObs:''},
+  {id:'tipo_dpa',label:'DPA Collection',plataformaId:'plat_meta',formatoId:'fmt_estatico',qtdRef:2,qtdObs:''},
+  {id:'tipo_ppl',label:'PPL',plataformaId:'plat_meta',formatoId:'fmt_estatico',qtdRef:2,qtdObs:'Mínimo. Se tiver variações, multiplica a cada variação.'},
+  {id:'tipo_carrossel',label:'Carrossel',plataformaId:'plat_meta',formatoId:'fmt_estatico',qtdRef:6,qtdObs:'Média — mínimo 2 telas (4 criativos), pode ir até 5 telas (10 criativos).'},
+  {id:'tipo_ppv',label:'PPV',plataformaId:'plat_meta',formatoId:'fmt_video',qtdRef:2,qtdObs:'Mínimo. Se tiver variações, multiplica a cada variação.'},
+  {id:'tipo_infeed',label:'In-Feed',plataformaId:'plat_tiktok',formatoId:'fmt_video',qtdRef:1,qtdObs:'Mínimo. Se tiver variações, multiplica a cada variação.'},
+  {id:'tipo_topview',label:'Topview',plataformaId:'plat_tiktok',formatoId:'fmt_video',qtdRef:1,qtdObs:'Mínimo. Se tiver variações, multiplica a cada variação.'},
+  {id:'tipo_pmax',label:'Pmax',plataformaId:'plat_google',formatoId:'fmt_multi',qtdRef:15,qtdObs:'Ideal — pode ser mais, nunca menos (exige muita variação criativa).'},
+  {id:'tipo_demandgen',label:'Demand Gen',plataformaId:'plat_google',formatoId:'fmt_multi',qtdRef:8,qtdObs:'Ideal — pode ser mais ou menos. Aceita só estático.'},
+  {id:'tipo_googleapp',label:'Google App',plataformaId:'plat_google',formatoId:'fmt_multi',qtdRef:11,qtdObs:'Ideal — pode ser mais, nunca menos (exige muita variação criativa).'},
+  {id:'tipo_displaycomum',label:'Display Comum',plataformaId:'plat_google',formatoId:'fmt_estatico',qtdRef:8,qtdObs:''},
+  {id:'tipo_displayresp',label:'Display Responsivo',plataformaId:'plat_google',formatoId:'fmt_estatico',qtdRef:5,qtdObs:''},
+  {id:'tipo_ytvrc',label:'Youtube VRC',plataformaId:'plat_youtube',formatoId:'fmt_multi',qtdRef:6,qtdObs:'Ideal — mínimo 4 (3 vídeos + 1 banner) até 30. Média 6 a 9.'},
+  {id:'tipo_ytvvc',label:'Youtube VVC',plataformaId:'plat_youtube',formatoId:'fmt_multi',qtdRef:6,qtdObs:'Mínimo 3 vídeos + 1 banner.'},
+  {id:'tipo_rtb',label:'RTB / Criteo',plataformaId:'plat_rtb',formatoId:'fmt_multi',qtdRef:19,qtdObs:''},
+  {id:'tipo_rocketlab',label:'Rocket Lab',plataformaId:'plat_rocketlab',formatoId:'fmt_estatico',qtdRef:9,qtdObs:''},
+  {id:'tipo_pinterest_outros',label:'Outros',plataformaId:'plat_pinterest',formatoId:'',qtdRef:'',qtdObs:''},
+  {id:'tipo_outros',label:'Outros',plataformaId:'plat_outros',formatoId:'',qtdRef:'',qtdObs:''},
+];
 let archiveCfg={};
 // Demandante: quem SOLICITOU o card — diferente do Responsável, que executa
 // e pode mudar ao longo do card (ex.: passa de designer pra redator). O
@@ -7274,6 +7392,25 @@ function fbLoadAll(){
     _populateCriativosFilterLista();
     _populateCriativosImportLista();
     if(document.getElementById('criativos-ov')?.classList.contains('open')) renderCriativosTable();
+  });
+  // Ficha Técnica — taxonomias configuráveis (Canal/Objetivo/Plataforma/
+  // Tipo/Formato). Reconstrói do zero a cada eco remoto (mesmo padrão de
+  // flowConfig) — se vier vazio de verdade (squad nunca ativou), NÃO
+  // provisiona aqui (só toggleCriativosAtivo faz isso, ao ligar) — evita
+  // escrever de volta no Firebase só por causa de um listener de leitura.
+  fbListen(FB+'/config/criativo_opcoes', val=>{
+    if(val && typeof val==='object'){
+      criativoOpcoes={
+        canais: Array.isArray(val.canais)?val.canais:[],
+        objetivos: Array.isArray(val.objetivos)?val.objetivos:[],
+        plataformas: Array.isArray(val.plataformas)?val.plataformas:[],
+        tipos: Array.isArray(val.tipos)?val.tipos:[],
+        formatos: Array.isArray(val.formatos)?val.formatos:[],
+      };
+    }
+    if(typeof renderCriativoOpcoesCfg==='function' && document.getElementById('crv-opcoes-cfg-wrap')) renderCriativoOpcoesCfg();
+    if(typeof _refreshCriativoFichaSelects==='function' && document.getElementById('card-ov')?.classList.contains('open')) _refreshCriativoFichaSelects();
+    if(typeof _populateCriativosFiltroOpcoes==='function' && document.getElementById('criativos-ov')?.classList.contains('open')){ _populateCriativosFiltroOpcoes(); renderCriativosTable(); }
   });
   fbListen(FB+'/archive_cfg',val=>{ if(val) archiveCfg=val; });
 
@@ -8786,6 +8923,9 @@ function makeCardEl(card){
   // pelo navegador). Achado real, a partir de um print com cards de teste do
   // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
+  // Direcional de Mídia (Ficha Técnica) — pedido direto pra ter destaque
+  // visual pra quem for pegar o card ver fácil, sem precisar abrir.
+  const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">📌 Direcional</span>`:'';
   // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
   // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
   // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
@@ -8856,7 +8996,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -10639,6 +10779,33 @@ function saveCard(){
     showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
     return;
   }
+  // Ficha Técnica — todos os campos obrigatórios pro demandante quando o
+  // squad tem a Ficha Técnica ativada (pedido direto). Mesmo padrão de
+  // bloqueio das regras acima (título/prazo/submarca) — só que aqui inteiro
+  // dentro de um "if(criativosAtivo)", já que o resto do squad nem vê essa
+  // seção quando desativada.
+  if(criativosAtivo){
+    const crvMissing=[];
+    const crvLabels={crvCampanha:'Campanha',crvFunil:'Funil',crvEtapa:'Etapa do Funil',crvCanal:'Canal',crvObjetivo:'Objetivo',
+      crvPlataforma:'Plataforma',crvTipo:'Tipo',crvFormato:'Formato',crvVariacoes:'Variações',crvQtd:'Quantidade de Criativos',crvDirecional:'Direcional de Mídia'};
+    if(!document.querySelector('input[name="crv-campanha-tipo"]:checked')) crvMissing.push('crvCampanha');
+    if(!document.querySelector('input[name="crv-funil"]:checked')) crvMissing.push('crvFunil');
+    if(!document.getElementById('m-crv-etapa')?.value) crvMissing.push('crvEtapa');
+    if(!document.getElementById('m-crv-canal')?.value) crvMissing.push('crvCanal');
+    if(!_crvGetChecked('crv-objetivo').length) crvMissing.push('crvObjetivo');
+    if(!_crvGetSelectedPlataformas().length) crvMissing.push('crvPlataforma');
+    if(!document.getElementById('m-crv-tipo')?.value) crvMissing.push('crvTipo');
+    if(!document.getElementById('m-crv-formato')?.value) crvMissing.push('crvFormato');
+    if(!document.querySelector('input[name="crv-variacoes"]:checked')) crvMissing.push('crvVariacoes');
+    if(!document.getElementById('m-crv-qtd')?.value) crvMissing.push('crvQtd');
+    if(!document.getElementById('m-crv-direcional')?.value.trim()) crvMissing.push('crvDirecional');
+    if(crvMissing.length){
+      _highlightMissingFields(crvMissing);
+      document.getElementById('m-criativo-sec')?.scrollIntoView({behavior:'smooth',block:'center'});
+      showToast('🔒 Ficha Técnica incompleta: '+crvMissing.map(k=>crvLabels[k]).join(', '));
+      return;
+    }
+  }
   _savingCard=true;
   const _saveBtn=document.getElementById('btn-save-card');
   if(_saveBtn){ _saveBtn.disabled=true; _saveBtn.dataset.origLabel=_saveBtn.innerHTML; _saveBtn.innerHTML='💾 Salvando…'; }
@@ -11105,17 +11272,149 @@ function renderRiscos(rl){
 }
 function getRiscos(){ return Array.from(document.querySelectorAll('#m-riscos .cl-item')).map(r=>r.querySelector('.cl-it').textContent); }
 // ── Ficha de Criativo (opt-in por squad) ──
+// ── Ficha Técnica: helpers de UI pra selects/checkboxes vindos de
+// criativoOpcoes (listas configuráveis, ver Config → Criativos) ──
+function _crvOpcaoSelectHtml(list, placeholder){
+  return '<option value="">'+esc(placeholder||'— selecione —')+'</option>'
+    + (list||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.label)+'</option>').join('');
+}
+function _crvCheckGroupHtml(list, name){
+  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="scheduleAutoSave()"> '+esc(o.label)+'</label>').join('')
+    || '<span style="font-size:11px;color:var(--txt3);">Nenhuma opção configurada ainda (⚙ Config → Criativos).</span>';
+}
+function _crvGetChecked(name){
+  return Array.from(document.querySelectorAll('input[name="'+name+'"]:checked')).map(i=>i.value);
+}
+function _crvSetChecked(name, arr){
+  const set=new Set(arr||[]);
+  document.querySelectorAll('input[name="'+name+'"]').forEach(i=>{ i.checked=set.has(i.value); });
+}
+// Repopula Canal/Objetivo/Plataforma/Formato a partir de criativoOpcoes —
+// chamado na abertura do card E quando a config muda remotamente (PO
+// editando listas com o card de outra pessoa aberto ao mesmo tempo).
+// Formato NÃO usa este helper direto — fica só com as 3 opções fixas do
+// squad (Estático/Vídeo/Multiformatos), já que raramente precisa de mais.
+function _refreshCriativoFichaSelects(){
+  const canalSel=document.getElementById('m-crv-canal');
+  if(canalSel){ const cur=canalSel.value; canalSel.innerHTML=_crvOpcaoSelectHtml(criativoOpcoes.canais); canalSel.value=cur; }
+  const objWrap=document.getElementById('m-crv-objetivo-list');
+  if(objWrap){ const cur=_crvGetChecked('crv-objetivo'); objWrap.innerHTML=_crvCheckGroupHtml(criativoOpcoes.objetivos,'crv-objetivo'); _crvSetChecked('crv-objetivo',cur); }
+  const platSel=document.getElementById('m-crv-plataforma-single');
+  if(platSel){ const cur=platSel.value; platSel.innerHTML=_crvOpcaoSelectHtml(criativoOpcoes.plataformas); platSel.value=cur; }
+  const platMulti=document.getElementById('m-crv-plataforma-multi');
+  if(platMulti){ const cur=_crvGetChecked('crv-plataforma'); platMulti.innerHTML=_crvCheckGroupHtml(criativoOpcoes.plataformas,'crv-plataforma'); _crvSetChecked('crv-plataforma',cur); }
+  const fmtSel=document.getElementById('m-crv-formato');
+  if(fmtSel){ const cur=fmtSel.value; fmtSel.innerHTML=_crvOpcaoSelectHtml(criativoOpcoes.formatos); fmtSel.value=cur; }
+  _crvRefreshTipoOptions();
+}
+// Plataforma vira múltipla escolha só quando o card é supercard (tem
+// filhos) — pedido direto. _crvSyncPlataformaMode() decide qual UI mostrar
+// e migra o valor de um modo pro outro sem perder o que já tava marcado.
+function _crvSyncPlataformaMode(){
+  const single=document.getElementById('m-crv-plataforma-single');
+  const multi=document.getElementById('m-crv-plataforma-multi');
+  const hint=document.getElementById('m-crv-plataforma-hint');
+  if(!single || !multi) return;
+  const isSuper = editingSuperChildren.length>0;
+  const wasMulti = multi.style.display!=='none';
+  if(isSuper===wasMulti) return; // já está no modo certo
+  if(isSuper){
+    // single → multi: o valor único vira o primeiro (e único) marcado
+    const cur=single.value;
+    multi.innerHTML=_crvCheckGroupHtml(criativoOpcoes.plataformas,'crv-plataforma');
+    if(cur) _crvSetChecked('crv-plataforma',[cur]);
+    single.style.display='none'; multi.style.display='flex';
+  } else {
+    // multi → single: pega a primeira marcada (se houver mais de uma, as
+    // demais se perdem — aviso no toast, já que single só guarda 1)
+    const cur=_crvGetChecked('crv-plataforma');
+    single.value=cur[0]||'';
+    if(cur.length>1) showToast('⚠ Este card não é mais supercard — só a primeira plataforma marcada ('+(criativoOpcoes.plataformas.find(p=>p.id===cur[0])?.label||cur[0])+') foi mantida.');
+    multi.style.display='none'; single.style.display='';
+  }
+  if(hint) hint.textContent = isSuper ? '(múltipla escolha — supercard)' : '';
+  _crvRefreshTipoOptions();
+}
+function _crvGetSelectedPlataformas(){
+  const multi=document.getElementById('m-crv-plataforma-multi');
+  if(multi && multi.style.display!=='none') return _crvGetChecked('crv-plataforma');
+  const single=document.getElementById('m-crv-plataforma-single');
+  return single && single.value ? [single.value] : [];
+}
+function _crvPlataformaChange(){
+  _crvRefreshTipoOptions();
+  scheduleAutoSave();
+}
+// Tipo é dependente da(s) Plataforma(s) escolhida(s) — só mostra os tipos
+// da tabela de referência que pertencem a alguma das plataformas
+// selecionadas. Sem plataforma escolhida ainda = campo vazio, orientando a
+// preencher Plataforma primeiro.
+function _crvRefreshTipoOptions(){
+  const sel=document.getElementById('m-crv-tipo'); if(!sel) return;
+  const cur=sel.value;
+  const platIds=new Set(_crvGetSelectedPlataformas());
+  if(!platIds.size){ sel.innerHTML='<option value="">— selecione a Plataforma primeiro —</option>'; sel.disabled=true; return; }
+  sel.disabled=false;
+  const tipos=(criativoOpcoes.tipos||[]).filter(t=>platIds.has(t.plataformaId));
+  sel.innerHTML=_crvOpcaoSelectHtml(tipos, tipos.length?'— selecione —':'— nenhum tipo configurado pra essa plataforma —');
+  if(tipos.some(t=>t.id===cur)) sel.value=cur;
+  _crvUpdateQtdHint();
+}
+// Ao escolher o Tipo: pré-preenche Formato (editável depois, se precisar
+// ajustar) e mostra a referência de quantidade da tabela real da Hering.
+function _crvTipoChange(){
+  const tipoId=document.getElementById('m-crv-tipo')?.value||'';
+  const tipo=(criativoOpcoes.tipos||[]).find(t=>t.id===tipoId);
+  const fmtSel=document.getElementById('m-crv-formato');
+  if(tipo && tipo.formatoId && fmtSel) fmtSel.value=tipo.formatoId;
+  _crvUpdateQtdHint();
+  scheduleAutoSave();
+}
+function _crvUpdateQtdHint(){
+  const hint=document.getElementById('m-crv-qtd-hint'); if(!hint) return;
+  const tipoId=document.getElementById('m-crv-tipo')?.value||'';
+  const tipo=(criativoOpcoes.tipos||[]).find(t=>t.id===tipoId);
+  if(!tipo || !tipo.qtdRef){ hint.textContent=''; return; }
+  hint.textContent = '📎 Referência ('+tipo.label+'): '+tipo.qtdRef+(tipo.qtdObs?' — '+tipo.qtdObs:'');
+}
+function _crvCampanhaTipoChange(){
+  const tipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
+  const inp=document.getElementById('m-crv-campanha-nome');
+  if(inp){
+    const show = tipo==='campanha' || tipo==='acao';
+    inp.style.display = show?'':'none';
+    inp.placeholder = tipo==='campanha' ? 'Nome da campanha...' : (tipo==='acao' ? 'Nome da ação comercial...' : '');
+    if(!show) inp.value='';
+  }
+  scheduleAutoSave();
+}
+function _crvVariacoesChange(){
+  const sim=(document.querySelector('input[name="crv-variacoes"]:checked')||{}).value==='sim';
+  const inp=document.getElementById('m-crv-variacoes-qtd');
+  if(inp){ inp.style.display=sim?'':'none'; if(!sim) inp.value=''; }
+  scheduleAutoSave();
+}
 function getCriativoData(){
-  const canal=document.getElementById('m-crv-canal')?.value.trim()||'';
-  const objetivo=document.getElementById('m-crv-objetivo')?.value.trim()||'';
-  const plataforma=document.getElementById('m-crv-plataforma')?.value.trim()||'';
-  const formato=document.getElementById('m-crv-formato')?.value.trim()||'';
+  const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
+  const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
+  const funil=(document.querySelector('input[name="crv-funil"]:checked')||{}).value||'';
+  const etapaFunil=document.getElementById('m-crv-etapa')?.value||'';
+  const canal=document.getElementById('m-crv-canal')?.value||'';
+  const objetivos=_crvGetChecked('crv-objetivo');
+  const plataformas=_crvGetSelectedPlataformas();
+  const tipo=document.getElementById('m-crv-tipo')?.value||'';
+  const formato=document.getElementById('m-crv-formato')?.value||'';
+  const variacoes=(document.querySelector('input[name="crv-variacoes"]:checked')||{}).value||'';
+  const variacoesQtd=document.getElementById('m-crv-variacoes-qtd')?.value||'';
   const qtd=document.getElementById('m-crv-qtd')?.value||'';
+  const direcional=document.getElementById('m-crv-direcional')?.value.trim()||'';
   const status=document.getElementById('m-crv-status')?.value||'';
   const obs=document.getElementById('m-crv-obs')?.value.trim()||'';
   const lista=document.getElementById('m-crv-lista')?.value||'';
-  if(!canal && !objetivo && !plataforma && !formato && !qtd && !status && !obs && !lista) return null;
-  return {canal,objetivo,plataforma,formato,qtd,status,obs,lista};
+  const vazio = !campanhaTipo && !funil && !etapaFunil && !canal && !objetivos.length && !plataformas.length
+    && !tipo && !formato && !variacoes && !qtd && !direcional && !status && !obs && !lista;
+  if(vazio) return null;
+  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,objetivos,plataformas,tipo,formato,variacoes,variacoesQtd,qtd,direcional,status,obs,lista};
 }
 function _populateCriativosListaSelect(){
   const sel=document.getElementById('m-crv-lista'); if(!sel) return;
@@ -11127,23 +11426,154 @@ function _populateCriativosListaSelect(){
 function setCriativoFields(crv){
   crv=crv||{};
   _populateCriativosListaSelect();
+  _refreshCriativoFichaSelects();
   const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
-  set('m-crv-canal',crv.canal); set('m-crv-objetivo',crv.objetivo); set('m-crv-plataforma',crv.plataforma);
-  set('m-crv-formato',crv.formato); set('m-crv-qtd',crv.qtd); set('m-crv-status',crv.status); set('m-crv-obs',crv.obs);
-  set('m-crv-lista',crv.lista);
+  // Campanha (radio + texto condicional)
+  document.querySelectorAll('input[name="crv-campanha-tipo"]').forEach(r=>{ r.checked = r.value===(crv.campanhaTipo||''); });
+  _crvCampanhaTipoChange();
+  set('m-crv-campanha-nome', crv.campanhaNome);
+  // Funil (radio)
+  document.querySelectorAll('input[name="crv-funil"]').forEach(r=>{ r.checked = r.value===(crv.funil||''); });
+  set('m-crv-etapa', crv.etapaFunil);
+  set('m-crv-canal', crv.canal);
+  _crvSetChecked('crv-objetivo', crv.objetivos||[]);
+  // Plataforma: decide modo (single/multi) pelo supercard ANTES de setar o
+  // valor, senão o valor pode ir pro elemento errado (escondido).
+  _crvSyncPlataformaMode();
+  if(editingSuperChildren.length>0) _crvSetChecked('crv-plataforma', crv.plataformas||[]);
+  else document.getElementById('m-crv-plataforma-single').value = (crv.plataformas||[])[0]||'';
+  _crvRefreshTipoOptions();
+  set('m-crv-tipo', crv.tipo);
+  set('m-crv-formato', crv.formato);
+  _crvUpdateQtdHint();
+  document.querySelectorAll('input[name="crv-variacoes"]').forEach(r=>{ r.checked = r.value===(crv.variacoes||''); });
+  _crvVariacoesChange();
+  set('m-crv-variacoes-qtd', crv.variacoesQtd);
+  set('m-crv-qtd', crv.qtd);
+  set('m-crv-direcional', crv.direcional);
+  set('m-crv-status', crv.status);
+  set('m-crv-obs', crv.obs);
+  set('m-crv-lista', crv.lista);
 }
 
 function _criativosRows(){
-  return cards.filter(c=>!c.archived && c.criativo && (c.criativo.canal||c.criativo.objetivo||c.criativo.plataforma||c.criativo.formato||c.criativo.qtd||c.criativo.status||c.criativo.obs));
+  return cards.filter(c=>!c.archived && c.criativo && (c.criativo.canal||(c.criativo.objetivos||[]).length||(c.criativo.plataformas||[]).length||c.criativo.tipo||c.criativo.formato||c.criativo.qtd||c.criativo.status||c.criativo.obs));
+}
+// Resolve id → label numa das 5 listas da Ficha Técnica. Cai no próprio
+// valor bruto se não achar (cobre dado legado/importado que nunca foi um id
+// de verdade — melhor mostrar o texto que a pessoa tinha do que "—").
+function _crvLabel(key, id){
+  if(!id) return '';
+  return (criativoOpcoes[key]||[]).find(o=>o.id===id)?.label || id;
+}
+function _crvLabels(key, ids){ return (ids||[]).map(id=>_crvLabel(key,id)).filter(Boolean); }
+// Provisiona (idempotente) as 5 listas da Ficha Técnica — só preenche o que
+// ESTÁ FALTANDO (por id), nunca sobrescreve edição já feita pelo PO. Mesmo
+// espírito do provisionamento de SIZE_TAGS logo abaixo.
+function _provisionCriativoOpcoes(){
+  const defaults={ canais:CANAL_OPCOES_DEFAULT, objetivos:OBJETIVO_OPCOES_DEFAULT, plataformas:PLATAFORMA_OPCOES_DEFAULT, tipos:TIPO_OPCOES_DEFAULT, formatos:FORMATO_OPCOES_DEFAULT };
+  let mudou=false;
+  Object.keys(defaults).forEach(k=>{
+    if(!Array.isArray(criativoOpcoes[k])) { criativoOpcoes[k]=[]; mudou=true; }
+    defaults[k].forEach(def=>{
+      if(!criativoOpcoes[k].some(o=>o.id===def.id)){ criativoOpcoes[k].push(Object.assign({},def)); mudou=true; }
+    });
+  });
+  if(mudou) fbSet(FB+'/config/criativo_opcoes', criativoOpcoes);
+  return mudou;
 }
 function toggleCriativosAtivo(checked){
   if(!_isPOorOrg()) return;
   criativosAtivo = !!checked;
   fbSet(FB+'/config/criativos_ativo', criativosAtivo);
+  if(criativosAtivo) _provisionCriativoOpcoes();
   const btn=document.getElementById('btn-criativos'); if(btn) btn.style.display = criativosAtivo?'':'none';
   const sec=document.getElementById('m-criativo-sec'); if(sec && document.getElementById('card-ov')?.classList.contains('open')) sec.style.display = criativosAtivo?'':'none';
   const listasWrap=document.getElementById('crv-listas-cfg-wrap'); if(listasWrap) listasWrap.style.display = criativosAtivo?'':'none';
-  showToast(criativosAtivo?'🎬 Ficha de Criativo ativada neste squad.':'Ficha de Criativo desativada neste squad.');
+  const opcoesWrap=document.getElementById('crv-opcoes-cfg-wrap'); if(opcoesWrap) opcoesWrap.style.display = criativosAtivo?'':'none';
+  if(criativosAtivo && typeof renderCriativoOpcoesCfg==='function') renderCriativoOpcoesCfg();
+  showToast(criativosAtivo?'🎬 Ficha Técnica ativada neste squad.':'Ficha Técnica desativada neste squad.');
+}
+// ── Config → Criativos: editor das 5 listas fechadas da Ficha Técnica ──
+const _CRV_OPCAO_SECOES=[
+  {key:'canais',label:'📡 Canal'},
+  {key:'objetivos',label:'🎯 Objetivo'},
+  {key:'plataformas',label:'📱 Plataforma'},
+  {key:'formatos',label:'🖼️ Formato'},
+];
+function _crvSlug(label){
+  return 'op_'+label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,30)+'_'+Math.random().toString(36).slice(2,5);
+}
+function renderCriativoOpcoesCfg(){
+  const body=document.getElementById('crv-opcoes-cfg-body'); if(!body) return;
+  const chipList=(key)=> (criativoOpcoes[key]||[]).map(o=>
+    '<span class="tag-chip-cfg" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,179,217,.1);border:1px solid rgba(255,179,217,.3);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--txt);margin:2px;">'
+    +esc(o.label)+'<span onclick="_crvOpcaoRemove(\''+key+'\',\''+esc(o.id)+'\')" style="cursor:pointer;color:var(--txt3);" title="Remover">✕</span></span>'
+  ).join('') || '<span style="font-size:11px;color:var(--txt3);">Vazio.</span>';
+  const simpleSecs=_CRV_OPCAO_SECOES.map(sec=>
+    '<div style="margin-bottom:16px;">'
+    +'<div style="font-size:11.5px;font-weight:700;color:var(--txt);margin-bottom:6px;">'+sec.label+'</div>'
+    +'<div style="margin-bottom:6px;">'+chipList(sec.key)+'</div>'
+    +'<div style="display:flex;gap:6px;"><input type="text" class="fi" id="crv-opcao-add-'+sec.key+'" placeholder="Nova opção..." style="font-size:11px;padding:5px 8px;max-width:220px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();_crvOpcaoAdd(\''+sec.key+'\');}">'
+    +'<button class="btn btn-sm" style="font-size:10px;" onclick="_crvOpcaoAdd(\''+sec.key+'\')">+ Adicionar</button></div>'
+    +'</div>'
+  ).join('');
+
+  const platOpts=(sel)=>'<option value="">— plataforma —</option>'+(criativoOpcoes.plataformas||[]).map(p=>'<option value="'+esc(p.id)+'"'+(p.id===sel?' selected':'')+'>'+esc(p.label)+'</option>').join('');
+  const fmtOpts=(sel)=>'<option value="">— formato —</option>'+(criativoOpcoes.formatos||[]).map(f=>'<option value="'+esc(f.id)+'"'+(f.id===sel?' selected':'')+'>'+esc(f.label)+'</option>').join('');
+  const tipoRows=(criativoOpcoes.tipos||[]).map(t=>{
+    const plat=(criativoOpcoes.plataformas||[]).find(p=>p.id===t.plataformaId);
+    const fmt=(criativoOpcoes.formatos||[]).find(f=>f.id===t.formatoId);
+    return '<div style="display:grid;grid-template-columns:1.4fr 1fr .8fr .5fr auto;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--glass-b);font-size:11px;">'
+      +'<span style="color:var(--txt);">'+esc(t.label)+'</span>'
+      +'<span style="color:var(--txt2);">'+esc(plat?.label||'—')+'</span>'
+      +'<span style="color:var(--txt2);">'+esc(fmt?.label||'—')+'</span>'
+      +'<span style="color:var(--txt3);">'+(t.qtdRef||'—')+'</span>'
+      +'<span onclick="_crvOpcaoRemove(\'tipos\',\''+esc(t.id)+'\')" style="cursor:pointer;color:var(--txt3);text-align:right;" title="Remover">✕</span>'
+      +'</div>';
+  }).join('') || '<div style="font-size:11px;color:var(--txt3);padding:6px 0;">Nenhum tipo configurado.</div>';
+
+  body.innerHTML = simpleSecs
+    + '<div style="margin-top:6px;">'
+    + '<div style="font-size:11.5px;font-weight:700;color:var(--txt);margin-bottom:6px;">🏷️ Tipo <span style="font-weight:400;color:var(--txt3);">(depende da Plataforma escolhida no card — Formato/Qtd de referência aqui são só o padrão sugerido)</span></div>'
+    + '<div style="display:grid;grid-template-columns:1.4fr 1fr .8fr .5fr auto;gap:6px;font-size:9.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;padding-bottom:4px;border-bottom:1px solid var(--glass-b);"><span>Nome</span><span>Plataforma</span><span>Formato</span><span>Qtd ref.</span><span></span></div>'
+    + tipoRows
+    + '<div style="display:grid;grid-template-columns:1.4fr 1fr .8fr .5fr auto;gap:6px;margin-top:8px;align-items:center;">'
+      + '<input type="text" class="fi" id="crv-tipo-add-label" placeholder="Nome do tipo..." style="font-size:11px;padding:5px 8px;">'
+      + '<select class="fi" id="crv-tipo-add-plataforma" style="font-size:11px;padding:5px 4px;">'+platOpts()+'</select>'
+      + '<select class="fi" id="crv-tipo-add-formato" style="font-size:11px;padding:5px 4px;">'+fmtOpts()+'</select>'
+      + '<input type="number" min="0" class="fi" id="crv-tipo-add-qtd" placeholder="Qtd" style="font-size:11px;padding:5px 4px;">'
+      + '<button class="btn btn-sm" style="font-size:10px;" onclick="_crvTipoAdd()">+</button>'
+    + '</div>'
+    + '</div>';
+}
+function _crvOpcaoAdd(key){
+  const inp=document.getElementById('crv-opcao-add-'+key); if(!inp) return;
+  const label=inp.value.trim(); if(!label) return;
+  if((criativoOpcoes[key]||[]).some(o=>_norm(o.label)===_norm(label))){ showToast('⚠ "'+label+'" já existe nessa lista.'); return; }
+  criativoOpcoes[key]=(criativoOpcoes[key]||[]).concat([{id:_crvSlug(label),label}]);
+  fbSet(FB+'/config/criativo_opcoes', criativoOpcoes);
+  inp.value='';
+  renderCriativoOpcoesCfg();
+  if(document.getElementById('card-ov')?.classList.contains('open') && typeof _refreshCriativoFichaSelects==='function') _refreshCriativoFichaSelects();
+}
+function _crvTipoAdd(){
+  const label=document.getElementById('crv-tipo-add-label')?.value.trim()||'';
+  const plataformaId=document.getElementById('crv-tipo-add-plataforma')?.value||'';
+  const formatoId=document.getElementById('crv-tipo-add-formato')?.value||'';
+  const qtdRef=document.getElementById('crv-tipo-add-qtd')?.value||'';
+  if(!label || !plataformaId){ showToast('⚠ Preencha ao menos o nome e a plataforma do tipo.'); return; }
+  criativoOpcoes.tipos=(criativoOpcoes.tipos||[]).concat([{id:_crvSlug(label),label,plataformaId,formatoId,qtdRef:qtdRef?parseInt(qtdRef,10):'',qtdObs:''}]);
+  fbSet(FB+'/config/criativo_opcoes', criativoOpcoes);
+  renderCriativoOpcoesCfg();
+  if(document.getElementById('card-ov')?.classList.contains('open') && typeof _refreshCriativoFichaSelects==='function') _refreshCriativoFichaSelects();
+}
+async function _crvOpcaoRemove(key, id){
+  if(!await uiConfirm('Remover esta opção da lista? Cards que já usam esse valor mantêm o dado (só some das opções pra escolher em cards novos).',{title:'Remover opção',okText:'Remover',danger:true})) return;
+  criativoOpcoes[key]=(criativoOpcoes[key]||[]).filter(o=>o.id!==id);
+  fbSet(FB+'/config/criativo_opcoes', criativoOpcoes);
+  renderCriativoOpcoesCfg();
+  if(document.getElementById('card-ov')?.classList.contains('open') && typeof _refreshCriativoFichaSelects==='function') _refreshCriativoFichaSelects();
 }
 // Provisiona (idempotente) as 4 tags de tamanho no squad — reativar não duplica,
 // já que os ids são fixos (SIZE_TAGS). Desativar NÃO remove as tags já criadas/
@@ -11521,11 +11951,24 @@ function _crvSweepAutoStatus(){
   });
   if(changed && typeof renderCriativosTable==='function') renderCriativosTable();
 }
+// Popula os 4 selects de filtro (Canal/Objetivo/Plataforma/Formato) do
+// Controle de Criativos a partir de criativoOpcoes — chamado na abertura
+// do painel e sempre que a config muda remotamente.
+function _populateCriativosFiltroOpcoes(){
+  const map={ 'crv-fh-canal':['canais','Todos'], 'crv-fh-objetivo':['objetivos','Todos'], 'crv-fh-plataforma':['plataformas','Todas'], 'crv-fh-formato':['formatos','Todos'] };
+  Object.entries(map).forEach(([elId,[key,todos]])=>{
+    const sel=document.getElementById(elId); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">'+todos+'</option>'+(criativoOpcoes[key]||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.label)+'</option>').join('');
+    sel.value=cur;
+  });
+}
 function openCriativos(){
   _crvSweepAutoStatus();
   const ov=document.getElementById('criativos-ov'); if(!ov) return;
   ov.classList.add('open');
   _populateCriativosFilterLista();
+  _populateCriativosFiltroOpcoes();
   _crvClearFilters();
   const canManage=_isPOorOrg();
   const impB=document.getElementById('crv-import-btn'); if(impB) impB.style.display=canManage?'':'none';
@@ -11592,14 +12035,22 @@ function renderCriativosDashboard(){
   const prioCounts={critical:0,high:0,medium:0,low:0}; let semPrio=0;
   rows.forEach(c=>{ if(c.priority && prioCounts.hasOwnProperty(c.priority)) prioCounts[c.priority]++; else semPrio++; });
 
-  function topBy(field,n){
+  // canal/formato continuam id único (resolve label); plataformas é array
+  // desde a Ficha Técnica (Fase reformulação) — cada plataforma marcada
+  // conta como 1, flatten em vez de tratar o array inteiro como 1 chave.
+  function topBy(opcoesKey,cardField,n){
     const m=new Map();
-    rows.forEach(c=>{ const v=(c.criativo&&c.criativo[field]||'').trim()||'—'; m.set(v,(m.get(v)||0)+1); });
+    rows.forEach(c=>{ const v=_crvLabel(opcoesKey,c.criativo&&c.criativo[cardField])||'—'; m.set(v,(m.get(v)||0)+1); });
     return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n||6);
   }
-  const byCanal=topBy('canal',6);
-  const byPlataforma=topBy('plataforma',6);
-  const byFormato=topBy('formato',6);
+  function topByArray(opcoesKey,cardField,n){
+    const m=new Map();
+    rows.forEach(c=>{ _crvLabels(opcoesKey,c.criativo&&c.criativo[cardField]).forEach(v=>m.set(v,(m.get(v)||0)+1)); });
+    return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n||6);
+  }
+  const byCanal=topBy('canais','canal',6);
+  const byPlataforma=topByArray('plataformas','plataformas',6);
+  const byFormato=topBy('formatos','formato',6);
   const listaMap=new Map();
   rows.forEach(c=>{ const lid=c.criativo&&c.criativo.lista; const nome=lid&&criativosListas[lid]?criativosListas[lid].nome:'Sem lista'; listaMap.set(nome,(listaMap.get(nome)||0)+1); });
   const byLista=[...listaMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
@@ -11685,10 +12136,12 @@ function _crvTriggerImport(){
 function _criativosFilteredRows(){
   const q=(document.getElementById('crv-search')?.value||'').toLowerCase().trim();
   const listaFilter=document.getElementById('crv-filter-lista')?.value||'';
-  const fCanal=_norm(document.getElementById('crv-fh-canal')?.value||'');
-  const fObjetivo=_norm(document.getElementById('crv-fh-objetivo')?.value||'');
-  const fPlataforma=_norm(document.getElementById('crv-fh-plataforma')?.value||'');
-  const fFormato=_norm(document.getElementById('crv-fh-formato')?.value||'');
+  // Canal/Objetivo/Plataforma/Formato agora filtram por ID exato (selects
+  // sourced de criativoOpcoes), não mais substring de texto livre.
+  const fCanal=document.getElementById('crv-fh-canal')?.value||'';
+  const fObjetivo=document.getElementById('crv-fh-objetivo')?.value||'';
+  const fPlataforma=document.getElementById('crv-fh-plataforma')?.value||'';
+  const fFormato=document.getElementById('crv-fh-formato')?.value||'';
   const fStatus=document.getElementById('crv-fh-status')?.value||'';
   const fPrazo=document.getElementById('crv-fh-prazo')?.value||'';
   const fPrioridade=document.getElementById('crv-fh-prioridade')?.value||'';
@@ -11696,10 +12149,10 @@ function _criativosFilteredRows(){
   const fQtdMin=fQtdRaw===''?NaN:parseFloat(fQtdRaw);
   let rows=_criativosRows();
   if(listaFilter) rows=rows.filter(c=>(c.criativo&&c.criativo.lista||'')===listaFilter);
-  if(fCanal) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.canal||'').includes(fCanal));
-  if(fObjetivo) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.objetivo||'').includes(fObjetivo));
-  if(fPlataforma) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.plataforma||'').includes(fPlataforma));
-  if(fFormato) rows=rows.filter(c=>_norm(c.criativo&&c.criativo.formato||'').includes(fFormato));
+  if(fCanal) rows=rows.filter(c=>(c.criativo&&c.criativo.canal||'')===fCanal);
+  if(fObjetivo) rows=rows.filter(c=>(c.criativo&&c.criativo.objetivos||[]).includes(fObjetivo));
+  if(fPlataforma) rows=rows.filter(c=>(c.criativo&&c.criativo.plataformas||[]).includes(fPlataforma));
+  if(fFormato) rows=rows.filter(c=>(c.criativo&&c.criativo.formato||'')===fFormato);
   if(fStatus) rows=rows.filter(c=>(c.criativo&&c.criativo.status||'')===fStatus);
   if(fPrioridade){
     if(fPrioridade==='none') rows=rows.filter(c=>!c.priority);
@@ -11729,7 +12182,7 @@ function renderCriativosTable(){
   const cEl=document.getElementById('crv-count'); if(cEl) cEl.textContent = rows.length+' pedido(s)';
   const tbody=document.getElementById('crv-tbody'); if(!tbody) return;
   if(!rows.length){
-    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha de Criativo preenchida ainda (ou nenhum bate com os filtros).</td></tr>';
+    tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--txt3);padding:24px;">Nenhum card com Ficha Técnica preenchida ainda (ou nenhum bate com os filtros).</td></tr>';
     return;
   }
   const prioMap={low:'🟢 Baixa',medium:'🟡 Média',high:'🔴 Alta',critical:'🔥 Crítica'};
@@ -11737,13 +12190,19 @@ function renderCriativosTable(){
     const crv=c.criativo||{};
     const id=String(c.id).replace(/'/g,"\\'");
     const listaNome = crv.lista && criativosListas[crv.lista] ? criativosListas[crv.lista].nome : '—';
+    // Objetivo/Plataforma são multi-escolha desde a Ficha Técnica — mostra
+    // as labels juntas, sem edição inline aqui (não cabe um <select multi>
+    // numa célula); duplo clique nessas duas colunas simplesmente abre o
+    // card, igual clique simples na linha.
+    const objetivoTxt=_crvLabels('objetivos',crv.objetivos).join(', ')||'—';
+    const plataformaTxt=_crvLabels('plataformas',crv.plataformas).join(', ')||'—';
     return '<tr class="crv-row" onclick="_crvRowClick(\''+id+'\')">'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'vinculo\')" title="Duplo clique pra vincular a outro card">'+esc(c.title)+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'lista\')">'+esc(listaNome)+'</td>'
-      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'canal\')">'+esc(crv.canal||'—')+'</td>'
-      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'objetivo\')">'+esc(crv.objetivo||'—')+'</td>'
-      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'plataforma\')">'+esc(crv.plataforma||'—')+'</td>'
-      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'formato\')">'+esc(crv.formato||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'canal\')">'+esc(_crvLabel('canais',crv.canal)||'—')+'</td>'
+      +'<td title="Múltipla escolha — abra o card pra editar">'+esc(objetivoTxt)+'</td>'
+      +'<td title="Múltipla escolha — abra o card pra editar">'+esc(plataformaTxt)+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'formato\')">'+esc(_crvLabel('formatos',crv.formato)||'—')+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'status\')">'+esc(crv.status||'—')+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'due\')">'+(c.due?esc(_fmtDateBR2(c.due)):'—')+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'priority\')">'+(prioMap[c.priority]||'—')+'</td>'
@@ -11870,10 +12329,20 @@ function _crvEditCell(td, cardId, field){
     inp.onblur=()=>finish(true,inp.value);
     return;
   }
-  const listId={canal:'crv-canal-list',objetivo:'crv-objetivo-list',plataforma:'crv-plataforma-list',formato:'crv-formato-list'}[field];
+  // Canal/Formato são listas fechadas desde a Ficha Técnica — select a
+  // partir de criativoOpcoes, não mais texto livre com datalist.
+  if(field==='canal' || field==='formato'){
+    const opcoesKey = field==='canal' ? 'canais' : 'formatos';
+    const sel=document.createElement('select');
+    sel.className='fi crv-edit-select';
+    sel.innerHTML='<option value="">— selecione —</option>'+(criativoOpcoes[opcoesKey]||[]).map(o=>'<option value="'+esc(o.id)+'"'+(o.id===(crv[field]||'')?' selected':'')+'>'+esc(o.label)+'</option>').join('');
+    td.innerHTML=''; td.appendChild(sel); sel.focus();
+    sel.onchange=()=>finish(true,sel.value);
+    sel.onblur=()=>finish(false);
+    return;
+  }
   const inp=document.createElement('input');
   inp.type='text'; inp.className='fi crv-edit-input'; inp.style.width='100%';
-  if(listId) inp.setAttribute('list',listId);
   inp.value=crv[field]||'';
   td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
   inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value.trim()); else if(e.key==='Escape') finish(false); };
@@ -11906,13 +12375,13 @@ function exportCriativosCSV(){
   if(!_isPOorOrg()){ showToast('🔒 Exportar disponível só para ADM, PO e Organizador.'); return; }
   const rows=_criativosFilteredRows();
   if(!rows.length){ showToast('Nenhum dado para exportar.'); return; }
-  const headers=['Pedido','Lista','Canal','Objetivo','Plataforma','Formato','Status','Prazo','Prioridade','Qtd Criativos','Responsável','Obs'];
+  const headers=['Pedido','Lista','Canal','Objetivo','Plataforma','Tipo','Formato','Status','Prazo','Prioridade','Qtd Criativos','Direcional de Mídia','Responsável','Obs'];
   const csvRows=[headers.join(';')];
   rows.forEach(c=>{
     const crv=c.criativo||{};
     const owner=members.find(m=>m.init===c.owner);
     const listaNome = crv.lista && criativosListas[crv.lista] ? criativosListas[crv.lista].nome : '';
-    const line=[c.title,listaNome,crv.canal,crv.objetivo,crv.plataforma,crv.formato,crv.status,c.due||'',c.priority||'',crv.qtd||'',owner?owner.name:(c.owner||''),crv.obs||'']
+    const line=[c.title,listaNome,_crvLabel('canais',crv.canal),_crvLabels('objetivos',crv.objetivos).join(', '),_crvLabels('plataformas',crv.plataformas).join(', '),_crvLabel('tipos',crv.tipo),_crvLabel('formatos',crv.formato),crv.status,c.due||'',c.priority||'',crv.qtd||'',crv.direcional||'',owner?owner.name:(c.owner||''),crv.obs||'']
       .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"');
     csvRows.push(line.join(';'));
   });
@@ -12034,9 +12503,12 @@ function _criativosImportConfirm(){
     if(!r.include || !r.cardId) return;
     const card=cards.find(c=>c.id===r.cardId); if(!card) return;
     const crv = Object.assign({}, card.criativo||{});
+    // Importado da planilha entra como texto bruto (não como id de
+    // criativoOpcoes) — a Ficha Técnica mostra esse texto como está até
+    // alguém reabrir o card e escolher a opção certa da lista fechada.
     if(r.canal) crv.canal=r.canal;
-    if(r.objetivo) crv.objetivo=r.objetivo;
-    if(r.plataforma) crv.plataforma=r.plataforma;
+    if(r.objetivo) crv.objetivos=[r.objetivo];
+    if(r.plataforma) crv.plataformas=[r.plataforma];
     if(r.formato) crv.formato=r.formato;
     if(r.status) crv.status=r.status;
     if(r.qtd) crv.qtd=r.qtd;
@@ -16709,7 +17181,8 @@ function _missingRequired(){
   return _pendingRequired.filter(k=>!_reqFieldFilled(k));
 }
 // Destaca visualmente os campos obrigatórios faltando
-const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority',submarca:'m-submarca'};
+const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority',submarca:'m-submarca',
+  crvEtapa:'m-crv-etapa',crvCanal:'m-crv-canal',crvTipo:'m-crv-tipo',crvFormato:'m-crv-formato',crvQtd:'m-crv-qtd',crvDirecional:'m-crv-direcional'};
 function _highlightMissingFields(missing){
   // limpa destaques antigos
   document.querySelectorAll('.req-missing').forEach(el=>el.classList.remove('req-missing'));
@@ -16719,6 +17192,11 @@ function _highlightMissingFields(missing){
     else if(k==='tags') el=document.getElementById('m-tags-box');
     else if(k==='desc') el=document.getElementById('desc-eoc');
     else if(k==='checklist') el=document.getElementById('m-cl-list')||document.getElementById('m-checklist');
+    else if(k==='crvCampanha') el=document.getElementById('m-crv-campanha-wrap');
+    else if(k==='crvFunil') el=document.getElementById('m-crv-funil-wrap');
+    else if(k==='crvObjetivo') el=document.getElementById('m-crv-objetivo-wrap');
+    else if(k==='crvPlataforma') el=document.getElementById('m-crv-plataforma-wrap');
+    else if(k==='crvVariacoes') el=document.getElementById('m-crv-variacoes-wrap');
     if(el){ el.classList.add('req-missing'); }
   });
   // foca no primeiro faltando
@@ -16778,7 +17256,12 @@ function swCfgTab(tab){
   }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
-  if(tab==='criativos'){ const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo; renderCriativosListasCfg(); }
+  if(tab==='criativos'){
+    const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo;
+    renderCriativosListasCfg();
+    const opcoesWrap=document.getElementById('crv-opcoes-cfg-wrap'); if(opcoesWrap) opcoesWrap.style.display=criativosAtivo?'':'none';
+    if(criativosAtivo) renderCriativoOpcoesCfg();
+  }
   if(tab==='padroes'){
     const elDem=document.getElementById('cfg-demandante-ativo'); if(elDem) elDem.checked=demandanteAtivo;
     renderCardPatternsCfg();
@@ -18823,7 +19306,7 @@ const HELP_CONTENT = {
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
-    { icon:'🎬', title:'Ficha de Criativo', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha de Criativo neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra (Canal, Objetivo, Plataforma, Formato, Quantidade de criativos, Status de produção e Observações), e um painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado.\n\nDá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas — cada card escolhe uma lista, e o painel filtra por ela. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
+    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b>, <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só, ou várias se o card for Supercard), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b>, <b>Quantidade de Criativos</b> e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado do campo de Quantidade — não trava nada, só orienta.\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado. Dá pra criar Listas de Criativos (ex.: "Dia dos Pais", "Institucional T1") pra segmentar as fichas. Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
@@ -19405,6 +19888,11 @@ function initSuperChildren(card){
   }
 }
 function renderSuperChildrenList(){
+  // Ficha Técnica: Plataforma vira múltipla escolha quando o card é
+  // supercard (tem filhos) — reavalia toda vez que a lista de filhos muda,
+  // não só na abertura do card (pedido direto: "Pode ser múltiplas
+  // escolhas, quando SUPERCARD").
+  if(typeof _crvSyncPlataformaMode==='function') _crvSyncPlataformaMode();
   const list=document.getElementById('m-super-children-list'); if(!list) return;
   if(!editingSuperChildren.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt2);">Nenhum card filho ainda.</div>'; return; }
   const doneN=editingSuperChildren.filter(lc=>_isColDone(lc.col)).length;
