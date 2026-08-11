@@ -1318,6 +1318,42 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.386-dev — 2026-08-11
+Fase 5, item 4 aprovado: formulário de intake por squad — link público,
+sem login, pra quem está fora do squad (ou fora da empresa) pedir algo
+sem precisar de conta no Maré Digital.
+
+- **Novo:** `intake.html` (página pública, na raiz do site, sem SDK do
+  Firebase/login) + Cloud Function `intakeSubmit`
+  (`functions/intake/submit.js`) — único ponto de escrita anônima
+  permitido no sistema. Link por squad: `intake.html?squad=SEU_SQUAD`
+  (botão "🔗 Copiar link" dentro do painel de Intake).
+- Decisão de arquitetura: a function NUNCA escreve direto em `/cards` —
+  esse nó é um array reescrito por INTEIRO a cada `fbSaveAll()` do
+  cliente (criar/excluir/reordenar card), então um card inserido por
+  fora seria apagado silenciosamente no primeiro save estrutural de
+  qualquer pessoa do squad. Em vez disso, grava um registro leve em
+  `kanban/squads/{squad}/dados/intake_pending/{id}` (nó comum, chaveado
+  por push-id) — o cliente lê esse nó e cria o card de verdade pelo
+  fluxo normal, com uma pessoa confirmando antes.
+- Defesa contra abuso sem custo de lib nova: honeypot (campo invisível
+  só um bot preenche) + limite de 5 envios/hora por IP.
+- No board: botão "📥 Intake" na toolbar (badge com a contagem de
+  pendentes) abre a lista de pedidos. "✅ Criar card" abre o card de
+  criação já pré-preenchido (título, descrição com nome/contato de quem
+  pediu, prazo) pra revisar e salvar; "🗑 Descartar" remove da lista
+  (fica registrado, não vira card). Pedido só sai de "pendente" quando o
+  card é de fato SALVO com sucesso — cancelar o card no meio do caminho
+  deixa o pedido pendente de novo.
+- Campo `demandante` do card é uma lista fechada de membros do squad
+  (não texto livre) — por isso o nome/contato de quem pediu (que pode
+  ser alguém de fora) entra na descrição do card, não nesse campo.
+- **Atenção — passo manual:** a Cloud Function precisa de
+  `firebase deploy --only functions:intakeSubmit` pra ir ao ar (deploy
+  de function não é automático como o GitHub Pages). Até isso rodar, o
+  formulário público fica sem endpoint válido.
+- HELP_CONTENT atualizado.
+
 ### v8.30.385-dev — 2026-08-11
 Fase 5, item 3 aprovado: CFD (Cumulative Flow Diagram) + Burndown, nova
 3ª aba "📈 CFD & Burndown" dentro de "📊 Dados do Board".
