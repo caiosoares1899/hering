@@ -1318,6 +1318,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.373-dev — 2026-08-11
+Fase 2.3 do plano de otimização: animações conscientes (peixinhos,
+bolhas, pulsos de alerta).
+
+- **Pausa em background**: `visibilitychange` alterna
+  `[data-anim-paused]` no `<html>` — pausa a animação de peixes/bolhas
+  quando a aba não está visível (`document.hidden`), retoma ao voltar.
+  Zero trabalho de CPU/GPU animando algo que ninguém está vendo.
+- **`prefers-reduced-motion: reduce`**: desliga (via `animation:none`)
+  os peixinhos, bolhas e os pulsos de alerta contínuos (tag de iniciais
+  duplicadas, botão "Salvar" com alteração não salva, bolinha de raia
+  sem dono) — não mexe em animações curtas/pontuais (toast, abrir modal,
+  popup de notificação), que não são o tipo de movimento que essa
+  preferência do usuário pede pra evitar.
+- **Mobile (≤768px)**: metade da quantidade de peixes/bolhas (4+8 em vez
+  de 8+16) — mesma cena, menos elementos animados ao mesmo tempo, mais
+  leve pra CPU/bateria de celular.
+- Preferência pessoal de ligar/desligar peixinhos (🐟 no título) e a
+  cena em si continuam do mesmo jeito — isso só reduz o CUSTO da
+  animação, não muda a experiência de quem não pediu nada disso.
+
 ### v8.30.372-dev — 2026-08-11
 Fase 2.2 do plano de otimização: `_updateSaveBtnDirtyState()` (indicador
 "alterações não salvas" no botão Salvar do card) rodava num

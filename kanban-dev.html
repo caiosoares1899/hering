@@ -458,6 +458,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 @keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
 .fish-rtl{position:absolute;animation:swimRTL linear infinite;}
 @keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
+/* Pausa peixes/bolhas quando a aba não está visível (document.hidden) — ver
+   o listener de visibilitychange no JS que alterna [data-anim-paused] no
+   <html>. Anima em background sem ninguém olhando é custo de bateria à toa. */
+[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble{
+  animation-play-state:paused;
+}
+/* prefers-reduced-motion: desliga as animações contínuas e "ambiente"
+   (peixinhos, bolhas, pulsos de alerta) — não mexe em animações curtas/
+   pontuais (popup de notificação, toast, abrir modal), que não são o tipo
+   de movimento que essa preferência do usuário pede pra evitar. */
+@media (prefers-reduced-motion: reduce){
+  .fish-ltr,.fish-rtl,.bubble,.init-pill.init-dup,.btn-unsaved,.raia-unowned-dot{
+    animation:none!important;
+  }
+}
 .app{position:relative;z-index:2;padding:.9rem 1.2rem 10px;}
 /* header */
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:8px;position:relative;z-index:20;}
@@ -5150,7 +5165,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.372-dev</div>
+<div class="version">v8.30.373-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -22695,10 +22710,21 @@ _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicad
     `<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>`,
     `<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>`,
   ];
-  for(let i=0;i<8;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
-  for(let i=0;i<16;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
+  // Mobile (≤768px) fica com metade dos peixes/bolhas — mesma cena, menos
+  // elementos animados simultâneos (custo de bateria/CPU maior em celular).
+  const isMobile = window.matchMedia('(max-width:768px)').matches;
+  const nFish = isMobile ? 4 : 8;
+  const nBubbles = isMobile ? 8 : 16;
+  for(let i=0;i<nFish;i++){ const f=document.createElement('div'); const r=Math.random()>.5; f.className=r?'fish-ltr':'fish-rtl'; f.style.top=(5+Math.random()*80)+'%'; f.style.animationDuration=(14+Math.random()*24)+'s'; f.style.animationDelay=(-Math.random()*24)+'s'; f.innerHTML=svgs[i%svgs.length]; fw.appendChild(f); }
+  for(let i=0;i<nBubbles;i++){ const b=document.createElement('div'); b.className='bubble'; const sz=3+Math.random()*14; b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${8+Math.random()*18}s;animation-delay:-${Math.random()*18}s;`; bw.appendChild(b); }
   _applyFishBgVisibility();
 })();
+// Pausa a animação de peixes/bolhas quando a aba vai pro background — não
+// tem sentido gastar CPU/bateria animando algo que ninguém está vendo.
+// Ver regra [data-anim-paused] .fish-ltr/.fish-rtl/.bubble no CSS.
+document.addEventListener('visibilitychange', ()=>{
+  document.documentElement.toggleAttribute('data-anim-paused', document.hidden);
+});
 
 // Init
 document.addEventListener('DOMContentLoaded',()=>{ try{ initPWA(); }catch(e){ console.warn('PWA init skipped:', e.message); } initSquadUI(); });
