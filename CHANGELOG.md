@@ -1454,6 +1454,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.410-dev — 2026-08-12 — Título automático: colchetes + Tipo no lugar de Formato
+Feedback direto do time depois de ver o título automático (v8.30.408-dev)
+em uso: sem colchetes, ficava difícil separar visualmente onde terminava
+cada pedaço (ex.: Objetivo colado no nome da Campanha, tipo um texto só
+"Camiseta Brasil Tráfego"). Formato do título ajustado:
+
+`[Plataforma] Tipo - Campanha [Objetivo] - Etapa do Funil/Funil`
+
+- Plataforma e Objetivo ganham colchetes literais, isolando visualmente
+  do resto (Tipo e Campanha, respectivamente).
+- **Formato trocado por Tipo** — pedido direto ("no lugar de formato é a
+  variável Tipo"); `_crvComposeTitle()` agora lê `m-crv-tipo` em vez de
+  `m-crv-formato`. Gatilho de recomposição também migrou: sai do
+  `onchange` de Formato, entra dentro de `_crvTipoChange()` (mesmo
+  cuidado de antes — só dispara em resposta a uma escolha real da
+  pessoa nesse select, `_crvTipoChange()` nunca é chamada
+  programaticamente durante `setCriativoFields()`/abertura de card).
+
 ### v8.30.409-dev — 2026-08-12 — Blindagem: fallback se query() do Firebase falhar
 Investigação extensa em cima do `Uncaught ReferenceError: query is not
 defined` em `_refreshComunicados()` reportado por uma pessoa: código

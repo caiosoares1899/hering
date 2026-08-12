@@ -3637,7 +3637,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <select class="fi" id="m-crv-tipo" onchange="_crvTipoChange()"><option value="">— selecione a Plataforma primeiro —</option></select>
         </div>
         <div class="field"><label class="fl">Formato</label>
-          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave();_crvAutoTitle()">
+          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave()">
             <option value="">— selecione —</option>
           </select>
         </div>
@@ -4075,7 +4075,7 @@ input[type="date"]{-moz-appearance:textfield;}
         Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato e Variações — obrigatórios pro demandante — mais Direcional de Mídia, opcional) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
       </p>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Com a ficha ativa, o <b>título do card também se monta sozinho</b> — Plataforma, Formato, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa]/[Funil]</code> — sempre que algum desses campos mudar. Não precisa mais digitar o título completo na mão, só preencher a Ficha.
+        Com a ficha ativa, o <b>título do card também se monta sozinho</b> — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code> — sempre que algum desses campos mudar. Não precisa mais digitar o título completo na mão, só preencher a Ficha.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -5338,7 +5338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.409-dev</div>
+<div class="version">v8.30.410-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11395,6 +11395,7 @@ function _crvTipoChange(){
   if(tipo && tipo.formatoId && fmtSel) fmtSel.value=tipo.formatoId;
   _crvUpdateQtdHint();
   scheduleAutoSave();
+  _crvAutoTitle();
 }
 // Referência de quantidade da tabela real da Hering (por Tipo) — mostrada
 // ao lado do label "Variações" desde que o campo dedicado de Quantidade de
@@ -11436,15 +11437,19 @@ function _crvCanalChange(){
   scheduleAutoSave();
 }
 // Título automático a partir da Ficha Técnica (pedido direto do time):
-// "[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa do Funil]/[Funil]".
+// "[Plataforma] Tipo - Campanha [Objetivo] - Etapa do Funil/Funil".
+// Colchetes literais em Plataforma e Objetivo — feedback direto depois da
+// 1ª versão: sem eles ficava difícil separar visualmente onde terminava
+// cada pedaço (ex.: Objetivo colado no nome da Campanha, parecendo um
+// texto só). Formato trocado por Tipo — pedido direto também.
 // Lê os campos direto do DOM (mesmo padrão de getCriativoData(), sem
 // depender de já ter salvo nada) e monta a string ignorando de forma
-// graciosa qualquer parte ainda vazia (sem "()" ou "- -" sobrando) — assim
+// graciosa qualquer parte ainda vazia (sem "[]" ou "- -" sobrando) — assim
 // funciona também no meio do preenchimento, não só quando tudo já foi
 // escolhido.
 function _crvComposeTitle(){
   const plataformaLbl=_crvLabels('plataformas', _crvGetSelectedPlataformas()).join('/');
-  const formatoLbl=_crvLabel('formatos', document.getElementById('m-crv-formato')?.value||'');
+  const tipoLbl=_crvLabel('tipos', document.getElementById('m-crv-tipo')?.value||'');
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
   const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
   const campanhaTipoLbl={campanha:'Campanha',acao:'Ação Comercial',perene:'Perene',refresh:'Refresh'}[campanhaTipo]||'';
@@ -11454,8 +11459,8 @@ function _crvComposeTitle(){
   const funilLbl={mkt:'MKT',ecm:'ECM'}[(document.querySelector('input[name="crv-funil"]:checked')||{}).value]||'';
   const etapaFunilLbl=[etapaFunil,funilLbl].filter(Boolean).join('/');
   const partes=[
-    [plataformaLbl,formatoLbl].filter(Boolean).join(' '),
-    [campanhaLbl,objetivoLbl].filter(Boolean).join(' '),
+    [plataformaLbl?'['+plataformaLbl+']':'',tipoLbl].filter(Boolean).join(' '),
+    [campanhaLbl,objetivoLbl?'['+objetivoLbl+']':''].filter(Boolean).join(' '),
     etapaFunilLbl
   ].filter(Boolean);
   return partes.join(' - ');
