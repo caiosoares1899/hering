@@ -5465,6 +5465,30 @@ pra descrição principal, PO e comentário).
 
 ## Service Worker — `firebase-messaging-sw.js` (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-08-12 — `gstatic.com` exclu­ído do cache do SW (achado real: `query is not defined` em rede doméstica)
+Reportado como `Uncaught ReferenceError: query is not defined` em
+`_refreshComunicados()` — mesmo com hard refresh, aba anônima e fora
+de rede corporativa (usuária confirmou "to na rede de casa"). O
+próprio código estava correto (conferido byte a byte contra o `main`
+no GitHub, e o `query` exportado normalmente pela lib — confirmado
+via `import()` manual no console). O que diferenciava os dois testes:
+o `import()` manual rodou DEPOIS do carregamento da página, batendo
+num cache que o próprio SW já tinha corrigido em segundo plano nesse
+meio-tempo — clássico sintoma da corrida na estratégia cache-first
+abaixo (`cached || fresh`): a cópia ruim/incompleta cacheada é servida
+NA HORA pro `<script type="module">` da página (que trava com o
+`ReferenceError`), enquanto o fetch "fresh" concorrente já reescreve o
+cache em background, tarde demais pra aquele carregamento.
+
+**Fix**: `gstatic.com` (onde vive o SDK modular do Firebase, importado
+em `kanban.html`/`kanban-dev.html`) entra na mesma lista de exclusão
+de `firebaseio.com`/`googleapis.com`/`workers.dev` — para de passar
+pela nossa camada de cache. É uma URL versionada e imutável
+(`.../10.12.0/...`), o cache HTTP nativo do navegador já lida com ela
+sem o risco extra da nossa reimplementação. `CACHE` (`v2` → `v3`) pra
+purgar, no próximo `activate`, qualquer cópia ruim que já esteja presa
+no Cache Storage de quem já passou por isso.
+
 ### 2026-07-29 · PR #53
 Corrige push em iOS ainda levando pra 404 mesmo depois do fix da PR #36:
 aquele fix trocou a URL absoluta (`/kanban.html`) por uma relativa
