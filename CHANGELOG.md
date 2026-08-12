@@ -18,6 +18,27 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.246 — 2026-08-12 · promove pra prod
+Promove pra produção todo o lote acumulado em dev desde a v8.30.245
+(v8.30.410-dev → v8.30.413-dev), validado em dev.
+
+- **Título automático da Ficha Técnica, ajustes de formato**: colchetes
+  literais isolando Plataforma e Objetivo do resto do título
+  (`[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil`); Formato
+  trocado por Tipo — pedidos diretos do time depois do primeiro teste.
+- **Restrito a cards novos via Modelo**: o título só se monta sozinho
+  quando o card nasce de um item de 📐 Modelos — cards em branco e
+  cards já existentes mantêm o título 100% manual, como sempre
+  (pedido direto).
+- **SDK do Firebase vendorizado**: sai do `gstatic.com`, passa a ser
+  servido do próprio domínio (`vendor/firebase-10.14.1/`) —
+  investigação de um `query is not defined` reportado por uma pessoa
+  atrás de VPN corporativa com inspeção SSL (FortiGate); reduz
+  dependência de CDN de terceiros pra todo mundo, independente da
+  causa raiz específica desse caso não ter sido 100% fechada (o
+  fallback da v8.30.245 já cobria o caso, esta entrada só troca a
+  origem do arquivo).
+
 ### v8.30.245 — 2026-08-12 · promove pra prod
 Promove pra produção todo o lote acumulado em dev desde a v8.30.244
 (v8.30.401-dev → v8.30.409-dev), validado em dev.
