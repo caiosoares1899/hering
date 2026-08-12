@@ -1416,6 +1416,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.408-dev — 2026-08-12 — Título do card gerado a partir da Ficha Técnica
+Pedido direto do time: "definir o nome do Card somente com um nome
+simples e o restante puxar os parâmetros que forem preenchidos na
+Ficha Técnica". Com a Ficha Técnica ativa (e o card não sendo
+supercard — mesma condição que já esconde a seção pra supercards),
+o título passa a se recompor sozinho a cada mudança em Plataforma,
+Formato, Campanha (tipo + nome), Objetivo, Etapa do Funil ou Funil:
+
+`[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa do Funil]/[Funil]`
+
+- Segmentos vazios são ignorados de forma graciosa (sem `" - "`
+  sobrando enquanto a Ficha ainda está sendo preenchida aos poucos).
+- Campanha usa o nome digitado (`campanhaNome`) quando o tipo é
+  Campanha/Ação Comercial; nos tipos Perene/Refresh (sem campo de
+  nome), usa o próprio rótulo do tipo.
+- Objetivo (múltipla escolha) e Plataforma (múltipla só em
+  supercard) entram concatenados com `/` quando há mais de um.
+- **Roda só em resposta a uma mudança feita pela pessoa** nesses
+  campos — nunca ao só abrir um card já existente (a chamada fica só
+  nos `onchange`/`oninput` desses campos específicos, não dentro das
+  funções compartilhadas que `setCriativoFields()` também dispara ao
+  carregar o card — evita reescrever silenciosamente o título de
+  cards antigos só por terem sido abertos).
+- Título continua editável na mão a qualquer momento — a próxima
+  mudança num campo da Ficha volta a sobrescrever, comportamento
+  "ao vivo" escolhido direto pelo time.
+
 ### v8.30.407-dev — 2026-08-12 — Badge de Intake vira só o ícone
 Feedback direto logo após o teste: o badge "📥 Intake" da entrada
 anterior (v8.30.406-dev) parecia uma tag/chip (fundo, borda, texto) —
