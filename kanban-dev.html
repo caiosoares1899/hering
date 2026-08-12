@@ -3590,23 +3590,23 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="field" id="m-crv-campanha-wrap" style="grid-column:1/-1;">
         <label class="fl">Campanha</label>
         <div class="crv-radio-group">
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="campanha" onchange="_crvCampanhaTipoChange()"> Campanha</label>
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="acao" onchange="_crvCampanhaTipoChange()"> Ação Comercial</label>
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="perene" onchange="_crvCampanhaTipoChange()"> Perene</label>
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="refresh" onchange="_crvCampanhaTipoChange()"> Refresh</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="campanha" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Campanha</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="acao" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Ação Comercial</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="perene" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Perene</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="refresh" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Refresh</label>
         </div>
-        <input class="fi" id="m-crv-campanha-nome" type="text" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;">
+        <input class="fi" id="m-crv-campanha-nome" type="text" oninput="scheduleAutoSave();_crvAutoTitle()" style="display:none;margin-top:6px;">
       </div>
 
       <div class="card-attr-row">
         <div class="field" id="m-crv-funil-wrap"><label class="fl">Funil</label>
           <div class="crv-radio-group">
-            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="mkt" onchange="scheduleAutoSave()"> MKT</label>
-            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="ecm" onchange="scheduleAutoSave()"> ECM</label>
+            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="mkt" onchange="scheduleAutoSave();_crvAutoTitle()"> MKT</label>
+            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="ecm" onchange="scheduleAutoSave();_crvAutoTitle()"> ECM</label>
           </div>
         </div>
         <div class="field"><label class="fl">Etapa do Funil</label>
-          <select class="fi" id="m-crv-etapa" onchange="scheduleAutoSave()">
+          <select class="fi" id="m-crv-etapa" onchange="scheduleAutoSave();_crvAutoTitle()">
             <option value="">— selecione —</option>
             <option value="AWS">AWS</option>
             <option value="CON">CON</option>
@@ -3637,7 +3637,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <select class="fi" id="m-crv-tipo" onchange="_crvTipoChange()"><option value="">— selecione a Plataforma primeiro —</option></select>
         </div>
         <div class="field"><label class="fl">Formato</label>
-          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave()">
+          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave();_crvAutoTitle()">
             <option value="">— selecione —</option>
           </select>
         </div>
@@ -4073,6 +4073,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="cfg-sec-title">🎬 Controle de Criativos</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
         Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato e Variações — obrigatórios pro demandante — mais Direcional de Mídia, opcional) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
+      </p>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Com a ficha ativa, o <b>título do card também se monta sozinho</b> — Plataforma, Formato, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa]/[Funil]</code> — sempre que algum desses campos mudar. Não precisa mais digitar o título completo na mão, só preencher a Ficha.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -5335,7 +5338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.407-dev</div>
+<div class="version">v8.30.408-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11301,7 +11304,7 @@ function _crvOpcaoSelectHtml(list, placeholder){
     + (list||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.label)+'</option>').join('');
 }
 function _crvCheckGroupHtml(list, name){
-  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="scheduleAutoSave()"> '+esc(o.label)+'</label>').join('')
+  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="scheduleAutoSave();_crvAutoTitle()"> '+esc(o.label)+'</label>').join('')
     || '<span style="font-size:11px;color:var(--txt3);">Nenhuma opção configurada ainda (⚙ Config → Criativos).</span>';
 }
 function _crvGetChecked(name){
@@ -11366,6 +11369,7 @@ function _crvGetSelectedPlataformas(){
 function _crvPlataformaChange(){
   _crvRefreshTipoOptions();
   scheduleAutoSave();
+  _crvAutoTitle();
 }
 // Tipo é dependente da(s) Plataforma(s) escolhida(s) — só mostra os tipos
 // da tabela de referência que pertencem a alguma das plataformas
@@ -11430,6 +11434,43 @@ function _crvCanalChange(){
   const inp=document.getElementById('m-crv-canal-outros');
   if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
   scheduleAutoSave();
+}
+// Título automático a partir da Ficha Técnica (pedido direto do time):
+// "[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa do Funil]/[Funil]".
+// Lê os campos direto do DOM (mesmo padrão de getCriativoData(), sem
+// depender de já ter salvo nada) e monta a string ignorando de forma
+// graciosa qualquer parte ainda vazia (sem "()" ou "- -" sobrando) — assim
+// funciona também no meio do preenchimento, não só quando tudo já foi
+// escolhido.
+function _crvComposeTitle(){
+  const plataformaLbl=_crvLabels('plataformas', _crvGetSelectedPlataformas()).join('/');
+  const formatoLbl=_crvLabel('formatos', document.getElementById('m-crv-formato')?.value||'');
+  const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
+  const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
+  const campanhaTipoLbl={campanha:'Campanha',acao:'Ação Comercial',perene:'Perene',refresh:'Refresh'}[campanhaTipo]||'';
+  const campanhaLbl=campanhaNome||campanhaTipoLbl;
+  const objetivoLbl=_crvLabels('objetivos', _crvGetChecked('crv-objetivo')).join('/');
+  const etapaFunil=document.getElementById('m-crv-etapa')?.value||'';
+  const funilLbl={mkt:'MKT',ecm:'ECM'}[(document.querySelector('input[name="crv-funil"]:checked')||{}).value]||'';
+  const etapaFunilLbl=[etapaFunil,funilLbl].filter(Boolean).join('/');
+  const partes=[
+    [plataformaLbl,formatoLbl].filter(Boolean).join(' '),
+    [campanhaLbl,objetivoLbl].filter(Boolean).join(' '),
+    etapaFunilLbl
+  ].filter(Boolean);
+  return partes.join(' - ');
+}
+// Roda a cada mudança num campo da Ficha Técnica que participe do título
+// (ver handlers abaixo) — só reescreve #m-title enquanto a Ficha estiver
+// realmente visível (mesma condição de _crvUpdateFichaSecVisibility) e só
+// se já der pra montar algo (nunca apaga um título já digitado por causa
+// de campos ainda vazios).
+function _crvAutoTitle(){
+  if(!criativosAtivo || editingSuperChildren.length>0) return;
+  const composto=_crvComposeTitle();
+  if(!composto) return;
+  const titleEl=document.getElementById('m-title');
+  if(titleEl && titleEl.value!==composto){ titleEl.value=composto; }
 }
 function getCriativoData(){
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
