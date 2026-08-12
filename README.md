@@ -58,23 +58,35 @@ Pra aplicar uma mudança feita aqui de volta pro Firebase:
 firebase deploy --only database
 ```
 
+### Backup semanal automático
+Pasta `functions/backup/` — Cloud Function `weeklyBackup`, agendada (Cloud
+Scheduler, todo domingo 04:00 horário de Brasília) pra salvar um snapshot de
+cada squad de produção em `backups/{squadId}/{data}.json` no Cloud Storage.
+Roda sozinho, sem depender de ninguém abrir o board — diferente do backup
+manual/e-mail já existente em `kanban-dev.html`, que só dispara se alguém
+clicar ou deixar a aba aberta. Formato do JSON é o mesmo de
+`exportBackupJSON()`, então dá pra restaurar direto pela UI "🧯 Restaurar
+backup" do board.
+
 ### Cloud Storage
 `storage.rules`, na raiz do repo — mesma lógica do `database.rules.json` acima
 (espelho do que está configurado no Firebase Console → Storage → Rules). Guarda os
 relatórios que o Agente Ágil hospeda (`relatorios/**`, ver
-`functions/agente-agil/`) e o upload de PDF da Central de Dados do painel
-(`dados_diarios/**`).
+`functions/agente-agil/`), o upload de PDF da Central de Dados do painel
+(`dados_diarios/**`) e o backup semanal automático (`backups/**`, ver acima).
 
 Pra aplicar uma mudança feita aqui de volta pro Firebase:
 ```bash
 firebase deploy --only storage
 ```
 
-**Retenção dos relatórios** (`storage-lifecycle.json`, também na raiz): apaga
-automaticamente qualquer coisa em `relatorios/**` com mais de 2 dias. Isso é
+**Retenção** (`storage-lifecycle.json`, também na raiz): apaga automaticamente
+qualquer coisa em `relatorios/**` com mais de 2 dias, e em `backups/**` com
+mais de 60 dias (~8-9 backups semanais mantidos por squad). Isso é
 propriedade do bucket do Cloud Storage, não da camada Firebase — não existe
 `firebase deploy` pra isso, precisa do `gsutil` (ou `gcloud storage`), rodado
-**uma vez** (ou de novo só se o arquivo mudar):
+**uma vez** (ou de novo só se o arquivo mudar — inclusive agora, depois de
+adicionar a regra do `backups/**`):
 ```bash
 gsutil lifecycle set storage-lifecycle.json gs://hering-onboarding.firebasestorage.app
 ```

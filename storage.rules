@@ -24,6 +24,18 @@ service firebase.storage {
         && request.auth.token.email.matches('.*@ciahering[.]com[.]br$');
     }
 
+    // Backup semanal automático de cada squad (ver
+    // functions/backup/weeklyBackup.js) — só a Cloud Function escreve
+    // (Admin SDK ignora Storage Rules, "write: if false" aqui só bloqueia
+    // escrita direta do cliente). Leitura: mesmo critério de domínio que
+    // dados_diarios/** acima, pra permitir baixar um backup antigo direto
+    // do Storage se um dia precisar (ex.: via console do Firebase).
+    match /backups/{allPaths=**} {
+      allow read: if request.auth != null
+        && request.auth.token.email.matches('.*@ciahering[.]com[.]br$');
+      allow write: if false;
+    }
+
     // Bucket foi criado do zero pra essa feature — nada mais usa Storage
     // ainda hoje. Todo o resto continua negado por padrão (mesmo
     // comportamento que já estava configurado no console antes desse

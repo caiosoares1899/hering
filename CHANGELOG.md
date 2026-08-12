@@ -5880,6 +5880,47 @@ nenhuma). HTML (navegação) e `version.json` agora vão network-first; o
 resto (imagens, libs de terceiros) continua como antes. Bump de `CACHE`
 (`v1` → `v2`) pra purgar cache antigo salvo com a estratégia anterior.
 
+## Cloud Function — `weeklyBackup` (`functions/backup/weeklyBackup.js`, sem versão própria em `version.json`)
+
+### 2026-08-12 — Nova function: backup semanal automático de cada squad
+Pedido direto, depois de validar o sistema de backup existente e criar a UI
+de restauração: "já que agora temos uma fatia gratuita no storage, por que
+não criamos uma função de baixar o backup semanalmente de cada squad e
+colocar lá (excluindo o backup antigo)". O backup que já existia
+(`saveSnapshotToFirebase()` em `kanban-dev.html`) só roda se alguém abrir o
+board e clicar, ou deixar a aba aberta 7+ dias com e-mail configurado — na
+prática pode passar semanas sem gerar nada se ninguém mexer no board. Essa
+function roda sozinha, sem depender de ninguém.
+
+- `onSchedule`, todo domingo 04:00 (horário de Brasília) — cadência
+  deliberadamente baixa (~4-5 invocações/mês). Ver o comentário em
+  `functions/index.js` sobre `spotifySync` ter sido pausado por rodar
+  24h/dia (43mil invocações/mês) e custar acima do esperado — esse aqui é
+  ordens de grandeza mais barato, fica bem dentro do free tier tanto do
+  Cloud Scheduler quanto de invocações do Cloud Functions.
+- Itera os squads de produção (3 fixos + o que estiver em
+  `kanban/squads_meta`, excluindo os squads fictícios `dev`/`omnichannel`)
+  e salva um JSON em `backups/{squadId}/{data}.json` no Cloud Storage.
+- Formato do JSON é o MESMO de `exportBackupJSON()`
+  (`{version, squad, exportedAt, exportedBy, board: {cards, columns, tags,
+  ...}}`) — de propósito, pra um backup salvo por aqui poder ser
+  restaurado direto pela UI "🧯 Restaurar backup" do board, sem conversão.
+- Retenção via `storage-lifecycle.json` (mesmo mecanismo já usado pros
+  relatórios do Agente Ágil): apaga automaticamente qualquer coisa em
+  `backups/**` com mais de 60 dias (~8-9 backups semanais mantidos por
+  squad) — sem precisar reimplementar poda manual dentro da function.
+- `storage.rules` ganhou uma entrada pra `backups/**`: leitura liberada
+  pra qualquer `@ciahering.com.br` autenticado (pra poder baixar um
+  backup antigo direto do console se precisar), escrita bloqueada pro
+  cliente (só a Cloud Function grava, via Admin SDK).
+- **Requer deploy manual, feito pela pessoa com acesso ao Firebase CLI**
+  (não é automático como o GitHub Pages):
+  ```bash
+  firebase deploy --only functions:weeklyBackup
+  firebase deploy --only storage
+  gsutil lifecycle set storage-lifecycle.json gs://hering-onboarding.firebasestorage.app
+  ```
+
 ## Cloud Function — `sendPushOnNotification` (`functions/index.js`, sem versão própria em `version.json`)
 
 ### 2026-08-12 — `intake` entra em PUSH_TYPES
