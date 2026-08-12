@@ -1416,6 +1416,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.406-dev — 2026-08-12 — Badge e métricas de Intake
+Pedido direto: dar visibilidade a cards que vieram do formulário de
+intake, e contabilizar o funil (recebidos → aprovados/descartados →
+concluídos) em vez de só ter a lista de pendentes.
+
+- **`intakeId` no card**: `saveCard()` grava `intakeId` (o id do
+  pedido em `intake_pending`) em todo card criado via "✅ Criar card"
+  no painel de Intake — antes esse vínculo só existia enquanto o
+  pedido estava pendente (`_intakeOrigemPendingId`, limpo assim que o
+  card salvava); agora fica permanente no próprio card.
+- **Badge 📥 no card**: cards com `intakeId` ganham um badge "📥
+  Intake" no topo, ao lado do 📌 Direcional/🎯 OKR — dá pra saber de
+  relance, sem abrir o card, que ele nasceu de um pedido externo.
+- **Funil de Intake no "Dados do quadro"**: dois novos cartões de
+  métrica — "📥 Pedidos de intake" (total recebido + quantos
+  aprovados/viraram card, descartados, pendentes) e "✅ Intake
+  concluído" (dos aprovados, quantos já chegaram na coluna
+  Concluído). Cards de intake arquivados não entram na conta de
+  concluído (podem estar fora da memória — ver
+  `_ensureArchivedCardsLoaded`).
+
 ### v8.30.405-dev — 2026-08-12
 Dois ajustes:
 
