@@ -1416,6 +1416,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.409-dev — 2026-08-12 — Blindagem: fallback se query() do Firebase falhar
+Investigação extensa em cima do `Uncaught ReferenceError: query is not
+defined` em `_refreshComunicados()` reportado por uma pessoa: código
+conferido várias vezes contra o que estava realmente sendo servido pra
+ela (batia, linha por linha, em dois momentos diferentes, com números de
+linha diferentes acompanhando novos commits); confirmado via `import()`
+manual no console que o SDK do Firebase exporta `query` normalmente;
+descartado cache de HTML/Service Worker (já corrigido e desregistrado),
+extensão de navegador (aba anônima), rede corporativa (rede de casa),
+antivírus (nenhum instalado) e URL mal formada (reproduzido de novo com
+URL limpa, inclusive no Edge). **Sem causa raiz confirmada.**
+
+O que ficou claro, revendo o código: essa exceção é lançada de forma
+SÍNCRONA como a 1ª linha de `_initComunicados()` — se acontecer, o
+`setInterval()`/listener de `visibilitychange` logo depois nunca chegam
+a ser registrados, deixando Mural/avisos quebrados pro resto da sessão
+de quem for afetado, em silêncio. Independente de nunca achar a causa
+exata, isso não pode continuar quebrando a função inteira: `query()`
+agora roda dentro de um try/catch, caindo pro comportamento antigo
+(busca a árvore inteira de `comunicados`, sem filtro no servidor — o
+filtro de `ativo` já roda no cliente de qualquer forma) se falhar por
+qualquer motivo. Sem perda de robustez pra quem nunca teve o problema.
+
 ### v8.30.408-dev — 2026-08-12 — Título do card gerado a partir da Ficha Técnica
 Pedido direto do time: "definir o nome do Card somente com um nome
 simples e o restante puxar os parâmetros que forem preenchidos na
