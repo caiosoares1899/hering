@@ -1475,6 +1475,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.416-dev — 2026-08-12 — Proteção da descrição em cards com Demandante
+Pedido direto: "avisar/bloquear descrição gerada por um demandante... pra
+não perder essa informação sem querer". Card com o campo **Demandante**
+preenchido não deixa mais ninguém apagar a descrição por completo — só
+ADM, PO ou Organizador (mesmo papel que já libera exclusão em massa,
+`canBulkDelete()`).
+
+- Bloqueio nos dois caminhos que gravam a descrição: botão "Salvar"
+  (`saveCard()`, mostra aviso e não deixa salvar) e o autosave
+  (`scheduleAutoSave()`, dispara sozinho 800ms depois de qualquer
+  digitação — sem essa segunda checagem, dava pra contornar o
+  bloqueio só apagando o texto e esperando; aqui o campo é revertido
+  automaticamente pro texto anterior, com aviso).
+- Só trava o **esvaziamento total** de uma descrição que já tinha
+  conteúdo — editar/complementar continua livre pra qualquer um.
+  Cards sem Demandante, ou sendo criados agora, não são afetados.
+- Badge "🔒 Protegida (Demandante)" ao lado do label de Descrição no
+  modal, atualizado ao vivo conforme o campo Demandante é preenchido/
+  limpo — avisa proativamente, antes de alguém tentar apagar e levar
+  o bloqueio de surpresa.
+
 ### v8.30.415-dev — 2026-08-12 — Nova ordenação: Alfabética (A → Z)
 Pedido direto: nova opção de ordenação de cards dentro da coluna, por
 título em ordem alfabética. Entra no mesmo lugar de sempre — botão
