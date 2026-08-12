@@ -1416,6 +1416,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.402-dev — 2026-08-12
+HELP_CONTENT do "📥 Formulário de intake" atualizado — a entrada
+"squad/time solicitante" agora descreve corretamente a lista suspensa
+fixa (ver seção da Cloud Function `intakeSubmit` acima), em vez de
+"texto livre". Nenhuma mudança de comportamento, só texto de ajuda.
+
 ### v8.30.401-dev — 2026-08-12
 Dois ajustes pedidos direto no formulário de intake (`intake.html` +
 `functions/intake/submit.js`, ver seção própria da Cloud Function) e
@@ -5439,6 +5445,17 @@ manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
 
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
+
+### 2026-08-12 — "Squad/time solicitante" vira lista suspensa fixa
+Feedback direto logo após o primeiro teste real: campo de texto livre
+tinha o "velho problema" de precisar digitar o nome certinho pra bater
+com uma tag — qualquer variação (acento, abreviação, espaço) quebrava
+o vínculo automático. `intake.html` trocou o `<input type="text">` por
+um `<select>` com 8 opções fixas: Outlet, Omni, App, Site Hering,
+MarketPlace, CX, Midia, Comercial Geral. `functions/intake/submit.js`
+não mudou (continua aceitando texto, só que agora vem de uma lista
+fechada no client) — não precisa de novo deploy da function por causa
+desta mudança específica.
 
 ### 2026-08-12 — Descrição e squad solicitante viram obrigatórios
 Pedido direto: dois campos novos/alterados no formulário (`intake.html`)
