@@ -1002,8 +1002,17 @@ input[type="date"]{-moz-appearance:textfield;}
   font-weight:800;font-family:"DM Sans",sans-serif;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;
   justify-content:center;padding:0 5px;line-height:1;box-shadow:0 2px 8px rgba(255,107,107,.5);
   font-variant-numeric:tabular-nums;letter-spacing:0;}
-#intake-badge{position:absolute;top:-7px;right:-7px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;
-  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+/* Depois de 2 rodadas tentando cortar cada vez menos offset negativo
+   (v8.30.403-dev, v8.30.404-dev) e nenhuma resolver de vez (a .toolbar rola
+   com overflow-x:auto, que a spec de CSS trata como se overflow-y também
+   fosse auto — nunca dá pra "vazar" pra fora da caixa do botão nesse
+   container sem risco de corte em algum navegador/zoom/tela), a solução
+   definitiva é não tentar vazar: o badge deixa de ser position:absolute
+   flutuando no canto e passa a ser mais um item em fila no próprio
+   flex do botão (.btn já é display:inline-flex;gap:5px), com uma margem
+   à esquerda. Sem overlap, sem depender de overflow de ancestral nenhum. */
+#intake-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:1px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);box-shadow:-12px 0 48px rgba(0,0,0,.55);
@@ -3123,7 +3132,7 @@ input[type="date"]{-moz-appearance:textfield;}
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
        menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
-  <button class="btn btn-sm" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);position:relative;">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
+  <button class="btn btn-sm" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
@@ -3581,23 +3590,23 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="field" id="m-crv-campanha-wrap" style="grid-column:1/-1;">
         <label class="fl">Campanha</label>
         <div class="crv-radio-group">
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="campanha" onchange="_crvCampanhaTipoChange()"> Campanha</label>
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="acao" onchange="_crvCampanhaTipoChange()"> Ação Comercial</label>
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="perene" onchange="_crvCampanhaTipoChange()"> Perene</label>
-          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="refresh" onchange="_crvCampanhaTipoChange()"> Refresh</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="campanha" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Campanha</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="acao" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Ação Comercial</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="perene" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Perene</label>
+          <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="refresh" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Refresh</label>
         </div>
-        <input class="fi" id="m-crv-campanha-nome" type="text" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;">
+        <input class="fi" id="m-crv-campanha-nome" type="text" oninput="scheduleAutoSave();_crvAutoTitle()" style="display:none;margin-top:6px;">
       </div>
 
       <div class="card-attr-row">
         <div class="field" id="m-crv-funil-wrap"><label class="fl">Funil</label>
           <div class="crv-radio-group">
-            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="mkt" onchange="scheduleAutoSave()"> MKT</label>
-            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="ecm" onchange="scheduleAutoSave()"> ECM</label>
+            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="mkt" onchange="scheduleAutoSave();_crvAutoTitle()"> MKT</label>
+            <label class="crv-radio-row"><input type="radio" name="crv-funil" value="ecm" onchange="scheduleAutoSave();_crvAutoTitle()"> ECM</label>
           </div>
         </div>
         <div class="field"><label class="fl">Etapa do Funil</label>
-          <select class="fi" id="m-crv-etapa" onchange="scheduleAutoSave()">
+          <select class="fi" id="m-crv-etapa" onchange="scheduleAutoSave();_crvAutoTitle()">
             <option value="">— selecione —</option>
             <option value="AWS">AWS</option>
             <option value="CON">CON</option>
@@ -3628,7 +3637,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <select class="fi" id="m-crv-tipo" onchange="_crvTipoChange()"><option value="">— selecione a Plataforma primeiro —</option></select>
         </div>
         <div class="field"><label class="fl">Formato</label>
-          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave()">
+          <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave();_crvAutoTitle()">
             <option value="">— selecione —</option>
           </select>
         </div>
@@ -4064,6 +4073,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="cfg-sec-title">🎬 Controle de Criativos</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
         Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato e Variações — obrigatórios pro demandante — mais Direcional de Mídia, opcional) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
+      </p>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Com a ficha ativa, o <b>título do card também se monta sozinho</b> — Plataforma, Formato, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa]/[Funil]</code> — sempre que algum desses campos mudar. Não precisa mais digitar o título completo na mão, só preencher a Ficha.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -5326,7 +5338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.244</div>
+<div class="version">v8.30.245</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8890,6 +8902,10 @@ function makeCardEl(card){
   // Direcional de Mídia (Ficha Técnica) — pedido direto pra ter destaque
   // visual pra quem for pegar o card ver fácil, sem precisar abrir.
   const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">📌 Direcional</span>`:'';
+  // Pedido direto: identificar de relance, sem abrir o card, quais vieram do
+  // formulário público de intake (ver intakeId em saveCard() e o funil de
+  // métricas em renderBoardDataGrid()).
+  const intakeBadge=card.intakeId?`<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;" title="Card criado a partir de um pedido de intake">📥</span>`:'';
   // Badge de impedimento no título, igual ao 🎯 de OKR — usa _cardIsBlocked()
   // (não card.blocker cru), porque no modo "col" quem manda é a COLUNA, não a
   // flag (ver comentário em _cardIsBlocked): card.blocker pode estar
@@ -8960,7 +8976,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -9635,7 +9651,20 @@ function renderBoardDataGrid(){
     const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
     return d<hoje;
   }).length;
-  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div>`;
+  // Funil do Intake (pedido direto): recebidos = tudo que já chegou por
+  // intake.html (kanban/{squad}/dados/intake_pending), independente do
+  // status atual — _intakeBucket é o cache local, alimentado pelos
+  // listeners granulares (ver comentário na declaração). "Concluído" só
+  // olha pros cards ATIVOS e carregados (activeCards) que têm intakeId —
+  // cards arquivados podem estar fora da memória (ver
+  // _ensureArchivedCardsLoaded), então não entram nessa conta.
+  const intakeVals=Object.values(_intakeBucket);
+  const intakeRecebidos=intakeVals.length;
+  const intakeAprovados=intakeVals.filter(v=>v.status==='done').length;
+  const intakeDescartados=intakeVals.filter(v=>v.status==='discarded').length;
+  const intakePendentesN=intakeVals.filter(v=>v.status==='pending').length;
+  const intakeConcluidos=activeCards.filter(c=>c.intakeId&&c.col==='done').length;
+  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">📥 Pedidos de intake <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Funil do formulário público de intake (link em 📥 no topo do board): total recebido desde sempre, e quantos desses já foram aprovados (viraram card), descartados ou continuam pendentes de revisão.</span></span></div><div class="met-val">${intakeRecebidos}</div><div class="met-sub">${intakeAprovados+' aprovados · '+intakeDescartados+' descartados · '+intakePendentesN+' pendentes'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">✅ Intake concluído <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dos pedidos de intake que já viraram card (aprovados), quantos já chegaram na coluna "Concluído". Cards de intake arquivados não entram nessa conta.</span></span></div><div class="met-val">${intakeConcluidos}</div><div class="met-sub">${intakeAprovados>0?Math.round(intakeConcluidos/intakeAprovados*100)+'% dos aprovados':'sem aprovados ainda'}</div></div>`;
 }
 
 
@@ -10859,6 +10888,13 @@ function saveCard(){
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
       demandante:document.getElementById('m-demandante')?.value||'',
+      // Card veio de "✅ Criar card" no painel de Intake? _intakeOrigemPendingId
+      // ainda está setado aqui (só é limpo depois da confirmação do Firebase,
+      // no .then() de saveCard() — ver comentário na declaração). Fica gravado
+      // pra sempre no card (usado pro badge 📥 e pro funil de métricas do
+      // Intake — ver renderBoardDataGrid()), mesmo depois que intake_pending
+      // some da lista de pendentes.
+      intakeId:_intakeOrigemPendingId||null,
       coverColor:_pendingCoverColor||null,
       coverImageUrl:_pendingCoverImageUrl||null,
       due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
@@ -11268,7 +11304,7 @@ function _crvOpcaoSelectHtml(list, placeholder){
     + (list||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.label)+'</option>').join('');
 }
 function _crvCheckGroupHtml(list, name){
-  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="scheduleAutoSave()"> '+esc(o.label)+'</label>').join('')
+  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="scheduleAutoSave();_crvAutoTitle()"> '+esc(o.label)+'</label>').join('')
     || '<span style="font-size:11px;color:var(--txt3);">Nenhuma opção configurada ainda (⚙ Config → Criativos).</span>';
 }
 function _crvGetChecked(name){
@@ -11333,6 +11369,7 @@ function _crvGetSelectedPlataformas(){
 function _crvPlataformaChange(){
   _crvRefreshTipoOptions();
   scheduleAutoSave();
+  _crvAutoTitle();
 }
 // Tipo é dependente da(s) Plataforma(s) escolhida(s) — só mostra os tipos
 // da tabela de referência que pertencem a alguma das plataformas
@@ -11397,6 +11434,43 @@ function _crvCanalChange(){
   const inp=document.getElementById('m-crv-canal-outros');
   if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
   scheduleAutoSave();
+}
+// Título automático a partir da Ficha Técnica (pedido direto do time):
+// "[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa do Funil]/[Funil]".
+// Lê os campos direto do DOM (mesmo padrão de getCriativoData(), sem
+// depender de já ter salvo nada) e monta a string ignorando de forma
+// graciosa qualquer parte ainda vazia (sem "()" ou "- -" sobrando) — assim
+// funciona também no meio do preenchimento, não só quando tudo já foi
+// escolhido.
+function _crvComposeTitle(){
+  const plataformaLbl=_crvLabels('plataformas', _crvGetSelectedPlataformas()).join('/');
+  const formatoLbl=_crvLabel('formatos', document.getElementById('m-crv-formato')?.value||'');
+  const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
+  const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
+  const campanhaTipoLbl={campanha:'Campanha',acao:'Ação Comercial',perene:'Perene',refresh:'Refresh'}[campanhaTipo]||'';
+  const campanhaLbl=campanhaNome||campanhaTipoLbl;
+  const objetivoLbl=_crvLabels('objetivos', _crvGetChecked('crv-objetivo')).join('/');
+  const etapaFunil=document.getElementById('m-crv-etapa')?.value||'';
+  const funilLbl={mkt:'MKT',ecm:'ECM'}[(document.querySelector('input[name="crv-funil"]:checked')||{}).value]||'';
+  const etapaFunilLbl=[etapaFunil,funilLbl].filter(Boolean).join('/');
+  const partes=[
+    [plataformaLbl,formatoLbl].filter(Boolean).join(' '),
+    [campanhaLbl,objetivoLbl].filter(Boolean).join(' '),
+    etapaFunilLbl
+  ].filter(Boolean);
+  return partes.join(' - ');
+}
+// Roda a cada mudança num campo da Ficha Técnica que participe do título
+// (ver handlers abaixo) — só reescreve #m-title enquanto a Ficha estiver
+// realmente visível (mesma condição de _crvUpdateFichaSecVisibility) e só
+// se já der pra montar algo (nunca apaga um título já digitado por causa
+// de campos ainda vazios).
+function _crvAutoTitle(){
+  if(!criativosAtivo || editingSuperChildren.length>0) return;
+  const composto=_crvComposeTitle();
+  if(!composto) return;
+  const titleEl=document.getElementById('m-title');
+  if(titleEl && titleEl.value!==composto){ titleEl.value=composto; }
 }
 function getCriativoData(){
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
@@ -15876,7 +15950,7 @@ function renderIntakeBody(){
     const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
     return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${esc(item.titulo)}</div>
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''} · ${quando}${prazo}</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
       ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
       <div style="display:flex;gap:8px;">
         <button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>
@@ -15892,11 +15966,21 @@ function _intakeCriarCard(id){
   openNewCard();
   document.getElementById('m-title').value = '📥 '+item.titulo;
   const partes = ['**Pedido via formulário de intake**', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
+  if(item.squadDemandante) partes.push('Squad/time solicitante: '+item.squadDemandante);
   if(item.descricao){ partes.push(''); partes.push(item.descricao); }
   eocInitDisplay('desc-eoc', partes.join('\n'), 'Adicionar descrição...');
   if(item.prazo){
     document.getElementById('m-due').value = item.prazo;
     _mNoDue=false; _renderNoDueBtn();
+  }
+  // Vínculo automático de tag pelo squad solicitante (pedido direto) — casa
+  // por nome (ignorando maiúscula/acento), já que o texto vem digitado
+  // livremente no intake.html. Silencioso se não achar nenhuma tag com esse
+  // nome — não trava nada, só não pré-marca a tag.
+  if(item.squadDemandante){
+    const alvo=_norm(item.squadDemandante);
+    const tagMatch=(tags||[]).find(t=>_norm(t.label)===alvo);
+    if(tagMatch) addCardTag(tagMatch.id);
   }
   // Setado DEPOIS de openNewCard() de propósito — openNewCard() zera este
   // mesmo campo no início (ver comentário na declaração), então só marcar
@@ -19170,7 +19254,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e (opcional) contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
@@ -19990,6 +20074,7 @@ const NOTIF_ICONS = {
   risk:       '⚠️',
   checklist:  '☑️',
   moved:      '➡️',
+  intake:     '📥',
 };
 
 function toggleNotifPanel(){
@@ -20363,7 +20448,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -20374,12 +20459,19 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
-function openNotif(notifId, cardId, squad, commentId){
+function openNotif(notifId, cardId, squad, commentId, type){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
   // Fecha painel
   notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
+  // Notificação de intake não tem card (pedido ainda tá pendente) — abre o
+  // painel de Intake em vez de tentar navegar pra um card que não existe.
+  if(type==='intake'){
+    if(squad && squad!==ACTIVE_SQUAD){ window.location.href = window.location.pathname+'?squad='+encodeURIComponent(squad); return; }
+    openIntakePanel();
+    return;
+  }
   if(!cardId) return;
   // Notificação de outro squad (ex.: menção de alguém trabalhando em outro
   // board) — antes isso não fazia NADA além de marcar como lida, e a pessoa
@@ -26251,8 +26343,29 @@ function _refreshComunicados(){
   // ativo:true (renderMuralLista/_updateMuralBadge já filtravam isso no
   // cliente, depois de já ter baixado tudo). Query filtra ativo:true no
   // servidor — mesmo resultado visível, sem baixar o histórico inativo.
-  const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
-  window._get(_comunicadosQuery).then(snap=>{
+  //
+  // Blindagem (achado real: "query is not defined" reportado por uma
+  // pessoa, nunca reproduzido — código conferido várias vezes contra o que
+  // estava sendo servido pra ela, sempre batendo; SDK do Firebase confirmado
+  // exportando `query` normalmente). Sem causa raiz confirmada, mas essa
+  // função é chamada SÍNCRONA como a 1ª linha de _initComunicados() — se
+  // query() lançar por qualquer motivo, a exceção interrompia a função
+  // ali mesmo, e o setInterval()/listener de visibilitychange logo abaixo
+  // NUNCA chegavam a ser registrados: quem for afetado ficava com
+  // Mural/avisos quebrados pelo resto da sessão, em silêncio. Try/catch
+  // aqui cai pro comportamento antigo (busca a árvore inteira, sem filtro
+  // no servidor) se o filtro falhar — o filtro de "ativo" logo abaixo já
+  // roda no cliente de qualquer forma, então o fallback continua
+  // funcionalmente correto, só sem a economia de banda.
+  let _comunicadosPromise;
+  try{
+    const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
+    _comunicadosPromise = window._get(_comunicadosQuery);
+  }catch(e){
+    console.warn('[comunicados] query() falhou, caindo pro fallback sem filtro server-side:', e);
+    _comunicadosPromise = window._get(fb('kanban/comunicados'));
+  }
+  _comunicadosPromise.then(snap=>{
     _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
