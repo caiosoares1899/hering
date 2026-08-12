@@ -1454,6 +1454,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.411-dev — 2026-08-12 — Bump do SDK do Firebase (10.12.0 → 10.14.1)
+Tentativa de contornar, sem depender do time de TI, a causa raiz
+encontrada pro `query is not defined`: uma pessoa tem o **FortiClient
+VPN** corporativo sempre conectado (obrigatório, mesmo em casa), cujo
+firewall (**FortiGate**) faz inspeção profunda de SSL — intercepta,
+descriptografa e re-criptografa todo o tráfego HTTPS da máquina,
+independente da rede física (confirmado via certificado raiz
+"FortiGate CA" instalado localmente, achado em `certmgr.msc`, e a
+política `EnableSha1ForLocalAnchors` com erro em `chrome://policy` —
+ambos ligados à conta `@ciahering.com.br`, não a nada de rede). Em
+algum ponto dessa interceptação, a resposta de
+`firebase-database.js` (gstatic.com) chegava com o binding de `query`
+faltando — mesmo com o conteúdo confirmado correto numa inspeção
+posterior (bug conhecido dessa categoria de produto: corrupção
+intermitente ligada a como o proxy remonta streams de conteúdo).
+
+Pedir pro TI liberar `gstatic.com` da inspeção profunda resolveria
+"de verdade", mas trava a agilidade — enquanto isso não acontece, os
+4 imports do SDK (`firebase-app.js`, `firebase-database.js`,
+`firebase-auth.js`, `firebase-messaging.js`) sobem de `10.12.0` pra
+`10.14.1` (mesma major version, sem mudança de API esperada). Muda a
+URL inteira que o navegador busca — se o problema for uma cópia
+específica presa em cache em algum ponto do caminho (o mais provável,
+dado o `age` de ~7 dias encontrado na investigação), a URL nova nunca
+foi cacheada por ninguém, forçando um fetch do zero. Não elimina a
+causa raiz (o FortiGate ainda pode corromper QUALQUER URL nova no
+futuro), mas testa se resolve o caso concreto de agora. O fallback em
+`_refreshComunicados()` (v8.30.409-dev) continua no lugar como rede
+de segurança, independente disso funcionar ou não.
+
 ### v8.30.410-dev — 2026-08-12 — Título automático: colchetes + Tipo no lugar de Formato
 Feedback direto do time depois de ver o título automático (v8.30.408-dev)
 em uso: sem colchetes, ficava difícil separar visualmente onde terminava
