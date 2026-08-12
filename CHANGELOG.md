@@ -1475,6 +1475,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.419-dev — 2026-08-12 — Restaurar backup (finalmente um caminho de volta)
+Achado ao validar o sistema de backup: a funcionalidade só sabia **exportar**
+(baixar JSON, copiar JSON, salvar snapshot no Firebase, listar/baixar
+snapshots antigos) — não existia nenhum jeito de pegar esse JSON e repor os
+dados no board. Confirmado na prática: colar o JSON do backup no importador
+de Trello dá "0 cards" (schemas diferentes, o parser do Trello não reconhece
+o formato do nosso backup). Pedido direto: "cria o restaurar backup".
+
+- Nova seção **🧯 Restaurar backup**, na mesma aba ⚙ Config → Backup:
+  - Upload de um arquivo `mare-digital-*.json` (baixado antes, ou de um
+    snapshot do histórico), com prévia mostrando squad de origem, data,
+    quem exportou, quantos cards/colunas — e um aviso destacado se o
+    backup for de uma squad DIFERENTE da atual.
+  - Cada linha do histórico de snapshots do Firebase ganhou um botão
+    "🧯 restaurar" direto, sem precisar baixar e reenviar o arquivo.
+  - Confirmação explícita antes de aplicar (`uiConfirm`, modo perigo),
+    deixando claro que é uma SUBSTITUIÇÃO completa (cards, colunas, tags,
+    config), não uma mesclagem.
+  - Só ADM, PO ou Organizador vê/usa a seção (`canBulkDelete()`) — é uma
+    ação de alto risco, mesmo padrão de outras ações privilegiadas do
+    sistema.
+- **Rede de segurança**: antes de sobrescrever qualquer coisa, salva
+  automaticamente um snapshot do estado ATUAL numa chave própria
+  (`pre_restore_{timestamp}`, não colide com o backup do dia) — se a
+  restauração sair errada, dá pra restaurar esse snapshot de volta pelo
+  mesmo botão. Essa escrita de segurança usa `window._set()` direto (não
+  `fbSet()`, que engole erro silenciosamente) — se ela falhar, a
+  restauração inteira é **cancelada antes de mexer em qualquer coisa**,
+  em vez de seguir sem rede de segurança nenhuma.
+- Escrita final via `fbSaveAll()` (cards + `cards_index`/`cards_updated_at`/
+  `cards_archived` recalculados juntos, no mesmo update atômico) — evita
+  repetir o bug de índice órfão descoberto essa semana ao copiar cards por
+  script direto pro `/cards`.
+
 ### v8.30.418-dev — 2026-08-12 — Proteção da descrição: trava a caixa de vez, em vez de reverter depois
 A v8.30.417-dev bloqueava com um `.includes()` na hora de salvar, mas o
 autosave revertia o valor da textarea **enquanto a pessoa ainda digitava**
