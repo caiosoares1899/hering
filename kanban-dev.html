@@ -5338,7 +5338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.408-dev</div>
+<div class="version">v8.30.409-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -26343,8 +26343,29 @@ function _refreshComunicados(){
   // ativo:true (renderMuralLista/_updateMuralBadge já filtravam isso no
   // cliente, depois de já ter baixado tudo). Query filtra ativo:true no
   // servidor — mesmo resultado visível, sem baixar o histórico inativo.
-  const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
-  window._get(_comunicadosQuery).then(snap=>{
+  //
+  // Blindagem (achado real: "query is not defined" reportado por uma
+  // pessoa, nunca reproduzido — código conferido várias vezes contra o que
+  // estava sendo servido pra ela, sempre batendo; SDK do Firebase confirmado
+  // exportando `query` normalmente). Sem causa raiz confirmada, mas essa
+  // função é chamada SÍNCRONA como a 1ª linha de _initComunicados() — se
+  // query() lançar por qualquer motivo, a exceção interrompia a função
+  // ali mesmo, e o setInterval()/listener de visibilitychange logo abaixo
+  // NUNCA chegavam a ser registrados: quem for afetado ficava com
+  // Mural/avisos quebrados pelo resto da sessão, em silêncio. Try/catch
+  // aqui cai pro comportamento antigo (busca a árvore inteira, sem filtro
+  // no servidor) se o filtro falhar — o filtro de "ativo" logo abaixo já
+  // roda no cliente de qualquer forma, então o fallback continua
+  // funcionalmente correto, só sem a economia de banda.
+  let _comunicadosPromise;
+  try{
+    const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
+    _comunicadosPromise = window._get(_comunicadosQuery);
+  }catch(e){
+    console.warn('[comunicados] query() falhou, caindo pro fallback sem filtro server-side:', e);
+    _comunicadosPromise = window._get(fb('kanban/comunicados'));
+  }
+  _comunicadosPromise.then(snap=>{
     _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
