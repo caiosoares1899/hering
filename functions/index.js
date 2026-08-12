@@ -166,3 +166,8 @@ exports.spotifyRadioSuggest = require('./spotify/radioSuggest').spotifyRadioSugg
 // porquê de gravar em intake_pending em vez de /cards direto. Deploy
 // isolado: firebase deploy --only functions:intakeSubmit
 exports.intakeSubmit = require('./intake/submit').intakeSubmit;
+
+// Backup semanal automático de cada squad pro Cloud Storage (ver
+// functions/backup/weeklyBackup.js) — roda sozinho, sem depender de
+// ninguém abrir o board. Deploy isolado: firebase deploy --only functions:weeklyBackup
+exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
