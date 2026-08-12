@@ -3657,6 +3657,10 @@ input[type="date"]{-moz-appearance:textfield;}
         <textarea class="fi" id="m-crv-direcional" rows="2" oninput="scheduleAutoSave()" placeholder="Instrução importante pra quem for produzir/mídia — se preencher, aparece com destaque pra quem pegar o card." style="background:rgba(255,209,102,.08);border-color:rgba(255,209,102,.4);"></textarea>
       </div>
 
+      <div class="field" style="grid-column:1/-1;text-align:right;">
+        <button type="button" class="btn btn-sm" onclick="_crvGerarTitulo()" style="color:#ffb3d9;border-color:rgba(255,179,217,.35);">🪄 Gerar título</button>
+      </div>
+
     </div>
 
     <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
@@ -4075,7 +4079,7 @@ input[type="date"]{-moz-appearance:textfield;}
         Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato e Variações — obrigatórios pro demandante — mais Direcional de Mídia, opcional) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
       </p>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Em cards <b>novos criados a partir de um Modelo</b> (📐), o <b>título também se monta sozinho</b> conforme a Ficha vai sendo preenchida — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão, como sempre.
+        Em cards <b>novos criados a partir de um Modelo</b> (📐), o <b>título também se monta sozinho</b> conforme a Ficha vai sendo preenchida — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão — mas o botão <b>🪄 Gerar título</b>, no fim da Ficha Técnica, monta o mesmo título sob demanda em qualquer card, a qualquer momento.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -5338,7 +5342,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.413-dev</div>
+<div class="version">v8.30.414-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11499,6 +11503,19 @@ function _crvAutoTitle(){
   const titleEl=document.getElementById('m-title');
   if(titleEl && titleEl.value!==composto){ titleEl.value=composto; }
 }
+// Botão "🪄 Gerar título" no fim da Ficha Técnica (pedido direto) — mesma
+// composição de _crvAutoTitle(), mas sob demanda: funciona em QUALQUER
+// card com Ficha Técnica preenchida (em branco ou novo), não só nos
+// restritos a Modelo. Diferente da versão automática, aqui a pessoa
+// clicou de propósito, então pode sobrescrever o título sem restrição
+// nenhuma — inclusive em card já existente, se for isso que ela quiser.
+function _crvGerarTitulo(){
+  const composto=_crvComposeTitle();
+  if(!composto){ showToast('⚠️ Preencha algum campo da Ficha Técnica primeiro.'); return; }
+  const titleEl=document.getElementById('m-title');
+  if(titleEl){ titleEl.value=composto; scheduleAutoSave(); }
+  showToast('✅ Título gerado a partir da Ficha Técnica.');
+}
 function getCriativoData(){
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
   const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
@@ -12084,6 +12101,10 @@ function renderCriativosDashboard(){
   const emAndamento=Math.max(0, total-concluidos-atrasados);
   const pctConcl = total>0?Math.round(concluidos/total*100):0;
   const compos=_crvCardCountBreakdown(rows);
+  // Total de variações (pedido direto): soma de m-crv-variacoes-qtd de todo
+  // card com Variações:"sim" — não conta quem marcou "não" (sem campo de
+  // quantidade pra somar) nem quem deixou em branco.
+  const totalVariacoes=rows.reduce((s,c)=>s+(c.criativo?.variacoes==='sim'?(parseInt(c.criativo.variacoesQtd)||0):0),0);
 
   const prioOrder=['critical','high','medium','low'];
   const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
@@ -12143,6 +12164,7 @@ function renderCriativosDashboard(){
       +statCard('✅','Concluídos',concluidos+' <span style=\'font-size:12px;color:var(--txt3);\'>('+pctConcl+'%)</span>','#4ade80')
       +statCard('🔄','Em andamento',emAndamento,'#38b6ff')
       +statCard('⚠️','Atrasados',atrasados,'#ff6b6b')
+      +statCard('🔀','Total de variações',totalVariacoes,'#ffb3d9')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
       +barsBlock('🧩 Cards vs. Supercards', [['Cards',compos.cards],['Supercards',compos.supercards],['Cards filhos',compos.superChildren]])
