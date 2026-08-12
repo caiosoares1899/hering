@@ -5490,6 +5490,18 @@ o link antigo quebrado.
 
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
 
+### 2026-08-12 — Debug temporário: notificação deployada mas não chegando
+Testado após o deploy da entrada anterior — pedido é gravado
+normalmente, mas nenhuma notificação aparece pra ninguém do squad.
+Sem acesso aos logs da Cloud Function pra ver o erro de verdade,
+`notifySquadMembers()` ganhou um "recibo" de diagnóstico, gravado em
+`kanban/squads/{squad}/dados/_intake_notify_debug` a cada chamada
+(sucesso ou falha) — legível via console sem precisar abrir o Firebase
+Console. Mostra quantos usuários existem no total, quantos bateram
+como membros do squad, e o erro exato se alguma etapa falhar. Remover
+depois de achar a causa. **Requer `firebase deploy --only functions`
+manual.**
+
 ### 2026-08-12 — Notifica o squad inteiro quando chega um pedido novo
 Pedido direto: "vc tem q criar uma notificação para avisar aos membros
 da squad q tem um intake novo". Implementado direto na function (não
