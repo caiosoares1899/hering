@@ -1416,6 +1416,12 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.407-dev — 2026-08-12 — Badge de Intake vira só o ícone
+Feedback direto logo após o teste: o badge "📥 Intake" da entrada
+anterior (v8.30.406-dev) parecia uma tag/chip (fundo, borda, texto) —
+pedido era pra ficar leve, no mesmo padrão visual do 🎯 de OKR (só o
+emoji, sem fundo/borda/texto). Ajustado.
+
 ### v8.30.406-dev — 2026-08-12 — Badge e métricas de Intake
 Pedido direto: dar visibilidade a cards que vieram do formulário de
 intake, e contabilizar o funil (recebidos → aprovados/descartados →
