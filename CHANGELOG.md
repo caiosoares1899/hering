@@ -1416,6 +1416,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.403-dev — 2026-08-12
+Feedback direto com print: o número do badge do botão "📥 Intake" ficava
+cortado. Causa: `.toolbar` tem `overflow-x:auto` (rolagem horizontal em
+telas menores) — o eixo vertical já tinha sido corrigido antes
+(`overflow-y:visible`), mas o badge ainda saía 7px pra fora da borda
+DIREITA do botão (`right:-7px`), que podia cair fora da área visível
+da rolagem horizontal e ser cortado. Reduzido pra `right:-2px`.
+
 ### v8.30.402-dev — 2026-08-12
 HELP_CONTENT do "📥 Formulário de intake" atualizado — a entrada
 "squad/time solicitante" agora descreve corretamente a lista suspensa
