@@ -5634,6 +5634,27 @@ pra descrição principal, PO e comentário).
 
 ## Service Worker — `firebase-messaging-sw.js` (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-08-12 — `/vendor/` também excluído do cache do SW (o bug nunca foi o gstatic.com)
+A vendorização do SDK do Firebase (v8.30.412-dev de `kanban-dev.html`)
+não resolveu o `query is not defined` reportado — mesmo com ctrl+F5,
+mesma versão confirmada. Investigando o Network tab da pessoa afetada,
+achado o motivo real: a requisição de `vendor/firebase-10.14.1/
+firebase-database.js` aparecia com `Initiator: firebase-messaging-sw.js`
+— o **próprio Service Worker** intercedendo. A exclusão anterior
+(entrada de 2026-08-12 acima) só cobria `gstatic.com` — como o arquivo
+vendorizado é MESMA ORIGEM, não caía em nenhuma das exclusões, e caiu
+de volta na mesma estratégia cache-first arriscada (`cached || fresh`)
+que causou o problema original com gstatic.com. Ou seja: a causa nunca
+foi "gstatic.com" especificamente, foi a própria camada de cache do
+nosso SW ser vulnerável a um primeiro fetch corrompido virar
+permanente — trocar a origem do arquivo (CDN → mesmo domínio) não
+resolve isso sozinho enquanto o SW ainda intercepta o caminho novo.
+
+**Fix**: `/vendor/` entra na lista de exclusão (path, não domínio —
+é same-origin). `CACHE` (`v3` → `v4`) pra purgar qualquer cópia ruim
+do SDK vendorizado que já esteja presa no Cache Storage de quem já
+passou por isso nesse meio-tempo.
+
 ### 2026-08-12 — `gstatic.com` exclu­ído do cache do SW (achado real: `query is not defined` em rede doméstica)
 Reportado como `Uncaught ReferenceError: query is not defined` em
 `_refreshComunicados()` — mesmo com hard refresh, aba anônima e fora

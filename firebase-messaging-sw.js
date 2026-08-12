@@ -32,7 +32,7 @@ const messaging = firebase.messaging();
 // Unificar num arquivo só elimina essa disputa. Mesma lógica de antes:
 // stale-while-revalidate, pulando chamadas de API (Firebase/Google/Workers).
 // ═══════════════════════════════════════════════════════════════════
-const CACHE = 'kanban-hering-v3'; // bump: purga cache antigo, que pode ter uma cópia ruim/incompleta do SDK do Firebase (gstatic.com) presa de antes da exclusão acima
+const CACHE = 'kanban-hering-v4'; // bump: purga cache antigo, que pode ter uma cópia ruim/incompleta do SDK vendorizado (/vendor/) presa de antes da exclusão acima
 self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
@@ -59,11 +59,22 @@ self.addEventListener('fetch', (e) => {
   // (gstatic.com) é uma URL versionada e imutável ('10.12.0' no path) — o
   // cache HTTP nativo do navegador já lida com isso corretamente, sem
   // precisar (e sem risco) da nossa própria camada de cache por cima.
+  // /vendor/ entrou aqui pelo mesmo motivo do gstatic.com acima, achado na
+  // prática: o SDK do Firebase foi vendorizado pro próprio domínio (sai do
+  // gstatic.com, ver kanban-dev.html) justamente pra escapar de um problema
+  // de rede corrompendo o fetch — mas por ser MESMA ORIGEM, não caía em
+  // nenhuma das exclusões acima, e voltou a cair na MESMA estratégia
+  // cache-first arriscada que causou o problema original: se o primeiro
+  // fetch (o que popula o cache) vier corrompido por qualquer motivo, fica
+  // preso servido pra sempre, sem nunca revalidar sozinho. Path (não domínio
+  // inteiro) porque é same-origin — /vendor/ nunca deveria colidir com nada
+  // do resto do app.
   if (
     e.request.url.includes('firebaseio.com') ||
     e.request.url.includes('googleapis.com') ||
     e.request.url.includes('workers.dev') ||
-    e.request.url.includes('gstatic.com')
+    e.request.url.includes('gstatic.com') ||
+    e.request.url.includes('/vendor/')
   )
     return;
 
