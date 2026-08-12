@@ -1475,6 +1475,17 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.417-dev — 2026-08-12 — Fecha furo na proteção de descrição: substituir também é bloqueado
+Achado em teste real, logo depois da v8.30.416-dev: a checagem só
+olhava "o campo ficou vazio?" — dava pra contornar selecionando tudo e
+digitando por cima (ex.: apagar o texto do demandante e escrever
+"testessss"), já que o campo nunca passa por um estado vazio nesse
+fluxo. Trocado por uma checagem mais forte: exige que o texto
+ORIGINAL continue presente dentro do novo texto (`.includes()`) — bloqueia
+apagar ou substituir o que já estava lá, mas ainda deixa livre
+complementar/adicionar por cima, pra qualquer um. Ajustado em
+`saveCard()`, `scheduleAutoSave()`, badge e textos de ajuda.
+
 ### v8.30.416-dev — 2026-08-12 — Proteção da descrição em cards com Demandante
 Pedido direto: "avisar/bloquear descrição gerada por um demandante... pra
 não perder essa informação sem querer". Card com o campo **Demandante**
