@@ -1475,6 +1475,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.420-dev — 2026-08-12 — Comparar com backup: recupera só quem sumiu, sem sobrescrever tudo
+Pedido direto logo depois da v8.30.419-dev, pensando no incidente de card
+sumido em `midiacriativa` de mais cedo: em vez de só o "Restaurar TUDO"
+(substitui o board inteiro), agora dá pra **comparar** o backup carregado
+com o board atual e ver exatamente quais cards divergem — com a
+possibilidade de trazer de volta só os que realmente sumiram, sem correr
+o risco de ressuscitar algo que foi excluído de propósito.
+
+- Novo botão **🔍 Comparar com o board atual**, ao lado do "Restaurar TUDO",
+  habilitado assim que um backup válido é carregado (arquivo ou snapshot
+  do histórico).
+- A comparação lista só os cards que estão no backup mas **sumiram por
+  completo** do board atual — nem ativos, nem arquivados. Cards que foram
+  arquivados/excluídos de propósito continuam arquivados no board (ou já
+  não existem mesmo, se excluídos em definitivo) e não entram nessa lista
+  por decisão automática nenhuma — a pessoa que revisa item por item decide
+  o que faz sentido trazer de volta.
+- Cada card divergente aparece com título, coluna (do backup) e aviso se
+  estava arquivado, com botão **↩ Restaurar** individual — ou **↩
+  Restaurar todos** pra trazer a lista inteira de uma vez.
+- Card restaurado volta pra uma coluna válida do board atual (se a coluna
+  original do backup não existir mais, cai na primeira coluna em vez de
+  quebrar). Gravação via `fbSaveAll()` com `touchedIds`, mesmo padrão
+  seguro do restore completo — `cards_index`/`cards_updated_at` saem
+  sincronizados junto.
+- Mesma trava de permissão do restore completo (`canBulkDelete()`).
+
 ### v8.30.419-dev — 2026-08-12 — Restaurar backup (finalmente um caminho de volta)
 Achado ao validar o sistema de backup: a funcionalidade só sabia **exportar**
 (baixar JSON, copiar JSON, salvar snapshot no Firebase, listar/baixar

@@ -4493,7 +4493,15 @@ input[type="date"]{-moz-appearance:textfield;}
         </p>
         <input type="file" id="restore-file-inp" accept="application/json" onchange="handleRestoreFileSelect(event)" style="font-size:11px;color:var(--txt2);margin-bottom:10px;">
         <div id="restore-preview" style="display:none;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--txt2);line-height:1.8;margin-bottom:10px;"></div>
-        <button class="btn btn-sm" id="btn-restore-backup" onclick="confirmRestoreBackup()" disabled style="opacity:.4;color:var(--danger);border-color:rgba(255,107,107,.35);">🧯 Restaurar este backup</button>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn btn-sm" id="btn-compare-backup" onclick="compararComBackup()" disabled style="opacity:.4;color:var(--cyan);border-color:rgba(56,182,255,.3);">🔍 Comparar com o board atual (recomendado)</button>
+          <button class="btn btn-sm" id="btn-restore-backup" onclick="confirmRestoreBackup()" disabled style="opacity:.4;color:var(--danger);border-color:rgba(255,107,107,.35);">🧯 Restaurar TUDO (substitui o board inteiro)</button>
+        </div>
+        <p style="font-size:10px;color:var(--txt3);line-height:1.6;margin-bottom:10px;">
+          <b>Comparar</b> mostra só os cards que estão no backup mas sumiram do board atual (nem ativos, nem arquivados) — dá pra revisar um por um e trazer de volta só quem realmente sumiu por engano, sem mexer em nada que foi arquivado/excluído de propósito. <b>Restaurar TUDO</b> substitui cards, colunas, tags e config por inteiro — use só se o board inteiro estiver comprometido.
+        </p>
+        <div id="restore-compare" style="display:none;margin-bottom:10px;"></div>
       </div>
     </div>
 
@@ -5373,7 +5381,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.419-dev</div>
+<div class="version">v8.30.420-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26471,11 +26479,17 @@ function _validateBackupPayload(payload){
 function _prepareRestorePreview(payload, origemLabel){
   const preview = document.getElementById('restore-preview');
   const btn = document.getElementById('btn-restore-backup');
+  const cmpBtn = document.getElementById('btn-compare-backup');
+  const cmpEl = document.getElementById('restore-compare');
+  // Novo backup carregado — qualquer comparação anterior fica obsoleta.
+  _backupMissingCards = [];
+  if(cmpEl){ cmpEl.style.display='none'; cmpEl.innerHTML=''; }
   const erro = _validateBackupPayload(payload);
   if(erro){
     _restoreParsedPayload = null;
     if(preview){ preview.style.display='block'; preview.innerHTML = '❌ '+esc(erro); }
     if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
+    if(cmpBtn){ cmpBtn.disabled=true; cmpBtn.style.opacity='.4'; }
     return;
   }
   _restoreParsedPayload = payload;
@@ -26492,6 +26506,102 @@ function _prepareRestorePreview(payload, origemLabel){
       '• '+ativos+' cards ativos'+(arquivados?' · '+arquivados+' arquivados':'')+' · '+cols+' colunas · versão '+esc(payload.version||'?');
   }
   if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+  if(cmpBtn){ cmpBtn.disabled=false; cmpBtn.style.opacity='1'; }
+}
+
+// ── Comparar com o board atual: recupera cards perdidos sem sobrescrever
+// tudo. Pedido direto (depois do incidente de card sumido em midiacriativa):
+// mostra só os cards que estão no backup mas SUMIRAM de vez do board atual
+// (nem ativos, nem arquivados) — cards arquivados de propósito NÃO entram
+// aqui, só o que realmente não existe mais no array `cards`. A pessoa
+// revisa um por um (ou "restaurar todos") em vez de um restore cego, então
+// dá pra distinguir "sumiu por bug" de "foi excluído de propósito" — quem
+// decide é o humano olhando a lista, não uma regra automática.
+let _backupMissingCards = [];
+
+function compararComBackup(){
+  const payload = _restoreParsedPayload;
+  if(!payload){ showToast('Carrega um backup válido primeiro (arquivo ou snapshot do histórico).'); return; }
+  const idsAtuais = new Set(cards.map(c=>c && c.id).filter(Boolean));
+  _backupMissingCards = payload.board.cards.filter(c=>c && c.id && !idsAtuais.has(c.id));
+  _renderComparacaoBackup();
+}
+
+function _renderComparacaoBackup(){
+  const el = document.getElementById('restore-compare');
+  if(!el) return;
+  el.style.display = 'block';
+  if(!_backupMissingCards.length){
+    el.innerHTML = '<div style="font-size:11px;color:var(--teal);">✅ Nenhuma divergência — todo card do backup já está no board atual (ativo ou arquivado).</div>';
+    return;
+  }
+  const payloadCols = _restoreParsedPayload?.board?.columns||[];
+  const linhas = _backupMissingCards.map(c=>{
+    const colNome = payloadCols.find(col=>col.id===c.col)?.name || c.col || '?';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:11px;font-weight:600;color:#e8f4fd;">'+esc(c.title||'(sem título)')+'</div>'+
+        '<div style="font-size:10px;color:rgba(150,200,240,.6);">coluna no backup: '+esc(colNome)+(c.archived?' · estava arquivado':'')+' · id: '+esc(c.id)+'</div>'+
+      '</div>'+
+      '<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.35);flex-shrink:0;" onclick="restaurarCardPerdido(\''+c.id.replace(/'/g,"\\'")+'\')">↩ Restaurar</button>'+
+    '</div>';
+  }).join('');
+  el.innerHTML =
+    '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:8px;">⚠ '+_backupMissingCards.length+' card(s) estão no backup mas não existem mais no board atual (nem ativos, nem arquivados). Podem ter sumido por bug, ou terem sido excluídos de propósito — confira um por um antes de restaurar.</div>'+
+    '<button class="btn btn-sm" style="margin-bottom:8px;color:var(--teal);border-color:rgba(29,233,182,.35);" onclick="restaurarTodosCardsPerdidos()">↩ Restaurar todos ('+_backupMissingCards.length+')</button>'+
+    linhas;
+}
+
+// Repõe os cards no array local `cards`, remapeando pra uma coluna válida
+// se a coluna original do backup não existir mais no board atual (ex.:
+// coluna renomeada/excluída desde o backup).
+function _inserirCardsRestaurados(lista){
+  const colIds = new Set(columns.map(c=>c.id));
+  const fallbackCol = columns[0]?.id;
+  lista.forEach(c=>{
+    const novo = {...c};
+    if(!colIds.has(novo.col) && fallbackCol) novo.col = fallbackCol;
+    cards.push(novo);
+  });
+}
+
+async function restaurarCardPerdido(cardId){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar cards de um backup.'); return; }
+  const card = _backupMissingCards.find(c=>c.id===cardId);
+  if(!card){ showToast('Card não encontrado na comparação.'); return; }
+  if(!await uiConfirm('Restaurar o card "'+(card.title||cardId)+'" de volta pro board? Ele volta exatamente como estava no backup.', {title:'↩ Restaurar card', okText:'Restaurar'})) return;
+  _inserirCardsRestaurados([card]);
+  try{
+    await fbSaveAll(undefined, [card.id]);
+  }catch(e){
+    console.error('[Restaurar card] falhou:', e);
+    showToast('❌ Erro ao restaurar o card — tenta de novo.');
+    return;
+  }
+  _backupMissingCards = _backupMissingCards.filter(c=>c.id!==cardId);
+  renderBoard();
+  _renderComparacaoBackup();
+  showToast('✅ Card restaurado: '+(card.title||cardId));
+}
+
+async function restaurarTodosCardsPerdidos(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar cards de um backup.'); return; }
+  if(!_backupMissingCards.length) return;
+  if(!await uiConfirm('Restaurar TODOS os '+_backupMissingCards.length+' card(s) perdidos de volta pro board? Cada um volta exatamente como estava no backup.', {title:'↩ Restaurar todos', okText:'Restaurar todos'})) return;
+  const lista = _backupMissingCards.slice();
+  const ids = lista.map(c=>c.id);
+  _inserirCardsRestaurados(lista);
+  try{
+    await fbSaveAll(undefined, ids);
+  }catch(e){
+    console.error('[Restaurar todos] falhou:', e);
+    showToast('❌ Erro ao restaurar — tenta de novo.');
+    return;
+  }
+  _backupMissingCards = [];
+  renderBoard();
+  _renderComparacaoBackup();
+  showToast('✅ '+ids.length+' card(s) restaurados.');
 }
 
 // Carrega um snapshot já salvo no histórico do Firebase pro mesmo fluxo
