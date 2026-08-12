@@ -18,6 +18,44 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.245 — 2026-08-12 · promove pra prod
+Promove pra produção todo o lote acumulado em dev desde a v8.30.244
+(v8.30.401-dev → v8.30.409-dev), validado em dev.
+
+- **Intake — campos obrigatórios + vínculo automático**: Descrição e
+  "Squad/time solicitante" (`intake.html`) viram obrigatórios,
+  validados também no servidor (`functions/intake/submit.js`); o
+  campo de squad solicitante virou uma lista suspensa fixa (Outlet,
+  Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) —
+  troca o texto livre (que exigia digitar certinho pra casar com uma
+  tag) por uma lista fechada, e vincula a tag correspondente
+  automaticamente ao criar o card.
+- **Badge do 📥 Intake, fix definitivo de clipping**: parou de ser
+  `position:absolute` tentando escapar do corte da `.toolbar` — agora
+  é só mais um item em fila no flex do botão, imune a qualquer
+  comportamento de overflow de ancestral.
+- **Notificação de intake novo**: squad inteiro recebe notificação
+  (sino 🔔 + push) assim que um pedido chega, disparada direto pela
+  Cloud Function `intakeSubmit` — não depende de ninguém com o board
+  aberto no momento.
+- **Badge 📥 no próprio card + funil de métricas**: cards criados a
+  partir de um pedido de intake ganham um `intakeId` permanente e um
+  badge visual (só o ícone, mesmo padrão do 🎯 de OKR); "Dados do
+  quadro" ganha dois cartões novos — pedidos recebidos/aprovados/
+  descartados/pendentes, e quantos dos aprovados já foram concluídos.
+- **Título do card gerado pela Ficha Técnica**: com a Ficha Técnica
+  ativa, o título se monta sozinho a cada mudança em Plataforma,
+  Formato, Campanha, Objetivo, Etapa do Funil ou Funil —
+  `[Plataforma] [Formato] - [Campanha] [Objetivo] - [Etapa]/[Funil]`.
+  Continua editável na mão; nunca reescreve o título só por abrir um
+  card já existente.
+- **Blindagem em `_refreshComunicados()`**: `query()` do Firebase
+  agora roda dentro de um try/catch, com fallback pro comportamento
+  sem filtro server-side se falhar por qualquer motivo — reportado por
+  uma pessoa (`query is not defined`), causa raiz não confirmada, mas
+  o crash não pode mais deixar Mural/avisos quebrados pro resto da
+  sessão de quem for afetado.
+
 ### v8.30.244 — 2026-08-12 · promove pra prod
 Promove pra produção a otimização de bandwidth do `comunicados`
 (validada em dev): `_refreshComunicados()` trocou de baixar a árvore
