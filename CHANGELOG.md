@@ -1454,6 +1454,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.413-dev — 2026-08-12 — Título automático restrito a cards novos criados a partir de Modelo
+Pedido direto do time: "tem como deixar esse título automático só em
+cards novos a partir de modelos?" — até aqui, `_crvAutoTitle()` rodava
+em QUALQUER card com Ficha Técnica ativa, incluindo cards em branco e
+cards já existentes sendo editados depois. Agora só roda quando o
+card está sendo criado pela primeira vez a partir de um item de 📐
+Modelos — reaproveita `_pendingQLSource` (já existia pra disparar o
+trigger "Modelo usado" das Automações), que fica setado com
+`tipo:'modelos'` exatamente durante essa janela: de `usarQLItem()` até
+o card salvar pela 1ª vez. Cards em branco (`_pendingQLSource` nulo) e
+cards já existentes (nunca passam por `usarQLItem()`) ficam de fora
+automaticamente, sem precisar de nenhuma checagem extra.
+
 ### v8.30.412-dev — 2026-08-12 — SDK do Firebase vendorizado (sai do gstatic.com)
 A v8.30.411-dev (trocar a versão pinada do SDK, `10.12.0` → `10.14.1`,
 pra mudar a URL e furar um eventual cache velho) **não resolveu** —

@@ -4075,7 +4075,7 @@ input[type="date"]{-moz-appearance:textfield;}
         Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato e Variações — obrigatórios pro demandante — mais Direcional de Mídia, opcional) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
       </p>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Com a ficha ativa, o <b>título do card também se monta sozinho</b> — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code> — sempre que algum desses campos mudar. Não precisa mais digitar o título completo na mão, só preencher a Ficha.
+        Em cards <b>novos criados a partir de um Modelo</b> (📐), o <b>título também se monta sozinho</b> conforme a Ficha vai sendo preenchida — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão, como sempre.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -5338,7 +5338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.412-dev</div>
+<div class="version">v8.30.413-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11481,11 +11481,19 @@ function _crvComposeTitle(){
 }
 // Roda a cada mudança num campo da Ficha Técnica que participe do título
 // (ver handlers abaixo) — só reescreve #m-title enquanto a Ficha estiver
-// realmente visível (mesma condição de _crvUpdateFichaSecVisibility) e só
+// realmente visível (mesma condição de _crvUpdateFichaSecVisibility), só
 // se já der pra montar algo (nunca apaga um título já digitado por causa
-// de campos ainda vazios).
+// de campos ainda vazios), e — pedido direto — só em cards NOVOS criados a
+// partir de um Modelo (não recorrentes, não card em branco, não card já
+// existente sendo editado depois). `_pendingQLSource` já existe pra outro
+// fim (disparar o trigger "Modelo usado" das Automações) e cobre
+// exatamente essa janela: setado em usarQLItem() só quando o item vem de
+// 📐 Modelos, e só é limpo depois que o card salva pela 1ª vez (ver
+// saveCard()) — em cards já existentes (abertos via openCard) nunca chega
+// a ser setado, então a checagem sozinha já garante "só card novo".
 function _crvAutoTitle(){
   if(!criativosAtivo || editingSuperChildren.length>0) return;
+  if(_pendingQLSource?.tipo!=='modelos') return;
   const composto=_crvComposeTitle();
   if(!composto) return;
   const titleEl=document.getElementById('m-title');
