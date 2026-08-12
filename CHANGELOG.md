@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.244 — 2026-08-12 · promove pra prod
+Promove pra produção a otimização de bandwidth do `comunicados`
+(validada em dev): `_refreshComunicados()` trocou de baixar a árvore
+inteira (ativos + inativos/arquivados) a cada 3min para uma query
+server-side (`orderByChild('ativo').equalTo(true)`) — mesmo
+comportamento visível (popup/badge/Mural), sem o peso morto do
+histórico inativo. Achado investigando um aumento real de consumo de
+download com a instrumentação `_dbg` já existente.
+
 ### v8.30.243 — 2026-08-11 · promove pra prod
 Ajuste de legibilidade no painel 🌅 Meu Dia, depois de 3 rodadas de
 feedback direto com print: título e texto secundário (squad/coluna/
