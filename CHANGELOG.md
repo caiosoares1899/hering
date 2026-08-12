@@ -1475,6 +1475,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.418-dev — 2026-08-12 — Proteção da descrição: trava a caixa de vez, em vez de reverter depois
+A v8.30.417-dev bloqueava com um `.includes()` na hora de salvar, mas o
+autosave revertia o valor da textarea **enquanto a pessoa ainda digitava**
+(dispara sozinho 800ms depois de cada tecla) — isso entra em corrida com o
+teclado e embaralha o texto na tela (reportado: campo virou algo tipo
+"testesssssddddddd aaa aaa..."). Pedido direto pra corrigir de vez: "ideal é
+que nem conseguisse abrir a caixa de texto sabe... tremesse pra pessoa".
+
+- `eocEdit('desc-eoc')` agora recusa entrar em modo de edição quando o card
+  tem Demandante e o texto original ainda não foi apagado/substituído e
+  quem está mexendo não é ADM/PO/Organizador — a caixa nem abre, só
+  "treme" (animação CSS) e mostra um aviso (throttle de 3s pra não
+  spammar toast a cada clique).
+- A textarea (`#m-desc`) fica `readOnly` como segunda camada nesse mesmo
+  cenário — mesmo que algo force a entrada em modo de edição, não dá pra
+  digitar ou colar por cima.
+- `scheduleAutoSave()` não mexe mais no valor da textarea (fim da corrida
+  com a digitação): se detectar violação, só preserva o conteúdo original
+  no que é gravado no Firebase, sem tocar no DOM — o "bloqueio de
+  verdade", com o campo corrigido de fato, acontece só no clique em
+  Salvar (`saveCard()`), que já não brigava com digitação.
+- A indicação visual (borda âmbar + cursor "não permitido") aparece direto
+  na caixinha de descrição fechada quando ela está travada, então dá pra
+  perceber antes mesmo de tentar clicar.
+- Complementar informação continua livre pra qualquer um, sem trava — só
+  que agora via "Descrições adicionais" (campo separado), já que a
+  descrição principal fica bloqueada por inteiro pra quem não pode editar.
+
 ### v8.30.417-dev — 2026-08-12 — Fecha furo na proteção de descrição: substituir também é bloqueado
 Achado em teste real, logo depois da v8.30.416-dev: a checagem só
 olhava "o campo ficou vazio?" — dava pra contornar selecionando tudo e
