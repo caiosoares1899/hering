@@ -1002,17 +1002,17 @@ input[type="date"]{-moz-appearance:textfield;}
   font-weight:800;font-family:"DM Sans",sans-serif;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;
   justify-content:center;padding:0 5px;line-height:1;box-shadow:0 2px 8px rgba(255,107,107,.5);
   font-variant-numeric:tabular-nums;letter-spacing:0;}
-/* v8.30.403-dev só reduziu o "right" (achando que "overflow-y:visible" na
-   .toolbar já resolvia o eixo vertical) e não resolveu — o corte continuava
-   em cima. Causa real: quando um eixo do overflow não é "visible", a spec de
-   CSS manda o navegador tratar o OUTRO eixo como "auto" também (não dá pra
-   ter um eixo rolando e o outro genuinamente sem corte) — "overflow-y:visible"
-   ao lado de "overflow-x:auto" nunca preveniu corte vertical de verdade.
-   Reduzido "top" pelo mesmo motivo do "right": mantém o badge dentro (ou bem
-   perto) da própria caixa do botão, sem depender do comportamento de overflow
-   de nenhum ancestral. */
-#intake-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;
-  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+/* Depois de 2 rodadas tentando cortar cada vez menos offset negativo
+   (v8.30.403-dev, v8.30.404-dev) e nenhuma resolver de vez (a .toolbar rola
+   com overflow-x:auto, que a spec de CSS trata como se overflow-y também
+   fosse auto — nunca dá pra "vazar" pra fora da caixa do botão nesse
+   container sem risco de corte em algum navegador/zoom/tela), a solução
+   definitiva é não tentar vazar: o badge deixa de ser position:absolute
+   flutuando no canto e passa a ser mais um item em fila no próprio
+   flex do botão (.btn já é display:inline-flex;gap:5px), com uma margem
+   à esquerda. Sem overlap, sem depender de overflow de ancestral nenhum. */
+#intake-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:1px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);box-shadow:-12px 0 48px rgba(0,0,0,.55);
@@ -3132,7 +3132,7 @@ input[type="date"]{-moz-appearance:textfield;}
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
        menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
-  <button class="btn btn-sm" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);position:relative;">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
+  <button class="btn btn-sm" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
@@ -5335,7 +5335,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.404-dev</div>
+<div class="version">v8.30.405-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -19189,7 +19189,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
@@ -20009,6 +20009,7 @@ const NOTIF_ICONS = {
   risk:       '⚠️',
   checklist:  '☑️',
   moved:      '➡️',
+  intake:     '📥',
 };
 
 function toggleNotifPanel(){
@@ -20382,7 +20383,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -20393,12 +20394,19 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
-function openNotif(notifId, cardId, squad, commentId){
+function openNotif(notifId, cardId, squad, commentId, type){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
   // Fecha painel
   notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
+  // Notificação de intake não tem card (pedido ainda tá pendente) — abre o
+  // painel de Intake em vez de tentar navegar pra um card que não existe.
+  if(type==='intake'){
+    if(squad && squad!==ACTIVE_SQUAD){ window.location.href = window.location.pathname+'?squad='+encodeURIComponent(squad); return; }
+    openIntakePanel();
+    return;
+  }
   if(!cardId) return;
   // Notificação de outro squad (ex.: menção de alguém trabalhando em outro
   // board) — antes isso não fazia NADA além de marcar como lida, e a pessoa
