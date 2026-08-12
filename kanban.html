@@ -5326,12 +5326,12 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.243</div>
+<div class="version">v8.30.244</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
@@ -26245,7 +26245,14 @@ function _initComunicados(){
 
 function _refreshComunicados(){
   _lastComunicadosRefresh = Date.now();
-  window._get(fb('kanban/comunicados')).then(snap=>{
+  // Otimização de bandwidth (achado no consumo de download): baixava a
+  // árvore INTEIRA de comunicados (ativos + inativos/arquivados) a cada 3min
+  // por aba aberta, globalmente — mas popup, badge e Mural só usam os
+  // ativo:true (renderMuralLista/_updateMuralBadge já filtravam isso no
+  // cliente, depois de já ter baixado tudo). Query filtra ativo:true no
+  // servidor — mesmo resultado visível, sem baixar o histórico inativo.
+  const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
+  window._get(_comunicadosQuery).then(snap=>{
     _dbgTrack('comunicados', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
