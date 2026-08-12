@@ -18,6 +18,42 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.247 — 2026-08-12 · promove pra prod
+Promove pra produção todo o lote acumulado em dev desde a v8.30.246
+(v8.30.414-dev → v8.30.421-dev), validado em dev.
+
+- **Botão "🪄 Gerar título"**: monta o título a partir da Ficha Técnica
+  sob demanda em qualquer card, a qualquer momento — não só em cards
+  novos criados via Modelo (que já ganhavam o título automático sozinho).
+- **Total de variações no dashboard**: o painel "🎬 Controle de
+  Criativos" ganhou um card de estatística somando a quantidade total
+  de variações marcadas nos cards do squad.
+- **Nova ordenação Alfabética (A → Z)**: mais uma opção no botão ↕
+  Ordenação (geral e por coluna), ordenando pelo título do card.
+- **Proteção da descrição em cards com Demandante**: card com o campo
+  Demandante preenchido trava a descrição principal pra quem não é
+  ADM/PO/Organizador — a caixa nem abre pra edição (treme se alguém
+  tentar), evitando apagar ou substituir por engano o conteúdo de quem
+  pediu o card. Complementar continua livre pra qualquer um via
+  "Descrições adicionais". (Passou por duas rodadas de correção em dev
+  depois de bypasses encontrados em teste real — ver entradas de
+  v8.30.416 a v8.30.418-dev pro histórico completo.)
+- **🧯 Restaurar backup**: nova seção em Config → Backup, restrita a
+  ADM/PO/Organizador — sobe um arquivo de backup (ou escolhe um
+  snapshot do histórico) e traz os dados de volta. "🔍 Comparar com o
+  board atual" lista só os cards que sumiram desde aquele backup (sem
+  mexer no que foi arquivado/excluído de propósito), com restauração
+  individual ou em lote; "🧯 Restaurar TUDO" substitui o board inteiro,
+  pra cenários mais graves. Salva automaticamente um snapshot de
+  segurança do estado atual antes de qualquer restauração.
+- **Backup automático semanal**: nova Cloud Function (`weeklyBackup`,
+  deploy separado) salva um snapshot de cada squad no Cloud Storage
+  todo domingo às 04:00, sem depender de ninguém abrir o board —
+  reforça a rede de segurança dos dados.
+- **Central de Ajuda atualizada**: sincronizada com todas as features
+  acima (campo Demandante nunca tinha entrada própria; Backup, Ficha
+  Técnica e Ordenação estavam desatualizadas).
+
 ### v8.30.246 — 2026-08-12 · promove pra prod
 Promove pra produção todo o lote acumulado em dev desde a v8.30.245
 (v8.30.410-dev → v8.30.413-dev), validado em dev.

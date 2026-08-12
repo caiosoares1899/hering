@@ -1774,6 +1774,15 @@ input[type="date"]{-moz-appearance:textfield;}
 .eoc-display.is-empty{min-height:44px;}
 .eoc-display .mention-user,.eoc-display .mention-card{pointer-events:none;}
 .eoc-display a.desc-link{pointer-events:auto;cursor:pointer;position:relative;z-index:2;}
+.eoc-display.eoc-locked{cursor:not-allowed;border-color:var(--warn);opacity:.92;}
+.eoc-display.eoc-locked:hover{background:rgba(56,182,255,.04);border-color:var(--warn);}
+@keyframes eocShake{
+  10%,90%{transform:translateX(-2px);}
+  20%,80%{transform:translateX(4px);}
+  30%,50%,70%{transform:translateX(-8px);}
+  40%,60%{transform:translateX(8px);}
+}
+.eoc-shake{animation:eocShake .4s;}
 .eoc-editing .eoc-display{display:none;}
 .eoc-editing .eoc-textarea{display:block!important;}
 .eoc-editing .eoc-actions{display:flex!important;}
@@ -3077,6 +3086,10 @@ input[type="date"]{-moz-appearance:textfield;}
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         👕 Tamanho (P → GG)
       </button>
+      <button onclick="setColSortMode('alpha')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔤 Alfabética (A → Z)
+      </button>
       <button onclick="setColSortMode('manual')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         🖐 Manual (arraste do jeito que quiser)
@@ -3473,7 +3486,7 @@ input[type="date"]{-moz-appearance:textfield;}
               <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
             </div>
             <div class="field" id="m-demandante-row" style="display:none;"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
-              <select class="fi" id="m-demandante" onchange="scheduleAutoSave()"></select>
+              <select class="fi" id="m-demandante" onchange="scheduleAutoSave();_updateDescProtectedBadge()"></select>
             </div>
           </div>
           <div class="field"><label class="fl">Prazo</label>
@@ -3657,6 +3670,10 @@ input[type="date"]{-moz-appearance:textfield;}
         <textarea class="fi" id="m-crv-direcional" rows="2" oninput="scheduleAutoSave()" placeholder="Instrução importante pra quem for produzir/mídia — se preencher, aparece com destaque pra quem pegar o card." style="background:rgba(255,209,102,.08);border-color:rgba(255,209,102,.4);"></textarea>
       </div>
 
+      <div class="field" style="grid-column:1/-1;text-align:right;">
+        <button type="button" class="btn btn-sm" onclick="_crvGerarTitulo()" style="color:#ffb3d9;border-color:rgba(255,179,217,.35);">🪄 Gerar título</button>
+      </div>
+
     </div>
 
     <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
@@ -3666,7 +3683,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div id="m-sec-conteudo" style="display:flex;flex-direction:column;gap:10px;">
     <!-- Descrição full-width -->
     <div class="field" id="desc-field" style="scroll-margin-top:60px;">
-      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
+      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span> <span id="m-desc-protected-badge" style="display:none;font-size:9px;color:var(--warn);font-weight:700;margin-left:4px;" title="Card com Demandante definido — a descrição fica travada (não abre pra edição) pra não perder essa informação sem querer. Só ADM, PO ou Organizador pode editar. Pra complementar, use 'Descrições adicionais'.">🔒 Protegida (Demandante)</span></label>
       <div class="eoc-wrap" id="desc-eoc">
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
@@ -4075,7 +4092,7 @@ input[type="date"]{-moz-appearance:textfield;}
         Ativa a <b>Ficha Técnica</b> no card (Campanha, Funil, Etapa, Canal, Objetivo, Plataforma, Tipo, Formato e Variações — obrigatórios pro demandante — mais Direcional de Mídia, opcional) pra times que produzem peças criativas. Com a ficha ativa, um painel <b>🎬 Controle de Criativos</b> aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida, numa tabela filtrável — sempre atualizada, sem trabalho duplicado.
       </p>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
-        Em cards <b>novos criados a partir de um Modelo</b> (📐), o <b>título também se monta sozinho</b> conforme a Ficha vai sendo preenchida — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão, como sempre.
+        Em cards <b>novos criados a partir de um Modelo</b> (📐), o <b>título também se monta sozinho</b> conforme a Ficha vai sendo preenchida — Plataforma, Tipo, Campanha, Objetivo, Etapa do Funil e Funil, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão — mas o botão <b>🪄 Gerar título</b>, no fim da Ficha Técnica, monta o mesmo título sob demanda em qualquer card, a qualquer momento.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,179,217,.06);border:1px solid rgba(255,179,217,.25);border-radius:var(--r);">
         <input type="checkbox" id="cfg-criativos-ativo" onchange="toggleCriativosAtivo(this.checked)"> Ativar Ficha Técnica neste squad
@@ -4097,6 +4114,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="cfg-sec-title">📢 Campo Demandante</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
         Adiciona ao card um campo separado do Responsável: <b>quem solicitou</b> o card. Pensado pra ficar estável durante toda a execução mesmo quando o Responsável muda de mão (ex.: passa de designer pra redator) — o demandante normalmente não muda. Fica disponível como campo no card, filtro na toolbar, e conta pras notificações de conclusão/desbloqueio (junto com Responsável e Participantes) e pro contexto que o Agente Ágil enxerga.
+      </p>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
+        <b>Proteção da descrição</b>: com um Demandante definido, a descrição fica travada — a caixa nem abre pra edição (só ADM, PO ou Organizador conseguem editar), pra ninguém apagar ou substituir aquele conteúdo sem querer. Pra complementar, use o campo separado "Descrições adicionais" — continua livre pra qualquer um.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:var(--r);margin-bottom:18px;">
         <input type="checkbox" id="cfg-demandante-ativo" onchange="toggleDemandanteAtivo(this.checked)"> Ativar campo de Demandante neste squad
@@ -4461,6 +4481,28 @@ input[type="date"]{-moz-appearance:textfield;}
       <div id="backup-history" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;">
         <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
       </div>
+
+      <div style="height:1px;background:var(--glass-b);margin:14px 0 10px;"></div>
+      <div class="cfg-sec-title" style="color:var(--danger);">🧯 Restaurar backup</div>
+      <div id="restore-no-permission" style="display:none;font-size:11px;color:var(--txt3);line-height:1.6;">
+        Só ADM, PO ou Organizador pode restaurar um backup — é uma ação que substitui todos os cards, colunas e tags da squad de uma vez.
+      </div>
+      <div id="restore-section">
+        <p style="font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:10px;">
+          Escolhe um arquivo <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">mare-digital-*.json</code> baixado antes (via "⬇ Baixar JSON agora" ou de um snapshot do histórico acima). <strong style="color:var(--danger);">Isso SUBSTITUI por completo</strong> os cards, colunas, tags e configurações da squad atual pelo conteúdo do backup — não é uma mesclagem. Um snapshot de segurança do estado atual é salvo automaticamente antes de restaurar, então dá pra desfazer restaurando esse snapshot "pre_restore" de volta se algo sair errado.
+        </p>
+        <input type="file" id="restore-file-inp" accept="application/json" onchange="handleRestoreFileSelect(event)" style="font-size:11px;color:var(--txt2);margin-bottom:10px;">
+        <div id="restore-preview" style="display:none;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--txt2);line-height:1.8;margin-bottom:10px;"></div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button class="btn btn-sm" id="btn-compare-backup" onclick="compararComBackup()" disabled style="opacity:.4;color:var(--cyan);border-color:rgba(56,182,255,.3);">🔍 Comparar com o board atual (recomendado)</button>
+          <button class="btn btn-sm" id="btn-restore-backup" onclick="confirmRestoreBackup()" disabled style="opacity:.4;color:var(--danger);border-color:rgba(255,107,107,.35);">🧯 Restaurar TUDO (substitui o board inteiro)</button>
+        </div>
+        <p style="font-size:10px;color:var(--txt3);line-height:1.6;margin-bottom:10px;">
+          <b>Comparar</b> mostra só os cards que estão no backup mas sumiram do board atual (nem ativos, nem arquivados) — dá pra revisar um por um e trazer de volta só quem realmente sumiu por engano, sem mexer em nada que foi arquivado/excluído de propósito. <b>Restaurar TUDO</b> substitui cards, colunas, tags e config por inteiro — use só se o board inteiro estiver comprometido.
+        </p>
+        <div id="restore-compare" style="display:none;margin-bottom:10px;"></div>
+      </div>
     </div>
 
   </div>
@@ -4576,6 +4618,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <option value="dueDesc">📅 Prazo (mais novos primeiro)</option>
         <option value="movedAt">🕓 Movimentação (mais recente)</option>
         <option value="size">👕 Tamanho (P → GG)</option>
+        <option value="alpha">🔤 Alfabética (A → Z)</option>
         <option value="manual">🖐 Manual (arraste do jeito que quiser)</option>
       </select>
     </div>
@@ -5338,7 +5381,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.246</div>
+<div class="version">v8.30.247</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9059,6 +9102,12 @@ function _sortCards(arr, colId){
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
     });
   }
+  if(mode==='alpha'){
+    // Ordem alfabética pelo título (pedido direto) — 'pt-BR'+sensitivity:'base'
+    // pra acentuação/maiúscula não bagunçar a ordem (mesmo padrão já usado
+    // pra ordenar pessoas/agentes no resto do arquivo).
+    return arr.slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'pt-BR',{sensitivity:'base'}));
+  }
   if(mode==='manual'){
     // Ordenação 100% livre — pedido direto. card.manualOrder é atribuído só
     // quando o card é arrastado dentro de uma coluna nesse modo (ver
@@ -9851,6 +9900,29 @@ function scheduleAutoSave(){
     const cl=getCL(); const rl=getRiscos();
     const user=window._currentUser?.displayName||'Usuário';
     const c=cards.find(x=>x.id===editingId); if(!c) return;
+    // Proteção de descrição do demandante — mesma condição do saveCard()
+    // manual (exige que o texto ORIGINAL continue presente dentro do novo
+    // texto, não só "não ficou vazio" — fecha o furo de selecionar tudo e
+    // digitar por cima). IMPORTANTE: aqui NÃO mexemos no campo da tela
+    // (document.getElementById('m-desc').value) — o autosave dispara
+    // sozinho a cada digitação, então reverter o DOM enquanto a pessoa
+    // ainda está digitando entra em corrida com o teclado e emburrilha o
+    // texto na tela. Em vez disso, o que fica protegido é só o que é
+    // PERSISTIDO no Firebase (ver _descProtViolada abaixo, usado no
+    // Object.assign) — a pessoa continua vendo o que digitou, mas o
+    // conteúdo original do demandante nunca é sobrescrito por baixo dos
+    // panos. O bloqueio "de verdade", com o campo corrigido de fato, só
+    // acontece no clique em Salvar (saveCard()), que não briga com digitação.
+    const _asDemBefore=(c.desc||'').trim();
+    const _asDemAfter=document.getElementById('m-desc').value.trim();
+    const _descProtViolada = !!(c.demandante && _asDemBefore && !_asDemAfter.includes(_asDemBefore) && !canBulkDelete());
+    if(_descProtViolada){
+      const _now=Date.now();
+      if(!window._lastDescProtToastAt || _now-window._lastDescProtToastAt>4000){
+        window._lastDescProtToastAt=_now;
+        showToast('🔒 Este card tem um Demandante definido — o conteúdo original da descrição não pode ser apagado ou substituído. Só ADM, PO ou Organizador pode alterar esse trecho. Clique em Salvar pra ver o campo corrigido.');
+      }
+    }
     const _asBefore=_histSnapshot(c); // 📜 snapshot antes do auto-save
     // Estado anterior — usado abaixo para disparar as mesmas notificações que o
     // saveCard() manual dispara (a maioria das edições passa pelo autosave, não
@@ -9865,7 +9937,7 @@ function scheduleAutoSave(){
     const _colToSave=(_selCol===_modalOpenCol)?c.col:_selCol;
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),
       col:_colToSave,owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',
-      due:document.getElementById('m-due').value,noDue:_mNoDue,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
+      due:document.getElementById('m-due').value,noDue:_mNoDue,desc:_descProtViolada?c.desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),
       po:document.getElementById('m-po').value,checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,participants:getParticipants(),edited:user,editedAt:td,
       // blockerReason faltava aqui — o autosave nunca capturava esse campo
       // (só o botão "Salvar" manual fazia isso), então uma edição do motivo
@@ -10372,6 +10444,7 @@ function openCard(id){
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-demandante').value=c.demandante||'';
+  _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
   _mNoDue=!!c.noDue; _renderNoDueBtn();
@@ -10733,6 +10806,7 @@ function openNewCard(col){
   _crvUpdateFichaSecVisibility();
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
+  _updateDescProtectedBadge();
   _pendingCoverColor=null; _pendingCoverImageUrl=null; _applyCoverStripToModal(null,null); renderCoverSwatches();
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
@@ -10836,6 +10910,28 @@ function saveCard(){
       _highlightMissingFields(crvMissing);
       document.getElementById('m-criativo-sec')?.scrollIntoView({behavior:'smooth',block:'center'});
       showToast('🔒 Ficha Técnica incompleta: '+crvMissing.map(k=>crvLabels[k]).join(', '));
+      return;
+    }
+  }
+  // Proteção de descrição do demandante (pedido direto: "que os outros
+  // usuários não excluam aquilo que foi gerado por um demandante, afim de
+  // não perder essa informação sem querer"). Checar só "ficou vazio" tinha
+  // um furo real, achado em teste: dava pra SELECIONAR TUDO e digitar por
+  // cima (ex.: "testessss") — o campo nunca passa por um estado vazio,
+  // então esvaziar-e-checar não pegava isso. Em vez disso, exige que o
+  // texto ORIGINAL continue presente dentro do novo texto (.includes) —
+  // bloqueia apagar/substituir o conteúdo protegido, mas ainda deixa
+  // livre completar/adicionar informação por cima dele, pra qualquer um.
+  // ADM, PO e Organizador continuam podendo alterar/limpar quando for
+  // mesmo preciso (mesmo papel que já libera exclusão em massa, ver
+  // canBulkDelete()). Cards sem Demandante, ou sendo criados agora
+  // (editingId null), não são afetados.
+  if(editingId){
+    const _cDemProt=cards.find(x=>x.id===editingId);
+    const _cDemProtBefore=(_cDemProt?.desc||'').trim();
+    const _cDemProtAfter=document.getElementById('m-desc').value.trim();
+    if(_cDemProt && _cDemProt.demandante && _cDemProtBefore && !_cDemProtAfter.includes(_cDemProtBefore) && !canBulkDelete()){
+      showToast('🔒 Este card tem um Demandante definido — o conteúdo original da descrição não pode ser apagado ou substituído. Só ADM, PO ou Organizador pode alterar esse trecho. Complementar por cima continua liberado.');
       return;
     }
   }
@@ -11499,6 +11595,19 @@ function _crvAutoTitle(){
   const titleEl=document.getElementById('m-title');
   if(titleEl && titleEl.value!==composto){ titleEl.value=composto; }
 }
+// Botão "🪄 Gerar título" no fim da Ficha Técnica (pedido direto) — mesma
+// composição de _crvAutoTitle(), mas sob demanda: funciona em QUALQUER
+// card com Ficha Técnica preenchida (em branco ou novo), não só nos
+// restritos a Modelo. Diferente da versão automática, aqui a pessoa
+// clicou de propósito, então pode sobrescrever o título sem restrição
+// nenhuma — inclusive em card já existente, se for isso que ela quiser.
+function _crvGerarTitulo(){
+  const composto=_crvComposeTitle();
+  if(!composto){ showToast('⚠️ Preencha algum campo da Ficha Técnica primeiro.'); return; }
+  const titleEl=document.getElementById('m-title');
+  if(titleEl){ titleEl.value=composto; scheduleAutoSave(); }
+  showToast('✅ Título gerado a partir da Ficha Técnica.');
+}
 function getCriativoData(){
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
   const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
@@ -11769,6 +11878,39 @@ function toggleDemandanteAtivo(checked){
 function _applyDemandanteUIVisibility(){
   const row=document.getElementById('m-demandante-row'); if(row) row.style.display=demandanteAtivo?'':'none';
   const f=document.getElementById('f-demandante'); if(f) f.style.display=demandanteAtivo?'':'none';
+}
+// Badge "🔒 Protegida (Demandante)" ao lado do label de Descrição, e trava
+// de fato o campo pra quem não pode editar (pedido direto: "não excluam
+// aquilo que foi gerado por um demandante" + depois "ideal é que nem
+// conseguisse abrir a caixa de texto... tremesse pra pessoa"). Quando
+// travado: eocEdit('desc-eoc') recusa entrar em modo de edição e faz a
+// caixa "tremer" (ver lá), e a textarea some readOnly como segunda camada
+// — ninguém digita, cola ou substitui o conteúdo por cima, mesmo tentando
+// via atalho/formatação. ADM/PO/Organizador continuam liberados.
+// Complementar informação continua livre pra qualquer um via "Descrições
+// adicionais" (campo separado, não afetado por essa trava).
+function _isDescLocked(){
+  if(!editingId) return false;
+  const c=cards.find(x=>x.id===editingId);
+  const dem=document.getElementById('m-demandante')?.value||'';
+  return !!(c && dem && (c.desc||'').trim() && !canBulkDelete());
+}
+function _updateDescProtectedBadge(){
+  const badge=document.getElementById('m-desc-protected-badge');
+  const dem=document.getElementById('m-demandante')?.value||'';
+  if(badge) badge.style.display = dem ? '' : 'none';
+  const locked=_isDescLocked();
+  const ta=document.getElementById('m-desc');
+  if(ta) ta.readOnly=locked;
+  const display=document.getElementById('m-desc-display');
+  if(display) display.classList.toggle('eoc-locked', locked);
+}
+function _shakeEl(el){
+  if(!el) return;
+  el.classList.remove('eoc-shake');
+  void el.offsetWidth; // força reflow pra reiniciar a animação se já tiver rodado
+  el.classList.add('eoc-shake');
+  setTimeout(()=>el.classList.remove('eoc-shake'), 500);
 }
 function toggleSubmarcaVisivel(tagId, checked){
   if(!_isPOorOrg()) return;
@@ -12084,6 +12226,10 @@ function renderCriativosDashboard(){
   const emAndamento=Math.max(0, total-concluidos-atrasados);
   const pctConcl = total>0?Math.round(concluidos/total*100):0;
   const compos=_crvCardCountBreakdown(rows);
+  // Total de variações (pedido direto): soma de m-crv-variacoes-qtd de todo
+  // card com Variações:"sim" — não conta quem marcou "não" (sem campo de
+  // quantidade pra somar) nem quem deixou em branco.
+  const totalVariacoes=rows.reduce((s,c)=>s+(c.criativo?.variacoes==='sim'?(parseInt(c.criativo.variacoesQtd)||0):0),0);
 
   const prioOrder=['critical','high','medium','low'];
   const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
@@ -12143,6 +12289,7 @@ function renderCriativosDashboard(){
       +statCard('✅','Concluídos',concluidos+' <span style=\'font-size:12px;color:var(--txt3);\'>('+pctConcl+'%)</span>','#4ade80')
       +statCard('🔄','Em andamento',emAndamento,'#38b6ff')
       +statCard('⚠️','Atrasados',atrasados,'#ff6b6b')
+      +statCard('🔀','Total de variações',totalVariacoes,'#ffb3d9')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
       +barsBlock('🧩 Cards vs. Supercards', [['Cards',compos.cards],['Supercards',compos.supercards],['Cards filhos',compos.superChildren]])
@@ -18206,7 +18353,7 @@ CAPACIDADES DO SISTEMA (Maré Digital v8.0):
 - Importação do Trello com mapeamento semântico de listas e labels
 - Histórico do agente com resumo de ações executadas (preservado entre mensagens)
 - Snapshot do board omite cards concluídos há mais de 7 dias (eficiência de tokens)
-- Demandante (campo opcional, por squad): quem SOLICITOU o card — separado do Responsável, que executa e pode mudar de mão ao longo do card (o demandante normalmente não muda)
+- Demandante (campo opcional, por squad): quem SOLICITOU o card — separado do Responsável, que executa e pode mudar de mão ao longo do card (o demandante normalmente não muda). Com Demandante definido, a descrição do card fica travada pra edição (não abre) pra ninguém além de ADM/PO/Organizador — protege contra perder informação de quem pediu o card sem querer; complementar continua livre via o campo separado "Descrições adicionais"
 
 AÇÕES QUE POSSO EXECUTAR:
 - mover_card: mover card para outra coluna
@@ -19258,7 +19405,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
+    { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
@@ -19327,7 +19474,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Dicas de uso', text:'Seja específico: mencione nomes de cards, pessoas e datas. Você pode perguntar sobre qualquer coisa relacionada ao board, à sprint ou às práticas ágeis do time. O agente reconhece "eu", "mim" e "me atribua" como referências ao usuário logado.' },
   ],
   config: [
-    { icon:'⚙', title:'Abrindo configurações', text:'Clique no botão Configurações no canto inferior direito. O painel tem abas para: Ágil, Usuários, Lembretes, Tags, Subtimes, Fluxo, Auto, Importar, Worker, Firebase, Backup, Calendário e Criativos.' },
+    { icon:'⚙', title:'Abrindo configurações', text:'Clique no botão Configurações no canto inferior direito. O painel tem abas para: Ágil, Usuários, Lembretes, Tags, Subtimes, Padrões de card, Fluxo, Auto, Importar, Worker, Firebase, Backup, Calendário e Criativos.' },
     { icon:'👥', title:'Subtimes', text:'Em Config → Subtimes, o PO pode agrupar membros em subtimes (ex.: Design, Dev, Mídia), cada um com nome e cor. Os cards podem ser organizados por subtime na Raia, e os subtimes aparecem como pílulas coloridas na lista de usuários e no modal de Equipe.' },
     { icon:'🔤', title:'Iniciais únicas e reatribuição', text:'Cada pessoa tem iniciais (ex.: CS) que vinculam os cards a ela. Se duas pessoas teriam as mesmas iniciais no squad, o sistema gera uma única automaticamente e avisa. Na lista de usuários, iniciais repetidas piscam em vermelho — clique na pílula para corrigir. O botão "🔄 Reatribuir cards" move todos os cards de uma pessoa para outra de uma vez.' },
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
@@ -19337,11 +19484,12 @@ const HELP_CONTENT = {
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
-    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (escolhendo "Outros", abre um campo pra especificar), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Supercard não tem ficha própria:</b> assim que um card ganha pelo menos um card filho, a seção Ficha Técnica some do modal dele e para de ser obrigatória pra salvar — ele já é a soma dos filhos, e cada filho tem sua própria ficha preenchida individualmente. Se ele já tinha uma ficha preenchida antes de virar supercard, o conteúdo continua salvo (só some da tela); voltar a ser um card comum (remover todos os filhos) traz a seção de volta.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.' },
+    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (escolhendo "Outros", abre um campo pra especificar), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Supercard não tem ficha própria:</b> assim que um card ganha pelo menos um card filho, a seção Ficha Técnica some do modal dele e para de ser obrigatória pra salvar — ele já é a soma dos filhos, e cada filho tem sua própria ficha preenchida individualmente. Se ele já tinha uma ficha preenchida antes de virar supercard, o conteúdo continua salvo (só some da tela); voltar a ser um card comum (remover todos os filhos) traz a seção de volta.\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.\n\n<b>🪄 Título automático:</b> em cards novos criados a partir de um Modelo (📐), o título se monta sozinho conforme a Ficha vai sendo preenchida, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão — mas o botão "🪄 Gerar título", no fim da Ficha Técnica, monta o mesmo título sob demanda em qualquer card, a qualquer momento, sem precisar vir de um Modelo.\n\n<b>Total de variações no dashboard:</b> o "🎬 Controle de Criativos" também soma a quantidade total de variações marcadas nos cards ("Variações: Sim" + quantidade preenchida), num card de estatística próprio — útil pra ter uma visão rápida de quantas peças estão sendo produzidas no total, sem contar card por card.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
+    { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
-    { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos 10 snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.' },
+    { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Worker é o proxy Cloudflare que conecta o Agente Ágil à API da Anthropic. O Firebase armazena todos os dados em tempo real. Raramente precisam ser alterados após o setup inicial.' },
@@ -25404,6 +25552,15 @@ function _eocPasteHandler(e){
 function eocEdit(wrapId){
   const wrap = document.getElementById(wrapId);
   if(!wrap) return;
+  if(wrapId==='desc-eoc' && _isDescLocked()){
+    _shakeEl(wrap.querySelector('.eoc-display')||wrap);
+    const _now=Date.now();
+    if(!window._lastDescProtToastAt || _now-window._lastDescProtToastAt>3000){
+      window._lastDescProtToastAt=_now;
+      showToast('🔒 Este card tem um Demandante definido — o conteúdo original da descrição está protegido e só ADM, PO ou Organizador pode alterá-lo. Use "Descrições adicionais" pra complementar.');
+    }
+    return;
+  }
   wrap.classList.add('eoc-editing');
   const ta = wrap.querySelector('.eoc-textarea');
   if(ta){
@@ -26111,6 +26268,7 @@ function loadBackupTab(){
     lastEl.textContent = '⏱ Último backup automático: '+new Date(cfg.lastRun).toLocaleString('pt-BR');
   }
   renderBackupHistory();
+  _applyRestoreSectionVisibility();
 }
 
 function updateBackupAutoStatus(){
@@ -26235,20 +26393,23 @@ function renderBackupHistory(){
       const entries = Object.entries(val)
         .sort(([a],[b])=>b.localeCompare(a))
         .slice(0,10); // mostra os 10 mais recentes
+      const _podeRestaurar = typeof canBulkDelete==='function' && canBulkDelete();
       el.innerHTML = entries.map(([date, snap])=>{
         const meta = snap.meta || {};
-        const label = meta.type==='auto' ? '🤖 Auto' : meta.type==='teste' ? '🧪 Teste' : '👤 Manual';
+        const label = meta.type==='auto' ? '🤖 Auto' : meta.type==='teste' ? '🧪 Teste' : meta.type==='pre_restore' ? '🧯 Pré-restauração' : '👤 Manual';
         const ts = meta.ts ? new Date(meta.ts).toLocaleString('pt-BR') : date;
         return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
-          background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;cursor:pointer;"
-          onclick="downloadSnapshotFromFirebase('${date}')"
-          title="Clique para baixar o JSON deste snapshot">
-          <span style="font-size:16px;">💾</span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:11px;font-weight:600;color:#e8f4fd;">${ts} ${label}</div>
-            <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
+          background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;"
+            onclick="downloadSnapshotFromFirebase('${date}')"
+            title="Clique para baixar o JSON deste snapshot">
+            <span style="font-size:16px;">💾</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:600;color:#e8f4fd;">${ts} ${label}</div>
+              <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
+            </div>
           </div>
-          <span style="font-size:10px;color:var(--accent);">⬇ baixar</span>
+          ${_podeRestaurar ? `<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.35);flex-shrink:0;" onclick="event.stopPropagation();restoreFromFirebaseSnapshot('${date}')" title="Restaurar este snapshot no board">🧯 restaurar</button>` : ''}
         </div>`;
       }).join('');
     })
@@ -26275,6 +26436,285 @@ function downloadSnapshotFromFirebase(date){
       showToast('✅ Snapshot '+date+' baixado!');
     })
     .catch(()=>showToast('❌ Erro ao baixar snapshot'));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 🧯 RESTAURAR BACKUP — pedido direto depois de descobrir que o backup
+// só sabia EXPORTAR (baixar/copiar JSON, salvar snapshot no Firebase),
+// sem nenhum caminho de volta pra repor os dados no board. Aceita tanto
+// um arquivo mare-digital-*.json baixado quanto um snapshot já salvo no
+// histórico do Firebase (botão "🧯 restaurar" em cada linha) — os dois
+// caminhos convergem pro mesmo preview + confirmação + aplicação, pra
+// não duplicar a parte arriscada. Só ADM/PO/Organizador pode restaurar
+// (canBulkDelete()): é uma ação que substitui TODOS os cards, colunas e
+// tags da squad de uma vez, não uma mesclagem.
+// ═══════════════════════════════════════════════════════════════════
+let _restoreParsedPayload = null;
+
+async function handleRestoreFileSelect(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    _prepareRestorePreview(JSON.parse(text), 'arquivo "'+file.name+'"');
+  }catch(e){
+    _restoreParsedPayload = null;
+    const preview = document.getElementById('restore-preview');
+    if(preview){
+      preview.style.display = 'block';
+      preview.innerHTML = '❌ Não deu pra ler esse arquivo como um backup do Maré Digital — confira se é o JSON certo (baixado pelo "⬇ Baixar JSON agora" ou de um snapshot do histórico). Se você tentou colar um export do Trello aqui, é o campo errado: isso é só pra backups do próprio Maré Digital.';
+    }
+    const btn = document.getElementById('btn-restore-backup');
+    if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
+  }
+}
+
+// Confere se o JSON tem a cara de um backup do Maré Digital (não de um
+// export de outro sistema, tipo Trello — schemas bem diferentes).
+function _validateBackupPayload(payload){
+  if(!payload || typeof payload!=='object') return 'JSON inválido.';
+  if(!payload.board || !Array.isArray(payload.board.cards)) return 'Esse JSON não parece um backup do Maré Digital (falta board.cards) — confira se não é, por exemplo, um export do Trello ou outro arquivo.';
+  return null;
+}
+
+function _prepareRestorePreview(payload, origemLabel){
+  const preview = document.getElementById('restore-preview');
+  const btn = document.getElementById('btn-restore-backup');
+  const cmpBtn = document.getElementById('btn-compare-backup');
+  const cmpEl = document.getElementById('restore-compare');
+  // Novo backup carregado — qualquer comparação anterior fica obsoleta.
+  _backupMissingCards = [];
+  if(cmpEl){ cmpEl.style.display='none'; cmpEl.innerHTML=''; }
+  const erro = _validateBackupPayload(payload);
+  if(erro){
+    _restoreParsedPayload = null;
+    if(preview){ preview.style.display='block'; preview.innerHTML = '❌ '+esc(erro); }
+    if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
+    if(cmpBtn){ cmpBtn.disabled=true; cmpBtn.style.opacity='.4'; }
+    return;
+  }
+  _restoreParsedPayload = payload;
+  const ativos = payload.board.cards.filter(c=>c && !c.archived).length;
+  const arquivados = payload.board.cards.length - ativos;
+  const cols = (payload.board.columns||[]).length;
+  const squadDivergente = payload.squad && payload.squad!==ACTIVE_SQUAD;
+  if(preview){
+    preview.style.display = 'block';
+    preview.innerHTML =
+      '📦 Backup de <strong>'+esc(origemLabel)+'</strong><br>'+
+      '• Squad de origem: <strong>'+esc(payload.squad||'?')+'</strong>'+(squadDivergente?' <span style="color:var(--warn);font-weight:700;">⚠ diferente da squad atual ('+esc(ACTIVE_SQUAD)+')</span>':'')+'<br>'+
+      '• Exportado em: '+(payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('pt-BR') : '?')+' por '+esc(payload.exportedBy||'?')+'<br>'+
+      '• '+ativos+' cards ativos'+(arquivados?' · '+arquivados+' arquivados':'')+' · '+cols+' colunas · versão '+esc(payload.version||'?');
+  }
+  if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+  if(cmpBtn){ cmpBtn.disabled=false; cmpBtn.style.opacity='1'; }
+}
+
+// ── Comparar com o board atual: recupera cards perdidos sem sobrescrever
+// tudo. Pedido direto (depois do incidente de card sumido em midiacriativa):
+// mostra só os cards que estão no backup mas SUMIRAM de vez do board atual
+// (nem ativos, nem arquivados) — cards arquivados de propósito NÃO entram
+// aqui, só o que realmente não existe mais no array `cards`. A pessoa
+// revisa um por um (ou "restaurar todos") em vez de um restore cego, então
+// dá pra distinguir "sumiu por bug" de "foi excluído de propósito" — quem
+// decide é o humano olhando a lista, não uma regra automática.
+let _backupMissingCards = [];
+
+function compararComBackup(){
+  const payload = _restoreParsedPayload;
+  if(!payload){ showToast('Carrega um backup válido primeiro (arquivo ou snapshot do histórico).'); return; }
+  const idsAtuais = new Set(cards.map(c=>c && c.id).filter(Boolean));
+  _backupMissingCards = payload.board.cards.filter(c=>c && c.id && !idsAtuais.has(c.id));
+  _renderComparacaoBackup();
+}
+
+function _renderComparacaoBackup(){
+  const el = document.getElementById('restore-compare');
+  if(!el) return;
+  el.style.display = 'block';
+  if(!_backupMissingCards.length){
+    el.innerHTML = '<div style="font-size:11px;color:var(--teal);">✅ Nenhuma divergência — todo card do backup já está no board atual (ativo ou arquivado).</div>';
+    return;
+  }
+  const payloadCols = _restoreParsedPayload?.board?.columns||[];
+  const linhas = _backupMissingCards.map(c=>{
+    const colNome = payloadCols.find(col=>col.id===c.col)?.name || c.col || '?';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:11px;font-weight:600;color:#e8f4fd;">'+esc(c.title||'(sem título)')+'</div>'+
+        '<div style="font-size:10px;color:rgba(150,200,240,.6);">coluna no backup: '+esc(colNome)+(c.archived?' · estava arquivado':'')+' · id: '+esc(c.id)+'</div>'+
+      '</div>'+
+      '<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.35);flex-shrink:0;" onclick="restaurarCardPerdido(\''+c.id.replace(/'/g,"\\'")+'\')">↩ Restaurar</button>'+
+    '</div>';
+  }).join('');
+  el.innerHTML =
+    '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:8px;">⚠ '+_backupMissingCards.length+' card(s) estão no backup mas não existem mais no board atual (nem ativos, nem arquivados). Podem ter sumido por bug, ou terem sido excluídos de propósito — confira um por um antes de restaurar.</div>'+
+    '<button class="btn btn-sm" style="margin-bottom:8px;color:var(--teal);border-color:rgba(29,233,182,.35);" onclick="restaurarTodosCardsPerdidos()">↩ Restaurar todos ('+_backupMissingCards.length+')</button>'+
+    linhas;
+}
+
+// Repõe os cards no array local `cards`, remapeando pra uma coluna válida
+// se a coluna original do backup não existir mais no board atual (ex.:
+// coluna renomeada/excluída desde o backup).
+function _inserirCardsRestaurados(lista){
+  const colIds = new Set(columns.map(c=>c.id));
+  const fallbackCol = columns[0]?.id;
+  lista.forEach(c=>{
+    const novo = {...c};
+    if(!colIds.has(novo.col) && fallbackCol) novo.col = fallbackCol;
+    cards.push(novo);
+  });
+}
+
+async function restaurarCardPerdido(cardId){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar cards de um backup.'); return; }
+  const card = _backupMissingCards.find(c=>c.id===cardId);
+  if(!card){ showToast('Card não encontrado na comparação.'); return; }
+  if(!await uiConfirm('Restaurar o card "'+(card.title||cardId)+'" de volta pro board? Ele volta exatamente como estava no backup.', {title:'↩ Restaurar card', okText:'Restaurar'})) return;
+  _inserirCardsRestaurados([card]);
+  try{
+    await fbSaveAll(undefined, [card.id]);
+  }catch(e){
+    console.error('[Restaurar card] falhou:', e);
+    showToast('❌ Erro ao restaurar o card — tenta de novo.');
+    return;
+  }
+  _backupMissingCards = _backupMissingCards.filter(c=>c.id!==cardId);
+  renderBoard();
+  _renderComparacaoBackup();
+  showToast('✅ Card restaurado: '+(card.title||cardId));
+}
+
+async function restaurarTodosCardsPerdidos(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar cards de um backup.'); return; }
+  if(!_backupMissingCards.length) return;
+  if(!await uiConfirm('Restaurar TODOS os '+_backupMissingCards.length+' card(s) perdidos de volta pro board? Cada um volta exatamente como estava no backup.', {title:'↩ Restaurar todos', okText:'Restaurar todos'})) return;
+  const lista = _backupMissingCards.slice();
+  const ids = lista.map(c=>c.id);
+  _inserirCardsRestaurados(lista);
+  try{
+    await fbSaveAll(undefined, ids);
+  }catch(e){
+    console.error('[Restaurar todos] falhou:', e);
+    showToast('❌ Erro ao restaurar — tenta de novo.');
+    return;
+  }
+  _backupMissingCards = [];
+  renderBoard();
+  _renderComparacaoBackup();
+  showToast('✅ '+ids.length+' card(s) restaurados.');
+}
+
+// Carrega um snapshot já salvo no histórico do Firebase pro mesmo fluxo
+// de preview+confirmação do upload de arquivo, sem precisar baixar e
+// reenviar o JSON manualmente.
+function restoreFromFirebaseSnapshot(date){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar um backup.'); return; }
+  showToast('⏳ Carregando snapshot de '+date+'...');
+  window._get(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+date+'/data'))
+    .then(snap=>{
+      const val = snap.val();
+      if(!val){ showToast('❌ Snapshot não encontrado'); return; }
+      _prepareRestorePreview(val, 'snapshot do Firebase de '+date);
+      document.getElementById('restore-preview')?.scrollIntoView({behavior:'smooth', block:'center'});
+      showToast('📦 Snapshot carregado — confira o resumo e clique em "Restaurar este backup".');
+    })
+    .catch(()=>showToast('❌ Erro ao carregar snapshot'));
+}
+
+async function confirmRestoreBackup(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar um backup.'); return; }
+  const payload = _restoreParsedPayload;
+  if(!payload){ showToast('Carrega um backup válido primeiro.'); return; }
+  const ativos = payload.board.cards.filter(c=>c && !c.archived).length;
+  const squadDivergente = payload.squad && payload.squad!==ACTIVE_SQUAD;
+  const dataFmt = payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('pt-BR') : 'data desconhecida';
+  const msg = 'Isso vai SUBSTITUIR todos os cards, colunas, tags e configurações da squad "'+ACTIVE_SQUAD+'" pelo conteúdo deste backup ('+ativos+' cards ativos, exportado em '+dataFmt+').'+
+    (squadDivergente ? '\n\n⚠ Esse backup foi exportado da squad "'+payload.squad+'", DIFERENTE da squad atual ("'+ACTIVE_SQUAD+'"). Confirme que é isso mesmo que você quer.' : '')+
+    '\n\nUm snapshot de segurança do estado ATUAL é salvo antes de restaurar, mas essa ação sobrescreve o board imediatamente pra todo mundo que estiver com ele aberto. Confirma?';
+  if(!await uiConfirm(msg, {title:'🧯 Restaurar backup', okText:'Restaurar', cancelText:'Cancelar', danger:true})) return;
+  await _applyRestorePayload(payload);
+}
+
+// Salva o estado ATUAL (antes de sobrescrever) numa chave própria, sem
+// colidir com o backup diário normal (que usa a data como chave e seria
+// sobrescrito). Usa window._set() direto (não fbSet()) de propósito: essa
+// escrita PRECISA propagar erro real — se o snapshot de segurança falhar,
+// a restauração tem que ser abortada, não seguir em frente sem rede de
+// segurança nenhuma.
+async function _salvarSnapshotPreRestauracao(){
+  const payload = await buildBackupPayload();
+  const key = 'pre_restore_' + Date.now();
+  const meta = {
+    ts: new Date().toISOString(),
+    type: 'pre_restore',
+    by: window._currentUser?.displayName || window._currentUser?.email || '?',
+    cards: (payload.board?.cards||[]).filter(c=>!c.archived).length,
+    cols: (payload.board?.columns||[]).length,
+  };
+  await window._set(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/meta'), meta);
+  await window._set(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/data'), payload);
+  return key;
+}
+
+async function _applyRestorePayload(payload){
+  const btn = document.getElementById('btn-restore-backup');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Restaurando...'; }
+
+  let preKey;
+  try{
+    showToast('⏳ Salvando snapshot de segurança do estado atual...');
+    preKey = await _salvarSnapshotPreRestauracao();
+  }catch(e){
+    console.error('[Restaurar backup] Snapshot de segurança falhou, abortando:', e);
+    showToast('❌ Não consegui salvar o snapshot de segurança — restauração CANCELADA, nada foi alterado. Tenta de novo em alguns segundos.');
+    if(btn){ btn.disabled=false; btn.textContent='🧯 Restaurar este backup'; }
+    return;
+  }
+
+  try{
+    cards = (payload.board.cards||[]).map(c=>({...c}));
+    columns = (payload.board.columns||[]).slice();
+    tags = (payload.board.tags||[]).slice();
+    agilCfg = payload.board.agilCfg||{};
+    qlItems = payload.board.qlItems||{recorrentes:[],modelos:[],agendamentos:[]};
+    links = payload.board.links||[];
+    calEvents = payload.board.calEvents||[];
+    autoRules = payload.board.autoRules||[];
+
+    await fbSaveAll({
+      columns, tags, agil_cfg: agilCfg, ql_items: qlItems,
+      links, cal_events: calEvents, auto_rules: autoRules,
+    });
+
+    applyAgilCfg();
+    renderBoard();
+    if(typeof renderTagEditor==='function') renderTagEditor();
+    if(typeof renderQLBody==='function') renderQLBody();
+    if(typeof renderAutoRules==='function') renderAutoRules();
+    if(typeof renderLinksBody==='function') renderLinksBody();
+    populateColSelect();
+    renderBackupHistory();
+
+    const fileInp=document.getElementById('restore-file-inp'); if(fileInp) fileInp.value='';
+    const prev=document.getElementById('restore-preview'); if(prev) prev.style.display='none';
+    _restoreParsedPayload=null;
+
+    showToast('✅ Backup restaurado! '+cards.filter(c=>!c.archived).length+' cards ativos. (snapshot de segurança do estado anterior salvo em backups/'+preKey+')');
+  }catch(e){
+    console.error('[Restaurar backup] falhou ao gravar:', e);
+    showToast('❌ Erro ao restaurar — o estado anterior está salvo em backups/'+preKey+', mas a escrita final falhou. '+(e?.message||''));
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='🧯 Restaurar este backup'; }
+  }
+}
+
+function _applyRestoreSectionVisibility(){
+  const pode = typeof canBulkDelete==='function' && canBulkDelete();
+  const sec = document.getElementById('restore-section');
+  const noPerm = document.getElementById('restore-no-permission');
+  if(sec) sec.style.display = pode ? '' : 'none';
+  if(noPerm) noPerm.style.display = pode ? 'none' : '';
 }
 
 // ── Backup automático semanal: checagem "está atrasado?" ao carregar ────
