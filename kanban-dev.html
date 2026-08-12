@@ -5338,14 +5338,28 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.411-dev</div>
+<div class="version">v8.30.412-dev</div>
 
 <!-- FIREBASE SDK -->
+<!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
+     achado real: uma pessoa atrás de VPN corporativa (FortiClient, com o
+     firewall FortiGate fazendo inspeção profunda de SSL) recebia a resposta
+     de firebase-database.js corrompida (faltando o binding de "query"),
+     reproduzido em qualquer navegador/rede, mesmo depois de trocar a versão
+     do SDK pra uma URL nunca antes cacheada — sinal de que é a inspeção em
+     si corrompendo o conteúdo, não uma cópia velha presa em cache. Servir os
+     arquivos do próprio domínio (mesma origem do resto do app, que já
+     comprovadamente funciona pra ela) elimina essa camada de risco. Só os 4
+     arquivos usados aqui foram baixados do pacote npm oficial "firebase" na
+     mesma versão (10.14.1) e tiveram a única referência cruzada entre eles
+     (firebase-database.js/firebase-auth.js/firebase-messaging.js → import
+     de firebase-app.js) reescrita de URL absoluta do gstatic.com pra
+     caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js';
+import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
 const safeLS = (function(){

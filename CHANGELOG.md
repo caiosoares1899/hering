@@ -1454,6 +1454,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.412-dev — 2026-08-12 — SDK do Firebase vendorizado (sai do gstatic.com)
+A v8.30.411-dev (trocar a versão pinada do SDK, `10.12.0` → `10.14.1`,
+pra mudar a URL e furar um eventual cache velho) **não resolveu** —
+mesmo erro `query is not defined`, reproduzido de novo pela mesma
+pessoa. Isso descarta "cópia velha presa em cache numa URL
+específica": o problema é a própria inspeção de SSL corrompendo o
+conteúdo em trânsito, não importa a URL.
+
+**Fix definitivo, sem depender do time de TI**: os 4 arquivos do SDK
+modular do Firebase usados aqui (`firebase-app.js`,
+`firebase-database.js`, `firebase-auth.js`, `firebase-messaging.js`)
+saem de `gstatic.com` e passam a ser servidos do próprio domínio —
+`vendor/firebase-10.14.1/` neste repositório, versionados junto com o
+resto do app. Baixados do pacote npm oficial `firebase@10.14.1`
+(mesmo conteúdo que o gstatic.com serve, publicado pela própria
+Firebase); a única alteração foi reescrever a referência cruzada
+interna entre eles (`firebase-database.js`/`firebase-auth.js`/
+`firebase-messaging.js` importam `firebase-app.js`) de URL absoluta
+do gstatic.com pra caminho relativo local. Nenhuma outra linha de
+conteúdo tocada. Endpoints de API em runtime (Google Sign-In,
+reCAPTCHA, FCM, Firebase Installations) continuam apontando pros
+serviços do Google normalmente — só o código do SDK em si passa a vir
+da mesma origem que o resto do app (que já comprovadamente funciona
+pra essa pessoa, atrás do mesmo FortiClient/FortiGate).
+
+**Trade-off consciente**: perde as atualizações automáticas de
+segurança/bugfix do SDK que vinham de graça com a URL "flutuante" do
+gstatic.com — de agora em diante, atualizar a versão do SDK exige
+baixar os arquivos de novo manualmente (mesmo processo desta entrada)
+e trocar o import. Aceitável pelo ganho de não depender de uma CDN de
+terceiros que pode ser corrompida por proxies corporativos
+man-in-the-middle, fora do nosso controle.
+
 ### v8.30.411-dev — 2026-08-12 — Bump do SDK do Firebase (10.12.0 → 10.14.1)
 Tentativa de contornar, sem depender do time de TI, a causa raiz
 encontrada pro `query is not defined`: uma pessoa tem o **FortiClient
