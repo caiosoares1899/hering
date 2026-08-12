@@ -6180,6 +6180,30 @@ O título automático agora só se aplica quando o card nasce de um item de 📐
     tipo: 'novidade',
     squad: '*',
   },
+  {
+    id: 'seed_demandante_backup_2026_08_12',
+    titulo: '🔒 Proteção de descrição, restaurar backup e mais',
+    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
+
+<p><b>🔒 Proteção da descrição em cards com Demandante</b><br>
+Quem usa o campo "📢 Demandante" (Config → Padrões de card): a partir de agora, um card com Demandante definido trava a descrição principal pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição, evitando que alguém apague ou substitua sem querer o conteúdo de quem pediu o card. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais".</p>
+
+<p><b>🧯 Restaurar backup</b><br>
+Nova seção em Config → Backup (só ADM/PO/Organizador): sobe um arquivo de backup salvo antes (ou escolhe um snapshot do histórico) e dá pra "🔍 Comparar com o board atual" — lista só os cards que sumiram desde aquele backup, sem mexer em nada que foi arquivado ou excluído de propósito, com restauração card a card ou tudo de uma vez. Também tem a opção "🧯 Restaurar TUDO" pra cenários mais graves. Antes de qualquer restauração, o estado atual é salvo automaticamente como rede de segurança.</p>
+
+<p><b>💾 Backup automático semanal</b><br>
+Agora, todo domingo de madrugada, um backup de cada squad é salvo sozinho, sem precisar que ninguém abra o board — mais uma camada de proteção pros dados.</p>
+
+<p><b>🪄 Gerar título sob demanda</b><br>
+Quem usa a Ficha Técnica: o botão "🪄 Gerar título" monta o título a partir da ficha em qualquer card, a qualquer momento — não só nos criados via Modelo.</p>
+
+<p><b>🔤 Nova ordenação Alfabética</b><br>
+Mais uma opção no botão ↕ Ordenação: organiza os cards de A a Z pelo título.</p>
+
+<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
+    tipo: 'novidade',
+    squad: '*',
+  },
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
