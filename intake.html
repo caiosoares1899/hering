@@ -63,10 +63,12 @@
       <form id="intake-form">
         <label>Título do pedido *</label>
         <input type="text" id="f-titulo" maxlength="200" required placeholder="Ex.: Banner para campanha X">
-        <label>Descrição <span class="opt">(opcional)</span></label>
-        <textarea id="f-descricao" maxlength="4000" placeholder="Detalhe o que precisa, referências, contexto..."></textarea>
+        <label>Descrição *</label>
+        <textarea id="f-descricao" maxlength="4000" required placeholder="Detalhe o que precisa, referências, contexto..."></textarea>
         <label>Seu nome *</label>
         <input type="text" id="f-demandante" maxlength="120" required placeholder="Quem está pedindo">
+        <label>Squad/time solicitante *</label>
+        <input type="text" id="f-squad-demandante" maxlength="120" required placeholder="Ex.: Site Hering, Outlet CRM...">
         <label>E-mail ou contato <span class="opt">(opcional)</span></label>
         <input type="text" id="f-contato" maxlength="200" placeholder="Pra time entrar em contato se precisar">
         <label>Prazo desejado <span class="opt">(opcional)</span></label>
@@ -127,6 +129,7 @@ document.getElementById('intake-form').addEventListener('submit', function(e){
     titulo: document.getElementById('f-titulo').value,
     descricao: document.getElementById('f-descricao').value,
     demandante: document.getElementById('f-demandante').value,
+    squadDemandante: document.getElementById('f-squad-demandante').value,
     contato: document.getElementById('f-contato').value,
     prazo: document.getElementById('f-prazo').value,
     website: document.getElementById('f-website').value,
@@ -148,7 +151,7 @@ document.getElementById('intake-form').addEventListener('submit', function(e){
       } else if(data.error === 'intake_disabled'){
         showMsg('🚫 Este squad desativou os pedidos por este link enquanto você preenchia. Fale direto com alguém do time.', false);
       } else {
-        showMsg('⚠️ Preencha título e nome antes de enviar.', false);
+        showMsg('⚠️ Preencha título, descrição, nome e squad/time antes de enviar.', false);
       }
     })
     .catch(() => showMsg('⚠️ Não deu pra enviar (conexão instável). Tente de novo.', false))

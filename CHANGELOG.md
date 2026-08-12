@@ -1416,6 +1416,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.401-dev — 2026-08-12
+Dois ajustes pedidos direto no formulário de intake (`intake.html` +
+`functions/intake/submit.js`, ver seção própria da Cloud Function) e
+no lado do board que revisa os pedidos:
+
+- **Descrição obrigatória** no formulário (antes opcional).
+- **Novo campo "Squad/time solicitante"** (texto livre, obrigatório) —
+  aparece na lista de pedidos pendentes (📥 Intake) e, ao clicar
+  "✅ Criar card", vai pro corpo da descrição igual demandante/contato.
+- **Vínculo automático de tag**: se o texto digitado bater (ignorando
+  maiúscula/acento, via `_norm()`) com o nome de alguma tag já
+  cadastrada no squad que recebe o pedido, essa tag já vem marcada no
+  card criado — pensado pro time de Dados e IA, que já usa tags pra
+  identificar o squad de origem do pedido. Não bate com nenhuma tag
+  existente? Sem problema, só não pré-marca nada (o texto continua
+  visível na descrição). HELP_CONTENT atualizado.
+
 ### v8.30.400-dev — 2026-08-12
 Otimização de bandwidth, achada investigando um aumento de consumo de
 download com a instrumentação `_dbg` já existente (ver `debugBytesAllSquads()`
@@ -5422,6 +5439,20 @@ manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
 
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
+
+### 2026-08-12 — Descrição e squad solicitante viram obrigatórios
+Pedido direto: dois campos novos/alterados no formulário (`intake.html`)
+com validação também no lado do servidor, não só no client:
+
+- **Descrição** vira obrigatória (antes era opcional).
+- **Squad/time solicitante**: campo novo, texto livre, obrigatório —
+  alimenta o vínculo automático de tag ao criar o card (ver entrada
+  correspondente em `kanban-dev.html`).
+
+**Requer `firebase deploy --only functions:intakeSubmit` manual** pra
+a validação server-side valer de verdade (o form já bloqueia no
+client sem isso, mas um POST direto à API, sem passar pelo
+`intake.html`, só fica bloqueado depois do deploy).
 
 ### 2026-08-11 — corrige validação de squad rejeitando squads reais
 Primeiro teste manual pós-deploy (`intake.html?squad=dados`) voltou

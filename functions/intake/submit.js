@@ -110,8 +110,14 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
 
   const titulo = clean(body.titulo, 200);
   const demandante = clean(body.demandante, 120);
-  if (!titulo || !demandante) { res.status(400).json({ error: 'missing_required_fields' }); return; }
   const descricao = clean(body.descricao, 4000);
+  const squadDemandante = clean(body.squadDemandante, 120);
+  // Descrição e squad/time solicitante viraram obrigatórios (pedido direto) —
+  // squadDemandante alimenta o vínculo automático de tag ao criar o card
+  // (ver _intakeCriarCard em kanban-dev.html), então sem ele o recurso não
+  // funciona; validado aqui também, não só no client (front-end-only não é
+  // suficiente pra um form público).
+  if (!titulo || !demandante || !descricao || !squadDemandante) { res.status(400).json({ error: 'missing_required_fields' }); return; }
   const contato = clean(body.contato, 200);
   const prazo = /^\d{4}-\d{2}-\d{2}$/.test(body.prazo) ? body.prazo : '';
 
@@ -134,7 +140,7 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   const pendingRef = db.ref(`kanban/squads/${squad}/dados/intake_pending`).push();
   await pendingRef.set({
     id: pendingRef.key,
-    titulo, descricao, demandante, contato, prazo,
+    titulo, descricao, demandante, squadDemandante, contato, prazo,
     createdAt: new Date().toISOString(),
     status: 'pending',
   });
