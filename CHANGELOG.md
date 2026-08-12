@@ -1475,6 +1475,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.421-dev — 2026-08-12 — Central de Ajuda: sincroniza com as features desta sessão
+Rotina `/atualizarhelpcontent` — puramente documentação, sem mudança de
+comportamento. Achados (mesmo padrão que motivou a criação da skill:
+funcionalidade evoluiu, texto inline foi atualizado, `HELP_CONTENT` ficou
+pra trás):
+
+- **Campo Demandante**: não tinha NENHUMA entrada na Central de Ajuda —
+  só existia como texto inline em Config → Padrões de card. Criada a
+  entrada "📢 Campo Demandante", cobrindo o campo em si e a proteção de
+  descrição (v8.30.416-418-dev).
+- **Backup**: entrada existente só descrevia a exportação manual/e-mail.
+  Atualizada com o backup automático semanal no Cloud Storage
+  (`weeklyBackup`) e a nova UI "🧯 Restaurar backup" (comparar +
+  restaurar individual/todos, v8.30.419-420-dev).
+- **Ordenar cards nas colunas**: faltava a opção "🔤 Alfabética (A → Z)"
+  (v8.30.415-dev) na lista de modos de ordenação.
+- **Ficha Técnica (produção criativa)**: não mencionava o botão "🪄
+  Gerar título" nem a automontagem de título em cards de Modelo
+  (v8.30.408/410/413/414-dev), nem o total de variações no dashboard.
+  Adicionados dois sub-parágrafos à entrada existente.
+- **Abrindo configurações**: lista de abas do painel de Config estava
+  sem "Padrões de card" (gap mais antigo, não desta sessão — corrigido
+  de passagem por estar na mesma área).
+
 ### v8.30.420-dev — 2026-08-12 — Comparar com backup: recupera só quem sumiu, sem sobrescrever tudo
 Pedido direto logo depois da v8.30.419-dev, pensando no incidente de card
 sumido em `midiacriativa` de mais cedo: em vez de só o "Restaurar TUDO"
