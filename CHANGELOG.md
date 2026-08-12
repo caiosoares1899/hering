@@ -1407,6 +1407,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.400-dev — 2026-08-12
+Otimização de bandwidth, achada investigando um aumento de consumo de
+download com a instrumentação `_dbg` já existente (ver `debugBytesAllSquads()`
+no console): o path `comunicados` sozinho respondia por ~80MB em 7 dias
+de amostra (~43KB por chamada, em 1877 chamadas).
+
+**Causa raiz**: `_refreshComunicados()` baixava a árvore **inteira** de
+`kanban/comunicados` — ativos **e** inativos/arquivados, todo o
+histórico desde sempre — a cada 3 minutos, por aba aberta, de forma
+global (não por squad). O badge do Mural, o popup automático e a
+listagem do Mural (`renderMuralLista`) sempre filtraram só `ativo:true`
+no cliente, DEPOIS de já ter baixado tudo — ou seja, todo comunicado
+desativado/arquivado era puro peso morto, repetido a cada poll, pra
+sempre.
+
+**Fix**: `_refreshComunicados()` agora usa uma query do Firebase
+(`orderByChild('ativo').equalTo(true)`) — filtra no servidor, baixa só
+o que já era exibido antes. Comportamento visível idêntico (nada muda
+pra quem usa o Mural/popup), só o volume trafegado cai. Adicionado
+`.indexOn: ["ativo"]` em `comunicados` no `database.rules.json` pra a
+query rodar eficiente no servidor.
+
+`painel.html` (que legitimamente precisa ver os inativos pra
+reativar/editar) não foi tocado — só o lado de exibição no board.
+
+**Atenção — passo manual**: como `database.rules.json` mudou, precisa
+de `firebase deploy --only database` pra a regra `.indexOn` valer de
+verdade (sem isso a query ainda funciona, só sem o índice otimizado no
+servidor).
+
 ### v8.30.399-dev — 2026-08-11
 Terceira rodada de feedback sobre o texto secundário do 🌅 Meu Dia, com
 print: a passada anterior (v8.30.398-dev, `var(--txt)` + peso 500 +
