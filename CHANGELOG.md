@@ -7250,6 +7250,30 @@ divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
 
+### 2026-08-12 — Regra faltando pra `backups`: o recurso de Backup nunca gravou nada, pra ninguém
+Achado investigando um relato de card sumido (squad Mídia Criativa) —
+tentando ver se dava pra recuperar via snapshot de backup, veio
+`Uncaught (in promise) Error: Permission denied` ao ler
+`kanban/squads/{squad}/backups`. Causa: esse path nunca teve regra
+nenhuma neste arquivo — só existe regra pra `kanban/squads/{squad}/
+snapshots` (feature diferente e não relacionada, de métricas diárias
+usadas no CFD/Burndown). `fbSet()` engole erros de escrita
+silenciosamente por design ("evita loop com logError"), então
+`saveSnapshotToFirebase()` vem falhando 100% das vezes, pra TODO
+squad, desde sempre, sem nenhum aviso — a aba ⚙ Config → Backup
+provavelmente sempre mostrou "nenhum snapshot salvo" achando que
+ninguém tinha rodado um backup ainda, quando na real todos os
+backups (manuais e automáticos) estavam sendo descartados
+silenciosamente pelas regras.
+
+**Fix**: novo bloco `kanban/squads/$squadId/backups` com `.read`/
+`.write` idêntico ao de `snapshots` (`auth != null` +
+`@ciahering.com.br`). **Requer `firebase deploy --only database`
+manual** pra valer — a partir daí, backups (manuais e automáticos)
+passam a persistir de verdade. Não recupera o card específico que
+motivou a investigação (não havia nenhum snapshot salvo até agora,
+óbvio), mas previne que o mesmo aconteça daqui pra frente.
+
 ### 2026-07-31 · Regras pra integração com Spotify ("ouvindo agora")
 Duas adições, ambas pra suportar a primeira leva da integração com
 Spotify (ver entrada de `v8.30.232-dev` no `kanban-dev.html`):
