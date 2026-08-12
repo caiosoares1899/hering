@@ -1475,6 +1475,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.414-dev — 2026-08-12 — Botão "Gerar título" + total de Variações no dash
+Dois pedidos diretos:
+
+- **Botão 🪄 Gerar título**: no fim da Ficha Técnica, monta o título
+  sob demanda com a mesma composição do automático
+  (`_crvComposeTitle()`) — mas funciona em QUALQUER card (em branco,
+  já existente, não só os restritos a Modelo da v8.30.413-dev), já
+  que é a pessoa clicando de propósito, não algo rodando sozinho.
+- **Total de variações no dashboard**: novo cartão "🔀 Total de
+  variações" em 🎬 Controle de Criativos, somando o campo Qtd de
+  variações de todo card com Variações:"Sim" (cards com "Não" ou sem
+  preencher não entram na soma).
+
 ### v8.30.413-dev — 2026-08-12 — Título automático restrito a cards novos criados a partir de Modelo
 Pedido direto do time: "tem como deixar esse título automático só em
 cards novos a partir de modelos?" — até aqui, `_crvAutoTitle()` rodava
