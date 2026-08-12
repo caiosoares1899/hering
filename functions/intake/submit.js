@@ -66,6 +66,41 @@ const SQUAD_FALLBACK = {
   gestao: { label: 'Gestão', emoji: '🏛' },
 };
 
+// Avisa todo mundo inscrito neste squad que chegou um pedido novo — sino 🔔
+// (e push, se 'intake' estiver em PUSH_TYPES de functions/index.js) direto
+// daqui, sem depender de alguém estar com o board aberto no momento do
+// envio (é formulário público, pode chegar a qualquer hora). Mesma checagem
+// de inscrição que o cliente usa pra montar `members`
+// (kanban-dev.html, _applyUsuariosData): squads[squad]===true, com fallback
+// pro campo legado inscrito:true sem squads (squad único, de antes de
+// squads múltiplos existirem). Sem cardId — o pedido ainda não virou card;
+// clicar na notificação abre o painel de Intake (ver openNotif no board).
+async function notifySquadMembers(db, squad, titulo, demandante) {
+  try {
+    const usersSnap = await db.ref('kanban/usuarios').get();
+    const usersVal = usersSnap.val() || {};
+    const memberUids = Object.entries(usersVal)
+      .filter(([, u]) => (u.squads && u.squads[squad] === true) || (!u.squads && (u.inscrito === true || u.inscrito === 'true')))
+      .map(([uid]) => uid);
+    if (!memberUids.length) return;
+    const notifId = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+    const notif = {
+      id: notifId,
+      type: 'intake',
+      title: '📥 Novo pedido de intake',
+      sub: titulo + ' — ' + demandante,
+      read: false,
+      ts: new Date().toISOString(),
+      squad,
+    };
+    await Promise.all(memberUids.map((uid) => db.ref(`kanban/usuarios/${uid}/notificacoes/${notifId}`).set(notif)));
+  } catch (e) {
+    // Não deixa uma falha aqui derrubar a resposta de sucesso pro
+    // demandante — o pedido já foi gravado de verdade, isso é só o aviso.
+    console.warn('[intakeSubmit] falha ao notificar squad:', e);
+  }
+}
+
 const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   setCors(res);
   if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
@@ -144,6 +179,8 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
     createdAt: new Date().toISOString(),
     status: 'pending',
   });
+
+  await notifySquadMembers(db, squad, titulo, demandante);
 
   res.status(200).json({ ok: true });
 });

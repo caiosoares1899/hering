@@ -1416,6 +1416,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.405-dev — 2026-08-12
+Dois ajustes:
+
+- **Badge do Intake, fix definitivo**: as duas tentativas anteriores
+  (v8.30.403-dev, v8.30.404-dev) só reduziam o offset negativo
+  (`top`/`right`) tentando escapar do corte da `.toolbar` — funcionava
+  parcialmente, mas o badge ficava "flutuando por cima" do texto do
+  botão em vez de no canto, ainda meio errado. Solução definitiva:
+  parou de ser `position:absolute` tentando vazar pra fora da caixa do
+  botão — agora é só mais um item em fila no próprio flex do botão
+  (`.btn` já é `display:inline-flex;gap:5px`), sem overlap, sem
+  depender do comportamento de overflow de nenhum ancestral nunca mais.
+- **Notificação de intake novo** (pedido direto): squad member recebe
+  notificação (sino 🔔 + push, ver seção da Cloud Function
+  `intakeSubmit`) assim que um pedido chega, disparada pela própria
+  Cloud Function — não depende de ninguém com o board aberto no
+  momento. Ícone novo em `NOTIF_ICONS` (📥) e `openNotif()` passa a
+  tratar `type==='intake'` abrindo o painel de Intake em vez de tentar
+  navegar pra um card (que ainda não existe nesse ponto). HELP_CONTENT
+  atualizado.
+
 ### v8.30.404-dev — 2026-08-12
 A v8.30.403-dev não resolveu — feedback direto confirmou que o corte
 continuava em cima (`top`), não do lado (`right`). Causa real: a spec
@@ -5444,6 +5465,11 @@ resto (imagens, libs de terceiros) continua como antes. Bump de `CACHE`
 
 ## Cloud Function — `sendPushOnNotification` (`functions/index.js`, sem versão própria em `version.json`)
 
+### 2026-08-12 — `intake` entra em PUSH_TYPES
+`PUSH_TYPES` ganha o tipo `'intake'` — notificação de pedido novo (ver
+seção de `intakeSubmit`) agora também vira push, não só sino 🔔.
+**Requer `firebase deploy --only functions` manual.**
+
 ### 2026-07-29 · PR #53
 Mesmo fix descrito na seção do Service Worker acima: URL do deep-link do
 push passa a ser totalmente qualificada
@@ -5463,6 +5489,27 @@ manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
 
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
+
+### 2026-08-12 — Notifica o squad inteiro quando chega um pedido novo
+Pedido direto: "vc tem q criar uma notificação para avisar aos membros
+da squad q tem um intake novo". Implementado direto na function (não
+no cliente) — como é um formulário público, pode chegar a qualquer
+hora, sem ninguém com o board aberto pra disparar a notificação.
+
+- Nova `notifySquadMembers()`: lê `kanban/usuarios`, filtra quem tem
+  `squads[squad]===true` (mesma checagem que o cliente usa pra montar
+  `members` em `kanban-dev.html`, com o mesmo fallback legado
+  `inscrito:true` sem `squads`) e grava uma notificação
+  (`type:'intake'`) pra cada um em
+  `kanban/usuarios/{uid}/notificacoes/{id}` — o mesmo path que
+  `sendPushOnNotification` (`functions/index.js`) já escuta, então
+  também já dispara push (ver entrada abaixo).
+- Falha ao notificar não derruba a resposta de sucesso pro demandante
+  — o pedido já foi gravado de verdade antes disso, a notificação é
+  best-effort.
+- Sem `cardId` (o pedido ainda não virou card) — o board trata isso
+  abrindo o painel de Intake ao clicar na notificação, em vez de tentar
+  navegar pra um card inexistente (ver entrada de `kanban-dev.html`).
 
 ### 2026-08-12 — "Squad/time solicitante" vira lista suspensa fixa
 Feedback direto logo após o primeiro teste real: campo de texto livre
