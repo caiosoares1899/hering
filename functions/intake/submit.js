@@ -75,21 +75,13 @@ const SQUAD_FALLBACK = {
 // pro campo legado inscrito:true sem squads (squad único, de antes de
 // squads múltiplos existirem). Sem cardId — o pedido ainda não virou card;
 // clicar na notificação abre o painel de Intake (ver openNotif no board).
-// DEBUG TEMPORÁRIO (tirar depois de confirmar o motivo de notifySquadMembers
-// não estar gravando nada em produção — ver kanban/squads/{squad}/dados/_intake_notify_debug,
-// legível via console sem precisar abrir o Firebase Console/logs de Cloud Function).
 async function notifySquadMembers(db, squad, titulo, demandante) {
-  const debugRef = db.ref(`kanban/squads/${squad}/dados/_intake_notify_debug`);
   try {
     const usersSnap = await db.ref('kanban/usuarios').get();
     const usersVal = usersSnap.val() || {};
-    const totalUsers = Object.keys(usersVal).length;
     const memberUids = Object.entries(usersVal)
       .filter(([, u]) => (u.squads && u.squads[squad] === true) || (!u.squads && (u.inscrito === true || u.inscrito === 'true')))
       .map(([uid]) => uid);
-    await debugRef.set({
-      ts: new Date().toISOString(), ok: true, squad, totalUsers, memberCount: memberUids.length, memberUids,
-    }).catch(() => {});
     if (!memberUids.length) return;
     const notifId = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
     const notif = {
@@ -103,7 +95,6 @@ async function notifySquadMembers(db, squad, titulo, demandante) {
     };
     await Promise.all(memberUids.map((uid) => db.ref(`kanban/usuarios/${uid}/notificacoes/${notifId}`).set(notif)));
   } catch (e) {
-    await debugRef.set({ ts: new Date().toISOString(), ok: false, squad, error: String((e && e.message) || e) }).catch(() => {});
     // Não deixa uma falha aqui derrubar a resposta de sucesso pro
     // demandante — o pedido já foi gravado de verdade, isso é só o aviso.
     console.warn('[intakeSubmit] falha ao notificar squad:', e);

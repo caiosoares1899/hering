@@ -5490,6 +5490,18 @@ o link antigo quebrado.
 
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
 
+### 2026-08-12 — Remove debug temporário: notificação confirmada funcionando
+Confirmado pelo usuário ("fiz um novo pedido e funcionou!") — os testes
+anteriores que voltavam `null` eram de pedidos feitos antes do deploy
+da versão com `notifySquadMembers()` valer, não um bug de verdade.
+`notifySquadMembers()` volta à forma limpa, sem o "recibo" de
+diagnóstico em `kanban/squads/{squad}/dados/_intake_notify_debug`
+(gravado só pra achar a causa, entrada abaixo). **Requer
+`firebase deploy --only functions` manual** pra tirar a gravação de
+debug da versão em produção (o nó `_intake_notify_debug` já escrito
+antes deste deploy fica órfão no banco, inofensivo, e pode ser
+apagado manualmente se quiser).
+
 ### 2026-08-12 — Debug temporário: notificação deployada mas não chegando
 Testado após o deploy da entrada anterior — pedido é gravado
 normalmente, mas nenhuma notificação aparece pra ninguém do squad.
