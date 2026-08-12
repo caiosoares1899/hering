@@ -3477,7 +3477,7 @@ input[type="date"]{-moz-appearance:textfield;}
               <select class="fi" id="m-owner" onchange="scheduleAutoSave()"></select>
             </div>
             <div class="field" id="m-demandante-row" style="display:none;"><label class="fl">📢 Demandante <span style="font-size:9px;color:var(--txt3);font-weight:400;">quem solicitou o card</span></label>
-              <select class="fi" id="m-demandante" onchange="scheduleAutoSave()"></select>
+              <select class="fi" id="m-demandante" onchange="scheduleAutoSave();_updateDescProtectedBadge()"></select>
             </div>
           </div>
           <div class="field"><label class="fl">Prazo</label>
@@ -3674,7 +3674,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div id="m-sec-conteudo" style="display:flex;flex-direction:column;gap:10px;">
     <!-- Descrição full-width -->
     <div class="field" id="desc-field" style="scroll-margin-top:60px;">
-      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span></label>
+      <label class="fl">Descrição <span style="font-size:9px;color:var(--txt3);font-weight:400;">Use @nome.sobrenome para mencionar · @card: para cards</span> <span id="m-desc-protected-badge" style="display:none;font-size:9px;color:var(--warn);font-weight:700;margin-left:4px;" title="Card com Demandante definido — só ADM, PO ou Organizador pode apagar a descrição inteira, pra não perder essa informação sem querer.">🔒 Protegida (Demandante)</span></label>
       <div class="eoc-wrap" id="desc-eoc">
         <div class="eoc-display is-empty" id="m-desc-display"
           data-placeholder="Adicionar descrição..."
@@ -4105,6 +4105,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="cfg-sec-title">📢 Campo Demandante</div>
       <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
         Adiciona ao card um campo separado do Responsável: <b>quem solicitou</b> o card. Pensado pra ficar estável durante toda a execução mesmo quando o Responsável muda de mão (ex.: passa de designer pra redator) — o demandante normalmente não muda. Fica disponível como campo no card, filtro na toolbar, e conta pras notificações de conclusão/desbloqueio (junto com Responsável e Participantes) e pro contexto que o Agente Ágil enxerga.
+      </p>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
+        <b>Proteção da descrição</b>: com um Demandante definido, ninguém consegue apagar a descrição do card por completo (nem pelo botão Salvar, nem pelo autosave) — só ADM, PO ou Organizador. Editar/complementar continua livre pra qualquer um; é só o esvaziamento total que fica travado, pra não perder a informação de quem pediu o card sem querer.
       </p>
       <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:var(--r);margin-bottom:18px;">
         <input type="checkbox" id="cfg-demandante-ativo" onchange="toggleDemandanteAtivo(this.checked)"> Ativar campo de Demandante neste squad
@@ -5347,7 +5350,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.415-dev</div>
+<div class="version">v8.30.416-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9866,6 +9869,17 @@ function scheduleAutoSave(){
     const cl=getCL(); const rl=getRiscos();
     const user=window._currentUser?.displayName||'Usuário';
     const c=cards.find(x=>x.id===editingId); if(!c) return;
+    // Proteção de descrição do demandante — mesma condição do saveCard()
+    // manual (ver comentário lá), mas aqui precisa REVERTER o campo em vez
+    // de só abortar: como o autosave dispara sozinho a cada digitação, um
+    // "return" simples deixaria a pessoa vendo a caixa vazia na tela,
+    // achando que salvou, enquanto por baixo dos panos nada mudou — bem
+    // mais confuso do que corrigir o campo na hora e avisar por quê.
+    if(c.demandante && (c.desc||'').trim() && !document.getElementById('m-desc').value.trim() && !canBulkDelete()){
+      const _descEl=document.getElementById('m-desc');
+      if(_descEl){ _descEl.value=c.desc; eocInitDisplay('desc-eoc', c.desc, 'Adicionar descrição...'); }
+      showToast('🔒 Este card tem um Demandante definido — a descrição não pode ficar vazia. Só ADM, PO ou Organizador pode apagá-la por completo.');
+    }
     const _asBefore=_histSnapshot(c); // 📜 snapshot antes do auto-save
     // Estado anterior — usado abaixo para disparar as mesmas notificações que o
     // saveCard() manual dispara (a maioria das edições passa pelo autosave, não
@@ -10387,6 +10401,7 @@ function openCard(id){
   _modalOpenCol=c.col;
   document.getElementById('m-owner').value=c.owner||'';
   document.getElementById('m-demandante').value=c.demandante||'';
+  _updateDescProtectedBadge();
   _applyCoverStripToModal(c.coverColor, c.coverImageUrl); renderCoverSwatches();
   document.getElementById('m-due').value=c.due||'';
   _mNoDue=!!c.noDue; _renderNoDueBtn();
@@ -10748,6 +10763,7 @@ function openNewCard(col){
   _crvUpdateFichaSecVisibility();
   const _mTam2=document.getElementById('m-tamanho'); if(_mTam2) _mTam2.value='';
   const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
+  _updateDescProtectedBadge();
   _pendingCoverColor=null; _pendingCoverImageUrl=null; _applyCoverStripToModal(null,null); renderCoverSwatches();
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
@@ -10851,6 +10867,22 @@ function saveCard(){
       _highlightMissingFields(crvMissing);
       document.getElementById('m-criativo-sec')?.scrollIntoView({behavior:'smooth',block:'center'});
       showToast('🔒 Ficha Técnica incompleta: '+crvMissing.map(k=>crvLabels[k]).join(', '));
+      return;
+    }
+  }
+  // Proteção de descrição do demandante (pedido direto: "que os outros
+  // usuários não excluam aquilo que foi gerado por um demandante, afim de
+  // não perder essa informação sem querer"). Só barra ESVAZIAR de vez uma
+  // descrição que já tinha conteúdo, num card que já tem um Demandante
+  // definido — editar/complementar continua livre pra qualquer um; ADM,
+  // PO e Organizador continuam podendo limpar quando for mesmo preciso
+  // (mesmo papel que já libera exclusão em massa, ver canBulkDelete()).
+  // Cards sem Demandante, ou sendo criados agora (editingId null), não são
+  // afetados.
+  if(editingId){
+    const _cDemProt=cards.find(x=>x.id===editingId);
+    if(_cDemProt && _cDemProt.demandante && (_cDemProt.desc||'').trim() && !document.getElementById('m-desc').value.trim() && !canBulkDelete()){
+      showToast('🔒 Este card tem um Demandante definido — só ADM, PO ou Organizador pode apagar a descrição inteira. Mantenha algum conteúdo, ou peça pra alguém com essas permissões.');
       return;
     }
   }
@@ -11797,6 +11829,17 @@ function toggleDemandanteAtivo(checked){
 function _applyDemandanteUIVisibility(){
   const row=document.getElementById('m-demandante-row'); if(row) row.style.display=demandanteAtivo?'':'none';
   const f=document.getElementById('f-demandante'); if(f) f.style.display=demandanteAtivo?'':'none';
+}
+// Badge "🔒 Protegida (Demandante)" ao lado do label de Descrição (pedido
+// direto: "não excluam aquilo que foi gerado por um demandante, afim de
+// não perder essa informação sem querer"). Só avisa aqui — quem realmente
+// barra o esvaziamento da descrição é a checagem em saveCard(), pra
+// ADM/PO/Organizador ainda conseguirem limpar quando for de fato preciso.
+function _updateDescProtectedBadge(){
+  const badge=document.getElementById('m-desc-protected-badge');
+  if(!badge) return;
+  const dem=document.getElementById('m-demandante')?.value||'';
+  badge.style.display = dem ? '' : 'none';
 }
 function toggleSubmarcaVisivel(tagId, checked){
   if(!_isPOorOrg()) return;
@@ -18239,7 +18282,7 @@ CAPACIDADES DO SISTEMA (Maré Digital v8.0):
 - Importação do Trello com mapeamento semântico de listas e labels
 - Histórico do agente com resumo de ações executadas (preservado entre mensagens)
 - Snapshot do board omite cards concluídos há mais de 7 dias (eficiência de tokens)
-- Demandante (campo opcional, por squad): quem SOLICITOU o card — separado do Responsável, que executa e pode mudar de mão ao longo do card (o demandante normalmente não muda)
+- Demandante (campo opcional, por squad): quem SOLICITOU o card — separado do Responsável, que executa e pode mudar de mão ao longo do card (o demandante normalmente não muda). Com Demandante definido, a descrição do card não pode ser esvaziada por completo por ninguém além de ADM/PO/Organizador (protege contra perder informação de quem pediu o card sem querer)
 
 AÇÕES QUE POSSO EXECUTAR:
 - mover_card: mover card para outra coluna
