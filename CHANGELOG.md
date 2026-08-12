@@ -1475,6 +1475,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.415-dev — 2026-08-12 — Nova ordenação: Alfabética (A → Z)
+Pedido direto: nova opção de ordenação de cards dentro da coluna, por
+título em ordem alfabética. Entra no mesmo lugar de sempre — botão
+↕ Ordenação na toolbar (padrão do board) e no seletor "Visualização"
+de ⚙ Config da coluna (override por coluna). `localeCompare('pt-BR',
+{sensitivity:'base'})` pra acentuação/maiúscula não bagunçar a ordem
+(mesmo padrão já usado pra ordenar pessoas/agentes no resto do app).
+
 ### v8.30.414-dev — 2026-08-12 — Botão "Gerar título" + total de Variações no dash
 Dois pedidos diretos:
 

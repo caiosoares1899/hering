@@ -3077,6 +3077,10 @@ input[type="date"]{-moz-appearance:textfield;}
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         👕 Tamanho (P → GG)
       </button>
+      <button onclick="setColSortMode('alpha')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
+        onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
+        🔤 Alfabética (A → Z)
+      </button>
       <button onclick="setColSortMode('manual')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
         🖐 Manual (arraste do jeito que quiser)
@@ -4580,6 +4584,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <option value="dueDesc">📅 Prazo (mais novos primeiro)</option>
         <option value="movedAt">🕓 Movimentação (mais recente)</option>
         <option value="size">👕 Tamanho (P → GG)</option>
+        <option value="alpha">🔤 Alfabética (A → Z)</option>
         <option value="manual">🖐 Manual (arraste do jeito que quiser)</option>
       </select>
     </div>
@@ -5342,7 +5347,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.414-dev</div>
+<div class="version">v8.30.415-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9062,6 +9067,12 @@ function _sortCards(arr, colId){
       if(!da && db) return 1;
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
     });
+  }
+  if(mode==='alpha'){
+    // Ordem alfabética pelo título (pedido direto) — 'pt-BR'+sensitivity:'base'
+    // pra acentuação/maiúscula não bagunçar a ordem (mesmo padrão já usado
+    // pra ordenar pessoas/agentes no resto do arquivo).
+    return arr.slice().sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'pt-BR',{sensitivity:'base'}));
   }
   if(mode==='manual'){
     // Ordenação 100% livre — pedido direto. card.manualOrder é atribuído só
