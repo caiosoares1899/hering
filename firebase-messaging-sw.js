@@ -32,7 +32,7 @@ const messaging = firebase.messaging();
 // Unificar num arquivo só elimina essa disputa. Mesma lógica de antes:
 // stale-while-revalidate, pulando chamadas de API (Firebase/Google/Workers).
 // ═══════════════════════════════════════════════════════════════════
-const CACHE = 'kanban-hering-v2'; // bump: purga cache antigo com a estratégia stale-first pra HTML/version.json
+const CACHE = 'kanban-hering-v3'; // bump: purga cache antigo, que pode ter uma cópia ruim/incompleta do SDK do Firebase (gstatic.com) presa de antes da exclusão acima
 self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
@@ -48,10 +48,22 @@ self.addEventListener('fetch', (e) => {
   // extensões do Chrome (chrome-extension://...) ou outras origens não-http que passam
   // pelo fetch do navegador quebram o cache.put() com TypeError.
   if (!e.request.url.startsWith('http')) return;
+  // gstatic.com entrou aqui depois de um "query is not defined" real, num
+  // dispositivo específico, mesmo com hard refresh E aba anônima — só
+  // sumiu num import() manual rodado depois, no console (bateu num cache já
+  // corrigido em segundo plano pelo próprio SW). Isso bate com o padrão
+  // clássico de corrida no cache-first abaixo: cache.match() devolve uma
+  // cópia ruim/incompleta na hora (nunca expira sozinha, é servida pra
+  // sempre), enquanto o fetch "fresh" concorrente já conserta o cache em
+  // background, tarde demais pra aquele carregamento. O SDK do Firebase
+  // (gstatic.com) é uma URL versionada e imutável ('10.12.0' no path) — o
+  // cache HTTP nativo do navegador já lida com isso corretamente, sem
+  // precisar (e sem risco) da nossa própria camada de cache por cima.
   if (
     e.request.url.includes('firebaseio.com') ||
     e.request.url.includes('googleapis.com') ||
-    e.request.url.includes('workers.dev')
+    e.request.url.includes('workers.dev') ||
+    e.request.url.includes('gstatic.com')
   )
     return;
 
