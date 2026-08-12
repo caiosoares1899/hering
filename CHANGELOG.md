@@ -1416,6 +1416,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.404-dev — 2026-08-12
+A v8.30.403-dev não resolveu — feedback direto confirmou que o corte
+continuava em cima (`top`), não do lado (`right`). Causa real: a spec
+de CSS manda o navegador tratar `overflow-y:visible` como `auto`
+sempre que o eixo irmão (`overflow-x`) não é `visible` — não dá pra um
+eixo rolar e o outro ficar genuinamente sem corte ao mesmo tempo. O
+`overflow-y:visible` da `.toolbar` (de uma correção anterior, outro
+elemento) nunca preveniu corte vertical de verdade. `#intake-badge`:
+`top:-7px` → `top:-2px`, mesmo raciocínio já aplicado ao `right`.
+
 ### v8.30.403-dev — 2026-08-12
 Feedback direto com print: o número do badge do botão "📥 Intake" ficava
 cortado. Causa: `.toolbar` tem `overflow-x:auto` (rolagem horizontal em

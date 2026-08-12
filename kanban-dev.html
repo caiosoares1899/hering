@@ -1002,12 +1002,16 @@ input[type="date"]{-moz-appearance:textfield;}
   font-weight:800;font-family:"DM Sans",sans-serif;min-width:20px;height:20px;border-radius:999px;display:flex;align-items:center;
   justify-content:center;padding:0 5px;line-height:1;box-shadow:0 2px 8px rgba(255,107,107,.5);
   font-variant-numeric:tabular-nums;letter-spacing:0;}
-/* right reduzido de -7px pra -2px: a .toolbar tem overflow-x:auto (rolagem
-   horizontal em telas menores) — overflow-y já era "visible" (corte vertical
-   resolvido antes), mas o lado direito do badge, saindo da borda do botão,
-   ainda podia cair fora da área visível da rolagem e ser cortado quando o
-   botão Intake ficava perto da borda direita da barra. */
-#intake-badge{position:absolute;top:-7px;right:-2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+/* v8.30.403-dev só reduziu o "right" (achando que "overflow-y:visible" na
+   .toolbar já resolvia o eixo vertical) e não resolveu — o corte continuava
+   em cima. Causa real: quando um eixo do overflow não é "visible", a spec de
+   CSS manda o navegador tratar o OUTRO eixo como "auto" também (não dá pra
+   ter um eixo rolando e o outro genuinamente sem corte) — "overflow-y:visible"
+   ao lado de "overflow-x:auto" nunca preveniu corte vertical de verdade.
+   Reduzido "top" pelo mesmo motivo do "right": mantém o badge dentro (ou bem
+   perto) da própria caixa do botão, sem depender do comportamento de overflow
+   de nenhum ancestral. */
+#intake-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;
   line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
@@ -5331,7 +5335,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.403-dev</div>
+<div class="version">v8.30.404-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
