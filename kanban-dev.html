@@ -4481,6 +4481,20 @@ input[type="date"]{-moz-appearance:textfield;}
       <div id="backup-history" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;">
         <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
       </div>
+
+      <div style="height:1px;background:var(--glass-b);margin:14px 0 10px;"></div>
+      <div class="cfg-sec-title" style="color:var(--danger);">🧯 Restaurar backup</div>
+      <div id="restore-no-permission" style="display:none;font-size:11px;color:var(--txt3);line-height:1.6;">
+        Só ADM, PO ou Organizador pode restaurar um backup — é uma ação que substitui todos os cards, colunas e tags da squad de uma vez.
+      </div>
+      <div id="restore-section">
+        <p style="font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:10px;">
+          Escolhe um arquivo <code style="background:rgba(56,182,255,.1);padding:1px 5px;border-radius:3px;">mare-digital-*.json</code> baixado antes (via "⬇ Baixar JSON agora" ou de um snapshot do histórico acima). <strong style="color:var(--danger);">Isso SUBSTITUI por completo</strong> os cards, colunas, tags e configurações da squad atual pelo conteúdo do backup — não é uma mesclagem. Um snapshot de segurança do estado atual é salvo automaticamente antes de restaurar, então dá pra desfazer restaurando esse snapshot "pre_restore" de volta se algo sair errado.
+        </p>
+        <input type="file" id="restore-file-inp" accept="application/json" onchange="handleRestoreFileSelect(event)" style="font-size:11px;color:var(--txt2);margin-bottom:10px;">
+        <div id="restore-preview" style="display:none;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--txt2);line-height:1.8;margin-bottom:10px;"></div>
+        <button class="btn btn-sm" id="btn-restore-backup" onclick="confirmRestoreBackup()" disabled style="opacity:.4;color:var(--danger);border-color:rgba(255,107,107,.35);">🧯 Restaurar este backup</button>
+      </div>
     </div>
 
   </div>
@@ -5359,7 +5373,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.418-dev</div>
+<div class="version">v8.30.419-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26245,6 +26259,7 @@ function loadBackupTab(){
     lastEl.textContent = '⏱ Último backup automático: '+new Date(cfg.lastRun).toLocaleString('pt-BR');
   }
   renderBackupHistory();
+  _applyRestoreSectionVisibility();
 }
 
 function updateBackupAutoStatus(){
@@ -26369,20 +26384,23 @@ function renderBackupHistory(){
       const entries = Object.entries(val)
         .sort(([a],[b])=>b.localeCompare(a))
         .slice(0,10); // mostra os 10 mais recentes
+      const _podeRestaurar = typeof canBulkDelete==='function' && canBulkDelete();
       el.innerHTML = entries.map(([date, snap])=>{
         const meta = snap.meta || {};
-        const label = meta.type==='auto' ? '🤖 Auto' : meta.type==='teste' ? '🧪 Teste' : '👤 Manual';
+        const label = meta.type==='auto' ? '🤖 Auto' : meta.type==='teste' ? '🧪 Teste' : meta.type==='pre_restore' ? '🧯 Pré-restauração' : '👤 Manual';
         const ts = meta.ts ? new Date(meta.ts).toLocaleString('pt-BR') : date;
         return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
-          background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;cursor:pointer;"
-          onclick="downloadSnapshotFromFirebase('${date}')"
-          title="Clique para baixar o JSON deste snapshot">
-          <span style="font-size:16px;">💾</span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:11px;font-weight:600;color:#e8f4fd;">${ts} ${label}</div>
-            <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
+          background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;"
+            onclick="downloadSnapshotFromFirebase('${date}')"
+            title="Clique para baixar o JSON deste snapshot">
+            <span style="font-size:16px;">💾</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:600;color:#e8f4fd;">${ts} ${label}</div>
+              <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
+            </div>
           </div>
-          <span style="font-size:10px;color:var(--accent);">⬇ baixar</span>
+          ${_podeRestaurar ? `<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.35);flex-shrink:0;" onclick="event.stopPropagation();restoreFromFirebaseSnapshot('${date}')" title="Restaurar este snapshot no board">🧯 restaurar</button>` : ''}
         </div>`;
       }).join('');
     })
@@ -26409,6 +26427,183 @@ function downloadSnapshotFromFirebase(date){
       showToast('✅ Snapshot '+date+' baixado!');
     })
     .catch(()=>showToast('❌ Erro ao baixar snapshot'));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 🧯 RESTAURAR BACKUP — pedido direto depois de descobrir que o backup
+// só sabia EXPORTAR (baixar/copiar JSON, salvar snapshot no Firebase),
+// sem nenhum caminho de volta pra repor os dados no board. Aceita tanto
+// um arquivo mare-digital-*.json baixado quanto um snapshot já salvo no
+// histórico do Firebase (botão "🧯 restaurar" em cada linha) — os dois
+// caminhos convergem pro mesmo preview + confirmação + aplicação, pra
+// não duplicar a parte arriscada. Só ADM/PO/Organizador pode restaurar
+// (canBulkDelete()): é uma ação que substitui TODOS os cards, colunas e
+// tags da squad de uma vez, não uma mesclagem.
+// ═══════════════════════════════════════════════════════════════════
+let _restoreParsedPayload = null;
+
+async function handleRestoreFileSelect(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    _prepareRestorePreview(JSON.parse(text), 'arquivo "'+file.name+'"');
+  }catch(e){
+    _restoreParsedPayload = null;
+    const preview = document.getElementById('restore-preview');
+    if(preview){
+      preview.style.display = 'block';
+      preview.innerHTML = '❌ Não deu pra ler esse arquivo como um backup do Maré Digital — confira se é o JSON certo (baixado pelo "⬇ Baixar JSON agora" ou de um snapshot do histórico). Se você tentou colar um export do Trello aqui, é o campo errado: isso é só pra backups do próprio Maré Digital.';
+    }
+    const btn = document.getElementById('btn-restore-backup');
+    if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
+  }
+}
+
+// Confere se o JSON tem a cara de um backup do Maré Digital (não de um
+// export de outro sistema, tipo Trello — schemas bem diferentes).
+function _validateBackupPayload(payload){
+  if(!payload || typeof payload!=='object') return 'JSON inválido.';
+  if(!payload.board || !Array.isArray(payload.board.cards)) return 'Esse JSON não parece um backup do Maré Digital (falta board.cards) — confira se não é, por exemplo, um export do Trello ou outro arquivo.';
+  return null;
+}
+
+function _prepareRestorePreview(payload, origemLabel){
+  const preview = document.getElementById('restore-preview');
+  const btn = document.getElementById('btn-restore-backup');
+  const erro = _validateBackupPayload(payload);
+  if(erro){
+    _restoreParsedPayload = null;
+    if(preview){ preview.style.display='block'; preview.innerHTML = '❌ '+esc(erro); }
+    if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
+    return;
+  }
+  _restoreParsedPayload = payload;
+  const ativos = payload.board.cards.filter(c=>c && !c.archived).length;
+  const arquivados = payload.board.cards.length - ativos;
+  const cols = (payload.board.columns||[]).length;
+  const squadDivergente = payload.squad && payload.squad!==ACTIVE_SQUAD;
+  if(preview){
+    preview.style.display = 'block';
+    preview.innerHTML =
+      '📦 Backup de <strong>'+esc(origemLabel)+'</strong><br>'+
+      '• Squad de origem: <strong>'+esc(payload.squad||'?')+'</strong>'+(squadDivergente?' <span style="color:var(--warn);font-weight:700;">⚠ diferente da squad atual ('+esc(ACTIVE_SQUAD)+')</span>':'')+'<br>'+
+      '• Exportado em: '+(payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('pt-BR') : '?')+' por '+esc(payload.exportedBy||'?')+'<br>'+
+      '• '+ativos+' cards ativos'+(arquivados?' · '+arquivados+' arquivados':'')+' · '+cols+' colunas · versão '+esc(payload.version||'?');
+  }
+  if(btn){ btn.disabled=false; btn.style.opacity='1'; }
+}
+
+// Carrega um snapshot já salvo no histórico do Firebase pro mesmo fluxo
+// de preview+confirmação do upload de arquivo, sem precisar baixar e
+// reenviar o JSON manualmente.
+function restoreFromFirebaseSnapshot(date){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar um backup.'); return; }
+  showToast('⏳ Carregando snapshot de '+date+'...');
+  window._get(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+date+'/data'))
+    .then(snap=>{
+      const val = snap.val();
+      if(!val){ showToast('❌ Snapshot não encontrado'); return; }
+      _prepareRestorePreview(val, 'snapshot do Firebase de '+date);
+      document.getElementById('restore-preview')?.scrollIntoView({behavior:'smooth', block:'center'});
+      showToast('📦 Snapshot carregado — confira o resumo e clique em "Restaurar este backup".');
+    })
+    .catch(()=>showToast('❌ Erro ao carregar snapshot'));
+}
+
+async function confirmRestoreBackup(){
+  if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar um backup.'); return; }
+  const payload = _restoreParsedPayload;
+  if(!payload){ showToast('Carrega um backup válido primeiro.'); return; }
+  const ativos = payload.board.cards.filter(c=>c && !c.archived).length;
+  const squadDivergente = payload.squad && payload.squad!==ACTIVE_SQUAD;
+  const dataFmt = payload.exportedAt ? new Date(payload.exportedAt).toLocaleString('pt-BR') : 'data desconhecida';
+  const msg = 'Isso vai SUBSTITUIR todos os cards, colunas, tags e configurações da squad "'+ACTIVE_SQUAD+'" pelo conteúdo deste backup ('+ativos+' cards ativos, exportado em '+dataFmt+').'+
+    (squadDivergente ? '\n\n⚠ Esse backup foi exportado da squad "'+payload.squad+'", DIFERENTE da squad atual ("'+ACTIVE_SQUAD+'"). Confirme que é isso mesmo que você quer.' : '')+
+    '\n\nUm snapshot de segurança do estado ATUAL é salvo antes de restaurar, mas essa ação sobrescreve o board imediatamente pra todo mundo que estiver com ele aberto. Confirma?';
+  if(!await uiConfirm(msg, {title:'🧯 Restaurar backup', okText:'Restaurar', cancelText:'Cancelar', danger:true})) return;
+  await _applyRestorePayload(payload);
+}
+
+// Salva o estado ATUAL (antes de sobrescrever) numa chave própria, sem
+// colidir com o backup diário normal (que usa a data como chave e seria
+// sobrescrito). Usa window._set() direto (não fbSet()) de propósito: essa
+// escrita PRECISA propagar erro real — se o snapshot de segurança falhar,
+// a restauração tem que ser abortada, não seguir em frente sem rede de
+// segurança nenhuma.
+async function _salvarSnapshotPreRestauracao(){
+  const payload = await buildBackupPayload();
+  const key = 'pre_restore_' + Date.now();
+  const meta = {
+    ts: new Date().toISOString(),
+    type: 'pre_restore',
+    by: window._currentUser?.displayName || window._currentUser?.email || '?',
+    cards: (payload.board?.cards||[]).filter(c=>!c.archived).length,
+    cols: (payload.board?.columns||[]).length,
+  };
+  await window._set(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/meta'), meta);
+  await window._set(window._ref(window._db, 'kanban/squads/'+ACTIVE_SQUAD+'/backups/'+key+'/data'), payload);
+  return key;
+}
+
+async function _applyRestorePayload(payload){
+  const btn = document.getElementById('btn-restore-backup');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Restaurando...'; }
+
+  let preKey;
+  try{
+    showToast('⏳ Salvando snapshot de segurança do estado atual...');
+    preKey = await _salvarSnapshotPreRestauracao();
+  }catch(e){
+    console.error('[Restaurar backup] Snapshot de segurança falhou, abortando:', e);
+    showToast('❌ Não consegui salvar o snapshot de segurança — restauração CANCELADA, nada foi alterado. Tenta de novo em alguns segundos.');
+    if(btn){ btn.disabled=false; btn.textContent='🧯 Restaurar este backup'; }
+    return;
+  }
+
+  try{
+    cards = (payload.board.cards||[]).map(c=>({...c}));
+    columns = (payload.board.columns||[]).slice();
+    tags = (payload.board.tags||[]).slice();
+    agilCfg = payload.board.agilCfg||{};
+    qlItems = payload.board.qlItems||{recorrentes:[],modelos:[],agendamentos:[]};
+    links = payload.board.links||[];
+    calEvents = payload.board.calEvents||[];
+    autoRules = payload.board.autoRules||[];
+
+    await fbSaveAll({
+      columns, tags, agil_cfg: agilCfg, ql_items: qlItems,
+      links, cal_events: calEvents, auto_rules: autoRules,
+    });
+
+    applyAgilCfg();
+    renderBoard();
+    if(typeof renderTagEditor==='function') renderTagEditor();
+    if(typeof renderQLBody==='function') renderQLBody();
+    if(typeof renderAutoRules==='function') renderAutoRules();
+    if(typeof renderLinksBody==='function') renderLinksBody();
+    populateColSelect();
+    renderBackupHistory();
+
+    const fileInp=document.getElementById('restore-file-inp'); if(fileInp) fileInp.value='';
+    const prev=document.getElementById('restore-preview'); if(prev) prev.style.display='none';
+    _restoreParsedPayload=null;
+
+    showToast('✅ Backup restaurado! '+cards.filter(c=>!c.archived).length+' cards ativos. (snapshot de segurança do estado anterior salvo em backups/'+preKey+')');
+  }catch(e){
+    console.error('[Restaurar backup] falhou ao gravar:', e);
+    showToast('❌ Erro ao restaurar — o estado anterior está salvo em backups/'+preKey+', mas a escrita final falhou. '+(e?.message||''));
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='🧯 Restaurar este backup'; }
+  }
+}
+
+function _applyRestoreSectionVisibility(){
+  const pode = typeof canBulkDelete==='function' && canBulkDelete();
+  const sec = document.getElementById('restore-section');
+  const noPerm = document.getElementById('restore-no-permission');
+  if(sec) sec.style.display = pode ? '' : 'none';
+  if(noPerm) noPerm.style.display = pode ? 'none' : '';
 }
 
 // ── Backup automático semanal: checagem "está atrasado?" ao carregar ────
