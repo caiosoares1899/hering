@@ -18,6 +18,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.248 — 2026-08-13 · promove pra prod
+Promove pra produção todo o lote acumulado em dev desde a v8.30.247
+(v8.30.422-dev → v8.30.423-dev), validado em dev.
+
+- **Filtros no Dashboard do Controle de Criativos**: Tag, Responsável,
+  Demandante, Coluna, Prioridade e Período livre (Prazo ou Criação, com
+  De/Até) — antes só a aba Lista tinha filtros. Todos os gráficos/cards
+  de resumo recalculam sobre o resultado filtrado.
+- **Ficha Técnica**: nova opção "Mktpace" no Canal, "Impresso" no
+  Formato; Objetivo e Plataforma ganham campo "Qual?" quando "Outros" é
+  marcado (mesma mecânica que já existia só no Canal).
+- **Fix: card concluído aparecendo como atrasado no "Meu Dia"** — a
+  checagem de "coluna é fim" pra cards de outros squads agora usa a
+  config de fim (`doneCols`) daquele squad quando existe, em vez de só
+  adivinhar pelo nome da coluna.
+
 ### v8.30.247 — 2026-08-12 · promove pra prod
 Promove pra produção todo o lote acumulado em dev desde a v8.30.246
 (v8.30.414-dev → v8.30.421-dev), validado em dev.
