@@ -1511,6 +1511,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.423-dev — 2026-08-13 — Ficha Técnica: novas opções + "Outros" com campo pra especificar; fix no "Meu Dia"
+Duas coisas represadas (pedido direto: "não sobe... deixa só salvo, quando
+eu liberar você sobe" — time estava corrigindo os modelos em dev ao mesmo
+tempo), liberadas agora.
+
+**Ficha Técnica** — pedido do time de mídia criativa (print com o texto em
+vermelho marcando o que faltava):
+- **Canal**: nova opção "Mktpace".
+- **Formato**: nova opção "Impresso".
+- **Objetivo** e **Plataforma**: a opção "Outros" agora abre um campo
+  "Qual?" pra especificar em texto livre — mesma mecânica que o Canal já
+  tinha, adaptada pros dois campos serem de múltipla escolha (checkbox).
+  Plataforma funciona nos dois modos (seleção única / múltipla quando
+  supercard).
+- Como essas listas são configuráveis por squad (⚙ Config → Criativos →
+  "Opções da Ficha Técnica"), squads que já ativaram o recurso não ganham
+  "Mktpace"/"Impresso" automaticamente — é só adicionar por lá, ou pedir
+  pra alguém com acesso.
+
+**Fix: card concluído aparecendo como atrasado no "Meu Dia"** — reportado
+pelo time em teste real. "Meu Dia" (cards de todos os squads que a pessoa
+participa) decidia se um card de OUTRO squad estava "concluído" só
+adivinhando pelo NOME da coluna (regex `conclu|cancel|done|finaliz`) — se
+a coluna de fim daquele squad tivesse um nome fora desse padrão (ex.:
+"Aprovado", "Publicado", "No ar"), o card nunca era reconhecido como
+concluído e aparecia como atrasado pra sempre, mesmo pronto. Corrigido pra
+usar a config de fim (`doneCols`, ⚙ Config → Fluxo) do PRÓPRIO squad de
+cada card quando ela existe — mesma prioridade que o squad ativo já usa —
+só caindo na adivinhação por nome se aquele squad nunca configurou nada.
+Não custa nenhuma leitura extra: o dado já vinha de graça no mesmo fetch
+que "Meu Dia" já fazia (comentário antigo no código dizia o contrário,
+por engano).
+
 ### v8.30.422-dev — 2026-08-13 — Filtros no Dashboard do Controle de Criativos
 Pedido direto: "coloca, lá no dash do controle de criativos, filtros! tag,
 responsável, demandante, data (setar a escolha do usuário) e mais filtros
