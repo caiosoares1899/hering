@@ -5408,7 +5408,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.423-dev</div>
+<div class="version">v8.30.424-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7590,6 +7590,19 @@ let _cardsSyncDebounce = null;
   // sem precisar serializar pra string como o localStorage exige.
   const _CARDS_CACHE_KEY = 'cardsCache_v1_'+ACTIVE_SQUAD;
   const _CARDS_CACHE_STALE_RATIO = 0.4;
+  // Piso absoluto — sem ele, um squad PEQUENO cai no fallback (listener
+  // vitalício em /cards inteiro, sem filtro de arquivados, que sangra banda
+  // a cada mudança de QUALQUER pessoa dali em diante) só por ultrapassar
+  // 40% em termos RELATIVOS, mesmo o número absoluto de cards a rebuscar
+  // sendo pequeno — achado real (2026-08-13, squad "outlet"): 44-52 cards
+  // ativos, caindo no fallback repetidas vezes por precisar rebuscar entre
+  // 26 e 49 cards (proporção de 0.59 a 0.94, bem acima do limite, mas em
+  // número absoluto ainda bem mais barato que centenas de leituras avulsas
+  // — ver comentário original abaixo). Só considera o fallback mais barato
+  // quando o número absoluto TAMBÉM é grande; pra squads grandes (onde
+  // activeCount*RATIO já ultrapassa este piso sozinho) o comportamento não
+  // muda nada.
+  const _CARDS_CACHE_STALE_FLOOR = 150;
   const _IDB_NAME = 'mare_digital_cache';
   const _IDB_STORE = 'cards_cache';
   let _idbOpenPromise = null;
@@ -7733,11 +7746,13 @@ let _cardsSyncDebounce = null;
     // "não mudou" só porque ele nunca entra em toFetch.
     if(cache){
       const activeCount = remoteIds.filter(id=>!(remoteArchived||{})[id]).length;
-      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO){
+      const limiteEfetivo = Math.max(activeCount * _CARDS_CACHE_STALE_RATIO, _CARDS_CACHE_STALE_FLOOR);
+      if(activeCount && toFetch.length > limiteEfetivo){
         _logFallbackReason('cache_desatualizado_demais', {
           activeCount, toFetch: toFetch.length,
           proporcao: +(toFetch.length/activeCount).toFixed(3),
           limite: _CARDS_CACHE_STALE_RATIO,
+          limiteEfetivo,
         });
         return false;
       }

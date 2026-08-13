@@ -1527,6 +1527,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.424-dev — 2026-08-13 — Fase 1 do investimento em custo de Firebase: piso absoluto no fallback de cards
+Primeira fase de um trabalho maior investigando o consumo de banda do
+Firebase (motivado pela cobrança que passa a valer em 01/09) — pedido
+direto: "retomando aquele ponto de isolar os cards arquivados e modelos,
+como podemos prosseguir para isso rodar 100%?". Essa etapa foca só no
+fallback do carregamento de cards; Modelos/Recorrentes/Agendamentos
+(`ql_items`) fica pra uma próxima fase, por mexer em mais pontos do código.
+
+**Achado (via `_debug_fallback_log`, squad real "outlet"):** o
+carregamento em duas etapas desiste e cai no fallback completo (listener
+bruto em `/cards` inteiro, sem filtro de arquivados, que soma banda a cada
+mudança de QUALQUER pessoa dali em diante) sempre que a proporção de cards
+a rebuscar passa de 40% do total ativo — mas essa proporção é RELATIVA.
+Um squad pequeno (44-52 cards ativos, no caso) cai nesse fallback repetidas
+vezes só por precisar rebuscar 26-49 cards num dia de mais movimento,
+mesmo esse número sendo, em termos absolutos, muito mais barato que ligar
+um listener vitalício no board inteiro.
+
+**Correção:** o limite agora usa o MAIOR valor entre a proporção de 40% e
+um piso absoluto de 150 cards a rebuscar. Squads pequenos/médios (a
+maioria) deixam de cair no fallback por causa só da proporção — só caem
+quando o número absoluto de fato justifica. Squads grandes (onde
+`ativos × 40%` já passa de 150 sozinho) não mudam de comportamento nenhum.
+
+Também explica um segundo padrão encontrado (squad "outlet-crm", consumo
+com cara de fallback mas sem registro novo no log dos últimos 7 dias):
+a decisão de cair no fallback só é tomada uma vez, no carregamento da
+página — uma aba aberta há mais de uma semana pode estar presa nesse modo
+até hoje, sem gerar log novo. Promover esta correção pra prod força (via
+o mecanismo de auto-update já existente) um reload em toda sessão aberta,
+o que reavalia essa decisão do zero pra todo mundo, inclusive sessões
+presas — resolve os dois achados com a mesma entrega.
+
 ### v8.30.423-dev — 2026-08-13 — Ficha Técnica: novas opções + "Outros" com campo pra especificar; fix no "Meu Dia"
 Duas coisas represadas (pedido direto: "não sobe... deixa só salvo, quando
 eu liberar você sobe" — time estava corrigindo os modelos em dev ao mesmo
