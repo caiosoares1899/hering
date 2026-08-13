@@ -5062,6 +5062,31 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     </div>
     <div id="crv-view-dashboard" style="display:none;">
+      <div id="crv-dash-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+        <select class="fi crv-fh" id="crv-df-tag" onchange="renderCriativosDashboard()" style="max-width:150px;"><option value="">🏷 Todas as tags</option></select>
+        <select class="fi crv-fh" id="crv-df-owner" onchange="renderCriativosDashboard()" style="max-width:170px;"><option value="">👤 Todos os responsáveis</option></select>
+        <select class="fi crv-fh" id="crv-df-demandante" onchange="renderCriativosDashboard()" style="max-width:170px;display:none;"><option value="">📢 Todos os demandantes</option></select>
+        <select class="fi crv-fh" id="crv-df-col" onchange="renderCriativosDashboard()" style="max-width:150px;"><option value="">📍 Todas as colunas</option></select>
+        <select class="fi crv-fh" id="crv-df-prioridade" onchange="renderCriativosDashboard()" style="max-width:150px;">
+          <option value="">🚦 Todas prioridades</option>
+          <option value="critical">🔥 Crítica</option>
+          <option value="high">🔴 Alta</option>
+          <option value="medium">🟡 Média</option>
+          <option value="low">🟢 Baixa</option>
+          <option value="none">Sem prioridade</option>
+        </select>
+        <span style="display:flex;align-items:center;gap:5px;">
+          <select class="fi crv-fh" id="crv-df-datefield" onchange="renderCriativosDashboard()" style="max-width:96px;">
+            <option value="due">📅 Prazo</option>
+            <option value="createdAt">🕐 Criação</option>
+          </select>
+          <input class="fi crv-fh" type="date" id="crv-df-date-from" onchange="renderCriativosDashboard()" style="max-width:132px;" title="De">
+          <span style="color:var(--txt3);font-size:11px;">até</span>
+          <input class="fi crv-fh" type="date" id="crv-df-date-to" onchange="renderCriativosDashboard()" style="max-width:132px;" title="Até">
+        </span>
+        <button class="btn btn-sm" onclick="_crvDashClearFilters()" title="Limpar filtros do dashboard" style="padding:4px 8px;font-size:10.5px;">✕ Limpar</button>
+        <span id="crv-dash-filter-count" style="font-size:10.5px;color:var(--txt3);margin-left:auto;white-space:nowrap;"></span>
+      </div>
       <div id="crv-dash-body"></div>
     </div>
   </div>
@@ -5381,7 +5406,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.421-dev</div>
+<div class="version">v8.30.422-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12208,12 +12233,96 @@ function _crvBarRow(label, count, total, color){
     + '<span style="width:30px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+count+'</span>'
     + '</div>';
 }
+// Filtros do Dashboard (Tag/Responsável/Demandante/Coluna/Prioridade/Período)
+// — pedido direto ("coloca filtros: tag, responsável, demandante, data...
+// e mais filtros que julgar interessante"). Separados dos filtros da aba
+// Lista (que já tinha os seus, por Canal/Objetivo/Plataforma/Formato/Prazo/
+// Prioridade/Qtd) de propósito: aqui o resultado alimenta os próprios
+// gráficos (Por lista/canal/plataforma/formato, prioridade, status) — filtrar
+// por Tag "Institucional", por exemplo, já refaz todos os breakdowns só
+// com esses cards, sem precisar sair do Dashboard.
+function _crvPopulateDashFilterOptions(allRows){
+  const tagSel=document.getElementById('crv-df-tag');
+  if(tagSel){
+    const prev=tagSel.value;
+    const usedIds=new Set(); allRows.forEach(c=>getCardTags(c).forEach(t=>usedIds.add(t)));
+    const opts=tags.filter(t=>usedIds.has(t.id)).map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+    tagSel.innerHTML='<option value="">🏷 Todas as tags</option>'+opts;
+    tagSel.value = usedIds.has(prev) ? prev : '';
+  }
+  const ownerSel=document.getElementById('crv-df-owner');
+  if(ownerSel){
+    const prev=ownerSel.value;
+    ownerSel.innerHTML='<option value="">👤 Todos os responsáveis</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
+    ownerSel.value = members.some(m=>m.init===prev) ? prev : '';
+  }
+  const demSel=document.getElementById('crv-df-demandante');
+  if(demSel){
+    if(demandanteAtivo){
+      demSel.style.display='';
+      const prev=demSel.value;
+      demSel.innerHTML='<option value="">📢 Todos os demandantes</option>'+members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
+      demSel.value = members.some(m=>m.init===prev) ? prev : '';
+    } else {
+      demSel.style.display='none';
+      demSel.value='';
+    }
+  }
+  const colSel=document.getElementById('crv-df-col');
+  if(colSel){
+    const prev=colSel.value;
+    colSel.innerHTML='<option value="">📍 Todas as colunas</option>'+columns.map(col=>`<option value="${esc(col.id)}">${esc(col.name)}</option>`).join('');
+    colSel.value = columns.some(c=>c.id===prev) ? prev : '';
+  }
+}
+function _crvDashFilteredRows(allRows){
+  const fTag=document.getElementById('crv-df-tag')?.value||'';
+  const fOwner=document.getElementById('crv-df-owner')?.value||'';
+  const fDem=document.getElementById('crv-df-demandante')?.value||'';
+  const fCol=document.getElementById('crv-df-col')?.value||'';
+  const fPrio=document.getElementById('crv-df-prioridade')?.value||'';
+  const dateField=document.getElementById('crv-df-datefield')?.value||'due';
+  const dFrom=document.getElementById('crv-df-date-from')?.value||'';
+  const dTo=document.getElementById('crv-df-date-to')?.value||'';
+  let out=allRows;
+  if(fTag) out=out.filter(c=>getCardTags(c).includes(fTag));
+  if(fOwner) out=out.filter(c=>c.owner===fOwner);
+  if(fDem) out=out.filter(c=>c.demandante===fDem);
+  if(fCol) out=out.filter(c=>c.col===fCol);
+  if(fPrio){ out = fPrio==='none' ? out.filter(c=>!c.priority) : out.filter(c=>c.priority===fPrio); }
+  if(dFrom||dTo){
+    out=out.filter(c=>{
+      const raw=c[dateField]; if(!raw) return false;
+      const v=String(raw).split('T')[0]; // due/createdAt já são YYYY-MM-DD, split é só defesa
+      if(dFrom && v<dFrom) return false;
+      if(dTo && v>dTo) return false;
+      return true;
+    });
+  }
+  return out;
+}
+function _crvDashClearFilters(){
+  ['crv-df-tag','crv-df-owner','crv-df-demandante','crv-df-col','crv-df-prioridade','crv-df-date-from','crv-df-date-to'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const dfEl=document.getElementById('crv-df-datefield'); if(dfEl) dfEl.value='due';
+  renderCriativosDashboard();
+}
 // Renderiza o painel visual do Controle de Criativos: cards de resumo + donuts (status/prioridade) + barras (lista/canal/plataforma/formato)
 function renderCriativosDashboard(){
   const body=document.getElementById('crv-dash-body'); if(!body) return;
-  const rows=_criativosRows();
-  if(!rows.length){
+  const filtersEl=document.getElementById('crv-dash-filters');
+  const allRows=_criativosRows();
+  if(!allRows.length){
+    if(filtersEl) filtersEl.style.display='none';
     body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card com Ficha de Criativo preenchida ainda.</div>';
+    return;
+  }
+  if(filtersEl) filtersEl.style.display='flex';
+  _crvPopulateDashFilterOptions(allRows);
+  const rows=_crvDashFilteredRows(allRows);
+  const cntEl=document.getElementById('crv-dash-filter-count');
+  if(cntEl) cntEl.textContent = rows.length===allRows.length ? '' : ('mostrando '+rows.length+' de '+allRows.length);
+  if(!rows.length){
+    body.innerHTML='<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum pedido bate com esses filtros. <button class="btn btn-sm" onclick="_crvDashClearFilters()" style="margin-left:6px;">Limpar filtros</button></div>';
     return;
   }
   const total=rows.length;

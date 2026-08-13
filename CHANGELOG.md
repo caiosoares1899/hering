@@ -1511,6 +1511,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.422-dev — 2026-08-13 — Filtros no Dashboard do Controle de Criativos
+Pedido direto: "coloca, lá no dash do controle de criativos, filtros! tag,
+responsável, demandante, data (setar a escolha do usuário) e mais filtros
+que julgar interessante". A aba 📋 Lista já tinha filtros próprios (Canal,
+Objetivo, Plataforma, Formato, Prazo, Prioridade, Qtd); a aba 📊 Dashboard
+não tinha nenhum — os cards de resumo, donuts e barras sempre olhavam pro
+squad inteiro.
+
+- Nova barra de filtros na aba Dashboard: **🏷 Tag** (só as que aparecem
+  nos pedidos, evita opção que nunca bate com nada), **👤 Responsável**,
+  **📢 Demandante** (só aparece se o squad tem o campo ativado), **📍
+  Coluna** e **🚦 Prioridade**.
+- **Período**: em vez de presets fixos (como o "Atrasado/Próx. 7 dias" da
+  Lista), aqui é livre — escolhe se filtra por 📅 Prazo ou 🕐 Data de
+  criação, e define De/Até com dois campos de data.
+- Todos os gráficos e cards de resumo (Total, Concluídos, Atrasados, Em
+  andamento, Variações, Por lista/canal/plataforma/formato, donut de
+  prioridade) recalculam em cima do resultado filtrado — filtrar por uma
+  Tag, por exemplo, já refaz todos os breakdowns só com esses cards, sem
+  precisar sair do Dashboard pra Lista.
+- Contador "mostrando X de Y" quando algum filtro está ativo; botão
+  "✕ Limpar" volta tudo ao squad inteiro.
+
 ### v8.30.421-dev — 2026-08-12 — Central de Ajuda: sincroniza com as features desta sessão
 Rotina `/atualizarhelpcontent` — puramente documentação, sem mudança de
 comportamento. Achados (mesmo padrão que motivou a criação da skill:
