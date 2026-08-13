@@ -3637,12 +3637,14 @@ input[type="date"]{-moz-appearance:textfield;}
 
       <div class="field" id="m-crv-objetivo-wrap" style="grid-column:1/-1;"><label class="fl">Objetivo <span style="font-size:9px;color:var(--txt3);font-weight:400;">(múltipla escolha)</span></label>
         <div class="crv-check-group" id="m-crv-objetivo-list"></div>
+        <input class="fi" id="m-crv-objetivo-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
       </div>
 
       <div class="field" id="m-crv-plataforma-wrap" style="grid-column:1/-1;">
         <label class="fl">Plataforma <span id="m-crv-plataforma-hint" style="font-size:9px;color:var(--txt3);font-weight:400;"></span></label>
         <select class="fi" id="m-crv-plataforma-single" onchange="_crvPlataformaChange()"><option value="">— selecione —</option></select>
         <div class="crv-check-group" id="m-crv-plataforma-multi" style="display:none;"></div>
+        <input class="fi" id="m-crv-plataforma-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
       </div>
 
       <div class="card-attr-row">
@@ -5406,7 +5408,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.422-dev</div>
+<div class="version">v8.30.423-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6599,6 +6601,7 @@ let criativoOpcoes={ canais:[], objetivos:[], plataformas:[], tipos:[], formatos
 const CANAL_OPCOES_DEFAULT=[
   {id:'canal_site',label:'Site'},{id:'canal_app',label:'App'},{id:'canal_ooh',label:'OOH'},
   {id:'canal_o2o',label:'O2O'},{id:'canal_tv',label:'TV'},{id:'canal_streaming',label:'Streaming'},
+  {id:'canal_mktpace',label:'Mktpace'},
   {id:'canal_outros',label:'Outros'},
 ];
 const OBJETIVO_OPCOES_DEFAULT=[
@@ -6614,6 +6617,7 @@ const PLATAFORMA_OPCOES_DEFAULT=[
 ];
 const FORMATO_OPCOES_DEFAULT=[
   {id:'fmt_estatico',label:'Estático'},{id:'fmt_video',label:'Vídeo'},{id:'fmt_multi',label:'Multiformatos'},
+  {id:'fmt_impresso',label:'Impresso'},
 ];
 // qtdRef/qtdObs vêm direto da tabela "Padrão de formatos e quantidades de
 // criativos" passada pelo time — mostrada como DICA (não trava nada) ao
@@ -11438,8 +11442,14 @@ function _crvOpcaoSelectHtml(list, placeholder){
   return '<option value="">'+esc(placeholder||'— selecione —')+'</option>'
     + (list||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.label)+'</option>').join('');
 }
-function _crvCheckGroupHtml(list, name){
-  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="scheduleAutoSave();_crvAutoTitle()"> '+esc(o.label)+'</label>').join('')
+// syncFn (opcional): nome de uma função global chamada ANTES do
+// scheduleAutoSave/_crvAutoTitle padrão — usado por Objetivo/Plataforma
+// pra mostrar/esconder o campo "Qual?" quando a opção "Outros" é marcada
+// (mesma ideia do Canal, ver _crvCanalChange, só que aqui em grupo de
+// checkbox em vez de select único).
+function _crvCheckGroupHtml(list, name, syncFn){
+  const extra = syncFn ? syncFn+'();' : '';
+  return (list||[]).map(o=>'<label><input type="checkbox" name="'+esc(name)+'" value="'+esc(o.id)+'" onchange="'+extra+'scheduleAutoSave();_crvAutoTitle()"> '+esc(o.label)+'</label>').join('')
     || '<span style="font-size:11px;color:var(--txt3);">Nenhuma opção configurada ainda (⚙ Config → Criativos).</span>';
 }
 function _crvGetChecked(name){
@@ -11458,14 +11468,16 @@ function _refreshCriativoFichaSelects(){
   const canalSel=document.getElementById('m-crv-canal');
   if(canalSel){ const cur=canalSel.value; canalSel.innerHTML=_crvOpcaoSelectHtml(criativoOpcoes.canais); canalSel.value=cur; }
   const objWrap=document.getElementById('m-crv-objetivo-list');
-  if(objWrap){ const cur=_crvGetChecked('crv-objetivo'); objWrap.innerHTML=_crvCheckGroupHtml(criativoOpcoes.objetivos,'crv-objetivo'); _crvSetChecked('crv-objetivo',cur); }
+  if(objWrap){ const cur=_crvGetChecked('crv-objetivo'); objWrap.innerHTML=_crvCheckGroupHtml(criativoOpcoes.objetivos,'crv-objetivo','_crvObjetivoOutrosSync'); _crvSetChecked('crv-objetivo',cur); }
   const platSel=document.getElementById('m-crv-plataforma-single');
   if(platSel){ const cur=platSel.value; platSel.innerHTML=_crvOpcaoSelectHtml(criativoOpcoes.plataformas); platSel.value=cur; }
   const platMulti=document.getElementById('m-crv-plataforma-multi');
-  if(platMulti){ const cur=_crvGetChecked('crv-plataforma'); platMulti.innerHTML=_crvCheckGroupHtml(criativoOpcoes.plataformas,'crv-plataforma'); _crvSetChecked('crv-plataforma',cur); }
+  if(platMulti){ const cur=_crvGetChecked('crv-plataforma'); platMulti.innerHTML=_crvCheckGroupHtml(criativoOpcoes.plataformas,'crv-plataforma','_crvPlataformaOutrosSync'); _crvSetChecked('crv-plataforma',cur); }
   const fmtSel=document.getElementById('m-crv-formato');
   if(fmtSel){ const cur=fmtSel.value; fmtSel.innerHTML=_crvOpcaoSelectHtml(criativoOpcoes.formatos); fmtSel.value=cur; }
   _crvRefreshTipoOptions();
+  _crvObjetivoOutrosSync();
+  _crvPlataformaOutrosSync();
 }
 // Plataforma vira múltipla escolha só quando o card é supercard (tem
 // filhos) — pedido direto. _crvSyncPlataformaMode() decide qual UI mostrar
@@ -11481,7 +11493,7 @@ function _crvSyncPlataformaMode(){
   if(isSuper){
     // single → multi: o valor único vira o primeiro (e único) marcado
     const cur=single.value;
-    multi.innerHTML=_crvCheckGroupHtml(criativoOpcoes.plataformas,'crv-plataforma');
+    multi.innerHTML=_crvCheckGroupHtml(criativoOpcoes.plataformas,'crv-plataforma','_crvPlataformaOutrosSync');
     if(cur) _crvSetChecked('crv-plataforma',[cur]);
     single.style.display='none'; multi.style.display='flex';
   } else {
@@ -11494,6 +11506,7 @@ function _crvSyncPlataformaMode(){
   }
   if(hint) hint.textContent = isSuper ? '(múltipla escolha — supercard)' : '';
   _crvRefreshTipoOptions();
+  _crvPlataformaOutrosSync();
 }
 function _crvGetSelectedPlataformas(){
   const multi=document.getElementById('m-crv-plataforma-multi');
@@ -11502,6 +11515,7 @@ function _crvGetSelectedPlataformas(){
   return single && single.value ? [single.value] : [];
 }
 function _crvPlataformaChange(){
+  _crvPlataformaOutrosSync();
   _crvRefreshTipoOptions();
   scheduleAutoSave();
   _crvAutoTitle();
@@ -11570,6 +11584,25 @@ function _crvCanalChange(){
   const inp=document.getElementById('m-crv-canal-outros');
   if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
   scheduleAutoSave();
+}
+// Objetivo/Plataforma "Outros" abrem um campo pra especificar — mesma
+// ideia do Canal acima, adaptada pra grupo de checkbox (múltipla escolha):
+// mostra o campo se QUALQUER opção marcada for "Outros" (casa pela LABEL,
+// não pelo id, mesmo motivo do Canal).
+function _crvObjetivoOutrosSync(){
+  const checked=_crvGetChecked('crv-objetivo');
+  const isOutros=checked.some(id=>_norm(_crvLabel('objetivos',id))==='outros');
+  const inp=document.getElementById('m-crv-objetivo-outros');
+  if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
+}
+// Plataforma tem 2 modos de UI (select único / grupo de checkbox, ver
+// _crvSyncPlataformaMode) mas só 1 campo "Qual?" compartilhado — usa
+// _crvGetSelectedPlataformas() que já sabe ler o modo certo sozinho.
+function _crvPlataformaOutrosSync(){
+  const checked=_crvGetSelectedPlataformas();
+  const isOutros=checked.some(id=>_norm(_crvLabel('plataformas',id))==='outros');
+  const inp=document.getElementById('m-crv-plataforma-outros');
+  if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
 }
 // Título automático a partir da Ficha Técnica (pedido direto do time):
 // "[Plataforma] Tipo - Campanha [Objetivo] - Etapa do Funil/Funil".
@@ -11641,7 +11674,9 @@ function getCriativoData(){
   const canal=document.getElementById('m-crv-canal')?.value||'';
   const canalOutros=document.getElementById('m-crv-canal-outros')?.value.trim()||'';
   const objetivos=_crvGetChecked('crv-objetivo');
+  const objetivosOutros=document.getElementById('m-crv-objetivo-outros')?.value.trim()||'';
   const plataformas=_crvGetSelectedPlataformas();
+  const plataformasOutros=document.getElementById('m-crv-plataforma-outros')?.value.trim()||'';
   const tipo=document.getElementById('m-crv-tipo')?.value||'';
   const formato=document.getElementById('m-crv-formato')?.value||'';
   const variacoes=(document.querySelector('input[name="crv-variacoes"]:checked')||{}).value||'';
@@ -11650,7 +11685,7 @@ function getCriativoData(){
   const vazio = !campanhaTipo && !funil && !etapaFunil && !canal && !objetivos.length && !plataformas.length
     && !tipo && !formato && !variacoes && !direcional;
   if(vazio) return null;
-  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,plataformas,tipo,formato,variacoes,variacoesQtd,direcional};
+  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,objetivosOutros,plataformas,plataformasOutros,tipo,formato,variacoes,variacoesQtd,direcional};
 }
 function setCriativoFields(crv){
   crv=crv||{};
@@ -11667,11 +11702,15 @@ function setCriativoFields(crv){
   _crvCanalChange();
   set('m-crv-canal-outros', crv.canalOutros);
   _crvSetChecked('crv-objetivo', crv.objetivos||[]);
+  _crvObjetivoOutrosSync();
+  set('m-crv-objetivo-outros', crv.objetivosOutros);
   // Plataforma: decide modo (single/multi) pelo supercard ANTES de setar o
   // valor, senão o valor pode ir pro elemento errado (escondido).
   _crvSyncPlataformaMode();
   if(editingSuperChildren.length>0) _crvSetChecked('crv-plataforma', crv.plataformas||[]);
   else document.getElementById('m-crv-plataforma-single').value = (crv.plataformas||[])[0]||'';
+  _crvPlataformaOutrosSync();
+  set('m-crv-plataforma-outros', crv.plataformasOutros);
   _crvRefreshTipoOptions();
   set('m-crv-tipo', crv.tipo);
   set('m-crv-formato', crv.formato);
@@ -16094,7 +16133,7 @@ async function setCampViewMode(mode){
 // cards+columns por squad, só quando a pessoa abre o painel, cacheado em
 // memória pra não rebuscar em aberturas seguintes na mesma sessão.
 // ═══════════════════════════════════════════════════════
-let _meuDiaCrossData = {}; // sqId -> {cards, columns}
+let _meuDiaCrossData = {}; // sqId -> {cards, columns, doneCols}
 async function _loadMeuDiaCrossSquads(){
   const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD && !_meuDiaCrossData[sq]);
   if(!outros.length) return;
@@ -16105,22 +16144,37 @@ async function _loadMeuDiaCrossSquads(){
         _meuDiaCrossData[sq]={
           cards:   val.cards   ?(Array.isArray(val.cards)   ?val.cards   :Object.values(val.cards))   :[],
           columns: val.columns ?(Array.isArray(val.columns) ?val.columns :Object.values(val.columns)) :[],
+          // BUG CORRIGIDO (relatado pelo time: card já concluído aparecendo
+          // como atrasado no Meu Dia): o comentário antigo aqui dizia que
+          // pegar o flowConfig do outro squad "custaria mais uma leitura" —
+          // não custa nada, já vem de graça dentro do MESMO fetch de
+          // '/dados' acima (config/flow é filho direto). Sem isso, "coluna é
+          // fim" pra squad de fora dependia só de adivinhar pelo NOME da
+          // coluna (regex), que não reconhece um "Concluído" configurado
+          // manualmente pelo PO com nome fora do padrão (ex.: "Aprovado",
+          // "Publicado", "No ar") — o card ficava pra sempre fora da coluna
+          // reconhecida como "fim", contando como pendente/atrasado.
+          doneCols: (val.config && val.config.flow && Array.isArray(val.config.flow.doneCols)) ? val.config.flow.doneCols : [],
         };
-      }).catch(()=>{ _meuDiaCrossData[sq]={cards:[],columns:[]}; })
+      }).catch(()=>{ _meuDiaCrossData[sq]={cards:[],columns:[],doneCols:[]}; })
   ));
 }
 // Heurísticas "coluna é fim"/"card bloqueado" pra squads QUE NÃO SÃO o
-// ativo — sem o flowConfig/blockerMode de cada squad (não faz parte deste
-// fetch, custaria mais uma leitura por squad), usa convenção de nome de
-// coluna (Concluído/Cancelado/...) e os dois sinais de bloqueio que juntos
-// cobrem os dois modos possíveis (tag OU coluna "blocker"), igual
-// _cardIsBlocked() cobre pro squad ativo — só que sem precisar saber QUAL
-// modo o outro squad usa.
+// ativo: usa a config de fim (doneCols) do PRÓPRIO squad quando ele
+// configurou uma em Config → Fluxo — mesma prioridade de _isColDone() pro
+// squad ativo — e só cai pra heurística de nome de coluna
+// (Concluído/Cancelado/...) se aquele squad nunca configurou nada. Os dois
+// sinais de bloqueio cobrem os dois modos possíveis (tag OU coluna
+// "blocker"), igual _cardIsBlocked() cobre pro squad ativo — só que sem
+// precisar saber QUAL modo o outro squad usa.
 function _meuDiaIsDone(card){
   if(card._squad===ACTIVE_SQUAD) return _isColDone(card.col);
-  const cols=_meuDiaCrossData[card._squad]?.columns||[];
+  const data=_meuDiaCrossData[card._squad]||{};
+  const cols=data.columns||[];
+  const doneCols=(data.doneCols||[]).filter(id=>cols.some(c=>c.id===id));
+  if(doneCols.length) return doneCols.includes(card.col);
   const nome=(cols.find(c=>c.id===card.col)?.name||'').toLowerCase();
-  return /conclu|cancel|done|finaliz/.test(nome);
+  return /conclu|cancel|done|feito|finaliz/.test(nome);
 }
 function _meuDiaIsBlocked(card){
   return card.blocker===true || card.col==='blocker';
