@@ -1527,6 +1527,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.425-dev — 2026-08-13 — Fase 2 do investimento em custo de Firebase: 📋 Modelos sob demanda
+Segunda fase do trabalho de redução de banda do Firebase (ver v8.30.424-dev
+pra Fase 1) — pedido direto: "ja vai fazendo as outras fases q a gente sobe
+tudo pra prod junto". Foca no nó `ql_items` (Recorrentes, Agendamentos e
+Modelos), que carregava tudo de uma vez, sempre, em toda sessão, mesmo
+squads com biblioteca grande de Modelos que quase ninguém abre.
+
+**Correção:** o listener de `ql_items` foi dividido em três. Recorrentes e
+Agendamentos continuam eager (carregam sempre) — são checados sozinhos
+~3.5s depois do board abrir, pra saber se algum item recorrente/agendado
+precisa virar card real, então não dá pra adiar. Modelos passou a carregar
+sob demanda, só quando a sessão realmente precisa: abrir o drawer "📋
+Modelos", usar "📥 Usar modelo" num card, salvar um card como modelo
+(botão direto ou clique direito), abrir a aba Automações (usada pra
+configurar receitas de fan-out com modelo), ou gerar um backup manual —
+mesmo padrão já usado pros cards arquivados.
+
+Todos os pontos que gravavam o nó `ql_items` inteiro (~10 no total,
+incluindo dois usados pelo Agente Ágil) passaram a gravar só a sub-lista
+que de fato mudou, pra nunca sobrescrever Modelos que aquela sessão nunca
+chegou a carregar. O caso do Agente Ágil salvar um modelo (`salvar_modelo`)
+ganhou uma checagem específica: como aquele fluxo roda de forma síncrona,
+ele recusa educadamente ("tenta de novo em alguns segundos") se a lista
+ainda não tiver carregado nesta sessão, em vez de arriscar apagar dado.
+
 ### v8.30.424-dev — 2026-08-13 — Fase 1 do investimento em custo de Firebase: piso absoluto no fallback de cards
 Primeira fase de um trabalho maior investigando o consumo de banda do
 Firebase (motivado pela cobrança que passa a valer em 01/09) — pedido
