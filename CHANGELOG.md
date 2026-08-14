@@ -6823,6 +6823,36 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Canário 8 CONFIRMADO: editar_campos.desc com escrita real
+Rodado pelo usuário contra `c1786712278908` (card de teste dedicado,
+descrição revertida pra "Este post faz parte da campanha de Q3." antes
+de rodar, pra exercitar de fato o caminho de escrita — a 1ª tentativa
+contra esse card tinha sido um "não fez nada" válido, porque a descrição
+já continha a informação pedida desde uma edição manual anterior).
+
+Resultado: `editar_campos` aplicado com `dryRun:false`, `applied: 2`. O
+modelo preservou o texto original da campanha Q3, acrescentou a
+informação nova sobre a divulgação nas redes sociais sair do escopo, e
+— achado extra interessante — notou sozinho, via `ler_card`, que um
+comentário seu de uma rodada anterior ("essa informação já está na
+descrição") estava desatualizado (a descrição tinha sido revertida
+depois daquele comentário), e deixou isso explícito no novo comentário
+em vez de simplesmente ignorar a inconsistência. Checagem automática do
+script (`descNova.includes(descAtual)`) confirmou a preservação.
+
+**Com isso, o toolset real do orquestrador está com tudo validado**: 8
+canários confirmados — `ler_card` (implícito em todos), `comentario`,
+`mover_coluna`, `checklist_item`, `agent_status`, `perguntar_humano`
+(com notificação), `link`, e `editar_campos` completo (`tags`,
+`priority` e agora `desc`, os três com escrita real). Só falta
+`relatorio_html`, deliberadamente adiado até ter necessidade real — sem
+mais nenhum sub-passo pendente de validação no toolset atual.
+
+**Pendente, não bloqueante:** o card de teste `c1786712278908` acumulou
+2 comentários do agente durante essa rodada (a checagem "já está lá" e
+depois a correção) — não tem problema deixar, mas vale limpar se o card
+for reaproveitado como fixture de novo no futuro.
+
 ### 2026-08-14 · Canário 8 (escrita real): 2ª tentativa contra card reaproveitado, card de teste novo criado
 Retomando o trabalho depois de 11 dias parado (último commit real era
 7/ago, `1ca31d2`, atualizando os scripts do canário 8 pro card
