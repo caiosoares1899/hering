@@ -38,11 +38,15 @@
 // perguntar_humano — mover_coluna/checklist_item/agent_status/link/
 // relatorio_html de fora, sem motivo pra estarem acessíveis aqui.
 //
-// cardId é OBRIGATÓRIO, sem default. Card de teste atual: c1785889397211_x0xr2
-// ("Otimizar consulta lenta no dashboard principal", squad dev) — o card
-// anterior (c1785505159707_geo) foi excluído. Rode
-// verEstadoCardTesteContraSquadDev.js primeiro pra conferir a descrição
-// atual antes de rodar este (é de graça, não chama o modelo).
+// cardId é OBRIGATÓRIO, sem default. Card de teste atual: c1786712278908
+// ("[TESTE Agente Ágil] Canário 8 — não editar manualmente", squad dev,
+// desc já preenchida com "Este post faz parte da campanha de Q3.", a
+// mesma aprovada no dryRun original). Os dois cards anteriores morreram:
+// c1785505159707_geo foi excluído, c1785889397211_x0xr2 acabou
+// reaproveitado pra trabalho real (query lenta no dashboard) — squad
+// 'dev' não é um sandbox isolado. Rode verEstadoCardTesteContraSquadDev.js
+// primeiro pra conferir a descrição atual antes de rodar este (é de
+// graça, não chama o modelo).
 //
 // Uso:
 //   cd functions
@@ -67,7 +71,7 @@ async function main() {
   const cardId = process.argv[2];
   if (!cardId) {
     console.error(`Uso: node ${__filename.split(require('path').sep).pop()} <cardId>`);
-    console.error('cardId é obrigatório, sem default. Card de teste atual: c1785889397211_x0xr2 (squad dev).');
+    console.error('cardId é obrigatório, sem default. Card de teste atual: c1786712278908 (squad dev).');
     process.exit(1);
   }
 
