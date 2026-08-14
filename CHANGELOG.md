@@ -18,6 +18,30 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.249 — 2026-08-14 · promove pra prod
+Promove pra produção o investimento em custo de Firebase feito em dev
+(v8.30.424-dev → v8.30.425-dev) — motivado pela cobrança que passa a
+valer em 01/09.
+
+- **Fase 1 — piso absoluto no fallback de carregamento de cards**: o
+  carregamento em duas etapas caía no fallback completo (listener bruto
+  em `/cards` inteiro, sem filtro de arquivados, somando banda a cada
+  mudança de QUALQUER pessoa dali em diante) sempre que a proporção de
+  cards a rebuscar passava de 40% do total ativo — mas squads pequenos
+  caíam nisso repetidas vezes só pela proporção, mesmo com um número
+  absoluto de cards baixo. Agora o limite usa o MAIOR valor entre a
+  proporção de 40% e um piso absoluto de 150 cards a rebuscar; squads
+  grandes não mudam de comportamento. Esta promoção também força (via
+  auto-update) um reload em toda sessão aberta, reavaliando essa decisão
+  do zero pra sessões que ficaram presas no fallback há dias.
+- **Fase 2 — 📋 Modelos sob demanda**: o nó `ql_items` (Recorrentes,
+  Agendamentos e Modelos) carregava tudo de uma vez, sempre, mesmo em
+  squads com biblioteca grande de Modelos que quase ninguém abre.
+  Recorrentes/Agendamentos continuam carregando sempre (o board precisa
+  deles sozinho pra conferir itens vencidos); Modelos passa a carregar
+  só quando a sessão realmente usa (drawer de Modelos, "Usar modelo" num
+  card, salvar como modelo, aba Automações, backup manual).
+
 ### v8.30.248 — 2026-08-13 · promove pra prod
 Promove pra produção todo o lote acumulado em dev desde a v8.30.247
 (v8.30.422-dev → v8.30.423-dev), validado em dev.
