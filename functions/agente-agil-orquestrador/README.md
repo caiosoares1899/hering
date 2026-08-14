@@ -1486,3 +1486,72 @@ Exemplo do formato novo:
 ```
 [agente-agil-mencao] c1785... c1786... dryRun=true | status=done | ferramentas: checklist_item({"item":"Medir de novo em prod","done":true}) -> comentario({"texto":"Marquei o item como concluído."}) | finalText: "Feito! Marquei o item de checklist."
 ```
+
+## Item 4: lote de testes deliberados via @menção — lacuna fechada
+
+Depois do log enriquecido, o usuário rodou 4 pedidos inequívocos
+(ferramenta e valor certos nomeados de propósito, diferente dos testes
+anteriores que geraram `awaiting_human` por ambiguidade genuína) — o
+objetivo era fechar a lacuna identificada: confirmar uma ferramenta de
+ESCRITA de verdade sendo escolhida e aplicada certo, através do gatilho
+automático (não mais só via script CLI), agora visível no log
+enriquecido.
+
+**Resultado — todos passaram:**
+- `checklist_item`, 2x: item certo, `done:true` em ambos. Num deles, o
+  modelo notou sozinho que o card estava pronto pra revisão depois da
+  marcação — mesmo tipo de raciocínio "além do pedido direto" já visto
+  nos cenários de julgamento anteriores.
+- `editar_campos` (tags): adicionou a tag pedida, preservando as 5 tags
+  existentes do card (add-only, como já era esperado desde o canário
+  7 — mas essa era a 1ª vez confirmado através do gatilho, não do
+  script).
+- Prioridade "alta" — **achado de julgamento inesperado**: a prioridade
+  atual do card já era "crítica" (mais alta que "alta"). Em vez de
+  aplicar cegamente o pedido, o modelo reconheceu que isso seria um
+  DOWNGRADE não pedido explicitamente, e pausou em `perguntar_humano`
+  pra confirmar antes de rebaixar — nuance que não tinha aparecido em
+  nenhum cenário anterior (os testes de prioridade até aqui sempre
+  usaram um alvo inequivocamente mais alto ou um valor "de troca", nunca
+  um pedido que seria regressivo dado o estado real do card).
+
+**Item 4 considerado satisfeito** com os testes deliberados — a lacuna
+específica (ferramenta de escrita real + input certo, via gatilho
+automático, visível no log) está fechada. Segue rodando de forma
+orgânica (sem testes forçados) por mais alguns dias, como bônus — não
+bloqueante pra nenhuma decisão.
+
+**Decisão sobre `dryRun:false` no gatilho de @menção: AINDA PENDENTE,
+NÃO TOMADA.** Fica explícito aqui pra não virar suposição por inércia —
+mesmo com o item 4 satisfeito, virar escrita real no gatilho (ainda
+restrito ao squad `dev`) é uma decisão nova e separada, que só acontece
+depois do período de uso orgânico e de um sign-off explícito do
+usuário, do mesmo jeito que cada um dos passos anteriores desta fase
+exigiu.
+
+## Achado de UX (não implementado): Agente Ágil não aparece no autocomplete de menção
+
+Ao planejar o lote de testes, o usuário perguntou se "Agente Ágil"
+aparece na lista suspensa de autocomplete quando alguém digita "@" num
+comentário (a mesma lista que sugere membros reais + "agentes de IA"
+cadastrados em `dados/agentes`, um recurso genérico e pré-existente,
+sem relação com este orquestrador). Confirmado: não aparece — o agente
+não é um membro real nem está cadastrado nessa lista.
+
+**Achado extra ao investigar**: mesmo que "Agente Ágil" fosse cadastrado
+em `dados/agentes` só pra aparecer na lista, SELECIONAR essa sugestão
+não inseriria o texto certo. `insertMention()` usa `getMemberHandle()`,
+que deriva o texto a partir do nome ("Agente Ágil" → `agente.gil` — o
+"Á" acentuado é removido pela sanitização de handle, não vira "a",
+some). Isso não bate com a convenção de `detectaMencao.js`
+("@agente agil"). Mesma causa raiz do problema já sinalizado com o
+botão "↩ Responder" (ver seção "Item 3" acima) — os dois passam pela
+mesma máquina de handle de menção.
+
+**Escopo do follow-up combinado**: os dois ajustes (aparecer no
+autocomplete + inserir o texto certo ao selecionar/responder) cabem no
+MESMO PR pequeno de `kanban-dev.html`, quando decidido fazer — mudança
+concentrada no código de menção (`handleMentionInput`/`insertMention`/
+Responder), não requer registro real em `dados/agentes`. Segue como
+follow-up, não implementado, fora do escopo desta fase (Cloud
+Function).
