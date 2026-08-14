@@ -1560,6 +1560,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.428-dev — 2026-08-14 — Agente Ágil aparece no autocomplete de @menção
+Follow-up combinado (mesma causa raiz) de dois achados de UX sinalizados
+ao testar o gatilho automático de @menção do Agente Ágil Orquestrador
+(`functions/agente-agil-orquestrador/`): (1) ele não aparecia como
+sugestão ao digitar "@" num comentário, e (2) mesmo cadastrado pra
+aparecer, selecionar inseriria `@agente.gil` em vez do texto certo —
+`getMemberHandle()` deriva o texto a partir do nome ("Agente Ágil" →
+"agente" + "." + "gil", o "Á" acentuado é removido pela sanitização de
+handle, não vira "a", simplesmente some) — não bate com a convenção que
+`detectaMencao.js` espera (`"@agente agil"`).
+
+**Correção**: entidade sintética `AGENTE_AGIL_MENTION_ENTRY` (nunca vira
+registro real em `dados/agentes` — só o sistema de menção enxerga, não
+aparece em seletor de responsável/participantes) aparece no autocomplete
+ao digitar "@a"/"@age"/etc., **só nos squads onde o gatilho automático
+existe** (`AGENTE_AGIL_MENTION_SQUADS`, hoje só `dev` — mesmo escopo de
+`mentionTrigger.js:SQUAD_ID`, pra não sugerir uma menção que não dispara
+nada em outro squad). Selecionar (mouse ou teclado) ou usar "↩ Responder"
+num comentário do agente insere `@Agente Ágil ` literal, nunca passando
+por `getMemberHandle()`.
+
+Bônus encontrado no caminho: a seleção por TECLADO (Enter/Tab) no
+dropdown de menção reparsava o texto exibido pra achar o membro de novo
+(`activeOpt.querySelector('.mention-init').textContent`) — funcionava
+por acaso pra membros humanos, mas quebraria pro Agente Ágil (texto
+exibido é o nome, não um handle válido). Trocado por um `data-mention-init`
+gravado direto no elemento ao renderizar — mais robusto, corrige de
+quebra a mesma classe de fragilidade pra qualquer "agente" cadastrado em
+`dados/agentes` também.
+
 ### v8.30.427-dev — 2026-08-14 — Agente Ágil (client-side) passa a respeitar Prazo/Submarca/Ficha Técnica obrigatórios
 Pedido direto do PO/organizador do board: as regras de campo obrigatório
 que a UI já aplica em `salvarCard()` (Prazo, e Submarca/Ficha Técnica
