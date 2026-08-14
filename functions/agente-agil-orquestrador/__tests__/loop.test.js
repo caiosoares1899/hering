@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { runLoop } = require('../loop');
 const { buildTools } = require('../tools');
 const limits = require('../limits');
+const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
 
 // Cliente falso: cada chamada a decide() consome a próxima resposta do
 // script, na ordem. Zero rede — nenhuma dependência de llmClient.js aqui.
@@ -93,20 +94,44 @@ test('ferramenta desconhecida vinda do modelo não derruba o loop', async () => 
   assert.deepEqual(result.steps[0].toolCalls[0].output, { ok: false, error: 'unknown_tool', tool: 'ferramenta_que_nao_existe' });
 });
 
-test('limits.isEnabled() é false por padrão (kill switch de produção)', () => {
-  assert.equal(limits.isEnabled(), false);
+test('limits.isEnabled() é false sem db (kill switch dinâmico, postura fail-safe)', async () => {
+  assert.equal(await limits.isEnabled(), false);
+  assert.equal(await limits.isEnabled(undefined), false);
+});
+
+test('limits.isEnabled(db) lê kanban/config/agente_agil_orquestrador/enabled do Firebase', async () => {
+  const dbDesligado = makeFakeDb({}); // nó ausente -> desligado
+  assert.equal(await limits.isEnabled(dbDesligado), false);
+
+  const dbFalso = makeFakeDb({ kanban: { config: { agente_agil_orquestrador: { enabled: false } } } });
+  assert.equal(await limits.isEnabled(dbFalso), false);
+
+  const dbValorEstranho = makeFakeDb({ kanban: { config: { agente_agil_orquestrador: { enabled: 'sim' } } } });
+  assert.equal(await limits.isEnabled(dbValorEstranho), false); // só true literal liga
+
+  const dbLigado = makeFakeDb({ kanban: { config: { agente_agil_orquestrador: { enabled: true } } } });
+  assert.equal(await limits.isEnabled(dbLigado), true);
 });
 
 test('a suíte nunca depende do valor real do kill switch de produção', async () => {
-  // O switch de produção está desligado (linha acima já comprova isso), mas
-  // o teste passa enabled:true explicitamente e o loop roda normalmente —
-  // prova que runLoop() nunca lê limits.isEnabled() por conta própria.
-  assert.equal(limits.isEnabled(), false);
+  // Sem db, o switch fica desligado (testes acima já comprovam isso), mas o
+  // teste passa enabled:true explicitamente e o loop roda normalmente —
+  // prova que runLoop() nunca lê limits.isEnabled() por conta própria (o
+  // default de `enabled` agora é `false` puro, nem chama isEnabled()).
+  assert.equal(await limits.isEnabled(), false);
   const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'rodou mesmo com o switch de produção desligado' }]);
   const result = await runLoop({ llmClient, tools: buildTools(), system: 'sistema', task: 'tarefa', enabled: true });
 
   assert.equal(result.status, 'done');
   assert.equal(llmClient.calls(), 1);
+});
+
+test('runLoop() sem `enabled` explícito fica desligado por padrão (default mudou de limits.isEnabled() pra false puro)', async () => {
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'não deveria rodar' }]);
+  const result = await runLoop({ llmClient, tools: buildTools(), system: 'sistema', task: 'tarefa' });
+
+  assert.equal(result.status, 'disabled');
+  assert.equal(llmClient.calls(), 0);
 });
 
 test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_humano + ler_card', () => {
