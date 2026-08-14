@@ -6851,6 +6851,11 @@ verdade por um tempo.
 precisa rodar `firebase functions:secrets:set ANTHROPIC_API_KEY` e
 `firebase deploy --only functions:agenteAgilMencao`.
 
+**Deploy confirmado** (mesmo dia): secret criado, deploy completo,
+`agenteAgilMencao(us-central1)` ativa em produção, rodando em modo sombra.
+Próximo passo: testar comentando "@Agente Ágil" num card do squad `dev`
+e observar os logs.
+
 ### 2026-08-14 · Kill switch dinâmico (item 1 do plano de acionamento sem supervisão)
 Combinado com o usuário: sequência final pra ligar os dois mecanismos de
 acionamento pedidos (@menção + gatilho automático) — kill switch

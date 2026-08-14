@@ -1443,9 +1443,10 @@ tempo — decisão nova e separada, combinada, não implícita neste commit.
 **151 testes passando** (era 138 antes — 13 novos: 7 de
 `detectaMencao.test.js`, 6 de `mentionTrigger.test.js`).
 
-**Pendente pro deploy** (fora do alcance deste ambiente — precisa da CLI
-do Firebase com credenciais reais): `firebase functions:secrets:set
-ANTHROPIC_API_KEY` antes do primeiro `firebase deploy --only
-functions:agenteAgilMencao`. Depois do deploy, observar os logs da
-função (Cloud Functions console ou `firebase functions:log`) por um
-tempo em modo sombra antes de considerar virar `dryRun:false`.
+**Deploy feito** (2026-08-14, pelo usuário): secret `ANTHROPIC_API_KEY`
+criado, `firebase deploy --only functions:agenteAgilMencao` — `+ Deploy
+complete!`, função `agenteAgilMencao(us-central1)` criada e ativa em
+produção. Rodando em modo sombra (`dryRun:true` fixo). Próximo passo:
+comentar "@Agente Ágil ..." num card do squad `dev`, observar
+`firebase functions:log --only agenteAgilMencao` (ou Console do
+Firebase) por um tempo, antes de considerar virar `dryRun:false`.
