@@ -136,6 +136,23 @@ outra mudança na página:
   de alguém perguntar "atualizou o help content também?"). Motivou a
   criação desta skill.
 
+- **v8.30.417-dev → v8.30.425-dev (auditoria em 2026-08-14, PRs #369, #370,
+  #372, #373)**: revisado tudo desde o último sync (#366) — nenhum gap
+  encontrado. `b738e7d` (filtros no Dashboard do Controle de Criativos) não
+  precisou de ajuste: a entrada "Ficha Técnica" já descreve a tabela como
+  genericamente "filtrável", sem restringir a uma aba só. `2aff220`
+  (opções Mktpace/Impresso/Outros + fix "Meu Dia" marcando card concluído
+  de outro squad como atrasado) também não precisou: Plataforma já é
+  documentada de forma genérica, e o fix restaura o comportamento que a
+  entrada "Meu Dia" já prometia ("Cards já concluídos não aparecem"), não
+  muda o que é prometido. `0f51b9a` e `8c75bc7` (Fases 1 e 2 do
+  investimento em custo de Firebase) são só arquitetura interna
+  (threshold do fallback de cards, carregamento sob demanda de Modelos) —
+  zero texto de tela ou comportamento visível mudou, exceto uma mensagem
+  de fallback do Agente Ágil pra uma corrida rara (`salvar_modelo` antes
+  dos Modelos carregarem), já coberta pela bullet genérica existente em
+  "Ações que o agente pode executar".
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.
