@@ -193,3 +193,24 @@ environments) or deployed through their own separate command, not GitHub
 Pages. Still tag and log Cloud Function releases (see the `agente-agil-v1a`
 example in `CHANGELOG.md`) since they're versioned independently of
 `version.json`.
+
+### Promotion cadence for `kanban.html`/`painel.html` (prod): bugs now, features batched
+
+Standing rule (2026-08-14): **bug fixes still promote to prod immediately**
+once validated (step 3 above, no change there) — but **feature promotions
+get batched and concentrated at the end of the day** instead of shipping
+one-by-one as each gets validated. Exceptions handled ad hoc when they come
+up in conversation (e.g. something time-sensitive), not a rigid rule.
+
+Why: every prod version bump forces every open tab to reload within
+`CHECK_INTERVAL_MS` (5 min) via the auto-update overlay (`kanban.html`
+~line 24439). A reload isn't free — it re-authenticates and re-attaches
+every Firebase listener from scratch (`cards`, `cards_index`, `tags`,
+`columns`, `presence`, ...), which is the expensive "cold start" the
+`_dbg` byte-measurement system (~line 6702) tracks. Confirmed against real
+data: 13 separate "Promove pra prod" merges landed within ~40h on
+2026-08-04/05, and those are the two highest-bandwidth days in the
+`_debug_bytes_daily` sample for that window (~210MB and ~161MB, vs. a
+typical quiet day around 1-2MB) — each promotion re-charges the cold-start
+cost to everyone who had the board open at the time. Batching feature
+promotions into one push per day means one forced reload instead of many.
