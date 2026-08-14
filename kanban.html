@@ -5408,7 +5408,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.248</div>
+<div class="version">v8.30.249</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6552,6 +6552,13 @@ let editingId=null;
 let _savingCard=false;
 let currentQL=null; // 'recorrentes' | 'modelos'
 let qlItems={ recorrentes:[], modelos:[], agendamentos:[] };
+// Modelos carrega sob demanda (ver _ensureModelosLoaded, perto do listener
+// de ql_items) — Recorrentes/Agendamentos continuam eager, processados
+// sozinhos ~3.5s depois do board abrir (ver processRecorrentes). Squad com
+// biblioteca grande de modelos que quase ninguém abre pagava esse custo
+// sempre, pra qualquer sessão, mesmo sem nunca abrir a tela de Modelos.
+let _modelosLoaded=false;
+let _modelosLoadPromise=null;
 let links=[];
 // ═══ LEMBRETES ═══ (manuais persistidos no Firebase; quadro = derivado dos cards)
 let lembretes=[];        // manuais do squad: {id, tipo:'po'|'gestao'(legado), text, autor, autorUid, init, ts, target?}
@@ -7590,6 +7597,19 @@ let _cardsSyncDebounce = null;
   // sem precisar serializar pra string como o localStorage exige.
   const _CARDS_CACHE_KEY = 'cardsCache_v1_'+ACTIVE_SQUAD;
   const _CARDS_CACHE_STALE_RATIO = 0.4;
+  // Piso absoluto — sem ele, um squad PEQUENO cai no fallback (listener
+  // vitalício em /cards inteiro, sem filtro de arquivados, que sangra banda
+  // a cada mudança de QUALQUER pessoa dali em diante) só por ultrapassar
+  // 40% em termos RELATIVOS, mesmo o número absoluto de cards a rebuscar
+  // sendo pequeno — achado real (2026-08-13, squad "outlet"): 44-52 cards
+  // ativos, caindo no fallback repetidas vezes por precisar rebuscar entre
+  // 26 e 49 cards (proporção de 0.59 a 0.94, bem acima do limite, mas em
+  // número absoluto ainda bem mais barato que centenas de leituras avulsas
+  // — ver comentário original abaixo). Só considera o fallback mais barato
+  // quando o número absoluto TAMBÉM é grande; pra squads grandes (onde
+  // activeCount*RATIO já ultrapassa este piso sozinho) o comportamento não
+  // muda nada.
+  const _CARDS_CACHE_STALE_FLOOR = 150;
   const _IDB_NAME = 'mare_digital_cache';
   const _IDB_STORE = 'cards_cache';
   let _idbOpenPromise = null;
@@ -7733,11 +7753,13 @@ let _cardsSyncDebounce = null;
     // "não mudou" só porque ele nunca entra em toFetch.
     if(cache){
       const activeCount = remoteIds.filter(id=>!(remoteArchived||{})[id]).length;
-      if(activeCount && toFetch.length > activeCount * _CARDS_CACHE_STALE_RATIO){
+      const limiteEfetivo = Math.max(activeCount * _CARDS_CACHE_STALE_RATIO, _CARDS_CACHE_STALE_FLOOR);
+      if(activeCount && toFetch.length > limiteEfetivo){
         _logFallbackReason('cache_desatualizado_demais', {
           activeCount, toFetch: toFetch.length,
           proporcao: +(toFetch.length/activeCount).toFixed(3),
           limite: _CARDS_CACHE_STALE_RATIO,
+          limiteEfetivo,
         });
         return false;
       }
@@ -8111,12 +8133,37 @@ let _cardsSyncDebounce = null;
       if(currentIds!==incomingIds) tags=incoming;
     }).catch(()=>{});
   }, 60000);
-  // Quick lists
-  fbListen(FB+'/ql_items',val=>{ 
-    if(val) qlItems=val;
-    // Atualiza painel se estiver aberto
-    if(document.getElementById('ql-ov')?.classList.contains('open')) renderQLBody();
+  // Quick lists — Recorrentes/Agendamentos continuam eager (o board precisa
+  // deles sozinho, ~3.5s depois de abrir, pra conferir se algum item está
+  // na hora de virar card — ver processRecorrentes). Modelos NÃO entra
+  // aqui de propósito: só carrega sob demanda, ver _ensureModelosLoaded.
+  fbListen(FB+'/ql_items/recorrentes',val=>{
+    qlItems.recorrentes = val || [];
+    if(document.getElementById('ql-ov')?.classList.contains('open') && currentQL==='recorrentes') renderQLBody();
   });
+  fbListen(FB+'/ql_items/agendamentos',val=>{
+    qlItems.agendamentos = val || [];
+    if(document.getElementById('ql-ov')?.classList.contains('open') && currentQL==='agendamentos') renderQLBody();
+  });
+  // Modelos sob demanda: primeira chamada liga o listener (que já chega com
+  // o valor atual, resolvendo a promise); chamadas seguintes só devolvem o
+  // que já está resolvido/em voo. Depois do 1º load, fica sincronizado ao
+  // vivo como qualquer outro campo -- só o INÍCIO do carregamento que é
+  // adiado. Exposta em window pelo mesmo motivo de _ensureArchivedCardsLoaded
+  // (closure de fbLoadAll(), chamada de fora por openQL/ctxModel/etc).
+  function _ensureModelosLoaded(){
+    if(_modelosLoaded) return Promise.resolve();
+    if(_modelosLoadPromise) return _modelosLoadPromise;
+    _modelosLoadPromise = new Promise(resolve=>{
+      fbListen(FB+'/ql_items/modelos', val=>{
+        qlItems.modelos = val || [];
+        if(!_modelosLoaded){ _modelosLoaded = true; resolve(); }
+        if(document.getElementById('ql-ov')?.classList.contains('open') && currentQL==='modelos') renderQLBody();
+      });
+    });
+    return _modelosLoadPromise;
+  }
+  window._ensureModelosLoaded = _ensureModelosLoaded;
   // Links
   fbListen(FB+'/links',val=>{ 
     if(val) links=Array.isArray(val)?val:Object.values(val);
@@ -10877,7 +10924,12 @@ function saveCard(){
       item.participants = getParticipants();
       item.updatedAt = new Date().toISOString();
       item.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-      fbSet(FB+'/ql_items',qlItems);
+      // Escreve só a sub-lista que mudou (tipo vem de _editingQLItem, é
+      // sempre a mesma aba que estava aberta pra editar) -- nunca o nó
+      // ql_items inteiro, que sobrescreveria modelos/recorrentes/agendamentos
+      // que este dispositivo talvez nunca tenha carregado (modelos agora é
+      // sob demanda, ver _ensureModelosLoaded).
+      fbSet(FB+'/ql_items/'+tipo, qlItems[tipo]);
     }
     cards = cards.filter(c=>!c._isQLTemp);
     _editingQLItem = null;
@@ -16968,7 +17020,7 @@ async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card perm
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
 // ═══════════════════════════════════════════════════════
-function openQL(tipo){
+async function openQL(tipo){
   currentQL=tipo;
   if(!qlItems[tipo]) qlItems[tipo]=[];
   const titles={recorrentes:'🔁 Itens recorrentes',modelos:'📋 Cards modelo',agendamentos:'📅 Cards agendados'};
@@ -16986,8 +17038,16 @@ function openQL(tipo){
       : '');
   // Popula tag select
   document.getElementById('ql-new-tag').innerHTML=tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
-  renderQLBody();
   document.getElementById('ql-ov').classList.add('open');
+  // Modelos carrega sob demanda (ver _ensureModelosLoaded) -- só espera de
+  // verdade na 1ª vez que alguém abre essa aba; depois disso a promise já
+  // vem resolvida na hora.
+  if(tipo==='modelos' && window._ensureModelosLoaded){
+    const body=document.getElementById('ql-body');
+    if(body) body.innerHTML='<div style="font-size:12px;color:var(--txt3);">⏳ Carregando modelos...</div>';
+    await window._ensureModelosLoaded();
+  }
+  renderQLBody();
 }
 function renderQLBody(){
   const body=document.getElementById('ql-body'); body.innerHTML='';
@@ -17058,7 +17118,7 @@ function salvarAgendamento(){
   if(!data){ showToast('Escolha uma data.'); return; }
   item.data = data;
   item.col  = document.getElementById('agcfg-col').value;
-  fbSet(FB+'/ql_items',qlItems);
+  fbSet(FB+'/ql_items/agendamentos',qlItems.agendamentos);
   closeOv('agcfg-ov');
   renderQLBody();
   showToast('📅 Agendamento salvo para '+_fmtDataAg(data));
@@ -17092,7 +17152,7 @@ function saveReqFields(){
   const i=parseInt(ov.dataset.idx); const item=qlItems.modelos[i]; if(!item) return;
   const checked=[...document.querySelectorAll('#reqf-list input:checked')].map(c=>c.value);
   item.requiredFields=checked;
-  fbSet(FB+'/ql_items',qlItems);
+  fbSet(FB+'/ql_items/modelos',qlItems.modelos);
   ov.classList.remove('open');
   renderQLBody();
   showToast(checked.length?`✅ ${checked.length} campo(s) obrigatório(s) definido(s)`:'Campos obrigatórios removidos');
@@ -17102,7 +17162,7 @@ function addQLItem(){
   const tag=document.getElementById('ql-new-tag').value;
   if(!qlItems[currentQL]) qlItems[currentQL]=[];
   qlItems[currentQL].push({title,tag});
-  fbSet(FB+'/ql_items',qlItems);
+  fbSet(FB+'/ql_items/'+currentQL,qlItems[currentQL]);
   document.getElementById('ql-new-title').value='';
   renderQLBody();
 }
@@ -17238,7 +17298,7 @@ function processRecorrentes(){
     // (ver _criarCardRecorrente), reaproveitado como valor do trigger pra
     // não depender de índice de array (que desalinha se o item for excluído).
     criados.forEach(card=>{ if(card.recorrenteDe) runAutoRules('recorrente_created', card.id, card.recorrenteDe); });
-    fbSet(FB+'/ql_items',qlItems);
+    fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes);
     renderBoard();
     // Avisa: lembrete + notificação + toast
     let lemPropMudou=false;
@@ -17309,7 +17369,7 @@ function processAgendamentos(){
   });
   if(mudou){
     fbSaveAll(undefined, criados.map(c=>c.id));
-    fbSet(FB+'/ql_items',qlItems);
+    fbSet(FB+'/ql_items/agendamentos',qlItems.agendamentos);
     renderBoard();
     let lemPropMudou=false;
     criados.forEach(card=>{
@@ -17367,7 +17427,7 @@ function processRelembreteAuto(){
     updLemBadge();
   }
 }
-function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items',qlItems); renderQLBody(); }
+function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items/'+currentQL,qlItems[currentQL]); renderQLBody(); }
 // ── Modal de configuração de recorrência ──
 let _recEditIdx=null;
 let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente via modal de card
@@ -17445,7 +17505,7 @@ function salvarRecorrencia(){
   const on=document.getElementById('rec-active').checked;
   if(!on){
     item.active=false;
-    fbSet(FB+'/ql_items',qlItems); renderQLBody(); closeOv('rec-ov');
+    fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes); renderQLBody(); closeOv('rec-ov');
     showToast('Recorrência desativada.');
     return;
   }
@@ -17459,7 +17519,7 @@ function salvarRecorrencia(){
   item.col=document.getElementById('rec-col').value;
   item.owner=document.getElementById('rec-owner').value;
   if(item.lastCreated===undefined) item.lastCreated=null;
-  fbSet(FB+'/ql_items',qlItems);
+  fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes);
   renderQLBody();
   closeOv('rec-ov');
   showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec));
@@ -17586,7 +17646,17 @@ function swCfgTab(tab){
  const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
-  if(tab==='auto'){ renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); renderFanoutCfg(); }
+  if(tab==='auto'){
+    renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); renderFanoutCfg();
+    // Modelos é lazy (ver _ensureModelosLoaded) — na 1ª vez que esta aba abre
+    // numa sessão os selects de modelo acima renderizam vazios; assim que
+    // carregar, re-renderiza só se a aba ainda estiver aberta.
+    if(window._ensureModelosLoaded && !_modelosLoaded){
+      window._ensureModelosLoaded().then(()=>{
+        if(document.getElementById('cfgtab-auto')?.classList.contains('on')){ populateAutoSelects(); renderFanoutCfg(); renderAutoRules(); }
+      });
+    }
+  }
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
@@ -18434,12 +18504,17 @@ function executeTool(name,input){
     case 'salvar_modelo':{
       const c=cards.find(x=>x.id===input.card_id);
       if(!c) return{ok:false,msg:'Card não encontrado'};
-      if(!qlItems.modelos) qlItems.modelos=[];
+      // executeTool() é síncrono (o chamador faz JSON.stringify(res) na
+      // hora, sem await) — não dá pra usar _ensureModelosLoaded() aqui
+      // (é async). Se a lista de modelos ainda não carregou nesta sessão,
+      // recusa educadamente em vez de arriscar sobrescrever/perder modelos
+      // que este dispositivo nunca buscou.
+      if(!_modelosLoaded) return{ok:false,msg:'Lista de modelos ainda carregando — tenta de novo em alguns segundos.'};
       const nome=input.nome_modelo||c.title;
       if(qlItems.modelos.find(m=>m.title===nome)) return{ok:false,msg:`Modelo "${nome}" já existe`};
       qlItems.modelos.push({title:nome,tag:c.tag,tags:getCardTags(c).slice(),desc:c.desc||'',po:c.po||'',
         checklist:(c.checklist||[]).map(i=>({t:i.t,done:false})),riscos:c.riscos||[]});
-      fbSet(FB+'/ql_items',qlItems);
+      fbSet(FB+'/ql_items/modelos',qlItems.modelos);
       return{ok:true,msg:`Card "${c.title}" salvo como modelo "${nome}"`};
     }
     case 'salvar_recorrente':{
@@ -18448,7 +18523,7 @@ function executeTool(name,input){
       if(!qlItems.recorrentes) qlItems.recorrentes=[];
       if(qlItems.recorrentes.find(r=>r.title===c.title)) return{ok:false,msg:`"${c.title}" já está nos recorrentes`};
       qlItems.recorrentes.push({title:c.title,tag:c.tag,tags:getCardTags(c).slice(),desc:c.desc||''});
-      fbSet(FB+'/ql_items',qlItems);
+      fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes);
       return{ok:true,msg:`"${c.title}" adicionado aos recorrentes`};
     }
     case 'excluir_card':{
@@ -23949,19 +24024,20 @@ function toggleCampMetaMobile(){
   sb.classList.toggle('camp-sidebar-open', !isOpen);
   btn.classList.toggle('open', !isOpen);
 }
-function ctxModel(){
+async function ctxModel(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
+  hideCtxMenu();
+  if(window._ensureModelosLoaded) await window._ensureModelosLoaded();
   if(!qlItems.modelos) qlItems.modelos=[];
   if(qlItems.modelos.find(m=>m.title===card.title)){
-    showToast('"'+card.title.substring(0,20)+'" já está nos modelos'); hideCtxMenu(); return;
+    showToast('"'+card.title.substring(0,20)+'" já está nos modelos'); return;
   }
   qlItems.modelos.push({
     title:card.title, tag:card.tag, tags:getCardTags(card).slice(), desc:card.desc||'',
     po:card.po||'', checklist:(card.checklist||[]).map(i=>({t:i.t,done:false})), riscos:card.riscos||[],
   });
-  fbSet(FB+'/ql_items',qlItems);
+  fbSet(FB+'/ql_items/modelos',qlItems.modelos);
   showToast('✅ Salvo como modelo');
-  hideCtxMenu();
 }
 
 function ctxRecorrente(){
@@ -23976,7 +24052,7 @@ function ctxRecorrente(){
       owner:card.owner||'', col:card.col||(columns[0]?.id)||'', active:false,
     });
     idx = qlItems.recorrentes.length-1;
-    fbSet(FB+'/ql_items',qlItems);
+    fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes);
     showToast('🔁 Salvo como recorrente — configure abaixo');
   } else {
     showToast('Já existe um recorrente com esse nome — abrindo config');
@@ -24009,7 +24085,9 @@ async function ctxDelete(){
 // UTILS
 // ═══════════════════════════════════════════════════════
 async function salvarComoModeloModal(){
+  const btn=event.target; // captura antes de qualquer await — window.event não sobrevive à espera
   const title=document.getElementById('m-title').value.trim(); if(!title) return;
+  if(window._ensureModelosLoaded) await window._ensureModelosLoaded();
   if(!qlItems.modelos) qlItems.modelos=[];
   const jaExiste=qlItems.modelos.find(m=>m.title===title);
   if(jaExiste){ await uiAlert('"'+title+'" já está nos modelos.',{title:'Modelo duplicado'}); return; }
@@ -24021,8 +24099,8 @@ async function salvarComoModeloModal(){
     checklist:getCL().map(i=>({t:i.t,done:false})),
     riscos:getRiscos(),
   });
-  fbSet(FB+'/ql_items',qlItems);
-  const btn=event.target; const orig=btn.textContent;
+  fbSet(FB+'/ql_items/modelos',qlItems.modelos);
+  const orig=btn.textContent;
   btn.textContent='✅ Salvo!'; btn.disabled=true;
   setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; },2000);
 }
@@ -24030,10 +24108,11 @@ async function salvarComoModeloModal(){
 // (chamado a partir do drawer de Modelos), que sempre abre um card NOVO
 // em branco a partir do modelo. Aqui o card sendo editado continua sendo
 // o mesmo (editingId não muda), só os campos são atualizados.
-function toggleUsarModeloMenu(){
+async function toggleUsarModeloMenu(){
   const menu=document.getElementById('m-usarmodelo-menu'); if(!menu) return;
   const isOpen=menu.style.display!=='none';
   if(isOpen){ menu.style.display='none'; return; }
+  if(window._ensureModelosLoaded && !_modelosLoaded) await window._ensureModelosLoaded();
   if(!qlItems.modelos || !qlItems.modelos.length){ showToast('Nenhum modelo salvo pra essa squad ainda.'); return; }
   menu.innerHTML=qlItems.modelos.map((m,i)=>
     `<button onclick="aplicarModeloNoCard(${i})" style="display:block;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
@@ -26311,6 +26390,10 @@ async function buildBackupPayload(){
   // _planCardsDelta) seria um backup incompleto sem nenhum aviso -- garante
   // que estão todos em `cards` antes de montar o payload.
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
+  // Mesmo raciocínio pros Modelos (sob demanda desde a Fase 2 do
+  // investimento em custo de Firebase) -- sem isso um backup rodado antes de
+  // qualquer sessão abrir a tela de Modelos sairia sem eles, sem aviso.
+  if(window._ensureModelosLoaded) await window._ensureModelosLoaded();
   return {
     version: document.querySelector('.version')?.textContent?.trim() || '',
     squad: ACTIVE_SQUAD,
@@ -26358,6 +26441,7 @@ async function copyBackupJSON(){
 async function previewBackupStats(){
   const el = document.getElementById('backup-stats'); if(!el) return;
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded(); // senão a contagem de arquivados sai errada na primeira visita
+  if(window._ensureModelosLoaded) await window._ensureModelosLoaded(); // idem pra contagem de modelos, agora sob demanda
   const ativos = cards.filter(c=>!c.archived);
   const arquivados = cards.filter(c=>c.archived);
   const byCol = columns.reduce((acc,col)=>{
