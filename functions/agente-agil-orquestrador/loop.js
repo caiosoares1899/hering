@@ -14,6 +14,14 @@
 // E uma terceira parada "de produto", não de segurança: 'awaiting_human',
 // quando o modelo chama perguntar_humano — não tem com o que continuar até
 // alguém responder, então o loop encerra e devolve a pergunta em steps.
+//
+// `enabled` NÃO tem mais default resolvido de `limits.isEnabled()` (2026-08-14
+// — isEnabled() virou async, lê o Firebase, e default de parâmetro não pode
+// dar `await`). Default agora é `false`: quem quiser respeitar o kill switch
+// de verdade precisa resolver `await limits.isEnabled(db)` ANTES de chamar
+// runLoop() e passar o resultado explícito — omitir o parâmetro passa a
+// significar "desligado", não "usa o valor de produção", o mesmo tipo de
+// postura fail-safe do resto deste módulo (nunca liga por acidente).
 const limits = require('./limits');
 
 function findTool(tools, name) {
@@ -40,7 +48,7 @@ async function runLoop({
   tools,
   system,
   task,
-  enabled = limits.isEnabled(),
+  enabled = false,
   maxIterations = limits.MAX_ITERATIONS,
 }) {
   if (!enabled) {

@@ -6823,6 +6823,30 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Kill switch dinâmico (item 1 do plano de acionamento sem supervisão)
+Combinado com o usuário: sequência final pra ligar os dois mecanismos de
+acionamento pedidos (@menção + gatilho automático) — kill switch
+dinâmico primeiro, antes de QUALQUER acionamento sem humano no terminal
+(não só antes do gatilho automático).
+
+`limits.js`: `isEnabled()` deixou de ser constante hardcoded
+(`KILL_SWITCH_ENABLED = false`) e virou `async isEnabled(db)`, lendo
+`kanban/config/agente_agil_orquestrador/enabled` no Firebase — ADM liga/
+desliga na hora, sem deploy. Fail-safe preservado: sem db, nó ausente,
+erro, ou qualquer valor não-`true` → desligado.
+
+`loop.js`: default de `enabled` mudou de `limits.isEnabled()` (não dava
+mais pra usar, virou async) pra `false` puro — quem quer respeitar o
+switch de verdade resolve `await limits.isEnabled(db)` antes de chamar
+`runLoop()`. Nenhum canário/teste existente afetado (todos já passavam
+`enabled: true` explícito). 138 testes passando (2 novos).
+
+Também registrado no README a decisão completa de sequenciamento dos
+dois mecanismos de acionamento: kill switch → escopo squad `dev` → @menção
+v1 (sem retomada de sessão dedicada — reconstrução via `ler_card`, mesmo
+padrão já provado no canário 9) → rodar de verdade por um tempo → só
+depois gatilho automático.
+
 ### 2026-08-14 · Canário 9 CONFIRMADO: item 5 fechado, toolset completo com escrita real
 Mesma tarefa do dryRun anterior (mesmo dia), agora `dryRun:false`,
 toolset completo sem filtro (1º canário de escrita real sem

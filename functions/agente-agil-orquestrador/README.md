@@ -1221,48 +1221,79 @@ padrão incremental (desenho combinado → validado em dryRun/fake →
 canário restrito → sign-off explícito) que guiou tudo até aqui — nada
 aqui deve ser implementado sem alinhar antes.
 
-**Decisões de produto que precisam ser tomadas primeiro** (bloqueiam
-qualquer engenharia de gatilho automático):
+**Decisão sobre o item 1 (mecanismo de acionamento) — combinada com o
+usuário em 2026-08-14**, depois de discutir o sequenciamento antes de
+qualquer código:
 
-1. **Como o orquestrador é acionado de verdade?** Hoje é 100% CLI manual
-   com humano olhando o terminal. Pra sair disso, precisa escolher entre
-   (ou combinar): (a) botão/comando dentro do próprio board — ex.: "🤖
-   Chamar Agente Ágil" no card, ainda manual mas dentro do produto, sem
-   terminal; (b) gatilho automático em toda mudança do card (RTDB
-   `onWrite`) — maior alcance, maior risco, exige toda a bateria de
-   segurança abaixo primeiro; (c) por menção explícita (ex.: comentário
-   com "@Agente Ágil faz X") — meio-termo, sempre uma pessoa pedindo algo
-   específico, não o board inteiro sendo monitorado.
-2. **`perguntar_humano` não retoma sozinho** (lacuna já documentada, não
-   implementada): hoje, depois de `perguntar_humano`, uma resposta
-   humana exige reinvocar o script manualmente com a resposta embutida
-   na tarefa. Isso só é aceitável enquanto invocação é manual — qualquer
-   gatilho automático (item 1b/1c) precisa de um mecanismo real de
-   retomada (ex.: resposta do responsável no próprio comentário do card
-   dispara uma nova invocação do loop com o histórico completo).
-3. **Kill switch é uma constante hardcoded** (`limits.js`,
-   `KILL_SWITCH_ENABLED = false`) — pausar exige mudar código e fazer
-   deploy. Antes de qualquer gatilho automático, vale trocar por uma
-   flag lida do Firebase (ex.: `kanban/config/agente_agil_orquestrador/
-   enabled`), pra dar ao ADM controle de pausar instantaneamente sem
-   depender de deploy.
-4. **Escopo de squad**: toda validação até aqui foi só no squad `dev`
-   (semi-sandbox — já teve cards de teste reaproveitados pra trabalho
-   real duas vezes, ver canário 8). Expandir pra qualquer squad real
-   (a começar por qual?) é decisão separada, com opt-in explícito por
-   squad (mesmo padrão já usado por Submarca/Ficha Técnica/Intake no
-   client-side).
+O usuário quer os DOIS mecanismos (b) gatilho automático em mudança de
+card e (c) @menção em comentário — não escolher só um. Perfis de risco
+diferentes, então a ORDEM importa. Sequência final combinada:
+
+1. ~~**Kill switch dinâmico**~~ — **FECHADO**, ver "Item 1: kill switch
+   dinâmico" abaixo. Decidido: isso vem ANTES de qualquer acionamento sem
+   humano olhando o terminal, não só antes do gatilho automático — a
+   @menção já remove a rede de segurança que protegeu todos os canários
+   até aqui (alguém no terminal, digitando `ESCREVER`).
+2. **Escopo de squad pra @menção v1**: `dev`, confirmado. Continua
+   `ecomm`/qualquer squad real fora de escopo por enquanto.
+3. **@menção v1** — invocação única, SEM mecanismo de retomada de sessão
+   dedicado. Insight que mudou o desenho original: retomada de sessão não
+   é a arquitetura certa aqui, nem quando/se um dia for resolvida "de
+   verdade" — o padrão que já usamos manualmente em TODOS os canários
+   (rodar o script de novo com uma tarefa nova, deixando `ler_card`
+   reconstruir o contexto) já é funcionalmente equivalente a retomar, e
+   tem prova real: no canário 9, o modelo notou sozinho, via `ler_card`
+   (que inclui os últimos 20 comentários), uma pergunta pendente de uma
+   rodada anterior — sem qualquer memória de sessão. Então: cada @menção
+   nova dispara um `runLoop()` novo e independente, com o texto literal
+   do comentário como tarefa; se for resposta a uma pergunta do agente, o
+   modelo reconstrói o contexto lendo o histórico de comentários do
+   próprio card.
+   - **Pré-requisito técnico ainda em aberto**: pra uma resposta humana
+     disparar de novo, ela precisa RE-mencionar o agente. O botão "↩
+     Responder" já existente pré-preenche o "@" de quem comentou, mas os
+     comentários do agente têm `author:"Agente Ágil", init:"🤖"` — o
+     regex de menção humana (`/@[a-zA-Z]/`) não bate com emoji. Decisão
+     de implementação, não de produto: (a) o detector de menção do
+     trigger novo usa sua própria convenção (texto literal "@Agente
+     Ágil", case-insensitive), independente do regex de menção humana; ou
+     (b) ajustar o botão Responder pra pré-preencher "@Agente Ágil "
+     (texto) quando o autor é o agente. Fica pra quando o item entrar em
+     implementação.
+   - **Infra necessária, nada disso existe hoje**: uma Cloud Function
+     nova, trigger `onCreate`/`onWrite` em
+     `kanban/squads/{squad}/dados/card_comments/{cardId}/{commentId}` —
+     não existe nenhum listener nessa árvore hoje (`sendPushOnNotification`
+     escuta outro caminho, `notificacoes`; `buildMentionSteps()` só roda
+     dentro do próprio processo de escrita do agente, não é um listener).
+     Isso também é o 1º deploy real do orquestrador como Cloud Function —
+     hoje `functions/agente-agil-orquestrador/` não tem `index.js`.
+   - **Requisito de design não-negociável, não é correção pra depois**:
+     o trigger escuta o MESMO caminho onde o agente escreve seus próprios
+     comentários (`comentario`, `perguntar_humano`) — sem filtrar
+     `comment.uid !== 'agente-agil'` desde a primeira versão, existe risco
+     real de auto-disparo (loop).
+4. **Rodar a @menção de verdade por um tempo** (squad `dev`), ver se a
+   reconstrução de contexto via `ler_card` basta na prática ou se aparece
+   um caso real que precise de retomada de sessão de verdade — só decidir
+   isso com dado real, não especulando agora.
+5. **Só depois**, gatilho automático em mudança de card (item 1b) — com
+   kill switch, escopo de squad e @menção já rodando de forma estável
+   como pré-condição. Continua exigindo o item "retomada de
+   `perguntar_humano`" original SE a experiência com @menção mostrar que
+   reconstrução de contexto não é suficiente pra esse caso mais amplo —
+   reavaliar no momento, não agora.
 
 **Validação técnica que dá pra fazer já, sem esperar as decisões acima**
 (baixo risco, mesmo padrão de canário manual):
 
-5. ~~**Toolset completo junto, não mais filtrado por cenário**~~ —
+6. ~~**Toolset completo junto, não mais filtrado por cenário**~~ —
    **FECHADO** (dryRun + canário 9 de escrita real, ver seções acima): as
    9 ferramentas disponíveis ao mesmo tempo, sem confusão entre
    `checklist_item`/`agent_status`, sem cair na armadilha de
    `mover_coluna`, sem uso indevido de `link`/`relatorio_html` — inclusive
    com escrita de verdade confirmada.
-6. **Roteamento de modelo de verdade**: `escolheClienteParaTarefa()`
+7. **Roteamento de modelo de verdade**: `escolheClienteParaTarefa()`
    ainda é um esqueleto, sempre devolve `sonnet` — nenhuma heurística de
    complexidade implementada, gate de aprovação do ADM pro `opus` não
    existe ainda (`MODEL_BY_TIER` já tem os ids, mas nenhum caminho de
@@ -1279,3 +1310,51 @@ esse gap hoje porque `editar_campos` não toca `due`/`submarca`/Ficha
 Técnica, e não existe `criar_card` no toolset dele — mas se algum dia
 ganhar uma ferramenta de criação de card ou de edição de prazo/submarca,
 a mesma regra precisa ser replicada aqui.
+
+## Item 1 (sequência de acionamento): kill switch dinâmico — FECHADO
+
+Primeira peça da sequência combinada acima. `limits.js`:
+`isEnabled()` deixou de ser uma constante hardcoded
+(`KILL_SWITCH_ENABLED = false`, exigia deploy pra mudar) e virou
+`async isEnabled(db)`, lendo
+`kanban/config/agente_agil_orquestrador/enabled` no Realtime Database.
+Postura fail-safe preservada — sem `db`, nó ausente, erro de leitura, ou
+qualquer valor que não seja `true` literal: desligado. Só um `true`
+explícito liga.
+
+Como virou async, deixou de poder ser o valor default de `enabled` em
+`runLoop()` (default de parâmetro não pode dar `await`) — `loop.js`
+mudou o default de `enabled = limits.isEnabled()` pra `enabled = false`
+puro. Quem quiser respeitar o switch de verdade agora precisa resolver
+`await limits.isEnabled(db)` ANTES de chamar `runLoop()` e passar o
+resultado explícito. Nenhum script/teste existente foi afetado — todos
+os canários 1-9 e a suíte inteira já passavam `enabled: true`
+explicitamente, nunca dependeram do valor default (ver comentário
+histórico em `limits.js`).
+
+Testes atualizados/novos em `__tests__/loop.test.js`: `isEnabled()` sem
+db → `false`; `isEnabled(db)` contra fake db com nó ausente/`false`/valor
+estranho (ex.: string `"sim"`) → `false`, só `true` literal → `true`;
+`runLoop()` sem `enabled` explícito → `status: 'disabled'`, zero chamada
+ao LLM (prova do novo default). **138 testes passando** (era 136 antes —
+2 testes novos, os outros ajustados pra `async`).
+
+**Como o ADM liga/desliga** — script de console (`kanban-dev.html` ou
+`painel.html`, squad qualquer, só precisa de sessão autenticada
+`@ciahering.com.br`, mesma regra de escrita de `kanban/config` que
+outros toggles do app já usam):
+
+```js
+// Confere o estado atual
+await window._get(window._ref(window._db, 'kanban/config/agente_agil_orquestrador/enabled'))
+  .then(s => console.log('Agente Ágil Orquestrador está', s.val() === true ? 'LIGADO' : 'desligado'));
+
+// Liga
+await window._set(window._ref(window._db, 'kanban/config/agente_agil_orquestrador'), { enabled: true });
+
+// Desliga
+await window._set(window._ref(window._db, 'kanban/config/agente_agil_orquestrador'), { enabled: false });
+```
+
+Efeito é instantâneo pra qualquer caller que resolva `isEnabled(db)` no
+momento da chamada (não há cache) — sem deploy, sem restart.
