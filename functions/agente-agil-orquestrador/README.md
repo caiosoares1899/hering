@@ -1529,7 +1529,7 @@ depois do período de uso orgânico e de um sign-off explícito do
 usuário, do mesmo jeito que cada um dos passos anteriores desta fase
 exigiu.
 
-## Achado de UX (não implementado): Agente Ágil não aparece no autocomplete de menção
+## Achado de UX — CORRIGIDO e confirmado ao vivo: Agente Ágil no autocomplete de menção
 
 Ao planejar o lote de testes, o usuário perguntou se "Agente Ágil"
 aparece na lista suspensa de autocomplete quando alguém digita "@" num
@@ -1548,10 +1548,20 @@ some). Isso não bate com a convenção de `detectaMencao.js`
 botão "↩ Responder" (ver seção "Item 3" acima) — os dois passam pela
 mesma máquina de handle de menção.
 
-**Escopo do follow-up combinado**: os dois ajustes (aparecer no
-autocomplete + inserir o texto certo ao selecionar/responder) cabem no
-MESMO PR pequeno de `kanban-dev.html`, quando decidido fazer — mudança
-concentrada no código de menção (`handleMentionInput`/`insertMention`/
-Responder), não requer registro real em `dados/agentes`. Segue como
-follow-up, não implementado, fora do escopo desta fase (Cloud
-Function).
+**Corrigido** (`kanban-dev.html` v8.30.428-dev): entidade sintética
+`AGENTE_AGIL_MENTION_ENTRY`, escopada só aos squads onde o gatilho
+existe (`AGENTE_AGIL_MENTION_SQUADS`, hoje só `dev`), aparece no
+autocomplete e insere `@Agente Ágil ` literal ao ser selecionada (mouse
+ou teclado) ou ao usar "↩ Responder" num comentário do agente — nunca
+passa por `getMemberHandle()`. Bônus: seleção por teclado no dropdown
+de menção deixou de reparsear o texto exibido (frágil) e passou a ler
+um `data-mention-init` gravado no elemento — corrige a mesma classe de
+fragilidade também pra qualquer "agente" cadastrado em `dados/agentes`.
+
+**Confirmado ao vivo pelo usuário, pelo fluxo real de UI** (não
+digitando a menção na mão): digitou "@a", "Agente Ágil" apareceu como
+sugestão, selecionou, o comentário disparou o gatilho automático —
+`ler_card -> editar_campos -> comentario`, tag "AÇÃO" adicionada
+preservando as 5 tags existentes, `status:'done'`. Primeira confirmação
+do fluxo de descoberta ponta a ponta (autocomplete → seleção → gatilho
+→ escrita), não só do texto digitado manualmente.
