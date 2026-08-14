@@ -1,6 +1,6 @@
 ---
 name: subirproprod
-description: Promove o conteúdo validado de kanban-dev.html pra produção (kanban.html), seguindo o "Release process" do CLAUDE.md, e entrega os três artefatos que sempre acompanham essa promoção — (1) o PR de prod em si (diff restrito às 2 linhas de ambiente + version bump + CHANGELOG), (2) rascunho de avisos (Mural em painel.html + texto de WhatsApp), e (3) log completo da promoção como comentário no card "Melhorias Maré Digital" (c1783541085140, squad dados) no Firebase. Use sempre que o usuário pedir "sobe pro prod", "sobe pra prod", "promove pra produção", "manda o kanban pra prod", "libera pra prod", "publica no prod", ou invocar /subirproprod diretamente — mesmo que a frase não peça os avisos/log explicitamente, eles são parte padrão do fluxo (só pule se o usuário disser algo como "sem avisos"/"não precisa de avisos").
+description: Promove o conteúdo validado de kanban-dev.html pra produção (kanban.html), seguindo o "Release process" do CLAUDE.md, e entrega os três artefatos que sempre acompanham essa promoção — (1) o PR de prod em si (diff restrito às 2 linhas de ambiente + version bump + CHANGELOG), (2) rascunho de avisos (Mural em painel.html + texto de WhatsApp), e (3) log completo da promoção como comentário no card certo do Firebase (squad dados) — "Implementação Agente Ágil" (c1785199972010_nd0) se for sobre o Agente Ágil, "Melhorias Maré Digital" (c1783541085140) pra tudo mais. Use sempre que o usuário pedir "sobe pro prod", "sobe pra prod", "promove pra produção", "manda o kanban pra prod", "libera pra prod", "publica no prod", ou invocar /subirproprod diretamente — mesmo que a frase não peça os avisos/log explicitamente, eles são parte padrão do fluxo (só pule se o usuário disser algo como "sem avisos"/"não precisa de avisos").
 ---
 
 # Subir pro Prod — Maré Digital
@@ -80,8 +80,12 @@ texto do whatsapp" — não repetir.)
 ## Passo 3 — Log completo no card do Firebase
 
 Sempre faça isso — inclusive quando os avisos do Passo 2 forem pulados.
-Card "Melhorias Maré Digital": id `c1783541085140`, squad `dados`,
-caminho `kanban/squads/dados/dados/card_comments/c1783541085140/{id}`.
+Qual card usar (squad `dados` nos dois casos, regra do `CLAUDE.md`):
+- **`c1785199972010_nd0`** ("Implementação Agente Ágil") — se a promoção
+  for sobre o Agente Ágil (client-side ou orquestrador).
+- **`c1783541085140`** ("Melhorias Maré Digital") — qualquer outra coisa.
+
+Caminho: `kanban/squads/dados/dados/card_comments/{cardId}/{commentId}`.
 
 Formato do comentário:
 ```js

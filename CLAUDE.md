@@ -144,13 +144,21 @@ page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
    post (via console script against `painel.html`, or the
    `COMUNICADO_RASCUNHOS_SEED` seed mechanism if GitHub/deploy access is
    available) and a WhatsApp-ready text — summarizing what's new/changed in
-   user-facing terms; and (b) log the batch as a comment on the "Melhorias
-   Maré Digital" Firebase card (`c1783541085140`, squad `dados`), via a
-   console script. This is a standing rule, not something that needs to be
-   asked for each time. **Always use `ts: new Date().toISOString()` for any
-   comment written this way — never `ts: Date.now()`** — `loadComments()`
-   sorts with `a.ts.localeCompare(b.ts)`, which throws and silently breaks
-   the ENTIRE comment list for that card if `ts` isn't a string.
+   user-facing terms; and (b) log the batch as a comment on the right
+   Firebase card, via a console script (squad `dados` for both):
+   - **`c1785199972010_nd0`** ("Implementação Agente Ágil") — anything
+     about the Agente Ágil, either implementation (`functions/agente-agil/`,
+     `functions/agente-agil-orquestrador/`, the client-side agent tools in
+     `kanban.html`/`kanban-dev.html`) — comments, checklist items, canário/
+     scenario results, next-steps planning, all of it.
+   - **`c1783541085140`** ("Melhorias Maré Digital") — everything else
+     about Maré Digital (kanban/painel features, Firebase cost work,
+     optimization routines, etc.).
+   This is a standing rule, not something that needs to be asked for each
+   time. **Always use `ts: new Date().toISOString()` for any comment written
+   this way — never `ts: Date.now()`** — `loadComments()` sorts with
+   `a.ts.localeCompare(b.ts)`, which throws and silently breaks the ENTIRE
+   comment list for that card if `ts` isn't a string.
 
 Files without a `-dev` counterpart (`firebase-messaging-sw.js`,
 `database.rules.json`, `functions/`) skip the dev-first step — they're
