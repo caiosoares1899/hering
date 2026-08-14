@@ -1590,6 +1590,13 @@ gravado direto no elemento ao renderizar — mais robusto, corrige de
 quebra a mesma classe de fragilidade pra qualquer "agente" cadastrado em
 `dados/agentes` também.
 
+**Confirmado ao vivo pelo usuário, pelo fluxo real de UI**: digitou
+"@a", "Agente Ágil" apareceu como sugestão, selecionou, o comentário
+disparou o gatilho — `editar_campos` adicionou a tag pedida preservando
+as existentes, `status:'done'`. Primeira confirmação ponta a ponta do
+fluxo de descoberta (autocomplete → seleção → gatilho → escrita), não
+só de texto digitado manualmente.
+
 ### v8.30.427-dev — 2026-08-14 — Agente Ágil (client-side) passa a respeitar Prazo/Submarca/Ficha Técnica obrigatórios
 Pedido direto do PO/organizador do board: as regras de campo obrigatório
 que a UI já aplica em `salvarCard()` (Prazo, e Submarca/Ficha Técnica
