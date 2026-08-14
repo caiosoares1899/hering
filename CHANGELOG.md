@@ -6823,6 +6823,34 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · @menção v1 em modo sombra (item 3) — 1º gatilho automático, 1º deploy real
+Primeiro gatilho automático do orquestrador (até aqui, 100% invocação
+manual) e primeiro deploy real deste módulo como Cloud Function.
+
+**Convenção de menção** (`detectaMencao.js`): não reaproveita o regex de
+menção humana (resolve contra INIT de membro real) — o agente não tem
+init de verdade. Substring `"@agente agil"` normalizada (minúsculo, sem
+diacríticos). Ajuste do botão "↩ Responder" pra pré-preencher a menção
+certa fica como follow-up separado (mudança em `kanban-dev.html`, outro
+ciclo de deploy).
+
+**`mentionTrigger.js`**: `processarMencao()` — anti-auto-disparo
+(`comment.uid === 'agente-agil'`) SEMPRE primeiro, antes de olhar o
+texto; depois checa menção, kill switch (`limits.isEnabled`), e
+idempotência (mesmo padrão de `agente-agil/http.js`, agora por
+`commentId`) antes de rodar o loop. Squad `dev` travado no `ref` do
+trigger (literal no path, não checagem em runtime).
+
+**MODO SOMBRA**: `dryRun` fixo em `true` — o que falta validar não é o
+modelo escolhendo ferramenta certa (já provado 9x), é o MECANISMO DE
+GATILHO em si. Só vira escrita real depois de observar rodando de
+verdade por um tempo.
+
+`functions/index.js` ganha o primeiro export deste módulo:
+`agenteAgilMencao`. 151 testes passando (13 novos). Pendente: usuário
+precisa rodar `firebase functions:secrets:set ANTHROPIC_API_KEY` e
+`firebase deploy --only functions:agenteAgilMencao`.
+
 ### 2026-08-14 · Kill switch dinâmico (item 1 do plano de acionamento sem supervisão)
 Combinado com o usuário: sequência final pra ligar os dois mecanismos de
 acionamento pedidos (@menção + gatilho automático) — kill switch

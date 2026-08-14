@@ -1236,8 +1236,11 @@ diferentes, então a ORDEM importa. Sequência final combinada:
    até aqui (alguém no terminal, digitando `ESCREVER`).
 2. **Escopo de squad pra @menção v1**: `dev`, confirmado. Continua
    `ecomm`/qualquer squad real fora de escopo por enquanto.
-3. **@menção v1** — invocação única, SEM mecanismo de retomada de sessão
-   dedicado. Insight que mudou o desenho original: retomada de sessão não
+3. **@menção v1** — **implementado, em modo sombra** (ver "Item 3..."
+   abaixo), aguardando deploy + secret + um tempo observando os logs
+   antes de virar escrita real. Invocação única, SEM mecanismo de
+   retomada de sessão dedicado. Insight que mudou o desenho original:
+   retomada de sessão não
    é a arquitetura certa aqui, nem quando/se um dia for resolvida "de
    verdade" — o padrão que já usamos manualmente em TODOS os canários
    (rodar o script de novo com uma tarefa nova, deixando `ler_card`
@@ -1358,3 +1361,91 @@ await window._set(window._ref(window._db, 'kanban/config/agente_agil_orquestrado
 
 Efeito é instantâneo pra qualquer caller que resolva `isEnabled(db)` no
 momento da chamada (não há cache) — sem deploy, sem restart.
+
+**Confirmado pelo usuário** contra o Firebase real: ligou via console,
+conferiu o estado, desligou de novo. Funciona.
+
+## Item 3 (sequência de acionamento): @menção v1 — MODO SOMBRA, implementado
+
+Primeiro gatilho automático do orquestrador (até aqui, canários 1-9 eram
+100% invocação manual) e primeiro deploy real deste módulo como Cloud
+Function (`functions/agente-agil-orquestrador/` não tinha `index.js`
+nenhum antes disso). Design combinado com o usuário antes de qualquer
+código, 3 perguntas centrais:
+
+1. **Convenção de menção**: não reaproveita o regex de menção humana
+   (`/@[a-zA-Z]/`, usado em `outputs/editarCampos.js`/`comentario.js` —
+   detecta "existe uma @menção", depois resolve contra o INIT de um
+   membro real do squad). O agente não tem init de verdade
+   (`author:"Agente Ágil", init:"🤖"` — emoji não bate em `[a-zA-Z]`),
+   então ganhou convenção própria: `detectaMencao.js`, substring
+   `"@agente agil"` normalizada (minúsculo + sem diacríticos), pra não
+   travar se alguém digitar "Ágil" sem acento.
+   - **Deixado de fora deste lote, de propósito**: o botão "↩ Responder"
+     já existente no board pré-preenche o "@" de quem comentou pelo
+     `init`, mas isso não funciona bem pro agente (mesmo problema do
+     emoji). Ajustar isso é mudança em `kanban-dev.html` — outro arquivo,
+     outro ciclo de deploy (dev-first, GitHub Pages) — combinado ficar
+     como follow-up separado. Até lá, responder ao agente exige digitar
+     a menção na mão.
+2. **Filtro anti-auto-disparo**: primeira checagem de `processarMencao()`
+   (`mentionTrigger.js`), antes até de olhar o texto do comentário —
+   `comment.uid === 'agente-agil'` (mesmo uid que todo output do agente
+   grava) → ignora. Sem isso, o próprio comentário de resposta do agente
+   poderia disparar o trigger de novo (o trigger escuta o MESMO caminho
+   onde o agente escreve).
+3. **Squad**: só `dev`, travado no próprio `ref` do trigger com o squad
+   **literal** no path
+   (`kanban/squads/dev/dados/card_comments/{cardId}/{commentId}`, só
+   `cardId`/`commentId` como wildcard) — a infraestrutura simplesmente
+   não recebe evento de nenhum outro squad, mais forte que uma checagem
+   em runtime.
+
+**Ordem completa de checagem** (`processarMencao()`, cada uma um
+early-return, do mais barato pro mais caro): (1) comentário do próprio
+agente → ignora; (2) não menciona o agente → ignora; (3) kill switch
+desligado (`limits.isEnabled(db)`) → ignora; (4) já processado antes
+(idempotência) → ignora; só então monta o toolset e roda o loop.
+
+**Idempotência**: RTDB triggers do Firebase Functions v2 não garantem
+entrega exatamente-uma-vez — mesmo padrão de `agente-agil/http.js`
+(`IDEMPOTENCY_PATH`/`requestId`), agora por `commentId`, em
+`kanban/squads/dev/dados/agente_agil_mencao_processed/{commentId}`.
+Marcado DEPOIS de rodar o loop (não antes) — se o loop lançar exceção,
+fica elegível pra reprocessar, já que nada foi de fato concluído.
+
+**MODO SOMBRA**: `DRY_RUN_SOMBRA = true` fixo em `mentionTrigger.js`
+(mesmo espírito do antigo `DRY_RUN_FIXO` da Etapa 2, antes de `dryRun`
+virar parâmetro de verdade na Etapa 3) — não exposto como toggle ainda.
+O que nunca foi validado até agora não é "o modelo escolhe a ferramenta
+certa" (já provado 9x em canário) — é o MECANISMO DE GATILHO em si:
+dispara uma vez só por comentário, ignora comentário próprio, respeita
+kill switch, detecta menção certo. Só vira `dryRun:false` depois de
+observar isso rodando de verdade (Firebase real, não fake db) por um
+tempo — decisão nova e separada, combinada, não implícita neste commit.
+
+**Arquivos novos**:
+- `detectaMencao.js` — `mencionaAgente(texto)`, função pura, testada
+  isoladamente (`__tests__/detectaMencao.test.js`).
+- `mentionTrigger.js` — `processarMencao(db, {cardId, commentId, comment,
+  llmClient})`, lógica de negócio pura com `llmClient` INJETADO (nunca
+  resolve `escolheClienteParaTarefa()`/secret internamente) — testável
+  com fake db + cliente scriptado, mesmo padrão de
+  `loop.test.js`/`realHandlers.test.js`, sem mockar `firebase-functions`
+  nem bater na API de verdade (`__tests__/mentionTrigger.test.js`, 13
+  testes novos). `agenteAgilMencao` (o export `onValueCreated`) é só o
+  encanamento — resolve `db`/secret/client reais e chama
+  `processarMencao()`.
+- `functions/index.js`: `exports.agenteAgilMencao = require('./agente-
+  agil-orquestrador/mentionTrigger').agenteAgilMencao;` — primeiro export
+  deste módulo.
+
+**151 testes passando** (era 138 antes — 13 novos: 7 de
+`detectaMencao.test.js`, 6 de `mentionTrigger.test.js`).
+
+**Pendente pro deploy** (fora do alcance deste ambiente — precisa da CLI
+do Firebase com credenciais reais): `firebase functions:secrets:set
+ANTHROPIC_API_KEY` antes do primeiro `firebase deploy --only
+functions:agenteAgilMencao`. Depois do deploy, observar os logs da
+função (Cloud Functions console ou `firebase functions:log`) por um
+tempo em modo sombra antes de considerar virar `dryRun:false`.
