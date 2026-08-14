@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.250 — 2026-08-14 · promove pra prod
+Promove pra produção o único achado da rotina de otimização (PR #375,
+kanban-dev v8.30.426-dev): um `<link rel="preconnect">` órfão pro
+`www.gstatic.com` no `<head>`, que ficou desatualizado desde que o SDK
+do Firebase foi vendorizado localmente (v8.30.412-dev) — não há mais
+chamada de runtime pra esse domínio. Removida a linha e corrigido o
+comentário que ainda dizia o contrário. Puramente rede/documentação,
+sem mudança de comportamento visível.
+
 ### v8.30.249 — 2026-08-14 · promove pra prod
 Promove pra produção o investimento em custo de Firebase feito em dev
 (v8.30.424-dev → v8.30.425-dev) — motivado pela cobrança que passa a

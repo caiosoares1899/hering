@@ -13,15 +13,16 @@
   <meta name="apple-mobile-web-app-title" id="meta-app-title" content="Maré Digital">
   <link rel="manifest" id="pwa-manifest">
   <link rel="apple-touch-icon" href="favicon.png">
-  <!-- Preconnect: adianta DNS/TLS pros domínios externos usados no <head>/módulo
-       Firebase (fonts.googleapis.com serve o CSS da fonte; fonts.gstatic.com
-       serve os arquivos .woff2 de verdade, referenciados DE DENTRO desse CSS —
-       por isso os dois; www.gstatic.com é de onde o SDK do Firebase é importado
-       logo abaixo). Ganho pequeno mas de graça: sem isso, cada handshake só
-       começa quando o browser efetivamente decide buscar aquele recurso. -->
+  <!-- Preconnect: adianta DNS/TLS pros domínios externos usados no <head>
+       (fonts.googleapis.com serve o CSS da fonte; fonts.gstatic.com serve
+       os arquivos .woff2 de verdade, referenciados DE DENTRO desse CSS —
+       por isso os dois). Ganho pequeno mas de graça: sem isso, cada
+       handshake só começa quando o browser efetivamente decide buscar
+       aquele recurso. Note: www.gstatic.com NÃO entra aqui — o SDK do
+       Firebase é vendorizado localmente (./vendor/firebase-10.14.1/),
+       não vem mais de lá (ver comentário perto da linha ~5414). -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 .card-fn-modal-item { display:flex; align-items:center; gap:11px; width:100%; padding:13px 14px; background:none; border:none; border-radius:9px; color:var(--txt); font-size:13px; font-family:'DM Sans',sans-serif; cursor:pointer; text-align:left; transition:background .12s; -webkit-tap-highlight-color:rgba(56,182,255,.15); }
@@ -5408,7 +5409,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.249</div>
+<div class="version">v8.30.250</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
