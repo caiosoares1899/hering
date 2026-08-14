@@ -271,6 +271,25 @@ não faz parte desta rotina por padrão, a menos que peçam.
   - Viewport meta + `addTouchDnD` (drag por toque no celular):
     intactos, sem sinal de regressão.
 
+- **v8.30.426-dev (2026-08-14)**: achado real — `<link rel="preconnect"
+  href="https://www.gstatic.com">` ficou órfão desde que o SDK do
+  Firebase foi vendorizado localmente (`./vendor/firebase-10.14.1/`, fix
+  do "query is not defined" na v8.30.412-dev); o comentário do `<head>`
+  ainda dizia que o SDK vinha de lá. Removida a linha + corrigido o
+  comentário. Resto da rodada limpo: `data:image` embutido continua em 0;
+  blocos reais (por linha) — CSS ~187KB, script módulo Firebase ~7KB,
+  script principal ~1.28MB (27500 linhas, ~1.67MB total, cresceu desde a
+  última rodada por causa de Ficha Técnica/Supercard/Notas/etc.);
+  `setInterval`/`clearInterval` — 14 setInterval reais (uma 15ª ocorrência
+  do grep era só menção em comentário) / 12 clearInterval, todos
+  rastreados par a par (8 timers escopados com clear, 6 "vida inteira da
+  sessão" sem clear — cresceu de 5 pra 6 por causa do poll de
+  comunicados/mural, esperado) — zero vazamento novo; `backdrop-filter`
+  em 31 (baseline anterior 29, crescimento proporcional às novas
+  features, não desproporcional); import do Firebase modular; único
+  asset fora do favicon continua `marinheiro.png` (sob demanda); viewport
+  + `addTouchDnD` intactos.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está limpo.
