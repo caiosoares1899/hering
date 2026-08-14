@@ -1450,3 +1450,26 @@ produção. Rodando em modo sombra (`dryRun:true` fixo). Próximo passo:
 comentar "@Agente Ágil ..." num card do squad `dev`, observar
 `firebase functions:log --only agenteAgilMencao` (ou Console do
 Firebase) por um tempo, antes de considerar virar `dryRun:false`.
+
+**PRIMEIRA EXECUÇÃO REAL CONFIRMADA** (mesmo dia, minutos depois do
+deploy): usuário comentou "@Agente Ágil ..." num card do squad `dev` —
+log mostrou `processado, status=done, dryRun=true`. Mecanismo de
+gatilho validado ponta a ponta contra o Firebase real: detectou a
+menção, checou o kill switch, passou pela idempotência, rodou o loop
+com o LLM real, terminou `status:'done'` sem escrever nada de verdade.
+
+Achado no caminho, sem problema nenhum: vários comentários de teste
+anteriores (em cards diferentes, span de poucos segundos) geraram
+eventos `ignorado (no_mention)` — texto sem a menção — e um
+`ignorado (disabled)` — kill switch estava desligado do teste do item
+1. Comportamento correto nos dois casos; zero chamada à API nesses
+casos (a checagem de menção/kill switch acontece ANTES do LLM ser
+invocado).
+
+**Gap identificado**: o log de produção só imprime um resumo de uma
+linha (`cardId`, `commentId`, `status`) — diferente dos scripts CLI, que
+imprimem passo a passo (ferramentas escolhidas, input/output, texto
+final). Pro período de observação (item 4) ter valor de verdade, o log
+provavelmente precisa de mais detalhe (ferramentas usadas, resumo do
+`finalText`) — proposto ao usuário, ainda não implementado nem
+combinado.

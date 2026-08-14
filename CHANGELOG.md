@@ -6853,8 +6853,20 @@ precisa rodar `firebase functions:secrets:set ANTHROPIC_API_KEY` e
 
 **Deploy confirmado** (mesmo dia): secret criado, deploy completo,
 `agenteAgilMencao(us-central1)` ativa em produção, rodando em modo sombra.
-Próximo passo: testar comentando "@Agente Ágil" num card do squad `dev`
-e observar os logs.
+
+**Primeira execução real confirmada** (minutos depois): usuário
+comentou "@Agente Ágil ..." num card do squad `dev` — log mostrou
+`processado, status=done, dryRun=true`. Mecanismo de gatilho validado
+ponta a ponta contra o Firebase real (não fake db): detecta menção,
+checa kill switch, passa pela idempotência, roda o loop com LLM real,
+sem escrever nada de verdade. Vários testes anteriores geraram
+`ignorado (no_mention)`/`ignorado (disabled)` corretamente, sem custo
+de API (checagens acontecem antes do LLM ser chamado).
+
+Gap identificado, ainda não resolvido: o log de produção só imprime um
+resumo de uma linha — pro período de observação (item 4) ter valor de
+verdade, provavelmente precisa de mais detalhe (ferramentas usadas,
+resumo do `finalText`).
 
 ### 2026-08-14 · Kill switch dinâmico (item 1 do plano de acionamento sem supervisão)
 Combinado com o usuário: sequência final pra ligar os dois mecanismos de
