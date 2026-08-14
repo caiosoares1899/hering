@@ -1560,6 +1560,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.427-dev — 2026-08-14 — Agente Ágil (client-side) passa a respeitar Prazo/Submarca/Ficha Técnica obrigatórios
+Pedido direto do PO/organizador do board: as regras de campo obrigatório
+que a UI já aplica em `salvarCard()` (Prazo, e Submarca/Ficha Técnica
+quando o squad usa) nunca tinham sido replicadas pro Agente Ágil (as
+ferramentas `criar_card` e `atualizar_prazo` de `agTools`/`executeTool`,
+que já estão em produção) — o agente escreve direto no Firebase via
+`fbSaveCard()`, sem passar pelo botão Salvar nem pela validação que vive
+só ali. Achado confirmado durante o trabalho do canário 8 do Agente Ágil
+Orquestrador (server-side, projeto separado): squad "dev" teve um card
+de teste virar card real, e isso levantou a pergunta de fundo sobre se o
+agente client-side (já em produção) respeitava as mesmas regras — não
+respeitava.
+
+**Correção, nas duas ferramentas que tocam esses campos:**
+- `criar_card`: se o squad tem Ficha Técnica ativa (`criativosAtivo`), a
+  criação é recusada (o agente ainda não sabe preencher os campos da
+  ficha — melhor recusar do que salvar incompleto). Se o squad usa
+  Submarca (`submarcaAtivo`), a ferramenta agora aceita um parâmetro
+  `submarca` (label exato, ex. "Hering Kids Comercial") — sem ele, ou
+  com um valor que não bate com nenhuma opção visível, a criação é
+  recusada com a lista de opções válidas. Card criado sem `prazo`
+  informado nasce com `noDue:true` (mesma flag do botão "🚫 Sem prazo
+  definido" do modal) em vez de ficar num estado que a UI bloquearia.
+- `atualizar_prazo`: limpar o prazo (`novo_prazo` vazio) agora também
+  marca `noDue:true`, pelo mesmo motivo.
+
+Help content ("Ações que o agente pode executar") atualizado com essas
+regras. Fora de escopo por ora: suporte completo aos campos da Ficha
+Técnica no toolset do agente (10+ campos, listas fechadas, dependentes
+entre si) — fica como recusa segura até virar necessidade real.
+
 ### v8.30.426-dev — 2026-08-14 — Rotina de otimização: preconnect órfão pro gstatic.com
 Rodada de rotina da auditoria de bytes/performance/mobile (ver v8.30.332-dev
 pra origem da skill). Sem asset base64 duplicado (fix da v8.30.332-dev
