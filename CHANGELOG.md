@@ -6823,6 +6823,28 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Item 4 satisfeito: lote de testes deliberados via @menção
+4 pedidos inequívocos (ferramenta/valor certos nomeados de propósito)
+rodados pelo usuário através do gatilho — objetivo era confirmar
+escrita real escolhida certa via automação, não só script CLI. Todos
+passaram: `checklist_item` 2x (item certo), `editar_campos.tags`
+(preservou as 5 tags existentes), e um achado de julgamento inesperado
+— pedido de prioridade "alta" pausou em `perguntar_humano` porque a
+prioridade atual já era "crítica" (mais alta); o modelo reconheceu que
+aplicar cegamente seria um downgrade não pedido, e confirmou antes.
+
+**Item 4 satisfeito.** Segue rodando organicamente por mais alguns dias
+(bônus, não bloqueante). **Decisão sobre `dryRun:false` no gatilho:
+ainda pendente, não tomada** — registrado explicitamente pra não virar
+suposição por inércia.
+
+Achado de UX, não implementado: Agente Ágil não aparece no autocomplete
+de menção (`@`), e mesmo cadastrado como "agente" apareceria, selecionar
+inseriria `@agente.gil` (bug de sanitização de handle removendo o "Á"
+acentuado) em vez do texto que `detectaMencao.js` espera — mesma causa
+raiz do ajuste já sinalizado no botão "↩ Responder". Follow-up
+combinado, fora do escopo desta fase.
+
 ### 2026-08-14 · @menção v1 em modo sombra (item 3) — 1º gatilho automático, 1º deploy real
 Primeiro gatilho automático do orquestrador (até aqui, 100% invocação
 manual) e primeiro deploy real deste módulo como Cloud Function.
