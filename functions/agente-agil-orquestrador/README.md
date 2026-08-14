@@ -1466,10 +1466,23 @@ eventos `ignorado (no_mention)` — texto sem a menção — e um
 casos (a checagem de menção/kill switch acontece ANTES do LLM ser
 invocado).
 
-**Gap identificado**: o log de produção só imprime um resumo de uma
-linha (`cardId`, `commentId`, `status`) — diferente dos scripts CLI, que
-imprimem passo a passo (ferramentas escolhidas, input/output, texto
-final). Pro período de observação (item 4) ter valor de verdade, o log
-provavelmente precisa de mais detalhe (ferramentas usadas, resumo do
-`finalText`) — proposto ao usuário, ainda não implementado nem
-combinado.
+**Gap identificado e FECHADO** (mesmo dia): o log de produção só
+imprimia um resumo de uma linha (`cardId`, `commentId`, `status`) —
+insuficiente pro usuário avaliar qualidade de decisão sem abrir o
+Firebase Console. `mentionTrigger.js` ganhou
+`resumirResultadoParaLog(result)` — função pura, separada de
+`processarMencao()` de propósito (lógica de negócio não deve ter opinião
+sobre formato de log), que monta uma linha só com: ferramentas na ordem
++ input resumido de cada uma (campo `type` removido do resumo, já é
+redundante com o nome da ferramenta) + `finalText`. Trunca qualquer
+campo longo (160 chars por input, 500 por `finalText`) pra não virar
+spam de log nem vazar payload gigante pro Cloud Logging. 4 testes novos
+(`__tests__/mentionTrigger.test.js`) — sem ferramenta nenhuma (resposta
+só em texto), ferramentas na ordem certa, truncamento de campo longo sem
+quebrar, e `status:'awaiting_human'` formatando sem erro. **155 testes
+passando** (era 151).
+
+Exemplo do formato novo:
+```
+[agente-agil-mencao] c1785... c1786... dryRun=true | status=done | ferramentas: checklist_item({"item":"Medir de novo em prod","done":true}) -> comentario({"texto":"Marquei o item como concluído."}) | finalText: "Feito! Marquei o item de checklist."
+```
