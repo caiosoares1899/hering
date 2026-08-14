@@ -5409,7 +5409,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.427-dev</div>
+<div class="version">v8.30.428-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6112,6 +6112,39 @@ function allIdentities(){
     init:a.init||a.id, name:a.nome||a.id, foto:'', uid:'agent:'+a.id,
     isAgent:true, cor:a.cor||'#a78bfa', avatarEmoji:a.avatarEmoji||'🤖',
   }))];
+}
+// Entidade sintética pro Agente Ágil Orquestrador aparecer no autocomplete
+// de @menção (achado de UX: sem isso, ninguém descobre que dá pra chamar o
+// agente digitando "@" — dependia de lembrar "@Agente Ágil" de cor, sem
+// erro de digitação). NUNCA vira registro real em dados/agentes — é só
+// pro sistema de menção enxergar, não aparece em seletor de responsável/
+// participantes nem em nenhum outro uso de allIdentities(). `init` é um
+// sentinela que não colide com nenhum init de verdade (humano ou agente
+// cadastrado), resolvido de propósito em insertMention()/handleMentionKey
+// pra inserir "Agente Ágil" literal — NUNCA passar por getMemberHandle()
+// (bug real encontrado: "Agente Ágil" → getMemberHandle → "agente.gil",
+// o "Á" acentuado é removido pela sanitização, não vira "a" — não bate
+// com a convenção de menção que o gatilho automático espera, ver
+// functions/agente-agil-orquestrador/detectaMencao.js).
+const AGENTE_AGIL_MENTION_INIT = '__agente_agil__';
+const AGENTE_AGIL_MENTION_ENTRY = {
+  init: AGENTE_AGIL_MENTION_INIT, name: 'Agente Ágil', foto: '', uid: 'agente-agil',
+  isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖', isAgenteAgilMention: true,
+};
+// Mesmo escopo do gatilho automático (mentionTrigger.js:SQUAD_ID) — só
+// squad 'dev' por enquanto. Atualizar aqui junto se/quando o gatilho
+// expandir de squad, senão a sugestão aparece em squad onde não faz
+// nada (nenhuma Cloud Function escutando o comentário).
+const AGENTE_AGIL_MENTION_SQUADS = new Set(['dev']);
+function mentionCandidates(){
+  const base = allIdentities();
+  return AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) ? [...base, AGENTE_AGIL_MENTION_ENTRY] : base;
+}
+// Label usado tanto pra filtrar (digitou "@a"/"@age"...) quanto pra exibir
+// no dropdown — pro Agente Ágil é sempre o nome literal, nunca o handle
+// derivado (ver comentário acima do porquê).
+function mentionMatchLabel(m){
+  return m.isAgenteAgilMention ? m.name : getMemberHandle(m);
 }
 // ── MODO DE VISUALIZAÇÃO HÍBRIDO (humanos / agentes / híbrido-padrão) ──
 // Só aparece em squads com agentes de IA cadastrados (ex.: ecomm). Funciona como
@@ -21360,9 +21393,11 @@ function handleMentionInput(ta, dd){
     return;
   }
 
-  // @INICIAIS → busca membros + agentes de IA
-  const matches = allIdentities().filter(m=>{
-    const handle = getMemberHandle(m);
+  // @INICIAIS → busca membros + agentes de IA + Agente Ágil (orquestrador,
+  // só aparece em squads onde o gatilho automático existe, ver
+  // AGENTE_AGIL_MENTION_SQUADS)
+  const matches = mentionCandidates().filter(m=>{
+    const handle = mentionMatchLabel(m);
     return handle.toLowerCase().includes(query.toLowerCase()) ||
       m.name.toLowerCase().includes(query.toLowerCase()) ||
       m.init.toLowerCase().startsWith(query.toLowerCase());
@@ -21407,12 +21442,13 @@ function renderMentionDropdown(dd, matches, ta, atPos, pos){
   matches.forEach((m,i)=>{
     const opt = document.createElement('div');
     opt.className = 'mention-option' + (i===0?' active':'');
+    opt.dataset.mentionInit = m.init; // fonte de verdade pra seleção via teclado (ver handleMentionKey) — nunca reparsear do texto exibido
     const av = m.isAgent
       ? '<div class="mention-avatar" style="background:'+_hexA(m.cor,.25)+';">'+(m.avatarEmoji||'🤖')+'</div>'
       : (safeUrl(m.foto)
         ? '<img src="'+safeUrl(m.foto)+'" onerror="this.style.display=\'none\'">'
         : '<div class="mention-avatar">'+m.init+'</div>');
-    const handle = getMemberHandle(m);
+    const handle = mentionMatchLabel(m);
     opt.innerHTML = av
       + '<span class="mention-init">@'+handle+(m.isAgent?' 🤖':'')+'</span>'
       + '<span class="mention-name">'+m.name+'</span>';
@@ -21440,11 +21476,13 @@ function handleMentionKey(e, ta, dd){
     const activeOpt = dd.querySelector('.mention-option.active');
     if(activeOpt){
       e.preventDefault();
-      const handleFromOpt = activeOpt.querySelector('.mention-init').textContent.slice(1);
-      // find member by handle
-      const memByHandle = members.find(mm => getMemberHandle(mm)===handleFromOpt) || members.find(mm=>mm.init===handleFromOpt);
+      // Lê o init direto do dataset (setado em renderMentionDropdown) em vez
+      // de reparsear o texto exibido — o texto exibido pro Agente Ágil é o
+      // nome literal, não um handle que bate com nenhum init/getMemberHandle,
+      // então reparsear quebrava a seleção por teclado dessa entrada
+      // especificamente (mouse já funcionava, por passar m.init direto).
       const pos = ta.selectionStart;
-      insertMention(ta, _mentionActive?.atPos??0, pos, memByHandle?.init||handleFromOpt);
+      insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
     }
   } else if(e.key==='Escape'){
     dd.classList.remove('open');
@@ -21470,8 +21508,8 @@ function getMemberByHandle(handle){
 }
 
 function insertMention(ta, atPos, curPos, init){
-  const member = allIdentities().find(m=>m.init===init);
-  const handle = member ? getMemberHandle(member) : init;
+  const member = mentionCandidates().find(m=>m.init===init);
+  const handle = member ? mentionMatchLabel(member) : init;
   const val = ta.value;
   ta.value = val.slice(0,atPos) + '@'+handle+' ' + val.slice(curPos);
   ta.selectionStart = ta.selectionEnd = atPos + handle.length + 2;
@@ -25183,10 +25221,20 @@ function replyToComment(cid){
   const c=_commentsCache[_commentCardId]?.[cid]; if(!c) return;
   eocEdit('comment-eoc');
   const ta=document.getElementById('m-comment-inp'); if(!ta) return;
-  const mem=allIdentities().find(m=>m.init===c.init);
-  if(mem){
-    const mention='@'+getMemberHandle(mem)+' ';
+  // Comentário do Agente Ágil (uid gravado por functions/agente-agil-
+  // orquestrador/*.js em toda escrita real): nome literal, nunca
+  // getMemberHandle() — mesmo motivo do insertMention()/AGENTE_AGIL_MENTION_ENTRY
+  // acima (o handle derivado "agente.gil" não bate com a convenção que o
+  // gatilho automático de @menção espera).
+  if(c.uid==='agente-agil'){
+    const mention='@Agente Ágil ';
     if(!ta.value.startsWith(mention)) ta.value=mention+ta.value;
+  } else {
+    const mem=allIdentities().find(m=>m.init===c.init);
+    if(mem){
+      const mention='@'+getMemberHandle(mem)+' ';
+      if(!ta.value.startsWith(mention)) ta.value=mention+ta.value;
+    }
   }
   autoResizeCommentInp(ta);
   ta.focus();
