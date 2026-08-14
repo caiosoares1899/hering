@@ -1080,6 +1080,62 @@ todas validadas com escrita de verdade**: `ler_card`, `comentario`,
 (com notificação), `link`, `editar_campos` (tags + priority + desc). Só
 falta `relatorio_html`, deliberadamente adiado até ter necessidade real.
 
+## Item 5 do plano de próximos passos: toolset completo, sem filtro por cenário
+
+Primeiro script sem `TOOLS_PERMITIDAS` — as 9 ferramentas do orquestrador
+(`ler_card`, `comentario`, `mover_coluna`, `checklist_item`,
+`agent_status`, `perguntar_humano`, `link`, `editar_campos`,
+`relatorio_html`) disponíveis ao modelo ao mesmo tempo, pela primeira vez
+desde a Etapa 1. Até aqui todo canário/cenário restringia o toolset pro
+subconjunto relevante daquele teste específico — nunca tinha sido
+validado o modelo escolhendo certo com tudo na mesa.
+
+`scripts/llmRealSystemPromptV1ToolsetCompletoDryRunContraSquadDev.js` —
+pedido composto, 4 instruções SEM ambiguidade (diferente da bateria de 4
+cenários, que testava reconhecer incerteza; aqui o eixo é execução
+correta), desenhado pra forçar dois pares que um modelo descuidado
+poderia confundir: `checklist_item` (marcar um item específico) vs
+`agent_status` (status do próprio agente) — ambos sobre "isso tá
+pronto?", campos diferentes; e a linguagem de "terminei" (gatilho que
+nos cenários 3/4 levava a cogitar `mover_coluna`) sem pedir mudança de
+coluna nenhuma, testando que `mover_coluna` não é chamada à toa. Lê
+estado real do card em tempo de execução (item de checklist pendente,
+prioridade atual, tag do squad que o card ainda não tem), mesmo padrão
+dos canários 7/8.
+
+**Rodado pelo usuário contra o LLM real** (card `c1785889397211_x0xr2`,
+squad `dev`): `status: 'done'`, sequência `ler_card -> checklist_item ->
+editar_campos -> agent_status -> comentario`, 3 chamadas à API. Passou em
+tudo:
+- `checklist_item` no item certo ("Medir de novo em prod"), marcado
+  concluído.
+- `agent_status` → `awaiting_validation`, sem se confundir com
+  `checklist_item`.
+- `editar_campos` com prioridade e tag corretas — tags existentes
+  preservadas (add-only, como já era esperado).
+- `comentario` com resumo claro de tudo que foi feito.
+- `mover_coluna` **não** foi chamado, mesmo com a linguagem de "terminei"
+  no pedido — não caiu na armadilha.
+- `link`/`relatorio_html` não foram chamados à toa, mesmo disponíveis.
+- Extra: o modelo notou sozinho, no histórico de comentários do card, uma
+  pergunta pendente de uma rodada anterior (canário 8, sobre escopo de
+  divulgação em redes sociais) sem relação com o pedido atual, e
+  mencionou no `finalText` sem agir sobre ela — não misturou escopos.
+
+**Achado, mas na verificação do script, não no modelo**: a checagem
+automática de `checklist_item` acusou `⚠` na 1ª rodada — bug na própria
+checagem (esperava campos `texto`/`concluido`, que são o formato de
+SAÍDA de `ler_card`, não o schema real de `checklist_item`, que usa
+`item`/`done` — `agente-agil/schema.js:outputChecklistItem`). O modelo
+mandou os campos certos desde o início; só o script de verificação
+estava desatualizado. Corrigido no mesmo commit.
+
+**Item 5 considerado validado em dryRun** — toolset completo não causa
+confusão entre ferramentas parecidas, nem uso indevido das que não foram
+pedidas. Falta o canário real (`dryRun:false`) pra confirmar o mesmo
+comportamento com escrita de verdade — combinado com o usuário, próximo
+passo.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -1174,14 +1230,12 @@ qualquer engenharia de gatilho automático):
 **Validação técnica que dá pra fazer já, sem esperar as decisões acima**
 (baixo risco, mesmo padrão de canário manual):
 
-5. **Toolset completo junto, não mais filtrado por cenário**: todo
-   canário até aqui restringiu `TOOLS_PERMITIDAS` pro subconjunto
-   relevante daquele teste específico. Falta validar o modelo escolhendo
-   certo com as 9 ferramentas disponíveis AO MESMO TEMPO (o toolset real
-   de uso, não um recorte por cenário) — inclui checar que não há
-   confusão entre ferramentas parecidas (`checklist_item` vs
-   `agent_status`, `mover_coluna` vs `editar_campos`) quando todas estão
-   na mesa.
+5. ~~**Toolset completo junto, não mais filtrado por cenário**~~ —
+   **validado em dryRun** (ver seção "Item 5 do plano..." acima): as 9
+   ferramentas disponíveis ao mesmo tempo, sem confusão entre
+   `checklist_item`/`agent_status`, sem cair na armadilha de
+   `mover_coluna`, sem uso indevido de `link`/`relatorio_html`. Falta só
+   o canário real (`dryRun:false`) pra fechar este item.
 6. **Roteamento de modelo de verdade**: `escolheClienteParaTarefa()`
    ainda é um esqueleto, sempre devolve `sonnet` — nenhuma heurística de
    complexidade implementada, gate de aprovação do ADM pro `opus` não

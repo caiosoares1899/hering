@@ -6823,6 +6823,28 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Item 5 validado em dryRun: as 9 ferramentas juntas, sem confusão
+Primeiro teste sem filtro de `TOOLS_PERMITIDAS` — todo canário/cenário
+anterior restringia o toolset pro subconjunto relevante daquele teste.
+Pedido composto (4 instruções, sem ambiguidade) desenhado pra forçar
+`checklist_item` vs `agent_status` e a armadilha "terminei" → `mover_coluna`
+(gatilho que nos cenários 3/4 levava a cogitar mover coluna).
+
+Rodado pelo usuário (card `c1785889397211_x0xr2`, squad `dev`): passou em
+tudo — item de checklist certo marcado, `agent_status` sem se confundir
+com checklist, prioridade/tag corretas via `editar_campos`, `mover_coluna`
+corretamente não chamado apesar da linguagem de "terminei", `link`/
+`relatorio_html` não usados à toa. Extra: notou uma pergunta pendente de
+uma rodada anterior sem relação com o pedido, mencionou sem agir.
+
+Achado real, mas na verificação do próprio script, não no modelo: a
+checagem automática de `checklist_item` usava os nomes de campo errados
+(`texto`/`concluido`, que são o formato de SAÍDA de `ler_card` — o schema
+real usa `item`/`done`). Corrigido no mesmo commit.
+
+Item 5 do plano de próximos passos considerado validado em dryRun — falta
+o canário real (`dryRun:false`) pra fechar.
+
 ### 2026-08-14 · Canário 8 CONFIRMADO: editar_campos.desc com escrita real
 Rodado pelo usuário contra `c1786712278908` (card de teste dedicado,
 descrição revertida pra "Este post faz parte da campanha de Q3." antes
