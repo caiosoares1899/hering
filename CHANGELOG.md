@@ -1551,6 +1551,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.426-dev — 2026-08-14 — Rotina de otimização: preconnect órfão pro gstatic.com
+Rodada de rotina da auditoria de bytes/performance/mobile (ver v8.30.332-dev
+pra origem da skill). Sem asset base64 duplicado (fix da v8.30.332-dev
+continua valendo), `setInterval`/`clearInterval` conferidos par a par sem
+vazamento novo, `backdrop-filter` em 31 ocorrências (baseline informativo),
+import do Firebase modular, viewport/touch DnD intactos.
+
+**Único achado:** o `<link rel="preconnect" href="https://www.gstatic.com">`
+no `<head>` ficou órfão desde que o SDK do Firebase foi vendorizado pra
+`./vendor/firebase-10.14.1/` (v8.30.412-dev, fix do "query is not defined")
+— o comentário ao lado ainda dizia que era "de onde o SDK do Firebase é
+importado", mas isso deixou de ser verdade. Removida a linha (nenhuma
+chamada de runtime resta pra esse domínio) e corrigido o comentário, que
+agora aponta pra onde o SDK realmente vem. Puramente rede/documentação —
+sem mudança de comportamento visível.
+
 ### v8.30.425-dev — 2026-08-13 — Fase 2 do investimento em custo de Firebase: 📋 Modelos sob demanda
 Segunda fase do trabalho de redução de banda do Firebase (ver v8.30.424-dev
 pra Fase 1) — pedido direto: "ja vai fazendo as outras fases q a gente sobe
