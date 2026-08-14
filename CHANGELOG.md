@@ -6823,6 +6823,21 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Canário 9 CONFIRMADO: item 5 fechado, toolset completo com escrita real
+Mesma tarefa do dryRun anterior (mesmo dia), agora `dryRun:false`,
+toolset completo sem filtro (1º canário de escrita real sem
+`TOOLS_PERMITIDAS`, incluindo `relatorio_html` tecnicamente acessível
+pela 1ª vez numa escrita real).
+
+Rodado pelo usuário: `status: 'done'`, sequência idêntica ao dryRun
+(`ler_card -> checklist_item -> editar_campos -> agent_status ->
+comentario`). Passou em tudo, com escrita real confirmada em cada
+ferramenta — item de checklist certo marcado, `agent_status` sem se
+confundir com `checklist_item`, prioridade/tag corretas via
+`editar_campos`, `mover_coluna`/`link`/`relatorio_html` corretamente não
+chamados mesmo disponíveis. **Item 5 do plano de próximos passos
+fechado.**
+
 ### 2026-08-14 · Item 5 validado em dryRun: as 9 ferramentas juntas, sem confusão
 Primeiro teste sem filtro de `TOOLS_PERMITIDAS` — todo canário/cenário
 anterior restringia o toolset pro subconjunto relevante daquele teste.
