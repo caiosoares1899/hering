@@ -1130,11 +1130,37 @@ SAÍDA de `ler_card`, não o schema real de `checklist_item`, que usa
 mandou os campos certos desde o início; só o script de verificação
 estava desatualizado. Corrigido no mesmo commit.
 
-**Item 5 considerado validado em dryRun** — toolset completo não causa
-confusão entre ferramentas parecidas, nem uso indevido das que não foram
-pedidas. Falta o canário real (`dryRun:false`) pra confirmar o mesmo
-comportamento com escrita de verdade — combinado com o usuário, próximo
-passo.
+## Canário 9: toolset completo com escrita real — item 5 FECHADO
+
+`scripts/escritaReal9ToolsetCompletoContraSquadDev.js` — mesma tarefa do
+dryRun acima, agora `dryRun:false`, toolset completo sem filtro (1º
+canário de escrita real sem `TOOLS_PERMITIDAS`, incluindo `relatorio_html`
+tecnicamente acessível pela 1ª vez numa escrita real, embora nunca
+chamada).
+
+**Rodado pelo usuário contra o Firebase real** (mesmo card
+`c1785889397211_x0xr2`): `status: 'done'`, sequência idêntica ao dryRun
+(`ler_card -> checklist_item -> editar_campos -> agent_status ->
+comentario`), 3 chamadas à API. Passou em tudo, com escrita real
+confirmada (`output.dryRun: false`, `applied > 0`) em cada ferramenta:
+- `checklist_item`: item certo, marcado concluído de verdade.
+- `agent_status`: `awaiting_validation`, sem se confundir com
+  `checklist_item`.
+- `editar_campos`: prioridade e tag corretas, tags existentes
+  preservadas.
+- `comentario`: resumo real postado no card.
+- `mover_coluna`/`link`/`relatorio_html`: nenhuma chamada indevida, mesmo
+  com as 9 ferramentas disponíveis o tempo todo (incluindo
+  `relatorio_html`, nunca antes exposta numa escrita real).
+- Mesmo comportamento extra do dryRun: sinalizou a pergunta pendente de
+  uma rodada anterior sem relação com o pedido, sem agir sobre ela.
+
+**Item 5 do plano de próximos passos — FECHADO.** O toolset completo,
+sem filtro por cenário, se comporta de forma consistente entre dryRun e
+escrita real: escolhe a ferramenta certa pra cada instrução, não confunde
+`checklist_item`/`agent_status`, não cai na armadilha "terminei" ->
+`mover_coluna`, e não usa `link`/`relatorio_html` fora de propósito
+mesmo com as 9 disponíveis ao mesmo tempo.
 
 ## Status
 
@@ -1231,11 +1257,11 @@ qualquer engenharia de gatilho automático):
 (baixo risco, mesmo padrão de canário manual):
 
 5. ~~**Toolset completo junto, não mais filtrado por cenário**~~ —
-   **validado em dryRun** (ver seção "Item 5 do plano..." acima): as 9
-   ferramentas disponíveis ao mesmo tempo, sem confusão entre
+   **FECHADO** (dryRun + canário 9 de escrita real, ver seções acima): as
+   9 ferramentas disponíveis ao mesmo tempo, sem confusão entre
    `checklist_item`/`agent_status`, sem cair na armadilha de
-   `mover_coluna`, sem uso indevido de `link`/`relatorio_html`. Falta só
-   o canário real (`dryRun:false`) pra fechar este item.
+   `mover_coluna`, sem uso indevido de `link`/`relatorio_html` — inclusive
+   com escrita de verdade confirmada.
 6. **Roteamento de modelo de verdade**: `escolheClienteParaTarefa()`
    ainda é um esqueleto, sempre devolve `sonnet` — nenhuma heurística de
    complexidade implementada, gate de aprovação do ADM pro `opus` não
