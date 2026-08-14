@@ -13,7 +13,14 @@ const assert = require('node:assert/strict');
 
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
 const membersLib = require('../../agente-agil/members');
-const { processarMencao, SQUAD_ID, IDEMPOTENCY_PATH, AGENTE_UID, DRY_RUN_SOMBRA } = require('../mentionTrigger');
+const {
+  processarMencao,
+  resumirResultadoParaLog,
+  SQUAD_ID,
+  IDEMPOTENCY_PATH,
+  AGENTE_UID,
+  DRY_RUN_SOMBRA,
+} = require('../mentionTrigger');
 
 function scriptedLlmClient(script) {
   let calls = 0;
@@ -133,4 +140,68 @@ test('mesmo com toolset completo disponível, task simples só usa o que precisa
   const comentarioCall = outcome.result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'comentario');
   assert.ok(comentarioCall);
   assert.equal(comentarioCall.output.dryRun, true); // modo sombra: monta o plano, nunca aplica
+});
+
+// ── resumirResultadoParaLog() — formatação do log de produção ──────────
+// Função pura (não depende de db/Firebase), separada de processarMencao()
+// de propósito. Cobre o pedido do usuário: precisa dar pra julgar se as
+// decisões fizeram sentido só lendo o log, sem abrir o Firebase Console.
+
+test('resumirResultadoParaLog: sem nenhuma ferramenta chamada (resposta só em texto)', () => {
+  const result = { status: 'done', finalText: 'Não há nada a fazer aqui.', steps: [] };
+  const resumo = resumirResultadoParaLog(result);
+  assert.match(resumo, /status=done/);
+  assert.match(resumo, /ferramentas: \(nenhuma\)/);
+  assert.match(resumo, /finalText: "Não há nada a fazer aqui\."/);
+});
+
+test('resumirResultadoParaLog: mostra as ferramentas na ordem, com input resumido (sem o campo "type" redundante)', () => {
+  const result = {
+    status: 'done',
+    finalText: 'Feito.',
+    steps: [
+      {
+        iteration: 1,
+        toolCalls: [
+          { name: 'checklist_item', input: { type: 'checklist_item', item: 'Testar em prod', done: true }, output: { ok: true } },
+          { name: 'comentario', input: { type: 'comentario', texto: 'Marquei o item.' }, output: { ok: true } },
+        ],
+      },
+    ],
+  };
+  const resumo = resumirResultadoParaLog(result);
+  assert.match(resumo, /ferramentas: checklist_item\(.*\) -> comentario\(.*\)/);
+  assert.ok(!resumo.includes('"type"')); // campo type removido do resumo, já é redundante com o nome da ferramenta
+  assert.match(resumo, /item.*Testar em prod/);
+  assert.match(resumo, /texto.*Marquei o item\./);
+});
+
+test('resumirResultadoParaLog: trunca input e finalText muito longos, sem quebrar', () => {
+  const descLonga = 'x'.repeat(1000);
+  const finalTextLongo = 'y'.repeat(1000);
+  const result = {
+    status: 'done',
+    finalText: finalTextLongo,
+    steps: [{ iteration: 1, toolCalls: [{ name: 'editar_campos', input: { type: 'editar_campos', desc: descLonga }, output: { ok: true } }] }],
+  };
+  const resumo = resumirResultadoParaLog(result);
+  assert.ok(resumo.length < descLonga.length + finalTextLongo.length); // realmente truncou, não colou tudo cru
+  assert.match(resumo, /…/); // marcador de truncamento presente
+});
+
+test('resumirResultadoParaLog: status awaiting_human também formata sem erro', () => {
+  const result = {
+    status: 'awaiting_human',
+    finalText: null,
+    steps: [
+      {
+        iteration: 1,
+        toolCalls: [{ name: 'perguntar_humano', input: { type: 'perguntar_humano', pergunta: 'Qual coluna devo usar?' }, output: { ok: true } }],
+      },
+    ],
+  };
+  const resumo = resumirResultadoParaLog(result);
+  assert.match(resumo, /status=awaiting_human/);
+  assert.match(resumo, /finalText: "\(nenhum\)"/);
+  assert.match(resumo, /pergunta.*Qual coluna devo usar\?/);
 });

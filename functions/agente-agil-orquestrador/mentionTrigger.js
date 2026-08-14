@@ -111,6 +111,36 @@ async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
   return { processed: true, result };
 }
 
+// Formata um resumo legível de um resultado de runLoop() pro log de
+// produção — mesma informação que os scripts CLI imprimem passo a passo
+// (ferramenta, input, finalText), condensada numa linha só. Função pura,
+// separada de processarMencao() de propósito (lógica de negócio não deve
+// ter opinião sobre formato de log — mesmo espírito de isolamento do
+// resto do módulo). Trunca qualquer campo que possa ficar grande
+// (descrição longa em editar_campos, texto de comentário, finalText) pra
+// não virar spam de log nem vazar payload gigante pro Cloud Logging.
+const TRUNC_INPUT = 160;
+const TRUNC_FINAL_TEXT = 500;
+
+function truncar(s, max) {
+  if (s == null) return '';
+  const str = String(s);
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+function resumirChamada(call) {
+  const input = { ...call.input };
+  delete input.type; // já é redundante com call.name, não precisa duplicar no log
+  return `${call.name}(${truncar(JSON.stringify(input), TRUNC_INPUT)})`;
+}
+
+function resumirResultadoParaLog(result) {
+  const chamadas = result.steps.flatMap((s) => s.toolCalls);
+  const ferramentas = chamadas.length ? chamadas.map(resumirChamada).join(' -> ') : '(nenhuma)';
+  const finalText = result.finalText ? truncar(result.finalText, TRUNC_FINAL_TEXT) : '(nenhum)';
+  return `status=${result.status} | ferramentas: ${ferramentas} | finalText: "${finalText}"`;
+}
+
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
 const agenteAgilMencao = onValueCreated(
@@ -127,16 +157,23 @@ const agenteAgilMencao = onValueCreated(
     try {
       const { llmClient } = escolheClienteParaTarefa({ apiKey: ANTHROPIC_API_KEY.value() });
       const outcome = await processarMencao(db, { cardId, commentId, comment, llmClient });
-      console.log(
-        '[agente-agil-mencao]',
-        cardId,
-        commentId,
-        outcome.processed ? `processado, status=${outcome.result.status}, dryRun=${DRY_RUN_SOMBRA}` : `ignorado (${outcome.reason})`
-      );
+      if (outcome.processed) {
+        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_SOMBRA} |`, resumirResultadoParaLog(outcome.result));
+      } else {
+        console.log('[agente-agil-mencao]', cardId, commentId, `ignorado (${outcome.reason})`);
+      }
     } catch (err) {
       console.error('[agente-agil-mencao] falha ao processar menção:', cardId, commentId, err);
     }
   }
 );
 
-module.exports = { agenteAgilMencao, processarMencao, DRY_RUN_SOMBRA, SQUAD_ID, IDEMPOTENCY_PATH, AGENTE_UID };
+module.exports = {
+  agenteAgilMencao,
+  processarMencao,
+  resumirResultadoParaLog,
+  DRY_RUN_SOMBRA,
+  SQUAD_ID,
+  IDEMPOTENCY_PATH,
+  AGENTE_UID,
+};

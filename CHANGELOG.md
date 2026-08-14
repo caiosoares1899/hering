@@ -6863,10 +6863,10 @@ sem escrever nada de verdade. Vários testes anteriores geraram
 `ignorado (no_mention)`/`ignorado (disabled)` corretamente, sem custo
 de API (checagens acontecem antes do LLM ser chamado).
 
-Gap identificado, ainda não resolvido: o log de produção só imprime um
-resumo de uma linha — pro período de observação (item 4) ter valor de
-verdade, provavelmente precisa de mais detalhe (ferramentas usadas,
-resumo do `finalText`).
+Gap identificado, e fechado no mesmo dia: `resumirResultadoParaLog()`
+formata uma linha só com ferramentas na ordem + input resumido de cada
+uma + `finalText`, truncando campos longos. 4 testes novos, 155 no
+total.
 
 ### 2026-08-14 · Kill switch dinâmico (item 1 do plano de acionamento sem supervisão)
 Combinado com o usuário: sequência final pra ligar os dois mecanismos de
