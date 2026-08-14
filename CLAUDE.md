@@ -34,6 +34,32 @@ Deploying the static pages themselves is automatic: `.github/workflows/pages.yml
 publishes the entire repo root to GitHub Pages on every push to `main` — there
 is no separate deploy step for the HTML files.
 
+### `functions/` deploys run on the user's own machine — always resync first
+
+Unlike the HTML pages (auto-published by GitHub Pages), anything under
+`functions/` (Cloud Functions, `firebase functions:secrets:set`, `firebase
+deploy --only functions:...`) has to be run by the user on their own Windows
+machine, with their own `firebase-tools` login — this session's sandbox has
+no deploy credentials. **Every single time a PR touching `functions/` gets
+merged, and you're about to hand the user a `firebase deploy`/`firebase
+functions:secrets:set` command to run locally, first give them the sync
+step** — their local clone tracks the working branch and does not
+auto-update:
+```bash
+cd C:\path\to\hering
+git fetch origin <branch-name>
+git reset --hard origin/<branch-name>
+```
+Skipping this is a real, repeated failure mode: `firebase deploy` silently
+discovers whatever `functions/index.js` exports **on disk locally** — if a
+new export (e.g. a new Cloud Function) isn't there yet because the merge
+happened after their last pull, the deploy fails with a confusing `No
+function matches the filter: default:<name>` instead of any obviously
+git-related error. Same applies before `npm install`/testing anything
+in `functions/` locally after you've pushed changes — always assume their
+clone is stale until they've resynced, and say so up front rather than
+letting them hit the error first.
+
 ## Key files and their roles
 
 - `kanban.html` — production kanban board (squad management).
