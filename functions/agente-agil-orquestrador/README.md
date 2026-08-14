@@ -1054,6 +1054,32 @@ considerado validado em julgamento (dryRun) nos dois casos que importam
 — descrição vazia e descrição com conteúdo real a preservar — falta só
 o canário de escrita real (`dryRun:false`).
 
+## Canário 8: `editar_campos.desc` com escrita real — TOOLSET COMPLETO
+
+`scripts/escritaReal8EditarCamposDescContraSquadDev.js`. Card de teste
+dedicado (`c1786712278908`, não reaproveitado da Etapa 3 — os dois cards
+de controle anteriores "morreram": um excluído, outro reaproveitado pra
+trabalho real, squad `dev` não é um sandbox isolado de verdade).
+
+Duas rodadas até confirmar: a 1ª (descrição já continha a informação
+pedida, editada manualmente pelo usuário antes de rodar) resultou em
+"não fez nada" válido — o modelo detectou que a informação já estava lá
+e só comentou, comportamento seguro mas que não exercitava a escrita.
+Descrição revertida pro estado original ("Este post faz parte da
+campanha de Q3."), 2ª rodada: `editar_campos` aplicado com
+`dryRun:false`, `applied: 2`, preservação de conteúdo confirmada
+(`descNova.includes(descAtual)`) — e um achado extra: o modelo notou
+sozinho, via `ler_card`, que um comentário seu de uma rodada anterior
+estava desatualizado (a descrição tinha sido revertida depois daquele
+comentário), e deixou isso explícito no novo comentário em vez de
+ignorar a inconsistência.
+
+**Com isso, as 8 ferramentas de escrita/leitura do toolset real estão
+todas validadas com escrita de verdade**: `ler_card`, `comentario`,
+`mover_coluna`, `checklist_item`, `agent_status`, `perguntar_humano`
+(com notificação), `link`, `editar_campos` (tags + priority + desc). Só
+falta `relatorio_html`, deliberadamente adiado até ter necessidade real.
+
 ## Status
 
 Etapa de validação técnica e de comportamento da Fase 2 encerrada: loop +
@@ -1089,10 +1115,87 @@ médio, toolset ampliado só pro necessário pro cenário). Cada passo teve
 sign-off explícito do usuário antes do próximo — nada foi automatizado
 ou liberado por inércia.
 
-**Estado atual**: escrita real validada ponta a ponta pras duas ações já
-testadas (`comentario`, `mover_coluna`), restrita ao squad `dev`,
-invocação sempre manual (scripts standalone, nunca gatilho automático).
-Qualquer expansão — mais ferramentas em modo real, squad `dev` sem
-restrição de toolset, gatilho automático, ou qualquer squad além de
-`dev` (`ecomm` = produção) — é uma decisão nova, separada, ainda não
-tomada.
+**Estado atual (atualizado após canário 8, 2026-08-14)**: as 8
+ferramentas do toolset real (`ler_card`, `comentario`, `mover_coluna`,
+`checklist_item`, `agent_status`, `perguntar_humano`, `link`,
+`editar_campos` completo) têm escrita real validada ponta a ponta —
+`relatorio_html` é a única de fora, deliberadamente adiada. Toda
+validação continua restrita ao squad `dev`, cada canário testado com o
+toolset FILTRADO em código pro subconjunto relevante daquele cenário
+(nunca as 9 ferramentas juntas de uma vez), e invocação sempre manual
+(scripts standalone com confirmação interativa, nunca gatilho
+automático — não existe nenhum Cloud Function export pra este módulo
+ainda, `functions/agente-agil-orquestrador/` não tem `index.js`).
+
+Toolset validado ≠ pronto pra uso real desacompanhado. Ver "Próximos
+passos" abaixo pro que falta decidir/construir antes de qualquer
+gatilho automático ou expansão de squad.
+
+## Próximos passos (proposta — nada abaixo está decidido ou autorizado)
+
+Levantamento feito depois do canário 8, junto com o pedido de "planeja
+os próximos passos". Cada item é uma decisão separada, com o mesmo
+padrão incremental (desenho combinado → validado em dryRun/fake →
+canário restrito → sign-off explícito) que guiou tudo até aqui — nada
+aqui deve ser implementado sem alinhar antes.
+
+**Decisões de produto que precisam ser tomadas primeiro** (bloqueiam
+qualquer engenharia de gatilho automático):
+
+1. **Como o orquestrador é acionado de verdade?** Hoje é 100% CLI manual
+   com humano olhando o terminal. Pra sair disso, precisa escolher entre
+   (ou combinar): (a) botão/comando dentro do próprio board — ex.: "🤖
+   Chamar Agente Ágil" no card, ainda manual mas dentro do produto, sem
+   terminal; (b) gatilho automático em toda mudança do card (RTDB
+   `onWrite`) — maior alcance, maior risco, exige toda a bateria de
+   segurança abaixo primeiro; (c) por menção explícita (ex.: comentário
+   com "@Agente Ágil faz X") — meio-termo, sempre uma pessoa pedindo algo
+   específico, não o board inteiro sendo monitorado.
+2. **`perguntar_humano` não retoma sozinho** (lacuna já documentada, não
+   implementada): hoje, depois de `perguntar_humano`, uma resposta
+   humana exige reinvocar o script manualmente com a resposta embutida
+   na tarefa. Isso só é aceitável enquanto invocação é manual — qualquer
+   gatilho automático (item 1b/1c) precisa de um mecanismo real de
+   retomada (ex.: resposta do responsável no próprio comentário do card
+   dispara uma nova invocação do loop com o histórico completo).
+3. **Kill switch é uma constante hardcoded** (`limits.js`,
+   `KILL_SWITCH_ENABLED = false`) — pausar exige mudar código e fazer
+   deploy. Antes de qualquer gatilho automático, vale trocar por uma
+   flag lida do Firebase (ex.: `kanban/config/agente_agil_orquestrador/
+   enabled`), pra dar ao ADM controle de pausar instantaneamente sem
+   depender de deploy.
+4. **Escopo de squad**: toda validação até aqui foi só no squad `dev`
+   (semi-sandbox — já teve cards de teste reaproveitados pra trabalho
+   real duas vezes, ver canário 8). Expandir pra qualquer squad real
+   (a começar por qual?) é decisão separada, com opt-in explícito por
+   squad (mesmo padrão já usado por Submarca/Ficha Técnica/Intake no
+   client-side).
+
+**Validação técnica que dá pra fazer já, sem esperar as decisões acima**
+(baixo risco, mesmo padrão de canário manual):
+
+5. **Toolset completo junto, não mais filtrado por cenário**: todo
+   canário até aqui restringiu `TOOLS_PERMITIDAS` pro subconjunto
+   relevante daquele teste específico. Falta validar o modelo escolhendo
+   certo com as 9 ferramentas disponíveis AO MESMO TEMPO (o toolset real
+   de uso, não um recorte por cenário) — inclui checar que não há
+   confusão entre ferramentas parecidas (`checklist_item` vs
+   `agent_status`, `mover_coluna` vs `editar_campos`) quando todas estão
+   na mesa.
+6. **Roteamento de modelo de verdade**: `escolheClienteParaTarefa()`
+   ainda é um esqueleto, sempre devolve `sonnet` — nenhuma heurística de
+   complexidade implementada, gate de aprovação do ADM pro `opus` não
+   existe ainda (`MODEL_BY_TIER` já tem os ids, mas nenhum caminho de
+   código alcança `haiku`/`opus`). Não bloqueia nada, é otimização de
+   custo — mas fica mais fácil calibrar com algum volume real de uso
+   (item 1) rodando primeiro.
+
+**Achado desta sessão, registrado aqui pra não se perder**: ao investigar
+se o Agente Ágil segue as mesmas regras de campo obrigatório que a UI
+exige (Prazo, Submarca, Ficha Técnica), confirmamos que o agente
+client-side (`kanban-dev.html`, `criar_card`/`atualizar_prazo`) TINHA
+esse gap real e já foi corrigido (v8.30.427-dev). O orquestrador não tem
+esse gap hoje porque `editar_campos` não toca `due`/`submarca`/Ficha
+Técnica, e não existe `criar_card` no toolset dele — mas se algum dia
+ganhar uma ferramenta de criação de card ou de edição de prazo/submarca,
+a mesma regra precisa ser replicada aqui.
