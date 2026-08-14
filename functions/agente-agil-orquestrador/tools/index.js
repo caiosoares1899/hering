@@ -23,6 +23,7 @@ const {
 const { makeHandler } = require('./fakeHandlers');
 const { makeRealHandler, makeRealPerguntarHumanoHandler } = require('./realHandlers');
 const { lerCardSchema, makeFakeLerCardHandler, makeRealLerCardHandler } = require('./lerCard');
+const { visaoBoardSchema, makeFakeVisaoBoardHandler, makeRealVisaoBoardHandler } = require('./visaoBoard');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -95,6 +96,14 @@ function buildTools(options = {}) {
     description: 'Lê um resumo do card atual (descrição, checklist, comentários, coluna, tags, responsável/participantes) — use antes de decidir uma ação em pedidos abertos ou quando faltar contexto.',
     input_schema: zodToJsonSchema(lerCardSchema),
     handler: mode === 'real' ? makeRealLerCardHandler({ db, squadId, cardId }) : makeFakeLerCardHandler(),
+  });
+
+  tools.push({
+    name: 'visao_board',
+    description:
+      'Visão agregada do board inteiro (não só o card atual): WIP atual vs. limite por coluna, throughput, cycle time e lead time (média/mediana/amostra), gargalo por coluna (tempo médio parado) e bloqueios ativos. Aceita periodo_dias opcional (default 14) pra throughput/cycle/lead/gargalo — WIP e bloqueios são sempre o estado atual. Use antes de responder perguntas de gestão/fluxo do time ou pra dar contexto de board a um especialista externo.',
+    input_schema: zodToJsonSchema(visaoBoardSchema),
+    handler: mode === 'real' ? makeRealVisaoBoardHandler({ db, squadId }) : makeFakeVisaoBoardHandler(),
   });
 
   return tools;

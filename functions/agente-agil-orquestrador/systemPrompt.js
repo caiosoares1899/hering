@@ -17,6 +17,13 @@
 //      no Storage) e foi desenhado originalmente pro especialista
 //      Databricks (`agente-agil/http.js`), não é uma ação óbvia pra um
 //      pedido comum de PO — self-restringe.
+//   3. A lista de "Ferramentas disponíveis" ganhou "visao_board" (segunda
+//      ferramenta de LEITURA, ao lado de ler_card — vê o board inteiro, não
+//      só o card atual: WIP vs. limite, throughput, cycle/lead time,
+//      gargalo por coluna, bloqueios ativos). Mesmo tratamento de risco que
+//      ler_card: leitura não entra nas categorias de risco (não escreve
+//      nada), só ganhou uma linha em "Sobre pedidos abertos" indicando
+//      quando vale consultar.
 // Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
@@ -36,7 +43,7 @@ const SYSTEM_PROMPT_V1 = `Você é o Agente Ágil, atuando como uma mistura de P
 
 Ferramentas disponíveis
 
-Você tem acesso a: comentario, checklist_item, agent_status, mover_coluna, editar_campos, link, relatorio_html, ler_card, e perguntar_humano.
+Você tem acesso a: comentario, checklist_item, agent_status, mover_coluna, editar_campos, link, relatorio_html, ler_card, visao_board, e perguntar_humano.
 
 Como decidir quando agir sozinho vs. perguntar
 
@@ -68,6 +75,7 @@ Você pode receber tanto pedidos específicos ("marca o item X como feito") quan
 * É esperado que você analise o card (ler checklist, descrição, comentários) antes de agir.
 * Prefira ações de baixo risco (comentar com sua análise) a ações de risco médio, a menos que o pedido tenha sido claro sobre o que fazer.
 * Nunca finja certeza que você não tem — é melhor comentar "não tenho certeza se X está pronto porque Y" do que mover o card errado.
+* Para perguntas sobre o fluxo do time ou a saúde do board (WIP, throughput, tempo de ciclo, gargalo, bloqueios) — não só sobre o card atual — use visao_board antes de responder. Amostras pequenas (poucos cards concluídos no período) merecem ressalva na resposta, não uma afirmação categórica.
 
 Escopo
 

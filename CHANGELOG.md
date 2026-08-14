@@ -6860,6 +6860,30 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Nova ferramenta `visao_board` — "braço de PO" do agente (aguardando dryRun local)
+Pedido do usuário: além da biblioteca de conceitos ágeis (design
+combinado, ainda não implementada), o agente precisa de uma visão
+consolidada do board — fluxo do time, histórico de cards, números — pra
+atuar em gestão e dar contexto a especialistas externos.
+
+**Decisão combinada**: métricas FIXAS no v1 (não interpretação livre em
+cima de dado bruto — mais previsível, barato e fácil de validar por
+canário). Reabriu e confirmou o precedente de `agente-agil/flow.js`:
+`cardTempos()`/`cardTempoPorColuna()` são réplica deliberada das
+equivalentes em `kanban.html` (não módulo compartilhado — kanban.html não
+tem `<script src>` externo, propriedade arquitetural do repo).
+
+Ferramenta nova (`tools/visaoBoard.js`), sempre disponível no toolset:
+WIP vs. limite por coluna, throughput, cycle/lead time (média + mediana +
+amostra), gargalo por coluna (lógica genuinamente nova, o resto reaproveita
+cálculo já em produção), bloqueios ativos. `periodo_dias` opcional
+(default 14). `SYSTEM_PROMPT_V1` atualizado (lista de ferramentas + linha
+de orientação). 15 testes novos, suíte inteira 170/170.
+
+**Pendente**: dryRun contra squad dev (script entregue, roda só
+localmente) — cruzar os números com "📊 Dados do Board" antes de fechar o
+v1. Detalhes completos: `functions/agente-agil-orquestrador/README.md`.
+
 ### 2026-08-14 · Item 4 satisfeito: lote de testes deliberados via @menção
 4 pedidos inequívocos (ferramenta/valor certos nomeados de propósito)
 rodados pelo usuário através do gatilho — objetivo era confirmar
