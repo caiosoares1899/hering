@@ -5409,7 +5409,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.426-dev</div>
+<div class="version">v8.30.427-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18378,7 +18378,7 @@ const agTools=[
   {name:'mover_card',description:'Move um card para outra coluna',input_schema:{type:'object',properties:{card_id:{type:'string'},nova_coluna:{type:'string'},motivo:{type:'string'}},required:['card_id','nova_coluna','motivo']}},
   {name:'atualizar_prazo',description:'Atualiza o prazo de um card (formato YYYY-MM-DD)',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_prazo:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_prazo','motivo']}},
   {name:'marcar_checklist',description:'Marca ou desmarca item do checklist de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},item_index:{type:'number'},concluido:{type:'boolean'}},required:['card_id','item_index','concluido']}},
-  {name:'criar_card',description:'Cria novo card no board',input_schema:{type:'object',properties:{titulo:{type:'string'},coluna:{type:'string'},tag:{type:'string'},owner:{type:'string'},prazo:{type:'string'},descricao:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},po:{type:'string'}},required:['titulo','coluna']}},
+  {name:'criar_card',description:'Cria novo card no board. Se o squad exigir Submarca (ver contexto), informe uma das opções válidas — sem isso a criação é recusada, igual bloquearia um humano salvando pelo modal.',input_schema:{type:'object',properties:{titulo:{type:'string'},coluna:{type:'string'},tag:{type:'string'},owner:{type:'string'},prazo:{type:'string'},submarca:{type:'string',description:'Label exato de uma das opções de Submarca do squad (só quando o squad usa esse campo)'},descricao:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},po:{type:'string'}},required:['titulo','coluna']}},
   {name:'atualizar_owner',description:'Muda o responsável de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_owner:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_owner','motivo']}},
   {name:'definir_prioridade',description:'Define ou remove a prioridade de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},motivo:{type:'string'}},required:['card_id','prioridade']}},
   {name:'salvar_modelo',description:'Salva um card como modelo reutilizável',input_schema:{type:'object',properties:{card_id:{type:'string'},nome_modelo:{type:'string'}},required:['card_id']}},
@@ -18419,10 +18419,13 @@ function executeTool(name,input){
       let c=cards.find(x=>x.id===input.card_id);
       if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
       if(!c) return{ok:false,msg:'Card não encontrado'};
-      c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
-      recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'—'), '🤖 Agente Ágil');
+      // novo_prazo vazio limpa o prazo — marca noDue pra não deixar o card
+      // no mesmo estado inválido que a UI bloqueia (due vazio sem a flag
+      // "🚫 Sem prazo definido" setada).
+      c.due=input.novo_prazo||''; c.noDue=!input.novo_prazo; c.edited=user; c.editedAt=td;
+      recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'sem prazo definido'), '🤖 Agente Ágil');
       renderBoard(); fbSaveCard(c);
-      return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo}`};
+      return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo||'sem prazo definido'}`};
     }
     case 'marcar_checklist':{
       const c=cards.find(x=>x.id===input.card_id);
@@ -18450,8 +18453,23 @@ function executeTool(name,input){
           else ownerNovo=''; // não cria membro inexistente
         }
       }
-      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||'',title:input.titulo,
-        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',po:input.po||'',
+      // Regras obrigatórias do board (as mesmas que salvarCard() aplica no
+      // modal — pedido direto do PO/organizador: o agente não pode deixar
+      // um card num estado que um humano seria bloqueado de salvar).
+      if(criativosAtivo){
+        return{ok:false,msg:'Este squad exige Ficha Técnica preenchida pra salvar um card (Config → Criativos) — o Agente Ágil ainda não sabe preencher esses campos. Crie o card manualmente, ou crie por aqui mesmo assim e peça pra alguém completar a ficha depois.'};
+      }
+      let submarcaTagId='';
+      if(submarcaAtivo){
+        const opcoes=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id)).map(st=>st.label).join(', ');
+        if(!input.submarca) return{ok:false,msg:`Este squad exige Submarca pra salvar um card. Opções: ${opcoes}`};
+        const match=SUBMARCA_TAGS.find(st=>st.label.toLowerCase()===String(input.submarca).toLowerCase());
+        if(!match) return{ok:false,msg:`Submarca "${input.submarca}" não é uma opção válida. Opções: ${opcoes}`};
+        submarcaTagId=match.id;
+      }
+      const tagsIniciais=[input.tag||'', submarcaTagId].filter(Boolean);
+      const novo={id:'c'+Date.now(),col:input.coluna,tag:tagsIniciais[0]||'',tags:tagsIniciais,title:input.titulo,
+        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',noDue:!input.prazo,po:input.po||'',
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
@@ -19707,7 +19725,7 @@ const HELP_CONTENT = {
     { icon:'📋', title:'Daily', text:'Clique em Daily ou escreva livremente. O agente levanta o que está em progresso, o que vence hoje, impedimentos ativos e sugere pontos para a reunião diária.' },
     { icon:'📊', title:'Métricas', text:'Na aba Métricas, o agente interpreta WIP atual vs. limite, throughput e capacidade do time. Ele avisa quando o WIP está acima do limite e sugere ações para reequilibrar a carga.' },
     { icon:'🔧', title:'Retrospectiva', text:'Na aba Retrospectiva, o agente ajuda a formatar o que foi bem, o que melhorar e gera ações concretas para o próximo ciclo.' },
-    { icon:'✏️', title:'Ações que o agente pode executar', text:'O agente age diretamente no board: mover card, atualizar prazo, marcar/desmarcar checklist, criar card, atribuir responsável, definir prioridade, salvar como modelo ou recorrente, excluir card (requer confirmação), atualizar título/descrição/PO. Exemplos: "Move o card do pipeline VTEX para Concluído." "Cria um card de bug crítico no backlog." "Atribui o card de relatório para a Juliana."' },
+    { icon:'✏️', title:'Ações que o agente pode executar', text:'O agente age diretamente no board: mover card, atualizar prazo, marcar/desmarcar checklist, criar card, atribuir responsável, definir prioridade, salvar como modelo ou recorrente, excluir card (requer confirmação), atualizar título/descrição/PO. Exemplos: "Move o card do pipeline VTEX para Concluído." "Cria um card de bug crítico no backlog." "Atribui o card de relatório para a Juliana."\n\n🔒 Mesmas regras obrigatórias de quem salva pelo modal: se o squad usa Submarca, criar um card sem informar uma opção válida é recusado (o agente pergunta ou pede pra você especificar). Se o squad tem Ficha Técnica ativa, o agente ainda não sabe preenchê-la — recusa criar o card sozinho nesse caso. Card criado sem prazo informado nasce marcado como "sem prazo definido" (a mesma flag do botão "🚫 Sem prazo definido" do modal) em vez de ficar num estado inválido.' },
     { icon:'🧠', title:'Memória da conversa', text:'O agente lembra o contexto da conversa atual (até 20 mensagens por aba) — incluindo ações executadas. Você pode fazer perguntas de acompanhamento sem repetir contexto. Ao fechar e reabrir o agente, o histórico é recarregado do Firebase.' },
     { icon:'🔕', title:'Snapshot inteligente', text:'Para economizar tokens, o agente omite do contexto cards já concluídos há mais de 7 dias. Uma nota no prompt informa quantos foram omitidos, para que o agente saiba que existem.' },
     { icon:'💡', title:'Dicas de uso', text:'Seja específico: mencione nomes de cards, pessoas e datas. Você pode perguntar sobre qualquer coisa relacionada ao board, à sprint ou às práticas ágeis do time. O agente reconhece "eu", "mim" e "me atribua" como referências ao usuário logado.' },
