@@ -1565,3 +1565,70 @@ sugestão, selecionou, o comentário disparou o gatilho automático —
 preservando as 5 tags existentes, `status:'done'`. Primeira confirmação
 do fluxo de descoberta ponta a ponta (autocomplete → seleção → gatilho
 → escrita), não só do texto digitado manualmente.
+
+## Nova ferramenta: `visao_board` — implementada, aguardando dryRun local
+
+Pedido do usuário: além da biblioteca de conceitos ágeis (ainda não
+implementada, ver seção anterior), o Agente Ágil precisa de um "braço de
+PO" — conhecimento do fluxo do time, histórico de cards, comportamento do
+time, visão consolidada do board — pra atuar em gestão e pra dar contexto
+de board a especialistas externos.
+
+**Decisões combinadas antes de implementar:**
+- **Métricas fixas no v1**, não interpretação livre do LLM em cima de dado
+  bruto — mais previsível, mais barato, mais fácil de validar com o mesmo
+  rigor de canário já aplicado a tudo até aqui. Interpretação livre fica
+  como fase futura, só depois de confiança nas métricas fixas.
+- **Ferramenta nova, sempre disponível no toolset** (mesmo padrão do Item 5
+  — "toolset completo junto"), não amarrada a uma frase-gatilho específica.
+- **Fase própria**, separada da biblioteca de conceitos ágeis — perfis de
+  risco diferentes (texto estático vs. agregação sobre dado real + fórmula
+  nova de gargalo).
+- **Duplicação deliberada** de `_cardTempos()`/`_cardTempoPorColuna()`
+  (kanban.html ~14904-14929) em vez de módulo compartilhado de verdade —
+  reabre e confirma o mesmo precedente já aceito em `agente-agil/flow.js`
+  (que já replica `_flowStartColIds()`/`_flowDoneColId()`/
+  `_flowDoneColIds()`, pelo mesmo motivo: kanban.html não tem nenhum
+  `<script src>` externo hoje — propriedade arquitetural do repo, não
+  acidente — e client (ES modules) / Cloud Function (CommonJS) não
+  compartilham import sem um shim novo, mais peça pra um cálculo pequeno
+  e estável).
+
+**O que existia e foi reaproveitado** (nenhuma coleta de dado nova):
+`c.flow` (transições de coluna por card), `_cardTempos()`/
+`_cardTempoPorColuna()` (cycle/lead time e tempo por coluna, já em
+produção no painel "📊 Dados do Board"), `_colWipLimit()` (limite de WIP
+por coluna), `agente-agil/flow.js:readFlowMeta()` (columns/flowConfig, já
+cacheado 60s). **Lógica genuinely nova**: agregação de gargalo por coluna
+(rankeia média de tempo parado, maior primeiro) — não existia equivalente
+direto em produção.
+
+**Métricas do v1** (`functions/agente-agil-orquestrador/tools/visaoBoard.js`):
+WIP atual vs. limite por coluna, throughput (concluídos no período),
+cycle time e lead time (média + mediana + tamanho da amostra — média
+sozinha engana com outlier, e o agente precisa saber quando a amostra é
+rasa demais pra afirmar algo com confiança), gargalo por coluna, bloqueios
+ativos. Fora do escopo de propósito: Sprint/Capacidade/Objetivo (input
+manual do PO, não métrica calculada) e os gráficos completos de CFD/
+Burndown (visual pra humano, não dado estruturado).
+
+`periodo_dias` é opcional (default 14) e delimita throughput/cycle/lead/
+gargalo — WIP e bloqueios são sempre o estado atual, não faz sentido
+"WIP do período".
+
+**Testes**: 15 novos (`__tests__/visaoBoard.test.js`) — funções puras
+(`cardTempos`, `cardTempoPorColuna`, `colWipLimit`), `summarizeBoard()`
+(WIP filtrado por coluna com limite configurado, throughput/cycle/lead só
+dentro do período, média E mediana corretas, gargalo rankeado, bloqueios
+nos dois `blockerMode` — 'col' e 'field', board vazio sem quebrar),
+handlers fake/real, e `buildTools()` expondo a ferramenta nos dois modos.
+Suíte inteira: **170/170 passando** (era 155 antes desta mudança).
+`SYSTEM_PROMPT_V1` ganhou `visao_board` na lista de ferramentas + uma
+linha de orientação (mesmo padrão documentado das outras duas exceções ao
+texto verbatim, ver comentário no topo de `systemPrompt.js`).
+
+**Pendente**: dryRun contra o squad dev (script entregue:
+`scripts/dryRunVisaoBoardContraSquadDev.js`, roda só localmente — este
+sandbox não tem credenciais de Firebase nem chave da Anthropic). Cruzar os
+números que o agente lê com o que "📊 Dados do Board" mostra pra humano no
+mesmo squad/período antes de considerar o v1 fechado.
