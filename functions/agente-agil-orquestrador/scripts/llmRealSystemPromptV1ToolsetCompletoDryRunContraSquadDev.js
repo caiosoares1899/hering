@@ -171,10 +171,15 @@ async function main() {
   console.log('\n=== Verificação automática (leitura, não é validação com asserção) ===');
 
   const checklistCall = chamadas.find((c) => c.name === 'checklist_item');
-  if (checklistCall && checklistCall.input && checklistCall.input.texto === itemPendente.t && checklistCall.input.concluido === true) {
+  // Campos reais do schema (agente-agil/schema.js:outputChecklistItem): "item"
+  // e "done" — não "texto"/"concluido" (isso é o formato de SAÍDA do
+  // ler_card, um schema diferente; ver tools/lerCard.js). Bug encontrado na
+  // 1ª rodada real: o modelo mandou os campos certos, esta checagem que
+  // usava os nomes errados.
+  if (checklistCall && checklistCall.input && checklistCall.input.item === itemPendente.t && checklistCall.input.done === true) {
     console.log('✅ checklist_item: item certo, marcado como concluído.');
   } else if (checklistCall) {
-    console.log(`⚠ checklist_item chamado, mas com input inesperado: ${JSON.stringify(checklistCall.input)} (esperado texto="${itemPendente.t}", concluido=true).`);
+    console.log(`⚠ checklist_item chamado, mas com input inesperado: ${JSON.stringify(checklistCall.input)} (esperado item="${itemPendente.t}", done=true).`);
   } else {
     console.log('❌ checklist_item NÃO foi chamado — esperado pra marcar o item pendente.');
   }
