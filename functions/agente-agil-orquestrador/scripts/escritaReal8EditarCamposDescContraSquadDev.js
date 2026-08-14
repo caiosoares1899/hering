@@ -10,12 +10,17 @@
 // — ver llmRealSystemPromptV1EditarCamposDescPreservaConteudoDryRunContraSquadDev.js
 // e o comentário do canário 8 no card de controle), agora com dryRun:false.
 //
-// Card de teste atual: c1785889397211_x0xr2 ("Otimizar consulta lenta no
-// dashboard principal", squad dev). O card anterior (c1785505159707_geo)
-// foi excluído — rode verEstadoCardTesteContraSquadDev.js ANTES deste
-// script (de graça, sem LLM) pra conferir a descrição atual e decidir se
-// vale preencher uma descrição de exemplo pela UI antes de rodar, mesmo
-// padrão usado da última vez.
+// Card de teste atual: c1786712278908 ("[TESTE Agente Ágil] Canário 8 —
+// não editar manualmente", squad dev), já criado com a mesma descrição
+// aprovada no dryRun original: "Este post faz parte da campanha de Q3.".
+// Os dois cards anteriores morreram: c1785505159707_geo foi excluído,
+// c1785889397211_x0xr2 acabou reaproveitado pra trabalho real (query
+// lenta no dashboard) — a 1ª tentativa de escrita real contra ele
+// terminou em perguntar_humano (correto: o modelo notou que o pedido não
+// tinha nada a ver com o conteúdo real do card, e ainda deixou um
+// comentário/notificação real lá que precisa ser limpo à parte). Rode
+// verEstadoCardTesteContraSquadDev.js ANTES deste script (de graça, sem
+// LLM) pra conferir a descrição atual.
 //
 // Mesmo padrão de segurança dos canários anteriores (5/6/7):
 //   1. cardId obrigatório via CLI, sem default.
@@ -38,7 +43,7 @@
 //   cd functions
 //   ANTHROPIC_API_KEY=sk-ant-... node agente-agil-orquestrador/scripts/escritaReal8EditarCamposDescContraSquadDev.js <cardId>
 //
-// cardId é OBRIGATÓRIO, sem default. Use c1785889397211_x0xr2.
+// cardId é OBRIGATÓRIO, sem default. Use c1786712278908.
 //
 // Custo esperado: ler_card + editar_campos (+ talvez comentario) — ordem
 // de centavos de dólar.
@@ -77,7 +82,7 @@ async function main() {
   const cardId = process.argv[2];
   if (!cardId) {
     console.error(`Uso: node ${__filename.split(require('path').sep).pop()} <cardId>`);
-    console.error('cardId é obrigatório, sem default. Use c1785889397211_x0xr2.');
+    console.error('cardId é obrigatório, sem default. Use c1786712278908.');
     process.exit(1);
   }
 

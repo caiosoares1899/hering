@@ -6792,6 +6792,39 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-14 · Canário 8 (escrita real): 2ª tentativa contra card reaproveitado, card de teste novo criado
+Retomando o trabalho depois de 11 dias parado (último commit real era
+7/ago, `1ca31d2`, atualizando os scripts do canário 8 pro card
+`c1785889397211_x0xr2` depois que o card de teste original,
+`c1785505159707_geo`, foi excluído — atualização sem entrada própria no
+CHANGELOG até agora, registrada aqui retroativamente).
+
+Rodado `escritaReal8EditarCamposDescContraSquadDev.js` contra
+`c1785889397211_x0xr2`: resultado `awaiting_human`. Não é bug — o card
+tinha sido reaproveitado pra trabalho real desde 7/ago (virou "Otimizar
+consulta lenta no dashboard principal", com links de Vimeo), então o
+pedido fixo do canário ("registra que divulgação nas redes sociais saiu
+do escopo") não tinha relação nenhuma com o conteúdo real. O modelo leu
+o card via `ler_card`, notou a incompatibilidade e escalou por
+`perguntar_humano` em vez de inventar uma edição sem sentido — mesmo
+comportamento já validado no canário 6. Efeito colateral real: isso
+escreveu um comentário `❓` + notificação de menção no card de produção
+(squad `dev`), via `perguntar_humano` (`applied: 4`) — pendente de
+limpeza manual.
+
+Confirma o padrão: 2 cards de teste dedicados "morreram" seguidos (1º
+excluído, 2º reaproveitado) — squad `dev` não é um sandbox isolado,
+cards lá viram trabalho de verdade com o tempo. Criado um 3º card,
+`c1786712278908` ("[TESTE Agente Ágil] Canário 8 — não editar
+manualmente", título deixado explícito dessa vez pra reduzir a chance de
+reaproveitamento), já com a mesma descrição aprovada no dryRun original
+("Este post faz parte da campanha de Q3."). Os três scripts do canário 8
+(`verEstadoCardTesteContraSquadDev.js`,
+`llmRealSystemPromptV1EditarCamposDescPreservaConteudoDryRunContraSquadDev.js`,
+`escritaReal8EditarCamposDescContraSquadDev.js`) atualizados pra
+referenciar o card novo. Escrita real (`dryRun:false`) contra
+`c1786712278908` ainda não rodada — próximo passo.
+
 ### 2026-08-03 · Cenário 8 confirmado: preserva conteúdo real de desc
 Rodado pelo usuário duas vezes: primeiro contra a descrição vazia do
 card de controle (aprovado — sem invenção de conteúdo, sem agir sozinho

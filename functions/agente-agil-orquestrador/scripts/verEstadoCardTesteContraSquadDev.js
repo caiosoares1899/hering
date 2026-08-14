@@ -8,8 +8,12 @@
 // card já tem conteúdo suficiente pra testar preservação, ou se vale a
 // pena preencher uma descrição de exemplo manualmente pela UI antes
 // (mesmo padrão usado no card de teste anterior, c1785505159707_geo,
-// excluído — substituído por c1785889397211_x0xr2, "Otimizar consulta
-// lenta no dashboard principal").
+// excluído, e no seguinte, c1785889397211_x0xr2, que acabou reaproveitado
+// pra trabalho real — squad 'dev' não é um sandbox isolado, cards lá
+// viram trabalho de verdade com o tempo. Card atual: c1786712278908,
+// título "[TESTE Agente Ágil] Canário 8 — não editar manualmente", já
+// criado com a mesma descrição aprovada no dryRun original: "Este post
+// faz parte da campanha de Q3.").
 //
 // Uso:
 //   cd functions
@@ -29,7 +33,7 @@ async function main() {
   const cardId = process.argv[2];
   if (!cardId) {
     console.error(`Uso: node ${__filename.split(require('path').sep).pop()} <cardId>`);
-    console.error('cardId é obrigatório, sem default. Use c1785889397211_x0xr2.');
+    console.error('cardId é obrigatório, sem default. Use c1786712278908.');
     process.exit(1);
   }
 
