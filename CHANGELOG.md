@@ -6910,10 +6910,13 @@ E reconheceu a própria limitação de não saber preenchê-la sozinha —
 honestidade calibrada sobre capacidade, não só sobre informação.
 `biblioteca_agil` foi chamada sem pedido explícito nos dois casos.
 
-Script novo `scripts/escritaReal10BibliotecaAgilContraSquadDev.js` —
-mesmos dois cenários com `dryRun:false`, confirmando que o `comentario`
-com a resposta é escrito de verdade (biblioteca_agil em si nunca escreve
-nada). Pendente: rodar localmente.
+**Canário de escrita real validado**: `scripts/escritaReal10BibliotecaAgilContraSquadDev.js`
+rodado pelo usuário contra squad dev real — os mesmos dois cenários com
+`dryRun:false`. `biblioteca_agil` chamada sozinha nos dois casos (output
+sem campo `dryRun`, confirma que nunca toca escrita), `comentario`
+confirmado com escrita real escrevendo os dois comentários de verdade no
+card, conteúdo idêntico em qualidade ao dryRun. `biblioteca_agil` está
+validada ponta a ponta.
 
 ### 2026-08-15 · Nova ferramenta `biblioteca_agil` — conceitos ágeis + como o board funciona
 Expansão pedida pelo usuário: além dos conceitos ágeis já mapeados, o
