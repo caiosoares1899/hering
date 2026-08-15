@@ -1741,13 +1741,21 @@ determinístico, exposição em `buildTools()` nos dois modos com o mesmo
 comportamento. Suíte inteira: **176/176 passando** (era 170 antes desta
 mudança).
 
-**Pendente**: validação do usuário — rodar um cenário real que force o
-agente a consultar a biblioteca (ex.: pergunta sobre como funciona
-recorrência ou ficha técnica) pra confirmar que ele lembra de chamar a
-ferramenta no momento certo, não só que a ferramenta existe. Script
-entregue: `scripts/dryRunBibliotecaAgilContraSquadDev.js` (roda só
-localmente), com dois cenários na mesma rodada — "Recorrência automática"
-(testa se o agente distingue de "Itens recorrentes", conceito parecido) e
-"Ficha técnica" (testa o verbete mais denso, incluindo se a resposta
-reproduz a nota de que o agente ainda não sabe preencher a ficha
-sozinho).
+**Validado pelo usuário** (dryRun, `scripts/dryRunBibliotecaAgilContraSquadDev.js`):
+os dois cenários passaram exatamente nos pontos da checagem manual —
+"Recorrência automática" não confundiu com "Itens recorrentes" (explicou
+a diferença chave corretamente), "Ficha técnica" acertou os campos
+(obrigatórios vs. opcional) E reconheceu a própria limitação (não sabe
+preencher a ficha sozinho, recusa e pede humano) — honestidade calibrada
+sobre capacidade, não só sobre informação. `biblioteca_agil` foi chamada
+sem pedido explícito nos dois casos, confirmando uso proativo quando a
+pergunta claramente precisa de conhecimento específico do produto.
+
+**Canário de escrita real** (`scripts/escritaReal10BibliotecaAgilContraSquadDev.js`,
+décimo da série): mesmos dois cenários, agora com `dryRun:false`, pra
+confirmar que o `comentario` com a resposta do agente é escrito de
+verdade no card — `biblioteca_agil` em si nunca escreve nada (dado
+estático, sem distinção fake/real no handler), então o ponto real deste
+canário é confirmar que ela se comporta igual dentro de uma execução
+real e que a escrita do comentário funciona ponta a ponta. Pendente:
+rodar localmente e confirmar.
