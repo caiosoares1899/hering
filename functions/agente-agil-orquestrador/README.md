@@ -1751,11 +1751,14 @@ sobre capacidade, não só sobre informação. `biblioteca_agil` foi chamada
 sem pedido explícito nos dois casos, confirmando uso proativo quando a
 pergunta claramente precisa de conhecimento específico do produto.
 
-**Canário de escrita real** (`scripts/escritaReal10BibliotecaAgilContraSquadDev.js`,
-décimo da série): mesmos dois cenários, agora com `dryRun:false`, pra
-confirmar que o `comentario` com a resposta do agente é escrito de
-verdade no card — `biblioteca_agil` em si nunca escreve nada (dado
-estático, sem distinção fake/real no handler), então o ponto real deste
-canário é confirmar que ela se comporta igual dentro de uma execução
-real e que a escrita do comentário funciona ponta a ponta. Pendente:
-rodar localmente e confirmar.
+**Canário de escrita real validado** (`scripts/escritaReal10BibliotecaAgilContraSquadDev.js`,
+décimo da série, rodado pelo usuário contra squad dev real): os mesmos
+dois cenários, agora com `dryRun:false` — `biblioteca_agil` chamada
+sozinha nos dois casos, output sem campo `dryRun` (confirma que nunca
+toca escrita, mesmo em modo real), e `comentario` confirmado com escrita
+real (`dryRun:false` no output) escrevendo os dois comentários de
+verdade no card. Conteúdo das respostas idêntico em qualidade ao que já
+tinha passado no dryRun (diferenciação correta de "Recorrência
+automática" vs. "Itens recorrentes"; reconhecimento espontâneo da
+própria limitação na Ficha Técnica). `biblioteca_agil` está validada
+ponta a ponta — dryRun e escrita real.
