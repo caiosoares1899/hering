@@ -6860,6 +6860,51 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-15 · Nova ferramenta `biblioteca_agil` — conceitos ágeis + como o board funciona
+Expansão pedida pelo usuário: além dos conceitos ágeis já mapeados, o
+agente precisava de conhecimento prático das funcionalidades do Maré
+Digital (recorrência, ficha técnica, dependências, riscos, campanhas...)
+pra ajudar na tomada de decisão sobre o board em si, não só de metodologia.
+
+**Origem do conteúdo**: extraído e organizado do `HELP_CONTENT` real de
+`kanban-dev.html` (abas `agil`, `board`, `cards`, `config`,
+`comunicacao`), conferido linha a linha contra o repo antes de escrever —
+não é conteúdo novo, é o texto oficial já existente reorganizado pro
+agente. Duplicação deliberada (mesmo precedente de `flow.js`/
+`visaoBoard.js`), HTML de formatação removido (texto pra LLM, não pra
+modal).
+
+**Decisões combinadas antes de implementar**:
+- **Tool sob demanda, não baked no prompt** — mesmo padrão de
+  `ler_card`/`visao_board`. Corpo de texto dobra de tamanho com o novo
+  grupo; baked pagaria esse custo de tokens em toda invocação, mesmo nos
+  pedidos que não precisam (mover card, editar campo).
+- **Um grupo só, dois sub-grupos** (`Conceitos ágeis` + `Como o board
+  funciona`), não duas ferramentas/fases separadas — a linha entre
+  "conceito ágil" e "feature do produto" já é nebulosa (ex.: recorrência
+  automática É sobre ritmo de sprint), e um lugar só é mais simples pro
+  agente consultar.
+- **Sem distinção fake/real** — diferente de `ler_card`/`visao_board`,
+  nunca toca o Firebase (dado 100% estático), então não precisa da mesma
+  cautela de escrita. Um único handler serve os dois modos.
+- **Schema vazio no v1** — sem filtro por grupo/verbete, sempre retorna
+  tudo. Mesma filosofia de "simples primeiro" de `visao_board`; filtro
+  fica pra v2 se o custo por chamada importar na prática.
+- **Filtragem de escopo**: de 13 verbetes propostos, 1 foi reduzido
+  (Compartilhar card/Milanote → só o sinal 📌 de peça vinculada, cortando
+  a mecânica de copiar link, que não ajuda julgamento) e 2 foram
+  acrescentados por afetarem diretamente decisão sobre o board (Supercard,
+  Prazo/Submarca obrigatórios — este último documenta uma restrição que o
+  próprio agente já respeita ao criar cards).
+
+**Resultado**: `tools/bibliotecaAgil.js` (9 verbetes de conceitos ágeis +
+15 de como o board funciona), registrado em `buildTools()` como
+`biblioteca_agil`, `SYSTEM_PROMPT_V1` atualizado (lista de ferramentas +
+linha de orientação sobre quando consultar). 6 testes novos, suíte
+inteira 176/176. **Pendente**: validação do usuário rodando um cenário
+real (ex.: pergunta sobre recorrência ou ficha técnica) pra confirmar que
+o agente lembra de chamar a ferramenta no momento certo.
+
 ### 2026-08-15 · `visao_board` validado (dryRun risco + saudável) — achado pendente de calibração
 Dois dryRuns reais contra squad dev: (1) dado "sujo" acumulado de testes
 (WIP 32/12, amostra pequena) — agente identificou o risco certo e

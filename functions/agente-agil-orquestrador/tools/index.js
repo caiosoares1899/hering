@@ -24,6 +24,7 @@ const { makeHandler } = require('./fakeHandlers');
 const { makeRealHandler, makeRealPerguntarHumanoHandler } = require('./realHandlers');
 const { lerCardSchema, makeFakeLerCardHandler, makeRealLerCardHandler } = require('./lerCard');
 const { visaoBoardSchema, makeFakeVisaoBoardHandler, makeRealVisaoBoardHandler } = require('./visaoBoard');
+const { bibliotecaAgilSchema, makeBibliotecaAgilHandler } = require('./bibliotecaAgil');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -104,6 +105,16 @@ function buildTools(options = {}) {
       'Visão agregada do board inteiro (não só o card atual): WIP atual vs. limite por coluna, throughput, cycle time e lead time (média/mediana/amostra), gargalo por coluna (tempo médio parado) e bloqueios ativos. Aceita periodo_dias opcional (default 14) pra throughput/cycle/lead/gargalo — WIP e bloqueios são sempre o estado atual. Use antes de responder perguntas de gestão/fluxo do time ou pra dar contexto de board a um especialista externo.',
     input_schema: zodToJsonSchema(visaoBoardSchema),
     handler: mode === 'real' ? makeRealVisaoBoardHandler({ db, squadId }) : makeFakeVisaoBoardHandler(),
+  });
+
+  tools.push({
+    name: 'biblioteca_agil',
+    description:
+      'Base de conhecimento estática: conceitos ágeis (WIP, sprint, throughput, papéis...) e como as funcionalidades do Maré Digital funcionam na prática (recorrência, ficha técnica, dependências, riscos, campanhas, arquivamento...). Sempre o mesmo conteúdo, não depende do estado do board. Use quando o pedido envolver dúvida sobre uma funcionalidade do board ou um conceito ágil, ou pra decidir se/como usar um recurso do Maré Digital antes de agir ou responder.',
+    input_schema: zodToJsonSchema(bibliotecaAgilSchema),
+    // Sem distinção fake/real: dado 100% estático, nunca toca o Firebase —
+    // o mesmo handler serve os dois modos de buildTools().
+    handler: makeBibliotecaAgilHandler(),
   });
 
   return tools;
