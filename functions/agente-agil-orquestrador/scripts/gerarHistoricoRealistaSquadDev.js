@@ -47,7 +47,12 @@ const pickSome = (arr, n) => {
   while (out.length < n && copy.length) out.push(copy.splice(rndInt(0, copy.length - 1), 1)[0]);
   return out;
 };
-const rndId = (createdMsAgo) => 'c' + (NOW.getTime() - createdMsAgo) + '_' + Math.random().toString(36).slice(2, 6);
+// Math.round é essencial aqui: criadoMsAgo vem de rnd() (float), e
+// Date.now() - float também é float — "c1784191567645.2566_..." como
+// chave quebra o Firebase (RTDB não aceita "." em key). Achado rodando
+// contra o banco de verdade, não pego no teste isolado (que só conferia
+// ordem cronológica, não o formato da chave).
+const rndId = (createdMsAgo) => 'c' + Math.round(NOW.getTime() - createdMsAgo) + '_' + Math.random().toString(36).slice(2, 6);
 
 const TAG_POOL = {
   dev: ['feat', 'infra', 'bug', 'ml', 'data'],
