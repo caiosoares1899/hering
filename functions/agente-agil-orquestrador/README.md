@@ -1672,3 +1672,76 @@ que o gerador fabricou) — é uma nuance de calibração de julgamento.
 mais alguns cenários antes de decidir se vale ajustar o prompt (ex.: dar
 `agilCfg.sprintDays` como contexto de referência) ou se é comportamento
 aceitável.
+
+## Nova ferramenta: `biblioteca_agil` — conceitos ágeis + como o board funciona
+
+Pedido do usuário: expandir a biblioteca de conceitos ágeis (mencionada
+como pendente na seção anterior, nunca implementada até aqui) com um novo
+grupo — não metodologia, mas como as funcionalidades do Maré Digital
+funcionam na prática — pra ajudar o agente (e orientar POs) na tomada de
+decisão sobre features do board em si.
+
+**Origem do conteúdo**: extraído e organizado do `HELP_CONTENT` real de
+`kanban-dev.html` (abas `agil`, `board`, `cards`, `config`,
+`comunicacao`), conferido linha a linha contra o repo antes de escrever —
+o usuário levantou os verbetes candidatos, eu confirmei/corrigi contra o
+texto atual (ex.: "Ficha de Criativo" → nome real é "Ficha Técnica
+(produção criativa)") antes de implementar.
+
+**Decisões combinadas antes de implementar** (via `AskUserQuestion`,
+já que a mecânica de entrega tinha ficado em aberto na etapa anterior):
+
+- **Tool sob demanda (`biblioteca_agil`), não baked no prompt** — mesmo
+  padrão de `ler_card`/`visao_board`. O corpo de texto dobra de tamanho
+  com o novo grupo (9 → 24 verbetes); baked pagaria esse custo de tokens
+  em toda invocação do agente, mesmo em pedidos que não precisam
+  (mover card, editar campo). Sob demanda, só paga quando o agente decide
+  que é relevante.
+- **Um grupo só, dois sub-grupos internos** (`Conceitos ágeis` +
+  `Como o board funciona`), não duas ferramentas ou fases separadas.
+  Diferente da separação `visao_board` vs. biblioteca (perfis de risco
+  diferentes — agregação sobre dado real vs. texto estático), aqui os dois
+  sub-grupos são o MESMO tipo de coisa (texto estático), só tópicos
+  diferentes — e a linha entre "conceito ágil" e "feature do produto" já é
+  nebulosa (ex.: recorrência automática É sobre ritmo de sprint). Um lugar
+  só de consulta é mais simples pro agente.
+- **Sem distinção fake/real** — diferente de `ler_card`/`visao_board`,
+  esta ferramenta nunca toca o Firebase (dado 100% estático e
+  determinístico), então não precisa da mesma cautela de escrita real vs.
+  simulada. Um único handler serve os dois modos de `buildTools()`.
+- **Schema vazio no v1** (`z.object({})`) — sem filtro por grupo ou
+  verbete, sempre retorna tudo. Mesma filosofia de "simples primeiro" já
+  usada em `visao_board`: se o custo por chamada importar depois que o
+  agente usar de verdade, um filtro é mudança pequena de v2, não
+  retrabalho.
+
+**Filtragem de escopo** (dos 13 verbetes que o usuário propôs, mais 2 que
+eu sugeri por atenderem ao mesmo critério — "ajuda o agente a decidir",
+não só documentação de UI):
+
+- **Reduzido**: "Compartilhar card / Milanote" → só o sinal 📌 de peça
+  vinculada ("Peça vinculada (Milanote)"). A mecânica de copiar link pro
+  Slack é UI pura, não informa julgamento sobre o board.
+- **Acrescentados**: "Supercard (cards filhos)" (agrupamento que afeta
+  diretamente decisão de organização do board) e "Prazo e Submarca
+  obrigatórios" (restrição que o próprio agente já respeita ao criar
+  cards — inclui o fato de que ele recusa criar sem Submarca válida
+  quando o squad exige, e a Ficha Técnica ganhou a mesma nota: o agente
+  ainda não sabe preenchê-la).
+
+**Resultado** (`functions/agente-agil-orquestrador/tools/bibliotecaAgil.js`):
+`CONCEITOS_AGEIS` (9 verbetes) + `COMO_BOARD_FUNCIONA` (15 verbetes),
+registrado em `buildTools()` como `biblioteca_agil`. `SYSTEM_PROMPT_V1`
+ganhou a ferramenta na lista + uma linha de orientação em "Sobre pedidos
+abertos" indicando quando consultar (mesmo padrão documentado no
+comentário de topo de `systemPrompt.js`, agora exceção #4). 6 testes
+novos (`__tests__/bibliotecaAgil.test.js`): forma dos verbetes, ausência
+de HTML residual, títulos únicos por grupo, schema vazio, handler
+determinístico, exposição em `buildTools()` nos dois modos com o mesmo
+comportamento. Suíte inteira: **176/176 passando** (era 170 antes desta
+mudança).
+
+**Pendente**: validação do usuário — rodar um cenário real que force o
+agente a consultar a biblioteca (ex.: pergunta sobre como funciona
+recorrência ou ficha técnica) pra confirmar que ele lembra de chamar a
+ferramenta no momento certo, não só que a ferramenta existe.
