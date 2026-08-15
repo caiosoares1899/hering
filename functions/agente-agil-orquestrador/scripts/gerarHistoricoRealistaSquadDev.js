@@ -332,9 +332,18 @@ async function main() {
 
   const cardsSnap = await db.ref(`${base}/cards`).get();
   const existentes = cardsSnap.val() || {};
-  if (Object.keys(existentes).length > 0) {
-    console.error(`squad ${SQUAD_ID} ainda tem ${Object.keys(existentes).length} card(s) — rode o script de arquivamento antes deste, pra não misturar com o histórico simulado.`);
+  // Só bloqueia se ainda tiver card ATIVO — arquivado não conta (arquivar
+  // não apaga o registro, só marca `archived:true`; ver script de
+  // arquivamento). O `.set()` mais abaixo REESCREVE o nó /cards inteiro,
+  // então qualquer resíduo arquivado também some quando o script roda —
+  // isso é intencional (base limpa de verdade), avisado no log abaixo.
+  const ativosExistentes = Object.values(existentes).filter((c) => c && !c.archived);
+  if (ativosExistentes.length > 0) {
+    console.error(`squad ${SQUAD_ID} ainda tem ${ativosExistentes.length} card(s) ATIVO(s) — rode o script de arquivamento antes deste, pra não misturar com o histórico simulado.`);
     process.exit(1);
+  }
+  if (Object.keys(existentes).length > 0) {
+    console.log(`Aviso: ${Object.keys(existentes).length} card(s) arquivado(s) existente(s) também serão substituídos (o /cards inteiro é reescrito) — base ficará 100% com o histórico simulado.`);
   }
 
   const cards = gerarCards();
