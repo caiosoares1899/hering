@@ -1560,6 +1560,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.429-dev — 2026-08-15 — Auto-scroll de coluna durante drag-and-drop
+Bug de UX real reportado: reordenar manualmente um card do meio de uma
+coluna longa pra primeira posição exigia soltar o card, rolar a coluna na
+mão, pegar o drag de novo, repetir — sem auto-scroll nas bordas, virava
+várias tentativas seguidas em colunas com mais cards do que cabe na tela.
+
+**Causa**: HTML5 Drag and Drop nativo não rola sozinho containers
+internos com `overflow` (só o viewport da página, em alguns browsers) —
+`.col-body` nunca teve esse comportamento implementado.
+
+**Correção**: `handleDragOver` passa a rastrear o `.col-body` e o
+`clientY` mais recentes do cursor; um loop via `requestAnimationFrame`
+(`_autoScrollTick`, independente da frequência irregular do próprio
+evento `dragover`) rola a coluna sozinha quando o cursor entra numa zona
+de 50px a partir da borda superior/inferior *visível*, com velocidade
+crescente quanto mais perto da borda (até ~14px/frame). O loop se
+autodesliga quando o drag termina (`handleDragEnd`) ou quando o cursor
+sai de vez daquela coluna (`handleDragLeave`), evitando continuar
+rolando uma coluna que não está mais sendo sobrevoada. Escopo: só drag
+desktop (HTML5 DnD) — o drag touch/mobile (`addTouchDnD`) não suporta
+reordenar dentro da mesma coluna hoje, então o bug relatado não se
+aplica a esse caminho.
+
 ### v8.30.428-dev — 2026-08-14 — Agente Ágil aparece no autocomplete de @menção
 Follow-up combinado (mesma causa raiz) de dois achados de UX sinalizados
 ao testar o gatilho automático de @menção do Agente Ágil Orquestrador

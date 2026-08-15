@@ -5409,7 +5409,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.428-dev</div>
+<div class="version">v8.30.429-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -22708,6 +22708,41 @@ let _dragCardId = null;
 let _dragSourceCol = null;
 let _ghostEl = null;
 
+// ── Auto-scroll de coluna durante drag ──────────────────────────────
+// HTML5 Drag and Drop nativo não rola sozinho containers internos com
+// overflow (só o viewport da página, em alguns browsers) — sem isso, uma
+// coluna mais longa que a tela exigia soltar o card, rolar na mão, pegar o
+// drag de novo, repetir. _autoScrollBody/_autoScrollY guardam o
+// .col-body e o clientY mais recentes vistos em handleDragOver; o loop em
+// _autoScrollTick roda via requestAnimationFrame (não a frequência
+// irregular do próprio evento dragover) e se autodesliga quando o drag
+// termina (handleDragEnd) ou quando o cursor sai de vez da coluna
+// (handleDragLeave).
+let _autoScrollBody = null;
+let _autoScrollY = null;
+let _autoScrollRAF = null;
+const AUTO_SCROLL_ZONE = 50; // px a partir da borda visível que ativa o scroll
+const AUTO_SCROLL_MAX_SPEED = 14; // px por frame na borda (~60fps)
+
+function _autoScrollTick(){
+  if(!_dragCardId || !_autoScrollBody){ _autoScrollRAF=null; return; }
+  const body=_autoScrollBody, y=_autoScrollY;
+  if(y!=null){
+    const rect=body.getBoundingClientRect();
+    const distTop=y-rect.top, distBottom=rect.bottom-y;
+    if(distTop>=0 && distTop<AUTO_SCROLL_ZONE){
+      body.scrollTop -= AUTO_SCROLL_MAX_SPEED*(1-distTop/AUTO_SCROLL_ZONE);
+    } else if(distBottom>=0 && distBottom<AUTO_SCROLL_ZONE){
+      body.scrollTop += AUTO_SCROLL_MAX_SPEED*(1-distBottom/AUTO_SCROLL_ZONE);
+    }
+  }
+  _autoScrollRAF=requestAnimationFrame(_autoScrollTick);
+}
+function _stopAutoScroll(){
+  if(_autoScrollRAF){ cancelAnimationFrame(_autoScrollRAF); _autoScrollRAF=null; }
+  _autoScrollBody=null; _autoScrollY=null;
+}
+
 // --- D&D DAS COLUNAS ---
 let _dragColId = null;
 
@@ -22797,6 +22832,7 @@ function handleDragEnd(e){
   });
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
   _dragCardId=null; _dragSourceCol=null;
+  _stopAutoScroll();
 }
 
 function handleDragOver(e, colId){
@@ -22808,6 +22844,12 @@ function handleDragOver(e, colId){
   document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
   body.classList.add('drag-over');
   e.dataTransfer.dropEffect='move';
+
+  // Auto-scroll: atualiza a posição mais recente do cursor e garante que o
+  // loop está rodando (ver _autoScrollTick, declarado no topo do módulo D&D).
+  _autoScrollBody=body; _autoScrollY=e.clientY;
+  if(!_autoScrollRAF) _autoScrollRAF=requestAnimationFrame(_autoScrollTick);
+
   // Ghost line — mostra onde o card vai ser inserido
   if(_ghostEl) _ghostEl.remove();
   _ghostEl = document.createElement('div');
@@ -22826,6 +22868,10 @@ function handleDragLeave(e){
   if(!e.currentTarget.contains(e.relatedTarget)){
     e.currentTarget.classList.remove('drag-over','drag-over-blocked');
     if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+    // Saiu de vez dessa coluna — se era ela quem estava sendo auto-rolada,
+    // para o scroll (senão continuaria rolando uma coluna que o cursor já
+    // não está mais sobrevoando).
+    if(_autoScrollBody===e.currentTarget) _stopAutoScroll();
   }
 }
 
@@ -22859,6 +22905,7 @@ function handleDrop(e, colId){
   const body = e.currentTarget;
   body.classList.remove('drag-over','drag-over-blocked');
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  _stopAutoScroll();
   if(!_dragCardId) return;
   const card = cards.find(x=>x.id===_dragCardId);
   if(!card) return;
