@@ -1744,4 +1744,10 @@ mudança).
 **Pendente**: validação do usuário — rodar um cenário real que force o
 agente a consultar a biblioteca (ex.: pergunta sobre como funciona
 recorrência ou ficha técnica) pra confirmar que ele lembra de chamar a
-ferramenta no momento certo, não só que a ferramenta existe.
+ferramenta no momento certo, não só que a ferramenta existe. Script
+entregue: `scripts/dryRunBibliotecaAgilContraSquadDev.js` (roda só
+localmente), com dois cenários na mesma rodada — "Recorrência automática"
+(testa se o agente distingue de "Itens recorrentes", conceito parecido) e
+"Ficha técnica" (testa o verbete mais denso, incluindo se a resposta
+reproduz a nota de que o agente ainda não sabe preencher a ficha
+sozinho).
