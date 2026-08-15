@@ -75,6 +75,11 @@ async function main() {
   console.log(
     'Abra o board do squad "dev" > 📊 Dados do Board > aba Fluxo, e confira se WIP/gargalo/tempo batem com o que o visao_board devolveu acima (a aba Fluxo não mostra cycle/lead time em número direto — pra isso, compare com a aba "⏱ Tempo" do painel, se existir, ou confie na matemática: cycle/lead são réplica exata de _cardTempos()/_cardTempoPorColuna() do kanban.html).',
   );
+
+  // firebase-admin/database mantém uma conexão WebSocket aberta — sem isso
+  // o processo Node nunca encerra sozinho depois do script terminar
+  // (parece "travado" no terminal, mas já rodou tudo e imprimiu o resultado).
+  process.exit(0);
 }
 
 main().catch((err) => {
