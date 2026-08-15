@@ -18,6 +18,25 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.251 — 2026-08-15 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.250
+(v8.30.427-dev → v8.30.429-dev), validado em dev.
+
+- **Auto-scroll de coluna durante drag-and-drop**: arrastar um card pra
+  reordenar dentro de uma coluna mais longa que a tela agora rola a
+  coluna sozinha ao chegar perto da borda superior/inferior visível —
+  antes era preciso soltar o card, rolar na mão, pegar o drag de novo,
+  repetir.
+- **Agente Ágil passa a respeitar Prazo/Submarca/Ficha Técnica
+  obrigatórios**: as mesmas regras de campo obrigatório que a tela de
+  criar/editar card já aplica agora valem também quando o Agente Ágil
+  cria um card ou limpa um prazo — squads que usam Submarca ou Ficha
+  Técnica não ficam mais com cards incompletos criados pelo agente.
+- **Agente Ágil aparece no autocomplete de @menção**: digitar "@a" num
+  comentário agora sugere "Agente Ágil" como opção (nos squads onde o
+  gatilho automático existe), então não é mais preciso lembrar de cor
+  como chamar o agente.
+
 ### v8.30.250 — 2026-08-14 · promove pra prod
 Promove pra produção o único achado da rotina de otimização (PR #375,
 kanban-dev v8.30.426-dev): um `<link rel="preconnect">` órfão pro

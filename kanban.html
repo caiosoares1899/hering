@@ -5409,7 +5409,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.250</div>
+<div class="version">v8.30.251</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6112,6 +6112,39 @@ function allIdentities(){
     init:a.init||a.id, name:a.nome||a.id, foto:'', uid:'agent:'+a.id,
     isAgent:true, cor:a.cor||'#a78bfa', avatarEmoji:a.avatarEmoji||'🤖',
   }))];
+}
+// Entidade sintética pro Agente Ágil Orquestrador aparecer no autocomplete
+// de @menção (achado de UX: sem isso, ninguém descobre que dá pra chamar o
+// agente digitando "@" — dependia de lembrar "@Agente Ágil" de cor, sem
+// erro de digitação). NUNCA vira registro real em dados/agentes — é só
+// pro sistema de menção enxergar, não aparece em seletor de responsável/
+// participantes nem em nenhum outro uso de allIdentities(). `init` é um
+// sentinela que não colide com nenhum init de verdade (humano ou agente
+// cadastrado), resolvido de propósito em insertMention()/handleMentionKey
+// pra inserir "Agente Ágil" literal — NUNCA passar por getMemberHandle()
+// (bug real encontrado: "Agente Ágil" → getMemberHandle → "agente.gil",
+// o "Á" acentuado é removido pela sanitização, não vira "a" — não bate
+// com a convenção de menção que o gatilho automático espera, ver
+// functions/agente-agil-orquestrador/detectaMencao.js).
+const AGENTE_AGIL_MENTION_INIT = '__agente_agil__';
+const AGENTE_AGIL_MENTION_ENTRY = {
+  init: AGENTE_AGIL_MENTION_INIT, name: 'Agente Ágil', foto: '', uid: 'agente-agil',
+  isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖', isAgenteAgilMention: true,
+};
+// Mesmo escopo do gatilho automático (mentionTrigger.js:SQUAD_ID) — só
+// squad 'dev' por enquanto. Atualizar aqui junto se/quando o gatilho
+// expandir de squad, senão a sugestão aparece em squad onde não faz
+// nada (nenhuma Cloud Function escutando o comentário).
+const AGENTE_AGIL_MENTION_SQUADS = new Set(['dev']);
+function mentionCandidates(){
+  const base = allIdentities();
+  return AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) ? [...base, AGENTE_AGIL_MENTION_ENTRY] : base;
+}
+// Label usado tanto pra filtrar (digitou "@a"/"@age"...) quanto pra exibir
+// no dropdown — pro Agente Ágil é sempre o nome literal, nunca o handle
+// derivado (ver comentário acima do porquê).
+function mentionMatchLabel(m){
+  return m.isAgenteAgilMention ? m.name : getMemberHandle(m);
 }
 // ── MODO DE VISUALIZAÇÃO HÍBRIDO (humanos / agentes / híbrido-padrão) ──
 // Só aparece em squads com agentes de IA cadastrados (ex.: ecomm). Funciona como
@@ -18378,7 +18411,7 @@ const agTools=[
   {name:'mover_card',description:'Move um card para outra coluna',input_schema:{type:'object',properties:{card_id:{type:'string'},nova_coluna:{type:'string'},motivo:{type:'string'}},required:['card_id','nova_coluna','motivo']}},
   {name:'atualizar_prazo',description:'Atualiza o prazo de um card (formato YYYY-MM-DD)',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_prazo:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_prazo','motivo']}},
   {name:'marcar_checklist',description:'Marca ou desmarca item do checklist de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},item_index:{type:'number'},concluido:{type:'boolean'}},required:['card_id','item_index','concluido']}},
-  {name:'criar_card',description:'Cria novo card no board',input_schema:{type:'object',properties:{titulo:{type:'string'},coluna:{type:'string'},tag:{type:'string'},owner:{type:'string'},prazo:{type:'string'},descricao:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},po:{type:'string'}},required:['titulo','coluna']}},
+  {name:'criar_card',description:'Cria novo card no board. Se o squad exigir Submarca (ver contexto), informe uma das opções válidas — sem isso a criação é recusada, igual bloquearia um humano salvando pelo modal.',input_schema:{type:'object',properties:{titulo:{type:'string'},coluna:{type:'string'},tag:{type:'string'},owner:{type:'string'},prazo:{type:'string'},submarca:{type:'string',description:'Label exato de uma das opções de Submarca do squad (só quando o squad usa esse campo)'},descricao:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},po:{type:'string'}},required:['titulo','coluna']}},
   {name:'atualizar_owner',description:'Muda o responsável de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},novo_owner:{type:'string'},motivo:{type:'string'}},required:['card_id','novo_owner','motivo']}},
   {name:'definir_prioridade',description:'Define ou remove a prioridade de um card',input_schema:{type:'object',properties:{card_id:{type:'string'},prioridade:{type:'string',enum:['critical','high','medium','low','']},motivo:{type:'string'}},required:['card_id','prioridade']}},
   {name:'salvar_modelo',description:'Salva um card como modelo reutilizável',input_schema:{type:'object',properties:{card_id:{type:'string'},nome_modelo:{type:'string'}},required:['card_id']}},
@@ -18419,10 +18452,13 @@ function executeTool(name,input){
       let c=cards.find(x=>x.id===input.card_id);
       if(!c) c=cards.find(x=>x.title.toLowerCase().includes((input.card_id||'').toLowerCase()));
       if(!c) return{ok:false,msg:'Card não encontrado'};
-      c.due=input.novo_prazo; c.edited=user; c.editedAt=td;
-      recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'—'), '🤖 Agente Ágil');
+      // novo_prazo vazio limpa o prazo — marca noDue pra não deixar o card
+      // no mesmo estado inválido que a UI bloqueia (due vazio sem a flag
+      // "🚫 Sem prazo definido" setada).
+      c.due=input.novo_prazo||''; c.noDue=!input.novo_prazo; c.edited=user; c.editedAt=td;
+      recordHistory(c, 'alterou prazo: '+(input.novo_prazo||'sem prazo definido'), '🤖 Agente Ágil');
       renderBoard(); fbSaveCard(c);
-      return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo}`};
+      return{ok:true,msg:`Prazo de "${c.title}" → ${input.novo_prazo||'sem prazo definido'}`};
     }
     case 'marcar_checklist':{
       const c=cards.find(x=>x.id===input.card_id);
@@ -18450,8 +18486,23 @@ function executeTool(name,input){
           else ownerNovo=''; // não cria membro inexistente
         }
       }
-      const novo={id:'c'+Date.now(),col:input.coluna,tag:input.tag||'',title:input.titulo,
-        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',po:input.po||'',
+      // Regras obrigatórias do board (as mesmas que salvarCard() aplica no
+      // modal — pedido direto do PO/organizador: o agente não pode deixar
+      // um card num estado que um humano seria bloqueado de salvar).
+      if(criativosAtivo){
+        return{ok:false,msg:'Este squad exige Ficha Técnica preenchida pra salvar um card (Config → Criativos) — o Agente Ágil ainda não sabe preencher esses campos. Crie o card manualmente, ou crie por aqui mesmo assim e peça pra alguém completar a ficha depois.'};
+      }
+      let submarcaTagId='';
+      if(submarcaAtivo){
+        const opcoes=SUBMARCA_TAGS.filter(st=>_submarcaIsVisivel(st.id)).map(st=>st.label).join(', ');
+        if(!input.submarca) return{ok:false,msg:`Este squad exige Submarca pra salvar um card. Opções: ${opcoes}`};
+        const match=SUBMARCA_TAGS.find(st=>st.label.toLowerCase()===String(input.submarca).toLowerCase());
+        if(!match) return{ok:false,msg:`Submarca "${input.submarca}" não é uma opção válida. Opções: ${opcoes}`};
+        submarcaTagId=match.id;
+      }
+      const tagsIniciais=[input.tag||'', submarcaTagId].filter(Boolean);
+      const novo={id:'c'+Date.now(),col:input.coluna,tag:tagsIniciais[0]||'',tags:tagsIniciais,title:input.titulo,
+        desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',noDue:!input.prazo,po:input.po||'',
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
@@ -19707,7 +19758,7 @@ const HELP_CONTENT = {
     { icon:'📋', title:'Daily', text:'Clique em Daily ou escreva livremente. O agente levanta o que está em progresso, o que vence hoje, impedimentos ativos e sugere pontos para a reunião diária.' },
     { icon:'📊', title:'Métricas', text:'Na aba Métricas, o agente interpreta WIP atual vs. limite, throughput e capacidade do time. Ele avisa quando o WIP está acima do limite e sugere ações para reequilibrar a carga.' },
     { icon:'🔧', title:'Retrospectiva', text:'Na aba Retrospectiva, o agente ajuda a formatar o que foi bem, o que melhorar e gera ações concretas para o próximo ciclo.' },
-    { icon:'✏️', title:'Ações que o agente pode executar', text:'O agente age diretamente no board: mover card, atualizar prazo, marcar/desmarcar checklist, criar card, atribuir responsável, definir prioridade, salvar como modelo ou recorrente, excluir card (requer confirmação), atualizar título/descrição/PO. Exemplos: "Move o card do pipeline VTEX para Concluído." "Cria um card de bug crítico no backlog." "Atribui o card de relatório para a Juliana."' },
+    { icon:'✏️', title:'Ações que o agente pode executar', text:'O agente age diretamente no board: mover card, atualizar prazo, marcar/desmarcar checklist, criar card, atribuir responsável, definir prioridade, salvar como modelo ou recorrente, excluir card (requer confirmação), atualizar título/descrição/PO. Exemplos: "Move o card do pipeline VTEX para Concluído." "Cria um card de bug crítico no backlog." "Atribui o card de relatório para a Juliana."\n\n🔒 Mesmas regras obrigatórias de quem salva pelo modal: se o squad usa Submarca, criar um card sem informar uma opção válida é recusado (o agente pergunta ou pede pra você especificar). Se o squad tem Ficha Técnica ativa, o agente ainda não sabe preenchê-la — recusa criar o card sozinho nesse caso. Card criado sem prazo informado nasce marcado como "sem prazo definido" (a mesma flag do botão "🚫 Sem prazo definido" do modal) em vez de ficar num estado inválido.' },
     { icon:'🧠', title:'Memória da conversa', text:'O agente lembra o contexto da conversa atual (até 20 mensagens por aba) — incluindo ações executadas. Você pode fazer perguntas de acompanhamento sem repetir contexto. Ao fechar e reabrir o agente, o histórico é recarregado do Firebase.' },
     { icon:'🔕', title:'Snapshot inteligente', text:'Para economizar tokens, o agente omite do contexto cards já concluídos há mais de 7 dias. Uma nota no prompt informa quantos foram omitidos, para que o agente saiba que existem.' },
     { icon:'💡', title:'Dicas de uso', text:'Seja específico: mencione nomes de cards, pessoas e datas. Você pode perguntar sobre qualquer coisa relacionada ao board, à sprint ou às práticas ágeis do time. O agente reconhece "eu", "mim" e "me atribua" como referências ao usuário logado.' },
@@ -21342,9 +21393,11 @@ function handleMentionInput(ta, dd){
     return;
   }
 
-  // @INICIAIS → busca membros + agentes de IA
-  const matches = allIdentities().filter(m=>{
-    const handle = getMemberHandle(m);
+  // @INICIAIS → busca membros + agentes de IA + Agente Ágil (orquestrador,
+  // só aparece em squads onde o gatilho automático existe, ver
+  // AGENTE_AGIL_MENTION_SQUADS)
+  const matches = mentionCandidates().filter(m=>{
+    const handle = mentionMatchLabel(m);
     return handle.toLowerCase().includes(query.toLowerCase()) ||
       m.name.toLowerCase().includes(query.toLowerCase()) ||
       m.init.toLowerCase().startsWith(query.toLowerCase());
@@ -21389,12 +21442,13 @@ function renderMentionDropdown(dd, matches, ta, atPos, pos){
   matches.forEach((m,i)=>{
     const opt = document.createElement('div');
     opt.className = 'mention-option' + (i===0?' active':'');
+    opt.dataset.mentionInit = m.init; // fonte de verdade pra seleção via teclado (ver handleMentionKey) — nunca reparsear do texto exibido
     const av = m.isAgent
       ? '<div class="mention-avatar" style="background:'+_hexA(m.cor,.25)+';">'+(m.avatarEmoji||'🤖')+'</div>'
       : (safeUrl(m.foto)
         ? '<img src="'+safeUrl(m.foto)+'" onerror="this.style.display=\'none\'">'
         : '<div class="mention-avatar">'+m.init+'</div>');
-    const handle = getMemberHandle(m);
+    const handle = mentionMatchLabel(m);
     opt.innerHTML = av
       + '<span class="mention-init">@'+handle+(m.isAgent?' 🤖':'')+'</span>'
       + '<span class="mention-name">'+m.name+'</span>';
@@ -21422,11 +21476,13 @@ function handleMentionKey(e, ta, dd){
     const activeOpt = dd.querySelector('.mention-option.active');
     if(activeOpt){
       e.preventDefault();
-      const handleFromOpt = activeOpt.querySelector('.mention-init').textContent.slice(1);
-      // find member by handle
-      const memByHandle = members.find(mm => getMemberHandle(mm)===handleFromOpt) || members.find(mm=>mm.init===handleFromOpt);
+      // Lê o init direto do dataset (setado em renderMentionDropdown) em vez
+      // de reparsear o texto exibido — o texto exibido pro Agente Ágil é o
+      // nome literal, não um handle que bate com nenhum init/getMemberHandle,
+      // então reparsear quebrava a seleção por teclado dessa entrada
+      // especificamente (mouse já funcionava, por passar m.init direto).
       const pos = ta.selectionStart;
-      insertMention(ta, _mentionActive?.atPos??0, pos, memByHandle?.init||handleFromOpt);
+      insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
     }
   } else if(e.key==='Escape'){
     dd.classList.remove('open');
@@ -21452,8 +21508,8 @@ function getMemberByHandle(handle){
 }
 
 function insertMention(ta, atPos, curPos, init){
-  const member = allIdentities().find(m=>m.init===init);
-  const handle = member ? getMemberHandle(member) : init;
+  const member = mentionCandidates().find(m=>m.init===init);
+  const handle = member ? mentionMatchLabel(member) : init;
   const val = ta.value;
   ta.value = val.slice(0,atPos) + '@'+handle+' ' + val.slice(curPos);
   ta.selectionStart = ta.selectionEnd = atPos + handle.length + 2;
@@ -22652,6 +22708,41 @@ let _dragCardId = null;
 let _dragSourceCol = null;
 let _ghostEl = null;
 
+// ── Auto-scroll de coluna durante drag ──────────────────────────────
+// HTML5 Drag and Drop nativo não rola sozinho containers internos com
+// overflow (só o viewport da página, em alguns browsers) — sem isso, uma
+// coluna mais longa que a tela exigia soltar o card, rolar na mão, pegar o
+// drag de novo, repetir. _autoScrollBody/_autoScrollY guardam o
+// .col-body e o clientY mais recentes vistos em handleDragOver; o loop em
+// _autoScrollTick roda via requestAnimationFrame (não a frequência
+// irregular do próprio evento dragover) e se autodesliga quando o drag
+// termina (handleDragEnd) ou quando o cursor sai de vez da coluna
+// (handleDragLeave).
+let _autoScrollBody = null;
+let _autoScrollY = null;
+let _autoScrollRAF = null;
+const AUTO_SCROLL_ZONE = 50; // px a partir da borda visível que ativa o scroll
+const AUTO_SCROLL_MAX_SPEED = 14; // px por frame na borda (~60fps)
+
+function _autoScrollTick(){
+  if(!_dragCardId || !_autoScrollBody){ _autoScrollRAF=null; return; }
+  const body=_autoScrollBody, y=_autoScrollY;
+  if(y!=null){
+    const rect=body.getBoundingClientRect();
+    const distTop=y-rect.top, distBottom=rect.bottom-y;
+    if(distTop>=0 && distTop<AUTO_SCROLL_ZONE){
+      body.scrollTop -= AUTO_SCROLL_MAX_SPEED*(1-distTop/AUTO_SCROLL_ZONE);
+    } else if(distBottom>=0 && distBottom<AUTO_SCROLL_ZONE){
+      body.scrollTop += AUTO_SCROLL_MAX_SPEED*(1-distBottom/AUTO_SCROLL_ZONE);
+    }
+  }
+  _autoScrollRAF=requestAnimationFrame(_autoScrollTick);
+}
+function _stopAutoScroll(){
+  if(_autoScrollRAF){ cancelAnimationFrame(_autoScrollRAF); _autoScrollRAF=null; }
+  _autoScrollBody=null; _autoScrollY=null;
+}
+
 // --- D&D DAS COLUNAS ---
 let _dragColId = null;
 
@@ -22741,6 +22832,7 @@ function handleDragEnd(e){
   });
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
   _dragCardId=null; _dragSourceCol=null;
+  _stopAutoScroll();
 }
 
 function handleDragOver(e, colId){
@@ -22752,6 +22844,12 @@ function handleDragOver(e, colId){
   document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over','drag-over-blocked'));
   body.classList.add('drag-over');
   e.dataTransfer.dropEffect='move';
+
+  // Auto-scroll: atualiza a posição mais recente do cursor e garante que o
+  // loop está rodando (ver _autoScrollTick, declarado no topo do módulo D&D).
+  _autoScrollBody=body; _autoScrollY=e.clientY;
+  if(!_autoScrollRAF) _autoScrollRAF=requestAnimationFrame(_autoScrollTick);
+
   // Ghost line — mostra onde o card vai ser inserido
   if(_ghostEl) _ghostEl.remove();
   _ghostEl = document.createElement('div');
@@ -22770,6 +22868,10 @@ function handleDragLeave(e){
   if(!e.currentTarget.contains(e.relatedTarget)){
     e.currentTarget.classList.remove('drag-over','drag-over-blocked');
     if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+    // Saiu de vez dessa coluna — se era ela quem estava sendo auto-rolada,
+    // para o scroll (senão continuaria rolando uma coluna que o cursor já
+    // não está mais sobrevoando).
+    if(_autoScrollBody===e.currentTarget) _stopAutoScroll();
   }
 }
 
@@ -22803,6 +22905,7 @@ function handleDrop(e, colId){
   const body = e.currentTarget;
   body.classList.remove('drag-over','drag-over-blocked');
   if(_ghostEl){ _ghostEl.remove(); _ghostEl=null; }
+  _stopAutoScroll();
   if(!_dragCardId) return;
   const card = cards.find(x=>x.id===_dragCardId);
   if(!card) return;
@@ -25165,10 +25268,20 @@ function replyToComment(cid){
   const c=_commentsCache[_commentCardId]?.[cid]; if(!c) return;
   eocEdit('comment-eoc');
   const ta=document.getElementById('m-comment-inp'); if(!ta) return;
-  const mem=allIdentities().find(m=>m.init===c.init);
-  if(mem){
-    const mention='@'+getMemberHandle(mem)+' ';
+  // Comentário do Agente Ágil (uid gravado por functions/agente-agil-
+  // orquestrador/*.js em toda escrita real): nome literal, nunca
+  // getMemberHandle() — mesmo motivo do insertMention()/AGENTE_AGIL_MENTION_ENTRY
+  // acima (o handle derivado "agente.gil" não bate com a convenção que o
+  // gatilho automático de @menção espera).
+  if(c.uid==='agente-agil'){
+    const mention='@Agente Ágil ';
     if(!ta.value.startsWith(mention)) ta.value=mention+ta.value;
+  } else {
+    const mem=allIdentities().find(m=>m.init===c.init);
+    if(mem){
+      const mention='@'+getMemberHandle(mem)+' ';
+      if(!ta.value.startsWith(mention)) ta.value=mention+ta.value;
+    }
   }
   autoResizeCommentInp(ta);
   ta.focus();
