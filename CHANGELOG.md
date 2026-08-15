@@ -6902,6 +6902,19 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-15 · `biblioteca_agil` validada (dryRun) + décimo canário de escrita real
+Dois dryRuns reais rodados pelo usuário (`dryRunBibliotecaAgilContraSquadDev.js`):
+"Recorrência automática" não confundiu com "Itens recorrentes" (explicou
+a diferença certa); "Ficha técnica" acertou os campos obrigatórios/opcional
+E reconheceu a própria limitação de não saber preenchê-la sozinha —
+honestidade calibrada sobre capacidade, não só sobre informação.
+`biblioteca_agil` foi chamada sem pedido explícito nos dois casos.
+
+Script novo `scripts/escritaReal10BibliotecaAgilContraSquadDev.js` —
+mesmos dois cenários com `dryRun:false`, confirmando que o `comentario`
+com a resposta é escrito de verdade (biblioteca_agil em si nunca escreve
+nada). Pendente: rodar localmente.
+
 ### 2026-08-15 · Nova ferramenta `biblioteca_agil` — conceitos ágeis + como o board funciona
 Expansão pedida pelo usuário: além dos conceitos ágeis já mapeados, o
 agente precisava de conhecimento prático das funcionalidades do Maré
