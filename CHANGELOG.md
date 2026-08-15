@@ -6860,6 +6860,23 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-15 · `visao_board` validado (dryRun risco + saudável) — achado pendente de calibração
+Dois dryRuns reais contra squad dev: (1) dado "sujo" acumulado de testes
+(WIP 32/12, amostra pequena) — agente identificou o risco certo e
+reconheceu sozinho a amostra pequena, sem eu pedir; (2) squad limpo +
+`scripts/gerarHistoricoRealistaSquadDev.js` (310 cards, 3 meses de
+histórico fabricado mas coerente) — WIP 10/12, throughput 53/14 dias, a
+ressalva de amostra pequena sumiu como esperado.
+
+**Achado pendente**: no cenário saudável, o agente tratou "Em Progresso"
+ser a coluna mais lenta (84h) como risco, mas isso é razoável dentro de
+uma sprint de 14 dias — `SYSTEM_PROMPT_V1` não dá referência de ritmo
+esperado (`agilCfg.sprintDays`) pro agente calibrar "tempo alto de
+verdade" vs. "é só a etapa onde o trabalho acontece". Números batem
+exatamente com o gerador — não é bug, é nuance de julgamento. Não
+corrigido de propósito, aguardando mais cenários antes de decidir se
+ajusta o prompt. Detalhes completos: `functions/agente-agil-orquestrador/README.md`.
+
 ### 2026-08-14 · Nova ferramenta `visao_board` — "braço de PO" do agente (aguardando dryRun local)
 Pedido do usuário: além da biblioteca de conceitos ágeis (design
 combinado, ainda não implementada), o agente precisa de uma visão

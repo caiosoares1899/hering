@@ -1632,3 +1632,43 @@ texto verbatim, ver comentário no topo de `systemPrompt.js`).
 sandbox não tem credenciais de Firebase nem chave da Anthropic). Cruzar os
 números que o agente lê com o que "📊 Dados do Board" mostra pra humano no
 mesmo squad/período antes de considerar o v1 fechado.
+
+## `visao_board`: dryRuns validados — cenário de risco e cenário saudável
+
+Dois dryRuns reais rodados pelo usuário contra o squad dev (script
+`dryRunVisaoBoardContraSquadDev.js`), em dois estados de dado bem
+diferentes:
+
+**1. Squad dev "sujo"** (lixo acumulado de testes anteriores, 32 cards em
+"Em Progresso" contra limite 12, amostra de cycle/lead time de só 3-6
+cards): o agente identificou o WIP estourado como risco principal,
+**reconheceu sozinho** que a amostra pequena não era confiável pra afirmar
+nada sobre velocidade (sem eu pedir isso explicitamente no prompt da
+tarefa), e conectou WIP alto + throughput baixo como sinal de fluxo
+desbalanceado. Isso motivou a limpeza do squad (arquivamento de todos os
+cards ativos) e a criação de `scripts/gerarHistoricoRealistaSquadDev.js`
+— gerador de ~300 cards com histórico de 3 meses fabricado mas
+cronologicamente coerente, pra testar um cenário saudável de verdade.
+
+**2. Squad dev "saudável"** (310 cards gerados, WIP 10/12, throughput de
+53 concluídos em 14 dias): a amostra pequena sumiu — o agente confiou nos
+números sem ressalva, exatamente o comportamento esperado.
+
+### Achado pendente: `gargalo_por_coluna` sem referência de "normal"
+
+No cenário saudável, o agente tratou "Em Progresso" ser a coluna mais
+lenta (84h de média, contra 22,9h no Backlog e 15,6h em "A Fazer") como
+sinal de risco a observar — mas 84h (~3,5 dias) de cycle time dentro de
+uma sprint de 14 dias (`agilCfg.sprintDays`) não é necessariamente
+preocupante, é só onde o trabalho de fato acontece (a etapa "fazendo"
+naturalmente demora mais que uma fila de espera). `SYSTEM_PROMPT_V1` não
+dá ao agente nenhuma referência de ritmo esperado (ex.: `sprintDays`) pra
+calibrar se um tempo-por-coluna é alto de verdade ou só reflete o tipo da
+etapa — hoje ele só compara colunas entre si, sem contexto do ciclo do
+time. Não é bug de dado nem de cálculo (os números batem exatamente com o
+que o gerador fabricou) — é uma nuance de calibração de julgamento.
+
+**Não corrigido ainda, de propósito** — combinado com o usuário observar
+mais alguns cenários antes de decidir se vale ajustar o prompt (ex.: dar
+`agilCfg.sprintDays` como contexto de referência) ou se é comportamento
+aceitável.
