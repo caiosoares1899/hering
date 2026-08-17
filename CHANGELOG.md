@@ -1596,6 +1596,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.433-dev — 2026-08-17 — Chips do toggle de coluna visíveis em Insights e CFD & Burndown
+Correção de cima: a v8.30.432-dev tinha aplicado o EFEITO do toggle
+(cards em coluna oculta saindo da conta) em Insights e CFD & Burndown,
+mas esqueceu de colocar o CONTROLE visível nessas duas abas — só dava
+pra ligar/desligar coluna voltando pra Visão Geral. Usuário perguntou
+"onde q ta isso aqui" ao abrir as duas abas e não achar os chips.
+
+- Chips "📍 Colunas na conta" (mesmo componente usado na Visão Geral)
+  agora aparecem também no topo da aba Insights (junto de Período/Tags)
+  e no topo de CFD & Burndown — mesmo `_bdHiddenCols` compartilhado,
+  ligar/desligar em qualquer uma das 3 abas reflete nas outras 2.
+
 ### v8.30.432-dev — 2026-08-17 — Toggle de coluna em Dados do Board estende pra Insights e CFD & Burndown
 Pedido direto: o toggle de coluna adicionado na v8.30.430-dev (chips
 abaixo do gráfico "Cards ativos por coluna", só na aba Visão Geral)

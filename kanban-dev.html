@@ -4985,6 +4985,10 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <div id="boarddata-view-fluxo" style="display:none;">
       <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Reconstruído a partir do histórico de movimentação já gravado em cada card (<code>flow.log</code>) — nenhuma coleta nova, mas cards com muitas movimentações guardam só as últimas 40 (histórico bem antigo pode ficar incompleto).</div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px;">📍 Colunas na conta</div>
+        <div id="boarddata-fluxo-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+      </div>
       <div style="margin-bottom:22px;">
         <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias</div>
         <div id="boarddata-cfd"></div>
@@ -5414,7 +5418,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.432-dev</div>
+<div class="version">v8.30.433-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -15209,7 +15213,14 @@ function _renderInsightsFilterBar(){
         return '<span onclick="_insightsToggleTag(\''+t.id+'\')" style="'+chipStyle(on,p.c)+'">'+esc(t.label)+'</span>';
       }).join('')
     + '</div></div>') : '';
-  el.innerHTML = periodHtml + tagHtml;
+  // Mesmo toggle de coluna de 📊 Dados do Board → Visão Geral (_bdHiddenCols)
+  // — pedido direto pra dar pra ligar/desligar direto daqui também, sem
+  // precisar trocar de aba (o efeito no cálculo já valia desde antes, só
+  // faltava o controle visível nesta aba).
+  const colHtml = '<div>'
+    + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px;">📍 Colunas na conta</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:5px;max-width:280px;">' + _bdColToggleChips() + '</div></div>';
+  el.innerHTML = periodHtml + tagHtml + colHtml;
 }
 // ── Insights pra PO/ADM/Organizador (Dados do Board → aba 💡 Insights) ──
 // Pedido direto: "faça um match com as funcionalidades que temos hoje e
@@ -15447,6 +15458,8 @@ function _cardColunaEmDia(card, diaStr){
   return colunaAtual;
 }
 function renderBoardDataFluxo(){
+  const chipsEl=document.getElementById('boarddata-fluxo-col-chips');
+  if(chipsEl) chipsEl.innerHTML=_bdColToggleChips();
   _renderCFD();
   _renderBurndown();
 }
