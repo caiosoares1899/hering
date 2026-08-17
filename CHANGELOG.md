@@ -1596,6 +1596,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.432-dev — 2026-08-17 — Toggle de coluna em Dados do Board estende pra Insights e CFD & Burndown
+Pedido direto: o toggle de coluna adicionado na v8.30.430-dev (chips
+abaixo do gráfico "Cards ativos por coluna", só na aba Visão Geral)
+ficava restrito só àquela aba.
+
+- **Insights**: cards em coluna oculta saem de todos os números da aba
+  (cards ativos, prioridade, carga por responsável, riscos, aging) e a
+  coluna some do donut "OKR por coluna".
+- **CFD**: soma com o filtro já existente em ⚙ Config → Fluxo → "Ocultar
+  do CFD" — uma coluna some do gráfico se estiver oculta em QUALQUER um
+  dos dois, sem um substituir o outro.
+- **Burndown**: cards cuja coluna atual está oculta saem do escopo da
+  sprint (mesmo espírito de "tirar da conta" aplicado nas outras abas).
+- Toggle re-renderiza a aba Insights/Fluxo na hora se ela já estiver
+  aberta, sem precisar trocar de aba pra ver o efeito.
+
 ### v8.30.431-dev — 2026-08-17 — Ficha Técnica: "Outros" vira o texto especificado (Plataforma e Tipo)
 Pedido direto (print de um card com Plataforma "Outros" → "Dafiti" gerando
 o título "[Outros] Outros - ..." em vez de "[Dafiti] Dafiti - ...").
