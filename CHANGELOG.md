@@ -18,6 +18,21 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.253 — 2026-08-17 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.252
+(v8.30.431-dev → v8.30.433-dev), validado em dev.
+
+- **Ficha Técnica: "Outros" vira o texto especificado**: quando alguém
+  escolhe "Outros" em Canal, Objetivo, Plataforma ou Tipo e preenche o
+  campo "Qual?", esse texto passa a aparecer no lugar de "Outros" no
+  título do card, na tabela do Controle de Criativos, nos gráficos do
+  Dashboard e na exportação CSV. Tipo ganhou o campo "Qual?" que ainda
+  não tinha.
+- **Filtro de coluna em Dados do Board agora vale em Insights e CFD &
+  Burndown**: a coluna que você tira da conta na aba Visão Geral (chips
+  "📍 Colunas na conta") agora também sai dos números de Insights e do
+  escopo de CFD/Burndown — os mesmos chips aparecem nas 3 abas.
+
 ### v8.30.252 — 2026-08-17 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.251
 (v8.30.430-dev), validado em dev.
