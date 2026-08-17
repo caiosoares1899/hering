@@ -18,6 +18,23 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.252 — 2026-08-17 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.251
+(v8.30.430-dev), validado em dev.
+
+- **Ctrl+S salva o card aberto na hora**: com um card aberto, Ctrl+S (ou
+  Cmd+S no Mac) salva imediatamente, sem esperar o autosave automático.
+- **Badge 📎 na visão board**: cards com pelo menos um link/anexo salvo
+  ganham um indicador 📎 visível direto na lista, sem precisar abrir o
+  card.
+- **Filtro "Criado por"**: novo filtro na barra de Filtros pra achar
+  rápido os cards criados por uma pessoa específica.
+- **Filtro de coluna em 📊 Dados do Board**: dá pra tirar (e trazer de
+  volta) uma coluna específica da conta de todos os indicadores da
+  Visão Geral (WIP, Throughput, bloqueios etc.) — útil pra squads que
+  têm colunas tipo Backlog/Arquivo que não deveriam entrar nas métricas
+  de fluxo.
+
 ### v8.30.251 — 2026-08-15 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.250
 (v8.30.427-dev → v8.30.429-dev), validado em dev.
