@@ -3654,6 +3654,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="card-attr-row">
         <div class="field"><label class="fl">Tipo</label>
           <select class="fi" id="m-crv-tipo" onchange="_crvTipoChange()"><option value="">— selecione a Plataforma primeiro —</option></select>
+          <input class="fi" id="m-crv-tipo-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
         </div>
         <div class="field"><label class="fl">Formato</label>
           <select class="fi" id="m-crv-formato" onchange="scheduleAutoSave()">
@@ -5413,7 +5414,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.430-dev</div>
+<div class="version">v8.30.431-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11638,6 +11639,7 @@ function _crvRefreshTipoOptions(){
   const tipos=(criativoOpcoes.tipos||[]).filter(t=>platIds.has(t.plataformaId));
   sel.innerHTML=_crvOpcaoSelectHtml(tipos, tipos.length?'— selecione —':'— nenhum tipo configurado pra essa plataforma —');
   if(tipos.some(t=>t.id===cur)) sel.value=cur;
+  _crvTipoOutrosSync();
   _crvUpdateQtdHint();
 }
 // Ao escolher o Tipo: pré-preenche Formato (editável depois, se precisar
@@ -11647,9 +11649,19 @@ function _crvTipoChange(){
   const tipo=(criativoOpcoes.tipos||[]).find(t=>t.id===tipoId);
   const fmtSel=document.getElementById('m-crv-formato');
   if(tipo && tipo.formatoId && fmtSel) fmtSel.value=tipo.formatoId;
+  _crvTipoOutrosSync();
   _crvUpdateQtdHint();
   scheduleAutoSave();
   _crvAutoTitle();
+}
+// Tipo "Outros" abre um campo pra especificar — mesma ideia do Canal
+// (select único, casa pela LABEL não pelo id, pedido direto junto com a
+// troca de "Outros" pelo texto especificado em título/tabela/dashboard).
+function _crvTipoOutrosSync(){
+  const tipoId=document.getElementById('m-crv-tipo')?.value||'';
+  const isOutros = _norm(_crvLabel('tipos',tipoId))==='outros';
+  const inp=document.getElementById('m-crv-tipo-outros');
+  if(inp){ inp.style.display=isOutros?'':'none'; if(!isOutros) inp.value=''; }
 }
 // Referência de quantidade da tabela real da Hering (por Tipo) — mostrada
 // ao lado do label "Variações" desde que o campo dedicado de Quantidade de
@@ -11721,13 +11733,16 @@ function _crvPlataformaOutrosSync(){
 // funciona também no meio do preenchimento, não só quando tudo já foi
 // escolhido.
 function _crvComposeTitle(){
-  const plataformaLbl=_crvLabels('plataformas', _crvGetSelectedPlataformas()).join('/');
-  const tipoLbl=_crvLabel('tipos', document.getElementById('m-crv-tipo')?.value||'');
+  const plataformaOutros=document.getElementById('m-crv-plataforma-outros')?.value.trim()||'';
+  const plataformaLbl=_crvEffectiveLabels('plataformas', _crvGetSelectedPlataformas(), plataformaOutros).join('/');
+  const tipoOutros=document.getElementById('m-crv-tipo-outros')?.value.trim()||'';
+  const tipoLbl=_crvEffectiveLabel('tipos', document.getElementById('m-crv-tipo')?.value||'', tipoOutros);
   const campanhaTipo=(document.querySelector('input[name="crv-campanha-tipo"]:checked')||{}).value||'';
   const campanhaNome=document.getElementById('m-crv-campanha-nome')?.value.trim()||'';
   const campanhaTipoLbl={campanha:'Campanha',acao:'Ação Comercial',perene:'Perene',refresh:'Refresh'}[campanhaTipo]||'';
   const campanhaLbl=campanhaNome||campanhaTipoLbl;
-  const objetivoLbl=_crvLabels('objetivos', _crvGetChecked('crv-objetivo')).join('/');
+  const objetivoOutros=document.getElementById('m-crv-objetivo-outros')?.value.trim()||'';
+  const objetivoLbl=_crvEffectiveLabels('objetivos', _crvGetChecked('crv-objetivo'), objetivoOutros).join('/');
   const etapaFunil=document.getElementById('m-crv-etapa')?.value||'';
   const funilLbl={mkt:'MKT',ecm:'ECM'}[(document.querySelector('input[name="crv-funil"]:checked')||{}).value]||'';
   const etapaFunilLbl=[etapaFunil,funilLbl].filter(Boolean).join('/');
@@ -11783,6 +11798,7 @@ function getCriativoData(){
   const plataformas=_crvGetSelectedPlataformas();
   const plataformasOutros=document.getElementById('m-crv-plataforma-outros')?.value.trim()||'';
   const tipo=document.getElementById('m-crv-tipo')?.value||'';
+  const tipoOutros=document.getElementById('m-crv-tipo-outros')?.value.trim()||'';
   const formato=document.getElementById('m-crv-formato')?.value||'';
   const variacoes=(document.querySelector('input[name="crv-variacoes"]:checked')||{}).value||'';
   const variacoesQtd=document.getElementById('m-crv-variacoes-qtd')?.value||'';
@@ -11790,7 +11806,7 @@ function getCriativoData(){
   const vazio = !campanhaTipo && !funil && !etapaFunil && !canal && !objetivos.length && !plataformas.length
     && !tipo && !formato && !variacoes && !direcional;
   if(vazio) return null;
-  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,objetivosOutros,plataformas,plataformasOutros,tipo,formato,variacoes,variacoesQtd,direcional};
+  return {campanhaTipo,campanhaNome,funil,etapaFunil,canal,canalOutros,objetivos,objetivosOutros,plataformas,plataformasOutros,tipo,tipoOutros,formato,variacoes,variacoesQtd,direcional};
 }
 function setCriativoFields(crv){
   crv=crv||{};
@@ -11818,6 +11834,8 @@ function setCriativoFields(crv){
   set('m-crv-plataforma-outros', crv.plataformasOutros);
   _crvRefreshTipoOptions();
   set('m-crv-tipo', crv.tipo);
+  _crvTipoOutrosSync();
+  set('m-crv-tipo-outros', crv.tipoOutros);
   set('m-crv-formato', crv.formato);
   _crvUpdateQtdHint();
   document.querySelectorAll('input[name="crv-variacoes"]').forEach(r=>{ r.checked = r.value===(crv.variacoes||''); });
@@ -11837,6 +11855,26 @@ function _crvLabel(key, id){
   return (criativoOpcoes[key]||[]).find(o=>o.id===id)?.label || id;
 }
 function _crvLabels(key, ids){ return (ids||[]).map(id=>_crvLabel(key,id)).filter(Boolean); }
+// Versão "efetiva" de _crvLabel/_crvLabels: quando a opção resolvida é
+// "Outros" (casa pela LABEL, mesmo critério de _crvCanalChange/
+// _crvObjetivoOutrosSync/_crvPlataformaOutrosSync/_crvTipoOutrosSync) e a
+// pessoa preencheu o campo "Qual?" correspondente, mostra o texto
+// especificado no lugar — pedido direto (print mostrando "[Outros] Outros -
+// ..." no título de um card com Plataforma "Outros" → "Dafiti"). Usada em
+// TODO lugar que hoje resolve esses 4 campos pra exibição: título
+// (_crvComposeTitle), tabela/dashboard/CSV do Controle de Criativos — sem
+// isso "Outros" aparecia liso mesmo com a especificação preenchida.
+const _CRV_OUTROS_FIELD = {canais:'canalOutros', objetivos:'objetivosOutros', plataformas:'plataformasOutros', tipos:'tipoOutros'};
+function _crvEffectiveLabel(key, id, outrosTxt){
+  const lbl=_crvLabel(key,id);
+  return (lbl && outrosTxt && _norm(lbl)==='outros') ? outrosTxt : lbl;
+}
+function _crvEffectiveLabels(key, ids, outrosTxt){ return (ids||[]).map(id=>_crvEffectiveLabel(key,id,outrosTxt)).filter(Boolean); }
+// Mesma troca, mas lendo direto de um registro salvo (card.criativo) —
+// resolve sozinho qual campo "Outros" corresponde à chave (ver
+// _CRV_OUTROS_FIELD), pra não repetir o mapeamento em cada call site.
+function _crvEffectiveLabelFromRow(key, id, crv){ return _crvEffectiveLabel(key, id, crv?.[_CRV_OUTROS_FIELD[key]]||''); }
+function _crvEffectiveLabelsFromRow(key, ids, crv){ return _crvEffectiveLabels(key, ids, crv?.[_CRV_OUTROS_FIELD[key]]||''); }
 // Provisiona (idempotente) as 5 listas da Ficha Técnica — só preenche o que
 // ESTÁ FALTANDO (por id), nunca sobrescreve edição já feita pelo PO. Mesmo
 // espírito do provisionamento de SIZE_TAGS logo abaixo.
@@ -12495,12 +12533,12 @@ function renderCriativosDashboard(){
   // conta como 1, flatten em vez de tratar o array inteiro como 1 chave.
   function topBy(opcoesKey,cardField,n){
     const m=new Map();
-    rows.forEach(c=>{ const v=_crvLabel(opcoesKey,c.criativo&&c.criativo[cardField])||'—'; m.set(v,(m.get(v)||0)+1); });
+    rows.forEach(c=>{ const v=_crvEffectiveLabelFromRow(opcoesKey,c.criativo&&c.criativo[cardField],c.criativo)||'—'; m.set(v,(m.get(v)||0)+1); });
     return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n||6);
   }
   function topByArray(opcoesKey,cardField,n){
     const m=new Map();
-    rows.forEach(c=>{ _crvLabels(opcoesKey,c.criativo&&c.criativo[cardField]).forEach(v=>m.set(v,(m.get(v)||0)+1)); });
+    rows.forEach(c=>{ _crvEffectiveLabelsFromRow(opcoesKey,c.criativo&&c.criativo[cardField],c.criativo).forEach(v=>m.set(v,(m.get(v)||0)+1)); });
     return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n||6);
   }
   const byCanal=topBy('canais','canal',6);
@@ -12630,12 +12668,12 @@ function renderCriativosTable(){
     // as labels juntas, sem edição inline aqui (não cabe um <select multi>
     // numa célula); duplo clique nessas duas colunas simplesmente abre o
     // card, igual clique simples na linha.
-    const objetivoTxt=_crvLabels('objetivos',crv.objetivos).join(', ')||'—';
-    const plataformaTxt=_crvLabels('plataformas',crv.plataformas).join(', ')||'—';
+    const objetivoTxt=_crvEffectiveLabelsFromRow('objetivos',crv.objetivos,crv).join(', ')||'—';
+    const plataformaTxt=_crvEffectiveLabelsFromRow('plataformas',crv.plataformas,crv).join(', ')||'—';
     return '<tr class="crv-row" onclick="_crvRowClick(\''+id+'\')">'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'vinculo\')" title="Duplo clique pra vincular a outro card">'+esc(c.title)+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'lista\')">'+esc(listaNome)+'</td>'
-      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'canal\')">'+esc(_crvLabel('canais',crv.canal)||'—')+'</td>'
+      +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'canal\')">'+esc(_crvEffectiveLabelFromRow('canais',crv.canal,crv)||'—')+'</td>'
       +'<td title="Múltipla escolha — abra o card pra editar">'+esc(objetivoTxt)+'</td>'
       +'<td title="Múltipla escolha — abra o card pra editar">'+esc(plataformaTxt)+'</td>'
       +'<td ondblclick="event.stopPropagation();_crvCancelRowClick();_crvEditCell(this,\''+id+'\',\'formato\')">'+esc(_crvLabel('formatos',crv.formato)||'—')+'</td>'
@@ -12806,7 +12844,7 @@ function exportCriativosCSV(){
     const crv=c.criativo||{};
     const owner=members.find(m=>m.init===c.owner);
     const listaNome = crv.lista && criativosListas[crv.lista] ? criativosListas[crv.lista].nome : '';
-    const line=[c.title,listaNome,_crvLabel('canais',crv.canal),_crvLabels('objetivos',crv.objetivos).join(', '),_crvLabels('plataformas',crv.plataformas).join(', '),_crvLabel('tipos',crv.tipo),_crvLabel('formatos',crv.formato),c.due||'',c.priority||'',crv.qtd||'',crv.direcional||'',owner?owner.name:(c.owner||''),crv.obs||'']
+    const line=[c.title,listaNome,_crvEffectiveLabelFromRow('canais',crv.canal,crv),_crvEffectiveLabelsFromRow('objetivos',crv.objetivos,crv).join(', '),_crvEffectiveLabelsFromRow('plataformas',crv.plataformas,crv).join(', '),_crvEffectiveLabelFromRow('tipos',crv.tipo,crv),_crvLabel('formatos',crv.formato),c.due||'',c.priority||'',crv.qtd||'',crv.direcional||'',owner?owner.name:(c.owner||''),crv.obs||'']
       .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"');
     csvRows.push(line.join(';'));
   });

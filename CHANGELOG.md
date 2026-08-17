@@ -1596,6 +1596,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.431-dev — 2026-08-17 — Ficha Técnica: "Outros" vira o texto especificado (Plataforma e Tipo)
+Pedido direto (print de um card com Plataforma "Outros" → "Dafiti" gerando
+o título "[Outros] Outros - ..." em vez de "[Dafiti] Dafiti - ...").
+
+- **Tipo ganhou campo "Qual?"**: até aqui só Canal/Objetivo/Plataforma
+  abriam um campo pra especificar ao escolher "Outros" — Tipo não tinha
+  (a Ficha já tem várias entradas "Outros" na tabela de referência por
+  plataforma). Mesmo padrão visual dos outros três.
+- **"Outros" some em favor do texto especificado**: em qualquer lugar que
+  hoje resolve Canal/Objetivo/Plataforma/Tipo pra exibição — título
+  gerado (🪄 Gerar título / auto-título de Modelo), tabela do Controle de
+  Criativos, gráficos "Top" do Dashboard, exportação CSV — a opção
+  "Outros" agora aparece como o texto que a pessoa escreveu no campo
+  "Qual?" (ex.: "Dafiti"), não mais como "Outros" literal. Sem
+  especificação preenchida, continua mostrando "Outros" normalmente (sem
+  regressão pra dados antigos sem esse campo).
+- Estendido pros 4 campos de uma vez (não só Plataforma/Tipo do pedido
+  original) por consistência — Canal e Objetivo tinham exatamente o
+  mesmo problema latente, só não fotografado no print.
+
 ### v8.30.430-dev — 2026-08-17 — Ctrl+S, badge de anexo, filtro "Criado por" e filtro de coluna em Dados do Board
 Lote de 4 pedidos diretos:
 
