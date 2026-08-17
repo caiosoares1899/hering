@@ -5414,7 +5414,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.431-dev</div>
+<div class="version">v8.30.432-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -15132,6 +15132,11 @@ function _bdToggleCol(colId){
   localStorage.setItem('bd_hcols_'+ACTIVE_SQUAD, JSON.stringify([..._bdHiddenCols]));
   renderBoardDataGrid();
   _boardDataBarChart();
+  // Pedido direto: o mesmo toggle passa a valer também nas abas Insights e
+  // CFD & Burndown, não só na Visão Geral — re-renderiza as duas de uma vez
+  // (idempotente/barato, evita ficar defasado até trocar de aba na mão).
+  if(document.getElementById('boarddata-view-insights')?.style.display!=='none') renderBoardDataInsights();
+  if(document.getElementById('boarddata-view-fluxo')?.style.display!=='none') renderBoardDataFluxo();
 }
 function _bdColToggleChips(){
   return columns.map(col=>{
@@ -15216,7 +15221,7 @@ function _renderInsightsFilterBar(){
 function renderBoardDataInsights(){
   const body=document.getElementById('boarddata-insights-body'); if(!body) return;
   _renderInsightsFilterBar();
-  let activeCards=cards.filter(c=>!c.archived && c.col!=='done');
+  let activeCards=cards.filter(c=>!c.archived && c.col!=='done' && !_bdHiddenCols.has(c.col));
   if(_insightsPeriodDays>0){
     const cutoffMs=_insightsPeriodDays*86400000;
     activeCards=activeCards.filter(c=>c.createdAt && (Date.now()-new Date(c.createdAt+'T00:00:00').getTime())<=cutoffMs);
@@ -15301,7 +15306,7 @@ function renderBoardDataInsights(){
 
   // ── OKR ──
   const okrCards=activeCards.filter(c=>c.isOKR);
-  const okrPorCol=columns.map(col=>({label:col.name||col.id,count:okrCards.filter(c=>c.col===col.id).length,color:col.color||'#38b6ff'}));
+  const okrPorCol=columns.filter(col=>!_bdHiddenCols.has(col.id)).map(col=>({label:col.name||col.id,count:okrCards.filter(c=>c.col===col.id).length,color:col.color||'#38b6ff'}));
 
   // ── Cards parados (aging) — mesmo cálculo de checkAgingAutomations()/aged-1/aged-2 ──
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
@@ -15456,8 +15461,10 @@ function _renderCFD(){
   // Colunas fora do fluxo de verdade (ex.: Backlog, Arquivo, Bloqueios) não
   // entram no gráfico — configurável em ⚙ Config → Fluxo → "Ocultar do
   // CFD" (pedido direto: "tem coluna que não faz parte do fluxo"). Vazio =
-  // mostra todas, igual antes.
-  const cfdHidden = new Set(flowConfig.cfdHiddenCols||[]);
+  // mostra todas, igual antes. Soma com o toggle de coluna da Visão Geral
+  // (_bdHiddenCols) — pedido direto pra esse valer também aqui, sem
+  // substituir o que já está configurado em ⚙ Config → Fluxo.
+  const cfdHidden = new Set([...(flowConfig.cfdHiddenCols||[]), ..._bdHiddenCols]);
   const visibleCols = columns.filter(c=>!cfdHidden.has(c.id));
   if(!visibleCols.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Todas as colunas estão ocultas do CFD — ajuste em ⚙ Config → Fluxo.</div>'; return; }
   const colIds = visibleCols.map(c=>c.id);
@@ -15510,8 +15517,11 @@ function _renderBurndown(){
   // Escopo aproximado — o board não tem campo de "pertence à sprint X":
   // cards não arquivados criados até o fim da sprint, ainda não concluídos
   // OU concluídos dentro da janela da sprint.
+  // Card cuja coluna ATUAL está oculta pelo toggle de Dados do Board
+  // (_bdHiddenCols) sai do escopo — mesmo espírito de "tirar da conta"
+  // aplicado na Visão Geral, pedido direto pra valer aqui também.
   const escopo = cards.filter(c=>{
-    if(c.archived) return false;
+    if(c.archived || _bdHiddenCols.has(c.col)) return false;
     const criado=(c.createdAt||'').slice(0,10);
     if(!criado || criado>endStr) return false;
     const doneAt=(c.flow?.doneAt||'').slice(0,10);
