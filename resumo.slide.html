@@ -167,7 +167,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
   <div class="tb-center">
     <div class="tb-clock" id="brtClock">--:--</div>
     <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
-    <span class="slide-counter" id="slideCounter">1 / 5</span>
+    <span class="slide-counter" id="slideCounter">1 / 6</span>
   </div>
   <div class="tb-nav">
     <div class="ai-tag-pill" onclick="togglePanel()"><span class="ai-dot"></span>Atualizar com IA</div>
@@ -223,10 +223,21 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
     <div class="slide-inner">
       <div class="slide-header">
         <div class="s-tag">⚠ Impedimentos</div>
-        <h2 class="slide-h2">Resumo dos Times</h2>
+        <h2 class="slide-h2">Resumo dos Times <span style="font-size:14px;font-weight:400;color:var(--w40);">1/2</span></h2>
         <span style="font-size:13px;color:var(--w30);margin-left:auto;" id="imp-date"></span>
       </div>
       <div class="squads-grid" id="squads-container"></div>
+    </div>
+  </div>
+
+  <!-- S1b: IMPEDIMENTOS pág 2 -->
+  <div class="slide" id="slide-1b">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="s-tag">⚠ Impedimentos</div>
+        <h2 class="slide-h2">Resumo dos Times <span style="font-size:14px;font-weight:400;color:var(--w40);">2/2</span></h2>
+      </div>
+      <div class="squads-grid" id="squads-container-2"></div>
     </div>
   </div>
 
@@ -297,7 +308,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v4.1</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v4.3</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -328,20 +339,27 @@ let DATA = {
   },
   squads:[
     {name:"SITE & APP",impedimentos:[
-      "KVs de Verão com atraso: lançamento oficial hoje, mas materiais chegaram na sexta (07/08) — prazo era quarta (05/08). Home foi desenvolvida com materiais antigos e precisará ser refeita.",
-      "Página Warmup Cápsula Camadas: prazo de terça não cumprido, reescalonado para sexta. Na sexta recebemos só o desenho da página — materiais para teste ainda não liberados. Time de marketing cobrado para não travar ajustes de dimensão/peso.",
-      "Fotos modelo PDP Camiseta Brasil: time de foto não estava mapeado para o lançamento. Shooting será realizado essa semana com inclusão dos produtos."
+      "Fotos modelo PDP Camiseta Brasil: aguardando recebimento — time de foto cobrado, aguardando retorno do prazo.",
+      "Fotos Cápsula Carnaval: prazo ideal de recebimento é 19/08 com risco de atraso. Aguardando informações.",
+      "Aguardando jurídico com contrato da Insider."
     ]},
-    {name:"MÍDIA CRIATIVA",impedimentos:[
-      "Fornecedor de IA com atraso na entrega de Pijamas e também em Jeans & Sarja."
+    {name:"PERFORMANCE",impedimentos:[
+      "Falha de atribuição iOS no Meta: observado e sinalizado em 07/08. Com o time técnico para análise — previsão de retorno amanhã (18/08)."
+    ]},
+    {name:"MARKETPLACE",impedimentos:[
+      "Chamado aberto na Pluggto desde 04/08 sem retorno: erro no envio de imagens para a Dafiti impede ativação dos produtos de verão/drop. Crítico — Dafiti é o 2º maior canal e principal em full price, impactando diretamente a estratégia de recuperação de margem.",
+      "Reputação do Mercado Livre caiu para faixa amarela na semana passada (qua–sáb) por alta taxa de cancelamentos causada por erro da integradora. Reforça necessidade de avaliar troca de integradora para 2026."
+    ]},
+    {name:"ANALYTICS",impedimentos:[
+      "Atraso da VTEX no envio de dados do dia anterior está interferindo nas bases de dados e relatórios."
     ]}
   ],
   insights:[
-    {tipo:"event",tag:"CHECK-IN OKR",texto:"Reunião de OKR da semana: CRM, CX e Tech."},
-    {tipo:"alert",tag:"COMITÊ DE IA",texto:"Início do Comitê de IA."}
+    {tipo:"event",tag:"SEXTA · CHECK-IN OKR",texto:"OKR da semana (21/08): Geral, Comercial, Mídia e Dados/IA."},
+    {tipo:"alert",tag:"BIG REVIEW",texto:"1 slot ainda aberto na Big Review."}
   ],
   calDigital:[
-    {day:"26",mon:"AGO",name:"Big Review",type:"todos slots preenchidos"},
+    {day:"26",mon:"AGO",name:"Big Review",type:"1 slot aberto"},
     {day:"25",mon:"AGO",name:"Alinhamento Fritos",type:"Reunião interna"}
   ],
   calCIA:[
@@ -409,13 +427,17 @@ function render(){
 
   // SQUADS
   const sc=document.getElementById('squads-container');
-  if(sc)sc.innerHTML=DATA.squads.map(s=>`
+  const sc2=document.getElementById('squads-container-2');
+  const half=Math.ceil(DATA.squads.length/2);
+  const renderSquad=s=>`
     <div class="squad-card">
       <div class="squad-name">${s.name}</div>
       ${s.impedimentos.map(i=>`
         <div class="imp-item"><div class="imp-dot">!</div><span>${i}</span></div>
       `).join('')}
-    </div>`).join('');
+    </div>`;
+  if(sc) sc.innerHTML=DATA.squads.slice(0,half).map(renderSquad).join('');
+  if(sc2) sc2.innerHTML=DATA.squads.slice(half).map(renderSquad).join('');
 
   // INSIGHTS
   const ic=document.getElementById('insights-container');
@@ -478,7 +500,7 @@ function render(){
 }
 
 /* ====== NAV ====== */
-const TOTAL=5;let cur=0;
+const TOTAL=6;let cur=0;
 const slides=Array.from(document.querySelectorAll('.slide'));
 const dotsWrap=document.getElementById('bottombar');
 const counter=document.getElementById('slideCounter');
