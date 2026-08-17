@@ -3006,6 +3006,9 @@ input[type="date"]{-moz-appearance:textfield;}
   <select id="f-demandante" onchange="applyFilters()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">📢 Qualquer demandante</option>
   </select>
+  <select id="f-criador" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">✍️ Qualquer criador</option>
+  </select>
   <select id="f-tag" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todas as tags</option>
   </select>
@@ -4967,6 +4970,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="margin-top:22px;">
       <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cards ativos por coluna</div>
       <div id="boarddata-bar-chart"></div>
+      <div id="boarddata-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;" title="Clique numa coluna pra tirá-la (ou trazê-la de volta) da conta de todos os números acima"></div>
     </div>
     <div style="margin-top:22px;">
       <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📈 Tendência — últimos 14 dias</div>
@@ -5409,7 +5413,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.251</div>
+<div class="version">v8.30.252</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9117,6 +9121,7 @@ function makeCardEl(card){
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
+  const _anexosInd=(card.links&&card.links.length)?`<span class="ci" title="${card.links.length} anexo${card.links.length>1?'s':''}/link${card.links.length>1?'s':''}">📎</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
   // Capa de imagem (Fase 5.6) tem prioridade sobre a de cor (mutuamente
   // exclusivas na escrita, mas por segurança na leitura também). Usa
@@ -9143,7 +9148,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -9609,6 +9614,17 @@ function toggleFilters(){
   document.getElementById('f-owner').innerHTML='<option value="">Todos os usuários</option>'+allOwnerOptions.join('');
   const fDem=document.getElementById('f-demandante');
   if(fDem) fDem.innerHTML='<option value="">📢 Qualquer demandante</option>'+allOwnerOptions.join('');
+  // Filtro "Criado por" — usa card.created (nome de quem criou, gravado desde
+  // sempre em saveCard(), nunca virou filtro até agora). Diferente de
+  // owner/demandante, não é init nem vem de members: lista os nomes distintos
+  // já usados nos cards deste squad, ordenados.
+  const fCriador=document.getElementById('f-criador');
+  if(fCriador){
+    const prev=fCriador.value;
+    const criadores=[...new Set(cards.filter(c=>c.created).map(c=>c.created))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    fCriador.innerHTML='<option value="">✍️ Qualquer criador</option>'+criadores.map(nome=>`<option value="${esc(nome)}">${esc(nome)}</option>`).join('');
+    fCriador.value = criadores.includes(prev) ? prev : '';
+  }
   document.getElementById('f-tag').innerHTML='<option value="">Todas as tags</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
   const fSub=document.getElementById('f-subteam');
   if(fSub) fSub.innerHTML='<option value="">Todos os subtimes</option>'+subteams.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
@@ -9619,6 +9635,7 @@ function applyFilters(){
   activeFilters={
     owner:document.getElementById('f-owner').value,
     demandante:document.getElementById('f-demandante')?.value||'',
+    criador:document.getElementById('f-criador')?.value||'',
     tag:document.getElementById('f-tag').value,
     tamanho:document.getElementById('f-tamanho')?.value||'',
     // submarca é multi-seleção (array) — não vem de um <select> de valor único,
@@ -9640,6 +9657,7 @@ function applyFilters(){
 function clearFilters(){
   document.getElementById('f-owner').value='';
   const fDem=document.getElementById('f-demandante'); if(fDem) fDem.value='';
+  const fCriador=document.getElementById('f-criador'); if(fCriador) fCriador.value='';
   document.getElementById('f-tag').value='';
   const ftm=document.getElementById('f-tamanho'); if(ftm) ftm.value='';
   const fsm=document.getElementById('f-submarca'); if(fsm) fsm.value='';
@@ -9649,7 +9667,7 @@ function clearFilters(){
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   const fsc=document.getElementById('f-supercard'); if(fsc) fsc.checked=false;
-  activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false};
+  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false};
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
@@ -9665,6 +9683,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
     if(!isInvolved) return false;
   }
   if(activeFilters.demandante&&card.demandante!==activeFilters.demandante) return false;
+  if(activeFilters.criador&&card.created!==activeFilters.criador) return false;
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
   if(activeFilters.submarca&&activeFilters.submarca.length&&!activeFilters.submarca.some(id=>cardHasTag(card, id))) return false;
@@ -9805,7 +9824,7 @@ function updateMetrics(){
 function renderBoardDataGrid(){
   const g=document.getElementById('boarddata-met-grid'); if(!g) return;
   if(document.getElementById('boarddata-ov')?.classList.contains('open')) _boardDataBarChart();
-  const activeCards=cards.filter(c=>!c.archived);
+  const activeCards=cards.filter(c=>!c.archived&&!_bdHiddenCols.has(c.col));
   const wip=activeCards.filter(c=>c.col==='progress').length;
   const bl=activeCards.filter(c=>_cardIsBlocked(c)).length;
   const done=activeCards.filter(c=>c.col==='done').length;
@@ -15059,8 +15078,35 @@ function openTempoReport(){
   document.getElementById('tempo-ov').classList.add('open');
   renderTempoReport();
 }
+// Filtro de coluna na Visão Geral de Dados do Board — mesma lógica de
+// hiddenColsBySq/toggleSqCol do painel.html (chips clicáveis, persistido no
+// localStorage), só que escopado a 1 squad só (aqui não tem visão
+// multi-squad). Coluna marcada sai da conta de TODOS os números da aba
+// (WIP/Throughput/etc + gráfico "Cards ativos por coluna"), não só do
+// gráfico — pedido direto: "tirar uma coluna da conta e refazê-la".
+let _bdHiddenCols = new Set();
+function _bdLoadHiddenCols(){
+  const saved = localStorage.getItem('bd_hcols_'+ACTIVE_SQUAD);
+  _bdHiddenCols = new Set(saved ? JSON.parse(saved) : []);
+}
+function _bdToggleCol(colId){
+  if(_bdHiddenCols.has(colId)) _bdHiddenCols.delete(colId); else _bdHiddenCols.add(colId);
+  localStorage.setItem('bd_hcols_'+ACTIVE_SQUAD, JSON.stringify([..._bdHiddenCols]));
+  renderBoardDataGrid();
+  _boardDataBarChart();
+}
+function _bdColToggleChips(){
+  return columns.map(col=>{
+    const hid = _bdHiddenCols.has(col.id);
+    return `<span onclick="_bdToggleCol('${esc(col.id)}')" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta" `
+      +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
+      +`border:1px solid ${hid?'rgba(255,255,255,.06)':'rgba(56,182,255,.28)'};background:${hid?'transparent':'rgba(56,182,255,.08)'};color:${hid?'rgba(255,255,255,.2)':'var(--txt2)'};">`
+      +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${hid?0.2:1};"></span>${esc(col.name)}</span>`;
+  }).join('');
+}
 function openBoardData(){
   _insightsPeriodDays = 0; _insightsTagFilter.clear(); // reseta filtros da aba Insights a cada abertura
+  _bdLoadHiddenCols();
   _boardDataSwitchTab('geral'); // sempre abre na Visão Geral, mesmo se ficou em Insights da última vez
   renderBoardDataGrid();
   _boardDataBarChart();
@@ -15281,8 +15327,10 @@ function renderBoardDataInsights(){
 
 function _boardDataBarChart(){
   const el = document.getElementById('boarddata-bar-chart'); if(!el) return;
-  const activeCards = cards.filter(c=>!c.archived);
-  const data = columns.map(col=>({
+  const chipsEl = document.getElementById('boarddata-col-chips');
+  if(chipsEl) chipsEl.innerHTML = _bdColToggleChips();
+  const activeCards = cards.filter(c=>!c.archived&&!_bdHiddenCols.has(c.col));
+  const data = columns.filter(col=>!_bdHiddenCols.has(col.id)).map(col=>({
     label: col.name||col.id, color: col.color||'#38b6ff',
     count: activeCards.filter(c=>c.col===col.id).length
   }));
@@ -24038,6 +24086,16 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='d'){ e.preventDefault(); openMeuDia(); } // 🌅 Meu Dia (Fase 5.1)
+  // Ctrl+S salva o card aberto na hora (mesmo botão 💾 Salvar), sem esperar
+  // o debounce do autosave (800ms) — pedido direto. Bloqueia o "Salvar
+  // página" nativo do navegador sempre que o modal do card está aberto;
+  // fora dele, deixa o atalho passar batido (sem alteração pra salvar).
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+    if(document.getElementById('card-ov')?.classList.contains('open')){
+      e.preventDefault();
+      saveCard();
+    }
+  }
   if((e.ctrlKey||e.metaKey)&&e.key==='z'){
     // Não intercepta Ctrl+Z dentro de campos de texto editáveis
     const tag=document.activeElement?.tagName;
