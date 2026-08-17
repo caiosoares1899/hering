@@ -1579,6 +1579,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.430-dev — 2026-08-17 — Ctrl+S, badge de anexo, filtro "Criado por" e filtro de coluna em Dados do Board
+Lote de 4 pedidos diretos:
+
+- **Ctrl+S salva o card**: com o modal de um card aberto, Ctrl+S (ou Cmd+S no
+  Mac) dispara o mesmo `saveCard()` do botão 💾 Salvar, sem esperar o
+  debounce do autosave (800ms), e bloqueia o "Salvar página" nativo do
+  navegador. Fora do modal, o atalho não faz nada.
+- **Badge 📎 na visão board**: cards com pelo menos um link/anexo em
+  🔗 Anexos e links ganham um indicador 📎 na face do card, ao lado do já
+  existente 📌 (Milanote).
+- **Filtro "Criado por"**: novo select na barra de Filtros, ao lado de
+  Demandante — usa o campo `created` (nome de quem criou o card, gravado
+  desde sempre mas nunca virou filtro) e lista os nomes distintos já usados
+  nos cards do squad.
+- **Filtro de coluna em 📊 Dados do Board**: mesma lógica de
+  `hiddenColsBySq`/chips do painel.html, escopada a 1 squad — clique numa
+  coluna abaixo do gráfico "Cards ativos por coluna" pra tirá-la (ou trazê-la
+  de volta) da conta de TODOS os números da aba Visão Geral (WIP, Throughput,
+  bloqueios, etc.), não só do gráfico. Preferência salva no localStorage por
+  squad.
+
 ### v8.30.429-dev — 2026-08-15 — Auto-scroll de coluna durante drag-and-drop
 Bug de UX real reportado: reordenar manualmente um card do meio de uma
 coluna longa pra primeira posição exigia soltar o card, rolar a coluna na
