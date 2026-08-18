@@ -1898,3 +1898,28 @@ functions:agenteAgilMencao`) pra valer em produção — com os TRÊS achados
 deste dia (path morto, resposta presa no prompt, rede de segurança no
 código) juntos, a @menção real deveria entregar resposta no card em
 100% dos casos, não só na maioria.
+
+**VALIDADO EM PRODUÇÃO**: usuário confirmou a resposta aparecendo
+certinho no card (comentário do "Agente Ágil", texto formatado, batendo
+com a pergunta sobre Modelos de card) — os três fixes deste dia
+funcionaram juntos.
+
+## QUARTO AJUSTE (2026-08-18, mesmo dia): notifica quem fez a @menção original
+
+Pergunta direta do usuário depois de ver a resposta funcionando: "não
+deveria me mencionar pra aparecer notificação pra mim?". Resposta: sim,
+e não estava acontecendo — `comentario` só dispara notificação quando o
+TEXTO da resposta tem uma @menção reconhecível (heurística pra menção
+humana escrevendo o texto), e a resposta do agente normalmente não
+menciona ninguém. Quem perguntou nunca era avisado, mesmo sendo resposta
+direta a ela.
+
+**Fix**: `processarMencao()` notifica explicitamente quem fez a @menção
+original, direto por `comment.uid` (já em mãos), reaproveitando
+`buildNotifStep()` (mesmo módulo de notificações de `agente-agil` v0-v3).
+Mesmo esquema de id determinístico que @menção-no-texto usa
+(`mention_{cardId}_{uid}`) — sem duplicar se o texto por acaso também
+mencionar a pessoa.
+
+2 testes novos, suíte inteira 181/181 passando. **Requer novo deploy
+manual** de `agenteAgilMencao` pra valer em produção.

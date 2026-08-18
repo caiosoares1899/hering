@@ -72,6 +72,7 @@ const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { SYSTEM_PROMPT_V1 } = require('./systemPrompt');
 const { isEnabled } = require('./limits');
 const { mencionaAgente } = require('./detectaMencao');
+const { buildNotifStep } = require('../agente-agil/notifications');
 
 const SQUAD_ID = 'dev';
 const AGENTE_UID = 'agente-agil'; // mesmo uid que outputs/*.js grava em todo comentário/escrita do agente
@@ -131,6 +132,32 @@ async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
       await comentarioTool.handler({ type: 'comentario', texto: result.finalText });
       fallbackComentario = true;
     }
+  }
+
+  // Notifica quem fez a @menção original — achado real (2026-08-18):
+  // `comentario` só dispara notificação quando o TEXTO da resposta tem uma
+  // @menção reconhecível (heurística pensada pra menção humana dentro do
+  // texto, ver outputs/comentario.js), e a resposta do agente normalmente
+  // não menciona ninguém — a pessoa que perguntou nunca era avisada, mesmo
+  // sendo resposta direta a ela. Notifica direto por uid (já em `comment`,
+  // não precisa resolver init) com o MESMO esquema de id determinístico
+  // que @menção-no-texto usa (`mention_{cardId}_{uid}`) — se o texto por
+  // acaso também mencionar essa pessoa, buildNotifStep vê que já existe e
+  // não duplica.
+  const comentarioCall = result.steps.flatMap((step) => step.toolCalls).find((call) => call.name === 'comentario');
+  const respostaTexto = comentarioCall?.input?.texto || result.finalText || '';
+  const notifStep = await buildNotifStep(db, {
+    squadId: SQUAD_ID,
+    targetUid: comment.uid,
+    type: 'mention',
+    title: '🤖 Agente Ágil respondeu sua menção',
+    sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
+    cardId,
+    idOverride: 'mention_' + cardId + '_' + comment.uid,
+    dryRun: DRY_RUN_MENCAO,
+  });
+  if (notifStep && notifStep.kind === 'update') {
+    await db.ref(notifStep.path).update(notifStep.data);
   }
 
   // Marca DEPOIS de rodar (não antes) — se o loop lançar exceção, o
