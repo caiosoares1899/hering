@@ -7025,6 +7025,26 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-18 · `agenteAgilMencao` deployado — 1ª @menção real processada (item 4 do plano)
+Deploy real da Cloud Function `agenteAgilMencao` (item 3/4 do plano de
+acionamento sem supervisão — ver README, "Próximos passos"), primeira vez
+rodando fora de canário manual. Continua em modo sombra (`dryRun` fixo em
+`true`), squad `dev`.
+
+**Susto investigado, sem bug de código**: 1º comentário com "@Agente
+Ágil" não gerou log nenhum; 4 minutos depois, outro comentário no mesmo
+card gerou log normal. Antes de mexer em qualquer coisa, testei
+`detectaMencao.js` direto contra os dois textos exatos (com acento via
+dropdown de menção, sem acento digitado à mão) — os dois batem na
+detecção sem problema. Explicação mais provável: atraso de
+provisionamento do trigger (Eventarc/RTDB) nos minutos seguintes ao 1º
+deploy, comportamento conhecido do Firebase Functions v2. Confirmado:
+uma menção nova rodou normal, sem qualquer mudança de código.
+
+Agora na fase de observação real (item 4 do plano) — rodando por um
+tempo antes de decidir sobre o gatilho automático em mudança de card
+(item 5) ou virar escrita real (`dryRun:false`).
+
 ### 2026-08-15 · `biblioteca_agil` validada (dryRun) + décimo canário de escrita real
 Dois dryRuns reais rodados pelo usuário (`dryRunBibliotecaAgilContraSquadDev.js`):
 "Recorrência automática" não confundiu com "Itens recorrentes" (explicou
