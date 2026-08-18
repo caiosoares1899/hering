@@ -1611,6 +1611,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.434-dev — 2026-08-17 — Checagem de iniciais repetidas passa a ser board inteiro, não só por squad
+Bug real reportado: duas pessoas diferentes ("GS" de Outlet CRM e "GS" de
+Site Hering) com a mesma sigla em squads diferentes — "Meu Dia" misturava
+os cards de uma na outra. Renomear resolveu o sintoma, mas investigando
+mais fundo a causa raiz é mais ampla: iniciais são um campo GLOBAL por uid
+(`kanban/usuarios/{uid}.init`), só a CHECAGEM de conflito é que era
+squad-scoped em 3 lugares diferentes — permitindo a colisão nascer sem
+ninguém perceber.
+
+- **`autoRegistrar()`** (1º login de um usuário novo): antes gerava a
+  inicial a partir do nome sem checar conflito NENHUM, nem por squad. Agora
+  checa contra `kanban/usuarios_publicos` inteiro e, se colidir, acrescenta
+  um dígito automaticamente (ex.: "GS" → "GS2") — sem diálogo (não tem
+  onde mostrar erro nesse fluxo), mas não duplica mais às cegas.
+- **`confirmarInscricao()`** (tela de confirmar iniciais ao entrar num
+  squad): checava só `members` do squad atual — agora busca fresco em
+  `kanban/usuarios_publicos` e bloqueia com erro visível se colidir com
+  QUALQUER outro uid, de qualquer squad.
+- **`editarInicial()`** (ferramenta manual de renomear): já buscava o nó
+  global, mas filtrava só gente inscrita no squad ativo — filtro removido,
+  agora é board inteiro.
+
 ### v8.30.433-dev — 2026-08-17 — Chips do toggle de coluna visíveis em Insights e CFD & Burndown
 Correção de cima: a v8.30.432-dev tinha aplicado o EFEITO do toggle
 (cards em coluna oculta saindo da conta) em Insights e CFD & Burndown,
