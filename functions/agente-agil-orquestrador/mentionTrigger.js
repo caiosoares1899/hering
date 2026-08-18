@@ -31,15 +31,25 @@
 //   (4) já processado antes (idempotência, mesmo padrão de
 //   `agente-agil/http.js:IDEMPOTENCY_PATH`, protege contra reentrega do
 //   Firebase Functions — RTDB triggers não garantem exatamente-uma-vez).
-// - MODO SOMBRA: `dryRun` fixo em `true` (`DRY_RUN_SOMBRA` abaixo), não
-//   exposto como parâmetro ainda — mesmo padrão que `tools/realHandlers.js`
-//   usou na Etapa 2 antes do `dryRun` virar parâmetro de verdade na Etapa
-//   3. O que nunca foi validado até agora não é "o modelo escolhe a
-//   ferramenta certa" (já provado 9x) — é o MECANISMO DE GATILHO em si
-//   (dispara uma vez só, ignora comentário próprio, respeita kill
-//   switch, detecta menção certo). Só vira `dryRun:false` depois de
-//   observar isso rodando de verdade (não fake db) por um tempo —
-//   decisão nova e separada, não implícita neste commit.
+// - MODO SOMBRA (`dryRun` fixo em `true`, não exposto como parâmetro):
+//   rodou de 2026-08-18 (1º deploy real) até o mesmo dia, validando só o
+//   MECANISMO DE GATILHO em si (dispara uma vez só, ignora comentário
+//   próprio, respeita kill switch, detecta menção certo) — o que "o
+//   modelo escolhe a ferramenta certa" já tinha sido provado 9x nos
+//   canários manuais. Susto investigado nesse meio tempo: 1º comentário
+//   real não gerou log, 2º (4min depois, mesmo card) gerou normal —
+//   `detectaMencao.js` testado direto contra os dois textos exatos não
+//   achou bug de detecção; explicação mais provável é atraso de
+//   provisionamento do trigger Eventarc logo após o 1º deploy, confirmado
+//   por uma 3ª menção rodando normal sem qualquer mudança de código.
+// - **DECISÃO EXPLÍCITA DO USUÁRIO (2026-08-18): `DRY_RUN_MENCAO` virou
+//   `false`** — mecanismo de gatilho validado, escrita real já provada
+//   nos 10 canários manuais anteriores, squad `dev` continua sendo a
+//   única superfície (path do trigger travado, não checagem em runtime).
+//   Esta é a primeira vez que o agente escreve em produção SEM humano no
+//   terminal digitando `ESCREVER` — a rede de segurança agora é o kill
+//   switch dinâmico (`limits.js`) + o escopo travado no squad `dev`, não
+//   mais confirmação manual por invocação.
 // - `processarMencao()` é a lógica de negócio pura, com `llmClient`
 //   injetado (não resolve `escolheClienteParaTarefa()`/secret internamente)
 //   — testável com fake db + cliente scriptado, mesmo padrão de
@@ -62,7 +72,7 @@ const { mencionaAgente } = require('./detectaMencao');
 const SQUAD_ID = 'dev';
 const AGENTE_UID = 'agente-agil'; // mesmo uid que outputs/*.js grava em todo comentário/escrita do agente
 const IDEMPOTENCY_PATH = `kanban/squads/${SQUAD_ID}/dados/agente_agil_mencao_processed`;
-const DRY_RUN_SOMBRA = true;
+const DRY_RUN_MENCAO = false;
 
 async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
   // (1) Anti-auto-disparo — PRIMEIRO de tudo, antes até de olhar o texto.
@@ -82,14 +92,14 @@ async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
 
   // (4) Idempotência — protege contra reentrega do Firebase Functions
   // (RTDB triggers não garantem exatamente-uma-vez) e contra reprocessar
-  // o mesmo comentário 2x, mesmo em modo sombra (evita gastar tokens à
-  // toa numa chamada duplicada).
+  // o mesmo comentário 2x (evita gastar tokens à toa numa chamada
+  // duplicada, e — agora com escrita real — evita comentário repetido).
   const jaProcessado = await db.ref(`${IDEMPOTENCY_PATH}/${commentId}`).get();
   if (jaProcessado.exists()) {
     return { processed: false, reason: 'idempotent' };
   }
 
-  const tools = buildTools({ mode: 'real', db, squadId: SQUAD_ID, cardId, dryRun: DRY_RUN_SOMBRA });
+  const tools = buildTools({ mode: 'real', db, squadId: SQUAD_ID, cardId, dryRun: DRY_RUN_MENCAO });
 
   const result = await runLoop({
     llmClient,
@@ -105,7 +115,7 @@ async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
   await db.ref(`${IDEMPOTENCY_PATH}/${commentId}`).set({
     at: new Date().toISOString(),
     status: result.status,
-    dryRun: DRY_RUN_SOMBRA,
+    dryRun: DRY_RUN_MENCAO,
   });
 
   return { processed: true, result };
@@ -158,7 +168,7 @@ const agenteAgilMencao = onValueCreated(
       const { llmClient } = escolheClienteParaTarefa({ apiKey: ANTHROPIC_API_KEY.value() });
       const outcome = await processarMencao(db, { cardId, commentId, comment, llmClient });
       if (outcome.processed) {
-        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_SOMBRA} |`, resumirResultadoParaLog(outcome.result));
+        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_MENCAO} |`, resumirResultadoParaLog(outcome.result));
       } else {
         console.log('[agente-agil-mencao]', cardId, commentId, `ignorado (${outcome.reason})`);
       }
@@ -172,7 +182,7 @@ module.exports = {
   agenteAgilMencao,
   processarMencao,
   resumirResultadoParaLog,
-  DRY_RUN_SOMBRA,
+  DRY_RUN_MENCAO,
   SQUAD_ID,
   IDEMPOTENCY_PATH,
   AGENTE_UID,

@@ -19,7 +19,7 @@ const {
   SQUAD_ID,
   IDEMPOTENCY_PATH,
   AGENTE_UID,
-  DRY_RUN_SOMBRA,
+  DRY_RUN_MENCAO,
 } = require('../mentionTrigger');
 
 function scriptedLlmClient(script) {
@@ -105,7 +105,7 @@ test('ignora comentário já processado antes (idempotência)', async () => {
   assert.equal(llmClient.calls(), 0);
 });
 
-test('processa uma menção válida: chama o loop, marca idempotência, dryRun fixo em modo sombra', async () => {
+test('processa uma menção válida: chama o loop, marca idempotência, dryRun fixo em DRY_RUN_MENCAO', async () => {
   const db = seedDb();
   const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'feito, comentário deixado no card' }]);
   const comment = { uid: 'uid-humano', text: '@Agente Ágil resume o card pra mim' };
@@ -119,8 +119,13 @@ test('processa uma menção válida: chama o loop, marca idempotência, dryRun f
   const marcado = await db.ref(`${IDEMPOTENCY_PATH}/cm5`).get();
   assert.equal(marcado.exists(), true);
   assert.equal(marcado.val().status, 'done');
-  assert.equal(marcado.val().dryRun, DRY_RUN_SOMBRA);
-  assert.equal(DRY_RUN_SOMBRA, true); // trava o modo sombra — se isso um dia virar false, é decisão nova, não acidente
+  assert.equal(marcado.val().dryRun, DRY_RUN_MENCAO);
+  // Trava o valor ATUAL de propósito — se isso divergir do esperado, é
+  // sinal de mudança acidental do flag, não decisão nova (decisão de
+  // 2026-08-18: virou `false`, escrita real, ver comentário em
+  // mentionTrigger.js). Atualizar este assert junto de qualquer mudança
+  // futura do flag, nunca deixar o teste "seguir" o valor sem revisar.
+  assert.equal(DRY_RUN_MENCAO, false);
 });
 
 test('mesmo com toolset completo disponível, task simples só usa o que precisa (mesmo espírito do canário 9)', async () => {
@@ -139,7 +144,7 @@ test('mesmo com toolset completo disponível, task simples só usa o que precisa
   assert.equal(outcome.result.status, 'done');
   const comentarioCall = outcome.result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'comentario');
   assert.ok(comentarioCall);
-  assert.equal(comentarioCall.output.dryRun, true); // modo sombra: monta o plano, nunca aplica
+  assert.equal(comentarioCall.output.dryRun, false); // escrita real (DRY_RUN_MENCAO=false) — comentário de verdade, não simulado
 });
 
 // ── resumirResultadoParaLog() — formatação do log de produção ──────────

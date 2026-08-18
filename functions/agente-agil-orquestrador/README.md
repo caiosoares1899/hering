@@ -1280,20 +1280,26 @@ diferentes, então a ORDEM importa. Sequência final combinada:
 4. **Rodar a @menção de verdade por um tempo** (squad `dev`), ver se a
    reconstrução de contexto via `ler_card` basta na prática ou se aparece
    um caso real que precise de retomada de sessão de verdade — só decidir
-   isso com dado real, não especulando agora. **EM ANDAMENTO** — deploy
-   feito em 2026-08-18. Um susto falso-negativo logo no início: 1º
-   comentário com @menção (10:05) não gerou log nenhum; 2º comentário
-   (10:09, mesmo card) gerou log normalmente. Investigado antes de mexer
-   em qualquer código — rodei `detectaMencao.js` direto contra os dois
-   textos exatos (um com acento via dropdown, outro sem acento digitado à
-   mão): os dois batem na detecção sem problema, então não era bug de
-   texto/regex. Explicação mais provável: atraso de provisionamento do
-   trigger (Eventarc/RTDB) logo após o 1º deploy — comportamento
-   conhecido do Firebase Functions v2, a function aparece criada no
-   Console mas pode perder o primeiro evento nos minutos iniciais.
-   Confirmado: uma nova menção rodada depois funcionou normalmente, sem
-   qualquer mudança de código. Agora observando os logs de uso real ao
-   longo do tempo, como planejado.
+   isso com dado real, não especulando agora. **Mecanismo de gatilho
+   validado, decisão de destravar escrita real tomada mais cedo do que o
+   texto original previa** — deploy feito em 2026-08-18. Um susto
+   falso-negativo logo no início: 1º comentário com @menção (10:05) não
+   gerou log nenhum; 2º comentário (10:09, mesmo card) gerou log
+   normalmente. Investigado antes de mexer em qualquer código — rodei
+   `detectaMencao.js` direto contra os dois textos exatos (um com acento
+   via dropdown, outro sem acento digitado à mão): os dois batem na
+   detecção sem problema, então não era bug de texto/regex. Explicação
+   mais provável: atraso de provisionamento do trigger (Eventarc/RTDB)
+   logo após o 1º deploy — comportamento conhecido do Firebase Functions
+   v2, a function aparece criada no Console mas pode perder o primeiro
+   evento nos minutos iniciais. Confirmado: uma nova menção rodada depois
+   funcionou normalmente, sem qualquer mudança de código. Com o gatilho
+   validado, o usuário decidiu explicitamente (2026-08-18) destravar
+   escrita real (`DRY_RUN_MENCAO = false`) em vez de esperar mais tempo em
+   modo sombra — ver "Item 3" acima. A pergunta original do item ("a
+   reconstrução via `ler_card` basta, ou precisa de retomada de sessão de
+   verdade?") continua em aberto — agora será respondida observando uso
+   real com escrita de verdade, não mais em sombra.
 5. **Só depois**, gatilho automático em mudança de card (item 1b) — com
    kill switch, escopo de squad e @menção já rodando de forma estável
    como pré-condição. Continua exigindo o item "retomada de
@@ -1379,7 +1385,7 @@ momento da chamada (não há cache) — sem deploy, sem restart.
 **Confirmado pelo usuário** contra o Firebase real: ligou via console,
 conferiu o estado, desligou de novo. Funciona.
 
-## Item 3 (sequência de acionamento): @menção v1 — MODO SOMBRA, implementado
+## Item 3 (sequência de acionamento): @menção v1 — implementado, deployado, escrita real desde 2026-08-18
 
 Primeiro gatilho automático do orquestrador (até aqui, canários 1-9 eram
 100% invocação manual) e primeiro deploy real deste módulo como Cloud
@@ -1428,15 +1434,18 @@ entrega exatamente-uma-vez — mesmo padrão de `agente-agil/http.js`
 Marcado DEPOIS de rodar o loop (não antes) — se o loop lançar exceção,
 fica elegível pra reprocessar, já que nada foi de fato concluído.
 
-**MODO SOMBRA**: `DRY_RUN_SOMBRA = true` fixo em `mentionTrigger.js`
-(mesmo espírito do antigo `DRY_RUN_FIXO` da Etapa 2, antes de `dryRun`
-virar parâmetro de verdade na Etapa 3) — não exposto como toggle ainda.
-O que nunca foi validado até agora não é "o modelo escolhe a ferramenta
-certa" (já provado 9x em canário) — é o MECANISMO DE GATILHO em si:
-dispara uma vez só por comentário, ignora comentário próprio, respeita
-kill switch, detecta menção certo. Só vira `dryRun:false` depois de
-observar isso rodando de verdade (Firebase real, não fake db) por um
-tempo — decisão nova e separada, combinada, não implícita neste commit.
+**MODO SOMBRA → ESCRITA REAL**: rodou com `DRY_RUN_MENCAO = true` fixo em
+`mentionTrigger.js` (mesmo espírito do antigo `DRY_RUN_FIXO` da Etapa 2,
+antes de `dryRun` virar parâmetro de verdade na Etapa 3) só até o
+mecanismo de gatilho em si ser validado rodando de verdade — dispara uma
+vez só por comentário, ignora comentário próprio, respeita kill switch,
+detecta menção certo (o que "o modelo escolhe a ferramenta certa" já
+tinha sido provado 9x em canário, isso não precisava de mais validação).
+**Decisão explícita do usuário em 2026-08-18** (mesmo dia do 1º deploy):
+virou `DRY_RUN_MENCAO = false` depois de confirmar o gatilho disparando
+certo em produção — ver "Item 4" na seção "Próximos passos" acima pro
+relato completo (incluindo o susto do 1º comentário sem log, explicado
+por atraso de provisionamento do trigger, não bug).
 
 **Arquivos novos**:
 - `detectaMencao.js` — `mencionaAgente(texto)`, função pura, testada

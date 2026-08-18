@@ -172,14 +172,16 @@ exports.intakeSubmit = require('./intake/submit').intakeSubmit;
 // ninguém abrir o board. Deploy isolado: firebase deploy --only functions:weeklyBackup
 exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 
-// Agente Ágil Orquestrador — @menção v1 (item 3 do plano de acionamento
+// Agente Ágil Orquestrador — @menção v1 (item 3/4 do plano de acionamento
 // sem supervisão direta, ver functions/agente-agil-orquestrador/README.md).
 // Dispara quando um comentário novo em kanban/squads/dev/dados/
 // card_comments/{cardId} menciona "@Agente Ágil" (detectaMencao.js).
-// MODO SOMBRA: dryRun fixo em true (mentionTrigger.js:DRY_RUN_SOMBRA) —
-// só observa/loga, nada escrito de verdade ainda. Squad "dev" travado no
-// próprio path do trigger, não checagem em runtime. Requer o secret
-// ANTHROPIC_API_KEY (`firebase functions:secrets:set ANTHROPIC_API_KEY`
-// antes do primeiro deploy). Deploy isolado:
+// ESCRITA REAL desde 2026-08-18 (decisão explícita do usuário, ver
+// mentionTrigger.js:DRY_RUN_MENCAO) — antes rodou em modo sombra
+// (dryRun fixo em true, só observa/loga) até o mecanismo de gatilho ser
+// validado rodando de verdade. Squad "dev" travado no próprio path do
+// trigger, não checagem em runtime. Requer o secret ANTHROPIC_API_KEY
+// (`firebase functions:secrets:set ANTHROPIC_API_KEY` antes do primeiro
+// deploy). Deploy isolado:
 // firebase deploy --only functions:agenteAgilMencao
 exports.agenteAgilMencao = require('./agente-agil-orquestrador/mentionTrigger').agenteAgilMencao;
