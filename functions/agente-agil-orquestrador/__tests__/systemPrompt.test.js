@@ -29,3 +29,12 @@ test('SYSTEM_PROMPT_V1 documenta a distinção de risco baixo/médio e quando pe
 test('SYSTEM_PROMPT_V1 escopa explicitamente pro squad "dev"', () => {
   assert.match(SYSTEM_PROMPT_V1, /squad "dev"/);
 });
+
+// Achado real (2026-08-18): a 1ª @menção real mostrou o modelo respondendo
+// só no finalText (nunca chamou comentario) — invisível pra quem perguntou,
+// já que finalText só existe no log da Cloud Function. Guarda a instrução
+// explícita que fecha essa lacuna (exceção #5 do cabeçalho).
+test('SYSTEM_PROMPT_V1 exige que a resposta final sempre seja entregue via comentario', () => {
+  assert.match(SYSTEM_PROMPT_V1, /Entrega da resposta/i);
+  assert.match(SYSTEM_PROMPT_V1, /sempre precisa ser entregue via comentario/i);
+});

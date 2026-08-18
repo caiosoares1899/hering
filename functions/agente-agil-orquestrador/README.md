@@ -1821,3 +1821,34 @@ que prova que `ler_card` não volta a ler de `card.comments` por acidente.
 **Requer novo deploy manual** (`firebase deploy --only
 functions:agenteAgilMencao`) pra o fix valer em produção — o binário
 atual ainda tem o bug.
+
+## SEGUNDO ACHADO (2026-08-18, mesmo dia): resposta ficava presa no finalText, nunca virava comentario
+
+Depois do fix acima, o usuário testou de novo com 2 perguntas puramente
+explicativas ("me explica o conceito de sprint", "como usar cards
+recorrentes"). Deploy ok, log aparecia — `ferramentas: biblioteca_agil({})`,
+`finalText` com uma resposta completa e correta — mas nada chegava no
+card.
+
+**Causa raiz, dessa vez no prompt, não no código de escrita**:
+`SYSTEM_PROMPT_V1` nunca dizia explicitamente que a resposta final precisa
+virar um `comentario`. Os canários manuais sempre funcionaram porque o
+TEXTO DA TAREFA em si incluía "Comenta a resposta no card" (ex.: scripts
+de `biblioteca_agil`) — a @menção real passa o comentário da pessoa
+literal (`mentionTrigger.js: task: comment.text`), sem esse empurrão. Pra
+pergunta puramente explicativa, o modelo tratava como "só respondendo",
+nunca chamava `comentario` — comportamento nunca antes exercitado, porque
+todo canário manual até aqui tinha o empurrão embutido na própria tarefa.
+
+**Fix**: nova seção "Entrega da resposta" em `SYSTEM_PROMPT_V1` (exceção
+#5 no cabeçalho, mesmo padrão das 4 anteriores) — deixa explícito que
+texto fora de uma chamada de ferramenta nunca chega até quem perguntou.
+Resolvido no prompt (não remendando o texto da tarefa em
+`mentionTrigger.js`) de propósito: o mesmo problema reapareceria em
+qualquer canal automatizado futuro, incluindo o item 5 do plano (gatilho
+automático em mudança de card) — melhor uma correção que vale pra
+qualquer contexto de invocação sem humano no terminal.
+
+Teste novo (`systemPrompt.test.js`) guarda a instrução. Suíte inteira:
+177/177 passando. **Requer novo deploy manual** de `agenteAgilMencao` pra
+valer em produção.

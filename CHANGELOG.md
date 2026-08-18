@@ -7025,6 +7025,36 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-18 · Segundo achado: resposta ficava presa no finalText, nunca virava comentario
+Depois do fix do path morto (entrada abaixo), o usuário testou de novo com
+2 perguntas puramente explicativas ("me explica o conceito de sprint",
+"como usar cards recorrentes") — deploy ok, log aparecia
+(`ferramentas: biblioteca_agil({})`, `finalText` com a resposta completa e
+correta), mas nada chegava no card.
+
+**Causa raiz**: `SYSTEM_PROMPT_V1` nunca dizia explicitamente que a
+resposta final precisa virar um `comentario`. Os canários manuais sempre
+funcionaram porque o TEXTO DA TAREFA em si incluía "Comenta a resposta no
+card" (ex.: scripts de `biblioteca_agil`) — a @menção real passa o
+comentário da pessoa literal (`mentionTrigger.js: task: comment.text`),
+sem esse empurrão. Pra pergunta puramente explicativa, o modelo tratava
+como "só respondendo", nunca chamava `comentario`.
+
+**Fix**: nova seção "Entrega da resposta" em `SYSTEM_PROMPT_V1` (exceção
+#5 documentada no cabeçalho do arquivo, mesmo padrão das 4 anteriores) —
+deixa explícito que texto fora de uma chamada de ferramenta nunca chega
+até quem perguntou, e a resposta final sempre precisa ser um `comentario`,
+mesmo pra perguntas/explicações. Resolvido na raiz (prompt), não só
+remendando o texto da tarefa em `mentionTrigger.js`, porque o mesmo
+problema reapareceria em qualquer canal automatizado futuro (item 5 do
+plano — gatilho automático em mudança de card).
+
+Teste novo em `systemPrompt.test.js` guardando a instrução. Suíte inteira:
+**177/177 passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
+
 ### 2026-08-18 · ACHADO CRÍTICO: comentário do agente escrevia num campo morto desde 11/08 — corrigido
 Investigando o relato do usuário ("os comentários do agente não chegaram"
 depois de destravar `dryRun:false`), achei um bug real, silencioso, sem

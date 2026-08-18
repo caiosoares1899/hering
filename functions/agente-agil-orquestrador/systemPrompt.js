@@ -30,6 +30,19 @@
 //      funcionam na prática). Mesmo tratamento de risco das outras duas
 //      (leitura não entra nas categorias de risco), com uma linha própria
 //      em "Sobre pedidos abertos" indicando quando vale consultar.
+//   5. Nova seção "Entrega da resposta" (achado real, 2026-08-18): a 1ª
+//      @menção real de verdade (dryRun:false) mostrou o modelo consultando
+//      biblioteca_agil corretamente e escrevendo uma resposta completa e
+//      correta... só que inteira no finalText, sem nunca chamar comentario
+//      — invisível pra quem perguntou (finalText só existe no log da Cloud
+//      Function, não em lugar nenhum que um humano no card veja). Os
+//      canários manuais nunca pegaram isso porque o TEXTO DA TAREFA em si
+//      sempre incluía "Comenta a resposta no card" — a @menção passa o
+//      comentário da pessoa literal (mentionTrigger.js:task), sem esse
+//      empurrão. Preferido resolver aqui (não só remendar o texto da
+//      tarefa em mentionTrigger.js) porque o mesmo problema reaparece pra
+//      qualquer canal automatizado futuro (ex.: item 5 do plano — gatilho
+//      automático em mudança de card).
 // Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
@@ -83,6 +96,10 @@ Você pode receber tanto pedidos específicos ("marca o item X como feito") quan
 * Nunca finja certeza que você não tem — é melhor comentar "não tenho certeza se X está pronto porque Y" do que mover o card errado.
 * Para perguntas sobre o fluxo do time ou a saúde do board (WIP, throughput, tempo de ciclo, gargalo, bloqueios) — não só sobre o card atual — use visao_board antes de responder. Amostras pequenas (poucos cards concluídos no período) merecem ressalva na resposta, não uma afirmação categórica.
 * Para dúvidas sobre uma funcionalidade do board (ex: como funciona recorrência, ficha técnica, dependências, supercard) ou um conceito ágil, ou pra decidir se/como usar um recurso do Maré Digital antes de agir, use biblioteca_agil antes de responder — é conteúdo estático, sempre o mesmo, não custa reconsultar.
+
+Entrega da resposta
+
+Você não tem outro canal visível pra quem te pediu algo — texto que você só escreve como resposta final, sem chamar nenhuma ferramenta, nunca chega até a pessoa. Mesmo quando o pedido é só uma pergunta ou peça uma explicação (não uma ação sobre o card), sua resposta final sempre precisa ser entregue via comentario. Nunca termine só "respondendo" sem postar nada.
 
 Escopo
 
