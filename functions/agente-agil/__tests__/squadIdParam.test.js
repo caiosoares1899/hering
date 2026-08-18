@@ -55,26 +55,33 @@ test('resolveCardKey com squadId explícito resolve contra o squad certo, não c
 });
 
 test('buildWritePlan com extra.squadId monta o plano contra o squad certo (comentario)', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  // card_comments/{cardId} é path próprio por squad desde a migração Fase
+  // 1.1 (fora da subárvore do card, ver cardCommentsPath() em board.js) —
+  // continua respeitando squadId certinho.
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const plan = await buildWritePlan('9', [{ type: 'comentario', texto: 'Testando squadId' }], {
     cardId: 'c9',
     squadId: 'dev',
     db,
   });
   assert.equal(plan.length, 1);
-  assert.equal(plan[0].path, 'kanban/squads/dev/dados/cards/9/comments');
+  assert.equal(plan[0].path, 'kanban/squads/dev/dados/card_comments/c9');
 
   await applyWritePlan(db, plan, { cardPath: 'kanban/squads/dev/dados/cards/9', cardId: 'c9', squadId: 'dev' });
 
-  const devCard = db._data().kanban.squads.dev.dados.cards['9'];
-  const ecommCard = db._data().kanban.squads.ecomm.dados.cards['9'];
-  assert.equal(Object.keys(devCard.comments).length, 1, 'comentário deveria ter sido escrito no card do squad dev');
-  assert.equal(Object.keys(ecommCard.comments || {}).length, 0, 'card homônimo em ecomm não deveria ter sido tocado');
+  const devComments = db._data().kanban.squads.dev.dados.card_comments?.c9;
+  const ecommComments = db._data().kanban.squads.ecomm.dados.card_comments?.c9;
+  assert.equal(Object.keys(devComments || {}).length, 1, 'comentário deveria ter sido escrito no card_comments do squad dev');
+  assert.equal(Object.keys(ecommComments || {}).length, 0, 'card_comments homônimo em ecomm não deveria ter sido tocado');
 });
 
+// Comentário não estampa cards_updated_at desde que virou path próprio
+// (fora da subárvore do card, ver sprint3.test.js) — usa editar_campos aqui
+// pra testar o que este teste realmente cobre (squadId correto no carimbo),
+// já que precisa de um write que ainda toque o card de verdade.
 test('applyWritePlan com cardMeta.squadId carimba cards_updated_at do squad certo, não o de ecomm', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
-  const plan = await buildWritePlan('9', [{ type: 'comentario', texto: 'Oi' }], { cardId: 'c9', squadId: 'dev', db });
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', desc: 'antiga' });
+  const plan = await buildWritePlan('9', [{ type: 'editar_campos', desc: 'nova' }], { cardId: 'c9', squadId: 'dev', db });
   await applyWritePlan(db, plan, { cardPath: 'kanban/squads/dev/dados/cards/9', cardId: 'c9', squadId: 'dev' });
 
   const devStampNode = cardsUpdatedAtPath('dev').split('/').reduce((cur, seg) => (cur ? cur[seg] : undefined), db._data());
@@ -85,14 +92,14 @@ test('applyWritePlan com cardMeta.squadId carimba cards_updated_at do squad cert
 
 test('buildWritePlan sem extra.squadId continua batendo em ecomm (default preservado)', async () => {
   const db = makeFakeDb({
-    kanban: { squads: { ecomm: { dados: { cards: { 5: { id: 'c5', title: 'Card X', col: 'progress', comments: {} } } } } } },
+    kanban: { squads: { ecomm: { dados: { cards: { 5: { id: 'c5', title: 'Card X', col: 'progress' } } } } } },
   });
   const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'Oi' }], { cardId: 'c5', db });
-  assert.equal(plan[0].path, 'kanban/squads/ecomm/dados/cards/5/comments');
+  assert.equal(plan[0].path, 'kanban/squads/ecomm/dados/card_comments/c5');
 });
 
 test('buildWritePlan com extra.notificar usa o squadId certo no step de notificação (bugfix: antes usava SQUAD_ID fixo)', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const plan = await buildWritePlan('9', [{ type: 'comentario', texto: 'Sem menção aqui' }], {
     cardId: 'c9',
     squadId: 'dev',

@@ -38,7 +38,7 @@ test('buildTools({mode:"real"}) exige db, squadId e cardId', () => {
 });
 
 test('handler real de comentario monta o plano de verdade mas nunca escreve (dryRun fixo)', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });
   const comentario = tools.find((t) => t.name === 'comentario');
 
@@ -46,10 +46,12 @@ test('handler real de comentario monta o plano de verdade mas nunca escreve (dry
 
   assert.equal(result.ok, true);
   assert.equal(result.dryRun, true);
-  assert.equal(result.plan[0].path, 'kanban/squads/dev/dados/cards/9/comments');
+  // card_comments/{cardId} é path próprio por squad, fora da subárvore do
+  // card, desde a migração Fase 1.1 (ver cardCommentsPath() em board.js).
+  assert.equal(result.plan[0].path, 'kanban/squads/dev/dados/card_comments/c9');
 
-  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
-  assert.deepEqual(cardAfter.comments, {}, 'dryRun fixo não deveria ter escrito nada de verdade no card');
+  const commentsAfter = db._data().kanban.squads.dev.dados.card_comments?.c9;
+  assert.deepEqual(commentsAfter || {}, {}, 'dryRun fixo não deveria ter escrito nada de verdade');
 });
 
 test('handler real devolve card_not_found quando o cardId não existe no squad', async () => {
@@ -63,7 +65,7 @@ test('handler real devolve card_not_found quando o cardId não existe no squad',
 });
 
 test('handler real com dryRun:false escreve DE VERDADE no db (Etapa 3 — default continua true quando omitido)', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
   const comentario = tools.find((t) => t.name === 'comentario');
 
@@ -73,23 +75,26 @@ test('handler real com dryRun:false escreve DE VERDADE no db (Etapa 3 — defaul
   assert.equal(result.dryRun, false);
   assert.equal(result.applied, 1);
 
-  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
-  const comments = Object.values(cardAfter.comments || {});
+  const comments = Object.values(db._data().kanban.squads.dev.dados.card_comments?.c9 || {});
   assert.equal(comments.length, 1, 'dryRun:false deveria ter escrito o comentário de verdade no fake db');
   assert.equal(comments[0].text, 'Escrita real de teste');
-  assert.ok(cardAfter.updatedAt, 'applyWritePlan deveria carimbar updatedAt do card');
+  // Comentário vive fora da subárvore do card desde a migração Fase 1.1
+  // (mesmo achado de sprint3.test.js) — sozinho, não estampa mais
+  // card.updatedAt.
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.equal(cardAfter.updatedAt, undefined, 'comentário sozinho não carimba updatedAt do card (path fora da subárvore)');
 });
 
 test('omitir dryRun continua default true (comportamento de todos os scripts/testes anteriores preservado)', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {} });
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' }); // sem dryRun explícito
   const comentario = tools.find((t) => t.name === 'comentario');
 
   const result = await comentario.handler({ type: 'comentario', texto: 'Não deveria escrever' });
 
   assert.equal(result.dryRun, true);
-  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
-  assert.deepEqual(cardAfter.comments, {}, 'sem dryRun explícito, nada deveria ser escrito de verdade');
+  const commentsAfter = db._data().kanban.squads.dev.dados.card_comments?.c9;
+  assert.deepEqual(commentsAfter || {}, {}, 'sem dryRun explícito, nada deveria ser escrito de verdade');
 });
 
 test('handler real de mover_coluna funciona mesmo quando o LLM não manda "type" no input (achado real: protocolo de tool-use da Anthropic não reconstitui o nome da ferramenta dentro do input)', async () => {
@@ -207,7 +212,7 @@ const RESPONSAVEL_SEED = {
 test('perguntar_humano real em dryRun (default) monta o plano composto (comentario + agent_status + menção ao responsável) mas não escreve', async () => {
   const db = seedDevSquadDb(
     '9',
-    { id: 'c9', title: 'Card no dev', col: 'progress', owner: 'CO', comments: {}, agentStatus: null, executorType: null, history: [] },
+    { id: 'c9', title: 'Card no dev', col: 'progress', owner: 'CO', agentStatus: null, executorType: null, history: [] },
     RESPONSAVEL_SEED,
   );
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' }); // sem dryRun explícito
@@ -230,7 +235,8 @@ test('perguntar_humano real em dryRun (default) monta o plano composto (comentar
   assert.ok(result.plan[0].data[Object.keys(result.plan[0].data)[0]].text.includes('@CO'), 'texto do comentário (mesmo em dryRun) já deveria ter a @menção ao responsável');
 
   const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
-  assert.deepEqual(cardAfter.comments, {}, 'dryRun (default) não deveria ter escrito nada de verdade');
+  const commentsAfter = db._data().kanban.squads.dev.dados.card_comments?.c9;
+  assert.deepEqual(commentsAfter || {}, {}, 'dryRun (default) não deveria ter escrito nada de verdade');
   assert.equal(cardAfter.agentStatus, null, 'dryRun (default) não deveria ter mudado agentStatus de verdade');
   assert.deepEqual(db._data().kanban.usuarios || {}, {}, 'dryRun (default) não deveria ter criado notificação nenhuma');
 });
@@ -238,7 +244,7 @@ test('perguntar_humano real em dryRun (default) monta o plano composto (comentar
 test('perguntar_humano real com dryRun:false posta a pergunta como comentário (prefixo ❓ + @menção ao responsável), marca agent_status:awaiting_validation e notifica de verdade', async () => {
   const db = seedDevSquadDb(
     '9',
-    { id: 'c9', title: 'Card no dev', col: 'progress', owner: 'CO', comments: {}, agentStatus: null, executorType: null, history: [] },
+    { id: 'c9', title: 'Card no dev', col: 'progress', owner: 'CO', agentStatus: null, executorType: null, history: [] },
     RESPONSAVEL_SEED,
   );
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
@@ -251,7 +257,7 @@ test('perguntar_humano real com dryRun:false posta a pergunta como comentário (
   assert.ok(result.applied > 0);
 
   const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
-  const comments = Object.values(cardAfter.comments || {});
+  const comments = Object.values(db._data().kanban.squads.dev.dados.card_comments?.c9 || {});
   assert.equal(comments.length, 1, 'deveria ter escrito o comentário de verdade');
   assert.ok(
     comments[0].text.startsWith('❓ Agente Ágil precisa de uma resposta de @CO:'),
@@ -272,15 +278,14 @@ test('perguntar_humano real com dryRun:false posta a pergunta como comentário (
 });
 
 test('perguntar_humano real sem responsável no card (owner vazio) posta o comentário sem @menção, sem quebrar', async () => {
-  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card sem dono', col: 'progress', comments: {}, agentStatus: null, executorType: null, history: [] });
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card sem dono', col: 'progress', agentStatus: null, executorType: null, history: [] });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
   const perguntar = tools.find((t) => t.name === 'perguntar_humano');
 
   const result = await perguntar.handler({ pergunta: 'Card sem responsável, alguém decide?' });
 
   assert.equal(result.ok, true);
-  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
-  const comments = Object.values(cardAfter.comments || {});
+  const comments = Object.values(db._data().kanban.squads.dev.dados.card_comments?.c9 || {});
   assert.equal(comments.length, 1);
   assert.equal(comments[0].text, '❓ Agente Ágil precisa de uma resposta:\n\nCard sem responsável, alguém decide?', 'sem owner, mesmo texto de antes — sem @menção pendurada em branco');
 });

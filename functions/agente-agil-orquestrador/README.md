@@ -1785,3 +1785,70 @@ tinha passado no dryRun (diferenciação correta de "Recorrência
 automática" vs. "Itens recorrentes"; reconhecimento espontâneo da
 própria limitação na Ficha Técnica). `biblioteca_agil` está validada
 ponta a ponta — dryRun e escrita real.
+
+## ACHADO CRÍTICO (2026-08-18): comentário do agente escrevia num campo morto desde 11/08 — corrigido
+
+Correção retroativa importante sobre as seções acima: **Canário 9**
+(14/08), **Canário 10 / escrita real da `biblioteca_agil`** (15/08) e a
+**1ª @menção real** (18/08) reportaram "escrita real confirmada" com base
+no output da chamada (`comentarioCall.output.dryRun === false`) — mas o
+comentário em si nunca apareceu de verdade no board, nos 3 casos. Não
+invalida o que cada um desses passos realmente provou na época (o modelo
+escolhendo a ferramenta certa, o mecanismo de gatilho disparando certo) —
+só a checagem visual final ("confira no kanban-dev.html, ao vivo") não
+pegou o problema, porque escrever com sucesso num lugar errado e escrever
+com sucesso no lugar certo produzem o MESMO output de chamada.
+
+**Causa raiz**: `outputs/comentario.js` (compartilhado por `agente-agil`
+v0-v3 e pelo orquestrador) escrevia em `{cardPath}/comments/{id}` — dentro
+do card. Isso era correto até `kanban-dev.html` migrar comentários pra um
+path próprio (`card_comments/{cardId}/{commentId}`, Fase 1.1,
+2026-08-11). `outputs/comentario.js` e `tools/lerCard.js` (que lia
+`card.comments` pra montar o contexto de `ler_card`) nunca foram
+atualizados junto — ficaram presos ao modelo de dado antigo por uma
+semana inteira sem ninguém perceber, porque a escrita nunca falhava, só
+ia pro lugar errado.
+
+Achado a partir do relato direto do usuário: "os comentários do agente
+não chegaram" depois de destravar `dryRun:false` na @menção. Investigado
+e corrigido no mesmo commit que virou o flag pra escrita real — ver
+entrada correspondente em `CHANGELOG.md` pro detalhe completo do fix
+(`cardCommentsPath()` novo em `board.js`, `ctx.cardCommentsPath`
+pré-calculado pra evitar dependência circular, `lerCard.js` lendo do path
+certo). Suíte inteira validada: 176/176 passando, incluindo um teste-isca
+que prova que `ler_card` não volta a ler de `card.comments` por acidente.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra o fix valer em produção — o binário
+atual ainda tem o bug.
+
+## SEGUNDO ACHADO (2026-08-18, mesmo dia): resposta ficava presa no finalText, nunca virava comentario
+
+Depois do fix acima, o usuário testou de novo com 2 perguntas puramente
+explicativas ("me explica o conceito de sprint", "como usar cards
+recorrentes"). Deploy ok, log aparecia — `ferramentas: biblioteca_agil({})`,
+`finalText` com uma resposta completa e correta — mas nada chegava no
+card.
+
+**Causa raiz, dessa vez no prompt, não no código de escrita**:
+`SYSTEM_PROMPT_V1` nunca dizia explicitamente que a resposta final precisa
+virar um `comentario`. Os canários manuais sempre funcionaram porque o
+TEXTO DA TAREFA em si incluía "Comenta a resposta no card" (ex.: scripts
+de `biblioteca_agil`) — a @menção real passa o comentário da pessoa
+literal (`mentionTrigger.js: task: comment.text`), sem esse empurrão. Pra
+pergunta puramente explicativa, o modelo tratava como "só respondendo",
+nunca chamava `comentario` — comportamento nunca antes exercitado, porque
+todo canário manual até aqui tinha o empurrão embutido na própria tarefa.
+
+**Fix**: nova seção "Entrega da resposta" em `SYSTEM_PROMPT_V1` (exceção
+#5 no cabeçalho, mesmo padrão das 4 anteriores) — deixa explícito que
+texto fora de uma chamada de ferramenta nunca chega até quem perguntou.
+Resolvido no prompt (não remendando o texto da tarefa em
+`mentionTrigger.js`) de propósito: o mesmo problema reapareceria em
+qualquer canal automatizado futuro, incluindo o item 5 do plano (gatilho
+automático em mudança de card) — melhor uma correção que vale pra
+qualquer contexto de invocação sem humano no terminal.
+
+Teste novo (`systemPrompt.test.js`) guarda a instrução. Suíte inteira:
+177/177 passando. **Requer novo deploy manual** de `agenteAgilMencao` pra
+valer em produção.

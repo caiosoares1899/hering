@@ -35,13 +35,16 @@ test('summarizeCard resolve coluna, tags, responsável/participantes e checklist
       { t: 'Item sem grupo conhecido', done: false, grp: 'grupo-sumiu' },
     ],
     checklistGroups: [{ id: 'default', title: 'Checklist' }],
-    comments: {
-      c1: { author: 'Ana Silva', text: 'primeiro', ts: '2026-07-01T10:00:00.000Z' },
-      c2: { author: 'Bruno Tanaka', text: 'segundo', ts: '2026-07-02T10:00:00.000Z' },
-    },
+  };
+  // Comentários chegam separados do card desde a migração Fase 1.1 (ver
+  // cardCommentsPath() em agente-agil/board.js) — summarizeCard() recebe
+  // via `comments`, não mais `card.comments`.
+  const comments = {
+    c1: { author: 'Ana Silva', text: 'primeiro', ts: '2026-07-01T10:00:00.000Z' },
+    c2: { author: 'Bruno Tanaka', text: 'segundo', ts: '2026-07-02T10:00:00.000Z' },
   };
 
-  const resumo = summarizeCard(card, { columns: COLUMNS, squadTags: TAGS, members: MEMBERS });
+  const resumo = summarizeCard(card, { columns: COLUMNS, squadTags: TAGS, members: MEMBERS, comments });
 
   assert.equal(resumo.titulo, 'Card X');
   assert.equal(resumo.desc, 'Descrição do card');
@@ -65,8 +68,8 @@ test('summarizeCard limita comentários aos últimos COMMENTS_CAP, cronológico'
   for (let i = 0; i < COMMENTS_CAP + 5; i++) {
     comments['c' + i] = { author: 'X', text: 'msg ' + i, ts: new Date(2026, 0, 1 + i).toISOString() };
   }
-  const card = { col: 'backlog', comments };
-  const resumo = summarizeCard(card, { columns: COLUMNS, squadTags: [], members: [] });
+  const card = { col: 'backlog' };
+  const resumo = summarizeCard(card, { columns: COLUMNS, squadTags: [], members: [], comments });
 
   assert.equal(resumo.comentarios.length, COMMENTS_CAP);
   assert.equal(resumo.comentarios[0].texto, 'msg 5'); // os 5 mais antigos ficaram de fora
@@ -99,9 +102,15 @@ test('handler real de ler_card lê o card de verdade (fake db) e devolve o resum
       squads: {
         dev: {
           dados: {
-            cards: { 9: { id: 'c9', title: 'Card real', col: 'backlog', owner: 'ANA', comments: {}, checklist: [] } },
+            // `comments` dentro do card é campo MORTO desde a migração Fase
+            // 1.1 (kanban-dev.html, 2026-08-11) — deixado aqui de propósito
+            // com um comentário-isca que NÃO deve aparecer no resumo, prova
+            // de que o handler não volta a ler dali por acidente.
+            cards: { 9: { id: 'c9', title: 'Card real', col: 'backlog', owner: 'ANA', comments: { isca: { author: 'Fantasma', text: 'não deveria aparecer', ts: '2020-01-01T00:00:00.000Z' } }, checklist: [] } },
             cards_index: { c9: '9' },
             tags: [],
+            // Comentário de verdade, no path correto (card_comments/{cardId}).
+            card_comments: { c9: { cReal: { author: 'Ana Silva', text: 'comentário de verdade', ts: '2026-08-18T10:00:00.000Z' } } },
           },
         },
       },
@@ -114,6 +123,8 @@ test('handler real de ler_card lê o card de verdade (fake db) e devolve o resum
   assert.equal(result.ok, true);
   assert.equal(result.card.titulo, 'Card real');
   assert.deepEqual(result.card.responsavel, { init: 'ANA', nome: 'Ana Silva' });
+  // Lê do path novo (card_comments), ignora o campo morto card.comments.
+  assert.deepEqual(result.card.comentarios, [{ autor: 'Ana Silva', texto: 'comentário de verdade', quando: '2026-08-18T10:00:00.000Z' }]);
 });
 
 test('handler real de ler_card devolve card_not_found quando o cardId não existe', async () => {
@@ -147,7 +158,10 @@ test('integração: o loop consegue encadear ler_card -> comentario com o client
       },
     },
   });
-  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });
+  // dryRun:false — regressão de propósito (achado 2026-08-18): quer provar
+  // não só que o loop encadeia ler_card -> comentario, mas que o comentário
+  // realmente aparece no path certo depois de uma escrita de verdade.
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
 
   let call = 0;
   const llmClient = {
@@ -164,4 +178,16 @@ test('integração: o loop consegue encadear ler_card -> comentario com o client
   assert.equal(result.status, 'done');
   assert.deepEqual(result.steps.map((s) => s.toolCalls[0].name), ['ler_card', 'comentario']);
   assert.equal(result.steps[0].toolCalls[0].output.card.titulo, 'Card real');
+
+  // Regressão do achado 2026-08-18: o comentário escrito pelo `comentario`
+  // tem que ir pro path novo (card_comments/{cardId}), não pro campo morto
+  // card.comments — senão a UI (kanban-dev.html) nunca mostra o que o
+  // agente escreveu, mesmo com o output da chamada reportando sucesso.
+  const novoPath = await db.ref('kanban/squads/dev/dados/card_comments/c9').get();
+  const comentariosNovos = Object.values(novoPath.val() || {});
+  assert.equal(comentariosNovos.length, 1);
+  assert.equal(comentariosNovos[0].text, 'Analisei: card ainda sem checklist.');
+
+  const cardAposEscrita = await db.ref('kanban/squads/dev/dados/cards/9').get();
+  assert.deepEqual(cardAposEscrita.val().comments, {}); // campo morto continua vazio, não recebe mais nada
 });

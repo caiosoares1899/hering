@@ -54,10 +54,14 @@ test('envelope rejeita link sem url válida', () => {
 });
 
 test('buildWritePlan monta update multi-path pra comentario', async () => {
-  const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'oi' }]);
+  // Path próprio (card_comments/{cardId}), fora da subárvore do card, desde
+  // a migração Fase 1.1 (ver cardCommentsPath() em board.js) — precisa de
+  // extra.cardId (sempre presente em uso real via http.js) pro path fazer
+  // sentido.
+  const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'oi' }], { cardId: 'c5' });
   assert.equal(plan.length, 1);
   assert.equal(plan[0].kind, 'update');
-  assert.equal(plan[0].path, `${CARDS_PATH}/5/comments`);
+  assert.equal(plan[0].path, 'kanban/squads/ecomm/dados/card_comments/c5');
   const [commentId, comment] = Object.entries(plan[0].data)[0];
   assert.equal(comment.id, commentId);
   assert.equal(comment.text, 'oi');

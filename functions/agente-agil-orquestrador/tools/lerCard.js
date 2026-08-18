@@ -28,7 +28,7 @@
 // vazio, o LLM não precisa (nem deveria) informar nada de novo.
 
 const { z } = require('zod');
-const { resolveCardKey, cardsPath, tagsPath } = require('../../agente-agil/board');
+const { resolveCardKey, cardsPath, tagsPath, cardCommentsPath } = require('../../agente-agil/board');
 const flowLib = require('../../agente-agil/flow');
 const membersLib = require('../../agente-agil/members');
 
@@ -50,14 +50,19 @@ function resolveMember(members, init) {
   return { init, nome: m ? m.name : init };
 }
 
-function summarizeCard(card, { columns, squadTags, members }) {
+function summarizeCard(card, { columns, squadTags, members, comments }) {
   const tagsPorId = new Map((squadTags || []).map((t) => [t.id, t.label]));
 
   const participantes = (card.participants || card.participantes || [])
     .filter(Boolean)
     .map((init) => resolveMember(members, init));
 
-  const comentarios = Object.values(card.comments || {})
+  // Comentários NÃO vivem mais dentro do card desde a migração Fase 1.1
+  // (kanban-dev.html, 2026-08-11) — ver comentário em cardCommentsPath()
+  // (agente-agil/board.js) pro achado completo. `comments` chega já lido
+  // do path próprio (card_comments/{cardId}), não de card.comments (campo
+  // morto desde a migração — ficaria sempre vazio se lido daqui).
+  const comentarios = Object.values(comments || {})
     .sort((a, b) => new Date(a.ts) - new Date(b.ts))
     .slice(-COMMENTS_CAP)
     .map((c) => ({ autor: c.author, texto: c.text, quando: c.ts }));
@@ -106,19 +111,21 @@ function makeRealLerCardHandler({ db, squadId, cardId }) {
     const cardKey = await resolveCardKey(db, cardId, { squadId });
     if (!cardKey) return { ok: false, error: 'card_not_found', cardId, squadId };
 
-    const [cardSnap, meta, squadTagsSnap, members] = await Promise.all([
+    const [cardSnap, meta, squadTagsSnap, members, commentsSnap] = await Promise.all([
       db.ref(`${cardsPath(squadId)}/${cardKey}`).get(),
       flowLib.readFlowMeta(db, squadId),
       db.ref(tagsPath(squadId)).get(),
       membersLib.readSquadMembers(db, squadId),
+      db.ref(cardCommentsPath(squadId, cardId)).get(),
     ]);
     const card = cardSnap.val() || {};
     const squadTags = squadTagsSnap.val() || [];
+    const comments = commentsSnap.val() || {};
 
     return {
       ok: true,
       tool: 'ler_card',
-      card: summarizeCard(card, { columns: meta.columns, squadTags, members }),
+      card: summarizeCard(card, { columns: meta.columns, squadTags, members, comments }),
     };
   };
 }

@@ -410,11 +410,22 @@ test('editar_campos carimba updatedAt do card e cards_updated_at no mesmo write,
   assert.equal(stampedCard, stampedRemote, 'card.updatedAt e cards_updated_at/{cardId} devem ter o MESMO timestamp');
 });
 
-test('comentario carimba cards_updated_at', async () => {
+// Achado real (2026-08-18): `comentario` costumava escrever DENTRO do card
+// (card.comments), então carimbava cards_updated_at igual a qualquer outro
+// output. Desde a migração Fase 1.1 (kanban-dev.html, 2026-08-11),
+// comentários vivem num path próprio (card_comments/{cardId}, ver
+// cardCommentsPath() em board.js) fora da subárvore do card — igual o
+// cliente já fazia ("desacoplado de qualquer outro campo do card", ver
+// comentário em kanban-dev.html). applyWritePlan() só carimba
+// cards_updated_at quando um path TOCADO é o próprio cardPath ou está
+// dentro dele; comentário não bate mais nessa condição, de propósito —
+// senão cada comentário forçaria um re-fetch desnecessário de /cards no
+// delta-sync do cliente, coisa que a migração original evitou.
+test('comentario NÃO carimba cards_updated_at (comentário vive fora da subárvore do card desde a Fase 1.1)', async () => {
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress' });
   const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'oi' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/5`, cardId: 'c5' });
-  assert.ok(remoteUpdatedAtOf(db, 'c5'));
+  assert.equal(remoteUpdatedAtOf(db, 'c5'), undefined);
 });
 
 test('link carimba cards_updated_at', async () => {
