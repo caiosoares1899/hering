@@ -1850,5 +1850,19 @@ automático em mudança de card) — melhor uma correção que vale pra
 qualquer contexto de invocação sem humano no terminal.
 
 Teste novo (`systemPrompt.test.js`) guarda a instrução. Suíte inteira:
-177/177 passando. **Requer novo deploy manual** de `agenteAgilMencao` pra
-valer em produção.
+177/177 passando.
+
+**PARCIALMENTE VALIDADO, investigação em aberto (2026-08-18, mesmo dia)**:
+PR mergeado + redeploy feito pelo usuário — nova pergunta ("como usar
+cards recorrentes") resultou em `ferramentas: biblioteca_agil({}) ->
+comentario({...})` no log, com `dryRun:false` e texto batendo com a
+pergunta — confirma que os dois fixes deste dia resolveram o que se
+propunham a resolver (mecanismo de escrita + prompt). **Mas o usuário
+reportou logo em seguida que o comentário não apareceu no card** — ainda
+não determinado se é: (a) o log de sucesso era de um card diferente do
+que foi conferido visualmente, (b) delay de propagação do listener do
+client, ou (c) um terceiro bug ainda não encontrado. Instruído a
+conferir `kanban/squads/dev/dados/card_comments/{cardId}` direto via
+console (F12) pra isolar se a escrita chegou no Firebase mas não
+renderizou, ou se não chegou de verdade. Não marcar item 4 como validado
+até isso ser esclarecido.
