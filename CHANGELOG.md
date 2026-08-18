@@ -1611,6 +1611,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.437-dev — 2026-08-18 — Ficha Técnica compartilhada entre supercard e cards filhos
+Pedido direto: dentro de uma campanha, Campanha/Funil/Etapa do Funil/Canal
+não mudam entre os cards filhos (só Objetivo/Plataforma/Tipo/Formato/
+Variações variam por peça). Antes, a Ficha Técnica inteira simplesmente
+sumia do supercard (pedido antigo: "supercard não precisa de ficha, ele já
+é a soma dos filhos") — cada filho preenchia esses 4 campos por conta
+própria, repetindo a mesma informação N vezes.
+
+- **No supercard**, a Ficha Técnica volta a aparecer, mas só com os 4
+  campos compartilhados (Campanha, Funil, Etapa do Funil, Canal) — os que
+  variam por peça continuam de fora, cada filho define o dele.
+- **Ao salvar o supercard** (botão Salvar, autosave, adicionar/criar filho,
+  ou aplicar uma receita de fan-out), esses 4 campos propagam
+  automaticamente pra Ficha Técnica de cada card filho — só preenchendo
+  quem ainda está vazio nesses campos, nunca sobrescrevendo um valor que o
+  filho já tinha (protege dado antigo de squad que já usava supercard antes
+  desta feature).
+- **No card filho**, esses 4 campos somem da Ficha Técnica dele (vêm
+  herdados do pai) — uma notinha no lugar mostra o resumo herdado e linka
+  de volta pro supercard. Só os campos que realmente variam por peça
+  continuam editáveis ali.
+- Card comum (nem supercard, nem filho) continua com a Ficha Técnica
+  completa, sem nenhuma mudança de comportamento.
+
 ### v8.30.436-dev — 2026-08-18 — Menção de card (@card:) na caixa de comentário não inseria ao clicar
 Bug real reportado (mesma usuária que reportou o "Usar modelo", via
 compartilhamento de tela): ela digitava `@card:`, achava o card certo na
