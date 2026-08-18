@@ -7045,6 +7045,12 @@ também mencionar a pessoa, não duplica notificação.
 duplica em 2 chamadas com o mesmo uid/card. Suíte inteira: **181/181
 passando**.
 
+**Validado em produção**: usuário confirmou a notificação "🤖 Agente Ágil
+respondeu sua menção" aparecendo no sininho. Os quatro ajustes deste dia
+(path morto, resposta presa no prompt, rede de segurança, notificação)
+funcionando juntos, ponta a ponta — item 4 do plano de acionamento
+(@menção real) considerado validado a partir daqui.
+
 **Requer novo deploy manual** (`firebase deploy --only
 functions:agenteAgilMencao`) pra valer em produção.
 
