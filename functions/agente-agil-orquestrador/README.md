@@ -1236,9 +1236,10 @@ diferentes, então a ORDEM importa. Sequência final combinada:
    até aqui (alguém no terminal, digitando `ESCREVER`).
 2. **Escopo de squad pra @menção v1**: `dev`, confirmado. Continua
    `ecomm`/qualquer squad real fora de escopo por enquanto.
-3. **@menção v1** — **implementado, em modo sombra** (ver "Item 3..."
-   abaixo), aguardando deploy + secret + um tempo observando os logs
-   antes de virar escrita real. Invocação única, SEM mecanismo de
+3. **@menção v1** — **implementado, em modo sombra, DEPLOYADO** (ver
+   "Item 3..." abaixo) — deploy real feito em 2026-08-18, primeira
+   menção de verdade processada e logada com sucesso (ver "Item 4"
+   abaixo). Invocação única, SEM mecanismo de
    retomada de sessão dedicado. Insight que mudou o desenho original:
    retomada de sessão não
    é a arquitetura certa aqui, nem quando/se um dia for resolvida "de
@@ -1279,7 +1280,20 @@ diferentes, então a ORDEM importa. Sequência final combinada:
 4. **Rodar a @menção de verdade por um tempo** (squad `dev`), ver se a
    reconstrução de contexto via `ler_card` basta na prática ou se aparece
    um caso real que precise de retomada de sessão de verdade — só decidir
-   isso com dado real, não especulando agora.
+   isso com dado real, não especulando agora. **EM ANDAMENTO** — deploy
+   feito em 2026-08-18. Um susto falso-negativo logo no início: 1º
+   comentário com @menção (10:05) não gerou log nenhum; 2º comentário
+   (10:09, mesmo card) gerou log normalmente. Investigado antes de mexer
+   em qualquer código — rodei `detectaMencao.js` direto contra os dois
+   textos exatos (um com acento via dropdown, outro sem acento digitado à
+   mão): os dois batem na detecção sem problema, então não era bug de
+   texto/regex. Explicação mais provável: atraso de provisionamento do
+   trigger (Eventarc/RTDB) logo após o 1º deploy — comportamento
+   conhecido do Firebase Functions v2, a function aparece criada no
+   Console mas pode perder o primeiro evento nos minutos iniciais.
+   Confirmado: uma nova menção rodada depois funcionou normalmente, sem
+   qualquer mudança de código. Agora observando os logs de uso real ao
+   longo do tempo, como planejado.
 5. **Só depois**, gatilho automático em mudança de card (item 1b) — com
    kill switch, escopo de squad e @menção já rodando de forma estável
    como pré-condição. Continua exigindo o item "retomada de
