@@ -1785,3 +1785,39 @@ tinha passado no dryRun (diferenciação correta de "Recorrência
 automática" vs. "Itens recorrentes"; reconhecimento espontâneo da
 própria limitação na Ficha Técnica). `biblioteca_agil` está validada
 ponta a ponta — dryRun e escrita real.
+
+## ACHADO CRÍTICO (2026-08-18): comentário do agente escrevia num campo morto desde 11/08 — corrigido
+
+Correção retroativa importante sobre as seções acima: **Canário 9**
+(14/08), **Canário 10 / escrita real da `biblioteca_agil`** (15/08) e a
+**1ª @menção real** (18/08) reportaram "escrita real confirmada" com base
+no output da chamada (`comentarioCall.output.dryRun === false`) — mas o
+comentário em si nunca apareceu de verdade no board, nos 3 casos. Não
+invalida o que cada um desses passos realmente provou na época (o modelo
+escolhendo a ferramenta certa, o mecanismo de gatilho disparando certo) —
+só a checagem visual final ("confira no kanban-dev.html, ao vivo") não
+pegou o problema, porque escrever com sucesso num lugar errado e escrever
+com sucesso no lugar certo produzem o MESMO output de chamada.
+
+**Causa raiz**: `outputs/comentario.js` (compartilhado por `agente-agil`
+v0-v3 e pelo orquestrador) escrevia em `{cardPath}/comments/{id}` — dentro
+do card. Isso era correto até `kanban-dev.html` migrar comentários pra um
+path próprio (`card_comments/{cardId}/{commentId}`, Fase 1.1,
+2026-08-11). `outputs/comentario.js` e `tools/lerCard.js` (que lia
+`card.comments` pra montar o contexto de `ler_card`) nunca foram
+atualizados junto — ficaram presos ao modelo de dado antigo por uma
+semana inteira sem ninguém perceber, porque a escrita nunca falhava, só
+ia pro lugar errado.
+
+Achado a partir do relato direto do usuário: "os comentários do agente
+não chegaram" depois de destravar `dryRun:false` na @menção. Investigado
+e corrigido no mesmo commit que virou o flag pra escrita real — ver
+entrada correspondente em `CHANGELOG.md` pro detalhe completo do fix
+(`cardCommentsPath()` novo em `board.js`, `ctx.cardCommentsPath`
+pré-calculado pra evitar dependência circular, `lerCard.js` lendo do path
+certo). Suíte inteira validada: 176/176 passando, incluindo um teste-isca
+que prova que `ler_card` não volta a ler de `card.comments` por acidente.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra o fix valer em produção — o binário
+atual ainda tem o bug.

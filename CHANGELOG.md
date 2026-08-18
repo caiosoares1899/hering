@@ -7025,6 +7025,64 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-18 · ACHADO CRÍTICO: comentário do agente escrevia num campo morto desde 11/08 — corrigido
+Investigando o relato do usuário ("os comentários do agente não chegaram"
+depois de destravar `dryRun:false`), achei um bug real, silencioso, sem
+relação com o susto de provisionamento do trigger investigado antes.
+
+**Causa raiz**: `outputs/comentario.js` (compartilhado por `agente-agil`
+v0-v3 E pelo orquestrador) escrevia em `{cardPath}/comments/{id}` — DENTRO
+do card. Esse era o modelo de dado correto até 2026-08-11, quando
+`kanban-dev.html` migrou comentários pra um path próprio,
+`card_comments/{cardId}/{commentId}` (Fase 1.1, comentário "comments saiu
+daqui"). `outputs/comentario.js` (e `tools/lerCard.js`, que lia
+`card.comments` pra reconstruir contexto) **nunca foram atualizados junto**
+— ficaram escrevendo/lendo um campo que a UI não usa mais desde então.
+
+**Por que passou batido em canário 9, 10 e na 1ª @menção real**: a escrita
+em si sempre teve sucesso (é um write RTDB válido, só que pro lugar
+errado) — `dryRun:false` no output, sem erro nenhum. Os checks automáticos
+dos canários só conferem o output da chamada (`comentarioCall.output.dryRun
+=== false`), nunca a UI de verdade. O lembrete final dos scripts ("confira
+no kanban-dev.html, ao vivo, os comentários") dependia de alguém realmente
+olhar — canário 9 (14/08) e 10 (15/08), ambos DEPOIS da migração de 11/08,
+tiveram esse passo manual reportado como "confirmado" sem pegar o
+problema. Canários 1-8 (antes de 11/08) escreviam no lugar certo pra época
+e continuam válidos.
+
+**Impacto real**: qualquer comentário escrito por QUALQUER versão do
+Agente Ágil (v0-v3 via `http.js`, usado por especialista externo tipo
+Databricks, E o orquestrador) desde 11/08/2026 nunca apareceu de verdade
+no board — silenciosamente. `ler_card` também nunca via comentários reais
+de humanos (lia do mesmo campo morto), o que enfraquecia a reconstrução de
+contexto que sustenta a arquitetura de @menção sem retomada de sessão.
+
+**Fix**: novo helper `cardCommentsPath(squadId, cardId)` em
+`agente-agil/board.js`, pré-calculado em `ctx.cardCommentsPath` (mesmo
+padrão de `ctx.cardPath`) — `outputs/comentario.js` usa esse valor em vez
+de montar o path sozinho (importar `board.js` diretamente de dentro de
+`outputs/comentario.js` criaria dependência circular, já que `board.js`
+requer `./outputs` no topo — achado real: `cardCommentsPath is not a
+function`). `tools/lerCard.js` passa a buscar comentários no path novo em
+paralelo com as outras leituras, não mais de `card.comments`.
+
+**Efeito colateral esperado, não regressão**: comentário sozinho não
+carimba mais `card.updatedAt`/`cards_updated_at` (o path fica fora da
+subárvore do card agora) — mesmo comportamento que o cliente já tinha
+("comentário desacoplado de qualquer outro campo do card", ver
+`kanban-dev.html`), só que o lado do agente ainda não acompanhava.
+
+**Testes**: 3 arquivos atualizados (`sprint3.test.js`, `board.test.js`,
+`squadIdParam.test.js`, `lerCard.test.js`, `realHandlers.test.js`) —
+assertions que checavam o path antigo agora checam o novo, incluindo um
+teste-isca (`card.comments` populado com um comentário fantasma que NÃO
+deveria aparecer no resumo do `ler_card`, provando que o handler não volta
+a ler dali por acidente). Suíte inteira: **176/176 passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) — o binário em produção agora mesmo ainda
+tem o bug, escrevendo no campo morto.
+
 ### 2026-08-18 · `agenteAgilMencao` sai do modo sombra — escrita real ligada (decisão explícita do usuário)
 Decisão do usuário, no mesmo dia do deploy (ver entrada anterior): com o
 mecanismo de gatilho validado rodando em produção (dispara certo, ignora

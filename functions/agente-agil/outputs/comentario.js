@@ -1,6 +1,12 @@
-// Comentário vira update multi-path em {cardPath}/comments/{novoId} — comments
-// já é objeto chaveado por id no schema real do card (kanban.html), então não
-// tem risco de posição/concorrência como card.links (array) tem.
+// Comentário vira update multi-path em card_comments/{cardId}/{novoId} —
+// path próprio por squad desde a migração Fase 1.1 (kanban-dev.html,
+// 2026-08-11), NÃO mais dentro do card (card.comments, campo morto desde
+// então). Achado real (2026-08-18): este arquivo ficou escrevendo no campo
+// antigo por uma sprint inteira depois da migração, sem erro nenhum (é uma
+// escrita RTDB válida, só que pra um lugar que a UI não lê mais) — os
+// comentários dos canários 9/10 e da 1ª @menção real do orquestrador nunca
+// apareceram de verdade no board, mesmo com "escrita real confirmada" nos
+// checks automáticos (que só conferem o output da chamada, não a UI).
 //
 // Sprint 3: se o texto tiver @menção, resolve e notifica igual ao
 // parseMentions() do cliente (ver notifications.js) — sem isso, comentar
@@ -15,7 +21,10 @@ async function build(out, ctx) {
   const id = 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
   const commentStep = {
     kind: 'update',
-    path: `${ctx.cardPath}/comments`,
+    // Pré-calculado em ctx.cardCommentsPath por buildWritePlan() (board.js)
+    // — não importa board.js diretamente aqui de propósito, ver comentário
+    // na montagem de ctx (dependência circular real encontrada).
+    path: ctx.cardCommentsPath,
     data: {
       [id]: {
         id,

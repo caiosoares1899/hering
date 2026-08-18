@@ -61,6 +61,18 @@ const cardsUpdatedAtPath = (squadId) => `kanban/squads/${squadId}/dados/cards_up
 // mesmo update multi-path que cria os cards do dia. Ver resolver.js.
 const recorrentesIndexPath = (squadId) => `kanban/squads/${squadId}/dados/recorrentes_index`;
 const tagsPath = (squadId) => `kanban/squads/${squadId}/dados/tags`;
+// Comentários NÃO vivem mais dentro do card (`card.comments`) desde a
+// migração Fase 1.1 (2026-08-11, kanban-dev.html) — viram um path próprio
+// por squad, chaveado por cardId. Achado real (2026-08-18): `outputs/
+// comentario.js` e `tools/lerCard.js` (agente-agil-orquestrador) nunca
+// foram atualizados junto com essa migração — continuaram escrevendo/lendo
+// `card.comments`, um campo morto que a UI não usa mais desde então.
+// Escritas iam com sucesso (sem erro, `dryRun:false` no output), só que
+// pra um lugar que ninguém lê mais — os comentários dos canários 9/10 e da
+// 1ª @menção real nunca apareceram de verdade no board, mesmo com todo
+// check automático passando. Corrigido usando este path (mesmo que
+// FB+'/card_comments/'+cardId+'/'+commentId em kanban-dev.html).
+const cardCommentsPath = (squadId, cardId) => `kanban/squads/${squadId}/dados/card_comments/${cardId}`;
 
 // Constantes pré-calculadas pro squad default — mantidas por compatibilidade
 // (http.js e os testes existentes as importam literalmente; ver funções
@@ -114,6 +126,14 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
   let _cardPromise = null;
   const ctx = {
     cardPath,
+    // Pré-calculado aqui (mesmo espírito de cardPath) em vez de outputs/
+    // comentario.js importar board.js pra montar sozinho — board.js já
+    // requer ./outputs (outputBuilders) no topo do arquivo, então um
+    // require reverso de outputs/comentario.js -> ../board criaria
+    // dependência circular (module.exports ainda incompleto na hora que
+    // comentario.js carrega, achado real: "cardCommentsPath is not a
+    // function").
+    cardCommentsPath: cardCommentsPath(squadId, extra.cardId),
     cardId: extra.cardId,
     squadId,
     dryRun: !!extra.dryRun,
@@ -243,6 +263,7 @@ module.exports = {
   cardsPath,
   cardsIndexPath,
   cardsUpdatedAtPath,
+  cardCommentsPath,
   recorrentesIndexPath,
   tagsPath,
   resolveCardKey,
