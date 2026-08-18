@@ -5418,7 +5418,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.433-dev</div>
+<div class="version">v8.30.434-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8766,10 +8766,28 @@ function autoRegistrar(user){
     window._currentUserRole='adm';
     _applyRoleVisibility();
   }
-  fbGet('kanban/usuarios/'+user.uid).then(snap=>{
+  // Busca em paralelo o usuário (existe ou não) e o registro público de TODO
+  // mundo, não só do squad atual — precisa dele aqui embaixo pra checar
+  // colisão de iniciais board inteiro antes de gravar um usuário novo (ver
+  // comentário abaixo). Iniciais são um campo GLOBAL por uid
+  // (kanban/usuarios/{uid}.init), então checar só o squad atual deixava
+  // passar batido gente de squads diferentes com a mesma sigla — achado
+  // real: "GS" de Outlet CRM e "GS" de Site Hering, cards se misturando no
+  // Meu Dia sem ninguém saber por quê até investigar.
+  Promise.all([fbGet('kanban/usuarios/'+user.uid), fbGet('kanban/usuarios_publicos')]).then(([snap, pubSnap])=>{
     const existe=snap.val();
-    const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    let init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     if(!existe){
+      // Colisão de iniciais board inteiro: se a inicial gerada automaticamente
+      // já está em uso por qualquer outro uid (de qualquer squad), acrescenta
+      // um dígito até achar uma livre — silencioso de propósito (não tem
+      // diálogo nesse fluxo pra mostrar erro), mas evita duplicar às cegas.
+      const allPub = pubSnap.val()||{};
+      const usedInits = new Set(Object.values(allPub).map(d=>(d.init||'').toUpperCase()).filter(Boolean));
+      if(usedInits.has(init)){
+        let n=2; while(usedInits.has(init+n) && n<10) n++;
+        init = init+n;
+      }
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
@@ -8867,16 +8885,22 @@ function mostrarInscricao(user,dados){
   const f=document.getElementById('insc-foto'); if(user.photoURL){f.src=user.photoURL;f.style.display='block';}
   document.getElementById('insc-ov').classList.add('open');
 }
-function confirmarInscricao(){
+async function confirmarInscricao(){
   const user=window._currentUser; if(!user) return;
   const init=document.getElementById('insc-init').value.trim().toUpperCase().substring(0,3);
   if(!init){ showToast('⚠ Defina suas iniciais.'); return; }
-  // Valida se iniciais já estão em uso por outro membro do squad
-  const conflict=members.find(m=>m.init===init && m.email!==user.email);
+  // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) —
+  // checar só `members` (squad atual) deixava passar gente de OUTRO squad
+  // com a mesma sigla, sem aviso nenhum (achado real: "GS" duplicado entre
+  // Outlet CRM e Site Hering, misturando cards no Meu Dia). Busca fresca em
+  // kanban/usuarios_publicos (nó global) pra checar contra todo mundo.
+  const pubSnap = await fbGet('kanban/usuarios_publicos');
+  const allPub = pubSnap.val()||{};
+  const conflict = Object.entries(allPub).find(([u2,d])=>u2!==user.uid && (d.init||'').toUpperCase()===init);
   if(conflict){
     const errEl=document.getElementById('insc-init-err');
     if(errEl){
-      errEl.textContent='⚠ Iniciais "'+init+'" já usadas por '+( conflict.name.split(' ')[0]||conflict.init)+'. Escolha outras.';
+      errEl.textContent='⚠ Iniciais "'+init+'" já usadas por '+(conflict[1].nome?.split(' ')[0]||init)+' (pode ser de outro squad). Escolha outras.';
       errEl.style.display='block';
     }
     return;
@@ -18085,12 +18109,16 @@ async function editarInicial(uid, initAtual, nome){
   const novaInit = nova.trim().toUpperCase();
   if(!novaInit || novaInit.length<1 || novaInit.length>4){ showToast('⚠ Use de 1 a 4 letras.'); return; }
   if(novaInit===initAtual.toUpperCase()){ return; }
-  // Checa se a nova inicial já existe neste squad
+  // Checa se a nova inicial já existe — board inteiro, não só neste squad.
+  // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init); a
+  // checagem antiga só olhava gente inscrita no squad ativo, então duas
+  // pessoas em squads diferentes podiam ficar com a mesma sigla sem aviso
+  // (achado real: "GS" duplicado entre Outlet CRM e Site Hering, cards se
+  // misturando no Meu Dia).
   const snap = await fbGet('kanban/usuarios_publicos');
   const all = snap.val()||{};
-  const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit &&
-    ((d.squads&&d.squads[ACTIVE_SQUAD]===true)||(!d.squads&&d.inscrito)));
-  if(conflito){ showToast('⚠ Iniciais "'+novaInit+'" já usadas por '+(conflito[1].nome?.split(' ')[0]||novaInit)+'. Escolha outras.'); return; }
+  const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit);
+  if(conflito){ showToast('⚠ Iniciais "'+novaInit+'" já usadas por '+(conflito[1].nome?.split(' ')[0]||novaInit)+' (pode ser de outro squad). Escolha outras.'); return; }
   // Pergunta se deve migrar os cards da inicial antiga
   const cardsAfetados = cards.filter(c=>c.owner===initAtual || (Array.isArray(c.participants)&&c.participants.includes(initAtual)));
   let migrar=false;
