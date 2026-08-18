@@ -3874,10 +3874,9 @@ input[type="date"]{-moz-appearance:textfield;}
             </div>
             <div style="position:relative;">
               <textarea class="eoc-textarea" id="m-comment-inp"
-                oninput="autoResizeCommentInp(this);handleCommentMentions(this)" onpaste="_eocPasteHandler(event)"
+                oninput="autoResizeCommentInp(this)" onpaste="_eocPasteHandler(event)"
                 onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('comment-eoc');}
                   else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
-              <div class="link-dropdown" id="comment-mention-dd" style="position:absolute;bottom:100%;left:0;width:100%;z-index:20;margin-bottom:4px;"></div>
             </div>
             <div class="eoc-actions">
               <button class="eoc-save" onclick="submitComment()">Enviar</button>
@@ -5424,7 +5423,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.435-dev</div>
+<div class="version">v8.30.436-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10664,6 +10663,19 @@ function openCard(id){
     // card antigo tinha aberto sozinho no lugar de um novo em branco.
     if(editingId !== id) return;
     initMentionDropdown('m-po');
+    // Achado real (2026-08-18): o comentário usava um sistema de @menção
+    // separado e mais frágil (handleCommentMentions/insertCardMention) —
+    // regex exigia "@card " com espaço (a dica na tela manda digitar
+    // "@card:"), e o insert relia em reler a posição do cursor NA HORA do
+    // clique em vez de guardar a posição de quando o dropdown abriu — se o
+    // clique mexesse no foco/cursor antes do handler rodar, o texto digitado
+    // ficava intocado. Migrado pro mesmo sistema robusto de Descrição/PO/
+    // campanhas (initMentionDropdown/handleMentionInput/
+    // insertCardMentionInline), que guarda a posição do "@" como parâmetro
+    // — resolve o bug e de brinde ganha autocomplete de @pessoa no
+    // comentário, que não existia antes (handleCommentMentions só tratava
+    // @card, nunca teve busca de pessoa).
+    initMentionDropdown('m-comment-inp');
     loadComments(id);
     renderDescPreview();
     renderCardDepMini(id);
@@ -25596,51 +25608,6 @@ function _renderReactions(c){
 }
 function _reactPicker(c){
   return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
-}
-
-// ── @card mention in textareas ────────────────────────────────────────
-function handleCommentMentions(ta){
-  autoResizeCommentInp(ta);
-  const val=ta.value;
-  const cur=ta.selectionStart;
-  const beforeCursor=val.slice(0,cur);
-  const atMatch=beforeCursor.match(/@card\s+(\S*)$/i)||beforeCursor.match(/@c(\S{0,20})$/);
-  const dd=document.getElementById('comment-mention-dd');
-  if(!dd) return;
-  if(atMatch){
-    const q=atMatch[1]||'';
-    const results=cards.filter(c=>!c.archived&&c.id!==_commentCardId&&
-      c.title.toLowerCase().includes(q.toLowerCase())).slice(0,6);
-    if(results.length){
-      dd.innerHTML='';
-      results.forEach(c=>{
-        const col=columns.find(x=>x.id===c.col);
-        const div=document.createElement('div');
-        div.className='link-option';
-        div.innerHTML='<span class="link-option-col">'+(col?.name||c.col)+'</span>'+
-          '<span style="flex:1;color:var(--txt);">'+esc(c.title)+'</span>';
-        div.onclick=()=>insertCardMention(c.id, c.title);
-        dd.appendChild(div);
-      });
-      dd.classList.add('show');
-      return;
-    }
-  }
-  dd.classList.remove('show');
-}
-
-function insertCardMention(cardId,cardTitle){
-  const ta=document.getElementById('m-comment-inp'); if(!ta) return;
-  const val=ta.value;
-  const cur=ta.selectionStart;
-  const before=val.slice(0,cur);
-  // Replace the @card... trigger with the mention token
-  const replaced=before.replace(/@card\s+\S*$/i,'').replace(/@c\S{0,20}$/,'');
-  const token='[[CARD:'+cardId+':'+_sanitizeCardMentionTitle(cardTitle)+']]';
-  ta.value=replaced+token+val.slice(cur);
-  ta.selectionStart=ta.selectionEnd=(replaced+token).length;
-  document.getElementById('comment-mention-dd').classList.remove('show');
-  ta.focus();
 }
 
 function renderDescPreview(){
