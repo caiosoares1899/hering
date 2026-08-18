@@ -1611,6 +1611,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.436-dev — 2026-08-18 — Menção de card (@card:) na caixa de comentário não inseria ao clicar
+Bug real reportado (mesma usuária que reportou o "Usar modelo", via
+compartilhamento de tela): ela digitava `@card:`, achava o card certo na
+lista, clicava — e o texto ficava só `@card:`, sem inserir nada.
+
+Causa raiz: a caixa de comentário (`#m-comment-inp`) era o único lugar do
+app que ainda usava uma implementação de menção separada e mais frágil
+(`handleCommentMentions`/`insertCardMention`), diferente do sistema
+robusto já usado em descrição, PO e composer de campanhas
+(`initMentionDropdown`/`handleMentionInput`/`insertCardMentionInline`).
+Dois problemas nela: (1) a regex exigia um espaço literal depois de
+"@card" (`/@card\s+(\S*)$/i`), mas a própria dica na tela mostra
+`@card:` com dois-pontos, então na prática caía sempre no fallback
+genérico; (2) pior — `insertCardMention()` relia em reler
+`ta.selectionStart` no momento do clique, e clicar num item do dropdown
+tira o foco/cursor da textarea antes do clique disparar, então a posição
+lida no clique já não é mais a posição de onde o "@card:" foi digitado —
+resultado: nada é substituído.
+
+Fix: migrado `#m-comment-inp` para o mesmo sistema robusto do resto do
+app (`initMentionDropdown('m-comment-inp')`, chamado dentro de
+`openCard()` junto com o de PO), que captura a posição do "@" como
+parâmetro no momento do render do dropdown — imune a mudança de foco/
+cursor entre abrir o dropdown e clicar. Removida a implementação antiga
+(`handleCommentMentions`, `insertCardMention`) e a div fixa
+`#comment-mention-dd` do HTML. Bônus: como o sistema novo já suporta
+menção de pessoa além de card, a caixa de comentário ganha autocomplete
+de `@pessoa` de graça.
+
 ### v8.30.435-dev — 2026-08-18 — Filtro por nome/tag no botão "📥 Usar modelo"
 Pedido direto: com muitos modelos cadastrados, achar o certo no menu
 "📥 Usar modelo" (dentro do card já aberto) ficava só de olho, rolando a
