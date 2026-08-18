@@ -7025,6 +7025,32 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-18 · Terceiro achado: instrução no prompt não é garantia — rede de segurança no código
+Validado em produção que o fix anterior (instrução "Entrega da resposta"
+em `SYSTEM_PROMPT_V1`) funciona — mas não sempre. Mesma revisão deployada
+(`agenteagilmencao-00007-com`), mesmo prompt: uma pergunta explicativa
+resultou em `biblioteca_agil -> comentario` (funcionou), a próxima em só
+`biblioteca_agil` (voltou a falhar). Não-determinismo do LLM, não bug de
+deploy nem de path — confirmado cruzando IDs/timestamps de dois testes
+consecutivos na mesma revisão.
+
+**Fix**: pedir só no prompt reduz a frequência do problema, não garante.
+`processarMencao()` (`mentionTrigger.js`) ganha uma rede de segurança no
+código — depois do `runLoop()`, se nenhuma chamada de `comentario`
+aconteceu mas existe `finalText`, posta ele mesmo automaticamente
+(reaproveitando a mesma ferramenta `comentario`, mesmo dryRun/squad/card
+que o modelo usaria). Registrado no log de produção
+(`FALLBACK: finalText postado como comentario...`) e no registro de
+idempotência (`fallbackComentario: true/false`) pra dar pra medir com que
+frequência isso dispara.
+
+2 testes novos (fallback dispara quando devia; NÃO duplica quando
+`comentario` já foi chamado pelo modelo). Suíte inteira: **179/179
+passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
+
 ### 2026-08-18 · Segundo achado: resposta ficava presa no finalText, nunca virava comentario
 Depois do fix do path morto (entrada abaixo), o usuário testou de novo com
 2 perguntas puramente explicativas ("me explica o conceito de sprint",
