@@ -7025,6 +7025,32 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-18 · `agenteAgilMencao` sai do modo sombra — escrita real ligada (decisão explícita do usuário)
+Decisão do usuário, no mesmo dia do deploy (ver entrada anterior): com o
+mecanismo de gatilho validado rodando em produção (dispara certo, ignora
+comentário próprio, respeita kill switch, detecta menção), destravar
+escrita real em vez de esperar mais tempo observando em modo sombra —
+`DRY_RUN_MENCAO` (renomeado de `DRY_RUN_SOMBRA`, já não fazia sentido
+chamar de "sombra" com o valor `false`) vira `false` em
+`mentionTrigger.js`.
+
+Esta é a **primeira vez que o Agente Ágil escreve em produção sem humano
+no terminal digitando `ESCREVER`** — a rede de segurança agora é o kill
+switch dinâmico (`kanban/config/agente_agil_orquestrador/enabled`) + o
+escopo travado no squad `dev` (path do trigger, não checagem em
+runtime), não mais confirmação manual por invocação.
+
+Comentários/testes atualizados pra refletir o novo estado (inclusive o
+assert que travava `DRY_RUN_MENCAO===true` de propósito, pra forçar
+qualquer mudança futura a ser decisão revisada, não acidente). Suíte
+inteira: **176/176 passando** (mesma contagem — só assertions ajustadas,
+nenhum teste novo).
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`, na máquina do usuário) pra o `dryRun:false`
+valer de verdade — o deploy de 2026-08-18 anterior ainda está rodando
+com o binário antigo (`dryRun:true`) até isso acontecer.
+
 ### 2026-08-18 · `agenteAgilMencao` deployado — 1ª @menção real processada (item 4 do plano)
 Deploy real da Cloud Function `agenteAgilMencao` (item 3/4 do plano de
 acionamento sem supervisão — ver README, "Próximos passos"), primeira vez
