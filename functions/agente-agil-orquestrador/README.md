@@ -1921,5 +1921,11 @@ Mesmo esquema de id determinístico que @menção-no-texto usa
 (`mention_{cardId}_{uid}`) — sem duplicar se o texto por acaso também
 mencionar a pessoa.
 
-2 testes novos, suíte inteira 181/181 passando. **Requer novo deploy
-manual** de `agenteAgilMencao` pra valer em produção.
+2 testes novos, suíte inteira 181/181 passando.
+
+**VALIDADO EM PRODUÇÃO**: usuário confirmou a notificação "🤖 Agente Ágil
+respondeu sua menção" aparecendo no sininho depois do deploy — os quatro
+ajustes deste dia (path morto, resposta presa no prompt, rede de
+segurança, notificação) estão todos funcionando juntos, ponta a ponta.
+Item 4 do plano de acionamento (@menção real rodando de verdade) pode ser
+considerado validado a partir daqui.
