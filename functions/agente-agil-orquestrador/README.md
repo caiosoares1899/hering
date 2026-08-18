@@ -1850,5 +1850,76 @@ automático em mudança de card) — melhor uma correção que vale pra
 qualquer contexto de invocação sem humano no terminal.
 
 Teste novo (`systemPrompt.test.js`) guarda a instrução. Suíte inteira:
-177/177 passando. **Requer novo deploy manual** de `agenteAgilMencao` pra
-valer em produção.
+177/177 passando.
+
+**Investigação da discrepância inicial, resolvida**: um primeiro teste
+pós-deploy mostrou `ferramentas: biblioteca_agil({}) -> comentario({...})`
+no log com `dryRun:false` — mas o usuário reportou que nada apareceu no
+card. Cruzando os IDs (embutem `Date.now()`) dos comentários do agente
+contra os das perguntas humanas, achei que esse comentário específico
+tinha ido pro campo antigo `card.comments` (dentro do card) — sinal de
+que aquela chamada em particular ainda rodou com o binário anterior
+(Cloud Run/Functions v2 pode levar alguns minutos pra migrar 100% do
+tráfego pra uma revisão nova; instâncias mornas da revisão antiga podem
+processar mais uma chamada nesse meio-tempo). Um teste novo, feito minutos
+depois na MESMA revisão já estabilizada (`agenteagilmencao-00007-com`),
+revelou o achado real — ver "TERCEIRO ACHADO" abaixo.
+
+## TERCEIRO ACHADO (2026-08-18, mesmo dia): instrução no prompt não é garantia — rede de segurança no código
+
+Testando de novo, na mesma revisão já estabilizada, duas perguntas
+explicativas seguidas tiveram resultado DIFERENTE: uma gerou
+`biblioteca_agil -> comentario` (funcionou), a próxima gerou só
+`biblioteca_agil` (voltou a falhar) — mesma revisão, mesmo prompt,
+mesmo tipo de pergunta. Não é bug de deploy nem de path (já descartados
+pelos IDs/timestamps): é **não-determinismo do LLM** — a instrução
+"Entrega da resposta" em `SYSTEM_PROMPT_V1` reduz a frequência do
+problema, mas nunca foi (e não pode ser, pedindo só no prompt) uma
+garantia.
+
+**Fix**: rede de segurança no código, não só no prompt.
+`processarMencao()` (`mentionTrigger.js`) passa a checar, depois do
+`runLoop()`, se alguma chamada de `comentario` aconteceu; se não, e existe
+`finalText`, posta ele mesmo automaticamente — reaproveitando a mesma
+ferramenta `comentario` (mesmo dryRun/squad/card que o modelo usaria).
+Registrado tanto no log de produção (`FALLBACK: finalText postado como
+comentario...`) quanto no registro de idempotência
+(`fallbackComentario: true/false`), pra dar pra medir com que frequência
+isso dispara ao longo do tempo — número alto sinalizaria que vale
+reforçar o prompt mais, número baixo confirma que é só uma rede de
+segurança ocasional.
+
+2 testes novos em `mentionTrigger.test.js`: fallback dispara quando o
+modelo não chama `comentario`; NÃO duplica quando `comentario` já foi
+chamado. Suíte inteira: **179/179 passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção — com os TRÊS achados
+deste dia (path morto, resposta presa no prompt, rede de segurança no
+código) juntos, a @menção real deveria entregar resposta no card em
+100% dos casos, não só na maioria.
+
+**VALIDADO EM PRODUÇÃO**: usuário confirmou a resposta aparecendo
+certinho no card (comentário do "Agente Ágil", texto formatado, batendo
+com a pergunta sobre Modelos de card) — os três fixes deste dia
+funcionaram juntos.
+
+## QUARTO AJUSTE (2026-08-18, mesmo dia): notifica quem fez a @menção original
+
+Pergunta direta do usuário depois de ver a resposta funcionando: "não
+deveria me mencionar pra aparecer notificação pra mim?". Resposta: sim,
+e não estava acontecendo — `comentario` só dispara notificação quando o
+TEXTO da resposta tem uma @menção reconhecível (heurística pra menção
+humana escrevendo o texto), e a resposta do agente normalmente não
+menciona ninguém. Quem perguntou nunca era avisado, mesmo sendo resposta
+direta a ela.
+
+**Fix**: `processarMencao()` notifica explicitamente quem fez a @menção
+original, direto por `comment.uid` (já em mãos), reaproveitando
+`buildNotifStep()` (mesmo módulo de notificações de `agente-agil` v0-v3).
+Mesmo esquema de id determinístico que @menção-no-texto usa
+(`mention_{cardId}_{uid}`) — sem duplicar se o texto por acaso também
+mencionar a pessoa.
+
+2 testes novos, suíte inteira 181/181 passando. **Requer novo deploy
+manual** de `agenteAgilMencao` pra valer em produção.

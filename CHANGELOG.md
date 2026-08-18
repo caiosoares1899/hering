@@ -7025,6 +7025,55 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-18 · Quarto ajuste: notifica quem fez a @menção original
+Depois de ver a resposta aparecer certinho no card, o usuário perguntou:
+"não deveria me mencionar pra aparecer notificação pra mim?". Resposta:
+sim — e não estava acontecendo. `comentario` só dispara notificação
+quando o TEXTO da resposta tem uma @menção reconhecível (heurística
+pensada pra menção humana escrevendo o texto), e a resposta do agente
+normalmente não menciona ninguém — quem perguntou nunca era avisado,
+mesmo sendo resposta direta a ela.
+
+**Fix**: `processarMencao()` notifica explicitamente quem fez a @menção
+original, direto por `comment.uid` (já em mãos, não precisa resolver
+init), reaproveitando `buildNotifStep()` (mesmo módulo de notificações já
+usado por `agente-agil` v0-v3). Mesmo esquema de id determinístico que
+@menção-no-texto usa (`mention_{cardId}_{uid}`) — se o texto por acaso
+também mencionar a pessoa, não duplica notificação.
+
+2 testes novos: notifica mesmo sem @menção no texto da resposta; não
+duplica em 2 chamadas com o mesmo uid/card. Suíte inteira: **181/181
+passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
+
+### 2026-08-18 · Terceiro achado: instrução no prompt não é garantia — rede de segurança no código
+Validado em produção que o fix anterior (instrução "Entrega da resposta"
+em `SYSTEM_PROMPT_V1`) funciona — mas não sempre. Mesma revisão deployada
+(`agenteagilmencao-00007-com`), mesmo prompt: uma pergunta explicativa
+resultou em `biblioteca_agil -> comentario` (funcionou), a próxima em só
+`biblioteca_agil` (voltou a falhar). Não-determinismo do LLM, não bug de
+deploy nem de path — confirmado cruzando IDs/timestamps de dois testes
+consecutivos na mesma revisão.
+
+**Fix**: pedir só no prompt reduz a frequência do problema, não garante.
+`processarMencao()` (`mentionTrigger.js`) ganha uma rede de segurança no
+código — depois do `runLoop()`, se nenhuma chamada de `comentario`
+aconteceu mas existe `finalText`, posta ele mesmo automaticamente
+(reaproveitando a mesma ferramenta `comentario`, mesmo dryRun/squad/card
+que o modelo usaria). Registrado no log de produção
+(`FALLBACK: finalText postado como comentario...`) e no registro de
+idempotência (`fallbackComentario: true/false`) pra dar pra medir com que
+frequência isso dispara.
+
+2 testes novos (fallback dispara quando devia; NÃO duplica quando
+`comentario` já foi chamado pelo modelo). Suíte inteira: **179/179
+passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
+
 ### 2026-08-18 · Segundo achado: resposta ficava presa no finalText, nunca virava comentario
 Depois do fix do path morto (entrada abaixo), o usuário testou de novo com
 2 perguntas puramente explicativas ("me explica o conceito de sprint",

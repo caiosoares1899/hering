@@ -128,6 +128,86 @@ test('processa uma menção válida: chama o loop, marca idempotência, dryRun f
   assert.equal(DRY_RUN_MENCAO, false);
 });
 
+// Achado real (2026-08-18): mesma revisão deployada, mesmo prompt, e o
+// modelo às vezes termina só com finalText (como no cliente scriptado
+// acima, de propósito) sem chamar comentario — não-determinismo do LLM,
+// não bug. A rede de segurança em processarMencao() garante entrega mesmo
+// assim.
+test('rede de segurança: se o modelo não chama comentario mas devolve finalText, posta ele mesmo como fallback', async () => {
+  const db = seedDb();
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'Sprint é o ciclo fixo de trabalho do time.' }]);
+  const comment = { uid: 'uid-humano', text: '@Agente Ágil me explica o conceito de sprint' };
+
+  const outcome = await processarMencao(db, { cardId: 'c1', commentId: 'cm-fallback', comment, llmClient });
+
+  assert.equal(outcome.processed, true);
+  assert.equal(outcome.fallbackComentario, true);
+
+  const comentariosNoCard = Object.values((await db.ref('kanban/squads/dev/dados/card_comments/c1').get()).val() || {});
+  assert.equal(comentariosNoCard.length, 1, 'fallback deveria ter postado o finalText como comentario de verdade');
+  assert.equal(comentariosNoCard[0].text, 'Sprint é o ciclo fixo de trabalho do time.');
+  assert.equal(comentariosNoCard[0].author, 'Agente Ágil');
+
+  const marcado = await db.ref(`${IDEMPOTENCY_PATH}/cm-fallback`).get();
+  assert.equal(marcado.val().fallbackComentario, true);
+});
+
+test('rede de segurança NÃO duplica: se o modelo já chamou comentario, não posta o finalText de novo', async () => {
+  const db = seedDb();
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Resposta via ferramenta.' } }], text: null },
+    { toolCalls: [], text: 'Concluído.' },
+  ]);
+  const comment = { uid: 'uid-humano', text: '@Agente Ágil qualquer coisa' };
+
+  const outcome = await processarMencao(db, { cardId: 'c1', commentId: 'cm-sem-fallback', comment, llmClient });
+
+  assert.equal(outcome.fallbackComentario, false);
+  const comentariosNoCard = Object.values((await db.ref('kanban/squads/dev/dados/card_comments/c1').get()).val() || {});
+  assert.equal(comentariosNoCard.length, 1, 'só o comentário real da ferramenta, sem duplicata do fallback');
+  assert.equal(comentariosNoCard[0].text, 'Resposta via ferramenta.');
+});
+
+// Achado real (2026-08-18): usuário perguntou "não deveria me mencionar pra
+// notificar?" depois de ver a resposta aparecer certinho no card, mas sem
+// nenhuma notificação chegar pra ele — comentario só notifica quando o
+// TEXTO tem uma @menção reconhecível, e a resposta do agente normalmente
+// não menciona ninguém.
+test('notifica quem fez a @menção original, mesmo a resposta não mencionando ninguém no texto', async () => {
+  const db = seedDb();
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Sprint é o ciclo fixo de trabalho do time.' } }], text: null },
+    { toolCalls: [], text: 'Concluído.' },
+  ]);
+  const comment = { uid: 'uid-quem-perguntou', text: '@Agente Ágil me explica o conceito de sprint' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif', comment, llmClient });
+
+  const notifs = Object.values((await db.ref('kanban/usuarios/uid-quem-perguntou/notificacoes').get()).val() || {});
+  assert.equal(notifs.length, 1, 'quem mencionou o agente deveria ser notificado da resposta, mesmo sem @menção no texto');
+  assert.equal(notifs[0].type, 'mention');
+  assert.equal(notifs[0].cardId, 'c1');
+});
+
+test('notificação da resposta não duplica se rodar de novo pro mesmo comentário (idOverride determinístico)', async () => {
+  const db = seedDb();
+  const llmClient = () =>
+    scriptedLlmClient([
+      { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Resposta.' } }], text: null },
+      { toolCalls: [], text: 'Concluído.' },
+    ]);
+  const comment = { uid: 'uid-quem-perguntou', text: '@Agente Ágil pergunta' };
+
+  // idempotência normalmente impediria rodar 2x com o MESMO commentId — aqui
+  // simula 2 chamadas com uid/cardId iguais mas commentId diferente, cenário
+  // real de 2 menções seguidas da mesma pessoa no mesmo card.
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif-a', comment, llmClient: llmClient() });
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif-b', comment, llmClient: llmClient() });
+
+  const notifs = Object.values((await db.ref('kanban/usuarios/uid-quem-perguntou/notificacoes').get()).val() || {});
+  assert.equal(notifs.length, 1, 'mesmo cardId+uid usa o mesmo idOverride determinístico — 2ª chamada não deveria duplicar');
+});
+
 test('mesmo com toolset completo disponível, task simples só usa o que precisa (mesmo espírito do canário 9)', async () => {
   const db = seedDb();
   // Cliente scriptado que chama comentario antes de terminar, prova que o

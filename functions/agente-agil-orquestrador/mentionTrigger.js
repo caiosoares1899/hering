@@ -23,6 +23,10 @@
 // - Convenção de menção própria (detectaMencao.js), não o regex de
 //   menção humana (que resolve contra INIT de membro real — o agente não
 //   tem um init de verdade).
+// - Rede de segurança contra o modelo terminar só com finalText, sem
+//   chamar comentario (achado real 2026-08-18: não-determinismo — mesma
+//   revisão, mesmo prompt, comportamento diferente entre chamadas
+//   seguidas). Ver processarMencao().
 // - Ordem de checagem, cada uma um early-return, do mais barato pro mais
 //   caro: (1) é comentário do próprio agente? -> ignora, SEMPRE primeiro,
 //   requisito de design não-negociável (sem isso, risco real de
@@ -68,6 +72,7 @@ const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { SYSTEM_PROMPT_V1 } = require('./systemPrompt');
 const { isEnabled } = require('./limits');
 const { mencionaAgente } = require('./detectaMencao');
+const { buildNotifStep } = require('../agente-agil/notifications');
 
 const SQUAD_ID = 'dev';
 const AGENTE_UID = 'agente-agil'; // mesmo uid que outputs/*.js grava em todo comentário/escrita do agente
@@ -109,6 +114,52 @@ async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
     enabled: true, // kill switch já checado no passo (3) acima
   });
 
+  // Rede de segurança — achado real (2026-08-18): o modelo às vezes
+  // termina só com finalText, sem chamar comentario, mesmo com a
+  // instrução explícita em systemPrompt.js ("Entrega da resposta").
+  // MESMA revisão deployada, MESMO prompt, comportamento diferente entre
+  // chamadas seguidas — não-determinismo do LLM, não bug de código/path.
+  // Pedir só no prompt reduz a frequência, não garante; sem isso a
+  // resposta fica presa no log do Cloud Functions, invisível pra quem
+  // mencionou. Garantido aqui: se o loop terminou sem NENHUMA chamada de
+  // comentario mas tem finalText, posta ele mesmo, usando a MESMA
+  // ferramenta que o modelo usaria (mesmo dryRun/squad/card).
+  const chamouComentario = result.steps.some((step) => step.toolCalls.some((call) => call.name === 'comentario'));
+  let fallbackComentario = false;
+  if (!chamouComentario && result.finalText) {
+    const comentarioTool = tools.find((t) => t.name === 'comentario');
+    if (comentarioTool) {
+      await comentarioTool.handler({ type: 'comentario', texto: result.finalText });
+      fallbackComentario = true;
+    }
+  }
+
+  // Notifica quem fez a @menção original — achado real (2026-08-18):
+  // `comentario` só dispara notificação quando o TEXTO da resposta tem uma
+  // @menção reconhecível (heurística pensada pra menção humana dentro do
+  // texto, ver outputs/comentario.js), e a resposta do agente normalmente
+  // não menciona ninguém — a pessoa que perguntou nunca era avisada, mesmo
+  // sendo resposta direta a ela. Notifica direto por uid (já em `comment`,
+  // não precisa resolver init) com o MESMO esquema de id determinístico
+  // que @menção-no-texto usa (`mention_{cardId}_{uid}`) — se o texto por
+  // acaso também mencionar essa pessoa, buildNotifStep vê que já existe e
+  // não duplica.
+  const comentarioCall = result.steps.flatMap((step) => step.toolCalls).find((call) => call.name === 'comentario');
+  const respostaTexto = comentarioCall?.input?.texto || result.finalText || '';
+  const notifStep = await buildNotifStep(db, {
+    squadId: SQUAD_ID,
+    targetUid: comment.uid,
+    type: 'mention',
+    title: '🤖 Agente Ágil respondeu sua menção',
+    sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
+    cardId,
+    idOverride: 'mention_' + cardId + '_' + comment.uid,
+    dryRun: DRY_RUN_MENCAO,
+  });
+  if (notifStep && notifStep.kind === 'update') {
+    await db.ref(notifStep.path).update(notifStep.data);
+  }
+
   // Marca DEPOIS de rodar (não antes) — se o loop lançar exceção, o
   // comentário fica elegível pra reprocessar numa próxima tentativa, já
   // que nada foi de fato concluído.
@@ -116,9 +167,10 @@ async function processarMencao(db, { cardId, commentId, comment, llmClient }) {
     at: new Date().toISOString(),
     status: result.status,
     dryRun: DRY_RUN_MENCAO,
+    fallbackComentario,
   });
 
-  return { processed: true, result };
+  return { processed: true, result, fallbackComentario };
 }
 
 // Formata um resumo legível de um resultado de runLoop() pro log de
@@ -168,7 +220,8 @@ const agenteAgilMencao = onValueCreated(
       const { llmClient } = escolheClienteParaTarefa({ apiKey: ANTHROPIC_API_KEY.value() });
       const outcome = await processarMencao(db, { cardId, commentId, comment, llmClient });
       if (outcome.processed) {
-        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_MENCAO} |`, resumirResultadoParaLog(outcome.result));
+        const fallbackNote = outcome.fallbackComentario ? ' | FALLBACK: finalText postado como comentario (modelo não chamou a ferramenta)' : '';
+        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_MENCAO} |`, resumirResultadoParaLog(outcome.result) + fallbackNote);
       } else {
         console.log('[agente-agil-mencao]', cardId, commentId, `ignorado (${outcome.reason})`);
       }
