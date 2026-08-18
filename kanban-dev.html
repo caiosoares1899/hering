@@ -3925,9 +3925,15 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
     <div style="position:relative;" id="m-usarmodelo-wrap">
       <button class="btn btn-sm" onclick="toggleUsarModeloMenu()" title="Aplicar um modelo salvo neste card">📥 Usar modelo</button>
-      <div id="m-usarmodelo-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+      <div id="m-usarmodelo-menu" style="display:none;flex-direction:column;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:220px;max-height:260px;overflow-y:auto;z-index:500;"></div>
+        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:240px;max-width:280px;max-height:340px;z-index:500;">
+        <div style="padding:8px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--glass-b);flex-shrink:0;">
+          <input id="m-usarmodelo-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar modelo..." oninput="_renderUsarModeloList()" style="width:100%;">
+          <select id="m-usarmodelo-f-tag" class="ql-filter-sel" onchange="_renderUsarModeloList()" style="width:100%;"></select>
+        </div>
+        <div id="m-usarmodelo-list" style="overflow-y:auto;"></div>
+      </div>
     </div>
     <button class="btn btn-sm" onclick="archiveCard()">📦 Arquivar</button>
     <div style="position:relative;" id="m-depends-wrap">
@@ -5418,7 +5424,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.434-dev</div>
+<div class="version">v8.30.435-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24365,12 +24371,37 @@ async function toggleUsarModeloMenu(){
   if(isOpen){ menu.style.display='none'; return; }
   if(window._ensureModelosLoaded && !_modelosLoaded) await window._ensureModelosLoaded();
   if(!qlItems.modelos || !qlItems.modelos.length){ showToast('Nenhum modelo salvo pra essa squad ainda.'); return; }
-  menu.innerHTML=qlItems.modelos.map((m,i)=>
+  // Filtros por nome/tag — pedido direto, mesmo padrão já usado no drawer
+  // de Modelos (ql-f-nome/ql-f-tag, ver renderQLBody()) — reseta a cada
+  // abertura pra não ficar um filtro antigo escondendo modelo novo.
+  const fNome=document.getElementById('m-usarmodelo-f-nome');
+  const fTag=document.getElementById('m-usarmodelo-f-tag');
+  if(fNome) fNome.value='';
+  if(fTag){
+    const tagsUsadas=[...new Set(qlItems.modelos.flatMap(m=>Array.isArray(m.tags)?m.tags:(m.tag?[m.tag]:[])))].filter(Boolean);
+    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+tagsUsadas.map(id=>{const t=getTag(id);return t?`<option value="${esc(id)}">${esc(t.label)}</option>`:''}).join('');
+    fTag.value='';
+  }
+  _renderUsarModeloList();
+  menu.style.display='flex';
+  if(fNome) setTimeout(()=>fNome.focus(), 30);
+  setTimeout(()=>{ document.addEventListener('click', closeUsarModeloMenuOutside, {once:true}); }, 10);
+}
+// Filtra qlItems.modelos por nome/tag e redesenha a lista — preserva o
+// índice ORIGINAL do array (usado por aplicarModeloNoCard), mesma técnica
+// de renderQLBody() pra não embaralhar qual modelo cada botão aplica.
+function _renderUsarModeloList(){
+  const list=document.getElementById('m-usarmodelo-list'); if(!list) return;
+  const qNome=(document.getElementById('m-usarmodelo-f-nome')?.value||'').toLowerCase().trim();
+  const qTag=document.getElementById('m-usarmodelo-f-tag')?.value||'';
+  let indexed=(qlItems.modelos||[]).map((m,i)=>({m,i}));
+  if(qNome) indexed=indexed.filter(o=>(o.m.title||'').toLowerCase().includes(qNome));
+  if(qTag) indexed=indexed.filter(o=>{const tg=Array.isArray(o.m.tags)?o.m.tags:(o.m.tag?[o.m.tag]:[]);return tg.includes(qTag);});
+  if(!indexed.length){ list.innerHTML='<div style="padding:10px 14px;font-size:11px;color:var(--txt3);">Nenhum modelo com esse filtro.</div>'; return; }
+  list.innerHTML=indexed.map(({m,i})=>
     `<button onclick="aplicarModeloNoCard(${i})" style="display:block;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
       onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">${esc(m.title)}</button>`
   ).join('');
-  menu.style.display='block';
-  setTimeout(()=>{ document.addEventListener('click', closeUsarModeloMenuOutside, {once:true}); }, 10);
 }
 function closeUsarModeloMenu(){
   const menu=document.getElementById('m-usarmodelo-menu'); if(menu) menu.style.display='none';

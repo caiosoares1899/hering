@@ -1611,6 +1611,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.435-dev — 2026-08-18 — Filtro por nome/tag no botão "📥 Usar modelo"
+Pedido direto: com muitos modelos cadastrados, achar o certo no menu
+"📥 Usar modelo" (dentro do card já aberto) ficava só de olho, rolando a
+lista. Mesmo padrão de filtro já usado no drawer de Modelos (⚡ Funções
+→ 📋 Modelos, `ql-f-nome`/`ql-f-tag`) — busca por nome (`oninput`, sem
+precisar apertar Enter) e select de tag, os dois combináveis. Índice
+original do array é preservado no filtro, então o botão de cada modelo
+continua aplicando o modelo certo mesmo com a lista filtrada.
+
 ### v8.30.434-dev — 2026-08-17 — Checagem de iniciais repetidas passa a ser board inteiro, não só por squad
 Bug real reportado: duas pessoas diferentes ("GS" de Outlet CRM e "GS" de
 Site Hering) com a mesma sigla em squads diferentes — "Meu Dia" misturava
