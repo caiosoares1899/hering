@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.255 — 2026-08-19 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.254
+(v8.30.438-dev → v8.30.439-dev), validado em dev.
+
+- **Modelo (📋) passa a salvar e aplicar a Ficha Técnica**: quando um
+  card com a Ficha Técnica preenchida é salvo como modelo, essa
+  informação (Campanha/Funil/Etapa/Canal/Objetivo/Plataforma/Tipo/
+  Formato/Variações/Direcional) vai junto. Ao usar o modelo — criando
+  um card novo ou aplicando num card já aberto — a Ficha Técnica do
+  modelo é aplicada seguindo a mesma regra de sempre: só entra onde o
+  card ainda está vazio, nunca sobrescreve o que a pessoa já tinha
+  preenchido. Editar um modelo existente (✏️) também passou a
+  mostrar/salvar a Ficha Técnica normalmente.
+
 ### v8.30.254 — 2026-08-19 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.253
 (v8.30.434-dev → v8.30.437-dev), validado em dev.
