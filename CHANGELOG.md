@@ -1639,6 +1639,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.439-dev — 2026-08-19 — Editar modelo (✏️) agora também mostra/salva a Ficha Técnica
+Achado ao preparar material de treinamento sobre Modelos: a v8.30.438-dev
+fez "Salvar como modelo" gravar a Ficha Técnica e "Usar modelo"
+aplicá-la, mas deixou de fora o terceiro caminho — editar um modelo já
+existente pelo botão ✏️ (`openQLEdit()`). Esse fluxo abre um card
+temporário construído a partir do modelo salvo; como esse card temporário
+não recebia `criativo`, a Ficha Técnica aparecia em branco mesmo pra um
+modelo que já tinha ela preenchida (confuso, mas o dado salvo não era
+apagado — só não aparecia editável ali). `saveCard()` (ramo de edição de
+modelo) também não escrevia `criativo` de volta no modelo ao salvar essa
+tela. Os dois pontos corrigidos — editar um modelo agora reflete e
+permite alterar a Ficha Técnica normalmente, igual todo o resto do
+conteúdo do modelo.
+
 ### v8.30.438-dev — 2026-08-19 — Modelo (📋) passa a salvar e aplicar a Ficha Técnica
 Pergunta direta: "quando um modelo é salvo, as informações da Ficha
 Técnica também são salvas?" — não eram. `salvarComoModeloModal()` só
