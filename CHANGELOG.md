@@ -18,6 +18,34 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.254 — 2026-08-19 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.253
+(v8.30.434-dev → v8.30.437-dev), validado em dev.
+
+- **Iniciais duplicadas passam a ser checadas no board inteiro, não só
+  por squad**: bug real (duas pessoas diferentes com a mesma sigla em
+  squads diferentes misturavam cards uma na outra em "Meu Dia") — agora
+  o cadastro/confirmação/edição de iniciais checa conflito contra
+  TODOS os squads, não só o atual.
+- **Filtro por nome/tag no botão "📥 Usar modelo"**: achar o modelo
+  certo numa lista grande, dentro do card já aberto, agora tem busca por
+  nome + select de tag, combináveis — mesmo padrão de filtro já usado no
+  drawer de Modelos.
+- **Menção de card (@card:) na caixa de comentário volta a funcionar**:
+  bug reportado por usuária real (clicava no card certo e nada era
+  inserido) — a caixa de comentário usava uma implementação de menção
+  separada e mais frágil que o resto do app; migrada pro mesmo sistema
+  robusto de descrição/PO/campanhas. Bônus: comentário ganha
+  autocomplete de @pessoa de graça.
+- **Ficha Técnica compartilhada entre supercard e cards filhos**: dentro
+  de uma campanha, Campanha/Funil/Etapa do Funil/Canal não mudam entre
+  os cards filhos — agora esses 4 campos aparecem no supercard e
+  propagam automaticamente pra cada filho (só preenchendo quem ainda
+  está vazio, nunca sobrescrevendo dado que o filho já tinha). No card
+  filho, esses 4 campos somem da Ficha (vêm herdados, com nota linkando
+  de volta pro supercard) — só os campos que variam por peça continuam
+  editáveis ali.
+
 ### v8.30.253 — 2026-08-17 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.252
 (v8.30.431-dev → v8.30.433-dev), validado em dev.

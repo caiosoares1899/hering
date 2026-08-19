@@ -3604,7 +3604,20 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="cl-sec" id="m-criativo-sec" style="display:none;border-color:rgba(255,179,217,.3);margin:0 20px 14px;">
       <div class="cl-hd-row"><div class="cl-hd" style="color:#ffb3d9;">🎬 Ficha Técnica</div></div>
 
-      <div class="field" id="m-crv-campanha-wrap" style="grid-column:1/-1;">
+      <!-- Supercard: só os campos "compartilhados" (Campanha/Funil/Etapa/Canal, ver
+           .crv-shared-fld) aparecem aqui — pedido direto: dentro de uma campanha
+           esses pontos não mudam entre os cards filhos, então preenche uma vez no
+           supercard e propaga (ver _crvPropagateToChildren()). Explicado pra quem
+           não sabe o motivo de só 4 campos aparecerem num supercard. -->
+      <div id="m-crv-super-note" style="display:none;grid-column:1/-1;font-size:11px;color:var(--txt2);background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);border-radius:8px;padding:8px 10px;margin-bottom:2px;">
+        🧩 Supercard: estes campos valem para <b>todos os cards filhos</b> desta campanha — preenchidos aqui, os filhos já herdam automaticamente.
+      </div>
+      <!-- Card filho: Campanha/Funil/Etapa/Canal somem daqui (vêm do supercard, ver
+           nota acima) — só os campos que realmente variam por peça continuam
+           editáveis neste card (ver .crv-own-fld). -->
+      <div id="m-crv-child-note" style="display:none;grid-column:1/-1;font-size:11px;color:var(--txt2);background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);border-radius:8px;padding:8px 10px;margin-bottom:2px;"></div>
+
+      <div class="field crv-shared-fld" id="m-crv-campanha-wrap" style="grid-column:1/-1;">
         <label class="fl">Campanha</label>
         <div class="crv-radio-group">
           <label class="crv-radio-row"><input type="radio" name="crv-campanha-tipo" value="campanha" onchange="_crvCampanhaTipoChange();_crvAutoTitle()"> Campanha</label>
@@ -3615,7 +3628,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <input class="fi" id="m-crv-campanha-nome" type="text" oninput="scheduleAutoSave();_crvAutoTitle()" style="display:none;margin-top:6px;">
       </div>
 
-      <div class="card-attr-row">
+      <div class="card-attr-row crv-shared-fld">
         <div class="field" id="m-crv-funil-wrap"><label class="fl">Funil</label>
           <div class="crv-radio-group">
             <label class="crv-radio-row"><input type="radio" name="crv-funil" value="mkt" onchange="scheduleAutoSave();_crvAutoTitle()"> MKT</label>
@@ -3632,26 +3645,26 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
 
-      <div class="card-attr-row">
+      <div class="card-attr-row crv-shared-fld">
         <div class="field" style="grid-column:1/-1;"><label class="fl">Canal</label>
           <select class="fi" id="m-crv-canal" onchange="_crvCanalChange()"><option value="">— selecione —</option></select>
           <input class="fi" id="m-crv-canal-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
         </div>
       </div>
 
-      <div class="field" id="m-crv-objetivo-wrap" style="grid-column:1/-1;"><label class="fl">Objetivo <span style="font-size:9px;color:var(--txt3);font-weight:400;">(múltipla escolha)</span></label>
+      <div class="field crv-own-fld" id="m-crv-objetivo-wrap" style="grid-column:1/-1;"><label class="fl">Objetivo <span style="font-size:9px;color:var(--txt3);font-weight:400;">(múltipla escolha)</span></label>
         <div class="crv-check-group" id="m-crv-objetivo-list"></div>
         <input class="fi" id="m-crv-objetivo-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
       </div>
 
-      <div class="field" id="m-crv-plataforma-wrap" style="grid-column:1/-1;">
+      <div class="field crv-own-fld" id="m-crv-plataforma-wrap" style="grid-column:1/-1;">
         <label class="fl">Plataforma <span id="m-crv-plataforma-hint" style="font-size:9px;color:var(--txt3);font-weight:400;"></span></label>
         <select class="fi" id="m-crv-plataforma-single" onchange="_crvPlataformaChange()"><option value="">— selecione —</option></select>
         <div class="crv-check-group" id="m-crv-plataforma-multi" style="display:none;"></div>
         <input class="fi" id="m-crv-plataforma-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
       </div>
 
-      <div class="card-attr-row">
+      <div class="card-attr-row crv-own-fld">
         <div class="field"><label class="fl">Tipo</label>
           <select class="fi" id="m-crv-tipo" onchange="_crvTipoChange()"><option value="">— selecione a Plataforma primeiro —</option></select>
           <input class="fi" id="m-crv-tipo-outros" type="text" oninput="scheduleAutoSave()" placeholder="Qual?" style="display:none;margin-top:6px;">
@@ -3663,7 +3676,7 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
 
-      <div class="field" id="m-crv-variacoes-wrap">
+      <div class="field crv-own-fld" id="m-crv-variacoes-wrap">
         <label class="fl">Variações <span id="m-crv-qtd-hint" style="font-size:9px;color:var(--txt3);font-weight:400;"></span></label>
         <div class="crv-radio-group">
           <label class="crv-radio-row"><input type="radio" name="crv-variacoes" value="sim" onchange="_crvVariacoesChange()"> Sim</label>
@@ -3672,7 +3685,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <input class="fi" id="m-crv-variacoes-qtd" type="number" min="1" placeholder="Qtd de variações" oninput="scheduleAutoSave()" style="display:none;margin-top:6px;max-width:140px;">
       </div>
 
-      <div class="field" style="grid-column:1/-1;">
+      <div class="field crv-own-fld" style="grid-column:1/-1;">
         <label class="fl">📌 Direcional de Mídia <span style="font-size:9px;color:var(--txt3);font-weight:400;">(opcional)</span></label>
         <textarea class="fi" id="m-crv-direcional" rows="2" oninput="scheduleAutoSave()" placeholder="Instrução importante pra quem for produzir/mídia — se preencher, aparece com destaque pra quem pegar o card." style="background:rgba(255,209,102,.08);border-color:rgba(255,209,102,.4);"></textarea>
       </div>
@@ -3874,10 +3887,9 @@ input[type="date"]{-moz-appearance:textfield;}
             </div>
             <div style="position:relative;">
               <textarea class="eoc-textarea" id="m-comment-inp"
-                oninput="autoResizeCommentInp(this);handleCommentMentions(this)" onpaste="_eocPasteHandler(event)"
+                oninput="autoResizeCommentInp(this)" onpaste="_eocPasteHandler(event)"
                 onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('comment-eoc');}
                   else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
-              <div class="link-dropdown" id="comment-mention-dd" style="position:absolute;bottom:100%;left:0;width:100%;z-index:20;margin-bottom:4px;"></div>
             </div>
             <div class="eoc-actions">
               <button class="eoc-save" onclick="submitComment()">Enviar</button>
@@ -3925,9 +3937,15 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
     <div style="position:relative;" id="m-usarmodelo-wrap">
       <button class="btn btn-sm" onclick="toggleUsarModeloMenu()" title="Aplicar um modelo salvo neste card">📥 Usar modelo</button>
-      <div id="m-usarmodelo-menu" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;
+      <div id="m-usarmodelo-menu" style="display:none;flex-direction:column;position:absolute;bottom:calc(100% + 6px);left:0;
         background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
-        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:220px;max-height:260px;overflow-y:auto;z-index:500;"></div>
+        box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:240px;max-width:280px;max-height:340px;z-index:500;">
+        <div style="padding:8px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--glass-b);flex-shrink:0;">
+          <input id="m-usarmodelo-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar modelo..." oninput="_renderUsarModeloList()" style="width:100%;">
+          <select id="m-usarmodelo-f-tag" class="ql-filter-sel" onchange="_renderUsarModeloList()" style="width:100%;"></select>
+        </div>
+        <div id="m-usarmodelo-list" style="overflow-y:auto;"></div>
+      </div>
     </div>
     <button class="btn btn-sm" onclick="archiveCard()">📦 Arquivar</button>
     <div style="position:relative;" id="m-depends-wrap">
@@ -5418,7 +5436,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.253</div>
+<div class="version">v8.30.254</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8766,10 +8784,28 @@ function autoRegistrar(user){
     window._currentUserRole='adm';
     _applyRoleVisibility();
   }
-  fbGet('kanban/usuarios/'+user.uid).then(snap=>{
+  // Busca em paralelo o usuário (existe ou não) e o registro público de TODO
+  // mundo, não só do squad atual — precisa dele aqui embaixo pra checar
+  // colisão de iniciais board inteiro antes de gravar um usuário novo (ver
+  // comentário abaixo). Iniciais são um campo GLOBAL por uid
+  // (kanban/usuarios/{uid}.init), então checar só o squad atual deixava
+  // passar batido gente de squads diferentes com a mesma sigla — achado
+  // real: "GS" de Outlet CRM e "GS" de Site Hering, cards se misturando no
+  // Meu Dia sem ninguém saber por quê até investigar.
+  Promise.all([fbGet('kanban/usuarios/'+user.uid), fbGet('kanban/usuarios_publicos')]).then(([snap, pubSnap])=>{
     const existe=snap.val();
-    const init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    let init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     if(!existe){
+      // Colisão de iniciais board inteiro: se a inicial gerada automaticamente
+      // já está em uso por qualquer outro uid (de qualquer squad), acrescenta
+      // um dígito até achar uma livre — silencioso de propósito (não tem
+      // diálogo nesse fluxo pra mostrar erro), mas evita duplicar às cegas.
+      const allPub = pubSnap.val()||{};
+      const usedInits = new Set(Object.values(allPub).map(d=>(d.init||'').toUpperCase()).filter(Boolean));
+      if(usedInits.has(init)){
+        let n=2; while(usedInits.has(init+n) && n<10) n++;
+        init = init+n;
+      }
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
@@ -8867,16 +8903,22 @@ function mostrarInscricao(user,dados){
   const f=document.getElementById('insc-foto'); if(user.photoURL){f.src=user.photoURL;f.style.display='block';}
   document.getElementById('insc-ov').classList.add('open');
 }
-function confirmarInscricao(){
+async function confirmarInscricao(){
   const user=window._currentUser; if(!user) return;
   const init=document.getElementById('insc-init').value.trim().toUpperCase().substring(0,3);
   if(!init){ showToast('⚠ Defina suas iniciais.'); return; }
-  // Valida se iniciais já estão em uso por outro membro do squad
-  const conflict=members.find(m=>m.init===init && m.email!==user.email);
+  // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) —
+  // checar só `members` (squad atual) deixava passar gente de OUTRO squad
+  // com a mesma sigla, sem aviso nenhum (achado real: "GS" duplicado entre
+  // Outlet CRM e Site Hering, misturando cards no Meu Dia). Busca fresca em
+  // kanban/usuarios_publicos (nó global) pra checar contra todo mundo.
+  const pubSnap = await fbGet('kanban/usuarios_publicos');
+  const allPub = pubSnap.val()||{};
+  const conflict = Object.entries(allPub).find(([u2,d])=>u2!==user.uid && (d.init||'').toUpperCase()===init);
   if(conflict){
     const errEl=document.getElementById('insc-init-err');
     if(errEl){
-      errEl.textContent='⚠ Iniciais "'+init+'" já usadas por '+( conflict.name.split(' ')[0]||conflict.init)+'. Escolha outras.';
+      errEl.textContent='⚠ Iniciais "'+init+'" já usadas por '+(conflict[1].nome?.split(' ')[0]||init)+' (pode ser de outro squad). Escolha outras.';
       errEl.style.display='block';
     }
     return;
@@ -10092,6 +10134,7 @@ function scheduleAutoSave(){
     // antes de desistir (mesmo espírito do handleDrop, que já faz isso pro
     // arrastar de coluna).
     _saveCardWithRetry(c, 'Alterações do card');
+    _crvPropagateToChildren(c); // Ficha Técnica compartilhada (Campanha/Funil/Etapa/Canal) — ver declaração
     renderBoard();
     // ── Notificações (saúde: precisam disparar aqui também, não só no saveCard manual) ──
     // @menção nos campos de texto — faltava aqui (só existia no saveCard()
@@ -10634,6 +10677,19 @@ function openCard(id){
     // card antigo tinha aberto sozinho no lugar de um novo em branco.
     if(editingId !== id) return;
     initMentionDropdown('m-po');
+    // Achado real (2026-08-18): o comentário usava um sistema de @menção
+    // separado e mais frágil (handleCommentMentions/insertCardMention) —
+    // regex exigia "@card " com espaço (a dica na tela manda digitar
+    // "@card:"), e o insert relia em reler a posição do cursor NA HORA do
+    // clique em vez de guardar a posição de quando o dropdown abriu — se o
+    // clique mexesse no foco/cursor antes do handler rodar, o texto digitado
+    // ficava intocado. Migrado pro mesmo sistema robusto de Descrição/PO/
+    // campanhas (initMentionDropdown/handleMentionInput/
+    // insertCardMentionInline), que guarda a posição do "@" como parâmetro
+    // — resolve o bug e de brinde ganha autocomplete de @pessoa no
+    // comentário, que não existia antes (handleCommentMentions só tratava
+    // @card, nunca teve busca de pessoa).
+    initMentionDropdown('m-comment-inp');
     loadComments(id);
     renderDescPreview();
     renderCardDepMini(id);
@@ -11027,19 +11083,26 @@ function saveCard(){
   // bloqueio das regras acima (título/prazo/submarca) — só que aqui inteiro
   // dentro de um "if(criativosAtivo)", já que o resto do squad nem vê essa
   // seção quando desativada. Supercard fica de fora (editingSuperChildren.length>0)
-  // — ele já é a soma dos filhos, cada um com a própria ficha; a seção nem
-  // aparece pra ele no modal (ver _crvUpdateFichaSecVisibility).
+  // — ele já é a soma dos filhos, cada um com a própria ficha; ele só mostra
+  // (opcional, sem bloqueio) os 4 campos compartilhados (ver
+  // _crvUpdateFichaSecVisibility). Card FILHO de supercard também não exige
+  // Campanha/Funil/Etapa/Canal aqui — esses vêm herdados do pai (ver
+  // _crvPropagateToChildren) e nem aparecem editáveis nesta tela; exigir
+  // teria como travar um save sem a pessoa ter onde corrigir.
   if(criativosAtivo && editingSuperChildren.length===0){
     const crvMissing=[];
+    const isChildOfSuper=!!editingSuperParent;
     // Direcional de Mídia é o único campo OPCIONAL da ficha (pedido
     // direto) — texto livre pra quando precisar, sem travar o save quando
     // não há nada de especial a avisar.
     const crvLabels={crvCampanha:'Campanha',crvFunil:'Funil',crvEtapa:'Etapa do Funil',crvCanal:'Canal',crvObjetivo:'Objetivo',
       crvPlataforma:'Plataforma',crvTipo:'Tipo',crvFormato:'Formato',crvVariacoes:'Variações'};
-    if(!document.querySelector('input[name="crv-campanha-tipo"]:checked')) crvMissing.push('crvCampanha');
-    if(!document.querySelector('input[name="crv-funil"]:checked')) crvMissing.push('crvFunil');
-    if(!document.getElementById('m-crv-etapa')?.value) crvMissing.push('crvEtapa');
-    if(!document.getElementById('m-crv-canal')?.value) crvMissing.push('crvCanal');
+    if(!isChildOfSuper){
+      if(!document.querySelector('input[name="crv-campanha-tipo"]:checked')) crvMissing.push('crvCampanha');
+      if(!document.querySelector('input[name="crv-funil"]:checked')) crvMissing.push('crvFunil');
+      if(!document.getElementById('m-crv-etapa')?.value) crvMissing.push('crvEtapa');
+      if(!document.getElementById('m-crv-canal')?.value) crvMissing.push('crvCanal');
+    }
     if(!_crvGetChecked('crv-objetivo').length) crvMissing.push('crvObjetivo');
     if(!_crvGetSelectedPlataformas().length) crvMissing.push('crvPlataforma');
     if(!document.getElementById('m-crv-tipo')?.value) crvMissing.push('crvTipo');
@@ -11175,6 +11238,7 @@ function saveCard(){
   const _savedIntakePendingId = _intakeOrigemPendingId; // snapshot — ver comentário na declaração
   const _savedNewCardId = !editingId ? cards[cards.length-1]?.id : null;
   const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
+  _crvPropagateToChildren(editingId ? cards.find(x=>x.id===editingId) : cards[cards.length-1]); // Ficha Técnica compartilhada — ver declaração
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
   // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
   // (ex.: instabilidade do SDK de auth já corrigida antes, ou queda de rede), o card fechava mesmo
@@ -11846,6 +11910,29 @@ function setCriativoFields(crv){
   _crvVariacoesChange();
   set('m-crv-variacoes-qtd', crv.variacoesQtd);
   set('m-crv-direcional', crv.direcional);
+}
+
+// Campos "compartilhados" da Ficha Técnica (Campanha/Funil/Etapa/Canal) —
+// pedido direto: "dentro de uma campanha esses pontos não mudam pensando em
+// cards vinculados/filhos". Preenchidos uma vez no supercard, propagam pros
+// filhos automaticamente. Só preenche quem AINDA ESTÁ VAZIO nesses 4 campos
+// no filho — nunca sobrescreve um valor que o filho já tinha (mesmo que
+// divergente do pai), pra não apagar dado antigo de squad que já usava
+// supercard antes desta feature existir.
+const _CRV_SHARED_KEYS = ['campanhaTipo','campanhaNome','funil','etapaFunil','canal','canalOutros'];
+function _crvPropagateToChildren(parentCard){
+  if(!parentCard || !parentCard.criativo || !(parentCard.childCardIds||[]).length) return;
+  const src=parentCard.criativo;
+  if(!_CRV_SHARED_KEYS.some(k=>src[k])) return;
+  let any=false;
+  parentCard.childCardIds.forEach(cid=>{
+    const child=cards.find(c=>c.id===cid); if(!child) return;
+    const crv=child.criativo?Object.assign({},child.criativo):{};
+    let changed=false;
+    _CRV_SHARED_KEYS.forEach(k=>{ if(!crv[k] && src[k]){ crv[k]=src[k]; changed=true; } });
+    if(changed){ child.criativo=crv; any=true; fbSaveCard(child).catch(err=>console.error('[supercard] falha ao propagar Ficha Técnica pro filho:', err)); }
+  });
+  if(any) renderBoard();
 }
 
 function _criativosRows(){
@@ -18085,12 +18172,16 @@ async function editarInicial(uid, initAtual, nome){
   const novaInit = nova.trim().toUpperCase();
   if(!novaInit || novaInit.length<1 || novaInit.length>4){ showToast('⚠ Use de 1 a 4 letras.'); return; }
   if(novaInit===initAtual.toUpperCase()){ return; }
-  // Checa se a nova inicial já existe neste squad
+  // Checa se a nova inicial já existe — board inteiro, não só neste squad.
+  // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init); a
+  // checagem antiga só olhava gente inscrita no squad ativo, então duas
+  // pessoas em squads diferentes podiam ficar com a mesma sigla sem aviso
+  // (achado real: "GS" duplicado entre Outlet CRM e Site Hering, cards se
+  // misturando no Meu Dia).
   const snap = await fbGet('kanban/usuarios_publicos');
   const all = snap.val()||{};
-  const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit &&
-    ((d.squads&&d.squads[ACTIVE_SQUAD]===true)||(!d.squads&&d.inscrito)));
-  if(conflito){ showToast('⚠ Iniciais "'+novaInit+'" já usadas por '+(conflito[1].nome?.split(' ')[0]||novaInit)+'. Escolha outras.'); return; }
+  const conflito = Object.entries(all).find(([u2,d])=>u2!==uid && (d.init||'').toUpperCase()===novaInit);
+  if(conflito){ showToast('⚠ Iniciais "'+novaInit+'" já usadas por '+(conflito[1].nome?.split(' ')[0]||novaInit)+' (pode ser de outro squad). Escolha outras.'); return; }
   // Pergunta se deve migrar os cards da inicial antiga
   const cardsAfetados = cards.filter(c=>c.owner===initAtual || (Array.isArray(c.participants)&&c.participants.includes(initAtual)));
   let migrar=false;
@@ -20404,6 +20495,11 @@ document.addEventListener('click', e=>{
 // automação/config ("supercard de campanha X sempre gera os cards A,B,C...")
 // fica pra depois de validar o conceito visual.
 let editingSuperChildren = []; // [{id,title,col}]
+// Card (objeto completo) do supercard do qual ESTE card é filho, ou null —
+// calculado uma vez por abertura de modal (initSuperChildren), reusado pela
+// Ficha Técnica compartilhada (ver _crvUpdateFichaSecVisibility/saveCard) pra
+// saber se Campanha/Funil/Etapa/Canal devem sumir daqui (vêm do pai).
+let editingSuperParent = null;
 // IDs dos filhos CRIADOS DE VERDADE (quickCreateSuperChild/fan-out) durante a
 // sessão atual do modal de um card AINDA NÃO SALVO — diferente de filhos
 // VINCULADOS a um card já existente (addSuperChild), que não devem ser
@@ -20430,6 +20526,10 @@ function initSuperChildren(card){
     const found = cards.find(c=>c.id===id);
     return found ? {id:found.id, title:found.title, col:found.col} : null;
   }).filter(Boolean) : [];
+  // Calculado ANTES de renderSuperChildrenList()/_crvUpdateFichaSecVisibility()
+  // (chamada logo abaixo) — precisa estar pronto pra decidir se Campanha/
+  // Funil/Etapa/Canal aparecem ou somem da Ficha Técnica deste card.
+  editingSuperParent = card ? (cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id)) || null) : null;
   _newSuperChildIds = []; // reseta a cada card aberto — ver comentário na declaração
   renderSuperChildrenList();
   const searchWrap=document.getElementById('m-super-search-wrap'); if(searchWrap) searchWrap.style.display='none';
@@ -20456,7 +20556,7 @@ function initSuperChildren(card){
   // novo nunca é filho de ninguém ainda, então nem checa.
   const noteEl=document.getElementById('m-super-parent-note');
   if(noteEl){
-    const parent = card ? cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id)) : null;
+    const parent = editingSuperParent;
     if(parent){
       noteEl.style.display='block';
       noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
@@ -20465,16 +20565,59 @@ function initSuperChildren(card){
     }
   }
 }
-// Supercard não preenche Ficha Técnica própria — ele já é a soma dos
-// filhos, cada um com a ficha dele (pedido direto: "supercard não precisa
-// de ficha de criativos pq ele já vai ter cards filhos"). A seção some do
-// modal em vez de só virar opcional, pra não depender de ninguém lembrar
-// de pular — reavaliado toda vez que a lista de filhos muda (mesmo motivo
-// do _crvSyncPlataformaMode logo abaixo). Dado já preenchido antes de virar
-// supercard não é apagado, só some da tela.
+// Monta "Campanha: X · Funil: Y · Etapa: Z · Canal: W" a partir de um
+// card.criativo — usado só pra exibir o resumo herdado no card filho (ver
+// _crvUpdateFichaSecVisibility). Ignora de forma graciosa qualquer parte
+// ainda vazia, mesmo padrão de _crvComposeTitle().
+function _crvSharedSummary(crv){
+  crv=crv||{};
+  const campanhaTipoLbl={campanha:'Campanha',acao:'Ação Comercial',perene:'Perene',refresh:'Refresh'}[crv.campanhaTipo]||'';
+  const campanhaLbl=crv.campanhaNome||campanhaTipoLbl;
+  const funilLbl={mkt:'MKT',ecm:'ECM'}[crv.funil]||'';
+  const canalLbl=_crvEffectiveLabelFromRow('canais', crv.canal, crv);
+  const partes=[
+    campanhaLbl?'Campanha: '+campanhaLbl:'',
+    funilLbl?'Funil: '+funilLbl:'',
+    crv.etapaFunil?'Etapa: '+crv.etapaFunil:'',
+    canalLbl?'Canal: '+canalLbl:''
+  ].filter(Boolean);
+  return partes.join(' · ');
+}
+// Ficha Técnica: 3 estados possíveis, decididos por editingSuperChildren/
+// editingSuperParent (ambos calculados em initSuperChildren()) —
+// 1. Card comum (nem supercard, nem filho): mostra os 9 campos, como sempre.
+// 2. Supercard (tem filhos): só os campos COMPARTILHADOS (.crv-shared-fld —
+//    Campanha/Funil/Etapa/Canal) aparecem — pedido direto: "esses pontos não
+//    mudam pensando em cards vinculados/filhos", preenche uma vez aqui e
+//    propaga pros filhos (ver _crvPropagateToChildren()). Os campos que
+//    variam por peça (.crv-own-fld) somem — cada filho tem os dele.
+// 3. Filho de supercard: o INVERSO — campos compartilhados somem daqui (já
+//    vêm herdados do pai, ver nota m-crv-child-note), só os que variam por
+//    peça continuam editáveis neste card.
+// Reavaliado toda vez que a lista de filhos muda (mesmo motivo do
+// _crvSyncPlataformaMode logo abaixo). Dado já preenchido antes de virar
+// supercard/filho não é apagado, só some da tela.
 function _crvUpdateFichaSecVisibility(){
   const sec=document.getElementById('m-criativo-sec');
-  if(sec) sec.style.display = (criativosAtivo && editingSuperChildren.length===0) ? '' : 'none';
+  if(sec) sec.style.display = criativosAtivo ? '' : 'none';
+  if(!criativosAtivo) return;
+  const isSuper = editingSuperChildren.length>0;
+  const isChild = !!editingSuperParent;
+  document.querySelectorAll('#m-criativo-sec .crv-shared-fld').forEach(el=>{ el.style.display = isChild ? 'none' : ''; });
+  document.querySelectorAll('#m-criativo-sec .crv-own-fld').forEach(el=>{ el.style.display = isSuper ? 'none' : ''; });
+  const superNote=document.getElementById('m-crv-super-note');
+  if(superNote) superNote.style.display = isSuper ? '' : 'none';
+  const childNote=document.getElementById('m-crv-child-note');
+  if(childNote){
+    if(isChild){
+      const childCard = editingId ? cards.find(c=>c.id===editingId) : null;
+      const resumo=_crvSharedSummary(childCard?.criativo);
+      childNote.style.display='';
+      childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+    } else {
+      childNote.style.display='none';
+    }
+  }
 }
 function renderSuperChildrenList(){
   _crvUpdateFichaSecVisibility();
@@ -20619,6 +20762,7 @@ function persistSuperChildren(){
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
   parent.childCardIds = editingSuperChildren.map(l=>l.id);
   fbSaveCard(parent);
+  _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filho recém-adicionado/criado, ver declaração
   renderBoard(); // atualiza o rollup no board na hora
 }
 function hideSuperChildDropdown(){ document.getElementById('m-super-link-dropdown')?.classList.remove('show'); }
@@ -23499,6 +23643,7 @@ function applyFanoutToCurrentCard(templateId){
     const parent=cards.find(c=>c.id===editingId); if(!parent) return;
     const novos=_applyFanoutTemplate(parent, tpl, _histWho());
     fbSaveCard(parent);
+    _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filhos recém-criados via receita, ver declaração
     editingSuperChildren=(parent.childCardIds||[]).map(id=>{
       const found=cards.find(c=>c.id===id);
       return found?{id:found.id,title:found.title,col:found.col}:null;
@@ -24337,12 +24482,37 @@ async function toggleUsarModeloMenu(){
   if(isOpen){ menu.style.display='none'; return; }
   if(window._ensureModelosLoaded && !_modelosLoaded) await window._ensureModelosLoaded();
   if(!qlItems.modelos || !qlItems.modelos.length){ showToast('Nenhum modelo salvo pra essa squad ainda.'); return; }
-  menu.innerHTML=qlItems.modelos.map((m,i)=>
+  // Filtros por nome/tag — pedido direto, mesmo padrão já usado no drawer
+  // de Modelos (ql-f-nome/ql-f-tag, ver renderQLBody()) — reseta a cada
+  // abertura pra não ficar um filtro antigo escondendo modelo novo.
+  const fNome=document.getElementById('m-usarmodelo-f-nome');
+  const fTag=document.getElementById('m-usarmodelo-f-tag');
+  if(fNome) fNome.value='';
+  if(fTag){
+    const tagsUsadas=[...new Set(qlItems.modelos.flatMap(m=>Array.isArray(m.tags)?m.tags:(m.tag?[m.tag]:[])))].filter(Boolean);
+    fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+tagsUsadas.map(id=>{const t=getTag(id);return t?`<option value="${esc(id)}">${esc(t.label)}</option>`:''}).join('');
+    fTag.value='';
+  }
+  _renderUsarModeloList();
+  menu.style.display='flex';
+  if(fNome) setTimeout(()=>fNome.focus(), 30);
+  setTimeout(()=>{ document.addEventListener('click', closeUsarModeloMenuOutside, {once:true}); }, 10);
+}
+// Filtra qlItems.modelos por nome/tag e redesenha a lista — preserva o
+// índice ORIGINAL do array (usado por aplicarModeloNoCard), mesma técnica
+// de renderQLBody() pra não embaralhar qual modelo cada botão aplica.
+function _renderUsarModeloList(){
+  const list=document.getElementById('m-usarmodelo-list'); if(!list) return;
+  const qNome=(document.getElementById('m-usarmodelo-f-nome')?.value||'').toLowerCase().trim();
+  const qTag=document.getElementById('m-usarmodelo-f-tag')?.value||'';
+  let indexed=(qlItems.modelos||[]).map((m,i)=>({m,i}));
+  if(qNome) indexed=indexed.filter(o=>(o.m.title||'').toLowerCase().includes(qNome));
+  if(qTag) indexed=indexed.filter(o=>{const tg=Array.isArray(o.m.tags)?o.m.tags:(o.m.tag?[o.m.tag]:[]);return tg.includes(qTag);});
+  if(!indexed.length){ list.innerHTML='<div style="padding:10px 14px;font-size:11px;color:var(--txt3);">Nenhum modelo com esse filtro.</div>'; return; }
+  list.innerHTML=indexed.map(({m,i})=>
     `<button onclick="aplicarModeloNoCard(${i})" style="display:block;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
       onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">${esc(m.title)}</button>`
   ).join('');
-  menu.style.display='block';
-  setTimeout(()=>{ document.addEventListener('click', closeUsarModeloMenuOutside, {once:true}); }, 10);
 }
 function closeUsarModeloMenu(){
   const menu=document.getElementById('m-usarmodelo-menu'); if(menu) menu.style.display='none';
@@ -25537,51 +25707,6 @@ function _renderReactions(c){
 }
 function _reactPicker(c){
   return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
-}
-
-// ── @card mention in textareas ────────────────────────────────────────
-function handleCommentMentions(ta){
-  autoResizeCommentInp(ta);
-  const val=ta.value;
-  const cur=ta.selectionStart;
-  const beforeCursor=val.slice(0,cur);
-  const atMatch=beforeCursor.match(/@card\s+(\S*)$/i)||beforeCursor.match(/@c(\S{0,20})$/);
-  const dd=document.getElementById('comment-mention-dd');
-  if(!dd) return;
-  if(atMatch){
-    const q=atMatch[1]||'';
-    const results=cards.filter(c=>!c.archived&&c.id!==_commentCardId&&
-      c.title.toLowerCase().includes(q.toLowerCase())).slice(0,6);
-    if(results.length){
-      dd.innerHTML='';
-      results.forEach(c=>{
-        const col=columns.find(x=>x.id===c.col);
-        const div=document.createElement('div');
-        div.className='link-option';
-        div.innerHTML='<span class="link-option-col">'+(col?.name||c.col)+'</span>'+
-          '<span style="flex:1;color:var(--txt);">'+esc(c.title)+'</span>';
-        div.onclick=()=>insertCardMention(c.id, c.title);
-        dd.appendChild(div);
-      });
-      dd.classList.add('show');
-      return;
-    }
-  }
-  dd.classList.remove('show');
-}
-
-function insertCardMention(cardId,cardTitle){
-  const ta=document.getElementById('m-comment-inp'); if(!ta) return;
-  const val=ta.value;
-  const cur=ta.selectionStart;
-  const before=val.slice(0,cur);
-  // Replace the @card... trigger with the mention token
-  const replaced=before.replace(/@card\s+\S*$/i,'').replace(/@c\S{0,20}$/,'');
-  const token='[[CARD:'+cardId+':'+_sanitizeCardMentionTitle(cardTitle)+']]';
-  ta.value=replaced+token+val.slice(cur);
-  ta.selectionStart=ta.selectionEnd=(replaced+token).length;
-  document.getElementById('comment-mention-dd').classList.remove('show');
-  ta.focus();
 }
 
 function renderDescPreview(){
