@@ -1639,6 +1639,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.438-dev — 2026-08-19 — Modelo (📐) passa a salvar e aplicar a Ficha Técnica
+Pergunta direta: "quando um modelo é salvo, as informações da Ficha
+Técnica também são salvas?" — não eram. `salvarComoModeloModal()` só
+capturava título/tags/descrição/PO/checklist/riscos; a Ficha Técnica do
+card ficava pra trás.
+
+- **Salvar como modelo** (📐, dentro do card) agora também grava a Ficha
+  Técnica do card (Campanha/Funil/Etapa/Canal/Objetivo/Plataforma/Tipo/
+  Formato/Variações/Direcional) — `null` se o card não tinha nada
+  preenchido na Ficha.
+- **Aplicar o modelo** — tanto criando um card novo pelo drawer de
+  Modelos (`usarQLItem()`) quanto usando "📥 Usar modelo" num card já
+  aberto (`aplicarModeloNoCard()`) — agora também aplica a Ficha Técnica
+  salva no modelo. Pedido explícito: "deixando a pessoa editar" — mesma
+  regra "nunca sobrescreve o que já tiver preenchido" já usada pra
+  descrição/PO/tags/checklist/riscos: só entra campo a campo onde o card
+  AINDA ESTÁ VAZIO (`_mergeModeloEmCardObj()`); tudo continua 100%
+  editável depois de aplicado, igual sempre foi.
+
 ### v8.30.437-dev — 2026-08-18 — Ficha Técnica compartilhada entre supercard e cards filhos
 Pedido direto: dentro de uma campanha, Campanha/Funil/Etapa do Funil/Canal
 não mudam entre os cards filhos (só Objetivo/Plataforma/Tipo/Formato/
