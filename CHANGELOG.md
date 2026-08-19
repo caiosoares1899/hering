@@ -1639,13 +1639,13 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
-### v8.30.438-dev — 2026-08-19 — Modelo (📐) passa a salvar e aplicar a Ficha Técnica
+### v8.30.438-dev — 2026-08-19 — Modelo (📋) passa a salvar e aplicar a Ficha Técnica
 Pergunta direta: "quando um modelo é salvo, as informações da Ficha
 Técnica também são salvas?" — não eram. `salvarComoModeloModal()` só
 capturava título/tags/descrição/PO/checklist/riscos; a Ficha Técnica do
 card ficava pra trás.
 
-- **Salvar como modelo** (📐, dentro do card) agora também grava a Ficha
+- **Salvar como modelo** (📋, dentro do card) agora também grava a Ficha
   Técnica do card (Campanha/Funil/Etapa/Canal/Objetivo/Plataforma/Tipo/
   Formato/Variações/Direcional) — `null` se o card não tinha nada
   preenchido na Ficha.
