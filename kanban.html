@@ -5436,7 +5436,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.254</div>
+<div class="version">v8.30.255</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11036,6 +11036,7 @@ function saveCard(){
       item.sp = document.getElementById('m-sp').value;
       item.priority = document.getElementById('m-priority').value;
       item.participants = getParticipants();
+      item.criativo = getCriativoData(); // Ficha Técnica do modelo — ver comentário em openQLEdit() sobre por que tempCard precisa dela também
       item.updatedAt = new Date().toISOString();
       item.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
       // Escreve só a sub-lista que mudou (tipo vem de _editingQLItem, é
@@ -17683,6 +17684,7 @@ function openQLEdit(i){
     participants: Array.isArray(item.participants)?item.participants.slice():[],
     archived:false, created:'(item salvo)', edited:'(item salvo)',
     createdAt:'—', editedAt:'—', _isQLTemp:true,
+    criativo: item.criativo||null, // Ficha Técnica salva no modelo (ver salvarComoModeloModal) — sem isto, editar um modelo via ✏️ mostrava a Ficha em branco mesmo com dado salvo
   };
   cards.push(tempCard); // temporário; será removido ao fechar/salvar
   closeOv('ql-ov');
@@ -17780,6 +17782,11 @@ function usarQLItem(i){
   _clGroupsInit(item);
   if(item.checklist?.length) renderCL(item.checklist);
   if(item.riscos?.length) renderRiscos(item.riscos);
+  // Ficha Técnica do modelo — card novo, form começa vazio (openNewCard()
+  // já chamou setCriativoFields({})), então aplica direto sem precisar de
+  // merge campo a campo (nada pra conflitar ainda). Continua 100%
+  // editável — isto só é o ponto de partida.
+  if(item.criativo) setCriativoFields(item.criativo);
   // Guarda os campos obrigatórios deste modelo pra validar na criação
   _pendingRequired = (currentQL==='modelos' && Array.isArray(item.requiredFields)) ? item.requiredFields.slice() : [];
   _pendingRequiredModelo = item.title||'';
@@ -23611,6 +23618,18 @@ function _mergeModeloEmCardObj(card, modelo){
     const atuais=card.riscos||[];
     card.riscos=[...atuais, ...modelo.riscos.filter(r=>!atuais.includes(r))];
   }
+  // Ficha Técnica do modelo — mesma regra "nunca sobrescreve o que já
+  // tiver preenchido" do resto desta função: só entra campo a campo onde
+  // o card AINDA ESTÁ VAZIO (mesmo critério de _crvPropagateToChildren, a
+  // propagação supercard→filho). Continua 100% editável depois — isto só
+  // dá um ponto de partida, não trava nada.
+  if(modelo.criativo){
+    const isEmpty=v=>Array.isArray(v)?v.length===0:!v;
+    card.criativo=card.criativo?Object.assign({},card.criativo):{};
+    Object.keys(modelo.criativo).forEach(k=>{
+      if(isEmpty(card.criativo[k]) && !isEmpty(modelo.criativo[k])) card.criativo[k]=modelo.criativo[k];
+    });
+  }
 }
 // Botão manual "🧩 Aplicar receita" dentro do card (independe de automação —
 // cobre o caso "pedido do dia a dia" que não tem gatilho automático nenhum).
@@ -24466,6 +24485,13 @@ async function salvarComoModeloModal(){
     po:document.getElementById('m-po').value,
     checklist:getCL().map(i=>({t:i.t,done:false})),
     riscos:getRiscos(),
+    // Ficha Técnica (pedido direto: "quando um modelo é salvo, a ficha
+    // também deveria ser salva") — null se o card não tinha nada
+    // preenchido na Ficha (mesmo getCriativoData() de sempre). Aplicada
+    // de volta em usarQLItem()/aplicarModeloNoCard() sem nunca sobrescrever
+    // o que a pessoa já tiver preenchido — só como ponto de partida,
+    // continua 100% editável depois.
+    criativo:getCriativoData(),
   });
   fbSet(FB+'/ql_items/modelos',qlItems.modelos);
   const orig=btn.textContent;
@@ -24550,8 +24576,12 @@ function aplicarModeloNoCard(idx){
   // interromperia uma edição em andamento nesses campos.
   const descEl=document.getElementById('m-desc');
   const poEl=document.getElementById('m-po');
-  const estado={desc:descEl?.value||'', po:poEl?.value||'', tags:editingTags.slice(), checklist:getCL(), riscos:getRiscos()};
+  const estado={desc:descEl?.value||'', po:poEl?.value||'', tags:editingTags.slice(), checklist:getCL(), riscos:getRiscos(), criativo:getCriativoData()};
   _mergeModeloEmCardObj(estado, modelo);
+  // Ficha Técnica: escreve o resultado mesclado de volta no form — mesma
+  // regra de sempre (só entra onde tava vazio, ver _mergeModeloEmCardObj),
+  // continua editável na hora depois de aplicado.
+  if(modelo.criativo) setCriativoFields(estado.criativo);
 
   // BUGFIX: chamava renderDescPreview() (só atualiza o preview de @menção,
   // que só aparece quando há menção no texto) em vez de redesenhar o card
