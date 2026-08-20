@@ -1653,6 +1653,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.440-dev — 2026-08-20 — Checklist: opção de recolher cada checklist do card
+Pedido do time: quando o card tem mais de um checklist, a lista inteira
+ficava sempre aberta e a visão poluía rápido. Cada checklist agora tem um
+botão ▾/▸ no cabeçalho, ao lado do título, pra recolher ou expandir só os
+itens (a barra de progresso e o "X/Y · Z%" continuam visíveis mesmo
+recolhido, então dá pra acompanhar o andamento sem abrir). O estado
+recolhido/expandido é salvo por checklist junto com o card
+(`checklistGroups[].colapsado`), então volta do jeito que foi deixado da
+última vez que o card foi aberto.
+
 ### v8.30.439-dev — 2026-08-19 — Editar modelo (✏️) agora também mostra/salva a Ficha Técnica
 Achado ao preparar material de treinamento sobre Modelos: a v8.30.438-dev
 fez "Salvar como modelo" gravar a Ficha Técnica e "Usar modelo"

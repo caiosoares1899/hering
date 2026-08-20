@@ -290,6 +290,29 @@ não faz parte desta rotina por padrão, a menos que peçam.
   asset fora do favicon continua `marinheiro.png` (sob demanda); viewport
   + `addTouchDnD` intactos.
 
+- **v8.30.439-dev / v8.30.255 (prod) (2026-08-20)**: rodada limpa, nada
+  pra corrigir. `kanban.html`/`kanban-dev.html` sincronizados (diff só nas
+  2 linhas de ambiente) — nenhum trabalho pendente de promoção. Conferido:
+  - `data:image` embutido: continua em 0 nos dois arquivos.
+  - Blocos reais (por linha): CSS ~187KB, script módulo Firebase ~7KB,
+    script principal ~1,30MB (`kanban-dev.html`, 27888 linhas, ~1,70MB
+    total — cresceu desde a v8.30.426-dev por causa do lote de Ficha
+    Técnica compartilhada em supercards + Modelo salvando Ficha Técnica).
+  - `setInterval`/`clearInterval`: 14 reais / 12 (15ª ocorrência do grep
+    segue sendo só a menção em comentário já documentada) — mesmo padrão
+    da v8.30.426-dev (8 escopados com clear, 6 "vida inteira da sessão"),
+    zero vazamento novo.
+  - `backdrop-filter`: 31 — idêntico ao baseline anterior, sem
+    crescimento (nenhuma feature nova de "glass" no período).
+  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
+    presentes; `www.gstatic.com` segue ausente corretamente (SDK
+    vendorizado). Import do Firebase: modular, todos os 4 módulos do
+    vendor local.
+  - Único asset fora do favicon continua `marinheiro.png` (sob demanda).
+  - Viewport meta + `addTouchDnD` intactos.
+  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
+    (1434/1434) OK.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está limpo.

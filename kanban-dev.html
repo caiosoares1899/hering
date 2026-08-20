@@ -5436,7 +5436,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.439-dev</div>
+<div class="version">v8.30.440-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11396,14 +11396,20 @@ function _clNewGroupId(){ return 'g'+Date.now().toString(36)+Math.random().toStr
 // Chamar sempre que um card (ou card novo/modelo) for carregado no modal, antes de renderCL().
 function _clGroupsInit(card){
   if(card && Array.isArray(card.checklistGroups) && card.checklistGroups.length){
-    _mCurrentGroups = card.checklistGroups.map(g=>({id:g.id, title:g.title||'Checklist'}));
+    _mCurrentGroups = card.checklistGroups.map(g=>({id:g.id, title:g.title||'Checklist', colapsado:!!g.colapsado}));
   } else {
-    _mCurrentGroups = [{id:'default', title:'Checklist'}];
+    _mCurrentGroups = [{id:'default', title:'Checklist', colapsado:false}];
   }
 }
 function addChecklistGroup(){
   saveUndo('adicionar checklist');
-  _mCurrentGroups.push({id:_clNewGroupId(), title:'Checklist'});
+  _mCurrentGroups.push({id:_clNewGroupId(), title:'Checklist', colapsado:false});
+  renderCL(getCL());
+  scheduleAutoSave();
+}
+function toggleChecklistGroupCollapse(gid){
+  const g=_mCurrentGroups.find(x=>x.id===gid); if(!g) return;
+  g.colapsado=!g.colapsado;
   renderCL(getCL());
   scheduleAutoSave();
 }
@@ -11439,6 +11445,11 @@ function renderCL(cl){
 
     const sec=document.createElement('div'); sec.className='cl-group'; sec.style.cssText='margin-bottom:14px;';
     const hd=document.createElement('div'); hd.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const collapseBtn=document.createElement('button'); collapseBtn.type='button'; collapseBtn.className='cl-collapse-btn';
+    collapseBtn.style.cssText='background:none;border:none;color:var(--txt3);cursor:pointer;padding:2px 4px;font-size:11px;flex-shrink:0;line-height:1;';
+    collapseBtn.textContent = g.colapsado ? '▸' : '▾';
+    collapseBtn.title = g.colapsado ? 'Expandir checklist' : 'Recolher checklist';
+    collapseBtn.onclick=()=>toggleChecklistGroupCollapse(g.id);
     const titleEl=document.createElement('input'); titleEl.value=g.title; titleEl.className='cl-group-title';
     titleEl.style.cssText='background:none;border:none;color:var(--txt1);font-size:12px;font-weight:700;flex:1;min-width:0;padding:3px 5px;border-radius:5px;';
     titleEl.addEventListener('focus',()=>titleEl.style.background='rgba(56,182,255,.08)');
@@ -11452,7 +11463,7 @@ function renderCL(cl){
     pctEl.textContent = total? `${done}/${total} · ${pct}%` : '';
     const delGrpBtn=document.createElement('button'); delGrpBtn.className='cl-del'; delGrpBtn.textContent='✕'; delGrpBtn.title='Excluir este checklist';
     delGrpBtn.onclick=()=>delChecklistGroup(g.id);
-    hd.append(titleEl,pctEl,delGrpBtn);
+    hd.append(collapseBtn,titleEl,pctEl,delGrpBtn);
     sec.appendChild(hd);
 
     if(total){
@@ -11548,6 +11559,8 @@ function renderCL(cl){
     addBtn.onclick=()=>{ addCIToGroup(g.id, inp.value); inp.value=''; inp.focus(); };
     addRow.append(inp,addBtn);
     sec.appendChild(addRow);
+
+    if(g.colapsado){ itemsWrap.style.display='none'; addRow.style.display='none'; }
 
     w.appendChild(sec);
     // Só agora `inp` está de verdade na árvore do documento — initMentionDropdown()
