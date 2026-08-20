@@ -18,6 +18,27 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.257 — 2026-08-20 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.256
+(v8.30.445-dev → v8.30.448-dev), validado em dev.
+
+- **Busca geral: "Ver N cards no board"**: botão logo abaixo dos
+  resultados da busca (🔍/Ctrl+K) aplica o mesmo termo como filtro de
+  texto do board, mostrando todos os cards que batem dispostos no board
+  em vez de escolher um da lista. O filtro de texto também ganhou campo
+  próprio na barra de Filtros, usável direto por lá.
+- **Agente Ágil: modo autônomo nas Automações**: a ação "Notificar
+  Agente Ágil" ganhou a opção "🤖 Modo autônomo" (squad `dev`) — em vez
+  de abrir o painel local, escreve um comentário de verdade que aciona o
+  orquestrador automaticamente, entrando no mesmo fluxo já validado da
+  @menção. Validado em produção com um disparo real.
+- **Supercards/cards filhos — 3 bugs corrigidos**: título de um card
+  filho não deixava mais editar manualmente (voltava sozinho pro
+  formato automático a cada mudança na Ficha Técnica); um Objetivo
+  nunca marcado podia aparecer no título automático (mesma causa); busca
+  de "card existente pra virar filho" disparava com 1 caractere só,
+  mostrando resultados sem nexo aparente — agora exige 2+.
+
 ### v8.30.256 — 2026-08-20 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.255
 (v8.30.440-dev → v8.30.444-dev), validado em dev.
