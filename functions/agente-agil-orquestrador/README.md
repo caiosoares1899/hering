@@ -1929,3 +1929,36 @@ ajustes deste dia (path morto, resposta presa no prompt, rede de
 segurança, notificação) estão todos funcionando juntos, ponta a ponta.
 Item 4 do plano de acionamento (@menção real rodando de verdade) pode ser
 considerado validado a partir daqui.
+
+## Item 5 (sequência de acionamento): gatilho automático plugado nas Automações — implementado (2026-08-20)
+
+Com o item 4 validado em produção, o usuário confirmou seguir pro item 5
+("Só depois, gatilho automático em mudança de card"). Decisão de desenho
+combinada antes do código: em vez de um listener novo pra "qualquer
+mudança de card" (superfície de risco maior, precisaria replicar o
+filtro anti-loop desde o zero), reusar o sistema de **Automações** que
+já existe no board (`AUTO_TRIGGERS`/`AUTO_ACTIONS` em `kanban-dev.html`)
+— gatilhos já validados há semanas em produção (`due_today`,
+`due_overdue`, `aging`, `unblocked`, `checklist_complete`, `blocked`,
+`tag_added`, movimentação de coluna, etc.), cada um já com sua própria
+proteção contra reexecução (ver `checkDueNotifs()`/`checkAgingAutomations()`).
+
+Achado que destravou isso: a ação `notify_agent` ("Notificar Agente
+Ágil") já existia nas Automações, mas apontava só pro agente ANTIGO
+client-side (`functions/agente-agil/`, painel de chat manual —
+`openAgent()`/`qa()`), não pro orquestrador novo. Ganhou uma 3ª opção,
+**"🤖 Modo autônomo"**, só visível quando o squad ativo é `dev` (o path
+do trigger do `agenteAgilMencao` tem esse squad travado, literal, não
+`{squadId}`). Selecionada, a automação escreve um comentário de verdade
+em `card_comments/{cardId}` contendo `@Agente Ágil` — entra no MESMO
+pipeline do item 3/4 (já em produção), **sem nenhuma Cloud Function
+nova**. `uid` do comentário é `'automacao'` (nunca `'agente-agil'`, que
+o filtro anti-auto-disparo de `processarMencao()` trataria como
+comentário do próprio agente e ignoraria silenciosamente).
+
+Mudança 100% client-side (`kanban-dev.html`, v8.30.446-dev) — nada
+mudou em `functions/agente-agil-orquestrador/`. Ainda não validado com
+uso real (nenhuma regra criada em produção usando o modo autônomo até
+aqui) — próximo passo é criar 1 regra de teste no squad `dev` e observar
+um disparo de verdade, mesmo espírito incremental dos canários manuais
+anteriores.
