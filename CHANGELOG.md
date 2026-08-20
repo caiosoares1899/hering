@@ -18,9 +18,23 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### v8.30.257 — 2026-08-20 · promove pra prod
-Promove pra produção o lote acumulado em dev desde a v8.30.256
-(v8.30.445-dev → v8.30.448-dev), validado em dev.
+### v8.30.258 — 2026-08-20 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.257
+(v8.30.449-dev), validado em dev.
+
+- **Segurança: fecha escalação de privilégio na whitelist de externos**.
+  Achado numa revisão de segurança pra internalização do projeto: a
+  whitelist de colaboradores externos (não-`@ciahering.com.br`,
+  autorizados por squad em Configurações) só era checada em JavaScript
+  na tela de login — qualquer conta Google conseguia se auto-conceder
+  acesso de leitura/escrita a um squad inteiro, contornando essa
+  checagem direto via console do navegador. A regra do Firebase
+  (`database.rules.json`, deploy manual, já em produção desde antes
+  desta promoção do HTML) agora valida a whitelist de verdade; esta
+  promoção leva o código do board a gravar a whitelist no formato que
+  a regra nova exige (chave = email, não mais aleatória). Nenhum
+  externo/membro existente perdeu acesso — não havia nenhum externo
+  cadastrado no momento do fix.
 
 - **Busca geral: "Ver N cards no board"**: botão logo abaixo dos
   resultados da busca (🔍/Ctrl+K) aplica o mesmo termo como filtro de

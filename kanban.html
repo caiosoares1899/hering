@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.257</div>
+<div class="version">v8.30.258</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8751,7 +8751,11 @@ window.addEventListener('auth-change',e=>{
       }
       const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
         const externos = snap.val()||{};
-        const allowed = Object.values(externos).map(e=>e.email||e).includes(user.email);
+        // Lookup direto pela chave (email sanitizado) — ver _extKey(). Mantém
+        // fallback pro formato antigo (Object.values escaneando por e.email)
+        // só até a migração de dados rodar; depois disso vira redundante mas
+        // inofensivo (short-circuit no primeiro true).
+        const allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
         if(!allowed){
           document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
@@ -27027,13 +27031,25 @@ function abrirAddExterno(){
   if(row){ row.style.display='flex'; document.getElementById('externo-email-inp').focus(); }
 }
 
+// Chave da whitelist de externos = o próprio email, sanitizado (RTDB não aceita
+// "." em chave). Achado de segurança real: a regra do Firebase não consegue
+// "procurar por valor" dentro de uma lista — só checar um caminho exato. Com
+// chave aleatória (like era antes, 'ext_'+Date.now()), não dava pra validar
+// "esse email está na whitelist desse squad?" DENTRO da regra — só no
+// JavaScript do cliente, que qualquer um contorna abrindo o console e
+// chamando window._set() direto. Chaveando por email, a regra consegue
+// checar root.child('.../externos/'+auth.token.email...) sem escanear nada.
+// Precisa bater EXATAMENTE com a mesma sanitização usada em
+// database.rules.json (usuarios/$uid/squads/$squadId/.validate) — mudar aqui
+// sem mudar lá (ou vice-versa) quebra o match dos dois lados.
+function _extKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
 function salvarExterno(){
   const emailInp = document.getElementById('externo-email-inp');
   const nomeInp = document.getElementById('externo-nome-inp');
   const email = emailInp?.value.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('❌ Email inválido.'); return; }
   if(email.endsWith('@ciahering.com.br')){ showToast('❌ Emails @ciahering não precisam ser adicionados aqui.'); return; }
-  const key = 'ext_'+Date.now();
+  const key = _extKey(email);
   const ext = { email, nome: nomeInp?.value.trim()||'', adicionadoEm: new Date().toISOString(), adicionadoPor: window._currentUserInit||'' };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, ext);
   // Se essa pessoa já tem conta (já logou antes, em outro squad), a whitelist
