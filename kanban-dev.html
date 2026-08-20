@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.447-dev</div>
+<div class="version">v8.30.448-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12029,14 +12029,26 @@ function _crvComposeTitle(){
 // se já der pra montar algo (nunca apaga um título já digitado por causa
 // de campos ainda vazios), e — pedido direto — só em cards NOVOS criados a
 // partir de um Modelo (não recorrentes, não card em branco, não card já
-// existente sendo editado depois). `_pendingQLSource` já existe pra outro
-// fim (disparar o trigger "Modelo usado" das Automações) e cobre
-// exatamente essa janela: setado em usarQLItem() só quando o item vem de
-// 📐 Modelos, e só é limpo depois que o card salva pela 1ª vez (ver
-// saveCard()) — em cards já existentes (abertos via openCard) nunca chega
-// a ser setado, então a checagem sozinha já garante "só card novo".
+// existente sendo editado depois).
+//
+// Bug real corrigido: a checagem dependia só de `_pendingQLSource.tipo`,
+// que fica setado em usarQLItem() mas só é limpo dentro de saveCard() NA
+// CRIAÇÃO de um card novo (nunca ao editar um já existente, nem ao
+// cancelar o modal sem salvar) — se a pessoa abrisse "+ Usar" num Modelo
+// e desistisse sem salvar, `_pendingQLSource` ficava "preso" como
+// 'modelos' pelo resto da sessão. Qualquer card aberto DEPOIS (inclusive
+// um filho de supercard JÁ SALVO, editado bem depois de criado) herdava
+// esse resíduo e tinha o título reescrito sozinho a cada campo da Ficha
+// Técnica mexido — impossível editar o título manualmente, e o texto
+// recomposto podia incluir um Objetivo que só estava marcado por vir de
+// um Modelo aplicado, não por escolha da pessoa naquele momento.
+// `!editingId` é a condição que bate exatamente com o que o comentário
+// acima sempre quis dizer ("só em card novo, nunca já existente") — um
+// card só tem editingId depois de salvo pela 1ª vez, então essa checagem
+// sozinha já veta qualquer card existente, com ou sem _pendingQLSource
+// zerado a tempo.
 function _crvAutoTitle(){
-  if(!criativosAtivo || editingSuperChildren.length>0) return;
+  if(!criativosAtivo || editingSuperChildren.length>0 || editingId) return;
   if(_pendingQLSource?.tipo!=='modelos') return;
   const composto=_crvComposeTitle();
   if(!composto) return;
@@ -20878,7 +20890,12 @@ function toggleSuperChildSearch(){
 }
 function searchSuperChildren(q){
   const dd=document.getElementById('m-super-link-dropdown'); if(!dd) return;
-  if(!q.trim()){ dd.classList.remove('show'); return; }
+  // Bug reportado: "apareceu um card aleatório do board" — com 1 caractere
+  // só, o .includes() abaixo bate em QUALQUER card que tenha essa letra em
+  // qualquer parte do título, mostrando resultado que parece não ter nada
+  // a ver com o que a pessoa está digitando. 2+ caracteres já reduz isso
+  // bastante, mesmo padrão comum de autocomplete.
+  if(q.trim().length<2){ dd.classList.remove('show'); return; }
   const lower=q.toLowerCase();
   const excludeIds=new Set([editingId, ...editingSuperChildren.map(l=>l.id)]);
   // Não deixa aninhar supercard dentro de supercard (profundidade 1 só, pra
@@ -25044,6 +25061,13 @@ function _finishCloseOv(id){
     if(editingId) _releaseCardLock(editingId);
     _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
+    // Fecha a janela de "card novo vindo de um Modelo" mesmo se a pessoa
+    // cancelou sem salvar — sem isto, _pendingQLSource ficava preso como
+    // 'modelos' pelo resto da sessão (só era limpo dentro de saveCard() na
+    // criação bem-sucedida de um card novo). _crvAutoTitle() já tem sua
+    // própria proteção (!editingId) contra esse resíduo agora, mas isto
+    // fecha o ciclo de vida da variável de verdade, não só sintoma.
+    _pendingQLSource=null;
     // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
       cards = cards.filter(c=>!c._isQLTemp);
