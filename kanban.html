@@ -109,6 +109,9 @@
 .sr-meta{font-size:10px;color:var(--txt3);white-space:nowrap;}
 .sr-tag{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid;margin-left:6px;}
 .search-empty{padding:24px;text-align:center;color:var(--txt3);font-size:13px;}
+.search-viewall-btn{width:100%;padding:9px 16px;background:none;border:none;border-top:1px solid var(--glass-b);
+  color:var(--accent);font-size:11.5px;font-family:DM Sans,sans-serif;font-weight:600;cursor:pointer;text-align:left;}
+.search-viewall-btn:hover{background:rgba(56,182,255,.08);}
 .search-hint{padding:8px 16px;font-size:10px;color:var(--txt3);border-top:1px solid var(--glass-b);display:flex;gap:16px;}
 .search-hint kbd{background:rgba(56,182,255,.1);border:1px solid var(--glass-b);border-radius:3px;padding:1px 5px;font-size:9px;}
 
@@ -3002,6 +3005,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
   <div class="fb-group">
+  <input id="f-texto" type="text" placeholder="🔍 Título, descrição, PO, responsável…" oninput="_scheduleTextFilterApply()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;min-width:220px;">
   <select id="f-owner" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os usuários</option>
   </select>
@@ -5445,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.256</div>
+<div class="version">v8.30.257</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9622,7 +9626,7 @@ function _shortName(name){
 // pessoas). Só o campo submarca é restaurado; os demais filtros
 // continuam começando limpos, como sempre foi. Ver _saveSubmarcaFiltroPadrao(),
 // chamado nos 3 pontos que mudam activeFilters.submarca.
-let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false};
+let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
 // Mesma regra usada pelo rollup do card no board (makeCardEl) — um card é
 // supercard quando tem pelo menos 1 filho ainda ativo (não arquivado).
 // Extraído como helper pro filtro "🧩 Supercards" reusar em vez de reescrever.
@@ -9687,6 +9691,14 @@ function toggleFilters(){
   document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
   document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
 }
+let _textFilterDebounce=null;
+// Digitar em #f-texto não pode re-renderizar o board a cada tecla (boards
+// grandes ficariam travando) — mesmo motivo de debounce já usado em outros
+// campos de busca do app (ex.: _notaSearchSnippet/notaSearchCards).
+function _scheduleTextFilterApply(){
+  clearTimeout(_textFilterDebounce);
+  _textFilterDebounce=setTimeout(applyFilters, 250);
+}
 function applyFilters(){
   activeFilters={
     owner:document.getElementById('f-owner').value,
@@ -9705,6 +9717,7 @@ function applyFilters(){
     risco:document.getElementById('f-risco').checked,
     subteam:document.getElementById('f-subteam')?.value||'',
     supercard:document.getElementById('f-supercard')?.checked||false,
+    texto:(document.getElementById('f-texto')?.value||'').toLowerCase().trim(),
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
   renderSubmarcaQuickFilters(); // realça o botão certo se o filtro mudou pelo drawer, não só pelo botão rápido
@@ -9723,7 +9736,8 @@ function clearFilters(){
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   const fsc=document.getElementById('f-supercard'); if(fsc) fsc.checked=false;
-  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false};
+  const fTx=document.getElementById('f-texto'); if(fTx) fTx.value='';
+  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
@@ -9748,6 +9762,18 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.supercard&&!_cardIsSupercard(card)) return false;
+  if(activeFilters.texto){
+    // Mesmos campos que a busca geral (Ctrl+K/🔍) já usa em renderSearchResults()
+    // — "ver esses cards no board" precisa achar exatamente os mesmos cards.
+    const q=activeFilters.texto;
+    const owner=members.find(m=>m.init===card.owner);
+    const matched = (card.title||'').toLowerCase().includes(q)
+      || cardDescText(card).toLowerCase().includes(q)
+      || (card.po||'').toLowerCase().includes(q)
+      || (card.owner||'').toLowerCase().includes(q)
+      || (owner?.name||'').toLowerCase().includes(q);
+    if(!matched) return false;
+  }
   if(activeFilters.due){
     if(!card.due) return false;
     if(_isColDone(card.col)) return false;
@@ -12003,14 +12029,26 @@ function _crvComposeTitle(){
 // se já der pra montar algo (nunca apaga um título já digitado por causa
 // de campos ainda vazios), e — pedido direto — só em cards NOVOS criados a
 // partir de um Modelo (não recorrentes, não card em branco, não card já
-// existente sendo editado depois). `_pendingQLSource` já existe pra outro
-// fim (disparar o trigger "Modelo usado" das Automações) e cobre
-// exatamente essa janela: setado em usarQLItem() só quando o item vem de
-// 📐 Modelos, e só é limpo depois que o card salva pela 1ª vez (ver
-// saveCard()) — em cards já existentes (abertos via openCard) nunca chega
-// a ser setado, então a checagem sozinha já garante "só card novo".
+// existente sendo editado depois).
+//
+// Bug real corrigido: a checagem dependia só de `_pendingQLSource.tipo`,
+// que fica setado em usarQLItem() mas só é limpo dentro de saveCard() NA
+// CRIAÇÃO de um card novo (nunca ao editar um já existente, nem ao
+// cancelar o modal sem salvar) — se a pessoa abrisse "+ Usar" num Modelo
+// e desistisse sem salvar, `_pendingQLSource` ficava "preso" como
+// 'modelos' pelo resto da sessão. Qualquer card aberto DEPOIS (inclusive
+// um filho de supercard JÁ SALVO, editado bem depois de criado) herdava
+// esse resíduo e tinha o título reescrito sozinho a cada campo da Ficha
+// Técnica mexido — impossível editar o título manualmente, e o texto
+// recomposto podia incluir um Objetivo que só estava marcado por vir de
+// um Modelo aplicado, não por escolha da pessoa naquele momento.
+// `!editingId` é a condição que bate exatamente com o que o comentário
+// acima sempre quis dizer ("só em card novo, nunca já existente") — um
+// card só tem editingId depois de salvo pela 1ª vez, então essa checagem
+// sozinha já veta qualquer card existente, com ou sem _pendingQLSource
+// zerado a tempo.
 function _crvAutoTitle(){
-  if(!criativosAtivo || editingSuperChildren.length>0) return;
+  if(!criativosAtivo || editingSuperChildren.length>0 || editingId) return;
   if(_pendingQLSource?.tipo!=='modelos') return;
   const composto=_crvComposeTitle();
   if(!composto) return;
@@ -20852,7 +20890,12 @@ function toggleSuperChildSearch(){
 }
 function searchSuperChildren(q){
   const dd=document.getElementById('m-super-link-dropdown'); if(!dd) return;
-  if(!q.trim()){ dd.classList.remove('show'); return; }
+  // Bug reportado: "apareceu um card aleatório do board" — com 1 caractere
+  // só, o .includes() abaixo bate em QUALQUER card que tenha essa letra em
+  // qualquer parte do título, mostrando resultado que parece não ter nada
+  // a ver com o que a pessoa está digitando. 2+ caracteres já reduz isso
+  // bastante, mesmo padrão comum de autocomplete.
+  if(q.trim().length<2){ dd.classList.remove('show'); return; }
   const lower=q.toLowerCase();
   const excludeIds=new Set([editingId, ...editingSuperChildren.map(l=>l.id)]);
   // Não deixa aninhar supercard dentro de supercard (profundidade 1 só, pra
@@ -23964,8 +24007,34 @@ const AUTO_ACTIONS = [
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(!ct.includes(rule.actionVal)) return false; const nt=ct.filter(id=>id!==rule.actionVal); card.tags=nt; card.tag=nt[0]||''; recordHistory(card,'removeu tag (automação)','⚙ Automação'); return true; } },
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
     run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
-  { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab', visible:()=>AGENTE_AGIL_ATIVO,
-    run:(rule,card)=>{ const tab=rule.actionVal||'daily'; openAgent(); swAgTab(tab); qa(tab,`[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`); return false; } },
+  { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab',
+    // AGENTE_AGIL_ATIVO=false é o kill switch do painel ANTIGO (openAgent()),
+    // não tem nada a ver com o orquestrador novo/"Modo autônomo" — antes essa
+    // ação inteira ficava escondida junto quando o painel antigo desligava,
+    // mesmo o modo autônomo (squad dev) sendo independente disso.
+    visible:()=>AGENTE_AGIL_ATIVO||ACTIVE_SQUAD==='dev',
+    run:(rule,card)=>{
+      const tab=rule.actionVal||'daily';
+      if(tab==='auto'){
+        // Modo autônomo: entra no MESMO pipeline já validado da @menção
+        // humana (Cloud Function agenteAgilMencao, escuta card_comments do
+        // squad dev) — sem abrir nada localmente, sem Cloud Function nova.
+        // uid NÃO pode ser 'agente-agil': mentionTrigger.js filtra qualquer
+        // comentário com esse uid como "auto-comentário do próprio agente"
+        // ANTES de olhar o texto — usar esse uid faria a automação escrever
+        // um comentário que é silenciosamente ignorado, nunca dispara nada.
+        if(!window._fbReady) return false;
+        const comment={
+          id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+          uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+          text:'@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.',
+          ts:new Date().toISOString(),
+        };
+        window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment).catch(()=>{});
+        return false; // não altera o card em si, só dispara o agente
+      }
+      openAgent(); swAgTab(tab); qa(tab,`[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`); return false;
+    } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
     run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
@@ -24013,7 +24082,7 @@ function _autoValLabel(valueType, val){
     case 'priority': return ({critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'})[val] || val;
     case 'tag': return getTag(val)?.label || val;
     case 'member_optional': case 'member': { const m=members.find(x=>x.init===val); return m?(m.init+' · '+_shortName(m.name)):val; }
-    case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva'})[val] || val;
+    case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva',auto:'🤖 Modo autônomo'})[val] || val;
     case 'submarca': return SUBMARCA_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'tamanho': return SIZE_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'padrao': return cardPatterns[val]?.nome || val;
@@ -24039,7 +24108,18 @@ function _autoRenderValueOptions(valueType){
     // "atribuído a ___" precisa de uma pessoa de verdade escolhida, diferente
     // de 'member_optional' (usado em ações, onde "— manter atual —" faz sentido).
     case 'member': return members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
-    case 'agent_tab': return `<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>`;
+    case 'agent_tab': {
+      // "Modo autônomo" só aparece no squad dev: o gatilho que ele usa
+      // (agenteAgilMencao, ver notify_agent) tem o path da Cloud Function
+      // travado em kanban/squads/dev/... — oferecer a opção em outro squad
+      // criaria uma regra que parece funcionar mas nunca dispara nada.
+      const autoOpt = ACTIVE_SQUAD==='dev' ? '<option value="auto">🤖 Modo autônomo (aciona o orquestrador, sem abrir o painel)</option>' : '';
+      // As abas do painel ANTIGO só valem a pena oferecer se ele estiver
+      // ligado (AGENTE_AGIL_ATIVO) — senão a pessoa escolheria uma opção
+      // que só mostra "temporariamente desativado" ao disparar.
+      const oldOpts = AGENTE_AGIL_ATIVO ? '<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>' : '';
+      return oldOpts+autoOpt;
+    }
     case 'submarca': { const opts=tags.filter(t=>SUBMARCA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhuma —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'padrao': { const ids=Object.keys(cardPatterns||{}); return '<option value="">— nenhum —</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join(''); }
@@ -24240,7 +24320,22 @@ function runAutoRules(eventType, cardId, extraVal){
     const wipAction=_autoRuleActions(wipRule)[0];
     if(wip>parseInt(agilCfg.wip||3) && wipAction?.action==='notify_agent'){
       const tab=wipAction.actionVal||'metricas';
-      setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
+      if(tab==='auto'){
+        // Mesmo modo autônomo do notify_agent normal (ver AUTO_ACTIONS) —
+        // esse caso fica de fora do loop por-card acima (WIP é agregado do
+        // board inteiro), por isso replica em vez de reusar actionDef.run().
+        if(window._fbReady){
+          const comment={
+            id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+            uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+            text:'@Agente Ágil — [Automação] WIP atual é '+wip+', acima do limite de '+(agilCfg.wip||3)+'. O que fazer?',
+            ts:new Date().toISOString(),
+          };
+          window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment).catch(()=>{});
+        }
+      } else {
+        setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
+      }
     }
   }
 
@@ -24966,6 +25061,13 @@ function _finishCloseOv(id){
     if(editingId) _releaseCardLock(editingId);
     _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
+    // Fecha a janela de "card novo vindo de um Modelo" mesmo se a pessoa
+    // cancelou sem salvar — sem isto, _pendingQLSource ficava preso como
+    // 'modelos' pelo resto da sessão (só era limpo dentro de saveCard() na
+    // criação bem-sucedida de um card novo). _crvAutoTitle() já tem sua
+    // própria proteção (!editingId) contra esse resíduo agora, mas isto
+    // fecha o ciclo de vida da variável de verdade, não só sintoma.
+    _pendingQLSource=null;
     // Se estava editando um item recorrente/modelo e fechou sem salvar, limpa o temp
     if(_editingQLItem){
       cards = cards.filter(c=>!c._isQLTemp);
@@ -25475,9 +25577,11 @@ function closeSearch(){
 function renderSearchResults(){
   const q = (document.getElementById('search-inp').value||'').toLowerCase().trim();
   const container = document.getElementById('search-results');
+  const viewAll = document.getElementById('search-viewall');
   _searchIdx = 0;
   if(!q){
     container.innerHTML = '<div class="search-empty">Digite para buscar entre os cards do board…</div>';
+    if(viewAll) viewAll.innerHTML='';
     return;
   }
   const matches = cards.filter(c=>{
@@ -25490,7 +25594,16 @@ function renderSearchResults(){
   });
   if(!matches.length){
     container.innerHTML = '<div class="search-empty">Nenhum card encontrado para "<strong>'+esc(q)+'</strong>"</div>';
+    if(viewAll) viewAll.innerHTML='';
     return;
+  }
+  // Pedido do time: a lista é ótima pra achar UM card específico, mas às
+  // vezes a pessoa quer é ver TODOS os cards que batem, arrumados no board
+  // (colunas, drag, etc.) em vez de escolher um da lista. Aplica a mesma
+  // busca como filtro de texto do board (#f-texto/activeFilters.texto) em
+  // vez de abrir um card.
+  if(viewAll){
+    viewAll.innerHTML = `<button type="button" class="search-viewall-btn" onclick="verNoBoardFromSearch()">🔍 Ver ${matches.length} card${matches.length===1?'':'s'} no board</button>`;
   }
   container.innerHTML = matches.slice(0,20).map((c,i)=>{
     const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
@@ -25523,6 +25636,20 @@ function handleSearchKey(e){
 function openSearchCard(id){
   closeSearch();
   openCard(id);
+}
+// "🔍 Ver N cards no board" — joga a query da busca geral pro filtro de
+// texto do board (#f-texto) em vez de abrir um card específico. Mostra a
+// barra de filtros se estiver escondida, senão o resultado ficaria
+// filtrando o board sem nenhuma pista visual de por quê.
+function verNoBoardFromSearch(){
+  const q = document.getElementById('search-inp').value||'';
+  closeSearch();
+  const bar=document.getElementById('filter-bar');
+  if(bar.style.display==='none'||bar.style.display==='') toggleFilters();
+  const fTx=document.getElementById('f-texto');
+  if(fTx) fTx.value=q;
+  applyFilters();
+  fTx?.focus();
 }
 
 
@@ -27944,6 +28071,7 @@ renderBoard();
       <span class="search-kbd">Esc</span>
     </div>
     <div id="search-results"></div>
+    <div id="search-viewall"></div>
     <div class="search-hint">
       <span><kbd>↑↓</kbd> navegar</span>
       <span><kbd>Enter</kbd> abrir card</span>
