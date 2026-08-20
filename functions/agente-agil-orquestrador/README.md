@@ -1957,8 +1957,26 @@ o filtro anti-auto-disparo de `processarMencao()` trataria como
 comentário do próprio agente e ignoraria silenciosamente).
 
 Mudança 100% client-side (`kanban-dev.html`, v8.30.446-dev) — nada
-mudou em `functions/agente-agil-orquestrador/`. Ainda não validado com
-uso real (nenhuma regra criada em produção usando o modo autônomo até
-aqui) — próximo passo é criar 1 regra de teste no squad `dev` e observar
-um disparo de verdade, mesmo espírito incremental dos canários manuais
-anteriores.
+mudou em `functions/agente-agil-orquestrador/`.
+
+**Achado ao validar**: a ação inteira estava invisível mesmo no squad
+`dev` — `AGENTE_AGIL_ATIVO` (kill switch do painel ANTIGO, `false` de
+propósito) controlava a visibilidade de `notify_agent` como um todo,
+escondendo o "Modo autônomo" novo junto, mesmo ele não dependendo desse
+painel. Corrigido em v8.30.447-dev: a ação aparece se o painel antigo
+estiver ligado OU o squad for `dev`; o dropdown de opções só oferece o
+que funciona em cada contexto.
+
+**VALIDADO EM PRODUÇÃO (2026-08-20)**: primeira regra de teste criada no
+squad `dev` (gatilho "Tag adicionada ao card (CONCEPT)" → "Notificar
+Agente Ágil (🤖 Modo autônomo)"). Disparo real: tag adicionada a um card
+("Briefing de fotos — coleção Hering Teens"), automação escreveu o
+comentário `@Agente Ágil — [Automação] ...`, orquestrador processou e
+respondeu no card em ~1min. Resposta analisou o card de verdade
+(descrição quase vazia, tag "Bloqueio" sem motivo registrado, checklist
+com item de teste, sem responsável real) e **não executou nenhuma ação**
+por falta de informação suficiente — pediu esclarecimento à pessoa
+mencionada na descrição em vez de chutar mover coluna/editar campo.
+Comportamento de julgamento consistente com os canários manuais originais
+(cenários 1-4), agora confirmado também no caminho 100% autônomo. Item 5
+do plano de acionamento pode ser considerado validado a partir daqui.
