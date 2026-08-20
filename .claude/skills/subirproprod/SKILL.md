@@ -89,6 +89,7 @@ Caminho: `kanban/squads/dados/dados/card_comments/{cardId}/{commentId}`.
 
 Formato do comentário:
 ```js
+const user = window._currentUser; // NÃO existe uma variável global `user` solta no console — ver nota abaixo
 {
   id: 'c' + Date.now() + Math.random().toString(36).slice(2, 5),
   uid: user.uid,
@@ -112,6 +113,13 @@ entregue.
 
 ## Coisas que já causaram problema (não repetir)
 
+- **`user.uid` sem definir `user`** — o console do painel/kanban não tem
+  uma variável global `user` solta; o usuário logado vive em
+  `window._currentUser`. Sempre abrir o script do log do card com
+  `const user = window._currentUser;` antes de usar `user.uid`/
+  `user.displayName`/`user.photoURL` — sem isso dá
+  `ReferenceError: user is not defined` na hora de colar (já aconteceu
+  2x na mesma sessão, com scripts diferentes).
 - **`ts: Date.now()` em vez de string ISO** — quebra silenciosamente
   `loadComments()` pra TODA a lista de comentários daquele card (o sort
   usa `a.ts.localeCompare(b.ts)`, que não existe em number). Sempre
