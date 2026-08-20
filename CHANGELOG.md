@@ -1699,6 +1699,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.449-dev — 2026-08-20 — Segurança: whitelist de externos passa a ser chaveada por email
+Preparação pro fix de segurança em `database.rules.json` (ver seção
+própria mais abaixo neste CHANGELOG) — achado durante uma revisão de
+segurança pra internalização do projeto: a whitelist de externos
+(`kanban/squads/{squad}/externos`) usava chave aleatória (`ext_`+timestamp),
+o que impede a regra do Firebase de validar "esse email está na
+whitelist?" sem escanear a lista inteira (rules não fazem isso). Sem essa
+validação na regra, a única barreira contra alguém se auto-registrar num
+squad sem nunca ter sido convidado por um PO era o JavaScript da tela de
+login — contornável por qualquer um que chamasse a função direto no
+console.
+
+Mudança: a chave da whitelist passa a ser o próprio email, sanitizado
+(`_extKey()`: minúsculo, `.` vira `,` — RTDB não aceita `.` em chave).
+`salvarExterno()` já grava no formato novo; o check de login
+(`auth-change`) faz lookup direto pela chave (mais rápido) com fallback
+pro formato antigo até a migração de dados rodar. `removerExterno()` e
+os fluxos de remoção global (painel.html) não mudam — já recebem a chave
+pronta de quem lista.
+
+**Passo manual pendente**: rodar o script de migração (re-chaveia as
+entradas antigas) e o deploy de `database.rules.json` — ambos fora do
+GitHub Pages, feitos à parte pelo responsável pela infra.
+
 ### v8.30.448-dev — 2026-08-20 — Supercards/filhos: 3 bugs corrigidos (título travado, objetivo fantasma, busca de filho confusa)
 Investigação a partir de 3 relatos de usuário sobre Supercards e cards
 filhos:
@@ -8749,6 +8773,56 @@ retry e erro rastreável (`stale_cards_index`, HTTP 409) em caso de
 divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
+
+### 2026-08-20 — Escalação de privilégio: qualquer conta Google conseguia se auto-conceder acesso a um squad
+Achado durante uma revisão de segurança pra internalização do projeto na
+infra corporativa. A whitelist de "externos" (colaboradores não-
+`@ciahering.com.br` autorizados pelo PO por squad, em Configurações) só
+era checada em **JavaScript, na tela de login** — a regra de escrita de
+`kanban/usuarios/$uid` permitia `auth.uid === $uid` (escrever o próprio
+registro) sem checar domínio nem whitelist nenhuma. Como o fluxo de
+login (`autoRegistrar()`) grava `squads/{squadId}: true` no próprio uid
+pra completar o cadastro, **qualquer conta Google — mesmo sem nunca ter
+sido convidada por ninguém — conseguia se auto-conceder acesso de leitura
+e escrita a um squad inteiro**, bastando chamar a função direto no
+console do navegador (pulando a tela de login, que é só JavaScript do
+cliente, sem força de regra). A whitelist gerenciada pelo PO nunca era
+consultada pela regra — só pela UI, que é contornável.
+
+**Fix**: novo `.validate` em `kanban/usuarios/$uid/squads/$squadId` —
+só permite gravar `true` se o email de quem está escrevendo termina em
+`@ciahering.com.br` OU se esse email (normalizado) existe como chave em
+`kanban/squads/{squadId}/externos` (whitelist do PO). Sempre permite
+gravar `null` (sair de um squad). Pré-requisito: a whitelist de
+`externos` precisou trocar de chave aleatória pra chave = próprio email
+sanitizado (ver v8.30.449-dev do kanban-dev.html) — regra de Realtime
+Database não consegue "procurar por valor" numa lista, só checar um
+caminho exato, então sem essa mudança de chave a regra não teria como
+validar a whitelist sem escanear tudo.
+
+**Achado técnico ao validar a expressão da regra**: `.replace()` na
+linguagem de regras do Firebase substitui só a **primeira** ocorrência
+(diferente de `String.replace()` do JS com regex global) — a primeira
+versão desta regra usava um `.replace('.', ',')` único, que quebraria
+pra qualquer email com mais de um ponto (ou seja, praticamente todo
+email real, já que só o domínio `@ciahering.com.br` tem 2). Corrigido
+encadeando 8 `.replace('.', ',')` (cobre com folga qualquer email
+plausível — cada chamada processa a próxima ocorrência restante).
+
+**Passos manuais pendentes, nessa ordem**:
+1. Rodar o script de migração de `externos` (re-chaveia as entradas
+   existentes pro novo formato) — entregue à parte no chat.
+2. Confirmar que o fix do `kanban-dev.html` (v8.30.449-dev) foi
+   validado e promovido pra `kanban.html` (prod) — a regra nova, uma
+   vez publicada, também vale pra prod, e o `salvarExterno()` de lá
+   ainda grava no formato de chave antigo até a promoção acontecer
+   (janela de falha segura: só atrasa onboarding de externo novo,
+   não reabre a brecha).
+3. `firebase deploy --only database` manual, na sua máquina.
+
+Nenhum externo ou membro já cadastrado perde acesso com este deploy —
+`.validate` só se aplica a escritas novas, não apaga concessões já
+gravadas.
 
 ### 2026-08-12 — Regra faltando pra `backups`: o recurso de Backup nunca gravou nada, pra ninguém
 Achado investigando um relato de card sumido (squad Mídia Criativa) —
