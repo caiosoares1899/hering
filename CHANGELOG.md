@@ -1678,6 +1678,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.445-dev — 2026-08-20 — Busca geral: "Ver N cards no board"
+Pedido do time: a busca geral (🔍/Ctrl+K) é ótima pra achar UM card
+específico, mas às vezes a pessoa quer ver TODOS os cards que batem com
+o termo buscado, dispostos no board (colunas, drag, etc.) em vez de uma
+lista. Novo botão **"🔍 Ver N cards no board"** logo abaixo dos
+resultados — aplica a mesma busca como um filtro de texto do board e
+fecha a busca. Esse filtro de texto também ganhou vida própria: agora
+tem um campo dedicado (`🔍 Título, descrição, PO, responsável…`) na
+barra de Filtros do board, que dá pra usar direto por lá, sem passar
+pela busca geral. Reaproveita os mesmos critérios de busca de sempre
+(título, descrição, PO, responsável).
+
 ### v8.30.444-dev — 2026-08-20 — Notificações: fim das duplicatas e das menções ressuscitadas
 Dois bugs reportados por usuários, mesma área (notificações):
 - **Duplicadas**: "Prazo hoje!"/"Prazo atrasado!" (`checkDueNotifs()`)

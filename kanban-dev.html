@@ -109,6 +109,9 @@
 .sr-meta{font-size:10px;color:var(--txt3);white-space:nowrap;}
 .sr-tag{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid;margin-left:6px;}
 .search-empty{padding:24px;text-align:center;color:var(--txt3);font-size:13px;}
+.search-viewall-btn{width:100%;padding:9px 16px;background:none;border:none;border-top:1px solid var(--glass-b);
+  color:var(--accent);font-size:11.5px;font-family:DM Sans,sans-serif;font-weight:600;cursor:pointer;text-align:left;}
+.search-viewall-btn:hover{background:rgba(56,182,255,.08);}
 .search-hint{padding:8px 16px;font-size:10px;color:var(--txt3);border-top:1px solid var(--glass-b);display:flex;gap:16px;}
 .search-hint kbd{background:rgba(56,182,255,.1);border:1px solid var(--glass-b);border-radius:3px;padding:1px 5px;font-size:9px;}
 
@@ -3002,6 +3005,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
   <div class="fb-group">
+  <input id="f-texto" type="text" placeholder="🔍 Título, descrição, PO, responsável…" oninput="_scheduleTextFilterApply()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;min-width:220px;">
   <select id="f-owner" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os usuários</option>
   </select>
@@ -5445,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.444-dev</div>
+<div class="version">v8.30.445-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9622,7 +9626,7 @@ function _shortName(name){
 // pessoas). Só o campo submarca é restaurado; os demais filtros
 // continuam começando limpos, como sempre foi. Ver _saveSubmarcaFiltroPadrao(),
 // chamado nos 3 pontos que mudam activeFilters.submarca.
-let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false};
+let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
 // Mesma regra usada pelo rollup do card no board (makeCardEl) — um card é
 // supercard quando tem pelo menos 1 filho ainda ativo (não arquivado).
 // Extraído como helper pro filtro "🧩 Supercards" reusar em vez de reescrever.
@@ -9687,6 +9691,14 @@ function toggleFilters(){
   document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
   document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
 }
+let _textFilterDebounce=null;
+// Digitar em #f-texto não pode re-renderizar o board a cada tecla (boards
+// grandes ficariam travando) — mesmo motivo de debounce já usado em outros
+// campos de busca do app (ex.: _notaSearchSnippet/notaSearchCards).
+function _scheduleTextFilterApply(){
+  clearTimeout(_textFilterDebounce);
+  _textFilterDebounce=setTimeout(applyFilters, 250);
+}
 function applyFilters(){
   activeFilters={
     owner:document.getElementById('f-owner').value,
@@ -9705,6 +9717,7 @@ function applyFilters(){
     risco:document.getElementById('f-risco').checked,
     subteam:document.getElementById('f-subteam')?.value||'',
     supercard:document.getElementById('f-supercard')?.checked||false,
+    texto:(document.getElementById('f-texto')?.value||'').toLowerCase().trim(),
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
   renderSubmarcaQuickFilters(); // realça o botão certo se o filtro mudou pelo drawer, não só pelo botão rápido
@@ -9723,7 +9736,8 @@ function clearFilters(){
   document.getElementById('f-risco').checked=false;
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   const fsc=document.getElementById('f-supercard'); if(fsc) fsc.checked=false;
-  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false};
+  const fTx=document.getElementById('f-texto'); if(fTx) fTx.value='';
+  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
@@ -9748,6 +9762,18 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
   if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.supercard&&!_cardIsSupercard(card)) return false;
+  if(activeFilters.texto){
+    // Mesmos campos que a busca geral (Ctrl+K/🔍) já usa em renderSearchResults()
+    // — "ver esses cards no board" precisa achar exatamente os mesmos cards.
+    const q=activeFilters.texto;
+    const owner=members.find(m=>m.init===card.owner);
+    const matched = (card.title||'').toLowerCase().includes(q)
+      || cardDescText(card).toLowerCase().includes(q)
+      || (card.po||'').toLowerCase().includes(q)
+      || (card.owner||'').toLowerCase().includes(q)
+      || (owner?.name||'').toLowerCase().includes(q);
+    if(!matched) return false;
+  }
   if(activeFilters.due){
     if(!card.due) return false;
     if(_isColDone(card.col)) return false;
@@ -25475,9 +25501,11 @@ function closeSearch(){
 function renderSearchResults(){
   const q = (document.getElementById('search-inp').value||'').toLowerCase().trim();
   const container = document.getElementById('search-results');
+  const viewAll = document.getElementById('search-viewall');
   _searchIdx = 0;
   if(!q){
     container.innerHTML = '<div class="search-empty">Digite para buscar entre os cards do board…</div>';
+    if(viewAll) viewAll.innerHTML='';
     return;
   }
   const matches = cards.filter(c=>{
@@ -25490,7 +25518,16 @@ function renderSearchResults(){
   });
   if(!matches.length){
     container.innerHTML = '<div class="search-empty">Nenhum card encontrado para "<strong>'+esc(q)+'</strong>"</div>';
+    if(viewAll) viewAll.innerHTML='';
     return;
+  }
+  // Pedido do time: a lista é ótima pra achar UM card específico, mas às
+  // vezes a pessoa quer é ver TODOS os cards que batem, arrumados no board
+  // (colunas, drag, etc.) em vez de escolher um da lista. Aplica a mesma
+  // busca como filtro de texto do board (#f-texto/activeFilters.texto) em
+  // vez de abrir um card.
+  if(viewAll){
+    viewAll.innerHTML = `<button type="button" class="search-viewall-btn" onclick="verNoBoardFromSearch()">🔍 Ver ${matches.length} card${matches.length===1?'':'s'} no board</button>`;
   }
   container.innerHTML = matches.slice(0,20).map((c,i)=>{
     const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
@@ -25523,6 +25560,20 @@ function handleSearchKey(e){
 function openSearchCard(id){
   closeSearch();
   openCard(id);
+}
+// "🔍 Ver N cards no board" — joga a query da busca geral pro filtro de
+// texto do board (#f-texto) em vez de abrir um card específico. Mostra a
+// barra de filtros se estiver escondida, senão o resultado ficaria
+// filtrando o board sem nenhuma pista visual de por quê.
+function verNoBoardFromSearch(){
+  const q = document.getElementById('search-inp').value||'';
+  closeSearch();
+  const bar=document.getElementById('filter-bar');
+  if(bar.style.display==='none'||bar.style.display==='') toggleFilters();
+  const fTx=document.getElementById('f-texto');
+  if(fTx) fTx.value=q;
+  applyFilters();
+  fTx?.focus();
 }
 
 
@@ -27944,6 +27995,7 @@ renderBoard();
       <span class="search-kbd">Esc</span>
     </div>
     <div id="search-results"></div>
+    <div id="search-viewall"></div>
     <div class="search-hint">
       <span><kbd>↑↓</kbd> navegar</span>
       <span><kbd>Enter</kbd> abrir card</span>
