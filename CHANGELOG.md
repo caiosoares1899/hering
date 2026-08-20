@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.256 — 2026-08-20 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.255
+(v8.30.440-dev → v8.30.444-dev), validado em dev.
+
+- **Checklist: opção de recolher cada checklist do card**: card com mais
+  de um checklist ganhou um botão ▾/▸ no cabeçalho de cada um pra
+  recolher só os itens (a barra de progresso continua visível mesmo
+  recolhido). O estado fica salvo junto com o card.
+- **Card travado: links e menções de card voltam a ficar clicáveis**:
+  quando outra pessoa está editando um card, os links (descrição/
+  comentário/checklist) e as menções a outro card agora funcionam
+  normalmente — só a edição continua bloqueada. Antes, o modo leitura
+  travava tudo, inclusive links.
+- **Card travado: botão "🔔 Pedir o card"**: quem só precisa dar uma
+  olhada num card enquanto outra pessoa edita agora pode "pedir" o card.
+  Quem está editando recebe um aviso com 5 minutos pra salvar e sair (ou
+  liberar na hora); se não fizer nada, o card salva e libera sozinho no
+  prazo. O card de quem pediu atualiza automaticamente assim que o lock
+  é liberado, sem precisar reabrir.
+- **Notificações: fim das duplicatas e das menções ressuscitadas**:
+  "Prazo hoje!"/"Prazo atrasado!" não duplicam mais quando várias abas
+  reavaliam quase juntas (ex.: reload simultâneo de atualização). E uma
+  @menção que a pessoa já viu e leu não volta mais a aparecer como não
+  lida alguns dias depois.
+
 ### v8.30.255 — 2026-08-19 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.254
 (v8.30.438-dev → v8.30.439-dev), validado em dev.
