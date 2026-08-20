@@ -5445,7 +5445,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.442-dev</div>
+<div class="version">v8.30.443-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10433,6 +10433,15 @@ function _checkCardLock(cardId){
     const isStale = !lock || !lock.ts || (Date.now()-lock.ts > CARD_LOCK_STALE_MS);
     const isMine = !!(lock && lock.uid===myUid);
     if(!lock || isStale || isMine){
+      // Se a tela ainda estava mostrando "travado por outra pessoa" bem antes
+      // desta chamada, é porque acabamos de HERDAR o lock (a pessoa saiu/
+      // liberou/estourou o prazo do pedido) — os campos na tela continuam
+      // sendo os de quando o card foi aberto, e quem editava pode ter mudado
+      // qualquer coisa nesse meio tempo (achado real: dava pra editar em cima
+      // de dados velhos). #m-lock-row é o mesmo elemento reaproveitado pra
+      // todo card, então seu display ANTES de _setCardLockUI(false) rodar
+      // ainda reflete o estado da chamada anterior — não precisa de flag nova.
+      const _justInherited = document.getElementById('m-lock-row')?.style.display==='flex';
       _setCardLockUI(false);
       _cardLockOwnedId=cardId;
       // isMine: usa update() (não set()) pra não apagar um pedido pendente
@@ -10441,6 +10450,15 @@ function _checkCardLock(cardId){
       if(isMine) fbUpdate(_cardLockPath(cardId), _cardLockPayload()).catch(()=>{});
       else fbSet(_cardLockPath(cardId), _cardLockPayload());
       _startCardLockHeartbeat(cardId);
+      if(_justInherited && editingId===cardId){
+        // setTimeout(0): sai da pilha de chamadas atual (estamos dentro do
+        // próprio callback do listener do lock) antes de reabrir o card, que
+        // por sua vez chama _checkCardLock() de novo — evita reentrância
+        // síncrona dentro do onValue que disparou tudo isto.
+        setTimeout(()=>{
+          if(editingId===cardId){ _cardNavSkipReset=true; openCard(cardId); }
+        }, 0);
+      }
     } else {
       // Perdemos a corrida (duas pessoas abriram o card quase junto — as
       // duas assumem o lock otimisticamente, e o listener abaixo resolve
