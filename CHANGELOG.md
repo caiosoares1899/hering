@@ -1678,6 +1678,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.448-dev — 2026-08-20 — Supercards/filhos: 3 bugs corrigidos (título travado, objetivo fantasma, busca de filho confusa)
+Investigação a partir de 3 relatos de usuário sobre Supercards e cards
+filhos:
+
+- **"Não consigo editar o título de um filho, ele volta pro automático"**:
+  causa raiz encontrada em `_crvAutoTitle()` — a proteção "só reescreve o
+  título em card NOVO vindo de Modelo" dependia só de `_pendingQLSource`,
+  que fica setado em `usarQLItem()` mas só era limpo dentro de
+  `saveCard()` **na criação bem-sucedida** de um card novo — nunca ao
+  cancelar o modal sem salvar. Se a pessoa abrisse "+ Usar" num Modelo e
+  desistisse, essa flag ficava presa pelo resto da sessão; qualquer card
+  aberto depois (inclusive um filho JÁ SALVO, reaberto bem depois de
+  criado) herdava o resíduo e tinha o título reescrito sozinho a cada
+  campo da Ficha Técnica mexido. Corrigido com um guard direto
+  (`!editingId` — só card ainda não salvo) mais robusto que depender do
+  ciclo de vida da flag, e a flag também passou a ser limpa ao fechar o
+  modal (não só ao salvar).
+- **"Um objetivo que não marquei aparece no título automático"**: mesma
+  causa raiz acima — com o título sendo recomposto sem devia, ele reflete
+  o que estiver marcado NA HORA (ex.: um Objetivo pré-preenchido por um
+  Modelo aplicado, nunca escolhido manualmente pela pessoa). Resolvido
+  junto com o fix acima.
+- **"Apareceu um card aleatório do board ao criar um filho"**: a busca de
+  "card existente pra virar filho" (`searchSuperChildren()`) disparava a
+  partir de 1 caractere digitado — um `.includes()` tão curto casa com
+  praticamente qualquer card que tenha aquela letra em algum lugar do
+  título, parecendo um resultado sem nexo. Agora exige 2+ caracteres
+  antes de mostrar sugestões, padrão comum de autocomplete.
+
 ### v8.30.447-dev — 2026-08-20 — Fix: "Notificar Agente Ágil" não aparecia na lista de ações
 Achado testando a v8.30.446-dev: a opção nem aparecia no dropdown de
 ações das Automações, nem no squad `dev`. Causa: `AGENTE_AGIL_ATIVO` é
