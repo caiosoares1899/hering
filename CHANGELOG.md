@@ -1653,6 +1653,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.443-dev — 2026-08-20 — Pedir o card: força atualização ao herdar o lock
+Achado testando a v8.30.442-dev: quando o lock era liberado (manual ou por
+timeout do pedido) e a pessoa que esperava herdava o card, a tela
+continuava mostrando os campos de quando o card foi aberto — quem editou
+antes pode ter mudado título, descrição, checklist etc., e nada
+repopulava o modal com o que estava salvo agora no Firebase (o array
+`cards` já chegava atualizado, mas o formulário aberto não é redesenhado
+sozinho quando isso acontece). Corrigido: ao detectar que acabamos de
+herdar o lock vindo de "travado por outra pessoa", o card é reaberto
+(`openCard()`) automaticamente, recarregando todos os campos, comentários
+e anexos com o estado atual — sem perder o lock recém-assumido.
+
 ### v8.30.442-dev — 2026-08-20 — Card travado: botão "🔔 Pedir o card"
 Feedback de usuário: quando alguém só tinha o card aberto pra visualizar
 (sem editar), quem precisava mexer nele de verdade ficava sem jeito de
