@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.446-dev</div>
+<div class="version">v8.30.447-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23990,7 +23990,12 @@ const AUTO_ACTIONS = [
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(!ct.includes(rule.actionVal)) return false; const nt=ct.filter(id=>id!==rule.actionVal); card.tags=nt; card.tag=nt[0]||''; recordHistory(card,'removeu tag (automação)','⚙ Automação'); return true; } },
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
     run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
-  { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab', visible:()=>AGENTE_AGIL_ATIVO,
+  { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab',
+    // AGENTE_AGIL_ATIVO=false é o kill switch do painel ANTIGO (openAgent()),
+    // não tem nada a ver com o orquestrador novo/"Modo autônomo" — antes essa
+    // ação inteira ficava escondida junto quando o painel antigo desligava,
+    // mesmo o modo autônomo (squad dev) sendo independente disso.
+    visible:()=>AGENTE_AGIL_ATIVO||ACTIVE_SQUAD==='dev',
     run:(rule,card)=>{
       const tab=rule.actionVal||'daily';
       if(tab==='auto'){
@@ -24092,7 +24097,11 @@ function _autoRenderValueOptions(valueType){
       // travado em kanban/squads/dev/... — oferecer a opção em outro squad
       // criaria uma regra que parece funcionar mas nunca dispara nada.
       const autoOpt = ACTIVE_SQUAD==='dev' ? '<option value="auto">🤖 Modo autônomo (aciona o orquestrador, sem abrir o painel)</option>' : '';
-      return `<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>${autoOpt}`;
+      // As abas do painel ANTIGO só valem a pena oferecer se ele estiver
+      // ligado (AGENTE_AGIL_ATIVO) — senão a pessoa escolheria uma opção
+      // que só mostra "temporariamente desativado" ao disparar.
+      const oldOpts = AGENTE_AGIL_ATIVO ? '<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>' : '';
+      return oldOpts+autoOpt;
     }
     case 'submarca': { const opts=tags.filter(t=>SUBMARCA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhuma —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
