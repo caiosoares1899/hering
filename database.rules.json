@@ -105,6 +105,11 @@
           "role": {
             ".validate": "auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
           },
+          "squads": {
+            "$squadId": {
+              ".validate": "newData.val() === null || (newData.val() === true && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/squads/' + $squadId + '/externos/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists()))"
+            }
+          },
           "notificacoes": {
             "$notifId": {
               ".write": "auth != null && (!data.exists() || auth.uid === $uid || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
