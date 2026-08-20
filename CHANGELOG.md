@@ -1653,6 +1653,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.444-dev — 2026-08-20 — Notificações: fim das duplicatas e das menções ressuscitadas
+Dois bugs reportados por usuários, mesma área (notificações):
+- **Duplicadas**: "Prazo hoje!"/"Prazo atrasado!" (`checkDueNotifs()`)
+  criavam a notificação com id aleatório — se várias abas/dispositivos da
+  mesma pessoa reavaliassem quase juntos (ex.: todos recarregando ao
+  mesmo tempo pelo overlay de auto-atualização), cada um passava pelo
+  guard de "já rodou hoje" antes de qualquer um escrever, e cada um criava
+  a SUA própria notificação pro mesmo card — várias entradas idênticas,
+  todas "há 1min atrás". Corrigido com id determinístico
+  (`due_today_{cardId}_{dia}` / `due_overdue_{cardId}_{dia}`), mesmo
+  mecanismo que menção/lembrete de reunião já usavam: só a primeira
+  escrita realmente cria, o resto bate em "já existe" e não duplica.
+- **Menção "ressuscitando"**: notificações de @menção usam id
+  determinístico (pessoa+card) desde antes — pra não duplicar em saves
+  repetidos do mesmo card. Só que a limpeza por TTL (notificação LIDA some
+  depois de 3 dias) apagava o nó de verdade do Firebase; como a @menção
+  continua no texto do card pra sempre (ninguém tira uma menção antiga da
+  descrição), o PRÓXIMO save recalculava o MESMO id, não achava mais o nó
+  (apagado) e recriava do zero como não lida — uma menção de 3+ dias atrás,
+  já vista, reaparecendo sozinha. Notificações de id determinístico agora
+  ficam marcadas (`noTTLDelete`) e nunca são apagadas do Firebase — só
+  saem da lista visível depois do TTL, igual sempre saíram; a diferença é
+  que não voltam de novo depois.
+
 ### v8.30.443-dev — 2026-08-20 — Pedir o card: força atualização ao herdar o lock
 Achado testando a v8.30.442-dev: quando o lock era liberado (manual ou por
 timeout do pedido) e a pessoa que esperava herdava o card, a tela

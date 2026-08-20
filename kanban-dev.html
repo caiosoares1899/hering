@@ -5445,7 +5445,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.443-dev</div>
+<div class="version">v8.30.444-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -21017,6 +21017,18 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId)
   // parseMentions/submitComment/saveEditComment). Usado em openNotif() pra
   // avisar/limpar a notificação se o comentário for excluído depois.
   if(commentId) notif.commentId = commentId;
+  // idOverride = id determinístico (mesma pessoa+card sempre calcula o MESMO
+  // id) — o "só cria se não existe" logo abaixo é o que evita duplicar/
+  // reabrir como não lida. Mas isso só funciona enquanto o nó ainda existe no
+  // Firebase: achado real (bug reportado) — a limpeza por TTL em loadNotifs()
+  // apaga notificações LIDAS depois de alguns dias, e se o texto que gerou a
+  // menção continuar no card (ninguém apaga @menção antiga da descrição), o
+  // PRÓXIMO save do card recalcula o MESMO id, não encontra mais o nó
+  // (apagado), e recria do zero como não lida — a "menção de 3 dias atrás"
+  // ressuscitando sozinha. noTTLDelete marca esses nós pra loadNotifs() nunca
+  // apagar — eles continuam saindo da LISTA visível depois do TTL (mesmo
+  // filtro de sempre, só não é fisicamente apagado do Firebase).
+  if(idOverride) notif.noTTLDelete = true;
   const path = 'kanban/usuarios/'+targetUid+'/notificacoes/'+notifId;
   // Loga falha de escrita em vez de engolir silenciosamente — nao interrompe o fluxo do app.
   const _notifWarn = err => { if(!String(err).includes('error_logs')&&!String(err).includes('error_stats')) console.warn('[createNotif] write failed:', err); };
@@ -21269,6 +21281,12 @@ function loadNotifs(){
     // notificações expiradas = K downloads em cascata da lista completa.
     const _toDelete = {};
     Object.entries(val).forEach(([id,n])=>{
+      // noTTLDelete (ver createNotif): notificação de id determinístico —
+      // apagar deixaria o próximo save/checagem que recalcula o MESMO id
+      // recriá-la do zero como não lida (a menção/lembrete "ressuscitando"
+      // dias depois de já ter sido vista). Continua saindo da lista visível
+      // normalmente pelo filtro `active` acima, só não é apagada de verdade.
+      if(n.noTTLDelete) return;
       if(now - new Date(n.ts).getTime() >= (n.read?TTL:TTL_UNREAD)) _toDelete[id] = null;
     });
     if(Object.keys(_toDelete).length){
@@ -21639,10 +21657,18 @@ function checkDueNotifs(){
     if(card.due===today) runAutoRules('due_today', card.id);
     else if(card.due===ontemStr) runAutoRules('due_overdue', card.id);
     const uid=getUidByInit(card.owner); if(!uid) return;
+    // idOverride determinístico (tipo+cardId+dia): sem isso, a corrida entre
+    // abas/dispositivos que recarregam quase juntos (ex.: overlay de
+    // auto-atualização disparando em todo mundo ao mesmo tempo) faz cada um
+    // ler o guard do localStorage ainda "não rodou hoje", passar, e criar
+    // sua PRÓPRIA notificação com id aleatório — mesmo card, mesmo minuto,
+    // várias entradas duplicadas na lista. Com id fixo, só a primeira escrita
+    // realmente cria (createNotif já entende idOverride e só cria se ainda
+    // não existe), as outras batem em "já existe" e não duplicam.
     if(card.due===today){
-      createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id);
+      createNotif(uid,'due_today','Prazo hoje! ⚠',card.title?.substring(0,60),card.id,'due_today_'+card.id+'_'+today);
     } else if(card.due===ontemStr){
-      createNotif(uid,'due_overdue','Prazo atrasado! 🔴',card.title?.substring(0,60),card.id);
+      createNotif(uid,'due_overdue','Prazo atrasado! 🔴',card.title?.substring(0,60),card.id,'due_overdue_'+card.id+'_'+today);
     }
   });
 }
