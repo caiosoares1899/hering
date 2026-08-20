@@ -1678,6 +1678,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.447-dev — 2026-08-20 — Fix: "Notificar Agente Ágil" não aparecia na lista de ações
+Achado testando a v8.30.446-dev: a opção nem aparecia no dropdown de
+ações das Automações, nem no squad `dev`. Causa: `AGENTE_AGIL_ATIVO` é
+um interruptor mestre que desliga o painel ANTIGO do Agente Ágil
+(`openAgent()`, hoje `false` de propósito) — a ação inteira dependia só
+dessa flag pra aparecer, então desligar o painel antigo escondia junto
+o "Modo autônomo" novo, que não tem nada a ver com ele. Corrigido:
+- A ação agora aparece se o painel antigo estiver ligado OU se o squad
+  ativo for `dev` (onde o modo autônomo funciona).
+- O dropdown de opções (Aba Daily/Métricas/Retrospectiva vs. 🤖 Modo
+  autônomo) só oferece o que realmente funciona no contexto atual — as
+  abas do painel antigo somem da lista quando ele está desligado.
+
 ### v8.30.446-dev — 2026-08-20 — Automações: modo autônomo pra acionar o Agente Ágil
 Item 5 do roteiro do orquestrador (`functions/agente-agil-orquestrador/`):
 gatilho automático em mudança de card, plugado nas Automações que já
