@@ -3445,7 +3445,14 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
 
   <div id="m-lock-row" style="display:none;align-items:center;gap:8px;background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:12.5px;color:var(--accent);">
-    <span id="m-lock-text"></span>
+    <span id="m-lock-text" style="flex:1;"></span>
+    <span id="m-lock-req-action"></span>
+  </div>
+
+  <!-- Aparece pra quem ESTÁ editando, quando outra pessoa pede o card (ver pedirCard()/_handleLockRequest()) -->
+  <div id="m-lock-request-row" style="display:none;align-items:center;gap:8px;background:rgba(255,183,77,.1);border:1px solid rgba(255,183,77,.35);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:12.5px;color:#ffb74d;">
+    <span id="m-lock-request-text" style="flex:1;"></span>
+    <button type="button" class="btn btn-sm" onclick="liberarCardAgora()">✅ Liberar agora</button>
   </div>
 
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
@@ -5438,7 +5445,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.441-dev</div>
+<div class="version">v8.30.442-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10262,7 +10269,125 @@ let _cardLockHeartbeatTimer = null;
 let _cardLockUnsub = null;
 let _cardLockOwnedId = null; // id do card cujo lock ESTE cliente detém agora (null = nenhum)
 
+// ── PEDIR CARD ────────────────────────────────────────────────────
+// Feedback de usuário: o lock (acima) já evita duas pessoas sobrescreverem
+// o mesmo card, mas quem só tinha a aba aberta pra visualizar travava
+// quem realmente precisava editar — sem jeito de avisar, só no privado
+// mesmo ("sai do card?"). Isso aqui é um canal à parte, pendurado dentro
+// do MESMO nó do lock (card_locks/{cardId}/request={byUid,byWho,at}) —
+// não mexe no heartbeat/staleness que já existem, só dá um prazo curto
+// (CARD_LOCK_REQUEST_GRACE_MS) pra quem está segurando o card salvar e
+// sair, com liberação automática se não fizer isso a tempo.
+const CARD_LOCK_REQUEST_GRACE_MS = 5*60*1000; // 5min de carência após um pedido
+let _cardLockReqHandledAt = null;  // 'at' do último pedido já tratado (evita rearmar o timer a cada heartbeat-echo)
+let _cardLockReqForceTimer = null; // timer de quem SEGURA o lock: força salvar+fechar quando o prazo acaba
+let _cardLockReqUIInterval = null; // setInterval só de UI: atualiza o texto de contagem regressiva a cada 1s
+let _cardLockReqStealTimer = null; // timer de quem PEDIU: rede de segurança — assume o lock se ninguém liberar a tempo
+
 function _cardLockPath(cardId){ return FB+'/card_locks/'+cardId; }
+function _cardLockRequestPath(cardId){ return _cardLockPath(cardId)+'/request'; }
+function _stopCardLockRequestTimers(){
+  clearTimeout(_cardLockReqForceTimer); _cardLockReqForceTimer=null;
+  clearInterval(_cardLockReqUIInterval); _cardLockReqUIInterval=null;
+  clearTimeout(_cardLockReqStealTimer); _cardLockReqStealTimer=null;
+  _cardLockReqHandledAt=null;
+  const ownerRow=document.getElementById('m-lock-request-row'); if(ownerRow) ownerRow.style.display='none';
+  const askBtn=document.getElementById('m-lock-req-action'); if(askBtn) askBtn.innerHTML='';
+}
+// Botão "🔔 Pedir o card", no banner de quem está travado (m-lock-row).
+async function pedirCard(){
+  if(!editingId || !window._fbReady) return;
+  const reqRef=window._ref(window._db, _cardLockRequestPath(editingId));
+  const snap=await window._get(reqRef).catch(()=>null);
+  const existing=snap&&snap.val();
+  if(existing && existing.at && (Date.now()-existing.at<CARD_LOCK_REQUEST_GRACE_MS)) return; // já tem pedido em andamento
+  await window._set(reqRef, {
+    byUid: window._currentUser?.uid||'',
+    byWho: window._currentUser?.displayName||window._currentUser?.email||'?',
+    at: Date.now(),
+  }).catch(()=>{});
+}
+// Botão "✅ Liberar agora", no banner de quem está editando (m-lock-request-row)
+// — mesma ação que o timeout automático dispara, só que na hora.
+function liberarCardAgora(){ saveCard(); }
+// Atualiza a UI dos dois lados (quem segura o lock vê o pedido chegando;
+// quem pediu/um terceiro vê a contagem regressiva). `req` null = sem pedido
+// ativo (inexistente ou expirado).
+function _renderLockRequestUI(req, iOwnIt){
+  clearInterval(_cardLockReqUIInterval); _cardLockReqUIInterval=null;
+  const askBtn=document.getElementById('m-lock-req-action');
+  const ownerRow=document.getElementById('m-lock-request-row');
+  const ownerTxt=document.getElementById('m-lock-request-text');
+  if(!req){
+    // #m-lock-row (onde o botão mora) já fica display:none pra quem é dono
+    // do lock via _setCardLockUI — mas só escreve o botão pra quem não é,
+    // pra não deixar HTML de "pedir o próprio card" solto no DOM.
+    if(askBtn) askBtn.innerHTML = iOwnIt ? '' : '<button type="button" class="btn btn-sm" onclick="pedirCard()">🔔 Pedir o card</button>';
+    if(ownerRow) ownerRow.style.display='none';
+    return;
+  }
+  const myUid=window._currentUser?.uid;
+  const _tick=()=>{
+    const restam=Math.max(0, req.at+CARD_LOCK_REQUEST_GRACE_MS-Date.now());
+    const mm=String(Math.floor(restam/60000)).padStart(2,'0');
+    const ss=String(Math.floor((restam%60000)/1000)).padStart(2,'0');
+    if(iOwnIt){
+      if(ownerRow) ownerRow.style.display='flex';
+      if(ownerTxt) ownerTxt.textContent='🔔 '+(req.byWho||'Alguém')+' está esperando este card — salve e feche em até '+mm+':'+ss+', ou libere agora.';
+      if(askBtn) askBtn.innerHTML='';
+    } else if(req.byUid===myUid){
+      if(askBtn) askBtn.innerHTML='<span style="opacity:.85;">⏳ Pedido enviado — expira em '+mm+':'+ss+'</span>';
+    } else {
+      if(askBtn) askBtn.innerHTML='<span style="opacity:.85;">⏳ '+(req.byWho||'Alguém')+' já pediu este card (expira em '+mm+':'+ss+')</span>';
+    }
+  };
+  _tick();
+  _cardLockReqUIInterval=setInterval(_tick, 1000);
+}
+// Chamado de dentro do listener único do lock (_checkCardLock), toda vez que
+// card_locks/{cardId} muda — trata o pedido dos dois lados sem precisar de
+// um segundo listener no Firebase. `iOwnIt` já reflete o estado ATUAL de
+// _cardLockOwnedId (chamar isto DEPOIS de _apply()/do early-return de eco).
+function _handleLockRequest(cardId, lock){
+  const iOwnIt=_cardLockOwnedId===cardId;
+  const req=lock && lock.request;
+  if(!req || !req.at || (Date.now()-req.at>=CARD_LOCK_REQUEST_GRACE_MS)){
+    // Sem pedido ativo: limpa timers armados de um pedido anterior (se
+    // houver) e redesenha a UI limpa — inclui o botão "🔔 Pedir o card"
+    // pra quem está travado (_renderLockRequestUI cuida disso; não usar
+    // _stopCardLockRequestTimers() aqui porque ele só zera a área sem
+    // desenhar o botão de novo).
+    clearTimeout(_cardLockReqForceTimer); _cardLockReqForceTimer=null;
+    clearTimeout(_cardLockReqStealTimer); _cardLockReqStealTimer=null;
+    _cardLockReqHandledAt=null;
+    _renderLockRequestUI(null, iOwnIt);
+    return;
+  }
+  _renderLockRequestUI(req, iOwnIt);
+  const remaining=req.at+CARD_LOCK_REQUEST_GRACE_MS-Date.now();
+  if(iOwnIt){
+    if(_cardLockReqHandledAt===req.at) return; // já armamos o timer pra ESTE pedido
+    _cardLockReqHandledAt=req.at;
+    clearTimeout(_cardLockReqForceTimer);
+    _cardLockReqForceTimer=setTimeout(()=>{
+      if(_cardLockOwnedId===cardId && editingId===cardId) saveCard(); // salva o que tiver na tela e fecha
+    }, Math.max(0,remaining));
+  } else if(req.byUid===window._currentUser?.uid){
+    if(_cardLockReqHandledAt===req.at) return;
+    _cardLockReqHandledAt=req.at;
+    clearTimeout(_cardLockReqStealTimer);
+    // Rede de segurança: se quem segurava o lock não liberou a tempo (aba
+    // travada/fechada sem beforeunload, sem internet etc.), assume o lock à
+    // força — ignora o heartbeat, que só prova que a aba tá aberta, não que
+    // alguém salvou. +2s de folga pro dono ter prioridade se estiver
+    // salvando bem na hora do estouro.
+    _cardLockReqStealTimer=setTimeout(()=>{
+      if(editingId!==cardId || !window._fbReady) return; // já saiu do card, nada a fazer
+      window._set(window._ref(window._db,_cardLockPath(cardId)), _cardLockPayload()).catch(()=>{});
+      window._remove(window._ref(window._db,_cardLockRequestPath(cardId))).catch(()=>{});
+    }, Math.max(0,remaining)+2000);
+  }
+}
 function _cardLockPayload(){
   return {
     uid: window._currentUser?.uid||'',
@@ -10287,7 +10412,9 @@ function _startCardLockHeartbeat(cardId){
   _stopCardLockHeartbeat();
   _cardLockHeartbeatTimer=setInterval(()=>{
     if(!window._fbReady || _cardLockOwnedId!==cardId) return;
-    fbSet(_cardLockPath(cardId), _cardLockPayload());
+    // update() (não set()) — não pode apagar um pedido pendente (.../request)
+    // que só existe pra este cliente reagir; ver comentário no bloco "PEDIR CARD".
+    fbUpdate(_cardLockPath(cardId), _cardLockPayload()).catch(()=>{});
   }, CARD_LOCK_HEARTBEAT_MS);
 }
 // Chamada de dentro de openCard(id) — lê o lock atual e decide: assume (se
@@ -10297,6 +10424,7 @@ function _startCardLockHeartbeat(cardId){
 function _checkCardLock(cardId){
   if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
   _stopCardLockHeartbeat();
+  _stopCardLockRequestTimers();
   _cardLockOwnedId=null;
   if(!window._fbReady){ _setCardLockUI(false); return; }
   const myUid=window._currentUser?.uid;
@@ -10307,7 +10435,11 @@ function _checkCardLock(cardId){
     if(!lock || isStale || isMine){
       _setCardLockUI(false);
       _cardLockOwnedId=cardId;
-      fbSet(_cardLockPath(cardId), _cardLockPayload());
+      // isMine: usa update() (não set()) pra não apagar um pedido pendente
+      // (card_locks/{cardId}/request) que porventura já exista — só o caso
+      // "assumindo de alguém/de ninguém" precisa mesmo de overwrite completo.
+      if(isMine) fbUpdate(_cardLockPath(cardId), _cardLockPayload()).catch(()=>{});
+      else fbSet(_cardLockPath(cardId), _cardLockPayload());
       _startCardLockHeartbeat(cardId);
     } else {
       // Perdemos a corrida (duas pessoas abriram o card quase junto — as
@@ -10321,9 +10453,18 @@ function _checkCardLock(cardId){
       _setCardLockUI(true, lock.who);
     }
   };
-  window._get(ref).then(snap=>_apply(snap.val())).catch(()=>_setCardLockUI(false));
+  window._get(ref).then(snap=>{
+    const lock=snap.val();
+    _apply(lock);
+    _handleLockRequest(cardId, lock); // depois de _apply(), pra já refletir se virei dono agora
+  }).catch(()=>_setCardLockUI(false));
   _cardLockUnsub=window._onValue(ref, snap=>{
     const lock=snap.val();
+    // _handleLockRequest ANTES do early-return abaixo: um pedido chega via
+    // update() (ver "PEDIR CARD"), então lock.uid continua sendo o meu —
+    // cairia direto no "é só o meu heartbeat" e o dono nunca veria o pedido
+    // se isto rodasse depois do return.
+    _handleLockRequest(cardId, lock);
     // Se o lock ainda é nosso (é só o nosso próprio heartbeat voltando),
     // não precisa reprocessar — evita achar que "alguém mudou o lock" a
     // cada minuto por causa do próprio _startCardLockHeartbeat.
@@ -10337,6 +10478,7 @@ function _checkCardLock(cardId){
 function _releaseCardLock(cardId){
   if(_cardLockUnsub){ _cardLockUnsub(); _cardLockUnsub=null; }
   _stopCardLockHeartbeat();
+  _stopCardLockRequestTimers();
   if(!cardId || _cardLockOwnedId!==cardId){ _cardLockOwnedId=null; return; }
   _cardLockOwnedId=null;
   if(!window._fbReady) return;
@@ -10344,7 +10486,7 @@ function _releaseCardLock(cardId){
   const ref=window._ref(window._db, _cardLockPath(cardId));
   window._get(ref).then(snap=>{
     const lock=snap.val();
-    if(lock && lock.uid===myUid) window._remove(ref);
+    if(lock && lock.uid===myUid) window._remove(ref); // remove o nó inteiro — já libera o lock E qualquer pedido pendente junto
   }).catch(()=>{});
 }
 if(!window._cardLockBeforeUnloadSet){

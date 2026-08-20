@@ -1653,6 +1653,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.442-dev — 2026-08-20 — Card travado: botão "🔔 Pedir o card"
+Feedback de usuário: quando alguém só tinha o card aberto pra visualizar
+(sem editar), quem precisava mexer nele de verdade ficava sem jeito de
+avisar — só no privado mesmo ("poderia sair do card?"). Agora, no banner
+de card travado, aparece um botão **"🔔 Pedir o card"**. Quem está
+editando vê um aviso com contagem regressiva de 5 minutos pra salvar e
+sair (ou clicar em "✅ Liberar agora"); se não fizer nada, o card salva e
+fecha sozinho quando o prazo acaba, liberando pra quem pediu — cobre
+justamente o caso de aba aberta parada. Se o dono do card estiver
+offline/com a aba fechada de verdade, quem pediu assume o lock como rede
+de segurança, sem precisar esperar os 10min de expiração por heartbeat
+que já existiam. Não precisou de mudança no `database.rules.json` (o
+pedido usa o mesmo nó do lock, que já tinha permissão de escrita pro
+squad) nem de push notification — o aviso é só dentro do app por
+enquanto.
+
 ### v8.30.441-dev — 2026-08-20 — Card travado: links e menções de card voltam a ficar clicáveis
 Feedback de usuário: card travado (outra pessoa editando) virava
 modo leitura, mas isso incluía sem querer os links da descrição/
