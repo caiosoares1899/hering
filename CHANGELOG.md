@@ -1653,6 +1653,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.441-dev — 2026-08-20 — Card travado: links e menções de card voltam a ficar clicáveis
+Feedback de usuário: card travado (outra pessoa editando) virava
+modo leitura, mas isso incluía sem querer os links da descrição/
+comentário/checklist (`class="desc-link"`) e as menções a outro card
+(`class="mention-card"`) — a pessoa que só queria ler um link precisava
+pedir pro dono do lock sair do card. A exceção de `pointer-events` que já
+existia pra anexos e pro link do Milanote (fix anterior) foi estendida
+pra cobrir essas duas classes também. Não muda o comportamento do lock
+em si — só libera navegação/leitura, igual já funcionava pra anexos.
+
 ### v8.30.440-dev — 2026-08-20 — Checklist: opção de recolher cada checklist do card
 Pedido do time: quando o card tem mais de um checklist, a lista inteira
 ficava sempre aberta e a visão poluía rápido. Cada checklist agora tem um
