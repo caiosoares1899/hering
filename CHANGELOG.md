@@ -1678,6 +1678,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.446-dev — 2026-08-20 — Automações: modo autônomo pra acionar o Agente Ágil
+Item 5 do roteiro do orquestrador (`functions/agente-agil-orquestrador/`):
+gatilho automático em mudança de card, plugado nas Automações que já
+existem no board em vez de inventar semântica nova de "qualquer mudança
+de card" — reusa os gatilhos já validados (`due_today`, `due_overdue`,
+`aging`, `unblocked`, `checklist_complete`, etc.).
+
+A ação **"Notificar Agente Ágil"** (`AUTO_ACTIONS.notify_agent`) ganhou
+uma 3ª opção — **"🤖 Modo autônomo"** — só visível quando o squad ativo é
+`dev` (a Cloud Function `agenteAgilMencao` tem esse squad travado no path
+do trigger, literal, não wildcard). Marcada, em vez de abrir o painel
+local do Agente Ágil (comportamento de sempre, continua padrão), a
+automação escreve um comentário de verdade em `card_comments/{cardId}`
+contendo `@Agente Ágil` — entra no MESMO pipeline já validado em produção
+pela @menção humana, sem precisar de nenhuma Cloud Function nova. `uid`
+do comentário é `'automacao'` (nunca `'agente-agil'` — esse é filtrado
+como auto-comentário do próprio agente e seria ignorado). Mesmo ajuste
+replicado no caso especial de `wip_exceeded` (fora do loop por-card de
+`runAutoRules()`).
+
 ### v8.30.445-dev — 2026-08-20 — Busca geral: "Ver N cards no board"
 Pedido do time: a busca geral (🔍/Ctrl+K) é ótima pra achar UM card
 específico, mas às vezes a pessoa quer ver TODOS os cards que batem com

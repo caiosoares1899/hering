@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.445-dev</div>
+<div class="version">v8.30.446-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23991,7 +23991,28 @@ const AUTO_ACTIONS = [
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
     run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
   { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab', visible:()=>AGENTE_AGIL_ATIVO,
-    run:(rule,card)=>{ const tab=rule.actionVal||'daily'; openAgent(); swAgTab(tab); qa(tab,`[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`); return false; } },
+    run:(rule,card)=>{
+      const tab=rule.actionVal||'daily';
+      if(tab==='auto'){
+        // Modo autônomo: entra no MESMO pipeline já validado da @menção
+        // humana (Cloud Function agenteAgilMencao, escuta card_comments do
+        // squad dev) — sem abrir nada localmente, sem Cloud Function nova.
+        // uid NÃO pode ser 'agente-agil': mentionTrigger.js filtra qualquer
+        // comentário com esse uid como "auto-comentário do próprio agente"
+        // ANTES de olhar o texto — usar esse uid faria a automação escrever
+        // um comentário que é silenciosamente ignorado, nunca dispara nada.
+        if(!window._fbReady) return false;
+        const comment={
+          id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+          uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+          text:'@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.',
+          ts:new Date().toISOString(),
+        };
+        window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment).catch(()=>{});
+        return false; // não altera o card em si, só dispara o agente
+      }
+      openAgent(); swAgTab(tab); qa(tab,`[Automação disparada] Card "${card.title}" acionou a regra "${rule.label}". Alguma ação recomendada?`); return false;
+    } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
     run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
@@ -24039,7 +24060,7 @@ function _autoValLabel(valueType, val){
     case 'priority': return ({critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'})[val] || val;
     case 'tag': return getTag(val)?.label || val;
     case 'member_optional': case 'member': { const m=members.find(x=>x.init===val); return m?(m.init+' · '+_shortName(m.name)):val; }
-    case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva'})[val] || val;
+    case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva',auto:'🤖 Modo autônomo'})[val] || val;
     case 'submarca': return SUBMARCA_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'tamanho': return SIZE_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'padrao': return cardPatterns[val]?.nome || val;
@@ -24065,7 +24086,14 @@ function _autoRenderValueOptions(valueType){
     // "atribuído a ___" precisa de uma pessoa de verdade escolhida, diferente
     // de 'member_optional' (usado em ações, onde "— manter atual —" faz sentido).
     case 'member': return members.map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(_shortName(m.name))}</option>`).join('');
-    case 'agent_tab': return `<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>`;
+    case 'agent_tab': {
+      // "Modo autônomo" só aparece no squad dev: o gatilho que ele usa
+      // (agenteAgilMencao, ver notify_agent) tem o path da Cloud Function
+      // travado em kanban/squads/dev/... — oferecer a opção em outro squad
+      // criaria uma regra que parece funcionar mas nunca dispara nada.
+      const autoOpt = ACTIVE_SQUAD==='dev' ? '<option value="auto">🤖 Modo autônomo (aciona o orquestrador, sem abrir o painel)</option>' : '';
+      return `<option value="daily">Aba Daily</option><option value="metricas">Aba Métricas</option><option value="retro">Aba Retrospectiva</option>${autoOpt}`;
+    }
     case 'submarca': { const opts=tags.filter(t=>SUBMARCA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhuma —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'padrao': { const ids=Object.keys(cardPatterns||{}); return '<option value="">— nenhum —</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join(''); }
@@ -24266,7 +24294,22 @@ function runAutoRules(eventType, cardId, extraVal){
     const wipAction=_autoRuleActions(wipRule)[0];
     if(wip>parseInt(agilCfg.wip||3) && wipAction?.action==='notify_agent'){
       const tab=wipAction.actionVal||'metricas';
-      setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
+      if(tab==='auto'){
+        // Mesmo modo autônomo do notify_agent normal (ver AUTO_ACTIONS) —
+        // esse caso fica de fora do loop por-card acima (WIP é agregado do
+        // board inteiro), por isso replica em vez de reusar actionDef.run().
+        if(window._fbReady){
+          const comment={
+            id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+            uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+            text:'@Agente Ágil — [Automação] WIP atual é '+wip+', acima do limite de '+(agilCfg.wip||3)+'. O que fazer?',
+            ts:new Date().toISOString(),
+          };
+          window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment).catch(()=>{});
+        }
+      } else {
+        setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
+      }
     }
   }
 
