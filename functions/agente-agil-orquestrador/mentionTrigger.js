@@ -217,11 +217,11 @@ const agenteAgilMencao = onValueCreated(
     const db = getDatabase();
 
     try {
-      const { llmClient } = escolheClienteParaTarefa({ apiKey: ANTHROPIC_API_KEY.value() });
+      const { llmClient, tier } = await escolheClienteParaTarefa({ apiKey: ANTHROPIC_API_KEY.value(), taskText: comment?.text, db });
       const outcome = await processarMencao(db, { cardId, commentId, comment, llmClient });
       if (outcome.processed) {
         const fallbackNote = outcome.fallbackComentario ? ' | FALLBACK: finalText postado como comentario (modelo não chamou a ferramenta)' : '';
-        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_MENCAO} |`, resumirResultadoParaLog(outcome.result) + fallbackNote);
+        console.log('[agente-agil-mencao]', cardId, commentId, `dryRun=${DRY_RUN_MENCAO} | tier=${tier} |`, resumirResultadoParaLog(outcome.result) + fallbackNote);
       } else {
         console.log('[agente-agil-mencao]', cardId, commentId, `ignorado (${outcome.reason})`);
       }

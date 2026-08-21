@@ -7655,6 +7655,29 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-21 · Item 7 do roadmap: roteamento de modelo real (Haiku/Sonnet + override manual do ADM pra Opus)
+Com os itens 1-6 do roadmap fechados, avança o item 7
+(`escolheClienteParaTarefa()`, até aqui hardcoded em `sonnet`).
+Combinado antes do código: `opus` não ganha nenhum caminho automático
+nesta v1 — só um override manual do ADM
+(`kanban/config/agente_agil_orquestrador/model_tier_override`, mesmo
+padrão fail-safe do kill switch) alcança esse tier.
+
+Sem override, uma heurística de texto pura (sem LLM, sem rede)
+rebaixa pra `haiku` só tarefas com cara de pergunta conceitual curta
+(começa com "o que é"/"como funciona"/"por que"/"me explica"... e tem
+no máximo 20 palavras) — o mesmo tipo já validado nos canários rodando
+só `biblioteca_agil`. Qualquer pedido de ação no board, pergunta
+longa/composta ou texto vazio cai no default seguro `sonnet`.
+
+`mentionTrigger.js` loga o tier escolhido em cada execução, pra medir
+a distribuição real antes de calibrar mais. 13 testes novos
+(`escolheClienteParaTarefa.test.js`). Suíte inteira: **193/193
+passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
+
 ### 2026-08-18 · Quarto ajuste: notifica quem fez a @menção original
 Depois de ver a resposta aparecer certinho no card, o usuário perguntou:
 "não deveria me mencionar pra aparecer notificação pra mim?". Resposta:
