@@ -44,12 +44,30 @@ deve ir pra prod, confirme o escopo também.
    inteiro contra o baseline conhecido (historicamente: braces -1,
    parens 0 — se divergir do último baseline usado na sessão, investigue
    antes de seguir).
-8. Commit → `git fetch origin main -q && git rebase origin/main -q` →
+8. **Confere se o `CODE_MAP.md` precisa de atualização.** Ele só é útil
+   se continuar refletindo o código de verdade — não é opcional manter
+   em dia. Usa o diff acumulado que está sendo promovido (o mesmo do
+   passo 1) pra checar:
+   - alguma função/const que o `CODE_MAP.md` indexa foi **renomeada,
+     removida ou movida** de área? Atualiza a entrada correspondente.
+   - a promoção introduziu uma **área funcional nova** (não só um ajuste
+     dentro de uma função já existente) que ainda não tem seção no mapa?
+     Adiciona uma entrada nova, no mesmo padrão das existentes (nome da
+     função/const + linha + descrição de uma linha).
+   Não precisa re-conferir o arquivo inteiro nem revalidar todos os
+   números de linha já existentes a cada promoção — isso é
+   responsabilidade de quem for *usar* o mapa depois (sempre re-`grep`
+   antes de confiar numa linha, conforme o próprio `CODE_MAP.md` e o
+   `CLAUDE.md` já deixam explícito). Aqui o objetivo é só não deixar
+   nenhum anchor morto ou uma área nova invisível. Se nada relevante
+   mudou, segue sem tocar no arquivo. Se o `CODE_MAP.md` for editado,
+   entra no mesmo commit/PR da promoção.
+9. Commit → `git fetch origin main -q && git rebase origin/main -q` →
    push → PR → merge (squash, nunca self-merge sem checar CI) → rebase +
    push final na branch de trabalho. Mesmo fluxo de qualquer outro PR
    neste repo.
-9. Tenta criar e empurrar as tags de release (`kanban-vX.Y.Z` no commit
-   de merge) — ver nota sobre 403 abaixo se falhar.
+10. Tenta criar e empurrar as tags de release (`kanban-vX.Y.Z` no commit
+    de merge) — ver nota sobre 403 abaixo se falhar.
 
 ## Passo 2 — Avisos (Mural + WhatsApp)
 
@@ -134,3 +152,10 @@ entregue.
 - **Não promove sem validação explícita** de quem pediu que o dev já foi
   testado/aprovado — se não tiver certeza, pergunta antes de tocar em
   `kanban.html`.
+- **`CODE_MAP.md` esquecido em promoções passadas** — antes dele existir,
+  `CLAUDE.md` já tinha ficado semanas descrevendo `functions/index.js`
+  como "a única Cloud Function" mesmo depois de várias outras terem sido
+  adicionadas (Spotify, intake, backup semanal) — um achado incidental
+  numa promoção chegou a sinalizar isso como TODO e ainda assim ficou
+  parado. O passo 8 acima existe pra não deixar o mapa sofrer o mesmo
+  esquecimento agora que ele existe.
