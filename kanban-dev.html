@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.449-dev</div>
+<div class="version">v8.30.450-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11504,6 +11504,12 @@ function _duplicarCardObj(card, opts){
   novo.archived=false;
   novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
   novo.history=[]; novo.moveLog=[];
+  // Relações de supercard nunca sobrevivem à duplicação: o clone de um
+  // supercard não "herda" os filhos do original (os dois passariam a
+  // reivindicar os mesmos childCardIds), e o clone de um filho não fica
+  // apontando pra um pai cujo childCardIds nunca vai listar essa cópia —
+  // duplicata sempre nasce como card avulso, pode ser vinculada na mão depois.
+  novo.childCardIds=[]; novo.superParentId=null;
   if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
   if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
@@ -24292,6 +24298,31 @@ function _autoRuleActions(rule){
   return [];
 }
 
+// Quando TODOS os filhos ATIVOS de um supercard chegam numa coluna de fim
+// (Concluído, Cancelado etc. — ver _flowDoneColIds(), que respeita a config
+// do PO em vez de assumir só uma coluna "done"), o pai vai pra lá sozinho:
+// o supercard é a soma dos filhos, não faz sentido continuar aberto se tudo
+// já foi resolvido. Espelha _crvPropagateToChildren() (pai→filhos, Ficha
+// Técnica), só que na direção oposta (filhos→pai). Filhos arquivados ficam
+// de fora da checagem (não contam nem a favor nem contra); se não sobrar
+// nenhum filho ativo, não decide sozinho.
+function _checkSupercardAutoComplete(childCard){
+  if(!childCard || !childCard.superParentId) return;
+  const parent=cards.find(c=>c.id===childCard.superParentId);
+  if(!parent || !(parent.childCardIds||[]).length) return;
+  const doneIds=_flowDoneColIds();
+  if(doneIds.includes(parent.col)) return; // pai já concluído
+  const activeChildren=parent.childCardIds.map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
+  if(!activeChildren.length || !activeChildren.every(c=>doneIds.includes(c.col))) return;
+  const doneCol=_flowDoneColId();
+  recordMove(parent, doneCol);
+  parent.col=doneCol;
+  parent.edited='Automação'; parent.editedAt=new Date().toISOString().split('T')[0];
+  parent.updatedAt=new Date().toISOString(); parent.updatedBy='Automação';
+  recordHistory(parent, 'concluído automaticamente — todos os filhos foram concluídos', '⚙ Supercard');
+  fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao concluir automaticamente:', err));
+  renderBoard();
+}
 // Executa automações após mudanças no board. eventType: 'move'|'create'|
 // 'priority'|'due_today'|'due_overdue'|'checklist_complete'|'risk_added'|
 // 'blocked'|'unblocked'|'aging' — cada AUTO_TRIGGERS.matches() decide se a
@@ -24302,6 +24333,7 @@ function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
   let _anyTriggered=false; // true se alguma regra mudou o card -- usado no final pra persistir no Firebase (antes so mudava em memoria e sumia no reload)
   const card=cards.find(c=>c.id===cardId); if(!card) return;
+  if(eventType==='move') _checkSupercardAutoComplete(card);
   activeRules.forEach(rule=>{
     const triggerDef=_autoTrigger(rule.trigger);
     if(!triggerDef) return; // regra salva com trigger que não existe mais

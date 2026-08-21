@@ -1713,6 +1713,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.450-dev — 2026-08-21 — Supercard: conclusão automática + fix na duplicação
+Dois pedidos direto sobre a área de Supercards:
+
+- **Supercard conclui sozinho quando todos os filhos concluem**: nova
+  `_checkSupercardAutoComplete(childCard)`, chamada a cada evento `'move'`
+  processado por `runAutoRules()` (cobre drag-drop mouse/touch, o Agente
+  Ágil via `mover_coluna`, e a movimentação rápida do modal — os mesmos
+  pontos que já disparavam automações). Se o card movido tem
+  `superParentId` e TODOS os filhos ativos do pai (`childCardIds`, excluindo
+  arquivados) estão numa coluna de fim — `_flowDoneColIds()`, que respeita
+  a config do PO em vez de assumir só uma coluna "done" —, o pai vai pra
+  lá sozinho também, com histórico registrado ("concluído automaticamente
+  — todos os filhos foram concluídos"). Se não sobrar nenhum filho ativo
+  (todos arquivados), não decide sozinho. Espelha `_crvPropagateToChildren()`
+  (pai→filhos, Ficha Técnica), na direção oposta.
+- **Fix: duplicar um card não corrompe mais relações de supercard**.
+  `_duplicarCardObj()` faz uma clonagem completa (`JSON.parse(JSON.stringify(card))`)
+  e nunca zerava `childCardIds`/`superParentId` — duplicar um supercard
+  fazia o clone "herdar" os mesmos filhos do original (dois pais
+  reivindicando os mesmos `childCardIds`), e duplicar um filho deixava a
+  cópia com `superParentId` apontando pra um pai cujo `childCardIds` nunca
+  ia listar essa cópia. Agora todo duplicado nasce como card avulso,
+  vinculável na mão depois. **Achado ao investigar um pedido de
+  confirmação** de que a Ficha Técnica é duplicada corretamente (confirmado
+  que já era — `card.criativo` nunca estava na lista de campos zerados do
+  modal de duplicar, então sempre sobrevivia à clonagem).
+
 ### v8.30.449-dev — 2026-08-20 — Segurança: whitelist de externos passa a ser chaveada por email
 Preparação pro fix de segurança em `database.rules.json` (ver seção
 própria mais abaixo neste CHANGELOG) — achado durante uma revisão de
