@@ -1772,6 +1772,62 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.455-dev — 2026-08-21 — Central de Ajuda: sincroniza com o lote v8.30.426-dev → v8.30.454-dev
+Puramente documentação (`HELP_CONTENT`), sem mudança de comportamento —
+primeira execução da skill `/atualizarhelpcontent` desde a auditoria de
+14/08 (v8.30.417-dev → v8.30.425-dev). Cobre o gap acumulado desde então:
+
+- **"Supercard (cards filhos)"**: faltava por completo a história do
+  encadeamento de 2 níveis (campanha → criativo → versão, v8.30.452-dev)
+  e a conclusão automática em cascata (v8.30.450-dev), incluindo a
+  exceção de "todos cancelados não conclui sozinho" (v8.30.455 prod).
+  Maior gap encontrado nesta rodada.
+- **"Ficha Técnica (produção criativa)"**: o parágrafo "Supercard não tem
+  ficha própria" estava desatualizado — descrevia o modelo antigo de 1
+  nível só (ficha some inteira ao virar supercard). Reescrito pros 4
+  papéis reais hoje (campanha/criativo/criativo-com-versões/versão).
+  Também atualizado: "Outros" agora vale pra Objetivo/Plataforma/Tipo
+  também (não só Canal), e o texto especificado substitui "Outros" em
+  todo lugar (v8.30.431-dev/253 prod) — a entrada só mencionava Canal.
+- **Nova entrada "Card travado (duas pessoas no mesmo card)"**: a
+  mecânica de lock inteira (modo leitura, links/anexos continuam
+  clicáveis) e o botão "🔔 Pedir o card" (v8.30.442-dev/443-dev) nunca
+  tiveram entrada nenhuma na Central de Ajuda — feature inteira invisível
+  pra quem não sabia que existia.
+- **"Descrições adicionais"**: faltava o seletor de cor do rótulo
+  (v8.30.453-dev/454-dev prod).
+- **"Automações"**: faltava o "🤖 Modo autônomo" da ação "Notificar
+  Agente Ágil" (v8.30.446-dev/447-dev).
+- **"Busca global (Ctrl+K)"**: faltava o botão "Ver N cards no board"
+  (v8.30.445-dev).
+- **"Modelos"**: faltava mencionar que a Ficha Técnica é salva/aplicada
+  junto com o resto do modelo (v8.30.438-dev/439-dev).
+- **"Checklist"**: faltava a opção de recolher cada checklist do card
+  (v8.30.440-dev).
+
+Não precisou de ajuste (comportamento já coberto de forma genérica pela
+entrada existente, ou correção interna sem texto de tela pra
+atualizar): auto-scroll de coluna no drag-and-drop (v8.30.429-dev),
+Agente Ágil no autocomplete de @menção (v8.30.428-dev), Agente Ágil
+respeitando campos obrigatórios (v8.30.427-dev), toggle de coluna
+estendido pra Insights/CFD (v8.30.432-dev/433-dev — a entrada de CFD já
+aponta pra "⚙ Config → Fluxo → Ocultar do CFD" de forma genérica),
+checagem de iniciais duplicadas passando a olhar o board inteiro
+(v8.30.434-dev — correção interna, a promessa "sem duplicata" da tela já
+valia), fix de menção @card na caixa de comentário (v8.30.436-dev —
+restaura comportamento já prometido), notificações sem duplicata/sem
+ressuscitar (v8.30.444-dev — idem), 3 bugs de supercard (v8.30.448-dev —
+correções internas), whitelist de externos (v8.30.449-dev — segurança
+interna, sem texto de usuário final pra ajustar), Ctrl+S/badge
+anexo/filtro Criado por/filtro coluna em Dados do Board (v8.30.430-dev)
+e filtro nome/tag em "Usar modelo" (v8.30.435-dev) — descoberta própria
+o suficiente (botão/filtro visível na tela) pra não exigir entrada
+dedicada na Central de Ajuda por ora; revisitar se surgir dúvida real de
+alguém.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.454-dev — 2026-08-21 — Supercard de 2 níveis: 4 bugs corrigidos
 Revisão da área de supercards logo depois da promoção da v8.30.454
 (campanha → criativo → versão), a pedido do usuário. 3 bugs reais + 1
