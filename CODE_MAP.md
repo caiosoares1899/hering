@@ -59,6 +59,14 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `searchSuperChildren()` — L20895 — busca de cards existentes ao criar um filho
 - `_mergeModeloEmCardObj()` — L23852
 - `_applyFanoutTemplate()` — L23821 — cria os filhos de uma receita de fan-out
+- Nesting de 2 níveis (campanha → criativo → versão): `editingSuperParentIsChild`
+  (global, L20765) + `initSuperChildren()` — L20785 — calcula se o card
+  aberto já seria uma "versão" (teto real do 2º nível)
+- `_crvOwnSummary()` — L20869 — resumo dos campos próprios do criativo,
+  usado no card de versão (2º nível)
+- `_checkSupercardAutoComplete()` — L24402 — conclui o supercard sozinho
+  quando todos os filhos ativos chegam numa coluna de fim; cascateia
+  filho→pai→avô recursivamente
 
 ### Card lock / "Pedir o card"
 - `CARD_LOCK_REQUEST_GRACE_MS` — L10311
