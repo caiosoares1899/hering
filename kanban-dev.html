@@ -5453,7 +5453,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.453-dev</div>
+<div class="version">v8.30.454-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12175,13 +12175,20 @@ function _crvPropagateToChildren(parentCard){
   // diferente produzindo), não só os 4 campos que uma campanha compartilha
   // com seus criativos (que aí sim variam por peça).
   const keys = _cardIsSuperChild(parentCard, cards) ? Object.keys(src) : _CRV_SHARED_KEYS;
-  if(!keys.some(k=>src[k])) return;
+  // Array vazio ([]) é truthy em JS — !crv[k] sozinho não detecta um campo
+  // tipo objetivos/plataformas "vazio na prática" (ex.: card que já tinha
+  // outro campo da ficha preenchido, então criativo.objetivos ficou salvo
+  // como [] em vez de nunca existir). Sem isso a propagação criativo→
+  // versões pulava esses campos pra sempre. Mesmo helper que
+  // _mergeModeloEmCardObj() já usa pro mesmo problema (modelo→card).
+  const isEmpty=v=>Array.isArray(v)?v.length===0:!v;
+  if(!keys.some(k=>!isEmpty(src[k]))) return;
   let any=false;
   parentCard.childCardIds.forEach(cid=>{
     const child=cards.find(c=>c.id===cid); if(!child) return;
     const crv=child.criativo?Object.assign({},child.criativo):{};
     let changed=false;
-    keys.forEach(k=>{ if(!crv[k] && src[k]){ crv[k]=src[k]; changed=true; } });
+    keys.forEach(k=>{ if(isEmpty(crv[k]) && !isEmpty(src[k])){ crv[k]=src[k]; changed=true; } });
     if(changed){ child.criativo=crv; any=true; fbSaveCard(child).catch(err=>console.error('[supercard] falha ao propagar Ficha Técnica pro filho:', err)); }
   });
   if(any) renderBoard();
@@ -20914,8 +20921,17 @@ function _crvUpdateFichaSecVisibility(){
   const isSuper = editingSuperChildren.length>0;
   const isChild = !!editingSuperParent;
   const isTopSuper = isSuper && !isChild; // campanha — sem ficha própria
+  // Versão (2º nível — o pai desta já é filho de outra coisa): folha de
+  // verdade, também sem editar os campos próprios (Tipo/Formato/Objetivo)
+  // — bug real: antes só isTopSuper escondia .crv-own-fld, deixando a
+  // versão com esses campos soltos e editáveis mesmo a nota acima dizendo
+  // "a ficha técnica inteira vem de lá" (contradizia o estado 5 descrito
+  // no comentário desta função). Como a propagação é fill-empty-only, uma
+  // edição aqui divergia da versão pro criativo-pai pra sempre, sem
+  // ninguém perceber.
+  const isVersion = isChild && editingSuperParentIsChild;
   document.querySelectorAll('#m-criativo-sec .crv-shared-fld').forEach(el=>{ el.style.display = isChild ? 'none' : ''; });
-  document.querySelectorAll('#m-criativo-sec .crv-own-fld').forEach(el=>{ el.style.display = isTopSuper ? 'none' : ''; });
+  document.querySelectorAll('#m-criativo-sec .crv-own-fld').forEach(el=>{ el.style.display = (isTopSuper || isVersion) ? 'none' : ''; });
   const superNote=document.getElementById('m-crv-super-note');
   if(superNote) superNote.style.display = isSuper ? '' : 'none';
   const childNote=document.getElementById('m-crv-child-note');
@@ -24171,6 +24187,11 @@ const AUTO_ACTIONS = [
         if(paiModelo) _mergeModeloEmCardObj(card, paiModelo);
       }
       _applyFanoutTemplate(card, tpl, '⚙ Automação');
+      // Bug real: só o caminho manual (botão "🧩 Aplicar receita" dentro do
+      // card) propagava a Ficha Técnica pros filhos recém-criados — aqui,
+      // via Automação, os filhos nasciam sem herdar Campanha/Funil/Etapa/
+      // Canal (ou a ficha inteira, se `card` já for um criativo) do pai.
+      _crvPropagateToChildren(card);
       return true;
     } },
 ];
@@ -24391,6 +24412,17 @@ function _autoRuleActions(rule){
   return [];
 }
 
+// Coluna "cancelamento" só por heurística de nome — não existe um cancelCols
+// configurável separado do doneCols (que já junta Concluído+Cancelado pro
+// resto do fluxo/CFD, ver _flowDoneColIds()). Usado só por
+// _checkSupercardAutoComplete() pra decidir se o supercard conclui sozinho
+// ou fica onde está quando TODOS os filhos terminam cancelados — pedido
+// direto: "se todos filhos forem cancelados, o supercard deve se manter
+// onde está" (cancelar tudo não é a mesma coisa que concluir tudo).
+function _isColCancelLike(colId){
+  const col=(columns||[]).find(c=>c.id===colId);
+  return /cancel/i.test(col?.name||'');
+}
 // Quando TODOS os filhos ATIVOS de um supercard chegam numa coluna de fim
 // (Concluído, Cancelado etc. — ver _flowDoneColIds(), que respeita a config
 // do PO em vez de assumir só uma coluna "done"), o pai vai pra lá sozinho:
@@ -24398,7 +24430,9 @@ function _autoRuleActions(rule){
 // já foi resolvido. Espelha _crvPropagateToChildren() (pai→filhos, Ficha
 // Técnica), só que na direção oposta (filhos→pai). Filhos arquivados ficam
 // de fora da checagem (não contam nem a favor nem contra); se não sobrar
-// nenhum filho ativo, não decide sozinho.
+// nenhum filho ativo, não decide sozinho. Exceção: se TODOS os filhos
+// ativos terminaram cancelados (nenhum de fato concluído), o pai fica onde
+// está — ver _isColCancelLike() acima.
 function _checkSupercardAutoComplete(childCard){
   if(!childCard) return;
   // Não há parentId no filho — mesmo padrão de busca reversa de
@@ -24414,6 +24448,7 @@ function _checkSupercardAutoComplete(childCard){
     if(doneIds.includes(parent.col)) return; // pai já concluído
     const activeChildren=(parent.childCardIds||[]).map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
     if(!activeChildren.length || !activeChildren.every(c=>doneIds.includes(c.col))) return;
+    if(activeChildren.every(c=>_isColCancelLike(c.col))) return; // todos cancelados — mantém o pai onde está
     recordMove(parent, doneCol);
     parent.col=doneCol;
     parent.edited='Automação'; parent.editedAt=new Date().toISOString().split('T')[0];

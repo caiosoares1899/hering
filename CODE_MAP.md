@@ -64,9 +64,11 @@ instrumentação extra) — os números da seção painel abaixo são de
   aberto já seria uma "versão" (teto real do 2º nível)
 - `_crvOwnSummary()` — L20869 — resumo dos campos próprios do criativo,
   usado no card de versão (2º nível)
-- `_checkSupercardAutoComplete()` — L24402 — conclui o supercard sozinho
+- `_checkSupercardAutoComplete()` — L24423 — conclui o supercard sozinho
   quando todos os filhos ativos chegam numa coluna de fim; cascateia
-  filho→pai→avô recursivamente
+  filho→pai→avô recursivamente. `_isColCancelLike()` — L24415, logo acima —
+  se TODOS os filhos ativos terminaram cancelados, o pai NÃO conclui
+  sozinho, fica onde está
 
 ### Card lock / "Pedir o card"
 - `CARD_LOCK_REQUEST_GRACE_MS` — L10311
