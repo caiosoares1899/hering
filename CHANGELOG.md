@@ -1749,6 +1749,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.454-dev — 2026-08-21 — Supercard de 2 níveis: 4 bugs corrigidos
+Revisão da área de supercards logo depois da promoção da v8.30.454
+(campanha → criativo → versão), a pedido do usuário. 3 bugs reais + 1
+ajuste de comportamento confirmado direto com quem pediu a revisão:
+
+- **Versão (2º nível) mostrava os campos próprios como editáveis, mesmo
+  a nota do card dizendo que "a ficha técnica inteira vem de lá"**
+  (`_crvUpdateFichaSecVisibility`). Só `isTopSuper` escondia
+  `.crv-own-fld` (campanha), nunca considerava o card ser uma versão —
+  editar ali divergia a versão do criativo-pai pra sempre (propagação é
+  fill-empty-only), sem ninguém perceber. Adicionado `isVersion = isChild
+  && editingSuperParentIsChild` também escondendo os campos próprios.
+- **Fan-out disparado por Automação não propagava a Ficha Técnica pros
+  filhos** (ação `apply_fanout`) — só o botão manual "🧩 Aplicar receita"
+  dentro do card chamava `_crvPropagateToChildren()`. Uma campanha com
+  Funil/Etapa/Canal preenchidos gerando N criativos sozinha via regra
+  criava todos com a ficha em branco. Adicionada a mesma chamada no
+  caminho automático.
+- **Supercard concluía sozinho mesmo se TODOS os filhos tivessem sido
+  cancelados, não concluídos** (`_checkSupercardAutoComplete`) — pedido
+  direto ao revisar: "se todos filhos forem cancelados, o supercard deve
+  se manter onde está". Novo helper `_isColCancelLike()` (heurística de
+  nome de coluna, mesmo padrão já usado em outros lugares do código pra
+  detectar coluna "de fim") barra o auto-complete quando os filhos ativos
+  são 100% cancelamento; continua concluindo normalmente se pelo menos um
+  filho terminou numa coluna de conclusão de verdade.
+- **Bônus, achado comparando com `_mergeModeloEmCardObj`** (que já
+  resolvia isso certo): a propagação criativo→versões usava `!crv[k]`
+  pra checar campo vazio, mas array vazio (`[]`) é truthy em JS — se uma
+  versão já tivesse `objetivos:[]`/`plataformas:[]` salvo (outro campo
+  preenchido, esse não), a propagação nunca mais preenchia esses campos.
+  Agora usa o mesmo helper `isEmpty()`.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência). `CODE_MAP.md` atualizado com o anchor novo
+(`_isColCancelLike`).
+
 ### v8.30.453-dev — 2026-08-21 — Descrições adicionais: cor passa a ser do rótulo, não do texto
 Feedback recebido de um usuário: "no campo de 'adicionar nova descrição'
 tem a opção de selecionar cores, mas ela modifica a cor do texto, o que
