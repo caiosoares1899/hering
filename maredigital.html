@@ -25,11 +25,12 @@ body.menu-open{overflow:hidden;}
   animation:rise linear infinite;bottom:-60px;}
 @keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.7}90%{opacity:.2}100%{transform:translateY(-110vh);opacity:0}}
 .layout{position:relative;z-index:2;display:grid;grid-template-columns:265px 1fr;min-height:100vh;}
-.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:1.5rem 1.1rem;
-  border-right:1px solid var(--glass-b);background:rgba(3,13,26,.78);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+.sidebar{position:sticky;top:0;height:100vh;
+  border-right:1px solid var(--glass-b);background:rgba(3,13,26,.78);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);}
+.sidebar-inner{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:1.5rem 1.1rem;
   display:flex;flex-direction:column;gap:.25rem;}
-.sidebar::-webkit-scrollbar{width:3px;}
-.sidebar::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:99px;}
+.sidebar-inner::-webkit-scrollbar{width:3px;}
+.sidebar-inner::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:99px;}
 .logo{display:flex;align-items:center;gap:9px;margin-bottom:.9rem;padding-bottom:.9rem;border-bottom:1px solid var(--glass-b);}
 .logo-icon{font-size:24px;}
 .logo-text{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:800;line-height:1.2;}
@@ -176,6 +177,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
 <!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar">
+<div class="sidebar-inner">
   <div class="logo"><div class="logo-icon">🐟</div><div><div class="logo-text">Maré Digital</div><div class="logo-sub">Docs · ago/2026</div></div></div>
 
   <div class="ng"><div class="ng-lbl">Visão geral</div>
@@ -215,6 +217,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('firebase-rules')"><span class="nd" style="background:var(--danger)"></span>Firebase Rules</a>
     <a class="nl" onclick="goTo('functions-sec')"><span class="nd" style="background:var(--warn)"></span>Cloud Functions & Secrets</a>
   </div>
+</div>
 </nav>
 
 <!-- MAIN -->
