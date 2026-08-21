@@ -144,20 +144,34 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
 - `http.js`, `schema.js`, `board.js`, `flow.js`, `members.js`, `notifications.js`, `resolver.js`, `storage.js`
 
-### spotify/, intake/, backup/
-Existem e estão deployados (7 exports de Spotify + intake + backup semanal),
-mas **ainda não foram investigados/documentados** — este mapa só lista os
-arquivos pelo nome, não confere o comportamento. Ver observação abaixo.
+### intake/ e backup/ — online
+- `intake/submit.js` — `intakeSubmit`, HTTP público sem login, único ponto de
+  escrita anônima do sistema. Grava em `intake_pending` (nunca em `/cards`
+  direto — ver comentário no topo do arquivo pro porquê). Honeypot + rate
+  limit por IP.
+- `backup/weeklyBackup.js` — `weeklyBackup`, `onSchedule` todo domingo 04:00
+  (Brasília), backup de cada squad pro Cloud Storage
+  (`backups/{squadId}/{data}.json`), independente de alguém abrir o board.
+  Retenção automática de 60 dias via `storage-lifecycle.json` (~8-9 backups
+  semanais mantidos por squad).
+
+### spotify/ — PAUSADO (2026-08-04)
+"Ouvindo agora" (presença ao vivo, opt-in) + "Rádio do Maré" (playlist
+colaborativa). Completo e validado em produção, mas o sync periódico
+(`spotify/sync.js`, `spotifySync`) era a única function agendada de todo o
+projeto — rodava 24h/dia mesmo sem ninguém conectado — e custou mais do que
+o esperado. Pausado desligando só essa function (linha comentada em
+`functions/index.js`, L129-L140) e escondendo a aba `#spotify-tab` no board.
+As outras 6 functions da integração continuam deployadas normalmente:
+- `oauth.js` (`spotifyOauthCallback`) — conexão por pessoa (opt-in)
+- `disconnect.js` (`spotifyDisconnect`) — apaga o refresh_token de verdade
+- `syncNow.js` (`spotifySyncNow`) — sync sob demanda ao abrir o painel
+- `playback.js` (`spotifyPlayback`) — play/pause/próxima pessoal
+- `radioOwnerCallback.js` / `radioSearch.js` / `radioSuggest.js` — playlist
+  colaborativa (Rádio do Maré), não depende do sync pausado
+- Ver `functions/spotify/README.md` pro desenho completo. Pra religar o
+  sync: ver o comentário em `functions/index.js` sobre custo antes.
 
 ---
-
-## Observação em aberto
-
-Ao levantar este mapa, descobri que `functions/index.js` exporta bem mais do
-que o `maredigital.html` documenta hoje: uma integração inteira com Spotify
-(`functions/spotify/`, 7 exports — oauth, disconnect, sync, playback, rádio),
-além de `intakeSubmit` e `weeklyBackup`. Não fazia parte do pedido que gerou
-este mapa, então não investiguei o que cada uma faz — só sinalizando que
-existe uma lacuna de documentação aí, caso valha a pena olhar depois.
 
 *Retrato do commit `e5c52af` (2026-08-20).*
