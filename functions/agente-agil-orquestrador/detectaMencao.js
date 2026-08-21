@@ -15,11 +15,12 @@
 // de normalizar (minúsculo + remove diacríticos). Case/acento-insensitive
 // de propósito — não travar se alguém digitar "Ágil" sem o acento (comum
 // em teclado sem essa tecla configurada). O botão "↩ Responder" do board
-// ainda NÃO pré-preenche esse texto pro autor "Agente Ágil" (ele
-// pré-preenche o INIT de quem comentou, e "🤖" não serve pra isso) —
-// combinado com o usuário: fica como follow-up separado (mudança em
-// kanban-dev.html, outro ciclo de deploy), fora do escopo deste módulo.
-// Até lá, responder ao agente exige digitar a menção na mão.
+// (kanban-dev.html/kanban.html, `replyToComment()`) e o autocomplete de
+// "@" (`AGENTE_AGIL_MENTION_ENTRY`/`insertMention()`) JÁ pré-preenchem
+// "@Agente Ágil " literal quando o autor é o agente (`c.uid==='agente-agil'`),
+// nunca o INIT "🤖" nem o handle derivado (`getMemberHandle()` sanitizaria
+// o "Á" acentuado, virando "agente.gil", que não bate aqui) — os dois
+// caminhos batem com esta convenção normalizada.
 function normaliza(texto) {
   return String(texto || '')
     .toLowerCase()

@@ -1253,17 +1253,19 @@ diferentes, então a ORDEM importa. Sequência final combinada:
    do comentário como tarefa; se for resposta a uma pergunta do agente, o
    modelo reconstrói o contexto lendo o histórico de comentários do
    próprio card.
-   - **Pré-requisito técnico ainda em aberto**: pra uma resposta humana
-     disparar de novo, ela precisa RE-mencionar o agente. O botão "↩
-     Responder" já existente pré-preenche o "@" de quem comentou, mas os
-     comentários do agente têm `author:"Agente Ágil", init:"🤖"` — o
-     regex de menção humana (`/@[a-zA-Z]/`) não bate com emoji. Decisão
-     de implementação, não de produto: (a) o detector de menção do
-     trigger novo usa sua própria convenção (texto literal "@Agente
-     Ágil", case-insensitive), independente do regex de menção humana; ou
-     (b) ajustar o botão Responder pra pré-preencher "@Agente Ágil "
-     (texto) quando o autor é o agente. Fica pra quando o item entrar em
-     implementação.
+   - **Pré-requisito técnico — FECHADO**: pra uma resposta humana disparar
+     de novo, ela precisa RE-mencionar o agente. Optamos pelas DUAS opções
+     combinadas, não só uma: (a) `detectaMencao.js` detecta por substring
+     normalizada ("@agente agil", case/acento-insensitive), independente
+     do regex de menção humana; e (b) o botão "↩ Responder"
+     (`replyToComment()`, `kanban-dev.html`/`kanban.html`) e o autocomplete
+     de "@" (`AGENTE_AGIL_MENTION_ENTRY`) já pré-preenchem "@Agente Ágil "
+     literal quando o autor do comentário é o agente
+     (`c.uid==='agente-agil'`), nunca o INIT "🤖" nem o handle derivado por
+     `getMemberHandle()` (que sanitizaria o "Á" acentuado, virando
+     "agente.gil" — não bateria com a convenção acima). Round-trip
+     confirmado batendo ponta a ponta: Responder/autocomplete inserem o
+     texto certo → `detectaMencao.js` reconhece → dispara de novo.
    - **Infra necessária, nada disso existe hoje**: uma Cloud Function
      nova, trigger `onCreate`/`onWrite` em
      `kanban/squads/{squad}/dados/card_comments/{cardId}/{commentId}` —
