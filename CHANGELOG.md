@@ -7655,6 +7655,25 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-21 · Corrige `mover_coluna`: agente não sabia o ID das colunas sem WIP configurado
+Achado testando o item 7 em produção (pedido "move esse card pra
+Concluído"): `mover_coluna` sempre esperou o ID da coluna, mas nenhuma
+ferramenta expunha o mapa id↔nome de todas as colunas do board —
+`ler_card` só devolvia a coluna atual do card, `visao_board` só lista
+colunas com WIP configurado. O agente tentou o nome de exibição 2x
+(com e sem acento), falhou as duas, e corretamente pausou com
+`perguntar_humano` em vez de chutar um 3º valor — julgamento certo, por
+falta de informação que deveria existir.
+
+`ler_card` ganhou `colunas_disponiveis` (lista completa `{id, nome,
+fim}` de todas as colunas). `SYSTEM_PROMPT_V1` e a descrição da
+ferramenta `ler_card` avisam explicitamente que `mover_coluna` espera
+ID, não nome. 7 testes novos/atualizados. Suíte inteira: **196/196
+passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
+
 ### 2026-08-21 · Item 7 do roadmap: roteamento de modelo real (Haiku/Sonnet + override manual do ADM pra Opus)
 Com os itens 1-6 do roadmap fechados, avança o item 7
 (`escolheClienteParaTarefa()`, até aqui hardcoded em `sonnet`).

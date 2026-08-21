@@ -2027,3 +2027,34 @@ functions:agenteAgilMencao` rodado pelo usuário na própria máquina.
 Roteamento real vale a partir daqui; `opus` continua só atrás do
 override manual, sem tráfego real ainda pra decidir calibrar um
 critério automático.
+
+## Achado real ao validar o item 7 em produção: `mover_coluna` não sabia o ID da coluna — corrigido (2026-08-21)
+
+Teste do roteamento (pedido de ação, "move esse card pra Concluído")
+confirmou `tier=sonnet` certinho, mas revelou um bug funcional
+pré-existente, sem relação com o item 7: o agente tentou `mover_coluna`
+com `coluna:"Concluído"` (nome de exibição real da coluna nesse squad),
+depois `coluna:"Concludo"` (sem acento), os dois falharam
+(`flow.columnExists()` valida contra o ID), e só então pausou com
+`perguntar_humano` — julgamento correto (não chutou um 3º valor), mas
+por FALTA de informação que deveria estar disponível.
+
+**Causa raiz**: `mover_coluna` sempre esperou o ID da coluna
+(`outputs/moverColuna.js`), nunca o nome — mas nenhuma ferramenta do
+toolset expunha o mapa id↔nome de TODAS as colunas do board. `ler_card`
+só devolvia a coluna ATUAL do card; `visao_board` só lista colunas com
+WIP configurado (Backlog/Concluído tipicamente não têm limite).
+
+**Fix**: `ler_card` (`tools/lerCard.js`) ganhou `colunas_disponiveis` —
+lista completa `{id, nome, fim}` de todas as colunas do board (`fim`
+usa a mesma fonte de verdade que `mover_coluna` já usa pra decidir
+notificação, `flow.doneColumnIds()`). `SYSTEM_PROMPT_V1` e a descrição
+da ferramenta `ler_card` foram atualizados pra deixar explícito que
+`mover_coluna` espera ID (não nome) e que `ler_card` é onde resolver
+isso antes de agir.
+
+7 testes novos/atualizados (`lerCard.test.js`, `systemPrompt.test.js`).
+Suíte inteira: **196/196 passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção.
