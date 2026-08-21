@@ -87,6 +87,8 @@ h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:.3
 .wct{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;flex:1;}
 .wcb{font-size:11.5px;color:var(--txt2);line-height:1.7;}
 .wcb strong{color:var(--txt);}
+.elink{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(56,182,255,.45);transition:border-color .15s;}
+.elink:hover{border-bottom-style:solid;border-bottom-color:var(--accent);}
 /* code */
 .code{background:rgba(1,8,20,.85);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);
   padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;
@@ -286,6 +288,14 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
     <div class="wch"><div class="wci">🔁</div><div class="wct">Relação prod ↔ dev</div></div>
     <div class="wcb"><strong>kanban-dev.html é testado primeiro</strong> — toda feature nova entra ali, é validada por quem pediu, e só depois é portada cirurgicamente para kanban.html (nunca uma cópia cega do arquivo inteiro). Squad padrão <code class="hl">dev</code> mantém os dados isolados de produção, e é o único squad onde o "Modo autônomo" do Agente Ágil está disponível hoje.</div>
+  </div>
+  <div class="wc" style="margin-top:9px;">
+    <div class="wch"><div class="wci">🗺️</div><div class="wct">CODE_MAP.md — índice pra navegar no código</div></div>
+    <div class="wcb">kanban.html tem ~28 mil linhas / até ~1.1MB — grande demais pra ler inteiro toda vez que precisa achar algo. O <a class="elink" href="https://github.com/caiosoares1899/hering/blob/main/CODE_MAP.md" target="_blank" rel="noopener">CODE_MAP.md</a> é um índice de funções e constantes estáveis por área funcional (autenticação, board, cards, supercards, automações, notas, notificações, Cloud Functions...) — em vez de abrir o arquivo inteiro, dá pra ir direto no nome da função certa via <code class="hl">grep</code>. Os números de linha ali são um retrato de um commit específico (ficam desatualizados a cada edição); o valor real é a lista de nomes.</div>
+  </div>
+  <div class="wc" style="margin-top:9px;">
+    <div class="wch"><div class="wci">🔗</div><div class="wct">Repositório</div></div>
+    <div class="wcb">Todo o código-fonte, histórico de mudanças (<code class="hl">CHANGELOG.md</code>) e as instruções que guiam o desenvolvimento assistido por IA (<code class="hl">CLAUDE.md</code>) vivem em <a class="elink" href="https://github.com/caiosoares1899/hering" target="_blank" rel="noopener">github.com/caiosoares1899/hering</a>.</div>
   </div>
 </section>
 
