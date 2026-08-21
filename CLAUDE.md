@@ -62,6 +62,12 @@ letting them hit the error first.
 
 ## Key files and their roles
 
+- `CODE_MAP.md` — index of stable function/const anchors by feature area
+  (auth, board render, cards, supercards, automations, notas, notifications,
+  Cloud Functions...) for `kanban.html`/`kanban-dev.html`/`painel.html`/
+  `functions/`. Use it to jump straight to the right area instead of reading
+  the whole file — but always re-`grep` the anchor name before trusting a
+  line number, since it's a snapshot that drifts on every edit.
 - `kanban.html` — production kanban board (squad management).
 - `kanban-dev.html` — test/dev copy of the board. **Currently byte-identical
   to `kanban.html`** — historically it's meant for testing changes safely
