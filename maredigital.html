@@ -262,7 +262,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </svg>
   <div class="grid g2">
     <div class="wc"><div class="wch"><div class="wci">📦</div><div class="wct">O que fica no Firebase</div></div><div class="wcb">Cards, tags, colunas, sprint cfg, automações, backups, comentários, notas, notificações, logs de erro, presença. <strong>Segregado por squad</strong> — regras validam associação usuário↔squad no servidor.</div></div>
-    <div class="wc"><div class="wch"><div class="wci">🔑</div><div class="wct">O que fica na Cloud Function</div></div><div class="wcb">A <strong>chave da Anthropic</strong>, gerenciada via <code class="hl">firebase functions:secrets:set</code> (Secret Manager), nunca em HTML/localStorage. As duas funções deployadas: push (allow-list de tipos + janela "Não Perturbe") e o orquestrador do Agente Ágil.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🔑</div><div class="wct">O que fica na Cloud Function</div></div><div class="wcb">A <strong>chave da Anthropic</strong>, gerenciada via <code class="hl">firebase functions:secrets:set</code> (Secret Manager), nunca em HTML/localStorage. Além do push e do orquestrador, há Cloud Functions pra intake anônimo, backup semanal automático e a integração com Spotify (hoje pausada) — ver seção "Cloud Functions & Secrets".</div></div>
   </div>
 </section>
 
@@ -557,6 +557,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="card"><div class="ci">📸</div><div class="ct">Snapshots + CFD/Burndown</div><div class="cd">Foto diária do board via <code class="hl">maybeSnapshot()</code>. Alimenta o Diagrama de Fluxo Cumulativo e burndown na aba Fluxo.</div></div>
     <div class="card"><div class="ci">📶</div><div class="ct">Fila offline (PWA)</div><div class="cd">Ações feitas sem conexão ficam em fila e são reaplicadas quando a rede volta.</div></div>
     <div class="card"><div class="ci">👥</div><div class="ct">Externos autorizados</div><div class="cd">PO adiciona e-mails externos ao squad via whitelist em <code class="hl">squads/{id}/externos</code> — chave própria por e-mail, validada também nas Firebase Rules.</div></div>
+    <div class="card"><div class="ci">🎧</div><div class="ct">Spotify <span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);">pausado</span></div><div class="cd">"Ouvindo agora" (presença ao vivo, opt-in) + "Rádio do Maré" (playlist colaborativa por squad). Construído e validado, mas hoje fora do ar — o sync que alimentava presença em tempo real custava mais do que o esperado rodando 24h/dia. Ver "Cloud Functions & Secrets" pra religar.</div></div>
   </div>
 </section>
 
@@ -570,7 +571,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="grid g2">
     <div class="card"><div class="ci">📤</div><div class="ct">Export JSON</div><div class="cd">Baixa ou copia JSON completo (cards, tags, colunas, cfg). Função <code class="hl">exportBackupJSON()</code>.</div></div>
     <div class="card"><div class="ci">☁</div><div class="ct">Salvo no Firebase</div><div class="cd">Backup em <code class="hl">squads/{id}/backups/{key}</code> com metadata. Histórico visível na aba Config.</div></div>
-    <div class="card"><div class="ci">📧</div><div class="ct">E-mail automático</div><div class="cd">Backup semanal (domingo meia-noite). JSON em anexo. Configurável pelo PO.</div></div>
+    <div class="card"><div class="ci">📧</div><div class="ct">E-mail automático (cliente)</div><div class="cd">Configurável pelo PO, mas depende do board ficar aberto — na prática pode passar semanas sem rodar se ninguém mexer.</div></div>
+    <div class="card"><div class="ci">☁️</div><div class="ct">weeklyBackup (Cloud Function)</div><div class="cd">Backup semanal automático pro Cloud Storage, independente de alguém abrir o board — roda sozinho no servidor. Mesmo formato dos outros, restaurável direto pela UI.</div></div>
     <div class="card"><div class="ci">🗓</div><div class="ct">Snapshot diário</div><div class="cd"><code class="hl">maybeSnapshot()</code> — foto do estado uma vez por dia ao abrir o board. Histórico para métricas.</div></div>
   </div>
 </section>
@@ -747,6 +749,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <tbody>
       <tr><td>sendPushOnNotification</td><td><code class="hl">onValueCreated</code> em <code class="hl">usuarios/{uid}/notificacoes/{id}</code></td><td>Converte notificações elegíveis (allow-list <code class="hl">PUSH_TYPES</code>) em push via FCM, respeitando o DND e prunando tokens inválidos.</td></tr>
       <tr><td>agenteAgilMencao</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> do squad dev</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando as ferramentas reais.</td></tr>
+      <tr><td>intakeSubmit</td><td>HTTP público, sem login</td><td>Único ponto de escrita anônima do sistema — formulário de intake por squad grava em <code class="hl">intake_pending</code> (nunca direto em <code class="hl">/cards</code>); alguém do squad confirma e cria o card de verdade. Protegido por honeypot + rate limit por IP.</td></tr>
+      <tr><td>weeklyBackup</td><td><code class="hl">onSchedule</code> semanal</td><td>Backup automático de cada squad pro Cloud Storage, sem depender de ninguém abrir o board — mesmo formato do "Baixar JSON agora", restaurável direto pela UI.</td></tr>
+      <tr><td>Integração Spotify <span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);">pausada</span></td><td><code class="hl">onSchedule</code> a cada minuto (comentado, não deployado)</td><td>"Ouvindo agora" (presença ao vivo por squad) + "Rádio do Maré" (playlist colaborativa). O sync periódico era a única function agendada rodando 24h/dia e custou mais do que o esperado — pausado em 2026-08-04, painel escondido no board (<code class="hl">#spotify-tab</code>). As demais functions da integração (conectar/desconectar, sync sob demanda, playback, rádio) continuam deployadas, só sem o sync alimentando dado fresco.</td></tr>
     </tbody>
   </table>
   <div class="wc" style="margin-top:.9rem;">

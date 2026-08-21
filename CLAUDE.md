@@ -81,7 +81,19 @@ letting them hit the error first.
 - `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
   root** (not in a subfolder) — it handles both offline caching and showing
   push notifications when the tab is closed/backgrounded.
-- `functions/index.js` — the one Cloud Function, `sendPushOnNotification`.
+- `functions/index.js` — registers every deployed Cloud Function (each
+  `exports.xxx = require('./yyy/zzz').xxx` line documents its own deploy
+  command in a comment above it — always deploy with
+  `firebase deploy --only functions:<name>`, never a bare
+  `--only functions`, unless you mean to touch every function at once).
+  Currently live: `sendPushOnNotification` (push), `agenteAgilMencao`
+  (Agente Ágil orquestrador, `agente-agil-orquestrador/`), `agenteAgil`
+  (older HTTP-based agent v0-v3, `agente-agil/`), `intakeSubmit`
+  (anonymous public form → `intake_pending`, `intake/`), `weeklyBackup`
+  (automatic weekly board backup to Cloud Storage, `backup/`), and most of
+  the Spotify integration (`spotify/`, see below) — **except**
+  `spotifySync`, which is commented out. See `CODE_MAP.md` for the full
+  export list with line numbers.
 - `database.rules.json` — Realtime Database security rules. This is a
   **manual mirror** of what's configured in the Firebase Console; if someone
   edits rules directly in the console, this file goes stale until someone
