@@ -18,6 +18,29 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.455 — 2026-08-21 · promove pra prod
+Promove pra produção 4 correções encontradas numa revisão da área de
+supercards, feita logo depois da v8.30.454 ir ao ar (lote acumulado em
+dev: v8.30.454-dev), validado em dev.
+
+- **Versão (2º nível de um supercard) não mostra mais os campos próprios
+  da Ficha Técnica como editáveis** — antes dava pra editar Tipo/Formato/
+  Objetivo direto numa versão, mesmo o card avisando que "a ficha
+  técnica inteira vem do criativo", o que fazia essa versão silenciosamente
+  divergir do resto.
+- **Fan-out disparado por Automação agora também propaga a Ficha
+  Técnica pros filhos** — antes só o botão manual "🧩 Aplicar receita"
+  dentro do card fazia isso; uma campanha gerando criativos sozinha via
+  regra criava todos com a ficha em branco.
+- **Supercard não conclui mais sozinho se TODOS os filhos foram
+  cancelados** — cancelar tudo não é a mesma coisa que concluir tudo;
+  agora nesse caso o pai fica onde está, só conclui automaticamente
+  quando pelo menos um filho terminou numa coluna de conclusão de
+  verdade.
+- Corrigido um caso em que a propagação de Ficha Técnica pulava campos
+  de múltipla escolha (Objetivo/Plataforma) que já tinham sido salvos
+  como lista vazia.
+
 ### v8.30.454 — 2026-08-21 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.258
 (v8.30.449-dev → v8.30.453-dev), validado em dev.
