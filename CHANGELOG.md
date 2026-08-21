@@ -18,6 +18,42 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.454 — 2026-08-21 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.258
+(v8.30.449-dev → v8.30.453-dev), validado em dev.
+
+- **Supercard agora encadeia em 2 níveis (campanha → criativo →
+  versão)**: até aqui um supercard só aceitava filhos diretos — se o time
+  de mídia pedia um criativo (filho de uma campanha) e depois precisava
+  de várias versões daquele mesmo criativo pra designers diferentes, não
+  tinha como criar um card por versão. Agora um criativo que já é filho
+  de uma campanha pode, ele mesmo, ganhar filhos — as "versões" — sem
+  perder o vínculo com a campanha original. O teto é fixo em 2 níveis
+  (uma versão nunca pode virar supercard de novo), pra manter o modelo
+  simples.
+  - A Ficha Técnica acompanha o encadeamento: os campos compartilhados
+    da campanha (Funil, Etapa, Canal...) continuam descendo pro
+    criativo; agora a ficha *inteira* do criativo (incluindo Tipo,
+    Formato, Objetivo) desce também pras versões, já que é a mesma peça
+    sendo produzida por gente diferente — a versão não edita nada, só
+    herda.
+  - **Conclusão automática em cascata**: quando todos os filhos ativos
+    de um supercard chegam numa coluna de fim (Concluído/Cancelado),
+    o pai é movido pra lá sozinho — e isso cascateia: se todas as
+    versões de um criativo terminam, o criativo conclui sozinho; se
+    isso completa os últimos criativos pendentes da campanha, a
+    campanha conclui também, no mesmo evento.
+  - Duplicar um card agora sempre nasce sem vínculo de supercard (nem
+    como pai, nem como filho) — evita dois cards reivindicando os
+    mesmos filhos por engano.
+- **Cor do rótulo das descrições adicionais**: o campo "adicionar nova
+  descrição" ganhou um seletor de cor separado, pra colorir o *rótulo/
+  badge* de cada bloco (ex.: identificar visualmente qual time escreveu
+  o quê) — antes só existia o seletor de cor de texto rico (que colore
+  a palavra selecionada dentro do próprio texto), e usá-lo pra
+  "diferenciar" descrições deixava a leitura pior. Os dois seletores
+  continuam existindo, cada um com seu propósito.
+
 ### v8.30.258 — 2026-08-20 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.257
 (v8.30.449-dev), validado em dev.
