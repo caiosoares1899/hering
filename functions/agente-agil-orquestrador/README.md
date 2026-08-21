@@ -2056,5 +2056,9 @@ isso antes de agir.
 7 testes novos/atualizados (`lerCard.test.js`, `systemPrompt.test.js`).
 Suíte inteira: **196/196 passando**.
 
-**Requer novo deploy manual** (`firebase deploy --only
-functions:agenteAgilMencao`) pra valer em produção.
+**Deployado em produção (2026-08-21)** — `firebase deploy --only
+functions:agenteAgilMencao` rodado pelo usuário na própria máquina.
+`mover_coluna` já tem `colunas_disponiveis` disponível via `ler_card` a
+partir daqui — pendente reconfirmar com um teste real (mesmo pedido
+"move esse card pra Concluído") que o agente resolve o ID de primeira,
+sem precisar de `perguntar_humano`.
