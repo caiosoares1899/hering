@@ -11504,12 +11504,13 @@ function _duplicarCardObj(card, opts){
   novo.archived=false;
   novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
   novo.history=[]; novo.moveLog=[];
-  // Relações de supercard nunca sobrevivem à duplicação: o clone de um
-  // supercard não "herda" os filhos do original (os dois passariam a
-  // reivindicar os mesmos childCardIds), e o clone de um filho não fica
-  // apontando pra um pai cujo childCardIds nunca vai listar essa cópia —
-  // duplicata sempre nasce como card avulso, pode ser vinculada na mão depois.
-  novo.childCardIds=[]; novo.superParentId=null;
+  // Relação de supercard nunca sobrevive à duplicação do lado "pai": sem
+  // isso, o clone de um supercard "herdaria" os mesmos childCardIds do
+  // original — dois cards diferentes reivindicando os mesmos filhos. Não
+  // existe campo parentId no filho pra limpar do outro lado (ver comentário
+  // em _cardIsSuperChild()) — a cópia de um card filho automaticamente
+  // nasce avulsa, porque nenhum childCardIds por aí lista o id dela ainda.
+  novo.childCardIds=[];
   if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
   if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
@@ -24307,21 +24308,29 @@ function _autoRuleActions(rule){
 // de fora da checagem (não contam nem a favor nem contra); se não sobrar
 // nenhum filho ativo, não decide sozinho.
 function _checkSupercardAutoComplete(childCard){
-  if(!childCard || !childCard.superParentId) return;
-  const parent=cards.find(c=>c.id===childCard.superParentId);
-  if(!parent || !(parent.childCardIds||[]).length) return;
+  if(!childCard) return;
+  // Não há parentId no filho — mesmo padrão de busca reversa de
+  // _cardIsSuperChild(): o pai é quem lista, em childCardIds, o id de quem
+  // acabou de mover (ver comentário em _cardIsSuperChild acima). Um card
+  // pode em tese aparecer em mais de um childCardIds — checa todos.
+  const parents=cards.filter(p=>!p.archived && p.id!==childCard.id && (p.childCardIds||[]).includes(childCard.id));
+  if(!parents.length) return;
   const doneIds=_flowDoneColIds();
-  if(doneIds.includes(parent.col)) return; // pai já concluído
-  const activeChildren=parent.childCardIds.map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
-  if(!activeChildren.length || !activeChildren.every(c=>doneIds.includes(c.col))) return;
   const doneCol=_flowDoneColId();
-  recordMove(parent, doneCol);
-  parent.col=doneCol;
-  parent.edited='Automação'; parent.editedAt=new Date().toISOString().split('T')[0];
-  parent.updatedAt=new Date().toISOString(); parent.updatedBy='Automação';
-  recordHistory(parent, 'concluído automaticamente — todos os filhos foram concluídos', '⚙ Supercard');
-  fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao concluir automaticamente:', err));
-  renderBoard();
+  let any=false;
+  parents.forEach(parent=>{
+    if(doneIds.includes(parent.col)) return; // pai já concluído
+    const activeChildren=(parent.childCardIds||[]).map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
+    if(!activeChildren.length || !activeChildren.every(c=>doneIds.includes(c.col))) return;
+    recordMove(parent, doneCol);
+    parent.col=doneCol;
+    parent.edited='Automação'; parent.editedAt=new Date().toISOString().split('T')[0];
+    parent.updatedAt=new Date().toISOString(); parent.updatedBy='Automação';
+    recordHistory(parent, 'concluído automaticamente — todos os filhos foram concluídos', '⚙ Supercard');
+    fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao concluir automaticamente:', err));
+    any=true;
+  });
+  if(any) renderBoard();
 }
 // Executa automações após mudanças no board. eventType: 'move'|'create'|
 // 'priority'|'due_today'|'due_overdue'|'checklist_complete'|'risk_added'|
