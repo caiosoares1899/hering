@@ -1318,13 +1318,8 @@ diferentes, então a ORDEM importa. Sequência final combinada:
    `checklist_item`/`agent_status`, sem cair na armadilha de
    `mover_coluna`, sem uso indevido de `link`/`relatorio_html` — inclusive
    com escrita de verdade confirmada.
-7. **Roteamento de modelo de verdade**: `escolheClienteParaTarefa()`
-   ainda é um esqueleto, sempre devolve `sonnet` — nenhuma heurística de
-   complexidade implementada, gate de aprovação do ADM pro `opus` não
-   existe ainda (`MODEL_BY_TIER` já tem os ids, mas nenhum caminho de
-   código alcança `haiku`/`opus`). Não bloqueia nada, é otimização de
-   custo — mas fica mais fácil calibrar com algum volume real de uso
-   (item 1) rodando primeiro.
+7. ~~**Roteamento de modelo de verdade**~~ — **FECHADO** (2026-08-21), ver
+   "Item 7: roteamento de modelo real" abaixo.
 
 **Achado desta sessão, registrado aqui pra não se perder**: ao investigar
 se o Agente Ágil segue as mesmas regras de campo obrigatório que a UI
@@ -1982,3 +1977,51 @@ mencionada na descrição em vez de chutar mover coluna/editar campo.
 Comportamento de julgamento consistente com os canários manuais originais
 (cenários 1-4), agora confirmado também no caminho 100% autônomo. Item 5
 do plano de acionamento pode ser considerado validado a partir daqui.
+
+## Item 7: roteamento de modelo real — implementado (2026-08-21)
+
+Com os itens 1-5 (sequência de acionamento) e 6 (toolset completo)
+fechados, o usuário pediu pra avançar o item 7. Desenho combinado ANTES
+do código (mesmo padrão de todo o resto deste roadmap): a pergunta-chave
+era se o tier `opus` deveria ter algum caminho AUTOMÁTICO já nesta
+primeira versão. Decisão explícita: **não** — fica só atrás de um
+override manual do ADM, sem heurística nenhuma escolhendo `opus` sozinha,
+até existir volume real de uso pra calibrar um critério (mesmo raciocínio
+que já adiou a heurística por LLM: "perguntar pro Haiku se é simples"
+somaria custo/latência/erro de julgamento sem dado real pra validar).
+
+**`escolheClienteParaTarefa({ apiKey, taskText, db })`** (assíncrona
+agora, antes era síncrona — único caller de produção, `mentionTrigger.js`,
+atualizado junto) decide em 2 passos:
+
+1. **Override manual do ADM** — `kanban/config/agente_agil_orquestrador/
+   model_tier_override`, mesmo padrão fail-safe de `limits.isEnabled()`:
+   só um valor LITERAL entre `haiku`/`sonnet`/`opus` força a escolha;
+   sem `db`, erro de leitura, nó ausente ou valor fora desse conjunto
+   ignora o override silenciosamente e cai no passo 2. Único jeito de
+   rodar em `opus` hoje — nenhum caminho automático chega lá. Sem UI
+   dedicada (mesmo padrão do kill switch) — seta via console script.
+2. **Heurística de texto** (`classificaComplexidade(taskText)`, pura,
+   sem rede/LLM) — rebaixa pra `haiku` só quando a tarefa tem cara de
+   pergunta puramente conceitual: começa com um marcador tipo "o que é",
+   "como funciona", "por que", "me explica" (normalizado igual
+   `detectaMencao.js` — minúsculo, sem acento) E tem no máximo 20
+   palavras. O mesmo tipo de tarefa já validada nos canários rodando só
+   `biblioteca_agil`, sem tocar o board ("me explica o conceito de
+   sprint", "como usar cards recorrentes", ver seção "Achado de UX"
+   acima). Qualquer coisa fora desse padrão estreito — pedido de ação
+   (mover/editar/criar), pergunta longa/composta, texto vazio — cai no
+   default seguro `sonnet`, que continua sendo o piso de todo o resto.
+   `opus` nunca é alcançado por aqui.
+
+Log de produção ganhou o tier escolhido (`mentionTrigger.js`:
+`dryRun=... | tier=... | ...`) — dá pra medir na prática quantas tarefas
+reais caem em cada tier antes de decidir calibrar mais.
+
+13 testes novos em `escolheClienteParaTarefa.test.js` (heurística pura +
+override fail-safe, usando o mesmo `makeFakeDb` de `agente-agil/`).
+Suíte inteira: **193/193 passando**.
+
+**Requer novo deploy manual** (`firebase deploy --only
+functions:agenteAgilMencao`) pra valer em produção — o binário atual
+ainda roda com `escolheClienteParaTarefa()` hardcoded em `sonnet`.
