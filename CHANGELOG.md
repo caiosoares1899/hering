@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.456 — 2026-08-21 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.455
+(v8.30.455-dev → v8.30.456-dev), validado em dev.
+
+- **Agente Ágil volta a responder pelos atalhos com card** (botão
+  "🤖 Insights", opção "Insights" no menu de contexto do card, e a ação
+  de Automação "Notificar Agente Ágil" em qualquer uma das suas 4
+  opções de aba) — esses atalhos dependiam de um painel de chat antigo
+  cujo backend (um Worker pessoal) está fora do ar há tempo, então
+  ficavam sem resposta silenciosamente. Agora cada um posta a mesma
+  `@Agente Ágil <pergunta>` que uma pessoa digitaria à mão no
+  comentário do card, e a resposta chega em ~1 min como um comentário
+  novo (com notificação pra quem perguntou) — mesmo pipeline já
+  validado do `@menção`, hoje restrito à squad `dev`.
+- Central de Ajuda atualizada e sincronizada com várias features que já
+  estavam no ar sem documentação: os 2 níveis de supercard (campanha →
+  criativo → versão) e a conclusão automática em cascata, os 4 papéis
+  da Ficha Técnica num supercard encadeado, o "Card travado" (lock de
+  edição simultânea + botão "🔔 Pedir o card"), o seletor de cor do
+  rótulo em descrições adicionais, o "🤖 Modo autônomo" da automação do
+  Agente Ágil, o botão "Ver N cards no board" na busca global, a Ficha
+  Técnica sendo salva/aplicada junto com Modelos, e o recolher de
+  checklist por card. Também corrigidas as descrições de "O que é o
+  Agente Ágil" e "Ações que o agente pode executar", que ainda
+  descreviam o painel antigo.
+
 ### v8.30.455 — 2026-08-21 · promove pra prod
 Promove pra produção 4 correções encontradas numa revisão da área de
 supercards, feita logo depois da v8.30.454 ir ao ar (lote acumulado em

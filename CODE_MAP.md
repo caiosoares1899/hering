@@ -98,6 +98,19 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `_autoTrigger()`/`_autoAction()` — L24199/L24200
 - `_autoValLabel()`/`_autoRenderValueOptions()` — L24203/L24225
 
+### Agente Ágil (client-side — atalhos que postam @menção real)
+- `AGENTE_AGIL_MENTION_SQUADS` — L6182 — squads onde os atalhos abaixo
+  estão ativos (hoje só `'dev'`)
+- `_askAgenteAgilNoCard(card, pergunta)` — L6196 — posta
+  `@Agente Ágil <pergunta>` como comentário real do card, mesmo pipeline
+  do `@menção` manual (`functions/agente-agil-orquestrador/mentionTrigger.js`)
+- `insightsCard()` — L13538 — botão "🤖 Insights" no rodapé do card
+- `ctxInsights()` — L24904 — opção "Insights" no menu de contexto do card
+- Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) segue
+  desativado nos 4 pontos sem card real (FAB, nav mobile, AutoLab, alerta
+  de WIP) — depende de um Worker externo fora do ar, não faz parte deste
+  fluxo
+
 ### Externos / segurança
 - `_extKey()` — L27219 — chave de e-mail sanitizada (`.` → `,`)
 - `salvarExterno()` — L27220
