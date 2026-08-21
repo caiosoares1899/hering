@@ -1694,6 +1694,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .xdesc-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
 .xdesc-label{flex:1;background:rgba(56,182,255,.06);border:1px solid var(--glass-b);border-radius:6px;padding:4px 9px;color:var(--txt);font-size:12px;font-weight:600;font-family:"DM Sans",sans-serif;}
 .xdesc-label::placeholder{color:var(--txt3);font-weight:400;}
+.xdesc-color-picker{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.xdesc-color-dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.25);cursor:pointer;padding:0;flex-shrink:0;}
+.xdesc-color-dot.active{outline:2px solid var(--txt);outline-offset:1px;}
+.xdesc-color-dot.xdesc-color-none{background:transparent;color:var(--txt3);font-size:8px;line-height:12px;text-align:center;}
 .xdesc-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:2px 5px;border-radius:5px;flex-shrink:0;}
 .xdesc-del:hover{color:var(--danger);background:rgba(255,107,107,.1);}
 .xdesc-del:disabled{opacity:.3;cursor:not-allowed;}
@@ -5449,7 +5453,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.452-dev</div>
+<div class="version">v8.30.453-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10568,6 +10572,10 @@ function renderExtraDescs(){
           <div class="xdesc-head">
             <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
               oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
+            <span class="xdesc-color-picker" title="Cor de destaque do rótulo">
+              ${_XDESC_COLORS.map(c=>`<button type="button" class="xdesc-color-dot${d.color===c?' active':''}" style="background:${c}" onclick="_setDescColor(${i},'${c}')"></button>`).join('')}
+              <button type="button" class="xdesc-color-dot xdesc-color-none${!d.color?' active':''}" onclick="_setDescColor(${i},'')" title="Sem cor">✕</button>
+            </span>
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
           </div>
           <div class="fmt-toolbar">
@@ -10604,7 +10612,7 @@ function renderExtraDescs(){
         // MODO LEITURA (igual à descrição principal, com formatação renderizada)
         return `<div class="xdesc-card xdesc-read">
           <div class="xdesc-read-head">
-            ${d.label?`<span class="xdesc-read-label">${esc(d.label)}</span>`:'<span></span>'}
+            ${d.label?`<span class="xdesc-read-label"${d.color?` style="color:${esc(d.color)};background:${esc(d.color)}1a;border-color:${esc(d.color)}66;"`:''}>${esc(d.label)}</span>`:'<span></span>'}
             ${canEdit?`<button class="xdesc-edit" onclick="editExtraDesc(${i})" title="Editar">✏️</button>`:''}
           </div>
           <div class="xdesc-read-text">${renderMd(d.text||'')}</div>
@@ -10625,6 +10633,18 @@ function renderExtraDescs(){
   });
 }
 function editExtraDesc(i){ _editingDescIdx.add(i); renderExtraDescs(); }
+// Cor do RÓTULO da descrição adicional (o badge, não o texto) — pedido
+// direto: o seletor de cor do texto rico deixava a leitura ruim quando
+// usado pra "diferenciar" uma descrição da outra; isso aqui é separado da
+// formatação de texto (_fmtText/fmt-colors, que continua existindo pra
+// destacar palavras dentro do próprio texto) e serve só pra dar uma cor
+// de identidade pro card inteiro daquele time/pessoa.
+function _setDescColor(i, color){
+  const d=editingDescs[i]; if(!d) return;
+  d.color = color;
+  _touchDesc(i);
+  renderExtraDescs();
+}
 function _touchDesc(i){
   const d=editingDescs[i]; if(!d) return;
   // marca autor/data na primeira edição de conteúdo
@@ -10640,11 +10660,13 @@ function addExtraDesc(){
   // foca no rótulo recém-criado
   setTimeout(()=>{ const inps=document.querySelectorAll('.xdesc-label'); inps[inps.length-1]?.focus(); },50);
 }
+const _XDESC_COLORS = ['#ff6b6b','#ffd166','#1de9b6','#38b6ff'];
 function _cleanExtraDescs(){
   // remove descrições totalmente vazias (sem rótulo e sem texto)
   return editingDescs.filter(d=>(d.label&&d.label.trim())||(d.text&&d.text.trim()))
     .map(d=>({id:d.id||('d'+Date.now()+Math.random().toString(36).slice(2,5)), label:(d.label||'').trim(), text:(d.text||'').trim(),
-      author:d.author||'', authorInit:d.authorInit||'', at:d.at||null, editedAt:d.editedAt||null}));
+      author:d.author||'', authorInit:d.authorInit||'', at:d.at||null, editedAt:d.editedAt||null,
+      color:_XDESC_COLORS.includes(d.color)?d.color:''}));
 }
 async function removeExtraDesc(i){
   if(!await uiConfirm('Remover esta descrição adicional?',{title:'Remover descrição',danger:true,okText:'Remover'})) return;
