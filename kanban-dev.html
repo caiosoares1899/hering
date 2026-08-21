@@ -3848,7 +3848,7 @@ input[type="date"]{-moz-appearance:textfield;}
             <button class="attach-add-btn" onclick="toggleFanoutApplyMenu()" id="m-super-fanout-btn" style="display:none;">🧩 Aplicar receita ▾</button>
             <div class="link-dropdown" id="m-super-fanout-dd" style="left:auto;right:0;min-width:220px;"></div>
           </div>
-          <button class="attach-add-btn" onclick="toggleSuperChildSearch()">+ Adicionar</button>
+          <button class="attach-add-btn" onclick="toggleSuperChildSearch()" id="m-super-add-btn">+ Adicionar</button>
         </div>
       </div>
       <div id="m-super-parent-note" style="display:none;font-size:10px;color:var(--txt3);margin-bottom:6px;"></div>
@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.450-dev</div>
+<div class="version">v8.30.451-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -20774,7 +20774,18 @@ function initSuperChildren(card){
   const fanoutBtn=document.getElementById('m-super-fanout-btn');
   const fanoutDd=document.getElementById('m-super-fanout-dd');
   const tplIds=Object.keys(fanoutTemplates||{}).filter(id=>(fanoutTemplates[id].filhos||[]).length>0);
-  if(fanoutBtn) fanoutBtn.style.display = tplIds.length ? '' : 'none';
+  // Profundidade 1 só (comentário original em searchSuperChildren()):
+  // filtra QUEM pode virar filho (exclui quem já tem filhos próprios), mas
+  // faltava o lado inverso — nada impedia abrir um card que JÁ é filho de
+  // alguém e adicionar filhos nele mesmo, criando aninhamento de verdade
+  // por acidente (achado direto: "dá pra um filho virar supercard?").
+  // Fecha aqui: se este card já tem um pai (editingSuperParent), esconde
+  // os controles de adicionar/criar filho e de aplicar receita de fan-out.
+  const isChildAlready=!!editingSuperParent;
+  if(fanoutBtn) fanoutBtn.style.display = (!isChildAlready && tplIds.length) ? '' : 'none';
+  const addBtn=document.getElementById('m-super-add-btn');
+  if(addBtn) addBtn.style.display = isChildAlready ? 'none' : '';
+  if(isChildAlready){ const sw=document.getElementById('m-super-search-wrap'); if(sw) sw.style.display='none'; }
   if(fanoutDd){
     fanoutDd.classList.remove('show');
     fanoutDd.innerHTML = tplIds.map(id=>{
@@ -20790,7 +20801,7 @@ function initSuperChildren(card){
     const parent = editingSuperParent;
     if(parent){
       noteEl.style.display='block';
-      noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
+      noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a> — por isso não pode ter filhos próprios (supercard vai só 1 nível de profundidade).';
     } else {
       noteEl.style.display='none';
     }
@@ -20929,6 +20940,7 @@ function searchSuperChildren(q){
 }
 function addSuperChild(card){
   if(card.id===editingId) return;
+  if(editingSuperParent){ showToast('⚠ Este card já é filho de outro supercard — não pode ter filhos próprios.'); return; }
   if(editingSuperChildren.find(l=>l.id===card.id)) return;
   editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
   renderSuperChildrenList();
@@ -20976,6 +20988,7 @@ function _blankSuperChildCard(parentCard, title, {idx=0, modelo=null, user=null}
 function quickCreateSuperChild(title){
   title=(title||'').trim(); if(!title) return;
   if(!checkEditPermission()) return;
+  if(editingSuperParent){ showToast('⚠ Este card já é filho de outro supercard — não pode ter filhos próprios.'); return; }
   const parent=_superParentBasics();
   const novo=_blankSuperChildCard(parent, title);
   recordHistory(novo,'criou o card (filho de supercard)');
@@ -20995,6 +21008,7 @@ function quickCreateSuperChild(title){
 // grava o vínculo junto com o resto do card novo.
 function persistSuperChildren(){
   if(!editingId) return;
+  if(editingSuperParent) return; // profundidade 1 só — ver initSuperChildren()
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
   parent.childCardIds = editingSuperChildren.map(l=>l.id);
   fbSaveCard(parent);
