@@ -149,8 +149,11 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   escrita anônima do sistema. Grava em `intake_pending` (nunca em `/cards`
   direto — ver comentário no topo do arquivo pro porquê). Honeypot + rate
   limit por IP.
-- `backup/weeklyBackup.js` — `weeklyBackup`, `onSchedule` semanal, backup de
-  cada squad pro Cloud Storage, independente de alguém abrir o board.
+- `backup/weeklyBackup.js` — `weeklyBackup`, `onSchedule` todo domingo 04:00
+  (Brasília), backup de cada squad pro Cloud Storage
+  (`backups/{squadId}/{data}.json`), independente de alguém abrir o board.
+  Retenção automática de 60 dias via `storage-lifecycle.json` (~8-9 backups
+  semanais mantidos por squad).
 
 ### spotify/ — PAUSADO (2026-08-04)
 "Ouvindo agora" (presença ao vivo, opt-in) + "Rádio do Maré" (playlist
