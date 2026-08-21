@@ -1713,6 +1713,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.453-dev — 2026-08-21 — Descrições adicionais: cor passa a ser do rótulo, não do texto
+Feedback recebido de um usuário: "no campo de 'adicionar nova descrição'
+tem a opção de selecionar cores, mas ela modifica a cor do texto, o que
+deixa a visibilidade ruim, se a cor alterasse a cor do título seria
+muito melhor, assim haveria um destaque e diferenciação nas descrições
+adicionadas".
+
+A ferramenta de cor que já existia ali (`fmt-colors`) é a mesma barra de
+formatação de texto rico usada na descrição principal e nos
+comentários — colore a palavra selecionada dentro do texto, não foi
+feita pra "identidade visual" de um bloco inteiro. Mantida como está
+(ainda útil pra destacar uma palavra específica), e adicionado um
+seletor **separado**, só pro rótulo/badge de cada descrição adicional:
+
+- `_setDescColor(i, cor)` (novo): grava `descsExtra[i].color`, uma cor
+  fixa de uma paleta de 4 (`_XDESC_COLORS`) — não é texto livre.
+- 4 bolinhas de cor + uma opção "✕ sem cor" aparecem ao lado do campo de
+  rótulo, em modo edição.
+- O badge do rótulo (`.xdesc-read-label`, já era uma pílula colorida —
+  só usava sempre a mesma cor de destaque do app) passa a usar a cor
+  escolhida, dando o destaque/diferenciação pedido sem sacrificar a
+  legibilidade do texto da descrição em si.
+- `_cleanExtraDescs()` só aceita gravar uma cor que esteja na lista
+  `_XDESC_COLORS` (mesmo espírito de sanitização de todo dado vindo do
+  Firebase antes de renderizar — `esc()` aplicado no valor também).
+
 ### v8.30.452-dev — 2026-08-21 — Supercard: 2 níveis de verdade (campanha → criativo → versão)
 Pedido direto: "e se um criativo precisasse de várias versões, uma pra
 cada designer?" — a v8.30.451-dev tinha acabado de FECHAR a brecha que
