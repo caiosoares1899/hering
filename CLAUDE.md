@@ -148,7 +148,13 @@ letting them hit the error first.
   prompted to refresh.
 - Given the file sizes (kanban/painel HTML files run several thousand lines
   and 400KB–1.1MB), use `grep`/targeted `Read` offsets rather than reading a
-  whole file at once when investigating.
+  whole file at once when investigating. **Check `CODE_MAP.md` first** for
+  the feature area you're touching — it names the actual function/const to
+  grep for, so you skip the broad exploratory search entirely. Re-grep the
+  name to get the current line number (the map's numbers are a snapshot,
+  not live) and read from there. This applies to any investigation or edit
+  across `kanban.html`/`kanban-dev.html`/`painel.html`/`functions/`, not
+  just open-ended exploration.
 
 ## Release process
 
