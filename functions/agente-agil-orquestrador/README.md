@@ -2022,6 +2022,8 @@ reais caem em cada tier antes de decidir calibrar mais.
 override fail-safe, usando o mesmo `makeFakeDb` de `agente-agil/`).
 Suíte inteira: **193/193 passando**.
 
-**Requer novo deploy manual** (`firebase deploy --only
-functions:agenteAgilMencao`) pra valer em produção — o binário atual
-ainda roda com `escolheClienteParaTarefa()` hardcoded em `sonnet`.
+**Deployado em produção (2026-08-21)** — `firebase deploy --only
+functions:agenteAgilMencao` rodado pelo usuário na própria máquina.
+Roteamento real vale a partir daqui; `opus` continua só atrás do
+override manual, sem tráfego real ainda pra decidir calibrar um
+critério automático.
