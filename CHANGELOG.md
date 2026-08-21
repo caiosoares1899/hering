@@ -7655,6 +7655,26 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
+Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
+de trabalho da própria equipe) sem subir pra produção em horário de
+trabalho. `mentionTrigger.js` virou uma fábrica
+(`createMentionTrigger({squadId, dryRun})`) — cada squad suportado é
+uma Cloud Function própria, escutando um path LITERAL (não wildcard,
+trade-off de custo deliberado). Instância `dev` inalterada (mesmos
+exports de sempre). Nova instância `dados`, em modo sombra por padrão
+(`dryRun:true`).
+
+`functions/index.js` ganhou `exports.agenteAgilMencaoDados` **comentado**
+(mesmo padrão do `spotifySync` pausado) — existir no código não é estar
+no ar. Ativar exige descomentar + `firebase deploy --only
+functions:agenteAgilMencaoDados`, decisão separada e futura. Mudanças
+client-side (autocomplete, "Modo autônomo" nas Automações) ficaram de
+fora de propósito — `kanban-dev.html` publica sozinho no merge, vazaria
+a UI pro squad antes da hora.
+
+6 testes novos. Suíte inteira: **201/201 passando**.
+
 ### 2026-08-21 · Corrige `mover_coluna`: agente não sabia o ID das colunas sem WIP configurado
 Achado testando o item 7 em produção (pedido "move esse card pra
 Concluído"): `mover_coluna` sempre esperou o ID da coluna, mas nenhuma

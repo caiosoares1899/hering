@@ -185,3 +185,18 @@ exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 // deploy). Deploy isolado:
 // firebase deploy --only functions:agenteAgilMencao
 exports.agenteAgilMencao = require('./agente-agil-orquestrador/mentionTrigger').agenteAgilMencao;
+
+// Agente Ágil Orquestrador — squad `dados` — ESTRUTURADO, NÃO DEPLOYADO
+// (2026-08-21): pedido do usuário pra preparar o próximo squad (o squad
+// de trabalho da própria equipe) sem subir pra produção em horário de
+// trabalho. Código pronto e testado (mesma fábrica createMentionTrigger()
+// da instância `dev` acima, ver mentionTrigger.js), em modo sombra por
+// padrão (dryRun:true) — mesma disciplina do squad `dev`: mecanismo de
+// gatilho primeiro, decisão de escrita real depois, separada. Mesmo
+// padrão do spotifySync pausado logo acima neste arquivo: existir no
+// código não é o mesmo que estar no ar. Pra ativar (fora de horário de
+// trabalho, ou quando decidido): descomenta a linha abaixo e roda
+// firebase deploy --only functions:agenteAgilMencaoDados
+// (reusa o mesmo secret ANTHROPIC_API_KEY já configurado pro squad dev,
+// não precisa configurar de novo).
+// exports.agenteAgilMencaoDados = require('./agente-agil-orquestrador/mentionTrigger').agenteAgilMencaoDados;
