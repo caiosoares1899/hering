@@ -22,118 +22,118 @@ instrumentação extra) — os números da seção painel abaixo são de
 ## kanban.html / kanban-dev.html
 
 ### Papéis & autenticação
-- `ADM_EMAILS` (let) — L5605
-- `getEffectiveRole()` — L5643 — papel efetivo, ADMs hardcoded não são rebaixáveis
-- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L5704 / L5686
-- `resolveSquadAndShow()` — L8644 — resolve squad da URL, decide o que mostrar
-- `autoRegistrar()` — L8797 — cria/atualiza o doc do usuário no login
+- `ADM_EMAILS` (let) — L5609
+- `getEffectiveRole()` — L5647 — papel efetivo, ADMs hardcoded não são rebaixáveis
+- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L5708 / L5690
+- `resolveSquadAndShow()` — L8648 — resolve squad da URL, decide o que mostrar
+- `autoRegistrar()` — L8801 — cria/atualiza o doc do usuário no login
 
 ### Card — estrutura & modal
-- `CARD_SECTIONS` — L6089 — seções do modal (Conteúdo, Vínculos, Colaboração...)
-- `openCard()` — L10790
-- `saveCard()` — L11206 — auto-save (debounce 800ms) passa por aqui
-- `_finishCloseOv()` — L25054 — fechamento do modal, reset de estado pendente
+- `CARD_SECTIONS` — L6093 — seções do modal (Conteúdo, Vínculos, Colaboração...)
+- `openCard()` — L10812
+- `saveCard()` — L11228 — auto-save (debounce 800ms) passa por aqui
+- `_finishCloseOv()` — L25228 — fechamento do modal, reset de estado pendente
 
 ### Board & render
-- `renderNormal()` — L9404
-- `renderRaiaOwner()` — L9462
-- `renderRaiaTag()` — L9513
-- `toggleRaia()` — L9792
-- `passesFilter()` — L9749
-- `handleDragStart/End/Over/Leave()` — L23324–L23374
-- `addTouchDnD()` — L23512 — drag-and-drop por toque (mobile)
+- `renderNormal()` — L9408
+- `renderRaiaOwner()` — L9466
+- `renderRaiaTag()` — L9517
+- `toggleRaia()` — L9796
+- `passesFilter()` — L9753
+- `handleDragStart/End/Over/Leave()` — L23439–L23489
+- `addTouchDnD()` — L23627 — drag-and-drop por toque (mobile)
 
 ### Busca (Ctrl+K + "Ver no board")
-- `openSearch()` — L25569
-- `renderSearchResults()` — L25581
-- `verNoBoardFromSearch()` — L25648
-- `_scheduleTextFilterApply()` — L9702 — debounce do filtro `#f-texto`
+- `openSearch()` — L25743
+- `renderSearchResults()` — L25755
+- `verNoBoardFromSearch()` — L25822
+- `_scheduleTextFilterApply()` — L9706 — debounce do filtro `#f-texto`
 
 ### Checklist (com grupos colapsáveis)
-- `renderCL()` — L11624
-- `_clGroupsInit()` — L11589
-- `toggleChecklistGroupCollapse()` — L11602
+- `renderCL()` — L11653
+- `_clGroupsInit()` — L11618
+- `toggleChecklistGroupCollapse()` — L11631
 
 ### Supercards / Ficha Técnica
-- `_crvAutoTitle()` — L12054 — título automático do filho a partir da Ficha Técnica
-- `searchSuperChildren()` — L20895 — busca de cards existentes ao criar um filho
-- `_mergeModeloEmCardObj()` — L23852
-- `_applyFanoutTemplate()` — L23821 — cria os filhos de uma receita de fan-out
+- `_crvAutoTitle()` — L12083 — título automático do filho a partir da Ficha Técnica
+- `searchSuperChildren()` — L21006 — busca de cards existentes ao criar um filho
+- `_mergeModeloEmCardObj()` — L23967
+- `_applyFanoutTemplate()` — L23936 — cria os filhos de uma receita de fan-out
 - Nesting de 2 níveis (campanha → criativo → versão): `editingSuperParentIsChild`
-  (global, L20765) + `initSuperChildren()` — L20785 — calcula se o card
+  (global, L20773) + `initSuperChildren()` — L20793 — calcula se o card
   aberto já seria uma "versão" (teto real do 2º nível)
-- `_crvOwnSummary()` — L20869 — resumo dos campos próprios do criativo,
+- `_crvOwnSummary()` — L20877 — resumo dos campos próprios do criativo,
   usado no card de versão (2º nível)
-- `_checkSupercardAutoComplete()` — L24423 — conclui o supercard sozinho
+- `_checkSupercardAutoComplete()` — L24437 — conclui o supercard sozinho
   quando todos os filhos ativos chegam numa coluna de fim; cascateia
-  filho→pai→avô recursivamente. `_isColCancelLike()` — L24415, logo acima —
+  filho→pai→avô recursivamente. `_isColCancelLike()` — L24423, logo acima —
   se TODOS os filhos ativos terminaram cancelados, o pai NÃO conclui
   sozinho, fica onde está
 
 ### Card lock / "Pedir o card"
-- `CARD_LOCK_REQUEST_GRACE_MS` — L10311
-- `_cardLockRequestPath()` — L10318
-- `pedirCard()` — L10328
-- `liberarCardAgora()` — L10342
-- `_renderLockRequestUI()` — L10346
-- `_handleLockRequest()` — L10381
+- `CARD_LOCK_REQUEST_GRACE_MS` — L10315
+- `_cardLockRequestPath()` — L10322
+- `pedirCard()` — L10332
+- `liberarCardAgora()` — L10346
+- `_renderLockRequestUI()` — L10350
+- `_handleLockRequest()` — L10385
 
 ### Notificações in-app
-- `createNotif()` — L21047
-- `loadNotifs()` — L21308
-- `checkDueNotifs()` — L21691 — due_today/due_overdue, 1x/dia
+- `createNotif()` — L21162
+- `loadNotifs()` — L21423
+- `checkDueNotifs()` — L21806 — due_today/due_overdue, 1x/dia
 
 ### Notas
-- `toggleNotas()` — L14144, `setNotasScope()` — L14157
-- `renderNotasList()` — L14192, `createNota()` — L14224
-- `openNota()`/`closeNotaEditor()` — L14240/L14241
-- `renderNotaEditor()` — L14502, `toggleNotaModo()` — L14800 (livre/estruturado)
-- `renderNotaLinkedCards()` — L14267, `notaSearchCards()`/`notaAddCardLink()`/`notaRemoveCardLink()` — L14285/L14308/L14317
-- `renderNotasVinculadasNoCard()` — L14337 — seção "Vínculos" dentro do card
+- `toggleNotas()` — L14185, `setNotasScope()` — L14198
+- `renderNotasList()` — L14233, `createNota()` — L14265
+- `openNota()`/`closeNotaEditor()` — L14281/L14282
+- `renderNotaEditor()` — L14543, `toggleNotaModo()` — L14841 (livre/estruturado)
+- `renderNotaLinkedCards()` — L14308, `notaSearchCards()`/`notaAddCardLink()`/`notaRemoveCardLink()` — L14326/L14349/L14358
+- `renderNotasVinculadasNoCard()` — L14378 — seção "Vínculos" dentro do card
 
 ### Automações (Butler-style)
-- `AUTO_TRIGGERS` — L23940 (20 triggers)
-- `AUTO_ACTIONS` — L24003 (14 ações)
-- `runAutoRules()` — L24301
-- `_autoTrigger()`/`_autoAction()` — L24078/L24079
-- `_autoValLabel()`/`_autoRenderValueOptions()` — L24082/L24104
+- `AUTO_TRIGGERS` — L24056 (20 triggers)
+- `AUTO_ACTIONS` — L24119 (14 ações)
+- `runAutoRules()` — L24474
+- `_autoTrigger()`/`_autoAction()` — L24199/L24200
+- `_autoValLabel()`/`_autoRenderValueOptions()` — L24203/L24225
 
 ### Externos / segurança
-- `_extKey()` — L27045 — chave de e-mail sanitizada (`.` → `,`)
-- `salvarExterno()` — L27046
+- `_extKey()` — L27219 — chave de e-mail sanitizada (`.` → `,`)
+- `salvarExterno()` — L27220
 
 ### Backup
-- `exportBackupJSON()` — L27147
-- `maybeSnapshot()` — L10022
+- `exportBackupJSON()` — L27321
+- `maybeSnapshot()` — L10026
 
 ### Marcadores `// --- X ---` já existentes no código
 Só existem para um subconjunto pequeno de áreas — não é uma convenção
 aplicada no arquivo inteiro, não confie neles como única forma de navegar:
-- L18142 Ágil, L18227 Col editor, L18271 Usuários, L18456 Tags,
-  L18826 "Worker / Firebase" (nome do comentário é antigo — hoje é
+- L18183 Ágil, L18268 Col editor, L18312 Usuários, L18497 Tags,
+  L18867 "Worker / Firebase" (nome do comentário é antigo — hoje é
   config/legado de Firebase, **não** tem relação com o Cloudflare Worker,
   que não existe mais na arquitetura atual)
-- L23254 D&D das colunas, L23323 D&D dos cards
+- L23369 D&D das colunas, L23438 D&D dos cards
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
 ### Dashboard consolidado
-- `loadAll()` — L7971 / `renderAll()` — L7992
+- `loadAll()` — L8005 / `renderAll()` — L8026
 - `renderOKR()` — L3925
-- `renderBlockers()` — L8545 / `resolveAllBlockers()` — L8475
+- `renderBlockers()` — L8579 / `resolveAllBlockers()` — L8509
 - `renderRiscos()` — L3960
-- `renderTrend()` — L8583 (throughput)
-- `renderColDist()` — L8606
-- `renderComparison()` — L8422
+- `renderTrend()` — L8617 (throughput)
+- `renderColDist()` — L8640
+- `renderComparison()` — L8456
 - `loadAgentUsage()` — L4354
 - `renderGerenciaBar()` — L2427 / `gerenciaSquadIds()` — L2420 (Insights por Gerência)
 
 ### Board Setup
-- `openBoardSetup()` — L8641
+- `openBoardSetup()` — L8675
 
 ### Usuários
-- `openGlobalUsersModal()` — L7575
-- `initHiddenCols()` — L7290
+- `openGlobalUsersModal()` — L7609
+- `initHiddenCols()` — L7324
 
 ## functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
 
@@ -184,4 +184,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `e5c52af` (2026-08-20).*
+*Retrato do commit `49bd2c1` (2026-08-21).*
