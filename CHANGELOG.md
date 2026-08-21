@@ -1713,6 +1713,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.451-dev — 2026-08-21 — Supercard: fecha brecha de aninhamento + fix na regra de conclusão automática
+Pergunta direta ("dá pra um filho virar supercard, sem perder o vínculo
+com o pai anterior?") revelou dois problemas na v8.30.450-dev:
+
+- **`_checkSupercardAutoComplete()` nunca disparava de verdade**: checava
+  `childCard.superParentId`, um campo que não existe no modelo de dados —
+  o vínculo filho→pai é sempre calculado na hora (busca reversa em
+  `childCardIds` do pai, ver `_cardIsSuperChild()`), nunca salvo no filho.
+  Corrigido pra usar o mesmo padrão de busca reversa; checa todos os pais
+  que listam o card (em tese um card pode estar em mais de um `childCardIds`).
+- **Aninhar supercard dentro de supercard era possível por acidente**: o
+  código já tinha um bloqueio comentado como "profundidade 1 só", mas ele
+  só cobria um lado — impedia escolher um supercard existente como filho
+  de outro, mas não impedia abrir um card que JÁ é filho de alguém e
+  adicionar filhos nele mesmo. Fechado: `initSuperChildren()` agora
+  esconde os controles de "+ Adicionar"/"Aplicar receita" quando o card
+  sendo editado já tem um pai (`editingSuperParent`), com o aviso
+  atualizado explicando o porquê; `addSuperChild()`, `quickCreateSuperChild()`
+  e `persistSuperChildren()` ganham a mesma trava em código (defesa em
+  profundidade, não só esconder o botão).
+
 ### v8.30.450-dev — 2026-08-21 — Supercard: conclusão automática + fix na duplicação
 Dois pedidos direto sobre a área de Supercards:
 
