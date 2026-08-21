@@ -2058,7 +2058,14 @@ Suíte inteira: **196/196 passando**.
 
 **Deployado em produção (2026-08-21)** — `firebase deploy --only
 functions:agenteAgilMencao` rodado pelo usuário na própria máquina.
-`mover_coluna` já tem `colunas_disponiveis` disponível via `ler_card` a
-partir daqui — pendente reconfirmar com um teste real (mesmo pedido
-"move esse card pra Concluído") que o agente resolve o ID de primeira,
-sem precisar de `perguntar_humano`.
+
+**VALIDADO EM PRODUÇÃO (2026-08-21)**: mesmo pedido de antes ("move
+esse card pra Concluído") rodado de novo contra um card novo — o agente
+resolveu o ID sozinho via `colunas_disponiveis` e moveu de verdade,
+sem parar em `perguntar_humano`. Resposta: `"Movido para 'Concluído'
+conforme solicitado. Só um alerta: o card estava no Backlog, sem
+checklist e sem descrição preenchida — vale conferir se realmente está
+tudo pronto antes de considerá-lo finalizado de fato."` — mesmo
+julgamento de PO de sempre preservado (avisa em vez de assumir que
+"mover pra Concluído" = "está pronto de verdade"), agora sem o bug.
+Achado do teste do item 7 considerado fechado.
