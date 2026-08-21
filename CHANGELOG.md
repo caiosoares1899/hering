@@ -1772,6 +1772,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.456-dev — 2026-08-21 — Reativa os atalhos do Agente Ágil com card (Insights, menu de contexto, automação manual)
+O painel de chat antigo (`openAgent()`/`qa()`) dependia de um Cloudflare
+Worker pessoal (`WORKER_URL`) que hoje está fora do ar (confirmado:
+requisição sem resposta) — por isso `AGENTE_AGIL_ATIVO=false`
+desativava tudo que passava por ele. Em vez de reconstruir um chat
+síncrono novo, os 3 pontos de entrada que têm um card real viram
+atalho pra @menção — postam o mesmo `@Agente Ágil <pergunta>` que uma
+pessoa digitaria na mão, entrando no pipeline já validado (Cloud
+Function `agenteAgilMencao`), sem Cloud Function nova. A resposta
+chega como comentário no card (~1min), com notificação pra quem
+perguntou — não é mais instantâneo como o chat antigo prometia, mas
+reusa 100% do que já foi testado.
+
+- Novo helper `_askAgenteAgilNoCard(card, pergunta)`, escopado por
+  squad (`AGENTE_AGIL_MENTION_SQUADS`, hoje só `dev`).
+- **🤖 Insights** (botão no rodapé do card) e **Insights** (menu de
+  contexto do card) passam a usar o helper.
+- Automação "Notificar Agente Ágil": as 4 opções de tab (Aba Daily/
+  Métricas/Retrospectiva/🤖 Modo autônomo) faziam coisas diferentes
+  antes — 3 delas caíam no painel morto, só "Modo autônomo" funcionava
+  de verdade. Agora as 4 fazem a mesma coisa (postam a @menção real);
+  automações antigas configuradas com qualquer uma continuam
+  funcionando, só que de verdade.
+- Os 4 pontos de entrada SEM card real (FAB geral, nav mobile, AutoLab,
+  alerta de WIP excedido) continuam desativados de propósito — decisão
+  combinada com o usuário, não têm onde postar a @menção.
+- Central de Ajuda corrigida junto: "O que é o Agente Ágil" e "Ações
+  que o agente pode executar" ainda descreviam o painel antigo (criar/
+  excluir card, atribuir responsável, salvar como modelo/recorrente —
+  nada disso existe no toolset do orquestrador). Reescritas pro
+  comportamento real (11 ferramentas: comentário, link, checklist,
+  status, mover coluna, editar campos, relatório HTML, perguntar ao
+  humano, ler card, visão do board, biblioteca ágil).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0
+(baseline da sessão, sem divergência).
+
 ### v8.30.455-dev — 2026-08-21 — Central de Ajuda: sincroniza com o lote v8.30.426-dev → v8.30.454-dev
 Puramente documentação (`HELP_CONTENT`), sem mudança de comportamento —
 primeira execução da skill `/atualizarhelpcontent` desde a auditoria de
