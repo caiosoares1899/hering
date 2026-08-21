@@ -1713,6 +1713,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.452-dev — 2026-08-21 — Supercard: 2 níveis de verdade (campanha → criativo → versão)
+Pedido direto: "e se um criativo precisasse de várias versões, uma pra
+cada designer?" — a v8.30.451-dev tinha acabado de FECHAR a brecha que
+permitia isso por acidente; esta entrada REABRE, mas de propósito e com
+teto rígido em 2 níveis (não recursivo/infinito).
+
+- **Teto de profundidade**: `editingSuperParentIsChild` (novo, calculado
+  em `initSuperChildren()`) distingue "este card tem pai" (pode ganhar
+  filhos — é um criativo virando dono de versões) de "o PAI deste card
+  também tem pai" (não pode — seria um 3º nível). `addSuperChild()`,
+  `quickCreateSuperChild()`, `persistSuperChildren()` e
+  `applyFanoutToCurrentCard()` ganham a checagem; `searchSuperChildren()`
+  também passa a excluir candidatos que já têm um pai (evita um card
+  acabar com dois pais).
+- **Ficha Técnica, redesenhada pra não ser mutuamente exclusiva**: antes,
+  "tem filhos" e "é filho" eram tratados como estados opostos (um card só
+  podia ser um ou outro). Agora um criativo pode ser os dois ao mesmo
+  tempo — e continua mostrando/editando seus campos PRÓPRIOS (Tipo,
+  Formato, Objetivo, Plataforma, Direcional) mesmo depois de ganhar
+  versões, porque são exatamente esses campos que as versões herdam (a
+  versão é a MESMA peça, só que produzida por outra pessoa). Só a
+  campanha de verdade (tem filhos, não é filha de ninguém) continua sem
+  ficha própria, como sempre foi.
+- **Propagação passa a valer a ficha inteira, um nível abaixo**:
+  `_crvPropagateToChildren()` já copiava só os 4 campos compartilhados de
+  campanha pra criativo (isso não muda). Quando quem propaga é um
+  criativo (ele mesmo filho de uma campanha) pros seus filhos, agora
+  copia a ficha INTEIRA — nova `_crvOwnSummary()` monta o resumo
+  ("Objetivo: X · Plataforma: Y · Tipo: Z · Formato: W") mostrado na nota
+  da versão, ao lado do resumo compartilhado já existente
+  (`_crvSharedSummary()`).
+- **Conclusão automática em cascata**: `_checkSupercardAutoComplete()`
+  (v8.30.451-dev) agora se rechama no próprio pai depois de concluí-lo —
+  se todas as versões de um criativo terminam e ele conclui sozinho,
+  isso pode ser exatamente o que faltava pra campanha (o avô) também
+  concluir, sem precisar duplicar a lógica de "quantos níveis existem".
+
 ### v8.30.451-dev — 2026-08-21 — Supercard: fecha brecha de aninhamento + fix na regra de conclusão automática
 Pergunta direta ("dá pra um filho virar supercard, sem perder o vínculo
 com o pai anterior?") revelou dois problemas na v8.30.450-dev:

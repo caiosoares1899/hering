@@ -5449,7 +5449,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.451-dev</div>
+<div class="version">v8.30.452-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12148,13 +12148,18 @@ const _CRV_SHARED_KEYS = ['campanhaTipo','campanhaNome','funil','etapaFunil','ca
 function _crvPropagateToChildren(parentCard){
   if(!parentCard || !parentCard.criativo || !(parentCard.childCardIds||[]).length) return;
   const src=parentCard.criativo;
-  if(!_CRV_SHARED_KEYS.some(k=>src[k])) return;
+  // Se o pai TAMBÉM é filho de alguém (uma campanha), ele é um criativo
+  // ganhando VERSÕES — propaga a ficha INTEIRA (mesma peça, gente
+  // diferente produzindo), não só os 4 campos que uma campanha compartilha
+  // com seus criativos (que aí sim variam por peça).
+  const keys = _cardIsSuperChild(parentCard, cards) ? Object.keys(src) : _CRV_SHARED_KEYS;
+  if(!keys.some(k=>src[k])) return;
   let any=false;
   parentCard.childCardIds.forEach(cid=>{
     const child=cards.find(c=>c.id===cid); if(!child) return;
     const crv=child.criativo?Object.assign({},child.criativo):{};
     let changed=false;
-    _CRV_SHARED_KEYS.forEach(k=>{ if(!crv[k] && src[k]){ crv[k]=src[k]; changed=true; } });
+    keys.forEach(k=>{ if(!crv[k] && src[k]){ crv[k]=src[k]; changed=true; } });
     if(changed){ child.criativo=crv; any=true; fbSaveCard(child).catch(err=>console.error('[supercard] falha ao propagar Ficha Técnica pro filho:', err)); }
   });
   if(any) renderBoard();
@@ -20731,6 +20736,11 @@ let editingSuperChildren = []; // [{id,title,col}]
 // Ficha Técnica compartilhada (ver _crvUpdateFichaSecVisibility/saveCard) pra
 // saber se Campanha/Funil/Etapa/Canal devem sumir daqui (vêm do pai).
 let editingSuperParent = null;
+// true quando editingSuperParent ELE MESMO já é filho de outro card — ou
+// seja, ESTE card, se ganhasse filhos, estaria no 3º nível (versão de
+// versão). Supercard vai até 2 níveis (campanha → criativo → versão);
+// aqui é onde o teto é aplicado. Ver initSuperChildren().
+let editingSuperParentIsChild = false;
 // IDs dos filhos CRIADOS DE VERDADE (quickCreateSuperChild/fan-out) durante a
 // sessão atual do modal de um card AINDA NÃO SALVO — diferente de filhos
 // VINCULADOS a um card já existente (addSuperChild), que não devem ser
@@ -20761,6 +20771,7 @@ function initSuperChildren(card){
   // (chamada logo abaixo) — precisa estar pronto pra decidir se Campanha/
   // Funil/Etapa/Canal aparecem ou somem da Ficha Técnica deste card.
   editingSuperParent = card ? (cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id)) || null) : null;
+  editingSuperParentIsChild = !!(editingSuperParent && cards.some(gp=>!gp.archived && gp.id!==editingSuperParent.id && (gp.childCardIds||[]).includes(editingSuperParent.id)));
   _newSuperChildIds = []; // reseta a cada card aberto — ver comentário na declaração
   renderSuperChildrenList();
   const searchWrap=document.getElementById('m-super-search-wrap'); if(searchWrap) searchWrap.style.display='none';
@@ -20774,18 +20785,17 @@ function initSuperChildren(card){
   const fanoutBtn=document.getElementById('m-super-fanout-btn');
   const fanoutDd=document.getElementById('m-super-fanout-dd');
   const tplIds=Object.keys(fanoutTemplates||{}).filter(id=>(fanoutTemplates[id].filhos||[]).length>0);
-  // Profundidade 1 só (comentário original em searchSuperChildren()):
-  // filtra QUEM pode virar filho (exclui quem já tem filhos próprios), mas
-  // faltava o lado inverso — nada impedia abrir um card que JÁ é filho de
-  // alguém e adicionar filhos nele mesmo, criando aninhamento de verdade
-  // por acidente (achado direto: "dá pra um filho virar supercard?").
-  // Fecha aqui: se este card já tem um pai (editingSuperParent), esconde
-  // os controles de adicionar/criar filho e de aplicar receita de fan-out.
-  const isChildAlready=!!editingSuperParent;
-  if(fanoutBtn) fanoutBtn.style.display = (!isChildAlready && tplIds.length) ? '' : 'none';
+  // Supercard vai até 2 níveis: campanha → criativo → versão (pedido
+  // direto: "e se um criativo precisasse de várias versões, uma pra cada
+  // designer?"). O teto real é editingSuperParentIsChild — só bloqueia
+  // quando ESTE card já seria uma "versão" (o pai dele já é filho de
+  // alguém), pra não abrir um 3º nível. Um criativo comum (tem pai, mas o
+  // pai não tem pai) pode virar campo de versões normalmente.
+  const tooDeep=editingSuperParentIsChild;
+  if(fanoutBtn) fanoutBtn.style.display = (!tooDeep && tplIds.length) ? '' : 'none';
   const addBtn=document.getElementById('m-super-add-btn');
-  if(addBtn) addBtn.style.display = isChildAlready ? 'none' : '';
-  if(isChildAlready){ const sw=document.getElementById('m-super-search-wrap'); if(sw) sw.style.display='none'; }
+  if(addBtn) addBtn.style.display = tooDeep ? 'none' : '';
+  if(tooDeep){ const sw=document.getElementById('m-super-search-wrap'); if(sw) sw.style.display='none'; }
   if(fanoutDd){
     fanoutDd.classList.remove('show');
     fanoutDd.innerHTML = tplIds.map(id=>{
@@ -20801,7 +20811,10 @@ function initSuperChildren(card){
     const parent = editingSuperParent;
     if(parent){
       noteEl.style.display='block';
-      noteEl.innerHTML='🧩 Este card é filho do supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a> — por isso não pode ter filhos próprios (supercard vai só 1 nível de profundidade).';
+      const link='<a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(parent.id)+'\')" style="color:var(--accent);">'+esc(parent.title)+'</a>';
+      noteEl.innerHTML = tooDeep
+        ? '🧩 Este card é uma versão de '+link+' — supercard vai até 2 níveis, então uma versão não pode ter filhos próprios.'
+        : '🧩 Este card é filho do supercard '+link+'.';
     } else {
       noteEl.style.display='none';
     }
@@ -20825,17 +20838,50 @@ function _crvSharedSummary(crv){
   ].filter(Boolean);
   return partes.join(' · ');
 }
-// Ficha Técnica: 3 estados possíveis, decididos por editingSuperChildren/
-// editingSuperParent (ambos calculados em initSuperChildren()) —
+// Monta "Objetivo: X · Plataforma: Y · Tipo: Z · Formato: W" — os campos
+// PRÓPRIOS de um criativo (.crv-own-fld), usado só pra exibir o resumo
+// herdado numa VERSÃO (card no 2º nível, ver _crvUpdateFichaSecVisibility).
+// Diferente de _crvSharedSummary(): versão herda a ficha INTEIRA do
+// criativo-pai (mesma peça, produzida por gente diferente), não só os 4
+// campos que uma campanha compartilha com seus criativos.
+function _crvOwnSummary(crv){
+  crv=crv||{};
+  const objetivoLbl=_crvEffectiveLabelsFromRow('objetivos', crv.objetivos||[], crv).join(', ');
+  const plataformaLbl=_crvEffectiveLabelsFromRow('plataformas', crv.plataformas||[], crv).join(', ');
+  const tipoLbl=_crvEffectiveLabelFromRow('tipos', crv.tipo, crv);
+  const partes=[
+    objetivoLbl?'Objetivo: '+objetivoLbl:'',
+    plataformaLbl?'Plataforma: '+plataformaLbl:'',
+    tipoLbl?'Tipo: '+tipoLbl:'',
+    crv.formato?'Formato: '+crv.formato:''
+  ].filter(Boolean);
+  return partes.join(' · ');
+}
+// Ficha Técnica: estados possíveis, decididos por editingSuperChildren/
+// editingSuperParent/editingSuperParentIsChild (calculados em
+// initSuperChildren()) — supercard vai até 2 níveis (campanha → criativo
+// → versão), então "tem filhos" e "é filho" NÃO são mais mutuamente
+// exclusivos (um criativo com versões é os dois ao mesmo tempo):
 // 1. Card comum (nem supercard, nem filho): mostra os 9 campos, como sempre.
-// 2. Supercard (tem filhos): só os campos COMPARTILHADOS (.crv-shared-fld —
-//    Campanha/Funil/Etapa/Canal) aparecem — pedido direto: "esses pontos não
-//    mudam pensando em cards vinculados/filhos", preenche uma vez aqui e
-//    propaga pros filhos (ver _crvPropagateToChildren()). Os campos que
-//    variam por peça (.crv-own-fld) somem — cada filho tem os dele.
-// 3. Filho de supercard: o INVERSO — campos compartilhados somem daqui (já
-//    vêm herdados do pai, ver nota m-crv-child-note), só os que variam por
-//    peça continuam editáveis neste card.
+// 2. Campanha (tem filhos, NÃO é filha de ninguém): só os campos
+//    COMPARTILHADOS (.crv-shared-fld — Campanha/Funil/Etapa/Canal)
+//    aparecem — pedido direto: "esses pontos não mudam pensando em cards
+//    vinculados/filhos", preenche uma vez aqui e propaga pros filhos (ver
+//    _crvPropagateToChildren()). Os campos que variam por peça
+//    (.crv-own-fld) somem — cada criativo tem o dele.
+// 3. Criativo (é filho de uma campanha, SEM versões ainda): o inverso —
+//    campos compartilhados somem (herdados da campanha, ver
+//    m-crv-child-note), só os próprios (Tipo/Formato/Objetivo/etc.)
+//    continuam editáveis aqui.
+// 4. Criativo COM versões (é filho E tem filhos): mantém os campos
+//    PRÓPRIOS visíveis/editáveis aqui — pedido direto: "várias versões do
+//    mesmo criativo, cada uma pra um designer" — a versão não tem ficha
+//    própria, ela É a mesma peça; o criativo continua sendo a fonte de
+//    verdade da ficha, agora propagando ficha INTEIRA pras versões (ver
+//    _crvPropagateToChildren()), não só os 4 campos compartilhados.
+// 5. Versão (2º nível — o pai desta já é filho de outra coisa): folha de
+//    verdade, sem editar nada da ficha — mostra o resumo herdado
+//    completo (compartilhados + próprios) do criativo-pai.
 // Reavaliado toda vez que a lista de filhos muda (mesmo motivo do
 // _crvSyncPlataformaMode logo abaixo). Dado já preenchido antes de virar
 // supercard/filho não é apagado, só some da tela.
@@ -20845,17 +20891,25 @@ function _crvUpdateFichaSecVisibility(){
   if(!criativosAtivo) return;
   const isSuper = editingSuperChildren.length>0;
   const isChild = !!editingSuperParent;
+  const isTopSuper = isSuper && !isChild; // campanha — sem ficha própria
   document.querySelectorAll('#m-criativo-sec .crv-shared-fld').forEach(el=>{ el.style.display = isChild ? 'none' : ''; });
-  document.querySelectorAll('#m-criativo-sec .crv-own-fld').forEach(el=>{ el.style.display = isSuper ? 'none' : ''; });
+  document.querySelectorAll('#m-criativo-sec .crv-own-fld').forEach(el=>{ el.style.display = isTopSuper ? 'none' : ''; });
   const superNote=document.getElementById('m-crv-super-note');
   if(superNote) superNote.style.display = isSuper ? '' : 'none';
   const childNote=document.getElementById('m-crv-child-note');
   if(childNote){
     if(isChild){
       const childCard = editingId ? cards.find(c=>c.id===editingId) : null;
-      const resumo=_crvSharedSummary(childCard?.criativo);
       childNote.style.display='';
-      childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+      if(editingSuperParentIsChild){
+        // Versão: herda a ficha INTEIRA do criativo-pai (mesma peça).
+        const parentCrv=editingSuperParent.criativo;
+        const resumo=[_crvSharedSummary(parentCrv), _crvOwnSummary(parentCrv)].filter(Boolean).join(' · ');
+        childNote.innerHTML='🧩 Esta é uma versão do criativo <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> — a ficha técnica inteira vem de lá.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+      } else {
+        const resumo=_crvSharedSummary(childCard?.criativo);
+        childNote.innerHTML='🧩 Campanha, Funil, Etapa e Canal são definidos no supercard <a href="#" onclick="event.preventDefault();_navigateToCard(\''+esc(editingSuperParent.id)+'\')" style="color:var(--accent);">'+esc(editingSuperParent.title)+'</a> e valem pra todos os filhos.'+(resumo?' <span style="color:var(--txt3);">('+esc(resumo)+')</span>':'');
+      }
     } else {
       childNote.style.display='none';
     }
@@ -20920,9 +20974,10 @@ function searchSuperChildren(q){
   if(q.trim().length<2){ dd.classList.remove('show'); return; }
   const lower=q.toLowerCase();
   const excludeIds=new Set([editingId, ...editingSuperChildren.map(l=>l.id)]);
-  // Não deixa aninhar supercard dentro de supercard (profundidade 1 só, pra
-  // não abrir espaço pra ciclo/recursão infinita no rollup do board).
-  const results=cards.filter(c=>!c.archived && !excludeIds.has(c.id) && !(c.childCardIds&&c.childCardIds.length) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  // Teto de 2 níveis (campanha → criativo → versão), não infinito — exclui
+  // quem já tem filhos próprios (viraria um 3º nível a partir daqui) e
+  // quem já é filho de outro card (um card não pode ter dois pais).
+  const results=cards.filter(c=>!c.archived && !excludeIds.has(c.id) && !(c.childCardIds&&c.childCardIds.length) && !_cardIsSuperChild(c, cards) && c.title.toLowerCase().includes(lower)).slice(0,8);
   dd.innerHTML='';
   if(!results.length){
     dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado — aperte Enter pra criar "'+esc(q.trim())+'" como novo card filho.</div>';
@@ -20940,7 +20995,7 @@ function searchSuperChildren(q){
 }
 function addSuperChild(card){
   if(card.id===editingId) return;
-  if(editingSuperParent){ showToast('⚠ Este card já é filho de outro supercard — não pode ter filhos próprios.'); return; }
+  if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   if(editingSuperChildren.find(l=>l.id===card.id)) return;
   editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
   renderSuperChildrenList();
@@ -20988,7 +21043,7 @@ function _blankSuperChildCard(parentCard, title, {idx=0, modelo=null, user=null}
 function quickCreateSuperChild(title){
   title=(title||'').trim(); if(!title) return;
   if(!checkEditPermission()) return;
-  if(editingSuperParent){ showToast('⚠ Este card já é filho de outro supercard — não pode ter filhos próprios.'); return; }
+  if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   const parent=_superParentBasics();
   const novo=_blankSuperChildCard(parent, title);
   recordHistory(novo,'criou o card (filho de supercard)');
@@ -21008,7 +21063,7 @@ function quickCreateSuperChild(title){
 // grava o vínculo junto com o resto do card novo.
 function persistSuperChildren(){
   if(!editingId) return;
-  if(editingSuperParent) return; // profundidade 1 só — ver initSuperChildren()
+  if(editingSuperParentIsChild) return; // teto de 2 níveis — ver initSuperChildren()
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
   parent.childCardIds = editingSuperChildren.map(l=>l.id);
   fbSaveCard(parent);
@@ -23908,6 +23963,7 @@ function toggleFanoutApplyMenu(){
 function applyFanoutToCurrentCard(templateId){
   document.getElementById('m-super-fanout-dd')?.classList.remove('show');
   if(!checkEditPermission()) return;
+  if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   const tpl=fanoutTemplates[templateId]; if(!tpl) return;
   if(!tpl.filhos?.length){ showToast('Essa receita ainda não tem cards filhos configurados.'); return; }
   // Modelo do card PAI (opcional, ver tpl.paiModeloIdx/setFanoutPaiModelo):
@@ -24343,6 +24399,11 @@ function _checkSupercardAutoComplete(childCard){
     recordHistory(parent, 'concluído automaticamente — todos os filhos foram concluídos', '⚙ Supercard');
     fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao concluir automaticamente:', err));
     any=true;
+    // Cascata: se este pai (ex.: um criativo) também é filho de outra
+    // coisa (ex.: uma campanha), acabou de concluir pode ser exatamente o
+    // que faltava pro AVÔ também concluir sozinho — reaproveita a mesma
+    // função em vez de duplicar a lógica pra "quantos níveis existem".
+    _checkSupercardAutoComplete(parent);
   });
   if(any) renderBoard();
 }
