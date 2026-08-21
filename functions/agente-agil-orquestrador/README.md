@@ -2069,3 +2069,51 @@ tudo pronto antes de considerá-lo finalizado de fato."` — mesmo
 julgamento de PO de sempre preservado (avisa em vez de assumir que
 "mover pra Concluído" = "está pronto de verdade"), agora sem o bug.
 Achado do teste do item 7 considerado fechado.
+
+## Expansão pro squad `dados` — estruturado, NÃO ativado (2026-08-21)
+
+Primeiro passo real na direção do item "expandir pra um squad de
+produção real" do roadmap — pedido explícito do usuário: preparar o
+código, mas **não subir pra produção em horário de trabalho**. Ativação
+fica pra uma decisão separada, feita depois.
+
+**Refactor**: `mentionTrigger.js` deixou de ter `SQUAD_ID`/`DRY_RUN_MENCAO`
+fixos no módulo — virou uma fábrica, `createMentionTrigger({squadId,
+dryRun})`, que cada squad suportado chama uma vez pra virar uma Cloud
+Function própria. Cada squad continua sendo escutado por um path LITERAL
+no trigger (`kanban/squads/{squadId}/dados/card_comments/...`), não um
+wildcard `{squadId}` genérico — deliberado: um wildcard ouviria TODO
+comentário de TODO squad do sistema, cobrando invocação mesmo pra
+descartar a maioria em runtime (trade-off de custo real, dado o quanto
+esse projeto já investiu em reduzir consumo de Firebase). Mais squads =
+mais uma linha de export em `functions/index.js`, não mudança de
+arquitetura.
+
+A instância `dev` (`agenteAgilMencao`, `processarMencao`, `SQUAD_ID`,
+`IDEMPOTENCY_PATH`, `DRY_RUN_MENCAO`) continua exportada com os MESMOS
+nomes de sempre no topo do módulo — zero mudança de comportamento ou de
+import pra quem já usava. Nova instância `dados`
+(`agenteAgilMencaoDados`/`processarMencaoDados`), em **modo sombra por
+padrão** (`dryRun:true`) — mesma disciplina que o squad `dev` seguiu:
+mecanismo de gatilho primeiro, decisão de escrita real depois, separada.
+
+**Ficou de fora de propósito, pra não vazar antes da hora**: qualquer
+mudança em `kanban-dev.html` (autocomplete `AGENTE_AGIL_MENTION_SQUADS`,
+opção "🤖 Modo autônomo" nas Automações) — diferente de `functions/`
+(deploy manual), o board publica sozinho no merge (GitHub Pages), então
+qualquer alteração ali ficaria visível pro squad `dados` IMEDIATAMENTE,
+mesmo com o backend pausado. Fica pra quando a ativação for decidida de
+verdade — nesse momento, os dois lados (client + deploy da function)
+precisam andar juntos.
+
+**Como está "guardado"**: `functions/index.js` tem a linha
+`exports.agenteAgilMencaoDados = ...` **comentada**, mesmo padrão do
+`spotifySync` pausado — existir no código não é o mesmo que estar no ar.
+Ativar exige duas ações deliberadas, nenhuma acidental: descomentar a
+linha + `firebase deploy --only functions:agenteAgilMencaoDados`.
+
+6 testes novos (`mentionTrigger.test.js`) cobrindo a fábrica em si
+(paths escopados por squad, modo sombra por padrão) e a instância
+`dados` respeitando `dryRun:true` de verdade (não escreve comentário
+real mesmo processando com sucesso). Suíte inteira: **201/201
+passando**.

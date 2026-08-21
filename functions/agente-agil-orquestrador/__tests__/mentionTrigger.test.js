@@ -20,6 +20,9 @@ const {
   IDEMPOTENCY_PATH,
   AGENTE_UID,
   DRY_RUN_MENCAO,
+  createMentionTrigger,
+  agenteAgilMencaoDados,
+  processarMencaoDados,
 } = require('../mentionTrigger');
 
 function scriptedLlmClient(script) {
@@ -289,4 +292,69 @@ test('resumirResultadoParaLog: status awaiting_human também formata sem erro', 
   assert.match(resumo, /status=awaiting_human/);
   assert.match(resumo, /finalText: "\(nenhum\)"/);
   assert.match(resumo, /pergunta.*Qual coluna devo usar\?/);
+});
+
+// ── createMentionTrigger() — fábrica multi-squad (2026-08-21) ───────────
+// Pedido do usuário: preparar o squad `dados` SEM subir pra produção em
+// horário de trabalho. `agenteAgilMencaoDados`/`processarMencaoDados` são
+// a instância pronta, mas o export real em functions/index.js fica
+// COMENTADO (mesmo padrão do spotifySync pausado) até uma decisão
+// separada de ativação — o objetivo destes testes é só provar que a
+// fábrica produz uma instância squad-escopada e funcional, não que ela
+// está no ar (isso é controlado fora do código, no deploy).
+
+test('createMentionTrigger: cada instância tem seu próprio IDEMPOTENCY_PATH, escopado por squad', () => {
+  const dev = createMentionTrigger({ squadId: 'dev', dryRun: false });
+  const dados = createMentionTrigger({ squadId: 'dados', dryRun: true });
+  assert.equal(dev.IDEMPOTENCY_PATH, 'kanban/squads/dev/dados/agente_agil_mencao_processed');
+  assert.equal(dados.IDEMPOTENCY_PATH, 'kanban/squads/dados/dados/agente_agil_mencao_processed');
+  assert.notEqual(dev.IDEMPOTENCY_PATH, dados.IDEMPOTENCY_PATH);
+});
+
+test('createMentionTrigger: squad novo entra em modo sombra por padrão (dryRun:true) se não especificado', () => {
+  const instancia = createMentionTrigger({ squadId: 'outro-squad' });
+  assert.equal(instancia.DRY_RUN_MENCAO, true);
+});
+
+test('mentionTrigger.js exporta a instância dev com dryRun:false, sem regressão da fábrica', () => {
+  assert.equal(DRY_RUN_MENCAO, false);
+  assert.equal(SQUAD_ID, 'dev');
+});
+
+test('agenteAgilMencaoDados/processarMencaoDados exportados, prontos mas SEM export em functions/index.js ainda', () => {
+  assert.equal(typeof agenteAgilMencaoDados, 'function'); // onValueCreated() devolve uma CloudFunction (callable), mesmo tipo de agenteAgilMencao
+  assert.equal(typeof processarMencaoDados, 'function');
+});
+
+test('processarMencaoDados: respeita dryRun:true (modo sombra) — não escreve comentário real, mesmo processando com sucesso', async () => {
+  membersLib._resetCacheForTests();
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dados: {
+          dados: {
+            cards: { 9: { id: 'c1', title: 'Card de teste (squad dados)', col: 'progress', comments: {} } },
+            cards_index: { c1: '9' },
+            tags: [],
+          },
+        },
+      },
+      config: { agente_agil_orquestrador: { enabled: true } },
+    },
+  });
+  // Mesmo padrão do teste "processa uma menção válida" acima: finalText
+  // sem chamada de ferramenta nenhuma aciona a rede de segurança
+  // (fallbackComentario), que usa o MESMO handler — dryRun:true também
+  // vale pra esse caminho, não só pra chamada explícita do modelo.
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'Confirmado (dryRun).' }]);
+  const comment = { uid: 'uidHumano', text: '@Agente Ágil confirma esse card', ts: '2026-08-21T10:00:00.000Z' };
+
+  const outcome = await processarMencaoDados(db, { cardId: 'c1', commentId: 'cmt1', comment, llmClient });
+
+  assert.equal(outcome.processed, true);
+  assert.equal(outcome.result.status, 'done');
+  // dryRun:true — o plano foi montado, mas nada foi escrito de verdade no
+  // path de comentários do squad dados.
+  const comentariosReais = await db.ref('kanban/squads/dados/dados/card_comments/c1').get();
+  assert.equal(comentariosReais.val(), null);
 });
