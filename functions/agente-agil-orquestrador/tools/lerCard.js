@@ -50,8 +50,22 @@ function resolveMember(members, init) {
   return { init, nome: m ? m.name : init };
 }
 
-function summarizeCard(card, { columns, squadTags, members, comments }) {
+// Achado real (teste do item 7, 2026-08-21): mover_coluna espera o ID da
+// coluna (schema `coluna: z.string()`), não o nome de exibição — mas
+// nenhuma ferramenta expunha o mapa id<->nome de TODAS as colunas do
+// board antes disto. visao_board só lista colunas com WIP configurado
+// (Backlog/Concluído tipicamente não têm); ler_card só devolvia a coluna
+// ATUAL do card. Resultado observado em produção: pedido "move esse card
+// pra Concluído" (nome real da coluna) fez o agente corretamente recusar
+// adivinhar o ID e perguntar ao humano — julgamento certo, mas por falta
+// de informação que deveria estar disponível. `colunas_disponiveis`
+// fecha essa lacuna: toda vez que o agente chama ler_card (já orientado
+// pelo system prompt a fazer isso em pedidos abertos/falta de contexto),
+// ganha a lista completa pra resolver nome -> id antes de mover_coluna.
+function summarizeCard(card, { columns, flowConfig, squadTags, members, comments }) {
   const tagsPorId = new Map((squadTags || []).map((t) => [t.id, t.label]));
+  const doneIds = new Set(flowLib.doneColumnIds({ columns, flowConfig }));
+  const colunasDisponiveis = (columns || []).map((c) => ({ id: c.id, nome: c.name || c.id, fim: doneIds.has(c.id) }));
 
   const participantes = (card.participants || card.participantes || [])
     .filter(Boolean)
@@ -78,6 +92,7 @@ function summarizeCard(card, { columns, squadTags, members, comments }) {
     prioridade: card.priority || null,
     tags: (card.tags || []).map((id) => tagsPorId.get(id) || id),
     coluna: { id: card.col, nome: flowLib.columnName(card.col, columns) },
+    colunas_disponiveis: colunasDisponiveis,
     responsavel: resolveMember(members, card.owner),
     participantes,
     checklist,
@@ -97,6 +112,11 @@ function makeFakeLerCardHandler() {
         prioridade: null,
         tags: [],
         coluna: { id: 'backlog', nome: 'Backlog' },
+        colunas_disponiveis: [
+          { id: 'backlog', nome: 'Backlog', fim: false },
+          { id: 'progress', nome: 'Em Progresso', fim: false },
+          { id: 'done', nome: 'Concluído', fim: true },
+        ],
         responsavel: null,
         participantes: [],
         checklist: [],
@@ -125,7 +145,7 @@ function makeRealLerCardHandler({ db, squadId, cardId }) {
     return {
       ok: true,
       tool: 'ler_card',
-      card: summarizeCard(card, { columns: meta.columns, squadTags, members, comments }),
+      card: summarizeCard(card, { columns: meta.columns, flowConfig: meta.flowConfig, squadTags, members, comments }),
     };
   };
 }

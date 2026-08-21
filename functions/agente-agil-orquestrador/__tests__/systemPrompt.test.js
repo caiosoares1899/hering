@@ -38,3 +38,12 @@ test('SYSTEM_PROMPT_V1 exige que a resposta final sempre seja entregue via comen
   assert.match(SYSTEM_PROMPT_V1, /Entrega da resposta/i);
   assert.match(SYSTEM_PROMPT_V1, /sempre precisa ser entregue via comentario/i);
 });
+
+// Achado real (item 7, 2026-08-21): "move esse card pra Concluído" (nome de
+// exibição real da coluna) fez mover_coluna falhar 2x — o modelo tentou o
+// nome como se fosse o ID. Guarda a instrução que fecha essa lacuna,
+// apontando pra colunas_disponiveis (ler_card).
+test('SYSTEM_PROMPT_V1 deixa claro que mover_coluna espera o ID da coluna, não o nome, e aponta pra ler_card', () => {
+  assert.match(SYSTEM_PROMPT_V1, /coluna.*espera o ID/i);
+  assert.match(SYSTEM_PROMPT_V1, /colunas_disponiveis/);
+});

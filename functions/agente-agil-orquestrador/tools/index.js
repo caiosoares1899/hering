@@ -94,7 +94,7 @@ function buildTools(options = {}) {
 
   tools.push({
     name: 'ler_card',
-    description: 'Lê um resumo do card atual (descrição, checklist, comentários, coluna, tags, responsável/participantes) — use antes de decidir uma ação em pedidos abertos ou quando faltar contexto.',
+    description: 'Lê um resumo do card atual (descrição, checklist, comentários, coluna, tags, responsável/participantes) e a lista de TODAS as colunas do board com id e nome (colunas_disponiveis) — use antes de decidir uma ação em pedidos abertos, quando faltar contexto, ou pra descobrir o ID exato de uma coluna antes de mover_coluna (o campo "coluna" dessa ferramenta espera o ID, não o nome de exibição).',
     input_schema: zodToJsonSchema(lerCardSchema),
     handler: mode === 'real' ? makeRealLerCardHandler({ db, squadId, cardId }) : makeFakeLerCardHandler(),
   });
