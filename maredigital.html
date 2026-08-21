@@ -47,7 +47,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);mi
 .nb-w{background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
 .nb-b{background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);}
 .nb-p{background:rgba(167,139,250,.14);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
-.main{padding:2.8rem 3.2rem;max-width:980px;}
+.main{padding:2.8rem 3.2rem;max-width:980px;min-width:0;}
 /* hero */
 .hero{margin-bottom:2.8rem;}
 .ey{font-size:10px;color:var(--teal);font-weight:700;letter-spacing:.16em;text-transform:uppercase;
@@ -92,14 +92,17 @@ h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:.3
 /* code */
 .code{background:rgba(1,8,20,.85);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);
   padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;
-  color:#7ec8e3;overflow-x:auto;margin:.5rem 0;}
+  color:#7ec8e3;overflow-x:auto;margin:.5rem 0;white-space:pre;}
 .code .cm{color:rgba(150,200,240,.36);}
 .code .k{color:#ffd166;}.code .v{color:#1de9b6;}.code .fn{color:#a78bfa;}
 .cl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);
   margin-bottom:.3rem;display:flex;align-items:center;gap:5px;}
 .cl::before{content:'';width:9px;height:1px;background:var(--txt3);}
 /* table */
-.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:.7rem 0;}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.7rem 0;}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:0;table-layout:fixed;}
+.tbl td,.tbl th{word-wrap:break-word;overflow-wrap:break-word;}
+.tbl td:first-child,.tbl th:first-child{width:32%;}
 .tbl th{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;padding:7px 11px;text-align:left;border-bottom:1px solid var(--glass-b);}
 .tbl td{padding:8px 11px;color:var(--txt2);border-bottom:1px solid rgba(56,182,255,.05);vertical-align:top;}
 .tbl tr:hover td{background:rgba(56,182,255,.03);}
@@ -131,22 +134,46 @@ h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:.3
 .scn{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;}
 .scu{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt3);}
 /* db tree */
-.dbt{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:2;background:rgba(1,8,20,.8);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);padding:1rem 1.2rem;color:var(--txt2);}
+.dbt{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:2;background:rgba(1,8,20,.8);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);padding:1rem 1.2rem;color:var(--txt2);white-space:pre;overflow-x:auto;}
 .dbt .p{color:var(--accent);}.dbt .n{color:rgba(150,200,240,.36);font-size:10px;}
 .dbt .sq{color:var(--teal);}.dbt .sh2{color:var(--purple);}
 code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56,182,255,.1);color:var(--teal);padding:1px 5px;border-radius:4px;}
 .div{height:1px;background:linear-gradient(90deg,transparent,var(--glass-b),transparent);margin:2.5rem 0;}
-.footer{padding:1.8rem 0;border-top:1px solid var(--glass-b);margin-top:2rem;font-size:11px;color:var(--txt3);display:flex;justify-content:space-between;}
-@media(max-width:900px){.layout{grid-template-columns:1fr;}.sidebar{position:static;height:auto;}.main{padding:1.2rem 1rem;}h1{font-size:24px;}.sg,.g2,.g3{grid-template-columns:1fr;}}
+.footer{padding:1.8rem 0;border-top:1px solid var(--glass-b);margin-top:2rem;font-size:11px;color:var(--txt3);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+/* arch diagram */
+.arch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:1.4rem;}
+/* mobile nav */
+.menu-toggle{display:none;position:fixed;top:14px;left:14px;z-index:60;width:44px;height:44px;border-radius:12px;
+  background:rgba(3,13,26,.88);border:1px solid var(--glass-b);backdrop-filter:blur(14px);
+  align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:4px;}
+.menu-toggle span{display:block;width:18px;height:2px;background:var(--accent);border-radius:2px;transition:transform .2s,opacity .2s;}
+.menu-toggle.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+.menu-toggle.open span:nth-child(2){opacity:0;}
+.menu-toggle.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(1,4,10,.6);z-index:45;}
+.sidebar-backdrop.show{display:block;}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  .menu-toggle{display:flex;}
+  .sidebar{position:fixed;left:0;top:0;height:100vh;width:82%;max-width:300px;
+    transform:translateX(-100%);transition:transform .25s ease;z-index:50;box-shadow:8px 0 30px rgba(0,0,0,.5);}
+  .sidebar.open{transform:translateX(0);}
+  .nl{padding:10px 10px;font-size:12px;}
+  .main{padding:4.6rem 1.1rem 1.6rem;}
+  h1{font-size:24px;}
+  .sg,.g2,.g3{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
 <div class="ocean-bg"></div>
 <div id="bubbles"></div>
+<div class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" role="button" aria-label="Abrir menu"><span></span><span></span><span></span></div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleMenu(false)"></div>
 <div class="layout">
 
 <!-- SIDEBAR -->
-<nav class="sidebar">
+<nav class="sidebar" id="sidebar">
   <div class="logo"><div class="logo-icon">🐟</div><div><div class="logo-text">Maré Digital</div><div class="logo-sub">Docs · ago/2026</div></div></div>
 
   <div class="ng"><div class="ng-lbl">Visão geral</div>
@@ -231,7 +258,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <h2>Arquitetura</h2>
     <p class="slead">GitHub Pages para as páginas, Firebase para dados e auth, Cloud Functions para tudo que precisa de um segredo ou rodar sem o browser aberto.</p>
   </div></div>
-  <svg viewBox="0 0 800 290" xmlns="http://www.w3.org/2000/svg" width="100%" style="display:block;margin:0 auto 1.4rem;max-width:800px;">
+  <div class="arch-wrap">
+  <svg viewBox="0 0 800 290" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;width:800px;">
     <defs>
       <marker id="a1" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(56,182,255,.45)"/></marker>
       <marker id="a2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(29,233,182,.45)"/></marker>
@@ -262,6 +290,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <line x1="477" y1="245" x2="635" y2="245" stroke="rgba(255,107,107,.32)" stroke-width="1.5" marker-end="url(#a1)"/>
     <text x="500" y="238" fill="rgba(255,107,107,.5)" font-family="DM Sans" font-size="9">key nunca exposta</text>
   </svg>
+  </div>
   <div class="grid g2">
     <div class="wc"><div class="wch"><div class="wci">📦</div><div class="wct">O que fica no Firebase</div></div><div class="wcb">Cards, tags, colunas, sprint cfg, automações, backups, comentários, notas, notificações, logs de erro, presença. <strong>Segregado por squad</strong> — regras validam associação usuário↔squad no servidor.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🔑</div><div class="wct">O que fica na Cloud Function</div></div><div class="wcb">A <strong>chave da Anthropic</strong>, gerenciada via <code class="hl">firebase functions:secrets:set</code> (Secret Manager), nunca em HTML/localStorage. Além do push e do orquestrador, há Cloud Functions pra intake anônimo, backup semanal automático e a integração com Spotify (hoje pausada) — ver seção "Cloud Functions & Secrets".</div></div>
@@ -275,6 +304,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <h2>Os arquivos</h2>
     <p class="slead">Cada tela é seu próprio HTML autocontido. Mesmo Firebase por trás de todas.</p>
   </div></div>
+  <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
     <tbody>
@@ -285,6 +315,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>maredigital.html</td><td>sem versão própria</td><td>acesso direto</td><td>Esta página — documentação técnica, fora do ciclo de release versionado</td></tr>
     </tbody>
   </table>
+  </div>
   <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
     <div class="wch"><div class="wci">🔁</div><div class="wct">Relação prod ↔ dev</div></div>
     <div class="wcb"><strong>kanban-dev.html é testado primeiro</strong> — toda feature nova entra ali, é validada por quem pediu, e só depois é portada cirurgicamente para kanban.html (nunca uma cópia cega do arquivo inteiro). Squad padrão <code class="hl">dev</code> mantém os dados isolados de produção, e é o único squad onde o "Modo autônomo" do Agente Ágil está disponível hoje.</div>
@@ -395,6 +426,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <h2>Board & Visualizações</h2>
     <p class="slead">Três modos de visualização, filtros multicritério, drag-and-drop mouse e toque.</p>
   </div></div>
+  <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Função</th><th>O que faz</th></tr></thead>
     <tbody>
@@ -409,6 +441,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>pedirCard() / liberarCardAgora()</td><td>Card aberto por outra pessoa fica em modo somente-leitura com heartbeat de presença. Quem quer editar pode "Pedir o card" — dono recebe um aviso e, ao soltar (ou após o prazo de graça), quem pediu herda o lock automaticamente e o modal se atualiza sozinho.</td></tr>
     </tbody>
   </table>
+  </div>
   <div class="grid">
     <div class="card"><div class="ci">💤</div><div class="ct">Card aging</div><div class="cd">7 dias sem edição: desbotado. 14 dias: emoji 💤 + mais transparente. Sinal visual de estagnação.</div></div>
     <div class="card"><div class="ci">🔗</div><div class="ct">Dependências</div><div class="cd">Cards vinculados via "depende de". Mini-mapa de dependências no card. Modal com árvore completa.</div></div>
@@ -477,6 +510,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wch"><div class="wci">🤖</div><div class="wct">Modo autônomo (Automações)</div></div>
     <div class="wcb">A ação "Notificar Agente Ágil" das Automações pode, em vez de abrir o painel local, escrever ela mesma um comentário <code class="hl">@Agente Ágil</code> no card que disparou a regra — entrando no mesmo pipeline validado da @menção humana, sem nenhuma Cloud Function nova. Disponível hoje no squad <code class="hl">dev</code>.</div>
   </div>
+  <div class="tbl-wrap">
   <table class="tbl" style="margin-top:.9rem;">
     <thead><tr><th>Ferramenta (tool_use)</th><th>O que faz</th></tr></thead>
     <tbody>
@@ -493,6 +527,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>perguntar_humano</td><td>Pausa a tarefa e posta uma pergunta como comentário quando o agente não sabe como prosseguir — não adivinha uma resposta.</td></tr>
     </tbody>
   </table>
+  </div>
   <div class="wc" style="margin-top:8px;">
     <div class="wch"><div class="wci">🔑</div><div class="wct">Chave protegida via Secret Manager</div></div>
     <div class="wcb">A chave da Anthropic é gerenciada com <code class="hl">defineSecret()</code> (<code class="hl">firebase-functions/params</code>) e configurada via <code class="hl">firebase functions:secrets:set</code> — nunca fica em código, nem em variável de ambiente em texto puro.</div>
@@ -540,6 +575,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wch"><div class="wci">🔔</div><div class="wct">Fluxo</div></div>
     <div class="wcb">O app decide que algo merece notificar e escreve em <code class="hl">usuarios/{uid}/notificacoes/{id}</code>. A Cloud Function <code class="hl">sendPushOnNotification</code> só decide se <strong>também</strong> vira push — checando o <code class="hl">type</code> contra uma allow-list e a janela de "Não Perturbe" da pessoa (<code class="hl">notif_prefs/dnd</code>).</div>
   </div>
+  <div class="tbl-wrap">
   <table class="tbl" style="margin-top:.9rem;">
     <thead><tr><th>Tipo</th><th>Vira push?</th></tr></thead>
     <tbody>
@@ -547,6 +583,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>due_today · due_overdue</td><td>Não — só in-app, com deduplicação diária determinística</td></tr>
     </tbody>
   </table>
+  </div>
   <div class="wc" style="margin-top:8px;"><div class="wch"><div class="wci">📵</div><div class="wct">Mensagens data-only</div></div><div class="wcb">FCM envia só <code class="hl">data</code> (sem o campo <code class="hl">notification</code>) de propósito — os dois juntos fazem alguns browsers (Safari/iOS) mostrarem a notificação duas vezes.</div></div>
 </section>
 
@@ -638,6 +675,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="stag" style="color:var(--cyan)"><span style="background:var(--cyan)"></span>painel.html</div>
     <h2>Seções & Métricas</h2>
   </div></div>
+  <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Seção</th><th>O que mostra</th></tr></thead>
     <tbody>
@@ -655,6 +693,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Presença global</td><td>Quem está online agora e em qual squad.</td></tr>
     </tbody>
   </table>
+  </div>
 </section>
 
 <!-- 19 BOARD SETUP -->
@@ -754,6 +793,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <h2>Cloud Functions & Secrets</h2>
     <p class="slead">Duas funções deployadas em <code class="hl">functions/</code>, rodando com credenciais próprias do Firebase — nada de proxy externo.</p>
   </div></div>
+  <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Função</th><th>Trigger</th><th>O que faz</th></tr></thead>
     <tbody>
@@ -764,6 +804,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>Integração Spotify <span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);">pausada</span></td><td><code class="hl">onSchedule</code> a cada minuto (comentado, não deployado)</td><td>"Ouvindo agora" (presença ao vivo por squad) + "Rádio do Maré" (playlist colaborativa). O sync periódico era a única function agendada rodando 24h/dia e custou mais do que o esperado — pausado em 2026-08-04, painel escondido no board (<code class="hl">#spotify-tab</code>). As demais functions da integração (conectar/desconectar, sync sob demanda, playback, rádio) continuam deployadas, só sem o sync alimentando dado fresco.</td></tr>
     </tbody>
   </table>
+  </div>
   <div class="wc" style="margin-top:.9rem;">
     <div class="wch"><div class="wci">🔑</div><div class="wct">Secret Manager, não variável de ambiente em texto puro</div></div>
     <div class="code" style="margin-top:.5rem;"><span class="k">firebase functions:secrets:set</span> <span class="v">ANTHROPIC_API_KEY</span>
@@ -791,7 +832,17 @@ for(let i=0;i<14;i++){const b=document.createElement('div');b.className='bubble'
 const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');});},{threshold:.06});
 document.querySelectorAll('.section').forEach(s=>obs.observe(s));
 
-function goTo(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+function goTo(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});toggleMenu(false);}
+
+const menuToggle=document.getElementById('menu-toggle');
+const sidebarEl=document.getElementById('sidebar');
+const backdrop=document.getElementById('sidebar-backdrop');
+function toggleMenu(force){
+  const open = force!==undefined ? force : !sidebarEl.classList.contains('open');
+  sidebarEl.classList.toggle('open',open);
+  backdrop.classList.toggle('show',open);
+  menuToggle.classList.toggle('open',open);
+}
 
 const nls=document.querySelectorAll('.nl');
 document.querySelectorAll('.section').forEach(s=>{
