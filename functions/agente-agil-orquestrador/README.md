@@ -2070,7 +2070,7 @@ julgamento de PO de sempre preservado (avisa em vez de assumir que
 "mover pra Concluído" = "está pronto de verdade"), agora sem o bug.
 Achado do teste do item 7 considerado fechado.
 
-## Expansão pro squad `dados` — estruturado, NÃO ativado (2026-08-21)
+## Expansão pro squad `dados` — ativado em modo sombra (2026-08-23)
 
 Primeiro passo real na direção do item "expandir pra um squad de
 produção real" do roadmap — pedido explícito do usuário: preparar o
@@ -2117,3 +2117,28 @@ linha + `firebase deploy --only functions:agenteAgilMencaoDados`.
 `dados` respeitando `dryRun:true` de verdade (não escreve comentário
 real mesmo processando com sucesso). Suíte inteira: **201/201
 passando**.
+
+**Ativação (2026-08-23)**: já fora de horário de trabalho, o usuário
+confirmou subir — PR #480 descomentou `exports.agenteAgilMencaoDados`
+em `functions/index.js` (nenhuma mudança de código além disso, a
+fábrica já existia pronta desde a estruturação acima) e o deploy
+(`firebase deploy --only functions:agenteAgilMencaoDados`) foi
+confirmado feito pelo usuário. O gatilho agora roda de verdade em
+produção pro squad `dados`, ainda em modo sombra (`dryRun:true`):
+processa `@menções` reais e loga o resultado, mas não escreve o
+comentário de resposta no card ainda — mesma disciplina que o squad
+`dev` seguiu antes de virar escrita real. Validação em produção e
+decisão de virar `dryRun:false` ficam pra depois.
+
+**Ainda de propósito fora do ar pro squad `dados`**: o lado client-side
+em `kanban-dev.html`/`kanban.html` — `AGENTE_AGIL_MENTION_SQUADS` só
+tem `'dev'`, então o autocomplete de `@menção` não sugere o Agente Ágil
+nesse squad, e os 3 atalhos com card (Insights/menu de contexto/
+automação) mostram o toast "ainda não está disponível neste squad" em
+vez de postar. **Mas a detecção em si (`detectaMencao.js`) é por texto
+puro** (`"@agente agil"` como substring, case/acento-insensível) — não
+depende da entidade sintética do autocomplete — então alguém do squad
+`dados` que digitar `@Agente Ágil <pergunta>` manualmente no comentário
+já aciona o gatilho de verdade agora (mesmo sem autocomplete
+sugerindo). Ativar o client-side é decisão separada, pra quando os dois
+lados (autocomplete + atalhos) forem liberados juntos deliberadamente.
