@@ -129,10 +129,23 @@ normal do repo:
 
 ## Histórico de rodadas (não repetir trabalho já feito)
 
-*(nenhuma rodada ainda — skill criada em 2026-08-21, junto com
-`/monitorarbugs`. A última atualização real do `CODE_MAP.md` antes desta
-skill existir foi manual, durante a promoção da v8.30.454/455 — ver
-rodapé do arquivo pro commit exato.)*
+- **2026-08-24 — 1ª rodada usando esta skill** (rodapé anterior:
+  `49bd2c1`, 2026-08-21 → novo: `0b97e99`). `kanban.html`/`kanban-dev.html`
+  divergiam no momento da rodada (dev com squad `dados` no autocomplete/
+  atalhos do Agente Ágil, ainda não promovido) — cabeçalho atualizado
+  pra deixar isso explícito, números agora são de `kanban-dev.html`
+  (superset). ~60 âncoras revalidadas (todas ainda existiam, só linha
+  andou — nenhuma removida/renomeada, drift de +11 a +33 linhas
+  dependendo da posição, por conta dos commits do Agente Ágil client-side
+  desde a última rodada). 2 seções novas em `functions/`: export
+  `agenteAgilMencaoDados` (L198, squad `dados`) e dentro de
+  `agente-agil-orquestrador/` — `escolheClienteParaTarefa.js` (roteamento
+  de modelo, Item 7) e a fábrica `createMentionTrigger()` em
+  `mentionTrigger.js` (multi-squad, substituiu a descrição de
+  squad único). `tools/lerCard.js` ganhou entrada própria
+  (`colunas_disponiveis`). Marcadores `// --- X ---` revalidados
+  (mesmo drift). `painel.html`/`painel-dev.html` reconfirmado que
+  divergem de verdade.
 
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
