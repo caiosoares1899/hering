@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.457 — 2026-08-24 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.456
+(v8.30.457-dev → v8.30.458-dev), validado em dev e em produção (via
+squad `dev`, extensivamente testado ao longo do dia).
+
+- **Squad `dados` ganha o Agente Ágil pela UI** — autocomplete de `@`
+  passa a sugerir "Agente Ágil", e os 3 atalhos com card (🤖 Insights,
+  menu de contexto, automação "Notificar Agente Ágil") passam a postar
+  de verdade em vez de mostrar o toast "ainda não está disponível
+  neste squad". O backend (Cloud Function) já estava em escrita real
+  desde a v8.30.456; essa promoção só destrava o lado client.
+- Corrigido um bug real encontrado na mesma leva: o dropdown "🤖 Modo
+  autônomo" da automação "Notificar Agente Ágil" checava o squad de
+  forma hardcoded e ficava vazio pro squad `dados`, mesmo com a ação
+  já visível — agora usa a mesma fonte que o resto da feature.
+- Central de Ajuda ("O que é o Agente Ágil"/"Automações") atualizada
+  pra refletir os 2 squads.
+
 ### v8.30.456 — 2026-08-21 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.455
 (v8.30.455-dev → v8.30.456-dev), validado em dev.

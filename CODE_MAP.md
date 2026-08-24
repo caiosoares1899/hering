@@ -10,16 +10,13 @@ específico (ver rodapé) e ficam desatualizados a cada edição no arquivo —
 neles pra uma edição**. O valor real deste arquivo é a lista de nomes
 (âncoras estáveis), não os números de linha em si.
 
-`kanban.html` e `kanban-dev.html` DIVERGEM agora (retrato deste rodapé):
-dev tem features validadas em teste mas ainda não promovidas pra prod
-(hoje: squad `dados` no autocomplete/atalhos do Agente Ágil + fix do
-dropdown "Modo autônomo", v8.30.457-dev/458-dev — ver `CHANGELOG.md`).
-**Os números abaixo são de `kanban-dev.html`** (o superset — sempre
-inclui tudo que prod tem, mais o que ainda não foi promovido). Quando os
-dois voltarem a ficar idênticos exceto a versão/`VERSION_KEY` (depois da
-próxima promoção, ver "Release process" no `CLAUDE.md`), os números
-voltam a valer pros dois — até lá, se estiver editando `kanban.html`
-(prod) direto, refaça o grep nele especificamente.
+`kanban.html` e `kanban-dev.html` estão hoje byte-idênticos exceto 2
+linhas (string de versão + `VERSION_KEY`) — os números abaixo valem pros
+dois (retrato deste rodapé: promoção da v8.30.457 confirmada, ver
+`CHANGELOG.md`). Isso pode mudar a qualquer momento que uma feature nova
+entrar em dev antes de ir pra prod (ver "Release process" no
+`CLAUDE.md`) — se os tamanhos dos arquivos divergirem, refaça o grep no
+arquivo específico que você está editando.
 `painel.html`/`painel-dev.html` **divergem de verdade** (dev tem
 instrumentação extra) — os números da seção painel abaixo são de
 `painel.html` (prod).
