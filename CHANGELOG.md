@@ -1862,6 +1862,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.462-dev — 2026-08-24 — Filtro em "Aplicar receita" + Automações liberado pra todos os usuários
+Dois pedidos diretos:
+
+**1. Filtro (nome + tag) no "🧩 Aplicar receita"**
+O dropdown de receitas de fan-out dentro do card virou uma lista corrida
+sem filtro nenhum, ao contrário de Recorrentes/Modelos/Arquivados e do
+"📥 Usar modelo" (que já tinham busca por nome + tag). Agora tem os
+mesmos dois filtros. Como receita nunca teve tag própria, foi adicionado
+um campo <b>🏷 Tags</b> por receita (em ⚡ Automações → Receitas de
+Supercard) — usado só pra filtrar ela nesse dropdown, não afeta os cards
+gerados.
+
+**2. "⚡ Automações" liberado pra todos os usuários**
+Achado ao investigar o pedido: a única porta de entrada pra Automações
+era `⚙ Configurações → aba ⚡ Auto`, e o botão inteiro de Configurações
+fica escondido de quem não é PO/Organizador/ADM (`_applyRoleVisibility`)
+— então Membro/Convidado nunca tinham como abrir automações, mesmo sem
+nenhuma trava de permissão nas ações em si (criar regra, criar receita
+etc. sempre foram abertas pra qualquer papel). Extraído o conteúdo da
+aba "⚡ Auto" pra um overlay independente (`#auto-ov`, `openAutoOv()`),
+que não depende de abrir Configurações — agora tem um atalho novo em
+<b>⚡ Funções de card</b> (visível pra qualquer papel) além de continuar
+acessível pela aba "⚡ Auto" em Configurações (que virou um redirecionamento
+pro mesmo overlay, como pedido: "pode até continuar como atalho em
+configurações").
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.461-dev — 2026-08-24 — Rede de segurança: alerta ao vivo se um card sumir sem ninguém excluir
 Segunda parte do achado da v8.30.460-dev ("cards sumindo"): aquele fix
 cobriu só a CRIAÇÃO de card (a causa raiz confirmada do relato original).
