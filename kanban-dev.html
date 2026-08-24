@@ -5453,7 +5453,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.456-dev</div>
+<div class="version">v8.30.457-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6175,11 +6175,11 @@ const AGENTE_AGIL_MENTION_ENTRY = {
   init: AGENTE_AGIL_MENTION_INIT, name: 'Agente Ágil', foto: '', uid: 'agente-agil',
   isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖', isAgenteAgilMention: true,
 };
-// Mesmo escopo do gatilho automático (mentionTrigger.js:SQUAD_ID) — só
-// squad 'dev' por enquanto. Atualizar aqui junto se/quando o gatilho
-// expandir de squad, senão a sugestão aparece em squad onde não faz
-// nada (nenhuma Cloud Function escutando o comentário).
-const AGENTE_AGIL_MENTION_SQUADS = new Set(['dev']);
+// Mesmo escopo do gatilho automático (mentionTrigger.js) — precisa ter
+// uma Cloud Function de verdade escutando o squad, senão a sugestão
+// aparece em squad onde não faz nada. Hoje: 'dev' (SQUAD_ID) e 'dados'
+// (agenteAgilMencaoDados, ativado em escrita real 2026-08-24).
+const AGENTE_AGIL_MENTION_SQUADS = new Set(['dev', 'dados']);
 // Atalho pra @menção — reativa os pontos de entrada do Agente Ágil que têm
 // um card real (Insights do card, menu de contexto, automação manual),
 // substituindo o painel de chat antigo (openAgent()/qa()), que dependia de
