@@ -10,11 +10,16 @@ específico (ver rodapé) e ficam desatualizados a cada edição no arquivo —
 neles pra uma edição**. O valor real deste arquivo é a lista de nomes
 (âncoras estáveis), não os números de linha em si.
 
-`kanban.html` e `kanban-dev.html` estão hoje byte-idênticos exceto 2 linhas
-(string de versão + `VERSION_KEY`) — os números abaixo valem pros dois. Isso
-pode mudar a qualquer momento que uma feature nova entrar em dev antes de ir
-pra prod (ver "Release process" no `CLAUDE.md`) — se os tamanhos dos arquivos
-divergirem, refaça o grep no arquivo específico que você está editando.
+`kanban.html` e `kanban-dev.html` DIVERGEM agora (retrato deste rodapé):
+dev tem features validadas em teste mas ainda não promovidas pra prod
+(hoje: squad `dados` no autocomplete/atalhos do Agente Ágil + fix do
+dropdown "Modo autônomo", v8.30.457-dev/458-dev — ver `CHANGELOG.md`).
+**Os números abaixo são de `kanban-dev.html`** (o superset — sempre
+inclui tudo que prod tem, mais o que ainda não foi promovido). Quando os
+dois voltarem a ficar idênticos exceto a versão/`VERSION_KEY` (depois da
+próxima promoção, ver "Release process" no `CLAUDE.md`), os números
+voltam a valer pros dois — até lá, se estiver editando `kanban.html`
+(prod) direto, refaça o grep nele especificamente.
 `painel.html`/`painel-dev.html` **divergem de verdade** (dev tem
 instrumentação extra) — os números da seção painel abaixo são de
 `painel.html` (prod).
@@ -25,143 +30,165 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `ADM_EMAILS` (let) — L5609
 - `getEffectiveRole()` — L5647 — papel efetivo, ADMs hardcoded não são rebaixáveis
 - `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L5708 / L5690
-- `resolveSquadAndShow()` — L8648 — resolve squad da URL, decide o que mostrar
-- `autoRegistrar()` — L8801 — cria/atualiza o doc do usuário no login
+- `resolveSquadAndShow()` — L8675 — resolve squad da URL, decide o que mostrar
+- `autoRegistrar()` — L8828 — cria/atualiza o doc do usuário no login
 
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6093 — seções do modal (Conteúdo, Vínculos, Colaboração...)
-- `openCard()` — L10812
-- `saveCard()` — L11228 — auto-save (debounce 800ms) passa por aqui
-- `_finishCloseOv()` — L25228 — fechamento do modal, reset de estado pendente
+- `openCard()` — L10839
+- `saveCard()` — L11255 — auto-save (debounce 800ms) passa por aqui
+- `_finishCloseOv()` — L25263 — fechamento do modal, reset de estado pendente
 
 ### Board & render
-- `renderNormal()` — L9408
-- `renderRaiaOwner()` — L9466
-- `renderRaiaTag()` — L9517
-- `toggleRaia()` — L9796
-- `passesFilter()` — L9753
-- `handleDragStart/End/Over/Leave()` — L23439–L23489
-- `addTouchDnD()` — L23627 — drag-and-drop por toque (mobile)
+- `renderNormal()` — L9435
+- `renderRaiaOwner()` — L9493
+- `renderRaiaTag()` — L9544
+- `toggleRaia()` — L9823
+- `passesFilter()` — L9780
+- `handleDragStart/End/Over/Leave()` — L23472/L23483/L23494/L23522
+- `addTouchDnD()` — L23660 — drag-and-drop por toque (mobile)
 
 ### Busca (Ctrl+K + "Ver no board")
-- `openSearch()` — L25743
-- `renderSearchResults()` — L25755
-- `verNoBoardFromSearch()` — L25822
-- `_scheduleTextFilterApply()` — L9706 — debounce do filtro `#f-texto`
+- `openSearch()` — L25778
+- `renderSearchResults()` — L25790
+- `verNoBoardFromSearch()` — L25857
+- `_scheduleTextFilterApply()` — L9733 — debounce do filtro `#f-texto`
 
 ### Checklist (com grupos colapsáveis)
-- `renderCL()` — L11653
-- `_clGroupsInit()` — L11618
-- `toggleChecklistGroupCollapse()` — L11631
+- `renderCL()` — L11680
+- `_clGroupsInit()` — L11645
+- `toggleChecklistGroupCollapse()` — L11658
 
 ### Supercards / Ficha Técnica
-- `_crvAutoTitle()` — L12083 — título automático do filho a partir da Ficha Técnica
-- `searchSuperChildren()` — L21006 — busca de cards existentes ao criar um filho
-- `_mergeModeloEmCardObj()` — L23967
-- `_applyFanoutTemplate()` — L23936 — cria os filhos de uma receita de fan-out
+- `_crvAutoTitle()` — L12110 — título automático do filho a partir da Ficha Técnica
+- `searchSuperChildren()` — L21039 — busca de cards existentes ao criar um filho
+- `_mergeModeloEmCardObj()` — L24000
+- `_applyFanoutTemplate()` — L23969 — cria os filhos de uma receita de fan-out
 - Nesting de 2 níveis (campanha → criativo → versão): `editingSuperParentIsChild`
-  (global, L20773) + `initSuperChildren()` — L20793 — calcula se o card
+  (global, L20806) + `initSuperChildren()` — L20826 — calcula se o card
   aberto já seria uma "versão" (teto real do 2º nível)
-- `_crvOwnSummary()` — L20877 — resumo dos campos próprios do criativo,
+- `_crvOwnSummary()` — L20910 — resumo dos campos próprios do criativo,
   usado no card de versão (2º nível)
-- `_checkSupercardAutoComplete()` — L24437 — conclui o supercard sozinho
+- `_checkSupercardAutoComplete()` — L24474 — conclui o supercard sozinho
   quando todos os filhos ativos chegam numa coluna de fim; cascateia
-  filho→pai→avô recursivamente. `_isColCancelLike()` — L24423, logo acima —
+  filho→pai→avô recursivamente. `_isColCancelLike()` — L24460, logo acima —
   se TODOS os filhos ativos terminaram cancelados, o pai NÃO conclui
   sozinho, fica onde está
 
 ### Card lock / "Pedir o card"
-- `CARD_LOCK_REQUEST_GRACE_MS` — L10315
-- `_cardLockRequestPath()` — L10322
-- `pedirCard()` — L10332
-- `liberarCardAgora()` — L10346
-- `_renderLockRequestUI()` — L10350
-- `_handleLockRequest()` — L10385
+- `CARD_LOCK_REQUEST_GRACE_MS` — L10342
+- `_cardLockRequestPath()` — L10349
+- `pedirCard()` — L10359
+- `liberarCardAgora()` — L10373
+- `_renderLockRequestUI()` — L10377
+- `_handleLockRequest()` — L10412
 
 ### Notificações in-app
-- `createNotif()` — L21162
-- `loadNotifs()` — L21423
-- `checkDueNotifs()` — L21806 — due_today/due_overdue, 1x/dia
+- `createNotif()` — L21195
+- `loadNotifs()` — L21456
+- `checkDueNotifs()` — L21839 — due_today/due_overdue, 1x/dia
 
 ### Notas
-- `toggleNotas()` — L14185, `setNotasScope()` — L14198
-- `renderNotasList()` — L14233, `createNota()` — L14265
-- `openNota()`/`closeNotaEditor()` — L14281/L14282
-- `renderNotaEditor()` — L14543, `toggleNotaModo()` — L14841 (livre/estruturado)
-- `renderNotaLinkedCards()` — L14308, `notaSearchCards()`/`notaAddCardLink()`/`notaRemoveCardLink()` — L14326/L14349/L14358
-- `renderNotasVinculadasNoCard()` — L14378 — seção "Vínculos" dentro do card
+- `toggleNotas()` — L14218, `setNotasScope()` — L14231
+- `renderNotasList()` — L14266, `createNota()` — L14298
+- `openNota()`/`closeNotaEditor()` — L14314/L14315
+- `renderNotaEditor()` — L14576, `toggleNotaModo()` — L14874 (livre/estruturado)
+- `renderNotaLinkedCards()` — L14341, `notaSearchCards()`/`notaAddCardLink()`/`notaRemoveCardLink()` — L14359/L14382/L14391
+- `renderNotasVinculadasNoCard()` — L14411 — seção "Vínculos" dentro do card
 
 ### Automações (Butler-style)
-- `AUTO_TRIGGERS` — L24056 (20 triggers)
-- `AUTO_ACTIONS` — L24119 (14 ações)
-- `runAutoRules()` — L24474
-- `_autoTrigger()`/`_autoAction()` — L24199/L24200
-- `_autoValLabel()`/`_autoRenderValueOptions()` — L24203/L24225
+- `AUTO_TRIGGERS` — L24089 (20 triggers)
+- `AUTO_ACTIONS` — L24152 (14 ações)
+- `runAutoRules()` — L24511
+- `_autoTrigger()`/`_autoAction()` — L24235/L24236
+- `_autoValLabel()`/`_autoRenderValueOptions()` — L24239/L24261
 
 ### Agente Ágil (client-side — atalhos que postam @menção real)
 - `AGENTE_AGIL_MENTION_SQUADS` — L6182 — squads onde os atalhos abaixo
-  estão ativos (hoje só `'dev'`)
+  estão ativos: `'dev'` e `'dados'` (2026-08-24) — precisa ter uma Cloud
+  Function de verdade escutando o squad (ver seção `agente-agil-
+  orquestrador/` abaixo), senão a sugestão aparece sem nada escutando
 - `_askAgenteAgilNoCard(card, pergunta)` — L6196 — posta
   `@Agente Ágil <pergunta>` como comentário real do card, mesmo pipeline
   do `@menção` manual (`functions/agente-agil-orquestrador/mentionTrigger.js`)
 - `insightsCard()` — L13538 — botão "🤖 Insights" no rodapé do card
-- `ctxInsights()` — L24904 — opção "Insights" no menu de contexto do card
+- `ctxInsights()` — L24905 — opção "Insights" no menu de contexto do card
 - Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) segue
   desativado nos 4 pontos sem card real (FAB, nav mobile, AutoLab, alerta
   de WIP) — depende de um Worker externo fora do ar, não faz parte deste
   fluxo
 
 ### Externos / segurança
-- `_extKey()` — L27219 — chave de e-mail sanitizada (`.` → `,`)
-- `salvarExterno()` — L27220
+- `_extKey()` — L27254 — chave de e-mail sanitizada (`.` → `,`)
+- `salvarExterno()` — L27255
 
 ### Backup
-- `exportBackupJSON()` — L27321
-- `maybeSnapshot()` — L10026
+- `exportBackupJSON()` — L27356
+- `maybeSnapshot()` — L10053
 
 ### Marcadores `// --- X ---` já existentes no código
 Só existem para um subconjunto pequeno de áreas — não é uma convenção
 aplicada no arquivo inteiro, não confie neles como única forma de navegar:
-- L18183 Ágil, L18268 Col editor, L18312 Usuários, L18497 Tags,
-  L18867 "Worker / Firebase" (nome do comentário é antigo — hoje é
+- L18216 Ágil, L18301 Col editor, L18345 Usuários, L18530 Tags,
+  L18900 "Worker / Firebase" (nome do comentário é antigo — hoje é
   config/legado de Firebase, **não** tem relação com o Cloudflare Worker,
   que não existe mais na arquitetura atual)
-- L23369 D&D das colunas, L23438 D&D dos cards
+- L23402 D&D das colunas, L23471 D&D dos cards
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
 ### Dashboard consolidado
-- `loadAll()` — L8005 / `renderAll()` — L8026
+- `loadAll()` — L8016 / `renderAll()` — L8037
 - `renderOKR()` — L3925
-- `renderBlockers()` — L8579 / `resolveAllBlockers()` — L8509
+- `renderBlockers()` — L8590 / `resolveAllBlockers()` — L8520
 - `renderRiscos()` — L3960
-- `renderTrend()` — L8617 (throughput)
-- `renderColDist()` — L8640
-- `renderComparison()` — L8456
+- `renderTrend()` — L8628 (throughput)
+- `renderColDist()` — L8651
+- `renderComparison()` — L8467
 - `loadAgentUsage()` — L4354
 - `renderGerenciaBar()` — L2427 / `gerenciaSquadIds()` — L2420 (Insights por Gerência)
 
 ### Board Setup
-- `openBoardSetup()` — L8675
+- `openBoardSetup()` — L8686
 
 ### Usuários
-- `openGlobalUsersModal()` — L7609
-- `initHiddenCols()` — L7324
+- `openGlobalUsersModal()` — L7620
+- `initHiddenCols()` — L7335
 
 ## functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
 
 ### index.js — registro de exports
-- `PUSH_TYPES` (allow-list de push) — L23
+- `PUSH_TYPES` (allow-list de push, hoje: assigned/mention/unblocked/risk/
+  recorrente/painel_broadcast/intake) — L23
 - `sendPushOnNotification` — L25
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L119 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
 - `intakeSubmit` — L168 → `intake/submit.js`
 - `weeklyBackup` — L173 → `backup/weeklyBackup.js`
-- `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção)
+- `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
+- `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
+  escrita real 2026-08-24 (ver seção abaixo)
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
 - `tools/index.js` — `buildTools()`, registro das 11 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`)
-- `mentionTrigger.js` — gatilho @menção, `processarMencao()` L82
+- `tools/lerCard.js` — inclui `colunas_disponiveis` no retorno (mapa
+  id↔nome↔fim de TODAS as colunas do board) — `mover_coluna` precisa do
+  ID, não do nome de exibição; achado real 2026-08-21 (agente chutou
+  "Concluído"/"Concludo", ambos erraram, corretamente pausou com
+  `perguntar_humano` antes deste fix)
+- `mentionTrigger.js` — `createMentionTrigger({squadId, dryRun})` (L126)
+  é uma FÁBRICA multi-squad (2026-08-21) — cada squad suportado vira sua
+  própria Cloud Function com path LITERAL no trigger (não wildcard, por
+  custo). Instâncias hoje: `dev` (dryRun:false) e `dados` (dryRun:false,
+  2026-08-24) — ambas em escrita real. `processarMencao()` — L129
+  (dentro da fábrica, por instância)
+- `escolheClienteParaTarefa.js` — roteamento de modelo real (Item 7 do
+  roadmap, 2026-08-21): `classificaComplexidade()` — L70 — heurística de
+  texto que manda perguntas curtas/conceituais pro `haiku`, tudo o resto
+  (qualquer pedido de ação) pro `sonnet`; sem caminho automático pro
+  `opus` em v1, só override manual via
+  `kanban/config/agente_agil_orquestrador/model_tier_override`
+  (fail-safe: erro/ausente cai pra heurística). `MODEL_BY_TIER` — L27
 - `systemPrompt.js`, `loop.js`, `limits.js`, `detectaMencao.js`
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
@@ -197,4 +224,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `49bd2c1` (2026-08-21).*
+*Retrato do commit `0b97e99` (2026-08-24).*
