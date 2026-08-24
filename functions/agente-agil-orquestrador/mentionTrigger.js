@@ -213,8 +213,29 @@ function createMentionTrigger({ squadId, dryRun = true }) {
     // no client pra notificar due_today/due_overdue. Sem responsável
     // definido, não notifica ninguém (mesmo comportamento do client:
     // melhor não notificar do que notificar errado).
+    //
+    // Terceiro achado real (2026-08-24, MESMO dia — 1ª versão deste fix
+    // ainda não resolvia de verdade): usar o MESMO idOverride
+    // (`mention_{cardId}_{uid}`) que os outros 2 caminhos (notifica quem
+    // perguntou / notifica quem foi @mencionado no texto) já usam faz o
+    // disparo da Automação colidir com QUALQUER notificação anterior pra
+    // essa pessoa nesse card, de QUALQUER origem — inclusive uma bem
+    // antiga, de um teste ou @menção manual anterior. `buildNotifStep()`
+    // vê que o slot já existe e pula pra sempre, mesmo em invocações
+    // completamente novas dias depois, com informação nova de verdade
+    // (confirmado ao vivo: notificação de 12:37, de um teste anterior,
+    // bloqueou silenciosamente os disparos de Automação de 12:57/12:58 no
+    // MESMO card). O dedupe por card+pessoa faz sentido pro caso original
+    // (mesma pessoa perguntando de novo não precisa de notificação
+    // duplicada) mas quebra o da Automação, que PRECISA notificar de novo
+    // a cada disparo novo. Fix: `idOverride` da Automação inclui
+    // `commentId` (`mention_auto_{cardId}_{uid}_{commentId}`) — único por
+    // disparo, sem colidir com os outros 2 caminhos nem se auto-bloquear
+    // pra sempre; ainda idempotente pra reentrega do MESMO commentId
+    // (mesmo padrão de sempre).
     let targetUid = comment.uid;
     let notifTitle = '🤖 Agente Ágil respondeu sua menção';
+    let notifIdOverride = 'mention_' + cardId + '_' + comment.uid;
     if (comment.uid === AUTOMACAO_UID) {
       targetUid = null;
       const cardKey = await resolveCardKey(db, cardId, { squadId });
@@ -225,6 +246,7 @@ function createMentionTrigger({ squadId, dryRun = true }) {
         targetUid = getUidByInit(members, card.owner);
       }
       notifTitle = '🤖 Agente Ágil comentou no seu card (Automação)';
+      notifIdOverride = 'mention_auto_' + cardId + '_' + targetUid + '_' + commentId;
     }
     const comentarioCall = result.steps.flatMap((step) => step.toolCalls).find((call) => call.name === 'comentario');
     const respostaTexto = comentarioCall?.input?.texto || result.finalText || '';
@@ -236,7 +258,7 @@ function createMentionTrigger({ squadId, dryRun = true }) {
           title: notifTitle,
           sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
           cardId,
-          idOverride: 'mention_' + cardId + '_' + targetUid,
+          idOverride: notifIdOverride,
           dryRun,
         })
       : null;
