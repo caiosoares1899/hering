@@ -1816,6 +1816,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.460-dev — 2026-08-24 — Fix crítico: cards novos podiam sumir quando criados quase ao mesmo tempo
+Achado real de produção, reportado pelo time: cards criados no squad
+`midiacriativa` estavam sumindo depois de criados.
+
+**Causa raiz**: criar um card sempre passou por `fbSaveAll()`, que
+reescreve o array `/cards` **inteiro** com o que o navegador de quem
+está criando tem localmente — não é uma escrita pontual só do card
+novo. Se duas pessoas criam cards (ou uma cria enquanto a outra faz
+qualquer ação estrutural: duplicar em lote, arquivar em lote, importar)
+quase ao mesmo tempo no mesmo squad, quem grava por último sobrescreve
+o array inteiro com a cópia local desatualizada — apagando de verdade,
+sem erro nenhum, o card que a outra pessoa acabou de criar. Squads com
+várias pessoas criando cards ao mesmo tempo (como `midiacriativa`) são
+exatamente o cenário que dispara isso.
+
+**Fix**: card novo agora usa uma escrita pontual (só toca a posição
+dele em `/cards` + a entrada dele em `cards_index`), com a posição
+alocada via `transaction()` do Firebase — atômico contra criações
+concorrentes, o Firebase serializa e resolve automaticamente se duas
+pessoas tentam criar ao mesmo tempo. Aplicado consistentemente nos 4
+lugares que criam 1 card por vez: o modal principal, "⧉ Duplicar",
+criar filho de supercard, e cada filho de uma receita de fan-out.
+Ações em lote de verdade (duplicar/arquivar/excluir vários de uma vez,
+importação, recorrências) continuam usando o caminho antigo — fora de
+escopo desta rodada, por decisão explícita.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.459-dev — 2026-08-24 — Fix: risco notificava PO de squads errados
 Achado reportado pelo usuário: riscos mapeados num card notificavam
 **todos** os POs cadastrados no sistema, não só o PO do squad onde o
