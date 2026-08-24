@@ -37,22 +37,22 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `_finishCloseOv()` — L25263 — fechamento do modal, reset de estado pendente
 
 ### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
-- `fbSaveAll()` — L7304 — reescreve `/cards` INTEIRO (só pra operações
+- `fbSaveAll()` — L7336 — reescreve `/cards` INTEIRO (só pra operações
   estruturais em lote: duplicar/arquivar em massa, reordenar, importar,
   recorrências/agendamentos) — **nunca usar pra 1 card só**, arrisca
   sobrescrever o array com o estado local de outra pessoa
-- `fbCreateCard()` — L7436 — cria 1 card NOVO com escrita pontual,
+- `fbCreateCard()` — L7468 — cria 1 card NOVO com escrita pontual,
   posição alocada via `transaction()` no `cards_index` (atômico contra
   criações concorrentes) — achado real 2026-08-24 (squad
   `midiacriativa`, "cards sumindo"): `fbSaveAll()` na criação
   colidia com o mesmo tipo de ação concorrente e apagava cards de
   outras pessoas. Usar sempre pra criar 1 card (modal, duplicar, filho
   de supercard, fan-out)
-- `fbSaveCard()` — L7449 — edita 1 card EXISTENTE, escrita pontual
+- `fbSaveCard()` — L7521 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
 
 ### Rede de segurança — detecção ao vivo de card sumido inesperadamente
-- `_reportUnexpectedCardDisappearance()` — L7476 — dispara toast +
+- `_reportUnexpectedCardDisappearance()` — L7508 — dispara toast +
   `console.error` + grava `cards_incidentes_sumico/{incId}` quando um id
   some de `/cards_index` sem ter passado por `cards_deleted_intentionally`
   — "ponto 2" da rede de segurança pras ~46 chamadas de `fbSaveAll()` que
@@ -139,7 +139,7 @@ instrumentação extra) — os números da seção painel abaixo são de
   `⚙ Configurações → aba ⚡ Auto`, e o botão de Configurações fica
   escondido de quem não é PO/Organizador/ADM — `_applyRoleVisibility()`,
   L8966 — mesmo sem nenhuma trava de permissão nas ações em si) —
-  `openAutoOv()` abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
+  `openAutoOv()` — L18394 — abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
   tanto por um atalho em ⚡ Funções de card (`#card-fn-ov`, visível pra
   qualquer papel) quanto pela aba "⚡ Auto" em Configurações (que virou
   um redirecionamento pro mesmo overlay, não mais uma aba inline)

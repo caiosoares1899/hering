@@ -3850,7 +3850,13 @@ input[type="date"]{-moz-appearance:textfield;}
         <div style="display:flex;gap:6px;">
           <div style="position:relative;">
             <button class="attach-add-btn" onclick="toggleFanoutApplyMenu()" id="m-super-fanout-btn" style="display:none;">🧩 Aplicar receita ▾</button>
-            <div class="link-dropdown" id="m-super-fanout-dd" style="left:auto;right:0;min-width:220px;"></div>
+            <div class="link-dropdown" id="m-super-fanout-dd" style="left:auto;right:0;min-width:240px;max-width:280px;max-height:320px;overflow:hidden;">
+              <div style="padding:8px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--glass-b);">
+                <input id="m-super-fanout-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar receita..." oninput="_renderFanoutApplyList()" style="width:100%;">
+                <select id="m-super-fanout-f-tag" class="ql-filter-sel" onchange="_renderFanoutApplyList()" style="width:100%;"></select>
+              </div>
+              <div id="m-super-fanout-list" style="max-height:220px;overflow-y:auto;"></div>
+            </div>
           </div>
           <button class="attach-add-btn" onclick="toggleSuperChildSearch()" id="m-super-add-btn">+ Adicionar</button>
         </div>
@@ -4030,7 +4036,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('subtimes')">👥 Subtimes</div>
     <div class="ag-tab" onclick="swCfgTab('padroes')">📐 Padrões de card</div>
     <div class="ag-tab" onclick="swCfgTab('fluxo')">⚙️ Fluxo</div>
-    <div class="ag-tab" onclick="swCfgTab('auto')">⚡ Auto</div>
+    <div class="ag-tab" onclick="closeOv('cfg-ov');openAutoOv();">⚡ Auto</div>
     <div class="ag-tab" onclick="swCfgTab('importar')">📥 Importar</div>
     <div class="ag-tab" onclick="swCfgTab('worker')">🛠️ Worker</div>
     <div class="ag-tab" onclick="swCfgTab('firebase')">🔥 Firebase</div>
@@ -4322,67 +4328,14 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
 
 
-    <!-- ABA AUTOMAÇÕES -->
-    <div class="tab-c" id="cfgtab-auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
-        <div class="cfg-sec-title" style="margin-bottom:0;">🧩 Receitas de Supercard (fan-out)</div>
-        <button class="btn btn-sm" onclick="criarFanoutTemplate()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova receita</button>
-      </div>
-      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Defina de antemão os cards filhos que uma receita gera — ex.: "Campanha de mídia paga" → Feed, Stories, Reels, Display... (dá pra digitar vários de uma vez, separados por vírgula). Cada filho nasce com o título "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/demandante do pai. Opcionalmente, vincule cada filho — e também o <b>👑 card pai</b> — a um <b>📋 Modelo</b> (crie um em ⚡ Funções de card → Modelos) pra nascer/ficar já estruturado: descrição, checklist, tags e riscos vêm do modelo, sem apagar o que já estiver preenchido. Use manualmente (botão "🧩 Aplicar receita" dentro de qualquer card) ou automaticamente, com a ação "🧩 Aplicar fan-out" numa regra abaixo.</p>
-      <div id="fanout-cfg-list" style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px;"></div>
-
-      <div class="cfg-sec-title">⚡ Automações do board</div>
-      <p style="font-size:11px;color:var(--txt2);margin-bottom:10px;line-height:1.6;">Regras que executam automaticamente quando algo acontece no board. Use o <strong>AutoLab</strong> no Agente Ágil para testar antes de ativar.</p>
-      <div id="auto-rules-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;"></div>
-      <div style="background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-bottom:8px;">
-        <div class="cfg-sec-title" style="margin-bottom:8px;">Nova regra</div>
-        <div style="display:flex;flex-direction:column;gap:7px;">
-          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
-            <span style="font-size:11px;color:var(--cyan);font-weight:700;min-width:60px;">Quando</span>
-            <select class="rule-sel" id="auto-trigger" onchange="populateAutoSelects()"></select>
-            <select class="rule-sel" id="auto-trigger-val" style="max-width:140px;"></select>
-          </div>
-          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
-            <span style="font-size:11px;color:var(--txt3);font-weight:700;min-width:60px;">E (opcional)</span>
-            <span style="font-size:11px;color:var(--txt2);">a tag do card é</span>
-            <select class="rule-sel" id="auto-cond-tag" style="max-width:160px;"><option value="">— sem condição extra —</option></select>
-          </div>
-          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
-            <span style="font-size:11px;color:var(--teal);font-weight:700;min-width:60px;">Então</span>
-            <select class="rule-sel" id="auto-action" onchange="populateAutoSelects()"></select>
-            <select class="rule-sel" id="auto-action-val" style="max-width:140px;"></select>
-            <input type="text" class="rule-sel" id="auto-action-val-text" style="display:none;max-width:180px;" placeholder="Texto do item de checklist...">
-            <button class="btn btn-sm" onclick="addPendingAutoAction()" title="Adicionar mais uma ação a esta mesma regra" style="color:var(--teal);border-color:rgba(29,233,182,.3);">+ Ação</button>
-          </div>
-          <div id="auto-pending-actions" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-          <div style="display:flex;justify-content:flex-end;gap:7px;">
-            <button class="btn btn-sm" onclick="testAutoRule()">🧪 Testar no AutoLab</button>
-            <button class="btn btn-p btn-sm" onclick="saveAutoRule()">+ Adicionar regra</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-top:4px;">
-        <div class="cfg-sec-title" style="margin-bottom:6px;">🗄 Arquivamento automático por idade</div>
-        <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">Cards muito antigos e parados somem sozinhos do board ativo (continuam salvos em Arquivados, dá pra restaurar a qualquer hora). Só arquiva se as DUAS condições forem verdadeiras: idade mínima E tempo parado sem edição.</p>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);margin-bottom:10px;cursor:pointer;">
-          <input type="checkbox" id="archcfg-enabled" style="accent-color:var(--teal);"> Ativar arquivamento automático pra este squad
-        </label>
-        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
-          <div class="field" style="max-width:150px;">
-            <label class="fl">Idade mínima (dias)</label>
-            <input class="fi" type="number" id="archcfg-days" min="30" value="365">
-          </div>
-          <div class="field" style="max-width:150px;">
-            <label class="fl">Sem edição há (dias)</label>
-            <input class="fi" type="number" id="archcfg-inactive" min="0" value="90">
-          </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;">
-          <button class="btn btn-p btn-sm" onclick="saveArchiveCfg()">💾 Salvar regra</button>
-        </div>
-      </div>
-    </div>
+    <!-- ABA AUTOMAÇÕES: conteúdo mora agora no overlay independente #auto-ov
+         (ver logo depois de #card-fn-ov) — pedido direto: "preciso que
+         automações apareça no funções de card e esteja liberado para todos".
+         A aba "⚡ Auto" continua aqui como atalho (swCfgTab intercepta e abre
+         o overlay em vez de trocar de aba), mas o overlay em si não depende
+         de abrir ⚙ Configurações (que fica escondido pra quem não é
+         PO/organizador/adm — ver _applyRoleVisibility) — dá pra chegar nele
+         também por ⚡ Funções de card, visível pra qualquer papel. -->
 
 
     <!-- ABA IMPORTAR -->
@@ -4892,12 +4845,91 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('card-fn-ov')">✕</button>
   </div>
   <div style="padding:8px;display:flex;flex-direction:column;gap:3px;">
+    <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openAutoOv()">⚡ <span>Automações</span></button>
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openQL('recorrentes')">🔁 <span>Recorrentes</span></button>
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openQL('agendamentos')">📅 <span>Agendamentos</span></button>
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openQL('modelos')">📋 <span>Modelos</span></button>
     <div style="height:1px;background:var(--glass-b);margin:4px 8px;"></div>
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openArquivados()">📦 <span>Arquivados</span></button>
     <button class="card-fn-modal-item" onclick="closeOv('card-fn-ov');openCleanupOld()">🧹 <span>Cards antigos</span></button>
+  </div>
+</div>
+</div>
+
+<!-- AUTOMAÇÕES E RECEITAS DE FAN-OUT — extraído de ⚙ Configurações → ⚡ Auto
+     (achado real: essa tela ficava só acessível pra quem já enxergava o
+     botão ⚙ Configurações, escondido de membro/convidado por
+     _applyRoleVisibility — pedido direto: "preciso que automações apareça
+     no funções de card e esteja liberado para todos"). Overlay
+     independente, aberto por openAutoOv() tanto pelo atalho em ⚡ Funções de
+     card (visível pra qualquer papel) quanto pela aba "⚡ Auto" dentro de
+     Configurações (swCfgTab intercepta e redireciona pra cá — continua
+     "atalho em configurações", como pedido, sem duplicar o painel inteiro). -->
+<div class="ov" id="auto-ov">
+<div class="panel" style="max-width:640px;width:92vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">⚡ Automações</div>
+    <button class="x-btn" onclick="closeOv('auto-ov')">✕</button>
+  </div>
+  <div style="padding:14px 18px 20px;overflow-y:auto;flex:1;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+      <div class="cfg-sec-title" style="margin-bottom:0;">🧩 Receitas de Supercard (fan-out)</div>
+      <button class="btn btn-sm" onclick="criarFanoutTemplate()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Nova receita</button>
+    </div>
+    <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:10px;">Defina de antemão os cards filhos que uma receita gera — ex.: "Campanha de mídia paga" → Feed, Stories, Reels, Display... (dá pra digitar vários de uma vez, separados por vírgula). Cada filho nasce com o título "{card pai} — {nome do filho}", herdando coluna/prazo/prioridade/demandante do pai. Opcionalmente, vincule cada filho — e também o <b>👑 card pai</b> — a um <b>📋 Modelo</b> (crie um em ⚡ Funções de card → Modelos) pra nascer/ficar já estruturado: descrição, checklist, tags e riscos vêm do modelo, sem apagar o que já estiver preenchido. As <b>🏷 Tags</b> de uma receita servem só pra filtrar ela no botão "🧩 Aplicar receita" dentro do card. Use manualmente (botão "🧩 Aplicar receita" dentro de qualquer card) ou automaticamente, com a ação "🧩 Aplicar fan-out" numa regra abaixo.</p>
+    <div id="fanout-cfg-list" style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px;"></div>
+
+    <div class="cfg-sec-title">⚡ Automações do board</div>
+    <p style="font-size:11px;color:var(--txt2);margin-bottom:10px;line-height:1.6;">Regras que executam automaticamente quando algo acontece no board. Use o <strong>AutoLab</strong> no Agente Ágil para testar antes de ativar.</p>
+    <div id="auto-rules-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px;"></div>
+    <div style="background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-bottom:8px;">
+      <div class="cfg-sec-title" style="margin-bottom:8px;">Nova regra</div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--cyan);font-weight:700;min-width:60px;">Quando</span>
+          <select class="rule-sel" id="auto-trigger" onchange="populateAutoSelects()"></select>
+          <select class="rule-sel" id="auto-trigger-val" style="max-width:140px;"></select>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--txt3);font-weight:700;min-width:60px;">E (opcional)</span>
+          <span style="font-size:11px;color:var(--txt2);">a tag do card é</span>
+          <select class="rule-sel" id="auto-cond-tag" style="max-width:160px;"><option value="">— sem condição extra —</option></select>
+        </div>
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:11px;color:var(--teal);font-weight:700;min-width:60px;">Então</span>
+          <select class="rule-sel" id="auto-action" onchange="populateAutoSelects()"></select>
+          <select class="rule-sel" id="auto-action-val" style="max-width:140px;"></select>
+          <input type="text" class="rule-sel" id="auto-action-val-text" style="display:none;max-width:180px;" placeholder="Texto do item de checklist...">
+          <button class="btn btn-sm" onclick="addPendingAutoAction()" title="Adicionar mais uma ação a esta mesma regra" style="color:var(--teal);border-color:rgba(29,233,182,.3);">+ Ação</button>
+        </div>
+        <div id="auto-pending-actions" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:7px;">
+          <button class="btn btn-sm" onclick="testAutoRule()">🧪 Testar no AutoLab</button>
+          <button class="btn btn-p btn-sm" onclick="saveAutoRule()">+ Adicionar regra</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-top:4px;">
+      <div class="cfg-sec-title" style="margin-bottom:6px;">🗄 Arquivamento automático por idade</div>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">Cards muito antigos e parados somem sozinhos do board ativo (continuam salvos em Arquivados, dá pra restaurar a qualquer hora). Só arquiva se as DUAS condições forem verdadeiras: idade mínima E tempo parado sem edição.</p>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);margin-bottom:10px;cursor:pointer;">
+        <input type="checkbox" id="archcfg-enabled" style="accent-color:var(--teal);"> Ativar arquivamento automático pra este squad
+      </label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
+        <div class="field" style="max-width:150px;">
+          <label class="fl">Idade mínima (dias)</label>
+          <input class="fi" type="number" id="archcfg-days" min="30" value="365">
+        </div>
+        <div class="field" style="max-width:150px;">
+          <label class="fl">Sem edição há (dias)</label>
+          <input class="fi" type="number" id="archcfg-inactive" min="0" value="90">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="btn btn-p btn-sm" onclick="saveArchiveCfg()">💾 Salvar regra</button>
+      </div>
+    </div>
   </div>
 </div>
 </div>
@@ -5453,7 +5485,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.459</div>
+<div class="version">v8.30.460</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10372,6 +10404,13 @@ let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,
 // têm). Isso monitora esses campos "manuais" pra avisar visualmente quando há
 // algo pendente, e evita fechar o modal sem querer perdendo essa edição.
 let _cardManualSnap = null;
+// Rearmado a cada openNewCard(), desarmado nos pontos em que um card NOVO
+// fecha de forma LEGÍTIMA (salvou com sucesso, ou o modal foi reaproveitado
+// pra editar um item de Recorrente/Modelo/Agendamento e aquilo já foi
+// salvo) — sem isso, _newCardHasContent() (abaixo) acharia que ainda tem
+// conteúdo não salvo bem no instante em que o closeOv('card-ov') de
+// sucesso roda, e mostraria a confirmação por cima do toast de sucesso.
+let _newCardGuardOff = false;
 function _manualFieldsNow(){
   return {
     sp: document.getElementById('m-sp')?.value||'',
@@ -10387,6 +10426,28 @@ function _manualFieldsNow(){
 function _cardIsDirty(){
   if(!_cardManualSnap) return false;
   return JSON.stringify(_manualFieldsNow()) !== JSON.stringify(_cardManualSnap);
+}
+// Card NOVO (editingId null) não passa por _cardIsDirty() — openNewCard()
+// desarma a trava de propósito ("nada foi perdido se descartar"), porque no
+// instante em que o modal abre isso é verdade. Mas se a pessoa já digitou
+// algo (título, descrição, tags, checklist...) e clicar fora / Cancelar,
+// tudo isso some sem aviso nenhum — não tem autosave nenhum pra um card que
+// ainda nem existe no Firebase. Checa só os campos que começam vazios e só
+// ficam preenchidos por ação deliberada da pessoa — owner/coluna/prazo
+// entram com um valor padrão já ao abrir (ex.: owner = você mesmo), então
+// não contam, senão o aviso dispararia mesmo sem a pessoa ter feito nada.
+function _newCardHasContent(){
+  if(editingId) return false; // edição de card existente usa _cardIsDirty()
+  if(_newCardGuardOff) return false; // fechamento legítimo em andamento — ver declaração
+  if((document.getElementById('m-title')?.value||'').trim()) return true;
+  if((document.getElementById('m-desc')?.value||'').trim()) return true;
+  if((document.getElementById('m-po')?.value||'').trim()) return true;
+  if((document.getElementById('m-comment-inp')?.value||'').trim()) return true;
+  if(editingTags.length) return true;
+  if(editingDescs.length) return true;
+  if(getCL().length) return true;
+  if(getRiscos().length) return true;
+  return false;
 }
 function _updateSaveBtnDirtyState(){
   const btn=document.getElementById('btn-save-card'); if(!btn) return;
@@ -11366,6 +11427,7 @@ function openNewCard(col){
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
+  _newCardGuardOff = false; // rearma a trava de _newCardHasContent() pra esta nova sessão de criação
 }
 function saveCard(){
   if(_savingCard) return; // já tem um salvamento em voo (ver comentário na declaração de _savingCard)
@@ -11405,6 +11467,7 @@ function saveCard(){
     cards = cards.filter(c=>!c._isQLTemp);
     _editingQLItem = null;
     editingId = null;
+    _newCardGuardOff = true; // editingId vira null aqui (não é "criação abandonada") — ver declaração
     closeOv('card-ov');
     showToast('✅ Item atualizado');
     return;
@@ -11624,6 +11687,7 @@ function saveCard(){
     }
     _intakeOrigemPendingId=null;
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
+    _newCardGuardOff = true; // idem pra _newCardHasContent() — editingId pode continuar null aqui (ver comentário acima)
     closeOv('card-ov');
     _clearPendingRequired();
   }).catch(err=>{
@@ -18289,17 +18353,10 @@ function swCfgTab(tab){
  const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
-  if(tab==='auto'){
-    renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); renderFanoutCfg();
-    // Modelos é lazy (ver _ensureModelosLoaded) — na 1ª vez que esta aba abre
-    // numa sessão os selects de modelo acima renderizam vazios; assim que
-    // carregar, re-renderiza só se a aba ainda estiver aberta.
-    if(window._ensureModelosLoaded && !_modelosLoaded){
-      window._ensureModelosLoaded().then(()=>{
-        if(document.getElementById('cfgtab-auto')?.classList.contains('on')){ populateAutoSelects(); renderFanoutCfg(); renderAutoRules(); }
-      });
-    }
-  }
+  // 'auto' nunca chega aqui — o botão da aba chama openAutoOv() direto (ver
+  // HTML de #cfg-tabs) — o overlay #auto-ov mora fora de #cfg-ov agora, ver
+  // openAutoOv() abaixo. 'auto' continua em TABS acima só pra manter o
+  // índice dos botões alinhado com as outras abas (não remover).
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
@@ -18324,9 +18381,27 @@ function swCfgTab(tab){
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
   if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
-  if(tab==='calendario'){ 
-    if(typeof renderCalendarList === 'function') renderCalendarList(); 
+  if(tab==='calendario'){
+    if(typeof renderCalendarList === 'function') renderCalendarList();
   }
+}
+// Abre o overlay independente de Automações/Receitas (#auto-ov) — mesma
+// lógica que antes rodava só dentro de swCfgTab(tab==='auto'), extraída pra
+// cá quando o conteúdo saiu de dentro de #cfg-ov (ver comentário no HTML de
+// #auto-ov). Chamada tanto pelo atalho em ⚡ Funções de card (qualquer
+// papel) quanto pela aba "⚡ Auto" em Configurações (só PO/organizador/adm,
+// que são os únicos que enxergam o botão ⚙ Configurações).
+function openAutoOv(){
+  renderAutoRules(); populateAutoSelects(); fillArchiveCfgTab(); renderFanoutCfg();
+  // Modelos é lazy (ver _ensureModelosLoaded) — na 1ª vez que este overlay
+  // abre numa sessão os selects de modelo acima renderizam vazios; assim
+  // que carregar, re-renderiza só se o overlay ainda estiver aberto.
+  if(window._ensureModelosLoaded && !_modelosLoaded){
+    window._ensureModelosLoaded().then(()=>{
+      if(document.getElementById('auto-ov')?.classList.contains('open')){ populateAutoSelects(); renderFanoutCfg(); renderAutoRules(); }
+    });
+  }
+  document.getElementById('auto-ov')?.classList.add('open');
 }
 // --- Ágil ---
 function calcSprintEnd(){
@@ -20336,7 +20411,7 @@ const HELP_CONTENT = {
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚙ Config → Automações, crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada.\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚙ Config → Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n✅ Conclusão automática: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o pai vai pra lá sozinho — e isso cascateia pelos 2 níveis (todas as versões concluídas → o criativo conclui sozinho → se completar os últimos criativos pendentes, a campanha conclui também, no mesmo evento). Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), o pai fica onde está — cancelar tudo não é a mesma coisa que concluir tudo.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n✅ Conclusão automática: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o pai vai pra lá sozinho — e isso cascateia pelos 2 níveis (todas as versões concluídas → o criativo conclui sozinho → se completar os últimos criativos pendentes, a campanha conclui também, no mesmo evento). Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), o pai fica onde está — cancelar tudo não é a mesma coisa que concluir tudo.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.' },
@@ -20354,7 +20429,7 @@ const HELP_CONTENT = {
     { icon:'📋', title:'Salvar como modelo', text:'Clique no ícone 📋 no rodapé de qualquer card para salvá-lo como modelo. O modelo copia tag, descrição, PO, checklist (desmarcado) e riscos.' },
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.' },
-    { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar) e 📦 Arquivados (cards que saíram do quadro). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
+    { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: ⚡ Automações (regras "Quando X → Então Y" e receitas de fan-out, ver dica "Automações"), 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar), 📦 Arquivados (cards que saíram do quadro) e 🧹 Cards antigos (arquivamento em lote de cards parados há muito tempo, disponível pra ADM/PO/Organizador). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
     { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.' },
@@ -20383,7 +20458,7 @@ const HELP_CONTENT = {
     { icon:'🔤', title:'Iniciais únicas e reatribuição', text:'Cada pessoa tem iniciais (ex.: CS) que vinculam os cards a ela. Se duas pessoas teriam as mesmas iniciais no squad, o sistema gera uma única automaticamente e avisa. Na lista de usuários, iniciais repetidas piscam em vermelho — clique na pílula para corrigir. O botão "🔄 Reatribuir cards" move todos os cards de uma pessoa para outra de uma vez.' },
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
-    { icon:'⚡', title:'Automações', text:'Em Config → Auto, crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), ou notificar o Agente Ágil.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.' },
+    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), ou notificar o Agente Ágil.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
@@ -20407,7 +20482,7 @@ const HELP_CONTENT = {
     { icon:'🎯', title:'Objetivo da sprint', text:'Uma frase que resume o valor entregue nessa sprint. Deve ser específico, mensurável e acordado com stakeholders. Aparece no topo do board e no contexto do Agente Ágil.' },
     { icon:'🔁', title:'Retrospectiva', text:'Cerimônia ao fim de cada sprint para inspecionar o processo. Use a aba Retrospectiva do Agente Ágil para estruturar pontos de melhoria e transformá-los em ações.' },
     { icon:'👤', title:'Product Owner (PO)', text:'Responsável por maximizar o valor entregue pelo time. No Maré Digital, o PO gerencia configurações, acessa o Agente Ágil e usa o campo Insights do PO em cada card para descrever objetivo e critério de aceite (formato SMART).' },
-    { icon:'🏊', title:'Papéis no board', text:'Convidado e Membro: cria, edita e move cards, posta lembretes e kudos (Convidado é só um rótulo diferente, pra sinalizar gente de fora — ex. freelancer — e é o único papel que pode ser removido da lista pelo PO). Organizador: gerencia colunas e tags. PO: acesso total incluindo Agente Ágil, automações e configurações. ADM: acesso irrestrito a todos os squads.' },
+    { icon:'🏊', title:'Papéis no board', text:'Convidado e Membro: cria, edita e move cards, posta lembretes e kudos, e também usa ⚡ Automações (regras e receitas de fan-out — liberado pra qualquer papel, ver dica "Automações") (Convidado é só um rótulo diferente, pra sinalizar gente de fora — ex. freelancer — e é o único papel que pode ser removido da lista pelo PO). Organizador: gerencia colunas e tags. PO: acesso total incluindo Agente Ágil e configurações. ADM: acesso irrestrito a todos os squads.' },
   ],
   comunicacao: [
     { icon:'📢', title:'Mural — avisos do ADM', text:'Clique em 📢 no header (ao lado do sino 🔔) para abrir o Mural. Na aba Avisos você vê todos os comunicados publicados pelo administrador — novidades, dicas, avisos e alertas urgentes. Cada tipo tem cor e ícone próprios. Itens que você ainda não leu aparecem com uma bolinha colorida. Clicar num item abre o comunicado completo. Comunicados importantes podem aparecer automaticamente como popup ao abrir ou recarregar o board — basta clicar "Entendi 👍" para não ver de novo.' },
@@ -20447,7 +20522,7 @@ const HELP_CONTENT = {
 <div><b style="color:#3ddc97;">ENTÃO</b> — uma ou mais ações, ex.: marcar como OKR + adicionar item de checklist</div>
 </div>
 
-Onde configurar: ⚙ Configurações → aba ⚡ Auto → "+ Nova regra". Toda regra pode ser pausada a qualquer momento (sem precisar excluir) pelo interruptor ao lado dela na lista.` },
+Onde configurar: ⚡ Automações → "+ Nova regra" — liberado pra qualquer papel, acessível pelo atalho em ⚡ Funções de card ou pela aba ⚡ Auto de ⚙ Configurações (as duas abrem a mesma tela). Toda regra pode ser pausada a qualquer momento (sem precisar excluir) pelo interruptor ao lado dela na lista.` },
     { icon:'📥', title:'Gatilhos — o que faz a regra disparar (QUANDO)', text:`<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;line-height:1.5;">
 <div>📥 <b>Card mudou para a coluna X</b></div>
 <div>✨ <b>Card foi criado na coluna X</b></div>
@@ -20976,10 +21051,21 @@ function initSuperChildren(card){
   if(tooDeep){ const sw=document.getElementById('m-super-search-wrap'); if(sw) sw.style.display='none'; }
   if(fanoutDd){
     fanoutDd.classList.remove('show');
-    fanoutDd.innerHTML = tplIds.map(id=>{
-      const t=fanoutTemplates[id];
-      return '<div class="link-option" onclick="applyFanoutToCurrentCard(\''+esc(id)+'\')"><span style="flex:1;color:var(--txt);">🧩 '+esc(t.nome)+'</span><span class="link-option-col">'+(t.filhos||[]).length+'</span></div>';
-    }).join('');
+    // Filtro por nome+tag (pedido direto: "preciso de filtro, tipo aquele
+    // 'usar modelo', tag e nome") — a lista em si é populada por
+    // _renderFanoutApplyList(), a partir de _fanoutApplyTplIds guardado
+    // aqui; o dropdown só reconstrói o CONTEÚDO, não o filtro (mesmo
+    // padrão de #m-usarmodelo-menu).
+    _fanoutApplyTplIds = tplIds;
+    const fTag=document.getElementById('m-super-fanout-f-tag');
+    if(fTag){
+      const tagsUsadas=[...new Set(tplIds.flatMap(id=>fanoutTemplates[id].tags||[]))].filter(Boolean);
+      fTag.innerHTML='<option value="">🏷 Todas as tags</option>'+tagsUsadas.map(id=>{const t=getTag(id);return t?`<option value="${esc(id)}">${esc(t.label)}</option>`:''}).join('');
+      fTag.value='';
+    }
+    const fNome=document.getElementById('m-super-fanout-f-nome');
+    if(fNome) fNome.value='';
+    _renderFanoutApplyList();
   }
   // Se ESTE card é filho de algum outro supercard, mostra o vínculo reverso
   // (calculado na hora — barato, cards já estão todos em memória). Card
@@ -23952,7 +24038,7 @@ let _fanoutCfgAberto = null; // id da receita com a lista de filhos expandida (s
 function loadFanoutTemplates(){
   fbListen(FB+'/config/fanout_templates', val=>{
     fanoutTemplates = val||{};
-    if(document.getElementById('cfgtab-auto')?.classList.contains('on')) renderFanoutCfg();
+    if(document.getElementById('auto-ov')?.classList.contains('open')) renderFanoutCfg();
     // O dropdown "Então" de automação e o botão "Aplicar receita" do card
     // dependem de quantas receitas existem — repopula se estiverem visíveis.
     populateAutoSelects();
@@ -24072,6 +24158,17 @@ function renderFanoutCfg(){
         ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${f.paiModeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
       </select>
     </div>`;
+    // Tags DESTA receita — não têm nenhum outro uso, servem só pra filtrar
+    // ela no dropdown "🧩 Aplicar receita" dentro do card (ver
+    // _renderFanoutApplyList()), mesmo padrão de nome+tag já usado em
+    // Recorrentes/Modelos/Arquivados/"📥 Usar modelo".
+    const tagsAtuais=f.tags||[];
+    const tagsHtml=`<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 10px 8px;font-size:12px;color:var(--txt2);border-bottom:1px dashed var(--glass-b);margin-bottom:4px;flex-wrap:wrap;">
+      <span style="flex:0 0 auto;padding-top:3px;">🏷 Tags</span>
+      <select class="fi" multiple onchange="setFanoutTags('${id}',this)" title="Segure Ctrl (ou Cmd) pra marcar mais de uma — usadas só pra filtrar esta receita no botão 🧩 Aplicar receita dentro do card" style="font-size:10px;padding:3px 6px;min-width:140px;max-width:220px;height:58px;">
+        ${tags.map(t=>`<option value="${esc(t.id)}" ${tagsAtuais.includes(t.id)?'selected':''}>${esc(t.label)}</option>`).join('')}
+      </select>
+    </div>`;
     return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_fanoutCfgAberto=_fanoutCfgAberto==='${id}'?null:'${id}';renderFanoutCfg();">
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">🧩 ${esc(f.nome||'Sem nome')} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${(f.filhos||[]).length} card(s))</span></span>
@@ -24079,9 +24176,16 @@ function renderFanoutCfg(){
         <button class="btn btn-sm" onclick="event.stopPropagation();excluirFanoutTemplate('${id}')" title="Excluir receita" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
       </div>
-      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho('${id}')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
+      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${tagsHtml}${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho('${id}')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
     </div>`;
   }).join('');
+}
+function setFanoutTags(id, selectEl){
+  const f=fanoutTemplates[id]; if(!f) return;
+  const chosen=[...selectEl.selectedOptions].map(o=>o.value);
+  fanoutTemplates={...fanoutTemplates, [id]:{...f, tags:chosen}};
+  fbSet(FB+'/config/fanout_templates', fanoutTemplates);
+  renderFanoutCfg();
 }
 // Núcleo compartilhado de criação — usado tanto pela ação de automação
 // "Aplicar fan-out" quanto pelo botão manual "🧩 Aplicar receita" dentro do
@@ -24154,7 +24258,33 @@ function _mergeModeloEmCardObj(card, modelo){
 // Botão manual "🧩 Aplicar receita" dentro do card (independe de automação —
 // cobre o caso "pedido do dia a dia" que não tem gatilho automático nenhum).
 function toggleFanoutApplyMenu(){
-  document.getElementById('m-super-fanout-dd')?.classList.toggle('show');
+  const dd=document.getElementById('m-super-fanout-dd'); if(!dd) return;
+  const abrindo=!dd.classList.contains('show');
+  dd.classList.toggle('show');
+  if(abrindo){
+    const fNome=document.getElementById('m-super-fanout-f-nome');
+    if(fNome) setTimeout(()=>fNome.focus(), 30);
+  }
+}
+// IDs das receitas elegíveis (com filhos) pro filtro abaixo — recalculado
+// em initSuperChildren() toda vez que o card abre, mesmo se o dropdown
+// estiver fechado (barato, é só Object.keys).
+let _fanoutApplyTplIds = [];
+// Filtra _fanoutApplyTplIds por nome/tag e redesenha só a lista — mesmo
+// padrão de _renderUsarModeloList(), pedido direto: "preciso de filtro,
+// tipo aquele 'usar modelo', tag e nome".
+function _renderFanoutApplyList(){
+  const list=document.getElementById('m-super-fanout-list'); if(!list) return;
+  const qNome=(document.getElementById('m-super-fanout-f-nome')?.value||'').toLowerCase().trim();
+  const qTag=document.getElementById('m-super-fanout-f-tag')?.value||'';
+  let ids=_fanoutApplyTplIds.slice();
+  if(qNome) ids=ids.filter(id=>(fanoutTemplates[id]?.nome||'').toLowerCase().includes(qNome));
+  if(qTag) ids=ids.filter(id=>(fanoutTemplates[id]?.tags||[]).includes(qTag));
+  if(!ids.length){ list.innerHTML='<div style="padding:10px 14px;font-size:11px;color:var(--txt3);">Nenhuma receita com esse filtro.</div>'; return; }
+  list.innerHTML=ids.map(id=>{
+    const t=fanoutTemplates[id];
+    return '<div class="link-option" onclick="applyFanoutToCurrentCard(\''+esc(id)+'\')"><span style="flex:1;color:var(--txt);">🧩 '+esc(t.nome)+'</span><span class="link-option-col">'+(t.filhos||[]).length+'</span></div>';
+  }).join('');
 }
 function applyFanoutToCurrentCard(templateId){
   document.getElementById('m-super-fanout-dd')?.classList.remove('show');
@@ -24692,7 +24822,7 @@ function loadAutoRules(){
     if(val){
       autoRules=Array.isArray(val)?val:Object.values(val);
       // Re-renderiza lista se painel estiver aberto
-      if(document.getElementById('cfgtab-auto')?.classList.contains('on')) renderAutoRules();
+      if(document.getElementById('auto-ov')?.classList.contains('open')) renderAutoRules();
     } else {
       autoRules=[];
     }
@@ -25373,6 +25503,20 @@ function closeOv(id, afterClose){
   if(id==='card-ov' && editingId && _cardIsDirty()){
     uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento, OKR ou um comentário digitado mas não enviado).\n\nFechar mesmo assim?',
       {title:'Alterações não salvas', okText:'Fechar mesmo assim', cancelText:'Continuar editando'}).then(ok=>{
+      if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
+    });
+    return;
+  }
+  // Card NOVO (ainda sem editingId) sem nenhum autosave — pedido direto:
+  // "quando uma pessoa tiver... criando um card e clicar fora, ele tem que
+  // funcionar tipo o botão 'cancelar' e aparecer aquela telinha". Botão
+  // Cancelar e clique fora do modal já passavam os dois por aqui (ver
+  // listener de backdrop mais abaixo) — só faltava esta trava, que a
+  // criação desarmava de propósito em openNewCard() achando que não tinha
+  // nada a perder (ver _newCardHasContent()).
+  if(id==='card-ov' && !editingId && _newCardHasContent()){
+    uiConfirm('Este card ainda não foi salvo. Se sair agora, o que você já preencheu (título, descrição, tags, checklist...) será perdido.\n\nSair mesmo assim?',
+      {title:'Card não salvo', okText:'Sair sem salvar', cancelText:'Continuar criando'}).then(ok=>{
       if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
     });
     return;

@@ -18,6 +18,27 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.460 — 2026-08-24 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.459
+(v8.30.462-dev → v8.30.464-dev), validado em dev.
+
+- **"🧩 Aplicar receita" ganha filtro por nome + tag** — mesmo padrão já
+  usado em Recorrentes/Modelos/Arquivados/"📥 Usar modelo". Receitas de
+  fan-out passam a ter um campo de tags próprio, só pra esse filtro.
+- **"⚡ Automações" liberado pra todos os usuários** — antes só dava pra
+  chegar em Automações (regras + receitas de fan-out) por `⚙
+  Configurações`, cujo botão fica escondido de quem não é PO/
+  Organizador/ADM, mesmo sem nenhuma trava de permissão nas ações em si.
+  Agora tem um atalho em `⚡ Funções de card`, visível pra qualquer
+  papel. A aba "⚡ Auto" em Configurações continua existindo, redirecionando
+  pro mesmo lugar.
+- **Clicar fora de um card sem salvar agora avisa, igual o botão
+  Cancelar** — criar um card novo nunca tinha nenhum aviso de
+  "alterações não salvas" (nem clicando fora, nem no Cancelar); editar
+  um card já existente já era protegido. Agora os dois casos avisam
+  antes de descartar o que foi digitado.
+- Central de Ajuda sincronizada com as duas primeiras mudanças acima.
+
 ### v8.30.459 — 2026-08-24 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.458
 (v8.30.461-dev), validado em dev com um teste automatizado via console
