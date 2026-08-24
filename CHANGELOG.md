@@ -1843,6 +1843,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.461-dev — 2026-08-24 — Rede de segurança: alerta ao vivo se um card sumir sem ninguém excluir
+Segunda parte do achado da v8.30.460-dev ("cards sumindo"): aquele fix
+cobriu só a CRIAÇÃO de card (a causa raiz confirmada do relato original).
+Ainda existem ~46 outras chamadas de `fbSaveAll()` — ações estruturais em
+lote (duplicar/arquivar/excluir vários de uma vez, importação,
+recorrências/agendamentos) — que continuam reescrevendo o array `/cards`
+inteiro e, em teoria, podem colidir do mesmo jeito. Corrigir todas elas
+está fora de escopo desta rodada (decisão explícita); esta entrada cobre
+uma rede de segurança independente: **detectar ao vivo** se algum id
+sumir de `cards_index` sem ter passado por uma exclusão de verdade, e
+avisar na hora — nunca descobrir dias depois.
+
+**Como funciona**: os 5 pontos reais de exclusão de card
+(`bulkDeleteSelected()`, `deleteCard()`, `excluirArquivado()`,
+`ctxDelete()`, limpeza de filhos órfãos em `_finishCloseOv()`) agora
+gravam `cards_deleted_intentionally/{id}: true` na MESMA escrita atômica
+que já faziam (via `extra` do `fbSaveAll()`). Todo dispositivo com o
+board aberto escuta esse nó (`onChildAdded`) e mantém um Set local
+`_intentionalDeleteIds` — funciona entre abas/pessoas diferentes, não só
+localmente, porque é alimentado pelo próprio Firebase. O listener já
+existente de remoção em `cards_index` (`onChildRemoved`) agora espera
+~3s (dá tempo do evento irmão chegar, mesmo sem garantia de ordem entre
+os dois) e, se o id removido não está no Set, considera sumiço
+inesperado: mostra um toast pra quem está com o board aberto e grava um
+registro leve em `cards_incidentes_sumico/{incId}` (squad, quem
+detectou, quando) — não recupera o card (o conteúdo já foi perdido de
+verdade nesse cenário), só garante visibilidade imediata.
+
+Desenho deliberadamente **não** foi "contar quantos cards tem" — no
+cenário real de colisão, a contagem total de `cards_index` costuma ficar
+igual (as duas escritas concorrentes achavam que estavam ocupando "a
+próxima" posição livre); o que muda é que um id específico some
+enquanto outro ocupa a mesma posição. Por isso a detecção é por id
+sumido, não por contagem.
+
+Custo em downloads: praticamente zero — reaproveita 100% de dados que o
+app já baixa (o listener de `cards_index` já existia; o novo nó
+`cards_deleted_intentionally` é minúsculo, só grava quando alguém
+exclui de verdade). Escopo explicitamente combinado com quem pediu:
+"só detecção ao vivo" — sem checagem de drift no carregamento da página
+(ficou de fora de propósito).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.460-dev — 2026-08-24 — Fix crítico: cards novos podiam sumir quando criados quase ao mesmo tempo
 Achado real de produção, reportado pelo time: cards criados no squad
 `midiacriativa` estavam sumindo depois de criados.
