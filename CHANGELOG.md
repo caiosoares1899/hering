@@ -7803,6 +7803,17 @@ tinha como avaliar o andamento (sem descrição/checklist/comentário) e
 usou `perguntar_humano` em vez de agir sem evidência. Item 5 fechado
 com os dois gatilhos no ar.
 
+### 2026-08-24 · Fix: comentário automático (Automação) não notificava o responsável
+Achado reportado pelo usuário testando o item 5 em produção: o 1º
+comentário do agente (análise, sem @menção explícita no texto) saía
+sem notificação nenhuma — só o 2º (`perguntar_humano`, que @menciona
+alguém de verdade) notificava. Causa: `processarMencao()` notificava
+`comment.uid`, mas quando o disparo vem da Automação esse "uid" é
+`'automacao'` — não uma pessoa de verdade, a notificação ia pra um
+caminho no Firebase que ninguém lê. Fix: nesse caso, notifica o
+responsável do card (`card.owner`, resolvido por init) em vez de
+`comment.uid`. 3 testes novos. Suíte inteira: **223/223 passando**.
+
 ### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
 Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
 de trabalho da própria equipe) sem subir pra produção em horário de
