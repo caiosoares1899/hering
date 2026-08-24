@@ -2275,3 +2275,29 @@ mesma function, código atualizado. `due_today` fica no ar junto com
 `due_overdue` a partir do próximo scan (09:05 `America/Sao_Paulo`),
 mesma disciplina opt-in: só age se o ADM configurar a Automação
 "Notificar Agente Ágil" com o gatilho "Card vence hoje" no squad `dev`.
+
+**Validado em produção (2026-08-24, mesmo dia)**: Automação criada via
+script de console (mesmo padrão dos scripts de log já usados nesta
+sessão — `autoRules.push(...)` + `fbSet(FB+'/auto_rules', autoRules)`),
+card de teste "teste duetoday" criado com Prazo=hoje no squad `dev`,
+scan forçado manualmente (Cloud Console → Cloud Scheduler → "Forçar
+execução", sem esperar 09:05). Log real:
+`[agente-agil-due-overdue] squad=dev cards=591 notificados=2`. Resposta
+real do agente sobre o card de teste: leu o card (sem descrição,
+checklist ou comentário de andamento), reconheceu que não dava pra
+saber se estava travado/pronto, e usou `perguntar_humano` (notificando
+`@CO`, o responsável) em vez de mover a coluna sem evidência — mesmo
+julgamento cuidadoso de sempre.
+
+**Achado incidental da própria sessão de teste, não um bug**: forçar o
+scan manualmente várias vezes no MESMO dia (foi forçado 3x testando o
+`due_overdue` antes do `due_today`) reprocessa o(s) mesmo(s) card(s)
+atrasado(s) TODA vez, já que "due === ontem" continua verdadeiro o dia
+inteiro — cada força é uma chamada real ao LLM, não simulada. O agente
+lidou bem (reconheceu "sem mudança desde as análises anteriores" e não
+reagiu de novo), mas o custo de tokens é real a cada força manual. Em
+produção normal isso não se repete (só 1x/dia via Cloud Scheduler) —
+vale só como lembrete pra ir com parcimônia ao forçar execução manual
+em testes futuros.
+
+**Item 5 (due_today + due_overdue) — FECHADO, validado em produção.**

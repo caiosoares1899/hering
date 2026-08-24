@@ -7796,6 +7796,13 @@ não mudou (evita 2º deploy + apagar a antiga). 5 testes novos.
 
 Suíte inteira: **220/220 passando**.
 
+**`due_today` deployado e validado em produção no mesmo dia**: card de
+teste com Prazo=hoje, Automação criada via console, scan forçado
+manualmente — o agente identificou o card certo, reconheceu que não
+tinha como avaliar o andamento (sem descrição/checklist/comentário) e
+usou `perguntar_humano` em vez de agir sem evidência. Item 5 fechado
+com os dois gatilhos no ar.
+
 ### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
 Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
 de trabalho da própria equipe) sem subir pra produção em horário de
