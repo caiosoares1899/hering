@@ -7814,6 +7814,16 @@ caminho no Firebase que ninguém lê. Fix: nesse caso, notifica o
 responsável do card (`card.owner`, resolvido por init) em vez de
 `comment.uid`. 3 testes novos. Suíte inteira: **223/223 passando**.
 
+**Mesmo dia, 2ª rodada**: validação ao vivo mostrou que o fix acima não
+bastava — cards que JÁ tinham alguma notificação anterior continuavam
+sem notificar (só um card 100% novo funcionou de primeira). Causa: o
+`idOverride` usado (`mention_{cardId}_{uid}`) é o MESMO que os outros 2
+caminhos de notificação já usam — uma notificação antiga nesse slot
+bloqueava silenciosamente qualquer disparo novo da Automação no mesmo
+card, pra sempre. Fix: `idOverride` da Automação passa a incluir
+`commentId` (único por disparo de verdade). 1 teste novo. Suíte
+inteira: **224/224 passando**.
+
 ### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
 Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
 de trabalho da própria equipe) sem subir pra produção em horário de

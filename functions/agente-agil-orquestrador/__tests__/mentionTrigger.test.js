@@ -255,6 +255,43 @@ test('comment.uid===automacao, card.owner não bate com nenhum membro real — n
   assert.equal(notifsAna.val(), null);
 });
 
+// Achado real (2026-08-24, MESMO dia — a 1ª versão deste fix ainda não
+// resolvia): usar o mesmo idOverride (mention_{cardId}_{uid}) que os
+// outros 2 caminhos já usam fazia a notificação da Automação colidir com
+// QUALQUER notificação anterior pra essa pessoa nesse card — inclusive
+// uma bem antiga, de um teste ou @menção manual anterior — e
+// buildNotifStep() pulava pra sempre depois disso, mesmo em disparos
+// novos, dias depois, com informação nova de verdade. Confirmado ao
+// vivo em produção: uma notificação de @menção humana antiga bloqueou
+// silenciosamente 2 disparos de Automação novos no mesmo card.
+test('comment.uid===automacao: notifica de novo mesmo já existindo uma notificação ANTERIOR pra essa pessoa nesse card (não reusa o idOverride mention_{cardId}_{uid})', async () => {
+  const db = seedDb({
+    usuarios_publicos: {
+      uidAna: { nome: 'Ana Silva', email: 'ana@ciahering.com.br', init: 'ANA', squads: { [SQUAD_ID]: true } },
+    },
+  });
+  await db.ref(`kanban/squads/${SQUAD_ID}/dados/cards/9`).update({ owner: 'ANA' });
+  // Simula uma notificação BEM ANTERIOR pra essa mesma pessoa+card, de um
+  // caminho diferente (ex.: @menção humana real no texto de outro
+  // comentário) — mesmo id que esses outros caminhos usam.
+  await db.ref('kanban/usuarios/uidAna/notificacoes/mention_c1_uidAna').set({
+    id: 'mention_c1_uidAna', cardId: 'c1', type: 'mention', title: '@ANA — você foi mencionado', sub: 'antiga', read: true, ts: '2026-08-01T00:00:00.000Z', squad: SQUAD_ID,
+  });
+
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Disparo novo da Automação, dias depois.' } }], text: null },
+    { toolCalls: [], text: 'Concluído.' },
+  ]);
+  const comment = { uid: 'automacao', text: '@Agente Ágil — [Automação] Card "Card de teste" está atrasado (venceu ontem).' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-auto-novo', comment, llmClient });
+
+  const notifsAna = Object.values((await db.ref('kanban/usuarios/uidAna/notificacoes').get()).val() || {});
+  assert.equal(notifsAna.length, 2, 'a notificação antiga continua lá, E uma nova deveria ter sido criada — não bloqueada pelo idOverride antigo');
+  const nova = notifsAna.find((n) => n.sub.includes('não dá pra avaliar') || n.title.includes('Automação'));
+  assert.ok(notifsAna.some((n) => n.title.includes('Automação')), 'deveria existir uma notificação nova com o título da Automação');
+});
+
 test('notificação da resposta não duplica se rodar de novo pro mesmo comentário (idOverride determinístico)', async () => {
   const db = seedDb();
   const llmClient = () =>

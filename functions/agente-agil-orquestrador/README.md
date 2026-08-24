@@ -2341,8 +2341,35 @@ Suíte inteira: **223/223 passando**.
 **Deploy confirmado (2026-08-24, PR #494 mergeado)**: usuário rodou
 `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
 — as duas instâncias precisam do redeploy porque compartilham o mesmo
-`mentionTrigger.js`. A partir de agora, um comentário automático da
-Automação (1ª resposta do agente, sem `perguntar_humano`) já deveria
-notificar o responsável do card direto, sem precisar de um 2º
-comentário com @menção explícita. Validação em produção (checar o 🔔
-de alguém de verdade) fica pra próxima vez que a Automação disparar.
+`mentionTrigger.js`.
+
+## Segundo achado real, MESMO dia: fix do notifStep ainda falhava em cards com histórico
+
+Validação ao vivo revelou que o fix acima **não bastava**: em "teste
+duetoday" e "teste duetoday 2" (cards que já tinham recebido alguma
+notificação antes — de um teste anterior ou de um `perguntar_humano`
+na MESMA invocação), o comentário automático continuou sem notificar.
+Só um card **novo** ("teste duetoday 3", sem histórico nenhum)
+notificou de primeira.
+
+**Causa raiz confirmada via script de console** (leitura direta de
+`kanban/usuarios/{uid}/notificacoes`, comparando timestamps): o fix
+usava o MESMO `idOverride` (`mention_{cardId}_{uid}`) que os outros 2
+caminhos de notificação já usam (notifica quem perguntou / notifica
+quem foi @mencionado no texto). Uma notificação ANTIGA nesse mesmo
+slot (de 12:37, de um teste anterior) bloqueava silenciosamente os
+disparos novos de Automação às 12:57/12:58 no mesmo card —
+`buildNotifStep()` via que o slot já existia e pulava, mesmo sendo uma
+invocação nova, com informação nova, dias/minutos depois. O dedupe
+por card+pessoa fazia sentido pro caso original (mesma pessoa
+perguntando de novo não precisa de notificação duplicada), mas quebra
+o da Automação, que precisa notificar de novo a cada disparo real.
+
+**Fix (2ª rodada)**: `idOverride` da Automação passa a incluir
+`commentId` (`mention_auto_{cardId}_{uid}_{commentId}`) — único por
+disparo de verdade, sem colidir com os outros 2 caminhos nem se
+auto-bloquear pra sempre. Continua idempotente pra reentrega do MESMO
+`commentId` (mesmo padrão de sempre). 1 teste novo, reproduzindo
+exatamente o cenário encontrado (notificação antiga pré-existente no
+slot antigo, confirma que uma nova é criada mesmo assim). Suíte
+inteira: **224/224 passando**.
