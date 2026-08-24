@@ -186,13 +186,27 @@ exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 // firebase deploy --only functions:agenteAgilMencao
 exports.agenteAgilMencao = require('./agente-agil-orquestrador/mentionTrigger').agenteAgilMencao;
 
-// Agente Ágil Orquestrador — squad `dados` — ATIVADO (2026-08-21).
-// Mesma fábrica createMentionTrigger() da instância `dev` acima (ver
-// mentionTrigger.js), deployada em modo sombra (dryRun:true por padrão
-// nessa instância) — o gatilho passa a rodar em produção, processando
-// @menções reais e logando o resultado, mas sem escrever de fato o
-// comentário de resposta no card ainda. Deploy isolado:
+// Agente Ágil Orquestrador — squad `dados` — ATIVADO, escrita real
+// (2026-08-24). Mesma fábrica createMentionTrigger() da instância `dev`
+// acima (ver mentionTrigger.js) — deployado em modo sombra em 2026-08-23,
+// validado em produção com logs reais, e virou dryRun:false em 2026-08-24
+// (mesmo critério do squad dev: mecanismo de gatilho validado primeiro,
+// escrita real como decisão separada depois). Deploy isolado:
 // firebase deploy --only functions:agenteAgilMencaoDados
 // (reusa o mesmo secret ANTHROPIC_API_KEY já configurado pro squad dev,
 // não precisa configurar de novo).
 exports.agenteAgilMencaoDados = require('./agente-agil-orquestrador/mentionTrigger').agenteAgilMencaoDados;
+
+// Agente Ágil Orquestrador — item 5 do roadmap ("gatilho automático em
+// mudança de card"), v1 (2026-08-24). Achado que motivou: os gatilhos
+// "ambientais" das Automações (due_today/due_overdue/wip_exceeded/aging)
+// são 100% client-side — só avaliam se alguém tiver o board aberto. Este
+// scan roda 1x/dia (Cloud Scheduler, sem depender de ninguém abrir a
+// página) e cobre só due_overdue, só squad dev — ver comentário no topo de
+// dueOverdueTrigger.js pro desenho completo. Reusa a MESMA rota da @menção
+// (escreve o comentário, agenteAgilMencao processa) — zero caminho novo de
+// invocação do agente. Só age se o ADM já tiver configurado uma Automação
+// "Notificar Agente Ágil" com o gatilho "Card atrasado (1º dia)" nesse
+// squad — opt-in, não liga sozinho pra ninguém. Deploy isolado:
+// firebase deploy --only functions:agenteAgilDueOverdueScan
+exports.agenteAgilDueOverdueScan = require('./agente-agil-orquestrador/dueOverdueTrigger').agenteAgilDueOverdueScan;

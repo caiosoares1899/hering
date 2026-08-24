@@ -7755,6 +7755,36 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-24 · Squad `dados` — escrita real ativada + Item 5 v1 (gatilho automático `due_overdue`)
+**Escrita real no squad `dados`**: modo sombra validado em produção
+(logs reais colados pelo usuário — 2 disparos consecutivos, `dryRun=true
+| tier=sonnet | status=done`, idempotência OK). Decisão explícita: `dryRun`
+virou `false` em `dadosInstance` (`mentionTrigger.js`) — mesmo critério
+já usado no squad `dev`. 2 testes atualizados (o que provava "não
+escreve em dryRun:true" passou a provar "escreve de verdade em
+dryRun:false").
+
+**Client-side pro squad `dados`** (`kanban-dev.html` v8.30.457-dev,
+ainda não promovido): `AGENTE_AGIL_MENTION_SQUADS` ganhou `'dados'` —
+autocomplete + os 3 atalhos com card passam a funcionar nesse squad.
+Achado incidental corrigido na sincronização seguinte (v8.30.458-dev):
+o dropdown "🤖 Modo autônomo" ainda checava `ACTIVE_SQUAD==='dev'`
+hardcoded, dessincronizado da fonte real (`AGENTE_AGIL_MENTION_SQUADS`)
+— squad `dados` via a ação mas o dropdown vinha vazio.
+
+**Item 5 do roadmap ("gatilho automático em mudança de card") — v1**:
+nova Cloud Function `agenteAgilDueOverdueScan` (`onSchedule`, 1x/dia,
+`America/Sao_Paulo`), squad `dev` só, cobrindo só o gatilho ambiental
+`due_overdue` ("card atrasado, 1º dia"). Motivação: `runAutoRules()` no
+client só avalia gatilhos "ambientais" (due_today/due_overdue/
+wip_exceeded/aging) se alguém tiver o board aberto — sem isso, um card
+pode ficar atrasado um fim de semana inteiro sem ninguém notar. Reusa a
+MESMA rota já validada da @menção (escreve o comentário, `mentionTrigger.js`
+processa) — opt-in, só age se o ADM já tiver configurado a Automação
+correspondente. 14 testes novos.
+
+Suíte inteira: **215/215 passando**.
+
 ### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
 Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
 de trabalho da própria equipe) sem subir pra produção em horário de
