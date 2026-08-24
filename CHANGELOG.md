@@ -1862,6 +1862,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.464-dev — 2026-08-24 — Sincroniza Central de Ajuda (Automações liberado, filtro em Aplicar receita)
+Puramente documentação, sem mudança de comportamento — sincroniza a
+Central de Ajuda (❓/Ctrl+K) com o lote v8.30.462-dev (`⚡ Automações`
+liberado pra todos os papéis + filtro por nome/tag em "🧩 Aplicar
+receita"):
+
+- **"Supercard (cards filhos)"**: as 2 referências a "⚙ Config →
+  Automações" viram "⚡ Automações" com o caminho novo (atalho em ⚡
+  Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de
+  ⚙ Configurações); acrescentado que "🧩 Aplicar receita" agora tem
+  busca por nome + filtro por tag.
+- **"Automações"** (categoria) e **"O que é uma automação"**: mesma
+  correção de caminho/audiência.
+- **"Papéis no board"**: removido "automações" da lista de coisas
+  exclusivas do PO (agora é liberado pra Convidado/Membro também),
+  com uma nota explicando isso.
+- **"Funções de card"**: a lista de itens do menu ganhou "⚡
+  Automações" (item novo) e, oportunisticamente, "🧹 Cards antigos"
+  (já existia no menu há um tempo, mas nunca tinha entrado nesta
+  descrição).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.463-dev — 2026-08-24 — Clicar fora de um card sem salvar agora avisa, igual o botão Cancelar
 Pedido direto: "quando uma pessoa tiver editando ou criando um card e
 clicar fora, ele tem que funcionar tipo o botão 'cancelar' e aparecer
