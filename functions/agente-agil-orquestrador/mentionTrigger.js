@@ -80,8 +80,11 @@ const { SYSTEM_PROMPT_V1 } = require('./systemPrompt');
 const { isEnabled } = require('./limits');
 const { mencionaAgente } = require('./detectaMencao');
 const { buildNotifStep } = require('../agente-agil/notifications');
+const { resolveCardKey, cardsPath } = require('../agente-agil/board');
+const { readSquadMembers, getUidByInit } = require('../agente-agil/members');
 
 const AGENTE_UID = 'agente-agil'; // mesmo uid que outputs/*.js grava em todo comentário/escrita do agente
+const AUTOMACAO_UID = 'automacao'; // mesmo uid que o client (AUTO_ACTIONS.notify_agent) e dueOverdueTrigger.js gravam — não é uma pessoa real, ver achado abaixo
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
@@ -193,18 +196,50 @@ function createMentionTrigger({ squadId, dryRun = true }) {
     // que @menção-no-texto usa (`mention_{cardId}_{uid}`) — se o texto por
     // acaso também mencionar essa pessoa, buildNotifStep vê que já existe e
     // não duplica.
+    //
+    // Segundo achado real (2026-08-24, testando due_today/due_overdue):
+    // quando quem "mencionou" o agente foi a Automação (comment.uid ===
+    // 'automacao', não uma pessoa — ver dueOverdueTrigger.js/AUTO_ACTIONS.
+    // notify_agent no client), notificar `comment.uid` grava a notificação
+    // em `kanban/usuarios/automacao/notificacoes/...` — um caminho que
+    // ninguém lê, porque 'automacao' não é um uid de usuário de verdade.
+    // Resultado observado: o 1º comentário automático (análise, sem
+    // perguntar_humano) saía sem NENHUMA notificação — só o 2º, quando o
+    // agente usava perguntar_humano e @mencionava alguém de verdade no
+    // texto (esse caminho já funcionava, via buildMentionSteps() em
+    // outputs/comentario.js). Fix: quando o disparo foi da Automação,
+    // notifica o responsável do card (`card.owner`, resolvido por init)
+    // em vez de `comment.uid` — mesmo padrão que checkDueNotifs() já usa
+    // no client pra notificar due_today/due_overdue. Sem responsável
+    // definido, não notifica ninguém (mesmo comportamento do client:
+    // melhor não notificar do que notificar errado).
+    let targetUid = comment.uid;
+    let notifTitle = '🤖 Agente Ágil respondeu sua menção';
+    if (comment.uid === AUTOMACAO_UID) {
+      targetUid = null;
+      const cardKey = await resolveCardKey(db, cardId, { squadId });
+      const cardSnap = cardKey ? await db.ref(`${cardsPath(squadId)}/${cardKey}`).get() : null;
+      const card = cardSnap?.val();
+      if (card?.owner) {
+        const members = await readSquadMembers(db, squadId);
+        targetUid = getUidByInit(members, card.owner);
+      }
+      notifTitle = '🤖 Agente Ágil comentou no seu card (Automação)';
+    }
     const comentarioCall = result.steps.flatMap((step) => step.toolCalls).find((call) => call.name === 'comentario');
     const respostaTexto = comentarioCall?.input?.texto || result.finalText || '';
-    const notifStep = await buildNotifStep(db, {
-      squadId,
-      targetUid: comment.uid,
-      type: 'mention',
-      title: '🤖 Agente Ágil respondeu sua menção',
-      sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
-      cardId,
-      idOverride: 'mention_' + cardId + '_' + comment.uid,
-      dryRun,
-    });
+    const notifStep = targetUid
+      ? await buildNotifStep(db, {
+          squadId,
+          targetUid,
+          type: 'mention',
+          title: notifTitle,
+          sub: respostaTexto.substring(0, 80) + (respostaTexto.length > 80 ? '…' : ''),
+          cardId,
+          idOverride: 'mention_' + cardId + '_' + targetUid,
+          dryRun,
+        })
+      : null;
     if (notifStep && notifStep.kind === 'update') {
       await db.ref(notifStep.path).update(notifStep.data);
     }

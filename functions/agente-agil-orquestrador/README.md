@@ -2301,3 +2301,39 @@ vale só como lembrete pra ir com parcimônia ao forçar execução manual
 em testes futuros.
 
 **Item 5 (due_today + due_overdue) — FECHADO, validado em produção.**
+
+## Achado real na validação do item 5: 1º comentário automático saía sem notificação (2026-08-24)
+
+Reportado pelo usuário direto na validação em produção: o card "teste
+duetoday" recebeu 2 comentários do agente (1º: análise, sem @menção no
+texto; 2º: `perguntar_humano`, @mencionando `@CO`) — só o 2º gerou
+notificação de verdade. "Se não os usuários não vão saber que ele
+comentou."
+
+**Causa raiz**: `processarMencao()` notifica quem "mencionou" o agente
+usando `targetUid: comment.uid` — funciona pra @menção humana de
+verdade, mas quando o disparo vem da Automação (`comment.uid ===
+'automacao'`, ver `AUTO_ACTIONS.notify_agent`/`dueOverdueTrigger.js`),
+isso grava a notificação em `kanban/usuarios/automacao/notificacoes/...`
+— um caminho que ninguém lê, porque `'automacao'` não é um uid de
+usuário de verdade. `buildNotifStep()` não valida se o `targetUid`
+corresponde a alguém real, só escreve. O 2º comentário só notificou
+porque `perguntar_humano` monta um texto com @menção explícita
+(`@CO`), que passa pelo caminho JÁ existente e correto de
+`buildMentionSteps()` (`outputs/comentario.js`) — caminho totalmente
+separado do `targetUid: comment.uid` que falhou no 1º.
+
+**Fix** (`mentionTrigger.js`): quando `comment.uid === 'automacao'`,
+resolve o RESPONSÁVEL do card (`card.owner`, um init) contra
+`kanban/usuarios_publicos` (`membersLib.getUidByInit()`, mesmo padrão
+que `checkDueNotifs()` já usa no client) e notifica esse uid em vez de
+`comment.uid`. Card sem responsável, ou `owner` que não resolve pra
+nenhum membro real do squad → não notifica ninguém (mesmo
+comportamento do client: melhor não notificar do que notificar
+errado). Título da notificação também muda pra deixar claro que veio
+de uma Automação, não de uma @menção manual.
+
+3 testes novos (notifica o responsável de verdade / não escreve nada
+no uid fantasma `automacao`; card sem responsável não notifica, mas
+processa normal; `owner` sem membro correspondente não notifica).
+Suíte inteira: **223/223 passando**.

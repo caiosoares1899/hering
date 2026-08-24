@@ -192,6 +192,69 @@ test('notifica quem fez a @menção original, mesmo a resposta não mencionando 
   assert.equal(notifs[0].cardId, 'c1');
 });
 
+// ── Achado real (2026-08-24): comment.uid==='automacao' (disparo via
+// dueOverdueTrigger.js/AUTO_ACTIONS.notify_agent, não uma pessoa de
+// verdade) — notificar esse "uid" grava numa notificação fantasma que
+// ninguém lê. Fix: notifica o responsável do card (card.owner) nesse
+// caso, não comment.uid. ──────────────────────────────────────────────
+
+test('comment.uid===automacao: notifica o RESPONSÁVEL do card (card.owner), não o uid sintético "automacao"', async () => {
+  const db = seedDb({
+    usuarios_publicos: {
+      uidAna: { nome: 'Ana Silva', email: 'ana@ciahering.com.br', init: 'ANA', squads: { [SQUAD_ID]: true } },
+    },
+  });
+  await db.ref(`kanban/squads/${SQUAD_ID}/dados/cards/9`).update({ owner: 'ANA' });
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Card sem descrição, não dá pra avaliar.' } }], text: null },
+    { toolCalls: [], text: 'Concluído.' },
+  ]);
+  const comment = { uid: 'automacao', text: '@Agente Ágil — [Automação] Card "Card de teste" está atrasado (venceu ontem).' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-auto1', comment, llmClient });
+
+  const notifsAutomacao = await db.ref('kanban/usuarios/automacao/notificacoes').get();
+  assert.equal(notifsAutomacao.val(), null, 'não deveria gravar nada no uid sintético "automacao"');
+  const notifsAna = Object.values((await db.ref('kanban/usuarios/uidAna/notificacoes').get()).val() || {});
+  assert.equal(notifsAna.length, 1, 'a responsável do card deveria ser notificada');
+  assert.equal(notifsAna[0].type, 'mention');
+  assert.match(notifsAna[0].title, /Automação/);
+});
+
+test('comment.uid===automacao, card SEM responsável — não notifica ninguém (mas processa normalmente)', async () => {
+  const db = seedDb();
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Sem responsável definido.' } }], text: null },
+    { toolCalls: [], text: 'Concluído.' },
+  ]);
+  const comment = { uid: 'automacao', text: '@Agente Ágil — [Automação] Card "Card de teste" vence hoje.' };
+
+  const outcome = await processarMencao(db, { cardId: 'c1', commentId: 'cm-auto2', comment, llmClient });
+
+  assert.equal(outcome.processed, true);
+  const notifsAutomacao = await db.ref('kanban/usuarios/automacao/notificacoes').get();
+  assert.equal(notifsAutomacao.val(), null);
+});
+
+test('comment.uid===automacao, card.owner não bate com nenhum membro real — não notifica (sem chutar)', async () => {
+  const db = seedDb({
+    usuarios_publicos: {
+      uidAna: { nome: 'Ana Silva', email: 'ana@ciahering.com.br', init: 'ANA', squads: { [SQUAD_ID]: true } },
+    },
+  });
+  await db.ref(`kanban/squads/${SQUAD_ID}/dados/cards/9`).update({ owner: 'XYZ' }); // init sem membro correspondente
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Owner não resolvido.' } }], text: null },
+    { toolCalls: [], text: 'Concluído.' },
+  ]);
+  const comment = { uid: 'automacao', text: '@Agente Ágil — [Automação] teste' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-auto3', comment, llmClient });
+
+  const notifsAna = await db.ref('kanban/usuarios/uidAna/notificacoes').get();
+  assert.equal(notifsAna.val(), null);
+});
+
 test('notificação da resposta não duplica se rodar de novo pro mesmo comentário (idOverride determinístico)', async () => {
   const db = seedDb();
   const llmClient = () =>
