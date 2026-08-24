@@ -1816,6 +1816,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.459-dev — 2026-08-24 — Fix: risco notificava PO de squads errados
+Achado reportado pelo usuário: riscos mapeados num card notificavam
+**todos** os POs cadastrados no sistema, não só o PO do squad onde o
+risco foi adicionado — ex.: risco no squad `dados` gerava notificação
+pro PO do squad `App`.
+
+Causa: `notifRisk()` resolvia o papel de cada usuário com
+`(u.squads_roles[ACTIVE_SQUAD]) || u.role || 'membro'`, mas nunca
+checava se a pessoa era de fato **membro do squad ativo** antes de
+aplicar esse fallback — um PO de outro squad, sem
+`squads_roles[ACTIVE_SQUAD]` definido mas com o campo legado `u.role`
+ainda como `'po'`, entrava na lista de qualquer squad. Fix: adiciona a
+mesma checagem de "é membro deste squad" que `_applyUsuariosData()` já
+usa pra montar a lista de membros/menções, antes de resolver o papel.
+Os outros 3 lugares do código com o mesmo padrão de resolução de papel
+já filtravam por squad antes — só esse ficou de fora.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.458-dev — 2026-08-24 — Central de Ajuda sincronizada + fix real: "Modo autônomo" sumia no squad `dados`
 Rodada da skill `/atualizarhelpcontent`, cobrindo o gap desde a
 v8.30.455-dev (v8.30.456-dev e v8.30.457-dev):

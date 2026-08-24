@@ -5453,7 +5453,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.458-dev</div>
+<div class="version">v8.30.459-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -21785,6 +21785,15 @@ function notifRisk(card){
     const uids=[];
     Object.entries(all).forEach(([uid,u])=>{
       if(!u||!uid) return;
+      // Achado real (2026-08-24): sem checar se a pessoa é membro do squad
+      // ATIVO, o fallback pra u.role (campo legado, não escopado por squad)
+      // fazia um PO de OUTRO squad (sem squads_roles[ACTIVE_SQUAD] definido,
+      // mas com u.role antigo = 'po') ser notificado de riscos de squads que
+      // ele nem participa — ex.: risco no squad dados notificando o PO do
+      // squad App. Mesmo padrão de "é membro deste squad" que
+      // _applyUsuariosData() já usa pra montar a lista de membros/menções.
+      const inThisSquad = (u.squads && u.squads[ACTIVE_SQUAD]===true) || (!u.squads && (u.inscrito===true||u.inscrito==='true'));
+      if(!inThisSquad) return;
       const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
       if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
       uids.push(uid);
