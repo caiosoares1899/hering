@@ -2214,6 +2214,12 @@ ignora card não atrasado/arquivado/já numa coluna de fim, respeita
 `condTag`, vários cards na mesma varredura, `auto_rules` salvo como
 objeto). Suíte inteira: **215/215 passando**.
 
-**Ainda não feito, de propósito**: deploy (roda na máquina do usuário,
-`firebase deploy --only functions:agenteAgilDueOverdueScan`) e validação
-em produção — próximos passos depois deste PR ser revisado/mergeado.
+**Deploy confirmado (2026-08-24, PR #488 mergeado)**: usuário rodou
+`firebase deploy --only functions:agenteAgilDueOverdueScan` na própria
+máquina. Cloud Scheduler passa a rodar o scan diariamente às 09:05
+(`America/Sao_Paulo`) — ainda não age de fato pra ninguém enquanto não
+existir uma Automação "Notificar Agente Ágil" com o gatilho "Card
+atrasado (1º dia)" configurada no squad `dev` (opt-in, por desenho).
+Validação em produção (rodar de verdade com uma regra configurada e um
+card atrasado) fica como próximo passo, quando/se o usuário configurar
+essa Automação.
