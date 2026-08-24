@@ -2337,3 +2337,12 @@ de uma Automação, não de uma @menção manual.
 no uid fantasma `automacao`; card sem responsável não notifica, mas
 processa normal; `owner` sem membro correspondente não notifica).
 Suíte inteira: **223/223 passando**.
+
+**Deploy confirmado (2026-08-24, PR #494 mergeado)**: usuário rodou
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
+— as duas instâncias precisam do redeploy porque compartilham o mesmo
+`mentionTrigger.js`. A partir de agora, um comentário automático da
+Automação (1ª resposta do agente, sem `perguntar_humano`) já deveria
+notificar o responsável do card direto, sem precisar de um 2º
+comentário com @menção explícita. Validação em produção (checar o 🔔
+de alguém de verdade) fica pra próxima vez que a Automação disparar.
