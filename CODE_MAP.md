@@ -135,6 +135,20 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `runAutoRules()` — L24511
 - `_autoTrigger()`/`_autoAction()` — L24235/L24236
 - `_autoValLabel()`/`_autoRenderValueOptions()` — L24239/L24261
+- **Acesso à tela de Automações** (achado real 2026-08-24: só existia via
+  `⚙ Configurações → aba ⚡ Auto`, e o botão de Configurações fica
+  escondido de quem não é PO/Organizador/ADM — `_applyRoleVisibility()`,
+  L8966 — mesmo sem nenhuma trava de permissão nas ações em si) —
+  `openAutoOv()` abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
+  tanto por um atalho em ⚡ Funções de card (`#card-fn-ov`, visível pra
+  qualquer papel) quanto pela aba "⚡ Auto" em Configurações (que virou
+  um redirecionamento pro mesmo overlay, não mais uma aba inline)
+- `fanoutTemplates` — receitas de fan-out (supercard); `renderFanoutCfg()`
+  edita, incluindo o campo `tags` por receita (`setFanoutTags()`) usado só
+  pra filtrar no dropdown abaixo — não afeta os cards gerados
+- `toggleFanoutApplyMenu()`/`_renderFanoutApplyList()` — dropdown "🧩
+  Aplicar receita" dentro do card, com filtro por nome+tag (mesmo padrão
+  de "📥 Usar modelo"/`_renderUsarModeloList()`)
 
 ### Agente Ágil (client-side — atalhos que postam @menção real)
 - `AGENTE_AGIL_MENTION_SQUADS` — L6182 — squads onde os atalhos abaixo
