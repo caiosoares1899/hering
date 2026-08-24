@@ -153,6 +153,21 @@ outra mudança na página:
   dos Modelos carregarem), já coberta pela bullet genérica existente em
   "Ações que o agente pode executar".
 
+- **v8.30.455-dev → v8.30.458-dev (2026-08-24)**: squad `dados` ganhou o
+  Agente Ágil (backend em escrita real, depois autocomplete/atalhos no
+  client, v8.30.457-dev) — as entradas "O que é o Agente Ágil" e
+  "Automações" ainda diziam "só disponível no squad dev", corrigidas
+  pros dois squads. **Achado incidental, bug real (não só doc)**: o
+  dropdown "🤖 Modo autônomo" da ação "Notificar Agente Ágil"
+  (`_autoRenderValueOptions('agent_tab')`) checava `ACTIVE_SQUAD==='dev'`
+  hardcoded, separado da fonte que a própria ação usa em `visible:`
+  (`AGENTE_AGIL_MENTION_SQUADS`) — squad `dados` via a ação disponível
+  mas o dropdown de valor vinha vazio. Corrigido pra usar a mesma fonte.
+  Lição: ao expandir o escopo de squad de uma feature, checar TODO ponto
+  que hardcoda o nome do squad, não só o de visibilidade top-level — um
+  grep por `==='dev'`/`'dev'` perto do código da feature ajuda a achar
+  esses gates duplicados e desalinhados.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.
