@@ -2373,3 +2373,14 @@ auto-bloquear pra sempre. Continua idempotente pra reentrega do MESMO
 exatamente o cenário encontrado (notificação antiga pré-existente no
 slot antigo, confirma que uma nova é criada mesmo assim). Suíte
 inteira: **224/224 passando**.
+
+**Deploy confirmado e validado em produção (2026-08-24, PR #496
+mergeado, mesmo dia)**: usuário redeployou as duas instâncias e forçou
+o scan de novo no card "teste duetoday" — o mesmo card que estava
+falhando antes, com histórico (notificação de `12:37` de um teste
+anterior). Confirmado por leitura direta do Firebase (script de
+console): a notificação antiga continuou lá, E uma nova foi criada
+(`id: mention_auto_{cardId}_{uid}_{commentId}`, título "🤖 Agente Ágil
+comentou no seu card (Automação)") — exatamente o comportamento
+esperado. **Os dois achados de notificação do item 5 estão fechados de
+vez.**
