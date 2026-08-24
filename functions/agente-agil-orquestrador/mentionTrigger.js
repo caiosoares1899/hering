@@ -262,12 +262,12 @@ const devInstance = createMentionTrigger({ squadId: 'dev', dryRun: false });
 // Pedido do usuário (2026-08-21): preparar o próximo squad (o squad de
 // trabalho da própria equipe, mesmo onde os logs de implementação já são
 // registrados) SEM subir pra produção em horário de trabalho — decisão de
-// ativação fica pra depois, feita fora do código (ver functions/index.js:
-// exports.agenteAgilMencaoDados comentado, mesmo padrão do spotifySync
-// pausado). Modo sombra por padrão (dryRun:true) — mesma disciplina do
-// squad dev: mecanismo de gatilho primeiro, decisão de escrita real
-// depois, separada.
-const dadosInstance = createMentionTrigger({ squadId: 'dados', dryRun: true });
+// ativação (deploy: PR #480, 2026-08-23) rodou primeiro em modo sombra
+// pra validar o mecanismo de gatilho em produção — mesma disciplina do
+// squad dev. Validado (2026-08-24, logs reais: dryRun=true, status=done,
+// idempotência segurando entre menções sequenciais no mesmo card) —
+// decisão explícita do usuário: dryRun vira false, escrita real.
+const dadosInstance = createMentionTrigger({ squadId: 'dados', dryRun: false });
 
 module.exports = {
   createMentionTrigger,

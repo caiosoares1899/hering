@@ -2123,12 +2123,24 @@ confirmou subir — PR #480 descomentou `exports.agenteAgilMencaoDados`
 em `functions/index.js` (nenhuma mudança de código além disso, a
 fábrica já existia pronta desde a estruturação acima) e o deploy
 (`firebase deploy --only functions:agenteAgilMencaoDados`) foi
-confirmado feito pelo usuário. O gatilho agora roda de verdade em
-produção pro squad `dados`, ainda em modo sombra (`dryRun:true`):
-processa `@menções` reais e loga o resultado, mas não escreve o
-comentário de resposta no card ainda — mesma disciplina que o squad
-`dev` seguiu antes de virar escrita real. Validação em produção e
-decisão de virar `dryRun:false` ficam pra depois.
+confirmado feito pelo usuário. O gatilho passou a rodar de verdade em
+produção pro squad `dados`, em modo sombra (`dryRun:true`): processa
+`@menções` reais e loga o resultado, sem escrever o comentário de
+resposta no card ainda — mesma disciplina que o squad `dev` seguiu
+antes de virar escrita real.
+
+**Validado em produção e escrita real ativada (2026-08-24)**: usuário
+colou os logs reais do Cloud Function mostrando 2 disparos consecutivos
+no mesmo card — `dryRun=true | tier=sonnet | status=done`, sem erro, com
+a idempotência segurando certo entre as duas menções (não reprocessou a
+mesma). Mecanismo de gatilho validado em produção; decisão explícita do
+usuário: `dryRun` virou `false` (código: `dadosInstance` em
+`mentionTrigger.js`). Squad `dados` agora tem escrita real de verdade,
+igual ao squad `dev` — 2 testes atualizados pra refletir o novo
+comportamento (o que antes provava "não escreve em dryRun:true" agora
+prova "escreve de verdade em dryRun:false"). Suíte inteira: ainda
+**201/201 passando** (não foram testes novos, os 2 existentes mudaram de
+asserção).
 
 **Ainda de propósito fora do ar pro squad `dados`**: o lado client-side
 em `kanban-dev.html`/`kanban.html` — `AGENTE_AGIL_MENTION_SQUADS` só
