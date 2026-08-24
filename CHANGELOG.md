@@ -1798,6 +1798,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.457-dev — 2026-08-24 — Squad `dados` entra no autocomplete/atalhos do Agente Ágil
+Client-side alcança o backend: `agenteAgilMencaoDados` já estava ativo em
+escrita real desde ontem (funções, deploy fora deste repo), mas o squad
+`dados` ainda não tinha o Agente Ágil disponível pela UI — só quem
+digitasse `@Agente Ágil` na mão, sem sugestão do autocomplete, acionava
+o gatilho de verdade.
+
+- `AGENTE_AGIL_MENTION_SQUADS` ganha `'dados'` — autocomplete de `@`
+  volta a sugerir "Agente Ágil", o botão "🤖 Insights"/menu de contexto/
+  automação "Notificar Agente Ágil" passam a postar de verdade em vez
+  de mostrar o toast "ainda não está disponível neste squad".
+- Prod (`kanban.html`) segurada de propósito — squad já em horário de
+  trabalho, promoção fica pra mais tarde/lote seguinte.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.456-dev — 2026-08-21 — Reativa os atalhos do Agente Ágil com card (Insights, menu de contexto, automação manual)
 O painel de chat antigo (`openAgent()`/`qa()`) dependia de um Cloudflare
 Worker pessoal (`WORKER_URL`) que hoje está fora do ar (confirmado:
