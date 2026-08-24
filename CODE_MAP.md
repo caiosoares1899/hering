@@ -168,6 +168,9 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 - `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
 - `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
+- `agenteAgilDueOverdueScan` — L212 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
+  scan diário (`onSchedule`), item 5 do roadmap — squad `dev`, gatilho
+  `due_overdue` só (ver seção abaixo)
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
 - `tools/index.js` — `buildTools()`, registro das 11 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`)
@@ -189,6 +192,11 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   `opus` em v1, só override manual via
   `kanban/config/agente_agil_orquestrador/model_tier_override`
   (fail-safe: erro/ausente cai pra heurística). `MODEL_BY_TIER` — L27
+- `dueOverdueTrigger.js` — item 5 do roadmap (gatilho automático em
+  mudança de card), v1 (2026-08-24): `onSchedule` diário, squad `dev`
+  só, gatilho `due_overdue` só — `runDueOverdueScan()` reusa a mesma
+  rota da @menção (escreve comentário, `agenteAgilMencao` processa),
+  só age se o ADM já tiver configurado a Automação correspondente
 - `systemPrompt.js`, `loop.js`, `limits.js`, `detectaMencao.js`
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)

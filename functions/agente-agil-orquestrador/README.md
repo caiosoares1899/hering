@@ -2142,15 +2142,78 @@ prova "escreve de verdade em dryRun:false"). Suíte inteira: ainda
 **201/201 passando** (não foram testes novos, os 2 existentes mudaram de
 asserção).
 
-**Ainda de propósito fora do ar pro squad `dados`**: o lado client-side
-em `kanban-dev.html`/`kanban.html` — `AGENTE_AGIL_MENTION_SQUADS` só
-tem `'dev'`, então o autocomplete de `@menção` não sugere o Agente Ágil
-nesse squad, e os 3 atalhos com card (Insights/menu de contexto/
-automação) mostram o toast "ainda não está disponível neste squad" em
-vez de postar. **Mas a detecção em si (`detectaMencao.js`) é por texto
-puro** (`"@agente agil"` como substring, case/acento-insensível) — não
-depende da entidade sintética do autocomplete — então alguém do squad
-`dados` que digitar `@Agente Ágil <pergunta>` manualmente no comentário
-já aciona o gatilho de verdade agora (mesmo sem autocomplete
-sugerindo). Ativar o client-side é decisão separada, pra quando os dois
-lados (autocomplete + atalhos) forem liberados juntos deliberadamente.
+**Client-side liberado também (2026-08-24, `kanban-dev.html` v8.30.457-dev,
+ainda não promovido pra prod)**: `AGENTE_AGIL_MENTION_SQUADS` ganhou
+`'dados'` — autocomplete de `@menção` já sugere o Agente Ágil nesse squad,
+e os 3 atalhos com card (Insights/menu de contexto/automação) postam de
+verdade em vez de mostrar o toast "ainda não está disponível". Mesma
+rodada corrigiu um bug real encontrado incidentalmente: o dropdown "🤖
+Modo autônomo" da automação ainda checava `ACTIVE_SQUAD==='dev'`
+hardcoded, separado da fonte que a ação usa em `visible:` — squad `dados`
+via a ação mas o dropdown vinha vazio (ver `CHANGELOG.md`
+v8.30.458-dev). A detecção em si (`detectaMencao.js`) sempre foi por
+texto puro (`"@agente agil"` como substring) — não dependia da entidade
+sintética do autocomplete, então digitar a menção na mão já funcionava
+mesmo antes desse ajuste de UI.
+
+## Item 5: gatilho automático em mudança de card — v1 (due_overdue, squad `dev`, 2026-08-24)
+
+Desenho combinado com o usuário antes do código (mesmo padrão de todo
+este roadmap), a partir de uma pergunta aberta: "qual o próximo passo do
+Agente Ágil?".
+
+**Achado que motivou revisitar o item**: `runAutoRules()`
+(`kanban-dev.html`) é 100% client-side, disparado só pela ação de quem
+está com o board aberto (mover card, salvar, etc.). Dos 20 gatilhos de
+`AUTO_TRIGGERS`, 4 são "ambientais" — nascem do TEMPO passando, não de
+uma edição: `due_today`, `due_overdue`, `wip_exceeded`, `aging` (card
+parado sem edição). Hoje eles só avaliam porque alguma aba tem um
+`setInterval` rodando a checagem 1x/dia (`checkDueNotifs()`/
+`checkAgingAutomations()`). **Se ninguém abrir o board, nada dispara** —
+um card pode ficar atrasado um fim de semana inteiro sem ninguém, nem o
+Agente Ágil, notar. Essa é exatamente a lacuna que o item 5 original
+("gatilho automático em mudança de card", item "1b" na sequência
+combinada em 2026-08-14) visava fechar — e as pré-condições que o
+texto original exigia (kill switch + escopo de squad + @menção estável)
+já estavam satisfeitas nos dois squads.
+
+**Escopo v1, decidido via `AskUserQuestion` (não deduzido)**:
+- **Gatilho**: só `due_overdue` ("card atrasado, 1º dia") — dos 4
+  ambientais, o mais valioso pro time perceber sem precisar abrir o
+  board. `due_today`/`wip_exceeded`/`aging` ficam de fora de propósito,
+  cada um seria uma decisão separada depois.
+- **Squad**: só `dev` — mesma disciplina sequencial de sempre (valida
+  num squad de teste antes de considerar `dados`).
+- **Cadência**: 1x/dia — mesma que `checkDueNotifs()` já usa no client,
+  suficiente dado que `due_overdue` é auto-dedupe por construção (só
+  bate no dia EXATO em que o card cruza de "vence hoje" pra "atrasado
+  1 dia" — `card.due === ontem`, nunca "due <= ontem" — nunca bate 2
+  dias seguidos pro mesmo card).
+
+**Implementação** (`dueOverdueTrigger.js`): Cloud Function `onSchedule`
+nova (mesmo padrão de `weeklyBackup`, `schedule: 'every day 09:05'`,
+`timeZone: 'America/Sao_Paulo'`), squad `dev` hardcoded (sem fábrica
+ainda — mesma disciplina incremental que `mentionTrigger.js` seguiu:
+construir pra 1 squad primeiro, só virar fábrica quando um 2º squad for
+pedido de verdade). Reusa a MESMA rota já validada da `@menção`, não
+inventa caminho novo: quando `due_overdue` bate E existe uma Automação
+"Notificar Agente Ágil" ativa nesse squad com esse gatilho, escreve o
+MESMO formato de comentário que `AUTO_ACTIONS.notify_agent.run()` já
+escreve no client — cai direto no listener de `mentionTrigger.js`
+(`agenteAgilMencao`), que já filtra auto-comentário e respeita o kill
+switch. **Opt-in, não liga sozinho pra ninguém**: só age se o ADM já
+tiver configurado a Automação — o scan em si não cria nenhuma regra.
+Não replica nenhuma OUTRA ação de uma regra due_overdue (mover coluna,
+tag, etc.) — só a ação `notify_agent`; as outras continuam dependendo
+de alguém abrir o board, fora de escopo v1.
+
+14 testes novos (`dueOverdueTrigger.test.js`) — matching de regra (array
+de ações, formato legado, inativa, trigger errado, sem ação
+`notify_agent`, várias ações), e o scan em si (posta comentário real,
+ignora card não atrasado/arquivado/já numa coluna de fim, respeita
+`condTag`, vários cards na mesma varredura, `auto_rules` salvo como
+objeto). Suíte inteira: **215/215 passando**.
+
+**Ainda não feito, de propósito**: deploy (roda na máquina do usuário,
+`firebase deploy --only functions:agenteAgilDueOverdueScan`) e validação
+em produção — próximos passos depois deste PR ser revisado/mergeado.
