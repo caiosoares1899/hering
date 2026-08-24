@@ -2238,5 +2238,33 @@ card, sem loop (a própria resposta do agente foi corretamente ignorada
 pelo filtro `self_comment` quando reprocessada pelo listener).
 
 **Item 5 v1 — FECHADO.** Próximos passos possíveis (não decididos):
-portar `due_today`/`wip_exceeded`/`aging` pro mesmo mecanismo, e/ou
-expandir o scan pro squad `dados` — cada um, decisão separada.
+portar `wip_exceeded`/`aging` pro mesmo mecanismo, e/ou expandir o scan
+pro squad `dados` — cada um, decisão separada.
+
+## Item 5: `due_today` adicionado ao mesmo scan (2026-08-24, mesmo dia)
+
+Pedido direto do usuário, no mesmo dia da validação do item 5 v1: "só
+precisa esse mesmo, os outros 2 acho que não precisam" — respondendo a
+uma pergunta sobre o que `due_today` significa (o par do `due_overdue`
+já implementado: "card vence hoje", não "atrasado"). `wip_exceeded` e
+`aging` ficaram de fora, decisão explícita.
+
+**Implementação**: `runDueOverdueScan()` (mesmo arquivo,
+`dueOverdueTrigger.js`) passou a checar os dois gatilhos numa única
+passada pelos cards — `card.due===hoje` vira `due_today`,
+`card.due===ontem` vira `due_overdue` (mutuamente exclusivos, mesmo
+card nunca bate os dois no mesmo dia). Cada gatilho tem seu próprio
+texto de comentário ("vence hoje" vs. "está atrasado, venceu ontem") e
+sua própria lista de regras Automação correspondentes — devido a `notify_agent`
+continuar sendo a única ação replicada, e `condTag` continuar valendo
+por regra, como no v1. **Não renomeei** a Cloud Function exportada
+(`agenteAgilDueOverdueScan`) nem o nome do arquivo — o nome ficou de
+quando cobria só `due_overdue`, mas renomear exigiria um 2º deploy +
+apagar a function antiga na máquina do usuário, custo desproporcional
+pra um nome mais preciso; documentado no comentário do topo do arquivo
+e em `functions/index.js` pra quem for procurar não estranhar.
+
+5 testes novos (`ruleMatchesDueToday`, card `due===hoje` notificando com
+o texto certo, ausência de regra `due_today` não notificando, os dois
+gatilhos juntos numa mesma varredura com texto correto cada). Suíte
+inteira: **220/220 passando**.

@@ -1,10 +1,11 @@
 // functions/agente-agil-orquestrador/__tests__/dueOverdueTrigger.test.js
 //
-// Cobertura de runDueOverdueScan()/ruleMatchesDueOverdue() — a lógica pura
-// do item 5 v1 (gatilho ambiental due_overdue, squad dev). Não testa o
-// wrapper onSchedule em si (exigiria mockar firebase-functions/v2/scheduler,
-// mesmo raciocínio já aplicado a mentionTrigger.js/agenteAgilMencao: a
-// lógica que importa já está toda em runDueOverdueScan()).
+// Cobertura de runDueOverdueScan()/ruleMatchesDueOverdue()/ruleMatchesDueToday()
+// — a lógica pura do item 5 (gatilhos ambientais due_overdue + due_today,
+// squad dev). Não testa o wrapper onSchedule em si (exigiria mockar
+// firebase-functions/v2/scheduler, mesmo raciocínio já aplicado a
+// mentionTrigger.js/agenteAgilMencao: a lógica que importa já está toda em
+// runDueOverdueScan()).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -14,6 +15,7 @@ const {
   SQUAD_ID,
   todaySP,
   ruleMatchesDueOverdue,
+  ruleMatchesDueToday,
   runDueOverdueScan,
 } = require('../dueOverdueTrigger');
 
@@ -72,6 +74,18 @@ test('ruleMatchesDueOverdue: due_overdue mas sem ação notify_agent (outra aç�
 test('ruleMatchesDueOverdue: due_overdue com VÁRIAS ações, notify_agent é uma delas — bate', () => {
   const rule = { active: true, trigger: 'due_overdue', actions: [{ action: 'set_priority', actionVal: 'high' }, { action: 'notify_agent' }] };
   assert.equal(ruleMatchesDueOverdue(rule), true);
+});
+
+// ── ruleMatchesDueToday() ───────────────────────────────────────────────
+
+test('ruleMatchesDueToday: regra ativa, trigger due_today, ação notify_agent — bate', () => {
+  const rule = { active: true, trigger: 'due_today', actions: [{ action: 'notify_agent' }] };
+  assert.equal(ruleMatchesDueToday(rule), true);
+});
+
+test('ruleMatchesDueToday: due_overdue não bate como due_today', () => {
+  const rule = { active: true, trigger: 'due_overdue', actions: [{ action: 'notify_agent' }] };
+  assert.equal(ruleMatchesDueToday(rule), false);
 });
 
 // ── runDueOverdueScan() ─────────────────────────────────────────────────
@@ -166,4 +180,48 @@ test('runDueOverdueScan: auto_rules salvo como objeto (não array) — ainda fun
   await db.ref(`kanban/squads/${SQUAD_ID}/dados/auto_rules`).set({ 0: { active: true, trigger: 'due_overdue', actions: [{ action: 'notify_agent' }] } });
   const r = await runDueOverdueScan(db, SQUAD_ID);
   assert.equal(r.notificados, 1);
+});
+
+// ── due_today (adicionado no mesmo dia, pedido direto: "só precisa esse
+// mesmo, os outros 2 [wip_exceeded/aging] acho que não precisam") ────────
+
+test('runDueOverdueScan: card com due===hoje, regra due_today ativa — posta comentário com texto de "vence hoje"', async () => {
+  const db = seedDb({
+    cards: { 1: { id: 'c1', title: 'Publicar relatório', col: 'progress', due: HOJE } },
+    autoRules: [{ active: true, trigger: 'due_today', actions: [{ action: 'notify_agent' }] }],
+  });
+  const r = await runDueOverdueScan(db, SQUAD_ID);
+  assert.equal(r.notificados, 1);
+  const comentarios = Object.values((await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/c1`).get()).val());
+  assert.match(comentarios[0].text, /vence hoje/);
+  assert.doesNotMatch(comentarios[0].text, /atrasado/);
+});
+
+test('runDueOverdueScan: só regra due_overdue configurada — card due===hoje não notifica (due_today sem regra)', async () => {
+  const db = seedDb({
+    cards: { 1: { id: 'c1', title: 'Vence hoje', col: 'progress', due: HOJE } },
+    autoRules: [{ active: true, trigger: 'due_overdue', actions: [{ action: 'notify_agent' }] }],
+  });
+  const r = await runDueOverdueScan(db, SQUAD_ID);
+  assert.equal(r.notificados, 0);
+});
+
+test('runDueOverdueScan: due_today e due_overdue configurados juntos — cada card notifica com o texto certo do seu gatilho', async () => {
+  const db = seedDb({
+    cards: {
+      1: { id: 'c1', title: 'Vence hoje', col: 'progress', due: HOJE },
+      2: { id: 'c2', title: 'Atrasado', col: 'progress', due: ONTEM },
+    },
+    autoRules: [
+      { active: true, trigger: 'due_today', actions: [{ action: 'notify_agent' }] },
+      { active: true, trigger: 'due_overdue', actions: [{ action: 'notify_agent' }] },
+    ],
+  });
+  const r = await runDueOverdueScan(db, SQUAD_ID);
+  assert.equal(r.scanned, 2);
+  assert.equal(r.notificados, 2);
+  const c1 = Object.values((await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/c1`).get()).val());
+  const c2 = Object.values((await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/c2`).get()).val());
+  assert.match(c1[0].text, /vence hoje/);
+  assert.match(c2[0].text, /atrasado \(venceu ontem\)/);
 });

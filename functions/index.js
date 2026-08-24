@@ -198,15 +198,19 @@ exports.agenteAgilMencao = require('./agente-agil-orquestrador/mentionTrigger').
 exports.agenteAgilMencaoDados = require('./agente-agil-orquestrador/mentionTrigger').agenteAgilMencaoDados;
 
 // Agente Ágil Orquestrador — item 5 do roadmap ("gatilho automático em
-// mudança de card"), v1 (2026-08-24). Achado que motivou: os gatilhos
+// mudança de card"), 2026-08-24. Achado que motivou: os gatilhos
 // "ambientais" das Automações (due_today/due_overdue/wip_exceeded/aging)
 // são 100% client-side — só avaliam se alguém tiver o board aberto. Este
 // scan roda 1x/dia (Cloud Scheduler, sem depender de ninguém abrir a
-// página) e cobre só due_overdue, só squad dev — ver comentário no topo de
-// dueOverdueTrigger.js pro desenho completo. Reusa a MESMA rota da @menção
-// (escreve o comentário, agenteAgilMencao processa) — zero caminho novo de
-// invocação do agente. Só age se o ADM já tiver configurado uma Automação
-// "Notificar Agente Ágil" com o gatilho "Card atrasado (1º dia)" nesse
-// squad — opt-in, não liga sozinho pra ninguém. Deploy isolado:
-// firebase deploy --only functions:agenteAgilDueOverdueScan
+// página) e cobre due_today + due_overdue, só squad dev — decisão
+// explícita do usuário de deixar wip_exceeded/aging de fora ("só precisa
+// esse mesmo"). Nome ficou de quando cobria só due_overdue (v1); não
+// renomeado ao adicionar due_today pra não exigir apagar a function
+// antiga — ver comentário no topo de dueOverdueTrigger.js pro desenho
+// completo. Reusa a MESMA rota da @menção (escreve o comentário,
+// agenteAgilMencao processa) — zero caminho novo de invocação do agente.
+// Só age se o ADM já tiver configurado uma Automação "Notificar Agente
+// Ágil" com o gatilho correspondente ("Card vence hoje"/"Card atrasado
+// (1º dia)") nesse squad — opt-in, não liga sozinho pra ninguém. Deploy
+// isolado: firebase deploy --only functions:agenteAgilDueOverdueScan
 exports.agenteAgilDueOverdueScan = require('./agente-agil-orquestrador/dueOverdueTrigger').agenteAgilDueOverdueScan;
