@@ -7824,6 +7824,12 @@ card, pra sempre. Fix: `idOverride` da Automação passa a incluir
 `commentId` (único por disparo de verdade). 1 teste novo. Suíte
 inteira: **224/224 passando**.
 
+**Deployado e validado em produção no mesmo dia**: card com histórico
+("teste duetoday", que estava falhando antes) confirmado via leitura
+direta do Firebase — notificação antiga continuou lá, notificação nova
+foi criada. Item 5 fechado de vez, incluindo os dois achados de
+notificação.
+
 ### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
 Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
 de trabalho da própria equipe) sem subir pra produção em horário de
