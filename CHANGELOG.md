@@ -7786,7 +7786,15 @@ no mesmo dia**: scan real achou 2 cards atrasados num board de 591
 cards, o agente respondeu nos dois com julgamento correto (recomendou
 em vez de agir sem evidência de progresso) — item 5 v1 fechado.
 
-Suíte inteira: **215/215 passando**.
+**`due_today` adicionado ao mesmo scan, mesmo dia**: pedido direto do
+usuário ("só precisa esse mesmo, os outros 2 [wip_exceeded/aging] acho
+que não precisam") — `agenteAgilDueOverdueScan` passou a cobrir os 2
+gatilhos (`due_today` "card vence hoje" + `due_overdue` "atrasado, 1º
+dia") na mesma passada diária, cada um com seu próprio texto de
+comentário e suas próprias regras Automação. Nome da function/arquivo
+não mudou (evita 2º deploy + apagar a antiga). 5 testes novos.
+
+Suíte inteira: **220/220 passando**.
 
 ### 2026-08-21 · Expansão pro squad `dados` — estruturado, NÃO ativado
 Pedido explícito do usuário: preparar suporte ao squad `dados` (o squad
