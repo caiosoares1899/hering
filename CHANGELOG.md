@@ -1862,6 +1862,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.463-dev — 2026-08-24 — Clicar fora de um card sem salvar agora avisa, igual o botão Cancelar
+Pedido direto: "quando uma pessoa tiver editando ou criando um card e
+clicar fora, ele tem que funcionar tipo o botão 'cancelar' e aparecer
+aquela telinha de tem certeza que deseja sair?".
+
+Clicar fora do modal e clicar em "Cancelar" já passavam os dois pelo
+mesmo `closeOv('card-ov')` — não era um bug de detecção do clique fora.
+O gap real era outro: **criar um card novo nunca teve nenhum aviso**,
+nem clicando fora nem no Cancelar. `openNewCard()` desarmava de
+propósito a trava de "alterações não salvas" (`_stopDirtyWatch()`), com
+a lógica de "nada foi perdido se descartar" — verdade no instante em que
+o modal abre vazio, mas não depois que a pessoa já digitou título,
+descrição, tags, checklist etc., já que um card em criação não tem
+nenhum autosave (só existe de verdade no Firebase depois do "💾
+Salvar"). Editar um card JÁ EXISTENTE continua com a proteção que já
+tinha (via `_cardIsDirty()`, cobre prioridade/story points/impedimento/
+OKR/comentário digitado — os únicos campos sem autosave nesse caso).
+
+Nova função `_newCardHasContent()`: card novo com editingId ainda null,
+checa se título/descrição/PO/comentário/tags/checklist/riscos têm algo
+preenchido (não conta responsável/coluna/prazo, que já vêm com um valor
+padrão só de abrir o modal — senão o aviso disparava mesmo sem a pessoa
+ter feito nada). `closeOv('card-ov')` passa a checar essa função também,
+mostrando a mesma confirmação ("Sair sem salvar?" / "Continuar criando")
+usada pelo caso de edição. Cobre os 4 jeitos de sair do modal ao mesmo
+tempo, de graça, porque todos já passavam pela mesma função: clicar
+fora, "Cancelar", ✕ e arrastar pra baixo no mobile.
+
+Cuidado extra: como um card recém-salvo continua com `editingId` null
+até a próxima vez que for reaberto (comportamento antigo, documentado
+onde o `saveCard()` fecha o modal), sem uma trava extra o aviso
+apareceria por cima do toast de sucesso bem no instante do salvar. Nova
+flag `_newCardGuardOff`, desarmada nos 2 pontos onde isso aconteceria
+(sucesso de `saveCard()` e o fechamento do modal reaproveitado pra
+editar um item de Recorrente/Modelo/Agendamento) — mesmo padrão já
+usado por `_stopDirtyWatch()` nesses pontos.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.462-dev — 2026-08-24 — Filtro em "Aplicar receita" + Automações liberado pra todos os usuários
 Dois pedidos diretos:
 
