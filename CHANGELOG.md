@@ -1798,6 +1798,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.458-dev — 2026-08-24 — Central de Ajuda sincronizada + fix real: "Modo autônomo" sumia no squad `dados`
+Rodada da skill `/atualizarhelpcontent`, cobrindo o gap desde a
+v8.30.455-dev (v8.30.456-dev e v8.30.457-dev):
+
+- **"O que é o Agente Ágil"** e **"Automações"** (`HELP_CONTENT`) ainda
+  diziam "só disponível no squad dev" — desatualizado desde a
+  v8.30.457-dev, que adicionou `dados`. Corrigido pros dois squads.
+- **Achado incidental, bug real**: `_autoRenderValueOptions('agent_tab')`
+  ainda checava `ACTIVE_SQUAD==='dev'` hardcoded pra mostrar a opção
+  "🤖 Modo autônomo" no dropdown da ação "Notificar Agente Ágil" — a
+  ação em si já ficou visível pro squad `dados` na v8.30.457-dev
+  (`AGENTE_AGIL_MENTION_SQUADS`), mas o dropdown de valor continuava
+  vazio nesse squad (a única outra opção depende de `AGENTE_AGIL_ATIVO`,
+  que é `false`). Corrigido pra usar a mesma fonte
+  (`AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)`) do `visible:` da
+  própria ação.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.457-dev — 2026-08-24 — Squad `dados` entra no autocomplete/atalhos do Agente Ágil
 Client-side alcança o backend: `agenteAgilMencaoDados` já estava ativo em
 escrita real desde ontem (funções, deploy fora deste repo), mas o squad
