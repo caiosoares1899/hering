@@ -5485,7 +5485,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.462-dev</div>
+<div class="version">v8.30.463-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10404,6 +10404,13 @@ let editingDescs=[]; // descrições ADICIONAIS (além da principal): {id,label,
 // têm). Isso monitora esses campos "manuais" pra avisar visualmente quando há
 // algo pendente, e evita fechar o modal sem querer perdendo essa edição.
 let _cardManualSnap = null;
+// Rearmado a cada openNewCard(), desarmado nos pontos em que um card NOVO
+// fecha de forma LEGÍTIMA (salvou com sucesso, ou o modal foi reaproveitado
+// pra editar um item de Recorrente/Modelo/Agendamento e aquilo já foi
+// salvo) — sem isso, _newCardHasContent() (abaixo) acharia que ainda tem
+// conteúdo não salvo bem no instante em que o closeOv('card-ov') de
+// sucesso roda, e mostraria a confirmação por cima do toast de sucesso.
+let _newCardGuardOff = false;
 function _manualFieldsNow(){
   return {
     sp: document.getElementById('m-sp')?.value||'',
@@ -10419,6 +10426,28 @@ function _manualFieldsNow(){
 function _cardIsDirty(){
   if(!_cardManualSnap) return false;
   return JSON.stringify(_manualFieldsNow()) !== JSON.stringify(_cardManualSnap);
+}
+// Card NOVO (editingId null) não passa por _cardIsDirty() — openNewCard()
+// desarma a trava de propósito ("nada foi perdido se descartar"), porque no
+// instante em que o modal abre isso é verdade. Mas se a pessoa já digitou
+// algo (título, descrição, tags, checklist...) e clicar fora / Cancelar,
+// tudo isso some sem aviso nenhum — não tem autosave nenhum pra um card que
+// ainda nem existe no Firebase. Checa só os campos que começam vazios e só
+// ficam preenchidos por ação deliberada da pessoa — owner/coluna/prazo
+// entram com um valor padrão já ao abrir (ex.: owner = você mesmo), então
+// não contam, senão o aviso dispararia mesmo sem a pessoa ter feito nada.
+function _newCardHasContent(){
+  if(editingId) return false; // edição de card existente usa _cardIsDirty()
+  if(_newCardGuardOff) return false; // fechamento legítimo em andamento — ver declaração
+  if((document.getElementById('m-title')?.value||'').trim()) return true;
+  if((document.getElementById('m-desc')?.value||'').trim()) return true;
+  if((document.getElementById('m-po')?.value||'').trim()) return true;
+  if((document.getElementById('m-comment-inp')?.value||'').trim()) return true;
+  if(editingTags.length) return true;
+  if(editingDescs.length) return true;
+  if(getCL().length) return true;
+  if(getRiscos().length) return true;
+  return false;
 }
 function _updateSaveBtnDirtyState(){
   const btn=document.getElementById('btn-save-card'); if(!btn) return;
@@ -11398,6 +11427,7 @@ function openNewCard(col){
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
+  _newCardGuardOff = false; // rearma a trava de _newCardHasContent() pra esta nova sessão de criação
 }
 function saveCard(){
   if(_savingCard) return; // já tem um salvamento em voo (ver comentário na declaração de _savingCard)
@@ -11437,6 +11467,7 @@ function saveCard(){
     cards = cards.filter(c=>!c._isQLTemp);
     _editingQLItem = null;
     editingId = null;
+    _newCardGuardOff = true; // editingId vira null aqui (não é "criação abandonada") — ver declaração
     closeOv('card-ov');
     showToast('✅ Item atualizado');
     return;
@@ -11656,6 +11687,7 @@ function saveCard(){
     }
     _intakeOrigemPendingId=null;
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
+    _newCardGuardOff = true; // idem pra _newCardHasContent() — editingId pode continuar null aqui (ver comentário acima)
     closeOv('card-ov');
     _clearPendingRequired();
   }).catch(err=>{
@@ -25471,6 +25503,20 @@ function closeOv(id, afterClose){
   if(id==='card-ov' && editingId && _cardIsDirty()){
     uiConfirm('Você tem alterações não salvas neste card (prioridade, story points, impedimento, OKR ou um comentário digitado mas não enviado).\n\nFechar mesmo assim?',
       {title:'Alterações não salvas', okText:'Fechar mesmo assim', cancelText:'Continuar editando'}).then(ok=>{
+      if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
+    });
+    return;
+  }
+  // Card NOVO (ainda sem editingId) sem nenhum autosave — pedido direto:
+  // "quando uma pessoa tiver... criando um card e clicar fora, ele tem que
+  // funcionar tipo o botão 'cancelar' e aparecer aquela telinha". Botão
+  // Cancelar e clique fora do modal já passavam os dois por aqui (ver
+  // listener de backdrop mais abaixo) — só faltava esta trava, que a
+  // criação desarmava de propósito em openNewCard() achando que não tinha
+  // nada a perder (ver _newCardHasContent()).
+  if(id==='card-ov' && !editingId && _newCardHasContent()){
+    uiConfirm('Este card ainda não foi salvo. Se sair agora, o que você já preencheu (título, descrição, tags, checklist...) será perdido.\n\nSair mesmo assim?',
+      {title:'Card não salvo', okText:'Sair sem salvar', cancelText:'Continuar criando'}).then(ok=>{
       if(ok){ _finishCloseOv(id); if(afterClose) afterClose(); }
     });
     return;
