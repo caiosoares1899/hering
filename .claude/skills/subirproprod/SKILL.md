@@ -152,6 +152,25 @@ entregue.
 - **Não promove sem validação explícita** de quem pediu que o dev já foi
   testado/aprovado — se não tiver certeza, pergunta antes de tocar em
   `kanban.html`.
+- **`firebase.database()` não existe nas páginas do Maré Digital** — elas
+  usam o SDK modular (import direto do CDN, sem o global `firebase`).
+  Use as funções já expostas em `window`: `window._db`, `window._ref`,
+  `window._set`, `window._get`, `window._update` (ex.:
+  `window._set(window._ref(window._db, path), data)`), não
+  `firebase.database().ref(path).set(data)` — senão dá
+  `ReferenceError: firebase is not defined` na hora de colar.
+- **Texto do log do card contendo `@Agente Ágil`/`@agente agil` (mesmo
+  como assunto, não como chamada de verdade) DISPARA o agente de
+  verdade** nos squads com escrita real ativa (`dev`, e `dados` desde
+  2026-08-24) — `detectaMencao.js` é substring puro
+  (`normaliza(texto).includes('@agente agil')`), não distingue "estou
+  comentando SOBRE o agente" de "estou chamando ele". Já aconteceu: um
+  log de card contando a história da ativação, cheio de `@Agente Ágil`
+  citado como texto, foi lido como uma menção real e o agente respondeu
+  no meio do log. Ao escrever o `text` do comentário de log (Passo 3),
+  se precisar citar o nome, quebra a substring — ex. zero-width space
+  entre o `@` e o nome (`` @​Agente Ágil ``), ou simplesmente
+  escreve "o Agente Ágil" sem o `@` na frente.
 - **`CODE_MAP.md` esquecido em promoções passadas** — antes dele existir,
   `CLAUDE.md` já tinha ficado semanas descrevendo `functions/index.js`
   como "a única Cloud Function" mesmo depois de várias outras terem sido
