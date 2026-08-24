@@ -18,6 +18,25 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.459 — 2026-08-24 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.458
+(v8.30.461-dev), validado em dev com um teste automatizado via console
+simulando os dois cenários (exclusão intencional / sumiço inesperado).
+
+- **Rede de segurança: alerta ao vivo se um card sumir sem ninguém ter
+  excluído.** Segunda parte do achado "cards sumindo" (a primeira,
+  a causa raiz na criação de card, já foi pra prod na v8.30.458). Ainda
+  existem outras ações estruturais em lote (duplicar/arquivar/excluir
+  vários de uma vez, importação, recorrências) que continuam
+  reescrevendo o array inteiro de cards e podem, em teoria, colidir do
+  mesmo jeito — corrigir todas está fora de escopo desta rodada. Esta
+  entrada cobre a rede de segurança: agora, se algum card sumir do
+  quadro sem ter passado por uma exclusão de verdade, quem estiver com
+  o board aberto recebe um aviso na hora (toast) e o time de tecnologia
+  fica com um registro do incidente — não recupera o card sozinho, mas
+  garante que ninguém mais descubra dias depois. Não muda nada no
+  comportamento normal de excluir cards.
+
 ### v8.30.458 — 2026-08-24 · promove pra prod (fix crítico)
 Promove pra produção o lote acumulado em dev desde a v8.30.457
 (v8.30.459-dev → v8.30.460-dev). Promoção urgente — o item principal é
