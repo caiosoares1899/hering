@@ -168,6 +168,22 @@ outra mudança na página:
   grep por `==='dev'`/`'dev'` perto do código da feature ajuda a achar
   esses gates duplicados e desalinhados.
 
+- **v8.30.458-dev → v8.30.464-dev (2026-08-24)**: sync com o lote
+  v8.30.462-dev (`⚡ Automações` liberado pra qualquer papel, com atalho
+  novo em ⚡ Funções de card; filtro por nome/tag em "🧩 Aplicar
+  receita"). 4 entradas corrigidas: "Supercard (cards filhos)" (2
+  referências a "⚙ Config → Automações" + nota sobre o filtro novo),
+  "Automações" (categoria), "O que é uma automação" (caminho/audiência),
+  "Papéis no board" (removido "automações" da lista exclusiva do PO) e
+  "Funções de card" (item novo "⚡ Automações" na lista — e,
+  oportunisticamente, "🧹 Cards antigos", que já estava no menu mas
+  nunca tinha entrado nessa descrição). v8.30.460-dev/461-dev/463-dev
+  (fix crítico de card sumindo + rede de segurança + aviso ao sair de
+  card não salvo) não geraram entrada nova: são comportamento de
+  bastidor/rede de segurança, auto-explicativo no momento em que
+  acontece (toast/diálogo já contam a história), sem tela ou fluxo novo
+  pra documentar.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.
