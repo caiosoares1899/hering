@@ -313,6 +313,37 @@ não faz parte desta rotina por padrão, a menos que peçam.
   - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
     (1434/1434) OK.
 
+- **v8.30.458-dev / v8.30.456 (prod) (2026-08-24)**: rodada limpa, nada
+  pra corrigir. `kanban.html`/`kanban-dev.html` estavam divergindo no
+  momento (dev com squad `dados` no Agente Ágil, ainda não promovido —
+  ver `CODE_MAP.md`), auditoria feita em `kanban-dev.html` (superset).
+  Conferido:
+  - `data:image` embutido: continua em 0 nos dois arquivos.
+  - Blocos reais (por linha): CSS ~188KB, script módulo Firebase ~7KB,
+    script principal ~1,34MB (`kanban-dev.html`, 28442 linhas, ~1,74MB
+    total — cresceu desde a v8.30.439-dev por causa do supercard de 2
+    níveis, reativação do Agente Ágil client-side e roteamento de modelo).
+  - `setInterval`/`clearInterval`: **15 reais / 14** (subiu de 14/12) —
+    novo: `window._colTagPoll` (L8217, re-sync periódico de columns/tags
+    a cada 60s, rede de segurança contra `onValue` perder update de
+    coluna criada por outra sessão) com guard `clearInterval` logo antes
+    do `setInterval` (evita 2 pollings simultâneos se `fbLoadAll()` rodar
+    2x na sessão, ex. "🌱 Re-popular" no dev) — mesmo padrão "guard antes
+    de re-setar" já esperado pela skill, sem stop de verdade em lugar
+    nenhum (é "vida inteira da sessão" por natureza, só com proteção
+    contra duplicação). Resto idêntico ao padrão anterior (8 escopados
+    com clear real, 6 "vida inteira" sem clear) — zero vazamento novo.
+  - `backdrop-filter`: 31 — idêntico ao baseline anterior, sem
+    crescimento.
+  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
+    presentes; `www.gstatic.com` segue ausente corretamente (SDK
+    vendorizado). Import do Firebase: modular, todos os 4 módulos do
+    vendor local.
+  - Único asset fora do favicon continua `marinheiro.png` (sob demanda).
+  - Viewport meta + `addTouchDnD` intactos.
+  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
+    (1440/1440) OK.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está limpo.
