@@ -18,6 +18,33 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.458 — 2026-08-24 · promove pra prod (fix crítico)
+Promove pra produção o lote acumulado em dev desde a v8.30.457
+(v8.30.459-dev → v8.30.460-dev). Promoção urgente — o item principal é
+um fix crítico de perda de dados, reportado pelo time em produção.
+
+- **Fix crítico: cards novos podiam sumir quando criados quase ao
+  mesmo tempo** — criar um card sempre reescrevia o array `/cards`
+  **inteiro** com o estado local de quem estava salvando; se duas
+  pessoas criassem cards (ou uma criasse enquanto outra fazia qualquer
+  ação estrutural: duplicar em lote, arquivar em lote, importar) quase
+  ao mesmo tempo no mesmo squad, quem gravasse por último sobrescrevia
+  o array inteiro com uma cópia desatualizada — apagando de verdade,
+  sem erro nenhum, o card que a outra pessoa tinha acabado de criar.
+  Reportado pelo time do squad `midiacriativa`. Corrigido com uma
+  escrita pontual (só a posição do card novo, nunca o array inteiro)
+  usando uma `transaction()` do Firebase pra alocar a posição de forma
+  atômica — testado ao vivo em produção com 2 criações simultâneas de
+  verdade, confirmando que não colidem mais. Aplicado nos 4 lugares
+  que criam 1 card por vez (modal principal, duplicar, criar filho de
+  supercard, fan-out). Ações em lote de verdade continuam com o
+  comportamento antigo — decisão explícita, escopo de uma rodada
+  futura.
+- **Fix: riscos notificavam o PO de squads errados** — um card com
+  risco no squad `dados` podia notificar o PO do squad `App`, por
+  exemplo. Corrigido pra checar se a pessoa é membro do squad certo
+  antes de notificar.
+
 ### v8.30.457 — 2026-08-24 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.456
 (v8.30.457-dev → v8.30.458-dev), validado em dev e em produção (via
