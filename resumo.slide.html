@@ -167,7 +167,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
   <div class="tb-center">
     <div class="tb-clock" id="brtClock">--:--</div>
     <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
-    <span class="slide-counter" id="slideCounter">1 / 6</span>
+    <span class="slide-counter" id="slideCounter">1 / 5</span>
   </div>
   <div class="tb-nav">
     <div class="ai-tag-pill" onclick="togglePanel()"><span class="ai-dot"></span>Atualizar com IA</div>
@@ -223,21 +223,10 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
     <div class="slide-inner">
       <div class="slide-header">
         <div class="s-tag">⚠ Impedimentos</div>
-        <h2 class="slide-h2">Resumo dos Times <span style="font-size:14px;font-weight:400;color:var(--w40);">1/2</span></h2>
+        <h2 class="slide-h2">Resumo dos Times</h2>
         <span style="font-size:13px;color:var(--w30);margin-left:auto;" id="imp-date"></span>
       </div>
       <div class="squads-grid" id="squads-container"></div>
-    </div>
-  </div>
-
-  <!-- S1b: IMPEDIMENTOS pág 2 -->
-  <div class="slide" id="slide-1b">
-    <div class="slide-inner">
-      <div class="slide-header">
-        <div class="s-tag">⚠ Impedimentos</div>
-        <h2 class="slide-h2">Resumo dos Times <span style="font-size:14px;font-weight:400;color:var(--w40);">2/2</span></h2>
-      </div>
-      <div class="squads-grid" id="squads-container-2"></div>
     </div>
   </div>
 
@@ -308,7 +297,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v4.3</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v4.5</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -338,33 +327,24 @@ let DATA = {
     fonteCal: 15
   },
   squads:[
-    {name:"SITE & APP",impedimentos:[
-      "Fotos modelo PDP Camiseta Brasil: aguardando recebimento — time de foto cobrado, aguardando retorno do prazo.",
-      "Fotos Cápsula Carnaval: prazo ideal de recebimento é 19/08 com risco de atraso. Aguardando informações.",
-      "Aguardando jurídico com contrato da Insider."
-    ]},
     {name:"PERFORMANCE",impedimentos:[
-      "Falha de atribuição iOS no Meta: observado e sinalizado em 07/08. Com o time técnico para análise — previsão de retorno amanhã (18/08)."
+      "Dados iOS no Meta: parâmetros obrigatórios faltando em alguns eventos da AppsFlyer. Com o time técnico para resolução.",
+      "Resultados Google: campanhas em queda de performance e impressões desde 10/08. Análises internas ainda inconclusivas — aguardando análise do Google para complemento e solução."
     ]},
-    {name:"MARKETPLACE",impedimentos:[
-      "Chamado aberto na Pluggto desde 04/08 sem retorno: erro no envio de imagens para a Dafiti impede ativação dos produtos de verão/drop. Crítico — Dafiti é o 2º maior canal e principal em full price, impactando diretamente a estratégia de recuperação de margem.",
-      "Reputação do Mercado Livre caiu para faixa amarela na semana passada (qua–sáb) por alta taxa de cancelamentos causada por erro da integradora. Reforça necessidade de avaliar troca de integradora para 2026."
-    ]},
-    {name:"ANALYTICS",impedimentos:[
-      "Atraso da VTEX no envio de dados do dia anterior está interferindo nas bases de dados e relatórios."
+    {name:"SITE & APP",impedimentos:[
+      "Cápsula Carnaval: produtos não estavam liberados no briefing, impactando a subida no Wise. Ainda dentro do cronograma, mas gerou cobrança dos times envolvidos. Alinhado na sexta que a integração precisa de 24h após encerramento do cadastro para o produto aparecer disponível no Wise."
     ]}
   ],
   insights:[
-    {tipo:"event",tag:"SEXTA · CHECK-IN OKR",texto:"OKR da semana (21/08): Geral, Comercial, Mídia e Dados/IA."},
+    {tipo:"event",tag:"QUARTA · CHECK-IN OKR",texto:"OKR da semana: CRM, CX e Tech — 27/08."},
     {tipo:"alert",tag:"BIG REVIEW",texto:"1 slot ainda aberto na Big Review."}
   ],
   calDigital:[
     {day:"26",mon:"AGO",name:"Big Review",type:"1 slot aberto"},
-    {day:"25",mon:"AGO",name:"Alinhamento Fritos",type:"Reunião interna"}
+    {day:"28",mon:"AGO",name:"Alinhamento Fritos",type:"Reunião interna"}
   ],
   calCIA:[
     {name:"Verão",            start:"2025-07-16",end:"2025-10-01"},
-    {name:"Dia dos Pais",     start:"2025-07-16",end:"2025-08-09"},
     {name:"Verão I",          start:"2025-08-10",end:"2025-09-02"},
     {name:"Camiseta Brasil",  start:"2025-09-03",end:"2025-10-01"},
     {name:"Alto Verão",       start:"2025-10-01",end:"2025-10-31"}
@@ -427,8 +407,6 @@ function render(){
 
   // SQUADS
   const sc=document.getElementById('squads-container');
-  const sc2=document.getElementById('squads-container-2');
-  const half=Math.ceil(DATA.squads.length/2);
   const renderSquad=s=>`
     <div class="squad-card">
       <div class="squad-name">${s.name}</div>
@@ -436,8 +414,7 @@ function render(){
         <div class="imp-item"><div class="imp-dot">!</div><span>${i}</span></div>
       `).join('')}
     </div>`;
-  if(sc) sc.innerHTML=DATA.squads.slice(0,half).map(renderSquad).join('');
-  if(sc2) sc2.innerHTML=DATA.squads.slice(half).map(renderSquad).join('');
+  if(sc) sc.innerHTML=DATA.squads.map(renderSquad).join('');
 
   // INSIGHTS
   const ic=document.getElementById('insights-container');
@@ -500,7 +477,7 @@ function render(){
 }
 
 /* ====== NAV ====== */
-const TOTAL=6;let cur=0;
+const TOTAL=5;let cur=0;
 const slides=Array.from(document.querySelectorAll('.slide'));
 const dotsWrap=document.getElementById('bottombar');
 const counter=document.getElementById('slideCounter');
