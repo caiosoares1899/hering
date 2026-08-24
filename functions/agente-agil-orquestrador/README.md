@@ -2268,3 +2268,10 @@ e em `functions/index.js` pra quem for procurar não estranhar.
 o texto certo, ausência de regra `due_today` não notificando, os dois
 gatilhos juntos numa mesma varredura com texto correto cada). Suíte
 inteira: **220/220 passando**.
+
+**Deploy confirmado (2026-08-24, PR #491 mergeado)**: usuário rodou
+`firebase deploy --only functions:agenteAgilDueOverdueScan` de novo —
+mesma function, código atualizado. `due_today` fica no ar junto com
+`due_overdue` a partir do próximo scan (09:05 `America/Sao_Paulo`),
+mesma disciplina opt-in: só age se o ADM configurar a Automação
+"Notificar Agente Ágil" com o gatilho "Card vence hoje" no squad `dev`.
