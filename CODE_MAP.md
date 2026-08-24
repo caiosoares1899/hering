@@ -33,8 +33,23 @@ instrumentação extra) — os números da seção painel abaixo são de
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6093 — seções do modal (Conteúdo, Vínculos, Colaboração...)
 - `openCard()` — L10839
-- `saveCard()` — L11255 — auto-save (debounce 800ms) passa por aqui
+- `saveCard()` — L11309 — auto-save (debounce 800ms) passa por aqui
 - `_finishCloseOv()` — L25263 — fechamento do modal, reset de estado pendente
+
+### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
+- `fbSaveAll()` — L7286 — reescreve `/cards` INTEIRO (só pra operações
+  estruturais em lote: duplicar/arquivar em massa, reordenar, importar,
+  recorrências/agendamentos) — **nunca usar pra 1 card só**, arrisca
+  sobrescrever o array com o estado local de outra pessoa
+- `fbCreateCard()` — L7418 — cria 1 card NOVO com escrita pontual,
+  posição alocada via `transaction()` no `cards_index` (atômico contra
+  criações concorrentes) — achado real 2026-08-24 (squad
+  `midiacriativa`, "cards sumindo"): `fbSaveAll()` na criação
+  colidia com o mesmo tipo de ação concorrente e apagava cards de
+  outras pessoas. Usar sempre pra criar 1 card (modal, duplicar, filho
+  de supercard, fan-out)
+- `fbSaveCard()` — L7449 — edita 1 card EXISTENTE, escrita pontual
+  (usada por drag-and-drop, autosave, etc.)
 
 ### Board & render
 - `renderNormal()` — L9435

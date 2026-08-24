@@ -5453,7 +5453,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.457</div>
+<div class="version">v8.30.458</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5472,7 +5472,7 @@ input[type="date"]{-moz-appearance:textfield;}
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -5514,6 +5514,7 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
+window._runTransaction=runTransaction;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._increment=increment;
 window._auth=auth; window._provider=provider;
@@ -7390,6 +7391,59 @@ async function fbSaveAll(extra, touchedIds){
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
     throw err; // re-throw so handleDrop .catch can revert
+  }));
+}
+// Cria um card NOVO com escrita pontual (multi-path) — NÃO usa fbSaveAll().
+// Achado real de produção (2026-08-24, squad midiacriativa: "criamos cards
+// e eles sumiram"): fbSaveAll() reescreve o array /cards INTEIRO com o que
+// está localmente na hora do save — se duas pessoas criam cards (ou uma
+// cria enquanto a outra faz qualquer ação estrutural via fbSaveAll:
+// duplicar em lote, arquivar em lote, importar) quase ao mesmo tempo no
+// MESMO squad, quem grava por último sobrescreve o array com sua própria
+// cópia local desatualizada — apagando de verdade, sem erro nenhum, o
+// card que a outra pessoa acabou de criar. Card criado é sempre 1 card só
+// (nunca um lote), então não precisa do caminho "caro" do fbSaveAll —
+// dá pra ser tão pontual quanto fbSaveCard() já é pra edição.
+//
+// A posição nova (chave em /cards) é alocada via transaction() no próprio
+// /cards_index — atômico contra criações concorrentes: se dois clientes
+// tentam alocar ao mesmo tempo, o Firebase serializa e faz o 2º
+// retry automaticamente com o índice já atualizado pelo 1º, garantindo
+// que nunca saem duas chaves iguais (o mesmo tipo de colisão que
+// derrubava cards, só que agora impossível por construção, não por
+// sorte). Não precisa de um contador separado: acha o menor inteiro
+// ainda não usado em cards_index, o que também tolera buracos (cards
+// excluídos deixam a posição livre pra reuso, mesmo comportamento que
+// fbSaveAll() já tinha ao recompactar o array do zero a cada save).
+async function fbCreateCard(card){
+  _lastLocalSave = Date.now();
+  _hasLocalSession = true;
+  if(!window._fbReady) return Promise.resolve();
+  card.updatedAt = new Date().toISOString();
+  const idxRef = fb(FB+'/cards_index');
+  const txResult = await window._runTransaction(idxRef, currentIndex=>{
+    currentIndex = currentIndex || {};
+    const used = new Set(Object.values(currentIndex).map(String));
+    let key = 0;
+    while(used.has(String(key))) key++;
+    currentIndex[card.id] = String(key);
+    return currentIndex;
+  });
+  if(!txResult.committed) throw new Error('fbCreateCard: transaction de cards_index não commitou');
+  const key = txResult.snapshot.val()[card.id];
+  // Popula o espelho AGORA, síncrono — mesmo padrão de fbSaveAll() (ver
+  // comentário lá): fbSaveCard() usa window._cardsByKey pra achar a chave
+  // real de um card; sem isso, uma edição rápida logo após criar cairia no
+  // fallback por posição LOCAL (cards.indexOf), voltando a arriscar
+  // colisão — justamente o que este fix evita na criação em si.
+  if(window._cardsByKey) window._cardsByKey[key] = card;
+  const updates = {};
+  updates['cards/'+key] = card;
+  updates['cards_updated_at/'+card.id] = card.updatedAt;
+  return _trackFbWrite(window._update(fb(FB), updates).catch(err=>{
+    if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
+      console.warn('[fbCreateCard] write failed:', err);
+    throw err;
   }));
 }
  function fbSaveCard(card){
@@ -11479,7 +11533,7 @@ function saveCard(){
   }
   const _savedIntakePendingId = _intakeOrigemPendingId; // snapshot — ver comentário na declaração
   const _savedNewCardId = !editingId ? cards[cards.length-1]?.id : null;
-  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbSaveAll(undefined, [cards[cards.length-1].id]);
+  const _saveP = editingId ? fbSaveCard(cards.find(x=>x.id===editingId)) : fbCreateCard(cards[cards.length-1]);
   _crvPropagateToChildren(editingId ? cards.find(x=>x.id===editingId) : cards[cards.length-1]); // Ficha Técnica compartilhada — ver declaração
   renderBoard(); runAutoRules(editingId?'edit':'create', editingId||cards[cards.length-1]?.id, editingId?(cards.find(x=>x.id===editingId)?.col):document.getElementById('m-col').value);
   // Fix: antes o card fechava na hora, sem esperar confirmação do Firebase — se a escrita falhasse
@@ -11614,7 +11668,7 @@ function confirmarDuplicar(){
   const colSel=document.getElementById('dup-col');
   if(colSel && colSel.value) opts.col = colSel.value;
   const novo=_duplicarCardObj(card, opts);
-  fbSaveCard(novo); renderBoard();
+  fbCreateCard(novo); renderBoard();
   fecharDuplicarModal();
   // Sempre abre o modal da cópia pra edição imediata — antes só fechava o
   // modal do card original (se estava aberto) e deixava a pessoa no board;
@@ -21121,7 +21175,7 @@ function quickCreateSuperChild(title){
   recordHistory(novo,'criou o card (filho de supercard)');
   recordMove(novo,novo.col);
   cards.push(novo);
-  fbSaveCard(novo).catch(err=>console.error('[supercard] falha ao salvar card filho:', err));
+  fbCreateCard(novo).catch(err=>console.error('[supercard] falha ao salvar card filho:', err));
   editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
   if(!editingId) _newSuperChildIds.push(novo.id); // ver comentário na declaração — cancelar o pai remove este filho de verdade
   renderSuperChildrenList();
@@ -21785,6 +21839,15 @@ function notifRisk(card){
     const uids=[];
     Object.entries(all).forEach(([uid,u])=>{
       if(!u||!uid) return;
+      // Achado real (2026-08-24): sem checar se a pessoa é membro do squad
+      // ATIVO, o fallback pra u.role (campo legado, não escopado por squad)
+      // fazia um PO de OUTRO squad (sem squads_roles[ACTIVE_SQUAD] definido,
+      // mas com u.role antigo = 'po') ser notificado de riscos de squads que
+      // ele nem participa — ex.: risco no squad dados notificando o PO do
+      // squad App. Mesmo padrão de "é membro deste squad" que
+      // _applyUsuariosData() já usa pra montar a lista de membros/menções.
+      const inThisSquad = (u.squads && u.squads[ACTIVE_SQUAD]===true) || (!u.squads && (u.inscrito===true||u.inscrito==='true'));
+      if(!inThisSquad) return;
       const role=(u.squads_roles&&u.squads_roles[ACTIVE_SQUAD])||u.role||'membro';
       if(role!=='po'&&role!=='organizador'&&role!=='adm') return;
       uids.push(uid);
@@ -23981,7 +24044,7 @@ function _applyFanoutTemplate(parentCard, tpl, whoLabel){
     recordHistory(novo,'criou o card (fan-out "'+tpl.nome+'"'+(modelo?' + modelo "'+modelo.title+'"':'')+')',user);
     recordMove(novo,novo.col);
     cards.push(novo);
-    fbSaveCard(novo).catch(err=>console.error('[fanout] falha ao salvar card filho:', err));
+    fbCreateCard(novo).catch(err=>console.error('[fanout] falha ao salvar card filho:', err));
     return novo.id;
   });
   parentCard.childCardIds=[...(parentCard.childCardIds||[]), ...novos];
