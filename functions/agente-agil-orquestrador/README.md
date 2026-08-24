@@ -2220,6 +2220,23 @@ máquina. Cloud Scheduler passa a rodar o scan diariamente às 09:05
 (`America/Sao_Paulo`) — ainda não age de fato pra ninguém enquanto não
 existir uma Automação "Notificar Agente Ágil" com o gatilho "Card
 atrasado (1º dia)" configurada no squad `dev` (opt-in, por desenho).
-Validação em produção (rodar de verdade com uma regra configurada e um
-card atrasado) fica como próximo passo, quando/se o usuário configurar
-essa Automação.
+
+**Validado em produção (2026-08-24)**: usuário configurou a Automação e
+forçou o Cloud Scheduler a rodar na hora (Google Cloud Console →
+"Forçar execução"), sem esperar o agendamento diário. Log real do scan:
+`[agente-agil-due-overdue] squad=dev cards=591 notificados=2` — achou 2
+cards de verdade batendo `due_overdue` num board de produção (591 cards
+escaneados). Log real do `agenteAgilMencao` processando o 1º card
+notificado: `dryRun=false | tier=sonnet | status=done | ferramentas:
+ler_card({}) -> comentario(...)`, `finalText`: "...venceu ontem, mas não
+tem descrição, checklist nem qualquer comentário que indique o real
+andamento do trabalho... não tomei ação de mover coluna ou alterar
+prazo" — mesmo julgamento cuidadoso de sempre (recomenda em vez de agir
+sem evidência). Pipeline ponta a ponta confirmado: scan → comentário da
+Automação → `agenteAgilMencao` processa → agente responde de verdade no
+card, sem loop (a própria resposta do agente foi corretamente ignorada
+pelo filtro `self_comment` quando reprocessada pelo listener).
+
+**Item 5 v1 — FECHADO.** Próximos passos possíveis (não decididos):
+portar `due_today`/`wip_exceeded`/`aging` pro mesmo mecanismo, e/ou
+expandir o scan pro squad `dados` — cada um, decisão separada.

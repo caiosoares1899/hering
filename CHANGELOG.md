@@ -7781,7 +7781,10 @@ wip_exceeded/aging) se alguém tiver o board aberto — sem isso, um card
 pode ficar atrasado um fim de semana inteiro sem ninguém notar. Reusa a
 MESMA rota já validada da @menção (escreve o comentário, `mentionTrigger.js`
 processa) — opt-in, só age se o ADM já tiver configurado a Automação
-correspondente. 14 testes novos.
+correspondente. 14 testes novos. **Deployado e validado em produção
+no mesmo dia**: scan real achou 2 cards atrasados num board de 591
+cards, o agente respondeu nos dois com julgamento correto (recomendou
+em vez de agir sem evidência de progresso) — item 5 v1 fechado.
 
 Suíte inteira: **215/215 passando**.
 
