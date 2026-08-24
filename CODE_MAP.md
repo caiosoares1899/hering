@@ -37,11 +37,11 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `_finishCloseOv()` — L25263 — fechamento do modal, reset de estado pendente
 
 ### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
-- `fbSaveAll()` — L7286 — reescreve `/cards` INTEIRO (só pra operações
+- `fbSaveAll()` — L7304 — reescreve `/cards` INTEIRO (só pra operações
   estruturais em lote: duplicar/arquivar em massa, reordenar, importar,
   recorrências/agendamentos) — **nunca usar pra 1 card só**, arrisca
   sobrescrever o array com o estado local de outra pessoa
-- `fbCreateCard()` — L7418 — cria 1 card NOVO com escrita pontual,
+- `fbCreateCard()` — L7436 — cria 1 card NOVO com escrita pontual,
   posição alocada via `transaction()` no `cards_index` (atômico contra
   criações concorrentes) — achado real 2026-08-24 (squad
   `midiacriativa`, "cards sumindo"): `fbSaveAll()` na criação
@@ -50,6 +50,27 @@ instrumentação extra) — os números da seção painel abaixo são de
   de supercard, fan-out)
 - `fbSaveCard()` — L7449 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
+
+### Rede de segurança — detecção ao vivo de card sumido inesperadamente
+- `_reportUnexpectedCardDisappearance()` — L7476 — dispara toast +
+  `console.error` + grava `cards_incidentes_sumico/{incId}` quando um id
+  some de `/cards_index` sem ter passado por `cards_deleted_intentionally`
+  — "ponto 2" da rede de segurança pras ~46 chamadas de `fbSaveAll()` que
+  ainda reescrevem o array inteiro (fora do escopo do fix de
+  `fbCreateCard()` acima, que só cobre a CRIAÇÃO de 1 card). Não recupera
+  o card — só avisa na hora, em vez de descobrir dias depois.
+- `_intentionalDeleteIds` (Set) — populado por um listener `onChildAdded`
+  em `cards_deleted_intentionally` — grep `_delRef` dentro de `fbLoadAll()`
+  pra achar o listener; o `onChildRemoved` de `/cards_index` (mesmo escopo,
+  grep `window._onChildRemoved(_idxRef`) faz um debounce de ~3s checando
+  esse Set antes de chamar `_reportUnexpectedCardDisappearance()`
+- Os 5 pontos reais de exclusão gravam `cards_deleted_intentionally/{id}:
+  true` como `extra` na MESMA chamada `fbSaveAll()` que já fazem —
+  `bulkDeleteSelected()`, `deleteCard()`, `excluirArquivado()`,
+  `ctxDelete()`, e a limpeza de filhos órfãos em `_finishCloseOv()`. Grep o
+  nome da função + `cards_deleted_intentionally` pra achar a linha atual
+  de cada um — não repetido aqui pra não ficar obsoleto a cada edição
+  nessas funções.
 
 ### Board & render
 - `renderNormal()` — L9435

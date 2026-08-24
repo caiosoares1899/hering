@@ -5453,7 +5453,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.460-dev</div>
+<div class="version">v8.30.461-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5703,6 +5703,19 @@ const SQUAD_LABELS = Object.fromEntries(
 );
 
 const FB = 'kanban/squads/' + ACTIVE_SQUAD + '/dados';
+
+// Ids marcados como "exclusão intencional" — alimentado pelo nó leve
+// cards_deleted_intentionally (ver window._onChildAdded logo abaixo de
+// _twoPhaseCardsLoad) — usado pelo listener de cards_index pra
+// diferenciar "alguém excluiu esse card de propósito" de "esse card
+// sumiu sem ninguém ter mandado excluir" (achado real 2026-08-24, squad
+// midiacriativa: fbSaveAll() sobrescrevendo o array inteiro podia
+// apagar cards de OUTRAS pessoas silenciosamente — ver fbCreateCard()
+// e _reportUnexpectedCardDisappearance() mais abaixo). Compartilhado
+// entre TODAS as abas com o board aberto (não só a que excluiu), porque
+// é alimentado via Firebase, não estado local — ver comentário completo
+// no listener.
+let _intentionalDeleteIds = new Set();
 
 // Aplica identidade visual do squad assim que o DOM estiver pronto
 // Carrega squads criados via painel do Firebase (kanban/squads_meta)
@@ -6623,7 +6636,12 @@ async function bulkDeleteSelected(){
   if(!await uiConfirm(`Excluir ${n} card${n!==1?'s':''} selecionado${n!==1?'s':''}? Esta ação não pode ser desfeita.`)) return;
   const ids=new Set(selectedCards);
   cards=cards.filter(c=>!ids.has(c.id));
-  fbSaveAll(undefined, []); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
+  // Marca cada id excluído em cards_deleted_intentionally, na MESMA escrita
+  // atômica — alimenta _intentionalDeleteIds (ver listener de /cards_index)
+  // pra não disparar falso-positivo de "card sumiu sozinho".
+  const _delExtra={};
+  ids.forEach(id=>{ _delExtra['cards_deleted_intentionally/'+id]=true; });
+  fbSaveAll(_delExtra, []); // exclusão: nenhum card SOBREVIVENTE mudou de conteúdo, só a posição no array
   selectedCards.clear();
   selectMode=false;
   const btn=document.getElementById('btn-select');
@@ -7446,6 +7464,28 @@ async function fbCreateCard(card){
     throw err;
   }));
 }
+// Alerta ao vivo: um card sumiu de /cards_index sem ninguém ter mandado
+// excluir (achado real 2026-08-24, squad midiacriativa — ver
+// fbCreateCard() acima pro fix da causa raiz na CRIAÇÃO; isso aqui é a
+// rede de segurança pras ~49 chamadas de fbSaveAll() que ainda podem
+// sobrescrever o array inteiro em outras operações estruturais, fora
+// de escopo desta rodada). Mostra um aviso pra quem estiver com o board
+// aberto E grava um registro leve no Firebase (cards_incidentes_sumico)
+// — não recupera o card sozinho (o conteúdo já foi perdido de verdade),
+// só garante que alguém saiba na hora, em vez de descobrir dias depois.
+function _reportUnexpectedCardDisappearance(cardId, cardTitle){
+  const label = cardTitle ? '"'+cardTitle+'"' : cardId;
+  showToast('⚠️ Um card sumiu do quadro sem ninguém ter excluído: '+label+'. Avisem o time de tecnologia.');
+  console.error('[card sumiu inesperadamente]', cardId, cardTitle, 'squad:', ACTIVE_SQUAD);
+  if(!window._fbReady) return;
+  const incId = 'inc'+Date.now()+Math.random().toString(36).slice(2,6);
+  window._set(window._ref(window._db, FB+'/cards_incidentes_sumico/'+incId), {
+    cardId, cardTitle: cardTitle||null, squad: ACTIVE_SQUAD,
+    detectadoPorUid: window._currentUser?.uid||null,
+    detectadoPorNome: window._currentUser?.displayName||window._currentUser?.email||null,
+    detectadoEm: new Date().toISOString(),
+  }).catch(()=>{});
+}
  function fbSaveCard(card){
       // Salva SOMENTE este card (update num path especifico), em vez de
       // sobrescrever o array `cards` inteiro. Isso evita que edicoes
@@ -8010,7 +8050,19 @@ let _cardsSyncDebounce = null;
       _dbgTrack('/cards_index:child_removed(live)', snap.val());
       delete _liveCardsIndexById[snap.key];
       const key = snap.val();
+      const removedId = snap.key;
+      const removedTitle = (key!=null && _cardsByKey[key]) ? _cardsByKey[key].title : null;
       if(key!=null){ delete _cardsByKey[key]; _scheduleCardsSync(); }
+      // Debounce de ~3s antes de decidir que o sumiço foi inesperado: dá
+      // tempo do evento irmão de /cards_deleted_intentionally (escrito na
+      // MESMA transação fbSaveAll de quem excluiu de verdade) chegar por
+      // este mesmo listener path, mesmo com alguma folga de ordenação entre
+      // os dois child events. Ver _reportUnexpectedCardDisappearance() e
+      // _intentionalDeleteIds acima.
+      setTimeout(()=>{
+        if(_intentionalDeleteIds.has(removedId)) return;
+        _reportUnexpectedCardDisappearance(removedId, removedTitle);
+      }, 3000);
     });
 
     // Mantém _liveArchivedIds em sincronia durante a sessão — um card
@@ -8021,6 +8073,15 @@ let _cardsSyncDebounce = null;
     const _archRef = fb(FB+'/cards_archived');
     window._onChildAdded(_archRef, snap=>{ _dbgTrack('/cards_archived:live', snap.val()); _liveArchivedIds.add(snap.key); });
     window._onChildRemoved(_archRef, snap=>{ _dbgTrack('/cards_archived:live(removed)', null); _liveArchivedIds.delete(snap.key); });
+
+    // Índice leve gravado pelos pontos reais de exclusão (mesma escrita
+    // atômica do fbSaveAll que remove o card de verdade — ver os call sites
+    // de bulkDeleteSelected/deleteCard/excluirArquivado/ctxDelete/
+    // _finishCloseOv) — existe só pra alimentar _intentionalDeleteIds e
+    // distinguir "alguém excluiu de propósito" de "sumiu sozinho" no
+    // listener de /cards_index acima. Nunca é lido fora disso.
+    const _delRef = fb(FB+'/cards_deleted_intentionally');
+    window._onChildAdded(_delRef, snap=>{ _dbgTrack('/cards_deleted_intentionally:live', null); _intentionalDeleteIds.add(snap.key); });
 
     const _uaRef = fb(FB+'/cards_updated_at');
     async function _onCardsUpdatedAtLive(snap){
@@ -11578,7 +11639,7 @@ async function deleteCard(){
   saveUndo('excluir card');
   cards=cards.filter(x=>x.id!==editingId);
   _stopDirtyWatch(); // já confirmou a exclusão acima; não faz sentido perguntar de novo ao fechar
-  fbSaveAll(undefined, []); renderBoard(); closeOv('card-ov');
+  fbSaveAll({['cards_deleted_intentionally/'+editingId]:true}, []); renderBoard(); closeOv('card-ov');
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
@@ -17591,7 +17652,7 @@ async function purgeOldArchived(){
   openArquivados();
 }
 // ── FIM LIMPEZA DE CARDS ANTIGOS ─────────────────────────────────────
-async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll(undefined, []); openArquivados(); }
+async function excluirArquivado(id){ if(!await uiConfirm('Excluir este card permanentemente? Não dá pra desfazer.',{title:'Excluir card',danger:true,okText:'Excluir'})) return; cards=cards.filter(x=>x.id!==id); fbSaveAll({['cards_deleted_intentionally/'+id]:true}, []); openArquivados(); }
 
 // ═══════════════════════════════════════════════════════
 // QUICK LISTS
@@ -25035,7 +25096,7 @@ async function ctxDelete(){
   hideCtxMenu();
   if(!await uiConfirm('Excluir "'+card.title+'"? Esta ação não pode ser desfeita.',{title:'Excluir card',danger:true,okText:'Excluir'})) return;
   cards=cards.filter(x=>x.id!==cardId);
-  fbSaveAll(undefined, []); renderBoard();
+  fbSaveAll({['cards_deleted_intentionally/'+cardId]:true}, []); renderBoard();
   showToast('Card excluído');
 }
 // ═══════════════════════════════════════════════════════
@@ -25360,7 +25421,9 @@ function _finishCloseOv(id){
     if(!editingId && _newSuperChildIds.length){
       const _orfaos=new Set(_newSuperChildIds);
       cards = cards.filter(c=>!_orfaos.has(c.id));
-      fbSaveAll(undefined, []).catch(err=>console.error('[supercard] falha ao excluir filhos órfãos:', err));
+      const _delExtra={};
+      _orfaos.forEach(oid=>{ _delExtra['cards_deleted_intentionally/'+oid]=true; });
+      fbSaveAll(_delExtra, []).catch(err=>console.error('[supercard] falha ao excluir filhos órfãos:', err));
       renderBoard();
     }
     _newSuperChildIds = [];
