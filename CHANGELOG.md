@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.471 — 2026-08-25 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.467
+(v8.30.468-dev → v8.30.471-dev), validado em dev.
+
+- **Novo: duplicar supercard com os filhos junto** — no modal de
+  duplicar, quando o card tem cards filhos vinculados, aparece a opção
+  "🧩 Duplicar os N card(s) filho(s) também" (desmarcada por padrão).
+  Duplica a estrutura inteira — inclusive netos, se algum filho também
+  tiver os próprios filhos — cada um como cópia independente.
+- **Corrigido: "Criado por"/"Editado por" no modal do card** mostravam
+  a data em AAAA-MM-DD; agora em DD/MM/AAAA.
+- **Ajuste visual: mini contorno colorido no cabeçalho das colunas**,
+  com a cor de cada coluna.
+
 ### v8.30.467 — 2026-08-25 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.460
 (v8.30.465-dev → v8.30.467-dev), validado em dev.
