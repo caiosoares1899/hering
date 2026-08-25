@@ -7784,6 +7784,17 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v2.99 · painel — 2026-08-25 · promove pra prod (só o fix de presença)
+Promoção pedida direto: "sobe no painel prod mas n sobe no kanban
+prod" — promove SÓ o fix de presença online (ver entrada dev logo
+abaixo), sem levar o lote de `kanban-dev.html` (v8.30.468-dev) junto.
+
+`painel.html` não tem o early `return` de `loadExtraSquads()` que
+`painel-dev.html` tem (essa é uma das divergências intencionais entre
+os dois — dev não carrega `squads_meta` de produção) — então aqui a
+correção roda de ponta a ponta de verdade: squads extras criados via
+painel agora ganham listener de presença junto com os 3 squads base.
+
 ### painel-dev.html v2.99 · painel-dev — 2026-08-25 · Fix: presença online não aparecia pra squads criados via painel
 Achado real, pedido direto: "o online lá no painel não está aparecendo
 os usuários onlines das squads meta". `loadPresence()` rodava 1x, de

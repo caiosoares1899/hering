@@ -2218,7 +2218,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.98 · painel</div>
+<div class="version">v2.99 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2511,8 +2511,18 @@ document.addEventListener('click', e=>{
 
 
 // ── PRESENÇA GLOBAL ──────────────────────────────────────────────
+// Achado real 2026-08-25: squads extras (registrados em kanban/squads_meta,
+// carregados assincronamente por loadExtraSquads()) nunca apareciam online —
+// a 1ª chamada de loadPresence() (na inicialização) rodava ANTES do listener
+// de squads_meta resolver e popular SQUADS, então só os 3 squads base
+// ganhavam listener de presença; squads extras nunca ganhavam nenhum. Agora
+// é idempotente (_presenceListenedSquads) e loadExtraSquads() chama de novo
+// toda vez que SQUADS muda, sem duplicar listener nos squads já cobertos.
+let _presenceListenedSquads = new Set();
 function loadPresence(){
   SQUADS.forEach(sq=>{
+    if(_presenceListenedSquads.has(sq.id)) return;
+    _presenceListenedSquads.add(sq.id);
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/presence'),snap=>{
       const val=snap.val()||{};
       const now=Date.now();
@@ -7421,6 +7431,7 @@ function loadExtraSquads(callback){
         changed=true;
       }
     });
+    loadPresence(); // pega squad(s) extra(s) recém-adicionado(s) a SQUADS — ver comentário na declaração
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
