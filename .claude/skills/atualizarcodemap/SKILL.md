@@ -147,6 +147,40 @@ normal do repo:
   (mesmo drift). `painel.html`/`painel-dev.html` reconfirmado que
   divergem de verdade.
 
+- **2026-08-25 — 2ª rodada** (rodapé anterior: `0b97e99`, 2026-08-24 →
+  novo: `61d2d4a`, 2026-08-25). `kanban.html`/`kanban-dev.html`
+  confirmados byte-idênticos de novo (promoção da v8.30.460 já
+  mergeada) — cabeçalho voltou a dizer "promoção da vX.Y.Z confirmada"
+  em vez do aviso de divergência da rodada anterior. ~65 âncoras
+  revalidadas nas 3 seções (`kanban.html`/`kanban-dev.html`,
+  `painel.html`, `functions/`) — todas ainda existiam, só linha andou
+  (nenhuma removida/renomeada). Drift bem maior que o normal na seção
+  `kanban.html` (+150 a +270 linhas dependendo da posição no arquivo,
+  vs. +11 a +33 na rodada anterior) por causa do lote grande desta
+  sessão: extração do overlay `#auto-ov` (~80 linhas), `fbCreateCard()`
+  + rede de segurança de card sumido, tags/filtro em receitas, guarda
+  de card novo não salvo. Painel só teve drift pequeno (~35 linhas).
+  4 seções novas/reescritas:
+  - `kanban.html`: `_newCardHasContent()`/`_newCardGuardOff` (guarda
+    "sair sem salvar" pra card em criação — antes só cobria edição de
+    card existente).
+  - `kanban.html`: bullet "Acesso à tela de Automações" dentro de
+    Automações (achado: só chegava lá via Config, escondido de quem
+    não é PO/Organizador/ADM, mesmo sem trava nenhuma nas ações —
+    `openAutoOv()` extraiu pra overlay próprio, acessível também via
+    ⚡ Funções de card) + campo `tags`/filtro em receitas de fan-out.
+  - `functions/agente-agil-orquestrador/dueOverdueTrigger.js`: entrada
+    estava desatualizada dizendo "só due_overdue" — corrigido, cobre
+    due_today também desde o mesmo dia (2026-08-24), só não foi
+    atualizada na rodada anterior por ter sido commitada num lote
+    diferente.
+  - `functions/agente-agil-orquestrador/mentionTrigger.js`: 2 fixes
+    reais achados validando o item 5 em produção (disparo por
+    Automação não notificava ninguém; `idOverride` colidindo com
+    histórico antigo) — nenhum dos dois tinha entrada, adicionados.
+  `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade
+  (diff rodado de novo, 1287 linhas de diferença).
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. Isso evita reler o arquivo inteiro do zero numa
