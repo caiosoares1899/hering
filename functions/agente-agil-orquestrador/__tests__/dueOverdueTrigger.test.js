@@ -1,11 +1,14 @@
 // functions/agente-agil-orquestrador/__tests__/dueOverdueTrigger.test.js
 //
 // Cobertura de runDueOverdueScan()/ruleMatchesDueOverdue()/ruleMatchesDueToday()
-// — a lógica pura do item 5 (gatilhos ambientais due_overdue + due_today,
-// squad dev). Não testa o wrapper onSchedule em si (exigiria mockar
-// firebase-functions/v2/scheduler, mesmo raciocínio já aplicado a
-// mentionTrigger.js/agenteAgilMencao: a lógica que importa já está toda em
-// runDueOverdueScan()).
+// — a lógica pura do item 5 (gatilhos ambientais due_overdue + due_today).
+// runDueOverdueScan() é squad-agnóstica (recebe squadId), então a maioria
+// dos testes roda contra SQUAD_ID ('dev', só pra ter um valor fixo) — a
+// seção "Squad dados" no fim do arquivo prova que a mesma lógica funciona
+// pra qualquer squad, sem reescrever os outros testes. Não testa o wrapper
+// onSchedule em si (exigiria mockar firebase-functions/v2/scheduler, mesmo
+// raciocínio já aplicado a mentionTrigger.js/agenteAgilMencao: a lógica
+// que importa já está toda em runDueOverdueScan()).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
@@ -13,6 +16,7 @@ const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
 const flowLib = require('../../agente-agil/flow');
 const {
   SQUAD_ID,
+  SQUADS,
   todaySP,
   ruleMatchesDueOverdue,
   ruleMatchesDueToday,
@@ -224,4 +228,39 @@ test('runDueOverdueScan: due_today e due_overdue configurados juntos — cada ca
   const c2 = Object.values((await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/c2`).get()).val());
   assert.match(c1[0].text, /vence hoje/);
   assert.match(c2[0].text, /atrasado \(venceu ontem\)/);
+});
+
+// ── Squad `dados` (2026-08-25) ───────────────────────────────────────────
+
+test('SQUADS cobre dev e dados — a Cloud Function escaneia os dois squads', () => {
+  assert.deepEqual(SQUADS.slice().sort(), ['dados', 'dev']);
+});
+
+test('runDueOverdueScan funciona igual pro squad dados (a lógica não é específica de squad)', async () => {
+  flowLib._resetCacheForTests();
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dados: {
+          dados: {
+            cards: { 1: { id: 'c1', title: 'Atrasado no squad dados', col: 'progress', due: ONTEM } },
+            auto_rules: [{ active: true, trigger: 'due_overdue', actions: [{ action: 'notify_agent' }] }],
+            columns: [
+              { id: 'backlog', name: 'Backlog' },
+              { id: 'progress', name: 'Em andamento' },
+              { id: 'done', name: 'Concluído' },
+            ],
+            config: { flow: { startCols: [], doneCols: ['done'], reportCols: [] } },
+          },
+        },
+      },
+    },
+  });
+
+  const r = await runDueOverdueScan(db, 'dados');
+
+  assert.equal(r.scanned, 1);
+  assert.equal(r.notificados, 1);
+  const comments = Object.values((await db.ref('kanban/squads/dados/dados/card_comments/c1').get()).val());
+  assert.match(comments[0].text, /atrasado \(venceu ontem\)/);
 });

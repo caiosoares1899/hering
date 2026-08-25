@@ -8127,6 +8127,25 @@ nada do comportamento do orquestrador. Squad de teste combinado pro
 resto do desenho: `dev` (simulado — não tem tráfego real de `ecomm`
 lá até decidirmos se/quando levar o orquestrador pra esse squad).
 
+### 2026-08-25 · Scan de due_overdue/due_today expandido pro squad `dados`
+Pedido direto: "pode expandir o scan pro squad dados". Único "próximo
+passo" que sobrou em aberto do fechamento do item 5 (o outro,
+`wip_exceeded`/`aging`, já tinha sido descartado explicitamente pelo
+usuário).
+
+`dueOverdueTrigger.js`: `SQUADS = ['dev', 'dados']` — a Cloud Function
+`agenteAgilDueOverdueScan` (`onSchedule`, 1x/dia) passa a iterar os dois
+squads na mesma invocação, cada um em try/catch próprio (um squad
+falhando não bloqueia o outro). `runDueOverdueScan()` já era
+squad-agnóstica desde o v1 — zero mudança na lógica de scan em si, só
+o array de squads escaneados. Deliberadamente diferente do padrão de
+`mentionTrigger.js` (function separada por squad): não faz sentido
+aqui, porque `onSchedule` não escuta evento nenhum, só dispara 1x/dia
+— rodar os dois squads numa função só é mais simples e mais barato (1
+Scheduler em vez de 2), sem perder isolamento de falha.
+
+2 testes novos. Suíte inteira: **243/243 passando** (contagem re-verificada após rebase em cima do que já entrou no `main` desde a abertura desta PR).
+
 ### 2026-08-25 · "🤖 Resumo do Agente Ágil" dentro de "Meu Dia" (nova Cloud Function `agenteAgilResumoMeuDia`)
 Pedido direto do usuário: "acho que o 'Meu Dia' é uma oportunidade legal
 pro Agente Ágil... ele fazer um grande levantamento e resumo do board

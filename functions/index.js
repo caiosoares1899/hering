@@ -202,10 +202,11 @@ exports.agenteAgilMencaoDados = require('./agente-agil-orquestrador/mentionTrigg
 // "ambientais" das Automações (due_today/due_overdue/wip_exceeded/aging)
 // são 100% client-side — só avaliam se alguém tiver o board aberto. Este
 // scan roda 1x/dia (Cloud Scheduler, sem depender de ninguém abrir a
-// página) e cobre due_today + due_overdue, só squad dev — decisão
-// explícita do usuário de deixar wip_exceeded/aging de fora ("só precisa
-// esse mesmo"). Nome ficou de quando cobria só due_overdue (v1); não
-// renomeado ao adicionar due_today pra não exigir apagar a function
+// página) e cobre due_today + due_overdue nos squads dev e dados (dados
+// adicionado 2026-08-25) — decisão explícita do usuário de deixar
+// wip_exceeded/aging de fora ("só precisa esse mesmo"). Nome ficou de
+// quando cobria só due_overdue (v1) e só squad dev; não renomeado ao
+// adicionar due_today/squad dados pra não exigir apagar a function
 // antiga — ver comentário no topo de dueOverdueTrigger.js pro desenho
 // completo. Reusa a MESMA rota da @menção (escreve o comentário,
 // agenteAgilMencao processa) — zero caminho novo de invocação do agente.

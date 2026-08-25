@@ -20,10 +20,23 @@
 // notar.
 //
 // Escopo (decisão explícita do usuário, não deduzida): due_today +
-// due_overdue, só squad `dev`, scan 1x/dia — mesma cadência que
-// checkDueNotifs() já usa no client. wip_exceeded/aging ficam de fora de
-// propósito — cada um seria uma decisão separada, mesmo padrão incremental
-// do resto deste roadmap.
+// due_overdue, scan 1x/dia — mesma cadência que checkDueNotifs() já usa
+// no client. wip_exceeded/aging ficam de fora de propósito — cada um
+// seria uma decisão separada, mesmo padrão incremental do resto deste
+// roadmap.
+//
+// Squad `dados` adicionado ao scan em 2026-08-25 (mesma decisão pendente
+// desde o fechamento do item 5 — "expandir o scan pro squad dados"),
+// junto com o mesmo escopo já usado pra @menção/Resumo do Agente Ágil
+// (SQUADS_ATIVOS em resumoMeuDia.js). Diferente de mentionTrigger.js
+// (onde cada squad vira uma Cloud Function DEPLOYADA SEPARADAMENTE, com
+// path literal no trigger — ver comentário lá): aqui não existe esse
+// motivo de custo, porque `onSchedule` não escuta eventos de squad
+// nenhum, só dispara 1x/dia — então 1 Cloud Function só, iterando
+// SQUADS em sequência, é mais simples e não paga o preço de 2
+// Schedulers/cold starts separados pra zero benefício real. Cada squad
+// roda em seu próprio try/catch — um squad falhando não bloqueia o
+// outro nem derruba o scan inteiro.
 //
 // Reaproveita a MESMA rota já validada da @menção, não inventa caminho novo:
 // quando a condição bate e existe uma Automação "Notificar Agente Ágil"
@@ -49,7 +62,8 @@ const { getDatabase } = require('firebase-admin/database');
 const { cardsPath, cardCommentsPath } = require('../agente-agil/board');
 const flowLib = require('../agente-agil/flow');
 
-const SQUAD_ID = 'dev';
+const SQUAD_ID = 'dev'; // mantido por compatibilidade (testes existentes/scripts usam como default de 1 squad só)
+const SQUADS = ['dev', 'dados']; // squads escaneados de verdade pela Cloud Function — ver comentário no topo
 
 // Data no calendário de São Paulo, independente do timezone do processo do
 // Cloud Function — mesmo formato (YYYY-MM-DD) que card.due já usa.
@@ -143,17 +157,20 @@ const agenteAgilDueOverdueScan = onSchedule(
   { schedule: 'every day 09:05', timeZone: 'America/Sao_Paulo', region: 'us-central1', timeoutSeconds: 120 },
   async () => {
     const db = getDatabase();
-    try {
-      const { scanned, notificados } = await runDueOverdueScan(db, SQUAD_ID);
-      console.log(`[agente-agil-due-overdue] squad=${SQUAD_ID} cards=${scanned} notificados=${notificados}`);
-    } catch (e) {
-      console.error(`[agente-agil-due-overdue] squad=${SQUAD_ID} falhou:`, e);
+    for (const squadId of SQUADS) {
+      try {
+        const { scanned, notificados } = await runDueOverdueScan(db, squadId);
+        console.log(`[agente-agil-due-overdue] squad=${squadId} cards=${scanned} notificados=${notificados}`);
+      } catch (e) {
+        console.error(`[agente-agil-due-overdue] squad=${squadId} falhou:`, e);
+      }
     }
   }
 );
 
 module.exports = {
   SQUAD_ID,
+  SQUADS,
   todaySP,
   ruleMatchesTrigger,
   ruleMatchesDueOverdue,

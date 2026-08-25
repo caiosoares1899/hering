@@ -2245,6 +2245,9 @@ pro squad `dados` — cada um, decisão separada.
 prod.** Ficam de fora do mecanismo de scan diário; só `due_overdue` e
 `due_today` continuam ativos.
 
+**Expandir o scan pro squad `dados` — FEITO (2026-08-25).** Ver seção
+"Scan de due_overdue/due_today expandido pro squad dados" mais abaixo.
+
 ## Item 5: `due_today` adicionado ao mesmo scan (2026-08-24, mesmo dia)
 
 Pedido direto do usuário, no mesmo dia da validação do item 5 v1: "só
@@ -2566,3 +2569,41 @@ ver.
 `dev`, `ecomm` descontinuado) implementados. O resto do desenho combinado
 (pontos 1-4 acima — extensão de `ler_card` com `origem`, fluxo reativo
 de resumo) ainda não tem código — aguardando a próxima rodada.
+
+## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
+
+Único item que sobrou em aberto do fechamento do item 5 — o outro
+(`wip_exceeded`/`aging`) já tinha sido descartado explicitamente pelo
+usuário (ver acima). Pedido direto: "pode expandir o scan pro squad
+dados".
+
+**`dueOverdueTrigger.js`**: `SQUADS = ['dev', 'dados']` — a Cloud
+Function `agenteAgilDueOverdueScan` (`onSchedule`, 1x/dia) agora itera
+os dois squads na mesma invocação, cada um em seu próprio try/catch (um
+squad falhando não bloqueia o outro nem derruba o scan inteiro).
+`runDueOverdueScan(db, squadId)` já era squad-agnóstica desde o v1 — só
+o array de squads escaneados mudou, zero mudança na lógica de scan em
+si.
+
+**Deliberadamente diferente do padrão de `mentionTrigger.js`** (onde
+cada squad vira uma Cloud Function DEPLOYADA SEPARADAMENTE, com path
+literal no trigger): aquele desenho existe pra evitar o custo de
+escutar TODO evento de escrita de comentário de TODO squad só pra
+descartar a maioria em runtime — motivo que não existe aqui.
+`onSchedule` não escuta evento de squad nenhum, só dispara 1x/dia
+independente de quantos squads existirem; rodar os dois numa função só
+é mais simples, mais barato (1 Cloud Scheduler em vez de 2, 1 cold
+start em vez de 2) e não perde nada em isolamento — o try/catch por
+squad já dá o mesmo isolamento de falha que 2 functions separadas
+dariam.
+
+2 testes novos (`SQUADS` cobre `dev`+`dados`; `runDueOverdueScan`
+funciona igual pro squad `dados`, provando que a lógica não é
+hardcoded pra um squad só). Suíte inteira: **243/243 passando** (re-
+verificada após rebase em cima do que já entrou no `main` desde a
+abertura desta PR).
+
+**Ainda não deployado** — mesmo passo do "Resumo do Agente Ágil" acima:
+depende do usuário rodar `firebase deploy --only
+functions:agenteAgilDueOverdueScan` na própria máquina, depois de
+resincronizar o clone local.
