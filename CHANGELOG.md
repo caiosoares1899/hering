@@ -1901,6 +1901,13 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.470-dev — 2026-08-25 — Ajuste visual: corner do contorno arredondado igual o resto do card
+Feedback direto: "não dá pra arredondar pra continuar com o formato
+atual?" — o `border-top`+`border-left` novos ficavam com o canto reto,
+destoando do `border-radius` (`--r2`) já usado em `.col` (o card da
+coluna inteira). Adicionado `border-top-left-radius:var(--r2)` no
+`.col-hd` — mesmo raio, canto acompanha o resto do componente.
+
 ### v8.30.469-dev — 2026-08-25 — Ajuste visual: contorno do cabeçalho das colunas ganha borda de cima também
 Feedback direto depois de ver o resultado da v8.30.468-dev ("assim
 ficou feio kkkk continua o contorno na parte de cima"): o mini contorno
