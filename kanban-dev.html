@@ -579,7 +579,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* column */
 .col{display:flex;flex-direction:column;max-height:100%;width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);cursor:default;}
+.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);cursor:default;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
@@ -5485,7 +5485,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.467-dev</div>
+<div class="version">v8.30.468-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5850,6 +5850,18 @@ function toggleDados(){
 }
 function _fmtBRL(v){ return v==null? '—' : 'R$ '+Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0}); }
 function _fmtDateBR2(dateStr){ const p=(dateStr||'').split('-'); return p.length===3? (p[2]+'/'+p[1]) : (dateStr||''); }
+// card.createdAt vem como 'AAAA-MM-DD' (ver `td` em saveCard()/fbCreateCard()) — exibido
+// cru no "Criado por" do modal (achado real 2026-08-25: mostrava AAAA-MM-DD em vez de
+// DD/MM/AAAA). +'T12:00:00' evita virar o dia ao converter fuso (meio-dia nunca cruza
+// meia-noite UTC pra nenhum fuso real); se já vier com hora (formato inesperado) ou não
+// parsear, devolve o valor original em vez de "Invalid Date".
+function _fmtDataCriacao(d){
+  if(!d || d==='—') return '—';
+  try{
+    const parsed=new Date(d.includes('T')?d:d+'T12:00:00');
+    return isNaN(parsed.getTime()) ? d : parsed.toLocaleDateString('pt-BR');
+  }catch(e){ return d; }
+}
 function _pctBadgeDados(cap,meta){
   if(cap==null||!meta) return '';
   const pct = Math.round(cap/meta*100);
@@ -9593,7 +9605,7 @@ function renderNormal(board,activeCards){
     addTouchColDnD(div, col.id);
 
     const canCollapse=col.collapsible!==false;
-    div.innerHTML=`<div class="col-hd">
+    div.innerHTML=`<div class="col-hd" style="--col-accent:${col.color||'#38b6ff'};">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
         ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn('${col.id}')" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
@@ -9666,7 +9678,7 @@ function renderRaiaOwner(board,activeCards){
       const rColId='raia-'+safeId+'-'+col.id;
       const rCollapsed=collapsedCols.has(rColId);
       div.className='col'+(rCollapsed?' collapsed':'');
-      div.innerHTML=`<div class="col-hd">
+      div.innerHTML=`<div class="col-hd" style="--col-accent:${col.color||'#38b6ff'};">
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
@@ -9713,7 +9725,7 @@ function renderRaiaTag(board,activeCards){
       const div=document.createElement('div');
       div.className='col'+(tCollapsed?' collapsed':'');
       div.style.minWidth='160px';
-      div.innerHTML=`<div class="col-hd">
+      div.innerHTML=`<div class="col-hd" style="--col-accent:${col.color||'#38b6ff'};">
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
@@ -9765,7 +9777,7 @@ function renderRaiaSubteam(board,activeCards){
       const div=document.createElement('div');
       div.className='col'+(sCollapsed?' collapsed':'');
       div.style.minWidth='160px';
-      div.innerHTML=`<div class="col-hd">
+      div.innerHTML=`<div class="col-hd" style="--col-accent:${col.color||'#38b6ff'};">
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
@@ -11043,7 +11055,7 @@ function openCard(id){
   eocInitDisplay('desc-eoc', c.desc||'', 'Adicionar descrição...');
   _editingDescIdx=new Set(); editingDescs = getExtraDescs(c).map(d=>({...d})); renderExtraDescs();
   document.getElementById('m-po').value=c.po||'';
-  document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+(c.createdAt||'—');
+  document.getElementById('m-meta-c').textContent='Criado por '+(c.created||'—')+' · '+_fmtDataCriacao(c.createdAt);
   document.getElementById('m-sp').value=c.sp||'';
   document.getElementById('m-priority').value=c.priority||'';
   document.getElementById('m-exectype').value=c.executorType||'human';
@@ -11051,7 +11063,7 @@ function openCard(id){
   updateAgentStatusVisibility();
   renderSubPrioRow();
   renderParticipants(c.participants||[]);
-  document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+(c.editedAt||'—');
+  document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+_fmtDataCriacao(c.editedAt);
   renderHistory(c); // 📜 popula o histórico do card
   document.getElementById('btn-del-card').style.visibility='visible';
   const blockerRow=document.getElementById('m-blocker-row');

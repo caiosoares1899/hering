@@ -1901,6 +1901,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.468-dev — 2026-08-25 — Fix: data de criação/edição em formato errado + contorno colorido no cabeçalho das colunas
+2 pedidos diretos do usuário.
+
+**Fix: "Criado por"/"Editado por" no modal do card mostravam a data em
+AAAA-MM-DD** (formato bruto de `card.createdAt`/`card.editedAt`, ver
+`td` em `saveCard()`/`fbCreateCard()`) em vez de DD/MM/AAAA. Novo
+helper `_fmtDataCriacao()` — usa `+'T12:00:00'` antes de converter pra
+nunca virar o dia por fuso horário, e devolve o valor original se não
+conseguir parsear (nunca mostra "Invalid Date").
+
+**Mini contorno colorido no cabeçalho das colunas**, com a cor da
+própria coluna — mesmo padrão de acento já usado em outros lugares do
+board (`border-left:3px solid ${color}`, ex.: minicards de vínculo/
+supercard). Implementado via custom property CSS (`--col-accent`,
+setado inline por coluna) pra não repetir a lógica de borda nos 4
+render paths (normal, raia por owner, raia por tag, raia por subtime).
+
 ### v8.30.467-dev — 2026-08-25 — Fix: prioridade perdida ao fechar card novo sem salvar (achado via /monitorarbugs)
 Varredura de bugs pedida direto pelo usuário (skill `/monitorarbugs`),
 área "card novo sem salvar" (`_newCardHasContent()`, mudança mais
@@ -7766,6 +7783,31 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v2.99 · painel-dev — 2026-08-25 · Fix: presença online não aparecia pra squads criados via painel
+Achado real, pedido direto: "o online lá no painel não está aparecendo
+os usuários onlines das squads meta". `loadPresence()` rodava 1x, de
+forma síncrona, no boot da página (`SQUADS.forEach(...)` montando um
+listener de presença por squad) — mas `loadExtraSquads()` (que carrega
+squads registrados em `kanban/squads_meta` e os empurra pra `SQUADS`)
+é assíncrono, via `onValue`. Na prática `loadPresence()` sempre rodava
+ANTES do primeiro snapshot de `squads_meta` chegar: só os 3 squads
+base (`dados`/`prf`/`midiacriativa`) ganhavam listener de presença —
+qualquer squad extra criado via painel nunca ganhava nenhum, mesmo
+depois de `SQUADS` já estar completo.
+
+Corrigido tornando `loadPresence()` idempotente por squad
+(`_presenceListenedSquads`, um `Set`) e chamando de novo dentro do
+handler de `loadExtraSquads()` toda vez que `squads_meta` muda — sem
+duplicar listener nos squads já cobertos.
+
+**Nota**: `painel-dev.html` tem um early `return` deliberado em
+`loadExtraSquads()` (não carrega `squads_meta` de produção, fica só
+com os 3 squads base — ver comentário no código) — a parte do fix que
+chama `loadPresence()` de dentro desse listener fica, por design,
+inalcançável em dev. Validação de ponta a ponta (squad extra
+aparecendo online) só é possível depois de promover pra `painel.html`
+de verdade.
 
 ### painel.html — 2026-08-11 · rascunho de comunicado (sem bump de versão)
 Adicionada 1 entrada em `COMUNICADO_RASCUNHOS_SEED`
