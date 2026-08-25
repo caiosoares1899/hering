@@ -233,11 +233,12 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 - `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
 - `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
-- `agenteAgilDueOverdueScan` — L216 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
-  scan diário (`onSchedule`), item 5 do roadmap — squad `dev`, cobre
-  `due_overdue` **e** `due_today` (nome ficou de v1, só due_overdue —
-  ver seção abaixo)
-- `agenteAgilResumoMeuDia` — L227 → `agente-agil-orquestrador/resumoMeuDia.js`,
+- `agenteAgilDueOverdueScan` — L217 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
+  scan diário (`onSchedule`), item 5 do roadmap — squads `dev` **e**
+  `dados` (dados adicionado 2026-08-25), cobre `due_overdue` **e**
+  `due_today` (nome ficou de v1, só due_overdue/squad dev — ver seção
+  abaixo)
+- `agenteAgilResumoMeuDia` — L228 → `agente-agil-orquestrador/resumoMeuDia.js`,
   `onRequest` (não gatilho por evento) — "🤖 Resumo do Agente Ágil"
   dentro de "Meu Dia", 2026-08-25, ver seção abaixo
 
@@ -270,14 +271,19 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   `kanban/config/agente_agil_orquestrador/model_tier_override`
   (fail-safe: erro/ausente cai pra heurística). `MODEL_BY_TIER` — L27
 - `dueOverdueTrigger.js` — item 5 do roadmap, v1 (2026-08-24):
-  `onSchedule` diário, squad `dev` só, cobre `due_overdue` **e**
-  `due_today` (due_today adicionado no mesmo dia, ao mesmo scan —
-  nome da function ficou de quando era só due_overdue, não renomeado
-  pra não exigir apagar/recriar). `runDueOverdueScan()` — L94 — reusa
-  a mesma rota da @menção (escreve comentário, `agenteAgilMencao`
-  processa), só age se o ADM já tiver configurado a Automação
-  correspondente pro gatilho ("Card vence hoje"/"Card atrasado (1º
-  dia)")
+  `onSchedule` diário, cobre `due_overdue` **e** `due_today` (due_today
+  adicionado no mesmo dia, ao mesmo scan — nome da function ficou de
+  quando era só due_overdue, não renomeado pra não exigir apagar/
+  recriar). `SQUADS` — array de squads escaneados (`['dev','dados']`,
+  `dados` adicionado 2026-08-25) — 1 Cloud Function só, itera os squads
+  em sequência (cada um em try/catch próprio); diferente de
+  `mentionTrigger.js`, aqui NÃO faz sentido 1 function por squad (só se
+  justifica pra escutar evento com path literal — `onSchedule` não
+  escuta squad nenhum, só dispara 1x/dia). `runDueOverdueScan(db,
+  squadId)` — L108 — squad-agnóstica, reusa a mesma rota da @menção
+  (escreve comentário, `agenteAgilMencao` processa), só age se o ADM já
+  tiver configurado a Automação correspondente pro gatilho ("Card vence
+  hoje"/"Card atrasado (1º dia)") NAQUELE squad
 - `systemPrompt.js`, `loop.js`, `limits.js`, `detectaMencao.js`
 - `resumoMeuDia.js` — "🤖 Resumo do Agente Ágil" (2026-08-25), primeira
   invocação SOB DEMANDA do orquestrador (`onRequest`, não gatilho por
