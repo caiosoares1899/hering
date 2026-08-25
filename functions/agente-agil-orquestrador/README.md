@@ -2388,3 +2388,91 @@ console): a notificação antiga continuou lá, E uma nova foi criada
 comentou no seu card (Automação)") — exatamente o comportamento
 esperado. **Os dois achados de notificação do item 5 estão fechados de
 vez.**
+
+## "🤖 Resumo do Agente Ágil" dentro de "Meu Dia" (2026-08-25)
+
+Pedido direto do usuário: "acho que o 'Meu Dia' é uma oportunidade legal
+pro Agente Ágil... ele fazer um grande levantamento e resumo do board
+pra o usuário! cards incompletos, faltando coisa, atrasado, bloqueado".
+
+**Desenho combinado antes do código** (mesmo processo de todo o resto
+deste roadmap — 2 decisões tomadas explicitamente com o usuário):
+
+1. **Sob demanda e pessoal**, dentro de "Meu Dia" ("Meu Dia" existente,
+   `kanban-dev.html`) — não um digest automático do board inteiro por
+   squad. Modelo mais barato possível (zero custo se ninguém clicar) e
+   evita a categoria de risco que um gatilho automático amplo exigiria
+   gerenciar (auto-disparo, escopo, etc. — tudo que os itens 1-5 acima
+   já tiveram que resolver com tanto cuidado).
+2. **Escopo de squad**: só `dev`/`dados` (mesmo escopo de
+   `AGENTE_AGIL_MENTION_SQUADS` no client) — cards de outros squads da
+   pessoa continuam aparecendo normal na lista determinística de "Meu
+   Dia", só ficam de fora do resumo do agente. Um 3º "próximo passo"
+   que apareceu nesta mesma conversa (portar `wip_exceeded`/`aging` pro
+   scan diário) foi descartado explicitamente pelo usuário — ver seção
+   "Item 5" acima.
+
+**Diferente de TUDO que veio antes deste ponto**: não escreve nada no
+board. Nenhum comentário, nenhuma mudança de coluna, nenhuma edição de
+campo. Isso não é uma limitação de v1 — é uma escolha de desenho
+deliberada, porque simplifica a categoria de risco inteira que todo o
+resto deste documento gerenciou com tanto cuidado (auto-disparo, kill
+switch como única rede de segurança pra escrita sem supervisão, etc.):
+sem escrita, não tem o que dar errado no board, mesmo que o LLM
+"alucine" alguma coisa no texto — o pior caso é um resumo ruim, não um
+card corrompido. `tools: []` no `llmClient.decide()` garante isso em
+código, não só em prompt: não existe NENHUMA ferramenta de ação
+disponível pro modelo nesta chamada.
+
+**Como funciona** (`resumoMeuDia.js`):
+- `collectPendingCards(db, uid)`: lê `kanban/usuarios_publicos/{uid}`
+  pra saber squads + `init` da pessoa, filtra pra `SQUADS_ATIVOS`
+  (`dev`, `dados`) onde ela é membro de fato, e pra cada squad lê
+  `/cards` + `flowLib.readFlowMeta()` (mesmo helper que `visao_board`
+  já usa) pra filtrar só cards ATIVOS (não arquivados, não numa coluna
+  de fim) onde a pessoa é `owner` OU está em `participants`.
+- `sinaisDoCard()`: calcula, em código determinístico (não pelo LLM),
+  os sinais de cada card — atrasado + dias de atraso, vence hoje, sem
+  prazo, bloqueado (`card.blocker===true` ou coluna `blocker`), sem
+  descrição, checklist vazio, quantos itens do checklist ainda faltam.
+  Mesmo espírito de `visao_board` (métricas fixas, LLM só interpreta
+  dado já pronto, nunca decide "isso conta como atrasado?" sozinho).
+- `gerarResumoMeuDia()`: se não tem card pendente nenhum, devolve uma
+  mensagem fixa SEM chamar o LLM (custo zero pro caso comum de "tudo em
+  dia"). Com cards, monta o histórico (`system` + 1 mensagem `user` com
+  a lista de sinais em JSON compacto) e chama `llmClient.decide()` com
+  `tools: []` — tier sempre `sonnet` (via `escolheClienteParaTarefa`
+  com `taskText: ''`, que cai direto no default seguro; o override
+  manual de tier continua valendo se o ADM configurar).
+
+**Cloud Function (`agenteAgilResumoMeuDia`)**: primeira invocação SOB
+DEMANDA do orquestrador — todo o resto até aqui é `onValueCreated`
+(evento de escrita) ou `onSchedule` (agendado). Usa `onRequest`, não
+`onCall`/`httpsCallable` — mesmo motivo de `spotify/disconnect.js`:
+nenhuma página do app importa o SDK de Functions hoje, então verifica
+`Authorization: Bearer <idToken>` manualmente (`getAuth().verifyIdToken()`)
+e confere o domínio `@ciahering.com.br`, mesma disciplina de segurança
+do resto do projeto. Respeita o MESMO kill switch dinâmico
+(`limits.isEnabled`) que protege @menção e o scan diário — desligar o
+orquestrador desliga isto também. Rate limit de 2 minutos por pessoa
+(gravado ANTES de chamar o LLM, pra barrar uma 2ª requisição que chegue
+enquanto a 1ª ainda está em voo) — não é proteção de segurança, é só
+pra clique duplo/repetido não gerar custo à toa.
+
+**Client** (`kanban-dev.html` v8.30.465-dev): botão "🤖 Resumo do Agente
+Ágil" dentro do painel "🌅 Meu Dia", chama a function com o idToken da
+pessoa (`cu.getIdToken()`, mesmo padrão já usado pelas functions do
+Spotify) e mostra o texto retornado numa caixinha. Reseta a cada
+abertura do painel — não mostra resumo de uma sessão anterior.
+
+10 testes novos em `__tests__/resumoMeuDia.test.js` (sinais calculados
+certo; junta cards de dev+dados; ignora squad fora do escopo mesmo
+sendo membro; só squads onde a pessoa é membro de fato; owner OU
+participante; exclui arquivado/concluído; sem init ou sem squad
+relevante não quebra; sem cards pendentes não chama o LLM; chama com
+`tools: []`; resposta vazia do LLM cai num fallback). Suíte inteira:
+**234/234 passando**.
+
+**Ainda não deployado** — depende do usuário rodar
+`firebase deploy --only functions:agenteAgilResumoMeuDia` na própria
+máquina (ver nota de resync no `CLAUDE.md`).

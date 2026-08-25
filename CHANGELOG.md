@@ -1883,6 +1883,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.465-dev — 2026-08-25 — "🤖 Resumo do Agente Ágil" dentro de "Meu Dia"
+Botão novo no painel "🌅 Meu Dia" — chama a nova Cloud Function
+`agenteAgilResumoMeuDia` (ver entrada completa em "Agente Ágil
+Orquestrador" no CHANGELOG) e mostra o resumo priorizado retornado
+numa caixinha logo abaixo do botão. Reseta a cada abertura do painel.
+
+Requer a Cloud Function `agenteAgilResumoMeuDia` deployada — sem ela
+(ou com o kill switch do orquestrador desligado), o botão mostra um
+aviso amigável em vez de quebrar.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.464-dev — 2026-08-24 — Sincroniza Central de Ajuda (Automações liberado, filtro em Aplicar receita)
 Puramente documentação, sem mudança de comportamento — sincroniza a
 Central de Ajuda (❓/Ctrl+K) com o lote v8.30.462-dev (`⚡ Automações`
@@ -8026,6 +8039,46 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-08-25 · "🤖 Resumo do Agente Ágil" dentro de "Meu Dia" (nova Cloud Function `agenteAgilResumoMeuDia`)
+Pedido direto do usuário: "acho que o 'Meu Dia' é uma oportunidade legal
+pro Agente Ágil... ele fazer um grande levantamento e resumo do board
+pro usuário! cards incompletos, faltando coisa, atrasado, bloqueado".
+Design combinado antes do código (mesmo processo do resto do roadmap):
+sob demanda (só quando a pessoa clica "🤖 Resumo do Agente Ágil" dentro
+de Meu Dia), pessoal, só squads `dev`/`dados` (mesmo escopo de
+`AGENTE_AGIL_MENTION_SQUADS`).
+
+**Diferente de tudo que veio antes**: não escreve NADA no board — não
+posta comentário em nenhum card (não teria um natural, é cross-card),
+não move coluna, não edita campo nenhum. Só lê os cards ATIVOS da
+pessoa (responsável ou participante, não arquivados, não concluídos)
+nos squads relevantes, calcula sinais objetivos em código
+(atrasado/dias de atraso, vence hoje, sem prazo, bloqueado, sem
+descrição, checklist vazio/pendente) e manda pro LLM (tier sonnet, sem
+nenhuma ferramenta disponível — `tools: []`) só pra interpretar e
+priorizar, nunca decidir os sinais sozinho. Sem cards pendentes, nem
+chama o LLM — devolve uma mensagem fixa, custo zero.
+
+**Nova Cloud Function `agenteAgilResumoMeuDia`** (`onRequest`, não
+`onValueCreated`/`onSchedule` como o resto — é a primeira invocação
+sob demanda do orquestrador): verifica `Bearer <idToken>` manualmente
+(mesmo padrão de `spotify/disconnect.js`, já que nenhuma página importa
+o SDK de Functions), checa domínio `@ciahering.com.br`, respeita o
+mesmo kill switch dinâmico do resto do orquestrador, e aplica um rate
+limit de 2 minutos por pessoa (só pra evitar clique duplo gerando custo
+à toa — grava o timestamp ANTES de chamar o LLM). `functions/agente-agil-orquestrador/resumoMeuDia.js`.
+
+Client (`kanban-dev.html`): botão novo dentro do painel "🌅 Meu Dia",
+mostra o texto retornado numa caixinha (reseta a cada abertura do
+painel, não mostra resumo de sessão anterior).
+
+10 testes novos (sinais calculados certo; junta cards de dev+dados;
+ignora squad fora do escopo mesmo sendo membro; só squads onde a
+pessoa é membro de fato; owner OU participante; exclui arquivado/
+concluído; sem init ou sem squad relevante não quebra; sem cards
+pendentes não chama o LLM; chama com `tools: []`; resposta vazia do
+LLM cai num fallback). Suíte inteira: **234/234 passando**.
 
 ### 2026-08-24 · Squad `dados` — escrita real ativada + Item 5 v1 (gatilho automático `due_overdue`)
 **Escrita real no squad `dados`**: modo sombra validado em produção
