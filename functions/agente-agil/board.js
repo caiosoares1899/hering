@@ -34,13 +34,20 @@ const membersLib = require('./members');
 const flowLib = require('./flow');
 const notifications = require('./notifications');
 
-// v0: escrita travada só neste squad por padrão. Fase 2 (agente-agil-
-// orquestrador/) precisa rodar contra outros squads (ex.: 'dev', pra dryRun)
-// sem arriscar produção — por isso todo path abaixo virou função de
-// `squadId`, mas o valor default segue sendo este, e nada em http.js precisa
-// mudar (ele nunca passa squadId, então continua batendo em 'ecomm' exatamente
-// como antes). Autenticação/autorização por squad de verdade fica pro v4.
-const SQUAD_ID = 'ecomm';
+// v0: escrita travada só neste squad por padrão — todo path abaixo é função
+// de `squadId`, mas nada chama passando squadId explícito hoje (nem http.js,
+// nem os testes reais), então esse valor default é, na prática, O squad.
+//
+// Trocado de 'ecomm' pra 'dev' em 2026-08-25: 'ecomm' nunca teve overlap
+// real com o orquestrador (que só existe em 'dev'/'dados', ver
+// agente-agil-orquestrador/), e o squad em si foi descontinuado (apagado do
+// Realtime Database) — manter o default apontando pra lá faria toda chamada
+// de especialista externo (http.js, hoje só Databricks) escrever num squad
+// que não existe mais. 'dev' unifica onde o especialista escreve com onde o
+// orquestrador roda — pré-requisito pro orquestrador algum dia reagir a
+// input de especialista (ver README do orquestrador). Autenticação/
+// autorização por squad de verdade fica pro v4.
+const SQUAD_ID = 'dev';
 const cardsPath = (squadId) => `kanban/squads/${squadId}/dados/cards`;
 const cardsIndexPath = (squadId) => `kanban/squads/${squadId}/dados/cards_index`;
 // cards_updated_at/{cardId}->timestamp: índice paralelo que o CLIENTE

@@ -16,8 +16,8 @@ const notifications = require('../notifications');
 
 const MEMBERS_SEED = {
   'kanban/usuarios_publicos': {
-    uidAna: { nome: 'Ana Silva', email: 'ana.silva@ciahering.com.br', init: 'ANA', squads: { ecomm: true } },
-    uidBruno: { nome: 'Bruno Tanaka', email: 'bruno.tanaka@ciahering.com.br', init: 'BRU', squads: { ecomm: true } },
+    uidAna: { nome: 'Ana Silva', email: 'ana.silva@ciahering.com.br', init: 'ANA', squads: { dev: true } },
+    uidBruno: { nome: 'Bruno Tanaka', email: 'bruno.tanaka@ciahering.com.br', init: 'BRU', squads: { dev: true } },
     uidFora: { nome: 'Carla Fora', email: 'carla.fora@ciahering.com.br', init: 'CAR', squads: { outro: true } },
   },
 };
@@ -44,7 +44,7 @@ function seedDb(cardKey, card) {
     ...MEMBERS_SEED,
     kanban: {
       squads: {
-        ecomm: {
+        dev: {
           dados: {
             cards: { [cardKey]: card },
             tags: TAGS_SEED,
@@ -64,7 +64,7 @@ test('checklist_item cria grupo e item quando não existem, no grupo padrão do 
   const plan = await buildWritePlan('5', [{ type: 'checklist_item', item: 'Gerar relatório', done: true }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
 
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.deepEqual(card.checklistGroups, [{ id: 'agente-agil', title: '🤖 Processo automatizado' }]);
   assert.equal(card.checklist.length, 1);
   assert.equal(card.checklist[0].t, 'Gerar relatório');
@@ -84,7 +84,7 @@ test('checklist_item marca item já existente (mesmo grupo) sem duplicar', async
   const plan = await buildWritePlan('5', [{ type: 'checklist_item', item: 'Revisar PR', done: true, grupo: 'Checklist' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
 
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.checklist.length, 1, 'não deveria criar um item novo, só marcar o existente');
   assert.equal(card.checklist[0].done, true);
   assert.equal(card.checklistGroups.length, 1, 'grupo já existia — não deveria duplicar');
@@ -106,7 +106,7 @@ test('checklist_item acha o item certo mesmo com DOIS grupos de mesmo título (b
   const plan = await buildWritePlan('5', [{ type: 'checklist_item', item: 'Revisar cadastro', done: true, grupo: 'Checklist' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
 
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.checklist.length, 1, 'não deveria duplicar o item só porque existem dois grupos "Checklist"');
   assert.equal(card.checklist[0].done, true);
   assert.equal(card.checklist[0].grp, 'g1a2b3c', 'o item marcado deveria continuar no grupo onde já estava, não se mudar pro primeiro "Checklist" encontrado');
@@ -121,7 +121,7 @@ test('checklist_item não escreve histórico quando o estado já era o mesmo (id
   });
   const plan = await buildWritePlan('5', [{ type: 'checklist_item', item: 'Revisar PR', done: true, grupo: 'Checklist' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.history, undefined, 'nada mudou de fato — não deveria criar entrada de histórico');
 });
 
@@ -159,7 +159,7 @@ test('agent_status promove executorType human -> agent quando não vem override'
   const plan = await buildWritePlan('5', [{ type: 'agent_status', status: 'running' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
 
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.agentStatus, 'running');
   assert.equal(card.executorType, 'agent');
   assert.equal(card.history.length, 1);
@@ -170,7 +170,7 @@ test('agent_status não mexe em executorType já agent/hybrid', async () => {
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', executorType: 'hybrid' });
   const plan = await buildWritePlan('5', [{ type: 'agent_status', status: 'running' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.executorType, 'hybrid');
   assert.equal(card.history, undefined, 'sem promoção nem erro — não deveria logar nada pra status comuns');
 });
@@ -179,7 +179,7 @@ test('agent_status registra histórico quando status é error', async () => {
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', executorType: 'agent' });
   const plan = await buildWritePlan('5', [{ type: 'agent_status', status: 'error' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.agentStatus, 'error');
   assert.equal(card.history.length, 1);
   assert.match(card.history[0].what, /falhou/);
@@ -189,7 +189,7 @@ test('agent_status respeita executorType explícito, mesmo que "regrida"', async
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', executorType: 'agent' });
   const plan = await buildWritePlan('5', [{ type: 'agent_status', status: 'awaiting_validation', executorType: 'human' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.executorType, 'human');
   assert.match(card.history[0].what, /agente → humano/);
 });
@@ -215,7 +215,7 @@ test('mover_coluna registra flow + histórico e notifica owner com tipo "moved" 
   const plan = await buildWritePlan('5', [{ type: 'mover_coluna', coluna: 'progress' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
 
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.col, 'progress');
   assert.equal(card.history.length, 1);
   assert.match(card.history[0].what, /moveu para Em andamento/);
@@ -235,7 +235,7 @@ test('mover_coluna pra coluna done notifica owner+participants e marca flow.done
   const plan = await buildWritePlan('5', [{ type: 'mover_coluna', coluna: 'done' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
 
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.col, 'done');
   assert.ok(card.flow.doneAt);
   const notifsAna = Object.values(db._data().kanban.usuarios.uidAna.notificacoes || {});
@@ -249,7 +249,7 @@ test('mover_coluna pra mesma coluna atual não faz nada (sem histórico, sem not
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', owner: 'ANA' });
   const plan = await buildWritePlan('5', [{ type: 'mover_coluna', coluna: 'progress' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.history, undefined);
   assert.equal(card.flow, undefined);
 });
@@ -268,7 +268,7 @@ test('editar_campos atualiza desc/priority e registra histórico dos dois', asyn
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', desc: 'antiga', priority: 'low' });
   const plan = await buildWritePlan('5', [{ type: 'editar_campos', desc: 'nova descrição', priority: 'critical' }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.equal(card.desc, 'nova descrição');
   assert.equal(card.priority, 'critical');
   assert.equal(card.history.length, 2);
@@ -278,7 +278,7 @@ test('editar_campos resolve tag por label pro id correto', async () => {
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: [] });
   const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['Piloto'] }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.deepEqual(card.tags, ['tag_3']);
   assert.equal(card.history.length, 1);
   assert.match(card.history[0].what, /adicionou tag\(s\): Piloto/);
@@ -288,7 +288,7 @@ test('editar_campos resolve tag por label case-insensitive', async () => {
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: [] });
   const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['piloto'] }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.deepEqual(card.tags, ['tag_3']);
 });
 
@@ -298,7 +298,7 @@ test('editar_campos rejeita label de tag inexistente no squad, sem gravar nada',
     () => buildWritePlan('5', [{ type: 'editar_campos', tags: ['Piloto', 'NãoExiste'] }], { cardId: 'c5', db }),
     (err) => err.code === 'invalid_output'
   );
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.deepEqual(card.tags, ['tag_1']);
   assert.equal(card.history, undefined);
 });
@@ -307,7 +307,7 @@ test('editar_campos adiciona tags sem remover as existentes (add-only)', async (
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: ['tag_1'] });
   const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['Urgente', 'Financeiro'] }], { cardId: 'c5', db });
   await applyWritePlan(db, plan);
-  const card = db._data().kanban.squads.ecomm.dados.cards['5'];
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
   assert.deepEqual(card.tags, ['tag_1', 'tag_2']);
   assert.equal(card.history.length, 1);
   assert.match(card.history[0].what, /adicionou tag\(s\): Financeiro/);
@@ -383,7 +383,7 @@ test('extractMentionedMembers resolve por handle (email) e por init, ignora toke
 // como http.js faz em todo request real (ver board.js).
 
 function cardUpdatedAtOf(db, cardKey) {
-  return db._data().kanban.squads.ecomm.dados.cards[cardKey].updatedAt;
+  return db._data().kanban.squads.dev.dados.cards[cardKey].updatedAt;
 }
 function remoteUpdatedAtOf(db, cardId) {
   // Navega CARDS_UPDATED_AT_PATH em vez de repetir o path na unha, pra este
