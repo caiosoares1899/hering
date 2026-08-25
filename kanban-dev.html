@@ -4829,6 +4829,10 @@ input[type="date"]{-moz-appearance:textfield;}
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-links" checked> Anexos/Links</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-comments" checked> Comentários</label>
     </div>
+    <div id="dup-super-children-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--glass-b);">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-super-children"> 🧩 Duplicar os <span id="dup-super-children-count">0</span> card(s) filho(s) também</label>
+      <div style="font-size:10px;color:var(--txt3);margin-left:24px;line-height:1.4;">Cada filho vira uma cópia independente, com os mesmos campos marcados acima. Se algum filho também tiver filhos (versão), esses entram junto.</div>
+    </div>
     <button class="btn btn-teal" onclick="confirmarDuplicar()" style="margin-top:16px;width:100%;">⧉ Duplicar</button>
   </div>
 </div>
@@ -5485,7 +5489,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.470-dev</div>
+<div class="version">v8.30.471-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11780,6 +11784,39 @@ function _duplicarCardObj(card, opts){
   cards.push(novo);
   return novo;
 }
+// Duplica um card e, se opts.superChildren estiver marcado, duplica também
+// os filhos ATIVOS junto — recursivo, cobrindo netos (supercard vai até 2
+// níveis: campanha → criativo → versão, ver initSuperChildren()). Cada
+// filho vira uma cópia independente, persistida com fbCreateCard() própria
+// (mesmo padrão fire-and-forget de _applyFanoutTemplate() — cada chamada
+// aloca posição via transaction() isolada, seguro pra criar várias de uma
+// vez) e religada por childCardIds NOVOS — nunca reaproveita os ids
+// originais, mesma garantia que _duplicarCardObj já dá pro card raiz (ver
+// comentário lá: dois cards nunca reivindicam os mesmos filhos).
+// `isChild` (segundo nível em diante) ignora opts.col — só o card raiz deve
+// ir pra coluna escolhida no modal; filhos mantêm a coluna original de cada
+// um, senão a estrutura toda "colapsaria" pra uma coluna só. `visited`
+// protege contra ciclo nos dados (childCardIds não tem validação que
+// impeça isso na escrita) — não deveria acontecer dado o teto de 2 níveis,
+// mas evita loop infinito em vez de confiar cegamente na integridade dos
+// dados existentes.
+function _duplicarComFilhos(card, opts, visited, isChild){
+  visited = visited || new Set();
+  if(visited.has(card.id)) return null;
+  visited.add(card.id);
+  const novo = _duplicarCardObj(card, isChild ? {...opts, col:undefined} : opts);
+  if(opts.superChildren && (card.childCardIds||[]).length){
+    const filhosAtivos = card.childCardIds
+      .map(id=>cards.find(c=>c.id===id))
+      .filter(c=>c && !c.archived);
+    novo.childCardIds = filhosAtivos
+      .map(filho=>_duplicarComFilhos(filho, opts, visited, true))
+      .filter(Boolean)
+      .map(n=>n.id);
+  }
+  fbCreateCard(novo).catch(err=>console.error('[duplicar] falha ao salvar card:', err));
+  return novo;
+}
 // ── Modal de duplicar: deixa escolher quais campos entram na cópia ──────
 let _dupCardId = null;
 const _DUP_CAMPOS = ['desc','checklist','tags','owner','participants','due','priority','riscos','links','comments'];
@@ -11790,6 +11827,20 @@ function abrirDuplicarModal(cardId){
   _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); if(el) el.checked=true; });
   const colSel=document.getElementById('dup-col');
   if(colSel){ colSel.innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); colSel.value=card.col; }
+  // Opção só aparece pra supercard (tem pelo menos 1 filho ativo) — pedido
+  // direto: "quando ele for um supercard, habilita a opção de poder
+  // duplicar filhos tb". Desmarcada por padrão (opt-in): duplicar filhos
+  // multiplica cards, diferente das outras opções aqui que só decidem QUAIS
+  // campos entram na MESMA cópia.
+  const scWrap=document.getElementById('dup-super-children-wrap');
+  const scChk=document.getElementById('dup-super-children');
+  const isSuper=_cardIsSupercard(card);
+  if(scWrap) scWrap.style.display=isSuper?'':'none';
+  if(scChk) scChk.checked=false;
+  if(isSuper){
+    const nFilhos=(card.childCardIds||[]).filter(id=>{ const c=cards.find(x=>x.id===id); return c && !c.archived; }).length;
+    const cntEl=document.getElementById('dup-super-children-count'); if(cntEl) cntEl.textContent=nFilhos;
+  }
   document.getElementById('dup-ov').classList.add('open');
 }
 function fecharDuplicarModal(){
@@ -11802,15 +11853,21 @@ function confirmarDuplicar(){
   _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); opts[f]=el?el.checked:true; });
   const colSel=document.getElementById('dup-col');
   if(colSel && colSel.value) opts.col = colSel.value;
-  const novo=_duplicarCardObj(card, opts);
-  fbCreateCard(novo); renderBoard();
+  const scChk=document.getElementById('dup-super-children');
+  opts.superChildren = !!(scChk && scChk.checked);
+  const novo=_duplicarComFilhos(card, opts);
+  renderBoard();
   fecharDuplicarModal();
   // Sempre abre o modal da cópia pra edição imediata — antes só fechava o
   // modal do card original (se estava aberto) e deixava a pessoa no board;
   // agora abre direto a cópia, veio ela de dentro do card ou do menu de
   // contexto do board (onde nenhum modal estava aberto antes).
   openCard(novo.id);
-  showToast('⧉ Card duplicado — editando a cópia.');
+  // Conta a árvore inteira (filhos + netos), não só os filhos diretos —
+  // reflete de verdade quantos cards novos a operação criou.
+  const _contarDup=n=>{ let t=0; (n.childCardIds||[]).forEach(cid=>{ const c=cards.find(x=>x.id===cid); if(c){ t+=1+_contarDup(c); } }); return t; };
+  const nDup=_contarDup(novo);
+  showToast(nDup ? `⧉ Card duplicado com ${nDup} filho(s) — editando a cópia.` : '⧉ Card duplicado — editando a cópia.');
 }
 function duplicarCard(){
   if(!editingId) return;

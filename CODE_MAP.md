@@ -116,6 +116,13 @@ instrumentação extra) — os números da seção painel abaixo são de
   filho→pai→avô recursivamente. `_isColCancelLike()` — L24714, logo acima —
   se TODOS os filhos ativos terminaram cancelados, o pai NÃO conclui
   sozinho, fica onde está
+- `_duplicarComFilhos()` — L11803 — duplicar um supercard com opção de
+  duplicar os filhos junto (checkbox opt-in no modal de duplicar, só
+  aparece se `_cardIsSupercard()`). Recursivo (cobre netos, 3 níveis
+  campanha→criativo→versão), religa `childCardIds` pros ids NOVOS, filhos
+  mantêm a própria coluna (não herdam `opts.col` do card raiz), filhos
+  arquivados ficam de fora, `visited` protege contra ciclo corrompido nos
+  dados
 
 ### Card lock / "Pedir o card"
 - `CARD_LOCK_REQUEST_GRACE_MS` — L10518
