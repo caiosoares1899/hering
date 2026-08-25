@@ -2520,19 +2520,20 @@ especialista sem tocar em nada do comportamento do orquestrador
 (`realHandlers.js` nunca passa `especialista`, continua exatamente como
 sempre foi).
 
-**Achado 2 — o canal de especialistas roda num squad onde o
-orquestrador não existe.** `http.js` nunca recebe `squadId` no payload
-— sempre usa o default de `board.js`, squad `ecomm`, travado. O
-orquestrador (`@menção` + scan diário) só existe em `dev`/`dados` hoje.
-**Zero sobreposição real** — não tem um card hoje onde as duas coisas
-coexistem. Consequência prática: validar o resto deste desenho em
-`dev`/`dados` (squad de teste combinado com o usuário) não vai ter
-tráfego real de especialista — precisa simular comentário/history de
-especialista lá até decidirmos se/quando levar o orquestrador pro
-`ecomm` de verdade (decisão bem maior, categoria diferente, fora de
-escopo por ora).
+**Achado 2 — o canal de especialistas rodava num squad onde o
+orquestrador não existia.** `http.js` nunca recebeu `squadId` no
+payload — sempre usava o default de `board.js`, squad `ecomm`,
+travado, sem nenhum overlap com `dev`/`dados` (onde o orquestrador
+roda). **Corrigido nesta rodada, por decisão direta do usuário**:
+`ecomm` foi descontinuado (squad apagado do Realtime Database — decisão
+dele, não uma migração de dados) e o default de `board.js` virou
+`SQUAD_ID='dev'`. Especialista externo (`http.js`) e orquestrador
+(`@menção` + scan diário) agora escrevem/leem no MESMO squad — zero
+simulação necessária pra validar o resto deste desenho, tráfego real de
+especialista (quando/se vier) já vai cair onde o orquestrador consegue
+ver.
 
-### Desenho combinado (proposta — nada aqui além do Achado 1 está implementado ainda)
+### Desenho combinado (proposta — nada aqui além dos Achados 1 e 2 está implementado ainda)
 
 1. **De onde vem o sinal**: reaproveita 100% do que já existe, sem
    registro novo — `comentario` já vai pra `card_comments` (que
@@ -2561,6 +2562,7 @@ escopo por ora).
    comentário carregar uma `origem` (`especialista`/`humano`/`proprio`)
    — pequena extensão do que já existe.
 
-**Status**: só o Achado 1 (fix de identidade) foi implementado até
-aqui. O resto (extensão de `ler_card`, fluxo reativo de resumo) ainda
-não tem código — aguardando a próxima rodada.
+**Status**: Achado 1 (fix de identidade) e Achado 2 (squad unificado em
+`dev`, `ecomm` descontinuado) implementados. O resto do desenho combinado
+(pontos 1-4 acima — extensão de `ler_card` com `origem`, fluxo reativo
+de resumo) ainda não tem código — aguardando a próxima rodada.

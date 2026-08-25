@@ -64,7 +64,7 @@ test('buildWritePlan monta update multi-path pra comentario', async () => {
   const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'oi' }], { cardId: 'c5' });
   assert.equal(plan.length, 1);
   assert.equal(plan[0].kind, 'update');
-  assert.equal(plan[0].path, 'kanban/squads/ecomm/dados/card_comments/c5');
+  assert.equal(plan[0].path, 'kanban/squads/dev/dados/card_comments/c5');
   const [commentId, comment] = Object.entries(plan[0].data)[0];
   assert.equal(comment.id, commentId);
   assert.equal(comment.text, 'oi');
@@ -126,7 +126,7 @@ test('buildWritePlan+applyWritePlan (mover_coluna, ponta a ponta com fake db): c
   const db = makeFakeDb({
     kanban: {
       squads: {
-        ecomm: {
+        dev: {
           dados: {
             cards: { 5: { id: 'c5', title: 'Card X', col: 'backlog' } },
             columns: [
@@ -147,7 +147,7 @@ test('buildWritePlan+applyWritePlan (mover_coluna, ponta a ponta com fake db): c
   ], { cardId: 'c5', db, especialista: 'databricks' });
   await applyWritePlan(db, plan);
 
-  const squadData = db._data().kanban.squads.ecomm.dados;
+  const squadData = db._data().kanban.squads.dev.dados;
   const card = squadData.cards['5'];
   const [, comment] = Object.entries(squadData.card_comments.c5)[0];
   assert.equal(comment.author, '🔌 Databricks');
@@ -217,7 +217,7 @@ test('buildWritePlan (relatorio_html, execução real) sobe imagens + html enxut
   assert.ok(uploaded[1].path.endsWith('imagem-2.png'));
   assert.ok(uploaded[2].path.endsWith('relatorio.html'));
   assert.equal(uploaded[2].contentType, 'text/html; charset=utf-8');
-  assert.ok(uploaded[0].path.includes('relatorios/ecomm/c123/'), 'path deve usar o squad e o cardId de verdade');
+  assert.ok(uploaded[0].path.includes('relatorios/dev/c123/'), 'path deve usar o squad e o cardId de verdade');
 
   // plano final: mesma forma que buildLinkStep produz pro output "link"
   assert.equal(plan.length, 1);

@@ -8040,6 +8040,20 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-25 · Achado 2 corrigido: squad `ecomm` descontinuado, `dev` vira o squad único
+Decisão direta do usuário, resolvendo o Achado 2 documentado na entrada
+abaixo ("orquestrador recebendo/organizando input de especialistas
+externos"): squad `ecomm` apagado do Realtime Database (sem exportar
+antes — instrução explícita) e o default de `agente-agil/board.js`
+(`SQUAD_ID`) trocado de `'ecomm'` pra `'dev'`. Ver entrada completa em
+"Agente Ágil (`functions/agente-agil/`)" abaixo.
+
+Consequência prática: especialista externo (`http.js`) e orquestrador
+(`@menção` + scan diário) agora compartilham o mesmo squad — as 4
+perguntas de desenho ainda em aberto (de onde vem o sinal / reativo vs
+proativo / "julgamento de PO" / ferramenta nova) deixam de precisar de
+squad de teste simulado; podem ser validadas em `dev` de verdade.
+
 ### 2026-08-25 · Desenho: orquestrador recebendo/organizando input de especialistas externos — Achado 1 corrigido
 Pedido direto: "o ponto dele receber as informações de outros agentes
 externos e organizá-las dentro do board, está no mapeamento?". Não
@@ -9555,6 +9569,32 @@ squad de teste, tornar `SQUAD_ID` configurável. Nada aqui é chamado por
 nenhum endpoint HTTP ainda — não requer `firebase deploy`.
 
 ## Agente Ágil (`functions/agente-agil/`)
+
+### 2026-08-25 · Squad default trocado de `ecomm` pra `dev`
+Achado 2 do desenho "orquestrador recebe/organiza input de especialistas
+externos" (ver entrada completa em "Agente Ágil Orquestrador" acima) —
+`ecomm` nunca teve overlap real com o orquestrador (só `dev`/`dados`) e
+foi descontinuado por decisão do usuário (squad apagado do Realtime
+Database, sem exportar antes).
+
+`SQUAD_ID` em `board.js` — único ponto que define o squad default de
+`resolveCardKey()`/`buildWritePlan()`/`applyWritePlan()`, e por
+consequência de `http.js` (`IDEMPOTENCY_PATH`) — trocado de `'ecomm'`
+pra `'dev'`. Nenhuma outra mudança estrutural: todo path já era função
+de `squadId` desde a parametrização da Fase 2 (só o valor default que
+mudou).
+
+Testes atualizados pra refletir o novo default: `squadIdParam.test.js`
+(2 testes que afirmavam "default é ecomm" viram "default é dev"; squad
+decoy usado pra provar isolamento renomeado de `ecomm` pra
+`outro-squad`, já que `ecomm` deixou de existir), `board.test.js` (3
+asserções de path hardcoded), `sprint3.test.js` (squad seed inteiro
+renomeado de `ecomm` pra `dev`, já que todos os testes ali dependem do
+default e não passam `squadId` explícito). Suíte inteira: **241/241
+passando**.
+
+**Requer `firebase deploy --only functions:agenteAgil`** — muda o squad
+real que o endpoint (Databricks) escreve.
 
 ### 2026-08-25 · Fix de identidade: especialista externo deixa de gravar como "Agente Ágil"
 Achado 1 do desenho "orquestrador recebe/organiza input de múltiplos
