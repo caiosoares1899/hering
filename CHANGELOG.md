@@ -1883,6 +1883,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.467-dev — 2026-08-25 — Fix: prioridade perdida ao fechar card novo sem salvar (achado via /monitorarbugs)
+Varredura de bugs pedida direto pelo usuário (skill `/monitorarbugs`),
+área "card novo sem salvar" (`_newCardHasContent()`, mudança mais
+recente do arquivo, v8.30.463-dev).
+
+**Cenário real**: criar um card novo, selecionar uma Prioridade (ex.:
+🔥 Crítica) sem preencher título/descrição/PO/comentário/tags/checklist/
+riscos, e fechar o modal (clicar fora, ✕ ou Cancelar) — a prioridade
+escolhida sumia em silêncio, sem nenhum aviso. Causa: `m-priority` não
+tem autosave em card novo (`scheduleAutoSave()` só salva com
+`editingId`, comentário próprio confirma "só auto-salva cards
+existentes") E não entrava nos 8 campos checados por
+`_newCardHasContent()` — contradizendo o propósito documentado da
+própria função ("evita fechar o modal sem querer perdendo essa
+edição"). Corrigido adicionando o check de `m-priority` na função.
+
+Descartados como não-bug nesta mesma varredura: Story Points (`m-sp`,
+campo legado sem UI — comentário no próprio HTML confirma) e
+Impedimento/OKR (só acessíveis via clique-direito num card **já
+existente**, sempre cobertos por `_cardIsDirty()`/`editingId`).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/0 (baseline
+da sessão, sem divergência).
+
 ### v8.30.466-dev — 2026-08-25 — Remove os botões do painel de chat antigo do Agente Ágil (FAB + nav mobile)
 Pedido direto do usuário: "retire o botão do agente agil, já que ele
 morreu de vez". O painel de chat antigo (`openAgent()`, overlay
