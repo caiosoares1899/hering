@@ -1883,6 +1883,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.466-dev — 2026-08-25 — Remove os botões do painel de chat antigo do Agente Ágil (FAB + nav mobile)
+Pedido direto do usuário: "retire o botão do agente agil, já que ele
+morreu de vez". O painel de chat antigo (`openAgent()`, overlay
+`#ag-ov`, abas Daily/Métricas/Retro) já estava desativado desde antes
+via `AGENTE_AGIL_ATIVO=false` (dependia de um Worker externo hoje fora
+do ar) — os 2 pontos de entrada visíveis (botão flutuante 🤖 no FAB do
+desktop, e "🤖 Agente" na barra de navegação mobile) foram removidos de
+vez, junto com o código de visibilidade por papel que ainda os
+referenciava em `_applyRoleVisibility()` e `autoRegistrar()`.
+
+`openAgent()`/`#ag-ov`/`AGENTE_AGIL_ATIVO` continuam no arquivo — ainda
+existem 2 outros call sites sem UI própria (AutoLab, alerta de WIP
+excedido) que chamam `openAgent()` indiretamente; removê-los também
+ficou fora do escopo deste pedido.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`,
+brace/paren balance -1/0 (baseline da sessão, sem divergência).
+
 ### v8.30.465-dev — 2026-08-25 — "🤖 Resumo do Agente Ágil" dentro de "Meu Dia"
 Botão novo no painel "🌅 Meu Dia" — chama a nova Cloud Function
 `agenteAgilResumoMeuDia` (ver entrada completa em "Agente Ágil
