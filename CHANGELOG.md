@@ -9593,8 +9593,10 @@ renomeado de `ecomm` pra `dev`, já que todos os testes ali dependem do
 default e não passam `squadId` explícito). Suíte inteira: **241/241
 passando**.
 
-**Requer `firebase deploy --only functions:agenteAgil`** — muda o squad
-real que o endpoint (Databricks) escreve.
+**Deployado** em 2026-08-25 via `firebase deploy --only
+functions:agenteAgil` — squad `ecomm` já não existe mais no Realtime
+Database (apagado pelo usuário) e o endpoint (Databricks) agora escreve
+em `dev`.
 
 ### 2026-08-25 · Fix de identidade: especialista externo deixa de gravar como "Agente Ágil"
 Achado 1 do desenho "orquestrador recebe/organiza input de múltiplos
