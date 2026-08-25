@@ -5485,7 +5485,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.466-dev</div>
+<div class="version">v8.30.467-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10435,6 +10435,12 @@ function _newCardHasContent(){
   if((document.getElementById('m-desc')?.value||'').trim()) return true;
   if((document.getElementById('m-po')?.value||'').trim()) return true;
   if((document.getElementById('m-comment-inp')?.value||'').trim()) return true;
+  // Achado real 2026-08-25 (skill /monitorarbugs): prioridade é campo
+  // manual sem autosave em card novo (scheduleAutoSave() só salva com
+  // editingId), mas não entrava aqui — selecionar uma prioridade e clicar
+  // fora/Cancelar/✕ perdia a escolha em silêncio, contradizendo o próprio
+  // propósito deste guard (ver comentário no topo do bloco).
+  if(document.getElementById('m-priority')?.value) return true;
   if(editingTags.length) return true;
   if(editingDescs.length) return true;
   if(getCL().length) return true;
