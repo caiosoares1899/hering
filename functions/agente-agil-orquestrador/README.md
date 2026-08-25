@@ -2237,9 +2237,13 @@ Automação → `agenteAgilMencao` processa → agente responde de verdade no
 card, sem loop (a própria resposta do agente foi corretamente ignorada
 pelo filtro `self_comment` quando reprocessada pelo listener).
 
-**Item 5 v1 — FECHADO.** Próximos passos possíveis (não decididos):
+**Item 5 v1 — FECHADO.** Próximos passos possíveis levantados na época:
 portar `wip_exceeded`/`aging` pro mesmo mecanismo, e/ou expandir o scan
 pro squad `dados` — cada um, decisão separada.
+
+**`wip_exceeded`/`aging` — decisão do usuário: NÃO portar, não sobe pra
+prod.** Ficam de fora do mecanismo de scan diário; só `due_overdue` e
+`due_today` continuam ativos.
 
 ## Item 5: `due_today` adicionado ao mesmo scan (2026-08-24, mesmo dia)
 
