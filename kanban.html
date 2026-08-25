@@ -5161,6 +5161,9 @@ input[type="date"]{-moz-appearance:textfield;}
           <option value="low">🟢 Baixa</option>
           <option value="none">Sem prioridade</option>
         </select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap;" title="Supercard aqui é o card 'container' (campanha/criativo) — não é ele mesmo uma peça sendo produzida, só organiza os filhos que são">
+          <input type="checkbox" id="crv-df-supercard-incluir" checked onchange="renderCriativosDashboard()"> 🧩 Incluir supercards
+        </label>
         <span style="display:flex;align-items:center;gap:5px;">
           <select class="fi crv-fh" id="crv-df-datefield" onchange="renderCriativosDashboard()" style="max-width:96px;">
             <option value="due">📅 Prazo</option>
@@ -5489,7 +5492,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.471</div>
+<div class="version">v8.30.473</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13086,6 +13089,15 @@ function _crvDashFilteredRows(allRows){
   const fDem=document.getElementById('crv-df-demandante')?.value||'';
   const fCol=document.getElementById('crv-df-col')?.value||'';
   const fPrio=document.getElementById('crv-df-prioridade')?.value||'';
+  // Desmarcado: tira o card CONTAINER (campanha/criativo com filhos) da
+  // conta — ele não é ele mesmo uma peça sendo produzida, só organiza os
+  // filhos que são (pedido direto: "colocar e tirar da conta", depois
+  // simplificado de select de 3 opções pra checkbox de ligar/desligar).
+  // Filhos continuam contando normalmente nos dois casos — só o supercard
+  // em si entra/sai. checked=true por padrão (elemento nasce marcado no
+  // HTML) — ?.checked com fallback true cobre o elemento ainda não existir.
+  const incluirSuper=document.getElementById('crv-df-supercard-incluir');
+  const fSuperExcluir=incluirSuper ? !incluirSuper.checked : false;
   const dateField=document.getElementById('crv-df-datefield')?.value||'due';
   const dFrom=document.getElementById('crv-df-date-from')?.value||'';
   const dTo=document.getElementById('crv-df-date-to')?.value||'';
@@ -13094,6 +13106,7 @@ function _crvDashFilteredRows(allRows){
   if(fOwner) out=out.filter(c=>c.owner===fOwner);
   if(fDem) out=out.filter(c=>c.demandante===fDem);
   if(fCol) out=out.filter(c=>c.col===fCol);
+  if(fSuperExcluir) out=out.filter(c=>!_cardIsSupercard(c));
   if(fPrio){ out = fPrio==='none' ? out.filter(c=>!c.priority) : out.filter(c=>c.priority===fPrio); }
   if(dFrom||dTo){
     out=out.filter(c=>{
@@ -13109,6 +13122,7 @@ function _crvDashFilteredRows(allRows){
 function _crvDashClearFilters(){
   ['crv-df-tag','crv-df-owner','crv-df-demandante','crv-df-col','crv-df-prioridade','crv-df-date-from','crv-df-date-to'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const dfEl=document.getElementById('crv-df-datefield'); if(dfEl) dfEl.value='due';
+  const incluirSuper=document.getElementById('crv-df-supercard-incluir'); if(incluirSuper) incluirSuper.checked=true;
   renderCriativosDashboard();
 }
 // Renderiza o painel visual do Controle de Criativos: cards de resumo + donuts (status/prioridade) + barras (lista/canal/plataforma/formato)
