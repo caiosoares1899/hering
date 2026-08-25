@@ -1915,6 +1915,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.472-dev — 2026-08-25 — Controle de Criativos: filtro de supercard no Dashboard
+Pedido direto: "aqui falta o filtro de supercard (colocar e tirar da
+conta)" — no Dashboard do 🎬 Controle de Criativos, novo select "🧩
+Supercards" ao lado dos filtros já existentes (tag/responsável/
+demandante/coluna/prioridade/prazo).
+
+3 opções: incluídos (padrão, comportamento de sempre), excluir
+supercards da conta, ou só supercards. "Supercard" aqui é o card
+container (campanha/criativo com filhos) — ele não é ele mesmo uma
+peça sendo produzida, só organiza os filhos que são; o filtro só
+entra/sai o container em si, os filhos continuam contando normalmente
+nos dois casos. Reaproveita `_cardIsSupercard()` já existente. O bloco
+"🧩 Cards vs. Supercards" do dashboard reflete o filtro automaticamente
+(já lê da mesma lista filtrada).
+
 ### v8.30.471-dev — 2026-08-25 — Nova feature: duplicar supercard com filhos junto
 Pedido direto: "na parte de duplicar card, quando ele for um supercard,
 habilita a opção de poder duplicar filhos tb! (aí tem que ter as
