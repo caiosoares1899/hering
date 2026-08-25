@@ -114,7 +114,7 @@ async function build(out, ctx) {
             path: `${ctx.cardPath}/history`,
             transform(current) {
               const history = Array.isArray(current) ? current.slice() : [];
-              history.push({ who: 'Agente Ágil', what: `adicionou tag(s): ${newlyAddedLabels.join(', ')}`, at: nowISO });
+              history.push({ who: ctx.actor.who, what: `adicionou tag(s): ${newlyAddedLabels.join(', ')}`, at: nowISO });
               return history.length > HIST_CAP ? history.slice(-HIST_CAP) : history;
             },
           },
@@ -129,7 +129,7 @@ async function build(out, ctx) {
       path: `${ctx.cardPath}/history`,
       transform(current) {
         const history = Array.isArray(current) ? current.slice() : [];
-        historyEntries.forEach((what) => history.push({ who: 'Agente Ágil', what, at: nowISO }));
+        historyEntries.forEach((what) => history.push({ who: ctx.actor.who, what, at: nowISO }));
         return history.length > HIST_CAP ? history.slice(-HIST_CAP) : history;
       },
     });

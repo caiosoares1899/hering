@@ -40,7 +40,7 @@ async function build(out, ctx) {
         return out.executorType;
       }
       if (current === 'human' || current == null) {
-        changeMsg = 'o Agente Ágil assumiu a execução deste card';
+        changeMsg = `${ctx.actor.who} assumiu a execução deste card`;
         return 'agent';
       }
       return current;
@@ -56,7 +56,7 @@ async function build(out, ctx) {
           path: `${ctx.cardPath}/history`,
           transform(current) {
             const history = Array.isArray(current) ? current.slice() : [];
-            entries.forEach((what) => history.push({ who: 'Agente Ágil', what, at: nowISO }));
+            entries.forEach((what) => history.push({ who: ctx.actor.who, what, at: nowISO }));
             return history.length > HIST_CAP ? history.slice(-HIST_CAP) : history;
           },
         },

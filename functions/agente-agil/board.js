@@ -119,6 +119,35 @@ async function resolveCardKey(db, cardId, { squadId = SQUAD_ID, retries = 2, del
 // agentStatus.js, editarCampos.js. Builders continuam podendo devolver um
 // único step (como sempre) ou um array de steps — sempre granular, nunca
 // reescrevendo o card inteiro numa transaction só.
+// Nomes bonitos pra especialistas conhecidos — fallback capitaliza o id
+// cru (ex.: "novo-especialista" -> "Novo-especialista") pra nunca quebrar
+// com um especialista ainda não cadastrado aqui.
+const ESPECIALISTA_LABELS = { databricks: 'Databricks' };
+function especialistaLabel(id) {
+  return ESPECIALISTA_LABELS[id] || (id.charAt(0).toUpperCase() + id.slice(1));
+}
+
+// `ctx.actor`: identidade creditada em todo `uid`/`author`/`who` que os
+// output builders gravam (comentario -> card_comments; os outros 6 ->
+// card.history). Achado real (2026-08-25): antes disso, TODO output —
+// vindo de especialista externo (http.js) OU do próprio orquestrador
+// (agente-agil-orquestrador/tools/realHandlers.js, que reusa os MESMOS
+// builders) — gravava sempre uid:'agente-agil'/author:'Agente Ágil', o
+// MESMO ator. Isso tornava estruturalmente impossível o orquestrador
+// diferenciar "um especialista escreveu isso" de "eu mesmo escrevi isso"
+// — o filtro anti-auto-disparo de mentionTrigger.js (ignora
+// comment.uid===AGENTE_UID) engolia os dois igual.
+//
+// `extra.especialista` só vem preenchido quando quem chama é http.js (a
+// porta de especialistas externos) — realHandlers.js (o próprio
+// orquestrador) NUNCA passa isso, então continua com a identidade
+// 'agente-agil' de sempre, sem nenhuma mudança de comportamento pra ele.
+function resolveActor(especialistaId) {
+  if (!especialistaId) return { uid: 'agente-agil', author: 'Agente Ágil', who: 'Agente Ágil', init: '🤖' };
+  const label = '🔌 ' + especialistaLabel(especialistaId);
+  return { uid: `especialista:${especialistaId}`, author: label, who: label, init: '🔌' };
+}
+
 async function buildWritePlan(cardKey, outputs, extra = {}) {
   const squadId = extra.squadId || SQUAD_ID;
   const cardPath = `${cardsPath(squadId)}/${cardKey}`;
@@ -126,6 +155,7 @@ async function buildWritePlan(cardKey, outputs, extra = {}) {
   let _cardPromise = null;
   const ctx = {
     cardPath,
+    actor: resolveActor(extra.especialista),
     // Pré-calculado aqui (mesmo espírito de cardPath) em vez de outputs/
     // comentario.js importar board.js pra montar sozinho — board.js já
     // requer ./outputs (outputBuilders) no topo do arquivo, então um
@@ -269,4 +299,6 @@ module.exports = {
   resolveCardKey,
   buildWritePlan,
   applyWritePlan,
+  resolveActor,
+  especialistaLabel,
 };

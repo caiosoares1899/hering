@@ -2476,3 +2476,91 @@ relevante não quebra; sem cards pendentes não chama o LLM; chama com
 **Ainda não deployado** — depende do usuário rodar
 `firebase deploy --only functions:agenteAgilResumoMeuDia` na própria
 máquina (ver nota de resync no `CLAUDE.md`).
+
+## Orquestrador recebendo/organizando input de especialistas externos (proposta, 2026-08-25)
+
+Pergunta direta do usuário: "o ponto dele receber as informações de
+outros agentes externos e organizá-las dentro do board, está no
+mapeamento?". Resposta na hora: **não estava** — é extensão nova da
+visão "PO+orquestrador" já declarada no topo deste README ("um loop com
+LLM e ferramentas decidindo sozinho o que fazer"), sem desenho nem
+decisão tomada até aqui.
+
+### Contexto — o que já existe vs. o que é novo
+
+**Já existe e está estável**: `functions/agente-agil/http.js` (agente
+v0-v3) — a porta de entrada onde especialistas externos (hoje:
+Databricks) mandam outputs (comentário, link, relatório, mover card,
+editar campo) que alguém/algo mais decidiu. Continua sendo o canal de
+escrita, não precisa de nada novo aqui.
+
+**O que não existe**: o orquestrador usando esse fluxo como insumo pro
+PRÓPRIO julgamento — hoje ele só reage a @menção (uma pessoa pedindo
+algo) ou ao scan diário. Não tem mecanismo de "vários especialistas
+disseram coisas diferentes sobre o mesmo card, preciso ler isso e
+decidir como sintetizar/priorizar/consolidar".
+
+### 2 achados que reencaixaram o desenho, antes de qualquer decisão de arquitetura
+
+**Achado 1 — colisão de identidade (bloqueava até a LEITURA).** Todo
+output que sai de `http.js` era gravado com `uid:'agente-agil'`/
+`author:'Agente Ágil'` (comentário, `card_comments`) ou
+`who:'Agente Ágil'` (os outros 6 outputs, `card.history`) — o MESMO
+ator que `agente-agil-orquestrador/tools/realHandlers.js` usa pra si
+mesmo (reusa os mesmos builders de `agente-agil/outputs/`). O filtro
+anti-auto-disparo de `mentionTrigger.js` (ignora
+`comment.uid===AGENTE_UID`, primeira checagem, não-negociável desde o
+item 3) engolia comentário de especialista igual a comentário próprio
+— não dava pra simplesmente tirar esse filtro (risco real de loop).
+**Corrigido nesta rodada** — ver entrada completa em "Agente Ágil
+(`functions/agente-agil/`)" no `CHANGELOG.md`: `board.js` ganhou
+`resolveActor(especialistaId)`/`ctx.actor`, dando identidade própria
+(`uid:'especialista:databricks'`, `author:'🔌 Databricks'`) pro
+especialista sem tocar em nada do comportamento do orquestrador
+(`realHandlers.js` nunca passa `especialista`, continua exatamente como
+sempre foi).
+
+**Achado 2 — o canal de especialistas roda num squad onde o
+orquestrador não existe.** `http.js` nunca recebe `squadId` no payload
+— sempre usa o default de `board.js`, squad `ecomm`, travado. O
+orquestrador (`@menção` + scan diário) só existe em `dev`/`dados` hoje.
+**Zero sobreposição real** — não tem um card hoje onde as duas coisas
+coexistem. Consequência prática: validar o resto deste desenho em
+`dev`/`dados` (squad de teste combinado com o usuário) não vai ter
+tráfego real de especialista — precisa simular comentário/history de
+especialista lá até decidirmos se/quando levar o orquestrador pro
+`ecomm` de verdade (decisão bem maior, categoria diferente, fora de
+escopo por ora).
+
+### Desenho combinado (proposta — nada aqui além do Achado 1 está implementado ainda)
+
+1. **De onde vem o sinal**: reaproveita 100% do que já existe, sem
+   registro novo — `comentario` já vai pra `card_comments` (que
+   `ler_card` já lê, últimos 20); os outros 6 outputs já vão pra
+   `card.history` (que `ler_card` exclui de propósito hoje, "trilha de
+   auditoria, não é o que um PO lê pra decidir"). Com o Achado 1
+   corrigido, os dois já carregam identidade distinguível.
+2. **Reativo primeiro, proativo é Fase B separada**: alguém @menciona
+   pedindo o resumo (zero infra nova, reusa 100% do pipeline de
+   @menção já validado) — mesma sequência que a própria @menção seguiu
+   (manual → sombra → reativo → só depois, separadamente, scheduled).
+   Proativo (notar sozinho que N especialistas escreveram recente)
+   exigiria um gatilho novo com a mesma disciplina de opt-in via
+   Automação que due_overdue/due_today já usam — decisão separada, não
+   decidida agora.
+3. **"Julgamento de PO" = resumir e atribuir, nunca reconciliar
+   sozinho.** Se dois especialistas parecem se contradizer, o
+   orquestrador não escolhe quem tem razão — sinaliza a contradição
+   explicitamente no texto e para por aí. Sem `mover_coluna`/
+   `editar_campos` disparados por essa leitura em v1 — ferramenta de
+   leitura+síntese, não de ação, mesmo espírito de `visao_board`/
+   `ler_card` hoje.
+4. **Sem ferramenta nova** — em vez de um `ler_historico_especialistas`
+   dedicado (fragmentaria a leitura em 2 chamadas pra montar 1 quadro
+   só), estender `summarizeCard()` (dentro de `ler_card`) pra cada
+   comentário carregar uma `origem` (`especialista`/`humano`/`proprio`)
+   — pequena extensão do que já existe.
+
+**Status**: só o Achado 1 (fix de identidade) foi implementado até
+aqui. O resto (extensão de `ler_card`, fluxo reativo de resumo) ainda
+não tem código — aguardando a próxima rodada.

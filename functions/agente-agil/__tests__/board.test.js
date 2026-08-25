@@ -8,7 +8,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { envelope } = require('../schema');
-const { buildWritePlan, CARDS_PATH } = require('../board');
+const { buildWritePlan, applyWritePlan, CARDS_PATH, resolveActor, especialistaLabel } = require('../board');
+const { makeFakeDb } = require('./fakeDb');
+const membersLib = require('../members');
+const flowLib = require('../flow');
 
 test('envelope aceita payload v0 válido com outputs comentario e link', () => {
   const result = envelope.safeParse({
@@ -65,6 +68,92 @@ test('buildWritePlan monta update multi-path pra comentario', async () => {
   const [commentId, comment] = Object.entries(plan[0].data)[0];
   assert.equal(comment.id, commentId);
   assert.equal(comment.text, 'oi');
+});
+
+// ── Identidade do ator (achado real 2026-08-25) ──────────────────────────
+// Antes desta rodada, todo output gravava uid:'agente-agil'/author:'Agente
+// Ágil' sem distinguir "especialista externo via http.js" de "o próprio
+// orquestrador via realHandlers.js" — o mesmo ator sempre, o que tornava
+// impossível o orquestrador diferenciar os dois (e o filtro anti-auto-
+// disparo de mentionTrigger.js engolia os dois igual). resolveActor()/
+// ctx.actor resolvem isso — ver comentário completo em board.js.
+
+test('envelope aceita "especialista" (opcional) sem quebrar payloads antigos que não mandam isso', () => {
+  const semEspecialista = envelope.safeParse({ requestId: 'r1', cardId: 'c1', status: 'success', outputs: [] });
+  assert.equal(semEspecialista.success, true);
+
+  const comEspecialista = envelope.safeParse({ requestId: 'r2', cardId: 'c1', status: 'success', outputs: [], especialista: 'databricks' });
+  assert.equal(comEspecialista.success, true);
+  assert.equal(comEspecialista.data.especialista, 'databricks');
+});
+
+test('resolveActor(): sem especialista, devolve a identidade do próprio orquestrador (mesma de sempre)', () => {
+  const actor = resolveActor(undefined);
+  assert.deepEqual(actor, { uid: 'agente-agil', author: 'Agente Ágil', who: 'Agente Ágil', init: '🤖' });
+});
+
+test('resolveActor(): com especialista conhecido, devolve identidade PRÓPRIA — nunca a mesma do orquestrador', () => {
+  const actor = resolveActor('databricks');
+  assert.equal(actor.uid, 'especialista:databricks');
+  assert.equal(actor.author, '🔌 Databricks');
+  assert.equal(actor.who, '🔌 Databricks');
+  assert.notEqual(actor.uid, 'agente-agil');
+});
+
+test('especialistaLabel(): especialista desconhecido cai num fallback capitalizado, nunca quebra', () => {
+  assert.equal(especialistaLabel('databricks'), 'Databricks');
+  assert.equal(especialistaLabel('novo-especialista'), 'Novo-especialista');
+});
+
+test('buildWritePlan (comentario): sem extra.especialista, credita "Agente Ágil" — mesmo comportamento de sempre pro orquestrador (realHandlers.js nunca passa especialista)', async () => {
+  const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'oi' }], { cardId: 'c5' });
+  const [, comment] = Object.entries(plan[0].data)[0];
+  assert.equal(comment.uid, 'agente-agil');
+  assert.equal(comment.author, 'Agente Ágil');
+});
+
+test('buildWritePlan (comentario): com extra.especialista, credita o especialista — não mais "Agente Ágil"', async () => {
+  const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'métrica caiu 12%' }], { cardId: 'c5', especialista: 'databricks' });
+  const [, comment] = Object.entries(plan[0].data)[0];
+  assert.equal(comment.uid, 'especialista:databricks');
+  assert.equal(comment.author, '🔌 Databricks');
+  assert.notEqual(comment.uid, 'agente-agil'); // a checagem que importa: não colide mais com o uid do próprio orquestrador
+});
+
+test('buildWritePlan+applyWritePlan (mover_coluna, ponta a ponta com fake db): card.history credita o especialista, nunca "Agente Ágil"', async () => {
+  membersLib._resetCacheForTests();
+  flowLib._resetCacheForTests();
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        ecomm: {
+          dados: {
+            cards: { 5: { id: 'c5', title: 'Card X', col: 'backlog' } },
+            columns: [
+              { id: 'backlog', name: 'Backlog' },
+              { id: 'done', name: 'Concluído' },
+            ],
+            config: { flow: { startCols: [], doneCols: ['done'], reportCols: [] } },
+          },
+        },
+      },
+      usuarios_publicos: {},
+    },
+  });
+
+  const plan = await buildWritePlan('5', [
+    { type: 'comentario', texto: 'métrica caiu 12%' },
+    { type: 'mover_coluna', coluna: 'done' },
+  ], { cardId: 'c5', db, especialista: 'databricks' });
+  await applyWritePlan(db, plan);
+
+  const squadData = db._data().kanban.squads.ecomm.dados;
+  const card = squadData.cards['5'];
+  const [, comment] = Object.entries(squadData.card_comments.c5)[0];
+  assert.equal(comment.author, '🔌 Databricks');
+  assert.equal(comment.uid, 'especialista:databricks');
+  assert.equal(card.history[0].who, '🔌 Databricks');
+  assert.notEqual(card.history[0].who, 'Agente Ágil'); // a checagem que importa: não credita mais o orquestrador por engano
 });
 
 test('buildWritePlan monta transaction escopada em links pra link', async () => {

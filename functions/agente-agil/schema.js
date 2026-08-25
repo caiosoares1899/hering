@@ -103,6 +103,19 @@ const envelope = z
     // Aceito e validado desde já, mas não usado até o v3 (callback assíncrono)
     callbackUrl: z.string().url().optional(),
     dryRun: z.boolean().optional(),
+    // Identifica QUAL especialista externo mandou este envelope (ex.:
+    // "databricks") — opcional por compatibilidade (nenhum especialista
+    // real manda isso hoje). Ausente -> http.js assume "databricks" (único
+    // especialista em produção até 2026-08-25, ver comentário lá). Usado
+    // só pra creditar a escrita com uma identidade PRÓPRIA, diferente de
+    // "Agente Ágil" — achado real (2026-08-25): todo output gravava
+    // uid:'agente-agil'/author:'Agente Ágil', o MESMO ator que o
+    // orquestrador novo usa pra si mesmo — o filtro anti-auto-disparo de
+    // mentionTrigger.js (ignora comment.uid===AGENTE_UID) tornava
+    // estruturalmente impossível o orquestrador diferenciar "isso foi um
+    // especialista" de "isso fui eu mesmo". Ver board.js (buildWritePlan
+    // -> ctx.actor) pra onde isso vira uid/author/who de verdade.
+    especialista: z.string().min(1).optional(),
   })
   .refine((data) => Boolean(data.cardId) !== Boolean(data.referencia), {
     message: 'Envie exatamente um de "cardId" ou "referencia" — nunca os dois, nunca nenhum.',
