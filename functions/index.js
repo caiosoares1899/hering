@@ -214,3 +214,14 @@ exports.agenteAgilMencaoDados = require('./agente-agil-orquestrador/mentionTrigg
 // (1º dia)") nesse squad — opt-in, não liga sozinho pra ninguém. Deploy
 // isolado: firebase deploy --only functions:agenteAgilDueOverdueScan
 exports.agenteAgilDueOverdueScan = require('./agente-agil-orquestrador/dueOverdueTrigger').agenteAgilDueOverdueScan;
+
+// "🤖 Resumo do Agente Ágil" dentro de "Meu Dia" (kanban.html/kanban-dev.html),
+// 2026-08-25 — pedido direto do usuário. Sob demanda (só quando a pessoa
+// clica), pessoal, cross-squad (dev + dados, mesmo escopo de
+// AGENTE_AGIL_MENTION_SQUADS no client) — NÃO escreve nada no board, só lê
+// os cards ativos da pessoa e devolve um resumo priorizado (ver comentário
+// completo no topo de resumoMeuDia.js pro desenho: onRequest + Bearer
+// idToken, mesmo padrão de spotify/disconnect.js; kill switch dinâmico
+// respeitado; rate limit de 2min por pessoa; sem cards pendentes não chama
+// o LLM). Deploy isolado: firebase deploy --only functions:agenteAgilResumoMeuDia
+exports.agenteAgilResumoMeuDia = require('./agente-agil-orquestrador/resumoMeuDia').agenteAgilResumoMeuDia;

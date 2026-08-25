@@ -160,15 +160,21 @@ instrumentação extra) — os números da seção painel abaixo são de
   de "📥 Usar modelo"/`_renderUsarModeloList()`)
 
 ### Agente Ágil (client-side — atalhos que postam @menção real)
-- `AGENTE_AGIL_MENTION_SQUADS` — L6228 — squads onde os atalhos abaixo
+- `AGENTE_AGIL_MENTION_SQUADS` — L6232 — squads onde os atalhos abaixo
   estão ativos: `'dev'` e `'dados'` (2026-08-24) — precisa ter uma Cloud
   Function de verdade escutando o squad (ver seção `agente-agil-
   orquestrador/` abaixo), senão a sugestão aparece sem nada escutando
-- `_askAgenteAgilNoCard(card, pergunta)` — L6242 — posta
+- `_askAgenteAgilNoCard(card, pergunta)` — L6246 — posta
   `@Agente Ágil <pergunta>` como comentário real do card, mesmo pipeline
   do `@menção` manual (`functions/agente-agil-orquestrador/mentionTrigger.js`)
-- `insightsCard()` — L13717 — botão "🤖 Insights" no rodapé do card
-- `ctxInsights()` — L25159 — opção "Insights" no menu de contexto do card
+- `insightsCard()` — L13721 — botão "🤖 Insights" no rodapé do card
+- `ctxInsights()` — L25213 — opção "Insights" no menu de contexto do card
+- `_pedirResumoMeuDia()` — L17034 — botão "🤖 Resumo do Agente Ágil"
+  dentro do painel "🌅 Meu Dia" (`openMeuDia()` L16944/`renderMeuDia()`
+  L16970) — chama `agenteAgilResumoMeuDia` (onRequest, ver seção
+  `agente-agil-orquestrador/` abaixo) com `Bearer <idToken>`, mostra o
+  texto retornado numa caixinha (`#meudia-resumo-box`). Único ponto do
+  Agente Ágil que NÃO escreve nada no board — só lê e mostra texto
 - Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) segue
   desativado nos 4 pontos sem card real (FAB, nav mobile, AutoLab, alerta
   de WIP) — depende de um Worker externo fora do ar, não faz parte deste
@@ -228,6 +234,9 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   scan diário (`onSchedule`), item 5 do roadmap — squad `dev`, cobre
   `due_overdue` **e** `due_today` (nome ficou de v1, só due_overdue —
   ver seção abaixo)
+- `agenteAgilResumoMeuDia` — L227 → `agente-agil-orquestrador/resumoMeuDia.js`,
+  `onRequest` (não gatilho por evento) — "🤖 Resumo do Agente Ágil"
+  dentro de "Meu Dia", 2026-08-25, ver seção abaixo
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
 - `tools/index.js` — `buildTools()`, registro das 11 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`)
@@ -267,6 +276,19 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   correspondente pro gatilho ("Card vence hoje"/"Card atrasado (1º
   dia)")
 - `systemPrompt.js`, `loop.js`, `limits.js`, `detectaMencao.js`
+- `resumoMeuDia.js` — "🤖 Resumo do Agente Ágil" (2026-08-25), primeira
+  invocação SOB DEMANDA do orquestrador (`onRequest`, não gatilho por
+  evento) e a única que NÃO ESCREVE NADA no board — só lê os cards
+  ativos da pessoa (responsável/participante, squads `dev`/`dados` que
+  ela participa) e devolve texto interpretado pelo LLM (`tools: []`,
+  sem nenhuma ferramenta de ação). `collectPendingCards()`/
+  `sinaisDoCard()` — L111/pura, calculam os sinais objetivos (atrasado,
+  bloqueado, sem descrição, checklist vazio/pendente) ANTES do LLM ver
+  qualquer coisa. `gerarResumoMeuDia()` — L174 — lógica pura testável
+  (llmClient injetado). Sem cards pendentes, não chama o LLM (custo
+  zero). Auth via `Bearer <idToken>` verificado manualmente (mesmo
+  padrão de `spotify/disconnect.js`), kill switch dinâmico do resto do
+  orquestrador respeitado, rate limit de 2min/pessoa
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
 - `http.js`, `schema.js`, `board.js`, `flow.js`, `members.js`, `notifications.js`, `resolver.js`, `storage.js`
