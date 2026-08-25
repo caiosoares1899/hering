@@ -175,10 +175,13 @@ instrumentação extra) — os números da seção painel abaixo são de
   `agente-agil-orquestrador/` abaixo) com `Bearer <idToken>`, mostra o
   texto retornado numa caixinha (`#meudia-resumo-box`). Único ponto do
   Agente Ágil que NÃO escreve nada no board — só lê e mostra texto
-- Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) segue
-  desativado nos 4 pontos sem card real (FAB, nav mobile, AutoLab, alerta
-  de WIP) — depende de um Worker externo fora do ar, não faz parte deste
-  fluxo
+- Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) — os 2
+  botões de entrada (FAB, nav mobile) foram removidos de vez (2026-08-25,
+  pedido direto do usuário — "já morreu"), já que dependia de um Worker
+  externo fora do ar. `openAgent()`/`#ag-ov`/`AGENTE_AGIL_ATIVO` seguem no
+  arquivo (inacessíveis pela UI agora) por causa dos outros 2 pontos que
+  ainda chamam `openAgent()` sem card real (AutoLab, alerta de WIP
+  excedido) — não removidos nesta rodada, fora do escopo pedido
 
 ### Externos / segurança
 - `_extKey()` — L27524 — chave de e-mail sanitizada (`.` → `,`)

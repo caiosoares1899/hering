@@ -3208,7 +3208,6 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- FAB -->
 <div class="fab" id="fab" style="display:none;">
   <button class="fab-cfg" onclick="openCfg()" id="fab-cfg-btn">⚙ Configurações</button>
-  <button class="fab-btn" onclick="openAgent()" style="display:none;">🤖 Agente Ágil</button>
 </div>
 
 <!-- ═══ QUADRO DE LEMBRETES ═══ -->
@@ -5475,9 +5474,6 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="mobile-nav-btn" id="mnav-add" onclick="openNewCard(_mobileCurrentColId||undefined)">
     <span class="mobile-nav-icon">➕</span><span class="mobile-nav-label">Card</span>
   </button>
-  <button class="mobile-nav-btn" id="mnav-agent" onclick="mnavGo('agent')">
-    <span class="mobile-nav-icon">🤖</span><span class="mobile-nav-label">Agente</span>
-  </button>
   <button class="mobile-nav-btn" id="mnav-cal" onclick="mnavGo('cal')">
     <span class="mobile-nav-icon">📅</span><span class="mobile-nav-label">Agenda</span>
   </button>
@@ -5489,7 +5485,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.465-dev</div>
+<div class="version">v8.30.466-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8966,14 +8962,10 @@ window.addEventListener('auth-change',e=>{
   }
 });
 
-// Aplica visibilidade de UI conforme o papel atual (FAB agente, config)
+// Aplica visibilidade de UI conforme o papel atual (config)
 function _applyRoleVisibility(){
   const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
-  const fabBtn=document.querySelector('.fab-btn');
-  const mnavAgent=document.getElementById('mnav-agent');
   const fabCfg=document.getElementById('fab-cfg-btn');
-  if(fabBtn) fabBtn.style.display=isPOorOrg?'':'none';
-  if(mnavAgent) mnavAgent.style.display=isPOorOrg?'':'none';
   if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
 }
 function autoRegistrar(user){
@@ -9075,12 +9067,8 @@ function autoRegistrar(user){
         fbUpdate('kanban/usuarios/'+user.uid, midiaMigUpd);
         fbUpdate('kanban/usuarios_publicos/'+user.uid, midiaMigUpd);
       }
-      // Atualiza visibilidade do FAB do agente
-      const fabBtn=document.querySelector('.fab-btn');
-      const mnavAgent=document.getElementById('mnav-agent');
+      // Atualiza visibilidade do FAB de Configurações
       const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
-      if(fabBtn) fabBtn.style.display=isPOorOrg?'':'none';
-      if(mnavAgent) mnavAgent.style.display=isPOorOrg?'':'none';
       const fabCfg=document.getElementById('fab-cfg-btn');
       if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
