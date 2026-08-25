@@ -9587,9 +9587,8 @@ identidade hardcoded (`comentario`, `moverColuna`, `editarCampos` [2x],
 
 7 testes novos em `board.test.js`. Suíte inteira: **241/241 passando**.
 
-**Ainda não deployado** — depende de `firebase deploy --only
-functions:agenteAgil` na máquina do usuário, depois de resincronizar o
-clone local.
+**Deployado** em 2026-08-25 via `firebase deploy --only
+functions:agenteAgil`.
 
 ### 2026-07-29 · PR #52
 Corrige `mover_coluna` ficando silencioso ao mover um card pra coluna
