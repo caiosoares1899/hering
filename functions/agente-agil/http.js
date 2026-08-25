@@ -28,6 +28,14 @@ const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
 
 const IDEMPOTENCY_PATH = `kanban/squads/${SQUAD_ID}/dados/agente_agil_processed`;
 
+// Único especialista real usando este canal até 2026-08-25 — nenhuma
+// chamada existente manda `especialista` no envelope ainda (campo novo,
+// opcional, ver schema.js). Fallback aqui (não em board.js — resolveActor()
+// trata "sem especialista" como "é o próprio orquestrador", correto pra
+// realHandlers.js) garante que a escrita já fica corretamente atribuída
+// SEM precisar coordenar uma mudança no lado do Databricks primeiro.
+const DEFAULT_ESPECIALISTA = 'databricks';
+
 const agenteAgil = onRequest(
   { region: 'us-central1', secrets: [AGENTE_AGIL_KEY] },
   async (req, res) => {
@@ -100,7 +108,13 @@ const agenteAgil = onRequest(
 
     let plan;
     try {
-      plan = await buildWritePlan(cardKey, payload.outputs, { cardId, dryRun: payload.dryRun, db, notificar: payload.notificar });
+      plan = await buildWritePlan(cardKey, payload.outputs, {
+        cardId,
+        dryRun: payload.dryRun,
+        db,
+        notificar: payload.notificar,
+        especialista: payload.especialista || DEFAULT_ESPECIALISTA,
+      });
     } catch (err) {
       if (err.code === 'unknown_output_type' || err.code === 'invalid_output') {
         res.status(400).json({ error: 'invalid_output', message: err.message });

@@ -28,9 +28,9 @@ async function build(out, ctx) {
     data: {
       [id]: {
         id,
-        uid: 'agente-agil',
-        author: 'Agente Ágil',
-        init: '🤖',
+        uid: ctx.actor.uid,
+        author: ctx.actor.author,
+        init: ctx.actor.init,
         text: out.texto,
         ts: new Date().toISOString(),
       },

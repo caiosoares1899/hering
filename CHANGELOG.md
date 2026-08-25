@@ -8040,6 +8040,37 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-25 · Desenho: orquestrador recebendo/organizando input de especialistas externos — Achado 1 corrigido
+Pedido direto: "o ponto dele receber as informações de outros agentes
+externos e organizá-las dentro do board, está no mapeamento?". Não
+estava — é extensão nova da visão "PO+orquestrador" já declarada no
+topo do README, sem desenho nem decisão tomada antes.
+
+**2 achados que reencaixaram o desenho, antes de qualquer código**:
+(1) todo output do canal de especialistas (`agente-agil/http.js`, hoje
+só Databricks) grava com o MESMO ator (`uid:'agente-agil'`) que o
+próprio orquestrador usa pra si — estruturalmente impossível
+diferenciar um do outro hoje, e o filtro anti-auto-disparo de
+`mentionTrigger.js` engolia os dois igual; (2) o canal de especialistas
+roda travado no squad `ecomm` (nunca recebe `squadId`), enquanto o
+orquestrador só existe em `dev`/`dados` — zero sobreposição real hoje.
+
+**Escopo combinado**: reativo primeiro (alguém @menciona pedindo o
+resumo — zero infra nova), v1 só resume e atribui, nunca reconcilia
+contradições sozinho (sinaliza a divergência, não escolhe quem tem
+razão), reaproveita `ler_card` em vez de uma ferramenta nova (extensão
+futura: `origem` por comentário — especialista/humano/próprio).
+Proativo (scan notando múltiplos especialistas sozinho) fica pra uma
+Fase B, decisão separada.
+
+**Achado 1 corrigido nesta rodada** (pré-requisito técnico, antes do
+resto do desenho): ver entrada completa em "Agente Ágil
+(`functions/agente-agil/`)" abaixo — `resolveActor()`/`ctx.actor` dão
+identidade própria (`🔌 Databricks`) pro especialista, sem tocar em
+nada do comportamento do orquestrador. Squad de teste combinado pro
+resto do desenho: `dev` (simulado — não tem tráfego real de `ecomm`
+lá até decidirmos se/quando levar o orquestrador pra esse squad).
+
 ### 2026-08-25 · "🤖 Resumo do Agente Ágil" dentro de "Meu Dia" (nova Cloud Function `agenteAgilResumoMeuDia`)
 Pedido direto do usuário: "acho que o 'Meu Dia' é uma oportunidade legal
 pro Agente Ágil... ele fazer um grande levantamento e resumo do board
@@ -9524,6 +9555,41 @@ squad de teste, tornar `SQUAD_ID` configurável. Nada aqui é chamado por
 nenhum endpoint HTTP ainda — não requer `firebase deploy`.
 
 ## Agente Ágil (`functions/agente-agil/`)
+
+### 2026-08-25 · Fix de identidade: especialista externo deixa de gravar como "Agente Ágil"
+Achado 1 do desenho "orquestrador recebe/organiza input de múltiplos
+especialistas externos" (ver entrada completa em "Agente Ágil
+Orquestrador" acima) — descoberto ao planejar, não reportado como bug
+isolado.
+
+Todo output que sai de `http.js` (o canal de especialistas externos —
+hoje só Databricks) gravava `uid:'agente-agil'`/`author:'Agente Ágil'`
+em comentário, e `who:'Agente Ágil'` em `card.history` (mover_coluna/
+editar_campos/checklist_item/agent_status) — o MESMO ator que
+`agente-agil-orquestrador/tools/realHandlers.js` usa pra si mesmo
+(reusa os mesmos builders). Resultado: estruturalmente impossível
+diferenciar "um especialista escreveu isso" de "o orquestrador escreveu
+isso", e o filtro anti-auto-disparo do orquestrador (ignora
+`comment.uid===AGENTE_UID`) engolia comentário de especialista igual a
+comentário próprio.
+
+Fix: `board.js` ganha `resolveActor(especialistaId)`/`ctx.actor` —
+identidade própria (`uid: 'especialista:databricks'`, `author: '🔌
+Databricks'`) quando `extra.especialista` vem preenchido (só `http.js`
+passa isso, com fallback `'databricks'` pra não quebrar chamadas
+existentes que ainda não mandam o campo novo). `realHandlers.js` nunca
+passa `especialista` — identidade do orquestrador continua exatamente
+`'agente-agil'`/`'Agente Ágil'` de sempre, zero mudança de
+comportamento pra ele. `schema.js` ganha o campo opcional
+`especialista` no envelope. Todos os 6 output builders que gravavam a
+identidade hardcoded (`comentario`, `moverColuna`, `editarCampos` [2x],
+`checklistItem`, `agentStatus`) passam a usar `ctx.actor`.
+
+7 testes novos em `board.test.js`. Suíte inteira: **241/241 passando**.
+
+**Ainda não deployado** — depende de `firebase deploy --only
+functions:agenteAgil` na máquina do usuário, depois de resincronizar o
+clone local.
 
 ### 2026-07-29 · PR #52
 Corrige `mover_coluna` ficando silencioso ao mover um card pra coluna

@@ -292,6 +292,17 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
 - `http.js`, `schema.js`, `board.js`, `flow.js`, `members.js`, `notifications.js`, `resolver.js`, `storage.js`
+- `board.js` — `resolveActor(especialistaId)`/`ctx.actor` (2026-08-25): identidade
+  (`uid`/`author`/`who`/`init`) creditada em todo output — achado real: antes,
+  todo output (especialista externo via `http.js` OU o próprio orquestrador via
+  `agente-agil-orquestrador/tools/realHandlers.js`, que reusa os MESMOS
+  builders) gravava sempre `uid:'agente-agil'`, o mesmo ator, tornando
+  estruturalmente impossível o orquestrador diferenciar "especialista escreveu"
+  de "eu mesmo escrevi" (o filtro anti-auto-disparo de `mentionTrigger.js`
+  engolia os dois igual). `extra.especialista` em `buildWritePlan()` só vem
+  preenchido quando quem chama é `http.js` (default `'databricks'`, único
+  especialista real hoje) — `realHandlers.js` nunca passa isso, mantém a
+  identidade de sempre
 
 ### intake/ e backup/ — online
 - `intake/submit.js` — `intakeSubmit`, HTTP público sem login, único ponto de
