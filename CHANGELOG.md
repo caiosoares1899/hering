@@ -1901,6 +1901,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.471-dev — 2026-08-25 — Nova feature: duplicar supercard com filhos junto
+Pedido direto: "na parte de duplicar card, quando ele for um supercard,
+habilita a opção de poder duplicar filhos tb! (aí tem que ter as
+garantias que eles vão funcionar)".
+
+Modal de "⧉ Duplicar card" ganha uma nova opção — só aparece quando o
+card é um supercard (`_cardIsSupercard()`, pelo menos 1 filho ativo):
+"🧩 Duplicar os N card(s) filho(s) também", desmarcada por padrão
+(opt-in, diferente dos outros checkboxes do modal, que decidem só
+QUAIS campos entram na mesma cópia — esta multiplica cards).
+
+Nova função `_duplicarComFilhos()`, recursiva: cobre netos também
+(supercard vai até 3 níveis — campanha → criativo → versão), religa
+`childCardIds` pros ids NOVOS dos filhos duplicados (nunca reaproveita
+os originais — mesma garantia que já existia pro card raiz), filhos
+arquivados ficam de fora, e cada filho MANTÉM a própria coluna (a
+coluna escolhida no modal só vale pro card raiz — senão a estrutura
+toda "colapsaria" pra uma coluna só). Proteção contra ciclo corrompido
+nos dados (`visited`), embora não devesse acontecer dado o teto de
+níveis.
+
+**Garantias verificadas com um harness de teste isolado** (7 cenários:
+card simples, filho arquivado excluído, coluna do pai não vaza pros
+filhos, 3 níveis com netos, opção desmarcada preserva o comportamento
+antigo, ciclo corrompido não trava, `fbCreateCard()` chamado 1x por
+card novo da árvore) — todos passando antes de subir.
+
 ### v8.30.470-dev — 2026-08-25 — Ajuste visual: corner do contorno arredondado igual o resto do card
 Feedback direto: "não dá pra arredondar pra continuar com o formato
 atual?" — o `border-top`+`border-left` novos ficavam com o canto reto,
