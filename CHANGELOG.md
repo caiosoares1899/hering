@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.467 — 2026-08-25 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.460
+(v8.30.465-dev → v8.30.467-dev), validado em dev.
+
+- **"🤖 Resumo do Agente Ágil" dentro de "Meu Dia"** — botão novo que
+  chama o Agente Ágil sob demanda pra fazer um levantamento do board:
+  cards incompletos, atrasados, bloqueados, e uma sugestão de ordem de
+  ataque. Só squads dev/dados. Não escreve nada no board, só mostra o
+  texto.
+- **Removido o botão "🤖 Agente Ágil" antigo** (FAB no desktop, "Agente"
+  na barra de navegação mobile) — abria um painel de chat que já estava
+  desativado há tempos (dependia de um Worker externo hoje fora do ar).
+- **Corrigido: prioridade perdida ao criar um card novo** — selecionar
+  uma prioridade num card ainda não salvo e fechar o modal (clicar fora,
+  ✕ ou Cancelar) sem preencher mais nada descartava a escolha sem
+  nenhum aviso. Agora avisa igual aos outros campos (título, descrição,
+  tags, checklist...).
+
 ### v8.30.460 — 2026-08-24 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.459
 (v8.30.462-dev → v8.30.464-dev), validado em dev.
