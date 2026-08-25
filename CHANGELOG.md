@@ -1901,6 +1901,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.469-dev — 2026-08-25 — Ajuste visual: contorno do cabeçalho das colunas ganha borda de cima também
+Feedback direto depois de ver o resultado da v8.30.468-dev ("assim
+ficou feio kkkk continua o contorno na parte de cima"): o mini contorno
+colorido (`--col-accent`) tinha só `border-left`, o que ficava com um
+corte estranho na borda de cima do cabeçalho. Adicionado `border-top`
+na mesma cor/espessura — mesma variável CSS, sem mudar a lógica de
+JS.
+
 ### v8.30.468-dev — 2026-08-25 — Fix: data de criação/edição em formato errado + contorno colorido no cabeçalho das colunas
 2 pedidos diretos do usuário.
 
