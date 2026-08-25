@@ -1915,6 +1915,14 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.473-dev — 2026-08-25 — Ajuste: filtro de supercard vira checkbox
+Feedback direto: "prefiro que seja um checkbox de ligar e desligar" —
+o select de 3 opções (v8.30.472-dev) virou um checkbox único "🧩
+Incluir supercards" (marcado por padrão, mesmo comportamento de
+sempre). Desmarcar exclui o card container da conta, mesma lógica de
+antes — só a UI simplificou. Removida a opção "só supercards" (não
+fazia parte do pedido original).
+
 ### v8.30.472-dev — 2026-08-25 — Controle de Criativos: filtro de supercard no Dashboard
 Pedido direto: "aqui falta o filtro de supercard (colocar e tirar da
 conta)" — no Dashboard do 🎬 Controle de Criativos, novo select "🧩
