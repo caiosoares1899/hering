@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.473 — 2026-08-25 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.471
+(v8.30.472-dev → v8.30.473-dev), validado em dev.
+
+- **Controle de Criativos: checkbox "🧩 Incluir supercards"** no
+  Dashboard — marcado por padrão (comportamento de sempre). Desmarcar
+  tira o card container (campanha/criativo com filhos) da conta total;
+  os filhos continuam contando normalmente.
+
 ### v8.30.471 — 2026-08-25 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.467
 (v8.30.468-dev → v8.30.471-dev), validado em dev.
