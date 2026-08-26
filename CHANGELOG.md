@@ -1953,6 +1953,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.482-dev — 2026-08-26 — Dashboard de Campanhas ganha checkbox "Incluir supercards"
+Pedido direto: "em campanhas, ali na parte de dashboard (dados da
+campanha), faltou incluir a opção de incluir/ou não, supercards! tipo vc
+fez no de criativos" — mesma feature da v8.30.473 (Controle de
+Criativos), agora também no dashboard "📊 Dados de Produção" dentro do
+detalhe de uma campanha (`renderCampDashboard()`).
+
+Checkbox "🧩 Incluir supercards" (marcado por padrão, mesmo texto/
+tooltip do Controle de Criativos). Diferente de lá, aqui o corpo inteiro
+do dashboard é reconstruído (`innerHTML=`) a cada render — o estado do
+checkbox não pode morar só no DOM (seria recriado do zero e perderia o
+valor), então mora numa variável (`window._campDashIncludeSuper`,
+`_campDashToggleSuper()`). Desmarcado, tira o card container da conta —
+os filhos continuam contando normalmente, mesmo comportamento de lá.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.481-dev — 2026-08-26 — Aviso do Agente Ágil vira colapsável
 Pedido direto: "faz esse aviso do agente agil ser colapsável". O bloco
 explicativo + aviso de custo (v8.30.480-dev) ganhou cabeçalho clicável

@@ -5565,7 +5565,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.481-dev</div>
+<div class="version">v8.30.482-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17005,11 +17005,28 @@ function setCampRightTab(tab){
 // (_crvDonutGradient / _crvBarRow), mas alimentado pelos cards vinculados a campanha
 // (window._campVinculados), pra nao misturar com os numeros de venda/midia que o time
 // ja loga manualmente na timeline (registros tipo "📊 Resultado").
+// Checkbox "Incluir supercards" (mesmo padrão do Controle de Criativos,
+// crv-df-supercard-incluir — pedido direto: "faltou incluir a opção de
+// incluir/ou não, supercards! tipo vc fez no de criativos"). Diferente de
+// lá, aqui NÃO dá pra guardar o estado só no DOM: camp-dash-body é
+// reconstruído inteiro (innerHTML=) a cada render, então o checkbox em si
+// também seria recriado e perderia o valor — por isso o estado mora numa
+// variável (_campDashIncludeSuper), não no elemento.
+if(window._campDashIncludeSuper===undefined) window._campDashIncludeSuper=true;
+function _campDashToggleSuper(checked){
+  window._campDashIncludeSuper = checked;
+  renderCampDashboard();
+}
 function renderCampDashboard(){
   const body = document.getElementById('camp-dash-body'); if(!body) return;
-  const rows = window._campVinculados||[];
+  const allRows = window._campVinculados||[];
+  const superToggleHtml = allRows.length
+    ? '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap;margin-bottom:14px;" title="Supercard aqui é o card \'container\' (campanha/criativo) — não é ele mesmo uma peça sendo produzida, só organiza os filhos que são">'
+      +'<input type="checkbox" '+(window._campDashIncludeSuper?'checked':'')+' onchange="_campDashToggleSuper(this.checked)"> 🧩 Incluir supercards</label>'
+    : '';
+  const rows = window._campDashIncludeSuper ? allRows : allRows.filter(c=>!_cardIsSupercard(c));
   if(!rows.length){
-    body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card vinculado a esta campanha ainda.</div>';
+    body.innerHTML = superToggleHtml + '<div style="text-align:center;color:var(--txt3);padding:40px 0;">'+(allRows.length?'Nenhum card bate com esse filtro.':'Nenhum card vinculado a esta campanha ainda.')+'</div>';
     return;
   }
   const total = rows.length;
@@ -17076,7 +17093,8 @@ function renderCampDashboard(){
   const showSquadBlock = sqCounts.size>1;
 
   body.innerHTML =
-    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+    superToggleHtml
+    +'<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
       +statCard('📦','Cards vinculados',total,'var(--txt)')
       +statCard('✅','Concluídos',concluidos+' <span style=\'font-size:12px;color:var(--txt3);\'>('+pctConcl+'%)</span>','#4ade80')
       +statCard('🔄','Em andamento',emAndamento,'#38b6ff')
