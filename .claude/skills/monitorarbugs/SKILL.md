@@ -165,6 +165,26 @@ Mesma disciplina de sempre neste repo:
      produto (Passo 3), confirmado pelo usuário como bug real antes de
      implementar `_isColCancelLike()`.
 
+- **2026-08-26, área Automações (`AUTO_TRIGGERS`/`runAutoRules`)**:
+  não veio de pedido explícito de área — o usuário reportou "automações
+  não estão funcionando" ao vivo, a investigação achou o 1º bug fora do
+  fluxo desta skill, e o 2º veio de rodar a técnica 1 (caminhos
+  paralelos) contra o achado do 1º. 2 bugs reais, mesma classe os dois:
+  um evento de trigger disparava por alguns caminhos (arrastar, atalhos
+  de contexto/bulk) mas não pelo modal do card (Salvar/autosave), porque
+  o wrapper de notificações em `saveCard()`/`scheduleAutoSave()`
+  disparava a notificação (`notifX()`) mas esquecia o `runAutoRules()`
+  irmão — diferente dos outros blocos do mesmo wrapper, que sempre
+  disparam os dois juntos.
+  1. `assigned` ("Card atribuído a X") não disparava ao trocar
+     responsável pelo dropdown do modal + Salvar (dev v8.30.474-dev,
+     PR #533 → prod v8.30.474, PR #534).
+  2. `move` ("Card movido para coluna") não disparava ao trocar a
+     coluna pelo dropdown do modal + Salvar OU autosave — só
+     arrastar/`ctxMove()` disparavam (dev v8.30.476-dev, PR aberta
+     nesta rodada). Achado ao comparar TODOS os call sites de
+     `runAutoRules('move', ...)` contra o padrão que causou o bug #1.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

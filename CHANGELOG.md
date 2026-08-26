@@ -1935,6 +1935,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.476-dev — 2026-08-26 — Fix crítico: automação "Card movido para coluna" não disparava pelo modal
+Achado via skill `/monitorarbugs`, comparando TODOS os caminhos que
+mudam a coluna de um card com o achado anterior (fix de `assigned`
+na v8.30.474-dev, mesma classe de bug).
+
+Arrastar no board, arrastar por toque no mobile, e "Mover para" no
+menu de contexto (`handleDrop`/`ctxMove`) sempre dispararam
+`runAutoRules('move', ...)` corretamente. Mas trocar a "Coluna" no
+dropdown do modal do card — e clicar "💾 Salvar" OU deixar o autosave
+salvar sozinho — nunca disparava: os dois lugares que tratam essa
+mudança (`scheduleAutoSave()` e o wrapper de notificações de
+`saveCard()`) já disparavam `notifDone()`/`notifMoved()` certinho, mas
+nenhum dos dois chamava `runAutoRules('move', ...)`.
+
+Cenário real: automação "Quando card move pra coluna X → Y"
+configurada. Arrastar funciona; trocar a coluna pelo modal (um dos
+dois jeitos normais de mover um card) nunca disparava nada, sem erro
+visível.
+
+Corrigido nos dois lugares, mesmo padrão dos triggers irmãos
+(assigned/unblocked/risk_added/checklist_complete).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.475-dev — 2026-08-26 — Fix visual: capa do card cobria a bordinha do supercard
 Reportado direto: "ta vendo q a capa ficou levemente acima da bordinha
 rosa/roxa do supercard? tem como colocar atrás? trazer essa
