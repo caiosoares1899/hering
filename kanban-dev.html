@@ -3514,6 +3514,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <button type="button" class="btn btn-sm" onclick="openHelp()">❓ Central de Ajuda</button>
     <button type="button" class="btn btn-sm" onclick="closeOv('card-ov');openMeuDia();">🌅 Meu Dia</button>
     <button type="button" class="btn btn-sm" onclick="closeOv('card-ov');">🗂️ Ver board</button>
+    <button type="button" class="btn btn-sm" onclick="refreshAgenteHotline()" title="Apaga todos os comentários dessa conversa (de todo mundo) e começa do zero" style="margin-left:auto;color:var(--danger);border-color:rgba(255,107,107,.3);">🔄 Limpar conversa</button>
   </div>
 
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
@@ -5546,7 +5547,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.478-dev</div>
+<div class="version">v8.30.479-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11148,6 +11149,26 @@ async function openAgenteHotline(){
     catch(err){ console.error('[openAgenteHotline] falha ao criar card hotline:', err); showToast('⚠️ Não deu pra criar o card do Agente Ágil agora. Tenta de novo.'); return; }
   }
   openCard(c.id);
+}
+// Botão "🔄 Limpar conversa" (ver #m-agente-hotline-row) — o card hotline é
+// compartilhado entre QUALQUER pessoa que queira falar com o Agente Ágil,
+// então acumula assuntos sem nada a ver entre si com o tempo (achado
+// previsto na hora de desenhar a feature — ver CODE_MAP.md). Isso dá um
+// jeito de começar do zero sem precisar apagar/recriar o card em si (que
+// perderia a posição fixa e o id que `_findAgenteHotlineCard()` já achou).
+async function refreshAgenteHotline(){
+  const c=_findAgenteHotlineCard(); if(!c) return;
+  if(!confirm('Isso apaga TODOS os comentários dessa conversa com o Agente Ágil (de todo mundo). Não dá pra desfazer. Continuar?')) return;
+  try{
+    await window._set(window._ref(window._db, FB+'/card_comments/'+c.id), null);
+  }catch(err){
+    console.error('[refreshAgenteHotline] falha ao limpar comentários:', err);
+    showToast('⚠️ Não deu pra limpar os comentários agora. Tenta de novo.');
+    return;
+  }
+  _commentsCache[c.id]={};
+  loadComments(c.id);
+  showToast('🔄 Conversa limpa.');
 }
 function openCard(id){
   _intakeOrigemPendingId=null; // ver comentário na declaração

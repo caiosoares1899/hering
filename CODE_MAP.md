@@ -49,6 +49,14 @@ instrumentação extra) — os números da seção painel abaixo são de
   `functions/agente-agil-orquestrador/systemPrompt.js` (seção "Card
   especial") instrui o modelo a nunca chamar mover_coluna/editar_campos/
   checklist_item/agent_status nesse card, reconhecendo-o só pelo título.
+  Modal do card hotline esconde TUDO exceto a seção de comentários (título,
+  grid de atributos, conteúdo/vínculos, meta, histórico, extras de
+  header/rodapé — via CSS `#card-ov.agente-hotline`, não só
+  `_cardSectionVisible()`) e tem tema robô/terminal (fonte monoespaçada do
+  sistema). `refreshAgenteHotline()` — logo abaixo de `openAgenteHotline()`
+  — botão "🔄 Limpar conversa": apaga `card_comments/{cardId}` inteiro
+  (com confirmação nativa, irreversível), já que o card é compartilhado
+  entre qualquer pessoa e acumula assuntos sem relação com o tempo.
 - `saveCard()` — L11432 — auto-save (debounce 800ms) passa por aqui
 - `_finishCloseOv()` — L25531 — fechamento do modal, reset de estado pendente
 - `_newCardHasContent()`/`_newCardGuardOff` — L10439/L10413 — card ainda sem

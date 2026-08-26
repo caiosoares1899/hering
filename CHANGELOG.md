@@ -1953,6 +1953,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.479-dev — 2026-08-26 — Botão "🔄 Limpar conversa" no card do Agente Ágil
+Pedido direto: "pode colocar um botao para 'refresh' q é excluir os
+comentarios q ja tao la, limpar o historico". Faz sentido porque o card
+hotline é compartilhado entre QUALQUER pessoa que queira falar com o
+Agente Ágil — sem um jeito de zerar, ia acumular assuntos sem nada a ver
+entre si pra sempre, com o tempo confundindo o próprio agente (que lê o
+histórico de comentários via `ler_card` antes de responder).
+
+Botão novo na barra de atalhos (`refreshAgenteHotline()`), com
+confirmação nativa antes de apagar (irreversível, apaga de todo mundo —
+não só da pessoa que clicou). Apaga só `card_comments/{cardId}` — o card
+em si continua o mesmo (mesmo id, continua fixo/fora do board), só o
+histórico de comentários zera.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.478-dev — 2026-08-26 — Novo: card especial "🤖 Converse com o Agente Ágil"
 Ideia discutida em conversa direta sobre como organizar pedidos soltos pro
 Agente Ágil que não precisam ficar ligados a nenhum card real — postar
