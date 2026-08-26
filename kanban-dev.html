@@ -5492,7 +5492,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.473-dev</div>
+<div class="version">v8.30.474-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -22268,8 +22268,21 @@ saveCard = function(){
   (card.checklist||[]).forEach(it=>parseMentions(it?.t, cardId));
 
   // Responsável novo
-  if(card.owner && card.owner!==prevOwner)
+  // Achado real 2026-08-26: notifAssigned() disparava, mas runAutoRules()
+  // não — diferente de TODOS os blocos irmãos abaixo (Desbloqueado, Risco
+  // novo, Checklist 100%), que sempre disparam os dois juntos. Como este
+  // wrapper cancela o autosave pendente logo no início (clearTimeout
+  // (_autoSaveTimer), pra evitar notificação duplicada — ver comentário na
+  // declaração), e o autosave era o ÚNICO outro lugar que disparava
+  // 'assigned' pra uma troca feita pelo dropdown do modal, clicar em
+  // "Salvar" logo após trocar o responsável (o fluxo mais comum) nunca
+  // disparava a automação "Card atribuído a X". Reportado direto: "quando
+  // coloca como responsável alguma pessoa, não tá indo automaticamente pra
+  // coluna respectiva".
+  if(card.owner && card.owner!==prevOwner){
     notifAssigned(card.owner, cardId, card.title);
+    runAutoRules('assigned', card.id, card.owner);
+  }
 
   // Desbloqueado
   if(prevBlocker && !card.blocker){
