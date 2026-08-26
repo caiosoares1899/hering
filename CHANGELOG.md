@@ -1953,6 +1953,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.477-dev — 2026-08-26 — Card criado pelo Agente Ágil dispara automação + fix "Card criado em coluna X" + aviso e delay de automação
+Continuação da rodada de automações desta sessão (skill
+`/monitorarbugs`, área Automações). Três mudanças:
+
+1. **Criar card via Agente Ágil agora dispara automação.** A ferramenta
+   `criar_card` do orquestrador criava o card e salvava, mas nunca
+   chamava `runAutoRules('create', ...)` — automações de "Card criado
+   em coluna X" nunca reagiam a cards criados pelo agente. Corrigido
+   adicionando a chamada logo após `fbSaveCard(novo)`, mesmo padrão dos
+   outros pontos de criação. Dos outros 4 caminhos candidatos
+   (fan-out, quickCreateSuperChild, duplicar, duplicar em lote),
+   escopo explicitamente limitado só a este por decisão do usuário.
+
+2. **Fix incidental: trigger "Card criado em coluna X" ignorava a
+   coluna configurada.** Achado ao implementar o item acima —
+   `AUTO_TRIGGERS['card_created'].matches()` só checava
+   `ev==='create'`, nunca comparava a coluna de destino do card contra
+   `rule.triggerVal`. Na prática, uma automação configurada pra "Card
+   criado em Backlog" disparava pra card criado em QUALQUER coluna.
+   Corrigido: `matches:(rule,ev,card,extra)=> ev==='create' &&
+   extra===rule.triggerVal`.
+
+3. **Aviso + delay de 1.2s antes do efeito da automação.** Antes, o
+   efeito de uma automação (mover coluna, atribuir responsável, etc.)
+   era aplicado no mesmo instante da ação que disparou o gatilho — sem
+   nenhum sinal visual de que algo além da própria ação do usuário
+   tinha acontecido, e sem tempo de perceber a própria ação primeiro.
+   Agora `runAutoRules()` só decide quais regras batem (síncrono); a
+   aplicação de cada regra foi movida pra `_runAutoRuleAction()`, com
+   `AUTO_RULE_DELAY_MS = 1200` de atraso, e ao final mostra um toast
+   `⚡ Automação "<nome da regra>" foi aplicada`. Guarda contra card
+   excluído/arquivado durante os 1.2s (re-busca o card no início de
+   `_runAutoRuleAction`, sai sem erro se não achar).
+
+Verificado com harness Node isolado (3 cenários: matching de coluna do
+card_created, efeito+toast adiados corretamente, card excluído durante
+o delay não quebra nem age sobre card fantasma) — todos passaram.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.476-dev — 2026-08-26 — Fix crítico: automação "Card movido para coluna" não disparava pelo modal
 Achado via skill `/monitorarbugs`, comparando TODOS os caminhos que
 mudam a coluna de um card com o achado anterior (fix de `assigned`

@@ -5500,7 +5500,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.476-dev</div>
+<div class="version">v8.30.477-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19339,6 +19339,11 @@ function executeTool(name,input){
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
       cards.push(novo); renderBoard(); fbSaveCard(novo);
+      // Achado real 2026-08-26 (skill /monitorarbugs): esta é a única ferramenta
+      // de criação fora do modal principal que também deveria disparar "Card
+      // criado em [coluna]" — decisão do usuário: só esta, não fan-out/
+      // quickCreateSuperChild/duplicar (ver discussão na sessão).
+      runAutoRules('create', novo.id, novo.col);
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
     }
         case 'atualizar_owner':{
@@ -24506,7 +24511,12 @@ const AUTO_TRIGGERS = [
   { key:'move_to', label:'Card movido para coluna', valueType:'column',
     matches:(rule,ev,card,extra)=> ev==='move' && extra===rule.triggerVal },
   { key:'card_created', label:'Card criado em', valueType:'column',
-    matches:(rule,ev,card,extra)=> ev==='create' },
+    // Achado real 2026-08-26 (skill /monitorarbugs): faltava comparar extra
+    // (a coluna real onde o card nasceu) contra rule.triggerVal (a coluna
+    // escolhida na regra) — igual todo outro trigger valueType:'column' já
+    // faz (ver 'move_to' logo acima). Sem isso, uma regra "Card criado em
+    // Backlog" disparava pra card criado em QUALQUER coluna.
+    matches:(rule,ev,card,extra)=> ev==='create' && extra===rule.triggerVal },
   { key:'priority_set', label:'Prioridade definida como', valueType:'priority',
     // rule.triggerVal 'any'/vazio = regra salva antes desta generalização
     // (só existia "crítica", sem seletor de nível) — trata como 'critical'
@@ -24924,9 +24934,31 @@ function _checkSupercardAutoComplete(childCard){
 // regra bate com esse evento; rule.condTag (opcional) é uma condição E
 // extra, checada à parte do matches() pra não duplicar essa lógica em
 // todo trigger.
+// Achado real 2026-08-26, pedido direto do usuário: o efeito de uma
+// automação (ex.: criar card numa coluna que tem "mover pra Y" configurado)
+// era instantâneo — a pessoa nunca chegava a VER o card na coluna onde ela
+// mesma o colocou antes dele já ter sumido pra outro lugar, sem nenhum
+// aviso do que aconteceu. AUTO_RULE_DELAY_MS dá um respiro visual antes do
+// efeito aplicar de verdade, e _runAutoRuleAction() sempre fecha com um
+// toast deixando claro que foi uma automação (não um bug/sumiço).
+const AUTO_RULE_DELAY_MS = 1200;
+function _runAutoRuleAction(rule, cardId){
+  const card=cards.find(c=>c.id===cardId); if(!card) return; // card pode ter sido excluído/arquivado nesse meio-tempo
+  const td=new Date().toISOString().split('T')[0];
+  let ruleChanged=false;
+  _autoRuleActions(rule).forEach(a=>{
+    const actionDef=_autoAction(a.action); if(!actionDef) return;
+    if(actionDef.run({actionVal:a.actionVal, label:rule.label}, card)) ruleChanged=true;
+  });
+  if(ruleChanged){
+    card.edited='Automação'; card.editedAt=td;
+    fbSaveCard(card).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
+    renderBoard();
+    showToast('⚡ Automação "'+(rule.label||'Sem nome')+'" foi aplicada');
+  }
+}
 function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
-  let _anyTriggered=false; // true se alguma regra mudou o card -- usado no final pra persistir no Firebase (antes so mudava em memoria e sumia no reload)
   const card=cards.find(c=>c.id===cardId); if(!card) return;
   if(eventType==='move') _checkSupercardAutoComplete(card);
   activeRules.forEach(rule=>{
@@ -24934,13 +24966,7 @@ function runAutoRules(eventType, cardId, extraVal){
     if(!triggerDef) return; // regra salva com trigger que não existe mais
     if(!triggerDef.matches(rule,eventType,card,extraVal)) return;
     if(rule.condTag && !getCardTags(card).includes(rule.condTag)) return; // condição E extra, opcional
-    const td=new Date().toISOString().split('T')[0];
-    let ruleChanged=false;
-    _autoRuleActions(rule).forEach(a=>{
-      const actionDef=_autoAction(a.action); if(!actionDef) return;
-      if(actionDef.run({actionVal:a.actionVal, label:rule.label}, card)) ruleChanged=true;
-    });
-    if(ruleChanged){ card.edited='Automação'; card.editedAt=td; _anyTriggered=true; }
+    setTimeout(()=>_runAutoRuleAction(rule, cardId), AUTO_RULE_DELAY_MS);
   });
   // Checa WIP — condição agregada do board inteiro, não de 1 card específico,
   // por isso fica de fora do loop por-regra acima (não tem "o card" que
@@ -24968,14 +24994,6 @@ function runAutoRules(eventType, cardId, extraVal){
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }
     }
-  }
-
-  // Persiste as mudancas que as regras acima fizeram no card -- antes disso, runAutoRules()
-  // so mexia em memoria (card.col/priority/tags/owner) e a mudanca sumia no proximo reload
-  // porque nenhum fbSave* era chamado depois da automacao rodar.
-  if(_anyTriggered){
-    fbSaveCard(card).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
-    renderBoard();
   }
 }
 // Carrega regras do Firebase com listener contínuo
