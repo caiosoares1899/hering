@@ -18,6 +18,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.474 — 2026-08-26 · promove pra prod (fix crítico)
+Promove pra produção o fix crítico reportado direto: "automações não
+estão funcionando... quando coloca como responsável alguma pessoa,
+não tá indo automaticamente pra coluna respectiva".
+
+- **Corrigido: automação "Card atribuído a X" não disparava pelo botão
+  Salvar** — clicar em "💾 Salvar" logo depois de trocar o responsável
+  cancelava o autosave pendente (que era o único lugar que disparava
+  essa automação) sem disparar a automação por conta própria. Validado
+  em dev.
+
 ### v8.30.473 — 2026-08-25 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.471
 (v8.30.472-dev → v8.30.473-dev), validado em dev.
