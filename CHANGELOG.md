@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.483 — 2026-08-26 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.476
+(v8.30.477-dev → v8.30.483-dev), validado em dev.
+
+- **Automações: aviso + delay de 1.2s antes do efeito.** Quando uma
+  automação dispara (mover coluna, atribuir responsável, etc.), o efeito
+  agora só aplica ~1,2s depois, com um toast avisando qual regra rodou —
+  dá tempo de perceber a própria ação antes da automação mexer. Criar
+  card via Agente Ágil também passou a disparar automações de "Card
+  criado em coluna X" (antes não disparava), e esse mesmo trigger agora
+  respeita de verdade a coluna configurada na regra.
+- **Novo: card especial "🤖 Converse com o Agente Ágil".** Botão novo
+  (ao lado de ⚙ Configurações) abre um card fixo por squad — fora do
+  board normal, sem aparecer em nenhuma coluna — pra conversar com o
+  Agente Ágil sobre qualquer coisa que não precise ficar ligada a um
+  card real. O comentário já abre com a menção pronta, a resposta do
+  agente aparece sozinha (sem precisar sair e voltar do card), tem botão
+  pra limpar o histórico da conversa, e um visual próprio (tema
+  robô/terminal).
+- **Dashboard de Campanhas ganha o mesmo checkbox "🧩 Incluir
+  supercards"** que o Controle de Criativos já tinha (desde a v8.30.473)
+  — desmarcado, tira o card container (campanha/criativo com filhos) da
+  conta total; os filhos continuam contando normalmente.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.476 — 2026-08-26 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.474
 (v8.30.475-dev → v8.30.476-dev), validado em dev.
