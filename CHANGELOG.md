@@ -2002,6 +2002,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.485-dev — 2026-08-26 — Corrige cards de impedimento sumindo do board (coluna excluída)
+
+Bug reportado ao vivo pelo usuário na squad `midiacriativa`: 64 cards
+marcados como "impedimento" tinham sumido do board (visíveis/editáveis
+só via painel), com o campo "Coluna" aparecendo vazio no modal. Causa
+raiz: a coluna "Impedimentos" (id fixo `blocker`, referenciado direto no
+código sempre que `blockerMode==='col'`) tinha sido excluída dessa
+squad — e nada validava se o id `'blocker'` ainda existia antes de
+mandar um card pra lá. `renderNormal()` só mostra um card dentro da
+coluna cujo `id` bate exatamente com `card.col`; sem coluna
+correspondente, o card não aparece em lugar nenhum (sem erro, sem
+arquivar — só invisível), e o `<select>` de coluna no modal não
+seleciona nenhuma opção.
+
+**3 pontos de código faziam essa atribuição sem checar se a coluna
+existia** (mesma técnica de "comparar caminhos paralelos pra mesma
+mutação" — os 3 tratavam blocked/mover-de-automação, cada um do seu
+jeito): `ctxMove()`/`ctxBlock()` (marcar 1 card via menu de contexto),
+`_doBulkBlockCol()` (marcar em massa) e a action `move_card` de
+⚡ Automações (mover pra coluna configurada). Todos os 3 agora abortam
+com aviso claro em vez de gravar um `card.col` órfão. Além disso,
+`delColumn()` agora **bloqueia a exclusão da coluna "Impedimentos"**
+enquanto o modo de impedimentos da squad for "coluna" — evita que isso
+aconteça de novo, em vez de só reagir depois.
+
+Recuperação dos 64 cards da squad `midiacriativa` feita via script de
+console (recriação da coluna "Impedimentos" + reatribuição), fora deste
+commit (mudança de dados, não de código).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.484-dev — 2026-08-26 — Sincroniza Central de Ajuda (skill /atualizarhelpcontent) — sync geral desde a v8.30.464-dev
 Auditoria geral (não pedida por uma feature específica) cobrindo tudo que
 mudou em `HELP_CONTENT` desde o último sync (v8.30.464-dev). Achados
