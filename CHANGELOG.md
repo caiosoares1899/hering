@@ -18,6 +18,29 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.484 — 2026-08-26 · promove pra prod
+Promove pra produção o sync da Central de Ajuda (v8.30.484-dev),
+validado em dev. Puramente texto/documentação — nenhuma mudança de
+comportamento do board.
+
+- **Central de Ajuda limpa**: removidas 5 entradas da categoria "Agente
+  Ágil" que descreviam o painel de chat antigo (Daily/Métricas/
+  Retrospectiva/Memória da conversa/Snapshot inteligente) — desativado
+  há tempos (Worker fora do ar, botões removidos), sem nenhuma forma de
+  acessar essas telas hoje.
+- **Corrigidas 3 entradas com informação desatualizada**: "Dicas de
+  uso" (dizia que o agente atribui responsável — não atribui), "Worker
+  e Firebase" (ainda descrevia o Worker Cloudflare como parte do agente
+  atual, que hoje roda em Cloud Functions) e "Papéis no board" (dizia
+  que só o PO tinha acesso ao Agente Ágil — nunca foi verdade).
+- **Documentadas features que já estavam no ar sem entrada na Central
+  de Ajuda**: card especial "Converse com o Agente Ágil", "🤖 Resumo do
+  Agente Ágil" em Meu Dia, o delay/aviso de automações, duplicar
+  supercard com filhos, e o checkbox "Incluir supercards" nos
+  dashboards de Criativos e Campanhas.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.483 — 2026-08-26 · promove pra prod
 Promove pra produção o lote acumulado em dev desde a v8.30.476
 (v8.30.477-dev → v8.30.483-dev), validado em dev.
