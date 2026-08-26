@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.476 — 2026-08-26 · promove pra prod
+Promove pra produção o lote acumulado em dev desde a v8.30.474
+(v8.30.475-dev → v8.30.476-dev), validado em dev.
+
+- **Fix visual: capa do card cobria a bordinha do supercard** — a capa
+  (`.card-cover-strip`) avançava 1px além do padding reduzido de
+  `.card.supercard`, cobrindo a ponta da borda colorida
+  esquerda/superior. Corrigido alinhando a margem da capa com o
+  padding do supercard.
+- **Fix crítico: automação "Card movido para coluna" não disparava
+  pelo modal** — trocar a coluna no dropdown do modal do card e clicar
+  "💾 Salvar" (ou deixar o autosave salvar sozinho) nunca disparava
+  automações de "Card movido para coluna X". Só arrastar no board ou
+  usar "Mover para" no menu de contexto disparavam corretamente.
+  Mesma classe do bug de "Card atribuído a X" corrigido na v8.30.474 —
+  achado sistematicamente comparando todos os pontos que mudam a
+  coluna de um card (skill `/monitorarbugs`).
+
 ### v8.30.474 — 2026-08-26 · promove pra prod (fix crítico)
 Promove pra produção o fix crítico reportado direto: "automações não
 estão funcionando... quando coloca como responsável alguma pessoa,
