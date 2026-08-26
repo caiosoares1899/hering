@@ -26,8 +26,19 @@ test('SYSTEM_PROMPT_V1 documenta a distinção de risco baixo/médio e quando pe
   assert.match(SYSTEM_PROMPT_V1, /pedidos abertos/i);
 });
 
-test('SYSTEM_PROMPT_V1 escopa explicitamente pro squad "dev"', () => {
-  assert.match(SYSTEM_PROMPT_V1, /squad "dev"/);
+// Corrigido 2026-08-26: o texto dizia "só squad dev" mas dados também tem
+// escrita real desde 2026-08-24 (agenteAgilMencaoDados) — achado incidental
+// ao adicionar o guard do card hotline abaixo.
+test('SYSTEM_PROMPT_V1 escopa explicitamente pros squads "dev" e "dados"', () => {
+  assert.match(SYSTEM_PROMPT_V1, /squads "dev" e "dados"/);
+});
+
+// Card especial "Converse com Agente Ágil" (kanban-dev.html, openAgenteHotline())
+// — guarda contra o modelo tentar mover_coluna/editar_campos/etc. nesse card,
+// reconhecendo-o só pelo título exato.
+test('SYSTEM_PROMPT_V1 protege o card especial "Converse com Agente Ágil" de ações mecânicas', () => {
+  assert.match(SYSTEM_PROMPT_V1, /Converse com o Agente Ágil/);
+  assert.match(SYSTEM_PROMPT_V1, /NUNCA chame mover_coluna, editar_campos, checklist_item ou agent_status/);
 });
 
 // Achado real (2026-08-18): a 1ª @menção real mostrou o modelo respondendo

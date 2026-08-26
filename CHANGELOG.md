@@ -1953,6 +1953,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.478-dev — 2026-08-26 — Novo: card especial "🤖 Converse com o Agente Ágil"
+Ideia discutida em conversa direta sobre como organizar pedidos soltos pro
+Agente Ágil que não precisam ficar ligados a nenhum card real — postar
+num card de tarefa de verdade poluiria seu histórico com assuntos sem
+nada a ver com aquele card. Decisão: em vez de um chatbot separado (mais
+infra, mais manutenção, sem UI própria), reusar o mecanismo de `@menção`
+já existente — mas com um card que fica fora do board normal.
+
+- **Botão novo** (🤖, ao lado de ⚙ Configurações, canto inferior direito)
+  — visível pra todo mundo (não só PO/Organizador) nos squads onde o
+  Agente Ágil tem escrita real (`dev`/`dados`).
+- Ao clicar, abre (criando na 1ª vez) um card fixo por squad, título "🤖
+  Converse com o Agente Ágil", com um tema visual cinza/robô e atalhos
+  pra ❓ Central de Ajuda, 🌅 Meu Dia e 🗂️ Ver board.
+- O card **nunca aparece em nenhuma coluna do board** — é um card de
+  verdade no Firebase (flag `agenteHotline:true`), só fica de fora do
+  filtro que monta as colunas. Só a seção de comentários aparece no
+  modal — sem coluna, responsável, prioridade, checklist etc, já que não
+  é uma tarefa.
+- Continua funcionando exatamente como qualquer card: mencionar
+  `@Agente Ágil` num comentário dispara o mesmo orquestrador de sempre.
+  Ajuste no backend (`functions/agente-agil-orquestrador/systemPrompt.js`)
+  pra ele nunca tentar mover/editar esse card específico, reconhecendo-o
+  pelo título — ver entrada própria em "Agente Ágil Orquestrador" abaixo.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.477-dev — 2026-08-26 — Card criado pelo Agente Ágil dispara automação + fix "Card criado em coluna X" + aviso e delay de automação
 Continuação da rodada de automações desta sessão (skill
 `/monitorarbugs`, área Automações). Três mudanças:
@@ -8374,6 +8401,26 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-08-26 · `systemPrompt.js`: guard do card hotline + fix de escopo desatualizado (squad "dados")
+Ajuste em `SYSTEM_PROMPT_V1` acompanhando o card especial "🤖 Converse com
+o Agente Ágil" do `kanban-dev.html` (ver entrada em "kanban-dev.html
+(ambiente de teste)", v8.30.478-dev): nova seção instruindo o modelo a
+nunca chamar `mover_coluna`/`editar_campos`/`checklist_item`/
+`agent_status` nesse card específico — reconhecido só pelo título exato,
+sem nenhuma ferramenta nova nem mudança de schema (o modelo já vê o
+título via `ler_card`).
+
+**Achado incidental corrigido junto**: a seção "Escopo" (e a 1ª frase do
+próprio prompt) ainda diziam "só atua no squad dev", mas o squad `dados`
+também tem escrita real desde 2026-08-24 (`agenteAgilMencaoDados`) —
+texto desatualizado que sobrou de antes dessa expansão. Corrigido pros
+dois lugares mencionarem "dev" e "dados".
+
+Testes: `systemPrompt.test.js` atualizado (o teste que checava o escopo
+antigo esperava literalmente `squad "dev"` — corrigido pra `squads "dev"
+e "dados"`) + teste novo garantindo o guard do card hotline. Suíte
+completa (251 testes) passando.
 
 ### 2026-08-26 · Otimização de custo: prompt caching em `llmClient.js`
 Achado direto olhando o Console da Anthropic (`req_...`, colunas Entrada/

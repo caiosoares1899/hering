@@ -33,6 +33,22 @@ instrumentação extra) — os números da seção painel abaixo são de
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6139 — seções do modal (Conteúdo, Vínculos, Colaboração...)
 - `openCard()` — L11015
+- `openAgenteHotline()` — L11101 — card especial fixo por squad "🤖 Converse
+  com o Agente Ágil" (`AGENTE_AGIL_HOTLINE_SQUADS` — L5745, hoje `dev`/
+  `dados`, os únicos com escrita real do agente), pra pedido solto que não
+  precisa ficar ligado a um card real. É um card de VERDADE no Firebase
+  (`agenteHotline:true`, criado sob demanda por `fbCreateCard`, achado via
+  `_findAgenteHotlineCard()`) — reusa 100% do mecanismo de `@menção`
+  existente, só some do board normal (filtro em `renderBoard()`'s
+  `activeCards`) e o modal ganha tema cinza/robô + atalhos
+  (`_applyAgenteHotlineSkin()` — L11079, chamado por `openCard()`/
+  `openNewCard()`). `_cardSectionVisible()` esconde toda seção exceto
+  comentários pra esse card. Botão de acesso: `#fab-agente-hotline-btn`,
+  visível pra todo mundo (não só PO/Organizador) nos squads habilitados —
+  ver `_applyRoleVisibility()`. Guard equivalente no backend:
+  `functions/agente-agil-orquestrador/systemPrompt.js` (seção "Card
+  especial") instrui o modelo a nunca chamar mover_coluna/editar_campos/
+  checklist_item/agent_status nesse card, reconhecendo-o só pelo título.
 - `saveCard()` — L11432 — auto-save (debounce 800ms) passa por aqui
 - `_finishCloseOv()` — L25531 — fechamento do modal, reset de estado pendente
 - `_newCardHasContent()`/`_newCardGuardOff` — L10439/L10413 — card ainda sem
