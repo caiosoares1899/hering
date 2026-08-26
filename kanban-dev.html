@@ -5586,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.486-dev</div>
+<div class="version">v8.30.487-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10209,7 +10209,13 @@ function updateMetrics(){
 function renderBoardDataGrid(){
   const g=document.getElementById('boarddata-met-grid'); if(!g) return;
   if(document.getElementById('boarddata-ov')?.classList.contains('open')) _boardDataBarChart();
-  const activeCards=cards.filter(c=>!c.archived&&!_bdHiddenCols.has(c.col));
+  // Achado real (skill /monitorarbugs, 2026-08-26): renderBoard() já exclui
+  // o card hotline dos cards ativos (!c.agenteHotline, ver ali), mas os 3
+  // cálculos equivalentes aqui em "Dados do Board" (este, _boardDataBarChart
+  // e renderBoardDataInsights) não tinham essa mesma exclusão — o card
+  // hotline (owner:'' sempre, nunca tem prazo) inflava "Cards ativos" e
+  // "Sem responsável" em +1 permanentemente em qualquer squad com o recurso.
+  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
   const wip=activeCards.filter(c=>c.col==='progress').length;
   const bl=activeCards.filter(c=>_cardIsBlocked(c)).length;
   const done=activeCards.filter(c=>c.col==='done').length;
@@ -14856,7 +14862,9 @@ function notaSearchCards(q){
   const nota=_notasOpenId ? _notasStore()[_notasOpenId] : null; if(!nota) return;
   const already=new Set(_notaLinkedCardIds(nota));
   const lower=q.toLowerCase();
-  const results=cards.filter(c=>!c.archived && !already.has(c.id) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  // Achado real (skill /monitorarbugs, 2026-08-26): mesmo motivo do @card:
+  // em comentários — o card hotline não deveria ser vinculável a uma Nota.
+  const results=cards.filter(c=>!c.archived && !c.agenteHotline && !already.has(c.id) && c.title.toLowerCase().includes(lower)).slice(0,8);
   if(!results.length){
     dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado.</div>';
     dd.classList.add('show'); return;
@@ -16105,7 +16113,7 @@ function _renderInsightsFilterBar(){
 function renderBoardDataInsights(){
   const body=document.getElementById('boarddata-insights-body'); if(!body) return;
   _renderInsightsFilterBar();
-  let activeCards=cards.filter(c=>!c.archived && c.col!=='done' && !_bdHiddenCols.has(c.col));
+  let activeCards=cards.filter(c=>!c.archived && !c.agenteHotline && c.col!=='done' && !_bdHiddenCols.has(c.col));
   if(_insightsPeriodDays>0){
     const cutoffMs=_insightsPeriodDays*86400000;
     activeCards=activeCards.filter(c=>c.createdAt && (Date.now()-new Date(c.createdAt+'T00:00:00').getTime())<=cutoffMs);
@@ -16256,7 +16264,7 @@ function _boardDataBarChart(){
   const el = document.getElementById('boarddata-bar-chart'); if(!el) return;
   const chipsEl = document.getElementById('boarddata-col-chips');
   if(chipsEl) chipsEl.innerHTML = _bdColToggleChips();
-  const activeCards = cards.filter(c=>!c.archived&&!_bdHiddenCols.has(c.col));
+  const activeCards = cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
   const data = columns.filter(col=>!_bdHiddenCols.has(col.id)).map(col=>({
     label: col.name||col.id, color: col.color||'#38b6ff',
     count: activeCards.filter(c=>c.col===col.id).length
@@ -21650,7 +21658,11 @@ function searchSuperChildren(q){
   // Teto de 2 níveis (campanha → criativo → versão), não infinito — exclui
   // quem já tem filhos próprios (viraria um 3º nível a partir daqui) e
   // quem já é filho de outro card (um card não pode ter dois pais).
-  const results=cards.filter(c=>!c.archived && !excludeIds.has(c.id) && !(c.childCardIds&&c.childCardIds.length) && !_cardIsSuperChild(c, cards) && c.title.toLowerCase().includes(lower)).slice(0,8);
+  // Achado real (skill /monitorarbugs, 2026-08-26): sem essa exclusão, dava
+  // pra transformar o card hotline em filho de outro card — quebra a
+  // premissa de que ele é um card fixo, único por squad (ver
+  // _findAgenteHotlineCard()).
+  const results=cards.filter(c=>!c.archived && !c.agenteHotline && !excludeIds.has(c.id) && !(c.childCardIds&&c.childCardIds.length) && !_cardIsSuperChild(c, cards) && c.title.toLowerCase().includes(lower)).slice(0,8);
   dd.innerHTML='';
   if(!results.length){
     dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado — aperte Enter pra criar "'+esc(q.trim())+'" como novo card filho.</div>';
@@ -22667,8 +22679,13 @@ function handleMentionInput(ta, dd){
   // @card: → busca cards
   if(query.toLowerCase().startsWith('card:')){
     const cardQuery = query.slice(5).toLowerCase();
+    // Achado real (skill /monitorarbugs, 2026-08-26): o card hotline
+    // ("🤖 Converse com o Agente Ágil") foi desenhado pra ficar fora do
+    // grafo normal de cards (sem dono, sem prazo, invisível no board) —
+    // sem essa exclusão, dava pra @mencionar ele num comentário/descrição
+    // como se fosse um card de trabalho qualquer.
     const cardMatches = cards.filter(c=>
-      !c.archived && c.id !== editingId &&
+      !c.archived && !c.agenteHotline && c.id !== editingId &&
       c.title.toLowerCase().includes(cardQuery)
     ).slice(0,8);
     if(!cardMatches.length){ dd.classList.remove('open'); _mentionActive=null; return; }
