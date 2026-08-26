@@ -2028,6 +2028,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.487-dev — 2026-08-26 — Revisão de bugs (skill /monitorarbugs): card hotline do Agente Ágil vazando em métricas e buscas
+
+Rodada de `/monitorarbugs` sem área especificada — priorizou as 2 áreas
+mudadas mais recentemente: card hotline "🤖 Converse com o Agente Ágil"
+(v8.30.477-483) e o checkbox "Incluir supercards" em Campanhas
+(v8.30.482, sem achados — implementação já correta).
+
+2 achados na área do card hotline, mesma causa raiz: o card foi
+desenhado pra ficar fora do grafo normal de cards (sem dono, sem prazo,
+excluído do board), mas várias agregações/buscas de "todos os cards"
+nunca ganharam essa mesma exclusão:
+
+- **Métricas de "📊 Dados do Board" contando o card fantasma**:
+  `renderBoardDataGrid()`, `renderBoardDataInsights()` e
+  `_boardDataBarChart()` não excluíam `agenteHotline` (diferente de
+  `renderBoard()`, que já excluía) — "Cards ativos" e "Sem responsável"
+  ficavam permanentemente +1 em qualquer squad com o recurso (hoje
+  `dev`/`dados`), mesmo sem ninguém ter usado o card ainda.
+- **Card hotline aparecia em buscas/pickers de card**: menção `@card:`
+  em comentários/descrição, busca de cards pra vincular numa Nota, e
+  busca de filhos de supercard — nesse último caso dava pra
+  literalmente transformar o card hotline em filho de outro card,
+  quebrando a premissa de card fixo único por squad.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.486-dev — 2026-08-26 — Fecha o buraco restante: trocar pra "Impedimentos como coluna" sem a coluna existir
 
 Continuação da v8.30.485-dev: depois do merge, o bug ainda se repetiu na

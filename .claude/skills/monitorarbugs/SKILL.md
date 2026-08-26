@@ -185,6 +185,31 @@ Mesma disciplina de sempre neste repo:
      nesta rodada). Achado ao comparar TODOS os call sites de
      `runAutoRules('move', ...)` contra o padrão que causou o bug #1.
 
+- **2026-08-26, áreas card hotline "Converse com o Agente Ágil" +
+  checkbox "Incluir supercards" em Campanhas**: pedido genérico (sem
+  área especificada) — escolhidas as 2 áreas mudadas mais recentemente
+  no histórico (`git log --oneline -25 -- kanban-dev.html`, prioridade
+  1 do "Escopo de cada rodada"). Campanhas: comparada contra o padrão
+  já resolvido em Criativos (técnica 2) — implementação correta e bem
+  justificada (usa variável em vez de DOM porque o HTML do checkbox é
+  reconstruído a cada render ali; em Criativos o checkbox é estático),
+  **sem achados**. Card hotline: 2 achados reais, mesma causa raiz — o
+  card foi desenhado pra ficar fora do grafo normal de cards (sem dono,
+  sem prazo, excluído do board via `renderBoard()`), mas várias outras
+  agregações/buscas de "todos os cards" nunca ganharam essa mesma
+  exclusão (dev v8.30.487-dev):
+  1. `renderBoardDataGrid()`, `renderBoardDataInsights()` e
+     `_boardDataBarChart()` (painel "📊 Dados do Board") não excluíam
+     `agenteHotline` — "Cards ativos"/"Sem responsável" ficavam
+     permanentemente +1 em qualquer squad com o recurso. Achado via
+     técnica 1 (comparação com o filtro já correto de `renderBoard()`).
+  2. O card hotline aparecia em 3 buscas/pickers de card que não
+     deveriam listá-lo: menção `@card:` em comentários/descrição, busca
+     de cards pra vincular numa Nota, e busca de filhos de supercard
+     (esse último dava pra transformar o card hotline em filho de outro
+     card). Achado ao grepar todo `cards.filter(c=>!c.archived...)` do
+     arquivo e conferir cada um contra a mesma exclusão.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
