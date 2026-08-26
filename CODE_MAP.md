@@ -292,6 +292,18 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   tiver configurado a Automação correspondente pro gatilho ("Card vence
   hoje"/"Card atrasado (1º dia)") NAQUELE squad
 - `systemPrompt.js`, `loop.js`, `limits.js`, `detectaMencao.js`
+- `llmClient.js` — única camada que fala o formato Anthropic
+  (`createAnthropicLlmClient()`). Prompt caching (2026-08-26, achado
+  direto no Console: sem cache, um único acionamento do loop com 6
+  iterações cobrou ~50k tokens de entrada em preço cheio, já que cada
+  iteração reenvia o histórico acumulado do zero) — `withSystemCacheControl()`
+  marca o bloco de `system` (cobre tools+system juntos, TTL 1h — prefixo
+  reusado entre tarefas diferentes, não só iterações do mesmo loop) e
+  `withMessagesCacheControl()` marca o último bloco de `messages` (TTL
+  padrão 5min — prefixo específico da tarefa em andamento). `decide()`
+  agora também repassa `usage` (inclui `cache_read_input_tokens`/
+  `cache_creation_input_tokens`) pra quem chamar poder verificar hit
+  rate.
 - `resumoMeuDia.js` — "🤖 Resumo do Agente Ágil" (2026-08-25), primeira
   invocação SOB DEMANDA do orquestrador (`onRequest`, não gatilho por
   evento) e a única que NÃO ESCREVE NADA no board — só lê os cards
