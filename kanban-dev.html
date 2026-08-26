@@ -5500,7 +5500,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.475-dev</div>
+<div class="version">v8.30.476-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10390,6 +10390,11 @@ function scheduleAutoSave(){
     if(_prevCol!==c.col){
       if(c.col===_doneCol?.id) notifDone(c);
       else notifMoved(c, columns.find(cc=>cc.id===c.col)?.name);
+      // Achado real 2026-08-26 (skill /monitorarbugs): trocar a coluna pelo
+      // dropdown do modal nunca disparava o trigger "Card movido para
+      // coluna" — só arrastar/menu de contexto (handleDrop/ctxMove)
+      // disparavam. Mesma classe do bug de 'assigned' corrigido antes.
+      runAutoRules('move', c.id, c.col);
     }
     if((c.riscos?.length||0) > _prevRiscosLen){ notifRisk(c); runAutoRules('risk_added', c.id); }
     if(c.checklist?.length>0 && c.checklist.every(i=>i.done)){
@@ -22303,6 +22308,11 @@ saveCard = function(){
   if(prevCol!==card.col){
     if(card.col===doneCol?.id) notifDone(card);
     else notifMoved(card, columns.find(c=>c.id===card.col)?.name);
+    // Achado real 2026-08-26 (skill /monitorarbugs): mesmo gap do 'assigned'
+    // — trocar a coluna pelo dropdown do modal e clicar Salvar nunca
+    // disparava "Card movido para coluna" (só arrastar/menu de contexto
+    // disparavam). Ver comentário equivalente em scheduleAutoSave().
+    runAutoRules('move', card.id, card.col);
   }
 
   // Risco novo
