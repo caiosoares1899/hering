@@ -3507,8 +3507,18 @@ input[type="date"]{-moz-appearance:textfield;}
     <button type="button" class="btn btn-sm" onclick="liberarCardAgora()">✅ Liberar agora</button>
   </div>
 
-  <!-- Atalhos do card especial "🤖 Converse com Agente Ágil" (ver openAgenteHotline()/
-       _applyAgenteHotlineSkin()) — só aparece pra esse card, controlado via JS -->
+  <!-- Explicação + aviso de custo do card especial "🤖 Converse com Agente Ágil"
+       (ver openAgenteHotline()/_applyAgenteHotlineSkin()) — só aparece pra esse
+       card, controlado via JS. Pedido direto: "podia ter um lugar que
+       explicasse oq q ele faz" + aviso de que cada mensagem consome tokens
+       pagos, "entao é pra usar com cuidado e economia". -->
+  <div id="m-agente-hotline-info" style="display:none;flex-direction:column;gap:6px;background:rgba(148,163,184,.07);border:1px dashed rgba(148,163,184,.35);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:11.5px;line-height:1.5;color:var(--txt2);">
+    <div><b>🤖 O que é isso?</b> Um card fixo pra conversar com o Agente Ágil sobre qualquer coisa que não precise ficar ligada a uma tarefa real — dúvida, ideia, pedido solto. Comente mencionando <code>@Agente Ágil</code> e ele responde aqui mesmo.</div>
+    <div style="color:var(--warn);"><b>💰 Cada mensagem custa de verdade.</b> Toda vez que o agente processa um pedido, isso consome tokens da API da Anthropic — e tokens são pagos pela empresa. Use com cuidado e economia: evite testar à toa ou repetir a mesma pergunta várias vezes.</div>
+  </div>
+
+  <!-- Atalhos do card especial "🤖 Converse com Agente Ágil" — só aparece pra
+       esse card, controlado via JS -->
   <div id="m-agente-hotline-row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;">
     <span style="font-size:11px;color:var(--txt3);flex-shrink:0;">Atalhos:</span>
     <button type="button" class="btn btn-sm" onclick="openHelp()">❓ Central de Ajuda</button>
@@ -5547,7 +5557,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.479-dev</div>
+<div class="version">v8.30.480-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11108,9 +11118,11 @@ function _updateCardBackBtn(){
 function _applyAgenteHotlineSkin(card){
   const ov=document.getElementById('card-ov');
   const row=document.getElementById('m-agente-hotline-row');
+  const info=document.getElementById('m-agente-hotline-info');
   const isHotline=!!(card&&card.agenteHotline);
   if(ov) ov.classList.toggle('agente-hotline', isHotline);
   if(row) row.style.display=isHotline?'flex':'none';
+  if(info) info.style.display=isHotline?'flex':'none';
 }
 // Título fixo usado tanto pra criar quanto pra reconhecer o card hotline —
 // ver também o mesmo texto em SYSTEM_PROMPT_V1 (functions/agente-agil-

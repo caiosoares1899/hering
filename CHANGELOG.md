@@ -1953,6 +1953,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.480-dev — 2026-08-26 — Explicação + aviso de custo no card do Agente Ágil
+Pedido direto: "podia ter um lugar que explicasse oq q ele faz! e
+aproveita e coloca uma explicaçao que cada solicitação gera tokens e
+tokens sao pagos, entao é pra usar com cuidado e economia".
+
+Bloco novo (`#m-agente-hotline-info`) acima dos atalhos, sempre visível
+no card hotline: explica em 1 frase o que o card faz (conversar com o
+Agente Ágil sobre algo que não precisa de um card real) + um aviso
+destacado (`var(--warn)`) de que cada mensagem processada consome tokens
+pagos de verdade, pedindo uso com moderação. Toggle no mesmo lugar que já
+liga/desliga o resto do tema hotline (`_applyAgenteHotlineSkin()`).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.479-dev — 2026-08-26 — Botão "🔄 Limpar conversa" no card do Agente Ágil
 Pedido direto: "pode colocar um botao para 'refresh' q é excluir os
 comentarios q ja tao la, limpar o historico". Faz sentido porque o card
