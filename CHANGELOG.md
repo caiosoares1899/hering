@@ -1935,6 +1935,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.475-dev — 2026-08-26 — Fix visual: capa do card cobria a bordinha do supercard
+Reportado direto: "ta vendo q a capa ficou levemente acima da bordinha
+rosa/roxa do supercard? tem como colocar atrás? trazer essa
+bordinha/contorno pra frente?".
+
+Causa: `.card-cover-strip` usa `margin-left:-10px` pra ficar rente à
+borda do card, calibrado pro padding padrão (`10px`). Mas
+`.card.supercard` reduz o padding-left pra `9px` (abrindo espaço pro
+`border-left` de 4px, mais grosso que o 1px normal) — o `-10px` fixo
+da capa não sabia disso, avançava 1px além do novo padding e cobria a
+pontinha da borda roxa/rosa. Corrigido com `.card.supercard
+.card-cover-strip{margin-left:-9px;}`, alinhando exatamente com o
+padding-left reduzido do supercard.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.474-dev — 2026-08-26 — Fix crítico: automação "Card atribuído a X" não disparava pelo botão Salvar
 Reportado direto: "automações não estão funcionando... quando coloca
 como responsável alguma pessoa, não tá indo automaticamente pra
