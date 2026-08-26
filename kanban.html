@@ -5586,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.484</div>
+<div class="version">v8.30.486</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6702,6 +6702,10 @@ function bulkBlocker(){
 }
 function _doBulkBlockCol(){
   const col=columns.find(c=>c.id==='blocker');
+  // Mesmo guard de ctxMove() (ver comentário lá) — sem isso, marcar em
+  // massa como impedido com a coluna "Impedimentos" já excluída orfanava
+  // os cards em silêncio, um por um.
+  if(!col){ showToast('⚠ A coluna "Impedimentos" não existe mais — peça pra um ADM checar ⚙ Configurações → Colunas.'); return; }
   const list=_selectedList().filter(c=>!_cardIsBlocked(c));
   const n=list.length;
   list.forEach(c=>{
@@ -18891,6 +18895,20 @@ let _deletedColIds = new Set(); // IDs de colunas excluídas de propósito (não
 let _colDeleteReassignedCardIds = new Set();
 async function delColumn(i){
   if(columns.length<=1) return;
+  // Achado real (2026-08-26, squad midiacriativa): a coluna "Impedimentos"
+  // tem id fixo 'blocker', referenciado por várias partes do código
+  // (ctxBlock, _doBulkBlockCol, _cardIsBlocked, saveBlockerMode) sempre que
+  // blockerMode é 'col'. Bloquear a exclusão só QUANDO o modo já estava em
+  // "coluna" não bastava: dava pra excluir tranquilamente em modo "tag" (a
+  // coluna "parece" sem uso ali) e, na hora de voltar pra "coluna" depois,
+  // qualquer card que ainda carregasse col='blocker' de um período anterior
+  // sumia do board sem aviso nenhum — 64 cards afetados numa squad só, em
+  // mais de uma rodada. Por isso o bloqueio agora é incondicional: essa
+  // coluna nunca é excluível por aqui, independente do modo atual.
+  if(columns[i].id==='blocker'){
+    uiAlert('Essa é a coluna fixa de "Impedimentos" — não pode ser excluída, mesmo com o modo de impedimentos em "tag". Cards antigos podem continuar referenciando ela por baixo dos panos, e excluí-la faz esses cards sumirem do board sem aviso. Se não usam mais, deixem ela vazia/no fim da lista.');
+    return;
+  }
   if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return;
   const oldId=columns[i].id;
   _deletedColIds.add(oldId);
@@ -24810,7 +24828,11 @@ const AUTO_TRIGGERS = [
 ];
 const AUTO_ACTIONS = [
   { key:'move_card', label:'Mover card para coluna', valueType:'column',
-    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); card.col=rule.actionVal; recordHistory(card,'moveu para '+(cn?cn.name:rule.actionVal),'⚙ Automação'); return true; } },
+    // Mesmo guard de ctxMove()/​_doBulkBlockCol() — a regra guarda só o id
+    // da coluna escolhida na hora de configurar; se essa coluna for
+    // excluída depois, a automação continuava mandando o card pra um id
+    // órfão em silêncio, toda vez que disparasse.
+    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); if(!cn) return false; card.col=rule.actionVal; recordHistory(card,'moveu para '+cn.name,'⚙ Automação'); return true; } },
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
     run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
@@ -25265,6 +25287,18 @@ function _cardIsBlocked(card){
 }
 
 function saveBlockerMode(mode){
+  // Achado real (2026-08-26, squad midiacriativa): dava pra excluir a coluna
+  // "Impedimentos" enquanto o modo já estava em "tag" (delColumn() só
+  // bloqueava a exclusão se o modo JÁ fosse "coluna" — ver comentário lá) e
+  // depois trocar pra "coluna" sem nenhum aviso — qualquer card que ainda
+  // tivesse col='blocker' guardado (de um período anterior em modo "coluna")
+  // ficava invisível na hora, sem nenhuma ação óbvia pra reverter. Verifica
+  // ANTES de trocar, não depois.
+  if(mode==='col' && !columns.some(c=>c.id==='blocker')){
+    const radio=document.getElementById('bmode-'+blockerMode); if(radio) radio.checked=true; // reverte o radio visualmente
+    uiAlert('Não é possível ativar "Impedimentos como coluna": a coluna "Impedimentos" não existe nesta squad. Crie uma coluna com esse propósito em ⚙ Configurações → Colunas antes de trocar o modo.');
+    return;
+  }
   blockerMode = mode;
   fbSet(FB+'/config/blockerMode', mode);
   applyBlockerMode();
@@ -25520,7 +25554,15 @@ function ctxToggleOKR(){
 }
 function ctxMove(colId){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
-  const colName=columns.find(c=>c.id===colId)?.name||colId;
+  const colTarget=columns.find(c=>c.id===colId);
+  // Achado real (2026-08-26, squad midiacriativa): a coluna "Impedimentos"
+  // (id fixo 'blocker') tinha sido excluída, mas ctxBlock() continuava
+  // mandando cards pra lá sem checar se ela ainda existe — o card ficava
+  // com .col órfão, invisível no board (nenhuma coluna bate com aquele id),
+  // apesar de intacto no Firebase. 64 cards afetados. Sem essa validação,
+  // qualquer chamada de ctxMove pra um id de coluna já excluído repete o bug.
+  if(!colTarget){ showToast('⚠ Essa coluna não existe mais — peça pra um ADM checar ⚙ Configurações → Colunas.'); hideCtxMenu(); return; }
+  const colName=colTarget.name;
   saveUndo('mover para '+colName);
   const ant=card.col; card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';

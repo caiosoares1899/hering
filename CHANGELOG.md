@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.486 — 2026-08-26 · promove pra prod
+Promove pra produção o fix de cards de impedimento sumindo do board
+(v8.30.485-dev + v8.30.486-dev), validado em dev. Bug real reportado ao
+vivo pelo usuário na squad Mídia Criativa: 64 cards marcados como
+impedimento ficaram invisíveis no board (visíveis/editáveis só via
+painel) porque a coluna fixa "Impedimentos" tinha sido excluída, e nada
+validava isso antes de mandar um card pra lá.
+
+- **3 pontos de código agora checam se a coluna "Impedimentos" existe
+  antes de mandar um card pra lá**, abortando com aviso em vez de
+  orfanar o card em silêncio: marcar impedimento individual (menu de
+  contexto), marcar em massa, e a ação "Mover card para coluna" de
+  ⚡ Automações.
+- **A coluna "Impedimentos" não pode mais ser excluída** — em nenhum
+  modo de impedimentos (antes só bloqueava a exclusão se o modo já
+  estivesse em "coluna", deixando um buraco: dava pra excluir em modo
+  "tag" e só quebrar depois, ao voltar pra "coluna").
+- **Trocar pro modo "Impedimentos como coluna" agora valida na hora**:
+  se a coluna não existir, a troca é bloqueada com aviso claro, em vez
+  de deixar a squad num estado onde cards já bloqueados somem sem
+  explicação.
+- Recuperação dos 64 cards afetados na squad Mídia Criativa foi feita
+  à parte, direto no banco (mudança de dado, não de código).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.484 — 2026-08-26 · promove pra prod
 Promove pra produção o sync da Central de Ajuda (v8.30.484-dev),
 validado em dev. Puramente texto/documentação — nenhuma mudança de
