@@ -68,6 +68,16 @@ letting them hit the error first.
   `functions/`. Use it to jump straight to the right area instead of reading
   the whole file — but always re-`grep` the anchor name before trusting a
   line number, since it's a snapshot that drifts on every edit.
+- `MARINE_GLASS.md` — the brand/design-system manual for "Marine Glass"
+  (the "glass over ocean" visual identity — dark oceanic gradient background
+  + glassmorphism surfaces, "Abrolhos"/"Lençóis Maranhenses" theme names,
+  Syne/DM Sans typography, semantic emoji, tone of voice) shared across
+  `kanban.html`/`painel.html`, `onboarding.html`, and `bolao.html`. Written
+  by the user from the real CSS/copy already in those pages — reference it
+  (color tokens, glass blur recipe, the ready-made prompt template in its
+  §10) before styling any new page or standalone piece (slide, WhatsApp art)
+  that should read as "part of the family." Update it if the palette or
+  conventions evolve in a new piece, same spirit as `CODE_MAP.md`.
 - `kanban.html` — production kanban board (squad management).
 - `kanban-dev.html` — test/dev copy of the board. **Currently byte-identical
   to `kanban.html`** — historically it's meant for testing changes safely
