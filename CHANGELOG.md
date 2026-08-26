@@ -1953,6 +1953,15 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.481-dev — 2026-08-26 — Aviso do Agente Ágil vira colapsável
+Pedido direto: "faz esse aviso do agente agil ser colapsável". O bloco
+explicativo + aviso de custo (v8.30.480-dev) ganhou cabeçalho clicável
+com caret — mesmo padrão já usado em `toggleHistory()`/`toggleModalSec()`
+(sem persistência entre aberturas do modal, igual essas duas).
+`toggleAgenteHotlineInfo()`.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.480-dev — 2026-08-26 — Explicação + aviso de custo no card do Agente Ágil
 Pedido direto: "podia ter um lugar que explicasse oq q ele faz! e
 aproveita e coloca uma explicaçao que cada solicitação gera tokens e
