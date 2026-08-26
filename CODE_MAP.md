@@ -129,6 +129,18 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `_clGroupsInit()` — L11824
 - `toggleChecklistGroupCollapse()` — L11837
 
+### Campanhas (`openCamp()`, botão "📣 Campanhas")
+- `renderCampDashboard()` — L17020 — aba "📊 Dados de Produção" do detalhe
+  de campanha, alimentada por `window._campVinculados` (cards com a(s)
+  tag(s) da campanha — setado em `renderCampDetalhe()`). Checkbox "🧩
+  Incluir supercards" (estado em `window._campDashIncludeSuper`, não no
+  DOM — o corpo inteiro é `innerHTML=` a cada render) — mesmo padrão já
+  usado em `renderCriativosDashboard()`/`crv-df-supercard-incluir`
+  (Controle de Criativos, também sem seção própria neste mapa ainda).
+- (Seção nunca indexada antes — só a âncora tocada nesta rodada foi
+  adicionada; o resto de `openCamp()`/`renderCampDetalhe()`/etc. ainda
+  não tem entrada própria aqui.)
+
 ### Supercards / Ficha Técnica
 - `_crvAutoTitle()` — L12289 — título automático do filho a partir da Ficha Técnica
 - `searchSuperChildren()` — L21240 — busca de cards existentes ao criar um filho
