@@ -1953,6 +1953,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.483-dev — 2026-08-26 — Card do Agente Ágil: @menção automática, resposta em tempo real e estética de terminal
+3 pedidos diretos na mesma rodada:
+
+1. **Menção automática ao abrir o comentário.** "talvez sempre já colocar
+   o @Agente Ágil quando for começar um card". Ao abrir o card hotline, o
+   campo de comentário já abre em modo de edição com `@Agente Ágil ` pré-
+   preenchido e o cursor no fim — só quando o campo ainda está vazio (não
+   pisa num rascunho que a pessoa já tivesse começado).
+2. **Resposta do agente aparece sem sair e voltar do card.** "hoje quando
+   vc faz um pedido pra ele e ele responde, vc precisa sair e voltar para
+   aparecer a resposta dele". `loadComments()` normal é uma leitura
+   pontual (`window._get`) — a resposta da Cloud Function (escrita minutos
+   depois) só aparecia na próxima reabertura. Só pro card hotline, trocado
+   por um listener ao vivo (`window._onValue`,
+   `_attachAgenteHotlineCommentsListener()`/`_detachAgenteHotlineCommentsListener()`,
+   mesmo padrão de detach-then-reattach do `_checkCardLock()`). Verificado
+   com harness Node isolado (4 cenários: resposta ao vivo, listener antigo
+   desliga ao trocar de card, guard contra render fora de hora, detach
+   explícito) — todos passando.
+3. **Estética de terminal de código nos comentários.** "testa colocar uma
+   estética tipo um terminal de codigo (com cores) na area de
+   comentarios". Fundo escuro, fonte monoespaçada (já usada no resto do
+   tema hotline), mensagem do agente em verde (como stdout) vs. mensagem
+   humana em ciano (como stdin) — `comment-agent`/`comment-human` em
+   `renderCommentList()`, estilo escopado em `#card-ov.agente-hotline`
+   (não afeta comentários de nenhum outro card).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.482-dev — 2026-08-26 — Dashboard de Campanhas ganha checkbox "Incluir supercards"
 Pedido direto: "em campanhas, ali na parte de dashboard (dados da
 campanha), faltou incluir a opção de incluir/ou não, supercards! tipo vc
