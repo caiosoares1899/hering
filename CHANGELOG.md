@@ -2002,6 +2002,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.486-dev — 2026-08-26 — Fecha o buraco restante: trocar pra "Impedimentos como coluna" sem a coluna existir
+
+Continuação da v8.30.485-dev: depois do merge, o bug ainda se repetiu na
+squad `midiacriativa` por um caminho que a primeira rodada não cobria —
+o guard de `delColumn()` só bloqueava excluir a coluna "Impedimentos"
+**se o modo de impedimentos já estivesse em "coluna"** naquele momento.
+Dava pra excluir ela tranquilamente em modo "tag" (parece sem uso ali)
+e, ao voltar pra "coluna" depois, qualquer card com `col='blocker'`
+guardado de um período anterior sumia do board sem nenhum aviso na hora
+da troca.
+
+Duas correções:
+- `saveBlockerMode('col')` agora valida ANTES de trocar: se não existir
+  coluna com id `blocker`, bloqueia a troca com aviso claro, em vez de
+  deixar a squad cair num estado onde os cards já bloqueados ficam
+  invisíveis.
+- `delColumn()` não deixa mais excluir a coluna "Impedimentos" **em
+  nenhum modo** (antes só bloqueava em modo "coluna") — cards antigos
+  podem carregar `col='blocker'` independente do modo atual da squad.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.485-dev — 2026-08-26 — Corrige cards de impedimento sumindo do board (coluna excluída)
 
 Bug reportado ao vivo pelo usuário na squad `midiacriativa`: 64 cards

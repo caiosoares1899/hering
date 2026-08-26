@@ -5586,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.485-dev</div>
+<div class="version">v8.30.486-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18897,16 +18897,16 @@ async function delColumn(i){
   if(columns.length<=1) return;
   // Achado real (2026-08-26, squad midiacriativa): a coluna "Impedimentos"
   // tem id fixo 'blocker', referenciado por várias partes do código
-  // (ctxBlock, _doBulkBlockCol, _cardIsBlocked) sempre que blockerMode
-  // é 'col'. Excluir essa coluna nesse modo não quebra nada NA HORA (os
-  // cards que estavam lá são reatribuídos normalmente, ver bug 2026-08-04
-  // abaixo) — mas a partir daí, toda vez que alguém marca um card como
-  // impedido, ele volta a ser mandado pro id 'blocker' que não existe
-  // mais, e some do board de novo, silenciosamente. 64 cards afetados
-  // numa squad só. Bloqueia a exclusão nesse caso em vez de deixar
-  // acontecer de novo.
-  if(columns[i].id==='blocker' && blockerMode==='col'){
-    uiAlert('Essa é a coluna de "Impedimentos" (usada pelo modo atual de impedimentos). Mude o modo pra "🚧 Impedimentos como tag" em ⚙ Configurações → Impedimentos antes de excluir essa coluna — senão, todo card marcado como impedido depois vai sumir do board de novo.');
+  // (ctxBlock, _doBulkBlockCol, _cardIsBlocked, saveBlockerMode) sempre que
+  // blockerMode é 'col'. Bloquear a exclusão só QUANDO o modo já estava em
+  // "coluna" não bastava: dava pra excluir tranquilamente em modo "tag" (a
+  // coluna "parece" sem uso ali) e, na hora de voltar pra "coluna" depois,
+  // qualquer card que ainda carregasse col='blocker' de um período anterior
+  // sumia do board sem aviso nenhum — 64 cards afetados numa squad só, em
+  // mais de uma rodada. Por isso o bloqueio agora é incondicional: essa
+  // coluna nunca é excluível por aqui, independente do modo atual.
+  if(columns[i].id==='blocker'){
+    uiAlert('Essa é a coluna fixa de "Impedimentos" — não pode ser excluída, mesmo com o modo de impedimentos em "tag". Cards antigos podem continuar referenciando ela por baixo dos panos, e excluí-la faz esses cards sumirem do board sem aviso. Se não usam mais, deixem ela vazia/no fim da lista.');
     return;
   }
   if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return;
@@ -25287,6 +25287,18 @@ function _cardIsBlocked(card){
 }
 
 function saveBlockerMode(mode){
+  // Achado real (2026-08-26, squad midiacriativa): dava pra excluir a coluna
+  // "Impedimentos" enquanto o modo já estava em "tag" (delColumn() só
+  // bloqueava a exclusão se o modo JÁ fosse "coluna" — ver comentário lá) e
+  // depois trocar pra "coluna" sem nenhum aviso — qualquer card que ainda
+  // tivesse col='blocker' guardado (de um período anterior em modo "coluna")
+  // ficava invisível na hora, sem nenhuma ação óbvia pra reverter. Verifica
+  // ANTES de trocar, não depois.
+  if(mode==='col' && !columns.some(c=>c.id==='blocker')){
+    const radio=document.getElementById('bmode-'+blockerMode); if(radio) radio.checked=true; // reverte o radio visualmente
+    uiAlert('Não é possível ativar "Impedimentos como coluna": a coluna "Impedimentos" não existe nesta squad. Crie uma coluna com esse propósito em ⚙ Configurações → Colunas antes de trocar o modo.');
+    return;
+  }
   blockerMode = mode;
   fbSet(FB+'/config/blockerMode', mode);
   applyBlockerMode();
