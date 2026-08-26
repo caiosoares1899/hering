@@ -601,6 +601,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    borda do card (que tem padding:10px) e border-radius levemente menor
    que --r pra acompanhar o arredondamento do card sem sobrar quina viva. */
 .card-cover-strip{height:5px;border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;margin:-10px -10px 8px -10px;}
+/* Achado real 2026-08-26: em card supercard, .card.supercard reduz padding-left
+   pra 9px (era 10px) pra abrir espaço pro border-left de 4px (era 1px) — mas o
+   -10px de margin-left acima é fixo, então a capa ainda avançava até a marca de
+   -10px, 1px além do novo padding, cobrindo a pontinha da borda roxa/rosa
+   (relatado: "a capa ficou levemente acima da bordinha do supercard"). Aqui
+   alinha o -9px exatamente com o padding-left do supercard, sem mexer no resto
+   (top/right/bottom continuam -10px/-10px/8px, herdados da regra acima). */
+.card.supercard .card-cover-strip{margin-left:-9px;}
 .card-cover-strip.card-cover-img{height:64px;background-size:cover;background-position:center;background-repeat:no-repeat;}
 .cover-swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
 .cover-swatch{width:28px;height:28px;border-radius:7px;cursor:pointer;border:2px solid transparent;padding:0;transition:transform .12s,border-color .12s;}
@@ -5492,7 +5500,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.474-dev</div>
+<div class="version">v8.30.475-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
