@@ -61,6 +61,19 @@ instrumentação extra) — os números da seção painel abaixo são de
   que cada mensagem processada consome tokens pagos (uso com moderação),
   toggled junto no mesmo `_applyAgenteHotlineSkin()`. Colapsável via
   `toggleAgenteHotlineInfo()` — mesmo padrão de `toggleHistory()`.
+  Comentário já abre com `@Agente Ágil ` pré-preenchido (dentro do
+  `setTimeout()` de `openCard()`, logo depois de `initMentionDropdown(
+  'm-comment-inp')`, só se o campo ainda estiver vazio).
+  `_attachAgenteHotlineCommentsListener()`/
+  `_detachAgenteHotlineCommentsListener()` — logo acima de
+  `toggleAgenteHotlineInfo()` — listener ao vivo (`window._onValue`) nos
+  comentários desse card específico, pra resposta do agente aparecer sem
+  sair/voltar do card (`loadComments()` normal é leitura pontual, não
+  serviria); detach chamado em `_finishCloseOv()` e toda vez que
+  `openCard()`/`openNewCard()` abre outro card. Comentários do card
+  hotline têm tema visual de terminal (fundo escuro, mensagem do agente
+  em verde vs. humana em ciano — classes `comment-agent`/`comment-human`
+  em `renderCommentList()`, estilo em `#card-ov.agente-hotline`).
 - `saveCard()` — L11432 — auto-save (debounce 800ms) passa por aqui
 - `_finishCloseOv()` — L25531 — fechamento do modal, reset de estado pendente
 - `_newCardHasContent()`/`_newCardGuardOff` — L10439/L10413 — card ainda sem

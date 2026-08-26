@@ -775,6 +775,27 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 #card-ov.agente-hotline #m-agente-hotline-row button{border-radius:5px;font-family:inherit;border-color:rgba(148,163,184,.35);}
 #card-ov.agente-hotline #m-agente-hotline-row button:hover{border-color:#94a3b8;color:#e2e8f0;}
 #card-ov.agente-hotline .comments-hd-lbl{font-family:var(--hotline-mono);color:#94a3b8;}
+/* Estética "terminal de código" na área de comentários do card hotline —
+   pedido direto: "testa colocar uma estética tipo um terminal de codigo
+   (com cores) na area de comentarios no card do agente". Diferencia
+   mensagem do agente (verde, como stdout) de mensagem humana (ciano, como
+   stdin) — comment-agent/comment-human vêm de renderCommentList(). */
+#card-ov.agente-hotline .comments-wrap{background:#0a0f0d;border:1px solid rgba(148,163,184,.3);border-radius:8px;padding:14px;}
+#card-ov.agente-hotline .comments-hd-lbl::before{content:"$ ";color:#4ade80;}
+#card-ov.agente-hotline .comment-item{font-family:var(--hotline-mono);}
+#card-ov.agente-hotline .comment-meta{font-family:var(--hotline-mono);color:#64748b;}
+#card-ov.agente-hotline .comment-avatar{border-radius:4px;}
+#card-ov.agente-hotline .comment-text{background:transparent;border:none;border-left:2px solid rgba(148,163,184,.35);border-radius:0;padding:2px 0 2px 10px;color:#cbd5e1;}
+#card-ov.agente-hotline .comment-item.comment-agent .comment-meta strong{color:#4ade80;}
+#card-ov.agente-hotline .comment-item.comment-agent .comment-text{border-left-color:#4ade80;color:#a7f3d0;}
+#card-ov.agente-hotline .comment-item.comment-agent .comment-avatar{background:rgba(74,222,128,.14)!important;border-color:rgba(74,222,128,.45);}
+#card-ov.agente-hotline .comment-item.comment-human .comment-meta strong{color:#7dd3fc;}
+#card-ov.agente-hotline .comment-item.comment-human .comment-text{border-left-color:#38b6ff;}
+#card-ov.agente-hotline .comment-item.comment-human .comment-avatar{background:rgba(56,182,255,.14)!important;border-color:rgba(56,182,255,.45);}
+#card-ov.agente-hotline .cmt-act-btn{font-family:var(--hotline-mono);}
+#card-ov.agente-hotline .eoc-wrap.eoc-comment .eoc-textarea,
+#card-ov.agente-hotline .eoc-wrap.eoc-comment .eoc-display{font-family:var(--hotline-mono);background:#0a0f0d;border-color:rgba(148,163,184,.3);color:#a7f3d0;}
+#card-ov.agente-hotline .eoc-wrap.eoc-comment .eoc-display.is-empty::before{color:#64748b;}
 /* overlays */
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
@@ -5565,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.482-dev</div>
+<div class="version">v8.30.483-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11190,6 +11211,27 @@ async function refreshAgenteHotline(){
   loadComments(c.id);
   showToast('🔄 Conversa limpa.');
 }
+// Comentários do card hotline em tempo real — achado direto: "hoje quando
+// vc faz um pedido pra ele e ele responde, vc precisa sair e voltar para
+// aparecer a resposta dele". loadComments() normal é uma leitura pontual
+// (window._get), então a resposta do agente (escrita minutos depois pela
+// Cloud Function) só aparecia na próxima vez que o card fosse reaberto.
+// Aqui troca por um listener ao vivo (window._onValue), só pro card
+// hotline — os outros cards continuam no fluxo normal de loadComments().
+// Mesmo padrão de detach-then-reattach do _checkCardLock()/_cardLockUnsub.
+let _agenteHotlineCommentsUnsub = null;
+function _attachAgenteHotlineCommentsListener(card){
+  if(_agenteHotlineCommentsUnsub){ _agenteHotlineCommentsUnsub(); _agenteHotlineCommentsUnsub=null; }
+  if(!card || !card.agenteHotline || !window._fbReady) return;
+  const cardId=card.id;
+  _agenteHotlineCommentsUnsub = window._onValue(window._ref(window._db, FB+'/card_comments/'+cardId), snap=>{
+    _commentsCache[cardId] = snap.val()||{};
+    if(editingId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  });
+}
+function _detachAgenteHotlineCommentsListener(){
+  if(_agenteHotlineCommentsUnsub){ _agenteHotlineCommentsUnsub(); _agenteHotlineCommentsUnsub=null; }
+}
 // Mesmo padrão de toggleHistory()/toggleModalSec() — sem persistência entre
 // aberturas do modal, de propósito (mesmo comportamento dessas duas).
 function toggleAgenteHotlineInfo(){
@@ -11267,6 +11309,7 @@ function openCard(id){
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
   _applyAgenteHotlineSkin(c);
+  _attachAgenteHotlineCommentsListener(c);
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
@@ -11296,6 +11339,19 @@ function openCard(id){
     // comentário, que não existia antes (handleCommentMentions só tratava
     // @card, nunca teve busca de pessoa).
     initMentionDropdown('m-comment-inp');
+    // Card hotline: já abre o comentário com "@Agente Ágil " pronto e o
+    // cursor no fim, pra não precisar digitar a menção toda vez — pedido
+    // direto: "talvez sempre já colocar o @Agente Ágil quando for começar
+    // um card". Só quando o campo ainda está vazio (não pisa em cima de um
+    // rascunho que a pessoa já tivesse começado a digitar antes).
+    if(c.agenteHotline){
+      const _mciHotline=document.getElementById('m-comment-inp');
+      if(_mciHotline && !_mciHotline.value){
+        _mciHotline.value='@Agente Ágil ';
+        eocEdit('comment-eoc');
+        _mciHotline.selectionStart=_mciHotline.selectionEnd=_mciHotline.value.length;
+      }
+    }
     loadComments(id);
     renderDescPreview();
     renderCardDepMini(id);
@@ -11614,6 +11670,7 @@ function openNewCard(col){
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
   _applyAgenteHotlineSkin(null); // card novo em branco nunca é o hotline
+  _detachAgenteHotlineCommentsListener();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
@@ -25898,6 +25955,7 @@ function _finishCloseOv(id){
     if(_sb){ _sb.disabled=false; if(_sb.dataset.origLabel) _sb.innerHTML=_sb.dataset.origLabel; }
     _stopDirtyWatch();
     if(editingId) _releaseCardLock(editingId);
+    _detachAgenteHotlineCommentsListener();
     _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Fecha a janela de "card novo vindo de um Modelo" mesmo se a pessoa
@@ -26691,7 +26749,9 @@ function renderCommentList(comments){
   }
   comments.forEach(c=>{
     const item=document.createElement('div');
-    item.className='comment-item';
+    // comment-agent/comment-human só têm efeito visual dentro do tema
+    // #card-ov.agente-hotline (ver CSS) — inofensivo em cards normais.
+    item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human');
     item.dataset.cid=c.id||'';
     const avatarHtml=c.isAgent
       ? '<span title="🤖 Agente de IA">'+esc(c.avatarEmoji||'🤖')+'</span>'
