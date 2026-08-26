@@ -1953,6 +1953,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.479-dev — 2026-08-26 — Botão "🔄 Limpar conversa" no card do Agente Ágil
+Pedido direto: "pode colocar um botao para 'refresh' q é excluir os
+comentarios q ja tao la, limpar o historico". Faz sentido porque o card
+hotline é compartilhado entre QUALQUER pessoa que queira falar com o
+Agente Ágil — sem um jeito de zerar, ia acumular assuntos sem nada a ver
+entre si pra sempre, com o tempo confundindo o próprio agente (que lê o
+histórico de comentários via `ler_card` antes de responder).
+
+Botão novo na barra de atalhos (`refreshAgenteHotline()`), com
+confirmação nativa antes de apagar (irreversível, apaga de todo mundo —
+não só da pessoa que clicou). Apaga só `card_comments/{cardId}` — o card
+em si continua o mesmo (mesmo id, continua fixo/fora do board), só o
+histórico de comentários zera.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.478-dev — 2026-08-26 — Novo: card especial "🤖 Converse com o Agente Ágil"
 Ideia discutida em conversa direta sobre como organizar pedidos soltos pro
 Agente Ágil que não precisam ficar ligados a nenhum card real — postar
@@ -1969,14 +1985,28 @@ já existente — mas com um card que fica fora do board normal.
   pra ❓ Central de Ajuda, 🌅 Meu Dia e 🗂️ Ver board.
 - O card **nunca aparece em nenhuma coluna do board** — é um card de
   verdade no Firebase (flag `agenteHotline:true`), só fica de fora do
-  filtro que monta as colunas. Só a seção de comentários aparece no
-  modal — sem coluna, responsável, prioridade, checklist etc, já que não
-  é uma tarefa.
+  filtro que monta as colunas.
 - Continua funcionando exatamente como qualquer card: mencionar
   `@Agente Ágil` num comentário dispara o mesmo orquestrador de sempre.
   Ajuste no backend (`functions/agente-agil-orquestrador/systemPrompt.js`)
   pra ele nunca tentar mover/editar esse card específico, reconhecendo-o
   pelo título — ver entrada própria em "Agente Ágil Orquestrador" abaixo.
+
+**Ajuste de layout (feedback direto após o 1º teste)**: o modal ainda
+mostrava título, tags, coluna, responsável, prazo, prioridade, tamanho,
+submarca, executor, seção "Conteúdo", "Vínculos", metadados de criação/
+edição, histórico, e os botões de header (padrão/capa/compartilhar/
+expandir/ir-pra-descrição) e do rodapé (Excluir/Duplicar/Modelo/Usar
+modelo/Arquivar/Dependência/Cancelar/Salvar) — só as seções trackeadas em
+`CARD_SECTIONS` (checklist, riscos, anexos etc.) eram escondidas
+automaticamente; campos "core" do card (título, atributos) e chrome do
+modal (header/rodapé) não passam por ali. Pedido: "literalmente só o
+ponto de comentários! (pode tirar tb as coisas do menu header e da base
+do modal)". Escondido tudo isso via CSS escopado em `#card-ov.agente-
+hotline`, mantendo só a seção "💬 Colaboração" (comentários) e os
+atalhos. Visual robô reforçado: fonte monoespaçada do sistema (sem
+baixar fonte nova), scanline sutil de fundo, e um `>` estilo terminal
+antes do título.
 
 Checks de rotina: node --check OK, brace/paren balance -1/0.
 
