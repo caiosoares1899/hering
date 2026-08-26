@@ -1979,6 +1979,62 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.484-dev — 2026-08-26 — Sincroniza Central de Ajuda (skill /atualizarhelpcontent) — sync geral desde a v8.30.464-dev
+Auditoria geral (não pedida por uma feature específica) cobrindo tudo que
+mudou em `HELP_CONTENT` desde o último sync (v8.30.464-dev). Achados
+reais, não só ajuste cosmético:
+
+**Categoria `agente` (grande limpeza — 5 de 8 entradas eram resquício
+morto):** "📋 Daily", "📊 Métricas", "🔧 Retrospectiva", "🧠 Memória da
+conversa" e "🔕 Snapshot inteligente" descreviam o painel de chat antigo
+(`openAgent()`/`#ag-ov`, `agHistory` por aba) — removido de vez em
+v8.30.466-dev (FAB + nav mobile), e já estava com `AGENTE_AGIL_ATIVO =
+false` (Worker Cloudflare fora do ar) antes disso. Zero forma de chegar
+nessas telas hoje. Removidas as 5 entradas. "💡 Dicas de uso" também
+tinha uma afirmação falsa herdada de lá ("o agente reconhece... 'me
+atribua'") — o agente atual não atribui responsável (a própria entrada
+"Ações que o agente pode executar" já dizia isso, contradição interna).
+Corrigido, e trocado por uma dica real: cada @menção é respondida do
+zero, sem memória entre mensagens.
+
+**Nova entrada "Card especial 'Converse com o Agente Ágil'"**
+(categoria `agente`) — feature inteira (v8.30.478-dev → v8.30.483-dev)
+nunca tinha entrada na Central de Ajuda.
+
+**"🔧 Worker e Firebase"** (categoria `config`) — mesmo problema: descrevia
+o Worker Cloudflare como se ainda conectasse o agente à Anthropic.
+Corrigido pra deixar claro que é resquício do painel antigo e que o
+agente atual roda em Cloud Functions, sem Worker.
+
+**"🏊 Papéis no board"** — dizia "PO: acesso total incluindo Agente
+Ágil", implicando que só PO tinha acesso — nunca foi verdade pro
+@menção (qualquer papel que comenta pode mencionar) e definitivamente
+não é verdade pro card hotline (aberto pra todo mundo, decisão
+explícita). Corrigido.
+
+**Gaps de feature nova, sem contradição/erro, só faltando documentar:**
+- "🌅 Meu Dia" — botão "🤖 Resumo do Agente Ágil" (#513) nunca foi
+  mencionado.
+- "⚡ O que é uma automação" — não mencionava o delay de ~1s + toast
+  antes do efeito de uma regra (v8.30.477-dev).
+- "⧉ Duplicar card" — não mencionava a opção de duplicar supercard com
+  os filhos junto (v8.30.471-dev).
+- "🎬 Ficha Técnica" e "📣 Campanhas & Coleções" — não mencionavam o
+  checkbox "🧩 Incluir supercards" nos respectivos dashboards
+  (v8.30.472/473-dev e v8.30.482-dev).
+
+**Checado e SEM gap** (bug fix restaurando comportamento já prometido,
+ou puramente visual/interno, sem tela nova pra documentar): fix de
+presença online no painel (backstage), fix de formato de data
+"Criado/Editado por", contorno colorido no cabeçalho das colunas, fixes
+das automações "assigned"/"move" não disparando via modal (restauram a
+promessa que a própria automação já fazia), fix da capa cobrindo a
+borda do supercard, filtro de supercard no Controle de Criativos virar
+checkbox (já coberto pela entrada geral do checkbox, sem mudança de
+comportamento a mais).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.483-dev — 2026-08-26 — Card do Agente Ágil: @menção automática, resposta em tempo real e estética de terminal
 3 pedidos diretos na mesma rodada:
 
