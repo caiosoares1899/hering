@@ -742,11 +742,39 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .fab-agente-hotline{border-color:rgba(148,163,184,.45);}
 .fab-agente-hotline:hover{border-color:#94a3b8;color:#e2e8f0;}
 /* Tema cinza/robô do card especial "Converse com Agente Ágil" — ver
-   openAgenteHotline()/_applyAgenteHotlineSkin() em JS. Só troca cor/sutileza
-   visual do modal, não some com nenhuma seção (isso é _cardSectionVisible()). */
-#card-ov.agente-hotline .card-panel{border-color:rgba(148,163,184,.4);background:linear-gradient(180deg,rgba(148,163,184,.09),transparent 160px),rgba(var(--surface-rgb),.97);}
-#card-ov.agente-hotline .panel-hd{border-bottom-color:rgba(148,163,184,.3);}
-#card-ov.agente-hotline #m-title-disp{color:#cbd5e1;}
+   openAgenteHotline()/_applyAgenteHotlineSkin() em JS. Duas partes:
+   1. esconde TUDO que não é a seção de comentários. Pedido direto:
+      "literalmente só o ponto de comentários" — _cardSectionVisible() já
+      cuida das seções trackeadas em CARD_SECTIONS, isso aqui cobre o que
+      sobra: título, grid de atributos, conteúdo/vínculos, meta,
+      histórico, extras do header e o rodapé inteiro do modal.
+   2. visual robô/terminal — fonte monoespaçada do sistema, sem baixar
+      fonte nova (mantém a disciplina de bytes do resto do board), mais
+      contorno cinza-azulado e um scanline sutil de fundo. */
+:root{--hotline-mono:ui-monospace,"SF Mono","Cascadia Code","Segoe UI Mono",Consolas,monospace;}
+#card-ov.agente-hotline #m-title-field,
+#card-ov.agente-hotline .modal-grid,
+#card-ov.agente-hotline #m-sec-conteudo-hd,
+#card-ov.agente-hotline #m-sec-conteudo,
+#card-ov.agente-hotline #m-sec-vinculos-hd,
+#card-ov.agente-hotline #m-sec-vinculos,
+#card-ov.agente-hotline .meta-r,
+#card-ov.agente-hotline #m-history-wrap,
+#card-ov.agente-hotline #m-card-pattern,
+#card-ov.agente-hotline #m-cover-wrap,
+#card-ov.agente-hotline #m-share-label,
+#card-ov.agente-hotline #m-share-btn,
+#card-ov.agente-hotline #m-toggle-all-secs,
+#card-ov.agente-hotline #m-scrolldesc-btn,
+#card-ov.agente-hotline .modal-ft-row{display:none!important;}
+#card-ov.agente-hotline .card-panel{border:1px solid rgba(148,163,184,.45);border-radius:10px;background:repeating-linear-gradient(180deg,rgba(148,163,184,.035) 0px,rgba(148,163,184,.035) 1px,transparent 1px,transparent 3px),rgba(var(--surface-rgb),.98);font-family:var(--hotline-mono);}
+#card-ov.agente-hotline .panel-hd{background:rgba(148,163,184,.07);border-bottom:1px solid rgba(148,163,184,.35);}
+#card-ov.agente-hotline #m-title-disp{color:#cbd5e1;font-family:var(--hotline-mono);letter-spacing:.01em;}
+#card-ov.agente-hotline #m-title-disp::before{content:"> ";color:#64748b;}
+#card-ov.agente-hotline #m-agente-hotline-row{background:rgba(148,163,184,.07);border:1px dashed rgba(148,163,184,.4);font-family:var(--hotline-mono);}
+#card-ov.agente-hotline #m-agente-hotline-row button{border-radius:5px;font-family:inherit;border-color:rgba(148,163,184,.35);}
+#card-ov.agente-hotline #m-agente-hotline-row button:hover{border-color:#94a3b8;color:#e2e8f0;}
+#card-ov.agente-hotline .comments-hd-lbl{font-family:var(--hotline-mono);color:#94a3b8;}
 /* overlays */
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
@@ -3444,7 +3472,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
       title="Padrão de card — define quais seções opcionais aparecem no modal"
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
-    <div style="position:relative;display:inline-block;margin-right:6px;">
+    <div id="m-cover-wrap" style="position:relative;display:inline-block;margin-right:6px;">
       <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
       <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
         <div class="cover-swatches cover-swatches-target"></div>
@@ -3459,12 +3487,12 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
     </div>
-    <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
-    <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
+    <span id="m-share-label" style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
+    <button class="x-btn" id="m-share-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
     <button class="x-btn" id="m-toggle-all-secs" onclick="toggleAllModalSecs()" title="Expandir/recolher seções" style="margin-right:6px;">⇕</button>
-    <button class="x-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
+    <button class="x-btn" id="m-scrolldesc-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
@@ -3491,7 +3519,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
 
     <!-- Título -->
-    <div class="field">
+    <div id="m-title-field" class="field">
       <label class="fl">Título</label>
       <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()" onblur="_quickAddApplyIfNew()"
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
@@ -3738,7 +3766,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
     </div>
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
+    <div id="m-sec-conteudo-hd" class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
       <span style="flex:1;">📝 Conteúdo</span>
       <span id="m-sec-conteudo-caret" style="font-size:10px;transition:transform .2s;">▼</span>
     </div>
@@ -3799,7 +3827,7 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     </div><!-- /m-sec-conteudo -->
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('vinculos')">
+    <div id="m-sec-vinculos-hd" class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('vinculos')">
       <span style="flex:1;">🔗 Vínculos &amp; anexos</span>
       <span id="m-sec-vinculos-caret" style="font-size:10px;transition:transform .2s;">▼</span>
     </div>
