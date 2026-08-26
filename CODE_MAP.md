@@ -148,7 +148,12 @@ instrumentação extra) — os números da seção painel abaixo são de
 ### Automações (Butler-style)
 - `AUTO_TRIGGERS` — L24343 (20 triggers)
 - `AUTO_ACTIONS` — L24406 (14 ações)
-- `runAutoRules()` — L24765
+- `runAutoRules()` — L24765 — só decide QUAIS regras batem (síncrono);
+  `_runAutoRuleAction()`/`AUTO_RULE_DELAY_MS` (logo acima) aplicam o efeito
+  de verdade depois de ~1.2s (pedido direto: dar um respiro visual antes do
+  efeito da automação, e mostrar toast "⚡ Automação ... foi aplicada" —
+  antes era instantâneo e silencioso) — re-busca o card no momento de
+  aplicar (guarda contra card excluído/arquivado durante o delay)
 - `_autoTrigger()`/`_autoAction()` — L24489/L24490
 - `_autoValLabel()`/`_autoRenderValueOptions()` — L24493/L24515
 - **Acesso à tela de Automações** (achado real 2026-08-24: só existia via
