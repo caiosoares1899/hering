@@ -184,6 +184,40 @@ outra mudança na página:
   acontece (toast/diálogo já contam a história), sem tela ou fluxo novo
   pra documentar.
 
+- **v8.30.464-dev → v8.30.484-dev (2026-08-26, invocação genérica
+  "/atualizarhelpcontent /")**: maior sync desde a criação da skill —
+  18 commits acumulados, incluindo a feature inteira do card hotline do
+  Agente Ágil. Achado grande: **5 das 8 entradas da categoria `agente`
+  eram resquício do painel de chat antigo** (`openAgent()`/`#ag-ov`,
+  `agHistory` por aba) — "Daily", "Métricas", "Retrospectiva", "Memória
+  da conversa" e "Snapshot inteligente". O painel morreu de vez em
+  v8.30.466-dev (removidos os 2 últimos pontos de entrada, FAB + nav
+  mobile) e já estava com `AGENTE_AGIL_ATIVO=false` antes disso (Worker
+  Cloudflare fora do ar) — zero forma de alcançar essas telas há tempos,
+  mas as entradas continuaram na Central de Ajuda descrevendo um recurso
+  inacessível. Removidas as 5. "Dicas de uso" tinha uma contradição
+  interna herdada de lá (dizia que o agente reconhece "me atribua", mas
+  "Ações que o agente pode executar" já dizia que ele NÃO atribui
+  responsável) — corrigida. "Worker e Firebase" (categoria `config`) e
+  "Papéis no board" tinham o mesmo tipo de resquício (descreviam o
+  Worker como se ainda conectasse o agente atual; diziam que só PO tinha
+  acesso ao Agente Ágil) — corrigidas.
+  **Lição pra próxima vez que uma feature for desativada/removida**: a
+  skill original só previa "funcionalidade mudou de comportamento", não
+  "funcionalidade morreu e ninguém tirou a entrada correspondente" — ao
+  remover um ponto de entrada de UI (FAB, botão, aba), vale sempre
+  perguntar "alguma entrada de HELP_CONTENT descreve só isso, ou algo
+  que dependia disso?", não só corrigir o texto que mudou.
+  Gaps de feature nova documentados: card especial "Converse com o
+  Agente Ágil" (nova entrada), "🤖 Resumo do Agente Ágil" dentro de Meu
+  Dia (sub-parágrafo), delay/toast de automações (~1s antes do efeito,
+  sub-parágrafo em "O que é uma automação"), duplicar supercard com
+  filhos (sub-parágrafo em "Duplicar card"), checkbox "Incluir
+  supercards" nos dashboards de Criativos e Campanhas (sub-parágrafo em
+  cada entrada). Checado e sem gap: fixes de presença/data/CSS/
+  automação "assigned"/"move" (bug fix restaurando promessa já feita,
+  ou puramente visual — sem tela nova pra documentar).
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.
