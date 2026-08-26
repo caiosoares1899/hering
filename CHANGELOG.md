@@ -1924,6 +1924,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.474-dev — 2026-08-26 — Fix crítico: automação "Card atribuído a X" não disparava pelo botão Salvar
+Reportado direto: "automações não estão funcionando... quando coloca
+como responsável alguma pessoa, não tá indo automaticamente pra
+coluna respectiva".
+
+Causa raiz: o wrapper de notificações em `saveCard()` (linha ~22240)
+cancela o autosave pendente logo no início
+(`clearTimeout(_autoSaveTimer)`, pra evitar notificação duplicada) —
+e o autosave era o ÚNICO lugar que disparava
+`runAutoRules('assigned', ...)` pra uma troca de responsável feita
+pelo dropdown do modal. O bloco "Responsável novo" desse mesmo
+wrapper já disparava `notifAssigned()`, mas esquecia de chamar
+`runAutoRules('assigned', ...)` — diferente de TODOS os blocos irmãos
+(Desbloqueado, Risco novo, Checklist 100%), que sempre disparam os
+dois juntos. Resultado: clicar em "💾 Salvar" logo depois de trocar o
+responsável — o fluxo mais comum, muito mais rápido que os 800ms do
+debounce do autosave — nunca disparava a automação.
+
+Corrigido adicionando a chamada que faltava, no mesmo padrão dos
+blocos irmãos. Sem mudança nos outros pontos que já disparavam
+`assigned` corretamente (`scheduleAutoSave()`, `_doBulkAssign()`,
+`ctxAssignMe()`).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.473-dev — 2026-08-25 — Ajuste: filtro de supercard vira checkbox
 Feedback direto: "prefiro que seja um checkbox de ligar e desligar" —
 o select de 3 opções (v8.30.472-dev) virou um checkbox único "🧩
