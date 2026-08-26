@@ -5586,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.484-dev</div>
+<div class="version">v8.30.485-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6702,6 +6702,10 @@ function bulkBlocker(){
 }
 function _doBulkBlockCol(){
   const col=columns.find(c=>c.id==='blocker');
+  // Mesmo guard de ctxMove() (ver comentário lá) — sem isso, marcar em
+  // massa como impedido com a coluna "Impedimentos" já excluída orfanava
+  // os cards em silêncio, um por um.
+  if(!col){ showToast('⚠ A coluna "Impedimentos" não existe mais — peça pra um ADM checar ⚙ Configurações → Colunas.'); return; }
   const list=_selectedList().filter(c=>!_cardIsBlocked(c));
   const n=list.length;
   list.forEach(c=>{
@@ -18891,6 +18895,20 @@ let _deletedColIds = new Set(); // IDs de colunas excluídas de propósito (não
 let _colDeleteReassignedCardIds = new Set();
 async function delColumn(i){
   if(columns.length<=1) return;
+  // Achado real (2026-08-26, squad midiacriativa): a coluna "Impedimentos"
+  // tem id fixo 'blocker', referenciado por várias partes do código
+  // (ctxBlock, _doBulkBlockCol, _cardIsBlocked) sempre que blockerMode
+  // é 'col'. Excluir essa coluna nesse modo não quebra nada NA HORA (os
+  // cards que estavam lá são reatribuídos normalmente, ver bug 2026-08-04
+  // abaixo) — mas a partir daí, toda vez que alguém marca um card como
+  // impedido, ele volta a ser mandado pro id 'blocker' que não existe
+  // mais, e some do board de novo, silenciosamente. 64 cards afetados
+  // numa squad só. Bloqueia a exclusão nesse caso em vez de deixar
+  // acontecer de novo.
+  if(columns[i].id==='blocker' && blockerMode==='col'){
+    uiAlert('Essa é a coluna de "Impedimentos" (usada pelo modo atual de impedimentos). Mude o modo pra "🚧 Impedimentos como tag" em ⚙ Configurações → Impedimentos antes de excluir essa coluna — senão, todo card marcado como impedido depois vai sumir do board de novo.');
+    return;
+  }
   if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return;
   const oldId=columns[i].id;
   _deletedColIds.add(oldId);
@@ -24810,7 +24828,11 @@ const AUTO_TRIGGERS = [
 ];
 const AUTO_ACTIONS = [
   { key:'move_card', label:'Mover card para coluna', valueType:'column',
-    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); card.col=rule.actionVal; recordHistory(card,'moveu para '+(cn?cn.name:rule.actionVal),'⚙ Automação'); return true; } },
+    // Mesmo guard de ctxMove()/​_doBulkBlockCol() — a regra guarda só o id
+    // da coluna escolhida na hora de configurar; se essa coluna for
+    // excluída depois, a automação continuava mandando o card pra um id
+    // órfão em silêncio, toda vez que disparasse.
+    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); if(!cn) return false; card.col=rule.actionVal; recordHistory(card,'moveu para '+cn.name,'⚙ Automação'); return true; } },
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
     run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
@@ -25520,7 +25542,15 @@ function ctxToggleOKR(){
 }
 function ctxMove(colId){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
-  const colName=columns.find(c=>c.id===colId)?.name||colId;
+  const colTarget=columns.find(c=>c.id===colId);
+  // Achado real (2026-08-26, squad midiacriativa): a coluna "Impedimentos"
+  // (id fixo 'blocker') tinha sido excluída, mas ctxBlock() continuava
+  // mandando cards pra lá sem checar se ela ainda existe — o card ficava
+  // com .col órfão, invisível no board (nenhuma coluna bate com aquele id),
+  // apesar de intacto no Firebase. 64 cards afetados. Sem essa validação,
+  // qualquer chamada de ctxMove pra um id de coluna já excluído repete o bug.
+  if(!colTarget){ showToast('⚠ Essa coluna não existe mais — peça pra um ADM checar ⚙ Configurações → Colunas.'); hideCtxMenu(); return; }
+  const colName=colTarget.name;
   saveUndo('mover para '+colName);
   const ant=card.col; card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';
