@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.487 — 2026-08-26 · promove pra prod
+Promove pra produção a rodada de `/monitorarbugs` (v8.30.487-dev),
+validada em dev. Card hotline "🤖 Converse com o Agente Ágil" foi
+desenhado pra ficar fora do grafo normal de cards (sem dono, sem prazo,
+excluído do board), mas algumas contas/buscas de "todos os cards" ainda
+não tinham essa exclusão:
+
+- **Métricas de "📊 Dados do Board" contando o card fantasma**: "Cards
+  ativos" e "Sem responsável" ficavam permanentemente +1 em qualquer
+  squad com o recurso (hoje Dev e Dados), mesmo sem ninguém ter usado o
+  card ainda.
+- **Card hotline aparecia em buscas de card**: menção `@card:` em
+  comentários/descrição, busca de cards pra vincular numa Nota, e busca
+  de filhos de supercard (dava pra virar filho de outro card sem
+  querer).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.486 — 2026-08-26 · promove pra prod
 Promove pra produção o fix de cards de impedimento sumindo do board
 (v8.30.485-dev + v8.30.486-dev), validado em dev. Bug real reportado ao
