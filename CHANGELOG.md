@@ -8335,6 +8335,50 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-26 · Otimização de custo: prompt caching em `llmClient.js`
+Achado direto olhando o Console da Anthropic (`req_...`, colunas Entrada/
+Saída de tokens): um único acionamento do orquestrador com 6 iterações
+de loop (ver `runLoop()` em `loop.js`) somou ~50k tokens de entrada,
+todos cobrados em preço cheio — porque `llmClient.js` nunca marcava
+nada com `cache_control`, e cada iteração reenvia o histórico
+acumulado inteiro do zero (`system` + `tools` fixos + toda a conversa
+até ali).
+
+Corrigido com dois breakpoints de cache, sem mudar nenhum comportamento
+do agente:
+- `withSystemCacheControl()` — marca o bloco de `system`. Como a ordem
+  de renderização da API é `tools -> system -> messages`, esse único
+  marcador já cacheia tools+system juntos. TTL de 1h (não 5min): esse
+  prefixo é IDÊNTICO entre tarefas diferentes (não só entre iterações
+  do mesmo loop), então vale a pena mantê-lo vivo por mais tempo pra
+  pegar @menções espaçadas ao longo da hora.
+- `withMessagesCacheControl()` — marca o último bloco da última
+  mensagem de `messages`, TTL padrão (5min). Esse prefixo é específico
+  da tarefa em andamento (cresce a cada iteração), não faz sentido
+  mantê-lo por mais tempo que isso.
+- `decide()` agora também repassa `usage` (inclui
+  `cache_read_input_tokens`/`cache_creation_input_tokens`) pra quem
+  chamar poder confirmar o hit rate real, em vez de inferir só pelo
+  Console.
+
+Sem mudança de comportamento pro modelo — `system`/`tools`/`messages`
+continuam com o mesmo conteúdo, só ganham o marcador de cache. Testado
+com `global.fetch` mockado (`__tests__/llmClient.test.js`, 7 cenários):
+shape exato do body enviado (system vira array de blocos, cache_control
+no lugar certo), histórico multi-turno só marca o último bloco da
+última mensagem, `tools:[]` (caminho do `resumoMeuDia.js`) não quebra,
+e `usage` chega intacto no retorno de `decide()`.
+
+Cache mínimo pro Sonnet 5/Opus 5 é 1024 tokens — `system`+`tools` aqui
+somam ~2,5k tokens medidos, cria cache normalmente. Pro tier `haiku`
+(perguntas conceituais simples, ver `escolheClienteParaTarefa.js`), o
+mínimo do Haiku 4.5 é 4096 tokens — abaixo disso o marcador não quebra
+nada, só não cria cache (comportamento documentado da API).
+
+Requer `firebase deploy --only functions:agenteAgilMencao` (e as
+demais functions que passam por `llmClient.js`) pra entrar em vigor —
+ver nota de resync no `CLAUDE.md` antes de rodar localmente.
+
 ### 2026-08-25 · Achado 2 corrigido: squad `ecomm` descontinuado, `dev` vira o squad único
 Decisão direta do usuário, resolvendo o Achado 2 documentado na entrada
 abaixo ("orquestrador recebendo/organizando input de especialistas

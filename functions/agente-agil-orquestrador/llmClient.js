@@ -56,6 +56,49 @@ function anthropicToolsFromTools(tools) {
   return tools.map((t) => ({ name: t.name, description: t.description, input_schema: t.input_schema }));
 }
 
+// Prompt caching: `system` e `tools` são idênticos em toda chamada de um
+// mesmo modo/dryRun (buildTools() só varia por esses dois, não por
+// squadId/cardId — ver tools/index.js), e `messages` só CRESCE dentro do
+// mesmo loop (loop.js reenvia o histórico acumulado inteiro a cada
+// iteração, ver runLoop()). Sem cache_control nenhum, cada iteração paga
+// preço cheio pelo prefixo inteiro de novo — medido em produção: um único
+// acionamento com 6 iterações chegou a ~50k tokens de entrada cobrados
+// sem nenhum desconto. Ordem de renderização da API é tools -> system ->
+// messages, então o marcador no último bloco de `system` já cacheia
+// tools+system juntos (não precisa de marcador redundante em tools).
+//
+// TTL de 1h no bloco de system: esse prefixo é o mesmo pra QUALQUER
+// tarefa (não só entre iterações do mesmo loop) — vale manter vivo por
+// mais tempo pra pegar menções espaçadas ao longo da hora, não só
+// iterações consecutivas em segundos. O bloco de messages usa o TTL
+// padrão (5min): esse prefixo é específico da tarefa em andamento, não
+// faz sentido mantê-lo por 1h.
+//
+// Mínimo cacheável pro Sonnet 5/Opus 5 é 1024 tokens — system+tools aqui
+// somam ~2,5k tokens (medido), então cria cache normalmente. Já pro tier
+// 'haiku' (ver escolheClienteParaTarefa.js), o mínimo do Haiku 4.5 é
+// 4096 tokens — abaixo disso o marcador não quebra nada, só não cria
+// cache (comportamento documentado da API: cache_creation_input_tokens
+// fica 0, sem erro).
+function withSystemCacheControl(system) {
+  if (!system) return system;
+  return [{ type: 'text', text: system, cache_control: { type: 'ephemeral', ttl: '1h' } }];
+}
+
+function withMessagesCacheControl(messages) {
+  if (!messages.length) return messages;
+  const last = messages[messages.length - 1];
+  const content = typeof last.content === 'string'
+    ? [{ type: 'text', text: last.content }]
+    : last.content.slice();
+  if (!content.length) return messages;
+  content[content.length - 1] = {
+    ...content[content.length - 1],
+    cache_control: { type: 'ephemeral' },
+  };
+  return [...messages.slice(0, -1), { ...last, content }];
+}
+
 function createAnthropicLlmClient({ apiKey, model = DEFAULT_MODEL, maxTokens = DEFAULT_MAX_TOKENS } = {}) {
   if (!apiKey) throw new Error('createAnthropicLlmClient requer apiKey.');
 
@@ -71,8 +114,8 @@ function createAnthropicLlmClient({ apiKey, model = DEFAULT_MODEL, maxTokens = D
         body: JSON.stringify({
           model,
           max_tokens: maxTokens,
-          system,
-          messages: historyToAnthropicMessages(history),
+          system: withSystemCacheControl(system),
+          messages: withMessagesCacheControl(historyToAnthropicMessages(history)),
           tools: anthropicToolsFromTools(tools),
         }),
       });
@@ -90,9 +133,15 @@ function createAnthropicLlmClient({ apiKey, model = DEFAULT_MODEL, maxTokens = D
         else if (block.type === 'tool_use') toolCalls.push({ id: block.id, name: block.name, input: block.input });
       }
 
-      return { toolCalls, text, stopReason: data.stop_reason };
+      return { toolCalls, text, stopReason: data.stop_reason, usage: data.usage || null };
     },
   };
 }
 
-module.exports = { createAnthropicLlmClient, historyToAnthropicMessages, DEFAULT_MODEL };
+module.exports = {
+  createAnthropicLlmClient,
+  historyToAnthropicMessages,
+  withSystemCacheControl,
+  withMessagesCacheControl,
+  DEFAULT_MODEL,
+};
