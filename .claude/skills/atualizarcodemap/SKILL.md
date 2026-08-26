@@ -181,6 +181,45 @@ normal do repo:
   `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade
   (diff rodado de novo, 1287 linhas de diferença).
 
+- **2026-08-26 — 3ª rodada** (rodapé anterior: `61d2d4a`, 2026-08-25 →
+  novo: `307e6d9`, 2026-08-26). `kanban.html`/`kanban-dev.html`
+  confirmados byte-idênticos de novo (promoção da v8.30.487 já
+  mergeada) — cabeçalho atualizado. ~85 âncoras revalidadas nas 3
+  seções (`kanban.html`/`kanban-dev.html`, `painel.html`, `functions/`)
+  — todas ainda existiam, só linha andou (nenhuma removida/renomeada;
+  só `fbSaveCard()` exigiu regex mais solto pro grep, já que a
+  declaração está indentada — não é sinal de problema, só de estilo).
+  Drift bem maior que as rodadas anteriores (+68 a +475 linhas
+  dependendo da posição no arquivo, crescente da parte de cima pro
+  fim), por causa do volume desta sessão: card hotline "Converse com o
+  Agente Ágil" (6 rodadas de feedback, ~250 linhas), fix do bug de
+  cards de impedimento sumindo do board (2 rodadas), sync geral de
+  HELP_CONTENT, checkbox de Campanhas, e a rodada de `/monitorarbugs`
+  que motivou parte desta auditoria. `functions/index.js` (registro de
+  exports) e os arquivos internos do orquestrador tocados desde a
+  rodada anterior (`dueOverdueTrigger.js`, `resumoMeuDia.js`,
+  `mentionTrigger.js`, `escolheClienteParaTarefa.js`) já estavam
+  corretos — as entradas desses arquivos tinham sido escritas
+  corretamente na hora de cada mudança, sem esperar por esta rodada.
+  2 seções novas:
+  - `kanban.html`: **Impedimentos (modo coluna vs. tag)** — seção nova
+    inteira (`blockerMode`, `_cardIsBlocked()`, `saveBlockerMode()`,
+    `ctxMove()`/`ctxBlock()`, `_doBulkBlockCol()`/`_doBulkUnblockCol()`,
+    `delColumn()`), motivada por um incidente real em produção (squad
+    `midiacriativa`, 64 cards sumidos do board por coluna excluída) que
+    NUNCA tinha tido nenhuma âncora própria neste mapa, apesar de ter
+    lógica não-trivial há tempos.
+  - `kanban.html`: bullet novo dentro de `openAgenteHotline()`
+    documentando os achados do `/monitorarbugs` desta sessão (card
+    hotline vazando em métricas de "Dados do Board" e em 3 buscas de
+    card) — junta tudo que precisa lembrar de excluir `agenteHotline`
+    ao escrever uma futura agregação "todos os cards".
+  - `functions/agente-agil/board.js`: bullet aditivo (não seção nova)
+    sobre `SQUAD_ID` default trocado de `'ecomm'` (descontinuado) pra
+    `'dev'` (2026-08-25) — achado ao varrer `git log` do período, sem
+    entrada nenhuma até esta rodada.
+  `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. Isso evita reler o arquivo inteiro do zero numa
