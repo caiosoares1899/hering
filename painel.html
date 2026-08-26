@@ -5993,6 +5993,19 @@ function loadComunicados(){
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_agente_hotline_automacoes_campanhas_2026_08_26',
+    titulo: '🤖 Novo: card pra conversar com o Agente Ágil + melhorias em Automações e Campanhas',
+    corpo: `<p><b>🤖 Novo botão "Converse com o Agente Ágil"</b>, ao lado do ⚙ Configurações. Ele abre um card fixo, especial — não fica em nenhuma coluna do board — pra você conversar com o Agente Ágil sobre qualquer coisa solta que não precisa virar uma tarefa de verdade (dúvida, ideia, pedido informal). O comentário já abre com a menção pronta pra digitar, e a resposta do agente aparece sozinha, sem precisar sair e voltar do card. Tem até um botão pra limpar a conversa e começar do zero.</p>
+
+<p><b>⚡ Automações agora avisam quando disparam.</b> Quando uma regra roda (mover coluna, atribuir responsável, etc.), o efeito só aparece ~1 segundo depois, com um aviso na tela mostrando qual automação foi aplicada — assim dá pra perceber que foi a automação, não um bug. Criar card através do Agente Ágil também passou a disparar automações de "Card criado em coluna X" corretamente.</p>
+
+<p><b>🧩 Dashboard de Campanhas ganhou o mesmo checkbox "Incluir supercards"</b> que o Controle de Criativos já tinha — desmarcar tira o card container da campanha da contagem total, mantendo só os filhos.</p>
+
+<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_fix_automacao_move_capa_supercard_2026_08_26',
     titulo: '🛠️ Corrigido: automação de "Card movido para coluna" + capa do supercard',
     corpo: `<p>Quem usa <b>⚡ Automações</b> com o gatilho <b>"Card movido para coluna"</b> pode ter notado que a regra só disparava ao arrastar o card no board ou usar "Mover para" no menu de contexto — trocar a coluna direto no modal do card (pelo campo "Coluna" + <b>💾 Salvar</b>) não disparava a automação. Já está corrigido: agora dispara do mesmo jeito, não importa por onde você mudou a coluna.</p>
