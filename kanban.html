@@ -739,6 +739,63 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .fab-btn:hover{background:rgba(37,99,201,1);transform:scale(1.04);}
 .fab-cfg{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:11px;font-family:"DM Sans",sans-serif;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;backdrop-filter:blur(12px);transition:all .2s;}
 .fab-cfg:hover{border-color:var(--accent);color:var(--txt);}
+.fab-agente-hotline{border-color:rgba(148,163,184,.45);}
+.fab-agente-hotline:hover{border-color:#94a3b8;color:#e2e8f0;}
+/* Tema cinza/robô do card especial "Converse com Agente Ágil" — ver
+   openAgenteHotline()/_applyAgenteHotlineSkin() em JS. Duas partes:
+   1. esconde TUDO que não é a seção de comentários. Pedido direto:
+      "literalmente só o ponto de comentários" — _cardSectionVisible() já
+      cuida das seções trackeadas em CARD_SECTIONS, isso aqui cobre o que
+      sobra: título, grid de atributos, conteúdo/vínculos, meta,
+      histórico, extras do header e o rodapé inteiro do modal.
+   2. visual robô/terminal — fonte monoespaçada do sistema, sem baixar
+      fonte nova (mantém a disciplina de bytes do resto do board), mais
+      contorno cinza-azulado e um scanline sutil de fundo. */
+:root{--hotline-mono:ui-monospace,"SF Mono","Cascadia Code","Segoe UI Mono",Consolas,monospace;}
+#card-ov.agente-hotline #m-title-field,
+#card-ov.agente-hotline .modal-grid,
+#card-ov.agente-hotline #m-sec-conteudo-hd,
+#card-ov.agente-hotline #m-sec-conteudo,
+#card-ov.agente-hotline #m-sec-vinculos-hd,
+#card-ov.agente-hotline #m-sec-vinculos,
+#card-ov.agente-hotline .meta-r,
+#card-ov.agente-hotline #m-history-wrap,
+#card-ov.agente-hotline #m-card-pattern,
+#card-ov.agente-hotline #m-cover-wrap,
+#card-ov.agente-hotline #m-share-label,
+#card-ov.agente-hotline #m-share-btn,
+#card-ov.agente-hotline #m-toggle-all-secs,
+#card-ov.agente-hotline #m-scrolldesc-btn,
+#card-ov.agente-hotline .modal-ft-row{display:none!important;}
+#card-ov.agente-hotline .card-panel{border:1px solid rgba(148,163,184,.45);border-radius:10px;background:repeating-linear-gradient(180deg,rgba(148,163,184,.035) 0px,rgba(148,163,184,.035) 1px,transparent 1px,transparent 3px),rgba(var(--surface-rgb),.98);font-family:var(--hotline-mono);}
+#card-ov.agente-hotline .panel-hd{background:rgba(148,163,184,.07);border-bottom:1px solid rgba(148,163,184,.35);}
+#card-ov.agente-hotline #m-title-disp{color:#cbd5e1;font-family:var(--hotline-mono);letter-spacing:.01em;}
+#card-ov.agente-hotline #m-title-disp::before{content:"> ";color:#64748b;}
+#card-ov.agente-hotline #m-agente-hotline-row{background:rgba(148,163,184,.07);border:1px dashed rgba(148,163,184,.4);font-family:var(--hotline-mono);}
+#card-ov.agente-hotline #m-agente-hotline-row button{border-radius:5px;font-family:inherit;border-color:rgba(148,163,184,.35);}
+#card-ov.agente-hotline #m-agente-hotline-row button:hover{border-color:#94a3b8;color:#e2e8f0;}
+#card-ov.agente-hotline .comments-hd-lbl{font-family:var(--hotline-mono);color:#94a3b8;}
+/* Estética "terminal de código" na área de comentários do card hotline —
+   pedido direto: "testa colocar uma estética tipo um terminal de codigo
+   (com cores) na area de comentarios no card do agente". Diferencia
+   mensagem do agente (verde, como stdout) de mensagem humana (ciano, como
+   stdin) — comment-agent/comment-human vêm de renderCommentList(). */
+#card-ov.agente-hotline .comments-wrap{background:#0a0f0d;border:1px solid rgba(148,163,184,.3);border-radius:8px;padding:14px;}
+#card-ov.agente-hotline .comments-hd-lbl::before{content:"$ ";color:#4ade80;}
+#card-ov.agente-hotline .comment-item{font-family:var(--hotline-mono);}
+#card-ov.agente-hotline .comment-meta{font-family:var(--hotline-mono);color:#64748b;}
+#card-ov.agente-hotline .comment-avatar{border-radius:4px;}
+#card-ov.agente-hotline .comment-text{background:transparent;border:none;border-left:2px solid rgba(148,163,184,.35);border-radius:0;padding:2px 0 2px 10px;color:#cbd5e1;}
+#card-ov.agente-hotline .comment-item.comment-agent .comment-meta strong{color:#4ade80;}
+#card-ov.agente-hotline .comment-item.comment-agent .comment-text{border-left-color:#4ade80;color:#a7f3d0;}
+#card-ov.agente-hotline .comment-item.comment-agent .comment-avatar{background:rgba(74,222,128,.14)!important;border-color:rgba(74,222,128,.45);}
+#card-ov.agente-hotline .comment-item.comment-human .comment-meta strong{color:#7dd3fc;}
+#card-ov.agente-hotline .comment-item.comment-human .comment-text{border-left-color:#38b6ff;}
+#card-ov.agente-hotline .comment-item.comment-human .comment-avatar{background:rgba(56,182,255,.14)!important;border-color:rgba(56,182,255,.45);}
+#card-ov.agente-hotline .cmt-act-btn{font-family:var(--hotline-mono);}
+#card-ov.agente-hotline .eoc-wrap.eoc-comment .eoc-textarea,
+#card-ov.agente-hotline .eoc-wrap.eoc-comment .eoc-display{font-family:var(--hotline-mono);background:#0a0f0d;border-color:rgba(148,163,184,.3);color:#a7f3d0;}
+#card-ov.agente-hotline .eoc-wrap.eoc-comment .eoc-display.is-empty::before{color:#64748b;}
 /* overlays */
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
@@ -3215,6 +3272,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <!-- FAB -->
 <div class="fab" id="fab" style="display:none;">
+  <button class="fab-cfg fab-agente-hotline" onclick="openAgenteHotline()" id="fab-agente-hotline-btn" style="display:none;" title="Conversar com o Agente Ágil — pedidos soltos, sem precisar de um card real">🤖 Agente Ágil</button>
   <button class="fab-cfg" onclick="openCfg()" id="fab-cfg-btn">⚙ Configurações</button>
 </div>
 
@@ -3435,7 +3493,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <select class="fi" id="m-card-pattern" onchange="setCardPattern(this.value)"
       title="Padrão de card — define quais seções opcionais aparecem no modal"
       style="display:none;max-width:130px;font-size:10px;padding:4px 6px;margin-right:8px;flex-shrink:0;"></select>
-    <div style="position:relative;display:inline-block;margin-right:6px;">
+    <div id="m-cover-wrap" style="position:relative;display:inline-block;margin-right:6px;">
       <button class="x-btn" id="m-cover-btn" onclick="toggleCoverMenu()" title="Capa de cor ou imagem">🎨</button>
       <div id="m-cover-menu" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:10px;z-index:500;min-width:220px;">
         <div class="cover-swatches cover-swatches-target"></div>
@@ -3450,12 +3508,12 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
     </div>
-    <span style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
-    <button class="x-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
+    <span id="m-share-label" style="font-size:10px;color:var(--txt3);white-space:nowrap;margin-right:4px;">Compartilhar este card</span>
+    <button class="x-btn" id="m-share-btn" onclick="shareCardLink()" title="Copiar link deste card" style="margin-right:6px;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
     </button>
     <button class="x-btn" id="m-toggle-all-secs" onclick="toggleAllModalSecs()" title="Expandir/recolher seções" style="margin-right:6px;">⇕</button>
-    <button class="x-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
+    <button class="x-btn" id="m-scrolldesc-btn" onclick="scrollToDescription()" title="Ir para a Descrição" style="margin-right:6px;">⬇️</button>
     <button class="x-btn" onclick="closeOv('card-ov')">✕</button>
   </div>
 
@@ -3470,10 +3528,38 @@ input[type="date"]{-moz-appearance:textfield;}
     <button type="button" class="btn btn-sm" onclick="liberarCardAgora()">✅ Liberar agora</button>
   </div>
 
+  <!-- Explicação + aviso de custo do card especial "🤖 Converse com Agente Ágil"
+       (ver openAgenteHotline()/_applyAgenteHotlineSkin()) — só aparece pra esse
+       card, controlado via JS. Pedido direto: "podia ter um lugar que
+       explicasse oq q ele faz" + aviso de que cada mensagem consome tokens
+       pagos, "entao é pra usar com cuidado e economia". Colapsável (pedido
+       direto: "faz esse aviso do agente agil ser colapsável") — mesmo padrão
+       de caret/toggle já usado em toggleHistory()/toggleModalSec(). -->
+  <div id="m-agente-hotline-info" style="display:none;flex-direction:column;background:rgba(148,163,184,.07);border:1px dashed rgba(148,163,184,.35);border-radius:var(--r);margin:10px 16px 0;font-size:11.5px;line-height:1.5;color:var(--txt2);">
+    <div onclick="toggleAgenteHotlineInfo()" style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;padding:10px 14px;">
+      <span style="flex:1;"><b>🤖 O que é isso?</b></span>
+      <span id="m-agente-hotline-info-caret" style="font-size:10px;color:var(--txt3);transition:transform .2s;">▼</span>
+    </div>
+    <div id="m-agente-hotline-info-body" style="display:flex;flex-direction:column;gap:6px;padding:0 14px 10px;">
+      <div>Um card fixo pra conversar com o Agente Ágil sobre qualquer coisa que não precise ficar ligada a uma tarefa real — dúvida, ideia, pedido solto. Comente mencionando <code>@Agente Ágil</code> e ele responde aqui mesmo.</div>
+      <div style="color:var(--warn);"><b>💰 Cada mensagem custa de verdade.</b> Toda vez que o agente processa um pedido, isso consome tokens da API da Anthropic — e tokens são pagos pela empresa. Use com cuidado e economia: evite testar à toa ou repetir a mesma pergunta várias vezes.</div>
+    </div>
+  </div>
+
+  <!-- Atalhos do card especial "🤖 Converse com Agente Ágil" — só aparece pra
+       esse card, controlado via JS -->
+  <div id="m-agente-hotline-row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;">
+    <span style="font-size:11px;color:var(--txt3);flex-shrink:0;">Atalhos:</span>
+    <button type="button" class="btn btn-sm" onclick="openHelp()">❓ Central de Ajuda</button>
+    <button type="button" class="btn btn-sm" onclick="closeOv('card-ov');openMeuDia();">🌅 Meu Dia</button>
+    <button type="button" class="btn btn-sm" onclick="closeOv('card-ov');">🗂️ Ver board</button>
+    <button type="button" class="btn btn-sm" onclick="refreshAgenteHotline()" title="Apaga todos os comentários dessa conversa (de todo mundo) e começa do zero" style="margin-left:auto;color:var(--danger);border-color:rgba(255,107,107,.3);">🔄 Limpar conversa</button>
+  </div>
+
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
 
     <!-- Título -->
-    <div class="field">
+    <div id="m-title-field" class="field">
       <label class="fl">Título</label>
       <input class="fi" id="m-title" type="text" oninput="scheduleAutoSave()" onblur="_quickAddApplyIfNew()"
         onkeydown="if(event.key==='Enter'&&editingId){event.preventDefault();scheduleAutoSave();}">
@@ -3720,7 +3806,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
     </div>
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
+    <div id="m-sec-conteudo-hd" class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('conteudo')">
       <span style="flex:1;">📝 Conteúdo</span>
       <span id="m-sec-conteudo-caret" style="font-size:10px;transition:transform .2s;">▼</span>
     </div>
@@ -3781,7 +3867,7 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     </div><!-- /m-sec-conteudo -->
 
-    <div class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('vinculos')">
+    <div id="m-sec-vinculos-hd" class="cfg-sec-title" style="margin:2px 0 -2px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;" onclick="toggleModalSec('vinculos')">
       <span style="flex:1;">🔗 Vínculos &amp; anexos</span>
       <span id="m-sec-vinculos-caret" style="font-size:10px;transition:transform .2s;">▼</span>
     </div>
@@ -5500,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.476</div>
+<div class="version">v8.30.483</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5720,6 +5806,11 @@ if(_legacySquad){
 const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,'')==='criacao'
   ? 'midiacriativa'
   : (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,''));
+// Squads onde o Agente Ágil orquestrador tem escrita real (ver mentionTrigger.js
+// no functions/agente-agil-orquestrador/ — agenteAgilMencao/agenteAgilMencaoDados).
+// Só nesses squads o botão "Converse com Agente Ágil" (ver openAgenteHotline())
+// tem serventia — em outros, o @menção não é processado por ninguém.
+const AGENTE_AGIL_HOTLINE_SQUADS = ['dev', 'dados'];
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
@@ -6189,6 +6280,9 @@ function _activePatternFor(card){
   return defId ? cardPatterns[defId] : null;
 }
 function _cardSectionVisible(key, card){
+  // Card especial "Converse com Agente Ágil" (ver openAgenteHotline()) não é
+  // uma tarefa de verdade — só a seção de comentários faz sentido nele.
+  if(card?.agenteHotline) return key==='comentarios';
   const pat=_activePatternFor(card);
   return !pat || pat.sections?.[key]!==false;
 }
@@ -8994,6 +9088,10 @@ function _applyRoleVisibility(){
   const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
   const fabCfg=document.getElementById('fab-cfg-btn');
   if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
+  // Botão "🤖 Agente Ágil" — pra todo mundo (não é restrito a PO/Organizador
+  // como Configurações), só depende do squad ter escrita real do agente.
+  const fabHotline=document.getElementById('fab-agente-hotline-btn');
+  if(fabHotline) fabHotline.style.display=AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)?'':'none';
 }
 function autoRegistrar(user){
   if(!window._fbReady) return;
@@ -9540,7 +9638,7 @@ function renderBoard(){
   // raia estava ativa).
   const ignoreOwner = raiaMode==='owner';
   const ignoreTag = raiaMode==='tag';
-  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, ignoreOwner, ignoreTag));
+  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else if(raiaMode==='subteam') renderRaiaSubteam(board,activeCards);
@@ -11042,6 +11140,108 @@ function _updateCardBackBtn(){
   const btn=document.getElementById('m-card-back-btn');
   if(btn) btn.style.display = _cardNavStack.length ? '' : 'none';
 }
+// Aplica/remove o tema visual + atalhos do card especial "Converse com Agente
+// Ágil" (ver openAgenteHotline() logo abaixo) — chamado em toda abertura de
+// modal (openCard()/openNewCard()) pra nunca "vazar" o tema de um card pro
+// próximo, já que o modal é o mesmo elemento reaproveitado entre cards.
+function _applyAgenteHotlineSkin(card){
+  const ov=document.getElementById('card-ov');
+  const row=document.getElementById('m-agente-hotline-row');
+  const info=document.getElementById('m-agente-hotline-info');
+  const isHotline=!!(card&&card.agenteHotline);
+  if(ov) ov.classList.toggle('agente-hotline', isHotline);
+  if(row) row.style.display=isHotline?'flex':'none';
+  if(info) info.style.display=isHotline?'flex':'none';
+}
+// Título fixo usado tanto pra criar quanto pra reconhecer o card hotline —
+// ver também o mesmo texto em SYSTEM_PROMPT_V1 (functions/agente-agil-
+// orquestrador/systemPrompt.js), que usa o título pra saber quando NUNCA
+// chamar mover_coluna/editar_campos/checklist_item nesse card.
+const AGENTE_HOTLINE_TITLE = '🤖 Converse com o Agente Ágil';
+function _findAgenteHotlineCard(){
+  return cards.find(c=>c.agenteHotline && !c.archived);
+}
+// Pedido direto: "e se fosse aquele icone de conversa (ou robo) que abrisse
+// esse card especial??? ai ele n precisa ficar em nenhuma coluna!" — reusa
+// 100% do mecanismo de @menção já existente (mesmo card real no Firebase,
+// mesmo modal, mesma automação server-side); só fica de fora do board normal
+// (ver o filtro !c.agenteHotline em renderBoard()) e o modal ganha tema
+// diferente + atalhos (ver _applyAgenteHotlineSkin() acima e
+// _cardSectionVisible(), que esconde todas as seções exceto comentários).
+async function openAgenteHotline(){
+  if(!AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)){
+    showToast('🤖 O Agente Ágil ainda não tem escrita real nesse squad.');
+    return;
+  }
+  let c=_findAgenteHotlineCard();
+  if(!c){
+    c={
+      id:'hotline_'+Date.now()+Math.random().toString(36).slice(2,7),
+      title:AGENTE_HOTLINE_TITLE,
+      desc:'Use os comentários abaixo pra conversar com o 🤖 Agente Ágil sobre qualquer coisa que não precise ficar ligada a um card específico — dúvidas, pedidos soltos, ideias soltas. Só mencione @Agente Ágil no comentário.',
+      col:(columns[0]&&columns[0].id)||'backlog',
+      owner:'', priority:'', tags:[], checklist:[], participants:[],
+      agenteHotline:true,
+      created:window._currentUserInit||'', createdAt:new Date().toISOString().slice(0,10),
+      executorType:'human',
+    };
+    cards.push(c);
+    try{ await fbCreateCard(c); }
+    catch(err){ console.error('[openAgenteHotline] falha ao criar card hotline:', err); showToast('⚠️ Não deu pra criar o card do Agente Ágil agora. Tenta de novo.'); return; }
+  }
+  openCard(c.id);
+}
+// Botão "🔄 Limpar conversa" (ver #m-agente-hotline-row) — o card hotline é
+// compartilhado entre QUALQUER pessoa que queira falar com o Agente Ágil,
+// então acumula assuntos sem nada a ver entre si com o tempo (achado
+// previsto na hora de desenhar a feature — ver CODE_MAP.md). Isso dá um
+// jeito de começar do zero sem precisar apagar/recriar o card em si (que
+// perderia a posição fixa e o id que `_findAgenteHotlineCard()` já achou).
+async function refreshAgenteHotline(){
+  const c=_findAgenteHotlineCard(); if(!c) return;
+  if(!confirm('Isso apaga TODOS os comentários dessa conversa com o Agente Ágil (de todo mundo). Não dá pra desfazer. Continuar?')) return;
+  try{
+    await window._set(window._ref(window._db, FB+'/card_comments/'+c.id), null);
+  }catch(err){
+    console.error('[refreshAgenteHotline] falha ao limpar comentários:', err);
+    showToast('⚠️ Não deu pra limpar os comentários agora. Tenta de novo.');
+    return;
+  }
+  _commentsCache[c.id]={};
+  loadComments(c.id);
+  showToast('🔄 Conversa limpa.');
+}
+// Comentários do card hotline em tempo real — achado direto: "hoje quando
+// vc faz um pedido pra ele e ele responde, vc precisa sair e voltar para
+// aparecer a resposta dele". loadComments() normal é uma leitura pontual
+// (window._get), então a resposta do agente (escrita minutos depois pela
+// Cloud Function) só aparecia na próxima vez que o card fosse reaberto.
+// Aqui troca por um listener ao vivo (window._onValue), só pro card
+// hotline — os outros cards continuam no fluxo normal de loadComments().
+// Mesmo padrão de detach-then-reattach do _checkCardLock()/_cardLockUnsub.
+let _agenteHotlineCommentsUnsub = null;
+function _attachAgenteHotlineCommentsListener(card){
+  if(_agenteHotlineCommentsUnsub){ _agenteHotlineCommentsUnsub(); _agenteHotlineCommentsUnsub=null; }
+  if(!card || !card.agenteHotline || !window._fbReady) return;
+  const cardId=card.id;
+  _agenteHotlineCommentsUnsub = window._onValue(window._ref(window._db, FB+'/card_comments/'+cardId), snap=>{
+    _commentsCache[cardId] = snap.val()||{};
+    if(editingId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+  });
+}
+function _detachAgenteHotlineCommentsListener(){
+  if(_agenteHotlineCommentsUnsub){ _agenteHotlineCommentsUnsub(); _agenteHotlineCommentsUnsub=null; }
+}
+// Mesmo padrão de toggleHistory()/toggleModalSec() — sem persistência entre
+// aberturas do modal, de propósito (mesmo comportamento dessas duas).
+function toggleAgenteHotlineInfo(){
+  const body=document.getElementById('m-agente-hotline-info-body');
+  const caret=document.getElementById('m-agente-hotline-info-caret');
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'flex';
+  if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
+}
 function openCard(id){
   _intakeOrigemPendingId=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
@@ -11108,6 +11308,8 @@ function openCard(id){
   renderDependsBar(c);
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
+  _applyAgenteHotlineSkin(c);
+  _attachAgenteHotlineCommentsListener(c);
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
@@ -11137,6 +11339,19 @@ function openCard(id){
     // comentário, que não existia antes (handleCommentMentions só tratava
     // @card, nunca teve busca de pessoa).
     initMentionDropdown('m-comment-inp');
+    // Card hotline: já abre o comentário com "@Agente Ágil " pronto e o
+    // cursor no fim, pra não precisar digitar a menção toda vez — pedido
+    // direto: "talvez sempre já colocar o @Agente Ágil quando for começar
+    // um card". Só quando o campo ainda está vazio (não pisa em cima de um
+    // rascunho que a pessoa já tivesse começado a digitar antes).
+    if(c.agenteHotline){
+      const _mciHotline=document.getElementById('m-comment-inp');
+      if(_mciHotline && !_mciHotline.value){
+        _mciHotline.value='@Agente Ágil ';
+        eocEdit('comment-eoc');
+        _mciHotline.selectionStart=_mciHotline.selectionEnd=_mciHotline.value.length;
+      }
+    }
     loadComments(id);
     renderDescPreview();
     renderCardDepMini(id);
@@ -11454,6 +11669,8 @@ function openNewCard(col){
   // nesse ponto, então _activePatternFor cai no padrão-da-squad certinho).
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
+  _applyAgenteHotlineSkin(null); // card novo em branco nunca é o hotline
+  _detachAgenteHotlineCommentsListener();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
@@ -16845,11 +17062,28 @@ function setCampRightTab(tab){
 // (_crvDonutGradient / _crvBarRow), mas alimentado pelos cards vinculados a campanha
 // (window._campVinculados), pra nao misturar com os numeros de venda/midia que o time
 // ja loga manualmente na timeline (registros tipo "📊 Resultado").
+// Checkbox "Incluir supercards" (mesmo padrão do Controle de Criativos,
+// crv-df-supercard-incluir — pedido direto: "faltou incluir a opção de
+// incluir/ou não, supercards! tipo vc fez no de criativos"). Diferente de
+// lá, aqui NÃO dá pra guardar o estado só no DOM: camp-dash-body é
+// reconstruído inteiro (innerHTML=) a cada render, então o checkbox em si
+// também seria recriado e perderia o valor — por isso o estado mora numa
+// variável (_campDashIncludeSuper), não no elemento.
+if(window._campDashIncludeSuper===undefined) window._campDashIncludeSuper=true;
+function _campDashToggleSuper(checked){
+  window._campDashIncludeSuper = checked;
+  renderCampDashboard();
+}
 function renderCampDashboard(){
   const body = document.getElementById('camp-dash-body'); if(!body) return;
-  const rows = window._campVinculados||[];
+  const allRows = window._campVinculados||[];
+  const superToggleHtml = allRows.length
+    ? '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap;margin-bottom:14px;" title="Supercard aqui é o card \'container\' (campanha/criativo) — não é ele mesmo uma peça sendo produzida, só organiza os filhos que são">'
+      +'<input type="checkbox" '+(window._campDashIncludeSuper?'checked':'')+' onchange="_campDashToggleSuper(this.checked)"> 🧩 Incluir supercards</label>'
+    : '';
+  const rows = window._campDashIncludeSuper ? allRows : allRows.filter(c=>!_cardIsSupercard(c));
   if(!rows.length){
-    body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px 0;">Nenhum card vinculado a esta campanha ainda.</div>';
+    body.innerHTML = superToggleHtml + '<div style="text-align:center;color:var(--txt3);padding:40px 0;">'+(allRows.length?'Nenhum card bate com esse filtro.':'Nenhum card vinculado a esta campanha ainda.')+'</div>';
     return;
   }
   const total = rows.length;
@@ -16916,7 +17150,8 @@ function renderCampDashboard(){
   const showSquadBlock = sqCounts.size>1;
 
   body.innerHTML =
-    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+    superToggleHtml
+    +'<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
       +statCard('📦','Cards vinculados',total,'var(--txt)')
       +statCard('✅','Concluídos',concluidos+' <span style=\'font-size:12px;color:var(--txt3);\'>('+pctConcl+'%)</span>','#4ade80')
       +statCard('🔄','Em andamento',emAndamento,'#38b6ff')
@@ -19339,6 +19574,11 @@ function executeTool(name,input){
         created:user,edited:user,createdAt:td,editedAt:td};
       recordMove(novo, novo.col); // ← métricas de fluxo
       cards.push(novo); renderBoard(); fbSaveCard(novo);
+      // Achado real 2026-08-26 (skill /monitorarbugs): esta é a única ferramenta
+      // de criação fora do modal principal que também deveria disparar "Card
+      // criado em [coluna]" — decisão do usuário: só esta, não fan-out/
+      // quickCreateSuperChild/duplicar (ver discussão na sessão).
+      runAutoRules('create', novo.id, novo.col);
       return{ok:true,msg:`Card "${input.titulo}" criado em ${input.coluna} para ${ownerNovo||'sem dono'}`,card_id:novo.id};
     }
         case 'atualizar_owner':{
@@ -24506,7 +24746,12 @@ const AUTO_TRIGGERS = [
   { key:'move_to', label:'Card movido para coluna', valueType:'column',
     matches:(rule,ev,card,extra)=> ev==='move' && extra===rule.triggerVal },
   { key:'card_created', label:'Card criado em', valueType:'column',
-    matches:(rule,ev,card,extra)=> ev==='create' },
+    // Achado real 2026-08-26 (skill /monitorarbugs): faltava comparar extra
+    // (a coluna real onde o card nasceu) contra rule.triggerVal (a coluna
+    // escolhida na regra) — igual todo outro trigger valueType:'column' já
+    // faz (ver 'move_to' logo acima). Sem isso, uma regra "Card criado em
+    // Backlog" disparava pra card criado em QUALQUER coluna.
+    matches:(rule,ev,card,extra)=> ev==='create' && extra===rule.triggerVal },
   { key:'priority_set', label:'Prioridade definida como', valueType:'priority',
     // rule.triggerVal 'any'/vazio = regra salva antes desta generalização
     // (só existia "crítica", sem seletor de nível) — trata como 'critical'
@@ -24924,9 +25169,31 @@ function _checkSupercardAutoComplete(childCard){
 // regra bate com esse evento; rule.condTag (opcional) é uma condição E
 // extra, checada à parte do matches() pra não duplicar essa lógica em
 // todo trigger.
+// Achado real 2026-08-26, pedido direto do usuário: o efeito de uma
+// automação (ex.: criar card numa coluna que tem "mover pra Y" configurado)
+// era instantâneo — a pessoa nunca chegava a VER o card na coluna onde ela
+// mesma o colocou antes dele já ter sumido pra outro lugar, sem nenhum
+// aviso do que aconteceu. AUTO_RULE_DELAY_MS dá um respiro visual antes do
+// efeito aplicar de verdade, e _runAutoRuleAction() sempre fecha com um
+// toast deixando claro que foi uma automação (não um bug/sumiço).
+const AUTO_RULE_DELAY_MS = 1200;
+function _runAutoRuleAction(rule, cardId){
+  const card=cards.find(c=>c.id===cardId); if(!card) return; // card pode ter sido excluído/arquivado nesse meio-tempo
+  const td=new Date().toISOString().split('T')[0];
+  let ruleChanged=false;
+  _autoRuleActions(rule).forEach(a=>{
+    const actionDef=_autoAction(a.action); if(!actionDef) return;
+    if(actionDef.run({actionVal:a.actionVal, label:rule.label}, card)) ruleChanged=true;
+  });
+  if(ruleChanged){
+    card.edited='Automação'; card.editedAt=td;
+    fbSaveCard(card).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
+    renderBoard();
+    showToast('⚡ Automação "'+(rule.label||'Sem nome')+'" foi aplicada');
+  }
+}
 function runAutoRules(eventType, cardId, extraVal){
   const activeRules=autoRules.filter(r=>r.active);
-  let _anyTriggered=false; // true se alguma regra mudou o card -- usado no final pra persistir no Firebase (antes so mudava em memoria e sumia no reload)
   const card=cards.find(c=>c.id===cardId); if(!card) return;
   if(eventType==='move') _checkSupercardAutoComplete(card);
   activeRules.forEach(rule=>{
@@ -24934,13 +25201,7 @@ function runAutoRules(eventType, cardId, extraVal){
     if(!triggerDef) return; // regra salva com trigger que não existe mais
     if(!triggerDef.matches(rule,eventType,card,extraVal)) return;
     if(rule.condTag && !getCardTags(card).includes(rule.condTag)) return; // condição E extra, opcional
-    const td=new Date().toISOString().split('T')[0];
-    let ruleChanged=false;
-    _autoRuleActions(rule).forEach(a=>{
-      const actionDef=_autoAction(a.action); if(!actionDef) return;
-      if(actionDef.run({actionVal:a.actionVal, label:rule.label}, card)) ruleChanged=true;
-    });
-    if(ruleChanged){ card.edited='Automação'; card.editedAt=td; _anyTriggered=true; }
+    setTimeout(()=>_runAutoRuleAction(rule, cardId), AUTO_RULE_DELAY_MS);
   });
   // Checa WIP — condição agregada do board inteiro, não de 1 card específico,
   // por isso fica de fora do loop por-regra acima (não tem "o card" que
@@ -24968,14 +25229,6 @@ function runAutoRules(eventType, cardId, extraVal){
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }
     }
-  }
-
-  // Persiste as mudancas que as regras acima fizeram no card -- antes disso, runAutoRules()
-  // so mexia em memoria (card.col/priority/tags/owner) e a mudanca sumia no proximo reload
-  // porque nenhum fbSave* era chamado depois da automacao rodar.
-  if(_anyTriggered){
-    fbSaveCard(card).catch(err=>console.error('[runAutoRules] falha ao salvar mudanca da automacao:', err));
-    renderBoard();
   }
 }
 // Carrega regras do Firebase com listener contínuo
@@ -25702,6 +25955,7 @@ function _finishCloseOv(id){
     if(_sb){ _sb.disabled=false; if(_sb.dataset.origLabel) _sb.innerHTML=_sb.dataset.origLabel; }
     _stopDirtyWatch();
     if(editingId) _releaseCardLock(editingId);
+    _detachAgenteHotlineCommentsListener();
     _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Fecha a janela de "card novo vindo de um Modelo" mesmo se a pessoa
@@ -26495,7 +26749,9 @@ function renderCommentList(comments){
   }
   comments.forEach(c=>{
     const item=document.createElement('div');
-    item.className='comment-item';
+    // comment-agent/comment-human só têm efeito visual dentro do tema
+    // #card-ov.agente-hotline (ver CSS) — inofensivo em cards normais.
+    item.className='comment-item'+(c.isAgent?' comment-agent':' comment-human');
     item.dataset.cid=c.id||'';
     const avatarHtml=c.isAgent
       ? '<span title="🤖 Agente de IA">'+esc(c.avatarEmoji||'🤖')+'</span>'
