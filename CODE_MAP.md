@@ -59,7 +59,8 @@ instrumentação extra) — os números da seção painel abaixo são de
   entre qualquer pessoa e acumula assuntos sem relação com o tempo.
   `#m-agente-hotline-info` — bloco explicando o que o card faz + aviso de
   que cada mensagem processada consome tokens pagos (uso com moderação),
-  toggled junto no mesmo `_applyAgenteHotlineSkin()`.
+  toggled junto no mesmo `_applyAgenteHotlineSkin()`. Colapsável via
+  `toggleAgenteHotlineInfo()` — mesmo padrão de `toggleHistory()`.
 - `saveCard()` — L11432 — auto-save (debounce 800ms) passa por aqui
 - `_finishCloseOv()` — L25531 — fechamento do modal, reset de estado pendente
 - `_newCardHasContent()`/`_newCardGuardOff` — L10439/L10413 — card ainda sem
