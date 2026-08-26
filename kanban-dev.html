@@ -739,6 +739,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .fab-btn:hover{background:rgba(37,99,201,1);transform:scale(1.04);}
 .fab-cfg{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:11px;font-family:"DM Sans",sans-serif;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;color:var(--txt2);cursor:pointer;backdrop-filter:blur(12px);transition:all .2s;}
 .fab-cfg:hover{border-color:var(--accent);color:var(--txt);}
+.fab-agente-hotline{border-color:rgba(148,163,184,.45);}
+.fab-agente-hotline:hover{border-color:#94a3b8;color:#e2e8f0;}
+/* Tema cinza/robô do card especial "Converse com Agente Ágil" — ver
+   openAgenteHotline()/_applyAgenteHotlineSkin() em JS. Só troca cor/sutileza
+   visual do modal, não some com nenhuma seção (isso é _cardSectionVisible()). */
+#card-ov.agente-hotline .card-panel{border-color:rgba(148,163,184,.4);background:linear-gradient(180deg,rgba(148,163,184,.09),transparent 160px),rgba(var(--surface-rgb),.97);}
+#card-ov.agente-hotline .panel-hd{border-bottom-color:rgba(148,163,184,.3);}
+#card-ov.agente-hotline #m-title-disp{color:#cbd5e1;}
 /* overlays */
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
@@ -3215,6 +3223,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <!-- FAB -->
 <div class="fab" id="fab" style="display:none;">
+  <button class="fab-cfg fab-agente-hotline" onclick="openAgenteHotline()" id="fab-agente-hotline-btn" style="display:none;" title="Conversar com o Agente Ágil — pedidos soltos, sem precisar de um card real">🤖 Agente Ágil</button>
   <button class="fab-cfg" onclick="openCfg()" id="fab-cfg-btn">⚙ Configurações</button>
 </div>
 
@@ -3468,6 +3477,15 @@ input[type="date"]{-moz-appearance:textfield;}
   <div id="m-lock-request-row" style="display:none;align-items:center;gap:8px;background:rgba(255,183,77,.1);border:1px solid rgba(255,183,77,.35);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;font-size:12.5px;color:#ffb74d;">
     <span id="m-lock-request-text" style="flex:1;"></span>
     <button type="button" class="btn btn-sm" onclick="liberarCardAgora()">✅ Liberar agora</button>
+  </div>
+
+  <!-- Atalhos do card especial "🤖 Converse com Agente Ágil" (ver openAgenteHotline()/
+       _applyAgenteHotlineSkin()) — só aparece pra esse card, controlado via JS -->
+  <div id="m-agente-hotline-row" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.3);border-radius:var(--r);padding:10px 14px;margin:10px 16px 0;">
+    <span style="font-size:11px;color:var(--txt3);flex-shrink:0;">Atalhos:</span>
+    <button type="button" class="btn btn-sm" onclick="openHelp()">❓ Central de Ajuda</button>
+    <button type="button" class="btn btn-sm" onclick="closeOv('card-ov');openMeuDia();">🌅 Meu Dia</button>
+    <button type="button" class="btn btn-sm" onclick="closeOv('card-ov');">🗂️ Ver board</button>
   </div>
 
   <div class="modal-body" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
@@ -5500,7 +5518,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.477-dev</div>
+<div class="version">v8.30.478-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5720,6 +5738,11 @@ if(_legacySquad){
 const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,'')==='criacao'
   ? 'midiacriativa'
   : (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,''));
+// Squads onde o Agente Ágil orquestrador tem escrita real (ver mentionTrigger.js
+// no functions/agente-agil-orquestrador/ — agenteAgilMencao/agenteAgilMencaoDados).
+// Só nesses squads o botão "Converse com Agente Ágil" (ver openAgenteHotline())
+// tem serventia — em outros, o @menção não é processado por ninguém.
+const AGENTE_AGIL_HOTLINE_SQUADS = ['dev', 'dados'];
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
@@ -6189,6 +6212,9 @@ function _activePatternFor(card){
   return defId ? cardPatterns[defId] : null;
 }
 function _cardSectionVisible(key, card){
+  // Card especial "Converse com Agente Ágil" (ver openAgenteHotline()) não é
+  // uma tarefa de verdade — só a seção de comentários faz sentido nele.
+  if(card?.agenteHotline) return key==='comentarios';
   const pat=_activePatternFor(card);
   return !pat || pat.sections?.[key]!==false;
 }
@@ -8994,6 +9020,10 @@ function _applyRoleVisibility(){
   const isPOorOrg=window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm';
   const fabCfg=document.getElementById('fab-cfg-btn');
   if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
+  // Botão "🤖 Agente Ágil" — pra todo mundo (não é restrito a PO/Organizador
+  // como Configurações), só depende do squad ter escrita real do agente.
+  const fabHotline=document.getElementById('fab-agente-hotline-btn');
+  if(fabHotline) fabHotline.style.display=AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)?'':'none';
 }
 function autoRegistrar(user){
   if(!window._fbReady) return;
@@ -9540,7 +9570,7 @@ function renderBoard(){
   // raia estava ativa).
   const ignoreOwner = raiaMode==='owner';
   const ignoreTag = raiaMode==='tag';
-  const activeCards=cards.filter(c=>!c.archived&&passesFilter(c, ignoreOwner, ignoreTag));
+  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag));
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else if(raiaMode==='subteam') renderRaiaSubteam(board,activeCards);
@@ -11042,6 +11072,55 @@ function _updateCardBackBtn(){
   const btn=document.getElementById('m-card-back-btn');
   if(btn) btn.style.display = _cardNavStack.length ? '' : 'none';
 }
+// Aplica/remove o tema visual + atalhos do card especial "Converse com Agente
+// Ágil" (ver openAgenteHotline() logo abaixo) — chamado em toda abertura de
+// modal (openCard()/openNewCard()) pra nunca "vazar" o tema de um card pro
+// próximo, já que o modal é o mesmo elemento reaproveitado entre cards.
+function _applyAgenteHotlineSkin(card){
+  const ov=document.getElementById('card-ov');
+  const row=document.getElementById('m-agente-hotline-row');
+  const isHotline=!!(card&&card.agenteHotline);
+  if(ov) ov.classList.toggle('agente-hotline', isHotline);
+  if(row) row.style.display=isHotline?'flex':'none';
+}
+// Título fixo usado tanto pra criar quanto pra reconhecer o card hotline —
+// ver também o mesmo texto em SYSTEM_PROMPT_V1 (functions/agente-agil-
+// orquestrador/systemPrompt.js), que usa o título pra saber quando NUNCA
+// chamar mover_coluna/editar_campos/checklist_item nesse card.
+const AGENTE_HOTLINE_TITLE = '🤖 Converse com o Agente Ágil';
+function _findAgenteHotlineCard(){
+  return cards.find(c=>c.agenteHotline && !c.archived);
+}
+// Pedido direto: "e se fosse aquele icone de conversa (ou robo) que abrisse
+// esse card especial??? ai ele n precisa ficar em nenhuma coluna!" — reusa
+// 100% do mecanismo de @menção já existente (mesmo card real no Firebase,
+// mesmo modal, mesma automação server-side); só fica de fora do board normal
+// (ver o filtro !c.agenteHotline em renderBoard()) e o modal ganha tema
+// diferente + atalhos (ver _applyAgenteHotlineSkin() acima e
+// _cardSectionVisible(), que esconde todas as seções exceto comentários).
+async function openAgenteHotline(){
+  if(!AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)){
+    showToast('🤖 O Agente Ágil ainda não tem escrita real nesse squad.');
+    return;
+  }
+  let c=_findAgenteHotlineCard();
+  if(!c){
+    c={
+      id:'hotline_'+Date.now()+Math.random().toString(36).slice(2,7),
+      title:AGENTE_HOTLINE_TITLE,
+      desc:'Use os comentários abaixo pra conversar com o 🤖 Agente Ágil sobre qualquer coisa que não precise ficar ligada a um card específico — dúvidas, pedidos soltos, ideias soltas. Só mencione @Agente Ágil no comentário.',
+      col:(columns[0]&&columns[0].id)||'backlog',
+      owner:'', priority:'', tags:[], checklist:[], participants:[],
+      agenteHotline:true,
+      created:window._currentUserInit||'', createdAt:new Date().toISOString().slice(0,10),
+      executorType:'human',
+    };
+    cards.push(c);
+    try{ await fbCreateCard(c); }
+    catch(err){ console.error('[openAgenteHotline] falha ao criar card hotline:', err); showToast('⚠️ Não deu pra criar o card do Agente Ágil agora. Tenta de novo.'); return; }
+  }
+  openCard(c.id);
+}
 function openCard(id){
   _intakeOrigemPendingId=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
@@ -11108,6 +11187,7 @@ function openCard(id){
   renderDependsBar(c);
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
+  _applyAgenteHotlineSkin(c);
   document.getElementById('card-ov').classList.add('open');
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
@@ -11454,6 +11534,7 @@ function openNewCard(col){
   // nesse ponto, então _activePatternFor cai no padrão-da-squad certinho).
   populateCardPatternSelect();
   _applyCardSectionsVisibility();
+  _applyAgenteHotlineSkin(null); // card novo em branco nunca é o hotline
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)

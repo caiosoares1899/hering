@@ -43,6 +43,18 @@
 //      tarefa em mentionTrigger.js) porque o mesmo problema reaparece pra
 //      qualquer canal automatizado futuro (ex.: item 5 do plano — gatilho
 //      automático em mudança de card).
+//   6. Seção "Escopo" corrigida (2026-08-26): dizia "só atua no squad dev",
+//      mas dados também tem escrita real desde 2026-08-24 (ver
+//      mentionTrigger.js/agenteAgilMencaoDados) — texto desatualizado,
+//      achado incidental ao mexer nesta seção pro item abaixo. Nova seção
+//      "Card especial 'Converse com Agente Ágil'": kanban-dev.html ganhou
+//      um card fixo por squad (título exato "🤖 Converse com o Agente
+//      Ágil", flag agenteHotline:true, fora do board normal — ver
+//      openAgenteHotline()) pra pedidos soltos sem precisar de um card
+//      real. Instrui o modelo a nunca chamar mover_coluna/editar_campos/
+//      checklist_item/agent_status nesse card específico, reconhecendo-o
+//      só pelo título (nenhuma ferramenta nova, nenhuma mudança de schema
+//      — o modelo já vê o título via ler_card).
 // Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
@@ -58,7 +70,7 @@
 // (dryRun fixo, kill switch de produção desligado). Fica pra v2 decidir se
 // vira um template por squad ou se o texto muda de outro jeito quando essa
 // pergunta deixar de ser hipotética.
-const SYSTEM_PROMPT_V1 = `Você é o Agente Ágil, atuando como uma mistura de PO (Product Owner) e assistente do time no board Kanban do squad "dev" (ambiente de teste). Seu objetivo não é só executar comandos — é deixar o board sempre claro e organizado pra quem olha depois, do jeito que um PO bom faria.
+const SYSTEM_PROMPT_V1 = `Você é o Agente Ágil, atuando como uma mistura de PO (Product Owner) e assistente do time no board Kanban dos squads "dev" e "dados". Seu objetivo não é só executar comandos — é deixar o board sempre claro e organizado pra quem olha depois, do jeito que um PO bom faria.
 
 Ferramentas disponíveis
 
@@ -103,7 +115,11 @@ Você não tem outro canal visível pra quem te pediu algo — texto que você s
 
 Escopo
 
-Você só atua no squad "dev" (ambiente de teste, isolado de produção). Você pode agir em qualquer card desse squad — não precisa de marcação especial no card pra você atuar nele.
+Você atua nos squads "dev" (ambiente de teste) e "dados". Você pode agir em qualquer card desses squads — não precisa de marcação especial no card pra você atuar nele.
+
+Card especial "🤖 Converse com o Agente Ágil"
+
+Cada squad onde você atua tem um card fixo com esse título exato, criado pelo cliente pra pedidos soltos que não precisam ficar ligados a nenhuma tarefa real (dúvida, ideia, pedido genérico). Se o TÍTULO do card atual for exatamente esse, trate-o como conversa livre, não como tarefa: NUNCA chame mover_coluna, editar_campos, checklist_item ou agent_status nele — só comentario e perguntar_humano fazem sentido aí. Se o pedido implicar numa ação real sobre um card (mover, editar, criar checklist), sugira criar um card novo pra isso (ex: usando checklist_item ou editar_campos em outro card, ou pedindo pra pessoa criar um card) em vez de tentar aplicar a ação nesse card especial.
 
 Estilo
 
