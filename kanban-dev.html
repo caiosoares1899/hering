@@ -5586,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.487-dev</div>
+<div class="version">v8.30.488-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6530,6 +6530,11 @@ function _doBulkMove(colId){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'moveu para '+(col?.name||colId));
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesma classe dos bugs de
+    // 'assigned'/'move' já corrigidos (2026-08-26) — mover em massa nunca
+    // disparava a automação "Card movido para coluna", só arrastar/menu de
+    // contexto/modal disparavam.
+    runAutoRules('move', c.id, colId);
   } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
   // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
@@ -6714,6 +6719,11 @@ function _doBulkBlockCol(){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'moveu para '+(col?.name||'Impedimentos'));
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesma classe dos bugs de
+    // 'assigned'/'move' já corrigidos (2026-08-26) — marcar impedimento em
+    // massa nunca disparava a automação "Card movido para coluna", só
+    // ctxBlock() (1 card por vez) disparava.
+    runAutoRules('move', c.id, 'blocker');
   });
   _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.');
 }
@@ -6727,6 +6737,8 @@ function _doBulkUnblockCol(colId){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'moveu para '+(col?.name||colId));
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesmo gap do bloco acima.
+    runAutoRules('move', c.id, colId);
   });
   _bulkFinish('✅ '+n+' card(s) removidos de Impedimentos → '+(col?.name||colId)+'.');
 }
@@ -6739,6 +6751,10 @@ function _doBulkBlockTag(reason){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'marcou como impedido'+(reason?': '+reason:''));
+    // Achado real 2026-08-27 (skill /monitorarbugs): marcar impedimento em
+    // massa (modo tag) nunca disparava "Card foi marcado como impedido" —
+    // só o modal do card (saveCard()/scheduleAutoSave()) disparava.
+    runAutoRules('blocked', c.id);
   });
   _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.', true);
 }
@@ -6751,6 +6767,10 @@ function _doBulkUnblockTag(){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'removeu impedimento');
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesmo gap do bloco
+    // acima, na direção contrária (nem notificação nem automação disparavam).
+    notifUnblocked(c);
+    runAutoRules('unblocked', c.id);
   });
   _bulkFinish('✅ impedimento removido de '+n+' card(s).', true);
 }

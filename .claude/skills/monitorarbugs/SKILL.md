@@ -210,6 +210,26 @@ Mesma disciplina de sempre neste repo:
      card). Achado ao grepar todo `cards.filter(c=>!c.archived...)` do
      arquivo e conferir cada um contra a mesma exclusão.
 
+- **2026-08-27, áreas Automações (ações em massa) + `_duplicarComFilhos()`**:
+  pedido genérico de novo — nenhum código novo em `kanban-dev.html`
+  desde a rodada anterior (só doc), então a prioridade 1 (área mudada
+  mais recentemente) não mudou; escolhida a prioridade 2 (áreas não
+  cobertas), com extensão direta de um achado já confirmado. 5 achados
+  reais em Automações, mesma causa raiz dos 2 bugs de 2026-08-26
+  ('assigned'/'move' não disparando via modal): dessa vez em **ações em
+  massa** (seleção múltipla) — `_doBulkMove()`, `_doBulkBlockCol()`/
+  `_doBulkUnblockCol()` e `_doBulkBlockTag()`/`_doBulkUnblockTag()`
+  nunca disparavam `runAutoRules('move'/'blocked'/'unblocked', ...)`,
+  só as ações de 1 card por vez disparavam (dev v8.30.488-dev). Achado
+  ao comparar TODOS os call sites de `runAutoRules('move', ...)` — a
+  rodada anterior já tinha feito essa comparação, mas não tinha
+  alcançado as funções de bulk action. `_duplicarComFilhos()`: sem
+  achados — a dúvida óbvia ("duplicar deveria disparar 'card_created'?")
+  já tinha sido decidida explicitamente pelo usuário no mesmo dia
+  anterior (só `criar_card` do Agente Ágil dispara esse trigger, de
+  propósito) — comentário no código (L19603-19606) evitou reabrir uma
+  pergunta já respondida.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
