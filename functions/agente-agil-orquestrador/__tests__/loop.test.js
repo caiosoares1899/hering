@@ -147,3 +147,23 @@ test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_
     assert.equal(typeof t.handler, 'function');
   });
 });
+
+// Achado real, canário de validação (2026-08-27, 1ª vez testando escrita
+// real): criar_card era a ÚNICA ferramenta real cuja descrição não avisava
+// o modelo sobre dryRun — o modelo, vendo só ok:true no resultado em modo
+// sombra, narrou "criei o rascunho" com confiança total, quando nada tinha
+// sido escrito de verdade. Guarda que a descrição segue o MESMO padrão das
+// outras 8 ferramentas reais (dryRun explícito nos dois sentidos).
+test('descrição de criar_card (mode:real) avisa explicitamente quando está em dryRun, e quando está escrevendo de verdade', () => {
+  const db = makeFakeDb({});
+  const toolsDryRun = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c1', dryRun: true });
+  const toolsReal = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c1', dryRun: false });
+
+  const criarCardDryRun = toolsDryRun.find((t) => t.name === 'criar_card');
+  const criarCardReal = toolsReal.find((t) => t.name === 'criar_card');
+
+  assert.match(criarCardDryRun.description, /dryRun/i);
+  assert.match(criarCardDryRun.description, /NÃO cria nenhum rascunho de verdade/i);
+  assert.match(criarCardReal.description, /DE VERDADE/);
+  assert.notEqual(criarCardDryRun.description, criarCardReal.description);
+});
