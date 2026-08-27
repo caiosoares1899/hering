@@ -2736,10 +2736,22 @@ vazio — nada foi escrito, porque a instância `dev` segue em
 ÚNICA das 9 ferramentas reais cuja descrição não avisava o modelo sobre
 dryRun (mesma classe do bug "finge que deu certo" já corrigido antes,
 sintoma novo). Corrigido (ver `CHANGELOG.md`) — descrição agora segue o
-mesmo padrão das outras 8. **Decisão de destravar `dryRun:false` de
-verdade ainda pendente** — fica pro próximo teste, depois do redeploy
-deste fix, repetir o mesmo cenário e confirmar que a narrativa bate com
-a realidade antes de qualquer decisão final.
+mesmo padrão das outras 8.
+
+**5º teste, repetindo o cenário depois do redeploy do fix acima**: mesma
+sequência (desligar Ficha Técnica/Submarca, disparar, religar depois) —
+resultado: o modelo CONTINUOU narrando "Criei um rascunho de card..."
+com total confiança, `pendingIdCriado` de novo vazio. O fix na
+`description` de uma ferramenta só não bastou — o modelo simplesmente
+não deu peso suficiente àquela instrução isolada dentro do schema.
+Fix v2: regra genérica no `systemPrompt.js` (não mais escondida numa
+description de tool), nova seção "Ferramenta em modo de teste (dryRun)"
+— qualquer resultado com `dryRun:true` é simulação, nunca ação real,
+mesmo com `ok:true` (ver `CHANGELOG.md`). **Decisão de destravar
+`dryRun:false` de verdade ainda pendente** — fica pro próximo teste,
+depois do redeploy deste 2º fix, repetir o mesmo cenário mais uma vez e
+só então confirmar que a narrativa bate com a realidade antes de
+qualquer decisão final.
 
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 
