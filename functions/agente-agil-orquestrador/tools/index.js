@@ -135,7 +135,17 @@ function buildTools(options = {}) {
   tools.push({
     name: 'criar_card',
     description:
-      'Cria um card NOVO (rascunho revisável por um humano, ver tools/criarCard.js — não entra direto no board) quando a informação recebida não é sobre nenhum card existente. Use titulo obrigatório; descricao/prazo/squad_solicitante opcionais; submarca só é exigida se o squad tiver Submarca ativa (a ferramenta avisa as opções válidas se faltar ou vier errada). Se o squad exigir Ficha Técnica, a ferramenta recusa — peça pra um humano criar manualmente nesse caso.',
+      // Achado real, canário de validação (2026-08-27, testando escrita real
+      // pela 1ª vez): esta era a ÚNICA ferramenta real cuja descrição não
+      // avisava o modelo sobre dryRun (as outras 8 sempre disseram "em
+      // dryRun, nunca aplica" vs. "escreve DE VERDADE") — o modelo, vendo só
+      // `ok:true` no resultado da chamada em modo sombra, narrou "criei o
+      // rascunho" com confiança total, quando na prática nada foi escrito
+      // (mesma classe do bug de "finge que deu certo" já corrigido antes,
+      // pra outro sintoma). Mesmo texto/padrão das outras agora.
+      mode === 'real'
+        ? `Cria um card NOVO (rascunho revisável por um humano — não entra direto no board) quando a informação recebida não é sobre nenhum card existente. Use titulo obrigatório; descricao/prazo/squad_solicitante opcionais; submarca só é exigida se o squad tiver Submarca ativa (a ferramenta avisa as opções válidas se faltar ou vier errada). Se o squad exigir Ficha Técnica, a ferramenta recusa — peça pra um humano criar manualmente nesse caso. ${dryRun ? 'Monta o que faria, mas em dryRun — NÃO cria nenhum rascunho de verdade; se chamar essa ferramenta em dryRun, seu comentário final precisa deixar claro que nada foi criado ainda, nunca afirmar que o rascunho existe.' : 'Cria o rascunho DE VERDADE em Pedidos de Intake.'}`
+        : 'Cria um card NOVO (rascunho revisável por um humano — não entra direto no board) quando a informação recebida não é sobre nenhum card existente. Execução simulada, não escreve em lugar nenhum.',
     input_schema: zodToJsonSchema(criarCardSchema),
     handler:
       mode === 'real'

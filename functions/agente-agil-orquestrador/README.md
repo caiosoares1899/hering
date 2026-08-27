@@ -2721,9 +2721,25 @@ narrou "tentei no squad dados" (squad que a ferramenta nem alcança) —
 achado real de um problema de clareza (task text não dizia o squad ao
 modelo), também corrigido no mesmo dia, e **reconfirmado com um 3º
 teste simulado**: com o fix aplicado, o modelo passou a explicar
-corretamente que só tinha acesso ao squad `dev`. Mecanismo considerado
-validado — segue em modo sombra até decisão explícita de destravar
-escrita real, mesma disciplina de @menção.
+corretamente que só tinha acesso ao squad `dev`.
+
+**4º teste, decisivo, pré-destravar escrita real**: com o mecanismo já
+validado, o usuário perguntou diretamente "vamos destravar escrita real
+no intake?" — antes de decidir, rodamos um teste específico pra ver
+`criar_card` COMPLETAR uma criação de verdade (os 3 testes anteriores
+sempre bateram em recusa por Ficha Técnica). Squad `dev` teve
+`criativos_ativo`/`submarca_ativo` desligados temporariamente só pro
+teste (religados logo depois). Achado real: o modelo narrou "Criado o
+rascunho do card..." com total confiança, mas `pendingIdCriado` veio
+vazio — nada foi escrito, porque a instância `dev` segue em
+`dryRun:true` (modo sombra) de propósito. Causa: `criar_card` era a
+ÚNICA das 9 ferramentas reais cuja descrição não avisava o modelo sobre
+dryRun (mesma classe do bug "finge que deu certo" já corrigido antes,
+sintoma novo). Corrigido (ver `CHANGELOG.md`) — descrição agora segue o
+mesmo padrão das outras 8. **Decisão de destravar `dryRun:false` de
+verdade ainda pendente** — fica pro próximo teste, depois do redeploy
+deste fix, repetir o mesmo cenário e confirmar que a narrativa bate com
+a realidade antes de qualquer decisão final.
 
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 

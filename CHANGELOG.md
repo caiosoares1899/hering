@@ -8871,6 +8871,35 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `tools/index.js`: `criar_card` não avisava o modelo sobre dryRun — agente narrava sucesso de uma criação que não aconteceu
+
+Achado no canário decisivo de validação da escrita real (1ª vez
+testando `criar_card` com uma chamada de verdade à API, sem bloqueio de
+Ficha Técnica/Submarca no meio do caminho — squad `dev` teve as duas
+exigências desligadas temporariamente só pro teste). Resultado: o
+comentário final do modelo afirmou com total confiança "Criado o
+rascunho do card...", mas `pendingIdCriado` veio vazio — nada foi
+escrito de verdade, porque a instância `dev` de `agenteAgilIntake`
+segue em modo sombra (`dryRun:true`) de propósito.
+
+Causa: `criar_card` era a ÚNICA das 9 ferramentas reais cuja
+`description` não avisava o modelo sobre dryRun — as outras 8 sempre
+dizem algo como "em dryRun, nunca aplica" vs. "escreve DE VERDADE".
+Vendo só `ok:true` no resultado da chamada (que dryRun também devolve,
+só sem `pendingId`), o modelo não tinha como saber que era simulação —
+mesma classe do bug "finge que deu certo" já corrigido antes
+(2026-08-27, `llmClient.js`/`systemPrompt.js`), só que num sintoma novo
+e numa ferramenta que na época nem existia ainda.
+
+Fix: descrição de `criar_card` agora segue o mesmo padrão das outras —
+deixa explícito quando está em dryRun (e instrui o modelo a nunca
+afirmar que o rascunho existe nesse caso) e quando está escrevendo de
+verdade.
+
+1 teste novo. Suíte inteira: 300/300 passando.
+
+**Requer redeploy manual**: `firebase deploy --only functions:agenteAgilIntake`
+
 ### 2026-08-27 · `intakeTrigger.js`: pedido que falhava por instabilidade da API ficava preso pra sempre, sem nenhum aviso
 
 Segundo achado do mesmo canário de validação (entrada logo abaixo — o
