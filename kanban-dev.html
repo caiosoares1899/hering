@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.490-dev</div>
+<div class="version">v8.30.491-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18790,7 +18790,7 @@ function openCfg(tab){
   // real (mesmo escopo de _askAgenteAgilNoCard()/insightsCard()) — mostrar
   // em outras squads levaria a uma lista sempre vazia, sem explicação.
   const agLogBtn=document.getElementById('cfgtab-agentelog-btn');
-  if(agLogBtn) agLogBtn.style.display=AGENTE_AGIL_MENTION_SQUADS.includes(ACTIVE_SQUAD)?'':'none';
+  if(agLogBtn) agLogBtn.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
   swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open');
 }
 function swCfgTab(tab){
