@@ -2698,6 +2698,28 @@ o rascunho ainda exige reaplicar a submarca manualmente no modal.
 Migração do lado do Databricks pro `intakeEnvelope` novo (o contrato
 antigo de `outputs` parou de ser lido) também não foi coordenada ainda.
 
+**Validado com canário simulado após o deploy (2026-08-27), squad `dev`**:
+2 cenários, direto no Firebase real (mesmo padrão dos canários
+anteriores — grava um item em `agente_intake_pending` simulando o que
+`http.js` escreveria). Cenário 1 (informação sobre um card existente,
+já concluído): o modelo leu o card, viu que já estava resolvido, e
+registrou só um comentário informativo, sem mexer em mais nada —
+correto. Cenário 2 (informação sem nenhum card associado, squad `dev`
+com Ficha Técnica ativa): 1ª tentativa esbarrou numa instabilidade
+momentânea da API da Anthropic (erro 529 "overloaded", não relacionado
+ao código — mas revelou que um item que falha nessa etapa fica preso em
+"pending" pra sempre, sem sinalização nenhuma pra um humano notar,
+mesma lacuna que a @menção normal já tinha, só que mais escondida aqui
+por não ter ninguém esperando resposta num card — registrado como
+possível ajuste futuro, não bloqueante); 2ª tentativa processou normal
+— `criar_card` recusou corretamente (Ficha Técnica obrigatória), só que
+o comentário final narrou "tentei no squad dados" (squad que a
+ferramenta nem alcança) — achado real de um problema de clareza (task
+text não dizia o squad ao modelo), já corrigido (ver entrada no
+`CHANGELOG.md` do mesmo dia). Mecanismo considerado validado — segue em
+modo sombra até decisão explícita de destravar escrita real, mesma
+disciplina de @menção.
+
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 
 Único item que sobrou em aberto do fechamento do item 5 — o outro

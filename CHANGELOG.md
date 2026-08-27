@@ -8819,6 +8819,30 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `intakeTrigger.js`: tarefa passada ao modelo não dizia o squad — achado no canário de validação do deploy
+
+Validando o deploy de `agenteAgilIntake` (entrada logo abaixo) com um
+teste simulado no squad `dev`: cenário sem card associado, informação
+sobre queda de engajamento numa campanha. `criar_card` recusou
+corretamente (squad `dev` exige Ficha Técnica, confirmado em produção),
+mas o comentário final do modelo narrou "tentei registrar... no squad
+'dados'" — squad que a ferramenta nem tem como alcançar (`criar_card`
+só age no squad ONDE O GATILHO RODA, fixado em `squadId`, nunca
+escolhido pelo LLM). A recusa em si estava certa (squad certo, motivo
+certo); só a explicação citava um squad errado.
+
+Causa: a tarefa montada em `processarIntake()` nunca mencionava
+explicitamente qual squad — o modelo, vendo um assunto que "parecia"
+mais afim de outro time, presumiu isso na narrativa. Fix: o texto da
+tarefa agora deixa o squad explícito nos dois caminhos (com e sem
+card), e no caminho sem card reforça que `criar_card` só pode agir
+naquele squad mesmo.
+
+1 teste novo (`intakeTrigger.test.js`). Suíte inteira: 298/298
+passando.
+
+**Requer redeploy manual**: `firebase deploy --only functions:agenteAgilIntake`
+
 ### 2026-08-27 · Correção de arquitetura: especialistas externos perdem escrita direta no board — orquestrador vira o único executor
 
 Correção pedida direto pelo usuário, revisando o desenho fechado mais

@@ -121,8 +121,20 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
       especialista: entry.especialista,
     });
 
+    // Achado real, canário de validação (2026-08-27): sem dizer o squad
+    // explicitamente, o modelo — vendo um assunto que "parecia" de outro
+    // squad (ex: tema de campanha, mais afim de "dados") — narrou na
+    // resposta final "tentei criar o card no squad dados", mesmo a
+    // ferramenta criar_card só conseguindo agir no squad ONDE ESTE
+    // GATILHO RODA (fixado em `squadId`, nunca escolhido pelo LLM — ver
+    // tools/index.js). A recusa em si aconteceu certinho, no squad certo
+    // (Ficha Técnica ativa em `dev`) — só a narrativa estava enganosa.
+    // Deixar o squad explícito na tarefa evita o modelo inventar/assumir
+    // um squad errado ao explicar o que fez.
     const especialistaLabel = entry.especialista ? `Especialista externo "${entry.especialista}"` : 'Especialista externo';
-    const task = `${especialistaLabel} mandou esta informação${cardId ? ` sobre o card ${cardId}` : ' (sem card associado — se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir)'}:\n\n${entry.texto}`;
+    const task = cardId
+      ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):\n\n${entry.texto}`
+      : `${especialistaLabel} mandou esta informação, sem nenhum card associado a ela. Você está atuando no squad "${squadId}" — se decidir usar criar_card, o rascunho só pode nascer AQUI, neste squad (esta ferramenta não tem como criar em nenhum outro squad, mesmo que o assunto pareça mais afim de outro time). Se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir:\n\n${entry.texto}`;
 
     const result = await runLoop({
       llmClient,
