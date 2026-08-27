@@ -7,6 +7,7 @@
 
 function makeFakeDb(initialData) {
   let data = JSON.parse(JSON.stringify(initialData || {}));
+  let _pushSeq = 0;
 
   function getAt(path) {
     const parts = path.split('/').filter(Boolean);
@@ -35,6 +36,7 @@ function makeFakeDb(initialData) {
 
   function ref(path) {
     return {
+      key: path.split('/').filter(Boolean).pop() || null,
       async get() {
         const v = getAt(path);
         return { val: () => (v === undefined ? null : v), exists: () => v !== undefined && v !== null };
@@ -52,6 +54,14 @@ function makeFakeDb(initialData) {
         const newVal = transform(cur === undefined ? null : cur);
         setAt(path, newVal);
         return { committed: true, snapshot: { val: () => newVal } };
+      },
+      // push(): key determinístico o bastante pra teste (sem colisão dentro
+      // de uma mesma instância de fake db) — não precisa parecer um push-id
+      // real do Firebase, só precisa ser único.
+      push() {
+        _pushSeq += 1;
+        const key = 'fakepush' + _pushSeq;
+        return ref(`${path}/${key}`);
       },
     };
   }

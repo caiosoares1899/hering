@@ -8819,6 +8819,84 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · Correção de arquitetura: especialistas externos perdem escrita direta no board — orquestrador vira o único executor
+
+Correção pedida direto pelo usuário, revisando o desenho fechado mais
+cedo no mesmo dia (entrada logo abaixo): "os outros agentes NÃO tenham
+acesso ao board. eles devem se comunicar com o Agente Ágil e ele executa
+as ações... porque ele conhece o board e o fluxo do time, ele toma as
+decisões". Até esta correção, `agente-agil/http.js` (o canal HTTP de
+especialistas externos, hoje só Databricks) aplicava a ação que o
+especialista mandava (`mover_coluna`, `editar_campos`...) DIRETO no
+board via `buildWritePlan`/`applyWritePlan` — o orquestrador nunca
+participava dessa escrita, contrariando a própria ideia de "orquestrador
+como único ponto de decisão". Correção pensada também pro que vem
+depois: "a ideia nao é só ter o databricks, é expandir para outros
+agentes e subagentes... que nem sempre vamos conseguir adaptar" pro
+vocabulário de ações — o novo contrato é deliberadamente mais pobre em
+estrutura.
+
+- **`agente-agil/schema.js`**: novo `intakeEnvelope` — só `requestId` +
+  `texto` (livre) são obrigatórios; `cardId`/`referencia` viram DICA
+  opcional (nenhum dos dois é mais exigido); `especialista` continua
+  opcional, mesmo fallback de sempre. O `envelope`/`output` antigos
+  (vocabulário de ações) ficam só como contrato legado, documentados,
+  não usados mais por `http.js`.
+- **`agente-agil/http.js`**: parou de aplicar escrita direta. Agora só
+  valida o `intakeEnvelope` e enfileira em
+  `kanban/squads/{squad}/dados/agente_intake_pending/{id}` — mesmo
+  espírito de segurança que `intake_pending` (formulário público) já
+  usa. Uma `referencia` que não resolve não derruba mais o pedido com
+  404 — vira um item sem `cardId`, e o orquestrador decide.
+- **`agente-agil-orquestrador/intakeTrigger.js`** (novo, 2º gatilho
+  automático do orquestrador, depois de @menção): escuta
+  `agente_intake_pending/{id}`. Se o `cardId`/`referencia` resolve pra
+  um card real, monta o MESMO toolset de sempre (reaproveita
+  `buildTools`/`realHandlers.js`, comprovados desde @menção); se não
+  resolve (ou não veio nenhum), monta um toolset restrito
+  (`semCard:true`) só com `criar_card`, `visao_board` e
+  `biblioteca_agil` — as únicas 3 que não exigem um card já resolvido.
+  Resultado gravado de volta no próprio item da fila (`resultText`,
+  `pendingIdCriado`) — sem card pra comentar nesse caminho, é o único
+  jeito de dar rastreabilidade. Mesma disciplina de sempre: kill switch,
+  idempotência, squad literal no path, **modo sombra por padrão**
+  (mecanismo NUNCA validado em produção ainda, ao contrário de @menção
+  — 10 canários antes de destravar escrita real lá).
+- **`agente-agil-orquestrador/tools/criarCard.js`** (novo tool
+  `criar_card`, gap já registrado no README): fecha a lacuna de "receber
+  informação que não é sobre nenhum card existente". NÃO escreve direto
+  em `/cards` (mesmo risco de perda silenciosa documentado no topo de
+  `functions/intake/submit.js` — `/cards` é um array reescrito por
+  INTEIRO a cada `fbSaveAll()` do cliente) — reusa o mesmo caminho
+  seguro do formulário público de intake (`intake_pending`), zero código
+  novo no cliente. Replica as mesmas regras obrigatórias do `criar_card`
+  client-side (Ficha Técnica recusa, Submarca exige uma opção válida).
+- **`tools/index.js`**: `buildTools()` ganhou o parâmetro `semCard` e o
+  tool `criar_card` (disponível em QUALQUER chamada, não só no caminho
+  sem card).
+- **`systemPrompt.js`**: `criar_card` na lista de ferramentas (risco
+  médio, mesmo cuidado de `mover_coluna`/`editar_campos`), nova seção
+  "Informação sem card associado" explicando o toolset restrito e que a
+  resposta em texto puro já é a entrega nesse caso (não existe
+  `comentario` pra chamar).
+
+24 testes novos (`intakeEnvelope.test.js`, `criarCard.test.js`,
+`intakeTrigger.test.js`) + 1 teste existente atualizado
+(`loop.test.js`, toolset ganhou `criar_card`). Suíte inteira: 297/297
+passando.
+
+**Requer redeploy manual** (função nova, ainda em modo sombra — sem
+efeito em produção até alguém decidir destravar escrita real, mesma
+disciplina de @menção): `firebase deploy --only
+functions:agenteAgil,functions:agenteAgilIntake`
+
+Fora de escopo desta rodada, sinalizado pro usuário: a tela de Pedidos
+de Intake (`kanban-dev.html`) ainda não usa os campos novos que
+`criar_card` grava (`submarca`, `origem`) — quem confirmar o rascunho
+precisa reaplicar a submarca manualmente no modal. Coordenação com o
+lado do Databricks pra migrar pro `intakeEnvelope` novo também fica de
+fora (o endpoint mudou de contrato — `outputs` parou de ser lido).
+
 ### 2026-08-27 · Orquestrador lendo input de especialistas externos — desenho combinado FECHADO
 
 Pedido direto: "vamos avançar na frente orquestrador" → escolhida a
