@@ -67,3 +67,12 @@ test('SYSTEM_PROMPT_V1 instrui o modelo a nunca fingir sucesso quando uma ferram
   assert.match(SYSTEM_PROMPT_V1, /Ferramenta que falhou/i);
   assert.match(SYSTEM_PROMPT_V1, /finja que deu certo/i);
 });
+
+// Ponto 3 do desenho "orquestrador lendo input de especialistas externos"
+// (README.md, 2026-08-25/27): o modelo nunca deve reconciliar sozinho
+// especialistas que se contradizem — só sinalizar.
+test('SYSTEM_PROMPT_V1 instrui o modelo a sinalizar contradição entre especialistas, nunca reconciliar sozinho', () => {
+  assert.match(SYSTEM_PROMPT_V1, /Comentários de especialistas externos/i);
+  assert.match(SYSTEM_PROMPT_V1, /origem/);
+  assert.match(SYSTEM_PROMPT_V1, /NÃO escolha quem está certo/i);
+});

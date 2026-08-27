@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
-const { summarizeCard, makeRealLerCardHandler, makeFakeLerCardHandler, COMMENTS_CAP } = require('../tools/lerCard');
+const { summarizeCard, origemDoComentario, makeRealLerCardHandler, makeFakeLerCardHandler, COMMENTS_CAP } = require('../tools/lerCard');
 const { buildTools } = require('../tools');
 const { runLoop } = require('../loop');
 const flowLib = require('../../agente-agil/flow');
@@ -41,8 +41,8 @@ test('summarizeCard resolve coluna, tags, responsável/participantes e checklist
   // cardCommentsPath() em agente-agil/board.js) — summarizeCard() recebe
   // via `comments`, não mais `card.comments`.
   const comments = {
-    c1: { author: 'Ana Silva', text: 'primeiro', ts: '2026-07-01T10:00:00.000Z' },
-    c2: { author: 'Bruno Tanaka', text: 'segundo', ts: '2026-07-02T10:00:00.000Z' },
+    c1: { author: 'Ana Silva', text: 'primeiro', ts: '2026-07-01T10:00:00.000Z', uid: 'uidAna' },
+    c2: { author: 'Bruno Tanaka', text: 'segundo', ts: '2026-07-02T10:00:00.000Z', uid: 'uidBru' },
   };
 
   const resumo = summarizeCard(card, { columns: COLUMNS, flowConfig: { doneCols: ['done'] }, squadTags: TAGS, members: MEMBERS, comments });
@@ -67,9 +67,37 @@ test('summarizeCard resolve coluna, tags, responsável/participantes e checklist
     { texto: 'Item sem grupo conhecido', done: false, grupo: 'grupo-sumiu' }, // grupo não encontrado -> cai pro id cru
   ]);
   assert.deepEqual(resumo.comentarios, [
-    { autor: 'Ana Silva', texto: 'primeiro', quando: '2026-07-01T10:00:00.000Z' },
-    { autor: 'Bruno Tanaka', texto: 'segundo', quando: '2026-07-02T10:00:00.000Z' },
+    { autor: 'Ana Silva', texto: 'primeiro', quando: '2026-07-01T10:00:00.000Z', origem: 'humano' },
+    { autor: 'Bruno Tanaka', texto: 'segundo', quando: '2026-07-02T10:00:00.000Z', origem: 'humano' },
   ]);
+});
+
+// Ponto 4 do desenho "orquestrador lendo input de especialistas externos"
+// (README.md) — cada comentário carrega origem, resolvida pelo mesmo uid
+// que resolveActor() (agente-agil/board.js) já grava.
+test('origemDoComentario resolve especialista/proprio/automacao/humano pelo uid', () => {
+  assert.equal(origemDoComentario('especialista:databricks'), 'especialista');
+  assert.equal(origemDoComentario('especialista:outro-futuro'), 'especialista');
+  assert.equal(origemDoComentario('agente-agil'), 'proprio');
+  assert.equal(origemDoComentario('automacao'), 'automacao');
+  assert.equal(origemDoComentario('uidAna'), 'humano');
+  assert.equal(origemDoComentario(undefined), 'humano');
+});
+
+test('summarizeCard marca origem de cada comentário (especialista vs. próprio vs. automação vs. humano)', () => {
+  const comments = {
+    c1: { author: 'Ana Silva', text: 'pergunta original', ts: '2026-07-01T10:00:00.000Z', uid: 'uidAna' },
+    c2: { author: '🔌 Databricks', text: 'diagnóstico do especialista', ts: '2026-07-01T11:00:00.000Z', uid: 'especialista:databricks' },
+    c3: { author: 'Agente Ágil', text: 'resumo do próprio agente', ts: '2026-07-01T12:00:00.000Z', uid: 'agente-agil' },
+    c4: { author: '⚙ Automação', text: '@Agente Ágil — [Automação] Card atrasado', ts: '2026-07-01T13:00:00.000Z', uid: 'automacao' },
+  };
+  const card = { col: 'backlog' };
+  const resumo = summarizeCard(card, { columns: COLUMNS, squadTags: [], members: [], comments });
+
+  assert.deepEqual(
+    resumo.comentarios.map((c) => c.origem),
+    ['humano', 'especialista', 'proprio', 'automacao']
+  );
 });
 
 test('summarizeCard limita comentários aos últimos COMMENTS_CAP, cronológico', () => {
@@ -157,7 +185,7 @@ test('handler real de ler_card lê o card de verdade (fake db) e devolve o resum
   assert.equal(result.card.titulo, 'Card real');
   assert.deepEqual(result.card.responsavel, { init: 'ANA', nome: 'Ana Silva' });
   // Lê do path novo (card_comments), ignora o campo morto card.comments.
-  assert.deepEqual(result.card.comentarios, [{ autor: 'Ana Silva', texto: 'comentário de verdade', quando: '2026-08-18T10:00:00.000Z' }]);
+  assert.deepEqual(result.card.comentarios, [{ autor: 'Ana Silva', texto: 'comentário de verdade', quando: '2026-08-18T10:00:00.000Z', origem: 'humano' }]);
   // Achado real (item 7): lista completa de colunas pra resolver nome -> id
   // antes de mover_coluna, respeitando o doneCols configurado pelo PO.
   assert.deepEqual(result.card.colunas_disponiveis, [

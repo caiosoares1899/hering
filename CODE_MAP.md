@@ -364,7 +364,14 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   id↔nome↔fim de TODAS as colunas do board) — `mover_coluna` precisa do
   ID, não do nome de exibição; achado real 2026-08-21 (agente chutou
   "Concluído"/"Concludo", ambos erraram, corretamente pausou com
-  `perguntar_humano` antes deste fix)
+  `perguntar_humano` antes deste fix). `origemDoComentario(uid)` —
+  2026-08-27, "orquestrador lendo input de especialistas externos" (ver
+  README.md) — cada comentário que `summarizeCard()` devolve ganha
+  `origem` (`humano`/`proprio`/`automacao`/`especialista`), resolvida do
+  mesmo `uid` que `resolveActor()` (`agente-agil/board.js`) já grava;
+  zero campo novo no Firebase. `systemPrompt.js` ganhou seção instruindo
+  o modelo a nunca reconciliar especialistas que se contradizem sozinho
+  — só sinalizar.
 - `mentionTrigger.js` — `createMentionTrigger({squadId, dryRun})` (L130)
   é uma FÁBRICA multi-squad (2026-08-21) — cada squad suportado vira sua
   própria Cloud Function com path LITERAL no trigger (não wildcard, por
