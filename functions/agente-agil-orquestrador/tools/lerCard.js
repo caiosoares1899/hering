@@ -39,6 +39,26 @@ const COMMENTS_CAP = 20;
 
 const lerCardSchema = z.object({});
 
+// Ponto 4 do desenho combinado "orquestrador lendo input de especialistas
+// externos" (README.md, 2026-08-25 — implementado 2026-08-27): em vez de
+// uma ferramenta nova só pra ler o que especialistas escreveram, cada
+// comentário que ler_card já devolve ganha uma `origem`, resolvida pelo
+// MESMO `uid` que `resolveActor()` (agente-agil/board.js) já grava —
+// nenhum registro/campo novo no Firebase, só rotular o que já existe.
+// `especialista:*` é o prefixo que `resolveActor(especialistaId)` usa pra
+// qualquer especialista externo (hoje só Databricks, mas o prefixo já é
+// genérico); `agente-agil` é o próprio orquestrador (resolveActor() sem
+// especialista); `automacao` é o ator sintético que dispara o agente via
+// Automação/scan diário (não é uma pessoa, mas também não é um
+// especialista nem o próprio agente — categoria própria evita rotular
+// errado); qualquer outro uid é uma pessoa de verdade.
+function origemDoComentario(uid) {
+  if (uid === 'agente-agil') return 'proprio';
+  if (typeof uid === 'string' && uid.startsWith('especialista:')) return 'especialista';
+  if (uid === 'automacao') return 'automacao';
+  return 'humano';
+}
+
 // owner/participants no card já são INICIAIS (ex. "ANA"), não uids — ver
 // notifications.js:131 (buildOwnerParticipantNotifSteps monta a lista de
 // destinatários direto a partir de card.owner/card.participants como
@@ -79,7 +99,7 @@ function summarizeCard(card, { columns, flowConfig, squadTags, members, comments
   const comentarios = Object.values(comments || {})
     .sort((a, b) => new Date(a.ts) - new Date(b.ts))
     .slice(-COMMENTS_CAP)
-    .map((c) => ({ autor: c.author, texto: c.text, quando: c.ts }));
+    .map((c) => ({ autor: c.author, texto: c.text, quando: c.ts, origem: origemDoComentario(c.uid) }));
 
   const checklist = (card.checklist || []).map((item) => {
     const grupo = (card.checklistGroups || []).find((g) => g.id === item.grp);
@@ -150,4 +170,4 @@ function makeRealLerCardHandler({ db, squadId, cardId }) {
   };
 }
 
-module.exports = { lerCardSchema, summarizeCard, makeFakeLerCardHandler, makeRealLerCardHandler, COMMENTS_CAP };
+module.exports = { lerCardSchema, summarizeCard, origemDoComentario, makeFakeLerCardHandler, makeRealLerCardHandler, COMMENTS_CAP };

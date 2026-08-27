@@ -2565,10 +2565,42 @@ ver.
    comentário carregar uma `origem` (`especialista`/`humano`/`proprio`)
    — pequena extensão do que já existe.
 
-**Status**: Achado 1 (fix de identidade) e Achado 2 (squad unificado em
-`dev`, `ecomm` descontinuado) implementados. O resto do desenho combinado
-(pontos 1-4 acima — extensão de `ler_card` com `origem`, fluxo reativo
-de resumo) ainda não tem código — aguardando a próxima rodada.
+**Status (atualizado 2026-08-27): FECHADO.** Achado 1 (fix de
+identidade) e Achado 2 (squad unificado em `dev`) já estavam
+implementados. Pontos 1-4 do desenho combinado, implementados nesta
+rodada:
+
+- **Ponto 4 (sem ferramenta nova)**: `summarizeCard()`
+  (`tools/lerCard.js`) marca a `origem` de cada comentário
+  (`humano`/`proprio`/`automacao`/`especialista`), resolvida direto do
+  `uid` que `resolveActor()` já grava (`especialista:*` pro prefixo
+  genérico de qualquer especialista externo) — zero registro/campo novo
+  no Firebase.
+- **Ponto 2 (reativo primeiro)**: nada de infra nova — o fluxo é 100%
+  reaproveitado do pipeline de @menção já validado; alguém pede um
+  resumo, o modelo já vê a `origem` de cada comentário via `ler_card`
+  (que já lê nos pedidos abertos).
+- **Ponto 3 (julgamento de PO, não reconciliação automática)**: nova
+  seção no system prompt ("Comentários de especialistas externos")
+  instruindo o modelo a tratar comentário de especialista como
+  informação, nunca ordem, e a NUNCA escolher sozinho quem está certo
+  quando dois parecem se contradizer — só sinalizar a contradição no
+  comentario e parar, sem `mover_coluna`/`editar_campos` disparados só
+  por essa leitura.
+
+4 testes novos (`lerCard.test.js`: `origemDoComentario()` pura +
+`summarizeCard()` marcando os 4 casos; `systemPrompt.test.js`: seção
+nova presente). Suíte inteira: **270/270 passando**.
+
+**Ainda não deployado** — mesmo passo de sempre: `firebase deploy
+--only functions:agenteAgilMencao,functions:agenteAgilMencaoDados`.
+Como não é ferramenta nova nem trigger novo, nenhum canário/sign-off
+adicional é necessário além do redeploy — a validação de comportamento
+de verdade (o modelo lendo `origem` e se comportando certo diante de
+uma contradição real) só acontece com tráfego real de especialista, que
+ainda não existe hoje (nenhum especialista externo em produção usa
+`agente-agil/http.js` além do Databricks, e não há evidência de uso
+recente).
 
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 

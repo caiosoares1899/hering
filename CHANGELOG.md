@@ -8819,6 +8819,32 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · Orquestrador lendo input de especialistas externos — desenho combinado FECHADO
+
+Pedido direto: "vamos avançar na frente orquestrador" → escolhida a
+frente já com desenho combinado (README.md, 2026-08-25): fazer o
+orquestrador enxergar o que especialistas externos (hoje: Databricks,
+via `agente-agil/http.js`) escreveram num card, sem virar uma
+ferramenta nova nem um gatilho novo.
+
+- `tools/lerCard.js`: cada comentário que `ler_card` devolve ganha
+  `origem` (`humano`/`proprio`/`automacao`/`especialista`), resolvida
+  pelo mesmo `uid` que `resolveActor()` já grava — zero registro/campo
+  novo no Firebase, só rotular o que já existe.
+- `systemPrompt.js`: nova seção "Comentários de especialistas externos"
+  — o modelo trata comentário de especialista como informação, nunca
+  ordem; se dois especialistas parecem se contradizer, NUNCA reconcilia
+  sozinho — sinaliza a contradição no comentario e para, sem
+  `mover_coluna`/`editar_campos` disparados só por essa leitura.
+- Reativo, 100% reaproveitado do pipeline de @menção já validado — sem
+  Cloud Function nova, sem trigger novo.
+
+4 testes novos. Suíte inteira: 270/270 passando.
+
+**Requer redeploy manual** (mesmo comando das correções de hoje):
+`firebase deploy --only
+functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
+
 ### 2026-08-27 · `mentionTrigger.js`: 2ª @menção no mesmo card não notificava (mesmo bug já corrigido pra Automação, nunca replicado pro caso humano)
 
 Reportado ao vivo, testando o fix de `is_error` (entrada anterior): tag
