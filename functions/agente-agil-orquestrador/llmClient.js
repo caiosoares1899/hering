@@ -45,6 +45,16 @@ function historyToAnthropicMessages(history) {
           type: 'tool_result',
           tool_use_id: r.toolCallId,
           content: JSON.stringify(r.output),
+          // Achado real (2026-08-27): nenhum tool_result marcava is_error,
+          // mesmo quando o handler devolvia { ok: false, ... } (convenção
+          // usada em TODAS as tools que escrevem — realHandlers.js/
+          // lerCard.js). O modelo recebia a falha só enterrada dentro do
+          // JSON do content, sem o sinal dedicado que a API da Anthropic
+          // usa pra tratar aquele resultado como erro de verdade — achado
+          // ao vivo: pedido pra adicionar uma tag que não existe no squad
+          // falhava certinho (editar_campos lança invalid_output), mas o
+          // texto final do agente afirmava "adicionei a tag" mesmo assim.
+          ...(r.output && r.output.ok === false ? { is_error: true } : {}),
         })),
       };
     }

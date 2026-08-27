@@ -8819,6 +8819,37 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `llmClient.js` + `systemPrompt.js`: agente afirmava sucesso em ação que falhou
+
+Achado ao vivo, testando a aba nova de Histórico do Agente: pedido pra
+adicionar a tag "ML" a um card — `editar_campos` falhou de verdade (a
+tag não existe nesse squad, `invalid_output`), mas o comentário final do
+agente disse "Pronto, adicionei a tag ML ao card". A tag nunca foi
+adicionada e a pessoa que pediu não recebeu notificação nenhuma da
+falha.
+
+Causa raiz: `historyToAnthropicMessages()` em `llmClient.js` nunca
+marcava `is_error: true` nos blocos `tool_result`, mesmo quando o
+handler devolvia `{ ok: false, ... }` (convenção usada por TODAS as
+ferramentas que escrevem — `realHandlers.js`/`lerCard.js`). A falha
+chegava pro modelo só enterrada dentro do JSON do `content`, sem o sinal
+dedicado que a API da Anthropic usa pra tratar aquele resultado como
+erro de verdade — o modelo não necessariamente notava.
+
+- `llmClient.js`: `tool_result` com `output.ok === false` agora vem com
+  `is_error: true`.
+- `systemPrompt.js`: nova seção "Ferramenta que falhou" reforçando,
+  explicitamente, que o agente nunca deve reportar sucesso quando uma
+  ferramenta chamada devolveu erro.
+
+6 testes novos (`llmClient.test.js`/`systemPrompt.test.js`). Suíte
+inteira: 266/266 passando.
+
+**Requer redeploy manual**: `firebase deploy --only
+functions:agenteAgilMencao,functions:agenteAgilMencaoDados` — mesmo
+comando da entrada anterior (Histórico do Agente), pode ser feito no
+mesmo deploy.
+
 ### 2026-08-27 · `agenteLog.js`: histórico de alterações do agente, por squad (pedido direto do PO)
 
 Pedido direto: "quero que tenha uma area de log historico dele... quero
