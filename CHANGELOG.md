@@ -2046,6 +2046,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.488-dev — 2026-08-27 — Revisão de bugs (skill /monitorarbugs): ações em massa não disparavam automações
+
+Rodada de `/monitorarbugs` sem área especificada. Área 1: extensão
+direta dos 2 bugs de Automações já corrigidos em 2026-08-26 (evento
+dispara em alguns caminhos mas não em outros) — comparados TODOS os
+call sites de `runAutoRules('move'/'blocked'/'unblocked', ...)`,
+incluindo as ações em massa (seleção múltipla de cards), que a rodada
+anterior não tinha comparado. 5 achados reais, mesma causa raiz:
+
+- `_doBulkMove(colId)` — mover cards em massa nunca disparava "Card
+  movido para coluna".
+- `_doBulkBlockCol()`/`_doBulkUnblockCol()` — marcar/desmarcar
+  impedimento em massa (modo "Impedimentos como coluna") tinha o mesmo
+  gap, já que por baixo dos panos é uma mudança de coluna.
+- `_doBulkBlockTag()`/`_doBulkUnblockTag()` — marcar/desmarcar
+  impedimento em massa (modo "Impedimentos como tag") nunca disparava
+  "Card foi marcado como impedido"/"Card foi desbloqueado" (nem a
+  notificação de desbloqueio, no caso de desmarcar).
+
+Área 2 (`_duplicarComFilhos()`, duplicar supercard com filhos): sem
+achados — a única dúvida real (deveria disparar "Card criado em
+coluna"?) já tinha sido decidida explicitamente nesta sessão (2026-08-26):
+só a ferramenta `criar_card` do Agente Ágil dispara esse trigger, de
+propósito, não fan-out/duplicar.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.487-dev — 2026-08-26 — Revisão de bugs (skill /monitorarbugs): card hotline do Agente Ágil vazando em métricas e buscas
 
 Rodada de `/monitorarbugs` sem área especificada — priorizou as 2 áreas
