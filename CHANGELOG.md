@@ -2046,6 +2046,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.489-dev — 2026-08-27 — Revisão de bugs (skill /monitorarbugs, pedido direto): recorrentes/agendamentos podiam criar cards invisíveis
+
+Pedido direto do usuário: "ações desse tipo que rolaram ontem com a
+coluna de impedimento" — revisão focada em achar OUTRAS mutações que
+possam repetir o mesmo padrão do incidente de 2026-08-26 (card criado/
+movido pra um id de coluna que não existe mais, ficando invisível no
+board). Grep de todo `.col=`/`col:` com string literal ou vindo de uma
+config salva, no arquivo inteiro. 3 achados reais, mesma causa raiz,
+pior que o caso original: aqui o card órfão é criado **automaticamente,
+sem ninguém olhando**, toda vez que a recorrência/agendamento dispara —
+não é 1 evento só, é recorrente de verdade.
+
+- `_criarCardRecorrente()` e `_criarCardAgendado()` — cards recorrentes/
+  agendados guardam o id da coluna escolhida na hora de CONFIGURAR
+  (`item.col`), potencialmente dias/semanas antes de o card
+  efetivamente nascer. Se essa coluna foi excluída nesse meio-tempo, o
+  card nascia com `.col` órfão — invisível no board (achável só via
+  painel), silenciosamente, a cada disparo da recorrência/agendamento.
+- `openQLEdit()` — mesmo problema, só que na tela de edição do modelo/
+  recorrente/agendamento: o campo "Coluna" aparecia em branco (mesmo
+  sintoma visual do incidente original) se a coluna salva não existisse
+  mais.
+
+Import do Trello (`parseTrelloJSON()`) já tinha proteção equivalente
+(`SEMANTIC_TO_REAL`, fallback pra `columns[0]` se a coluna semântica não
+resolver) — não precisou de fix, serviu de referência pro padrão usado
+aqui.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.488-dev — 2026-08-27 — Revisão de bugs (skill /monitorarbugs): ações em massa não disparavam automações
 
 Rodada de `/monitorarbugs` sem área especificada. Área 1: extensão
