@@ -18,6 +18,36 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.492 — 2026-08-27 · promove pra prod (lote grande, batching de features)
+Promove pra produção todo o acumulado de `kanban-dev.html` desde a
+última promoção (v8.30.488-dev até v8.30.492-dev), seguindo a regra de
+cadência do `CLAUDE.md` (correções de bug vão imediatas, features
+batidas no fim do dia). Nada aqui é código novo desta promoção — cada
+item já tinha sua própria entrada em "kanban-dev.html (ambiente de
+teste)"; esta entrada só resume o pacote pra quem lê a versão de prod.
+
+- **🤖 Histórico do Agente Ágil** (Configurações): nova aba, PO/
+  Organizador/ADM, com todas as alterações que o Agente Ágil fez em
+  cards da squad — quem pediu (via @menção) ou se foi disparo
+  automático, útil pra auditoria do PO.
+- **Ações em massa (impedimento/mover) voltam a disparar Automações**:
+  bloquear/desbloquear/mover vários cards de uma vez não acionava
+  regras de Automação configuradas pra esses gatilhos — só a ação em 1
+  card de cada vez disparava. Corrigido pros 4 caminhos de bulk action.
+- **Recorrências/agendamentos não criam mais cards "fantasma"**: se a
+  coluna salva na configuração de um card recorrente/agendado tivesse
+  sido excluída depois, o card nascia numa coluna que não existe mais
+  no board — invisível, sem ninguém notar (a recorrência dispara
+  sozinha). Agora cai na 1ª coluna válida do fluxo nesse caso.
+- **Pedidos de Intake mostra sugestões do Agente Ágil**: quando o
+  Agente Ágil (novidade do backend, ver "Agente Ágil Orquestrador" mais
+  abaixo) sugere um card novo, a tela de Pedidos de Intake mostra 🤖 e
+  a submarca sugerida, já pré-marcada ao criar o card.
+- Fix incidental: erro que quebrava o botão ⚙ Configurações inteiro
+  logo depois do redeploy do backend (já corrigido e promovido junto).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.487 — 2026-08-26 · promove pra prod
 Promove pra produção a rodada de `/monitorarbugs` (v8.30.487-dev),
 validada em dev. Card hotline "🤖 Converse com o Agente Ágil" foi

@@ -4136,6 +4136,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
+    <div class="ag-tab" id="cfgtab-agentelog-btn" style="display:none;" onclick="swCfgTab('agentelog')">🤖 Histórico do Agente</div>
   </div>
   <div class="cfg-body">
 
@@ -4249,6 +4250,20 @@ input[type="date"]{-moz-appearance:textfield;}
         <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 12px;">Canal, Objetivo, Plataforma, Tipo e Formato são listas fechadas — o demandante só escolhe, nunca digita — pra não acumular duplicata tipo "vídeo"/"vídeos". Vieram pré-carregadas com o padrão da Hering; edite/adicione à vontade.</p>
         <div id="crv-opcoes-cfg-body"></div>
       </div>
+    </div>
+    <!-- ABA HISTÓRICO DO AGENTE — pedido direto: "quero uma area q guarde
+         todas as alterações nos cards que ele faça naquela squad, para
+         servir de historico para o PO". Só visível pra squads com escrita
+         real do orquestrador (AGENTE_AGIL_MENTION_SQUADS) — ver
+         _applyAgenteLogTabVisibility(). Configurações inteiro já é
+         PO/Organizador/ADM-only, não precisa de gate extra aqui. -->
+    <div class="tab-c" id="cfgtab-agentelog">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:0;">🤖 Histórico do Agente Ágil</div>
+        <button class="btn btn-sm" onclick="renderAgenteLog()" style="font-size:10px;color:var(--cyan);border-color:rgba(56,182,255,.3);">🔄 Atualizar</button>
+      </div>
+      <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 12px;">Todas as vezes que o Agente Ágil mudou algo num card desta squad — quem pediu (via @menção) ou se foi um disparo automático (Automação/verificação diária). Cards que só foram lidos pelo agente, sem nenhuma alteração, não aparecem aqui.</p>
+      <div id="agentelog-list"><div style="font-size:11px;color:var(--txt3);padding:8px 0;">Carregando…</div></div>
     </div>
     <!-- ABA PADRÕES DE CARD -->
     <div class="tab-c" id="cfgtab-padroes">
@@ -5586,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.487</div>
+<div class="version">v8.30.492</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6530,6 +6545,11 @@ function _doBulkMove(colId){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'moveu para '+(col?.name||colId));
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesma classe dos bugs de
+    // 'assigned'/'move' já corrigidos (2026-08-26) — mover em massa nunca
+    // disparava a automação "Card movido para coluna", só arrastar/menu de
+    // contexto/modal disparavam.
+    runAutoRules('move', c.id, colId);
   } });
   // Para mover colunas, o renderBoard é obrigatório para reordenar os cards no DOM.
   // No entanto, podemos tentar preservar o scroll horizontal do board-wrap.
@@ -6714,6 +6734,11 @@ function _doBulkBlockCol(){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'moveu para '+(col?.name||'Impedimentos'));
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesma classe dos bugs de
+    // 'assigned'/'move' já corrigidos (2026-08-26) — marcar impedimento em
+    // massa nunca disparava a automação "Card movido para coluna", só
+    // ctxBlock() (1 card por vez) disparava.
+    runAutoRules('move', c.id, 'blocker');
   });
   _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.');
 }
@@ -6727,6 +6752,8 @@ function _doBulkUnblockCol(colId){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'moveu para '+(col?.name||colId));
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesmo gap do bloco acima.
+    runAutoRules('move', c.id, colId);
   });
   _bulkFinish('✅ '+n+' card(s) removidos de Impedimentos → '+(col?.name||colId)+'.');
 }
@@ -6739,6 +6766,10 @@ function _doBulkBlockTag(reason){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'marcou como impedido'+(reason?': '+reason:''));
+    // Achado real 2026-08-27 (skill /monitorarbugs): marcar impedimento em
+    // massa (modo tag) nunca disparava "Card foi marcado como impedido" —
+    // só o modal do card (saveCard()/scheduleAutoSave()) disparava.
+    runAutoRules('blocked', c.id);
   });
   _bulkFinish('🚧 '+n+' card(s) marcados como impedimento.', true);
 }
@@ -6751,6 +6782,10 @@ function _doBulkUnblockTag(){
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'removeu impedimento');
+    // Achado real 2026-08-27 (skill /monitorarbugs): mesmo gap do bloco
+    // acima, na direção contrária (nem notificação nem automação disparavam).
+    notifUnblocked(c);
+    runAutoRules('unblocked', c.id);
   });
   _bulkFinish('✅ impedimento removido de '+n+' card(s).', true);
 }
@@ -17430,8 +17465,9 @@ function renderIntakeBody(){
     const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
     const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
     return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${esc(item.titulo)}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
+      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
       ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
       <div style="display:flex;gap:8px;">
         <button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>
@@ -17462,6 +17498,21 @@ function _intakeCriarCard(id){
     const alvo=_norm(item.squadDemandante);
     const tagMatch=(tags||[]).find(t=>_norm(t.label)===alvo);
     if(tagMatch) addCardTag(tagMatch.id);
+  }
+  // Submarca sugerida pelo Agente Ágil (criar_card, ver tools/criarCard.js
+  // nas functions) — mesmo casamento por label (case/acento-insensitive)
+  // que o squadDemandante acima já faz. addCardTag() sozinho não marca o
+  // <select id="m-submarca"> dedicado (mesmo bug já corrigido em "usar
+  // modelo", ver comentário lá — saveCard() valida submarca lendo o VALOR
+  // DO SELECT, não editingTags), então seta os dois.
+  if(item.submarca && typeof SUBMARCA_TAGS!=='undefined'){
+    const alvoSm=_norm(item.submarca);
+    const smMatch=SUBMARCA_TAGS.find(st=>_norm(st.label)===alvoSm);
+    if(smMatch){
+      addCardTag(smMatch.id);
+      const smSel=document.getElementById('m-submarca');
+      if(smSel) smSel.value=smMatch.id;
+    }
   }
   // Setado DEPOIS de openNewCard() de propósito — openNewCard() zera este
   // mesmo campo no início (ver comentário na declaração), então só marcar
@@ -18332,7 +18383,14 @@ function _criarCardRecorrente(item, hoje){
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
     id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
-    col:item.col||(columns[0]?.id)||'backlog',
+    // Achado real 2026-08-27 (skill /monitorarbugs, mesma classe do bug de
+    // "Impedimentos" corrigido em 2026-08-26): item.col é a coluna escolhida
+    // na hora de CONFIGURAR a recorrência, potencialmente dias/semanas atrás
+    // — se essa coluna foi excluída nesse meio-tempo, usar o id direto criava
+    // um card real com .col órfão, invisível no board (sem coluna bate com
+    // aquele id), toda vez que a recorrência disparasse (sozinho, sem
+    // ninguém olhando — pior que o caso original, que era 1 evento só).
+    col:(item.col && columns.some(c=>c.id===item.col)) ? item.col : (columns[0]?.id||'backlog'),
     tags, tag:tags[0]||'',
     title:item.title||'(recorrente)',
     desc:item.desc||'',
@@ -18428,7 +18486,8 @@ function _criarCardAgendado(item){
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
     id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
-    col:item.col||(columns[0]?.id)||'backlog',
+    // Mesmo achado/mesmo fix de _criarCardRecorrente() acima.
+    col:(item.col && columns.some(c=>c.id===item.col)) ? item.col : (columns[0]?.id||'backlog'),
     tags, tag:tags[0]||'',
     title:item.title||'(agendado)',
     desc:item.desc||'', descsExtra:[],
@@ -18534,7 +18593,10 @@ function openQLEdit(i){
   const tempId = '__qltmp__'+Date.now();
   const tempCard = {
     id: tempId,
-    col: item.col||(columns[0]?.id)||'backlog',
+    // Mesmo achado/mesmo fix de _criarCardRecorrente() — sem isso, editar um
+    // modelo/recorrente/agendamento cuja coluna salva foi excluída mostrava
+    // o campo "Coluna" em branco no modal (nenhuma option bate com o id).
+    col: (item.col && columns.some(c=>c.id===item.col)) ? item.col : (columns[0]?.id||'backlog'),
     tags, tag:tags[0]||'',
     title: item.title||'',
     desc: item.desc||'', descsExtra: Array.isArray(item.descsExtra)?item.descsExtra.slice():[],
@@ -18739,9 +18801,16 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
-function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
+function openCfg(tab){
+  // Aba "🤖 Histórico do Agente" só existe onde o orquestrador tem escrita
+  // real (mesmo escopo de _askAgenteAgilNoCard()/insightsCard()) — mostrar
+  // em outras squads levaria a uma lista sempre vazia, sem explicação.
+  const agLogBtn=document.getElementById('cfgtab-agentelog-btn');
+  if(agLogBtn) agLogBtn.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
+  swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open');
+}
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','agentelog'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   // 'auto' nunca chega aqui — o botão da aba chama openAutoOv() direto (ver
@@ -18759,6 +18828,7 @@ function swCfgTab(tab){
   }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
+  if(tab==='agentelog') renderAgenteLog();
   if(tab==='criativos'){
     const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo;
     renderCriativosListasCfg();
@@ -18775,6 +18845,52 @@ function swCfgTab(tab){
   if(tab==='calendario'){
     if(typeof renderCalendarList === 'function') renderCalendarList();
   }
+}
+// Histórico do Agente Ágil — aba "🤖 Histórico do Agente" dentro de
+// Configurações (pedido direto: "quero uma area q guarde todas as
+// alterações nos cards que ele faça naquela squad, para servir de
+// historico para o PO"). Leitura pontual (window._get), igual a
+// loadBackupTab() — não é um painel "ao vivo", só recarrega quando a aba
+// abre ou o botão "🔄 Atualizar" é clicado. Escrito pelo backend em
+// functions/agente-agil-orquestrador/agenteLog.js — ver comentário lá
+// pro formato exato de cada entrada.
+async function renderAgenteLog(){
+  const box=document.getElementById('agentelog-list'); if(!box) return;
+  box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Carregando…</div>';
+  let val;
+  try{
+    const snap=await window._get(window._ref(window._db, FB+'/agente_log'));
+    val=snap.val();
+  }catch(err){
+    console.warn('[agentelog] falha ao carregar:', err);
+    box.innerHTML='<div style="font-size:11px;color:var(--danger);padding:8px 0;">⚠ Não foi possível carregar o histórico.</div>';
+    return;
+  }
+  const entries=Object.values(val||{}).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  if(!entries.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhuma alteração registrada ainda.</div>';
+    return;
+  }
+  // Teto só de exibição (não apaga nada do Firebase) — evita travar o
+  // navegador renderizando uma lista gigante de uma vez; mesmo espírito do
+  // "ver mais" que colunas grandes do board já usam.
+  const LIMIT=200;
+  box.innerHTML=entries.slice(0,LIMIT).map(e=>{
+    const card=cards.find(c=>c.id===e.cardId);
+    const cardTitle=card?esc(card.title):'(card não encontrado — arquivado ou excluído)';
+    const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard('${esc(e.cardId)}');" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
+    const dt=e.ts?new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const quem=e.autonomous
+      ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
+      : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
+    const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
+    const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
+    return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${dt} · ${cardLink}</div>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${quem}${pedido}</div>
+      <ul style="margin:4px 0 0;padding-left:18px;font-size:12px;color:var(--txt);line-height:1.5;">${acoesHtml}</ul>
+    </div>`;
+  }).join('') + (entries.length>LIMIT?`<div style="font-size:11px;color:var(--txt3);padding:6px 0;text-align:center;">Mostrando os ${LIMIT} mais recentes de ${entries.length}.</div>`:'');
 }
 // Abre o overlay independente de Automações/Receitas (#auto-ov) — mesma
 // lógica que antes rodava só dentro de swCfgTab(tab==='auto'), extraída pra
