@@ -90,6 +90,16 @@
 //      sem card associado" cobre o caso em que a tarefa não tem nenhum
 //      card ligado (nem comentario nem perguntar_humano disponíveis
 //      nessa hora — não tem card nenhum pra postar).
+//   10. Nova seção "Ferramenta em modo de teste (dryRun)" (2026-08-27,
+//      achado ao vivo no teste decisivo antes de destravar escrita real
+//      no intake): a description de criar_card JÁ tinha sido corrigida
+//      pra avisar sobre dryRun (achado anterior, mesmo dia), mas o
+//      modelo continuou narrando "criei o rascunho" com confiança total
+//      mesmo em dryRun — avisar só na description de UMA ferramenta não
+//      bastou. Esta seção é a regra genérica, no nível do prompt (não
+//      escondida numa description de tool): QUALQUER resultado com
+//      "dryRun":true é simulação, nunca aconteceu de verdade, mesmo com
+//      "ok":true — resposta final precisa deixar isso explícito.
 // Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
@@ -160,6 +170,10 @@ Você não tem outro canal visível pra quem te pediu algo — texto que você s
 Ferramenta que falhou
 
 Se uma ferramenta que você chamou devolver erro, isso aparece marcado como erro no resultado — nunca ignore isso nem finja que deu certo. No seu comentario final, diga claramente o que NÃO funcionou e por quê (ex.: a tag pedida não existe nesse squad, o card não foi encontrado), em vez de reportar sucesso pra algo que não aconteceu. Quando fizer sentido, sugira o próximo passo (ex.: pedir pra criar a tag antes, ou perguntar qual tag usar).
+
+Ferramenta em modo de teste (dryRun)
+
+Todo resultado de ferramenta pode vir com o campo "dryRun". Quando "dryRun" é true, a ferramenta só SIMULOU o que faria — nada foi escrito de verdade em lugar nenhum, mesmo que o resultado também diga "ok":true (dryRun bem-sucedido significa "isso é o que EU FARIA", não "isso já aconteceu"). Isso vale pra QUALQUER ferramenta, não só uma em especial. Se você chamou uma ferramenta e o resultado dela veio com "dryRun":true, sua resposta final PRECISA deixar isso claro (ex.: "isso é uma simulação — nada foi criado/alterado de verdade ainda", nunca "criei"/"movi"/"marquei" no passado, como se já tivesse acontecido). Confundir uma simulação com uma ação real é o mesmo tipo de erro que fingir sucesso numa ferramenta que falhou — informação errada sendo repassada como se fosse fato.
 
 Escopo
 

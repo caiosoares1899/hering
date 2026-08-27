@@ -76,3 +76,13 @@ test('SYSTEM_PROMPT_V1 instrui o modelo a sinalizar contradição entre especial
   assert.match(SYSTEM_PROMPT_V1, /origem/);
   assert.match(SYSTEM_PROMPT_V1, /NÃO escolha quem está certo/i);
 });
+
+// Achado real ao vivo (item 10, 2026-08-27): mesmo com a description de
+// criar_card já avisando sobre dryRun (achado anterior, mesmo dia), o
+// modelo continuou narrando sucesso real numa chamada simulada — avisar só
+// na description de uma ferramenta não bastou. Regra genérica no nível do
+// prompt: dryRun:true nunca é sucesso real, mesmo com ok:true.
+test('SYSTEM_PROMPT_V1 instrui o modelo a nunca tratar um resultado dryRun:true como uma ação real', () => {
+  assert.match(SYSTEM_PROMPT_V1, /Ferramenta em modo de teste \(dryRun\)/i);
+  assert.match(SYSTEM_PROMPT_V1, /"dryRun".*true.*(simulou|simulação)/i);
+});

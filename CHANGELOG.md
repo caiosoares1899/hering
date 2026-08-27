@@ -8871,6 +8871,37 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `systemPrompt.js`: fix da description de `criar_card` não bastou — dryRun precisava de regra genérica no prompt
+
+Repetido o mesmo teste decisivo (squad `dev`, Ficha Técnica/Submarca
+desligadas de novo, temporariamente) depois do redeploy do fix anterior
+(entrada logo abaixo). Resultado: o modelo continuou narrando "Criei um
+rascunho de card..." com total confiança — o fix na `description` de
+`criar_card` (avisando sobre dryRun só naquela ferramenta) não foi
+suficiente pra mudar o comportamento na prática.
+
+Causa provável: uma instrução isolada dentro do JSON schema de UMA
+ferramenta tem muito menos peso do que uma regra explícita no corpo do
+system prompt — historicamente, toda instrução de comportamento que
+"pegou" de verdade neste projeto (nunca fingir sucesso, sempre entregar
+via comentario, nunca reconciliar especialistas sozinho...) vive no
+prompt, não escondida numa description.
+
+Fix: nova seção "Ferramenta em modo de teste (dryRun)" no
+`systemPrompt.js` — regra GENÉRICA, vale pra qualquer uma das 9
+ferramentas reais, não só `criar_card`: resultado com `dryRun:true`
+nunca é uma ação real, mesmo vindo com `ok:true` (dryRun bem-sucedido
+significa "isso é o que eu faria", não "isso já aconteceu") — resposta
+final precisa deixar isso explícito.
+
+1 teste novo. Suíte inteira: 301/301 passando.
+
+**Requer redeploy manual**: `firebase deploy --only functions:agenteAgilIntake`
+(o mesmo fix também se aplica, em tese, à @menção — mas lá o problema
+nunca foi reproduzido, porque a @menção só roda com `dryRun:false` desde
+2026-08-18; redeploy de `agenteAgilMencao`/`agenteAgilMencaoDados` não é
+necessário, mas não faz mal nenhum se acontecer no mesmo lote).
+
 ### 2026-08-27 · `tools/index.js`: `criar_card` não avisava o modelo sobre dryRun — agente narrava sucesso de uma criação que não aconteceu
 
 Achado no canário decisivo de validação da escrita real (1ª vez
