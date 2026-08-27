@@ -58,3 +58,12 @@ test('SYSTEM_PROMPT_V1 deixa claro que mover_coluna espera o ID da coluna, não 
   assert.match(SYSTEM_PROMPT_V1, /coluna.*espera o ID/i);
   assert.match(SYSTEM_PROMPT_V1, /colunas_disponiveis/);
 });
+
+// Achado real ao vivo (item 7, 2026-08-27): editar_campos falhou (tag
+// inexistente no squad), mas o comentario final do modelo afirmou sucesso
+// mesmo assim. Reforço explícito no prompt, complementar ao fix de código
+// (llmClient.js agora marca is_error:true nos tool_results com ok:false).
+test('SYSTEM_PROMPT_V1 instrui o modelo a nunca fingir sucesso quando uma ferramenta falha', () => {
+  assert.match(SYSTEM_PROMPT_V1, /Ferramenta que falhou/i);
+  assert.match(SYSTEM_PROMPT_V1, /finja que deu certo/i);
+});

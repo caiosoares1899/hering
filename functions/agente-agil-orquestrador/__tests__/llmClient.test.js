@@ -8,6 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   createAnthropicLlmClient,
+  historyToAnthropicMessages,
   withSystemCacheControl,
   withMessagesCacheControl,
 } = require('../llmClient');
@@ -58,6 +59,78 @@ test('withMessagesCacheControl: histórico com múltiplos turnos só marca o úl
 
 test('withMessagesCacheControl: lista vazia não quebra', () => {
   assert.deepEqual(withMessagesCacheControl([]), []);
+});
+
+// Achado real ao vivo (2026-08-27): editar_campos falhava (tag inexistente
+// no squad, ok:false), mas o comentario final do modelo afirmava sucesso —
+// tool_result nunca marcava is_error:true, mesmo com output.ok===false, então
+// a falha ficava só enterrada dentro do JSON do content.
+test('historyToAnthropicMessages: marca is_error:true em tool_result cujo output tem ok:false', () => {
+  const history = [
+    { role: 'tool_results', results: [
+      { toolCallId: '1', output: { ok: false, error: 'invalid_output', message: 'tag não existe' } },
+    ] },
+  ];
+  const messages = historyToAnthropicMessages(history);
+  assert.equal(messages[0].content[0].is_error, true);
+});
+
+test('historyToAnthropicMessages: NÃO marca is_error em tool_result de sucesso (ok:true)', () => {
+  const history = [
+    { role: 'tool_results', results: [
+      { toolCallId: '1', output: { ok: true, dryRun: false, applied: 2 } },
+    ] },
+  ];
+  const messages = historyToAnthropicMessages(history);
+  assert.equal(messages[0].content[0].is_error, undefined);
+});
+
+test('historyToAnthropicMessages: tool sem campo ok (ex.: fakeHandlers) não marca is_error', () => {
+  const history = [
+    { role: 'tool_results', results: [
+      { toolCallId: '1', output: { simulated: true, tool: 'comentario', wouldHaveExecuted: {} } },
+    ] },
+  ];
+  const messages = historyToAnthropicMessages(history);
+  assert.equal(messages[0].content[0].is_error, undefined);
+});
+
+test('historyToAnthropicMessages: múltiplos tool_results no mesmo turno, só os com ok:false marcam is_error', () => {
+  const history = [
+    { role: 'tool_results', results: [
+      { toolCallId: '1', output: { ok: true } },
+      { toolCallId: '2', output: { ok: false, error: 'card_not_found' } },
+    ] },
+  ];
+  const messages = historyToAnthropicMessages(history);
+  assert.equal(messages[0].content[0].is_error, undefined);
+  assert.equal(messages[0].content[1].is_error, true);
+});
+
+test('decide(): tool_result com ok:false chega na API com is_error:true', async () => {
+  const originalFetch = global.fetch;
+  let capturedBody = null;
+  global.fetch = async (url, opts) => {
+    capturedBody = JSON.parse(opts.body);
+    return { ok: true, json: async () => ({ content: [], stop_reason: 'end_turn', usage: {} }) };
+  };
+
+  try {
+    const client = createAnthropicLlmClient({ apiKey: 'fake-key' });
+    await client.decide({
+      system: 'sistema',
+      history: [
+        { role: 'user', text: 'tarefa' },
+        { role: 'assistant', text: null, toolCalls: [{ id: '1', name: 'editar_campos', input: {} }] },
+        { role: 'tool_results', results: [{ toolCallId: '1', output: { ok: false, error: 'invalid_output' } }] },
+      ],
+      tools: [],
+    });
+    const toolResultBlock = capturedBody.messages[2].content[0];
+    assert.equal(toolResultBlock.is_error, true);
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
 
 test('decide(): body enviado pra API tem cache_control em system e no último bloco de messages', async () => {

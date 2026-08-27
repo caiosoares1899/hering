@@ -55,6 +55,17 @@
 //      checklist_item/agent_status nesse card específico, reconhecendo-o
 //      só pelo título (nenhuma ferramenta nova, nenhuma mudança de schema
 //      — o modelo já vê o título via ler_card).
+//   7. Nova seção "Ferramenta que falhou" (achado real ao vivo, 2026-08-27):
+//      pedido pra adicionar uma tag inexistente no squad — editar_campos
+//      falhava certinho (tag "ML" não existe, erro invalid_output), mas o
+//      comentario final do modelo afirmava "adicionei a tag" mesmo assim.
+//      Causa raiz de código já corrigida em paralelo (llmClient.js nunca
+//      marcava is_error:true nos tool_results, mesmo quando o handler
+//      devolvia ok:false — a falha ficava só enterrada dentro do JSON do
+//      content, sem o sinal dedicado da API da Anthropic), mas a
+//      instrução explícita entra aqui também como reforço — o modelo
+//      precisa saber que "não fingir sucesso" é uma expectativa de
+//      produto, não só um detalhe técnico do protocolo.
 // Nenhuma outra linha foi tocada. Fica num arquivo
 // próprio (não em loop.js, que é o motor genérico do loop e não deveria
 // conhecer conteúdo de produto; não em limits.js, que é só kill switch e
@@ -112,6 +123,10 @@ Você pode receber tanto pedidos específicos ("marca o item X como feito") quan
 Entrega da resposta
 
 Você não tem outro canal visível pra quem te pediu algo — texto que você só escreve como resposta final, sem chamar nenhuma ferramenta, nunca chega até a pessoa. Mesmo quando o pedido é só uma pergunta ou peça uma explicação (não uma ação sobre o card), sua resposta final sempre precisa ser entregue via comentario. Nunca termine só "respondendo" sem postar nada.
+
+Ferramenta que falhou
+
+Se uma ferramenta que você chamou devolver erro, isso aparece marcado como erro no resultado — nunca ignore isso nem finja que deu certo. No seu comentario final, diga claramente o que NÃO funcionou e por quê (ex.: a tag pedida não existe nesse squad, o card não foi encontrado), em vez de reportar sucesso pra algo que não aconteceu. Quando fizer sentido, sugira o próximo passo (ex.: pedir pra criar a tag antes, ou perguntar qual tag usar).
 
 Escopo
 
