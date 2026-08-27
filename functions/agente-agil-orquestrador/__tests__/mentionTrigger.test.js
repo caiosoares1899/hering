@@ -292,7 +292,16 @@ test('comment.uid===automacao: notifica de novo mesmo já existindo uma notifica
   assert.ok(notifsAna.some((n) => n.title.includes('Automação')), 'deveria existir uma notificação nova com o título da Automação');
 });
 
-test('notificação da resposta não duplica se rodar de novo pro mesmo comentário (idOverride determinístico)', async () => {
+// Achado real ao vivo (2026-08-27, reportado pelo usuário): antes desta
+// correção, o idOverride da notificação de @menção humana era só
+// `mention_{cardId}_{uid}` (sem commentId) — mesmo problema já achado e
+// corrigido pro ramo da Automação (ver testes acima), nunca replicado pro
+// "caso original". Uma 2ª @menção da MESMA pessoa no MESMO card (pergunta
+// NOVA, não um reprocessamento do mesmo evento) não gerava notificação
+// nenhuma, porque o slot já estava ocupado pela 1ª. Este teste ANTES
+// afirmava esse comportamento (bug) como esperado — corrigido pra refletir
+// o comportamento certo: 2 menções diferentes = 2 notificações.
+test('2 @menções diferentes da mesma pessoa no mesmo card geram 2 notificações (não é a mesma pergunta de novo)', async () => {
   const db = seedDb();
   const llmClient = () =>
     scriptedLlmClient([
@@ -301,14 +310,34 @@ test('notificação da resposta não duplica se rodar de novo pro mesmo comentá
     ]);
   const comment = { uid: 'uid-quem-perguntou', text: '@Agente Ágil pergunta' };
 
-  // idempotência normalmente impediria rodar 2x com o MESMO commentId — aqui
-  // simula 2 chamadas com uid/cardId iguais mas commentId diferente, cenário
-  // real de 2 menções seguidas da mesma pessoa no mesmo card.
   await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif-a', comment, llmClient: llmClient() });
   await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif-b', comment, llmClient: llmClient() });
 
   const notifs = Object.values((await db.ref('kanban/usuarios/uid-quem-perguntou/notificacoes').get()).val() || {});
-  assert.equal(notifs.length, 1, 'mesmo cardId+uid usa o mesmo idOverride determinístico — 2ª chamada não deveria duplicar');
+  assert.equal(notifs.length, 2, 'commentId diferente = pergunta nova = notificação nova, mesmo card+pessoa de antes');
+});
+
+// Idempotência de verdade (RTDB triggers não garantem exatamente-uma-vez,
+// ver comentário no topo do arquivo): reentrega do MESMO evento (MESMO
+// commentId) não deveria duplicar a notificação.
+test('reentrega do MESMO commentId não duplica a notificação (idempotência)', async () => {
+  const db = seedDb();
+  const llmClient = () =>
+    scriptedLlmClient([
+      { toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Resposta.' } }], text: null },
+      { toolCalls: [], text: 'Concluído.' },
+    ]);
+  const comment = { uid: 'uid-quem-perguntou', text: '@Agente Ágil pergunta' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif-a', comment, llmClient: llmClient() });
+  // Reentrega real bateria no early-return de idempotência (IDEMPOTENCY_PATH)
+  // antes de chegar aqui — este teste isola só o comportamento do
+  // idOverride, chamando processarMencao() direto de novo com o MESMO
+  // commentId (sem passar pelo guard de idempotência, que é testado à parte).
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-notif-a', comment, llmClient: llmClient() });
+
+  const notifs = Object.values((await db.ref('kanban/usuarios/uid-quem-perguntou/notificacoes').get()).val() || {});
+  assert.equal(notifs.length, 1, 'mesmo commentId = mesmo evento = idOverride igual = não duplica');
 });
 
 test('mesmo com toolset completo disponível, task simples só usa o que precisa (mesmo espírito do canário 9)', async () => {
