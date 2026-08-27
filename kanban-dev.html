@@ -4136,6 +4136,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
+    <div class="ag-tab" id="cfgtab-agentelog-btn" style="display:none;" onclick="swCfgTab('agentelog')">🤖 Histórico do Agente</div>
   </div>
   <div class="cfg-body">
 
@@ -4249,6 +4250,20 @@ input[type="date"]{-moz-appearance:textfield;}
         <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 12px;">Canal, Objetivo, Plataforma, Tipo e Formato são listas fechadas — o demandante só escolhe, nunca digita — pra não acumular duplicata tipo "vídeo"/"vídeos". Vieram pré-carregadas com o padrão da Hering; edite/adicione à vontade.</p>
         <div id="crv-opcoes-cfg-body"></div>
       </div>
+    </div>
+    <!-- ABA HISTÓRICO DO AGENTE — pedido direto: "quero uma area q guarde
+         todas as alterações nos cards que ele faça naquela squad, para
+         servir de historico para o PO". Só visível pra squads com escrita
+         real do orquestrador (AGENTE_AGIL_MENTION_SQUADS) — ver
+         _applyAgenteLogTabVisibility(). Configurações inteiro já é
+         PO/Organizador/ADM-only, não precisa de gate extra aqui. -->
+    <div class="tab-c" id="cfgtab-agentelog">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:0;">🤖 Histórico do Agente Ágil</div>
+        <button class="btn btn-sm" onclick="renderAgenteLog()" style="font-size:10px;color:var(--cyan);border-color:rgba(56,182,255,.3);">🔄 Atualizar</button>
+      </div>
+      <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 12px;">Todas as vezes que o Agente Ágil mudou algo num card desta squad — quem pediu (via @menção) ou se foi um disparo automático (Automação/verificação diária). Cards que só foram lidos pelo agente, sem nenhuma alteração, não aparecem aqui.</p>
+      <div id="agentelog-list"><div style="font-size:11px;color:var(--txt3);padding:8px 0;">Carregando…</div></div>
     </div>
     <!-- ABA PADRÕES DE CARD -->
     <div class="tab-c" id="cfgtab-padroes">
@@ -5586,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.489-dev</div>
+<div class="version">v8.30.490-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18770,9 +18785,16 @@ function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBod
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
-function openCfg(tab){ swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open'); }
+function openCfg(tab){
+  // Aba "🤖 Histórico do Agente" só existe onde o orquestrador tem escrita
+  // real (mesmo escopo de _askAgenteAgilNoCard()/insightsCard()) — mostrar
+  // em outras squads levaria a uma lista sempre vazia, sem explicação.
+  const agLogBtn=document.getElementById('cfgtab-agentelog-btn');
+  if(agLogBtn) agLogBtn.style.display=AGENTE_AGIL_MENTION_SQUADS.includes(ACTIVE_SQUAD)?'':'none';
+  swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open');
+}
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','agentelog'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   // 'auto' nunca chega aqui — o botão da aba chama openAutoOv() direto (ver
@@ -18790,6 +18812,7 @@ function swCfgTab(tab){
   }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
+  if(tab==='agentelog') renderAgenteLog();
   if(tab==='criativos'){
     const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo;
     renderCriativosListasCfg();
@@ -18806,6 +18829,52 @@ function swCfgTab(tab){
   if(tab==='calendario'){
     if(typeof renderCalendarList === 'function') renderCalendarList();
   }
+}
+// Histórico do Agente Ágil — aba "🤖 Histórico do Agente" dentro de
+// Configurações (pedido direto: "quero uma area q guarde todas as
+// alterações nos cards que ele faça naquela squad, para servir de
+// historico para o PO"). Leitura pontual (window._get), igual a
+// loadBackupTab() — não é um painel "ao vivo", só recarrega quando a aba
+// abre ou o botão "🔄 Atualizar" é clicado. Escrito pelo backend em
+// functions/agente-agil-orquestrador/agenteLog.js — ver comentário lá
+// pro formato exato de cada entrada.
+async function renderAgenteLog(){
+  const box=document.getElementById('agentelog-list'); if(!box) return;
+  box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Carregando…</div>';
+  let val;
+  try{
+    const snap=await window._get(window._ref(window._db, FB+'/agente_log'));
+    val=snap.val();
+  }catch(err){
+    console.warn('[agentelog] falha ao carregar:', err);
+    box.innerHTML='<div style="font-size:11px;color:var(--danger);padding:8px 0;">⚠ Não foi possível carregar o histórico.</div>';
+    return;
+  }
+  const entries=Object.values(val||{}).sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  if(!entries.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhuma alteração registrada ainda.</div>';
+    return;
+  }
+  // Teto só de exibição (não apaga nada do Firebase) — evita travar o
+  // navegador renderizando uma lista gigante de uma vez; mesmo espírito do
+  // "ver mais" que colunas grandes do board já usam.
+  const LIMIT=200;
+  box.innerHTML=entries.slice(0,LIMIT).map(e=>{
+    const card=cards.find(c=>c.id===e.cardId);
+    const cardTitle=card?esc(card.title):'(card não encontrado — arquivado ou excluído)';
+    const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard('${esc(e.cardId)}');" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
+    const dt=e.ts?new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const quem=e.autonomous
+      ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
+      : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
+    const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
+    const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
+    return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${dt} · ${cardLink}</div>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${quem}${pedido}</div>
+      <ul style="margin:4px 0 0;padding-left:18px;font-size:12px;color:var(--txt);line-height:1.5;">${acoesHtml}</ul>
+    </div>`;
+  }).join('') + (entries.length>LIMIT?`<div style="font-size:11px;color:var(--txt3);padding:6px 0;text-align:center;">Mostrando os ${LIMIT} mais recentes de ${entries.length}.</div>`:'');
 }
 // Abre o overlay independente de Automações/Receitas (#auto-ov) — mesma
 // lógica que antes rodava só dentro de swCfgTab(tab==='auto'), extraída pra
