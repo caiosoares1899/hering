@@ -13,6 +13,17 @@
 // um decide sozinho, em outputs/*.js, se algum campo precisa de pelo menos
 // um valor preenchido (esse tipo de regra fica no builder, não aqui, porque
 // discriminatedUnion não aceita membros com .refine()).
+//
+// `envelope`/`output` (v0-v3) ficam como CONTRATO LEGADO — mantidos aqui só
+// por compatibilidade de schema/testes, mas http.js PAROU de usá-los pra
+// aplicar escrita direta (2026-08-27, ver comentário grande em http.js).
+// Correção de arquitetura pedida direto pelo usuário: especialista externo
+// nunca mais decide a AÇÃO (mover_coluna, editar_campos...) — só manda
+// INFORMAÇÃO em texto livre, e quem decide o que fazer no board é sempre o
+// orquestrador (agente-agil-orquestrador/). O novo contrato de entrada é
+// `intakeEnvelope`, abaixo — deliberadamente mais pobre em estrutura, porque
+// a ideia é caber especialistas futuros cujo formato "nem sempre vamos
+// conseguir adaptar" (palavras do usuário) pro vocabulário de outputs.
 
 const { z } = require('zod');
 const { zodToJsonSchema } = require('zod-to-json-schema');
@@ -126,6 +137,40 @@ function envelopeJsonSchema() {
   return zodToJsonSchema(envelope, 'AgenteAgilEnvelopeV0');
 }
 
+// Contrato de entrada NOVO (2026-08-27) — o que agente-agil/http.js valida
+// e enfileira de verdade hoje (ver intakePendingPath em http.js). `texto`
+// livre é o único campo sempre obrigatório: é a única coisa que qualquer
+// especialista, presente ou futuro, sempre consegue produzir de algum jeito
+// (mesmo que seja um JSON serializado como string) — nada de vocabulário
+// fixo de ações aqui. `cardId`/`referencia` continuam existindo, mas agora
+// como DICA opcional (nenhum dos dois é obrigatório) — se nenhum vier, ou
+// nenhum resolver pra um card real, o orquestrador decide sozinho o que
+// fazer (inclusive criar um card novo, ver tools/criarCard.js), em vez do
+// pedido inteiro falhar com 400 como acontecia no contrato antigo.
+// `dryRun` saiu do envelope — a decisão de sombra/escrita real agora é por
+// SQUAD, na criação do trigger (ver intakeTrigger.js), mesmo padrão que
+// mentionTrigger.js já usa, não mais por chamada individual.
+const intakeEnvelope = z
+  .object({
+    requestId: z.string().min(1),
+    texto: z.string().min(1),
+    cardId: z.string().min(1).optional(),
+    referencia: referencia.optional(),
+    // Mesmo campo/mesmo propósito de atribuição que `envelope.especialista`
+    // já tinha — quem mandou esta informação (ex.: "databricks"). Opcional
+    // por compatibilidade, mesmo fallback de sempre (ver DEFAULT_ESPECIALISTA
+    // em http.js).
+    especialista: z.string().min(1).optional(),
+  })
+  .refine((data) => !(data.cardId && data.referencia), {
+    message: 'Envie no máximo um de "cardId" ou "referencia" — nunca os dois.',
+    path: ['cardId'],
+  });
+
+function intakeEnvelopeJsonSchema() {
+  return zodToJsonSchema(intakeEnvelope, 'AgenteAgilIntakeEnvelopeV1');
+}
+
 module.exports = {
   envelope,
   referencia,
@@ -138,4 +183,6 @@ module.exports = {
   outputMoverColuna,
   outputEditarCampos,
   envelopeJsonSchema,
+  intakeEnvelope,
+  intakeEnvelopeJsonSchema,
 };

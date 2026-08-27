@@ -25,6 +25,7 @@ const { makeRealHandler, makeRealPerguntarHumanoHandler } = require('./realHandl
 const { lerCardSchema, makeFakeLerCardHandler, makeRealLerCardHandler } = require('./lerCard');
 const { visaoBoardSchema, makeFakeVisaoBoardHandler, makeRealVisaoBoardHandler } = require('./visaoBoard');
 const { bibliotecaAgilSchema, makeBibliotecaAgilHandler } = require('./bibliotecaAgil');
+const { criarCardSchema, makeFakeCriarCardHandler, makeRealCriarCardHandler } = require('./criarCard');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -66,38 +67,52 @@ const perguntarHumanoSchema = z.object({
 // agent_status:'awaiting_validation', respeitando dryRun igual às outras
 // 7 (importante pra não sujar os cenários de julgamento 1-6, que dependem
 // dela não escrever nada em dryRun).
+//
+// semCard (2026-08-27, ver tools/criarCard.js e intakeTrigger.js) — pra
+// quando o orquestrador é acionado por informação de especialista externo
+// que NÃO tem nenhum card associado (cardId/referencia ausentes ou não
+// resolvidos). `cardId` deixa de ser exigido em mode:'real', e as 9
+// ferramentas que precisam de um card FIXO já resolvido na hora de montar
+// o toolset (as 7 reaproveitadas + perguntar_humano + ler_card — nenhuma
+// delas recebe cardId por tool call, é sempre o mesmo card da tarefa
+// inteira) ficam de fora — só sobram as que fazem sentido sem alvo
+// definido: criar_card, visao_board, biblioteca_agil.
 function buildTools(options = {}) {
-  const { mode = 'fake', db, squadId, cardId, dryRun = true } = options;
-  if (mode === 'real' && (!db || !squadId || !cardId)) {
-    throw new Error('buildTools({mode:"real"}) precisa de db, squadId e cardId.');
+  const { mode = 'fake', db, squadId, cardId, dryRun = true, semCard = false } = options;
+  if (mode === 'real' && (!db || !squadId || (!cardId && !semCard))) {
+    throw new Error('buildTools({mode:"real"}) precisa de db, squadId e cardId (ou semCard:true, sem cardId).');
   }
 
-  const tools = Object.entries(REUSED_OUTPUT_SCHEMAS).map(([name, schema]) => ({
-    name,
-    description:
-      mode === 'real'
-        ? `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). ${dryRun ? 'Monta o plano de escrita de verdade contra o board, mas em dryRun — nunca aplica.' : 'Escreve DE VERDADE no board.'}`
-        : `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Execução simulada, não escreve no board.`,
-    input_schema: zodToJsonSchema(schema),
-    handler: mode === 'real' ? makeRealHandler(name, { db, squadId, cardId, dryRun }) : makeHandler(name),
-  }));
+  const tools = semCard
+    ? []
+    : Object.entries(REUSED_OUTPUT_SCHEMAS).map(([name, schema]) => ({
+        name,
+        description:
+          mode === 'real'
+            ? `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). ${dryRun ? 'Monta o plano de escrita de verdade contra o board, mas em dryRun — nunca aplica.' : 'Escreve DE VERDADE no board.'}`
+            : `Ferramenta reaproveitada do vocabulário de outputs do Agente Ágil ("${name}"). Execução simulada, não escreve no board.`,
+        input_schema: zodToJsonSchema(schema),
+        handler: mode === 'real' ? makeRealHandler(name, { db, squadId, cardId, dryRun }) : makeHandler(name),
+      }));
 
-  tools.push({
-    name: 'perguntar_humano',
-    description:
-      mode === 'real'
-        ? `Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir. ${dryRun ? 'Monta o plano de verdade (comentário + agent_status), mas em dryRun — nunca aplica.' : 'Posta a pergunta como comentário DE VERDADE no card e marca agent_status como "awaiting_validation".'}`
-        : 'Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir.',
-    input_schema: zodToJsonSchema(perguntarHumanoSchema),
-    handler: mode === 'real' ? makeRealPerguntarHumanoHandler({ db, squadId, cardId, dryRun }) : makeHandler('perguntar_humano'),
-  });
+  if (!semCard) {
+    tools.push({
+      name: 'perguntar_humano',
+      description:
+        mode === 'real'
+          ? `Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir. ${dryRun ? 'Monta o plano de verdade (comentário + agent_status), mas em dryRun — nunca aplica.' : 'Posta a pergunta como comentário DE VERDADE no card e marca agent_status como "awaiting_validation".'}`
+          : 'Pausa a tarefa e pergunta a um humano quando o orquestrador não sabe como prosseguir.',
+      input_schema: zodToJsonSchema(perguntarHumanoSchema),
+      handler: mode === 'real' ? makeRealPerguntarHumanoHandler({ db, squadId, cardId, dryRun }) : makeHandler('perguntar_humano'),
+    });
 
-  tools.push({
-    name: 'ler_card',
-    description: 'Lê um resumo do card atual (descrição, checklist, comentários, coluna, tags, responsável/participantes) e a lista de TODAS as colunas do board com id e nome (colunas_disponiveis) — use antes de decidir uma ação em pedidos abertos, quando faltar contexto, ou pra descobrir o ID exato de uma coluna antes de mover_coluna (o campo "coluna" dessa ferramenta espera o ID, não o nome de exibição).',
-    input_schema: zodToJsonSchema(lerCardSchema),
-    handler: mode === 'real' ? makeRealLerCardHandler({ db, squadId, cardId }) : makeFakeLerCardHandler(),
-  });
+    tools.push({
+      name: 'ler_card',
+      description: 'Lê um resumo do card atual (descrição, checklist, comentários, coluna, tags, responsável/participantes) e a lista de TODAS as colunas do board com id e nome (colunas_disponiveis) — use antes de decidir uma ação em pedidos abertos, quando faltar contexto, ou pra descobrir o ID exato de uma coluna antes de mover_coluna (o campo "coluna" dessa ferramenta espera o ID, não o nome de exibição).',
+      input_schema: zodToJsonSchema(lerCardSchema),
+      handler: mode === 'real' ? makeRealLerCardHandler({ db, squadId, cardId }) : makeFakeLerCardHandler(),
+    });
+  }
 
   tools.push({
     name: 'visao_board',
@@ -115,6 +130,17 @@ function buildTools(options = {}) {
     // Sem distinção fake/real: dado 100% estático, nunca toca o Firebase —
     // o mesmo handler serve os dois modos de buildTools().
     handler: makeBibliotecaAgilHandler(),
+  });
+
+  tools.push({
+    name: 'criar_card',
+    description:
+      'Cria um card NOVO (rascunho revisável por um humano, ver tools/criarCard.js — não entra direto no board) quando a informação recebida não é sobre nenhum card existente. Use titulo obrigatório; descricao/prazo/squad_solicitante opcionais; submarca só é exigida se o squad tiver Submarca ativa (a ferramenta avisa as opções válidas se faltar ou vier errada). Se o squad exigir Ficha Técnica, a ferramenta recusa — peça pra um humano criar manualmente nesse caso.',
+    input_schema: zodToJsonSchema(criarCardSchema),
+    handler:
+      mode === 'real'
+        ? makeRealCriarCardHandler({ db, squadId, especialista: options.especialista, dryRun })
+        : makeFakeCriarCardHandler(),
   });
 
   return tools;

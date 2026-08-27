@@ -1325,11 +1325,15 @@ diferentes, então a ORDEM importa. Sequência final combinada:
 se o Agente Ágil segue as mesmas regras de campo obrigatório que a UI
 exige (Prazo, Submarca, Ficha Técnica), confirmamos que o agente
 client-side (`kanban-dev.html`, `criar_card`/`atualizar_prazo`) TINHA
-esse gap real e já foi corrigido (v8.30.427-dev). O orquestrador não tem
-esse gap hoje porque `editar_campos` não toca `due`/`submarca`/Ficha
-Técnica, e não existe `criar_card` no toolset dele — mas se algum dia
-ganhar uma ferramenta de criação de card ou de edição de prazo/submarca,
-a mesma regra precisa ser replicada aqui.
+esse gap real e já foi corrigido (v8.30.427-dev). O orquestrador não tinha
+esse gap na época porque `editar_campos` não toca `due`/`submarca`/Ficha
+Técnica, e não existia `criar_card` no toolset dele — **atualização
+(2026-08-27): `criar_card` foi adicionado** (ver seção "Correção de
+arquitetura: especialistas externos perdem escrita direta" mais abaixo),
+replicando a mesma regra (recusa se Ficha Técnica ativa, exige Submarca
+válida se Submarca ativa). Edição de prazo continua fora do toolset —
+se algum dia ganhar uma ferramenta própria pra isso, a mesma regra
+precisa ser replicada.
 
 ## Item 1 (sequência de acionamento): kill switch dinâmico — FECHADO
 
@@ -2609,6 +2613,90 @@ prompt. Nenhuma ferramenta de escrita foi chamada com base na leitura
 dos especialistas, como esperado. Canário considerado bem-sucedido —
 comportamento validado contra o cenário central do desenho (ponto 3),
 não só a lógica pura testada em `lerCard.test.js`.
+
+## Correção de arquitetura: especialistas externos perdem escrita direta — orquestrador vira o único executor (2026-08-27)
+
+O desenho FECHADO logo acima ("Orquestrador recebendo/organizando input
+de especialistas externos") resolvia LEITURA — o orquestrador passou a
+enxergar `origem` nos comentários de especialista — mas deixou intacto
+um problema mais fundo, que o usuário apontou direto no mesmo dia,
+revendo a própria explicação anterior: "não sei se eu to conseguindo te
+passar realmente a ideia... a ideia é que os outros agentes NÃO tenham
+acesso ao board. eles devem se comunicar com o Agente Ágil e ele executa
+as ações dentro do board (criar um card, editar um card, tagear,
+mencionar um humano...). por isso que ele deve funcionar como
+orquestrador: recebe as informações dos outros agentes e como ele
+conhece o board e o fluxo do time, ele toma as decisões aqui dentro".
+
+Até esta correção, `agente-agil/http.js` (o canal de especialistas
+externos) aplicava a ação que o especialista mandava (`mover_coluna`,
+`editar_campos`, etc. — o mesmo vocabulário de `outputs` do orquestrador)
+DIRETO no board via `buildWritePlan`/`applyWritePlan`, sem o orquestrador
+participar da decisão em nenhum momento — exatamente o oposto do que a
+palavra "orquestrador" deveria significar. Reforçado com uma segunda
+observação, ao ser perguntado se o novo contrato deveria manter o
+vocabulário estruturado de `outputs` ou simplificar: "a ideia nao é só
+ter o databricks, é expandir para outros agentes e subagentes que
+possam vir mais pra frente. Inclusive por isso q eu quero um
+orquestrador, que saiba ler as informações que vao vim, que nem sempre
+vamos conseguir adaptar, e a partir delas organizar dentro do board" —
+ou seja, o contrato de entrada precisa caber formato que "nem sempre
+vamos conseguir adaptar" pro vocabulário fixo de ações, não só o
+Databricks de hoje. Confirmado também, via pergunta direta: o
+orquestrador deve agir automático nesse canal (sem precisar de
+@menção), igual já foi decidido pro scan de due_overdue/due_today.
+
+**Status: FECHADO, ainda em modo sombra (nunca validado em produção).**
+
+- **Contrato de entrada trocado**: `agente-agil/schema.js` ganhou
+  `intakeEnvelope` — só `requestId` + `texto` livre são obrigatórios;
+  `cardId`/`referencia` viram DICA opcional (nenhum dos dois é exigido
+  mais); `especialista` continua opcional. O `envelope`/`output`
+  antigos (vocabulário de ações) ficam só como contrato legado,
+  documentado em schema.js, não lido mais por `http.js`.
+- **`http.js` parou de decidir**: só valida e enfileira em
+  `kanban/squads/{squad}/dados/agente_intake_pending/{id}` — mesmo
+  espírito de segurança que `intake_pending` (formulário público) já
+  usa, chaveado por push-id (nunca um array).
+- **Gatilho novo, `intakeTrigger.js`** — o 2º gatilho automático do
+  orquestrador (depois de @menção): escuta `agente_intake_pending/{id}`.
+  Se `cardId`/`referencia` resolve pra um card real, monta o MESMO
+  toolset de sempre; se não resolve (ou não veio), monta um toolset
+  restrito (`semCard:true`) com só `criar_card`, `visao_board` e
+  `biblioteca_agil` — as 3 únicas que não precisam de um card já
+  resolvido. Resultado gravado de volta no próprio item da fila
+  (`resultText`, `pendingIdCriado`), já que não existe card nenhum pra
+  comentar nesse caminho. Mesma disciplina de sempre — kill switch,
+  idempotência, squad literal no path — e **modo sombra por padrão**:
+  ao contrário de @menção (10 canários manuais antes de destravar
+  escrita real), este mecanismo ainda não rodou nem uma vez contra
+  produção.
+- **Tool novo, `criar_card`** (`tools/criarCard.js`) — fecha o gap já
+  registrado mais acima neste README ("não existe `criar_card` no
+  toolset dele"). NÃO escreve direto em `/cards` — mesmo risco de perda
+  silenciosa documentado no topo de `functions/intake/submit.js`
+  (`/cards` é um array reescrito por INTEIRO a cada `fbSaveAll()` do
+  cliente; um card inserido por fora seria apagado no primeiro
+  `fbSaveAll()` de qualquer pessoa do squad). Reusa o mesmo caminho
+  seguro do formulário público de intake — grava um rascunho em
+  `intake_pending`, revisável por um humano pela tela que já existe
+  (`renderBoardDataGrid()`/`_intakeCriarCard()`), zero código novo no
+  cliente. Réplica das mesmas regras obrigatórias do `criar_card`
+  client-side (recusa se Ficha Técnica ativa; exige Submarca válida se
+  Submarca ativa).
+- **`criar_card` entra no toolset PADRÃO**, não só no caminho sem card
+  — o orquestrador pode decidir criar um card novo mesmo numa conversa
+  de @menção normal, se fizer sentido pro pedido.
+
+24 testes novos + 1 atualizado (toolset ganhou `criar_card`). Suíte
+inteira: 297/297 passando.
+
+**Deliberadamente fora de escopo desta rodada** (sinalizado ao usuário,
+não esquecido): a tela de Pedidos de Intake ainda não exibe/usa os
+campos novos que `criar_card` grava (`submarca`, `origem`) — confirmar
+o rascunho ainda exige reaplicar a submarca manualmente no modal.
+Migração do lado do Databricks pro `intakeEnvelope` novo (o contrato
+antigo de `outputs` parou de ser lido) também não foi coordenada ainda.
 
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 

@@ -226,3 +226,18 @@ exports.agenteAgilDueOverdueScan = require('./agente-agil-orquestrador/dueOverdu
 // respeitado; rate limit de 2min por pessoa; sem cards pendentes não chama
 // o LLM). Deploy isolado: firebase deploy --only functions:agenteAgilResumoMeuDia
 exports.agenteAgilResumoMeuDia = require('./agente-agil-orquestrador/resumoMeuDia').agenteAgilResumoMeuDia;
+
+// Agente Ágil Orquestrador — intake de especialista externo, squad `dev`,
+// 2026-08-27. Correção de arquitetura pedida direto pelo usuário:
+// especialistas externos (hoje: Databricks) PARARAM de escrever direto no
+// board via agente-agil/http.js — agora só mandam informação (texto livre),
+// que http.js enfileira em agente_intake_pending, e É ESTE gatilho quem
+// decide o que fazer (comentar, mover, tagear, mencionar um humano, ou
+// criar um card novo via criar_card — ver intakeTrigger.js pro desenho
+// completo). MODO SOMBRA (dryRun:true) — mecanismo ainda NÃO validado em
+// produção, ao contrário de @menção (10 canários manuais antes de
+// destravar escrita real); mesma disciplina incremental de sempre, mesmo
+// reusando o mesmo motor de escrita já comprovado. Requer o mesmo secret
+// ANTHROPIC_API_KEY já configurado pras outras functions deste módulo.
+// Deploy isolado: firebase deploy --only functions:agenteAgilIntake
+exports.agenteAgilIntake = require('./agente-agil-orquestrador/intakeTrigger').agenteAgilIntake;

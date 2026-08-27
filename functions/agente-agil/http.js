@@ -15,25 +15,50 @@
 // mover_coluna, editar_campos — ver outputs/*.js) e o campo `notificar` do
 // envelope, ambos passados adiante em buildWritePlan(..., {db, notificar})
 // pra poder ler card/members/columns e resolver @menções/notificações.
+//
+// CORREÇÃO DE ARQUITETURA (2026-08-27, pedido direto do usuário): até aqui
+// este endpoint aplicava a AÇÃO que o especialista mandava (mover_coluna,
+// editar_campos...) direto no board, via buildWritePlan/applyWritePlan —
+// o orquestrador (agente-agil-orquestrador/) nunca participava dessa
+// escrita. Isso contrariava a ideia de fundo do orquestrador: "os outros
+// agentes NÃO tenham acesso ao board... eles devem se comunicar com o
+// Agente Ágil e ele executa as ações... porque ele conhece o board e o
+// fluxo do time, ele toma as decisões". Um especialista com um vocabulário
+// fixo de ações decidindo sozinho o que escrever é exatamente o oposto
+// disso — e não escala pra "outros agentes e subagentes que possam vir mais
+// pra frente" com formatos "que nem sempre vamos conseguir adaptar"
+// (palavras do usuário) pro vocabulário de outputs.
+//
+// Este endpoint agora SÓ enfileira. Valida o envelope novo (`intakeEnvelope`
+// em schema.js — texto livre obrigatório, cardId/referencia como DICA
+// opcional) e grava em kanban/squads/{squad}/dados/agente_intake_pending/
+// {id} — nó comum (chaveado por push-id, nunca um array), mesmo espírito de
+// segurança que kanban/squads/{squad}/dados/intake_pending já usa pro
+// formulário público (ver functions/intake/submit.js). Quem decide o que
+// fazer com essa informação — comentar, mover, tagear, mencionar um humano,
+// ou até criar um card novo — é o orquestrador, via o gatilho automático
+// novo (agente-agil-orquestrador/intakeTrigger.js), nunca mais este arquivo.
+//
+// O vocabulário `output`/`outputs` de schema.js (mover_coluna, editar_campos,
+// etc.) continua existindo só como contrato legado — não é mais lido daqui.
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
 
-const { envelope } = require('./schema');
-const { SQUAD_ID, CARDS_PATH, resolveCardKey, buildWritePlan, applyWritePlan } = require('./board');
+const { intakeEnvelope } = require('./schema');
+const { SQUAD_ID } = require('./board');
 const { resolveReferencia } = require('./resolver');
 
 const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
 
 const IDEMPOTENCY_PATH = `kanban/squads/${SQUAD_ID}/dados/agente_agil_processed`;
+const intakePendingPath = (squadId) => `kanban/squads/${squadId}/dados/agente_intake_pending`;
 
 // Único especialista real usando este canal até 2026-08-25 — nenhuma
-// chamada existente manda `especialista` no envelope ainda (campo novo,
-// opcional, ver schema.js). Fallback aqui (não em board.js — resolveActor()
-// trata "sem especialista" como "é o próprio orquestrador", correto pra
-// realHandlers.js) garante que a escrita já fica corretamente atribuída
-// SEM precisar coordenar uma mudança no lado do Databricks primeiro.
+// chamada existente manda `especialista` no envelope ainda (campo opcional,
+// ver schema.js). Mesmo fallback de sempre, agora usado só pra rotular o
+// item enfileirado (não mais pra creditar uma escrita direta).
 const DEFAULT_ESPECIALISTA = 'databricks';
 
 const agenteAgil = onRequest(
@@ -49,7 +74,7 @@ const agenteAgil = onRequest(
       return;
     }
 
-    const parsed = envelope.safeParse(req.body);
+    const parsed = intakeEnvelope.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid_payload', details: parsed.error.flatten() });
       return;
@@ -57,88 +82,44 @@ const agenteAgil = onRequest(
     const payload = parsed.data;
     const db = getDatabase();
 
-    if (!payload.dryRun) {
-      const processedSnap = await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).get();
-      if (processedSnap.exists()) {
-        res.status(200).json({ ok: true, idempotent: true });
-        return;
-      }
+    const processedSnap = await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).get();
+    if (processedSnap.exists()) {
+      res.status(200).json({ ok: true, idempotent: true });
+      return;
     }
 
-    // cardId direto (v0) ou referencia de negócio (Sprint 2) — schema.js já
-    // garante que exatamente um dos dois veio preenchido. A partir daqui o
-    // resto do fluxo (resolveCardKey, buildWritePlan, applyWritePlan) só
-    // conhece cardId — não importa de qual dos dois formatos ele veio.
-    let cardId = payload.cardId;
+    // cardId direto ou referencia de negócio — os dois continuam servindo só
+    // de DICA pro orquestrador (ver intakeTrigger.js); diferente do contrato
+    // antigo, uma referencia que não resolve não derruba mais o pedido com
+    // 404 — vira um item sem cardId, e o orquestrador decide sozinho.
+    let cardId = payload.cardId || null;
     if (payload.referencia) {
       try {
         cardId = await resolveReferencia(db, payload.referencia);
       } catch (err) {
-        if (err.code === 'referencia_not_found') {
-          res.status(404).json({ error: 'referencia_not_found', referencia: payload.referencia, message: err.message });
+        if (err.code !== 'referencia_not_found') {
+          console.error('[agenteAgil] falha ao resolver referencia:', err);
+          res.status(500).json({ error: 'resolve_referencia_failed' });
           return;
         }
-        console.error('[agenteAgil] falha ao resolver referencia:', err);
-        res.status(500).json({ error: 'resolve_referencia_failed' });
-        return;
+        cardId = null;
       }
     }
 
-    let cardKey;
-    try {
-      cardKey = await resolveCardKey(db, cardId);
-    } catch (err) {
-      if (err.code === 'stale_cards_index') {
-        // cards_index apontava pra uma chave que não bate mais com o card
-        // esperado, mesmo depois de retentar — rastreável em vez de
-        // arriscar escrever no card errado silenciosamente. 409: o cliente
-        // pode tentar de novo (a reconciliação de carga do board deve
-        // corrigir o índice na próxima vez que alguém abrir o kanban).
-        res.status(409).json({ error: 'stale_cards_index', cardId, message: err.message });
-        return;
-      }
-      console.error('[agenteAgil] falha ao resolver cardId:', err);
-      res.status(500).json({ error: 'resolve_card_key_failed' });
-      return;
-    }
-    if (!cardKey) {
-      res.status(404).json({ error: 'card_not_found', cardId });
-      return;
-    }
+    const pendingRef = db.ref(intakePendingPath(SQUAD_ID)).push();
+    const entry = {
+      id: pendingRef.key,
+      requestId: payload.requestId,
+      especialista: payload.especialista || DEFAULT_ESPECIALISTA,
+      texto: payload.texto,
+      cardId,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+    await pendingRef.set(entry);
+    await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).set({ at: new Date().toISOString(), pendingId: pendingRef.key });
 
-    let plan;
-    try {
-      plan = await buildWritePlan(cardKey, payload.outputs, {
-        cardId,
-        dryRun: payload.dryRun,
-        db,
-        notificar: payload.notificar,
-        especialista: payload.especialista || DEFAULT_ESPECIALISTA,
-      });
-    } catch (err) {
-      if (err.code === 'unknown_output_type' || err.code === 'invalid_output') {
-        res.status(400).json({ error: 'invalid_output', message: err.message });
-        return;
-      }
-      // Falha de I/O de verdade (ex.: upload de relatorio_html pro Storage) —
-      // não é payload inválido do especialista, é falha do nosso lado.
-      console.error('[agenteAgil] falha ao montar plano de escrita:', err);
-      res.status(500).json({ error: 'write_plan_failed' });
-      return;
-    }
-
-    if (payload.dryRun) {
-      res.status(200).json({ ok: true, dryRun: true, cardKey, plan });
-      return;
-    }
-
-    // cardMeta faz applyWritePlan carimbar updatedAt do card + cards_updated_at
-    // no mesmo write (ver board.js) — sem isso, o cliente (delta-sync) nunca
-    // percebe que esse card mudou.
-    await applyWritePlan(db, plan, { cardPath: `${CARDS_PATH}/${cardKey}`, cardId });
-    await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).set({ at: new Date().toISOString() });
-
-    res.status(200).json({ ok: true, cardKey, applied: plan.length });
+    res.status(200).json({ ok: true, queued: true, pendingId: pendingRef.key });
   }
 );
 

@@ -357,9 +357,22 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 - `agenteAgilResumoMeuDia` — L228 → `agente-agil-orquestrador/resumoMeuDia.js`,
   `onRequest` (não gatilho por evento) — "🤖 Resumo do Agente Ágil"
   dentro de "Meu Dia", 2026-08-25, ver seção abaixo
+- `agenteAgilIntake` — 2026-08-27 → `agente-agil-orquestrador/intakeTrigger.js`,
+  squad `dev`, MODO SOMBRA (nunca validado em produção) — 2º gatilho
+  automático do orquestrador, escuta `agente_intake_pending/{id}` (ver
+  `agente-agil/http.js` abaixo pro porquê de existir)
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-- `tools/index.js` — `buildTools()`, registro das 11 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`)
+- `tools/index.js` — `buildTools()`, registro das 12 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil` sobrevivem, as demais exigem card já resolvido.
+- `tools/criarCard.js` — `criar_card` (2026-08-27, fecha o gap "não existe
+  criar_card no toolset dele" registrado no README). NÃO escreve em
+  `/cards` direto (mesmo risco de perda silenciosa de `intake/submit.js`
+  — array reescrito por inteiro a cada `fbSaveAll()`) — grava rascunho em
+  `intake_pending`, revisável na tela que já existe
+  (`renderBoardDataGrid()`/`_intakeCriarCard()` em kanban-dev.html).
+  Replica as regras obrigatórias do `criar_card` client-side (Ficha
+  Técnica recusa, Submarca exige opção válida — `SUBMARCA_LABELS`,
+  cópia fixa de `SUBMARCA_TAGS` do kanban-dev.html).
 - `tools/lerCard.js` — inclui `colunas_disponiveis` no retorno (mapa
   id↔nome↔fim de TODAS as colunas do board) — `mover_coluna` precisa do
   ID, não do nome de exibição; achado real 2026-08-21 (agente chutou
@@ -391,6 +404,19 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   `commentId`), então uma 2ª @menção da mesma pessoa no mesmo card
   (pergunta nova, não reprocessamento) nunca notificava, o slot já
   estava ocupado pela 1ª. Mesmo fix: `commentId` no idOverride.
+- `intakeTrigger.js` — `createIntakeTrigger({squadId, dryRun})` (2026-08-27,
+  fábrica no mesmo padrão de `mentionTrigger.js`) — 2º gatilho automático
+  do orquestrador, o 1º que não depende de card existente. Escuta
+  `agente_intake_pending/{id}` (escrito por `agente-agil/http.js`, ver
+  seção abaixo). `processarIntake()` resolve `cardId`/`referencia` de
+  novo (o card pode ter sumido entre o especialista mandar e o trigger
+  rodar); se resolve, monta o toolset normal (igual @menção); se não,
+  monta `semCard:true` (só `criar_card`/`visao_board`/`biblioteca_agil`).
+  Resultado gravado de volta no próprio item da fila (`resultText`,
+  `pendingIdCriado`) — sem card pra comentar nesse caminho. Só a
+  instância `dev` existe hoje, em modo sombra (`DRY_RUN_INTAKE:true`,
+  nunca validado em produção, diferente de @menção que teve 10 canários
+  antes de destravar escrita real).
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate
@@ -466,6 +492,14 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
 - `http.js`, `schema.js`, `board.js`, `flow.js`, `members.js`, `notifications.js`, `resolver.js`, `storage.js`
+- `http.js` — CORREÇÃO DE ARQUITETURA (2026-08-27, pedido direto do
+  usuário): parou de aplicar a ação do especialista direto no board.
+  Agora só valida `schema.js:intakeEnvelope` (texto livre obrigatório;
+  `cardId`/`referencia` viram dica opcional) e enfileira em
+  `agente_intake_pending/{id}` — quem decide é sempre
+  `agente-agil-orquestrador/intakeTrigger.js`. `schema.js:envelope`/
+  `output` (vocabulário de ações antigo) ficam só como contrato legado,
+  não lidos mais aqui.
 - `board.js` — `resolveActor(especialistaId)`/`ctx.actor` (2026-08-25): identidade
   (`uid`/`author`/`who`/`init`) creditada em todo output — achado real: antes,
   todo output (especialista externo via `http.js` OU o próprio orquestrador via
