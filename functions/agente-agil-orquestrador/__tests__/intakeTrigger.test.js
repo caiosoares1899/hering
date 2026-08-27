@@ -26,6 +26,24 @@ function scriptedLlmClient(script) {
   };
 }
 
+// Captura o `history` de cada chamada de decide() — usado só pra checar o
+// TEXTO da tarefa passada ao modelo (ver teste do achado do canário
+// abaixo), não o comportamento normal (scriptedLlmClient já cobre isso).
+function recordingLlmClient(script) {
+  let calls = 0;
+  const historias = [];
+  return {
+    calls: () => calls,
+    historias: () => historias,
+    async decide({ history }) {
+      historias.push(history);
+      const response = script[calls];
+      calls++;
+      return response;
+    },
+  };
+}
+
 function seedDb(extra) {
   membersLib._resetCacheForTests();
   return makeFakeDb({
@@ -111,6 +129,23 @@ test('cardId aponta pra card que não existe mais: cai no caminho semCard (não 
   assert.equal(outcome.processed, true);
   assert.equal(outcome.semCard, true);
   assert.equal(outcome.cardId, null);
+});
+
+// Achado real do canário de validação (2026-08-27): sem o squad explícito
+// na tarefa, o modelo narrou "tentei criar o card no squad dados" mesmo
+// só conseguindo agir no squad ONDE O GATILHO RODA (aqui, dev) — a recusa
+// em si (Ficha Técnica ativa) aconteceu certo, só a explicação mencionava
+// um squad errado. Fix: task text deixa o squad explícito nos dois
+// caminhos (com e sem card).
+test('a tarefa passada ao modelo menciona o squad explicitamente, nos dois caminhos (com e sem card)', async () => {
+  const db = seedDb();
+  const semCardClient = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  await processarIntake(db, { id: 'i-squad-a', entry: { texto: 'algo sem card' }, llmClient: semCardClient });
+  assert.match(semCardClient.historias()[0][0].text, new RegExp(`squad "${SQUAD_ID}"`));
+
+  const comCardClient = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  await processarIntake(db, { id: 'i-squad-b', entry: { texto: 'algo sobre esse card', cardId: 'c1' }, llmClient: comCardClient });
+  assert.match(comCardClient.historias()[0][0].text, new RegExp(`squad "${SQUAD_ID}"`));
 });
 
 // A instância `dev` exportada fica em modo sombra (DRY_RUN_INTAKE:true,
