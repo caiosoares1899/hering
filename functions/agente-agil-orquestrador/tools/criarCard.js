@@ -20,7 +20,7 @@
 // existe pro formulário público de intake: grava em
 // kanban/squads/{squad}/dados/intake_pending/{id} (nó comum, chaveado por
 // push-id, sem esse risco) — o board já tem a tela pronta pra revisar e
-// confirmar esses pedidos (renderBoardDataGrid()/_intakeCriarCard() em
+// confirmar esses pedidos (renderIntakeBody()/_intakeCriarCard() em
 // kanban-dev.html), zero código novo do lado do cliente.
 //
 // Decisão deliberada de segurança, não uma limitação por preguiça: um card

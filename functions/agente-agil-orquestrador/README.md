@@ -2680,7 +2680,7 @@ orquestrador deve agir automático nesse canal (sem precisar de
   `fbSaveAll()` de qualquer pessoa do squad). Reusa o mesmo caminho
   seguro do formulário público de intake — grava um rascunho em
   `intake_pending`, revisável por um humano pela tela que já existe
-  (`renderBoardDataGrid()`/`_intakeCriarCard()`), zero código novo no
+  (`renderIntakeBody()`/`_intakeCriarCard()`), zero código novo no
   cliente. Réplica das mesmas regras obrigatórias do `criar_card`
   client-side (recusa se Ficha Técnica ativa; exige Submarca válida se
   Submarca ativa).
@@ -2692,11 +2692,13 @@ orquestrador deve agir automático nesse canal (sem precisar de
 inteira: 297/297 passando.
 
 **Deliberadamente fora de escopo desta rodada** (sinalizado ao usuário,
-não esquecido): a tela de Pedidos de Intake ainda não exibe/usa os
-campos novos que `criar_card` grava (`submarca`, `origem`) — confirmar
-o rascunho ainda exige reaplicar a submarca manualmente no modal.
-Migração do lado do Databricks pro `intakeEnvelope` novo (o contrato
-antigo de `outputs` parou de ser lido) também não foi coordenada ainda.
+não esquecido) — **atualização (2026-08-27, mesmo dia): a tela de
+Pedidos de Intake foi atualizada** pra exibir/usar `submarca`/`origem`
+(ver `CODE_MAP.md`, seção "Intake" de `kanban-dev.html`, e
+`CHANGELOG.md` v8.30.492-dev) — não é mais uma pendência. Continua fora
+de escopo: migração do lado do Databricks pro `intakeEnvelope` novo (o
+contrato antigo de `outputs` parou de ser lido) não foi coordenada
+ainda.
 
 **Validado com canário simulado após o deploy (2026-08-27), squad `dev`**:
 2 cenários, direto no Firebase real (mesmo padrão dos canários

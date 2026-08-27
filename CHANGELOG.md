@@ -2046,6 +2046,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.492-dev — 2026-08-27 — Tela de Pedidos de Intake mostra os campos novos do Agente Ágil (submarca, origem)
+
+Item deixado deliberadamente fora de escopo na entrada do
+`criar_card`/`intakeTrigger.js` (`functions/agente-agil-orquestrador/`,
+ver seção do mesmo dia): a tela de Pedidos de Intake
+(`renderIntakeBody()`) sabia renderizar pedidos do formulário público,
+mas ignorava os campos novos que o `criar_card` do Agente Ágil grava
+(`origem`, `submarca`) — quem fosse confirmar o rascunho precisava
+reaplicar a submarca manualmente.
+
+- `renderIntakeBody()`: pedidos com `origem:'agente-agil'` ganham `🤖`
+  no título; quando o item tem `submarca` sugerida, aparece uma linha
+  "🏷 Submarca sugerida: ...".
+- `_intakeCriarCard()`: além do vínculo automático de tag por
+  `squadDemandante` (já existia), agora também casa `submarca` contra
+  as tags reais por label (case/acento-insensitive) e pré-marca —
+  tanto `editingTags` (via `addCardTag()`) quanto o `<select
+  id="m-submarca">` dedicado, mesmo cuidado do bugfix de "usar modelo"
+  (`saveCard()` valida lendo o VALOR do select, não `editingTags`).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.491-dev — 2026-08-27 — Fix: erro ao abrir Configurações (v8.30.490-dev)
 
 `openCfg()` usava `AGENTE_AGIL_MENTION_SQUADS.includes(...)` pra decidir
