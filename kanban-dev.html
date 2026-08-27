@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.492-dev</div>
+<div class="version">v8.30.493-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17504,8 +17504,13 @@ function _intakeCriarCard(id){
   // que o squadDemandante acima já faz. addCardTag() sozinho não marca o
   // <select id="m-submarca"> dedicado (mesmo bug já corrigido em "usar
   // modelo", ver comentário lá — saveCard() valida submarca lendo o VALOR
-  // DO SELECT, não editingTags), então seta os dois.
-  if(item.submarca && typeof SUBMARCA_TAGS!=='undefined'){
+  // DO SELECT, não editingTags), então seta os dois. Achado real (skill
+  // /monitorarbugs): faltava checar `submarcaAtivo` — o backend só EXIGE
+  // submarca válida quando o squad tem Submarca ativa, mas não impede o
+  // campo vir preenchido mesmo com a feature desligada; sem essa checagem
+  // aqui, um squad sem Submarca podia ganhar uma tag de submarca via
+  // coincidência de texto.
+  if(item.submarca && submarcaAtivo && typeof SUBMARCA_TAGS!=='undefined'){
     const alvoSm=_norm(item.submarca);
     const smMatch=SUBMARCA_TAGS.find(st=>_norm(st.label)===alvoSm);
     if(smMatch){
@@ -18880,9 +18885,18 @@ async function renderAgenteLog(){
     const cardTitle=card?esc(card.title):'(card não encontrado — arquivado ou excluído)';
     const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard('${esc(e.cardId)}');" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
     const dt=e.ts?new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-    const quem=e.autonomous
-      ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
-      : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
+    // Achado real (skill /monitorarbugs, 2026-08-27): `origem` é campo novo
+    // (backend, agenteLog.js) — entradas gravadas ANTES desse fix só têm
+    // `autonomous` (binário antigo, sempre mencao/automacao de verdade,
+    // nunca especialista, já que intakeTrigger.js só entrou em produção no
+    // mesmo dia) — fallback deriva `origem` pra não quebrar histórico já
+    // gravado.
+    const origem=e.origem||(e.autonomous?'automacao':'mencao');
+    const quem=origem==='especialista'
+      ? `<span style="color:var(--cyan);">${esc(e.requestedBy?.name||'Especialista externo')}</span> informou (processado automaticamente)`
+      : origem==='automacao'
+        ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
+        : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
     const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
     const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
     return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">

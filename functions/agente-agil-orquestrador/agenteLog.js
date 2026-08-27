@@ -3,12 +3,23 @@
 // Histórico do Agente Ágil, por squad — pedido direto do usuário: "quero
 // uma area q guarde todas as alterações nos cards que ele faça naquela
 // squad, para servir de historico para o PO... pode ate gravar quem
-// pediu, se for o caso, ou se foi autonomo". Escrito num ponto só
-// (mentionTrigger.js:processarMencao(), depois que runLoop() termina) —
-// cobre os 3 gatilhos que existem hoje (@menção manual, Automação, scan
-// diário de vencidos), já que todos passam pela mesma rota (escrevem um
-// comentário @Agente Ágil real, ver dueOverdueTrigger.js /
-// AUTO_ACTIONS.notify_agent no client).
+// pediu, se for o caso, ou se foi autonomo". Escrito em 2 pontos: 1)
+// mentionTrigger.js:processarMencao() (cobre @menção manual, Automação e
+// scan diário de vencidos — os 3 passam pela mesma rota, escrevem um
+// comentário @Agente Ágil real, ver dueOverdueTrigger.js/AUTO_ACTIONS.
+// notify_agent no client); 2) intakeTrigger.js:processarIntake() (2026-
+// 08-27, informação de especialista externo, sem comentário nenhum
+// envolvido).
+//
+// Achado real (skill /monitorarbugs, 2026-08-27, MESMO dia que
+// intakeTrigger.js entrou em produção): `autonomous` nasceu como
+// binário (`comment.uid===AUTOMACAO_UID` ou não), assumindo só 2
+// origens possíveis. Intake introduziu uma 3ª — `comment.uid` vem
+// `'especialista:'+id` (ver resolveActor() em agente-agil/board.js) —
+// que caía no braço "não é automacao" e virava `autonomous:false`,
+// fazendo o cliente (renderAgenteLog(), kanban-dev.html) exibir "👤
+// Databricks pediu via menção", uma frase falsa (ninguém mencionou o
+// agente). `classificarOrigem()`/campo `origem` fecham essa lacuna.
 //
 // Path: kanban/squads/{squadId}/dados/agente_log/{logId}. Guarda só
 // `cardId` (não título) — o cliente já tem `cards` em memória e resolve o
@@ -25,6 +36,20 @@
 // recentes. Revisitar se algum dia virar problema real de custo.
 
 const AUTOMACAO_UID = 'automacao';
+const ESPECIALISTA_PREFIX = 'especialista:';
+
+// 'mencao': um humano de verdade @mencionou o agente. 'automacao': disparo
+// sintético (Automação configurada ou scan diário), sem pessoa nem
+// especialista envolvido. 'especialista': informação de um especialista
+// externo via intake (ver intakeTrigger.js) — não é uma @menção (ninguém
+// escreveu num comentário pedindo isso), mas também não é "automação
+// interna do board" — categoria própria.
+function classificarOrigem(comment) {
+  if (!comment) return 'automacao';
+  if (comment.uid === AUTOMACAO_UID) return 'automacao';
+  if (typeof comment.uid === 'string' && comment.uid.startsWith(ESPECIALISTA_PREFIX)) return 'especialista';
+  return 'mencao';
+}
 
 function truncate(s, max) {
   if (s == null) return '';
@@ -95,13 +120,21 @@ function coletarAcoesAgente(steps) {
 async function registrarLogAgente(db, { squadId, cardId, comment, acoes }) {
   if (!acoes || !acoes.length) return; // nada mudou de fato — não polui o histórico
 
-  const autonomous = !comment || comment.uid === AUTOMACAO_UID;
+  const origem = classificarOrigem(comment);
+  // `autonomous` mantido por compatibilidade com entradas antigas/consumo
+  // existente — agora significa "sem pedido humano direto", true pros 2
+  // casos sem uma pessoa pedindo (automacao E especialista), não só o
+  // primeiro. `requestedBy` fica preenchido pra mencao E especialista —
+  // nos dois casos faz sentido pro PO saber QUEM/O QUE originou a ação;
+  // só fica null pra automacao, onde não existe um "quem" de verdade.
+  const autonomous = origem !== 'mencao';
   const entry = {
     id: 'log' + Date.now() + Math.random().toString(36).slice(2, 7),
     ts: new Date().toISOString(),
     cardId,
     autonomous,
-    requestedBy: autonomous ? null : { uid: comment.uid, name: comment.author || comment.init || comment.uid, init: comment.init || '' },
+    origem,
+    requestedBy: origem === 'automacao' ? null : { uid: comment.uid, name: comment.author || comment.init || comment.uid, init: comment.init || '' },
     pedido: comment ? truncate(comment.text, 300) : null,
     acoes,
   };
@@ -109,4 +142,4 @@ async function registrarLogAgente(db, { squadId, cardId, comment, acoes }) {
   return entry;
 }
 
-module.exports = { resumirAcaoLegivel, coletarAcoesAgente, registrarLogAgente, AUTOMACAO_UID };
+module.exports = { resumirAcaoLegivel, coletarAcoesAgente, registrarLogAgente, classificarOrigem, AUTOMACAO_UID };

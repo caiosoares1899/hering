@@ -251,6 +251,29 @@ Mesma disciplina de sempre neste repo:
   (`(item.col && columns.some(c=>c.id===item.col)) ? item.col :
   (columns[0]?.id||'backlog')`), aplicado nos 3 achados.
 
+- **2026-08-27, área Agente Ágil (Histórico do Agente + Pedidos de
+  Intake)**: pedido genérico — escolhida a prioridade 1 (área alterada
+  mais recentemente, `git log --oneline -20 -- kanban-dev.html`: submarca/
+  origem em Pedidos de Intake, feito no mesmo dia). 2 achados reais,
+  mesmo dia da própria feature que os introduziu (dev v8.30.493-dev):
+  1. `renderAgenteLog()`/`agenteLog.js` — `autonomous` nasceu binário
+     (`comment.uid==='automacao'` ou não), assumindo só 2 origens
+     possíveis (@menção humana, Automação/scan diário). `intakeTrigger.js`
+     (mesmo dia) introduziu uma 3ª — `comment.uid` no formato
+     `especialista:*` — que caía no braço "não é automação" e virava
+     `autonomous:false`, fazendo o Histórico do Agente exibir "👤
+     Databricks pediu via menção" pra uma ação disparada automaticamente
+     por informação de especialista externo, frase falsa (achado via
+     técnica 3, confrontando o comentário do módulo — que documentava
+     "3 gatilhos" — contra o código, que só tratava 2 origens de fato).
+     Fix: `classificarOrigem()`/campo `origem` novo (3 valores), com
+     fallback no cliente pra entradas antigas sem o campo.
+  2. `_intakeCriarCard()` — pré-marcava a tag de Submarca sugerida sem
+     checar `submarcaAtivo` (o backend só exige/valida submarca quando a
+     feature está ligada, mas não impede o campo vir preenchido mesmo
+     desligada) — achado via técnica 4 (checagem de campo sem considerar
+     o estado que o torna relevante), guard adicionado.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

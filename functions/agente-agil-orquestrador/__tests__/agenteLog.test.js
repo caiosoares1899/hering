@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { resumirAcaoLegivel, coletarAcoesAgente, registrarLogAgente, AUTOMACAO_UID } = require('../agenteLog');
+const { resumirAcaoLegivel, coletarAcoesAgente, registrarLogAgente, classificarOrigem, AUTOMACAO_UID } = require('../agenteLog');
 
 test('resumirAcaoLegivel: gera frase legível pra cada ferramenta mutante', () => {
   assert.equal(resumirAcaoLegivel({ name: 'mover_coluna', input: { coluna: 'done' } }), 'moveu para a coluna "done"');
@@ -78,6 +78,7 @@ test('registrarLogAgente: humano mencionando -> requestedBy preenchido, autonomo
   await registrarLogAgente(db, { squadId: 'dev', cardId: 'c1', comment, acoes: ['comentou: "Resumo..."'] });
   assert.ok(written.path.startsWith('kanban/squads/dev/dados/agente_log/'));
   assert.equal(written.data.autonomous, false);
+  assert.equal(written.data.origem, 'mencao');
   assert.deepEqual(written.data.requestedBy, { uid: 'u1', name: 'Caio Soares', init: 'CS' });
   assert.equal(written.data.pedido, 'faz o resumo desse card');
   assert.equal(written.data.cardId, 'c1');
@@ -89,5 +90,32 @@ test('registrarLogAgente: disparo por Automação (comment.uid===automacao) -> a
   const comment = { uid: AUTOMACAO_UID, author: '⚙ Automação', init: '⚙', text: 'Card atrasado' };
   await registrarLogAgente(db, { squadId: 'dev', cardId: 'c1', comment, acoes: ['moveu para a coluna "blocker"'] });
   assert.equal(written.autonomous, true);
+  assert.equal(written.origem, 'automacao');
   assert.equal(written.requestedBy, null);
+});
+
+// Achado real (skill /monitorarbugs, 2026-08-27, mesmo dia que
+// intakeTrigger.js entrou em produção): `autonomous` binário fazia
+// comment.uid==='especialista:*' cair no braço "não é automacao" e virar
+// autonomous:false — cliente exibia "👤 Databricks pediu via menção",
+// frase falsa (ninguém mencionou o agente, foi um disparo automático de
+// intake). `origem` fecha essa lacuna sem quebrar o campo `autonomous`
+// existente (que passa a cobrir os 2 casos sem pedido humano direto).
+
+test('classificarOrigem: mencao (uid de pessoa), automacao (uid sintético), especialista (uid especialista:*)', () => {
+  assert.equal(classificarOrigem({ uid: 'u1' }), 'mencao');
+  assert.equal(classificarOrigem({ uid: AUTOMACAO_UID }), 'automacao');
+  assert.equal(classificarOrigem({ uid: 'especialista:databricks' }), 'especialista');
+  assert.equal(classificarOrigem(null), 'automacao');
+});
+
+test('registrarLogAgente: informação de especialista externo (uid especialista:*) -> autonomous true, origem especialista, requestedBy preenchido (não null)', async () => {
+  let written = null;
+  const db = { ref: () => ({ set: async (data) => { written = data; } }) };
+  const comment = { uid: 'especialista:databricks', author: '🔌 Databricks', text: 'queda de engajamento detectada' };
+  await registrarLogAgente(db, { squadId: 'dev', cardId: 'c1', comment, acoes: ['comentou: "registrado"'] });
+  assert.equal(written.autonomous, true);
+  assert.equal(written.origem, 'especialista');
+  assert.deepEqual(written.requestedBy, { uid: 'especialista:databricks', name: '🔌 Databricks', init: '' });
+  assert.equal(written.pedido, 'queda de engajamento detectada');
 });
