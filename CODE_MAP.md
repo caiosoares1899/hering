@@ -336,6 +336,22 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 - `openGlobalUsersModal()` — L7762
 - `initHiddenCols()` — L7476
 
+### Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
+- `renderIntakeBody()` — L17457 — lista de `intakePendentes`
+  (`_intakeBucket`, alimentado por listeners granulares em
+  `intake_pending`, ver comentário na declaração). 2026-08-27: mostra
+  `🤖` no título + linha "🏷 Submarca sugerida" quando o item veio do
+  `criar_card` do Agente Ágil (campos `origem`/`submarca`, ver
+  `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
+  desses campos existirem, a tela só sabia renderizar pedidos do
+  formulário público.
+- `_intakeCriarCard(id)` — L17479 — abre o modal de novo card pré-
+  preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
+  tags reais por label (case/acento-insensitive, `_norm()`), pré-
+  marcando a tag — mesmo cuidado do bugfix de "usar modelo" (saveCard()
+  valida submarca lendo o VALOR do `<select id="m-submarca">`, não
+  `editingTags`, então os dois precisam ser setados).
+
 ## functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
 
 ### index.js — registro de exports
@@ -369,10 +385,10 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   `/cards` direto (mesmo risco de perda silenciosa de `intake/submit.js`
   — array reescrito por inteiro a cada `fbSaveAll()`) — grava rascunho em
   `intake_pending`, revisável na tela que já existe
-  (`renderBoardDataGrid()`/`_intakeCriarCard()` em kanban-dev.html).
-  Replica as regras obrigatórias do `criar_card` client-side (Ficha
-  Técnica recusa, Submarca exige opção válida — `SUBMARCA_LABELS`,
-  cópia fixa de `SUBMARCA_TAGS` do kanban-dev.html).
+  (`renderIntakeBody()`/`_intakeCriarCard()` em kanban-dev.html — ver
+  seção "Intake" abaixo). Replica as regras obrigatórias do `criar_card`
+  client-side (Ficha Técnica recusa, Submarca exige opção válida —
+  `SUBMARCA_LABELS`, cópia fixa de `SUBMARCA_TAGS` do kanban-dev.html).
 - `tools/lerCard.js` — inclui `colunas_disponiveis` no retorno (mapa
   id↔nome↔fim de TODAS as colunas do board) — `mover_coluna` precisa do
   ID, não do nome de exibição; achado real 2026-08-21 (agente chutou
