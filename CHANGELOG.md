@@ -2046,6 +2046,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.490-dev — 2026-08-27 — Novo: aba "🤖 Histórico do Agente" em Configurações
+
+Pedido direto do usuário (pensando no PO): uma área que guarde todas as
+alterações que o Agente Ágil fizer nos cards da squad, registrando quem
+pediu (via @menção) ou se foi um disparo automático (Automação/scan
+diário de vencidos).
+
+Nova aba dentro de ⚙ Configurações, só nas squads com escrita real do
+orquestrador (Dev e Dados) — lista cada interação em que o agente
+realmente mudou algo num card: data/hora, o card (clicável, abre direto),
+quem pediu (ou "⚙ Disparo automático"), o pedido original e a lista do
+que foi feito, em português simples. Cards só lidos pelo agente (sem
+nenhuma alteração) não aparecem — o log é sobre mudanças, não sobre tudo
+que o agente processou.
+
+Escrito pelo backend (`functions/agente-agil-orquestrador/agenteLog.js`
+— ver entrada correspondente em "Agente Ágil Orquestrador" abaixo,
+**requer redeploy manual** pra começar a funcionar de verdade).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.489-dev — 2026-08-27 — Revisão de bugs (skill /monitorarbugs, pedido direto): recorrentes/agendamentos podiam criar cards invisíveis
 
 Pedido direto do usuário: "ações desse tipo que rolaram ontem com a
@@ -8785,6 +8806,51 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-08-27 · `agenteLog.js`: histórico de alterações do agente, por squad (pedido direto do PO)
+
+Pedido direto: "quero que tenha uma area de log historico dele... quero
+uma area q guarde todas as alterações nos cards que ele faça naquela
+squad, para servir de historico para o PO! pode ate gravar quem pediu,
+se for o caso, ou se foi autonomo".
+
+Novo módulo `agenteLog.js`, chamado de dentro de `processarMencao()`
+(`mentionTrigger.js`), depois que `runLoop()` termina — ponto único que
+cobre os 3 gatilhos existentes hoje (@menção manual, disparo por
+Automação, scan diário de vencidos), já que todos passam pela mesma
+rota (escrevem um comentário `@Agente Ágil` real que dispara o trigger).
+
+- `coletarAcoesAgente()` transforma a lista bruta de tool calls do loop
+  numa lista de frases em português simples ("moveu para a coluna X",
+  "editou: prioridade, responsável", "comentou: \"...\""), só das
+  ferramentas que de fato mudam algo no card — leitura
+  (`ler_card`/`visao_board`/`biblioteca_agil`), simulações (`dryRun`) e
+  chamadas que falharam ficam de fora.
+- `registrarLogAgente()` grava uma entrada em
+  `kanban/squads/{squadId}/dados/agente_log/{logId}` com quem pediu
+  (`requestedBy`, do autor do comentário que mencionou o agente) ou
+  `autonomous:true`/`requestedBy:null` quando o disparo foi da Automação
+  ou do scan diário (`comment.uid === 'automacao'`, mesmo ator sintético
+  já usado em `dueOverdueTrigger.js`). Sem entrada se nenhuma ação
+  mutante rodou (evita poluir o log com "só leu o card").
+- Client: nova aba "🤖 Histórico do Agente" dentro de ⚙ Configurações
+  (`renderAgenteLog()`, kanban-dev.html v8.30.490-dev) — leitura pontual,
+  só aparece pra squads com escrita real do orquestrador
+  (`AGENTE_AGIL_MENTION_SQUADS`); herda o gate PO/Organizador/ADM que já
+  cobre o painel de Configurações inteiro.
+- `database.rules.json` não precisou de regra nova — `agente_log` já cai
+  dentro do `.read`/`.write` de `squads/$squadId/dados`, mesmo nível de
+  acesso de `cards`/`card_comments`.
+
+9 testes novos em `__tests__/agenteLog.test.js` (resumo de cada
+ferramenta, exclusão de tools de leitura/dryRun/falha, `autonomous`
+true/false). Suíte inteira: 260/260 passando.
+
+**Requer redeploy manual** (não sobe sozinho — ver "Release process" no
+CLAUDE.md): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
+— sem isso, a aba nova no client sempre mostra "Nenhuma alteração
+registrada ainda", porque nada escreve em `agente_log` até o deploy
+acontecer.
 
 ### 2026-08-26 · `systemPrompt.js`: guard do card hotline + fix de escopo desatualizado (squad "dados")
 Ajuste em `SYSTEM_PROMPT_V1` acompanhando o card especial "🤖 Converse com

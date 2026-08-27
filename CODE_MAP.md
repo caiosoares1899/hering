@@ -285,6 +285,19 @@ instrumentação extra) — os números da seção painel abaixo são de
   arquivo (inacessíveis pela UI agora) por causa dos outros 2 pontos que
   ainda chamam `openAgent()` sem card real (AutoLab, alerta de WIP
   excedido) — não removidos nesta rodada, fora do escopo pedido
+- `renderAgenteLog()` — L18841 — aba "🤖 Histórico do Agente" em
+  ⚙ Configurações (pedido direto: "quero uma area q guarde todas as
+  alterações nos cards que ele faça naquela squad, para servir de
+  historico para o PO"). Leitura pontual (`window._get`, não um listener
+  ao vivo) de `FB+'/agente_log'`, escrito pelo backend em
+  `functions/agente-agil-orquestrador/agenteLog.js` (ver seção
+  `agente-agil-orquestrador/` abaixo) — cada entrada já vem pronta com
+  quem pediu (ou `autonomous:true` se foi Automação/scan diário) e a
+  lista de ações em português simples. Aba só aparece pra squads com
+  escrita real do orquestrador (`AGENTE_AGIL_MENTION_SQUADS`, gate em
+  `openCfg()` — L18788); Configurações inteiro já é PO/Organizador/ADM-
+  only (`#fab-cfg-btn`, ver `_applyRoleVisibility()`), não precisa de
+  gate de papel próprio aqui.
 
 ### Externos / segurança
 - `_extKey()` — L27999 — chave de e-mail sanitizada (`.` → `,`)
@@ -352,11 +365,11 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   ID, não do nome de exibição; achado real 2026-08-21 (agente chutou
   "Concluído"/"Concludo", ambos erraram, corretamente pausou com
   `perguntar_humano` antes deste fix)
-- `mentionTrigger.js` — `createMentionTrigger({squadId, dryRun})` (L129)
+- `mentionTrigger.js` — `createMentionTrigger({squadId, dryRun})` (L130)
   é uma FÁBRICA multi-squad (2026-08-21) — cada squad suportado vira sua
   própria Cloud Function com path LITERAL no trigger (não wildcard, por
   custo). Instâncias hoje: `dev` (dryRun:false) e `dados` (dryRun:false,
-  2026-08-24) — ambas em escrita real. `processarMencao()` — L132
+  2026-08-24) — ambas em escrita real. `processarMencao()` — L133
   (dentro da fábrica, por instância). 2 fixes reais achados validando o
   item 5 (due_overdue/due_today) em produção, 2026-08-24: (1) disparo
   por Automação (`comment.uid==='automacao'`, ator sintético) não
@@ -366,6 +379,31 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   card — passou a incluir `commentId` (`mention_auto_{cardId}_{uid}_
   {commentId}`) pra não bloquear disparos novos com uma notificação
   antiga no mesmo slot.
+- `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
+  direto ("quero uma area q guarde todas as alterações nos cards que ele
+  faça naquela squad, para servir de historico para o PO... pode ate
+  gravar quem pediu, se for o caso, ou se foi autonomo"). Chamado de
+  dentro de `processarMencao()` (L204), depois que `runLoop()` termina —
+  ponto único que cobre os 3 gatilhos existentes (@menção manual,
+  Automação, scan diário de due_overdue/due_today), já que todos passam
+  pela mesma rota (escrevem um comentário `@Agente Ágil` real).
+  `coletarAcoesAgente(steps)` achata `result.steps` (ver `loop.js`) numa
+  lista de frases em português, só das tools que mudam algo de verdade
+  (`ler_card`/`visao_board`/`biblioteca_agil` ficam de fora, e chamadas
+  em `dryRun`/que falharam também). `registrarLogAgente(db, {squadId,
+  cardId, comment, acoes})` grava em `kanban/squads/{squadId}/dados/
+  agente_log/{logId}` — `autonomous:true`/`requestedBy:null` quando
+  `comment.uid==='automacao'` (mesmo ator sintético de
+  `dueOverdueTrigger.js`/`AUTO_ACTIONS.notify_agent` no client), senão
+  `requestedBy` vem do autor do comentário que mencionou o agente. Sem
+  entrada se nenhuma ação mutante rodou (não polui o log com "só leu o
+  card"). Lido pelo client em `renderAgenteLog()` (kanban.html, ver
+  seção "Agente Ágil" acima) — aba "🤖 Histórico do Agente" em
+  ⚙ Configurações. `database.rules.json` não precisou de regra nova —
+  `agente_log` já cai dentro do `.read`/`.write` amplo de
+  `squads/$squadId/dados` (mesmo nível de acesso de `cards`/
+  `card_comments`; a visibilidade de fato fica só na UI, PO/Organizador/
+  ADM, mesmo padrão do resto do app).
 - `escolheClienteParaTarefa.js` — roteamento de modelo real (Item 7 do
   roadmap, 2026-08-21): `classificaComplexidade()` — L70 — heurística de
   texto que manda perguntas curtas/conceituais pro `haiku`, tudo o resto

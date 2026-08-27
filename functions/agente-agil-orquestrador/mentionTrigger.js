@@ -81,6 +81,7 @@ const { isEnabled } = require('./limits');
 const { mencionaAgente } = require('./detectaMencao');
 const { buildNotifStep } = require('../agente-agil/notifications');
 const { resolveCardKey, cardsPath } = require('../agente-agil/board');
+const { coletarAcoesAgente, registrarLogAgente } = require('./agenteLog');
 const { readSquadMembers, getUidByInit } = require('../agente-agil/members');
 
 const AGENTE_UID = 'agente-agil'; // mesmo uid que outputs/*.js grava em todo comentário/escrita do agente
@@ -185,6 +186,24 @@ function createMentionTrigger({ squadId, dryRun = true }) {
         fallbackComentario = true;
       }
     }
+
+    // Histórico do Agente Ágil (Configurações → 🤖 Histórico do Agente,
+    // PO/Organizador/ADM) — pedido direto: "quero uma area q guarde todas
+    // as alterações nos cards que ele faça naquela squad". Melhor esforço
+    // (nunca derruba o fluxo principal: a resposta do agente já foi
+    // aplicada nos passos acima, uma falha aqui só perde a entrada do log,
+    // não desfaz nada). fallbackComentario não passa por result.steps
+    // (chama o handler direto, fora do loop) — emenda manualmente.
+    const acoesRegistro = coletarAcoesAgente(result.steps);
+    if (fallbackComentario) acoesRegistro.push(`comentou: "${truncar(result.finalText, 120)}"`);
+    // AWAIT de propósito (não fire-and-forget): o Cloud Functions pode
+    // congelar/matar o processo assim que a função do trigger retornar —
+    // sem esperar aqui, a escrita do log corre risco real de nunca
+    // completar. O .catch() garante que uma falha aqui não derruba o
+    // fluxo principal (a resposta do agente já foi aplicada acima).
+    await registrarLogAgente(db, { squadId, cardId, comment, acoes: acoesRegistro }).catch((err) =>
+      console.error(`[agente-log:${squadId}] falha ao registrar log:`, cardId, err)
+    );
 
     // Notifica quem fez a @menção original — achado real (2026-08-18):
     // `comentario` só dispara notificação quando o TEXTO da resposta tem uma
