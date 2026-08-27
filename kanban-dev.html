@@ -5586,7 +5586,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.488-dev</div>
+<div class="version">v8.30.489-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18352,7 +18352,14 @@ function _criarCardRecorrente(item, hoje){
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
     id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
-    col:item.col||(columns[0]?.id)||'backlog',
+    // Achado real 2026-08-27 (skill /monitorarbugs, mesma classe do bug de
+    // "Impedimentos" corrigido em 2026-08-26): item.col é a coluna escolhida
+    // na hora de CONFIGURAR a recorrência, potencialmente dias/semanas atrás
+    // — se essa coluna foi excluída nesse meio-tempo, usar o id direto criava
+    // um card real com .col órfão, invisível no board (sem coluna bate com
+    // aquele id), toda vez que a recorrência disparasse (sozinho, sem
+    // ninguém olhando — pior que o caso original, que era 1 evento só).
+    col:(item.col && columns.some(c=>c.id===item.col)) ? item.col : (columns[0]?.id||'backlog'),
     tags, tag:tags[0]||'',
     title:item.title||'(recorrente)',
     desc:item.desc||'',
@@ -18448,7 +18455,8 @@ function _criarCardAgendado(item){
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
   const novo={
     id:'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
-    col:item.col||(columns[0]?.id)||'backlog',
+    // Mesmo achado/mesmo fix de _criarCardRecorrente() acima.
+    col:(item.col && columns.some(c=>c.id===item.col)) ? item.col : (columns[0]?.id||'backlog'),
     tags, tag:tags[0]||'',
     title:item.title||'(agendado)',
     desc:item.desc||'', descsExtra:[],
@@ -18554,7 +18562,10 @@ function openQLEdit(i){
   const tempId = '__qltmp__'+Date.now();
   const tempCard = {
     id: tempId,
-    col: item.col||(columns[0]?.id)||'backlog',
+    // Mesmo achado/mesmo fix de _criarCardRecorrente() — sem isso, editar um
+    // modelo/recorrente/agendamento cuja coluna salva foi excluída mostrava
+    // o campo "Coluna" em branco no modal (nenhuma option bate com o id).
+    col: (item.col && columns.some(c=>c.id===item.col)) ? item.col : (columns[0]?.id||'backlog'),
     tags, tag:tags[0]||'',
     title: item.title||'',
     desc: item.desc||'', descsExtra: Array.isArray(item.descsExtra)?item.descsExtra.slice():[],

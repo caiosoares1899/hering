@@ -230,6 +230,27 @@ Mesma disciplina de sempre neste repo:
   propósito) — comentário no código (L19603-19606) evitou reabrir uma
   pergunta já respondida.
 
+- **2026-08-27, pedido direto do usuário — "ações desse tipo que
+  rolaram ontem com a coluna de impedimento"**: não foi escolha de área
+  por prioridade (1 ou 2 do "Escopo de cada rodada") — usuário pediu
+  pra achar OUTRAS mutações que repitam o padrão do incidente de
+  2026-08-26 (card criado/movido pra um id de coluna que não existe
+  mais). Técnica usada: grep de TODO `.col=`/`col:` do arquivo com
+  string literal ou vindo de config salva (não só os call sites de uma
+  função específica). 3 achados reais, mesma causa raiz, pior que o
+  caso original — o card órfão nasce sozinho, sem ninguém olhando, a
+  cada disparo (dev v8.30.489-dev):
+  1. `_criarCardRecorrente()` — cards recorrentes guardam `item.col`
+     (escolhido na configuração) sem revalidar se a coluna ainda existe
+     no momento em que o card nasce, dias/semanas depois.
+  2. `_criarCardAgendado()` — mesmo padrão, cards agendados.
+  3. `openQLEdit()` — mesmo padrão na tela de edição do modelo/
+     recorrente/agendamento (sintoma: campo "Coluna" em branco).
+  `parseTrelloJSON()` (import) já tinha proteção equivalente
+  (`SEMANTIC_TO_REAL`) — usado como referência do padrão de fix
+  (`(item.col && columns.some(c=>c.id===item.col)) ? item.col :
+  (columns[0]?.id||'backlog')`), aplicado nos 3 achados.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
