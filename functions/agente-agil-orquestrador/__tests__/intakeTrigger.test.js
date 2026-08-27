@@ -206,15 +206,21 @@ test('sem cardId nenhum (nem dica): toolset semCard, criar_card disponível e es
   assert.equal(rascunho.val().titulo, 'Investigar anomalia reportada');
 });
 
-test('sem cardId nenhum, dryRun (padrão): criar_card monta o plano mas não grava nada', async () => {
+// A instância `dev` exportada tem escrita real desde 2026-08-27 (ver
+// comentário no fim do arquivo) — este teste testa especificamente o
+// comportamento em dryRun, então monta a PRÓPRIA instância com
+// dryRun:true explícito, em vez de depender do flag da instância
+// compartilhada (mesmo padrão já usado no teste de escrita real acima).
+test('sem cardId nenhum, dryRun explícito: criar_card monta o plano mas não grava nada', async () => {
   const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: true });
   const llmClient = scriptedLlmClient([
     { toolCalls: [{ id: '1', name: 'criar_card', input: { titulo: 'Investigar anomalia reportada' } }], text: null },
     { toolCalls: [], text: 'Teria criado um rascunho, mas estou em modo sombra.' },
   ]);
   const entry = { texto: 'anomalia detectada, sem card associado', especialista: 'databricks' };
 
-  const outcome = await processarIntake(db, { id: 'i6b', entry, llmClient });
+  const outcome = await trigger.processarIntake(db, { id: 'i6b', entry, llmClient });
 
   assert.equal(outcome.processed, true);
   assert.equal(outcome.pendingIdCriado, null, 'dryRun não deveria gravar rascunho nenhum');
@@ -248,7 +254,12 @@ test('createIntakeTrigger: cada instância tem paths próprios, escopados por sq
   assert.notEqual(dev.IDEMPOTENCY_PATH, dados.IDEMPOTENCY_PATH);
 });
 
-test('instância dev exportada continua em modo sombra (mecanismo ainda não validado em produção)', () => {
-  assert.equal(DRY_RUN_INTAKE, true);
+// Decisão explícita do usuário (2026-08-27), depois de 4 canários
+// simulados diretos em produção validando os dois caminhos (com/sem
+// card) e as travas de segurança. Trava o valor ATUAL de propósito —
+// se isso divergir do esperado, é sinal de mudança acidental do flag,
+// não decisão nova (mesmo padrão de DRY_RUN_MENCAO em mentionTrigger.test.js).
+test('instância dev exportada tem escrita real (destravada em 2026-08-27)', () => {
+  assert.equal(DRY_RUN_INTAKE, false);
   assert.equal(SQUAD_ID, 'dev');
 });

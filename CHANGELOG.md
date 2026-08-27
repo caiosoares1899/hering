@@ -8871,6 +8871,32 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `intakeTrigger.js`: escrita real destravada no intake (squad `dev`)
+
+Decisão explícita do usuário — mesma pergunta direta feita pra @menção
+em 2026-08-18 ("vamos destravar?"). Antes de decidir, o teste decisivo
+(squad `dev`, Ficha Técnica/Submarca desligadas temporariamente só pro
+teste) precisou de 2 rodadas de fix (entradas logo abaixo) até o modelo
+parar de narrar sucesso numa criação simulada — na 3ª repetição do
+mesmo teste, o fix "não pegou" de novo, mas dessa vez por um motivo
+diferente: deploy rodando com código desatualizado (clone local não
+resincronizado antes do `firebase deploy` — falha silenciosa já
+documentada no `CLAUDE.md`, confirmada aqui comparando o
+`firebase-functions-hash` de deploys consecutivos). Resincronizado e
+redeployado, o teste passou de verdade na repetição seguinte: o modelo
+relatou corretamente "isso foi apenas uma simulação (dryRun)".
+
+Com os dois caminhos (com card e sem card) validados, as travas de
+segurança confirmadas, e a comunicação de dryRun corrigida, `dryRun`
+virou `false` pra instância `dev` de `agenteAgilIntake`. Squad `dados`
+segue sem instância deployada (só `dev` tem essa function até aqui).
+
+Testes ajustados pra cobrir dryRun explicitamente (em vez de depender
+do flag da instância compartilhada, que agora é `false`). Suíte
+inteira: 301/301 passando.
+
+**Requer redeploy manual**: `firebase deploy --only functions:agenteAgilIntake`
+
 ### 2026-08-27 · `systemPrompt.js`: fix da description de `criar_card` não bastou — dryRun precisava de regra genérica no prompt
 
 Repetido o mesmo teste decisivo (squad `dev`, Ficha Técnica/Submarca

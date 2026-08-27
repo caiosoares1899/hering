@@ -234,12 +234,18 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
   return { agenteAgilIntake, processarIntake, SQUAD_ID: squadId, IDEMPOTENCY_PATH, PENDING_PATH, DRY_RUN_INTAKE: dryRun };
 }
 
-// ── squad `dev` — ESTRUTURADO, NÃO DEPLOYADO ainda ──────────────────────
-// Mesma disciplina do 1º deploy de @menção (ver mentionTrigger.js): existir
-// no código não é o mesmo que estar no ar (functions/index.js decide o que
-// de fato é exportado/deployado). Modo sombra por padrão — mecanismo ainda
-// não rodou nem uma vez contra produção.
-const devInstance = createIntakeTrigger({ squadId: 'dev', dryRun: true });
+// ── squad `dev` — ESCRITA REAL desde 2026-08-27 ─────────────────────────
+// Rodou em modo sombra do 1º deploy (mesmo dia) até esta decisão — 4
+// canários simulados diretos no Firebase real: card existente (só
+// comentou, decisão certa), sem card associado com Ficha Técnica/Submarca
+// ativas (recusou corretamente, 2x), e sem card com as duas exigências
+// desligadas temporariamente só pro teste (criar_card completou e o
+// modelo relatou certo que era simulação — só depois de 2 rodadas de fix:
+// description de criar_card avisando sobre dryRun não bastou sozinha,
+// precisou da regra genérica em systemPrompt.js, "Ferramenta em modo de
+// teste (dryRun)"). Decisão explícita do usuário (2026-08-27, mesma
+// pergunta direta feita pra @menção em 2026-08-18): "sim, pode destravar".
+const devInstance = createIntakeTrigger({ squadId: 'dev', dryRun: false });
 
 module.exports = {
   createIntakeTrigger,
