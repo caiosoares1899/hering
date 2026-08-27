@@ -344,6 +344,34 @@ não faz parte desta rotina por padrão, a menos que peçam.
   - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
     (1440/1440) OK.
 
+- **v8.30.492-dev / v8.30.492 (prod) (2026-08-27)**: rodada limpa, nada
+  pra corrigir. `kanban.html`/`kanban-dev.html` sincronizados (diff só
+  nas 2 linhas de ambiente) — lote grande da sessão (Histórico do
+  Agente Ágil, correção de arquitetura do orquestrador + intake
+  automático + `criar_card`, submarca/origem em Pedidos de Intake, fixes
+  de Automações em massa e recorrências) já promovido, nada pendente.
+  Conferido:
+  - `data:image` embutido: continua em 0 nos dois arquivos.
+  - Blocos reais (por linha): CSS ~193KB, script módulo Firebase ~7.2KB,
+    script principal ~1,39MB (`kanban-dev.html`, 29303 linhas, ~1,80MB
+    total — cresceu desde a v8.30.458-dev por causa do lote grande
+    acima, principalmente a aba Histórico do Agente e a Central de
+    Pedidos de Intake).
+  - `setInterval`/`clearInterval`: **15 reais / 14** — idêntico ao
+    baseline da v8.30.458-dev, zero timer novo (as features desta
+    sessão usam leitura pontual — `window._get()` — não polling
+    contínuo, então não mexeram nessa contagem).
+  - `backdrop-filter`: 31 — idêntico ao baseline anterior, sem
+    crescimento (nenhuma feature nova de "glass" no período).
+  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
+    presentes; `www.gstatic.com` segue ausente corretamente (SDK
+    vendorizado). Import do Firebase: modular, todos os 4 módulos do
+    vendor local.
+  - Único asset fora do favicon continua `marinheiro.png` (sob demanda).
+  - Viewport meta + `addTouchDnD` intactos.
+  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
+    (1468/1468) OK.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está limpo.
