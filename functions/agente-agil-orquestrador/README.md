@@ -2592,15 +2592,23 @@ rodada:
 `summarizeCard()` marcando os 4 casos; `systemPrompt.test.js`: seção
 nova presente). Suíte inteira: **270/270 passando**.
 
-**Ainda não deployado** — mesmo passo de sempre: `firebase deploy
---only functions:agenteAgilMencao,functions:agenteAgilMencaoDados`.
-Como não é ferramenta nova nem trigger novo, nenhum canário/sign-off
-adicional é necessário além do redeploy — a validação de comportamento
-de verdade (o modelo lendo `origem` e se comportando certo diante de
-uma contradição real) só acontece com tráfego real de especialista, que
-ainda não existe hoje (nenhum especialista externo em produção usa
-`agente-agil/http.js` além do Databricks, e não há evidência de uso
-recente).
+**Deployado e validado com canário simulado (2026-08-27)**: sem
+tráfego real de especialista em produção pra testar, simulado direto no
+Firebase (2 comentários com `uid:'especialista:databricks'`, mesmo
+formato que `resolveActor()` grava de verdade) num card de teste do
+squad `dev`, com conclusões CONTRADITÓRIAS sobre o mesmo assunto
+(performance de campanha — uma recomendava pausar investimento, a outra
+aumentar). @menção real pedindo resumo. Resultado: o modelo identificou
+os dois comentários como do especialista Databricks, apontou a
+contradição explicitamente (as duas conclusões, lado a lado), recusou
+decidir sozinho qual estava certa, sugeriu checagem humana antes de
+qualquer decisão de investimento — e, além do desenho original, notou
+por conta própria que os dois vinham marcados "[Simulação de teste]" e
+levantou a hipótese de duplicata, sem que isso estivesse instruído no
+prompt. Nenhuma ferramenta de escrita foi chamada com base na leitura
+dos especialistas, como esperado. Canário considerado bem-sucedido —
+comportamento validado contra o cenário central do desenho (ponto 3),
+não só a lógica pura testada em `lerCard.test.js`.
 
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 
