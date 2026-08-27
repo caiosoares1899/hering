@@ -244,17 +244,40 @@ function createMentionTrigger({ squadId, dryRun = true }) {
     // completamente novas dias depois, com informação nova de verdade
     // (confirmado ao vivo: notificação de 12:37, de um teste anterior,
     // bloqueou silenciosamente os disparos de Automação de 12:57/12:58 no
-    // MESMO card). O dedupe por card+pessoa faz sentido pro caso original
-    // (mesma pessoa perguntando de novo não precisa de notificação
-    // duplicada) mas quebra o da Automação, que PRECISA notificar de novo
-    // a cada disparo novo. Fix: `idOverride` da Automação inclui
+    // MESMO card). Fix na época: `idOverride` da Automação inclui
     // `commentId` (`mention_auto_{cardId}_{uid}_{commentId}`) — único por
     // disparo, sem colidir com os outros 2 caminhos nem se auto-bloquear
     // pra sempre; ainda idempotente pra reentrega do MESMO commentId
     // (mesmo padrão de sempre).
+    //
+    // Quarto achado real (2026-08-27, reportado ao vivo pelo usuário): o
+    // raciocínio "dedupe por card+pessoa faz sentido pro caso original
+    // (mesma pessoa perguntando de novo não precisa de notificação
+    // duplicada)" — texto que estava aqui até esta correção — é FALSO na
+    // prática. Uma 2ª @menção da MESMA pessoa no MESMO card é uma
+    // PERGUNTA NOVA (ex.: pediu uma coisa, minutos depois pediu outra, ou
+    // testou de novo depois de um fix), e merece notificação nova quando
+    // o agente responde — exatamente o mesmo problema que o 3º achado
+    // acima já tinha resolvido pro ramo da Automação, nunca replicado pra
+    // este ramo (o "caso original"). Confirmado ao vivo: 2ª @menção no
+    // mesmo card, resposta do agente chegou certinho no card, mas
+    // nenhuma notificação — o slot `mention_{cardId}_{uid}` já estava
+    // ocupado pela 1ª. Mesmo fix de sempre: `commentId` no idOverride.
+    // Achado real ao vivo (2026-08-27): o comentário abaixo dizia "dedupe
+    // por card+pessoa faz sentido pro caso original (mesma pessoa
+    // perguntando de novo não precisa de notificação duplicada)" — mas
+    // isso é FALSO na prática: uma 2ª @menção da mesma pessoa no mesmo
+    // card é uma PERGUNTA NOVA (ex.: "adiciona a tag X" e, minutos depois,
+    // "testa de novo") e merece notificação nova quando o agente responde.
+    // Sem `commentId` aqui, a notificação da 1ª menção deixava o slot
+    // `mention_{cardId}_{uid}` ocupado pra sempre — qualquer resposta
+    // seguinte no MESMO card pra essa pessoa era silenciosamente
+    // engolida por `buildNotifStep()` (mesma causa raiz do bug já achado
+    // e corrigido pro ramo da Automação logo abaixo, nunca replicado pra
+    // este ramo). Mesmo fix: inclui `commentId`, único por @menção.
     let targetUid = comment.uid;
     let notifTitle = '🤖 Agente Ágil respondeu sua menção';
-    let notifIdOverride = 'mention_' + cardId + '_' + comment.uid;
+    let notifIdOverride = 'mention_' + cardId + '_' + comment.uid + '_' + commentId;
     if (comment.uid === AUTOMACAO_UID) {
       targetUid = null;
       const cardKey = await resolveCardKey(db, cardId, { squadId });

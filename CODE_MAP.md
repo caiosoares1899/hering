@@ -378,7 +378,12 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   Automação colidia com o de outros caminhos de notificação do mesmo
   card — passou a incluir `commentId` (`mention_auto_{cardId}_{uid}_
   {commentId}`) pra não bloquear disparos novos com uma notificação
-  antiga no mesmo slot.
+  antiga no mesmo slot. 3º fix real, achado ao vivo (2026-08-27): o
+  MESMO problema do 2º fix, nunca replicado pro caso "original" — a
+  notificação de @menção HUMANA usava `mention_{cardId}_{uid}` (sem
+  `commentId`), então uma 2ª @menção da mesma pessoa no mesmo card
+  (pergunta nova, não reprocessamento) nunca notificava, o slot já
+  estava ocupado pela 1ª. Mesmo fix: `commentId` no idOverride.
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate

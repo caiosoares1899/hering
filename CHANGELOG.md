@@ -8819,6 +8819,36 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `mentionTrigger.js`: 2ª @menção no mesmo card não notificava (mesmo bug já corrigido pra Automação, nunca replicado pro caso humano)
+
+Reportado ao vivo, testando o fix de `is_error` (entrada anterior): tag
+adicionada com sucesso desta vez, mas nenhuma notificação chegou. Causa:
+a notificação de "Agente Ágil respondeu sua menção" usava
+`idOverride: mention_{cardId}_{uid}` — sem `commentId`. Uma 2ª @menção
+da mesma pessoa no mesmo card (pergunta nova, não a mesma pergunta de
+novo) esbarrava no slot já ocupado pela 1ª notificação e
+`buildNotifStep()` silenciosamente não criava nada.
+
+Este é o MESMO problema já achado e corrigido pro ramo da Automação em
+2026-08-24 (ver entrada mais abaixo) — na época, o raciocínio registrado
+foi "o dedupe por card+pessoa faz sentido pro caso original (mesma
+pessoa perguntando de novo não precisa de notificação duplicada)", mas
+esse raciocínio nunca foi validado contra uso real e se mostrou errado:
+uma 2ª @menção quase sempre é uma pergunta nova, não uma repetição.
+
+Fix: mesmo padrão de sempre — `commentId` no `idOverride`
+(`mention_{cardId}_{uid}_{commentId}`), único por @menção, ainda
+idempotente pra reentrega do MESMO evento (RTDB triggers não garantem
+exatamente-uma-vez).
+
+Teste que antes codificava o bug como comportamento esperado, corrigido
+(`mentionTrigger.test.js`) + teste novo isolando idempotência de
+verdade. Suíte inteira: 267/267 passando.
+
+**Requer redeploy manual** (mesmo comando das 2 entradas acima, pode
+ser feito no mesmo deploy): `firebase deploy --only
+functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
+
 ### 2026-08-27 · `llmClient.js` + `systemPrompt.js`: agente afirmava sucesso em ação que falhou
 
 Achado ao vivo, testando a aba nova de Histórico do Agente: pedido pra
