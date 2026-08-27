@@ -2646,7 +2646,8 @@ Databricks de hoje. Confirmado também, via pergunta direta: o
 orquestrador deve agir automático nesse canal (sem precisar de
 @menção), igual já foi decidido pro scan de due_overdue/due_today.
 
-**Status: FECHADO, ainda em modo sombra (nunca validado em produção).**
+**Status: FECHADO, escrita real destravada (squad `dev`, 2026-08-27) —
+ver "5º/6º teste" mais abaixo pro fechamento completo.**
 
 - **Contrato de entrada trocado**: `agente-agil/schema.js` ganhou
   `intakeEnvelope` — só `requestId` + `texto` livre são obrigatórios;
@@ -2747,11 +2748,28 @@ não deu peso suficiente àquela instrução isolada dentro do schema.
 Fix v2: regra genérica no `systemPrompt.js` (não mais escondida numa
 description de tool), nova seção "Ferramenta em modo de teste (dryRun)"
 — qualquer resultado com `dryRun:true` é simulação, nunca ação real,
-mesmo com `ok:true` (ver `CHANGELOG.md`). **Decisão de destravar
-`dryRun:false` de verdade ainda pendente** — fica pro próximo teste,
-depois do redeploy deste 2º fix, repetir o mesmo cenário mais uma vez e
-só então confirmar que a narrativa bate com a realidade antes de
-qualquer decisão final.
+mesmo com `ok:true` (ver `CHANGELOG.md`).
+
+**6º teste, repetindo mais uma vez**: o modelo CONTINUOU narrando
+sucesso, `pendingIdCriado` vazio outra vez — mas desta vez a causa não
+era o prompt. Comparando o `firebase-functions-hash` de deploys
+consecutivos (visível em `firebase functions:log`), o deploy do fix v2
+saiu com o MESMO hash do deploy anterior — sinal de que rodou com
+código desatualizado, porque o clone local não tinha sido
+resincronizado antes (`git fetch`/`git reset --hard` — falha silenciosa
+já documentada no `CLAUDE.md`, "funcionar sem erro nenhum, só com
+código velho"). Resincronizado e redeployado de verdade (hash mudou), o
+**7º teste** finalmente passou: o modelo relatou corretamente *"isso
+foi apenas uma simulação (dryRun). Nenhum card foi criado de verdade
+ainda"*.
+
+Com os dois caminhos (com/sem card) validados, as travas de segurança
+confirmadas, e a comunicação de dryRun corrigida de ponta a ponta, o
+usuário confirmou explicitamente: **"sim, pode destravar"**. `dryRun`
+virou `false` pra instância `dev` (ver `CHANGELOG.md`, mesmo dia) —
+mesma decisão e mesmo nível de confiança que a @menção teve em
+2026-08-18, só que aqui com o histórico completo de 7 rodadas de teste
+documentado, não só a decisão final.
 
 ## Scan de due_overdue/due_today expandido pro squad `dados` (2026-08-25)
 

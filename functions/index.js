@@ -234,10 +234,12 @@ exports.agenteAgilResumoMeuDia = require('./agente-agil-orquestrador/resumoMeuDi
 // que http.js enfileira em agente_intake_pending, e É ESTE gatilho quem
 // decide o que fazer (comentar, mover, tagear, mencionar um humano, ou
 // criar um card novo via criar_card — ver intakeTrigger.js pro desenho
-// completo). MODO SOMBRA (dryRun:true) — mecanismo ainda NÃO validado em
-// produção, ao contrário de @menção (10 canários manuais antes de
-// destravar escrita real); mesma disciplina incremental de sempre, mesmo
-// reusando o mesmo motor de escrita já comprovado. Requer o mesmo secret
-// ANTHROPIC_API_KEY já configurado pras outras functions deste módulo.
+// completo). ESCRITA REAL desde 2026-08-27 (decisão explícita do usuário,
+// mesma pergunta direta feita pra @menção em 2026-08-18) — rodou em modo
+// sombra do 1º deploy até essa decisão, validado com 4 canários simulados
+// diretos no Firebase real (card existente, sem card com trava de
+// segurança recusando, sem card completando de verdade). Requer o mesmo
+// secret ANTHROPIC_API_KEY já configurado pras outras functions deste
+// módulo.
 // Deploy isolado: firebase deploy --only functions:agenteAgilIntake
 exports.agenteAgilIntake = require('./agente-agil-orquestrador/intakeTrigger').agenteAgilIntake;
