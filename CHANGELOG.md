@@ -8819,6 +8819,32 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-27 · `intakeTrigger.js`: pedido que falhava por instabilidade da API ficava preso pra sempre, sem nenhum aviso
+
+Segundo achado do mesmo canário de validação (entrada logo abaixo — o
+fix do squad já cobre o 1º). Reproduzido ao vivo: a API da Anthropic
+teve uma instabilidade momentânea (erro 529 "overloaded", não
+relacionado ao nosso código) bem no meio do processamento de um item —
+`runLoop()` lançou exceção, e como nada depois disso rodava, o item
+ficava com `status:'pending'` pra sempre, sem NENHUM sinal de que algo
+tinha falhado. Diferente da @menção (onde a ausência de resposta num
+card já é um sinal visível pra quem perguntou), aqui não existe ninguém
+esperando — o item simplesmente some no meio da fila.
+
+Fix: `runLoop()` agora roda dentro de um try/catch em
+`processarIntake()`. Se falhar, o item é marcado `status:'failed'` com
+o erro (truncado) e `processedAt`, e o erro completo vai pro log da
+Cloud Function — visível pra quem for investigar depois, em vez de
+silenciosamente invisível. Idempotência propositalmente NÃO marcada
+nesse caminho (nada foi de fato concluído, então um reprocessamento
+futuro — ex: reenviando o mesmo pedido manualmente — não fica
+bloqueado). Não implementa retry automático (ficaria pra um scan
+agendado, fora de escopo desta rodada) — só garante visibilidade.
+
+1 teste novo. Suíte inteira: 299/299 passando.
+
+**Requer redeploy manual**: `firebase deploy --only functions:agenteAgilIntake`
+
 ### 2026-08-27 · `intakeTrigger.js`: tarefa passada ao modelo não dizia o squad — achado no canário de validação do deploy
 
 Validando o deploy de `agenteAgilIntake` (entrada logo abaixo) com um

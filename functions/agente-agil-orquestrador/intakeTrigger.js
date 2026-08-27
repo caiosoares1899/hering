@@ -136,13 +136,38 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
       ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):\n\n${entry.texto}`
       : `${especialistaLabel} mandou esta informação, sem nenhum card associado a ela. Você está atuando no squad "${squadId}" — se decidir usar criar_card, o rascunho só pode nascer AQUI, neste squad (esta ferramenta não tem como criar em nenhum outro squad, mesmo que o assunto pareça mais afim de outro time). Se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir:\n\n${entry.texto}`;
 
-    const result = await runLoop({
-      llmClient,
-      tools,
-      system: SYSTEM_PROMPT_V1,
-      task,
-      enabled: true, // kill switch já checado acima
-    });
+    // Achado real, canário de validação (2026-08-27): uma instabilidade
+    // momentânea da API da Anthropic (erro 529 "overloaded") derrubou
+    // runLoop() com exceção — e como nada abaixo daqui rodava, o item
+    // ficava pra sempre com status:'pending', sem NENHUM sinal de que
+    // algo tinha falhado. Diferente da @menção (onde a ausência de
+    // resposta num card já é um sinal visível pra quem perguntou), aqui
+    // não existe ninguém esperando — o item some silenciosamente no
+    // meio da fila. Não tenta reprocessar sozinho (isso exigiria um scan
+    // agendado, fora de escopo por ora) — só GARANTE que a falha fica
+    // visível pra quem for olhar `agente_intake_pending` depois.
+    // Idempotência de propósito NÃO marcada nesse caminho — nada foi de
+    // fato concluído, então um reprocessamento futuro (ex: reenviando o
+    // mesmo pedido) não deveria ser bloqueado por isso.
+    let result;
+    try {
+      result = await runLoop({
+        llmClient,
+        tools,
+        system: SYSTEM_PROMPT_V1,
+        task,
+        enabled: true, // kill switch já checado acima
+      });
+    } catch (err) {
+      console.error(`[agente-agil-intake:${squadId}] runLoop falhou:`, id, err);
+      await db.ref(`${PENDING_PATH}/${id}`).update({
+        status: 'failed',
+        processedAt: new Date().toISOString(),
+        error: truncar(err.message, 500),
+        dryRun,
+      });
+      return { processed: false, reason: 'llm_error', error: err.message };
+    }
 
     const acoesRegistro = coletarAcoesAgente(result.steps);
     const criarCardCall = result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'criar_card' && c.output && c.output.ok && !c.output.dryRun);
