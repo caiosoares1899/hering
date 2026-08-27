@@ -306,6 +306,22 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `_extKey()` — L27999 — chave de e-mail sanitizada (`.` → `,`)
 - `salvarExterno()` — L28000
 
+### Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
+- `renderIntakeBody()` — L17457 — lista de `intakePendentes`
+  (`_intakeBucket`, alimentado por listeners granulares em
+  `intake_pending`, ver comentário na declaração). 2026-08-27: mostra
+  `🤖` no título + linha "🏷 Submarca sugerida" quando o item veio do
+  `criar_card` do Agente Ágil (campos `origem`/`submarca`, ver
+  `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
+  desses campos existirem, a tela só sabia renderizar pedidos do
+  formulário público.
+- `_intakeCriarCard(id)` — L17479 — abre o modal de novo card pré-
+  preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
+  tags reais por label (case/acento-insensitive, `_norm()`), pré-
+  marcando a tag — mesmo cuidado do bugfix de "usar modelo" (saveCard()
+  valida submarca lendo o VALOR do `<select id="m-submarca">`, não
+  `editingTags`, então os dois precisam ser setados).
+
 ### Backup
 - `exportBackupJSON()` — L28101
 - `maybeSnapshot()` — L10327
@@ -320,6 +336,33 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 - L24047 D&D das colunas, L24116 D&D dos cards
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
+
+### Visualizador externo (só em painel-dev.html, 2026-08-27 — NÃO promovido pra prod ainda)
+- `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do
+  listener `auth-change` (perto de `doSignIn()`/`isAdmUser()`) — pedido
+  direto: dar acesso de SÓ LEITURA ao painel pra alguém fora de
+  `@ciahering.com.br`. Novo node `kanban/painel_viewers/{emailKey}`
+  (whitelist, mesmo padrão de `externos` do kanban) — segurança de
+  verdade fica em `database.rules.json` (write nunca libera pra quem
+  não é `@ciahering.com.br`, em nenhum node do painel; visualizador só
+  ganha exceção de READ nos nodes que o painel lê: `painel`,
+  `squads_meta`, `config`, `feedback`, e por squad — `dados`,
+  `presence`, `snapshots`, `error_logs`, `error_stats`, `agent_usage`).
+- `window._isPainelViewer` / `_blockIfPainelViewer()` — flag + guard
+  chamado no topo de toda função que abre modal de edição (`openCfg`,
+  `openComunicadoCompose`, `openCampEdit`, `openPevModal`,
+  `openGlobalBackup`, `openBoardSetup`, `openGlobalUsersModal`,
+  `openPainelCampMsEdit`) — mostra toast em vez de abrir. CSS
+  `body.painel-viewer-mode` esconde `.hd-btn-adm`/`[data-sqid]` (botões
+  de admin do header + ⚙ Config de cada squad).
+- `renderPainelViewers()`/`addPainelViewer()`/`removePainelViewer()` —
+  gestão da whitelist, dentro da aba "🔑 ADMs" de `openCfg()` (seção
+  "👁 Visualizadores externos do painel").
+- Limitação conhecida: `openPevModal` (evento do calendário) é sempre
+  um formulário editável, mesmo pra só VER um evento existente —
+  bloqueá-lo pro visualizador também tira a visão de detalhe de um
+  evento específico (a grade do calendário continua visível). Não
+  corrigido — sinalizado no `CHANGELOG.md`.
 
 ### Dashboard consolidado
 - `loadAll()` — L8158 / `renderAll()` — L8179
@@ -338,22 +381,6 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 ### Usuários
 - `openGlobalUsersModal()` — L7762
 - `initHiddenCols()` — L7476
-
-### Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
-- `renderIntakeBody()` — L17457 — lista de `intakePendentes`
-  (`_intakeBucket`, alimentado por listeners granulares em
-  `intake_pending`, ver comentário na declaração). 2026-08-27: mostra
-  `🤖` no título + linha "🏷 Submarca sugerida" quando o item veio do
-  `criar_card` do Agente Ágil (campos `origem`/`submarca`, ver
-  `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
-  desses campos existirem, a tela só sabia renderizar pedidos do
-  formulário público.
-- `_intakeCriarCard(id)` — L17479 — abre o modal de novo card pré-
-  preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
-  tags reais por label (case/acento-insensitive, `_norm()`), pré-
-  marcando a tag — mesmo cuidado do bugfix de "usar modelo" (saveCard()
-  valida submarca lendo o VALOR do `<select id="m-submarca">`, não
-  `editingTags`, então os dois precisam ser setados).
 
 ## functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
 

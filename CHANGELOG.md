@@ -8542,6 +8542,53 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.00 · painel-dev — 2026-08-27 · Novo: visualizador externo do painel (acesso de convidado, só leitura)
+
+Pedido direto: acesso ao painel pra alguém de fora da empresa (executivo
+de uma empresa parceira, sem `@ciahering.com.br`). Painel sempre
+bloqueou qualquer email fora do domínio, sem exceção — nem client-side
+nem nas regras do Firebase (diferente do kanban, que já tem "Emails
+externos autorizados" por squad, mas aquele mecanismo dá leitura E
+ESCRITA do squad, não serve pra "só visualizar tudo o painel").
+
+Mecanismo novo, só do painel: `kanban/painel_viewers/{emailKey}` —
+whitelist gerida por ADMs em ⚙ Config → aba 🔑 ADMs → "👁 Visualizadores
+externos do painel". Segurança de verdade fica nas **regras do Firebase**
+(`database.rules.json`) — write nunca é liberado pra quem não é
+`@ciahering.com.br`, em NENHUM node; visualizador só ganha exceção de
+READ nos nodes que o painel de fato lê pra montar os dashboards:
+`painel`, `squads_meta`, `config`, `feedback`, e por squad — `dados`,
+`presence`, `snapshots`, `error_logs`, `error_stats`, `agent_usage`.
+
+No cliente: `window._isPainelViewer` fica `true` quando alguém loga
+pelo whitelist (mesmo padrão de resiliência do check de externos do
+kanban — cache de 24h + 3 tentativas antes de desconectar por erro de
+rede). Um banner fixo avisa "👁 Modo visualização" o tempo todo. Os
+pontos de entrada mais óbvios de edição ficam escondidos
+(`.hd-btn-adm` — Backup/Novo board/Usuários — e o ⚙ Config de cada
+squad) e as funções que abrem modal de edição (`openCfg`,
+`openComunicadoCompose`, `openCampEdit`, `openPevModal`,
+`openGlobalBackup`, `openBoardSetup`, `openGlobalUsersModal`,
+`openPainelCampMsEdit`) recusam com um toast em vez de abrir — mas essa
+parte é só UX; a trava que importa de verdade são as regras.
+
+**Limitação conhecida, aceita conscientemente**: `openPevModal` (evento
+do calendário) é sempre um formulário editável, mesmo pra só ver um
+evento existente — bloqueá-lo pro visualizador também tira a
+possibilidade dele ver o DETALHE de um evento específico (a grade do
+calendário em si continua visível). Não corrigido nesta rodada por ser
+uma refatoração maior (separar "ver" de "editar" nesse modal
+específico) — sinalizado, não implementado de bandeja.
+
+Checks de rotina: node --check OK, brace/paren balance -1/-12 (baseline
+da sessão).
+
+**Requer deploy manual das regras** (não é `firebase deploy --only
+functions:...` — é `firebase deploy --only database`):
+```
+firebase deploy --only database
+```
+
 ### painel.html v2.99 · painel — 2026-08-25 · promove pra prod (só o fix de presença)
 Promoção pedida direto: "sobe no painel prod mas n sobe no kanban
 prod" — promove SÓ o fix de presença online (ver entrada dev logo
