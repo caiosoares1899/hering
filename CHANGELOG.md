@@ -2076,6 +2076,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.493-dev — 2026-08-27 — Fix: Histórico do Agente Ágil mostrava "pediu via menção" pra ações vindas de especialista externo (/monitorarbugs)
+
+Achado rodando a skill de revisão de bugs, escopo genérico, priorizando
+a área alterada mais recentemente (Pedidos de Intake/Agente Ágil, mesmo
+dia). `renderAgenteLog()` (aba "🤖 Histórico do Agente" em
+Configurações) só sabia distinguir 2 origens — `e.autonomous` binário —
+mas o backend (`agenteLog.js`) ganhou uma 3ª origem no mesmo dia
+(informação de especialista externo via `intakeTrigger.js`, `comment.uid`
+no formato `especialista:*`), que caía no braço "não é automação" e
+virava `autonomous:false`. Resultado real: uma ação do Agente Ágil
+disparada pelo intake do Databricks aparecia no histórico como "👤
+Databricks pediu via menção" — frase falsa, ninguém mencionou o agente,
+foi um disparo automático.
+
+Fix (client + backend):
+- `functions/agente-agil-orquestrador/agenteLog.js`: nova
+  `classificarOrigem()`/campo `origem` (`mencao`/`automacao`/
+  `especialista`) — `autonomous` continua existindo (compat), agora
+  cobrindo os 2 casos sem pedido humano direto.
+- `renderAgenteLog()`: 3ª cor/frase pra origem `especialista` ("X
+  informou (processado automaticamente)"), com fallback pra entradas
+  antigas sem o campo `origem` (derivado de `autonomous`, sempre
+  correto pra entradas gravadas antes desta correção, já que
+  `especialista` só existe desde o próprio dia do bug).
+
+Achado incidental na mesma revisão, mesma área: `_intakeCriarCard()`
+pré-marcava a tag de Submarca sugerida pelo Agente Ágil sem checar se o
+squad tem Submarca ativa — o backend só EXIGE/valida submarca quando a
+feature está ligada, mas não impede o campo vir preenchido mesmo
+desligada. Corrigido com o mesmo guard (`submarcaAtivo`) que o resto do
+app já usa.
+
+3 testes novos (`agenteLog.test.js`). Suíte de functions: 303/303
+passando. Checks de rotina do HTML: node --check OK, brace/paren
+balance -1/0.
+
+**Requer redeploy manual** (o fix mora em `agenteLog.js`, usado por 3
+functions): `firebase deploy --only
+functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### v8.30.492-dev — 2026-08-27 — Tela de Pedidos de Intake mostra os campos novos do Agente Ágil (submarca, origem)
 
 Item deixado deliberadamente fora de escopo na entrada do
