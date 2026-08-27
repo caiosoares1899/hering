@@ -2046,6 +2046,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.491-dev — 2026-08-27 — Fix: erro ao abrir Configurações (v8.30.490-dev)
+
+`openCfg()` usava `AGENTE_AGIL_MENTION_SQUADS.includes(...)` pra decidir
+se mostra a aba nova "🤖 Histórico do Agente" — mas
+`AGENTE_AGIL_MENTION_SQUADS` é um `Set` (`.has()`), não um array
+(diferente de `AGENTE_AGIL_HOTLINE_SQUADS`, que é array — a confusão
+veio daí). Quebrava o botão ⚙ Configurações inteiro (`TypeError:
+AGENTE_AGIL_MENTION_SQUADS.includes is not a function`), reportado ao
+vivo logo depois do redeploy do backend. Corrigido pra `.has()`.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.490-dev — 2026-08-27 — Novo: aba "🤖 Histórico do Agente" em Configurações
 
 Pedido direto do usuário (pensando no PO): uma área que guarde todas as
