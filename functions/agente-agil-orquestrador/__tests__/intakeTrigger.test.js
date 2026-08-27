@@ -44,6 +44,10 @@ function recordingLlmClient(script) {
   };
 }
 
+function throwingLlmClient(err) {
+  return { calls: () => 1, async decide() { throw err; } };
+}
+
 function seedDb(extra) {
   membersLib._resetCacheForTests();
   return makeFakeDb({
@@ -129,6 +133,32 @@ test('cardId aponta pra card que não existe mais: cai no caminho semCard (não 
   assert.equal(outcome.processed, true);
   assert.equal(outcome.semCard, true);
   assert.equal(outcome.cardId, null);
+});
+
+// Achado real do canário de validação (2026-08-27): uma instabilidade
+// momentânea da API da Anthropic (erro 529 "overloaded") derrubou
+// runLoop() com exceção, e o item ficava preso em "pending" pra sempre,
+// sem NENHUM sinal de falha — diferente da @menção, aqui não tem
+// ninguém esperando resposta num card pra notar que nada chegou.
+test('runLoop falhando (ex: API fora do ar) marca o item como "failed", com o erro, em vez de ficar preso em "pending" pra sempre', async () => {
+  const db = seedDb();
+  const llmClient = throwingLlmClient(new Error('Anthropic API respondeu 529: overloaded'));
+  const entry = { texto: 'informação qualquer', especialista: 'databricks' };
+
+  const outcome = await processarIntake(db, { id: 'i-falha', entry, llmClient });
+
+  assert.equal(outcome.processed, false);
+  assert.equal(outcome.reason, 'llm_error');
+
+  const pendingEntry = await db.ref(`${PENDING_PATH}/i-falha`).get();
+  assert.equal(pendingEntry.val().status, 'failed');
+  assert.match(pendingEntry.val().error, /529/);
+  assert.ok(pendingEntry.val().processedAt);
+
+  // Idempotência NÃO marcada — nada foi de fato concluído, um
+  // reprocessamento futuro não deveria ser bloqueado por isso.
+  const marcado = await db.ref(`${IDEMPOTENCY_PATH}/i-falha`).get();
+  assert.equal(marcado.exists(), false);
 });
 
 // Achado real do canário de validação (2026-08-27): sem o squad explícito
