@@ -2862,3 +2862,54 @@ toolset completo). Suíte inteira: 306/306 passando.
 `realHandlers.js` pra pegar a ferramenta nova: `agenteAgilMencao`,
 `agenteAgilMencaoDados`, `agenteAgilIntake` — mesmo passo de sempre
 (resincronizar o clone local antes).
+
+## Notifica PO/ADM quando o intake não vira ação nenhuma (2026-08-28)
+
+Achado ao testar o intake pela primeira vez via HTTPS de verdade (`curl`
+direto contra `agenteAgil`, simulando o Databricks). Cenário: texto
+solto, sem card associado ("queda de 18% no volume de pedidos") — o
+modelo tentou `criar_card`, mas o squad `dev` exige Ficha Técnica, então
+a ferramenta recusou. Resultado: uma explicação clara gravada em
+`resultText`, no item da fila — mas **ninguém foi avisado**. A única
+forma de descobrir era abrir "Pedidos de Intake" por conta própria.
+Pedido direto do usuário: "ele precisa notificar alguém que isso
+aconteceu... sempre que esse tipo de erro acontecer, precisa relatar
+pro humano (PO e ADM)".
+
+**Escopo**: só dispara quando `semCard === true` E nada de acionável
+nasceu (`!pendingIdCriado`) — ou seja, a recusa/decisão de não agir
+aconteceu no caminho "informação solta, sem card nenhum". Quando existe
+um `cardId` real, o comentário já fica visível no próprio card (mesma
+cobertura de uma @menção normal); quando `criar_card` teve sucesso, o
+rascunho já aparece com o badge 🤖 em Pedidos de Intake.
+
+**Implementação** (`notificarFalhaSemCard()`/`acharCardHotline()` em
+`intakeTrigger.js`):
+- Procura o card hotline "🤖 Converse com o Agente Ágil"
+  (`agenteHotline:true`) da squad. **Só lê — nunca cria um card novo**:
+  escrever em `/cards` direto arrisca a mesma perda silenciosa que
+  `criarCard.js`/`intake/submit.js` já contornam (o cliente reescreve o
+  array inteiro em `fbSaveAll()`, sem transaction).
+- Se existe: posta um comentário explicando o que aconteceu (texto
+  original + `resultText`) e notifica quem tem papel `po`/`adm` na
+  squad com `type:'mention'` apontando pro card hotline.
+- Se não existe ainda: pula o comentário, mas AINDA notifica PO/ADM —
+  com `type:'intake'`/`cardId:null`, o mesmo tipo que `openNotif()`
+  (kanban-dev.html) já trata especificamente pra abrir o painel de
+  Pedidos de Intake em vez de tentar navegar pra um card que não
+  existe (achado incidental: esse tratamento já existia no cliente,
+  só nunca tinha sido usado por nada server-side).
+- `members.js` ganhou um campo `role` por membro (mesmo fallback de
+  `getEffectiveRole()` do cliente: `squads_roles[squadId] || u.role ||
+  'membro'`) — **não replica** o allowlist de e-mail fixo de
+  `isAdmUser()` (só existe no cliente); quem precisar dessa cobertura
+  extra sabe da lacuna.
+- Respeita `dryRun` como todo o resto do módulo — nada escreve de
+  verdade em modo sombra.
+
+3 testes novos em `intakeTrigger.test.js` (hotline existe/notifica;
+sem hotline/notifica com fallback; dryRun não escreve nada). Suíte
+inteira: 309/309 passando.
+
+**Requer redeploy** (mesmas 3 functions de sempre que usam este
+módulo): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`

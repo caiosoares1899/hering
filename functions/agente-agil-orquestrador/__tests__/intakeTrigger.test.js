@@ -241,6 +241,88 @@ test('sem cardId nenhum, modelo decide não criar nada: só finalText, sem chama
   assert.match(pendingEntry.val().resultText, /Informação vaga demais/);
 });
 
+// ── notificarFalhaSemCard (pedido direto, 2026-08-28) ───────────────────
+// Quando semCard e nada de acionável nasceu (criar_card recusou, ou o
+// modelo decidiu não criar nada), a informação não pode ficar visível só
+// pra quem for abrir Pedidos de Intake por conta própria.
+function seedDbComHotlineEMembros({ comHotline = true } = {}) {
+  membersLib._resetCacheForTests();
+  const cards = { 9: { id: 'c1', title: 'Card de teste', col: 'progress' } };
+  if (comHotline) cards[99] = { id: 'hotline1', title: '🤖 Converse com o Agente Ágil', agenteHotline: true, archived: false };
+  return makeFakeDb({
+    kanban: {
+      squads: {
+        [SQUAD_ID]: {
+          dados: {
+            cards,
+            cards_index: { c1: '9' },
+            tags: [],
+          },
+        },
+      },
+      usuarios_publicos: {
+        uidPO: { nome: 'Ana PO', email: 'ana@ciahering.com.br', init: 'ANA', squads: { [SQUAD_ID]: true }, squads_roles: { [SQUAD_ID]: 'po' } },
+        uidADM: { nome: 'Bruno Adm', email: 'bruno@ciahering.com.br', init: 'BRU', squads: { [SQUAD_ID]: true }, squads_roles: { [SQUAD_ID]: 'adm' } },
+        uidMembro: { nome: 'Carla Membro', email: 'carla@ciahering.com.br', init: 'CAR', squads: { [SQUAD_ID]: true }, squads_roles: { [SQUAD_ID]: 'membro' } },
+      },
+      config: { agente_agil_orquestrador: { enabled: true } },
+    },
+  });
+}
+
+test('semCard sem pendingIdCriado, hotline existe: comenta no card hotline e notifica PO+ADM (não membro comum)', async () => {
+  const db = seedDbComHotlineEMembros();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'Não consegui criar o card: Ficha Técnica obrigatória neste squad.' }]);
+  const entry = { texto: 'queda nas vendas da campanha', especialista: 'databricks' };
+
+  const outcome = await trigger.processarIntake(db, { id: 'i-hotline', entry, llmClient });
+  assert.equal(outcome.pendingIdCriado, null);
+
+  const comentarios = await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/hotline1`).get();
+  const lista = Object.values(comentarios.val() || {});
+  assert.equal(lista.length, 1);
+  assert.match(lista[0].text, /databricks/);
+  assert.match(lista[0].text, /Ficha Técnica obrigatória/);
+
+  const notifPO = Object.values((await db.ref('kanban/usuarios/uidPO/notificacoes').get()).val() || {});
+  const notifADM = Object.values((await db.ref('kanban/usuarios/uidADM/notificacoes').get()).val() || {});
+  const notifMembro = await db.ref('kanban/usuarios/uidMembro/notificacoes').get();
+  assert.equal(notifPO.length, 1);
+  assert.equal(notifPO[0].type, 'mention');
+  assert.equal(notifPO[0].cardId, 'hotline1');
+  assert.equal(notifADM.length, 1);
+  assert.equal(notifMembro.val(), null, 'membro comum (não PO/ADM) não deveria ser notificado');
+});
+
+test('semCard sem pendingIdCriado, SEM card hotline: não comenta em lugar nenhum mas ainda notifica PO/ADM (type intake, sem cardId)', async () => {
+  const db = seedDbComHotlineEMembros({ comHotline: false });
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'Informação vaga demais, não criei nada.' }]);
+  const entry = { texto: 'algo bem vago', especialista: 'databricks' };
+
+  await trigger.processarIntake(db, { id: 'i-sem-hotline', entry, llmClient });
+
+  const notifPO = Object.values((await db.ref('kanban/usuarios/uidPO/notificacoes').get()).val() || {});
+  assert.equal(notifPO.length, 1);
+  assert.equal(notifPO[0].type, 'intake');
+  assert.equal(notifPO[0].cardId, null);
+});
+
+test('semCard sem pendingIdCriado, dryRun:true: não escreve nem comentário nem notificação', async () => {
+  const db = seedDbComHotlineEMembros();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: true });
+  const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'Teria explicado, mas estou em modo sombra.' }]);
+  const entry = { texto: 'algo', especialista: 'databricks' };
+
+  await trigger.processarIntake(db, { id: 'i-dryrun-falha', entry, llmClient });
+
+  const comentarios = await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/hotline1`).get();
+  assert.equal(comentarios.val(), null);
+  const notifPO = await db.ref('kanban/usuarios/uidPO/notificacoes').get();
+  assert.equal(notifPO.val(), null);
+});
+
 test('createIntakeTrigger: squad novo entra em modo sombra por padrão (dryRun:true)', () => {
   const instancia = createIntakeTrigger({ squadId: 'outro-squad' });
   assert.equal(instancia.DRY_RUN_INTAKE, true);

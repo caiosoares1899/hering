@@ -63,7 +63,13 @@ async function readSquadMembers(db, squadId, { forceRefresh = false } = {}) {
     if (!inThisSquad) return;
     const init = (u.init && u.init.trim()) ? u.init.trim() : deriveInit(u.nome || u.email || '');
     if (!init) return;
-    members.push({ uid, init, name: u.nome || u.email || '', email: u.email || '' });
+    // role: mesmo fallback do getEffectiveRole() do cliente (kanban-dev.html)
+    // — squads_roles[squadId] (papel específico deste squad) senão o campo
+    // legado u.role, senão 'membro'. NÃO replica o override de isAdmUser()
+    // (allowlist de e-mail fixa, só no cliente) — quem usar `role` aqui pra
+    // decidir algo sensível a segurança precisa saber dessa lacuna.
+    const role = (u.squads_roles && u.squads_roles[squadId]) || u.role || 'membro';
+    members.push({ uid, init, name: u.nome || u.email || '', email: u.email || '', role });
   });
   _cache = { ts: now, squadId, members };
   return members;
