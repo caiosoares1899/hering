@@ -178,6 +178,51 @@ test('a tarefa passada ao modelo menciona o squad explicitamente, nos dois camin
   assert.match(comCardClient.historias()[0][0].text, new RegExp(`squad "${SQUAD_ID}"`));
 });
 
+// config/agentesExternos vive dentro de squads/{squadId}/dados/config/ (mesmo
+// FB do cliente, kanban-dev.html) — DIFERENTE do kill switch
+// (config/agente_agil_orquestrador, global, ver seedDb() acima) — por isso
+// estes 2 testes montam o próprio db em vez de reusar seedDb().
+function seedDbComAgentesExternos(agentesExternos) {
+  membersLib._resetCacheForTests();
+  return makeFakeDb({
+    kanban: {
+      squads: {
+        [SQUAD_ID]: {
+          dados: {
+            cards: { 9: { id: 'c1', title: 'Card de teste', col: 'progress' } },
+            cards_index: { c1: '9' },
+            tags: [],
+            config: { agentesExternos: agentesExternos || {} },
+          },
+        },
+      },
+      config: { agente_agil_orquestrador: { enabled: true } },
+    },
+  });
+}
+
+// Pedido direto (2026-08-28, testando o intake ao vivo): ADM/PO documenta
+// em Configurações → Agentes Externos o que cada especialista faz —
+// intakeTrigger.js injeta essa descrição na tarefa do LLM sempre que a
+// mensagem vem daquele especialista.
+test('injeta a descrição do especialista (config/agentesExternos) na tarefa do modelo, quando cadastrada', async () => {
+  const db = seedDbComAgentesExternos({
+    'agente-dados-concorrencia': { descricao: 'Coleta dados públicos de mídia paga de concorrentes, roda semanalmente.' },
+  });
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  await processarIntake(db, { id: 'i-desc-especialista', entry: { texto: 'dados novos', especialista: 'agente-dados-concorrencia' }, llmClient: client });
+
+  assert.match(client.historias()[0][0].text, /Coleta dados públicos de mídia paga de concorrentes/);
+});
+
+test('sem descrição cadastrada pro especialista (ou sem especialista), a tarefa não menciona nenhum contexto extra', async () => {
+  const db = seedDbComAgentesExternos();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  await processarIntake(db, { id: 'i-sem-desc-especialista', entry: { texto: 'dados novos', especialista: 'agente-desconhecido' }, llmClient: client });
+
+  assert.doesNotMatch(client.historias()[0][0].text, /Contexto sobre este especialista/);
+});
+
 // A instância `dev` exportada fica em modo sombra (DRY_RUN_INTAKE:true,
 // mecanismo ainda não validado em produção — ver comentário no fim do
 // arquivo) — criar_card em dryRun nunca grava pendingId de verdade, então
