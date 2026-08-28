@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.494</div>
+<div class="version">v8.30.495</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28745,9 +28745,24 @@ async function _applyRestorePayload(payload){
   }
 
   try{
-    cards = (payload.board.cards||[]).map(c=>({...c}));
-    columns = (payload.board.columns||[]).slice();
-    tags = (payload.board.tags||[]).slice();
+    // Achado real (2026-08-28, squad midiacriativa, /monitorarbugs): das 7
+    // atribuições de `columns`/`tags` a partir de dado externo neste arquivo,
+    // esta era a ÚNICA sem `.filter(Boolean)` — as outras 6 (fbListen/fbGet
+    // de '/columns', ver comentário logo acima da declaração de
+    // blockerMode) sempre descartam entradas nulas antes de aceitar o
+    // array. Um backup (manual ou o weeklyBackup.js, que lê o node cru via
+    // Admin SDK) que tenha capturado `columns`/`tags` com uma entrada
+    // inválida propagava isso direto pro estado ao vivo — `col.name`/
+    // `col.id` undefined em qualquer render (renderNormal, renderColEditor)
+    // trava a tela pra sempre, até alguém restaurar de novo ou editar
+    // manualmente. `cards` também filtrado pela mesma razão (evita ghost
+    // card `{}` de um `{...null}`). Aceita também o node sparse virando
+    // objeto (Object.values) — backups salvos ANTES deste fix (Cloud
+    // Storage, weeklyBackup.js) podem ter esse formato.
+    const _asArr = v => v ? (Array.isArray(v)?v:Object.values(v)).filter(Boolean) : [];
+    cards = _asArr(payload.board.cards).map(c=>({...c}));
+    columns = _asArr(payload.board.columns);
+    tags = _asArr(payload.board.tags);
     agilCfg = payload.board.agilCfg||{};
     qlItems = payload.board.qlItems||{recorrentes:[],modelos:[],agendamentos:[]};
     links = payload.board.links||[];
