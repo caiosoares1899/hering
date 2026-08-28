@@ -2086,6 +2086,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.494-dev — 2026-08-28 — Fix: "Bloqueios" do painel "🌅 Meu Dia" mostrava impedimento antigo pra squads em modo coluna (/monitorarbugs)
+
+Rodada genérica, escopo escolhido pela prioridade 1 (área alterada mais
+recentemente sem cobertura ainda: "Impedimentos" ganhou 3 fixes reais em
+2026-08-26, mas nenhum deles tinha passado por esta skill até agora).
+`_meuDiaIsBlocked(card)`, usada na seção "🚧 Bloqueios" do painel "Meu
+Dia" (agregação pessoal cross-squad), checava `card.blocker===true ||
+card.col==='blocker'` incondicionalmente — ignorando o `blockerMode` de
+cada squad, ao contrário de `_cardIsBlocked()` (a fonte única de verdade
+documentada pro squad ativo, que despacha por modo) e do vizinho
+`_meuDiaIsDone()` na mesma função, que já faz esse despacho por squad
+corretamente (achado via técnica 2 da skill — padrão já resolvido em
+outro lugar do arquivo).
+
+Cenário concreto: uma squad operou em modo "tag" e marcou `card.blocker
+= true` num card; depois trocou pra modo "col" (onde `_cardIsBlocked()`
+já ignora esse campo de propósito — só `card.col==='blocker'` conta). No
+board da própria squad o card não aparece mais como impedido. Mas
+qualquer pessoa (de qualquer squad) que tivesse aquele card em "Meu Dia"
+continuava vendo-o pra sempre na seção "Bloqueios", porque a checagem
+duplicada nunca expirava o sinal de tag antigo.
+
+Fix: `_meuDiaIsBlocked()` agora despacha por squad — usa o `blockerMode`
+live pro squad ativo, e `_meuDiaCrossData[sq].blockerMode` pros demais.
+Esse campo vem de graça do mesmo fetch de `/dados` que já trazia
+`doneCols` (mesmo padrão do bug de `_meuDiaIsDone()` corrigido
+anteriormente) — nenhuma leitura extra no Firebase.
+
+Checks de rotina: `node --check` OK (bloco `<script>` principal,
+L5737–L29167), brace/paren balance -1/0 (sem divergência do baseline da
+sessão).
+
 ### v8.30.493-dev — 2026-08-27 — Fix: Histórico do Agente Ágil mostrava "pediu via menção" pra ações vindas de especialista externo (/monitorarbugs)
 
 Achado rodando a skill de revisão de bugs, escopo genérico, priorizando

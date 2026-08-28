@@ -261,6 +261,15 @@ instrumentação extra) — os números da seção painel abaixo são de
   só voltar pra `col` depois já causou o incidente uma 2ª vez)
 - Ação de Automação "Mover card para coluna" (`AUTO_ACTIONS`, ver seção
   Automações acima) tem o mesmo guard de existência de coluna
+- `_meuDiaIsBlocked(card)` — L17308 (dentro da seção "Meu Dia", ver
+  `renderMeuDia()`/`_meuDiaCrossData` acima) — achado real 2026-08-28
+  (`/monitorarbugs`): checava `card.blocker===true || card.col==='blocker'`
+  incondicionalmente, dando falso-positivo pra squads em modo `col` com
+  cards que ainda carregavam `blocker:true` de um período anterior em modo
+  `tag`. Agora despacha por `blockerMode` de cada squad (ativo via
+  `blockerMode` live; cruzado via `_meuDiaCrossData[sq].blockerMode`, que
+  vem de graça do mesmo fetch de `/dados` que já trazia `doneCols`) —
+  mesmo padrão de `_cardIsBlocked()`/`_meuDiaIsDone()`
 
 ### Agente Ágil (client-side — atalhos que postam @menção real)
 - `AGENTE_AGIL_MENTION_SQUADS` — L6349 — squads onde os atalhos abaixo
