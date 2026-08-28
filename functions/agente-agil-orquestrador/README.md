@@ -2808,3 +2808,57 @@ abertura desta PR).
 depende do usuário rodar `firebase deploy --only
 functions:agenteAgilDueOverdueScan` na própria máquina, depois de
 resincronizar o clone local.
+
+## Ferramenta nova: `risco` (2026-08-28)
+
+Pedido direto, numa conversa sobre como o orquestrador escala pra
+projetos grandes: "o agente ágil consegue preencher checklist, colocar
+risco também?". Checklist já existia (`checklist_item`); risco não —
+lacuna real, não uma decisão deliberada de deixar de fora.
+
+`card.riscos` é um array de STRINGS puras no cliente (`addRisco()`/
+`getRiscos()` em `kanban-dev.html`, sem id nem metadado por item, sem
+conceito de "resolver"/"concluir" um risco — só uma lista de avisos
+visível na tela do card). Implementação seguiu o MESMO molde das outras
+7 ferramentas reaproveitadas do vocabulário de outputs:
+
+- **`agente-agil/schema.js`**: `outputRisco` (Zod) — só `texto`
+  obrigatório, mesmo shape de `outputComentario`. Entrou no
+  `discriminatedUnion` `output` (contrato legado, mas compartilhado).
+- **`agente-agil/outputs/risco.js`** (novo): builder — transaction
+  escopada em `{cardPath}/riscos`, mesmo raciocínio de concorrência de
+  `outputs/link.js` (nunca um `update()` direto que pudesse pisar num
+  risco adicionado ao mesmo tempo por um humano). Sem entrada em
+  `card.history`, de propósito, mesma escolha de `link.js` — a própria
+  lista de riscos já é o registro visível; diferente de
+  `checklist_item`/`editar_campos`/`mover_coluna`, que mudam um ESTADO
+  existente.
+- **`agente-agil/outputs/index.js`**: registra `risco: risco.build`.
+- **`agente-agil-orquestrador/tools/index.js`**: `outputRisco` entra em
+  `REUSED_OUTPUT_SCHEMAS` — isso sozinho já basta pra `risco` aparecer
+  no toolset (fake E real, incl. `dryRun`), porque `buildTools()`/
+  `makeHandler()`/`makeRealHandler()` são 100% genéricos a partir desse
+  mapa. Nenhuma outra mudança de código em `tools/index.js`/
+  `realHandlers.js`/`loop.js`.
+- **`systemPrompt.js`**: `risco` entra na lista de ferramentas
+  disponíveis, no bucket de "baixo risco" (só adiciona, nunca
+  sobrescreve — mesma classe de `comentario`/`checklist_item`/`link`),
+  com a mesma cautela anti-alucinação que `link` já tem ("só registre um
+  risco que o pedido/informação realmente descreveu"), e na lista de
+  ferramentas indisponíveis no caminho sem card (`semCard:true`).
+
+**Nível de confiança herdado, não revalidado do zero**: estruturalmente
+é quase idêntico a `checklist_item` (mesmo padrão de transaction
+escopada, array simples, já em produção com escrita real desde
+2026-08-18) — não passou por uma nova rodada de canários manuais como
+`criar_card` passou (aquele mexia com entidades novas e validação de
+Ficha Técnica/Submarca, risco bem mais alto). Coberto por testes
+automatizados (`agente-agil/__tests__/board.test.js` — construção da
+transaction; `agente-agil-orquestrador/__tests__/realHandlers.test.js`
+— escrita real ponta a ponta contra o fake db; `loop.test.js` —
+toolset completo). Suíte inteira: 306/306 passando.
+
+**Requer redeploy** das 3 Cloud Functions que usam `buildTools()`/
+`realHandlers.js` pra pegar a ferramenta nova: `agenteAgilMencao`,
+`agenteAgilMencaoDados`, `agenteAgilIntake` — mesmo passo de sempre
+(resincronizar o clone local antes).

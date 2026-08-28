@@ -19,6 +19,7 @@ const {
   outputAgentStatus,
   outputMoverColuna,
   outputEditarCampos,
+  outputRisco,
 } = require('../../agente-agil/schema');
 const { makeHandler } = require('./fakeHandlers');
 const { makeRealHandler, makeRealPerguntarHumanoHandler } = require('./realHandlers');
@@ -41,6 +42,7 @@ const REUSED_OUTPUT_SCHEMAS = {
   agent_status: outputAgentStatus,
   mover_coluna: outputMoverColuna,
   editar_campos: outputEditarCampos,
+  risco: outputRisco,
 };
 
 // Único schema que não vem de agente-agil/schema.js — central pra visão de

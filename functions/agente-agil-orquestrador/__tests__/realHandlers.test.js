@@ -85,6 +85,21 @@ test('handler real com dryRun:false escreve DE VERDADE no db (Etapa 3 — defaul
   assert.equal(cardAfter.updatedAt, undefined, 'comentário sozinho não carimba updatedAt do card (path fora da subárvore)');
 });
 
+test('handler real de risco com dryRun:false escreve DE VERDADE no db', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', riscos: ['Risco já existente'] });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const risco = tools.find((t) => t.name === 'risco');
+
+  const result = await risco.handler({ type: 'risco', texto: 'Fornecedor pode atrasar a entrega' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.dryRun, false);
+  assert.equal(result.applied, 1);
+
+  const cardAfter = db._data().kanban.squads.dev.dados.cards['9'];
+  assert.deepEqual(cardAfter.riscos, ['Risco já existente', 'Fornecedor pode atrasar a entrega']);
+});
+
 test('omitir dryRun continua default true (comportamento de todos os scripts/testes anteriores preservado)', async () => {
   const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' }); // sem dryRun explícito

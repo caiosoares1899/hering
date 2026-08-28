@@ -9142,6 +9142,39 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-28 · Ferramenta nova: `risco`
+
+Pedido direto numa conversa sobre escalar pra projetos grandes: "o
+agente ágil consegue preencher checklist, colocar risco também?".
+Checklist já existia (`checklist_item`); risco era uma lacuna real.
+
+`card.riscos` é array de strings puras no cliente, sem conceito de
+"resolver" — só adicionar. Implementação seguiu o mesmo molde das
+outras 7 ferramentas reaproveitadas do vocabulário de outputs: schema
+Zod novo (`outputRisco`, `agente-agil/schema.js`), builder novo
+(`agente-agil/outputs/risco.js`, mesmo padrão transacional de
+`outputs/link.js`, sem entrada em `card.history` — mesma escolha de
+`link.js`, a própria lista já é o registro visível), registrado em
+`outputs/index.js` e em `REUSED_OUTPUT_SCHEMAS`
+(`agente-agil-orquestrador/tools/index.js`) — esse último passo sozinho
+já basta pra `risco` aparecer no toolset completo (fake e real,
+respeitando dryRun), porque o resto do mecanismo é 100% genérico a
+partir desse mapa. `systemPrompt.js` ganhou a ferramenta na lista
+disponível, no bucket de baixo risco (só adiciona, nunca sobrescreve),
+com a mesma cautela anti-alucinação de `link` (só registrar um risco
+que a informação realmente descreveu).
+
+Estruturalmente quase idêntico a `checklist_item` (já em produção com
+escrita real desde 2026-08-18) — não passou por uma nova rodada de
+canários manuais como `criar_card` passou (risco de fato mais alto,
+mexia com entidades novas). Coberto por testes automatizados novos em
+`board.test.js`/`realHandlers.test.js`/`loop.test.js`. Suíte inteira:
+306/306 passando. Detalhes completos:
+`functions/agente-agil-orquestrador/README.md`.
+
+**Requer redeploy manual das 3 functions que usam este toolset**:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### 2026-08-27 · `intakeTrigger.js`: escrita real destravada no intake (squad `dev`)
 
 Decisão explícita do usuário — mesma pergunta direta feita pra @menção

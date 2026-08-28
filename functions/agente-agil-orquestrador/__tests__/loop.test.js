@@ -140,7 +140,7 @@ test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_
 
   assert.deepEqual(
     names.sort(),
-    ['agent_status', 'biblioteca_agil', 'checklist_item', 'comentario', 'criar_card', 'editar_campos', 'ler_card', 'link', 'mover_coluna', 'perguntar_humano', 'relatorio_html', 'visao_board'].sort(),
+    ['agent_status', 'biblioteca_agil', 'checklist_item', 'comentario', 'criar_card', 'editar_campos', 'ler_card', 'link', 'mover_coluna', 'perguntar_humano', 'relatorio_html', 'risco', 'visao_board'].sort(),
   );
   tools.forEach((t) => {
     assert.equal(t.input_schema.type, 'object');

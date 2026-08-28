@@ -83,6 +83,15 @@ const outputEditarCampos = z.object({
   tags: z.array(z.string().min(1)).optional(),
 });
 
+// risco: registra um risco novo no card. card.riscos é array de STRINGS
+// puras no cliente (addRisco()/getRiscos() em kanban-dev.html, sem id nem
+// metadado por item) — sem conceito de "concluir"/"resolver" um risco
+// (diferente de checklist_item), só adicionar. Ver outputs/risco.js.
+const outputRisco = z.object({
+  type: z.literal('risco'),
+  texto: z.string().min(1),
+});
+
 const output = z.discriminatedUnion('type', [
   outputComentario,
   outputLink,
@@ -91,6 +100,7 @@ const output = z.discriminatedUnion('type', [
   outputAgentStatus,
   outputMoverColuna,
   outputEditarCampos,
+  outputRisco,
 ]);
 
 // Só o tipo 'recorrente' existe por enquanto — nome é o slug carimbado em
@@ -182,6 +192,7 @@ module.exports = {
   outputAgentStatus,
   outputMoverColuna,
   outputEditarCampos,
+  outputRisco,
   envelopeJsonSchema,
   intakeEnvelope,
   intakeEnvelopeJsonSchema,
