@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.496-dev</div>
+<div class="version">v8.30.497-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11396,6 +11396,16 @@ function openCard(id){
         eocEdit('comment-eoc');
         _mciHotline.selectionStart=_mciHotline.selectionEnd=_mciHotline.value.length;
       }
+      // Achado real 2026-08-28 (reportado direto: "faz ele não deixar
+      // fechar, mesmo que a pessoa tenha escrito nada"): _cardManualSnap
+      // (o "estado salvo" pra comparação de _cardIsDirty()) é tirado em
+      // openCard(), ANTES deste setTimeout — então o preenchimento
+      // automático acima (vazio→"@Agente Ágil ") por si só já fazia o
+      // comentário parecer "digitado", disparando "Alterações não salvas"
+      // ao fechar mesmo sem a pessoa ter tocado em nada. Re-tira o
+      // snapshot agora que o prefill já rodou, então o aviso só dispara
+      // de verdade se a pessoa digitar algo A MAIS além do "@Agente Ágil ".
+      _cardManualSnap = _manualFieldsNow();
     }
     loadComments(id);
     renderDescPreview();

@@ -2111,6 +2111,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.497-dev — 2026-08-28 — Fix: card do Agente Ágil avisava "alterações não salvas" ao fechar mesmo sem digitar nada
+
+Reportado direto pelo usuário: abrir o card especial "🤖 Converse com o
+Agente Ágil" e fechar em seguida (sem escrever nada) mostrava o aviso
+"Alterações não salvas... Fechar mesmo assim?" — mesmo a pessoa não
+tendo tocado em nada.
+
+Causa: `openCard()` tira um snapshot dos campos manuais
+(`_cardManualSnap = _manualFieldsNow()`, usado por `_cardIsDirty()` pra
+decidir se avisa ao fechar) ANTES do `setTimeout` que pré-preenche o
+comentário desse card especial com "@Agente Ágil " (pra não precisar
+digitar a menção toda vez). O snapshot capturava o campo vazio; 100ms
+depois o prefill mudava o campo pra "@Agente Ágil " — na comparação seguinte,
+`_cardIsDirty()` via os dois estados diferentes e achava que a pessoa
+tinha digitado algo.
+
+Fix: re-tira o snapshot logo depois do prefill rodar (só pro card
+hotline) — o aviso agora só dispara se a pessoa digitar algo A MAIS além
+do "@Agente Ágil " pré-preenchido, preservando a proteção real (perder
+uma pergunta de verdade digitada) sem o falso-positivo.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.496-dev — 2026-08-28 — Fix: "Meu Dia" não excluía o card hotline do Agente Ágil, ao contrário de todas as outras agregações (/monitorarbugs)
 
 Rodada genérica, área escolhida pela prioridade 1 ("card do Agente Ágil
