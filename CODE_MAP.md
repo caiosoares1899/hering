@@ -513,8 +513,9 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   configurações para os ADM's/PO explicarem as funções dos outros
   agentes... pra ele usar como contexto") — lê `kanban/squads/{squad}/
   dados/config/agentesExternos/{especialista}` (editado no cliente, ver
-  `agentesExternos`/`renderAgentesExternosCfg()` em kanban-dev.html,
-  chave = mesmo valor do campo `especialista` do envelope) e injeta a
+  `agentesExternos`/`renderAgentesExternosCfg()` em kanban.html/
+  kanban-dev.html, chave = mesmo valor do campo `especialista` do
+  envelope) e injeta a
   descrição no início do `task` sempre que existe uma entrada pra aquele
   especialista.
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
