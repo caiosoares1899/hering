@@ -337,7 +337,7 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
-### Visualizador externo (só em painel-dev.html, 2026-08-27 — NÃO promovido pra prod ainda)
+### Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
 - `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do
   listener `auth-change` (perto de `doSignIn()`/`isAdmUser()`) — pedido
   direto: dar acesso de SÓ LEITURA ao painel pra alguém fora de

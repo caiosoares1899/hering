@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.493 — 2026-08-28 · promove pra prod (fix de bug)
+Promove o fix de bug encontrado via `/monitorarbugs` em v8.30.493-dev
+(entrada correspondente em "kanban-dev.html" logo abaixo), validado em
+dev: Histórico do Agente Ágil não exibia mais "pediu via menção" pra
+ações originadas de especialista externo (Databricks, via o intake
+automático), e a tela de Pedidos de Intake não aplica mais a submarca
+sugerida em squads sem a feature de Submarca ativa.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.492 — 2026-08-27 · promove pra prod (lote grande, batching de features)
 Promove pra produção todo o acumulado de `kanban-dev.html` desde a
 última promoção (v8.30.488-dev até v8.30.492-dev), seguindo a regra de
@@ -8541,6 +8551,30 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.00 · painel — 2026-08-28 · promove pra prod: visualizador externo do painel
+Promove pra produção o visualizador externo do painel (entrada
+`painel-dev.html` logo abaixo), validado em dev pelo usuário. Aplicado
+como diff cirúrgico (não `cp` — `painel.html`/`painel-dev.html`
+divergem de verdade, dev tem instrumentação de debug e falta a seção
+"Push manual" que só existe em prod): mesma whitelist
+`kanban/painel_viewers`, mesmas regras do Firebase (já deployadas junto
+com a versão dev), mesmos guards de UI (`_blockIfPainelViewer()` nas 8
+funções de abrir modal de edição, banner "Modo visualização", CSS
+escondendo os botões de admin óbvios).
+
+Achado incidental, fora de escopo desta promoção: `painel.html` (prod)
+não tem o mecanismo de auto-update (`version.json`/`VERSION_KEY`) que
+`painel-dev.html` já tem — bump de versão aqui é só cosmético (sem
+efeito de recarregar clientes abertos), mesmo comportamento de sempre
+neste arquivo (consistente com o histórico de promoções anteriores).
+Sinalizado, não implementado nesta promoção.
+
+Checks de rotina: node --check OK, brace/paren balance -1/-12.
+
+**Requer redeploy das regras** (mesmo comando de antes, já deployado
+junto com painel-dev.html): `firebase deploy --only database` — nenhum
+comando novo necessário aqui, as regras já valem pros dois arquivos.
 
 ### painel-dev.html v3.00 · painel-dev — 2026-08-27 · Novo: visualizador externo do painel (acesso de convidado, só leitura)
 
