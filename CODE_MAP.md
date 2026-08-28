@@ -334,6 +334,15 @@ instrumentação extra) — os números da seção painel abaixo são de
 ### Backup
 - `exportBackupJSON()` — L28101
 - `maybeSnapshot()` — L10327
+- `_applyRestorePayload(payload)` — L28746 — "🧯 Restaurar backup". Achado
+  real 2026-08-28 (squad midiacriativa, `/monitorarbugs`): era a ÚNICA
+  atribuição de `cards`/`columns`/`tags` a partir de dado externo no
+  arquivo sem `.filter(Boolean)` (as 6 outras, todas `fbListen`/`fbGet` de
+  `/columns`, filtram) — um backup com entrada nula em `columns` (ex.: o
+  `weeklyBackup.js` abaixo, que lia o node cru via Admin SDK) propagava a
+  sujeira pro estado ao vivo, travando `renderNormal()`/`renderColEditor()`
+  (`col.name`/`col.id` de undefined). Agora normaliza igual ao client
+  (`Array.isArray?:Object.values`, depois `filter(Boolean)`)
 
 ### Marcadores `// --- X ---` já existentes no código
 Só existem para um subconjunto pequeno de áreas — não é uma convenção

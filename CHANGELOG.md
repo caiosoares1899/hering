@@ -2097,6 +2097,48 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.495-dev — 2026-08-28 — Fix crítico: board travava (`TypeError: undefined`) pra squad que restaurou um backup com `columns` corrompido (/monitorarbugs)
+
+Reportado direto pelo usuário: Juliana (squad `midiacriativa`) tomou 8
+erros repetidos (`Uncaught TypeError: Cannot read properties of
+undefined (reading 'name'/'id')`) tentando abrir um card
+(`?squad=midiacriativa&opencard=...`), em `renderColEditor()` (L19005 na
+v8.30.492, então em prod) e `renderNormal()` (L9743) — os dois iterando
+`columns.forEach(col=>...)` e lendo `col.name`/`col.id` de um elemento
+`undefined`.
+
+**Causa raiz**: das 7 atribuições de `cards`/`columns`/`tags` a partir de
+dado externo neste arquivo, `_applyRestorePayload()` ("🧯 Restaurar
+backup") era a ÚNICA sem `.filter(Boolean)` — as outras 6 (todo
+`fbListen`/`fbGet` de `/columns`) sempre descartam entradas inválidas
+antes de aceitar o array, exatamente pra este cenário. O
+`weeklyBackup.js` (Cloud Function, backup automático semanal pro Cloud
+Storage) lê o node `/columns` cru via Admin SDK, sem a mesma limpeza que
+o client sempre aplica — se esse node tiver uma entrada inválida
+(residual de squads que já passaram por incidentes de coluna órfã, ex.:
+midiacriativa em 2026-08-26), o backup captura a sujeira, e restaurá-lo
+propaga isso pro estado ao vivo — todo render que lê `columns` trava, de
+forma persistente (o restore também salva de volta no Firebase).
+
+**Fix**:
+- `_applyRestorePayload()`: normaliza `cards`/`columns`/`tags` do mesmo
+  jeito que o client já faz em qualquer leitura de `/columns`
+  (`Array.isArray?:Object.values`, depois `filter(Boolean)`) — aceita
+  tanto array quanto o formato sparse (objeto) que um backup antigo,
+  salvo antes deste fix, pode ter.
+- `functions/backup/weeklyBackup.js`: mesma normalização (`_cleanArr()`)
+  antes de gravar `cards`/`columns`/`tags` no JSON do Cloud Storage —
+  não deixa mais o backup automático capturar dado sujo do node cru.
+
+Checks de rotina: `node --check` OK (kanban-dev.html e
+weeklyBackup.js), brace/paren balance -1/0.
+
+**Requer redeploy da function** (`weeklyBackup`) quando o PR for
+mergeado — ver `firebase deploy --only functions:weeklyBackup` no
+`CLAUDE.md`; a Cloud Function continua rodando o código antigo até o
+deploy manual (roda 1x/semana, domingo 04:00, então não é urgente, mas
+não se auto-atualiza com o merge).
+
 ### v8.30.494-dev — 2026-08-28 — Fix: "Bloqueios" do painel "🌅 Meu Dia" mostrava impedimento antigo pra squads em modo coluna (/monitorarbugs)
 
 Rodada genérica, escopo escolhido pela prioridade 1 (área alterada mais
