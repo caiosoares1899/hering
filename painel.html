@@ -775,6 +775,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-btn-adm::after{ content:attr(title); margin-left:4px; font-size:11px; }
 @media(max-width:600px){ .hd-btn-adm::after{ display:none; } }
 
+/* ── Visualizador externo (2026-08-27): esconde os pontos de entrada mais
+     óbvios de edição — os 3 botões de admin do header (Backup/Novo board/
+     Usuários) e o ⚙ de config de cada squad ([data-sqid], ver o listener de
+     delegação de clique perto de openPcModal()). Não é a trava de segurança
+     de verdade (isso é sempre as regras do Firebase — write nunca libera
+     pra quem não é @ciahering) — é só pra não deixar visível um botão que,
+     se clicado, ia mostrar um toast de "sem permissão" em vez de abrir algo.
+     Funções de abrir modal de edição têm o guard _blockIfPainelViewer()
+     próprio, então mesmo um botão que escapou desta lista continua seguro. */
+body.painel-viewer-mode .hd-btn-adm,
+body.painel-viewer-mode [data-sqid]{ display:none !important; }
+
 /* ── Abas mobile: emoji maior + label ── */
 @media(max-width:600px){
   .ptab .ptab-icon{ font-size:16px; line-height:1; }
@@ -1125,6 +1137,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 <!-- APP -->
 <div class="app" id="app-root" style="display:none;">
+  <!-- Visualizador externo (2026-08-27) — mostrado só quando window._isPainelViewer
+       é true (ver _finishPainelLogin() no <script>). Em fluxo normal (não fixed),
+       de propósito — evita ter que calcular espaçamento pra não cobrir o conteúdo
+       de baixo, como o banner "PAINEL DEV" fixo lá em cima precisa fazer. -->
+  <div id="painel-viewer-banner" style="display:none;background:rgba(56,182,255,.14);border-bottom:1px solid rgba(56,182,255,.4);padding:6px 12px;font-size:11px;font-weight:700;color:#38b6ff;letter-spacing:.02em;text-align:center;">👁 Modo visualização — acesso de convidado, sem permissão de edição</div>
   <div class="hd">
     <div>
       <div class="hd-title">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span></div>
@@ -2138,6 +2155,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
           <button class="save-btn" onclick="addAdmEmail()">+ ADM</button>
         </div>
         <div style="font-size:10px;color:var(--txt3);margin-top:5px;">ADMs têm acesso total a todos os boards e ao painel.</div>
+
+        <!-- Visualizadores externos do painel (2026-08-27) — pedido direto:
+             dar acesso de SÓ LEITURA ao painel pra alguém fora de
+             @ciahering.com.br (ex.: executivo de empresa parceira). Mesma
+             aba que ADMs por ser outra categoria de "acesso especial ao
+             painel", não fica junto de "Usuários" (que é sobre membros de
+             squad, um conceito diferente). Ver _finishPainelLogin()/
+             _blockIfPainelViewer() no <script> pro resto do mecanismo. -->
+        <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos do painel</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora de @ciahering.com.br autorizados a ver o painel inteiro (todos os squads, comunicados, etc.) — sem nenhuma permissão de edição, garantido pelas regras do Firebase, não só pela tela.</div>
+        <div id="pcfg-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
+        <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por email</div>
+        <div style="display:flex;gap:6px;">
+          <input class="cfg-input" id="pcfg-viewer-email" placeholder="email@dominio.com" style="flex:1;">
+          <input class="cfg-input" id="pcfg-viewer-nome" placeholder="Nome (opcional)" style="flex:1;">
+          <button class="save-btn" onclick="addPainelViewer()">+ Visualizador</button>
+        </div>
       </div>
 
       <!-- Aba Usuários -->
@@ -2218,7 +2252,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   </div>
 </div>
 
-<div class="version">v2.99 · painel</div>
+<div class="version">v3.00 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2443,6 +2477,7 @@ function squadVisible(sqId){
 let cfgSquadId = null;
 
 function openCfg(squadId){
+  if(_blockIfPainelViewer()) return;
   cfgSquadId = squadId;
   const sq = SQUADS.find(s=>s.id===squadId); if(!sq){ showToast("Squad não encontrado"); return; }
   const d = squadData[squadId]||{};
@@ -3275,6 +3310,7 @@ async function delCampEntrada(campId, entradaId){
 
 // ── Criar / Editar campanha ───────────────────────────────────────
 function openCampEdit(id){
+  if(_blockIfPainelViewer()) return;
   if(!_isPOorOrg()){ showToast('Apenas PO, organizador ou adm podem editar campanhas.'); return; }
   _campEditId = id||null;
   const c = id ? (_campanhas[id]||{}) : {};
@@ -3748,6 +3784,7 @@ function _pmsSwitchTab(tab){
 }
 
 function openPainelCampMsEdit(){
+  if(_blockIfPainelViewer()) return;
   const body = document.getElementById('painel-ms-edit-body'); if(!body) return;
   const saveBtn = document.getElementById('painel-ms-save-btn');
 
@@ -5089,6 +5126,7 @@ function renderPcalLegend(elId, evs){
 
 // ── MODAL EVENTO PAINEL ──────────────────────────────────────────
 function openPevModal(dateStr='', evId='', source='painel'){
+  if(_blockIfPainelViewer()) return;
   pcalEditId=evId||null;
   const ev=evId?pcalEvents.find(e=>e.id===evId):null;
   document.getElementById('pev-modal-title').textContent=ev?'Editar Evento':'Novo Evento';
@@ -6740,6 +6778,7 @@ function _ccFormat(cmd){
   }
 }
 function openComunicadoCompose(id){
+  if(_blockIfPainelViewer()) return;
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem criar comunicados.'); return; }
   _ccPopulaSquadSelect();
   _editingComunicadoId = (typeof id==='string') ? id : null;
@@ -7160,6 +7199,55 @@ function saveAdmEmails(){
 }
 // ── FIM GERENCIAMENTO ADMs ────────────────────────────────────────
 
+// ── VISUALIZADORES EXTERNOS DO PAINEL (2026-08-27) ─────────────────
+// kanban/painel_viewers/{emailKey} — key = email sanitizado (mesmo padrão
+// de _painelViewerKey()/_extKey() do kanban-dev.html: minúsculo, "." vira
+// ",", porque Firebase não aceita ponto em chave). Node comum (não array),
+// mesmo espírito de kanban/squads/{squadId}/externos. A trava de verdade
+// (write nunca libera pra quem não é @ciahering, em nenhum node do
+// painel) mora nas regras — isto aqui só gerencia a whitelist de LEITURA.
+function renderPainelViewers(){
+  const list=document.getElementById('pcfg-viewers-list'); if(!list) return;
+  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
+    const viewers=snap.val()||{};
+    const entries=Object.entries(viewers);
+    if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
+    list.innerHTML='';
+    entries.forEach(([key,v])=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
+      const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=(v.nome?v.nome+' — ':'')+(v.email||key);
+      const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent='👁 leitura';
+      const rm=document.createElement('button');
+      rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
+      rm.textContent='✕'; rm.title='Remover visualizador';
+      rm.onclick=()=>removePainelViewer(key);
+      row.appendChild(lbl); row.appendChild(badge); row.appendChild(rm);
+      list.appendChild(row);
+    });
+  });
+}
+function addPainelViewer(){
+  const emailInp=document.getElementById('pcfg-viewer-email');
+  const nomeInp=document.getElementById('pcfg-viewer-nome');
+  const email=emailInp?.value?.trim().toLowerCase();
+  if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
+  if(email.endsWith('@ciahering.com.br')){ showToast('❌ Emails @ciahering já têm acesso, não precisam ser adicionados aqui.'); return; }
+  const key=_painelViewerKey(email);
+  const entry={ email, nome:nomeInp?.value?.trim()||'', addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
+  window._set(window._ref(window._db,'kanban/painel_viewers/'+key), entry)
+    .then(()=>{ showToast('✅ '+email+' autorizado como visualizador do painel'); emailInp.value=''; if(nomeInp) nomeInp.value=''; renderPainelViewers(); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+function removePainelViewer(key){
+  if(!confirm('Remover este visualizador externo?')) return;
+  window._set(window._ref(window._db,'kanban/painel_viewers/'+key), null)
+    .then(()=>{ showToast('✅ Visualizador removido'); renderPainelViewers(); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+// ── FIM VISUALIZADORES EXTERNOS DO PAINEL ──────────────────────────
+
 // ── CENTRAL DE DADOS (captação digital diária) ─────────────────────
 let DADOS_EDITORS = [];       // emails com permissão de publicar (além dos ADMs)
 let dadosDiarios = {};        // {date:'YYYY-MM-DD': {...}}
@@ -7407,7 +7495,7 @@ function setPcfgTab(tab){
     const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
   if(tab==='users') loadPcfgUsers();
-  if(tab==='adm')  renderAdmList();
+  if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
 }
 
 function loadPcfgUsers(){
@@ -7574,29 +7662,99 @@ function doSignIn(){
 }
 function doSignOut(){ window._signOut(); }
 
+// 👁 Visualizadores externos do painel (2026-08-27) — pedido direto: dar
+// acesso de SÓ LEITURA ao painel pra alguém fora de @ciahering.com.br (ex.:
+// um executivo de uma empresa parceira). Painel sempre foi bloqueado pra
+// qualquer email fora do domínio — sem exceção nenhuma, nem client-side nem
+// nas regras do Firebase (diferente do kanban, que já tem "Emails externos
+// autorizados" por squad, mas aquele mecanismo dá leitura E ESCRITA do
+// squad — não serve pra "só visualizar tudo o painel").
+//
+// Mecanismo novo, só do painel: kanban/painel_viewers/{emailKey} (chave =
+// email sanitizado, mesmo padrão de _extKey() em kanban-dev.html — troca
+// "." por "," porque Firebase não aceita ponto em chave). Segurança de
+// verdade fica nas REGRAS (database.rules.json) — write nunca é liberado
+// pra quem não é @ciahering.com.br, em NENHUM node; visualizador só ganha
+// exceção de READ nos nodes que o painel de fato lê (painel, squads_meta,
+// config, squads/{id}/dados, presence, snapshots, error_logs, error_stats,
+// agent_usage, feedback). window._isPainelViewer fica true pro resto do
+// app saber que deve travar a UI de edição (ver openCfg()/
+// openComunicadoCompose()/etc. — cada uma checa esse flag e mostra um
+// toast em vez de abrir o modal).
+window._isPainelViewer = false;
+function _painelViewerKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
   if(user){
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
-      document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br';
-      document.getElementById('login-err').style.display='block';
-      window._signOut(); return;
+      // Mesmo padrão de resiliência que kanban-dev.html usa pro whitelist de
+      // externos: cache de 24h (evita reconsultar à toa a cada auth-change,
+      // que pode disparar sozinho por instabilidade do SDK) + 3 tentativas
+      // antes de desconectar por erro de rede.
+      const _cacheKey = 'painel_viewer_ok_'+user.email;
+      const _cached = parseInt(localStorage.getItem(_cacheKey)||'0', 10);
+      if(_cached && (Date.now()-_cached) < 86400000){
+        window._isPainelViewer = true;
+        _finishPainelLogin(user);
+        return;
+      }
+      const _check = (tentativa)=> window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
+        const viewers = snap.val()||{};
+        const allowed = !!viewers[_painelViewerKey(user.email)];
+        if(!allowed){
+          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça a um ADM pra te adicionar como visualizador.';
+          document.getElementById('login-err').style.display='block';
+          window._signOut();
+        } else {
+          localStorage.setItem(_cacheKey, String(Date.now()));
+          window._isPainelViewer = true;
+          _finishPainelLogin(user);
+        }
+      }).catch(err=>{
+        console.error('[painel_viewers check] erro (tentativa '+tentativa+'):', err);
+        if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_check(tentativa+1));
+        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
+        document.getElementById('login-err').style.display='block';
+        window._signOut();
+      });
+      _check(1);
+      return; // aguarda verificação async
     }
-    document.getElementById('login-ov').style.display='none';
-    document.getElementById('app-root').style.display='block';
-    document.getElementById('user-name').textContent=user.displayName||user.email;
-    const av=document.getElementById('user-avatar');
-    if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
-    setTimeout(_seedComunicadoRascunhos, 2000);
-    // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
-    // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
-    loadPainelNotifs();
+    window._isPainelViewer = false;
+    _finishPainelLogin(user);
   } else {
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
   }
 });
+function _finishPainelLogin(user){
+  document.getElementById('login-ov').style.display='none';
+  document.getElementById('app-root').style.display='block';
+  document.getElementById('user-name').textContent=user.displayName||user.email;
+  const av=document.getElementById('user-avatar');
+  if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
+  document.body.classList.toggle('painel-viewer-mode', window._isPainelViewer);
+  const banner=document.getElementById('painel-viewer-banner');
+  if(banner) banner.style.display = window._isPainelViewer ? 'block' : 'none';
+  setTimeout(_seedComunicadoRascunhos, 2000);
+  // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
+  // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
+  loadPainelNotifs();
+}
+// Bloqueia qualquer ação de edição pro visualizador externo — chamada no
+// topo de cada função que abre um modal/formulário de edição (ver
+// openCfg()/openComunicadoCompose()/openCampEdit()/openPevModal()/
+// openGlobalBackup()/openBoardSetup()/openGlobalUsersModal()/
+// openPainelCampMsEdit()). Segurança de verdade já está garantida nas
+// regras do Firebase (write nunca libera pra quem não é @ciahering) — isto
+// aqui é só pra não deixar a pessoa clicar num botão, preencher um
+// formulário, e só descobrir que não tinha permissão na hora de salvar.
+function _blockIfPainelViewer(){
+  if(!window._isPainelViewer) return false;
+  showToast('👁 Modo visualização — você está vendo como convidado, sem permissão de edição.');
+  return true;
+}
 
 // Fecha picker de reação de kudos ao clicar fora
 document.addEventListener('click', (e)=>{
@@ -7773,6 +7931,7 @@ const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
 const SQUAD_ROLES = ['membro','organizador','po'];
 
 function openGlobalUsersModal(){
+  if(_blockIfPainelViewer()) return;
   document.getElementById('global-users-ov').classList.add('open');
   renderGlobalUsers();
 }
@@ -8839,6 +8998,7 @@ let _bsSelectedEmoji = '💬';
 let _bsSelectedColor = '#38b6ff';
 
 function openBoardSetup(){
+  if(_blockIfPainelViewer()) return;
   document.getElementById('board-setup-ov').classList.add('open');
   bsRenderExisting();
   bsUpdatePreview();
@@ -9025,6 +9185,7 @@ document.addEventListener('keydown', e=>{
 // ═══════════════════════════════════════════════════════
 
 function openGlobalBackup(){
+  if(_blockIfPainelViewer()) return;
   loadGlobalBackupCfg();
   renderGlobalBackupStats();
   const el = document.getElementById('global-backup-ov');
