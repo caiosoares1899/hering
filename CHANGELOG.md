@@ -2131,6 +2131,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.500-dev — 2026-08-28 — Novo: aba "🔌 Agentes Externos" em Configurações — contexto pro Agente Ágil sobre especialistas
+
+Pedido direto, testando o Agente Ágil ao vivo via HTTPS com múltiplos
+"especialistas" simulados: "vale uma área em configurações para os
+ADM's/PO também explicarem as funções dos outros agentes, para o nosso
+também usar como contexto na hora de tomar ações".
+
+Nova aba "🔌 Agentes Externos" em ⚙ Configurações (mesmo gate de
+visibilidade de "🤖 Histórico do Agente" — só squads com escrita real
+do orquestrador). ADM/PO cadastra um identificador (precisa bater com
+o campo `especialista` do envelope da API) + descrição livre do que
+aquele sistema faz. Salvo em `config/agentesExternos`.
+
+Backend (`functions/agente-agil-orquestrador/intakeTrigger.js`): lê
+essa descrição e injeta no contexto da tarefa antes de chamar o LLM,
+sempre que a mensagem vier daquele especialista — nos dois caminhos
+(com card e sem card). Sem entrada cadastrada, nada muda.
+
+2 testes novos, suíte inteira de `functions/`: 312/312 passando.
+Detalhes completos: `functions/agente-agil-orquestrador/README.md`.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
+**Requer redeploy das 3 functions do orquestrador** (mesmo comando de
+sempre) pra a leitura nova entrar em vigor.
+
 ### v8.30.499-dev — 2026-08-28 — Fix: Padrão de card não aplicava NADA num card ainda sendo criado (2ª parte do fix anterior)
 
 Reportado direto pelo usuário logo depois de validar o fix anterior
@@ -9217,6 +9243,21 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-08-28 · Novo: contexto sobre especialistas externos (config/agentesExternos)
+
+Pedido direto, testando o orquestrador ao vivo via HTTPS com múltiplos
+especialistas simulados: ADM/PO agora documenta o que cada especialista
+externo faz (nova aba "🔌 Agentes Externos" em `kanban-dev.html`, ver
+entrada correspondente em "kanban-dev.html" logo abaixo) —
+`lerDescricaoEspecialista()` em `intakeTrigger.js` lê essa descrição e
+injeta no contexto da tarefa antes de chamar o LLM, sempre que a
+mensagem vier daquele especialista. Sem entrada cadastrada, nada muda.
+
+2 testes novos, suíte inteira: 312/312 passando.
+
+**Requer redeploy manual das 3 functions que usam este módulo**:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
 
 ### 2026-08-28 · Fix de prompt: @menção com nome completo não notificava ninguém
 

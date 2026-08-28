@@ -4137,6 +4137,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
     <div class="ag-tab" id="cfgtab-agentelog-btn" style="display:none;" onclick="swCfgTab('agentelog')">🤖 Histórico do Agente</div>
+    <div class="ag-tab" id="cfgtab-agentesexternos-btn" style="display:none;" onclick="swCfgTab('agentesexternos')">🔌 Agentes Externos</div>
   </div>
   <div class="cfg-body">
 
@@ -4264,6 +4265,21 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
       <p style="font-size:11px;color:var(--txt3);line-height:1.5;margin:0 0 12px;">Todas as vezes que o Agente Ágil mudou algo num card desta squad — quem pediu (via @menção) ou se foi um disparo automático (Automação/verificação diária). Cards que só foram lidos pelo agente, sem nenhuma alteração, não aparecem aqui.</p>
       <div id="agentelog-list"><div style="font-size:11px;color:var(--txt3);padding:8px 0;">Carregando…</div></div>
+    </div>
+    <!-- ABA AGENTES EXTERNOS — pedido direto: "área em configurações para
+         os ADM's/PO também explicarem as funções dos outros agentes, para
+         o nosso também usar como contexto na hora de tomar ações". Mesmo
+         gate de visibilidade que Histórico do Agente (só onde o
+         orquestrador tem escrita real). -->
+    <div class="tab-c" id="cfgtab-agentesexternos">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div class="cfg-sec-title" style="margin-bottom:0;">🔌 Agentes Externos</div>
+        <button class="btn btn-sm" onclick="criarAgenteExterno()" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Novo agente</button>
+      </div>
+      <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 16px;">
+        Descreva aqui os sistemas externos (ex.: Databricks) que mandam informação pro Agente Ágil via API — o que cada um faz, que tipo de dado costuma mandar. O identificador precisa bater exatamente com o campo "especialista" que aquele sistema manda no envelope da API — o Agente Ágil usa essa descrição como contexto extra sempre que recebe uma mensagem daquele especialista, além do texto da própria mensagem.
+      </p>
+      <div id="agentesexternos-cfg-list" style="display:flex;flex-direction:column;gap:2px;"></div>
     </div>
     <!-- ABA PADRÕES DE CARD -->
     <div class="tab-c" id="cfgtab-padroes">
@@ -5601,7 +5617,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.499-dev</div>
+<div class="version">v8.30.500-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6278,6 +6294,14 @@ let flowConfig={ startCols:[], doneCols:[], reportCols:[], agingDays:{}, cfdHidd
 // cardPatterns = {patId: {nome, sections:{chave:false,...}, isDefault}}
 // sections: chave AUSENTE = visível (mesma convenção de antes).
 let cardPatterns={};
+// Agentes externos conhecidos (ex.: Databricks) — ADM/PO documenta o que
+// cada um faz em ⚙ Configurações → 🔌 Agentes Externos; intakeTrigger.js
+// (backend) lê isso e injeta como contexto extra na tarefa do LLM sempre
+// que uma mensagem chega daquele especialista (campo "especialista" do
+// envelope HTTP casa com a chave aqui). agentesExternos =
+// {chaveDoEspecialista: {descricao, atualizadoEm, atualizadoPor}}.
+let agentesExternos={};
+let _agentesExternosCfgAberto=null;
 const CARD_SECTIONS=[
   {key:'po', id:'m-po-box', label:'🎯 Insights do PO'},
   {key:'descsExtra', id:'extra-descs-field', label:'📝 Descrições adicionais'},
@@ -8797,6 +8821,16 @@ let _cardsSyncDebounce = null;
     cardPatterns = (val && typeof val==='object') ? val : {};
     if(document.getElementById('card-ov')?.classList.contains('open')){ _applyCardSectionsVisibility(); populateCardPatternSelect(); }
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderCardPatternsCfg();
+  });
+  // Agentes externos (pedido direto: "área em configurações para os
+  // ADM's/PO explicarem as funções dos outros agentes, para o nosso
+  // também usar como contexto na hora de tomar ações") — descrição por
+  // especialista (chave = mesmo valor do campo "especialista" do envelope
+  // HTTP, agente-agil/schema.js), lida por intakeTrigger.js e injetada no
+  // texto da tarefa antes de chamar o LLM. Ver CODE_MAP.md.
+  fbListen(FB+'/config/agentesExternos',val=>{
+    agentesExternos = (val && typeof val==='object') ? val : {};
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesExternosCfg();
   });
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
@@ -18865,10 +18899,14 @@ function openCfg(tab){
   // em outras squads levaria a uma lista sempre vazia, sem explicação.
   const agLogBtn=document.getElementById('cfgtab-agentelog-btn');
   if(agLogBtn) agLogBtn.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
+  // Mesmo gate: "Agentes Externos" só faz sentido onde o orquestrador
+  // efetivamente processa mensagens de especialista (intakeTrigger.js).
+  const agExtBtn=document.getElementById('cfgtab-agentesexternos-btn');
+  if(agExtBtn) agExtBtn.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
   swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open');
 }
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','agentelog'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','agentelog','agentesexternos'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   // 'auto' nunca chega aqui — o botão da aba chama openAutoOv() direto (ver
@@ -18887,6 +18925,7 @@ function swCfgTab(tab){
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
   if(tab==='agentelog') renderAgenteLog();
+  if(tab==='agentesexternos') renderAgentesExternosCfg();
   if(tab==='criativos'){
     const el=document.getElementById('cfg-criativos-ativo'); if(el) el.checked=criativosAtivo;
     renderCriativosListasCfg();
@@ -19593,6 +19632,59 @@ function togglePadraoSecao(id, key, visible){
   cardPatterns={...cardPatterns, [id]:{...p, sections}};
   fbSet(FB+'/config/cardPatterns', cardPatterns);
   if(document.getElementById('card-ov')?.classList.contains('open')) _applyCardSectionsVisibility();
+}
+// ── Agentes Externos (Config → 🔌 Agentes Externos) ─────────────────────
+function renderAgentesExternosCfg(){
+  const box=document.getElementById('agentesexternos-cfg-list'); if(!box) return;
+  const ids=Object.keys(agentesExternos);
+  if(!ids.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum agente externo documentado ainda.</div>';
+    return;
+  }
+  box.innerHTML=ids.map(id=>{
+    const a=agentesExternos[id];
+    const aberto=_agentesExternosCfgAberto===id;
+    return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_agentesExternosCfgAberto=_agentesExternosCfgAberto==='${id}'?null:'${id}';renderAgentesExternosCfg();">
+        <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">🔌 ${esc(id)}${a.descricao?'':' <span style="font-size:9px;color:var(--warn);font-weight:700;">SEM DESCRIÇÃO</span>'}</span>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirAgenteExterno('${id}')" title="Excluir" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
+      </div>
+      ${aberto?`<div style="padding:0 12px 12px;border-top:1px solid var(--glass-b);">
+        <textarea class="fi fi-ta" id="agext-desc-${id}" rows="3" style="margin-top:8px;width:100%;box-sizing:border-box;" placeholder="O que esse agente faz, que tipo de dado ele manda...">${esc(a.descricao||'')}</textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:6px;">
+          <button class="btn btn-p btn-sm" onclick="salvarAgenteExternoDesc('${id}')">Salvar</button>
+        </div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+async function criarAgenteExterno(){
+  const chave=await uiPrompt('Identificador do especialista (o mesmo valor que ele manda no campo "especialista" da API):', '', {title:'🔌 Novo agente externo', placeholder:'Ex.: databricks, agente-dados-concorrencia...'});
+  if(chave===null) return;
+  const id=chave.trim();
+  if(!id) return;
+  if(agentesExternos[id]){ showToast('⚠ Já existe um agente com esse identificador.'); _agentesExternosCfgAberto=id; renderAgentesExternosCfg(); return; }
+  agentesExternos={...agentesExternos, [id]:{descricao:'', atualizadoEm:new Date().toISOString(), atualizadoPor:window._currentUserInit||''}};
+  fbSet(FB+'/config/agentesExternos', agentesExternos);
+  _agentesExternosCfgAberto=id;
+  renderAgentesExternosCfg();
+}
+function salvarAgenteExternoDesc(id){
+  const ta=document.getElementById('agext-desc-'+id); if(!ta) return;
+  const a=agentesExternos[id]; if(!a) return;
+  agentesExternos={...agentesExternos, [id]:{...a, descricao:ta.value.trim(), atualizadoEm:new Date().toISOString(), atualizadoPor:window._currentUserInit||''}};
+  fbSet(FB+'/config/agentesExternos', agentesExternos);
+  showToast('✅ Descrição salva.');
+}
+async function excluirAgenteExterno(id){
+  const a=agentesExternos[id]; if(!a) return;
+  if(!await uiConfirm('Excluir o agente "'+id+'"? O Agente Ágil deixa de ter esse contexto extra pras próximas mensagens dele.',{title:'Excluir agente externo'})) return;
+  const next={...agentesExternos}; delete next[id];
+  agentesExternos=next;
+  fbSet(FB+'/config/agentesExternos', agentesExternos);
+  if(_agentesExternosCfgAberto===id) _agentesExternosCfgAberto=null;
+  renderAgentesExternosCfg();
 }
 // Seletor "📐 Padrão de card" no HEADER do modal (ao lado de Compartilhar)
 // — cada card escolhe o seu (card.padraoId). Sem padrão nenhum criado na

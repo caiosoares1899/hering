@@ -2938,3 +2938,39 @@ passando.
 
 **Requer redeploy** (mesmas 3 functions de sempre):
 `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+## Contexto sobre especialistas externos (2026-08-28)
+
+Pedido direto do usuário, ainda no mesmo teste "épico" via HTTPS: "acho
+que vale uma área em configurações para os ADM's/PO também explicarem
+as funções dos outros agentes, para o nosso também usar como contexto
+na hora de tomar ações". Antes disso, o Agente Ágil só tinha o texto
+isolado de cada mensagem — sem saber, por exemplo, que
+"agente-dados-concorrencia" é um sistema que coleta dados públicos de
+mídia paga semanalmente, tinha que inferir isso só pelo conteúdo de
+cada mensagem, sempre do zero.
+
+**Client (kanban-dev.html)**: nova aba "🔌 Agentes Externos" em
+⚙ Configurações (mesmo gate de visibilidade que "🤖 Histórico do
+Agente" — só aparece em squads com escrita real do orquestrador,
+`AGENTE_AGIL_MENTION_SQUADS`). ADM/PO cadastra um identificador (que
+precisa bater com o campo `especialista` do envelope HTTP) + uma
+descrição livre do que aquele sistema faz. CRUD simples, mesmo padrão
+visual/de código de "Padrões de card" (lista expansível, cada item com
+editar/excluir). Salvo em `config/agentesExternos` (mesmo squad-scoped
+`FB` de sempre).
+
+**Backend (`intakeTrigger.js`)**: `lerDescricaoEspecialista()` lê
+`kanban/squads/{squad}/dados/config/agentesExternos/{especialista}` —
+leitura pontual, sem cache (mesmo espírito de baixo volume do resto do
+módulo) — e, se existir, prepend a descrição no `task` antes do texto
+da mensagem em si, nos dois caminhos (com card e sem card/semCard).
+Sem entrada cadastrada (especialista desconhecido, ou nenhum
+`especialista` no envelope), nada muda — mesmo comportamento de antes.
+
+2 testes novos em `intakeTrigger.test.js` (injeta quando cadastrado;
+não injeta nada quando não cadastrado). Suíte inteira: 312/312
+passando.
+
+**Requer redeploy** (mesmas 3 functions de sempre):
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`

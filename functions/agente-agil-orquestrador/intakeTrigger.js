@@ -157,6 +157,20 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     return cardKey ? entry.cardId : null;
   }
 
+  // Pedido direto do usuário (2026-08-28, testando o intake ao vivo):
+  // "área em configurações para os ADM's/PO também explicarem as funções
+  // dos outros agentes, para o nosso também usar como contexto na hora de
+  // tomar ações". Config editada em kanban-dev.html (⚙ Configurações →
+  // 🔌 Agentes Externos), chave = mesmo valor do campo "especialista" do
+  // envelope HTTP. Leitura pontual (sem cache) — mesmo espírito de baixo
+  // volume do resto deste módulo.
+  async function lerDescricaoEspecialista(db, especialista) {
+    if (!especialista) return null;
+    const snap = await db.ref(`kanban/squads/${squadId}/dados/config/agentesExternos/${especialista}`).get();
+    const val = snap.val();
+    return val && val.descricao ? val.descricao : null;
+  }
+
   async function processarIntake(db, { id, entry, llmClient }) {
     if (!entry) {
       return { processed: false, reason: 'entry_vazio' };
@@ -195,9 +209,18 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     // Deixar o squad explícito na tarefa evita o modelo inventar/assumir
     // um squad errado ao explicar o que fez.
     const especialistaLabel = entry.especialista ? `Especialista externo "${entry.especialista}"` : 'Especialista externo';
+    const descricaoEspecialista = await lerDescricaoEspecialista(db, entry.especialista);
+    // Contexto cadastrado por um ADM/PO sobre O QUE esse especialista faz
+    // (ex.: "coleta dados públicos de mídia paga de concorrentes, roda
+    // semanalmente") — ajuda o modelo a interpretar a mensagem com mais
+    // precisão do que só o texto isolado permitiria, sem precisar que o
+    // próprio texto se auto-explique toda vez.
+    const contextoEspecialista = descricaoEspecialista
+      ? `\n\nContexto sobre este especialista (cadastrado por um ADM/PO em Configurações → Agentes Externos): ${descricaoEspecialista}`
+      : '';
     const task = cardId
-      ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):\n\n${entry.texto}`
-      : `${especialistaLabel} mandou esta informação, sem nenhum card associado a ela. Você está atuando no squad "${squadId}" — se decidir usar criar_card, o rascunho só pode nascer AQUI, neste squad (esta ferramenta não tem como criar em nenhum outro squad, mesmo que o assunto pareça mais afim de outro time). Se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir:\n\n${entry.texto}`;
+      ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):${contextoEspecialista}\n\n${entry.texto}`
+      : `${especialistaLabel} mandou esta informação, sem nenhum card associado a ela. Você está atuando no squad "${squadId}" — se decidir usar criar_card, o rascunho só pode nascer AQUI, neste squad (esta ferramenta não tem como criar em nenhum outro squad, mesmo que o assunto pareça mais afim de outro time). Se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir:${contextoEspecialista}\n\n${entry.texto}`;
 
     // Achado real, canário de validação (2026-08-27): uma instabilidade
     // momentânea da API da Anthropic (erro 529 "overloaded") derrubou
