@@ -2111,6 +2111,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.496-dev — 2026-08-28 — Fix: "Meu Dia" não excluía o card hotline do Agente Ágil, ao contrário de todas as outras agregações (/monitorarbugs)
+
+Rodada genérica, área escolhida pela prioridade 1 ("card do Agente Ágil
+ganha @menção automática, resposta em tempo real e visual de terminal",
+mudou em 2026-08-25/26 e nunca tinha passado por revisão de ponta a
+ponta — só a exclusão em agregações tinha sido varrida). Releu
+`_applyAgenteHotlineSkin()`, `openAgenteHotline()`,
+`refreshAgenteHotline()`, `_attach/_detachAgenteHotlineCommentsListener()`
+por inteiro: sem achados novos ali (comportamento bate com o que o
+`CODE_MAP.md` documenta). Achado via técnica 1 (comparar TODOS os
+call sites de uma mesma checagem): `renderMeuDia()` era a única
+agregação de "todos os cards" no arquivo sem a exclusão
+`!c.agenteHotline` que as outras 11 já aplicam — inclusive contrariando
+uma regra explícita já escrita no `CODE_MAP.md` desde o achado original
+(2026-08-26): "Qualquer nova agregação 'todos os cards' precisa lembrar
+dessa exclusão também". Não apareceu no grep da varredura original
+porque usa o wrapper `_meuDiaAllCards()` em vez de um `cards.filter(...)`
+direto.
+
+Severidade: hoje não é explorável pela UI normal — o card hotline nasce
+com `owner`/`participants` sempre vazios e o modal trava a edição
+desses campos pra ele, então nunca bate no filtro `c.owner===meuInit`
+de "Meu Dia". Corrigido mesmo assim por consistência com a regra
+escrita e pra não virar armadilha se um dia esses campos passarem a ser
+tocáveis (ex.: uma automação futura).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.495-dev — 2026-08-28 — Fix crítico: board travava (`TypeError: undefined`) pra squad que restaurou um backup com `columns` corrompido (/monitorarbugs)
 
 Reportado direto pelo usuário: Juliana (squad `midiacriativa`) tomou 8
