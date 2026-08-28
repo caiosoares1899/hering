@@ -2148,6 +2148,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.501-dev — 2026-08-28 — Remove a aba "🔌 Agentes Externos" (migrada pro painel, registro global)
+
+Correção de arquitetura: a v8.30.500-dev abaixo tinha cadastrado o
+registro de "Agentes Externos" por squad, dentro desta aba. Pedido
+direto do usuário logo depois de validar o teste de ponta a ponta:
+centralizar num único lugar cross-squad, com controle de em quais
+squads cada agente vale — ver entrada da `painel-dev.html v3.01` no
+changelog do painel. Aba, estado (`agentesExternos`,
+`_agentesExternosCfgAberto`), listener e as 4 funções de CRUD
+(`renderAgentesExternosCfg`, `criarAgenteExterno`,
+`salvarAgenteExternoDesc`, `excluirAgenteExterno`) removidos por
+completo — a gestão agora é só pelo painel.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0 (mesmo
+baseline de antes desta mudança).
+
 ### v8.30.500-dev — 2026-08-28 — Novo: aba "🔌 Agentes Externos" em Configurações — contexto pro Agente Ágil sobre especialistas
 
 Pedido direto, testando o Agente Ágil ao vivo via HTTPS com múltiplos
@@ -8820,6 +8836,55 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.01 · painel-dev — 2026-08-28 · Novo: aba "🔌 Agentes Externos" (registro global, cross-squad)
+
+Pedido direto, logo depois do teste de ponta a ponta da v8.30.500-dev
+(contexto de especialista externo pro Agente Ágil): "tem q ter uma area
+no painel de configuração desses agentes plugados! listar todos eles,
+dar as informações que o sistema precisa, colocar essas descrições,
+setar em quais squads ele vai ficar... o agente agil tem q ser capaz de
+ler isso tb".
+
+**Correção de arquitetura**: a v8.30.500-dev tinha cadastrado isso por
+squad, dentro do próprio kanban-dev.html (⚙ Configurações → 🔌 Agentes
+Externos) — cada squad com seu próprio registro isolado, sem visão
+cross-squad e sem jeito de reaproveitar a mesma descrição em mais de um
+squad sem duplicar. Migrado pra um registro **global**:
+`kanban/config/agentesExternos/{especialista}` =
+`{descricao, squads:{squadId:true,...}, atualizadoEm, atualizadoPor}`.
+A aba equivalente dentro do kanban-dev.html foi **removida** — o painel
+passa a ser a única UI de gestão, evitando duas telas escrevendo no
+mesmo dado.
+
+Nova aba "🔌 Agentes Externos" em ⚙ Configurações do painel (ao lado de
+"🔑 ADMs") — lista todos os agentes cadastrados, cada um expansível com
+descrição (textarea) e chips de squad (marca/desmarca em qual squad
+aquele agente vale, grava na hora). Escritas gateadas por ADM
+(`_isAdmPainel()`), mesmo padrão de "Deslogar todos"/timeout de
+inatividade.
+
+**Backend** (`functions/agente-agil-orquestrador/intakeTrigger.js`):
+`lerDescricaoEspecialista()` passa a ler o registro global em vez do
+antigo path por squad, e só injeta a descrição no contexto da tarefa se
+`squads[squadId]===true` — sem o squad atual marcado ali, trata como
+especialista desconhecido (mesmo comportamento de antes de não injetar
+nada). 1 teste novo cobrindo esse gate (especialista cadastrado mas sem
+o squad atual marcado — não injeta). Suíte inteira: 313/313 passando.
+
+Checks de rotina: node --check OK, brace/paren balance -1/-12
+(painel-dev.html, inalterado — mesmo baseline de antes desta mudança),
+-1/0 (kanban-dev.html, também inalterado).
+
+**Requer redeploy** (mesmas 3 functions de sempre, por causa da mudança
+em `intakeTrigger.js`):
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+Dado existente a migrar manualmente: a única entrada real cadastrada até
+aqui (`agente-dados-concorrencia`, squad `dev`, criada durante o teste
+da v8.30.500-dev) fica órfã no path antigo — precisa ser recriada na
+nova aba do painel (mesmo identificador/descrição, marcando o squad
+`dev`).
 
 ### painel.html v3.00 · painel — 2026-08-28 · promove pra prod: visualizador externo do painel
 Promove pra produção o visualizador externo do painel (entrada

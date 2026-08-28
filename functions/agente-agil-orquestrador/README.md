@@ -2974,3 +2974,41 @@ passando.
 
 **Requer redeploy** (mesmas 3 functions de sempre):
 `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+## Registro de especialistas migra pra global, com squads explícitos (2026-08-28)
+
+Achado no mesmo teste "épico": validado ao vivo via HTTPS que o
+contexto do especialista funciona (mensagem deliberadamente vaga
+"Variação de 22% detectada na coleta desta semana" — sem citar
+concorrente/investimento/canal em lugar nenhum — e a resposta do
+modelo já veio perguntando exatamente por esses três pontos, prova de
+que a descrição cadastrada estava sendo usada). Na sequência, pedido
+direto: "tem q ter uma area no painel de configuração desses agentes
+plugados! listar todos eles, dar as informações que o sistema precisa,
+colocar essas descrições, setar em quais squads ele vai ficar... o
+agente agil tem q ser capaz de ler isso tb".
+
+O registro por squad (seção anterior) não dava visão cross-squad nem
+jeito de reaproveitar a mesma descrição em mais de um squad sem
+duplicar o cadastro. Migrado pra um node **global**:
+`kanban/config/agentesExternos/{especialista}` =
+`{descricao, squads:{squadId:true,...}, atualizadoEm, atualizadoPor}`.
+
+`lerDescricaoEspecialista()` passa a ler esse node global e só retorna
+a descrição se `squads[squadId]===true` — sem o squad atual marcado
+ali, trata como especialista desconhecido (mesmo comportamento de
+antes de não injetar nada). Isso evita que um especialista cadastrado
+pra um squad vaze contexto pra outro squad sem intenção.
+
+**Client**: aba "🔌 Agentes Externos" saiu do kanban.html/kanban-dev.html
+(por squad) e entrou em painel.html/painel-dev.html (⚙ Config → 🔌
+Agentes Externos, ao lado de 🔑 ADMs) — lista global, cada entrada com
+descrição + chips de squad (checkbox por squad).
+
+1 teste novo em `intakeTrigger.test.js` (especialista cadastrado mas
+sem o squad atual marcado em `squads` — não injeta nada). Suíte
+inteira: 313/313 passando.
+
+**Requer redeploy** (mesmas 3 functions de sempre, só o path de
+leitura mudou):
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
