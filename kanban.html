@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.493</div>
+<div class="version">v8.30.494</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17273,6 +17273,7 @@ async function _loadMeuDiaCrossSquads(){
         _meuDiaCrossData[sq]={
           cards:   val.cards   ?(Array.isArray(val.cards)   ?val.cards   :Object.values(val.cards))   :[],
           columns: val.columns ?(Array.isArray(val.columns) ?val.columns :Object.values(val.columns)) :[],
+          blockerMode: (val.config && val.config.blockerMode) || 'col',
           // BUG CORRIGIDO (relatado pelo time: card já concluído aparecendo
           // como atrasado no Meu Dia): o comentário antigo aqui dizia que
           // pegar o flowConfig do outro squad "custaria mais uma leitura" —
@@ -17306,7 +17307,15 @@ function _meuDiaIsDone(card){
   return /conclu|cancel|done|feito|finaliz/.test(nome);
 }
 function _meuDiaIsBlocked(card){
-  return card.blocker===true || card.col==='blocker';
+  // Mesmo dispatch por squad de _meuDiaIsDone() acima — checar OS DOIS sinais
+  // incondicionalmente (como antes) dava falso-positivo pra sempre: um card
+  // com card.blocker=true (tag) que sobrou de quando a squad esteve em modo
+  // "tag" continuava aparecendo aqui como bloqueio mesmo depois da squad
+  // trocar pra modo "col" — onde _cardIsBlocked() já ignora esse campo de
+  // propósito. blockerMode de squads cruzados vem de graça do mesmo fetch
+  // de '/dados' que já traz doneCols (ver comentário acima).
+  const mode = card._squad===ACTIVE_SQUAD ? blockerMode : ((_meuDiaCrossData[card._squad]||{}).blockerMode||'col');
+  return mode==='col' ? card.col==='blocker' : !!card.blocker;
 }
 function _meuDiaAllCards(){
   const local = cards.map(c=>({...c,_squad:ACTIVE_SQUAD}));

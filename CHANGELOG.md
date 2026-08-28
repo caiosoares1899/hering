@@ -18,6 +18,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.494 — 2026-08-28 · promove pra prod (fix de bug)
+Promove o fix de bug encontrado via `/monitorarbugs` em v8.30.494-dev
+(entrada correspondente em "kanban-dev.html" logo abaixo): o painel
+"🌅 Meu Dia" (seção "🚧 Bloqueios") não considerava mais o modo de
+impedimento (coluna vs. tag) de cada squad — um card que sobrou marcado
+com a tag antiga de impedimento continuava aparecendo como bloqueio pra
+sempre, mesmo depois da squad trocar pro modo "coluna" (onde o próprio
+board da squad já ignora essa tag).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.493 — 2026-08-28 · promove pra prod (fix de bug)
 Promove o fix de bug encontrado via `/monitorarbugs` em v8.30.493-dev
 (entrada correspondente em "kanban-dev.html" logo abaixo), validado em
