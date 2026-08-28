@@ -18,6 +18,23 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.500 — 2026-08-28 · promove pra prod — aba "🔌 Agentes Externos"
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.500-dev), validado pelo usuário ao vivo em dev — entrada
+correspondente em "kanban-dev.html" logo abaixo:
+
+- **Nova aba "🔌 Agentes Externos" em ⚙ Configurações** (mesmo gate de
+  visibilidade de "🤖 Histórico do Agente" — só squads com escrita real
+  do orquestrador). ADM/PO cadastra o identificador de um sistema
+  externo que manda mensagens pro Agente Ágil via API (ex.: Databricks)
+  — precisa bater com o campo `especialista` do envelope — mais uma
+  descrição livre do que aquele sistema faz. O backend
+  (`intakeTrigger.js`) lê essa descrição e injeta como contexto extra
+  na tarefa do LLM sempre que chega uma mensagem daquele especialista,
+  nos dois caminhos (com card e sem card).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.499 — 2026-08-28 · promove pra prod (lote de fixes, validado)
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
 promoção (v8.30.496-dev até v8.30.499-dev), validado pelo usuário —
