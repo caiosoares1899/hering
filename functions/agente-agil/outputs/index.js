@@ -8,6 +8,7 @@ const checklistItem = require('./checklistItem');
 const agentStatus = require('./agentStatus');
 const moverColuna = require('./moverColuna');
 const editarCampos = require('./editarCampos');
+const risco = require('./risco');
 
 module.exports = {
   comentario: comentario.build,
@@ -17,4 +18,5 @@ module.exports = {
   agent_status: agentStatus.build,
   mover_coluna: moverColuna.build,
   editar_campos: editarCampos.build,
+  risco: risco.build,
 };

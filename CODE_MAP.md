@@ -433,7 +433,15 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   `agente-agil/http.js` abaixo pro porquê de existir)
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-- `tools/index.js` — `buildTools()`, registro das 12 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil` sobrevivem, as demais exigem card já resolvido.
+- `tools/index.js` — `buildTools()`, registro das 13 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `risco`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil` sobrevivem, as demais exigem card já resolvido.
+  `risco` (2026-08-28, pedido direto — "pensando em grandes projetos, pode
+  ser legal") — só adiciona (`card.riscos` é array de strings puras,
+  sem id/estado, sem "resolver"); reusa o mesmo par schema Zod
+  (`agente-agil/schema.js`) + builder (`agente-agil/outputs/risco.js`,
+  mesmo padrão transacional de `outputs/link.js`) que as outras 7
+  ferramentas reaproveitadas já usam — nenhum código novo em
+  `tools/index.js`/`realHandlers.js` além de registrar o schema em
+  `REUSED_OUTPUT_SCHEMAS`, tudo genérico a partir daí.
 - `tools/criarCard.js` — `criar_card` (2026-08-27, fecha o gap "não existe
   criar_card no toolset dele" registrado no README). NÃO escreve em
   `/cards` direto (mesmo risco de perda silenciosa de `intake/submit.js`

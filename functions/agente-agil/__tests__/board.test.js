@@ -175,6 +175,26 @@ test('buildWritePlan preserva links existentes na transaction', async () => {
   assert.equal(result[0], existing[0]);
 });
 
+test('buildWritePlan monta transaction escopada em riscos pra risco', async () => {
+  const plan = await buildWritePlan('5', [{ type: 'risco', texto: 'Fornecedor pode atrasar a entrega' }]);
+  assert.equal(plan.length, 1);
+  assert.equal(plan[0].kind, 'transaction');
+  assert.equal(plan[0].path, `${CARDS_PATH}/5/riscos`);
+  assert.equal(plan[0].preview, 'Fornecedor pode atrasar a entrega');
+  const result = plan[0].transform(null);
+  assert.equal(result.length, 1);
+  assert.equal(result[0], 'Fornecedor pode atrasar a entrega');
+});
+
+test('buildWritePlan preserva riscos existentes na transaction', async () => {
+  const plan = await buildWritePlan('5', [{ type: 'risco', texto: 'Risco novo' }]);
+  const existing = ['Risco antigo'];
+  const result = plan[0].transform(existing);
+  assert.equal(result.length, 2);
+  assert.equal(result[0], 'Risco antigo');
+  assert.equal(result[1], 'Risco novo');
+});
+
 test('buildWritePlan rejeita output sem builder registrado', async () => {
   await assert.rejects(() => buildWritePlan('5', [{ type: 'tipo_inexistente' }]), (err) => err.code === 'unknown_output_type');
 });
