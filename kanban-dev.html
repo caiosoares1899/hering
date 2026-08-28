@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.495-dev</div>
+<div class="version">v8.30.496-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17352,7 +17352,17 @@ function renderMeuDia(){
   const body=document.getElementById('meudia-body'); if(!body) return;
   const meuInit = window._currentUserInit;
   if(!meuInit){ body.innerHTML='<div style="color:var(--txt3);font-size:12px;">Não identifiquei suas iniciais — abra um card seu pra confirmar seu cadastro.</div>'; return; }
-  const all = _meuDiaAllCards().filter(c=>!c.archived);
+  // Achado real (2026-08-28, /monitorarbugs): faltava a mesma exclusão do
+  // card hotline "Converse com o Agente Ágil" que TODAS as outras
+  // agregações de "todos os cards" já aplicam (renderBoardDataGrid/
+  // renderBoardDataInsights/_boardDataBarChart/buscas de card, achado
+  // original 2026-08-26 — ver CODE_MAP.md, que documenta isso como regra
+  // pra qualquer agregação nova). Hoje não é explorável pela UI normal (o
+  // card hotline nasce com owner/participants sempre vazios e o modal
+  // trava a edição desses campos pra ele), mas fica inconsistente com a
+  // regra escrita e vira armadilha pra qualquer mudança futura que passe
+  // a tocar esses campos.
+  const all = _meuDiaAllCards().filter(c=>!c.archived && !c.agenteHotline);
   const meus = all.filter(c=>c.owner===meuInit || (c.participants||[]).includes(meuInit));
   const hojeStr = _localDateStrBoard(new Date());
   const semanaLimite = new Date(); semanaLimite.setDate(semanaLimite.getDate()+7);

@@ -81,7 +81,13 @@ instrumentação extra) — os números da seção painel abaixo são de
   `_boardDataBarChart()` (painel "📊 Dados do Board") e nas 3 buscas de
   card (`@card:` em comentários/descrição, `notaSearchCards()`,
   `searchSuperChildren()`). Qualquer nova agregação "todos os cards"
-  precisa lembrar dessa exclusão também.
+  precisa lembrar dessa exclusão também. 2ª rodada, 2026-08-28: achado o
+  mesmo gap em `renderMeuDia()` (painel "🌅 Meu Dia", ver linha abaixo) —
+  não tinha passado pela varredura original porque usa `_meuDiaAllCards()`
+  em vez de um `cards.filter(...)` direto (não pega num grep simples do
+  padrão). Hoje não é explorável pela UI normal (o card hotline nasce com
+  `owner`/`participants` sempre vazios, e o modal trava a edição desses
+  campos pra ele), mas ficava inconsistente com a regra escrita acima.
 - `saveCard()` — L11689 — auto-save (debounce 800ms) passa por aqui
 - `_finishCloseOv()` — L26003 — fechamento do modal, reset de estado pendente
 - `_newCardHasContent()`/`_newCardGuardOff` — L10571/L10545 — card ainda sem
