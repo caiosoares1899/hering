@@ -160,15 +160,23 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
   // Pedido direto do usuário (2026-08-28, testando o intake ao vivo):
   // "área em configurações para os ADM's/PO também explicarem as funções
   // dos outros agentes, para o nosso também usar como contexto na hora de
-  // tomar ações". Config editada em kanban-dev.html (⚙ Configurações →
-  // 🔌 Agentes Externos), chave = mesmo valor do campo "especialista" do
-  // envelope HTTP. Leitura pontual (sem cache) — mesmo espírito de baixo
-  // volume do resto deste módulo.
+  // tomar ações". Registro GLOBAL (kanban/config/agentesExternos/
+  // {especialista}, chave = mesmo valor do campo "especialista" do
+  // envelope HTTP) — editado em painel.html/painel-dev.html (⚙ →
+  // 🔌 Agentes Externos), não mais por squad (2026-08-28, correção de
+  // arquitetura pedida direto: "listar todos eles... setar em quais
+  // squads ele vai ficar"). `squads:{squadId:true,...}` decide em quais
+  // squads a descrição vale — sem o squad atual marcado ali, não injeta
+  // nada (mesmo comportamento de especialista desconhecido). Leitura
+  // pontual (sem cache) — mesmo espírito de baixo volume do resto deste
+  // módulo.
   async function lerDescricaoEspecialista(db, especialista) {
     if (!especialista) return null;
-    const snap = await db.ref(`kanban/squads/${squadId}/dados/config/agentesExternos/${especialista}`).get();
+    const snap = await db.ref(`kanban/config/agentesExternos/${especialista}`).get();
     const val = snap.val();
-    return val && val.descricao ? val.descricao : null;
+    if (!val || !val.descricao) return null;
+    if (!val.squads || val.squads[squadId] !== true) return null;
+    return val.descricao;
   }
 
   async function processarIntake(db, { id, entry, llmClient }) {
@@ -216,7 +224,7 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     // precisão do que só o texto isolado permitiria, sem precisar que o
     // próprio texto se auto-explique toda vez.
     const contextoEspecialista = descricaoEspecialista
-      ? `\n\nContexto sobre este especialista (cadastrado por um ADM/PO em Configurações → Agentes Externos): ${descricaoEspecialista}`
+      ? `\n\nContexto sobre este especialista (cadastrado por um ADM/PO no Painel → Configurações → Agentes Externos): ${descricaoEspecialista}`
       : '';
     const task = cardId
       ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):${contextoEspecialista}\n\n${entry.texto}`

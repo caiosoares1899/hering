@@ -388,6 +388,27 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   evento específico (a grade do calendário continua visível). Não
   corrigido — sinalizado no `CHANGELOG.md`.
 
+### Agentes Externos (2026-08-28, só em painel-dev.html — ainda não
+promovido pra prod; linhas abaixo são de painel-dev.html)
+Registro global (não mais por squad) de sistemas externos que mandam
+mensagens pro Agente Ágil via API — ADM/PO documenta o que cada um faz
+e em quais squads a descrição vale. Migrado pra cá a partir de uma
+versão anterior por squad dentro do próprio kanban.html/kanban-dev.html
+(removida na mesma migração — pedido direto: "tem q ter uma area no
+painel de configuração desses agentes plugados! listar todos eles...
+setar em quais squads ele vai ficar"). Lido pelo backend em
+`kanban/config/agentesExternos/{especialista}` — ver
+`lerDescricaoEspecialista()` na seção "Cloud Functions" abaixo.
+- `loadAgentesExternosPainel()` — L6714 — registra o listener em
+  `kanban/config/agentesExternos`, chamado no boot (`fb-ready`).
+- `renderAgentesExternosPainel()` — L6721 — lista expansível na aba
+  "🔌 Agentes Externos" de `openCfg()`; cada item mostra descrição
+  (textarea) + chips de squad (`SQUADS`, checkbox por squad).
+- `criarAgenteExternoPainel()` — L6758 / `salvarAgenteExternoPainel(id)`
+  — L6771 / `toggleAgenteExternoSquad(id,squadId,checked)` — L6781
+  (grava na hora, sem precisar de "Salvar") / `excluirAgenteExternoPainel(id)`
+  — L6790. Todas as escritas gateadas por `_isAdmPainel()`.
+
 ### Dashboard consolidado
 - `loadAll()` — L8158 / `renderAll()` — L8179
 - `renderOKR()` — L3935
@@ -511,13 +532,16 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   Intake por conta própria.
   `lerDescricaoEspecialista()` (2026-08-28, pedido direto: "área em
   configurações para os ADM's/PO explicarem as funções dos outros
-  agentes... pra ele usar como contexto") — lê `kanban/squads/{squad}/
-  dados/config/agentesExternos/{especialista}` (editado no cliente, ver
-  `agentesExternos`/`renderAgentesExternosCfg()` em kanban.html/
-  kanban-dev.html, chave = mesmo valor do campo `especialista` do
-  envelope) e injeta a
-  descrição no início do `task` sempre que existe uma entrada pra aquele
-  especialista.
+  agentes... pra ele usar como contexto"; migrado pra registro GLOBAL no
+  mesmo dia, pedido direto: "listar todos eles... setar em quais squads
+  ele vai ficar") — lê `kanban/config/agentesExternos/{especialista}`
+  (editado em painel.html/painel-dev.html, ⚙ Config → 🔌 Agentes
+  Externos, ver `agentesExternosCfg`/`renderAgentesExternosPainel()`,
+  chave = mesmo valor do campo `especialista` do envelope) e injeta a
+  descrição no início do `task` só se `squads[squadId]===true` na
+  entrada — sem o squad atual marcado ali, trata como especialista
+  desconhecido (não injeta nada). Não existe mais UI equivalente dentro
+  do kanban (removida na mesma migração).
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate
