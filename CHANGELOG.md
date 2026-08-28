@@ -2111,6 +2111,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.498-dev — 2026-08-28 — Fix: Padrão de card que esconde a Ficha Técnica não deixava salvar o card
+
+Reportado direto pelo usuário: criou um Padrão de card desmarcando
+"🎬 Campos de produção criativa" (Ficha Técnica), esperando que ela
+sumisse do modal — a seção realmente some, mas o card nunca conseguia
+ser salvo, porque a validação de campos obrigatórios do `saveCard()`
+continuava exigindo os campos da Ficha Técnica mesmo escondidos.
+
+Causa: o bloco de validação (`if(criativosAtivo &&
+editingSuperChildren.length===0){...}`) só olhava se o squad tinha a
+Ficha Técnica ativada e se o card não era supercard — nunca checava se
+a seção estava de fato VISÍVEL pro Padrão de card ativo
+(`_cardSectionVisible('criativo', card)`, a mesma função que
+`_applyCardSectionsVisibility()` usa pra decidir se mostra a seção).
+Resultado: campos que a pessoa nem conseguia ver na tela travavam o
+save pra sempre, sem nenhum jeito de corrigir.
+
+Fix: a validação agora só roda quando a seção está visível pro padrão
+ativo — mesmo raciocínio que supercard já tinha ("seção que a pessoa
+nem vê não pode travar o save"), só que agora cobrindo Padrão de card
+também. O Padrão passa a ser "superior" à obrigatoriedade, como o
+usuário sugeriu.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.497-dev — 2026-08-28 — Fix: card do Agente Ágil avisava "alterações não salvas" ao fechar mesmo sem digitar nada
 
 Reportado direto pelo usuário: abrir o card especial "🤖 Converse com o
