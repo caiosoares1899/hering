@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.497-dev</div>
+<div class="version">v8.30.498-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11811,7 +11811,18 @@ function saveCard(){
   // Campanha/Funil/Etapa/Canal aqui — esses vêm herdados do pai (ver
   // _crvPropagateToChildren) e nem aparecem editáveis nesta tela; exigir
   // teria como travar um save sem a pessoa ter onde corrigir.
-  if(criativosAtivo && editingSuperChildren.length===0){
+  // Achado real (2026-08-28, reportado direto): faltava checar se a seção
+  // ainda está VISÍVEL pro Padrão de card ativo — um padrão que esconde
+  // "Campos de produção criativa" (_cardSectionVisible('criativo',...),
+  // ver _applyCardSectionsVisibility()) continuava exigindo os campos
+  // aqui, porque essa validação só olhava criativosAtivo/supercard, nunca
+  // o padrão. Resultado: a pessoa nunca conseguia salvar o card, porque os
+  // campos "obrigatórios" estavam escondidos sem nenhum jeito de
+  // preenchê-los. O padrão agora é "superior" à obrigatoriedade — se ele
+  // esconde a seção, ela deixa de ser exigida (mesma regra de supercard
+  // logo acima: seção que a pessoa nem vê não pode travar o save).
+  const _crvCardAtual = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(criativosAtivo && editingSuperChildren.length===0 && _cardSectionVisible('criativo', _crvCardAtual)){
     const crvMissing=[];
     const isChildOfSuper=!!editingSuperParent;
     // Direcional de Mídia é o único campo OPCIONAL da ficha (pedido
