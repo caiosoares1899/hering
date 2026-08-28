@@ -492,9 +492,23 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   monta `semCard:true` (só `criar_card`/`visao_board`/`biblioteca_agil`).
   Resultado gravado de volta no próprio item da fila (`resultText`,
   `pendingIdCriado`) — sem card pra comentar nesse caminho. Só a
-  instância `dev` existe hoje, em modo sombra (`DRY_RUN_INTAKE:true`,
-  nunca validado em produção, diferente de @menção que teve 10 canários
-  antes de destravar escrita real).
+  instância `dev` existe hoje, com escrita real desde 2026-08-27
+  (`DRY_RUN_INTAKE:false` — validada com 7 rodadas de teste, ver
+  `README.md`; squad `dados` ainda não tem instância deployada).
+  `notificarFalhaSemCard()`/`acharCardHotline()` (2026-08-28, pedido
+  direto após um teste real via HTTPS): quando `semCard` e nada de
+  acionável nasceu (`criar_card` recusou, ou o modelo decidiu não
+  criar), comenta no card hotline "🤖 Converse com o Agente Ágil" (só
+  LÊ — nunca cria um card novo em `/cards`, mesmo risco de perda
+  silenciosa que `criarCard.js` já contorna) e notifica quem tem papel
+  `po`/`adm` na squad (`members.js` ganhou o campo `role` por membro,
+  mesmo fallback de `getEffectiveRole()` do cliente, sem replicar o
+  allowlist de super-admin `isAdmUser()`). Sem card hotline ainda,
+  notifica do mesmo jeito com `type:'intake'`/`cardId:null` (mesmo tipo
+  que `openNotif()` já trata pra abrir Pedidos de Intake em vez de
+  navegar pra um card inexistente). Sem isso, uma recusa (ex.: Ficha
+  Técnica obrigatória) ficava visível só pra quem abrisse Pedidos de
+  Intake por conta própria.
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate

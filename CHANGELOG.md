@@ -9218,6 +9218,34 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-28 · Notifica PO/ADM quando o intake não vira ação nenhuma
+
+Achado ao testar o intake pela primeira vez via HTTPS de verdade (`curl`
+direto contra `agenteAgil`, simulando o Databricks): texto solto sem
+card associado, o modelo tentou `criar_card`, mas o squad `dev` exige
+Ficha Técnica — a ferramenta recusou. A explicação ficou gravada em
+`resultText` no item da fila, mas **ninguém foi avisado** — só descobria
+quem abrisse "Pedidos de Intake" por conta própria. Pedido direto do
+usuário: "sempre que esse tipo de erro acontecer, precisa relatar pro
+humano (PO e ADM)".
+
+Fix: `notificarFalhaSemCard()` (`intakeTrigger.js`) dispara quando
+`semCard` e nada de acionável nasceu — comenta no card hotline "🤖
+Converse com o Agente Ágil" (se existir; nunca CRIA um card novo em
+`/cards`, mesmo risco de perda silenciosa que `criarCard.js` já
+contorna) e notifica quem tem papel `po`/`adm` na squad. Sem card
+hotline ainda, notifica mesmo assim com `type:'intake'` — reaproveitando
+um tratamento que já existia em `openNotif()` (kanban-dev.html) pra
+abrir Pedidos de Intake em vez de navegar pra um card inexistente, só
+que nunca tinha sido usado por nada server-side até agora.
+`members.js` ganhou um campo `role` por membro pra viabilizar isso.
+
+3 testes novos, suíte inteira: 309/309 passando. Detalhes completos:
+`functions/agente-agil-orquestrador/README.md`.
+
+**Requer redeploy manual das 3 functions que usam este módulo**:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### 2026-08-28 · Ferramenta nova: `risco`
 
 Pedido direto numa conversa sobre escalar pra projetos grandes: "o

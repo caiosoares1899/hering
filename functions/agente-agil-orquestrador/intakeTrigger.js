@@ -58,9 +58,11 @@ const { runLoop } = require('./loop');
 const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { SYSTEM_PROMPT_V1 } = require('./systemPrompt');
 const { isEnabled } = require('./limits');
-const { resolveCardKey } = require('../agente-agil/board');
+const { resolveCardKey, cardsPath, cardCommentsPath } = require('../agente-agil/board');
 const { resolveReferencia } = require('../agente-agil/resolver');
 const { coletarAcoesAgente, registrarLogAgente } = require('./agenteLog');
+const { readSquadMembers } = require('../agente-agil/members');
+const { buildNotifStep } = require('../agente-agil/notifications');
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
@@ -68,6 +70,67 @@ function truncar(s, max) {
   if (s == null) return '';
   const str = String(s);
   return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+// Card hotline "🤖 Converse com o Agente Ágil" (agenteHotline:true) — ver
+// openAgenteHotline()/_findAgenteHotlineCard() em kanban-dev.html. Só LÊ,
+// nunca cria — escrever um card novo direto em /cards arrisca a mesma
+// perda silenciosa que criarCard.js/intake/submit.js já contornam (o
+// cliente reescreve o array inteiro em fbSaveAll(), sem transaction).
+async function acharCardHotline(db, squadId) {
+  const snap = await db.ref(cardsPath(squadId)).get();
+  const val = snap.val();
+  const lista = Array.isArray(val) ? val : Object.values(val || {});
+  return lista.find((c) => c && c.agenteHotline && !c.archived) || null;
+}
+
+// Pedido direto do usuário (2026-08-28, testando o intake via HTTPS real):
+// quando o orquestrador não tem NENHUM card pra agir (semCard) e termina
+// sem criar um rascunho de verdade (criar_card recusou, ex. Ficha Técnica
+// obrigatória, ou o modelo decidiu que não fazia sentido criar), a única
+// trilha até aqui era o próprio item de agente_intake_pending — ninguém é
+// avisado pra ir olhar lá, a informação podia se perder em silêncio.
+// Relata no card hotline (se a squad já tiver um) e notifica quem tem
+// papel "po"/"adm" nesta squad — mesmo padrão de dryRun de todo o resto
+// do módulo (nada escreve de verdade em modo sombra).
+async function notificarFalhaSemCard(db, { squadId, especialista, texto, resultText, dryRun }) {
+  const hotline = await acharCardHotline(db, squadId);
+  const especialistaLabel = especialista ? `"${especialista}"` : '(especialista não identificado)';
+
+  if (hotline) {
+    const commentId = 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
+    const comment = {
+      id: commentId,
+      uid: 'agente-agil',
+      author: 'Agente Ágil',
+      init: '🤖',
+      text: `⚠️ Recebi uma informação do especialista externo ${especialistaLabel} que não virou nenhuma ação no board — sem nenhum card associado, e não deu pra criar um rascunho novo.\n\n**Mensagem original:**\n${texto}\n\n**O que aconteceu:**\n${resultText || '(sem detalhe adicional)'}`,
+      ts: new Date().toISOString(),
+    };
+    if (!dryRun) await db.ref(cardCommentsPath(squadId, hotline.id)).update({ [commentId]: comment });
+  }
+
+  const members = await readSquadMembers(db, squadId);
+  const alvo = members.filter((m) => m.role === 'po' || m.role === 'adm');
+  const resumo = truncar(resultText || texto, 100);
+  for (const m of alvo) {
+    const step = await buildNotifStep(db, {
+      squadId,
+      targetUid: m.uid,
+      // 'mention' navega pro card hotline (mesmo comportamento de sempre);
+      // sem card hotline ainda, 'intake' abre o painel de Pedidos de
+      // Intake em vez de tentar navegar pra um cardId nulo (ver openNotif()
+      // em kanban-dev.html, que já trata esse tipo especificamente).
+      type: hotline ? 'mention' : 'intake',
+      title: '🤖 Agente Ágil não conseguiu agir sozinho',
+      sub: resumo,
+      cardId: hotline ? hotline.id : null,
+      dryRun,
+    });
+    if (step && step.kind === 'update' && !dryRun) {
+      await db.ref(step.path).update(step.data);
+    }
+  }
 }
 
 // Fábrica — mesmo padrão de createMentionTrigger() em mentionTrigger.js:
@@ -172,6 +235,23 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     const acoesRegistro = coletarAcoesAgente(result.steps);
     const criarCardCall = result.steps.flatMap((s) => s.toolCalls).find((c) => c.name === 'criar_card' && c.output && c.output.ok && !c.output.dryRun);
     const pendingIdCriado = criarCardCall ? criarCardCall.output.pendingId : null;
+
+    // Pedido direto do usuário: sem card nenhum pra agir E sem ter criado
+    // um rascunho de verdade, a informação ficaria visível só pra quem
+    // fosse abrir Pedidos de Intake por conta própria — ninguém é avisado.
+    // Reporta no card hotline + notifica PO/ADM da squad (ver
+    // notificarFalhaSemCard acima). Não dispara se resolveu um card real
+    // (cardId) — nesse caminho o comentário já fica visível no próprio
+    // card, mesma cobertura que uma @menção normal já tem.
+    if (semCard && !pendingIdCriado) {
+      await notificarFalhaSemCard(db, {
+        squadId,
+        especialista: entry.especialista,
+        texto: entry.texto,
+        resultText: result.finalText,
+        dryRun,
+      }).catch((err) => console.error(`[agente-agil-intake:${squadId}] falha ao notificar falha sem card:`, id, err));
+    }
 
     // Histórico do Agente Ágil (mesma tela de mentionTrigger.js) — aqui não
     // existe um "comment" de verdade (não veio de card_comments), então
