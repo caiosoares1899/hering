@@ -2111,6 +2111,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.499-dev — 2026-08-28 — Fix: Padrão de card não aplicava NADA num card ainda sendo criado (2ª parte do fix anterior)
+
+Reportado direto pelo usuário logo depois de validar o fix anterior
+(v8.30.498-dev): escolher o padrão "assistente" (com "Campos de
+produção criativa" desmarcado) no seletor de um card **novo** — ainda
+não salvo — não escondia a Ficha Técnica de jeito nenhum, mesmo o
+seletor mostrando "assistente" selecionado.
+
+Causa: `setCardPattern(patId)` — a função chamada pelo `onchange` do
+seletor — saía imediatamente com `if(!editingId) return` sempre que o
+card ainda não tinha sido salvo (`editingId` só existe depois do 1º
+Salvar). O `<select>` do browser atualiza seu próprio valor visual
+independente de handler nenhum, então parecia que o padrão tinha sido
+aplicado — mas a função nunca chegava a gravar nada nem a re-aplicar a
+visibilidade das seções. Um comentário já existente no código (linha
+~6108) até citava "Padrão de card" como um caso que já tinha aprendido
+essa lição (mesmo problema que capa de cor/imagem já resolveram com
+`_pendingCoverColor`/`_pendingCoverImageUrl`) — mas a lição nunca foi
+aplicada de fato aqui.
+
+Fix: novo estado `_newCardPadraoId` (mesmo padrão de
+`_pendingCoverColor`) guarda a escolha enquanto o card não existe;
+`_activePatternFor()` passa a consultá-lo quando não há card real
+ainda; `setCardPattern()` grava nele e re-aplica a visibilidade em vez
+de sair sem fazer nada; `saveCard()` grava `padraoId` no card novo a
+partir dele. Combinado com o fix da v8.30.498-dev (validação de
+obrigatoriedade), agora um Padrão de card escolhido ANTES de salvar
+funciona de ponta a ponta: esconde a seção e não bloqueia o save.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.498-dev — 2026-08-28 — Fix: Padrão de card que esconde a Ficha Técnica não deixava salvar o card
 
 Reportado direto pelo usuário: criou um Padrão de card desmarcando
