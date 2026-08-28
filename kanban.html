@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.495</div>
+<div class="version">v8.30.499</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6114,6 +6114,15 @@ let _pendingCoverColor = null;
 // Storage). Mutuamente exclusiva com a capa de cor: escolher uma limpa a
 // outra, pra não ter os dois tratamentos brigando no topo do card.
 let _pendingCoverImageUrl = null;
+// Padrão de card escolhido enquanto o card ainda não existe (editingId=null)
+// — mesma lição do comentário acima ("usar modelo" e Padrão de card), mas
+// achado real 2026-08-28 (reportado direto: escolher um padrão no seletor
+// de "Novo card" não escondia a Ficha Técnica) mostrou que ela nunca tinha
+// sido aplicada de verdade aqui: setCardPattern() saía cedo com
+// `if(!editingId) return`, então a escolha só MUDAVA o valor visual do
+// <select> (updates de <select> não dependem de handler JS), sem nunca
+// gravar em lugar nenhum nem re-aplicar a visibilidade das seções.
+let _newCardPadraoId = null;
 // Popula TODOS os alvos de swatch (o campo abaixo do Título + o popover do
 // botão 🎨 no header) — pedido direto pra ter acesso rápido no header além
 // do campo já existente. Os dois ficam sincronizados por lerem o mesmo
@@ -6287,9 +6296,11 @@ function _defaultPatternId(){
   return found ? found[0] : null;
 }
 // Resolve o padrão que vale pra um card: o dele mesmo (se ainda existir),
+// senão — pra um card NOVO ainda sem id (editingId=null), o padrão
+// escolhido no seletor mas ainda não persistido (ver _newCardPadraoId) —
 // senão o marcado como padrão-da-squad, senão nenhum (tudo visível).
 function _activePatternFor(card){
-  const pid=card?.padraoId;
+  const pid = card ? card.padraoId : (!editingId ? _newCardPadraoId : null);
   if(pid && cardPatterns[pid]) return cardPatterns[pid];
   const defId=_defaultPatternId();
   return defId ? cardPatterns[defId] : null;
@@ -11396,6 +11407,16 @@ function openCard(id){
         eocEdit('comment-eoc');
         _mciHotline.selectionStart=_mciHotline.selectionEnd=_mciHotline.value.length;
       }
+      // Achado real 2026-08-28 (reportado direto: "faz ele não deixar
+      // fechar, mesmo que a pessoa tenha escrito nada"): _cardManualSnap
+      // (o "estado salvo" pra comparação de _cardIsDirty()) é tirado em
+      // openCard(), ANTES deste setTimeout — então o preenchimento
+      // automático acima (vazio→"@Agente Ágil ") por si só já fazia o
+      // comentário parecer "digitado", disparando "Alterações não salvas"
+      // ao fechar mesmo sem a pessoa ter tocado em nada. Re-tira o
+      // snapshot agora que o prefill já rodou, então o aviso só dispara
+      // de verdade se a pessoa digitar algo A MAIS além do "@Agente Ágil ".
+      _cardManualSnap = _manualFieldsNow();
     }
     loadComments(id);
     renderDescPreview();
@@ -11705,6 +11726,7 @@ function openNewCard(col){
   const _mDem2=document.getElementById('m-demandante'); if(_mDem2) _mDem2.value='';
   _updateDescProtectedBadge();
   _pendingCoverColor=null; _pendingCoverImageUrl=null; _applyCoverStripToModal(null,null); renderCoverSwatches();
+  _newCardPadraoId=null;
   _applyTamanhoUIVisibility();
   _applySubmarcaUIVisibility();
   _applyDemandanteUIVisibility();
@@ -11801,7 +11823,18 @@ function saveCard(){
   // Campanha/Funil/Etapa/Canal aqui — esses vêm herdados do pai (ver
   // _crvPropagateToChildren) e nem aparecem editáveis nesta tela; exigir
   // teria como travar um save sem a pessoa ter onde corrigir.
-  if(criativosAtivo && editingSuperChildren.length===0){
+  // Achado real (2026-08-28, reportado direto): faltava checar se a seção
+  // ainda está VISÍVEL pro Padrão de card ativo — um padrão que esconde
+  // "Campos de produção criativa" (_cardSectionVisible('criativo',...),
+  // ver _applyCardSectionsVisibility()) continuava exigindo os campos
+  // aqui, porque essa validação só olhava criativosAtivo/supercard, nunca
+  // o padrão. Resultado: a pessoa nunca conseguia salvar o card, porque os
+  // campos "obrigatórios" estavam escondidos sem nenhum jeito de
+  // preenchê-los. O padrão agora é "superior" à obrigatoriedade — se ele
+  // esconde a seção, ela deixa de ser exigida (mesma regra de supercard
+  // logo acima: seção que a pessoa nem vê não pode travar o save).
+  const _crvCardAtual = editingId ? cards.find(c=>c.id===editingId) : null;
+  if(criativosAtivo && editingSuperChildren.length===0 && _cardSectionVisible('criativo', _crvCardAtual)){
     const crvMissing=[];
     const isChildOfSuper=!!editingSuperParent;
     // Direcional de Mídia é o único campo OPCIONAL da ficha (pedido
@@ -11921,6 +11954,7 @@ function saveCard(){
       intakeId:_intakeOrigemPendingId||null,
       coverColor:_pendingCoverColor||null,
       coverImageUrl:_pendingCoverImageUrl||null,
+      padraoId:_newCardPadraoId||null,
       due:document.getElementById('m-due').value,noDue:_mNoDue,po:document.getElementById('m-po').value,
       checklist:cl,checklistGroups:_mCurrentGroups.slice(),riscos:rl,sp:document.getElementById('m-sp').value,priority:document.getElementById('m-priority').value,
       executorType:document.getElementById('m-exectype')?.value||'human',
@@ -11938,7 +11972,7 @@ function saveCard(){
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
-    _pendingCoverColor=null; _pendingCoverImageUrl=null;
+    _pendingCoverColor=null; _pendingCoverImageUrl=null; _newCardPadraoId=null;
     if(_newCard.priority) runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
     // Triggers "Modelo usado"/"Card recorrente criado" (Automações) — só dispara
     // se este card novo veio de fato de um "+ Usar" em Modelos/Recorrentes (ver
@@ -17352,7 +17386,17 @@ function renderMeuDia(){
   const body=document.getElementById('meudia-body'); if(!body) return;
   const meuInit = window._currentUserInit;
   if(!meuInit){ body.innerHTML='<div style="color:var(--txt3);font-size:12px;">Não identifiquei suas iniciais — abra um card seu pra confirmar seu cadastro.</div>'; return; }
-  const all = _meuDiaAllCards().filter(c=>!c.archived);
+  // Achado real (2026-08-28, /monitorarbugs): faltava a mesma exclusão do
+  // card hotline "Converse com o Agente Ágil" que TODAS as outras
+  // agregações de "todos os cards" já aplicam (renderBoardDataGrid/
+  // renderBoardDataInsights/_boardDataBarChart/buscas de card, achado
+  // original 2026-08-26 — ver CODE_MAP.md, que documenta isso como regra
+  // pra qualquer agregação nova). Hoje não é explorável pela UI normal (o
+  // card hotline nasce com owner/participants sempre vazios e o modal
+  // trava a edição desses campos pra ele), mas fica inconsistente com a
+  // regra escrita e vira armadilha pra qualquer mudança futura que passe
+  // a tocar esses campos.
+  const all = _meuDiaAllCards().filter(c=>!c.archived && !c.agenteHotline);
   const meus = all.filter(c=>c.owner===meuInit || (c.participants||[]).includes(meuInit));
   const hojeStr = _localDateStrBoard(new Date());
   const semanaLimite = new Date(); semanaLimite.setDate(semanaLimite.getDate()+7);
@@ -19564,10 +19608,22 @@ function populateCardPatternSelect(){
   const defId=_defaultPatternId();
   sel.innerHTML='<option value="">'+(defId?'📐 Padrão: '+esc(cardPatterns[defId].nome):'📐 Padrão')+'</option>'
     + ids.map(id=>`<option value="${id}">📐 ${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join('');
-  sel.value = (card?.padraoId && cardPatterns[card.padraoId]) ? card.padraoId : '';
+  const _pidAtual = card ? card.padraoId : _newCardPadraoId;
+  sel.value = (_pidAtual && cardPatterns[_pidAtual]) ? _pidAtual : '';
 }
 function setCardPattern(patId){
-  if(!editingId) return;
+  // Card ainda sendo criado (sem id de verdade pra persistir em card.padraoId
+  // ainda) — achado real 2026-08-28: esta função saía aqui sem fazer NADA,
+  // então escolher um padrão num card novo só mudava o texto do <select>
+  // (nativo do browser, não depende deste handler) sem nunca aplicar a
+  // visibilidade das seções. Guarda em _newCardPadraoId (mesmo padrão de
+  // _pendingCoverColor/_pendingCoverImageUrl) até o 1º Salvar criar o card
+  // de verdade — ver saveCard() e openNewCard().
+  if(!editingId){
+    _newCardPadraoId = patId||null;
+    _applyCardSectionsVisibility();
+    return;
+  }
   const card=cards.find(c=>c.id===editingId); if(!card) return;
   const _prevPadrao=card.padraoId||'';
   card.padraoId = patId||null;
