@@ -49,6 +49,19 @@ async function listActiveSquads(db) {
   return Array.from(new Set([...DEFAULT_SQUADS, ...custom]));
 }
 
+// Mesma normalização que o client (kanban.html) já aplica em toda leitura de
+// '/columns'/'/cards'/'/tags' (Array.isArray?val:Object.values(val), depois
+// filter(Boolean)) — o Admin SDK devolve o node cru, sem essa limpeza. Sem
+// isso, achado real 2026-08-28 (squad midiacriativa, /monitorarbugs): um
+// node sparse virava objeto no snapshot, e uma entrada nula sobrevivia até
+// o JSON do backup — restaurar esse backup (_applyRestorePayload em
+// kanban.html) propagava o dado sujo pro estado ao vivo, travando qualquer
+// render que lesse `col.name`/`col.id` (renderNormal/renderColEditor).
+function _cleanArr(val) {
+  if (!val) return [];
+  return (Array.isArray(val) ? val : Object.values(val)).filter(Boolean);
+}
+
 async function backupSquad(db, bucket, squadId, date) {
   const snap = await db.ref('kanban/squads/' + squadId + '/dados').get();
   const dados = snap.val() || {};
@@ -58,9 +71,9 @@ async function backupSquad(db, bucket, squadId, date) {
     exportedAt: new Date().toISOString(),
     exportedBy: 'Backup automático semanal (Cloud Function)',
     board: {
-      cards: dados.cards || [],
-      columns: dados.columns || [],
-      tags: dados.tags || [],
+      cards: _cleanArr(dados.cards),
+      columns: _cleanArr(dados.columns),
+      tags: _cleanArr(dados.tags),
       agilCfg: dados.agil_cfg || {},
       qlItems: dados.ql_items || { recorrentes: [], modelos: [], agendamentos: [] },
       links: dados.links || [],
