@@ -9218,6 +9218,25 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-28 · Fix de prompt: @menção com nome completo não notificava ninguém
+
+Achado ao vivo testando um cenário "épico" (4 especialistas diferentes
+mandando informação pro mesmo card, simulando um projeto real): pedido
+pro modelo avisar o responsável do card sobre um risco — o comentário
+saiu com `@Caio Oliveira Dos Santos Soares` (nome completo), que
+parece uma menção mas não é reconhecida pelo sistema (a regex de
+menção não aceita espaço). O modelo tinha o valor certo disponível
+(`ler_card` devolve `responsavel.init`), só não sabia que precisava
+usar especificamente esse campo numa @menção.
+
+Fix: nova seção no `systemPrompt.js` instruindo explicitamente a usar
+`@` + iniciais, nunca o nome completo, com exemplo do formato errado.
+1 teste novo, suíte inteira: 310/310 passando. Detalhes completos:
+`functions/agente-agil-orquestrador/README.md`.
+
+**Requer redeploy manual das 3 functions que usam este módulo**:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### 2026-08-28 · Notifica PO/ADM quando o intake não vira ação nenhuma
 
 Achado ao testar o intake pela primeira vez via HTTPS de verdade (`curl`

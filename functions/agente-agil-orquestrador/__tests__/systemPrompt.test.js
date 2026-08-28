@@ -68,6 +68,20 @@ test('SYSTEM_PROMPT_V1 instrui o modelo a nunca fingir sucesso quando uma ferram
   assert.match(SYSTEM_PROMPT_V1, /finja que deu certo/i);
 });
 
+// Achado real ao vivo (2026-08-28, teste manual via HTTPS simulando um
+// especialista pedindo pra avisar o responsável): o modelo escreveu
+// "@Caio Oliveira Dos Santos Soares" (nome completo) num comentario — a
+// regex de menção (notifications.js, MENTION_RE) não aceita espaço, então
+// isso nunca virou uma menção de verdade (não notificou ninguém, não virou
+// link). O modelo tinha o "init" certo disponível via ler_card
+// (responsavel.init) mas nada no prompt dizia pra usar ele especificamente
+// numa menção — só citava "init" em outros contextos.
+test('SYSTEM_PROMPT_V1 instrui o modelo a usar as iniciais (init), nunca o nome completo, numa @menção dentro de um comentário', () => {
+  assert.match(SYSTEM_PROMPT_V1, /Menções \(@\) dentro de um comentário/i);
+  assert.match(SYSTEM_PROMPT_V1, /NUNCA use o nome completo depois do @/i);
+  assert.match(SYSTEM_PROMPT_V1, /responsavel\.init/);
+});
+
 // Ponto 3 do desenho "orquestrador lendo input de especialistas externos"
 // (README.md, 2026-08-25/27): o modelo nunca deve reconciliar sozinho
 // especialistas que se contradizem — só sinalizar.
