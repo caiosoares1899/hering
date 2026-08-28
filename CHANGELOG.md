@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.495 — 2026-08-28 · promove pra prod (fix crítico)
+Promove o fix crítico de v8.30.495-dev (entrada correspondente em
+"kanban-dev.html" logo abaixo): board travava com `TypeError: undefined`
+pra squad que tivesse restaurado um backup com `columns` corrompido —
+reportado ao vivo pela Juliana (squad `midiacriativa`), incapaz de abrir
+um card. `_applyRestorePayload()` agora normaliza `cards`/`columns`/
+`tags` do mesmo jeito que o resto do código já fazia em qualquer leitura
+externa desses dados.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
+**Ainda requer redeploy da function `weeklyBackup`** (não bloqueante,
+roda 1x/semana) — ver entrada correspondente em "kanban-dev.html".
+
 ### v8.30.494 — 2026-08-28 · promove pra prod (fix de bug)
 Promove o fix de bug encontrado via `/monitorarbugs` em v8.30.494-dev
 (entrada correspondente em "kanban-dev.html" logo abaixo): o painel
