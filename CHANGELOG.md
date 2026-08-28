@@ -18,6 +18,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.499 — 2026-08-28 · promove pra prod (lote de fixes, validado)
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.496-dev até v8.30.499-dev), validado pelo usuário —
+entradas correspondentes em "kanban-dev.html" logo abaixo:
+
+- **"Meu Dia" excluindo o card hotline do Agente Ágil** (`/monitorarbugs`)
+  — mesma exclusão que outras 11 agregações de "todos os cards" já
+  tinham, faltava só nessa.
+- **Card do Agente Ágil não avisa mais "alterações não salvas" à toa** —
+  o preenchimento automático de "@Agente Ágil " no comentário não conta
+  mais como digitação da pessoa.
+- **Padrão de card que esconde a Ficha Técnica agora funciona de ponta a
+  ponta**, em 2 partes: (1) a validação de campos obrigatórios respeita
+  a seção escondida pelo padrão (antes travava o save mesmo sem a
+  pessoa conseguir ver os campos exigidos); (2) escolher um padrão num
+  card AINDA NÃO SALVO agora funciona de verdade (antes não fazia nada,
+  apesar do seletor mostrar a escolha).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.495 — 2026-08-28 · promove pra prod (fix crítico)
 Promove o fix crítico de v8.30.495-dev (entrada correspondente em
 "kanban-dev.html" logo abaixo): board travava com `TypeError: undefined`
