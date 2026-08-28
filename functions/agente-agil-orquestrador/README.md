@@ -2913,3 +2913,28 @@ inteira: 309/309 passando.
 
 **Requer redeploy** (mesmas 3 functions de sempre que usam este
 módulo): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+## Fix de prompt: @menção com nome completo não notificava ninguém (2026-08-28)
+
+Achado ao vivo, testando o cenário "épico" (4 especialistas diferentes
+mandando informação pro mesmo card, simulando um projeto real): pedido
+pro modelo avisar diretamente o responsável do card sobre um risco.
+Resultado: o comentário saiu com `@Caio Oliveira Dos Santos Soares`
+(nome completo) — parece uma menção, mas `MENTION_RE`
+(`agente-agil/notifications.js`) só casa `@` seguido de
+`[a-zA-Z0-9._-]` (sem espaço), então isso nunca virou uma notificação
+de verdade nem um link clicável no cliente. O modelo TINHA o valor
+certo disponível — `ler_card` devolve `responsavel: {init, nome}` — só
+usou `nome` em vez de `init` ao escrever o texto, e nada no prompt
+dizia explicitamente qual dos dois usar numa @menção.
+
+Fix: nova seção "Menções (@) dentro de um comentário" no
+`systemPrompt.js`, logo depois de "Entrega da resposta" — instrui
+explicitamente a usar `@` + `init` (nunca o nome completo), com
+exemplo do formato errado pra deixar claro o que NÃO fazer.
+
+1 teste novo em `systemPrompt.test.js`. Suíte inteira: 310/310
+passando.
+
+**Requer redeploy** (mesmas 3 functions de sempre):
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
