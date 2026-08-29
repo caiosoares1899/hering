@@ -290,6 +290,34 @@ Mesma disciplina de sempre neste repo:
   clique chegasse antes do round-trip do 1º atualizar o cache local
   (dev v3.02 · painel-dev).
 
+- **2026-08-29, área Automações (`AUTO_TRIGGERS`/`saveCard()` branch de
+  criação)**: pedido genérico — nenhum código novo tocou kanban-dev.html
+  desde a rodada anterior (que cobriu painel-dev.html), então voltei à
+  prioridade 1 de verdade: mapeei TODOS os call sites de
+  `runAutoRules()` do arquivo (técnica 1) e cruzei contra os campos que
+  o branch de criação de `saveCard()` já grava no `_newCard`. 3 achados
+  reais, mesma causa raiz (e mesma classe dos achados de 2026-08-26/27
+  — trigger disparando em alguns caminhos mas não em outros pra mesma
+  mutação conceitual), desta vez no eixo "campo definido AO CRIAR o
+  card" vs. "campo definido depois, editando um card já existente" (dev
+  v8.30.502-dev):
+  1. `cover_set` ("Capa de cor definida como") — `setCardCover()` só
+     dispara no branch de card existente; `_pendingCoverColor` vira
+     `_newCard.coverColor` sem disparo no branch de criação.
+  2. `padrao_set` ("Padrão de card definido como") — mesmo padrão em
+     `setCardPattern()`/`_newCardPadraoId`. Achado incidental: é a
+     MESMA feature do fix #590 (v8.30.500-dev, que corrigiu "escolher
+     um padrão ao criar" não aplicar nada) — a automação correspondente
+     tinha ficado pra trás no mesmo fix.
+  3. `tag_added`/`submarca_set` — branch de edição faz diff de tags e
+     dispara por tag nova; branch de criação nunca disparava nada pras
+     tags já escolhidas antes do 1º Salvar.
+  Descartado (checado, sem achado): `marked_okr` na criação — o
+  checkbox `#m-is-okr` é só armazenamento interno (`display:none`
+  sempre), a única forma real de marcar OKR é via menu de contexto num
+  card já existente (`ctxToggleOKR()`) — não é um caminho de criação
+  que existe de verdade, então não há gap nenhum aí.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

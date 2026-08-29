@@ -2148,6 +2148,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.502-dev — 2026-08-29 — Fix (/monitorarbugs): 3 triggers de Automação não disparavam pra card que já nascia com o campo preenchido
+
+Mesma causa raiz, mesma classe de bug já vista antes nesta skill: um
+trigger de Automação dispara certinho quando o campo muda num card
+EXISTENTE, mas o branch de CRIAÇÃO de `saveCard()` grava o campo no
+card novo sem disparar o trigger correspondente.
+
+1. **"Capa de cor definida como"** — `setCardCover()` grava
+   `_pendingCoverColor` quando o card ainda está sendo criado, só
+   dispara `cover_set` no branch de card já existente.
+2. **"Padrão de card definido como"** — mesmo padrão em
+   `setCardPattern()`/`_newCardPadraoId`. Notável por ser a mesma
+   feature do fix #590 (v8.30.500-dev), que fez "escolher um padrão ao
+   criar" funcionar de verdade — a Automação ficou pra trás nesse
+   mesmo fix.
+3. **"Tag adicionada"/"Submarca definida como"** — o branch de edição
+   faz o diff de tags e dispara os 2 triggers por tag nova; o branch de
+   criação nunca disparava nada pras tags já escolhidas no modal antes
+   do 1º Salvar.
+
+Fix: as 3 chamadas de `runAutoRules()` correspondentes adicionadas no
+branch de criação de `saveCard()`, mesmo padrão já usado ali pro
+trigger `priority`.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0 (mesmo
+baseline de antes desta mudança).
+
 ### v8.30.501-dev — 2026-08-28 — Remove a aba "🔌 Agentes Externos" (migrada pro painel, registro global)
 
 Correção de arquitetura: a v8.30.500-dev abaixo tinha cadastrado o
