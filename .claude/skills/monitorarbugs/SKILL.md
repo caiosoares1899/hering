@@ -318,6 +318,35 @@ Mesma disciplina de sempre neste repo:
   card já existente (`ctxToggleOKR()`) — não é um caminho de criação
   que existe de verdade, então não há gap nenhum aí.
 
+- **2026-08-29, área Automações × Agente Ágil (backend orquestrador)**:
+  continuando a auditar Automações no mesmo dia, técnica 1 aplicada num
+  nível acima — não só "todo call site de `runAutoRules()` no cliente
+  dispara certo?" (já coberto), mas "existe algum caminho de MUTAÇÃO
+  que nunca passa por `runAutoRules()` nenhum?". Achado: mutações do
+  orquestrador real (`mover_coluna`/`editar_campos`/`checklist_item`/
+  `risco`, via `functions/agente-agil-orquestrador/tools/realHandlers.js`)
+  escrevem direto no Firebase via Admin SDK, sem passar por NENHUM
+  caminho client-side que dispara Automação — checagem inicial (achou
+  o painel de chat morto `qa()`/`executeTool()`, mas era kill switch
+  documentado, `AGENTE_AGIL_ATIVO=false`, não bug) levou a essa
+  descoberta maior. Diferente dos achados anteriores (uma chamada de
+  `runAutoRules()` faltando num call site que já existia), este é
+  ARQUITETURAL — reportado como recomendação primeiro (Passo 3/4), só
+  implementado depois de "pode tratar" do usuário. Solução: fila
+  `agente_pending_auto` (backend enfileira o que mudou, comparando
+  card antes/depois — `pendingAuto.js`) + reivindicação via
+  `transaction()` no cliente (`_claimPendingAuto()`, evita disparo
+  duplicado com várias abas abertas) — ver `functions/agente-agil-
+  orquestrador/README.md` ("Mutações do orquestrador passam a
+  disparar Automações") pro desenho completo. `criar_card` não
+  precisava do fix — nunca cria card direto, só um rascunho que um
+  humano confirma pelo `saveCard()` normal. Achado colateral ao
+  escrever os testes: um fake db de teste devolvia a MESMA referência
+  de objeto em `get()` (não uma cópia imutável como o SDK real
+  garante), fazendo um snapshot "antes" mudar sozinho quando o
+  "depois" era escrito — mascarava qualquer diff. 8 testes novos, dev
+  v8.30.503-dev.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

@@ -305,6 +305,109 @@ test('perguntar_humano real sem responsável no card (owner vazio) posta o comen
   assert.equal(comments[0].text, '❓ Agente Ágil precisa de uma resposta:\n\nCard sem responsável, alguém decide?', 'sem owner, mesmo texto de antes — sem @menção pendurada em branco');
 });
 
+function pendingAutoEntries(db, squadId) {
+  const node = db._data().kanban?.squads?.[squadId]?.dados?.agente_pending_auto || {};
+  return Object.values(node);
+}
+
+test('handler real de mover_coluna com dryRun:false enfileira o gatilho "move" (achado real /monitorarbugs: Automações não disparavam pra mutação do orquestrador)', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dev: {
+          dados: {
+            cards: { 9: { id: 'c9', title: 'Card no dev', col: 'todo', history: [], flow: {} } },
+            cards_index: { c9: '9' },
+            columns: [
+              { id: 'todo', name: 'A Fazer' },
+              { id: 'done', name: 'Concluído' },
+            ],
+            config: { flow: { startCols: [], doneCols: ['done'], reportCols: [] } },
+            cards_updated_at: {},
+          },
+        },
+      },
+    },
+  });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const moverColuna = tools.find((t) => t.name === 'mover_coluna');
+
+  const result = await moverColuna.handler({ coluna: 'done' });
+
+  assert.equal(result.ok, true, `esperava ok:true, veio: ${JSON.stringify(result)}`);
+  const entries = pendingAutoEntries(db, 'dev');
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].eventType, 'move');
+  assert.equal(entries[0].cardId, 'c9');
+  assert.equal(entries[0].extra, 'done');
+});
+
+test('handler real de mover_coluna em dryRun (default) NÃO enfileira nada (nada foi escrito de verdade)', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dev: {
+          dados: {
+            cards: { 9: { id: 'c9', title: 'Card no dev', col: 'todo', history: [], flow: {} } },
+            cards_index: { c9: '9' },
+            columns: [
+              { id: 'todo', name: 'A Fazer' },
+              { id: 'done', name: 'Concluído' },
+            ],
+            config: { flow: { startCols: [], doneCols: ['done'], reportCols: [] } },
+            cards_updated_at: {},
+          },
+        },
+      },
+    },
+  });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });
+  const moverColuna = tools.find((t) => t.name === 'mover_coluna');
+
+  await moverColuna.handler({ coluna: 'done' });
+
+  assert.deepEqual(pendingAutoEntries(db, 'dev'), []);
+});
+
+test('handler real de editar_campos com dryRun:false enfileira priority + tag_added (canário 7, mesmo cenário do teste de tags/priority acima)', async () => {
+  const db = makeFakeDb({
+    kanban: {
+      squads: {
+        dev: {
+          dados: {
+            cards: { 9: { id: 'c9', title: 'Card no dev', col: 'progress', tags: ['tag_1'], priority: 'medium', history: [] } },
+            cards_index: { c9: '9' },
+            tags: [
+              { id: 'tag_1', label: 'Piloto' },
+              { id: 'tag_2', label: 'Urgente' },
+            ],
+            cards_updated_at: {},
+          },
+        },
+      },
+    },
+  });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const editarCampos = tools.find((t) => t.name === 'editar_campos');
+
+  await editarCampos.handler({ tags: ['Urgente'], priority: 'high' });
+
+  const entries = pendingAutoEntries(db, 'dev');
+  assert.equal(entries.length, 2);
+  assert.ok(entries.some((e) => e.eventType === 'priority'));
+  assert.ok(entries.some((e) => e.eventType === 'tag_added' && e.extra === 'tag_2'));
+});
+
+test('handler real de comentario com dryRun:false NÃO enfileira nada (nenhum campo relevante pra Automações muda)', async () => {
+  const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress' });
+  const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9', dryRun: false });
+  const comentario = tools.find((t) => t.name === 'comentario');
+
+  await comentario.handler({ type: 'comentario', texto: 'Só um comentário, não deveria disparar automação nenhuma' });
+
+  assert.deepEqual(pendingAutoEntries(db, 'dev'), []);
+});
+
 test('integração ponta a ponta: runLoop com tools reais nunca muta o fake db (dryRun fixo em true)', async () => {
   const db = seedDevSquadDb('9', { id: 'c9', title: 'Card no dev', col: 'progress', comments: {}, checklist: [], checklistGroups: [] });
   const tools = buildTools({ mode: 'real', db, squadId: 'dev', cardId: 'c9' });

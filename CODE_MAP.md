@@ -237,6 +237,24 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `toggleFanoutApplyMenu()`/`_renderFanoutApplyList()` — dropdown "🧩
   Aplicar receita" dentro do card, com filtro por nome+tag (mesmo padrão
   de "📥 Usar modelo"/`_renderUsarModeloList()`)
+- **Fila de Automações pendentes do Agente Ágil** (2026-08-29, achado real
+  `/monitorarbugs`: AUTO_TRIGGERS só existe aqui no cliente — uma mutação
+  do orquestrador via Admin SDK, ex. `mover_coluna`, nunca disparava
+  nenhuma Automação). Backend enfileira em `kanban/squads/{squad}/dados/
+  agente_pending_auto` (ver `enqueuePendingAutoFromDiff()` em
+  `functions/agente-agil-orquestrador/pendingAuto.js`, chamado de dentro
+  de `runWritePlan()` em `tools/realHandlers.js`) — cliente escuta com
+  `window._onChildAdded` (L8816) e reivindica cada entrada via
+  `window._runTransaction()` antes de processar, garantindo exatamente 1
+  disparo mesmo com várias pessoas com o board aberto ao mesmo tempo.
+  `_claimPendingAuto()` — L25437 / `_refreshCardFromFirebase()` — L25455
+  (força `cards` a refletir o estado mais recente do card antes de rodar
+  `runAutoRules()`, já que a sincronização granular normal tem debounce de
+  150ms e correria o risco de ler/resalvar um snapshot desatualizado por
+  cima da própria mudança que disparou o evento). `criar_card` não
+  precisa desse mecanismo — nunca cria card direto, só um rascunho em
+  `intake_pending` que um humano confirma pelo modal normal (mesmo
+  `saveCard()` que já dispara tudo certo).
 
 ### Impedimentos (modo coluna vs. tag)
 - `blockerMode` (let) — L25291 — carregado de `config/blockerMode`, `'col'`
@@ -472,6 +490,19 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   seção "Intake" abaixo). Replica as regras obrigatórias do `criar_card`
   client-side (Ficha Técnica recusa, Submarca exige opção válida —
   `SUBMARCA_LABELS`, cópia fixa de `SUBMARCA_TAGS` do kanban-dev.html).
+- `pendingAuto.js` — `enqueuePendingAuto()`/`enqueuePendingAutoFromDiff()`
+  (2026-08-29, achado real `/monitorarbugs`: Automações client-side nunca
+  disparavam pra mutação do orquestrador). Chamado de dentro de
+  `runWritePlan()` em `tools/realHandlers.js` — lê o card antes/depois de
+  `applyWritePlan()` (clone via `JSON.parse(JSON.stringify(...))`, não
+  spread — achado ao rodar o teste de `mover_coluna`: um fake db de teste
+  que devolve a MESMA referência de objeto em `get()` fazia o snapshot
+  "antes" mudar sozinho quando o depois era escrito) e enfileira só os
+  eventos que mudaram de verdade (`move`/`priority`/`tag_added`/
+  `tag_removed`/`checklist_complete`/`risk_added` — os únicos campos que
+  `mover_coluna`/`editar_campos`/`checklist_item`/`risco` conseguem
+  tocar). Ver seção "Automações (Butler-style)" (kanban-dev.html) acima
+  pro lado que consome a fila.
 - `tools/lerCard.js` — inclui `colunas_disponiveis` no retorno (mapa
   id↔nome↔fim de TODAS as colunas do board) — `mover_coluna` precisa do
   ID, não do nome de exibição; achado real 2026-08-21 (agente chutou

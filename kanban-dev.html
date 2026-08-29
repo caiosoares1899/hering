@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.502-dev</div>
+<div class="version">v8.30.503-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8798,6 +8798,22 @@ let _cardsSyncDebounce = null;
     if(document.getElementById('card-ov')?.classList.contains('open')){ _applyCardSectionsVisibility(); populateCardPatternSelect(); }
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderCardPatternsCfg();
   });
+  // Fila de Automações pendentes do Agente Ágil (2026-08-29, achado real
+  // /monitorarbugs). Automações — AUTO_TRIGGERS/runAutoRules — só existem
+  // aqui no cliente, avaliadas ao vivo sempre que uma mutação passa por um
+  // caminho que já sabe disparar — modal, drag, bulk actions. O
+  // orquestrador (functions/agente-agil-orquestrador/) grava direto no
+  // Firebase via Admin SDK pra mover/editar um card já existente
+  // (mover_coluna/editar_campos/checklist_item/risco), sem passar por
+  // nenhum desses caminhos — uma regra "Card movido para Y" nunca
+  // disparava pra um mover_coluna do Agente Ágil. Em vez de portar o
+  // motor de Automações pro servidor, o backend só ENFILEIRA o que
+  // aconteceu (ver functions/agente-agil-orquestrador/pendingAuto.js) —
+  // qualquer cliente com o board aberto que vir uma entrada nova
+  // reivindica ela via transaction() em _claimPendingAuto() logo abaixo,
+  // então mesmo com várias pessoas com o board aberto ao mesmo tempo a
+  // automação dispara exatamente 1 vez, não 1 vez por aba.
+  window._onChildAdded(fb(FB+'/agente_pending_auto'), snap=>_claimPendingAuto(snap.key, snap.val()));
   // Agent msgs
   ['daily','metricas','retro'].forEach(tab=>{
     fbListen(FB+'/agent_msgs/'+tab,val=>{
@@ -25409,6 +25425,47 @@ function _checkSupercardAutoComplete(childCard){
     _checkSupercardAutoComplete(parent);
   });
   if(any) renderBoard();
+}
+// Reivindica UMA entrada da fila kanban/.../agente_pending_auto (ver
+// pendingAuto.js, functions/agente-agil-orquestrador/) via transaction() —
+// abortar (retornar undefined) quando o node já foi apagado por outro
+// cliente garante que, com N pessoas com o board aberto ao mesmo tempo, só
+// UMA vence a corrida e processa; as outras simplesmente não commitam.
+// Sem isso, cada aba aberta disparia a mesma automação de novo (grave pra
+// ações com efeito colateral real, tipo "🤖 Notificar Agente Ágil" — N abas
+// abertas pingariam o agente N vezes pelo mesmo evento).
+async function _claimPendingAuto(key, entry){
+  if(!entry || !entry.eventType || !entry.cardId) return;
+  let txResult;
+  try{
+    txResult = await window._runTransaction(fb(FB+'/agente_pending_auto/'+key), current=>current===null?undefined:null);
+  }catch(e){ return; } // corrida perdida (retry do SDK esgotado) ou erro de rede — sem problema, é fila, não fica pendurado
+  if(!txResult.committed) return; // outro cliente ganhou a corrida
+  // Garante que `cards` reflete o estado mais recente do card ANTES de
+  // rodar a automação — o mover_coluna/editar_campos que gerou esta
+  // entrada acabou de escrever direto no Firebase (Admin SDK, sem passar
+  // pelo caminho normal do cliente), então o snapshot local pode ainda
+  // estar desatualizado (a sincronização granular de /cards tem um debounce
+  // de 150ms, ver _scheduleCardsSync). Sem isso, uma AUTO_ACTIONS que lê/
+  // resalva o card (fbSaveCard) arriscaria reverter por cima a própria
+  // mudança que acabou de disparar este evento.
+  await _refreshCardFromFirebase(entry.cardId);
+  runAutoRules(entry.eventType, entry.cardId, entry.extra||undefined);
+}
+async function _refreshCardFromFirebase(cardId){
+  const byKey = window._cardsByKey||{};
+  let key = Object.keys(byKey).find(k=>byKey[k] && byKey[k].id===cardId);
+  if(key==null){
+    const idxSnap = await window._get(fb(FB+'/cards_index/'+cardId));
+    key = idxSnap.val();
+    if(key==null) return null; // card não existe mais (excluído?) — runAutoRules() já trata card ausente
+  }
+  const snap = await window._get(fb(FB+'/cards/'+key));
+  const fresh = snap.val(); if(!fresh) return null;
+  byKey[key] = fresh;
+  const localIdx = cards.findIndex(c=>c.id===cardId);
+  if(localIdx>=0) cards[localIdx]=fresh; else cards.push(fresh);
+  return fresh;
 }
 // Executa automações após mudanças no board. eventType: 'move'|'create'|
 // 'priority'|'due_today'|'due_overdue'|'checklist_complete'|'risk_added'|

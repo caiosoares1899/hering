@@ -2148,6 +2148,48 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.503-dev — 2026-08-29 — Fix (/monitorarbugs, arquitetural): mutações do Agente Ágil nunca disparavam Automações
+
+Achado ao continuar auditando Automações: cards movidos/editados pelo
+**orquestrador de verdade** (`functions/agente-agil-orquestrador/`, via
+@menção ou intake de especialista externo) nunca disparavam nenhuma
+regra — `AUTO_TRIGGERS`/`runAutoRules()` só existem aqui no cliente,
+avaliados sempre que uma mutação passa por um caminho já conhecido
+(modal, drag, bulk actions...). O orquestrador escreve direto no
+Firebase via Admin SDK (`mover_coluna`, `editar_campos`,
+`checklist_item`, `risco`), sem passar por nenhum deles — uma regra
+"Card movido para Y" nunca disparava pra um `mover_coluna` do Agente
+Ágil. `criar_card` já estava OK (nunca cria card direto, só um
+rascunho em Pedidos de Intake que um humano confirma pelo modal
+normal, mesmo `saveCard()` de sempre).
+
+Reportado como achado arquitetural (não uma correção pequena e local)
+e tratado a pedido do usuário. Solução: em vez de portar o motor de
+Automações pro servidor, o backend só **enfileira** o que aconteceu
+(`kanban/.../agente_pending_auto`, ver `pendingAuto.js` nas functions)
+— o cliente escuta essa fila e **reivindica** cada entrada via
+`transaction()` antes de processar (`_claimPendingAuto()`), garantindo
+que a automação dispara exatamente 1 vez mesmo com várias pessoas com
+o board aberto ao mesmo tempo (sem isso, N abas abertas disparariam a
+mesma automação N vezes — grave pra ações com efeito colateral real,
+tipo "🤖 Notificar Agente Ágil"). Antes de rodar a automação,
+`_refreshCardFromFirebase()` garante que o card local reflete o estado
+mais recente (a sincronização granular normal tem debounce de 150ms).
+
+8 testes novos no backend (`pendingAuto.test.js` + integração em
+`realHandlers.test.js`), suíte inteira: 328/328 passando. Achado e
+corrigido no processo: o diff antes/depois usava o valor de `.get()`
+direto (sem clonar) — um fake db de teste que devolve a MESMA
+referência de objeto fazia o snapshot "antes" mudar sozinho quando o
+"depois" era escrito, mascarando toda mudança.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0 (mesmo
+baseline de antes desta mudança).
+
+**Requer redeploy** (mesmas 3 functions de sempre, `runWritePlan()` em
+`realHandlers.js` mudou):
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### v8.30.502-dev — 2026-08-29 — Fix (/monitorarbugs): 3 triggers de Automação não disparavam pra card que já nascia com o campo preenchido
 
 Mesma causa raiz, mesma classe de bug já vista antes nesta skill: um
