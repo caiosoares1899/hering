@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.501-dev</div>
+<div class="version">v8.30.502-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11974,6 +11974,21 @@ function saveCard(){
     cards.push(_newCard);
     _pendingCoverColor=null; _pendingCoverImageUrl=null; _newCardPadraoId=null;
     if(_newCard.priority) runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
+    // Achado real (/monitorarbugs, 2026-08-29): "Capa de cor definida como"/
+    // "Padrão de card definido como"/"Tag adicionada"/"Submarca definida como"
+    // nunca disparavam pra um card que já nascia com esses campos preenchidos
+    // (coverColor/padraoId/tags escolhidos no modal ANTES do 1º Salvar) — só
+    // disparavam ao mudar um campo num card JÁ EXISTENTE (ver setCardCover()/
+    // setCardPattern()/branch de edição acima). Mesmo padrão dos 3 achados
+    // anteriores desta skill (assigned/move/bulk actions): o dado era gravado
+    // certinho nos dois casos, só o disparo da automação ficava pra trás no
+    // caminho de criação.
+    if(_newCard.coverColor) runAutoRules('cover_set', _newCard.id, _newCard.coverColor);
+    if(_newCard.padraoId) runAutoRules('padrao_set', _newCard.id, _newCard.padraoId);
+    (_newCard.tags||[]).forEach(t=>{
+      runAutoRules('tag_added', _newCard.id, t);
+      if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', _newCard.id, t);
+    });
     // Triggers "Modelo usado"/"Card recorrente criado" (Automações) — só dispara
     // se este card novo veio de fato de um "+ Usar" em Modelos/Recorrentes (ver
     // usarQLItem/_pendingQLSource), não em toda criação de card comum.
