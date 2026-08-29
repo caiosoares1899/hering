@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.503 — 2026-08-29 · promove pra prod — Agentes Externos migra pro painel + Automações cobrem criação de card e mutações do Agente Ágil
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.501-dev a v8.30.503-dev) — entradas correspondentes em
+"kanban-dev.html" logo abaixo:
+
+- **Registro de "Agentes Externos" migra pro painel, cross-squad.** A
+  aba dentro do kanban (v8.30.500) foi removida — cadastro passa a ser
+  global, gerenciado em painel.html → ⚙ Config → 🔌 Agentes Externos,
+  com controle de em quais squads cada agente vale. Testado ao vivo via
+  HTTPS real contra o Agente Ágil, com mensagens deliberadamente vagas —
+  confirmado que o contexto cadastrado é usado de verdade.
+- **3 triggers de Automação corrigidos**: "Capa de cor definida como",
+  "Padrão de card definido como" e "Tag adicionada"/"Submarca definida
+  como" agora disparam também quando o campo já nasce preenchido na
+  CRIAÇÃO do card (antes só disparavam ao editar um card existente).
+- **Mutações do Agente Ágil (mover coluna, editar campos, checklist,
+  risco) agora disparam Automações.** Antes, uma regra "Card movido
+  para Y" nunca disparava pra uma mudança feita pelo orquestrador
+  (escreve direto no Firebase, sem passar pelos caminhos que já
+  disparavam automação). Mecanismo novo: o backend enfileira o que
+  mudou, o cliente reivindica cada entrada antes de processar — garante
+  que a automação dispara exatamente 1 vez, mesmo com várias pessoas
+  com o board aberto ao mesmo tempo.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.500 — 2026-08-28 · promove pra prod — aba "🔌 Agentes Externos"
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
 promoção (v8.30.500-dev), validado pelo usuário ao vivo em dev — entrada
