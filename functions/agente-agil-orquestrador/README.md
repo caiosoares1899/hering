@@ -3012,3 +3012,60 @@ inteira: 313/313 passando.
 **Requer redeploy** (mesmas 3 functions de sempre, só o path de
 leitura mudou):
 `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+## Mutações do orquestrador passam a disparar Automações (2026-08-29)
+
+Achado via `/monitorarbugs` (kanban-dev.html), continuando a auditoria
+de Automações depois dos fixes anteriores no mesmo dia: cards
+movidos/editados pelo orquestrador (`mover_coluna`, `editar_campos`,
+`checklist_item`, `risco`, via `realHandlers.js`) nunca disparavam
+nenhuma regra de Automação — `AUTO_TRIGGERS`/`runAutoRules()` só
+existem no cliente, avaliados sempre que uma mutação passa por um
+caminho já conhecido (modal, drag, bulk actions...). O orquestrador
+escreve direto no Firebase via Admin SDK, sem passar por nenhum deles.
+`criar_card` já estava OK — nunca cria card direto, só um rascunho em
+`intake_pending` que um humano confirma pelo modal normal (mesmo
+`saveCard()` de sempre, que já dispara tudo certo).
+
+Reportado inicialmente como achado arquitetural (não uma correção
+pequena e local, per as regras da skill) e tratado a pedido direto do
+usuário. Em vez de portar o motor de Automações inteiro pro servidor
+(reescrita de verdade — `AUTO_ACTIONS` mexe em DOM/estado só do
+cliente), o backend só **anuncia** o que aconteceu:
+
+- **`pendingAuto.js`** (novo módulo): `enqueuePendingAutoFromDiff()`
+  compara o card antes/depois de `applyWritePlan()` aplicar o plano e
+  enfileira só os eventos que mudaram de verdade em
+  `kanban/squads/{squad}/dados/agente_pending_auto/{pushId}` =
+  `{eventType, cardId, extra, ts}` — cobre `move`, `priority`,
+  `tag_added`/`tag_removed`, `checklist_complete`, `risk_added` (os
+  únicos campos que as ferramentas reais conseguem tocar; nenhuma mexe
+  em coverColor/padraoId/isOKR/blocker).
+- **`realHandlers.js`**: `runWritePlan()` agora lê o card antes/depois
+  e chama `enqueuePendingAutoFromDiff()` só quando `dryRun:false`.
+- **Client** (kanban-dev.html): novo listener `window._onChildAdded`
+  em `agente_pending_auto` — cada entrada nova é **reivindicada** via
+  `window._runTransaction()` (`_claimPendingAuto()`) antes de rodar
+  `runAutoRules()`, garantindo que, mesmo com várias pessoas com o
+  board aberto ao mesmo tempo, a automação dispara exatamente 1 vez —
+  não 1 vez por aba (sem isso, uma ação com efeito colateral real, tipo
+  "🤖 Notificar Agente Ágil", pingaria o agente N vezes pelo mesmo
+  evento). `_refreshCardFromFirebase()` força o card local a refletir o
+  estado mais recente antes de rodar a automação (a sincronização
+  granular normal de `/cards` tem debounce de 150ms — sem isso, uma
+  ação que resalva o card via `fbSaveCard()` arriscaria reverter por
+  cima a própria mudança que disparou o evento).
+
+Achado no processo de testar: o diff antes/depois usava o valor de
+`.get()` direto sem clonar — um fake db de teste que devolve a MESMA
+referência de objeto em `get()` (em vez de uma cópia imutável, como o
+SDK real garante) fazia o snapshot "antes" mudar sozinho quando o
+"depois" era escrito, mascarando toda mudança. Fix: clone via
+`JSON.parse(JSON.stringify(...))` no momento da leitura.
+
+8 testes novos (`pendingAuto.test.js` + integração em
+`realHandlers.test.js`). Suíte inteira: 328/328 passando.
+
+**Requer redeploy** (mesmas 3 functions de sempre, `runWritePlan()`
+mudou):
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`

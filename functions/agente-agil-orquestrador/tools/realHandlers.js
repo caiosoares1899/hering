@@ -37,6 +37,7 @@
 // `type` a partir dele aqui, sempre, é seguro mesmo quando o modelo também
 // manda o campo (sobrescreve com o mesmo valor, no-op).
 const { resolveCardKey, buildWritePlan, applyWritePlan, cardsPath } = require('../../agente-agil/board');
+const { enqueuePendingAutoFromDiff } = require('../pendingAuto');
 
 // Compartilhado por makeRealHandler (1 output = a própria tool call) e
 // makeRealPerguntarHumanoHandler (2 outputs compostos, ver abaixo) — resolve
@@ -59,7 +60,22 @@ async function runWritePlan({ db, squadId, cardId, outputs, dryRun, toolName }) 
     return { ok: true, dryRun: true, tool: toolName, plan };
   }
 
-  await applyWritePlan(db, plan, { cardPath: `${cardsPath(squadId)}/${cardKey}`, cardId, squadId });
+  const cardPath = `${cardsPath(squadId)}/${cardKey}`;
+  // Snapshot ANTES da escrita — usado só pra enfileirar os gatilhos de
+  // Automação certos (ver pendingAuto.js), comparando com o card DEPOIS
+  // logo abaixo. dryRun já retornou acima, então isso só roda em escrita
+  // de verdade. Clone de propósito (JSON.parse/stringify, não só `{...v}`
+  // — as escritas abaixo mudam campos aninhados tipo `tags`/`checklist`,
+  // um shallow spread ainda compartilharia essas referências): sem isso,
+  // um fake db de teste que devolve a MESMA referência de objeto em
+  // get() (em vez de uma cópia imutável, como o SDK real garante) faria
+  // `before` "mudar sozinho" quando applyWritePlan() mutasse o card por
+  // baixo — achado ao rodar o teste de mover_coluna, before.col e
+  // after.col vinham iguais mesmo o card tendo movido de verdade.
+  const before = JSON.parse(JSON.stringify((await db.ref(cardPath).get()).val() || {}));
+  await applyWritePlan(db, plan, { cardPath, cardId, squadId });
+  const after = (await db.ref(cardPath).get()).val() || {};
+  await enqueuePendingAutoFromDiff(db, squadId, cardId, before, after);
   return { ok: true, dryRun: false, tool: toolName, plan, applied: plan.length };
 }
 
