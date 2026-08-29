@@ -8837,6 +8837,32 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.02 · painel-dev — 2026-08-29 · Fix (/monitorarbugs): toggle de squad podia reverter mudança concorrente silenciosamente
+
+`toggleAgenteExternoSquad()` e `salvarAgenteExternoPainel()` (v3.01,
+aba "🔌 Agentes Externos") faziam merge a partir do cache local
+`agentesExternosCfg[id]` antes de escrever, em vez de ler fresco do
+Firebase. Cenário real: ADM marca "dev" e depois "dados" pro mesmo
+agente em sequência rápida — se o 2º clique acontece antes do 1º
+`window._set()` voltar pelo listener e atualizar o cache local, o 2º
+toggle sobrescreve o node inteiro com base num `squads` desatualizado
+(sem "dev"), apagando a 1ª marcação sem nenhum aviso. Os dois
+checkboxes continuam mostrando marcado na tela (checkbox nativo não
+espera round-trip) até o próximo re-render pelo listener, quando "dev"
+volta a aparecer desmarcado sozinho.
+
+`painel.html` (prod) já tinha esse exato padrão resolvido em outro
+lugar do arquivo (comentário "Lê fresco do Firebase antes de
+escrever..."), só que meu código novo da v3.01 não seguiu. Fix: as
+duas funções agora fazem `window._get()` fresco imediatamente antes de
+mesclar e escrever.
+
+Achado por `/monitorarbugs`, escopo escolhido pela prioridade 1
+("área alterada mais recentemente" — a própria feature desta sessão).
+
+Checks de rotina: node --check OK, brace/paren balance inalterado
+(-1/-12).
+
 ### painel-dev.html v3.01 · painel-dev — 2026-08-28 · Novo: aba "🔌 Agentes Externos" (registro global, cross-squad)
 
 Pedido direto, logo depois do teste de ponta a ponta da v8.30.500-dev

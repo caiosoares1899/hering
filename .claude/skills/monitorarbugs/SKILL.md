@@ -274,6 +274,22 @@ Mesma disciplina de sempre neste repo:
      desligada) — achado via técnica 4 (checagem de campo sem considerar
      o estado que o torna relevante), guard adicionado.
 
+- **2026-08-29, área Agentes Externos no painel (`painel-dev.html`)**:
+  pedido genérico — prioridade 1 (área alterada mais recentemente),
+  cobrindo o próprio trabalho desta sessão (migração de registro por
+  squad, dentro do kanban, pra registro global no painel, PR #598). 1
+  bug real, achado via técnica 2 (comparação com padrão já resolvido em
+  outro lugar do arquivo): `toggleAgenteExternoSquad()` e
+  `salvarAgenteExternoPainel()` faziam merge a partir do cache local
+  (`agentesExternosCfg[id]`) antes de escrever, em vez de ler fresco do
+  Firebase — `painel.html` (prod) já tinha esse exato padrão resolvido
+  em outro lugar (comentário "Lê fresco do Firebase antes de
+  escrever... evita reverter mudanças concorrentes"), o código novo não
+  seguiu. Cenário concreto: marcar 2 squads em sequência rápida pro
+  mesmo agente podia apagar silenciosamente a 1ª marcação, se o 2º
+  clique chegasse antes do round-trip do 1º atualizar o cache local
+  (dev v3.02 · painel-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
