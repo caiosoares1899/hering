@@ -2139,6 +2139,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <button class="err-filter-btn active" id="pcfg-tab-sprint" onclick="setPcfgTab('sprint')">⚙ Config</button>
           <button class="err-filter-btn" id="pcfg-tab-users"  onclick="setPcfgTab('users')">👥 Usuários</button>
           <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
+          <button class="err-filter-btn" id="pcfg-tab-agentesext" onclick="setPcfgTab('agentesext')">🔌 Agentes Externos</button>
         </div>
       </div>
       <button class="x-btn" onclick="closeCfg()">✕</button>
@@ -2172,6 +2173,25 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <input class="cfg-input" id="pcfg-viewer-nome" placeholder="Nome (opcional)" style="flex:1;">
           <button class="save-btn" onclick="addPainelViewer()">+ Visualizador</button>
         </div>
+      </div>
+
+      <!-- Aba Agentes Externos (2026-08-28) — pedido direto: "tem q ter uma
+           area no painel de configuração desses agentes plugados! listar
+           todos eles, dar as informações que o sistema precisa, colocar
+           essas descrições, setar em quais squads ele vai ficar". Registro
+           GLOBAL (kanban/config/agentesExternos/{especialista}) — substitui
+           a versão anterior, por squad, que vivia dentro do próprio
+           kanban.html/kanban-dev.html (removida, ver CODE_MAP.md). O
+           backend (intakeTrigger.js, lerDescricaoEspecialista()) lê daqui e
+           só injeta a descrição como contexto se o squad da mensagem
+           estiver marcado em `squads`. -->
+      <div id="painel-cfg-agentesext" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+          <div class="cfg-sec" style="margin-bottom:0;">🔌 Agentes Externos</div>
+          <button class="save-btn" onclick="criarAgenteExternoPainel()">+ Novo agente</button>
+        </div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:10px;">Sistemas externos (ex.: Databricks) que mandam informação pro Agente Ágil via API — o que cada um faz, que tipo de dado costuma mandar. O identificador precisa bater exatamente com o campo "especialista" que aquele sistema manda no envelope da API. Marque em quais squads cada um vale — o Agente Ágil só usa a descrição como contexto extra pra mensagens daquele squad.</div>
+        <div id="agentesext-painel-list" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
 
       <!-- Aba Usuários -->
@@ -2252,7 +2272,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.00 · painel</div>
+<div class="version">v3.02 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7234,6 +7254,117 @@ function saveAdmEmails(){
 }
 // ── FIM GERENCIAMENTO ADMs ────────────────────────────────────────
 
+// ── AGENTES EXTERNOS (2026-08-28) ───────────────────────────────────
+// Registro global (kanban/config/agentesExternos/{especialista} =
+// {descricao, squads:{squadId:true,...}, atualizadoEm, atualizadoPor}) —
+// lido por lerDescricaoEspecialista() (intakeTrigger.js) pra injetar
+// contexto na tarefa do LLM. `squads` decide em quais squads a descrição
+// vale; sem squad marcado, o backend não injeta nada pra ninguém.
+let agentesExternosCfg = {};
+let _agentesExtPainelAberto = null;
+
+function loadAgentesExternosPainel(){
+  window._onValue(window._ref(window._db,'kanban/config/agentesExternos'), snap=>{
+    agentesExternosCfg = snap.val() || {};
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesExternosPainel();
+  });
+}
+
+function renderAgentesExternosPainel(){
+  const box=document.getElementById('agentesext-painel-list'); if(!box) return;
+  const ids=Object.keys(agentesExternosCfg);
+  if(!ids.length){
+    box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum agente externo cadastrado ainda.</div>';
+    return;
+  }
+  box.innerHTML=ids.map(id=>{
+    const a=agentesExternosCfg[id]||{};
+    const aberto=_agentesExtPainelAberto===id;
+    const squadsSel=a.squads||{};
+    const squadsChips=SQUADS.map(sq=>{
+      const on=squadsSel[sq.id]===true;
+      return `<label style="display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid ${on?'rgba(56,182,255,.4)':'var(--glass-b)'};background:${on?'rgba(56,182,255,.12)':'rgba(3,13,26,.4)'};color:${on?'var(--accent)':'var(--txt3)'};cursor:pointer;">
+        <input type="checkbox" ${on?'checked':''} onchange="toggleAgenteExternoSquad('${id}','${sq.id}',this.checked)" style="accent-color:var(--accent);"> ${sq.icon||''} ${esc(sq.label||sq.id)}
+      </label>`;
+    }).join('');
+    return `<div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;" onclick="_agentesExtPainelAberto=_agentesExtPainelAberto==='${id}'?null:'${id}';renderAgentesExternosPainel();">
+        <span style="flex:1;font-size:12px;font-weight:600;">🔌 ${esc(id)}${a.descricao?'':' <span style="font-size:9px;color:var(--warn);font-weight:700;">SEM DESCRIÇÃO</span>'}</span>
+        <button onclick="event.stopPropagation();excluirAgenteExternoPainel('${id}')" title="Excluir" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">🗑</button>
+        <span style="font-size:10px;color:var(--txt3);">${aberto?'▾':'▸'}</span>
+      </div>
+      ${aberto?`<div style="padding:0 11px 11px;border-top:1px solid var(--glass-b);">
+        <textarea class="cfg-input" id="agentext-p-desc-${id}" rows="3" style="width:100%;box-sizing:border-box;margin-top:8px;resize:vertical;" placeholder="O que esse agente faz, que tipo de dado ele manda...">${esc(a.descricao||'')}</textarea>
+        <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">Vale nos squads:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">${squadsChips}</div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="save-btn" onclick="salvarAgenteExternoPainel('${id}')" style="font-size:11px;padding:5px 12px;">💾 Salvar descrição</button>
+        </div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function _agenteExternoAutor(){ return window._currentUser?.displayName || window._currentUser?.email || '?'; }
+
+function criarAgenteExternoPainel(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  const chave=prompt('Identificador do especialista (o mesmo valor que ele manda no campo "especialista" da API):','');
+  if(chave===null) return;
+  const id=chave.trim();
+  if(!id) return;
+  if(agentesExternosCfg[id]){ showToast('⚠ Já existe um agente com esse identificador.'); _agentesExtPainelAberto=id; renderAgentesExternosPainel(); return; }
+  const entry={descricao:'', squads:{}, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+  agentesExternosCfg={...agentesExternosCfg, [id]:entry};
+  _agentesExtPainelAberto=id;
+  renderAgentesExternosPainel();
+  window._set(window._ref(window._db,'kanban/config/agentesExternos/'+id), entry)
+    .catch(e=>showToast('❌ '+e.message));
+}
+
+// As duas funções abaixo leem fresco do Firebase antes de escrever (em vez
+// de confiar em agentesExternosCfg[id], que pode estar desatualizado) —
+// evita reverter uma mudança concorrente no mesmo agente feita um instante
+// antes (ex.: marcar 2 squads em sequência rápida, clique 2 chegando antes
+// do round-trip do clique 1 atualizar o cache local via listener). Mesmo
+// padrão já usado em painel.html pra esse tipo de merge (ver comentário
+// "Lê fresco do Firebase antes de escrever" perto de markAllPainelNotifsRead-
+// equivalente).
+async function salvarAgenteExternoPainel(id){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  const ta=document.getElementById('agentext-p-desc-'+id); if(!ta) return;
+  const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
+  try{
+    const snap=await window._get(ref);
+    const a=snap.val(); if(!a) return;
+    const entry={...a, descricao:ta.value.trim(), atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+    await window._set(ref, entry);
+    showToast('✅ Descrição salva.');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function toggleAgenteExternoSquad(id, squadId, checked){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); renderAgentesExternosPainel(); return; }
+  const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
+  try{
+    const snap=await window._get(ref);
+    const a=snap.val(); if(!a) return;
+    const squads={...(a.squads||{})};
+    if(checked) squads[squadId]=true; else delete squads[squadId];
+    const entry={...a, squads, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+    await window._set(ref, entry);
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+function excluirAgenteExternoPainel(id){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  if(!confirm('Excluir o agente "'+id+'"? O Agente Ágil deixa de ter esse contexto extra pras próximas mensagens dele, em qualquer squad.')) return;
+  window._set(window._ref(window._db,'kanban/config/agentesExternos/'+id), null)
+    .then(()=>{ if(_agentesExtPainelAberto===id) _agentesExtPainelAberto=null; showToast('🗑 Removido.'); })
+    .catch(e=>showToast('❌ '+e.message));
+}
+// ── FIM AGENTES EXTERNOS ────────────────────────────────────────────
+
 // ── VISUALIZADORES EXTERNOS DO PAINEL (2026-08-27) ─────────────────
 // kanban/painel_viewers/{emailKey} — key = email sanitizado (mesmo padrão
 // de _painelViewerKey()/_extKey() do kanban-dev.html: minúsculo, "." vira
@@ -7525,12 +7656,13 @@ function removeDadosEditor(email){
 
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
-  ['sprint','users','adm'].forEach(t=>{
+  ['sprint','users','adm','agentesext'].forEach(t=>{
     const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
     const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
   if(tab==='users') loadPcfgUsers();
   if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
+  if(tab==='agentesext') renderAgentesExternosPainel();
 }
 
 function loadPcfgUsers(){
@@ -7807,6 +7939,7 @@ window.addEventListener('fb-ready',()=>{
   setTimeout(()=>{ if(_isPtab('pessoas')) renderPcal(); }, 2000);
   loadErrorLogs();
   loadAdmList();
+  loadAgentesExternosPainel();
   loadLembretesGestao();
   loadKudosGeral();
   loadPainelCampanhas();

@@ -8932,6 +8932,19 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.02 · painel — 2026-08-29 · promove pra prod — aba "🔌 Agentes Externos" (registro global, cross-squad)
+Promove pra produção o acumulado de `painel-dev.html` desde a última
+promoção (v3.01 e v3.02) — entradas correspondentes em "painel-dev.html"
+logo abaixo. Aplicado como diff cirúrgico (não `cp` — `painel.html`/
+`painel-dev.html` divergem de verdade, ver `CLAUDE.md`): nova aba "🔌
+Agentes Externos" em ⚙ Configurações (lista global de sistemas
+externos que mandam mensagens pro Agente Ágil, com controle de em quais
+squads cada um vale), já incluindo o fix de corrida (leitura fresca do
+Firebase antes de mesclar/escrever) achado no dia seguinte via
+`/monitorarbugs`.
+
+Checks de rotina: node --check OK, brace/paren balance -1/-12.
+
 ### painel-dev.html v3.02 · painel-dev — 2026-08-29 · Fix (/monitorarbugs): toggle de squad podia reverter mudança concorrente silenciosamente
 
 `toggleAgenteExternoSquad()` e `salvarAgenteExternoPainel()` (v3.01,
