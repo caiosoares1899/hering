@@ -406,8 +406,8 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
   evento específico (a grade do calendário continua visível). Não
   corrigido — sinalizado no `CHANGELOG.md`.
 
-### Agentes Externos (2026-08-28, só em painel-dev.html — ainda não
-promovido pra prod; linhas abaixo são de painel-dev.html)
+### Agentes Externos (2026-08-28/29, presente em painel.html e painel-dev.html;
+linhas abaixo são de painel-dev.html)
 Registro global (não mais por squad) de sistemas externos que mandam
 mensagens pro Agente Ágil via API — ADM/PO documenta o que cada um faz
 e em quais squads a descrição vale. Migrado pra cá a partir de uma
@@ -423,9 +423,13 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   "🔌 Agentes Externos" de `openCfg()`; cada item mostra descrição
   (textarea) + chips de squad (`SQUADS`, checkbox por squad).
 - `criarAgenteExternoPainel()` — L6758 / `salvarAgenteExternoPainel(id)`
-  — L6771 / `toggleAgenteExternoSquad(id,squadId,checked)` — L6781
+  — L6781 / `toggleAgenteExternoSquad(id,squadId,checked)` — L6794
   (grava na hora, sem precisar de "Salvar") / `excluirAgenteExternoPainel(id)`
-  — L6790. Todas as escritas gateadas por `_isAdmPainel()`.
+  — L6807. Todas as escritas gateadas por `_isAdmPainel()`. As duas do
+  meio leem fresco do Firebase (`window._get`) antes de mesclar/escrever
+  — achado real `/monitorarbugs` (2026-08-29): sem isso, marcar 2 squads
+  em sequência rápida no mesmo agente podia apagar a 1ª marcação
+  silenciosamente (corrida contra o cache local desatualizado).
 
 ### Dashboard consolidado
 - `loadAll()` — L8158 / `renderAll()` — L8179
