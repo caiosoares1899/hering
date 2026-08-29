@@ -2232,7 +2232,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.01 · painel-dev</div>
+<div class="version">v3.02 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6770,23 +6770,38 @@ function criarAgenteExternoPainel(){
     .catch(e=>showToast('❌ '+e.message));
 }
 
-function salvarAgenteExternoPainel(id){
+// As duas funções abaixo leem fresco do Firebase antes de escrever (em vez
+// de confiar em agentesExternosCfg[id], que pode estar desatualizado) —
+// evita reverter uma mudança concorrente no mesmo agente feita um instante
+// antes (ex.: marcar 2 squads em sequência rápida, clique 2 chegando antes
+// do round-trip do clique 1 atualizar o cache local via listener). Mesmo
+// padrão já usado em painel.html pra esse tipo de merge (ver comentário
+// "Lê fresco do Firebase antes de escrever" perto de markAllPainelNotifsRead-
+// equivalente).
+async function salvarAgenteExternoPainel(id){
   if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
   const ta=document.getElementById('agentext-p-desc-'+id); if(!ta) return;
-  const a=agentesExternosCfg[id]; if(!a) return;
-  const entry={...a, descricao:ta.value.trim(), atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
-  window._set(window._ref(window._db,'kanban/config/agentesExternos/'+id), entry)
-    .then(()=>showToast('✅ Descrição salva.'))
-    .catch(e=>showToast('❌ '+e.message));
+  const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
+  try{
+    const snap=await window._get(ref);
+    const a=snap.val(); if(!a) return;
+    const entry={...a, descricao:ta.value.trim(), atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+    await window._set(ref, entry);
+    showToast('✅ Descrição salva.');
+  }catch(e){ showToast('❌ '+e.message); }
 }
 
-function toggleAgenteExternoSquad(id, squadId, checked){
+async function toggleAgenteExternoSquad(id, squadId, checked){
   if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); renderAgentesExternosPainel(); return; }
-  const a=agentesExternosCfg[id]; if(!a) return;
-  const squads={...(a.squads||{})};
-  if(checked) squads[squadId]=true; else delete squads[squadId];
-  const entry={...a, squads, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
-  window._set(window._ref(window._db,'kanban/config/agentesExternos/'+id), entry).catch(e=>showToast('❌ '+e.message));
+  const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
+  try{
+    const snap=await window._get(ref);
+    const a=snap.val(); if(!a) return;
+    const squads={...(a.squads||{})};
+    if(checked) squads[squadId]=true; else delete squads[squadId];
+    const entry={...a, squads, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+    await window._set(ref, entry);
+  }catch(e){ showToast('❌ '+e.message); }
 }
 
 function excluirAgenteExternoPainel(id){
