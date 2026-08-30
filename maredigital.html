@@ -190,7 +190,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('firebase-db')"><span class="nd" style="background:var(--teal)"></span>Estrutura Firebase</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.258</div>
+  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.504</div>
     <a class="nl" onclick="goTo('auth')"><span class="nd" style="background:var(--purple)"></span>Autenticação & papéis</a>
     <a class="nl" onclick="goTo('board')"><span class="nd" style="background:var(--accent)"></span>Board & visualizações</a>
     <a class="nl" onclick="goTo('cards')"><span class="nd" style="background:var(--cyan)"></span>Sistema de cards</a>
@@ -203,11 +203,11 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('backup')"><span class="nd" style="background:var(--orange)"></span>Backup & snapshots</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.449-dev</div>
+  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.504-dev</div>
     <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">painel.html · v2.98</div>
+  <div class="ng"><div class="ng-lbl">painel.html · v3.02</div>
     <a class="nl" onclick="goTo('painel-overview')"><span class="nd" style="background:var(--teal)"></span>Visão geral</a>
     <a class="nl" onclick="goTo('painel-sections')"><span class="nd" style="background:var(--cyan)"></span>Seções & métricas</a>
     <a class="nl" onclick="goTo('painel-setup')"><span class="nd" style="background:var(--purple)"></span>Board Setup</a>
@@ -231,9 +231,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <h1>Maré Digital<br><span>Documentação Técnica</span></h1>
   <p class="hdesc">Sistema Kanban desenvolvido internamente. Páginas HTML autocontidas (sem build, sem servidor próprio), sincronização em tempo real via Firebase, um orquestrador de IA rodando em Cloud Functions e suporte a múltiplos squads.</p>
   <div class="pills">
-    <span class="pill pb">kanban.html · v8.30.258</span>
-    <span class="pill pp">kanban-dev.html · v8.30.449-dev</span>
-    <span class="pill pt">painel.html · v2.98</span>
+    <span class="pill pb">kanban.html · v8.30.504</span>
+    <span class="pill pp">kanban-dev.html · v8.30.504-dev</span>
+    <span class="pill pt">painel.html · v3.02</span>
     <span class="pill pw">🤖 Agente Ágil · Claude</span>
     <span class="pill po">☁ Firebase RTDB + Functions</span>
   </div>
@@ -315,9 +315,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <table class="tbl">
     <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
     <tbody>
-      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.258 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=midia</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
-      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.449-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, Modo autônomo do agente</td></tr>
-      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v2.98</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
+      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.504 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=midia</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
+      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.504-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
+      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v3.02</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
       <tr><td>firebase-messaging-sw.js</td><td>sem versão própria</td><td>raiz do domínio</td><td>Service Worker — cache offline + exibição de push com a aba fechada</td></tr>
       <tr><td>maredigital.html</td><td>sem versão própria</td><td>acesso direto</td><td>Esta página — documentação técnica, fora do ciclo de release versionado</td></tr>
     </tbody>
@@ -325,7 +325,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
   <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
     <div class="wch"><div class="wci">🔁</div><div class="wct">Relação prod ↔ dev</div></div>
-    <div class="wcb"><strong>kanban-dev.html é testado primeiro</strong> — toda feature nova entra ali, é validada por quem pediu, e só depois é portada cirurgicamente para kanban.html (nunca uma cópia cega do arquivo inteiro). Squad padrão <code class="hl">dev</code> mantém os dados isolados de produção, e é o único squad onde o "Modo autônomo" do Agente Ágil está disponível hoje.</div>
+    <div class="wcb"><strong>kanban-dev.html é testado primeiro</strong> — toda feature nova entra ali, é validada por quem pediu, e só depois é portada cirurgicamente para kanban.html (nunca uma cópia cega do arquivo inteiro). Squad padrão <code class="hl">dev</code> mantém os dados isolados de produção — é onde o Agente Ágil é testado antes de ganhar escrita real em outro squad (hoje: <code class="hl">dev</code> e <code class="hl">dados</code>).</div>
   </div>
   <div class="wc" style="margin-top:9px;">
     <div class="wch"><div class="wci">🗺️</div><div class="wct">CODE_MAP.md — índice pra navegar no código</div></div>
@@ -505,28 +505,37 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 <!-- 10 AGENTE -->
 <section class="section" id="agent">
   <div class="sh"><div class="sn">10</div><div>
-    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>IA · kanban.html</div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>IA · orquestrador</div>
     <h2>Agente Ágil</h2>
-    <p class="slead">Orquestrador de IA rodando como Cloud Function, com um loop de ferramentas próprio — não é mais um proxy simples pro chat da Anthropic.</p>
+    <p class="slead">Orquestrador de IA rodando em Cloud Functions (<code class="hl">functions/agente-agil-orquestrador/</code>) — um loop de ferramentas de verdade contra a API da Anthropic (<code class="hl">runLoop()</code>/<code class="hl">buildTools()</code>/<code class="hl">systemPrompt.js</code>), não um proxy simples de chat. Substitui a geração anterior (<code class="hl">functions/agente-agil/</code>, v0-v3) — essa continua deployada só como o ponto de entrada HTTP que especialistas externos usam pra enfileirar informação (ver "Especialistas externos" abaixo), nunca mais decide sozinha o que fazer com um card.</p>
   </div></div>
-  <div class="wc" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
-    <div class="wch"><div class="wci">💬</div><div class="wct">Gatilho: @menção em comentário</div></div>
-    <div class="wcb">Escreva <code class="hl">@Agente Ágil</code> num comentário de card e a Cloud Function <code class="hl">agenteAgilMencao</code> (<code class="hl">functions/agente-agil-orquestrador/mentionTrigger.js</code>) dispara automaticamente — ouvindo o path de comentários do squad. Ignora sempre, antes de mais nada, qualquer comentário que já seja do próprio agente (evita auto-disparo em loop) e é idempotente contra reentrega do Firebase Functions.</div>
-  </div>
-  <div class="wc" style="margin-top:8px;">
-    <div class="wch"><div class="wci">🤖</div><div class="wct">Modo autônomo (Automações)</div></div>
-    <div class="wcb">A ação "Notificar Agente Ágil" das Automações pode, em vez de abrir o painel local, escrever ela mesma um comentário <code class="hl">@Agente Ágil</code> no card que disparou a regra — entrando no mesmo pipeline validado da @menção humana, sem nenhuma Cloud Function nova. Disponível hoje no squad <code class="hl">dev</code>.</div>
-  </div>
+
+  <div class="cl">4 formas de acionar o orquestrador</div>
   <div class="tbl-wrap">
-  <table class="tbl" style="margin-top:.9rem;">
-    <thead><tr><th>Ferramenta (tool_use)</th><th>O que faz</th></tr></thead>
+  <table class="tbl">
+    <thead><tr><th>Gatilho</th><th>Como funciona</th></tr></thead>
     <tbody>
-      <tr><td>ler_card</td><td>Lê o resumo do card atual — descrição, checklist, comentários, coluna, tags, responsável/participantes. Chamada antes de agir em pedidos abertos.</td></tr>
+      <tr><td>@menção em comentário</td><td>Escreva <code class="hl">@Agente Ágil</code> num comentário de card — <code class="hl">mentionTrigger.js</code> é uma <strong>fábrica multi-squad</strong> (<code class="hl">createMentionTrigger()</code>): cada squad com escrita real vira sua própria Cloud Function (<code class="hl">agenteAgilMencao</code> pro squad <code class="hl">dev</code>, <code class="hl">agenteAgilMencaoDados</code> pro squad <code class="hl">dados</code>). Ignora sempre comentários do próprio agente (evita loop) e é idempotente contra reentrega do Firebase Functions.</td></tr>
+      <tr><td>Especialista externo (HTTPS)</td><td>Um sistema fora do Maré Digital (ex.: Databricks) manda texto livre pro endpoint HTTP de <code class="hl">agente-agil/http.js</code> — que só valida e enfileira em <code class="hl">agente_intake_pending</code>, nunca aplica ação nenhuma sozinho. <code class="hl">intakeTrigger.js</code> processa a fila e decide o que fazer (comentar, mover, sugerir um card novo via <code class="hl">criar_card</code>...). Squad <code class="hl">dev</code>, escrita real.</td></tr>
+      <tr><td>Automação "Notificar Agente Ágil"</td><td>Uma regra de Automação (ver seção 11) pode escrever ela mesma um comentário <code class="hl">@Agente Ágil</code> no card que disparou — entra no mesmo pipeline da @menção humana, sem Cloud Function extra. Também dispara sozinho 1x/dia pra "Card vence hoje"/"Card atrasado" via <code class="hl">dueOverdueTrigger.js</code> (scan agendado, squads <code class="hl">dev</code> e <code class="hl">dados</code>), se a regra correspondente estiver configurada naquele squad.</td></tr>
+      <tr><td>🤖 Resumo do Agente Ágil (Meu Dia)</td><td><code class="hl">resumoMeuDia.js</code> — único caminho <strong>sob demanda</strong> (<code class="hl">onRequest</code>, botão no painel "Meu Dia") e o único que <strong>não escreve nada</strong> no board — só lê os cards ativos da pessoa e devolve um resumo interpretado (atrasados, bloqueados, sem descrição...). Sem cards pendentes, nem chama o modelo (custo zero).</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="cl" style="margin-top:1.1rem;">13 ferramentas (tool_use)</div>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>Ferramenta</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>ler_card</td><td>Lê o resumo do card atual — descrição, checklist, comentários (com <code class="hl">origem</code>: humano/próprio/automação/especialista), coluna, tags, responsável/participantes, e o mapa id↔nome de todas as colunas do board.</td></tr>
       <tr><td>visao_board</td><td>Visão agregada do board: WIP vs. limite por coluna, throughput, cycle/lead time, gargalo por coluna e bloqueios ativos.</td></tr>
       <tr><td>biblioteca_agil</td><td>Base de conhecimento estática — conceitos ágeis e como cada funcionalidade do Maré Digital funciona na prática.</td></tr>
-      <tr><td>mover_coluna</td><td>Move o card para outra coluna.</td></tr>
-      <tr><td>editar_campos</td><td>Edita título, descrição, tags, prioridade e outros campos do card.</td></tr>
+      <tr><td>criar_card</td><td>Cria um <strong>rascunho</strong> em Pedidos de Intake (nunca escreve em <code class="hl">/cards</code> direto) — pra quando a informação recebida ainda não tem nenhum card associado. Respeita as mesmas regras obrigatórias do modal (Ficha Técnica, Submarca).</td></tr>
+      <tr><td>mover_coluna</td><td>Move o card para outra coluna (por id, não por nome de exibição).</td></tr>
+      <tr><td>editar_campos</td><td>Edita título, descrição, tags e prioridade do card.</td></tr>
       <tr><td>checklist_item</td><td>Adiciona ou marca um item de checklist.</td></tr>
+      <tr><td>risco</td><td>Adiciona um risco ao card (só adiciona — sem estado/id, sem "resolver").</td></tr>
       <tr><td>comentario</td><td>Posta um comentário no card.</td></tr>
       <tr><td>link</td><td>Anexa um link ao card.</td></tr>
       <tr><td>relatorio_html</td><td>Gera um relatório em HTML sobre o card ou o board.</td></tr>
@@ -535,9 +544,22 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     </tbody>
   </table>
   </div>
+  <div class="wcb" style="margin-top:.5rem;font-size:10.5px;">Quando ainda não existe um card pra vincular (gatilho de especialista externo, sem <code class="hl">cardId</code> resolvido), o toolset fica restrito a <code class="hl">criar_card</code>/<code class="hl">visao_board</code>/<code class="hl">biblioteca_agil</code> — as demais exigem um card já existente.</div>
+
+  <div class="grid g2" style="margin-top:1.1rem;">
+    <div class="wc"><div class="wch"><div class="wci">🔌</div><div class="wct">Contexto de especialistas externos</div></div><div class="wcb">Registro global (<code class="hl">kanban/config/agentesExternos/{especialista}</code>, editado no <strong>Painel</strong> → ⚙ Config → 🔌 Agentes Externos) onde ADM/PO descreve o que cada sistema externo faz e em quais squads a descrição vale. O orquestrador injeta essa descrição no início da tarefa sempre que a mensagem vem daquele especialista naquele squad — sem precisar que o texto se auto-explique toda vez.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">📜</div><div class="wct">Histórico do Agente Ágil</div></div><div class="wcb">Aba "🤖 Histórico do Agente" em ⚙ Configurações (kanban.html) — todas as vezes que o agente mudou algo num card daquele squad, com a origem (@menção, Automação, ou especialista externo) e a lista de ações em português simples. Não polui com chamadas que só leram o card.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">💬</div><div class="wct">Card "Converse com o Agente Ágil"</div></div><div class="wcb">Card especial, fora do grafo normal (sem dono, sem prazo, fora de métricas/buscas) — pra conversa solta que não precisa virar uma tarefa de verdade. Também recebe o comentário quando um especialista externo manda algo sem card associado e nada de acionável nasce daquilo.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧭</div><div class="wct">Roteamento de modelo + cache</div></div><div class="wcb"><code class="hl">escolheClienteParaTarefa.js</code> manda perguntas curtas/conceituais pro <code class="hl">haiku</code> e o resto (qualquer pedido de ação) pro <code class="hl">sonnet</code>, com override manual disponível. Prompt caching (system + histórico) evita reprocessar do zero a cada iteração do loop.</div></div>
+  </div>
+
   <div class="wc" style="margin-top:8px;">
-    <div class="wch"><div class="wci">🔑</div><div class="wct">Chave protegida via Secret Manager</div></div>
-    <div class="wcb">A chave da Anthropic é gerenciada com <code class="hl">defineSecret()</code> (<code class="hl">firebase-functions/params</code>) e configurada via <code class="hl">firebase functions:secrets:set</code> — nunca fica em código, nem em variável de ambiente em texto puro.</div>
+    <div class="wch"><div class="wci">⚡</div><div class="wct">Automação ↔ Agente Ágil, nas duas direções</div></div>
+    <div class="wcb">Automação → agente: a ação "Notificar Agente Ágil" (seção 11). Agente → automação: quando o orquestrador move um card, edita campos, marca um checklist ou registra um risco (escrita direta no Firebase, fora do fluxo normal do cliente), ele enfileira o evento em <code class="hl">agente_pending_auto</code> — qualquer board aberto reivindica a entrada via <code class="hl">transaction()</code> e dispara a Automação correspondente, garantindo 1 disparo só mesmo com várias pessoas com o board aberto ao mesmo tempo.</div>
+  </div>
+  <div class="wc" style="margin-top:8px;">
+    <div class="wch"><div class="wci">🔑</div><div class="wct">Escrita real é opt-in, chave protegida via Secret Manager</div></div>
+    <div class="wcb">Cada squad só ganha escrita de verdade (<code class="hl">dryRun:false</code>) depois de validado — hoje são <code class="hl">dev</code> e <code class="hl">dados</code>. A chave da Anthropic é gerenciada com <code class="hl">defineSecret()</code> (<code class="hl">firebase-functions/params</code>) e configurada via <code class="hl">firebase functions:secrets:set</code> — nunca fica em código, nem em variável de ambiente em texto puro.</div>
   </div>
 </section>
 
@@ -553,8 +575,12 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wch"><div class="wci">🎬</div><div class="wct">Ações</div></div><div class="wcb"><strong>Mover para coluna · Definir prioridade · Adicionar/remover tag · Atribuir responsável · Notificar Agente Ágil (painel ou @menção autônoma) · Definir submarca/tamanho/demandante/padrão/capa · Marcar como OKR · Adicionar item de checklist · Aplicar fan-out (criar cards filhos).</strong></div></div>
   </div>
   <div class="grid g2" style="margin-top:8px;">
-    <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">Notificar Agente Ágil — 2 modos</div></div><div class="wcb">Aba clássica (abre o painel local do Agente Ágil pré-preenchido) ou <strong>Modo autônomo</strong> — escreve o comentário <code class="hl">@Agente Ágil</code> direto no card, disparando o orquestrador via Cloud Function sem intervenção humana. Modo autônomo disponível hoje no squad <code class="hl">dev</code>.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">Notificar Agente Ágil</div></div><div class="wcb">Escreve o comentário <code class="hl">@Agente Ágil</code> direto no card que disparou a regra, entrando no mesmo pipeline validado da @menção humana — sem Cloud Function extra. Disponível nos squads com escrita real do orquestrador (<code class="hl">dev</code> e <code class="hl">dados</code>).</div></div>
     <div class="wc"><div class="wch"><div class="wci">🧪</div><div class="wct">AutoLab — teste antes de ativar</div></div><div class="wcb">Botão <strong>Testar no AutoLab</strong> simula o efeito da regra no estado atual do board, mostrando quais cards seriam afetados antes de ativar de verdade.</div></div>
+  </div>
+  <div class="wc" style="margin-top:8px;border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
+    <div class="wch"><div class="wci">🔁</div><div class="wct">Também dispara pra mutações do Agente Ágil</div></div>
+    <div class="wcb">Automações são avaliadas no cliente (<code class="hl">runAutoRules()</code>), mas o orquestrador escreve direto no Firebase via Admin SDK. Uma fila (<code class="hl">agente_pending_auto</code>) faz a ponte: o backend anuncia o que mudou, qualquer board aberto reivindica a entrada por <code class="hl">transaction()</code> antes de disparar a regra — garantindo 1 disparo só, não 1 por aba aberta. Ver seção "Agente Ágil" pra mais detalhe.</div>
   </div>
 </section>
 
@@ -798,14 +824,18 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="sh"><div class="sn">23</div><div>
     <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>Cloud Functions</div>
     <h2>Cloud Functions & Secrets</h2>
-    <p class="slead">Duas funções deployadas em <code class="hl">functions/</code>, rodando com credenciais próprias do Firebase — nada de proxy externo.</p>
+    <p class="slead">Funções deployadas em <code class="hl">functions/</code>, rodando com credenciais próprias do Firebase — nada de proxy externo.</p>
   </div></div>
   <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Função</th><th>Trigger</th><th>O que faz</th></tr></thead>
     <tbody>
       <tr><td>sendPushOnNotification</td><td><code class="hl">onValueCreated</code> em <code class="hl">usuarios/{uid}/notificacoes/{id}</code></td><td>Converte notificações elegíveis (allow-list <code class="hl">PUSH_TYPES</code>) em push via FCM, respeitando o DND e prunando tokens inválidos.</td></tr>
-      <tr><td>agenteAgilMencao</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> do squad dev</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando as ferramentas reais.</td></tr>
+      <tr><td>agenteAgilMencao / agenteAgilMencaoDados</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> — fábrica multi-squad, uma function por squad (<code class="hl">dev</code> / <code class="hl">dados</code>)</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando as 13 ferramentas reais.</td></tr>
+      <tr><td>agenteAgilIntake</td><td><code class="hl">onValueCreated</code> em <code class="hl">agente_intake_pending</code> (squad dev)</td><td>2º gatilho automático — processa o que um especialista externo mandou via HTTP, resolve o card (se houver) e decide sozinho a ação, incluindo sugerir um card novo.</td></tr>
+      <tr><td>agenteAgilDueOverdueScan</td><td><code class="hl">onSchedule</code> diário (squads dev e dados)</td><td>Varre cards vencendo hoje/atrasados e aciona o Agente Ágil (mesma rota da @menção) só nos squads com a Automação "Card vence hoje"/"Card atrasado" configurada.</td></tr>
+      <tr><td>agenteAgilResumoMeuDia</td><td><code class="hl">onRequest</code>, sob demanda</td><td>"🤖 Resumo do Agente Ágil" dentro de Meu Dia — único caminho que só lê, nunca escreve no board.</td></tr>
+      <tr><td>agenteAgil</td><td>HTTP público, autenticado por chave</td><td>Geração mais antiga (v0-v3) — hoje só o ponto de entrada que especialistas externos usam pra enfileirar informação; não decide mais ação nenhuma sozinha (ver "Agente Ágil").</td></tr>
       <tr><td>intakeSubmit</td><td>HTTP público, sem login</td><td>Único ponto de escrita anônima do sistema — formulário de intake por squad grava em <code class="hl">intake_pending</code> (nunca direto em <code class="hl">/cards</code>); alguém do squad confirma e cria o card de verdade. Protegido por honeypot + rate limit por IP.</td></tr>
       <tr><td>weeklyBackup</td><td><code class="hl">onSchedule</code> todo domingo 04:00 (Brasília)</td><td>Backup automático de cada squad pro Cloud Storage, sem depender de ninguém abrir o board — mesmo formato do "Baixar JSON agora", restaurável direto pela UI. Retenção de 60 dias (~8-9 backups semanais por squad).</td></tr>
       <tr><td>Integração Spotify <span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);">pausada</span></td><td><code class="hl">onSchedule</code> a cada minuto (comentado, não deployado)</td><td>"Ouvindo agora" (presença ao vivo por squad) + "Rádio do Maré" (playlist colaborativa). O sync periódico era a única function agendada rodando 24h/dia e custou mais do que o esperado — pausado em 2026-08-04, painel escondido no board (<code class="hl">#spotify-tab</code>). As demais functions da integração (conectar/desconectar, sync sob demanda, playback, rádio) continuam deployadas, só sem o sync alimentando dado fresco.</td></tr>
