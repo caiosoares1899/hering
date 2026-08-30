@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.504-dev</div>
+<div class="version">v8.30.505-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10553,6 +10553,13 @@ function scheduleAutoSave(){
     parseMentions(c.po, c.id);
     parseMentions(c.blockerReason, c.id);
     (c.descsExtra||[]).forEach(d=>parseMentions(d?.text, c.id));
+    // Itens de checklist também têm @menção (ver renderCL()/clEditId) — editar
+    // um item existente só passa por AQUI (o blur do textarea de edição chama
+    // scheduleAutoSave() direto, nunca saveCard()), então sem esta linha uma
+    // @menção digitada num item de checklist nunca notificava ninguém, a
+    // menos que a pessoa clicasse em "Salvar" por algum outro motivo depois
+    // (achado real, /monitorarbugs 2026-08-30 — mesma classe dos campos acima).
+    (c.checklist||[]).forEach(it=>parseMentions(it?.t, c.id));
     if(c.owner && c.owner!==_prevOwner){ notifAssigned(c.owner, c.id, c.title); runAutoRules('assigned', c.id, c.owner); }
     if(_prevBlocker && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
     else if(!_prevBlocker && c.blocker) runAutoRules('blocked', c.id);
