@@ -363,6 +363,23 @@ Mesma disciplina de sempre neste repo:
   `_refreshOpenCardPattern()` chamado pelas 4 funções que estavam sem
   isso (dev v8.30.504-dev).
 
+- **2026-08-30, área Notificações in-app (client-side)**: pedido
+  genérico — nenhuma área coberta ainda pela skill, escolhida por estar
+  ligada ao mesmo padrão de bug já achado 2x no backend (`idOverride`
+  de menção não cobrindo todos os caminhos, `mentionTrigger.js`). 1
+  achado real via técnica 1 (comparando caminhos paralelos pra mesma
+  operação): o wrapper de notificações em torno de `saveCard()` manual
+  já disparava `parseMentions()` nos itens de checklist, mas o bloco
+  equivalente em `scheduleAutoSave()` (autosave) não — e editar um item
+  de checklist já existente só passa pelo autosave (blur/Enter do
+  textarea chama `scheduleAutoSave()` direto, nunca `saveCard()`), então
+  uma `@menção` digitada num item de checklist só notificava se a
+  pessoa clicasse em "Salvar" por outro motivo depois. Mesma classe já
+  corrigida aqui pra descrição/PO/motivo de bloqueio — só não foi
+  estendida quando a menção em checklist foi adicionada depois (commit
+  `c134ccd`). Fix: mesma chamada de `parseMentions()` adicionada no
+  bloco de notificações do autosave (dev v8.30.505-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

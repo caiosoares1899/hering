@@ -2188,6 +2188,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.505-dev — 2026-08-30 — Fix (/monitorarbugs): @menção em item de checklist só notificava se a pessoa clicasse em "Salvar"
+
+Rodada genérica (sem área pedida) — escolhida "Notificações in-app",
+nunca varrida por esta skill, por estar ligada a um padrão de bug já
+achado 2x no backend (`idOverride` de menção não cobrindo todos os
+caminhos).
+
+Achado (técnica 1, comparando caminhos paralelos pra mesma operação —
+disparar `parseMentions()` num campo do card): o wrapper de
+notificações em torno do `saveCard()` manual (botão "Salvar") já
+parseava `@menção` nos itens de checklist, mas o bloco equivalente
+dentro de `scheduleAutoSave()` (autosave, debounce 800ms) não —
+parseava só descrição/PO/motivo de bloqueio/descrições extras.
+
+Cenário concreto: editar um item de checklist já existente (ex.:
+escrever `@fulano` nele) só passa por `scheduleAutoSave()` — o blur/
+Enter do textarea de edição chama isso direto, nunca `saveCard()` (ver
+`renderCL()`). Sem clicar em "Salvar" por outro motivo depois, o
+`@fulano` nunca era notificado — mesma classe de bug já corrigida aqui
+pra descrição/PO/motivo de bloqueio (o comentário original já
+documentava esse raciocínio, só não foi estendido quando a menção em
+checklist foi adicionada depois, em outro commit).
+
+Fix: adicionada a mesma chamada (`(c.checklist||[]).forEach(it=>
+parseMentions(it?.t, c.id))`) no bloco de notificações do autosave.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0 (mesmo
+baseline de antes desta mudança).
+
 ### v8.30.504-dev — 2026-08-29 — Fix (/monitorarbugs): editar Padrões de card não atualizava um card já aberto na hora
 
 Varredura completa da área "Padrão de card" (já tinha 3 bugs reais em
