@@ -2174,6 +2174,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.504-dev — 2026-08-29 — Fix (/monitorarbugs): editar Padrões de card não atualizava um card já aberto na hora
+
+Varredura completa da área "Padrão de card" (já tinha 3 bugs reais em
+dias recentes: #589, #590, e o `padrao_set` de ontem) — desta vez fora
+do ângulo de Automação. Achado (técnica 2, comparando funções irmãs):
+das 5 funções que mexem em `cardPatterns`, só `togglePadraoSecao()`
+atualizava o card ABERTO na hora (`_applyCardSectionsVisibility()`).
+`criarPadraoCard()`, `renomearPadraoCard()`, `definirPadraoDefault()`
+e `excluirPadraoCard()` dependiam só do round-trip do Firebase pra
+corrigir sozinho — janela real de inconsistência visual, alcançável de
+verdade (`mnavGo('cfg')`, nav mobile, abre ⚙ Configurações sem fechar
+o card que já está aberto).
+
+Fix: `_refreshOpenCardPattern()` (helper novo) replica o mesmo par de
+chamadas que o `fbListen` de `config/cardPatterns` já fazia, chamado
+agora pelas 4 funções que estavam sem isso.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0 (mesmo
+baseline de antes desta mudança).
+
 ### v8.30.503-dev — 2026-08-29 — Fix (/monitorarbugs, arquitetural): mutações do Agente Ágil nunca disparavam Automações
 
 Achado ao continuar auditando Automações: cards movidos/editados pelo
