@@ -218,6 +218,30 @@ outra mudança na página:
   automação "assigned"/"move" (bug fix restaurando promessa já feita,
   ou puramente visual — sem tela nova pra documentar).
 
+- **v8.30.484-dev → v8.30.508-dev (2026-08-30, invocação genérica
+  "/atualizarhelpcontent")**: maior backlog desde a criação da skill —
+  ~24 commits acumulados (multi-squad do Agente Ágil já coberto em
+  rodada anterior à v8.30.484; desde então: ferramenta `criar_card`,
+  ferramenta `risco`, Histórico do Agente, intake de especialista
+  externo com escrita real, mutações do orquestrador disparando
+  Automações, trigger novo `agendado_created`). 6 correções — ver
+  entrada do `CHANGELOG.md` (v8.30.508-dev) pro texto completo de cada
+  uma. **Achado mais sério: uma claim FALSA** em "Ações que o agente
+  pode executar" ("o agente não cria... cards") — ficou desatualizada
+  desde 2026-08-27 quando `criar_card` foi adicionado; diferente de um
+  gap de "faltou documentar", isso ativamente MENTIA sobre o
+  comportamento atual pra quem lesse a Central de Ajuda. Lição: ao
+  revisar uma entrada antiga, não vale só perguntar "falta algo aqui?"
+  — vale reler cada frase categórica ("não faz X", "sempre Y", "só Z")
+  contra o código de verdade, porque são essas frases que envelhecem
+  mal quando a funcionalidade ganha uma capacidade nova bem no meio do
+  que antes era uma limitação documentada. Achado 2: o texto inline da
+  própria aba "🤖 Histórico do Agente Ágil" (a OUTRA fonte, ver
+  cabeçalho desta skill) tinha o MESMO tipo de gap que o
+  `HELP_CONTENT` — as duas fontes desatualizaram juntas porque nenhuma
+  cobre uma origem (`especialista`) que existe há mais de 3 dias no
+  backend.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.
