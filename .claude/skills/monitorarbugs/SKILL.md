@@ -347,6 +347,22 @@ Mesma disciplina de sempre neste repo:
   "depois" era escrito — mascarava qualquer diff. 8 testes novos, dev
   v8.30.503-dev.
 
+- **2026-08-29, área Padrões de card (`cardPatterns`) — varredura
+  completa, fora do ângulo de Automação**: nenhum código novo desde a
+  rodada anterior, prioridade 1 não mudou; escolhida a prioridade 2, mas
+  não uma área qualquer — "Padrão de card" já tinha 3 bugs reais em
+  dias recentes (#589, #590, e `padrao_set` corrigido ontem), sinal de
+  risco concentrado ali. 1 achado real via técnica 2 (comparação de
+  funções irmãs): de 5 funções que mexem em `cardPatterns`, só
+  `togglePadraoSecao()` atualizava um card já ABERTO na hora
+  (`_applyCardSectionsVisibility()`); `criarPadraoCard()`/
+  `renomearPadraoCard()`/`definirPadraoDefault()`/`excluirPadraoCard()`
+  dependiam só do round-trip do Firebase — janela real de
+  inconsistência, alcançável de verdade (`mnavGo('cfg')` no nav mobile
+  abre Configurações sem fechar um card já aberto). Fix: helper
+  `_refreshOpenCardPattern()` chamado pelas 4 funções que estavam sem
+  isso (dev v8.30.504-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

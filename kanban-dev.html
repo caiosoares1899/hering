@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.503-dev</div>
+<div class="version">v8.30.504-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19581,6 +19581,19 @@ function renderCardPatternsCfg(){
   }).join('');
 }
 function _cardSectionVisible2(pattern, key){ return pattern?.sections?.[key]!==false; }
+// Achado real (/monitorarbugs, 2026-08-29): das 5 funções que mexem em
+// cardPatterns, só togglePadraoSecao() atualizava o card ABERTO na hora
+// (_applyCardSectionsVisibility()) — estas 4 dependiam só do round-trip do
+// Firebase (fbListen de config/cardPatterns já faz essa dupla checagem
+// certinho) pra corrigir sozinho, alguns instantes depois. Alcançável de
+// verdade: mnavGo('cfg') (nav mobile) abre #cfg-ov sem fechar #card-ov
+// primeiro. _refreshOpenCardPattern() replica o mesmo par de chamadas que o
+// listener já faz, pra não ficar 4 cópias do mesmo guard espalhadas.
+function _refreshOpenCardPattern(){
+  if(!document.getElementById('card-ov')?.classList.contains('open')) return;
+  populateCardPatternSelect();
+  _applyCardSectionsVisibility();
+}
 async function criarPadraoCard(){
   const nome=await uiPrompt('Nome do padrão:', '', {title:'📐 Novo padrão de card', placeholder:'Ex.: Bug, Campanha, Simples...'});
   if(nome===null) return;
@@ -19590,6 +19603,7 @@ async function criarPadraoCard(){
   fbSet(FB+'/config/cardPatterns', cardPatterns);
   _padroesCfgAberto=id;
   renderCardPatternsCfg();
+  _refreshOpenCardPattern();
 }
 async function renomearPadraoCard(id){
   const p=cardPatterns[id]; if(!p) return;
@@ -19599,6 +19613,7 @@ async function renomearPadraoCard(id){
   cardPatterns={...cardPatterns, [id]:{...p, nome:t}};
   fbSet(FB+'/config/cardPatterns', cardPatterns);
   renderCardPatternsCfg();
+  _refreshOpenCardPattern();
 }
 function definirPadraoDefault(id){
   const next={};
@@ -19606,6 +19621,7 @@ function definirPadraoDefault(id){
   cardPatterns=next;
   fbSet(FB+'/config/cardPatterns', cardPatterns);
   renderCardPatternsCfg();
+  _refreshOpenCardPattern();
   showToast('★ Padrão da squad atualizado.');
 }
 async function excluirPadraoCard(id){
@@ -19616,6 +19632,7 @@ async function excluirPadraoCard(id){
   fbSet(FB+'/config/cardPatterns', cardPatterns);
   if(_padroesCfgAberto===id) _padroesCfgAberto=null;
   renderCardPatternsCfg();
+  _refreshOpenCardPattern();
 }
 function togglePadraoSecao(id, key, visible){
   const p=cardPatterns[id]; if(!p) return;
