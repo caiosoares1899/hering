@@ -18,6 +18,34 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.505 — 2026-08-30 · promove pra prod — @menção em checklist, trava do "Salvar", novo gatilho de Agendamentos + Central de Ajuda em dia
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.505-dev a v8.30.508-dev) — entradas correspondentes em
+"kanban-dev.html" logo abaixo:
+
+- **@menção num item de checklist agora notifica de verdade.** Editar
+  um item de checklist existente (ex.: escrever "@fulano" nele) salva
+  sozinho (autosave) na maioria das vezes — antes, só notificava se a
+  pessoa clicasse em "Salvar" por outro motivo depois. Corrigido pra
+  notificar sempre, igual já acontecia com descrição/PO/motivo de
+  bloqueio.
+- **Botão "Salvar" não trava mais em casos raros.** Se o card sendo
+  editado fosse excluído/arquivado por outra pessoa (em outra aba)
+  enquanto o modal continuava aberto, clicar em "Salvar" podia deixar o
+  botão preso em "Salvando…" pra sempre — e todo clique futuro em
+  Salvar, de qualquer card, parava de funcionar até recarregar a
+  página. Agora avisa que o card não existe mais e fecha o modal
+  normalmente.
+- **Novo gatilho de Automação: "Card agendado criado".** Agendamentos
+  (cards únicos programados pra uma data) ganharam o mesmo gatilho que
+  Recorrentes já tinham — dá pra configurar uma automação que dispara
+  quando um agendamento específico entra no quadro.
+- **Central de Ajuda atualizada** com as novidades recentes do Agente
+  Ágil e de Automações (a aba "🤖 Histórico do Agente", o que o agente
+  pode/não pode fazer hoje, e o gatilho novo acima).
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.504 — 2026-08-29 · promove pra prod — Padrões de card atualiza na hora
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
 promoção (v8.30.504-dev) — entrada correspondente em "kanban-dev.html"
