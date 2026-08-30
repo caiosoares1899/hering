@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.504 — 2026-08-29 · promove pra prod — Padrões de card atualiza na hora
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.504-dev) — entrada correspondente em "kanban-dev.html"
+logo abaixo:
+
+- **Editar Padrões de card agora atualiza um card já aberto na hora.**
+  Criar, renomear, marcar como padrão da squad ou excluir um padrão
+  (⚙ Configurações → Padrões) já refletia sozinho depois de um instante
+  (round-trip do Firebase), mas não instantaneamente como já acontecia
+  ao mudar a visibilidade de uma seção específica — corrigido pra se
+  comportar igual nos dois casos.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.503 — 2026-08-29 · promove pra prod — Agentes Externos migra pro painel + Automações cobrem criação de card e mutações do Agente Ágil
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
 promoção (v8.30.501-dev a v8.30.503-dev) — entradas correspondentes em
