@@ -2188,6 +2188,42 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.508-dev — 2026-08-30 — Docs (/atualizarhelpcontent): sincroniza Central de Ajuda com o Agente Ágil/Automações atuais
+
+Puramente documentação, sem mudança de comportamento. Não sincronizado
+desde a v8.30.484-dev — backlog grande de mudanças no Agente Ágil e em
+Automações desde então. 6 correções:
+
+- **"Ações que o agente pode executar"** (categoria Agente Ágil) tinha
+  uma claim FALSA: "o agente não cria... cards" — não é mais verdade
+  desde 2026-08-27 (`criar_card`, ver `functions/agente-agil-
+  orquestrador/tools/criarCard.js`), que cria um rascunho revisável em
+  📥 Pedidos de Intake quando o pedido não é sobre nenhum card
+  existente. Corrigido pra explicar a distinção (rascunho revisável,
+  não "criar direto no board"). Também faltava a ferramenta `risco`
+  (2026-08-28) na lista de ações.
+- **"O que é uma automação" → Gatilhos (QUANDO)**: faltava "Card
+  agendado X criado" (`agendado_created`, adicionado nesta sessão) —
+  espelhando a linha já existente de "Card recorrente X criado".
+- **"Ações (ENTÃO)" e a pergunta do Q&A sobre "Notificar Agente Ágil"**
+  descreviam a visibilidade da ação como ligada ao kill switch antigo
+  do painel de chat ("Agente Ágil temporariamente desativado") — esse
+  switch não tem mais nenhuma relação com a ação desde que ela passou a
+  entrar direto no pipeline de @menção (ver comentário em `AUTO_ACTIONS`
+  → `notify_agent`). Corrigido pra descrever a visibilidade real: por
+  squad (dev/dados hoje), não um interruptor global.
+- **"Abrindo configurações"** não listava a aba "🤖 Histórico do
+  Agente" (nova desde `f0ed7a8`, só visível nos squads com o
+  orquestrador ativo).
+- **Nova entrada "Histórico do Agente"** (categoria Agente Ágil) — a
+  aba nunca tinha nenhuma descrição na Central de Ajuda.
+- **Texto inline da própria aba "🤖 Histórico do Agente Ágil"** (⚙
+  Configurações) descrevia só 2 origens possíveis (@menção/Automação),
+  mas a aba já mostra 3 desde 2026-08-27 (`classificarOrigem()` no
+  backend: `mencao`/`automacao`/`especialista`) — corrigido.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.507-dev — 2026-08-30 — Feat (/monitorarbugs, foco pedido: processos de criar card): novo trigger "Card agendado criado"
 
 Rodada com área nomeada explicitamente ("processos de criar card") —
