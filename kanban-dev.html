@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.506-dev</div>
+<div class="version">v8.30.507-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18610,6 +18610,12 @@ function _criarCardAgendado(item){
     participants:Array.isArray(item.participants)?item.participants.slice():[],
     archived:false, created:'📅 Agendamento', edited:'📅 Agendamento', createdAt:td, editedAt:td,
     _autoCriadoEm:td, _autoVisto:false, _autoTipo:'agendado',
+    // Trigger "Card agendado criado" (Automações) — mesmo padrão de
+    // recorrenteDe/_slugifyRecorrente em _criarCardRecorrente() (achado real
+    // /monitorarbugs 2026-08-30: Agendamentos era a única das 2 criações
+    // automáticas sem NENHUM gatilho de Automação, nem o específico nem o
+    // genérico 'card_created').
+    agendadoDe: _slugifyRecorrente(item.title),
   };
   recordHistory(novo,'criado automaticamente (agendamento)');
   recordMove(novo, novo.col);
@@ -18632,6 +18638,9 @@ function processAgendamentos(){
   });
   if(mudou){
     fbSaveAll(undefined, criados.map(c=>c.id));
+    // Trigger "Card agendado criado" (Automações) — mesma via automática de
+    // processRecorrentes()/recorrente_created, ver comentário lá.
+    criados.forEach(card=>{ if(card.agendadoDe) runAutoRules('agendado_created', card.id, card.agendadoDe); });
     fbSet(FB+'/ql_items/agendamentos',qlItems.agendamentos);
     renderBoard();
     let lemPropMudou=false;
@@ -25108,6 +25117,13 @@ const AUTO_TRIGGERS = [
     // identificador que card.recorrenteDe já usa (ver _criarCardRecorrente) —
     // mais estável que índice de array, sobrevive a exclusão/reordenação.
     matches:(rule,ev,card,extra)=> ev==='recorrente_created' && extra===rule.triggerVal },
+  // Achado real (/monitorarbugs 2026-08-30): Agendamentos é o par exato de
+  // Recorrentes (mesma tela de Quick List, mesmo par processX()/_criarCardX())
+  // mas nunca ganhou o trigger equivalente — mesmo padrão de
+  // recorrente_created, só trocando a fonte (card.agendadoDe, ver
+  // _criarCardAgendado()).
+  { key:'agendado_created', label:'Card agendado criado', valueType:'agendado', visible:()=>(qlItems.agendamentos||[]).length>0,
+    matches:(rule,ev,card,extra)=> ev==='agendado_created' && extra===rule.triggerVal },
 ];
 const AUTO_ACTIONS = [
   { key:'move_card', label:'Mover card para coluna', valueType:'column',
@@ -25214,6 +25230,7 @@ function _autoValLabel(valueType, val){
     case 'cover': return CARD_COVER_COLORS.find(c=>c.id===val)?.label || val;
     case 'template': return (qlItems.modelos||[])[val]?.title || val;
     case 'recorrente': return (qlItems.recorrentes||[]).find(it=>_slugifyRecorrente(it.title)===val)?.title || val;
+    case 'agendado': return (qlItems.agendamentos||[]).find(it=>_slugifyRecorrente(it.title)===val)?.title || val;
     case 'fanout': return fanoutTemplates[val]?.nome || val;
     case 'text': return '"'+val+'"';
     default: return val;
@@ -25252,6 +25269,7 @@ function _autoRenderValueOptions(valueType){
     case 'cover': return '<option value="">— sem capa —</option>'+CARD_COVER_COLORS.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
     case 'template': { const items=qlItems.modelos||[]; return items.length ? items.map((it,i)=>`<option value="${i}">${esc(it.title)}</option>`).join('') : '<option value="">— nenhum modelo criado —</option>'; }
     case 'recorrente': { const items=qlItems.recorrentes||[]; return items.length ? items.map(it=>`<option value="${esc(_slugifyRecorrente(it.title))}">${esc(it.title)}</option>`).join('') : '<option value="">— nenhum recorrente criado —</option>'; }
+    case 'agendado': { const items=qlItems.agendamentos||[]; return items.length ? items.map(it=>`<option value="${esc(_slugifyRecorrente(it.title))}">${esc(it.title)}</option>`).join('') : '<option value="">— nenhum agendamento criado —</option>'; }
     case 'fanout': { const ids=Object.keys(fanoutTemplates||{}); return ids.length ? ids.map(id=>`<option value="${esc(id)}">${esc(fanoutTemplates[id].nome||'Sem nome')}</option>`).join('') : '<option value="">— nenhuma receita criada —</option>'; }
     default: return '';
   }

@@ -419,6 +419,38 @@ Mesma disciplina de sempre neste repo:
   sem sentido aqui) — já reseta a trava/botão como rede de segurança
   (dev v8.30.506-dev).
 
+- **2026-08-30, área nomeada explicitamente — "processos de criar
+  card"**: pedido direto do usuário, mais amplo que só `saveCard()`
+  (já revisado na rodada anterior). Mapeados TODOS os `cards.push(...)`
+  do arquivo (técnica 1) — `saveCard()`, `bulkDuplicate()`,
+  `_duplicarCardObj()`/`_duplicarComFilhos()`, `_criarCardRecorrente()`,
+  `_criarCardAgendado()`, `_applyFanoutTemplate()`/
+  `_blankSuperChildCard()`, `quickCreateSuperChild()`,
+  `doTrelloImport()`, `_inserirCardsRestaurados()` — e comparado o que
+  cada um dispara em Automações. 1 achado real, reportado como pergunta
+  de produto antes de implementar (Passo 3 — não era óbvio se era
+  decisão deliberada, como já tinha sido o caso de "duplicar não
+  dispara `card_created`" numa rodada anterior): "Agendamentos" (cards
+  únicos programados) é o par exato de "Recorrentes" (mesma tela de
+  Quick List, mesmo padrão `processX()`/`_criarCardX()`), mas nunca
+  ganhou o trigger de Automação equivalente a "Card recorrente criado"
+  — confirmado via `git log -S` que a lacuna existe desde a origem da
+  feature (commit que adicionou `recorrente_created` nunca cobriu
+  Agendamentos), não é regressão. Usuário confirmou que é bug real e
+  pediu o mesmo padrão de `recorrente_created`. Fix: novo trigger
+  `agendado_created` em `AUTO_TRIGGERS` — `card.agendadoDe` (slug via
+  `_slugifyRecorrente()`, reaproveitada) como identificador, disparado
+  de `processAgendamentos()` do mesmo jeito que `processRecorrentes()`
+  já dispara o seu; `valueType:'agendado'` novo em
+  `_autoValLabel()`/`_autoRenderValueOptions()`, espelhando
+  `'recorrente'` (dev v8.30.507-dev). Descartado (checado, sem achado):
+  `bulkDuplicate()`/`_duplicarCardObj()`/`_applyFanoutTemplate()`/
+  `quickCreateSuperChild()`/`_inserirCardsRestaurados()` — nenhum
+  dispara `card_created` nem nenhum outro trigger, mas isso já é
+  consistente com a decisão registrada na rodada de 2026-08-27
+  (operações DERIVADAS/em massa ficam de fora de propósito), não é uma
+  inconsistência nova.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

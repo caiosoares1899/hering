@@ -2188,6 +2188,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.507-dev — 2026-08-30 — Feat (/monitorarbugs, foco pedido: processos de criar card): novo trigger "Card agendado criado"
+
+Rodada com área nomeada explicitamente ("processos de criar card") —
+mapeados todos os caminhos que empurram um card novo em `cards[]`
+(modal/`saveCard()`, duplicar, recorrentes, agendamentos, fan-out de
+supercard, filho rápido de supercard, import do Trello, restaurar
+backup) e comparado o que cada um dispara em termos de Automações.
+
+Achado: "Agendamentos" (cards únicos programados pra uma data) é o par
+exato de "Recorrentes" — mesma tela de Quick List, mesmo padrão de
+funções `processX()`/`_criarCardX()` — mas nunca ganhou o gatilho de
+Automação equivalente a "Card recorrente criado". Confirmado via
+`git log -S`: o commit que introduziu `recorrente_created` (7 gatilhos
+novos de uma vez) nunca cobriu Agendamentos — lacuna desde a origem da
+feature, não regressão. Reportado como pergunta de produto (não é o
+mesmo caso já decidido de "duplicar/fan-out não disparam `card_created`
+de propósito" — aqueles são operações DERIVADAS; Recorrentes/
+Agendamentos são os 2 únicos casos de criação 100% automática, e só um
+dos dois tinha gatilho) — confirmado pelo usuário antes de implementar.
+
+Fix: novo trigger `agendado_created` ("Card agendado criado") em
+`AUTO_TRIGGERS`, mesmo padrão de `recorrente_created` — `card.agendadoDe`
+(slug do título via `_slugifyRecorrente()`, reaproveitada) como
+identificador estável, disparado de `processAgendamentos()` do mesmo
+jeito que `processRecorrentes()` já dispara o seu. `valueType:'agendado'`
+novo em `_autoValLabel()`/`_autoRenderValueOptions()`, espelhando
+`'recorrente'`.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.506-dev — 2026-08-30 — Fix (/monitorarbugs, foco pedido: saveCard): botão "Salvar" podia travar pra sempre
 
 Rodada com área nomeada explicitamente ("foca no saveCard") — leitura
