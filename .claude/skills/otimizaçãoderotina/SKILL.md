@@ -372,6 +372,34 @@ não faz parte desta rotina por padrão, a menos que peçam.
   - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
     (1468/1468) OK.
 
+- **v8.30.504-dev / v8.30.503 (prod) (2026-08-29)**: rodada limpa, nada
+  pra corrigir. `kanban.html`/`kanban-dev.html` divergindo só no fix
+  ainda não promovido do `/monitorarbugs` mais recente (Padrões de
+  card) + as 2 linhas de ambiente — auditoria feita em
+  `kanban-dev.html` (superset). Lote grande do dia (registro de
+  Agentes Externos migrado pro painel, fila `agente_pending_auto` pra
+  Automações do Agente Ágil, fixes de Automação na criação/Padrões de
+  card) não mexeu em nenhum asset nem introduziu timer novo. Conferido:
+  - `data:image` embutido: continua em 0 nos dois arquivos.
+  - Blocos reais (por linha): CSS ~194KB, script módulo Firebase
+    ~7.2KB, script principal ~1,40MB (`kanban-dev.html`, 29486 linhas,
+    ~1,82MB total — cresceu pouco desde a v8.30.492-dev, ~20KB, o
+    esperado pro tamanho do lote do dia).
+  - `setInterval`/`clearInterval`: **15 reais / 14** — idêntico ao
+    baseline da v8.30.458-dev/v8.30.492-dev, zero timer novo (o
+    mecanismo novo de fila do Agente Ágil usa `onChildAdded` +
+    `transaction()`, não polling).
+  - `backdrop-filter`: 31 — idêntico ao baseline anterior.
+  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
+    presentes; `www.gstatic.com` segue ausente corretamente (SDK
+    vendorizado). Import do Firebase: modular, todos os 4 módulos do
+    vendor local.
+  - Único asset fora do favicon continua `marinheiro.png` (sob
+    demanda) — `favicon.png` também presente e único.
+  - Viewport meta + `addTouchDnD` intactos.
+  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
+    (1468/1468, idêntico ao baseline anterior) OK.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está limpo.
