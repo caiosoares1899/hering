@@ -220,6 +220,41 @@ normal do repo:
     entrada nenhuma até esta rodada.
   `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade.
 
+- **2026-08-30 — 4ª rodada** (rodapé anterior: `307e6d9`, 2026-08-26 →
+  novo: `b5e99ae`, 2026-08-30). `kanban.html`/`kanban-dev.html`
+  confirmados byte-idênticos de novo (promoção da v8.30.504 já
+  mergeada) — cabeçalho atualizado. Rodada com volume grande de trabalho
+  acumulado (~55 commits desde a rodada anterior: Agentes Externos no
+  painel, mutações do orquestrador disparando Automações via
+  `agente_pending_auto`, ferramenta `risco`, intake com escrita real,
+  vários `/monitorarbugs`). ~110 âncoras revalidadas nas 3 seções
+  (`kanban.html`/`kanban-dev.html`, `painel.html`/`painel-dev.html`,
+  `functions/`) — todas ainda existiam, só linha andou (nenhuma
+  removida/renomeada). Drift crescente da parte de cima pro fim do
+  arquivo, mesmo padrão de sempre (+15 a +46 no topo, +62 em ~9-10k,
+  +100 em ~12-15k, +243 a +311 em ~21-26k, +284 em ~26-28k). Achado
+  incidental relevante: o script de auto-substituição usado nesta rodada
+  tinha um bug de pareamento em linhas com múltiplos nomes/números
+  (`nomeA()/nomeB() — LX/LY`) que colava o MESMO número novo nos dois —
+  motivo pra sempre rodar uma checagem de "L(\d+)/L\1" (número repetido
+  colado por engano) depois de qualquer substituição em lote, não só
+  confiar no diff visual. 1 seção nova:
+  - `kanban.html`: **Padrões de card (cardPatterns)** — nunca tinha tido
+    seção própria apesar de já ter causado 3 bugs reais em dias recentes
+    (#589/#590/#600/#605, todos `/monitorarbugs`) — mesma classe de bug
+    toda vez: 1 de N pontos que mexem no padrão ficando pra trás de um
+    comportamento que os outros já tinham (`runAutoRules()` não disparado
+    na criação, card aberto não atualizado na hora).
+  Também corrigida 1 inconsistência interna real (não drift de linha):
+  o resumo de `agenteAgilIntake` em "index.js — registro de exports"
+  ainda dizia "MODO SOMBRA (nunca validado em produção)", mas a entrada
+  detalhada da própria seção `intakeTrigger.js`, mais abaixo no mesmo
+  arquivo, já documentava escrita real desde 2026-08-27 — o próprio
+  `functions/index.js` confirma (comentário + `dryRun:false` na
+  instância `dev`). Corrigido pra não contradizer a si mesmo.
+  `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade
+  (diff, 1451 linhas de diferença).
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. Isso evita reler o arquivo inteiro do zero numa
