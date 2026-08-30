@@ -213,7 +213,8 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `renderNotasVinculadasNoCard()` — L15013 — seção "Vínculos" dentro do card
 
 ### Automações (Butler-style)
-- `AUTO_TRIGGERS` — L25021 (20 triggers)
+- `AUTO_TRIGGERS` — L25053 (21 triggers — `agendado_created` adicionado
+  2026-08-30, par de `recorrente_created` que faltava)
 - `AUTO_ACTIONS` — L25089 (14 ações)
 - `runAutoRules()` — L25516 — só decide QUAIS regras batem (síncrono);
   `_runAutoRuleAction()`/`AUTO_RULE_DELAY_MS` (logo acima) aplicam o efeito
