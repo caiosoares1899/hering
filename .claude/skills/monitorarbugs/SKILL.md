@@ -380,6 +380,23 @@ Mesma disciplina de sempre neste repo:
   `c134ccd`). Fix: mesma chamada de `parseMentions()` adicionada no
   bloco de notificações do autosave (dev v8.30.505-dev).
 
+- **2026-08-30, área Notas (lista + editor de blocos em árvore + vínculo
+  com cards)**: pedido genérico — nenhum código novo desde a rodada
+  anterior, prioridade 1 não mudou (mesma área/fix já coberto);
+  escolhida a prioridade 2 (área nunca varrida). Leitura completa de
+  `toggleNotas()`/`renderNotasList()`/`renderNotaEditor()`/
+  `criarBlocoIrmao()`/`indentBloco()`/`outdentBloco()`/
+  `mergeComAnterior()`/`toggleNotaModo()`/vínculo nota↔card nos dois
+  sentidos (`notaAddCardLink`/`cardAddNotaLink` etc.). **Sem achados**:
+  indent/outdent/merge são estruturalmente à prova de ciclo (indentar só
+  vira filho do irmão imediatamente anterior; outdent só sobe ao nível
+  do avô; merge só junta com irmão anterior ou pai — nunca um
+  descendente); os vínculos nota↔card usam `_update()` cirúrgico por
+  chave (`cardIds/{id}: true|null`), não o padrão merge-a-partir-do-
+  cache-local que já causou bug em Agentes Externos e quase causou em
+  Padrões de card; `toggleNotaModo()` de fato empurra undo antes de
+  cada troca destrutiva, como o comentário promete.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
