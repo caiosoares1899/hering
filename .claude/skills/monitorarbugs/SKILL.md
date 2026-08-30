@@ -397,6 +397,28 @@ Mesma disciplina de sempre neste repo:
   Padrões de card; `toggleNotaModo()` de fato empurra undo antes de
   cada troca destrutiva, como o comentário promete.
 
+- **2026-08-30, área nomeada explicitamente — `saveCard()`**: pedido
+  direto do usuário ("foca no saveCard"), não escolha por prioridade.
+  Leitura completa da função (branch de edição, branch de criação,
+  `.then()`/`.catch()` de confirmação do Firebase). 1 achado real,
+  severo: a trava de reentrância `_savingCard` (impede clique duplo
+  criando cards repetidos) é armada — e o botão vira "💾 Salvando…"
+  desabilitado — ANTES de confirmar que o card sendo editado ainda
+  existe em `cards[]`. Se sumiu (`if(!c) return;`, alcançável de
+  verdade: card excluído/arquivado em massa por outra aba enquanto o
+  modal segue aberto), a função saía sem desarmar nada — diferente de
+  toda falha de validação anterior, que já retorna cedo sem tocar na
+  trava (comportamento documentado na própria declaração de
+  `_savingCard`). Resultado: botão preso pra sempre, e todo clique
+  futuro em Salvar — de QUALQUER card — virava no-op silencioso (mesmo
+  guard no topo da função), sem nenhum erro visível; só reload
+  destravava. Achado via técnica 3 (confrontando o comportamento
+  prometido pelo comentário da declaração contra o código de verdade).
+  Fix: toast explicando que o card não existe mais + `_finishCloseOv()`
+  direto (não `closeOv()`, que perguntaria "alterações não salvas?"
+  sem sentido aqui) — já reseta a trava/botão como rede de segurança
+  (dev v8.30.506-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

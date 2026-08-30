@@ -5601,7 +5601,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.505-dev</div>
+<div class="version">v8.30.506-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11911,7 +11911,23 @@ function saveCard(){
   const td=new Date().toISOString().split('T')[0];
   const cl=getCL(); const rl=getRiscos(); const user=window._currentUser?.displayName||'Usuário';
   if(editingId){
-    const c=cards.find(x=>x.id===editingId); if(!c) return;
+    const c=cards.find(x=>x.id===editingId);
+    if(!c){
+      // Achado real (/monitorarbugs 2026-08-30): esse `return` acontecia DEPOIS
+      // de _savingCard=true (ver declaração, L6870) e do botão já virar "💾
+      // Salvando…" — sem desarmar os dois, ficava tudo preso pra sempre (todo
+      // clique futuro em Salvar, de QUALQUER card, virava no-op silencioso via
+      // o guard no topo desta função). Alcançável de verdade: card excluído/
+      // arquivado em massa por outra aba enquanto este modal segue aberto (o
+      // listener ao vivo de `cards` já removeu o item local). Usa
+      // _finishCloseOv() direto (não closeOv()) pra pular o aviso de
+      // "alterações não salvas" — o card não existe mais, perguntar não faz
+      // sentido; _finishCloseOv() já reseta _savingCard/botão como rede de
+      // segurança (ver comentário na própria declaração).
+      showToast('⚠️ Este card não existe mais (foi excluído ou arquivado em outra aba) — nada foi salvo.');
+      _finishCloseOv('card-ov');
+      return;
+    }
     const _prevCol=c.col;
     // Mesma proteção do autosave: só trata como mudança de coluna intencional
     // se o valor do <select> divergir do que estava quando o modal abriu.

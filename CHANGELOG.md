@@ -2188,6 +2188,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.506-dev — 2026-08-30 — Fix (/monitorarbugs, foco pedido: saveCard): botão "Salvar" podia travar pra sempre
+
+Rodada com área nomeada explicitamente ("foca no saveCard") — leitura
+completa da função, do início ao fim (incluindo os dois branches,
+edição e criação, e o `.then()`/`.catch()` de confirmação do Firebase).
+
+Achado: a trava de reentrância `_savingCard` (protege contra clique
+duplo no "Salvar" criando cards repetidos) é armada — e o botão vira
+"💾 Salvando…" desabilitado — logo no início do branch de edição, antes
+de `cards.find(x=>x.id===editingId)` confirmar que o card ainda existe.
+Se não existir (`if(!c) return;`), a função saía ali, sem nunca
+desarmar a trava nem restaurar o botão — diferente de toda falha de
+validação ANTES desse ponto, que já retornava cedo sem tocar em nada
+(comportamento documentado na própria declaração de `_savingCard`).
+
+Cenário concreto: alguém abre um card pra editar; enquanto o modal
+segue aberto, o card é excluído/arquivado em massa por outra aba
+(qualquer um dos vários `cards=cards.filter(...)` do arquivo, todos
+sincronizados ao vivo entre abas). A pessoa clica em "Salvar" → cai
+nesse `return` → botão fica preso em "💾 Salvando…" pra sempre, e TODO
+clique futuro em Salvar — de QUALQUER card — vira no-op silencioso
+(mesmo guard `if(_savingCard) return;` no topo da função). Só um
+reload da página destravava, sem nenhum erro explicando o motivo.
+
+Fix: mostra um toast explicando que o card não existe mais, e fecha o
+modal via `_finishCloseOv()` direto (não `closeOv()`, que perguntaria
+"alterações não salvas?" sem sentido aqui) — que já reseta
+`_savingCard`/restaura o botão como rede de segurança.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.505-dev — 2026-08-30 — Fix (/monitorarbugs): @menção em item de checklist só notificava se a pessoa clicasse em "Salvar"
 
 Rodada genérica (sem área pedida) — escolhida "Notificações in-app",
