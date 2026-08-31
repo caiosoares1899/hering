@@ -391,6 +391,24 @@ const devInstance = createMentionTrigger({ squadId: 'dev', dryRun: false });
 // decisão explícita do usuário: dryRun vira false, escrita real.
 const dadosInstance = createMentionTrigger({ squadId: 'dados', dryRun: false });
 
+// Checagem de drift (revisão arquitetural 2026-08-31) — dueOverdueTrigger.js/
+// resumoMeuDia.js leem squadScope.js:MENTION_SQUADS pra saber "em quais
+// squads a menção está ativa de verdade", sem duplicar esta lista. Essa
+// lista continua sendo só REFERÊNCIA (não dirige o deploy em si — cada
+// squad aqui em cima precisa do próprio createMentionTrigger()+export
+// nomeado, exigência do modelo de deploy do Firebase Functions gen2, ver
+// comentário no topo de squadScope.js). Se alguém adicionar/remover um
+// squad num lado sem replicar no outro, isso não deve derrubar a função
+// no cold start — só avisa no log, pra não silenciar o esquecimento.
+const { MENTION_SQUADS: _squadScopeMentionSquads } = require('./squadScope');
+const _deployedMentionSquads = ['dev', 'dados'];
+if (JSON.stringify([..._deployedMentionSquads].sort()) !== JSON.stringify([..._squadScopeMentionSquads].sort())) {
+  console.warn(
+    '[mentionTrigger] squadScope.js:MENTION_SQUADS diverge dos squads deployados aqui — atualize os dois:',
+    { squadScope: _squadScopeMentionSquads, deployadosAqui: _deployedMentionSquads }
+  );
+}
+
 module.exports = {
   createMentionTrigger,
   agenteAgilMencao: devInstance.agenteAgilMencao,

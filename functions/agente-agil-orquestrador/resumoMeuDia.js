@@ -20,11 +20,14 @@
 //   disponível pro modelo (tools: [] no llmClient.decide()).
 // - **Escopo de squad**: só cards dos squads onde o Agente Ágil já atua —
 //   mesma lista que `AGENTE_AGIL_MENTION_SQUADS` no client
-//   (kanban-dev.html) hoje: `dev` e `dados`. Não existe um módulo
-//   compartilhado entre client (ES modules) e Cloud Function (CommonJS) —
-//   mesmo trade-off já aceito em flow.js/board.js (replicar é mais barato
-//   que criar um shim). Se o escopo de squad da @menção mudar, atualizar
-//   SQUADS_ATIVOS aqui também.
+//   (kanban-dev.html) hoje: `dev` e `dados`. Vem de squadScope.js
+//   (revisão arquitetural 2026-08-31) — compartilhado com
+//   dueOverdueTrigger.js, que tinha a MESMA lista hardcodada
+//   independentemente aqui antes. Ainda não dá pra compartilhar com o
+//   client (ES modules) — mesmo trade-off já aceito em flow.js/board.js
+//   (replicar lá é mais barato que criar um shim entre runtimes
+//   diferentes) — mas entre arquivos desta mesma pasta (CommonJS, mesmo
+//   runtime) não havia motivo pra continuar duplicado.
 // - **Chamada via onRequest + Bearer idToken**, não onCall/httpsCallable —
 //   mesmo motivo de spotify/disconnect.js: nenhuma página do app importa o
 //   SDK de Functions hoje, e onRequest com verificação manual do token já é
@@ -53,13 +56,14 @@ const { cardsPath } = require('../agente-agil/board');
 const flowLib = require('../agente-agil/flow');
 const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { isEnabled } = require('./limits');
+const { RESUMO_MEUDIA_SQUADS } = require('./squadScope');
 
 const SITE_ORIGIN = 'https://caiosoares1899.github.io';
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
-// Mesma lista que AGENTE_AGIL_MENTION_SQUADS no client — ver comentário no
-// topo do arquivo pro porquê de não ser um módulo compartilhado.
-const SQUADS_ATIVOS = ['dev', 'dados'];
+// Mesma lista que AGENTE_AGIL_MENTION_SQUADS no client — ver squadScope.js
+// e comentário no topo do arquivo.
+const SQUADS_ATIVOS = RESUMO_MEUDIA_SQUADS;
 
 const RATE_LIMIT_MS = 2 * 60 * 1000; // 2 minutos entre pedidos, por pessoa
 

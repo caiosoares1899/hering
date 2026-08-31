@@ -2216,6 +2216,58 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.512-dev — 2026-08-31 — Refactor: revisão arquitetural — unifica os disparos de "@Agente Ágil"
+
+Pedido direto do usuário depois de acumular várias features separadas de
+comunicação com o Agente Ágil na mesma sessão ("pense como um arquiteto,
+revise e integre essa parte"). Levantamento (mapeou TODOS os pontos de
+entrada, client e backend) achou que o sistema já tinha convergido
+organicamente pra **um único mecanismo real** — postar um comentário
+contendo `@Agente Ágil` em `card_comments`, deixando `mentionTrigger.js`
+processar — só que **reimplementado de forma independente em 5 lugares**
+(4 no cliente, 1 no backend), e "em quais squads o agente está ativo"
+guardado em **6 listas separadas** (3 no cliente, 3 no backend) que hoje
+coincidem só por coincidência. Puro refactor — nenhuma mudança de
+comportamento visível, 244/244 testes de `functions/` continuam passando.
+
+**Fase 1 — `kanban-dev.html`, dispatcher único**: `_dispatchAgenteAgilComment(cardId, text, {squads, asAutomacao, warnIfUnavailable})`
+concentra o que antes eram 4 cópias independentes de "montar o comentário
++ decidir uid/autoria + checar squad": `_askAgenteAgilNoCard()`, a
+automação `notify_agent.run()`, o caminho "WIP excedido" (o próprio
+código antigo já admitia *"replica em vez de reusar actionDef.run()"*) e
+`_reagirSeAgenteAgilAtribuido()` (v8.30.511-dev). De brinde, fecha uma
+inconsistência real: `notify_agent`/WIP só checavam squad na hora de
+CONFIGURAR a automação (`visible:`), nunca de novo na hora de escrever —
+uma regra configurada antes de um squad sair de escopo continuava
+escrevendo um comentário que nunca seria processado, silenciosamente.
+Agora os 4 caminhos re-checam na escrita, igual `_askAgenteAgilNoCard` já
+fazia.
+
+**Fase 2 — `kanban-dev.html`, unifica squad-lists do cliente**:
+`AGENTE_AGIL_HOTLINE_SQUADS` (array) e `AGENTE_AGIL_MENTION_SQUADS` (Set)
+guardavam o MESMO fato ("em quais squads a menção é processada de
+verdade") em 2 constantes independentes, tipos diferentes, sem nenhum
+motivo pra não serem uma só. `AGENTE_AGIL_HOTLINE_SQUADS` removida; os 2
+call sites (`openAgenteHotline()`, botão FAB) agora leem
+`AGENTE_AGIL_MENTION_SQUADS`. `AGENTE_AGIL_ASSIGNEE_SQUADS` continua
+separada de propósito (é deliberadamente mais restrita, só `dados`).
+
+**Fase 3 — `functions/agente-agil-orquestrador/`, unifica squad-lists do
+backend**: `squadScope.js` (novo) — `MENTION_SQUADS`/`DUE_SCAN_SQUADS`/
+`RESUMO_MEUDIA_SQUADS`. `dueOverdueTrigger.js` (`SQUADS`) e
+`resumoMeuDia.js` (`SQUADS_ATIVOS`) — que já tinham comentário cruzado
+avisando "mesma lista que o outro arquivo" — agora leem de lá em vez de
+hardcodar `['dev','dados']` cada um por conta própria.
+`mentionTrigger.js` (que continua com deploy explícito por squad de
+propósito — exigência do modelo do Firebase Functions gen2, não
+duplicação acidental) ganhou uma checagem de drift no module load:
+compara a lista deployada ali contra `squadScope.MENTION_SQUADS` e
+`console.warn` se divergirem, em vez de deixar um esquecimento silencioso.
+
+Checks de rotina: `node --check` OK (client e os 4 arquivos de backend
+tocados), brace/paren balance do client inalterado (-1/0), `npm test` em
+`functions/` — 244/244 passando.
+
 ### v8.30.511-dev — 2026-08-31 — Feat: Agente Ágil selecionável como Responsável/Participante, e reage à atribuição
 
 Pedido direto do usuário: diferente do agente cadastrado em

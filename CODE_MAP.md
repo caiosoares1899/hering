@@ -59,20 +59,30 @@ Responsável/Participante desde 2026-08-31, só no squad `dados`:
 orquestrador/*.js` em todo comentário real do agente). Diferente de
 `AGENTE_AGIL_MENTION_ENTRY` (L6398, só autocomplete de `@`, nunca
 selecionável). `_reagirSeAgenteAgilAtribuido(c, prevOwner,
-prevParticipants)` — L6432 — reusa o pipeline de `@menção` já testado
-(posta comentário sintético `@Agente Ágil ...`, autoria de quem
-atribuiu) toda vez que o campo muda de valor pra incluir o agente;
-chamada em `scheduleAutoSave()`, e nos dois branches de `saveCard()`
-(edição e criação). Zero Cloud Function nova — reusa
-`agenteAgilMencaoDados` (já em produção, ver seção `functions/`
-abaixo).
+prevParticipants)` — reusa o pipeline de `@menção` já testado (posta
+comentário sintético `@Agente Ágil ...`, autoria de quem atribuiu) toda
+vez que o campo muda de valor pra incluir o agente; chamada em
+`scheduleAutoSave()`, e nos dois branches de `saveCard()` (edição e
+criação). Zero Cloud Function nova — reusa `agenteAgilMencaoDados` (já em
+produção, ver seção `functions/` abaixo).
+
+**Dispatcher único** (revisão arquitetural 2026-08-31):
+`_dispatchAgenteAgilComment(cardId, text, {squads, asAutomacao,
+warnIfUnavailable})` — concentra "montar o comentário sintético +
+decidir uid/autoria + checar squad", antes reimplementado
+independentemente em 4 lugares (`_askAgenteAgilNoCard`,
+`_reagirSeAgenteAgilAtribuido`, a automação `notify_agent`, o caminho
+"WIP excedido"). Ver seção "Agente Ágil (client-side...)" abaixo pra
+detalhe dos 4 call sites.
 
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6281 — seções do modal (Conteúdo, Vínculos, Colaboração...)
 - `openCard()` — L11317
 - `openAgenteHotline()` — L11243 — card especial fixo por squad "🤖 Converse
-  com o Agente Ágil" (`AGENTE_AGIL_HOTLINE_SQUADS` — L5828, hoje `dev`/
-  `dados`, os únicos com escrita real do agente), pra pedido solto que não
+  com o Agente Ágil" (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev`/
+  `dados`, os únicos com escrita real do agente — até 2026-08-31 tinha uma
+  constante própria `AGENTE_AGIL_HOTLINE_SQUADS` com o mesmo valor,
+  unificada na revisão arquitetural dessa data), pra pedido solto que não
   precisa ficar ligado a um card real. É um card de VERDADE no Firebase
   (`agenteHotline:true`, criado sob demanda por `fbCreateCard`, achado via
   `_findAgenteHotlineCard()`) — reusa 100% do mecanismo de `@menção`
@@ -369,10 +379,26 @@ pra trás de um comportamento que os outros já tinham.
 - `AGENTE_AGIL_MENTION_SQUADS` — L6375 — squads onde os atalhos abaixo
   estão ativos: `'dev'` e `'dados'` (2026-08-24) — precisa ter uma Cloud
   Function de verdade escutando o squad (ver seção `agente-agil-
-  orquestrador/` abaixo), senão a sugestão aparece sem nada escutando
-- `_askAgenteAgilNoCard(card, pergunta)` — L6389 — posta
-  `@Agente Ágil <pergunta>` como comentário real do card, mesmo pipeline
-  do `@menção` manual (`functions/agente-agil-orquestrador/mentionTrigger.js`)
+  orquestrador/` abaixo), senão a sugestão aparece sem nada escutando.
+  Até 2026-08-31 o botão hotline usava uma 2ª constante própria
+  (`AGENTE_AGIL_HOTLINE_SQUADS`, mesmo valor) — unificada nesta, ver
+  seção "Agentes de IA" mais acima.
+- `_dispatchAgenteAgilComment(cardId, text, {squads, asAutomacao,
+  warnIfUnavailable})` — dispatcher único (revisão arquitetural
+  2026-08-31) pra "postar comentário sintético `@Agente Ágil`" — todos os
+  4 producers abaixo passam por aqui em vez de montar o comentário cada
+  um por conta própria:
+  - `_askAgenteAgilNoCard(card, pergunta)` — posta `@Agente Ágil
+    <pergunta>` com autoria de quem perguntou, `warnIfUnavailable:true`
+    (ação direta de clique, mostra toast se o squad não tiver o gatilho)
+  - `_reagirSeAgenteAgilAtribuido` (ver seção "Agentes de IA" acima) —
+    `squads: AGENTE_AGIL_ASSIGNEE_SQUADS` (mais restrito, só `dados`)
+  - Automação `notify_agent.run()` — `asAutomacao:true`
+    (`uid:'automacao'`, NUNCA `'agente-agil'` — mentionTrigger.js
+    ignoraria como auto-comentário do próprio agente)
+  - Caminho "WIP excedido" (`tab==='auto'`, dentro de `runAutoRules()`) —
+    mesma coisa, fora do loop por-card porque WIP é agregado do board
+    inteiro
 - `insightsCard()` — L14138 — botão "🤖 Insights" no rodapé do card
 - `ctxInsights()` — L25915 — opção "Insights" no menu de contexto do card
 - `_pedirResumoMeuDia()` — L17490 — botão "🤖 Resumo do Agente Ágil"
@@ -547,6 +573,17 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   porquê de existir)
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
+- `squadScope.js` (2026-08-31, revisão arquitetural) — fonte única das
+  listas "em quais squads o Agente Ágil está ativo, pra qual capacidade":
+  `MENTION_SQUADS`/`DUE_SCAN_SQUADS`/`RESUMO_MEUDIA_SQUADS`. Antes,
+  `dueOverdueTrigger.js`/`resumoMeuDia.js` hardcodavam `['dev','dados']`
+  cada um por conta própria (já tinham comentário cruzado avisando
+  "mesma lista que o outro arquivo", nunca chegaram a compartilhar de
+  verdade). `mentionTrigger.js` FICA DE FORA de propósito — cada squad
+  lá é uma Cloud Function exportada por nome, exigência do modelo de
+  deploy do Firebase Functions gen2, não duplicação acidental —, mas faz
+  uma checagem de drift contra `MENTION_SQUADS` no module load
+  (`console.warn` se divergir, não bloqueia).
 - `tools/index.js` — `buildTools()`, registro das 14 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `risco`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`, `cards_por_agente`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil`/`cards_por_agente` sobrevivem, as demais exigem card já resolvido.
 - `tools/cardsPorAgente.js` — `cards_por_agente` (2026-08-31, pedido direto:
   "fica mais fácil pro agente ágil se organizar dentro do quadro").
