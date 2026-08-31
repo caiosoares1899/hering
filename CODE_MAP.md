@@ -30,6 +30,28 @@ instrumentação extra) — os números da seção painel abaixo são de
 - `resolveSquadAndShow()` — L9009 — resolve squad da URL, decide o que mostrar
 - `autoRegistrar()` — L9162 — cria/atualiza o doc do usuário no login
 
+### Agentes de IA (cadastro — piloto híbrido humano+agente)
+Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que
+aparecem lado a lado com pessoas nos seletores de Responsável/
+Participante — `agentes` (let) — L6363 / `allIdentities()` — L6366
+(combina `members`+`agentes` só pra exibição/seleção, NUNCA pra checagem
+de permissão). Até 2026-08-31 só existia o listener (leitura) — pedido
+direto do usuário ("quero que isso fique mais claro o cadastro"): CRUD
+completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
+- `renderAgentesList()` — L19295 — lista + detecção de colisão de
+  iniciais (humano×agente E agente×agente, mesmo padrão de `dupInit` em
+  `renderUsuarios()`)
+- `abrirAddAgente()`/`editarAgente(id)`/`fecharAddAgente()` — L19313/
+  L19322/L19332 — abre/preenche/fecha o form inline (mesmo padrão de
+  "+ Adicionar externo", não é modal separado)
+- `salvarAgente()` — L19336 — valida nome/iniciais e colisão antes de
+  gravar; `excluirAgente(id, nome)` — L19356
+- Ligado ao Agente Ágil de verdade: ver `agenteMarcador.js` e
+  `cards_por_agente` na seção `functions/` abaixo — quando o
+  orquestrador muda algo num card cujo responsável/participante é um
+  agente cadastrado aqui, ele mesmo posta um comentário marcando esse
+  agente.
+
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6281 — seções do modal (Conteúdo, Vínculos, Colaboração...)
 - `openCard()` — L11317
@@ -510,7 +532,27 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   porquê de existir)
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-- `tools/index.js` — `buildTools()`, registro das 13 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `risco`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil` sobrevivem, as demais exigem card já resolvido.
+- `tools/index.js` — `buildTools()`, registro das 14 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `risco`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`, `cards_por_agente`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil`/`cards_por_agente` sobrevivem, as demais exigem card já resolvido.
+- `tools/cardsPorAgente.js` — `cards_por_agente` (2026-08-31, pedido direto:
+  "fica mais fácil pro agente ágil se organizar dentro do quadro").
+  Consulta `kanban/squads/{squad}/dados/agentes` (registro de identidades
+  de IA, ver seção "Agentes de IA" em kanban.html abaixo) e agrupa os
+  cards ativos (owner/participants) por agente — filtra por um agente
+  (`agente`, nome ou init) ou lista todos se omitido. Não exige cardId
+  fixo (mesma categoria de `visao_board`/`biblioteca_agil`/`criar_card`),
+  disponível também em `semCard:true`.
+- `agenteMarcador.js` — `marcarAgenteResponsavel()` (2026-08-31, pedido
+  direto: "se tem um outro agente de responsavel ali, ele deve ser
+  notificado quando as coisas acontecerem"). Um agente cadastrado em
+  `dados/agentes` não tem uid/login pra notificação de verdade — a
+  solução acordada foi um comentário adicional automático ("📎 cc: ...")
+  postado depois de QUALQUER mutação real do orquestrador (mesmo
+  critério `acoesRegistro.length` de `coletarAcoesAgente()`,
+  `agenteLog.js`) num card cujo owner/participant bate com um agente
+  cadastrado. Chamado de `processarMencao()` (`mentionTrigger.js`, cobre
+  @menção/Automação/scan diário) e `processarIntake()`
+  (`intakeTrigger.js`, quando resolve um card real) — os 2 mesmos pontos
+  que já chamam `registrarLogAgente()`.
   `risco` (2026-08-28, pedido direto — "pensando em grandes projetos, pode
   ser legal") — só adiciona (`card.riscos` é array de strings puras,
   sem id/estado, sem "resolver"); reusa o mesmo par schema Zod

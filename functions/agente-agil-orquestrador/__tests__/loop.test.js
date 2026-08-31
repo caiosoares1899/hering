@@ -134,13 +134,13 @@ test('runLoop() sem `enabled` explícito fica desligado por padrão (default mud
   assert.equal(llmClient.calls(), 0);
 });
 
-test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_humano + ler_card + visao_board + biblioteca_agil + criar_card', () => {
+test('buildTools() expõe o vocabulário de outputs do Agente Ágil + perguntar_humano + ler_card + visao_board + biblioteca_agil + criar_card + cards_por_agente', () => {
   const tools = buildTools();
   const names = tools.map((t) => t.name);
 
   assert.deepEqual(
     names.sort(),
-    ['agent_status', 'biblioteca_agil', 'checklist_item', 'comentario', 'criar_card', 'editar_campos', 'ler_card', 'link', 'mover_coluna', 'perguntar_humano', 'relatorio_html', 'risco', 'visao_board'].sort(),
+    ['agent_status', 'biblioteca_agil', 'cards_por_agente', 'checklist_item', 'comentario', 'criar_card', 'editar_campos', 'ler_card', 'link', 'mover_coluna', 'perguntar_humano', 'relatorio_html', 'risco', 'visao_board'].sort(),
   );
   tools.forEach((t) => {
     assert.equal(t.input_schema.type, 'object');

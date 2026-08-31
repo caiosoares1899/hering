@@ -123,6 +123,24 @@ test('cardId aponta pra card real: monta o toolset COM card (não semCard), roda
   assert.equal(pendingEntry.val().resultText, 'Confirmado, sem ação necessária.');
 });
 
+// Mesmo mecanismo de mentionTrigger.js (ver agenteMarcador.js) — a
+// informação de um especialista externo também pode resolver um card
+// real que já tem um agente de IA cadastrado como responsável.
+test('cardId real com agente de IA cadastrado como owner: posta um 2º comentário marcando ele', async () => {
+  const db = seedDb();
+  await db.ref(`kanban/squads/${SQUAD_ID}/dados/agentes/ag1`).set({ id: 'ag1', nome: 'Claude Code', init: 'CC', avatarEmoji: '✨' });
+  await db.ref(`kanban/squads/${SQUAD_ID}/dados/cards/9/owner`).set('CC');
+  const llmClient = scriptedLlmClient([{ toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Anotado conforme o especialista informou.' } }], text: null }, { toolCalls: [], text: 'Concluído.' }]);
+  const entry = { texto: 'informação sobre esse card', especialista: 'databricks', cardId: 'c1' };
+
+  await processarIntake(db, { id: 'i4b', entry, llmClient });
+
+  const comentariosNoCard = Object.values((await db.ref(`kanban/squads/${SQUAD_ID}/dados/card_comments/c1`).get()).val() || {});
+  assert.equal(comentariosNoCard.length, 2, 'resposta normal + marcador do agente responsável');
+  const marcador = comentariosNoCard.find((c) => c.text.startsWith('📎 cc:'));
+  assert.equal(marcador.text, '📎 cc: ✨ Claude Code — responsável por este card.');
+});
+
 test('cardId aponta pra card que não existe mais: cai no caminho semCard (não quebra)', async () => {
   const db = seedDb();
   const llmClient = scriptedLlmClient([{ toolCalls: [], text: 'Não achei o card, sem ação.' }]);

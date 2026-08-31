@@ -171,6 +171,50 @@ test('rede de segurança NÃO duplica: se o modelo já chamou comentario, não p
   assert.equal(comentariosNoCard[0].text, 'Resposta via ferramenta.');
 });
 
+// Pedido direto do usuário: "se tem um outro agente de responsavel ali,
+// ele deve ser notificado quando as coisas acontecerem" — ver
+// agenteMarcador.js pro desenho completo (comentário adicional, não
+// notificação de verdade, já que um agente cadastrado não tem uid).
+test('card com agente de IA cadastrado como owner: posta um 2º comentário marcando ele, depois da resposta normal', async () => {
+  const db = seedDb();
+  await db.ref('kanban/squads/dev/dados/agentes/ag1').set({ id: 'ag1', nome: 'Claude Code', init: 'CC', avatarEmoji: '✨' });
+  await db.ref('kanban/squads/dev/dados/cards/9/owner').set('CC');
+  const llmClient = scriptedLlmClient([{ toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Movido conforme pedido.' } }], text: null }, { toolCalls: [], text: 'Concluído.' }]);
+  const comment = { uid: 'uid-humano', text: '@Agente Ágil marca esse item' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-marcador', comment, llmClient });
+
+  const comentariosNoCard = Object.values((await db.ref('kanban/squads/dev/dados/card_comments/c1').get()).val() || {});
+  assert.equal(comentariosNoCard.length, 2, 'resposta normal + marcador do agente responsável');
+  const marcador = comentariosNoCard.find((c) => c.text.startsWith('📎 cc:'));
+  assert.ok(marcador, 'deveria ter um comentário marcador começando com "📎 cc:"');
+  assert.equal(marcador.text, '📎 cc: ✨ Claude Code — responsável por este card.');
+});
+
+test('card SEM agente cadastrado como responsável: não posta marcador nenhum (só a resposta normal)', async () => {
+  const db = seedDb();
+  await db.ref('kanban/squads/dev/dados/agentes/ag1').set({ id: 'ag1', nome: 'Claude Code', init: 'CC', avatarEmoji: '✨' });
+  // Card fica com o owner padrão do seedDb (nenhum) — CC não é responsável por ele.
+  const llmClient = scriptedLlmClient([{ toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Feito.' } }], text: null }, { toolCalls: [], text: 'Concluído.' }]);
+  const comment = { uid: 'uid-humano', text: '@Agente Ágil qualquer coisa' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-sem-marcador', comment, llmClient });
+
+  const comentariosNoCard = Object.values((await db.ref('kanban/squads/dev/dados/card_comments/c1').get()).val() || {});
+  assert.equal(comentariosNoCard.length, 1);
+});
+
+test('squad sem NENHUM agente cadastrado: não posta marcador (não quebra, só não faz nada)', async () => {
+  const db = seedDb(); // sem dados/agentes nenhum
+  const llmClient = scriptedLlmClient([{ toolCalls: [{ id: '1', name: 'comentario', input: { type: 'comentario', texto: 'Feito.' } }], text: null }, { toolCalls: [], text: 'Concluído.' }]);
+  const comment = { uid: 'uid-humano', text: '@Agente Ágil qualquer coisa' };
+
+  await processarMencao(db, { cardId: 'c1', commentId: 'cm-sem-agentes', comment, llmClient });
+
+  const comentariosNoCard = Object.values((await db.ref('kanban/squads/dev/dados/card_comments/c1').get()).val() || {});
+  assert.equal(comentariosNoCard.length, 1);
+});
+
 // Achado real (2026-08-18): usuário perguntou "não deveria me mencionar pra
 // notificar?" depois de ver a resposta aparecer certinho no card, mas sem
 // nenhuma notificação chegar pra ele — comentario só notifica quando o

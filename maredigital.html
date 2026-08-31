@@ -523,7 +523,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </table>
   </div>
 
-  <div class="cl" style="margin-top:1.1rem;">13 ferramentas (tool_use)</div>
+  <div class="cl" style="margin-top:1.1rem;">14 ferramentas (tool_use)</div>
   <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Ferramenta</th><th>O que faz</th></tr></thead>
@@ -531,6 +531,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>ler_card</td><td>Lê o resumo do card atual — descrição, checklist, comentários (com <code class="hl">origem</code>: humano/próprio/automação/especialista), coluna, tags, responsável/participantes, e o mapa id↔nome de todas as colunas do board.</td></tr>
       <tr><td>visao_board</td><td>Visão agregada do board: WIP vs. limite por coluna, throughput, cycle/lead time, gargalo por coluna e bloqueios ativos.</td></tr>
       <tr><td>biblioteca_agil</td><td>Base de conhecimento estática — conceitos ágeis e como cada funcionalidade do Maré Digital funciona na prática.</td></tr>
+      <tr><td>cards_por_agente</td><td>Consulta quais cards têm um agente de IA cadastrado (<code class="hl">dados/agentes</code>) como responsável/participante — filtra por um agente (nome ou iniciais) ou agrupa por todos.</td></tr>
       <tr><td>criar_card</td><td>Cria um <strong>rascunho</strong> em Pedidos de Intake (nunca escreve em <code class="hl">/cards</code> direto) — pra quando a informação recebida ainda não tem nenhum card associado. Respeita as mesmas regras obrigatórias do modal (Ficha Técnica, Submarca).</td></tr>
       <tr><td>mover_coluna</td><td>Move o card para outra coluna (por id, não por nome de exibição).</td></tr>
       <tr><td>editar_campos</td><td>Edita título, descrição, tags e prioridade do card.</td></tr>
@@ -551,6 +552,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <div class="wc"><div class="wch"><div class="wci">📜</div><div class="wct">Histórico do Agente Ágil</div></div><div class="wcb">Aba "🤖 Histórico do Agente" em ⚙ Configurações (kanban.html) — todas as vezes que o agente mudou algo num card daquele squad, com a origem (@menção, Automação, ou especialista externo) e a lista de ações em português simples. Não polui com chamadas que só leram o card.</div></div>
     <div class="wc"><div class="wch"><div class="wci">💬</div><div class="wct">Card "Converse com o Agente Ágil"</div></div><div class="wcb">Card especial, fora do grafo normal (sem dono, sem prazo, fora de métricas/buscas) — pra conversa solta que não precisa virar uma tarefa de verdade. Também recebe o comentário quando um especialista externo manda algo sem card associado e nada de acionável nasce daquilo.</div></div>
     <div class="wc"><div class="wch"><div class="wci">🧭</div><div class="wct">Roteamento de modelo + cache</div></div><div class="wcb"><code class="hl">escolheClienteParaTarefa.js</code> manda perguntas curtas/conceituais pro <code class="hl">haiku</code> e o resto (qualquer pedido de ação) pro <code class="hl">sonnet</code>, com override manual disponível. Prompt caching (system + histórico) evita reprocessar do zero a cada iteração do loop.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🤖</div><div class="wct">Agentes de IA cadastrados no board</div></div><div class="wcb">Identidades de IA (<code class="hl">kanban/squads/{squad}/dados/agentes</code>, cadastradas em kanban.html → ⚙ Configurações → Usuários → "🤖 Agentes de IA") — aparecem como opção de Responsável/Participante, lado a lado com pessoas. Quando o orquestrador muda algo de verdade num card com um desses agentes como responsável/participante, posta um comentário extra marcando ele (<code class="hl">agenteMarcador.js</code>) — como o agente não tem uid/login pra receber notificação de verdade, é o jeito de "avisar" ele que existe hoje. A ferramenta <code class="hl">cards_por_agente</code> consulta quais cards já são de qual agente.</div></div>
   </div>
 
   <div class="wc" style="margin-top:8px;">
@@ -831,7 +833,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <thead><tr><th>Função</th><th>Trigger</th><th>O que faz</th></tr></thead>
     <tbody>
       <tr><td>sendPushOnNotification</td><td><code class="hl">onValueCreated</code> em <code class="hl">usuarios/{uid}/notificacoes/{id}</code></td><td>Converte notificações elegíveis (allow-list <code class="hl">PUSH_TYPES</code>) em push via FCM, respeitando o DND e prunando tokens inválidos.</td></tr>
-      <tr><td>agenteAgilMencao / agenteAgilMencaoDados</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> — fábrica multi-squad, uma function por squad (<code class="hl">dev</code> / <code class="hl">dados</code>)</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando as 13 ferramentas reais.</td></tr>
+      <tr><td>agenteAgilMencao / agenteAgilMencaoDados</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> — fábrica multi-squad, uma function por squad (<code class="hl">dev</code> / <code class="hl">dados</code>)</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando as 14 ferramentas reais.</td></tr>
       <tr><td>agenteAgilIntake</td><td><code class="hl">onValueCreated</code> em <code class="hl">agente_intake_pending</code> (squad dev)</td><td>2º gatilho automático — processa o que um especialista externo mandou via HTTP, resolve o card (se houver) e decide sozinho a ação, incluindo sugerir um card novo.</td></tr>
       <tr><td>agenteAgilDueOverdueScan</td><td><code class="hl">onSchedule</code> diário (squads dev e dados)</td><td>Varre cards vencendo hoje/atrasados e aciona o Agente Ágil (mesma rota da @menção) só nos squads com a Automação "Card vence hoje"/"Card atrasado" configurada.</td></tr>
       <tr><td>agenteAgilResumoMeuDia</td><td><code class="hl">onRequest</code>, sob demanda</td><td>"🤖 Resumo do Agente Ágil" dentro de Meu Dia — único caminho que só lê, nunca escreve no board.</td></tr>

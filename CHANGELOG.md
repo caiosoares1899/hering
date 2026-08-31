@@ -2216,6 +2216,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.510-dev — 2026-08-31 — Feat: cadastro de Agentes de IA + integração com o Agente Ágil
+
+Pedido direto do usuário, a partir de uma dúvida sobre como "plugar" um
+agente no campo Executor — revelou um recurso piloto já existente
+(`kanban/squads/{squad}/dados/agentes`, identidades de IA selecionáveis
+como Responsável/Participante) que tinha só o listener de leitura,
+nenhuma tela pra cadastrar. 3 partes, decididas com o usuário antes de
+implementar:
+
+1. **Cadastro (kanban-dev.html)**: CRUD completo em ⚙ Configurações →
+   Usuários → "🤖 Agentes de IA" — criar/editar/excluir identidades
+   (nome, iniciais, cor, emoji), com detecção de colisão de iniciais
+   (humano×agente e agente×agente, mesmo padrão de `renderUsuarios()`).
+   `renderAgentesList()`/`abrirAddAgente()`/`editarAgente()`/
+   `salvarAgente()`/`excluirAgente()`.
+2. **Ferramenta `cards_por_agente`** (orquestrador, 14ª ferramenta) —
+   consulta quais cards têm um agente cadastrado como responsável/
+   participante, filtrando por agente ou agrupando por todos. "Fica
+   mais fácil pro Agente Ágil se organizar dentro do quadro."
+3. **Marcador automático** (`agenteMarcador.js`) — quando o orquestrador
+   muda algo de verdade num card cujo responsável/participante é um
+   agente cadastrado, posta um comentário extra marcando ele
+   ("📎 cc: ..."), já que um agente cadastrado não tem uid/login pra
+   receber notificação de verdade. Disparado tanto por @menção/
+   Automação/scan diário (`mentionTrigger.js`) quanto por informação de
+   especialista externo que resolveu um card real (`intakeTrigger.js`).
+
+Central de Ajuda (`HELP_CONTENT`) e base de conhecimento do Agente Ágil
+(`bibliotecaAgil.js`) atualizadas nas duas fontes; `maredigital.html`
+(13 → 14 ferramentas) e `CODE_MAP.md` também.
+
+Checks de rotina: node --check OK (kanban-dev.html), brace/paren
+balance -1/0, suíte de testes de `functions/` (359/359) passando —
+incluindo os testes novos de `cardsPorAgente.test.js` (13),
+`agenteMarcador.test.js` (14), e integração em `mentionTrigger.test.js`/
+`intakeTrigger.test.js`.
+
 ### v8.30.509-dev — 2026-08-30 — Feat: recorrência automática ganha "Dias úteis (seg-sex)"
 
 Pedido direto do usuário. Novo tipo de recorrência, ao lado de "A cada
