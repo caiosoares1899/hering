@@ -88,7 +88,7 @@ const COMO_BOARD_FUNCIONA = [
   {
     titulo: 'Recorrência automática',
     texto:
-      'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\nDiferença pra "Itens recorrentes": ali é o time que clica "Usar" manualmente a cada sprint; aqui o card se recria sozinho, sem ninguém precisar lembrar.',
+      'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\nDiferença pra "Itens recorrentes": ali é o time que clica "Usar" manualmente a cada sprint; aqui o card se recria sozinho, sem ninguém precisar lembrar.',
   },
   {
     titulo: 'Modelos',

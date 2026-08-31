@@ -2216,6 +2216,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.509-dev — 2026-08-30 — Feat: recorrência automática ganha "Dias úteis (seg-sex)"
+
+Pedido direto do usuário. Novo tipo de recorrência, ao lado de "A cada
+X dias"/"Toda semana"/"Todo mês": recria o card automaticamente todo
+dia útil (segunda a sexta), pulando sábado e domingo — sem precisar de
+nenhum campo extra pra configurar (implícito no tipo escolhido).
+
+- `_recurrenceDue()`: novo ramo `weekdays` — dispara se `today.getDay()`
+  não for domingo (0) nem sábado (6), mesma checagem "já criou hoje?"
+  (`lastCreated`) dos outros tipos.
+- `_recurrenceLabel()`: rótulo "Todo dia útil (seg-sex)".
+- `_recRenderSub()`: sem campo extra pra este tipo — limpa o sub-campo
+  (antes só era preenchido pelos outros 3 tipos; sem isso, trocar de
+  "Toda semana" pra "Dias úteis" deixava o `<select>` de dia da semana
+  visível, órfão, sem afetar nada de verdade).
+- `salvarRecorrencia()`: nenhuma mudança necessária — `rec={type}` já
+  cobre o caso sem propriedade extra.
+- Central de Ajuda (`HELP_CONTENT` + base de conhecimento do Agente
+  Ágil, `functions/agente-agil-orquestrador/tools/bibliotecaAgil.js`)
+  atualizadas pra mencionar a opção nova nas duas fontes.
+
+Checks de rotina: node --check OK (kanban-dev.html e bibliotecaAgil.js),
+brace/paren balance -1/0, suíte de testes de `functions/` (6/6 em
+`bibliotecaAgil.test.js`) passando.
+
 ### v8.30.508-dev — 2026-08-30 — Docs (/atualizarhelpcontent): sincroniza Central de Ajuda com o Agente Ágil/Automações atuais
 
 Puramente documentação, sem mudança de comportamento. Não sincronizado
