@@ -4894,6 +4894,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <select id="rec-type" class="rec-input" onchange="_recRenderSub()">
           <option value="days">A cada X dias</option>
           <option value="weekly">Toda semana</option>
+          <option value="weekdays">Dias úteis (seg-sex)</option>
           <option value="monthly">Todo mês</option>
         </select>
       </div>
@@ -5601,7 +5602,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.508-dev</div>
+<div class="version">v8.30.509-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18430,6 +18431,7 @@ function _recurrenceLabel(rec){
   if(!rec||!rec.type) return '';
   if(rec.type==='days') return 'A cada '+(rec.interval||1)+' dia(s)';
   if(rec.type==='weekly') return 'Toda '+(_DIAS_SEMANA[rec.weekday??1]||'semana');
+  if(rec.type==='weekdays') return 'Todo dia útil (seg-sex)';
   if(rec.type==='monthly') return 'Todo dia '+(rec.monthday||1)+' do mês';
   return '';
 }
@@ -18449,6 +18451,11 @@ function _recurrenceDue(item, hoje){
   }
   if(rec.type==='weekly'){
     if(today.getDay()!==(rec.weekday??1)) return false;
+    return !last || last.getTime()!==today.getTime();
+  }
+  if(rec.type==='weekdays'){
+    const dow=today.getDay();
+    if(dow===0||dow===6) return false; // domingo/sábado — só dias úteis
     return !last || last.getTime()!==today.getTime();
   }
   if(rec.type==='monthly'){
@@ -18774,6 +18781,12 @@ function _recRenderSub(){
     sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Dia da semana</label><select id="rec-weekday" class="rec-input">${_DIAS_SEMANA.map((d,idx)=>`<option value="${idx}" ${idx===wd?'selected':''}>${d}</option>`).join('')}</select></div>`;
   } else if(type==='monthly'){
     sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Dia do mês (1-28)</label><input type="number" id="rec-monthday" class="rec-input" min="1" max="28" value="${rec.monthday||1}"></div>`;
+  } else {
+    // 'weekdays' (dias úteis, seg-sex) não tem campo extra — implícito no
+    // tipo. Limpa o resíduo de um tipo anterior (ex.: trocar de "Toda
+    // semana" pra "Dias úteis" sem isto deixava o <select> de dia da semana
+    // visível, órfão, sem afetar nada de verdade).
+    sub.innerHTML='';
   }
 }
 function salvarRecorrencia(){
@@ -21074,7 +21087,7 @@ const HELP_CONTENT = {
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
-    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
+    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n📌 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 📌 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
