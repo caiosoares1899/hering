@@ -52,6 +52,21 @@ completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
   agente cadastrado aqui, ele mesmo posta um comentário marcando esse
   agente.
 
+O Agente Ágil de VERDADE (não um cadastro decorativo) também pode ser
+Responsável/Participante desde 2026-08-31, só no squad `dados`:
+`AGENTE_AGIL_ASSIGNEE_ENTRY`/`AGENTE_AGIL_ASSIGNEE_SQUADS` — L6417/L6421
+(`init:'🤖'`, mesmo valor gravado por `functions/agente-agil-
+orquestrador/*.js` em todo comentário real do agente). Diferente de
+`AGENTE_AGIL_MENTION_ENTRY` (L6398, só autocomplete de `@`, nunca
+selecionável). `_reagirSeAgenteAgilAtribuido(c, prevOwner,
+prevParticipants)` — L6432 — reusa o pipeline de `@menção` já testado
+(posta comentário sintético `@Agente Ágil ...`, autoria de quem
+atribuiu) toda vez que o campo muda de valor pra incluir o agente;
+chamada em `scheduleAutoSave()`, e nos dois branches de `saveCard()`
+(edição e criação). Zero Cloud Function nova — reusa
+`agenteAgilMencaoDados` (já em produção, ver seção `functions/`
+abaixo).
+
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6281 — seções do modal (Conteúdo, Vínculos, Colaboração...)
 - `openCard()` — L11317
