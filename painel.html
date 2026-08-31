@@ -2272,7 +2272,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.02 · painel</div>
+<div class="version">v3.03 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7315,6 +7315,8 @@ function renderAgentesExternosPainel(){
       </div>
       ${aberto?`<div style="padding:0 11px 11px;border-top:1px solid var(--glass-b);">
         <textarea class="cfg-input" id="agentext-p-desc-${id}" rows="3" style="width:100%;box-sizing:border-box;margin-top:8px;resize:vertical;" placeholder="O que esse agente faz, que tipo de dado ele manda...">${esc(a.descricao||'')}</textarea>
+        <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">🔗 Webhook de retorno (opcional) — URL que recebe um POST quando o Agente Ágil decide mandar uma informação de volta pra este especialista (ex.: card concluído, usuário validou, usuário pediu uma alteração):</div>
+        <input class="cfg-input" id="agentext-p-webhook-${id}" type="url" style="width:100%;box-sizing:border-box;margin-bottom:10px;" placeholder="https://..." value="${esc(a.webhookUrl||'')}">
         <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">Vale nos squads:</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">${squadsChips}</div>
         <div style="display:flex;justify-content:flex-end;">
@@ -7334,7 +7336,7 @@ function criarAgenteExternoPainel(){
   const id=chave.trim();
   if(!id) return;
   if(agentesExternosCfg[id]){ showToast('⚠ Já existe um agente com esse identificador.'); _agentesExtPainelAberto=id; renderAgentesExternosPainel(); return; }
-  const entry={descricao:'', squads:{}, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+  const entry={descricao:'', webhookUrl:'', squads:{}, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
   agentesExternosCfg={...agentesExternosCfg, [id]:entry};
   _agentesExtPainelAberto=id;
   renderAgentesExternosPainel();
@@ -7353,11 +7355,14 @@ function criarAgenteExternoPainel(){
 async function salvarAgenteExternoPainel(id){
   if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
   const ta=document.getElementById('agentext-p-desc-'+id); if(!ta) return;
+  const wh=document.getElementById('agentext-p-webhook-'+id);
+  const webhookUrl=(wh?.value||'').trim();
+  if(webhookUrl && !/^https?:\/\//i.test(webhookUrl)){ showToast('⚠ Webhook precisa começar com http:// ou https://'); return; }
   const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
   try{
     const snap=await window._get(ref);
     const a=snap.val(); if(!a) return;
-    const entry={...a, descricao:ta.value.trim(), atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+    const entry={...a, descricao:ta.value.trim(), webhookUrl, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
     await window._set(ref, entry);
     showToast('✅ Descrição salva.');
   }catch(e){ showToast('❌ '+e.message); }

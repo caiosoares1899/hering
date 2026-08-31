@@ -9325,6 +9325,25 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.03 · painel — 2026-08-31 · promove pra prod — Agentes Externos ganha webhook de retorno
+
+Promove pra produção o campo "🔗 Webhook de retorno" da aba "🔌 Agentes
+Externos" (entrada correspondente em "painel-dev.html" logo abaixo).
+Aplicado como diff cirúrgico (não `cp` — `painel.html`/`painel-dev.html`
+divergem de verdade, mesmo padrão da promoção anterior desta aba):
+`renderAgentesExternosPainel()`/`criarAgenteExternoPainel()`/
+`salvarAgenteExternoPainel()` ganham o campo `webhookUrl`, com validação
+de esquema `http(s)://` antes de escrever.
+
+Já tem consumidor de verdade do lado do backend desde esta mesma sessão:
+`notificar_especialista_externo` (`functions/agente-agil-orquestrador/`,
+ver `CHANGELOG.md` — seção "Agente Ágil Orquestrador"), disponível hoje
+só no squad `dev` — validado ponta a ponta com um webhook de teste real
+antes desta promoção.
+
+Checks de rotina: node --check OK, brace/paren balance -1/-12 (mesmo
+baseline conhecido do arquivo).
+
 ### painel-dev.html v3.03 · painel-dev — 2026-08-31 · Agentes Externos — campo de webhook de retorno
 
 Aba "🔌 Agentes Externos" ganha um campo opcional "Webhook de retorno":
@@ -9334,9 +9353,9 @@ usuário validou, usuário pediu alteração). Guardado em
 `kanban/config/agentesExternos/{id}/webhookUrl`, junto com `descricao`
 e `squads`. `salvarAgenteExternoPainel()` valida que, se preenchido, o
 valor comece com `http://` ou `https://` antes de escrever; campo vazio
-é aceito normalmente (webhook é opcional). Ainda não há nenhum
-consumidor do campo do lado do backend (`functions/`) — só o
-cadastro/persistência nesta etapa.
+é aceito normalmente (webhook é opcional). Consumidor real do backend
+(`notificar_especialista_externo`) chegou depois, na mesma sessão — ver
+promoção pra prod acima.
 
 Checks de rotina: node --check OK.
 
