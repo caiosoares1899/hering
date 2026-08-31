@@ -9182,6 +9182,21 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.03 · painel-dev — 2026-08-31 · Agentes Externos — campo de webhook de retorno
+
+Aba "🔌 Agentes Externos" ganha um campo opcional "Webhook de retorno":
+URL que recebe um POST quando o Agente Ágil decide mandar uma
+informação de volta pro especialista externo (ex.: card concluído,
+usuário validou, usuário pediu alteração). Guardado em
+`kanban/config/agentesExternos/{id}/webhookUrl`, junto com `descricao`
+e `squads`. `salvarAgenteExternoPainel()` valida que, se preenchido, o
+valor comece com `http://` ou `https://` antes de escrever; campo vazio
+é aceito normalmente (webhook é opcional). Ainda não há nenhum
+consumidor do campo do lado do backend (`functions/`) — só o
+cadastro/persistência nesta etapa.
+
+Checks de rotina: node --check OK.
+
 ### painel.html v3.02 · painel — 2026-08-29 · promove pra prod — aba "🔌 Agentes Externos" (registro global, cross-squad)
 Promove pra produção o acumulado de `painel-dev.html` desde a última
 promoção (v3.01 e v3.02) — entradas correspondentes em "painel-dev.html"
