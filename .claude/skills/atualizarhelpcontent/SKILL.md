@@ -242,6 +242,24 @@ outra mudança na página:
   cobre uma origem (`especialista`) que existe há mais de 3 dias no
   backend.
 
+- **v8.30.508-dev → v8.30.514-dev (2026-08-31)**: lote grande de uma
+  sessão só — cadastro de Agentes de IA, Agente Ágil como Responsável/
+  Participante (squads dev+dados), revisão arquitetural dos disparos de
+  `@Agente Ágil` (puro refactor, sem texto novo), ferramenta
+  `notificar_especialista_externo`. 2 correções: `cards_por_agente`
+  faltava no parágrafo "🔍 Antes de agir, ele pode consultar" (de
+  "Ações que o agente pode executar") — só existia há algumas horas,
+  gap pequeno; `notificar_especialista_externo` ganhou parágrafo próprio
+  "🔌" na mesma entrada, já nascendo documentado (não um gap achado
+  depois). **Achado bom desta rodada**: as 3 entradas mais óbvias de
+  checar (Recorrência automática/"dias úteis", Agentes de IA/"squads
+  dev e dados", Histórico do Agente/origem "especialista") já estavam
+  corretas — quem implementou cada feature nesta mesma sessão já tinha
+  atualizado o `HELP_CONTENT` na hora, em vez de deixar pra uma rodada
+  de sync depois. Sinal de que a disciplina "atualiza os 2 lugares
+  junto com a feature" está pegando, pelo menos quando a mesma sessão
+  faz a feature inteira.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.

@@ -2216,6 +2216,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.514-dev — 2026-08-31 — Docs: sincroniza Central de Ajuda (/atualizarhelpcontent)
+
+Sync com o lote acumulado desde o último sync (`28db092`, dentro da
+v8.30.508-dev): cadastro de Agentes de IA, Agente Ágil como Responsável/
+Participante, `cards_por_agente` e `notificar_especialista_externo`.
+Puramente documentação, sem mudança de comportamento.
+
+- **"Ações que o agente pode executar"**: `cards_por_agente` adicionada
+  ao parágrafo "🔍 Antes de agir, ele pode consultar" (faltava desde
+  2026-08-31, mesmo dia que a ferramenta foi criada). Novo parágrafo
+  "🔌" explicando `notificar_especialista_externo` — encaminha mensagem
+  de volta pro especialista externo via webhook, hoje só squad `dev`.
+- Conferido e já em dia (não precisou de ajuste): "Recorrência
+  automática" (já mencionava "dias úteis"), "Agentes de IA (piloto
+  híbrido humano+agente)" (já dizia "squads dev e dados" pro Agente
+  Ágil real), "Histórico do Agente" (já cobria a origem "especialista"
+  desde o sync anterior).
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(-1/0).
+
 ### v8.30.513-dev — 2026-08-31 — Amplia `AGENTE_AGIL_ASSIGNEE_SQUADS` pra incluir squad `dev`
 
 Durante a validação ponta a ponta da v8.30.511-dev (Agente Ágil como
