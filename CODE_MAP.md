@@ -53,8 +53,10 @@ completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
   agente.
 
 O Agente Ágil de VERDADE (não um cadastro decorativo) também pode ser
-Responsável/Participante desde 2026-08-31, só no squad `dados`:
-`AGENTE_AGIL_ASSIGNEE_ENTRY`/`AGENTE_AGIL_ASSIGNEE_SQUADS` — L6417/L6421
+Responsável/Participante desde 2026-08-31, nos squads `dev`+`dados`
+(começou só `dados`, ampliado pra `dev` no mesmo dia — pedido direto pra
+testar sem mexer em dado de squad de trabalho):
+`AGENTE_AGIL_ASSIGNEE_ENTRY`/`AGENTE_AGIL_ASSIGNEE_SQUADS`
 (`init:'🤖'`, mesmo valor gravado por `functions/agente-agil-
 orquestrador/*.js` em todo comentário real do agente). Diferente de
 `AGENTE_AGIL_MENTION_ENTRY` (L6398, só autocomplete de `@`, nunca
@@ -392,7 +394,7 @@ pra trás de um comportamento que os outros já tinham.
     <pergunta>` com autoria de quem perguntou, `warnIfUnavailable:true`
     (ação direta de clique, mostra toast se o squad não tiver o gatilho)
   - `_reagirSeAgenteAgilAtribuido` (ver seção "Agentes de IA" acima) —
-    `squads: AGENTE_AGIL_ASSIGNEE_SQUADS` (mais restrito, só `dados`)
+    `squads: AGENTE_AGIL_ASSIGNEE_SQUADS` (`dev`+`dados`)
   - Automação `notify_agent.run()` — `asAutomacao:true`
     (`uid:'automacao'`, NUNCA `'agente-agil'` — mentionTrigger.js
     ignoraria como auto-comentário do próprio agente)
