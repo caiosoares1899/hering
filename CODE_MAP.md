@@ -188,6 +188,16 @@ detalhe dos 4 call sites.
   nome da função + `cards_deleted_intentionally` pra achar a linha atual
   de cada um — não repetido aqui pra não ficar obsoleto a cada edição
   nessas funções.
+- `window._reconcileCardsUpdatedAtPeriodic` — L8547 — poll de 4min (rede
+  de segurança contra listener ao vivo que perde um evento
+  silenciosamente — achado real 2026-08-31, reunião com board espelhado:
+  prioridade salva não propagou por ~20min sem nenhum sinal de conexão
+  caída). Lê `cards_updated_at` (leve) e refaz o fetch completo só dos
+  cards que divergem do cache local — mesma lógica de
+  `_onCardsUpdatedAtLive`, só disparada por tempo. Mesmo padrão que
+  `_colTagPoll` (poll de 60s pra columns/tags) já usava; cards não
+  tinham essa rede apesar de mudarem bem mais. Exposta em `window` pra
+  testar/disparar manualmente sem esperar o intervalo.
 
 ### Board & render
 - `renderNormal()` — L9874

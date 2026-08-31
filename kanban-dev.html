@@ -5620,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.514-dev</div>
+<div class="version">v8.30.515-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8523,6 +8523,51 @@ let _cardsSyncDebounce = null;
       // Promise.all interno resolver) -- nunca mais um timer fixo
       // correndo contra um carregamento de tamanho desconhecido.
       setTimeout(_reconcileCardsIndexOnce, 500);
+      // Re-sync periódico de CONTEÚDO de card (rede de segurança) — achado
+      // real (2026-08-31, reportado ao vivo numa reunião com o board
+      // espelhado): prioridade alterada e salva com o botão "Salvar" não
+      // propagou pro board de outra pessoa por ~20min, sem nenhum sinal de
+      // que algo tinha travado (.info/connected seguia "conectado" o tempo
+      // todo). O listener ao vivo (_onCardsUpdatedAtLive acima) depende de
+      // eventos chegando direitinho — uma aba em segundo plano numa
+      // videochamada por muito tempo, ou uma reconexão de rede que não
+      // reprocessa tudo, pode perder um evento silenciosamente, sem
+      // derrubar `.info/connected`. Sem nenhuma rede de segurança, isso
+      // fica desatualizado pra sempre até alguém pensar em dar F5 — mesma
+      // classe de problema que o poll de columns/tags logo abaixo já
+      // resolve pra colunas, só que cards mudam com MUITO mais frequência.
+      // Confirma periodicamente contra cards_updated_at (índice leve,
+      // id->timestamp — mesmo dado que _reconcileCardsIndexOnce já lê 1x
+      // por sessão) e refaz o fetch completo só dos cards que de fato
+      // divergem, reaproveitando a mesma lógica de _onCardsUpdatedAtLive —
+      // só que disparada por tempo, não por evento. 4min: frequente o
+      // bastante pra não deixar uma reunião inteira desatualizada, barato
+      // o bastante pra não pesar no orçamento de download (ver comentário
+      // grande no topo desta função sobre onValue vs. listeners granulares).
+      window._reconcileCardsUpdatedAtPeriodic = async function _reconcileCardsUpdatedAtPeriodic(){
+        if(!window._fbReady) return;
+        try{
+          const snap = await fbGet(FB+'/cards_updated_at');
+          const remote = snap.val() || {};
+          const staleKeys = [];
+          for(const id in remote){
+            if(_liveArchivedIds.has(id)) continue; // arquivado -- não força rebaixar
+            const key = _liveCardsIndexById[id];
+            if(key==null) continue; // sem posição resolvível -- _reconcileCardsIndexOnce cuida disso
+            if(!_cardsByKey[key] || _cardsByKey[key].updatedAt !== remote[id]) staleKeys.push(key);
+          }
+          if(!staleKeys.length) return { corrigidos:0 };
+          _dbgTrack('/cards_updated_at:periodic_reconcile_stale', staleKeys.length);
+          await Promise.all(staleKeys.map(async key=>{
+            const s = await window._get(fb(FB+'/cards/'+key));
+            if(s.val()) _cardsByKey[key] = s.val();
+          }));
+          _scheduleCardsSync();
+          return { corrigidos:staleKeys.length };
+        }catch(e){ console.warn('[cards] reconciliação periódica falhou:', e); return { erro:String(e) }; }
+      };
+      clearInterval(window._cardsReconcilePoll);
+      window._cardsReconcilePoll = setInterval(window._reconcileCardsUpdatedAtPeriodic, 4*60*1000);
     });
   }
 
