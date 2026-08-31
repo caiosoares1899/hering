@@ -59,6 +59,21 @@ function origemDoComentario(uid) {
   return 'humano';
 }
 
+// Extrai o id CRU do especialista (a mesma chave usada em kanban/config/
+// agentesExternos/{especialista}, e que notificar_especialista_externo
+// exige) direto do uid do comentário — nunca do texto de exibição
+// (`author`), que pode vir formatado diferente da chave real (ver
+// especialistaLabel() em agente-agil/board.js: 'databricks' vira exibido
+// como "Databricks"). Sem isso, notificar_especialista_externo (2026-08-31)
+// dependeria do modelo adivinhar a chave a partir do texto exibido — risco
+// real de "Databricks" (capitalizado, como aparece no comentário) não
+// bater com "databricks" (chave de verdade no cadastro), falhando com
+// webhook_nao_configurado mesmo o especialista estando cadastrado certo.
+function especialistaIdDoComentario(uid) {
+  if (typeof uid !== 'string' || !uid.startsWith('especialista:')) return null;
+  return uid.slice('especialista:'.length) || null;
+}
+
 // owner/participants no card já são INICIAIS (ex. "ANA"), não uids — ver
 // notifications.js:131 (buildOwnerParticipantNotifSteps monta a lista de
 // destinatários direto a partir de card.owner/card.participants como
@@ -99,7 +114,7 @@ function summarizeCard(card, { columns, flowConfig, squadTags, members, comments
   const comentarios = Object.values(comments || {})
     .sort((a, b) => new Date(a.ts) - new Date(b.ts))
     .slice(-COMMENTS_CAP)
-    .map((c) => ({ autor: c.author, texto: c.text, quando: c.ts, origem: origemDoComentario(c.uid) }));
+    .map((c) => ({ autor: c.author, texto: c.text, quando: c.ts, origem: origemDoComentario(c.uid), especialista_id: especialistaIdDoComentario(c.uid) }));
 
   const checklist = (card.checklist || []).map((item) => {
     const grupo = (card.checklistGroups || []).find((g) => g.id === item.grp);
@@ -170,4 +185,4 @@ function makeRealLerCardHandler({ db, squadId, cardId }) {
   };
 }
 
-module.exports = { lerCardSchema, summarizeCard, origemDoComentario, makeFakeLerCardHandler, makeRealLerCardHandler, COMMENTS_CAP };
+module.exports = { lerCardSchema, summarizeCard, origemDoComentario, especialistaIdDoComentario, makeFakeLerCardHandler, makeRealLerCardHandler, COMMENTS_CAP };

@@ -28,6 +28,12 @@ const { visaoBoardSchema, makeFakeVisaoBoardHandler, makeRealVisaoBoardHandler }
 const { bibliotecaAgilSchema, makeBibliotecaAgilHandler } = require('./bibliotecaAgil');
 const { criarCardSchema, makeFakeCriarCardHandler, makeRealCriarCardHandler } = require('./criarCard');
 const { cardsPorAgenteSchema, makeFakeCardsPorAgenteHandler, makeRealCardsPorAgenteHandler } = require('./cardsPorAgente');
+const {
+  notificarEspecialistaExternoSchema,
+  makeFakeNotificarEspecialistaExternoHandler,
+  makeRealNotificarEspecialistaExternoHandler,
+} = require('./notificarEspecialistaExterno');
+const { NOTIFICAR_ESPECIALISTA_SQUADS } = require('../squadScope');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -163,6 +169,26 @@ function buildTools(options = {}) {
         ? makeRealCriarCardHandler({ db, squadId, especialista: options.especialista, dryRun })
         : makeFakeCriarCardHandler(),
   });
+
+  // notificar_especialista_externo (2026-08-31) — só aparece em mode:'real'
+  // nos squads de NOTIFICAR_ESPECIALISTA_SQUADS (squadScope.js, hoje só
+  // 'dev') — fora deles a ferramenta nem existe no toolset, pra não dar a
+  // impressão de disponível onde não tem cobertura nenhuma. Em mode:'fake'
+  // sempre disponível (squad não é uma preocupação de simulação/teste).
+  if (mode !== 'real' || NOTIFICAR_ESPECIALISTA_SQUADS.includes(squadId)) {
+    tools.push({
+      name: 'notificar_especialista_externo',
+      description:
+        mode === 'real'
+          ? `Encaminha uma mensagem de volta pro especialista externo (ex.: Databricks) que já interagiu com este card — identifique o especialista pelo histórico de comentários do card (ler_card mostra o autor de cada comentário; comentários de especialista externo vêm marcados como tal). Use quando algo relevante mudar e fizer sentido avisar quem mandou a informação original (ex.: card concluído, usuário validou, usuário pediu uma alteração). ${dryRun ? 'Monta a mensagem que enviaria, mas em dryRun — NÃO chama nenhum webhook de verdade.' : 'Chama o webhook cadastrado pra esse especialista DE VERDADE (POST HTTP). Se não houver webhook cadastrado, a ferramenta avisa em vez de falhar silenciosamente.'}`
+          : 'Encaminha uma mensagem de volta pro especialista externo que já interagiu com este card. Execução simulada, não chama nenhum webhook.',
+      input_schema: zodToJsonSchema(notificarEspecialistaExternoSchema),
+      handler:
+        mode === 'real'
+          ? makeRealNotificarEspecialistaExternoHandler({ db, squadId, cardId, dryRun })
+          : makeFakeNotificarEspecialistaExternoHandler(),
+    });
+  }
 
   return tools;
 }
