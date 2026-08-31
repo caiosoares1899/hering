@@ -2216,6 +2216,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.515-dev — 2026-08-31 — Fix: re-sync periódico de cards (rede de segurança contra listener travado)
+
+Achado ao vivo numa reunião com o board espelhado: um card teve a
+prioridade alterada e salva (botão "Salvar" — persistiu certo, não é
+bug de autosave) mas não propagou pro board de outra pessoa por ~20min,
+sem nenhum sinal visível de problema (`.info/connected` seguiu
+"conectado" o tempo todo). Investigação: a sincronização de cards
+depende inteiramente de listeners ao vivo (eventos, não polling) — não
+existia NENHUMA verificação periódica que reconfirmasse "os dados ainda
+batem com o servidor". Se um evento se perde silenciosamente (aba em
+segundo plano numa call por muito tempo, reconexão de rede que não
+reprocessa tudo), o board fica desatualizado indefinidamente até
+alguém pensar em dar F5.
+
+Fix: novo polling de 4 em 4 minutos (`window._reconcileCardsUpdatedAtPeriodic`,
+exposta pra teste/debug manual) — lê `cards_updated_at` (índice leve,
+id→timestamp, mesmo custo do que já é lido 1x por sessão) e refaz o
+fetch completo só dos cards que de fato divergem do que está localmente
+em cache, reaproveitando a mesma lógica do listener ao vivo. Mesmo
+padrão já usado pra columns/tags (`_colTagPoll`, poll de 60s) — cards
+não tinham a mesma rede de segurança, apesar de mudarem com muito mais
+frequência.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(-1/0).
+
 ### v8.30.514-dev — 2026-08-31 — Docs: sincroniza Central de Ajuda (/atualizarhelpcontent)
 
 Sync com o lote acumulado desde o último sync (`28db092`, dentro da
