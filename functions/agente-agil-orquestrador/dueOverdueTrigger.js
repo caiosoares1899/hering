@@ -27,8 +27,11 @@
 //
 // Squad `dados` adicionado ao scan em 2026-08-25 (mesma decisão pendente
 // desde o fechamento do item 5 — "expandir o scan pro squad dados"),
-// junto com o mesmo escopo já usado pra @menção/Resumo do Agente Ágil
-// (SQUADS_ATIVOS em resumoMeuDia.js). Diferente de mentionTrigger.js
+// junto com o mesmo escopo já usado pra @menção/Resumo do Agente Ágil.
+// SQUADS abaixo vem de squadScope.js (revisão arquitetural 2026-08-31) —
+// antes era hardcodado aqui de novo, cópia independente da de
+// resumoMeuDia.js (SQUADS_ATIVOS) e do client (AGENTE_AGIL_MENTION_SQUADS).
+// Diferente de mentionTrigger.js
 // (onde cada squad vira uma Cloud Function DEPLOYADA SEPARADAMENTE, com
 // path literal no trigger — ver comentário lá): aqui não existe esse
 // motivo de custo, porque `onSchedule` não escuta eventos de squad
@@ -61,9 +64,10 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
 const { cardsPath, cardCommentsPath } = require('../agente-agil/board');
 const flowLib = require('../agente-agil/flow');
+const { DUE_SCAN_SQUADS } = require('./squadScope');
 
 const SQUAD_ID = 'dev'; // mantido por compatibilidade (testes existentes/scripts usam como default de 1 squad só)
-const SQUADS = ['dev', 'dados']; // squads escaneados de verdade pela Cloud Function — ver comentário no topo
+const SQUADS = DUE_SCAN_SQUADS; // squads escaneados de verdade pela Cloud Function — ver squadScope.js
 
 // Data no calendário de São Paulo, independente do timezone do processo do
 // Cloud Function — mesmo formato (YYYY-MM-DD) que card.due já usa.

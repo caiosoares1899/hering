@@ -5620,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.511-dev</div>
+<div class="version">v8.30.512-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5844,7 +5844,12 @@ const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/
 // no functions/agente-agil-orquestrador/ — agenteAgilMencao/agenteAgilMencaoDados).
 // Só nesses squads o botão "Converse com Agente Ágil" (ver openAgenteHotline())
 // tem serventia — em outros, o @menção não é processado por ninguém.
-const AGENTE_AGIL_HOTLINE_SQUADS = ['dev', 'dados'];
+// Usa AGENTE_AGIL_MENTION_SQUADS (declarada mais abaixo, perto de
+// allIdentities()) — revisão arquitetural 2026-08-31: até aqui existia uma
+// 2ª constante aqui (AGENTE_AGIL_HOTLINE_SQUADS, mesmo valor, tipo
+// diferente — Array em vez de Set), risco real de uma expandir sem a
+// outra acompanhar. As duas descreviam o mesmo fato ("em quais squads a
+// menção é processada de verdade"), então viraram uma só.
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
@@ -6419,33 +6424,64 @@ const AGENTE_AGIL_ASSIGNEE_ENTRY = {
   isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖',
 };
 const AGENTE_AGIL_ASSIGNEE_SQUADS = new Set(['dados']);
+// ── Dispatcher único: "postar comentário sintético @Agente Ágil" (revisão
+// arquitetural 2026-08-31) ───────────────────────────────────────────────
+// Até aqui esse padrão (escrever um comentário com "@Agente Ágil" em
+// card_comments, deixando mentionTrigger.js processar) tinha sido
+// reimplementado de forma independente em pelo menos 4 lugares deste
+// arquivo — _askAgenteAgilNoCard, a automação "notify_agent", o caminho
+// "WIP excedido" (o próprio código antigo admitia "replica em vez de
+// reusar actionDef.run()") e esta função — cada um com sua própria cópia
+// de montar o comentário, decidir uid/autoria e (só 2 dos 4) checar se o
+// squad atual tem mesmo uma Cloud Function ouvindo. Esta função concentra
+// as 3 coisas num só lugar; os 4 call sites viraram 1 linha cada.
+// opts.squads (Set, obrigatório de fato — sem ele cai no padrão
+// AGENTE_AGIL_MENTION_SQUADS): qual escopo valida ESTE disparo — nem todo
+// caller usa o mesmo (atribuição usa AGENTE_AGIL_ASSIGNEE_SQUADS, mais
+// restrito).
+// opts.asAutomacao: autoria 'automacao'/'⚙ Automação' em vez do usuário
+// logado — mentionTrigger.js trata os dois igual (nunca 'agente-agil',
+// que seria auto-ignorado pra evitar o agente se auto-disparar).
+// opts.warnIfUnavailable: mostra toast se o squad não tiver o gatilho
+// ativo — só faz sentido numa ação DIRETA de clique (_askAgenteAgilNoCard);
+// uma automação rodando em background não deve interromper quem estiver
+// com o board aberto com um toast que não é sobre a ação dele — por isso
+// os outros 3 callers deixam essa opção de fora (fica silencioso, mesmo
+// comportamento de antes da unificação).
+// Retorna true se escreveu, false se não (squad fora de escopo, sem
+// sessão de usuário numa ação não-automação, ou Firebase não pronto).
+function _dispatchAgenteAgilComment(cardId, text, opts){
+  opts = opts || {};
+  if(!window._fbReady) return false;
+  const squads = opts.squads || AGENTE_AGIL_MENTION_SQUADS;
+  if(!squads.has(ACTIVE_SQUAD)){
+    if(opts.warnIfUnavailable) showToast('🤖 O Agente Ágil ainda não está disponível neste squad.');
+    return false;
+  }
+  const user = window._currentUser;
+  if(!opts.asAutomacao && !user) return false;
+  const comment = opts.asAutomacao
+    ? { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'', text, ts:new Date().toISOString() }
+    : { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:user.uid||'', author:user.displayName||user.email||'?', init:window._currentUserInit||'?', foto:user.photoURL||'', text, ts:new Date().toISOString() };
+  _pushCardComment(cardId, comment);
+  return true;
+}
 // Posta um comentário sintético "@Agente Ágil" (autoria de QUEM FEZ a
-// atribuição, nunca do próprio agente — importante: mentionTrigger.js
-// ignora comentário cujo uid já é 'agente-agil', pra não se auto-disparar;
-// um comentário com uid humano passa normal por esse filtro) — reusa
-// 100% do pipeline de @menção já testado (kill switch, idempotência,
-// detecção) em vez de um gatilho novo dedicado a mudança de campo. Só
-// dispara quando o campo responsavel/participantes MUDA DE VALOR pra
-// incluir o agente (reatribuir de volta pra ele conta como mudança de
-// novo; editar outro campo do card com ele já atribuído NÃO reaciona) —
-// decisão explícita do usuário.
+// atribuição, nunca do próprio agente) — reusa 100% do pipeline de
+// @menção já testado (kill switch, idempotência, detecção) em vez de um
+// gatilho novo dedicado a mudança de campo. Só dispara quando o campo
+// responsavel/participantes MUDA DE VALOR pra incluir o agente (reatribuir
+// de volta pra ele conta como mudança de novo; editar outro campo do card
+// com ele já atribuído NÃO reaciona) — decisão explícita do usuário.
 function _reagirSeAgenteAgilAtribuido(c, prevOwner, prevParticipants){
-  if(!AGENTE_AGIL_ASSIGNEE_SQUADS.has(ACTIVE_SQUAD)) return;
   const init = AGENTE_AGIL_ASSIGNEE_ENTRY.init;
-  const user = window._currentUser; if(!user) return;
-  const _mkComment = text => ({
-    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-    uid:user.uid, author:user.displayName||user.email||'?',
-    init:window._currentUserInit||'?', foto:user.photoURL||'',
-    text, ts:new Date().toISOString(),
-  });
   if(c.owner===init && c.owner!==(prevOwner||'')){
-    _pushCardComment(c.id, _mkComment('@Agente Ágil você foi definido como responsável por este card.'));
+    _dispatchAgenteAgilComment(c.id, '@Agente Ágil você foi definido como responsável por este card.', {squads: AGENTE_AGIL_ASSIGNEE_SQUADS});
   }
   const wasParticipant=(prevParticipants||[]).includes(init);
   const isParticipant=(c.participants||[]).includes(init);
   if(isParticipant && !wasParticipant){
-    _pushCardComment(c.id, _mkComment('@Agente Ágil você foi adicionado como participante deste card.'));
+    _dispatchAgenteAgilComment(c.id, '@Agente Ágil você foi adicionado como participante deste card.', {squads: AGENTE_AGIL_ASSIGNEE_SQUADS});
   }
 }
 // Atalho pra @menção — reativa os pontos de entrada do Agente Ágil que têm
@@ -6463,17 +6499,8 @@ function _reagirSeAgenteAgilAtribuido(c, prevOwner, prevParticipants){
 // propósito — não têm onde postar a @menção.
 function _askAgenteAgilNoCard(card, pergunta){
   if(!card) return;
-  if(!AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)){ showToast('🤖 O Agente Ágil ainda não está disponível neste squad.'); return; }
-  if(!window._fbReady) return;
-  const user=window._currentUser;
-  const comment={
-    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-    uid:user?.uid||'', author:user?.displayName||user?.email||'?', init:window._currentUserInit||'?', foto:user?.photoURL||'',
-    text:'@Agente Ágil '+pergunta,
-    ts:new Date().toISOString(),
-  };
-  window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment).catch(()=>{});
-  showToast('🤖 Pergunta enviada — a resposta chega como comentário no card.');
+  const ok = _dispatchAgenteAgilComment(card.id, '@Agente Ágil '+pergunta, {squads: AGENTE_AGIL_MENTION_SQUADS, warnIfUnavailable:true});
+  if(ok) showToast('🤖 Pergunta enviada — a resposta chega como comentário no card.');
 }
 function mentionCandidates(){
   // allIdentities() já pode incluir AGENTE_AGIL_ASSIGNEE_ENTRY (mesmo uid
@@ -9237,7 +9264,7 @@ function _applyRoleVisibility(){
   // Botão "🤖 Agente Ágil" — pra todo mundo (não é restrito a PO/Organizador
   // como Configurações), só depende do squad ter escrita real do agente.
   const fabHotline=document.getElementById('fab-agente-hotline-btn');
-  if(fabHotline) fabHotline.style.display=AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)?'':'none';
+  if(fabHotline) fabHotline.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
 }
 function autoRegistrar(user){
   if(!window._fbReady) return;
@@ -11340,7 +11367,7 @@ function _findAgenteHotlineCard(){
 // diferente + atalhos (ver _applyAgenteHotlineSkin() acima e
 // _cardSectionVisible(), que esconde todas as seções exceto comentários).
 async function openAgenteHotline(){
-  if(!AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)){
+  if(!AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)){
     showToast('🤖 O Agente Ágil ainda não tem escrita real nesse squad.');
     return;
   }
@@ -25350,16 +25377,16 @@ const AUTO_ACTIONS = [
     // mentionTrigger.js filtra qualquer comentário com esse uid como
     // "auto-comentário do próprio agente" ANTES de olhar o texto — usar
     // esse uid faria a automação escrever um comentário que é
-    // silenciosamente ignorado, nunca dispara nada.
+    // silenciosamente ignorado, nunca dispara nada. Escrita em si delegada
+    // a _dispatchAgenteAgilComment() (ver declaração) — antes escrevia
+    // direto sem re-checar squad aqui (só o `visible:` acima impedia
+    // CONFIGURAR a regra fora de escopo; uma regra já configurada antes de
+    // um squad sair do escopo continuava escrevendo um comentário que
+    // nunca seria processado, silenciosamente). Agora reusa o mesmo guard
+    // de escrita que _askAgenteAgilNoCard/_reagirSeAgenteAgilAtribuido já
+    // tinham.
     run:(rule,card)=>{
-      if(!window._fbReady) return false;
-      const comment={
-        id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-        uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
-        text:'@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.',
-        ts:new Date().toISOString(),
-      };
-      window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment).catch(()=>{});
+      _dispatchAgenteAgilComment(card.id, '@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.', {squads: AGENTE_AGIL_MENTION_SQUADS, asAutomacao:true});
       return false; // não altera o card em si, só dispara o agente
     } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
@@ -25768,16 +25795,12 @@ function runAutoRules(eventType, cardId, extraVal){
       if(tab==='auto'){
         // Mesmo modo autônomo do notify_agent normal (ver AUTO_ACTIONS) —
         // esse caso fica de fora do loop por-card acima (WIP é agregado do
-        // board inteiro), por isso replica em vez de reusar actionDef.run().
-        if(window._fbReady){
-          const comment={
-            id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-            uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
-            text:'@Agente Ágil — [Automação] WIP atual é '+wip+', acima do limite de '+(agilCfg.wip||3)+'. O que fazer?',
-            ts:new Date().toISOString(),
-          };
-          window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment).catch(()=>{});
-        }
+        // board inteiro), por isso monta a chamada aqui em vez de reusar
+        // actionDef.run() (não tem "o card" que disparou pra passar pra
+        // ele) — mas a escrita em si já é a mesma _dispatchAgenteAgilComment()
+        // que actionDef.run() usa, não mais uma 2ª cópia da montagem do
+        // comentário (ver declaração de _dispatchAgenteAgilComment).
+        _dispatchAgenteAgilComment(cardId, '@Agente Ágil — [Automação] WIP atual é '+wip+', acima do limite de '+(agilCfg.wip||3)+'. O que fazer?', {squads: AGENTE_AGIL_MENTION_SQUADS, asAutomacao:true});
       } else {
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }
