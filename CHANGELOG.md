@@ -2216,6 +2216,61 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.511-dev — 2026-08-31 — Feat: Agente Ágil selecionável como Responsável/Participante, e reage à atribuição
+
+Pedido direto do usuário: diferente do agente cadastrado em
+`dados/agentes` (v8.30.510-dev, só decorativo — vira um comentário
+"cc:" quando algo muda), o Agente Ágil de VERDADE agora pode ser
+escolhido como Responsável ou Participante de um card (nunca
+Demandante — mesma regra já aplicada aos agentes cadastrados, um
+agente não é quem "pede" o card) e **reage de verdade** quando isso
+acontece.
+
+Escopo combinado com o usuário antes de implementar (4 perguntas):
+mecanismo, papéis, squads, frequência do gatilho.
+
+- **Mecanismo**: reusa 100% o pipeline de `@menção` já testado
+  (`mentionTrigger.js`/`agenteAgilMencaoDados`, squad `dados`, já em
+  produção desde 2026-08-24) em vez de um gatilho novo dedicado a
+  mudança de campo — `_reagirSeAgenteAgilAtribuido()` posta um
+  comentário sintético `@Agente Ágil você foi definido como
+  responsável/adicionado como participante...` (autoria de QUEM fez a
+  atribuição, nunca do próprio agente — `mentionTrigger.js` ignora
+  comentário cujo uid já é `'agente-agil'`, pra não se auto-disparar).
+  **Zero deploy de Cloud Function novo** — o gatilho já escuta
+  `card_comments` do squad `dados` e detecta a menção normalmente.
+- **Papéis**: Responsável e Participante (não Demandante).
+- **Squad**: só `dados` por enquanto (`AGENTE_AGIL_ASSIGNEE_SQUADS`) —
+  mesma disciplina de rollout gradual do `AGENTE_AGIL_MENTION_SQUADS`.
+- **Frequência**: dispara toda vez que o campo responsável/participantes
+  MUDA DE VALOR pra incluir o agente (reatribuir de volta pra ele conta
+  como mudança de novo) — editar qualquer OUTRO campo do card com ele já
+  atribuído não reaciona.
+
+Implementação (`kanban-dev.html`):
+- `AGENTE_AGIL_ASSIGNEE_ENTRY`/`AGENTE_AGIL_ASSIGNEE_SQUADS` — nova
+  identidade real, `init:'🤖'` (mesmo valor que
+  `functions/agente-agil-orquestrador/*.js` já grava em todo comentário
+  real do agente, pra qualquer lookup por init casar direto). Diferente
+  de `AGENTE_AGIL_MENTION_ENTRY` (só autocomplete de `@`, nunca
+  selecionável).
+- `allIdentities()` inclui a nova identidade só no squad `dados` —
+  `mentionCandidates()` filtra ela de volta pra não duplicar com
+  `AGENTE_AGIL_MENTION_ENTRY` no autocomplete de `@`.
+- `populateOwnerSelect()`/`populatePartSelect()` — opção "🤖 Agente
+  Ágil" no mesmo optgroup dos agentes cadastrados.
+- `_reagirSeAgenteAgilAtribuido()` chamada nos 3 caminhos que gravam
+  responsável/participantes: `scheduleAutoSave()` (autosave, caminho
+  mais comum), `saveCard()` edição manual, e `saveCard()` criação de
+  card novo (nasce com o agente já atribuído conta como mudança, de
+  vazio).
+- `salvarAgente()` (cadastro de Agentes de IA) agora também bloqueia
+  colisão de iniciais contra o Agente Ágil de verdade, não só contra
+  membros/agentes cadastrados.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(-1/0).
+
 ### v8.30.510-dev — 2026-08-31 — Feat: cadastro de Agentes de IA + integração com o Agente Ágil
 
 Pedido direto do usuário, a partir de uma dúvida sobre como "plugar" um
