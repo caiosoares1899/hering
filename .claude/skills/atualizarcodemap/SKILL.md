@@ -255,6 +255,52 @@ normal do repo:
   `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade
   (diff, 1451 linhas de diferença).
 
+- **2026-08-31 — 5ª rodada** (rodapé anterior: `b5e99ae`, 2026-08-30 →
+  novo: `68e233d`, 2026-08-31). `kanban.html`/`kanban-dev.html`
+  **divergem no momento desta rodada** (374 linhas de diff — lote grande
+  do dia ainda não promovido: cadastro de Agentes de IA, Agente Ágil
+  como Responsável/Participante, revisão arquitetural dos disparos de
+  `@Agente Ágil`, squad `dev` habilitado) — cabeçalho do `CODE_MAP.md`
+  atualizado explicitando isso, números agora são de `kanban-dev.html`
+  (superset), mesmo padrão da 1ª rodada quando isso já tinha acontecido
+  antes. Script Python (`grep -E`, não BRE — achado de bug no processo:
+  a 1ª tentativa usou `subprocess` sem `-E`, todas as 104 âncoras
+  testadas vieram "MISSING" por causa disso, não porque sumiram de
+  verdade — sempre confirmar 1 caso manualmente antes de confiar num
+  resultado de "tudo sumiu") revalidou as 86 âncoras da seção
+  `kanban.html`/`kanban-dev.html` (nenhuma removida/renomeada — todas só
+  andaram de linha, drift de -7 a +284, crescente da parte de cima pro
+  fim do arquivo, mesmo padrão de sempre) e as 18 da seção `painel.html`
+  (15 com drift 0 — arquivo não mudou nessas partes —, 3 da subseção
+  "Agentes Externos" com drift real, corrigidas usando os números de
+  `painel-dev.html`, não `painel.html`, porque essa subseção específica
+  já tinha uma nota própria dizendo "linhas abaixo são de
+  painel-dev.html", diferente da convenção do resto da seção painel —
+  quase pisei nisso substituindo pelos números de `painel.html` por
+  engano, ver texto atualizado explicando o porquê). Seção
+  `functions/agente-agil-orquestrador/` usa citação por FILE NAME na
+  maioria das entradas (não por linha) — só 5 tinham `— LNNNN` explícito
+  (`processarMencao`, `classificaComplexidade`, `MODEL_BY_TIER`,
+  `sinaisDoCard`, `gerarResumoMeuDia`); 2 tinham drift real (`sinaisDoCard`
+  L111→L87, `gerarResumoMeuDia` L174→L178), corrigidas; `processarMencao`
+  L133→L134 corrigido por completude (drift de 1 linha). `functions/
+  index.js` (registro de exports) conferido linha por linha contra
+  `grep -n "^exports\."` — bate 100%, nenhuma divergência. Arquivos
+  citados só por nome em `agente-agil/`/`intake/`/`backup/`/`spotify/`
+  todos confirmados existentes (`ls`), nenhum removido.
+  4 seções/entradas novas (todas já escritas corretamente na hora de
+  cada mudança durante a sessão, não descobertas só agora nesta rodada —
+  diferente das rodadas anteriores onde o gap só aparecia na auditoria):
+  `squadScope.js`, `tools/notificarEspecialistaExterno.js`,
+  `AGENTE_AGIL_ASSIGNEE_ENTRY`/`_dispatchAgenteAgilComment()` em
+  `kanban.html`, e o bullet "Webhook de retorno" na subseção "Agentes
+  Externos" do painel. `painel.html`/`painel-dev.html` reconfirmado que
+  divergem de verdade (diff, 1466 linhas de diferença). Não indexada de
+  propósito (curadoria, não esquecimento): opção "Dias úteis (seg-sex)"
+  em recorrência automática — adição pequena a uma feature que nunca
+  teve seção própria no mapa, não justifica criar uma agora só por essa
+  adição.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. Isso evita reler o arquivo inteiro do zero numa
