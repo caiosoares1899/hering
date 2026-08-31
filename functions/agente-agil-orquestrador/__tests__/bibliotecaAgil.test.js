@@ -29,8 +29,8 @@ test('CONCEITOS_AGEIS tem os 9 verbetes esperados, todos com titulo+texto válid
   assertVerbetesValidos(CONCEITOS_AGEIS);
 });
 
-test('COMO_BOARD_FUNCIONA tem os 15 verbetes esperados, todos com titulo+texto válidos', () => {
-  assert.equal(COMO_BOARD_FUNCIONA.length, 15);
+test('COMO_BOARD_FUNCIONA tem os 16 verbetes esperados, todos com titulo+texto válidos', () => {
+  assert.equal(COMO_BOARD_FUNCIONA.length, 16);
   assertVerbetesValidos(COMO_BOARD_FUNCIONA);
 });
 

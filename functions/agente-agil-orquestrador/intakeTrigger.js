@@ -61,6 +61,7 @@ const { isEnabled } = require('./limits');
 const { resolveCardKey, cardsPath, cardCommentsPath } = require('../agente-agil/board');
 const { resolveReferencia } = require('../agente-agil/resolver');
 const { coletarAcoesAgente, registrarLogAgente } = require('./agenteLog');
+const { marcarAgenteResponsavel } = require('./agenteMarcador');
 const { readSquadMembers } = require('../agente-agil/members');
 const { buildNotifStep } = require('../agente-agil/notifications');
 
@@ -299,6 +300,23 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
       },
       acoes: acoesRegistro,
     }).catch((err) => console.error(`[agente-log:${squadId}] falha ao registrar log (intake):`, id, err));
+
+    // Marca o(s) agente(s) de IA cadastrados responsáveis por este card —
+    // mesmo mecanismo de mentionTrigger.js, ver agenteMarcador.js pro
+    // desenho completo. Só quando resolveu um card de verdade (cardId,
+    // semCard:false — comentario nem existe no toolset quando semCard).
+    if (cardId && acoesRegistro.length) {
+      const cardKeyMarcador = await resolveCardKey(db, cardId, { squadId }).catch(() => null);
+      const cardParaMarcador = cardKeyMarcador ? (await db.ref(`${cardsPath(squadId)}/${cardKeyMarcador}`).get()).val() : null;
+      await marcarAgenteResponsavel(db, {
+        squadId,
+        cardId,
+        card: cardParaMarcador,
+        acoes: acoesRegistro,
+        comentarioTool: tools.find((t) => t.name === 'comentario'),
+        dryRun,
+      }).catch((err) => console.error(`[agente-marcador:${squadId}] falha:`, cardId, err));
+    }
 
     // Sem card nenhum pra comentar (ou o card só apareceu via criar_card,
     // que já deixa seu próprio pendingId), o único jeito de dar

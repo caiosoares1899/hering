@@ -4327,6 +4327,24 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
 
+      <!-- Agentes de IA (piloto híbrido humano+agente) -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(167,139,250,.15);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="cfg-sec-title" style="margin-bottom:0;font-size:11px;">🤖 Agentes de IA</div>
+          <button class="btn btn-sm" onclick="abrirAddAgente()" style="font-size:10px;color:#c4b5fd;border-color:rgba(167,139,250,.3);">+ Novo agente</button>
+        </div>
+        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Identidades de IA que podem ser escolhidas como Responsável/Participante de um card, lado a lado com pessoas de verdade.</p>
+        <div id="agentes-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+        <div id="add-agente-row" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;" class="frow">
+          <input class="fi" id="agente-nome-inp" type="text" placeholder="Nome (ex.: Claude Code)" style="flex:1;min-width:120px;font-size:12px;">
+          <input class="fi" id="agente-init-inp" type="text" placeholder="Iniciais (ex.: CC)" maxlength="4" style="width:80px;font-size:12px;text-transform:uppercase;">
+          <input type="color" id="agente-cor-inp" value="#a78bfa" style="width:34px;height:30px;border:none;background:none;cursor:pointer;">
+          <input class="fi" id="agente-emoji-inp" type="text" placeholder="🤖" maxlength="4" style="width:44px;font-size:14px;text-align:center;">
+          <button class="btn btn-sm btn-teal" onclick="salvarAgente()">Salvar</button>
+          <button class="btn btn-sm" onclick="fecharAddAgente()">✕</button>
+        </div>
+      </div>
+
       <p style="font-size:11px;color:var(--txt3);margin-top:12px;">O PO pode alterar o papel de cada usuário ou convidar alguém pelo email.</p>
     </div>
 
@@ -5602,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.509-dev</div>
+<div class="version">v8.30.510-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7898,6 +7916,7 @@ function fbLoadAll(){
     agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesList();
     scheduleRender();
   });
   fbListen(FB+'/tags',val=>{
@@ -18952,7 +18971,7 @@ function swCfgTab(tab){
   // openAutoOv() abaixo. 'auto' continua em TABS acima só pra manter o
   // índice dos botões alinhado com as outras abas (não remover).
   if(tab==='agil') fillAgilTab();
-  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
+  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); renderAgentesList(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags'){
     renderTagEditor();
@@ -19263,6 +19282,83 @@ function renderUsuarios(){
       </select>`;
       list.appendChild(row);
     });
+  });
+}
+// ── Agentes de IA (piloto híbrido humano+agente) ────────────────────
+// CRUD de dados/agentes — antes só existia o listener (fbListen em
+// FB+'/agentes', ver declaração de `agentes`) e o código que já sabe LER
+// esse registro (allIdentities()/optgroup "🤖 Agentes" no seletor de
+// Responsável/Participante); pedido direto do usuário: "quero que isso
+// fique mais claro o cadastro" — não dava pra criar um agente novo sem
+// escrever direto no Firebase via console.
+let _agenteEditId = null;
+function renderAgentesList(){
+  const list=document.getElementById('agentes-list'); if(!list) return;
+  if(!agentes.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum agente cadastrado.</div>'; return; }
+  list.innerHTML = agentes.map(a=>{
+    // Mesma checagem de colisão de iniciais já feita pra humanos (ver
+    // dupInit em renderUsuarios() acima) — estendida pra cobrir
+    // agente×humano e agente×agente, não só humano×humano.
+    const initUp=(a.init||a.id||'').toUpperCase();
+    const dupInit = members.some(m=>(m.init||'').toUpperCase()===initUp) ||
+      agentes.some(b=>b.id!==a.id && (b.init||b.id||'').toUpperCase()===initUp);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:8px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${_hexA(a.cor||'#a78bfa',.25)};border:1px solid ${_hexA(a.cor||'#a78bfa',.5)};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${esc(a.avatarEmoji||'🤖')}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:12px;color:var(--txt);">${esc(a.nome||a.id)} <span class="init-pill${dupInit?' init-dup':''}" title="${dupInit?'⚠ Iniciais colidem com outra pessoa/agente deste squad':'Iniciais'}">${esc(a.init||a.id)}${dupInit?' ⚠':''}</span></div></div>
+      <button onclick="editarAgente('${a.id}')" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
+      <button onclick="excluirAgente('${a.id}','${esc((a.nome||a.id).replace(/'/g,''))}')" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+}
+function abrirAddAgente(){
+  _agenteEditId=null;
+  document.getElementById('agente-nome-inp').value='';
+  document.getElementById('agente-init-inp').value='';
+  document.getElementById('agente-cor-inp').value='#a78bfa';
+  document.getElementById('agente-emoji-inp').value='';
+  const row=document.getElementById('add-agente-row');
+  if(row){ row.style.display='flex'; document.getElementById('agente-nome-inp').focus(); }
+}
+function editarAgente(id){
+  const a=agentes.find(x=>x.id===id); if(!a) return;
+  _agenteEditId=id;
+  document.getElementById('agente-nome-inp').value=a.nome||'';
+  document.getElementById('agente-init-inp').value=a.init||'';
+  document.getElementById('agente-cor-inp').value=a.cor||'#a78bfa';
+  document.getElementById('agente-emoji-inp').value=a.avatarEmoji||'';
+  const row=document.getElementById('add-agente-row');
+  if(row){ row.style.display='flex'; document.getElementById('agente-nome-inp').focus(); }
+}
+function fecharAddAgente(){
+  document.getElementById('add-agente-row').style.display='none';
+  _agenteEditId=null;
+}
+function salvarAgente(){
+  const nome=document.getElementById('agente-nome-inp')?.value.trim();
+  const init=document.getElementById('agente-init-inp')?.value.trim().toUpperCase();
+  const cor=document.getElementById('agente-cor-inp')?.value||'#a78bfa';
+  const emoji=document.getElementById('agente-emoji-inp')?.value.trim()||'🤖';
+  if(!nome){ showToast('❌ Dê um nome pro agente.'); return; }
+  if(!init||init.length<2){ showToast('❌ Iniciais precisam ter pelo menos 2 letras.'); return; }
+  // Bloqueia salvar com colisão (mesmo padrão de proteção que editarInicial()
+  // já dá pra humanos — sem isso, dois seletores de Responsável mostrariam a
+  // mesma inicial apontando pra gente/agentes diferentes, ambíguo pra quem
+  // escolhe e pra qualquer automação que resolva por inicial).
+  const colideComMembro=members.some(m=>(m.init||'').toUpperCase()===init);
+  const colideComAgente=agentes.some(a=>a.id!==_agenteEditId && (a.init||a.id||'').toUpperCase()===init);
+  if(colideComMembro||colideComAgente){ showToast('❌ Já existe alguém (pessoa ou agente) com as iniciais "'+init+'" neste squad.'); return; }
+  const id=_agenteEditId||('ag'+Date.now()+Math.random().toString(36).slice(2,5));
+  fbSet(FB+'/agentes/'+id, {id, nome, init, cor, avatarEmoji:emoji});
+  const eraEdicao=!!_agenteEditId;
+  fecharAddAgente();
+  showToast((eraEdicao?'✅ Agente atualizado: ':'✅ Agente criado: ')+nome);
+}
+function excluirAgente(id, nome){
+  const a=agentes.find(x=>x.id===id);
+  uiConfirm('Excluir o agente "'+nome+'"? Cards que já tinham "'+(a?.init||'')+'" como responsável/participante mantêm a inicial guardada — só some da lista de seleção pra escolher em cards novos.', {title:'Excluir agente', danger:true, okText:'Excluir'}).then(ok=>{
+    if(!ok) return;
+    fbSet(FB+'/agentes/'+id, null);
+    showToast('🗑 Agente removido.');
   });
 }
 // ── Reatribuir cards de uma pessoa/inicial para outra ──
@@ -21155,6 +21251,7 @@ const HELP_CONTENT = {
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
     { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), ou notificar o Agente Ágil.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
+    { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },

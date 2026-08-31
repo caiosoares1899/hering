@@ -155,6 +155,11 @@ const COMO_BOARD_FUNCIONA = [
     texto:
       'Todo card precisa de um Prazo pra salvar — sem data definida ainda, use o botão "🚫 Sem prazo definido" em vez de chutar uma data. Em squads que usam o campo Submarca, escolher a submarca também é obrigatório. Vale pra criar e editar, pelo modal ou pelo Agente Ágil: o agente segue a mesma regra — recusa criar um card sem Submarca válida quando o squad exige, e um card criado sem prazo informado nasce marcado como "sem prazo definido" em vez de ficar num estado inválido.',
   },
+  {
+    titulo: 'Agentes de IA cadastrados no board',
+    texto:
+      'Além de pessoas, um squad pode cadastrar identidades de IA (nome, iniciais, cor, emoji) em Config → Usuários → "🤖 Agentes de IA" — elas aparecem lado a lado com gente de verdade nos seletores de Responsável/Participante de um card. Um agente cadastrado NÃO tem login próprio — é só uma identidade visual/organizacional, diferente do Agente Ágil (você mesmo). Quando você (o Agente Ágil) muda algo de verdade num card que já tem um desses agentes como responsável ou participante, um comentário adicional marcando esse agente é postado automaticamente depois da sua resposta — não precisa fazer isso você mesmo. Use a ferramenta cards_por_agente pra consultar quais cards já são de um agente específico (ou ver todos agrupados) antes de sugerir organizar/redistribuir trabalho entre agentes.',
+  },
 ];
 
 function makeBibliotecaAgilHandler() {

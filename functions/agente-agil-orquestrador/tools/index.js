@@ -27,6 +27,7 @@ const { lerCardSchema, makeFakeLerCardHandler, makeRealLerCardHandler } = requir
 const { visaoBoardSchema, makeFakeVisaoBoardHandler, makeRealVisaoBoardHandler } = require('./visaoBoard');
 const { bibliotecaAgilSchema, makeBibliotecaAgilHandler } = require('./bibliotecaAgil');
 const { criarCardSchema, makeFakeCriarCardHandler, makeRealCriarCardHandler } = require('./criarCard');
+const { cardsPorAgenteSchema, makeFakeCardsPorAgenteHandler, makeRealCardsPorAgenteHandler } = require('./cardsPorAgente');
 
 // A ferramenta "type" de cada schema (ex: 'mover_coluna') já diz o que a
 // ferramenta faz — o próprio `name` da tool-use do Anthropic. O campo
@@ -122,6 +123,14 @@ function buildTools(options = {}) {
       'Visão agregada do board inteiro (não só o card atual): WIP atual vs. limite por coluna, throughput, cycle time e lead time (média/mediana/amostra), gargalo por coluna (tempo médio parado) e bloqueios ativos. Aceita periodo_dias opcional (default 14) pra throughput/cycle/lead/gargalo — WIP e bloqueios são sempre o estado atual. Use antes de responder perguntas de gestão/fluxo do time ou pra dar contexto de board a um especialista externo.',
     input_schema: zodToJsonSchema(visaoBoardSchema),
     handler: mode === 'real' ? makeRealVisaoBoardHandler({ db, squadId }) : makeFakeVisaoBoardHandler(),
+  });
+
+  tools.push({
+    name: 'cards_por_agente',
+    description:
+      'Consulta quais cards têm um agente de IA cadastrado (kanban/squads/{squad}/dados/agentes) como responsável ou participante — só cards ativos (não arquivados). Aceita `agente` opcional (nome ou iniciais); sem ele, agrupa por TODOS os agentes cadastrados no squad, útil pra ter uma visão geral de quem tem o quê. Use antes de agir quando precisar saber se um card já é "de" um agente específico, ou pra ajudar a organizar/priorizar trabalho entre agentes.',
+    input_schema: zodToJsonSchema(cardsPorAgenteSchema),
+    handler: mode === 'real' ? makeRealCardsPorAgenteHandler({ db, squadId }) : makeFakeCardsPorAgenteHandler(),
   });
 
   tools.push({

@@ -82,6 +82,7 @@ const { mencionaAgente } = require('./detectaMencao');
 const { buildNotifStep } = require('../agente-agil/notifications');
 const { resolveCardKey, cardsPath } = require('../agente-agil/board');
 const { coletarAcoesAgente, registrarLogAgente } = require('./agenteLog');
+const { marcarAgenteResponsavel } = require('./agenteMarcador');
 const { readSquadMembers, getUidByInit } = require('../agente-agil/members');
 
 const AGENTE_UID = 'agente-agil'; // mesmo uid que outputs/*.js grava em todo comentário/escrita do agente
@@ -204,6 +205,28 @@ function createMentionTrigger({ squadId, dryRun = true }) {
     await registrarLogAgente(db, { squadId, cardId, comment, acoes: acoesRegistro }).catch((err) =>
       console.error(`[agente-log:${squadId}] falha ao registrar log:`, cardId, err)
     );
+
+    // Marca o(s) agente(s) de IA cadastrados (dados/agentes) que são
+    // responsável/participante deste card — pedido direto: "se tem um
+    // outro agente de responsável ali, ele deve ser notificado quando as
+    // coisas acontecerem". Um agente cadastrado não é um usuário de
+    // verdade (sem login/uid pra notificação real) — a solução acordada é
+    // um comentário adicional, curto, visível no histórico. Só dispara
+    // quando algo mudou de verdade (mesmo `acoesRegistro` do log acima) —
+    // ver agenteMarcador.js pro porquê e o resto do desenho. Melhor
+    // esforço, mesmo padrão do log logo acima.
+    if (acoesRegistro.length) {
+      const cardKeyMarcador = await resolveCardKey(db, cardId, { squadId }).catch(() => null);
+      const cardParaMarcador = cardKeyMarcador ? (await db.ref(`${cardsPath(squadId)}/${cardKeyMarcador}`).get()).val() : null;
+      await marcarAgenteResponsavel(db, {
+        squadId,
+        cardId,
+        card: cardParaMarcador,
+        acoes: acoesRegistro,
+        comentarioTool: tools.find((t) => t.name === 'comentario'),
+        dryRun,
+      }).catch((err) => console.error(`[agente-marcador:${squadId}] falha:`, cardId, err));
+    }
 
     // Notifica quem fez a @menção original — achado real (2026-08-18):
     // `comentario` só dispara notificação quando o TEXTO da resposta tem uma
