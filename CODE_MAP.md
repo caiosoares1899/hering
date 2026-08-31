@@ -577,7 +577,9 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
 - `squadScope.js` (2026-08-31, revisão arquitetural) — fonte única das
   listas "em quais squads o Agente Ágil está ativo, pra qual capacidade":
-  `MENTION_SQUADS`/`DUE_SCAN_SQUADS`/`RESUMO_MEUDIA_SQUADS`. Antes,
+  `MENTION_SQUADS`/`DUE_SCAN_SQUADS`/`RESUMO_MEUDIA_SQUADS`/
+  `NOTIFICAR_ESPECIALISTA_SQUADS` (esta última adicionada no mesmo dia,
+  ver `tools/notificarEspecialistaExterno.js` abaixo). Antes,
   `dueOverdueTrigger.js`/`resumoMeuDia.js` hardcodavam `['dev','dados']`
   cada um por conta própria (já tinham comentário cruzado avisando
   "mesma lista que o outro arquivo", nunca chegaram a compartilhar de
@@ -586,7 +588,8 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   deploy do Firebase Functions gen2, não duplicação acidental —, mas faz
   uma checagem de drift contra `MENTION_SQUADS` no module load
   (`console.warn` se divergir, não bloqueia).
-- `tools/index.js` — `buildTools()`, registro das 14 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `risco`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`, `cards_por_agente`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil`/`cards_por_agente` sobrevivem, as demais exigem card já resolvido.
+- `tools/index.js` — `buildTools()`, registro das 15 ferramentas reais (`comentario`, `link`, `relatorio_html`, `checklist_item`, `agent_status`, `mover_coluna`, `editar_campos`, `risco`, `perguntar_humano`, `ler_card`, `visao_board`, `biblioteca_agil`, `criar_card`, `cards_por_agente`, `notificar_especialista_externo`). `semCard:true` (2026-08-27) — variante restrita pra quando não há cardId fixo (ver `intakeTrigger.js`): só `criar_card`/`visao_board`/`biblioteca_agil`/`cards_por_agente`/`notificar_especialista_externo` sobrevivem, as demais exigem card já resolvido.
+- `tools/notificarEspecialistaExterno.js` (2026-08-31) — `notificar_especialista_externo`, "encaminha de volta" pro especialista externo (POST HTTP pro `webhookUrl` cadastrado em `kanban/config/agentesExternos/{especialista}`, ver painel.html). Só aparece no toolset em `mode:'real'` quando `squadId` está em `NOTIFICAR_ESPECIALISTA_SQUADS` (`squadScope.js`, hoje só `dev`) — decisão explícita do usuário: escrita real direto, sem modo sombra (risco baixo, é só uma URL que o próprio ADM cadastrou). Identifica QUAL especialista pelo `especialista_id` que `ler_card`/`lerCard.js` (`especialistaIdDoComentario()`) já extrai do `uid` de cada comentário (`especialista:{id}`) — nunca do texto de exibição (`author`), que pode vir formatado diferente da chave real. Timeout 8s, nunca lança exceção (sempre `{ok:false, error, message}` em falha).
 - `tools/cardsPorAgente.js` — `cards_por_agente` (2026-08-31, pedido direto:
   "fica mais fácil pro agente ágil se organizar dentro do quadro").
   Consulta `kanban/squads/{squad}/dados/agentes` (registro de identidades

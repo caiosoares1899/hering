@@ -37,4 +37,14 @@ const DUE_SCAN_SQUADS = Object.freeze(['dev', 'dados']);
 // Ágil" em Meu Dia.
 const RESUMO_MEUDIA_SQUADS = Object.freeze(['dev', 'dados']);
 
-module.exports = { MENTION_SQUADS, DUE_SCAN_SQUADS, RESUMO_MEUDIA_SQUADS };
+// Squads onde a ferramenta notificar_especialista_externo (tools/
+// notificarEspecialistaExterno.js) está disponível pro modelo — chamada
+// HTTP de saída de verdade pra uma URL cadastrada em painel.html. Decisão
+// explícita do usuário (2026-08-31): entra REAL direto (sem modo sombra),
+// mas só no squad de teste — mesmo raciocínio de conter o raio de
+// alcance de uma capacidade nova sem repetir todo o ciclo de dry-run que
+// as outras ferramentas passaram, já que aqui o risco é "chamar uma URL
+// que o próprio ADM configurou", não escrever no board.
+const NOTIFICAR_ESPECIALISTA_SQUADS = Object.freeze(['dev']);
+
+module.exports = { MENTION_SQUADS, DUE_SCAN_SQUADS, RESUMO_MEUDIA_SQUADS, NOTIFICAR_ESPECIALISTA_SQUADS };

@@ -523,7 +523,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </table>
   </div>
 
-  <div class="cl" style="margin-top:1.1rem;">14 ferramentas (tool_use)</div>
+  <div class="cl" style="margin-top:1.1rem;">15 ferramentas (tool_use)</div>
   <div class="tbl-wrap">
   <table class="tbl">
     <thead><tr><th>Ferramenta</th><th>O que faz</th></tr></thead>
@@ -542,6 +542,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>relatorio_html</td><td>Gera um relatório em HTML sobre o card ou o board.</td></tr>
       <tr><td>agent_status</td><td>Marca o status do trabalho do agente no card (ex: <code class="hl">awaiting_validation</code>).</td></tr>
       <tr><td>perguntar_humano</td><td>Pausa a tarefa e posta uma pergunta como comentário quando o agente não sabe como prosseguir — não adivinha uma resposta.</td></tr>
+      <tr><td>notificar_especialista_externo</td><td>Encaminha uma mensagem de volta pro especialista externo (ex.: Databricks) que comentou no card — POST HTTP pro webhook cadastrado em Painel → Agentes Externos. Identifica QUAL especialista pelo <code class="hl">especialista_id</code> que <code class="hl">ler_card</code> já resolve do uid de cada comentário (nunca do texto de exibição). Só nos squads de <code class="hl">NOTIFICAR_ESPECIALISTA_SQUADS</code> (hoje só <code class="hl">dev</code>) — escrita real direto, sem modo sombra (risco baixo: só chama uma URL que o próprio ADM cadastrou).</td></tr>
     </tbody>
   </table>
   </div>
@@ -833,7 +834,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <thead><tr><th>Função</th><th>Trigger</th><th>O que faz</th></tr></thead>
     <tbody>
       <tr><td>sendPushOnNotification</td><td><code class="hl">onValueCreated</code> em <code class="hl">usuarios/{uid}/notificacoes/{id}</code></td><td>Converte notificações elegíveis (allow-list <code class="hl">PUSH_TYPES</code>) em push via FCM, respeitando o DND e prunando tokens inválidos.</td></tr>
-      <tr><td>agenteAgilMencao / agenteAgilMencaoDados</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> — fábrica multi-squad, uma function por squad (<code class="hl">dev</code> / <code class="hl">dados</code>)</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando as 14 ferramentas reais.</td></tr>
+      <tr><td>agenteAgilMencao / agenteAgilMencaoDados</td><td><code class="hl">onValueCreated</code> em <code class="hl">card_comments</code> — fábrica multi-squad, uma function por squad (<code class="hl">dev</code> / <code class="hl">dados</code>)</td><td>Detecta <code class="hl">@Agente Ágil</code> num comentário e roda o loop do orquestrador contra o card, usando até 15 ferramentas reais (a 15ª, <code class="hl">notificar_especialista_externo</code>, só aparece no squad <code class="hl">dev</code> por enquanto).</td></tr>
       <tr><td>agenteAgilIntake</td><td><code class="hl">onValueCreated</code> em <code class="hl">agente_intake_pending</code> (squad dev)</td><td>2º gatilho automático — processa o que um especialista externo mandou via HTTP, resolve o card (se houver) e decide sozinho a ação, incluindo sugerir um card novo.</td></tr>
       <tr><td>agenteAgilDueOverdueScan</td><td><code class="hl">onSchedule</code> diário (squads dev e dados)</td><td>Varre cards vencendo hoje/atrasados e aciona o Agente Ágil (mesma rota da @menção) só nos squads com a Automação "Card vence hoje"/"Card atrasado" configurada.</td></tr>
       <tr><td>agenteAgilResumoMeuDia</td><td><code class="hl">onRequest</code>, sob demanda</td><td>"🤖 Resumo do Agente Ágil" dentro de Meu Dia — único caminho que só lê, nunca escreve no board.</td></tr>

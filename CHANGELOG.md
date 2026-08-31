@@ -9847,6 +9847,40 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-08-31 · Novo: notificar_especialista_externo — encaminha de volta pro especialista via webhook
+
+Pedido direto do usuário: "algo acontecendo dentro do card e o agente
+ágil encaminhando de volta para um agente externo" — testando no card
+real que já tinha histórico de comentários do especialista "databricks"
+(`c1786076103794_26ii`, squad `dev`). Fecha o caminho inverso do que já
+existia (especialista → card, via `intakeTrigger.js`): agora o modelo
+pode, dentro do próprio loop, chamar `notificar_especialista_externo`
+pra mandar uma mensagem de volta.
+
+Decisões fechadas com o usuário antes de implementar:
+- **Identificação de quem notificar**: o modelo escolhe pelo histórico
+  de comentários do card, não um campo novo persistido. `ler_card`
+  (`tools/lerCard.js`) ganhou `especialista_id` em cada comentário —
+  extraído do `uid` (`especialista:{id}`), NUNCA do texto de exibição
+  (`author`, que pode vir formatado diferente, ex. "Databricks" exibido
+  vs. "databricks" a chave real em `config/agentesExternos`).
+- **Rollout**: escrita real direto (POST HTTP de verdade), sem o ciclo
+  de modo sombra que o resto do roadmap sempre seguiu — risco baixo
+  (só chama uma URL que o próprio ADM cadastrou em painel.html), mas
+  restrito a `NOTIFICAR_ESPECIALISTA_SQUADS` (`squadScope.js`, hoje só
+  `dev`).
+
+`tools/notificarEspecialistaExterno.js` (novo) — timeout 8s, nunca
+lança exceção (sempre `{ok:false, error, message}` em falha: webhook
+não cadastrado, URL não é http(s), timeout, erro HTTP, erro de rede).
+
+11 testes novos (1 em `lerCard.test.js` pro `especialista_id`, 10 em
+`notificarEspecialistaExterno.test.js`), suíte `functions/` inteira:
+370/370 passando.
+
+**Requer redeploy manual das 3 functions que usam `tools/index.js`**:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### 2026-08-28 · Novo: contexto sobre especialistas externos (config/agentesExternos)
 
 Pedido direto, testando o orquestrador ao vivo via HTTPS com múltiplos

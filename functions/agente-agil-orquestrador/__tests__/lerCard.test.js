@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
-const { summarizeCard, origemDoComentario, makeRealLerCardHandler, makeFakeLerCardHandler, COMMENTS_CAP } = require('../tools/lerCard');
+const { summarizeCard, origemDoComentario, especialistaIdDoComentario, makeRealLerCardHandler, makeFakeLerCardHandler, COMMENTS_CAP } = require('../tools/lerCard');
 const { buildTools } = require('../tools');
 const { runLoop } = require('../loop');
 const flowLib = require('../../agente-agil/flow');
@@ -67,8 +67,8 @@ test('summarizeCard resolve coluna, tags, responsável/participantes e checklist
     { texto: 'Item sem grupo conhecido', done: false, grupo: 'grupo-sumiu' }, // grupo não encontrado -> cai pro id cru
   ]);
   assert.deepEqual(resumo.comentarios, [
-    { autor: 'Ana Silva', texto: 'primeiro', quando: '2026-07-01T10:00:00.000Z', origem: 'humano' },
-    { autor: 'Bruno Tanaka', texto: 'segundo', quando: '2026-07-02T10:00:00.000Z', origem: 'humano' },
+    { autor: 'Ana Silva', texto: 'primeiro', quando: '2026-07-01T10:00:00.000Z', origem: 'humano', especialista_id: null },
+    { autor: 'Bruno Tanaka', texto: 'segundo', quando: '2026-07-02T10:00:00.000Z', origem: 'humano', especialista_id: null },
   ]);
 });
 
@@ -84,6 +84,20 @@ test('origemDoComentario resolve especialista/proprio/automacao/humano pelo uid'
   assert.equal(origemDoComentario(undefined), 'humano');
 });
 
+// notificar_especialista_externo (2026-08-31) precisa da chave EXATA de
+// kanban/config/agentesExternos/{especialista}, não do texto de exibição
+// (que pode vir capitalizado diferente, ver especialistaLabel() em
+// agente-agil/board.js) — especialistaIdDoComentario() extrai essa chave
+// direto do uid, nunca do author.
+test('especialistaIdDoComentario extrai a chave crua do especialista a partir do uid, null pros outros', () => {
+  assert.equal(especialistaIdDoComentario('especialista:databricks'), 'databricks');
+  assert.equal(especialistaIdDoComentario('especialista:outro-futuro'), 'outro-futuro');
+  assert.equal(especialistaIdDoComentario('agente-agil'), null);
+  assert.equal(especialistaIdDoComentario('automacao'), null);
+  assert.equal(especialistaIdDoComentario('uidAna'), null);
+  assert.equal(especialistaIdDoComentario(undefined), null);
+});
+
 test('summarizeCard marca origem de cada comentário (especialista vs. próprio vs. automação vs. humano)', () => {
   const comments = {
     c1: { author: 'Ana Silva', text: 'pergunta original', ts: '2026-07-01T10:00:00.000Z', uid: 'uidAna' },
@@ -97,6 +111,10 @@ test('summarizeCard marca origem de cada comentário (especialista vs. próprio 
   assert.deepEqual(
     resumo.comentarios.map((c) => c.origem),
     ['humano', 'especialista', 'proprio', 'automacao']
+  );
+  assert.deepEqual(
+    resumo.comentarios.map((c) => c.especialista_id),
+    [null, 'databricks', null, null]
   );
 });
 
@@ -185,7 +203,7 @@ test('handler real de ler_card lê o card de verdade (fake db) e devolve o resum
   assert.equal(result.card.titulo, 'Card real');
   assert.deepEqual(result.card.responsavel, { init: 'ANA', nome: 'Ana Silva' });
   // Lê do path novo (card_comments), ignora o campo morto card.comments.
-  assert.deepEqual(result.card.comentarios, [{ autor: 'Ana Silva', texto: 'comentário de verdade', quando: '2026-08-18T10:00:00.000Z', origem: 'humano' }]);
+  assert.deepEqual(result.card.comentarios, [{ autor: 'Ana Silva', texto: 'comentário de verdade', quando: '2026-08-18T10:00:00.000Z', origem: 'humano', especialista_id: null }]);
   // Achado real (item 7): lista completa de colunas pra resolver nome -> id
   // antes de mover_coluna, respeitando o doneCols configurado pelo PO.
   assert.deepEqual(result.card.colunas_disponiveis, [
