@@ -2216,6 +2216,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.513-dev — 2026-08-31 — Amplia `AGENTE_AGIL_ASSIGNEE_SQUADS` pra incluir squad `dev`
+
+Durante a validação ponta a ponta da v8.30.511-dev (Agente Ágil como
+Responsável/Participante), achado na hora: o teste inicial foi tentado no
+squad `dev`, mas `AGENTE_AGIL_ASSIGNEE_SQUADS` só tinha `'dados'` — o
+seletor não mostrava a opção lá. Pedido direto do usuário: "pode incluir
+dev nos testes" — sem risco novo, já que `mentionTrigger.js` tem Cloud
+Function real ligada em `dev` desde 2026-08-18 (mesmo escopo de
+`AGENTE_AGIL_MENTION_SQUADS`); era só a lista mais restrita da feature de
+atribuição que ainda não cobria o squad onde dá pra testar sem mexer em
+dado de trabalho real. `AGENTE_AGIL_ASSIGNEE_SQUADS` vira
+`['dev','dados']`; comentários e texto do `HELP_CONTENT` atualizados.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado (-1/0).
+
 ### v8.30.512-dev — 2026-08-31 — Refactor: revisão arquitetural — unifica os disparos de "@Agente Ágil"
 
 Pedido direto do usuário depois de acumular várias features separadas de
