@@ -524,8 +524,8 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
 - `renderAgentesExternosPainel()` — L6721 — lista expansível na aba
   "🔌 Agentes Externos" de `openCfg()`; cada item mostra descrição
   (textarea) + chips de squad (`SQUADS`, checkbox por squad). Ganhou
-  também um campo "🔗 Webhook de retorno" (`webhookUrl`, 2026-08-31, só
-  em `painel-dev.html` ainda — ver entrada própria abaixo).
+  também um campo "🔗 Webhook de retorno" (`webhookUrl`, 2026-08-31 —
+  ver entrada própria abaixo).
 - `criarAgenteExternoPainel()` — L6760 / `salvarAgenteExternoPainel(id)`
   — L6783 / `toggleAgenteExternoSquad(id,squadId,checked)` — L6799
   (grava na hora, sem precisar de "Salvar") / `excluirAgenteExternoPainel(id)`
@@ -540,8 +540,8 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   URL que recebe um POST quando o Agente Ágil decide mandar uma
   informação de volta pro especialista. `salvarAgenteExternoPainel()`
   valida esquema `http(s)://` antes de escrever; campo vazio é aceito
-  (webhook é opcional). Só em `painel-dev.html` por enquanto, não
-  promovido pra `painel.html` (prod).
+  (webhook é opcional). Promovido pra `painel.html` (prod) no mesmo dia
+  (v3.03), depois de validado ponta a ponta com `notificar_especialista_externo`.
 
 ### Dashboard consolidado
 - `loadAll()` — L8518 / `renderAll()` — L8539
