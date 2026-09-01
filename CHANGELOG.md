@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.534 — 2026-09-01 · promove pra prod — sincroniza Central de Ajuda (documentação, sem mudança de comportamento)
+
+Promove o acumulado de `kanban-dev.html` v8.30.533-dev — puramente
+documentação (`/atualizarhelpcontent`), zero mudança de comportamento:
+
+- Nova entrada "📌 Fixar card no topo da coluna (pin)" — a feature já
+  estava em produção há um tempo, sem nenhuma entrada correspondente na
+  Central de Ajuda.
+- "🤖 Ponto de vista do Agente Ágil" documentado em "Insights pra
+  PO/ADM/Organizador" e "Ficha Técnica".
+- "🤖 Análise do board (PO)" documentado em "Meu Dia".
+- `criar_card` (ferramenta do Agente Ágil) documentado com os campos
+  checklist/tags/riscos em "Ações que o agente pode executar".
+
+Checks de rotina: `node --check` OK, diff restrito às 2 linhas de
+ambiente (versão/`VERSION_KEY`) + as 4 entradas de documentação acima
+— sem divergência de chaves/parênteses.
+
 ### v8.30.533 — 2026-09-01 · promove pra prod — @todos, indicador "pensando...", Ponto de vista/Análise do board do Agente Ágil, Agentes Externos no board
 
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
