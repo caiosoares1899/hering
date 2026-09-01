@@ -636,6 +636,32 @@ Mesma disciplina de sempre neste repo:
   explicitamente — a regra "não é licença pra refatorar" é sobre NÃO
   tomar essa decisão sozinho, não sobre recusar quando pedido.
 
+- **2026-09-01, área nomeada explicitamente — "pin do card"**: pedido
+  direto. Feature pequena e contida (só ~12 referências a `pinned`/
+  `pinnedAt`/`togglePinCard` no arquivo todo) — leitura completa de
+  todas. Estado (1 fixado por coluna, reset ao duplicar — inclusive
+  filhos de supercard, imunidade de recorrência/agendamento/import)
+  **sem achados**, tudo correto; o caso "2 pinned na mesma coluna depois
+  de mover" é decisão documentada de propósito no comentário de
+  `_sortCards()`, não bug. 1 achado real, técnica 1 (comparar caminhos
+  paralelos): `togglePinCard()` só tinha 1 call site — o botão 📌 no
+  canto do card, `opacity:0` por padrão, só visível via `:hover`, sem
+  NENHUM fallback pra toque (`@media (hover:none)` não existe em lugar
+  nenhum do arquivo) nem atalho de teclado. Comparado contra o menu de
+  contexto do card (`showCtxMenu()`), que já lista toda ação rápida
+  equivalente de card único (mover, prioridade, atribuir a mim, OKR,
+  duplicar, arquivar, excluir) — pin nunca tinha entrado lá, apesar de
+  ser exatamente esse tipo de ação. Sem o menu, quem usa celular/tablet
+  não tinha NENHUM jeito visual de descobrir a feature. Fix: item novo
+  no menu de contexto, mesmo padrão de `ctxToggleOKR()`, chamando
+  `togglePinCard()` direto — dá um 2º caminho sem mexer no botão hover
+  nem no padrão CSS compartilhado com outros elementos (`.notif-dismiss`
+  usa o mesmo esquema — não é bug exclusivo do pin, ficou fora do
+  escopo). `HELP_CONTENT` também ganhou uma frase sobre o caminho novo,
+  no mesmo commit (dev v8.30.537-dev). Testado via Playwright headless:
+  item aparece com label certo, clique chama `togglePinCard()` de
+  verdade, menu reflete o novo estado ao reabrir.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

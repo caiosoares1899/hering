@@ -2401,6 +2401,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.537-dev — 2026-09-01 — Fix (/monitorarbugs): pin do card não tinha jeito de usar no celular/tablet
+
+Revisão dedicada ao pin (fixar card no topo da coluna) pedida direto pelo
+usuário. Toda a lógica de estado (1 fixado por coluna, reset ao duplicar,
+imunidade de recorrência/agendamento/import) já estava correta — o único
+achado real foi de **acesso**, não de dado: o único jeito de fixar/
+desafixar era o ícone 📌 no canto do card (`makeCardEl()`), que é
+`opacity:0` por padrão e só aparece com `:hover` — sem nenhum fallback
+pra toque (`@media (hover:none)` não existe em nenhum lugar do arquivo) e
+sem atalho de teclado. Numa tela sem mouse (celular/tablet), não tinha
+NENHUM jeito visual de descobrir a feature, nem onde o botão invisível
+ficava.
+
+Achado ao comparar contra o menu de contexto do card (`showCtxMenu()`),
+que já lista toda ação rápida equivalente de card único (mover, prioridade,
+atribuir a mim, marcar OKR, duplicar, arquivar, excluir) — pin, apesar de
+ser exatamente esse tipo de ação, nunca tinha entrado lá.
+
+Fix: item novo "📌 Fixar no topo da coluna"/"Desafixar" no menu de
+contexto (mesmo padrão de `ctxToggleOKR()`), chamando `togglePinCard()`
+direto — dá um 2º caminho, acessível por toque-longo/clique-direito, sem
+mexer no botão hover nem no padrão CSS (`.notif-dismiss` usa o mesmo
+esquema em outro lugar do app — não é bug exclusivo do pin, fora do
+escopo desta rodada). `HELP_CONTENT` (entrada "Fixar card no topo da
+coluna (pin)") ganhou um parágrafo mencionando o caminho novo, pra não
+ficar desatualizado no mesmo commit que introduziu o gap.
+
+Testado via Playwright headless: item aparece com o label certo (Fixar/
+Desafixar conforme `card.pinned`), clique chama `togglePinCard()` de
+verdade e o menu reflete o novo estado ao reabrir.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/+1 (mesmo
+baseline conhecido da sessão).
+
 ### v8.30.536-dev — 2026-09-01 — Fix (/monitorarbugs): link "abrir card" falhava em silêncio quando o card não existia mais
 
 Achado durante revisão pedida via `/monitorarbugs`, focada na aba "🤖
