@@ -5620,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.515</div>
+<div class="version">v8.30.516</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11929,6 +11929,21 @@ function openNewCard(col){
   _detachAgenteHotlineCommentsListener();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
+  // BUGFIX (relato real, 2026-09-01: "criei um card do zero e trouxe um
+  // comentário de um último card aleatório"): faltava aqui — openCard()
+  // chama loadComments(id), que atualiza _commentCardId E o DOM de
+  // #m-comment-list; openNewCard() nunca chamava loadComments() (card
+  // ainda não tem id pra buscar), então os dois ficavam com o valor do
+  // ÚLTIMO card existente aberto. Resultado: o painel de comentários do
+  // card novo mostrava (e submitComment() ESCREVIA de verdade, via
+  // _commentCardId) no card_comments/{id do card antigo} — um comentário
+  // digitado no card novo era silenciosamente salvo no card errado, sumindo
+  // de vista assim que o card novo ganhasse seu próprio id. Reseta os dois
+  // aqui, mesmo padrão de attachSave()/attachRemove() (que já resolvem por
+  // editingId, não por uma variável separada — nunca tiveram este bug).
+  _commentCardId = null;
+  const _mcl2=document.getElementById('m-comment-list');
+  if(_mcl2) _mcl2.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Salve o card para poder comentar.</div>';
   _stopDirtyWatch(); // card novo: sem trava de "não salvo" (nada foi perdido se descartar)
   _newCardGuardOff = false; // rearma a trava de _newCardHasContent() pra esta nova sessão de criação
 }
@@ -27488,6 +27503,11 @@ function submitComment(){
   const inp=document.getElementById('m-comment-inp'); if(!inp) return;
   const text=inp.value.trim(); if(!text) return;
   const user=window._currentUser; if(!user) return;
+  // Guarda-chuva pro bugfix em openNewCard() (ver comentário lá): sem
+  // _commentCardId resolvido (card ainda não salvo, sem id de verdade),
+  // nunca escreve — evita tanto card_comments/null quanto, se algum outro
+  // caminho futuro esquecer de resetar a variável, escrever no card ERRADO.
+  if(!_commentCardId){ showToast('⚠ Salve o card antes de comentar.'); return; }
   const comment={
     id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
     uid:user.uid,
