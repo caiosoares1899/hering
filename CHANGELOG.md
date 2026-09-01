@@ -10326,6 +10326,25 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.07 · painel — 2026-09-01 · promove pra prod — CRUD de Agentes Externos: fim das falhas silenciosas + preserva edição não salva
+
+Promove pra produção o fix v3.06→v3.07 de `painel-dev.html` (validado
+pelo usuário: "testei, funcionou certinho, pode subir tudo pro prod"),
+achado numa revisão dedicada da aba "🤖 Agentes" (`/monitorarbugs`):
+
+- `salvarAgenteExternoPainel()`/`toggleAgenteExternoSquad()` agora
+  avisam com toast quando o agente já não existe mais (2 ADMs mexendo ao
+  mesmo tempo), em vez de o clique não fazer nada visível.
+- `criarAgenteExternoPainel()` reverte a entrada "fantasma" do cache
+  local se a escrita falhar de verdade (ex.: identificador com
+  caractere inválido pra chave do Firebase).
+- `renderAgentesExternosPainel()` agora preserva o que está sendo
+  digitado na linha aberta, mesmo quando o Firebase manda uma
+  atualização por causa de outro agente sendo editado ao mesmo tempo.
+
+`painel.html` v3.05 → v3.07. Checks de rotina: `node --check` OK,
+brace/paren balance -1/-11 (mesmo baseline conhecido do arquivo).
+
 ### painel.html v3.05 · painel — 2026-09-01 · promove pra prod — nova aba "🤖 Agentes"
 
 Promove pra produção a aba "🤖 Agentes" (v3.05/v3.06 de `painel-dev.html`,
