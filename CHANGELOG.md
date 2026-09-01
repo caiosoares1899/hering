@@ -10088,6 +10088,20 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html — 2026-09-01 · rascunho de Mural sobre a promoção do kanban.html v8.30.533
+
+Entrada nova em `COMUNICADO_RASCUNHOS_SEED` (`seed_todos_agenteagil_insights_2026_09_01`),
+junto com o lote de `kanban.html` v8.30.533 promovido no mesmo dia
+(`@todos`, indicador "pensando...", "Ponto de vista"/"Análise do board"
+do Agente Ágil, Agentes Externos no board). Fica como rascunho
+(`rascunho:true`, `ativo:false`) até um ADM abrir o painel e publicar
+manualmente — sem bump de versão do `painel.html` (dado inerte, não
+muda comportamento de ninguém até ser publicado, não justifica forçar
+reload de quem tem o painel aberto).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/-12 (mesmo
+baseline conhecido do arquivo).
+
 ### painel-dev.html v3.04 · painel-dev — 2026-09-01 · Agentes Externos ganham nome/iniciais/cor/emoji — viram selecionáveis no board
 
 Pedido direto do usuário: "meu ponto com os agentes dentro do board é que
