@@ -660,7 +660,11 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   chamado toda vez que a aba abre (`swPtab()`).
 - `loadAgentesTabData()` — L6944 — SOB DEMANDA (botão "🔄 Atualizar", não
   listener sempre ligado — são N squads × 2 leituras: `kanban/squads/
-  {squadId}/agentes` + `kanban/squads/{squadId}/dados/agente_log`).
+  {squadId}/dados/agentes` + `kanban/squads/{squadId}/dados/agente_log` —
+  ambos sob `dados/`, mesmo path que `FB` já usa em kanban.html/
+  kanban-dev.html; achado real, 2026-09-01: 1ª versão desta função lia
+  `kanban/squads/{squadId}/agentes` SEM o `/dados/`, path sem regra
+  nenhuma em `database.rules.json` → "Permission denied" ao vivo).
   Guarda o resultado em `_agentesTabCache` e chama os 2 renders abaixo.
 - `renderAgentesAtivosGrid(results)` — L6968 — grid por squad cruzando
   Agentes de IA do board com Agentes Externos que têm `init` (mesma
