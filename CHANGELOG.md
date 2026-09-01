@@ -10184,6 +10184,34 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.05 · painel — 2026-09-01 · promove pra prod — nova aba "🤖 Agentes"
+
+Promove pra produção a aba "🤖 Agentes" (v3.05/v3.06 de `painel-dev.html`,
+já validada em dev pelo usuário — "testei, funcionou certinho!"), incluindo
+o fix de path que corrigia o "Permission denied" ao clicar "🔄 Atualizar".
+
+Consolida numa aba própria na barra principal (ao lado de Visão/Fluxo/
+Pessoas/Monitor/Status/Dados):
+- **🟢 Quem está representado no board hoje** — grid visual por squad,
+  Agentes de IA + Agentes Externos selecionáveis (com "iniciais") vs. os
+  que só servem de contexto pro LLM.
+- **🧾 Histórico do Agente Ágil** — agora cross-squad numa lista só, com
+  filtro por squad e link direto pro card certo (antes só existia por
+  squad, dentro do próprio board).
+- **🔌 Agentes Externos** — a configuração já existente, movida pra cá
+  (antes vivia dentro do modal "Configurar — Squad X", uma localização
+  confusa já que é registro global).
+- **❓ Ajuda** — modal explicando a diferença entre cada tipo de agente.
+
+`painel.html` v3.04 → v3.05. Diff restrito ao conteúdo da promoção — só
+2 linhas de ambiente (versão) continuam divergentes de `painel-dev.html`
+por natureza.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/-11 (mesmo
+baseline de `painel-dev.html`). Testado via Playwright headless com
+Firebase mockado (troca de aba, modal de ajuda, `loadAgentesTabData()`
+end-to-end) antes de promover — sem exceptions.
+
 ### painel-dev.html v3.06 · painel-dev — 2026-09-01 · fix: "Permission denied" ao clicar 🔄 Atualizar na aba Agentes
 
 Achado ao vivo pelo usuário logo após testar a v3.05: `loadAgentesTabData()`

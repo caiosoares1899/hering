@@ -648,7 +648,8 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   ver `agenteMarcador.js` na seção `functions/` abaixo, NÃO depende de
   nada configurado aqui além de `init`+`webhookUrl`.
 
-### Aba "🤖 Agentes" (2026-09-01)
+### Aba "🤖 Agentes" (2026-09-01, presente em painel.html e painel-dev.html;
+linhas abaixo são de painel-dev.html)
 Aba própria na barra principal (`ptab-agentes`/`ppane-agentes`, ao lado
 de Visão/Fluxo/Pessoas/Monitor/Status/Dados) — pedido direto: "isso
 merece uma aba sozinha, nao ficar dentro de outras". Consolida tudo que

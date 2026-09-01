@@ -1192,6 +1192,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
     <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
     <button class="ptab"     id="ptab-dados"   onclick="swPtab('dados')"  style="color:var(--cyan);"><span class="ptab-icon">📊</span><span class="ptab-lbl">Dados</span></button>
+    <button class="ptab"     id="ptab-agentes" onclick="swPtab('agentes')" style="color:var(--accent);"><span class="ptab-icon">🤖</span><span class="ptab-lbl">Agentes</span></button>
   </div>
 
   <!-- ═══ ABA: VISÃO ═══ -->
@@ -1816,6 +1817,97 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div id="dd-historico"></div>
   </div><!-- /ppane-dados -->
 
+  <!-- ═══ ABA: AGENTES (2026-09-01) — pedido direto: "isso merece uma aba
+       sozinha, nao ficar dentro de outras". Antes disso, tudo relacionado a
+       agente vivia espalhado: Agentes Externos dentro do modal "Configurar
+       — Squad X" (apesar de ser registro GLOBAL, não por squad — já era uma
+       localização confusa), Agentes de IA e Histórico do Agente só existiam
+       dentro do kanban de cada squad (sem visão cross-squad nenhuma no
+       painel). Esta aba consolida os 3: quem está representado no board
+       hoje (visual), o histórico de ações do Agente Ágil em TODOS os
+       squads, e a configuração dos Agentes Externos (registro global, ver
+       kanban/config/agentesExternos abaixo). -->
+  <div class="ptab-pane" id="ppane-agentes">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:600;">🤖 Agentes</div>
+        <div style="font-size:11px;color:var(--txt3);">Agente Ágil, Agentes de IA cadastrados no board e Agentes Externos conectados — tudo num só lugar.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" onclick="loadAgentesTabData()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">🔄 Atualizar</button>
+        <button class="btn btn-sm" onclick="openAgentesHelp()" style="color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
+      </div>
+    </div>
+
+    <!-- Ativos hoje (visual, por squad) -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;margin-bottom:4px;">🟢 Quem está representado no board hoje</div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:12px;">Por squad: Agentes de IA cadastrados direto no board + Agentes Externos que viraram selecionáveis (têm "iniciais" preenchidas, ver 🔌 Agentes Externos abaixo).</div>
+      <div id="agentes-ativos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+        <div style="font-size:11px;color:var(--txt3);">Clique em 🔄 Atualizar pra carregar.</div>
+      </div>
+    </div>
+
+    <!-- Histórico do Agente Ágil (cross-squad) -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🧾 Histórico do Agente Ágil</div>
+        <select id="agentelog-squad-filter" class="camp-filter-sel" onchange="renderAgentesLogCross()" style="font-size:11px;">
+          <option value="all">Todos os squads</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:12px;">Toda ação que o Agente Ágil já executou nos cards, em qualquer squad — quem pediu (ou se foi automático/especialista externo) e o que mudou.</div>
+      <div id="agentelog-cross-list"><div style="font-size:11px;color:var(--txt3);">Clique em 🔄 Atualizar pra carregar.</div></div>
+    </div>
+
+    <!-- Config Agentes Externos (2026-08-28, movido pra cá em 2026-09-01 —
+         é registro GLOBAL, kanban/config/agentesExternos/{especialista},
+         nunca deveria ter ficado dentro de um modal "Configurar — Squad X".
+         O backend (intakeTrigger.js, lerDescricaoEspecialista()) lê daqui e
+         só injeta a descrição como contexto se o squad da mensagem estiver
+         marcado em `squads`. -->
+    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+        <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🔌 Agentes Externos</div>
+        <button class="save-btn" onclick="criarAgenteExternoPainel()">+ Novo agente</button>
+      </div>
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:10px;">Sistemas externos (ex.: Databricks) que mandam informação pro Agente Ágil via API — o que cada um faz, que tipo de dado costuma mandar. O identificador precisa bater exatamente com o campo "especialista" que aquele sistema manda no envelope da API. Marque em quais squads cada um vale — o Agente Ágil só usa a descrição como contexto extra pra mensagens daquele squad.</div>
+      <div id="agentesext-painel-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div><!-- /ppane-agentes -->
+
+  <!-- Modal de ajuda da aba Agentes -->
+  <div class="pev-modal-ov" id="agentes-help-ov">
+    <div class="pev-modal" style="max-width:520px;">
+      <div class="pev-hd">
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;">❓ Agentes — como funciona</div>
+        <button class="x-btn" onclick="closeAgentesHelp()">✕</button>
+      </div>
+      <div class="pev-body" style="font-size:11.5px;color:var(--txt2);line-height:1.65;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <b style="color:var(--txt);">🤖 Agente Ágil</b><br>
+          A IA que acompanha o board de cada squad — cards, prazos, riscos, comentários. Responde quando alguém marca <code>@Agente Ágil</code> num comentário, e também roda sozinho em algumas automações (ex.: avisar de card atrasado).
+        </div>
+        <div>
+          <b style="color:var(--txt);">🪪 Agentes de IA (no board)</b><br>
+          Identidades cadastradas direto dentro de um board (kanban → ⚙ Configurações → Agentes de IA), pra squads que usam mais de uma IA no dia a dia (ex.: um assistente de código). Podem ser marcados como Responsável/Participante de card, igual uma pessoa.
+        </div>
+        <div>
+          <b style="color:var(--txt);">🔌 Agentes Externos</b><br>
+          Sistemas de fora da empresa (ex.: um agente da Vtex, um agente de dados do Databricks) que trocam informação com o Agente Ágil via API — funcionam nos dois sentidos:
+          <ul style="margin:6px 0 0;padding-left:18px;">
+            <li><b>Saindo do board:</b> se o agente externo tiver "iniciais" preenchidas, ele pode ser marcado como Responsável/Participante de um card. Sempre que algo relevante acontece nesse card, o Agente Ágil avisa o sistema externo automaticamente, via webhook.</li>
+            <li><b>Chegando no board:</b> o sistema externo também pode mandar informação pra dentro (ex.: "coleção validada"). O Agente Ágil decide o que fazer — comenta, atualiza, ou pede confirmação de um humano se a ação for sensível ou o card não for claro.</li>
+          </ul>
+        </div>
+        <div>
+          <b style="color:var(--txt);">🧾 Histórico do Agente Ágil</b><br>
+          Registro de toda ação que o agente já tomou em qualquer card, com quem pediu (uma pessoa via @menção, uma Automação, ou um agente externo) — pra dar rastreabilidade total do que a IA fez em nome do time.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ MODAL: COMPOR COMUNICADO ═══ -->
   <div class="pev-modal-ov" id="comunicado-compose-ov">
     <div class="pev-modal" style="max-width:520px;">
@@ -2139,7 +2231,6 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <button class="err-filter-btn active" id="pcfg-tab-sprint" onclick="setPcfgTab('sprint')">⚙ Config</button>
           <button class="err-filter-btn" id="pcfg-tab-users"  onclick="setPcfgTab('users')">👥 Usuários</button>
           <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
-          <button class="err-filter-btn" id="pcfg-tab-agentesext" onclick="setPcfgTab('agentesext')">🔌 Agentes Externos</button>
         </div>
       </div>
       <button class="x-btn" onclick="closeCfg()">✕</button>
@@ -2173,25 +2264,6 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <input class="cfg-input" id="pcfg-viewer-nome" placeholder="Nome (opcional)" style="flex:1;">
           <button class="save-btn" onclick="addPainelViewer()">+ Visualizador</button>
         </div>
-      </div>
-
-      <!-- Aba Agentes Externos (2026-08-28) — pedido direto: "tem q ter uma
-           area no painel de configuração desses agentes plugados! listar
-           todos eles, dar as informações que o sistema precisa, colocar
-           essas descrições, setar em quais squads ele vai ficar". Registro
-           GLOBAL (kanban/config/agentesExternos/{especialista}) — substitui
-           a versão anterior, por squad, que vivia dentro do próprio
-           kanban.html/kanban-dev.html (removida, ver CODE_MAP.md). O
-           backend (intakeTrigger.js, lerDescricaoEspecialista()) lê daqui e
-           só injeta a descrição como contexto se o squad da mensagem
-           estiver marcado em `squads`. -->
-      <div id="painel-cfg-agentesext" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
-          <div class="cfg-sec" style="margin-bottom:0;">🔌 Agentes Externos</div>
-          <button class="save-btn" onclick="criarAgenteExternoPainel()">+ Novo agente</button>
-        </div>
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:10px;">Sistemas externos (ex.: Databricks) que mandam informação pro Agente Ágil via API — o que cada um faz, que tipo de dado costuma mandar. O identificador precisa bater exatamente com o campo "especialista" que aquele sistema manda no envelope da API. Marque em quais squads cada um vale — o Agente Ágil só usa a descrição como contexto extra pra mensagens daquele squad.</div>
-        <div id="agentesext-painel-list" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
 
       <!-- Aba Usuários -->
@@ -2272,7 +2344,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.04 · painel</div>
+<div class="version">v3.05 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4608,6 +4680,7 @@ function swPtab(tab){
   if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
+  if(tab==='agentes'){ _fillAgentesLogSquadFilter(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
 }
@@ -7329,7 +7402,12 @@ let _agentesExtPainelAberto = null;
 function loadAgentesExternosPainel(){
   window._onValue(window._ref(window._db,'kanban/config/agentesExternos'), snap=>{
     agentesExternosCfg = snap.val() || {};
-    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesExternosPainel();
+    // 2026-09-01: box vive agora na aba própria "🤖 Agentes" (não mais
+    // dentro do modal "Configurar"), então re-renderiza sempre que o box
+    // existir no DOM — a aba/pane pode estar oculta (display:none), mas
+    // atualizar o innerHTML de um elemento oculto é barato, não vale a
+    // pena checar se a aba está ativa só pra economizar isso.
+    if(document.getElementById('agentesext-painel-list')) renderAgentesExternosPainel();
   });
 }
 
@@ -7444,6 +7522,108 @@ function excluirAgenteExternoPainel(id){
     .catch(e=>showToast('❌ '+e.message));
 }
 // ── FIM AGENTES EXTERNOS ────────────────────────────────────────────
+
+// ── ABA "🤖 AGENTES" (2026-09-01) — visão consolidada cross-squad ──────
+// Diferente de agentesExternosCfg (listener sempre ligado, é 1 nó global
+// pequeno), os dados aqui (agentes de IA por squad + agente_log por squad)
+// só são buscados SOB DEMANDA quando a pessoa clica "🔄 Atualizar" — são N
+// squads × 2 leituras, não vale manter isso sempre ativo em background só
+// porque a aba existe (mesmo espírito de "Histórico de pushes" e outras
+// seções lazy do painel).
+let _agentesTabCache = null;
+
+function _fillAgentesLogSquadFilter(){
+  const sel=document.getElementById('agentelog-squad-filter'); if(!sel) return;
+  const cur=sel.value||'all';
+  sel.innerHTML='<option value="all">Todos os squads</option>' + SQUADS.map(s=>`<option value="${esc(s.id)}">${s.icon||''} ${esc(s.label||s.id)}</option>`).join('');
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:'all';
+}
+
+async function loadAgentesTabData(){
+  _fillAgentesLogSquadFilter();
+  const grid=document.getElementById('agentes-ativos-grid');
+  const list=document.getElementById('agentelog-cross-list');
+  if(grid) grid.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  if(list) list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  try{
+    const results=await Promise.all(SQUADS.map(async sq=>{
+      const [agentesSnap, logSnap]=await Promise.all([
+        window._get(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/agentes')),
+        window._get(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/agente_log')),
+      ]);
+      const log=Object.entries(logSnap.val()||{}).map(([id,e])=>({...e,id,squadId:sq.id}));
+      return { squad:sq, agentesIA:Object.values(agentesSnap.val()||{}), log };
+    }));
+    _agentesTabCache=results;
+    renderAgentesAtivosGrid(results);
+    renderAgentesLogCross();
+  }catch(e){
+    if(grid) grid.innerHTML='<div style="font-size:11px;color:var(--danger);">⚠ Erro ao carregar: '+esc(e.message||String(e))+'</div>';
+    if(list) list.innerHTML='';
+  }
+}
+
+function renderAgentesAtivosGrid(results){
+  const grid=document.getElementById('agentes-ativos-grid'); if(!grid) return;
+  if(!results.length){ grid.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum squad configurado.</div>'; return; }
+  grid.innerHTML=results.map(r=>{
+    const sq=r.squad;
+    const externosDoSquad=Object.entries(agentesExternosCfg).filter(([,a])=>(a.squads||{})[sq.id]===true);
+    const selecionaveis=[
+      ...r.agentesIA.map(a=>({nome:a.nome||a.id||'?', init:a.init, emoji:a.avatarEmoji||'🤖', cor:a.cor})),
+      ...externosDoSquad.filter(([,a])=>a.init).map(([id,a])=>({nome:a.nome||id, init:a.init, emoji:a.avatarEmoji||'🔌', cor:a.cor})),
+    ];
+    const soContexto=externosDoSquad.filter(([,a])=>!a.init);
+    const selHtml=selecionaveis.length
+      ? selecionaveis.map(a=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 0;"><span>${esc(a.emoji)}</span><span style="flex:1;">${esc(a.nome)}</span>${a.init?`<span style="font-size:9px;font-weight:700;color:var(--accent);background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);padding:1px 7px;border-radius:999px;">${esc(a.init)}</span>`:''}</div>`).join('')
+      : '<div style="font-size:10.5px;color:var(--txt3);">Nenhum agente selecionável cadastrado.</div>';
+    const ctxHtml=soContexto.length
+      ? `<div style="font-size:9.5px;color:var(--txt3);margin-top:8px;border-top:1px solid var(--glass-b);padding-top:8px;">📡 Só contexto (sem representar no board): ${soContexto.map(([id,a])=>esc(a.nome||id)).join(', ')}</div>`
+      : '';
+    return `<div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:12px;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;">${sq.icon||''} ${esc(sq.label||sq.id)}</div>
+      ${selHtml}
+      ${ctxHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderAgentesLogCross(){
+  const box=document.getElementById('agentelog-cross-list'); if(!box) return;
+  if(!_agentesTabCache){ box.innerHTML='<div style="font-size:11px;color:var(--txt3);">Clique em 🔄 Atualizar pra carregar.</div>'; return; }
+  const filtro=document.getElementById('agentelog-squad-filter')?.value||'all';
+  let entries=[];
+  _agentesTabCache.forEach(r=>{ if(filtro==='all'||filtro===r.squad.id) entries.push(...r.log); });
+  entries.sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  if(!entries.length){ box.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhuma alteração registrada ainda.</div>'; return; }
+  const LIMIT=100;
+  box.innerHTML=entries.slice(0,LIMIT).map(e=>{
+    const sq=SQUADS.find(s=>s.id===e.squadId);
+    const sqLbl=sq?`${sq.icon||''} ${esc(sq.label||sq.id)}`:esc(e.squadId);
+    const dt=e.ts?new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    // Mesma lógica de origem de renderAgenteLog() em kanban-dev.html —
+    // ver classificarOrigem() (functions/agente-agil-orquestrador/
+    // agenteLog.js) e o fallback pra entradas antigas sem o campo.
+    const origem=e.origem||(e.autonomous?'automacao':'mencao');
+    const quem=origem==='especialista'
+      ? `<span style="color:var(--cyan);">${esc(e.requestedBy?.name||'Especialista externo')}</span> informou (processado automaticamente)`
+      : origem==='automacao'
+        ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
+        : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
+    const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
+    const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
+    const cardLink=e.cardId?`<a href="${esc(squadBoardUrl(e.squadId,e.cardId))}" target="_blank" style="color:var(--cyan);">abrir card ↗</a>`:'';
+    return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${dt} · ${sqLbl}${cardLink?' · '+cardLink:''}</div>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${quem}${pedido}</div>
+      <ul style="margin:4px 0 0;padding-left:18px;font-size:12px;color:var(--txt);line-height:1.5;">${acoesHtml}</ul>
+    </div>`;
+  }).join('') + (entries.length>LIMIT?`<div style="font-size:11px;color:var(--txt3);padding:6px 0;text-align:center;">Mostrando os ${LIMIT} mais recentes de ${entries.length}.</div>`:'');
+}
+
+function openAgentesHelp(){ document.getElementById('agentes-help-ov')?.classList.add('open'); }
+function closeAgentesHelp(){ document.getElementById('agentes-help-ov')?.classList.remove('open'); }
+// ── FIM ABA AGENTES ─────────────────────────────────────────────────
 
 // ── VISUALIZADORES EXTERNOS DO PAINEL (2026-08-27) ─────────────────
 // kanban/painel_viewers/{emailKey} — key = email sanitizado (mesmo padrão
@@ -7736,13 +7916,12 @@ function removeDadosEditor(email){
 
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
-  ['sprint','users','adm','agentesext'].forEach(t=>{
+  ['sprint','users','adm'].forEach(t=>{
     const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
     const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
   if(tab==='users') loadPcfgUsers();
   if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
-  if(tab==='agentesext') renderAgentesExternosPainel();
 }
 
 function loadPcfgUsers(){
