@@ -18,6 +18,54 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.533 — 2026-09-01 · promove pra prod — @todos, indicador "pensando...", Ponto de vista/Análise do board do Agente Ágil, Agentes Externos no board
+
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.521-dev a v8.30.532-dev) — entradas correspondentes em
+"kanban-dev.html" logo abaixo:
+
+- **Feat: `@todos`** (v8.30.521-dev) — menção coletiva que notifica
+  todo mundo do squad de uma vez, sempre 1ª opção no autocomplete de
+  `@`.
+- **Feat: automação "📣 Notificar todos" + indicador "🤖 pensando..."**
+  (v8.30.524-dev, com fixes em v8.30.527-dev) — nova ação de Automação
+  que dispara um `@todos` sintético; e um banner/chip que aparece no
+  card enquanto uma @menção real ao Agente Ágil está sendo processada
+  (sem precisar reabrir o card pra saber que a resposta chegou).
+- **Feat: `criar_card` do Agente Ágil ganha checklist, tags e riscos**
+  (v8.30.525-dev/526-dev) — quando o agente cria um rascunho em Pedidos
+  de Intake, agora também pode vir com checklist, tags e riscos já
+  preenchidos, não só título/descrição/prazo.
+- **Feat: "🤖 Ponto de vista do Agente Ágil"** (v8.30.528-dev) — botão
+  novo nos painéis "📊 Dados do Board" (Insights) e "🎨 Controle de
+  Criativos" que manda os números já exibidos na tela pro Agente Ágil
+  analisar e devolver uma leitura curta.
+- **Feat: "🤖 Análise do board (PO)" em Meu Dia** (v8.30.529-dev) —
+  botão novo, visível só pra PO/Organizador/ADM, com leitura rápida do
+  board (WIP, atrasados, bloqueados, incompletos) e sugestão de
+  campanha/coleção nova quando fizer sentido pelos dados — sempre
+  comparando com as campanhas já ativas/em planejamento pra nunca
+  sugerir algo que já esteja em execução.
+- **Feat: Agentes Externos (cadastrados no Painel) viram selecionáveis
+  no board** (v8.30.532-dev, fix de causa raiz em v8.30.530-dev/531-dev)
+  — um agente externo cadastrado com iniciais no Painel agora pode ser
+  Responsável/Participante de card, num optgroup próprio "🔌 Agentes
+  Externos". Quando o Agente Ágil muda algo de verdade num card
+  responsável de um desses agentes, além do aviso de sempre no
+  histórico do card, ele manda uma notificação de verdade (webhook) pro
+  sistema externo cadastrado.
+- **Fix: excluir Agente de IA não funcionava de verdade pra cadastros
+  antigos** (v8.30.530-dev/531-dev) — a linha ficava na lista mesmo
+  depois de confirmar a exclusão, sem nenhum aviso de erro.
+- **Fix: duplicar cards em massa não limpava vínculos de supercard/pin
+  da cópia** (v8.30.522-dev) e **3 checagens de permissão esquecidas de
+  ADM/organizador** (Calendário, Campanhas — v8.30.523-dev), achados
+  numa auditoria de rotina.
+
+Checks de rotina: `node --check` OK, diff restrito às 2 linhas de
+ambiente (versão/`VERSION_KEY`) + as mudanças acima — sem divergência
+de chaves/parênteses.
+
 ### v8.30.517 — 2026-09-01 · promove pra prod — Pin no topo da coluna, ícone PWA temático (Android), re-sync periódico mais robusto
 
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
