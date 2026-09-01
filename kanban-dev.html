@@ -5633,7 +5633,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.522-dev</div>
+<div class="version">v8.30.523-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17966,7 +17966,12 @@ function _renderEntrada(e, campId){
   const icon  = CAMP_TIPO_ICONS[e.tipo]||'📝';
   const links = (e.links||[]).map(l=>`<a class="camp-entry-link" href="${safeUrl(l.url)}" target="_blank" rel="noopener">${esc(l.label||l.url)}</a>`).join('');
   const quando = e.ts ? new Date(e.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  const podeApagar = e.autorUid===window._currentUser?.uid || window._currentUserRole==='adm' || window._currentUserRole==='po';
+  // Achado real (/monitorarbugs 2026-09-01): faltava 'organizador' aqui —
+  // Organizador não conseguia apagar entrada de Campanhas de outra pessoa,
+  // diferente de todo o resto do arquivo, onde organizador sempre anda
+  // junto com po/adm pra ações de moderação (_isPOorOrg(), canBulkDelete(),
+  // _canManageLemCfg()...). _isPOorOrg() já cobre po+organizador+adm.
+  const podeApagar = e.autorUid===window._currentUser?.uid || _isPOorOrg();
   // Squad header — aparece só no modo multi-squad quando a entrada tem _squad
   const isMulti = e._squad && (window._campViewMode==='multi' || e._squad==='gestao');
   let sqHeader = '';
@@ -23619,7 +23624,14 @@ function populateCalFilters() {
 // lazy quebraria esse alerta pra maioria das pessoas. Mantido eager de
 // propósito; só Campanhas (sem essa dependência de fundo) virou lazy abaixo.
 function openCal(){
-  const isPO=window._currentUserRole==='po'||window._currentUserRole==='organizador';
+  // Achado real (/monitorarbugs 2026-09-01): esta checagem era feita na mão
+  // (só po/organizador), diferente de canEdit/canDelete logo abaixo neste
+  // mesmo módulo de Calendário (que já incluem adm, com comentário
+  // explícito em editEvent() dizendo que adm pode excluir QUALQUER evento)
+  // — um ADM não via nem o botão "+" pra criar evento. _isPOorOrg() é o
+  // helper canônico já usado em >7 outros lugares do arquivo pra esse
+  // mesmo trio de papéis; evita este tipo de deriva.
+  const isPO=_isPOorOrg();
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
   populateCalFilters();
   renderCal();
@@ -23896,7 +23908,13 @@ function editEvent(evId){
   // Editar campos: só faz sentido pra eventos próprios do squad (editar um espelho do
   // Google seria sobrescrito na próxima sincronização). Excluir é outra permissão — PO/org/adm
   // podem excluir qualquer evento, inclusive espelhos do Google, mesmo que não editem o conteúdo.
-  const isPO=!isGcal && (window._currentUserRole==='po'||window._currentUserRole==='organizador');
+  // Achado real (/monitorarbugs 2026-09-01): faltava adm aqui (só po/
+  // organizador) — um ADM abria um evento próprio do squad e via TODOS os
+  // campos travados como somente-leitura (ver readOnly=!isPO logo abaixo),
+  // apesar de já poder excluir esse mesmo evento (canDelete, linha acima,
+  // sempre incluiu adm). _isPOorOrg() é o helper canônico do arquivo pra
+  // esse trio de papéis.
+  const isPO=!isGcal && _isPOorOrg();
   const canDelete=(window._currentUserRole==='po'||window._currentUserRole==='organizador'||window._currentUserRole==='adm') && !ev._gestao;
   editingEvId=evId;
   document.getElementById('ev-modal-title').textContent=isGcal?'🗓️ Evento do Google Agenda':(isPO?'Editar Evento':'Detalhes do Evento');

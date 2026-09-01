@@ -505,6 +505,42 @@ Mesma disciplina de sempre neste repo:
   campo listado à mão), nunca clonando/espalhando um card existente
   inteiro, então imunes a essa classe específica de bug.
 
+- **2026-09-01, área nomeada explicitamente — "pontos críticos de uso
+  (comentários, checklist, acesso, descrições, tags)"**: pedido direto,
+  5 sub-áreas de uma vez. Comentários: revisão de
+  `replyToComment`/`deleteComment`/`startEditComment`/`saveEditComment`/
+  `cancelEditComment`/`toggleReaction` — todos já consistentes com o fix
+  de `_commentCardId` desta mesma sessão, **sem achados novos**
+  (permissão de excluir/editar é só client-side — mesmo modelo de
+  confiança do resto do app, que também não tem ACL de campo no
+  Firebase; não é uma inconsistência LOCAL, então não reportado como
+  achado). Checklist: `renderCL()` inteira lida — **sem achados** (toggle
+  de "concluído" sem `saveUndo()` é intencional, reversível com 1
+  clique, diferente de deletar/reordenar/editar texto que já têm undo).
+  Tags: `_doBulkTagMulti`/`_doBulkTagClear`/`addCardTag`/`removeCardTag`
+  — **sem achados**, todos disparam `runAutoRules('tag_added'/
+  'tag_removed'/'submarca_set', ...)` consistentemente. Descrições:
+  proteção "Demandante" (`_descProtViolada` no autosave,
+  `_cDemProtBefore`/`_cDemProtAfter` no `saveCard()` manual) — **sem
+  achados**, os dois caminhos usam a MESMA condição
+  (`.includes()`+`canBulkDelete()`) e o comentário do autosave documenta
+  de propósito por que o campo do DOM não é revertido ali (corrida
+  contra a digitação) vs. no manual (onde é seguro).
+  Acesso: 3 achados reais, técnica 2 (comparar contra padrão já
+  resolvido) — grep de todo `==='po'` do arquivo achou 3 checagens de
+  papel feitas na mão em vez de usar o helper canônico `_isPOorOrg()`
+  (já usado certo em 7+ lugares), cada uma esquecendo um papel
+  diferente:
+  1. `openCal()` — `isPO` sem `adm`: ADM não via o botão "+" de criar
+     evento no Calendário.
+  2. `editEvent()` — mesmo esquecimento, pior: com `isPO` falso,
+     `readOnly=!isPO` trava TODOS os campos do evento — ADM podia
+     EXCLUIR um evento (canDelete sempre incluiu adm, com comentário
+     explícito no código) mas não editar o conteúdo dele.
+  3. `_renderEntrada()` (Campanhas) — o oposto: `podeApagar` esquecia
+     `organizador`, que não conseguia apagar entrada de outra pessoa.
+  Fix: as 3 passam a usar `_isPOorOrg()` (dev v8.30.523-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

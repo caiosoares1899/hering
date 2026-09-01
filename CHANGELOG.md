@@ -2308,6 +2308,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.523-dev — 2026-09-01 — Fix: 3 checagens de papel esquecidas de adm/organizador (/monitorarbugs)
+
+Achado auditando pontos críticos de uso (comentários, checklist, acesso,
+descrições, tags — pedido direto). Técnica 2 (comparar contra um padrão
+já resolvido em outro lugar do arquivo): o arquivo tem um helper
+canônico pra "é PO, Organizador ou ADM?" — `_isPOorOrg()` — já usado
+certinho em mais de 7 lugares (`canBulkDelete()`, `_canManageLemCfg()`,
+os dois `canEdit`/`canDelete` do próprio módulo de Calendário...). 3
+lugares fizeram a checagem NA MÃO em vez de reusar o helper, e cada um
+esqueceu um papel diferente:
+
+1. `openCal()` — `isPO` só checava `po`/`organizador`, sem `adm`. Um
+   ADM abrindo o Calendário nunca via o botão "+" pra criar evento —
+   apesar de `canEdit`/`canDelete`, no MESMO módulo, sempre terem
+   incluído adm (com comentário explícito dizendo que adm pode excluir
+   QUALQUER evento).
+2. `editEvent()` — mesmo esquecimento (`isPO` sem `adm`) num lugar
+   pior: com `isPO` falso, `readOnly=!isPO` trava TODOS os campos do
+   evento (título, datas, descrição, link) como somente-leitura — um
+   ADM podia excluir um evento próprio do squad, mas não editar o
+   conteúdo dele.
+3. `_renderEntrada()` (Campanhas) — o oposto: `podeApagar` esquecia
+   `organizador` (só checava autor do post, `adm` ou `po`). Organizador
+   não conseguia apagar uma entrada de Campanhas escrita por outra
+   pessoa, diferente de toda ação de moderação equivalente no resto do
+   arquivo.
+
+Fix: as 3 checagens passam a usar `_isPOorOrg()` — mesmo padrão do
+resto do arquivo, evita este tipo de deriva se um 4º papel for
+adicionado no futuro.
+
+Checks de rotina: `node --check` OK, diff balanceado.
+
 ### v8.30.522-dev — 2026-09-01 — Fix: duplicar em massa não limpava childCardIds/pin da cópia (/monitorarbugs)
 
 Achado auditando os pontos de criação/duplicação de card (pedido
