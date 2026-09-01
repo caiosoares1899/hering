@@ -2356,6 +2356,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.533-dev — 2026-09-01 — Sincroniza Central de Ajuda (`/atualizarhelpcontent`) — pin nunca documentado + 4 features novas sem entrada
+
+Auditoria desde o último sync (`cfced61`, dentro do lote v8.30.508-dev
+→ 514-dev) — 15 commits acumulados de kanban-dev.html no meio do
+caminho. Achados:
+
+- **Pin (fixar card no topo da coluna, v8.30.519-dev/520-dev) nunca
+  teve entrada na Central de Ajuda** — só o tooltip inline do botão
+  existia. Feature já promovida pra prod há um tempo (v8.30.517), sem
+  nenhuma documentação buscável. Nova entrada "📌 Fixar card no topo da
+  coluna (pin)".
+- **"🤖 Ponto de vista do Agente Ágil"** (Dados do Board/Criativos,
+  v8.30.528-dev) — sub-parágrafo adicionado nas entradas "Insights pra
+  PO/ADM/Organizador" e "Ficha Técnica" (onde o Controle de Criativos já
+  é documentado).
+- **"🤖 Análise do board (PO)"** em Meu Dia (v8.30.529-dev) —
+  sub-parágrafo adicionado na entrada "Meu Dia", ao lado do "🤖 Resumo
+  do Agente Ágil" já existente.
+- **`criar_card` ganhando checklist/tags/riscos** (v8.30.525-dev/
+  526-dev) — clausula adicionada em "Ações que o agente pode executar",
+  no parágrafo que já descrevia a criação de rascunho em Pedidos de
+  Intake.
+
+Já estavam em dia (corrigidos na hora, junto com a própria feature,
+sem esperar rodada de sync): `@todos` ("Menções"), indicador "🤖
+pensando..." e automação "📣 Notificar todos" ("O que é o Agente
+Ágil"/"Automações"), Agentes Externos selecionáveis no board ("Agentes
+de IA (piloto híbrido humano+agente)").
+
+Também sincronizado `maredigital.html` (pedido explícito junto:
+"atualizar tb maredigital.html") — tabela de Cloud Functions ganhou
+`agenteAgilAnaliseDados`/`agenteAgilAnalisePO`; lista de Ações de
+Automação ganhou "Notificar todos" + card explicativo; linha de
+`criar_card` na tabela de 15 ferramentas ganhou a menção a checklist/
+tags/riscos; novo card "🔌 Agentes Externos também viram Responsável/
+Participante" ao lado do card já existente de Agentes de IA.
+
+Checks de rotina: `node --check` OK (`kanban-dev.html` e
+`maredigital.html`), balanço de chaves/parênteses de `kanban-dev.html`
+igual ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.532-dev — 2026-09-01 — Novo: Agentes Externos viram selecionáveis como Responsável/Participante de card
 
 Continuação direta do pedido do usuário sobre unificar/simplificar o
