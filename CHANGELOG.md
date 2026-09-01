@@ -2308,6 +2308,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.522-dev — 2026-09-01 — Fix: duplicar em massa não limpava childCardIds/pin da cópia (/monitorarbugs)
+
+Achado auditando os pontos de criação/duplicação de card (pedido
+direto). O board tem 2 caminhos pra "duplicar um card": o modal
+individual (`_duplicarComFilhos()`/`_duplicarCardObj()`) e a ação em
+massa (`bulkDuplicate()`, seleção múltipla). O individual já reseta
+`childCardIds` (senão 2 cards reivindicariam os mesmos filhos de
+supercard) e `pinned`/`pinnedAt` (fix desta sessão) — mas
+`bulkDuplicate()` tinha sua PRÓPRIA cópia manual de
+`JSON.parse(JSON.stringify(c))`, sem nenhum desses resets.
+
+Cenários concretos: (1) selecionar um supercard e duplicar em massa
+fazia a cópia nascer com o MESMO `childCardIds` do original — 2 cards
+reivindicando os mesmos filhos, quebrando o rollup dos dois; (2)
+selecionar um card fixado (📌, v8.30.519-dev) e duplicar em massa criava
+um 2º card "fixado" na mesma coluna.
+
+Fix: `bulkDuplicate()` agora reusa `_duplicarCardObj()` em vez de
+clonar na mão (`comments:false` preserva o comportamento de sempre —
+bulk nunca copiava comentário nenhum). Conferidos os demais pontos de
+criação (`_criarCardRecorrente`, `_criarCardAgendado`,
+`_blankSuperChildCard`/`quickCreateSuperChild`/`_applyFanoutTemplate`)
+— todos constroem o card via objeto literal explícito, sem clonar um
+card existente, imunes a essa classe de bug.
+
+Checks de rotina: `node --check` OK, diff balanceado.
+
 ### v8.30.521-dev — 2026-09-01 — Feat: @todos — menção coletiva que notifica todo mundo do squad
 
 Pedido direto do usuário: "faz um @todos" — um jeito de mencionar TODOS

@@ -5633,7 +5633,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.521-dev</div>
+<div class="version">v8.30.522-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6946,20 +6946,24 @@ function _doBulkUnblockTag(){
 async function bulkDuplicate(){
   if(!selectedCards.size) return;
   if(!await uiConfirm('Duplicar '+selectedCards.size+' card(s)?',{title:'Duplicar cards',okText:'Duplicar'})) return;
-  const user=window._currentUser?.displayName||'Usuário';
-  const td=new Date().toISOString().split('T')[0];
   let count=0;
   const novosIds=[];
+  // Reusa _duplicarCardObj() (mesmo motor do duplicar de 1 card/com filhos)
+  // em vez de clonar na mão — achado real (/monitorarbugs 2026-09-01):
+  // esta função tinha sua PRÓPRIA cópia de JSON.parse(JSON.stringify(c)),
+  // que nunca resetava childCardIds nem pinned/pinnedAt (ver os dois
+  // comentários em _duplicarCardObj explicando por que isso importa).
+  // Cenário concreto: selecionar um supercard + "Duplicar" em massa fazia
+  // a cópia reivindicar os MESMOS filhos do original (2 pais pro mesmo
+  // filho); selecionar um card fixado (ver togglePinCard) criava um 2º
+  // card "fixado" na mesma coluna. comments:false preserva o comportamento
+  // observável de sempre (bulk nunca copiava comentário nenhum — nem o do
+  // path novo nem o legado); ainda assim, _duplicarCardObj já limpa o
+  // campo legado direito em vez de carregar ele cru como o clone manual
+  // fazia.
   _selectedList().forEach(c=>{
-    const novo=JSON.parse(JSON.stringify(c));
-    novo.id='c'+Date.now()+'_'+(count++);
-    novo.title=(c.title||'')+' (cópia)';
-    novo.archived=false;
-    novo.created=user; novo.createdAt=td; novo.edited=user; novo.editedAt=td;
-    novo.updatedAt=new Date().toISOString(); // clone trazia o updatedAt do original — carimba de novo, é conteúdo novo
-    novo.history=[]; novo.moveLog=[];
-    recordHistory(novo,'duplicou o card'); recordMove(novo, novo.col);
-    cards.push(novo);
+    const novo=_duplicarCardObj(c, {comments:false});
+    count++;
     novosIds.push(novo.id);
   });
   _bulkFinish('⧉ '+count+' card(s) duplicados.', false, novosIds);

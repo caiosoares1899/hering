@@ -482,6 +482,29 @@ Mesma disciplina de sempre neste repo:
   backfill de `_liveCardsIndexById` na hora, em vez de pular (dev
   v8.30.517-dev).
 
+- **2026-09-01, área nomeada explicitamente — "pontos de criação de
+  card, duplicação"**: pedido direto do usuário. Técnica 1 (caminhos
+  paralelos) aplicada a "duplicar um card": grep de todo
+  `JSON.parse(JSON.stringify(` do arquivo achou 2 clones de card
+  inteiro — `_duplicarCardObj()` (usado pelo modal individual e por
+  `_duplicarComFilhos()`) e uma cópia própria dentro de
+  `bulkDuplicate()` (seleção múltipla). 1 achado real: `bulkDuplicate()`
+  nunca resetava `childCardIds` nem `pinned`/`pinnedAt` (este último,
+  campo novíssimo da mesma sessão) — `_duplicarCardObj()` já fazia os
+  dois, com comentário explícito no código sobre por quê. Cenário
+  concreto: duplicar em massa um supercard fazia a cópia reivindicar os
+  MESMOS filhos do original (2 pais pro mesmo filho); duplicar em massa
+  um card fixado criava um 2º "fixado" na mesma coluna. Fix:
+  `bulkDuplicate()` passa a reusar `_duplicarCardObj()` (com
+  `comments:false`, preservando o comportamento de sempre de não copiar
+  comentário em massa) em vez de manter uma 2ª cópia da lógica de clone
+  (dev v8.30.522-dev). Demais pontos de criação citados pelo usuário —
+  `_criarCardRecorrente`, `_criarCardAgendado`, `_blankSuperChildCard`/
+  `quickCreateSuperChild`/`_applyFanoutTemplate` — checados e **sem
+  achados**: todos constroem o card via objeto literal explícito (cada
+  campo listado à mão), nunca clonando/espalhando um card existente
+  inteiro, então imunes a essa classe específica de bug.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
