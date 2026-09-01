@@ -9546,7 +9546,30 @@ pra descrição principal, PO e comentário).
 - Corrige participantes sumindo de cards.
 - Lembrete de acesso ao colar link do Google (Docs/Sheets/Slides/Drive).
 
-## favicon.png (asset compartilhado — raiz do domínio, sem versão própria em `version.json`)
+## favicon.png / favicon-monochrome.png (assets compartilhados — raiz do domínio, sem versão própria em `version.json`)
+
+### 2026-09-01 — Regenera `favicon-monochrome.png` (ícone temático Android) pra bater com a logo nova
+
+Usuário apagou o `favicon-monochrome.png` antigo (`65ef89a`, direto no
+GitHub) ao trocar a logo — ficou sem o ícone temático do Android
+(Material You/Android 13+, ver entrada de `kanban-dev.html` que introduziu
+esse ícone — `purpose:'monochrome'` no manifest do PWA) até esta entrada.
+Pergunta direta do usuário puxou o gap: "e aquele negócio que você tinha
+feito pra adaptar as cores do android?".
+
+Regenerado a partir do `favicon.png` novo, mas com a transformação
+ajustada: a 1ª versão deste arquivo (logo antiga) usava
+"alpha = luminância do pixel" simples — funcionava porque aquela logo só
+tinha fundo sólido escuro + glifo branco, sem mais nada. A logo nova tem
+elementos decorativos no FUNDO (peixes pequenos + linhas de onda num azul
+médio, não preto) que a luminância simples pegava como ruído
+semi-transparente atrás do glifo principal — testado, ficou poluído (ver
+antes/depois testado localmente). Fix: threshold + rampa em cima de
+`min(r,g,b)` (mede "quão perto de branco puro", não só luminância) — só
+os 2 peixes brancos sólidos em primeiro plano ficam opacos, o resto vira
+transparente, mesma limpeza visual do ícone antigo. Comentário no código
+(`kanban-dev.html`, dentro de `initPWA()`) documenta os limiares usados,
+pra regenerar de novo se a logo trocar outra vez.
 
 ### 2026-09-01 — Logo atualizada + otimização de bytes (403KB → 28KB)
 

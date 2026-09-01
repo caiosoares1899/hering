@@ -22273,9 +22273,20 @@ function initPWA(){
       // ícone junto com o resto do sistema e mantém as cores originais —
       // achado direto de uma usuária ("no Android... o do marola n mudou,
       // tá estragando a estética"). Gerada a partir do favicon.png
-      // existente (fundo escuro sólido + glifo branco): cada pixel vira
-      // alpha proporcional à "brancura" dele, então o glifo sobra como
-      // silhueta e o fundo escuro vira transparente.
+      // existente (fundo escuro sólido + glifo branco em primeiro plano).
+      // 2026-09-01 (logo trocada pro novo desenho "Marine Glass", 2 peixes
+      // sobre ondas): a transformação simples "alpha = luminância do
+      // pixel" que gerava a 1ª versão deste arquivo passou a pegar as
+      // linhas de onda e os peixes decorativos do FUNDO do novo desenho
+      // (que não são pretos, são um azul médio — ~30% de "brancura", nada
+      // perto de 0%) como ruído semi-transparente atrás do glifo
+      // principal. Troca pra threshold + rampa em cima do canal mínimo
+      // (min(r,g,b) — mede "quão perto de branco puro", não só
+      // luminância): abaixo de ~59% vira transparente total, acima de
+      // ~86% vira opaco total, só a faixa entre os dois interpola — separa
+      // os 2 peixes brancos sólidos (glifo) do resto do fundo (ruído)
+      // igual o ícone antigo já ficava (glifo simples, sem elementos
+      // decorativos). Regenerar assim de novo se a logo trocar outra vez.
       {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
