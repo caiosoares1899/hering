@@ -65,6 +65,20 @@ completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
   orquestrador muda algo num card cujo responsável/participante é um
   agente cadastrado aqui, ele mesmo posta um comentário marcando esse
   agente.
+- **`agentesExternos`** (2026-09-01, pedido direto: "meu ponto com os
+  agentes dentro do board é que seja esses agentes externos!") — 2º
+  array de identidades selecionáveis, ao lado de `agentes` (decorativos)
+  acima — carregado de `kanban/config/agentesExternos` (registro GLOBAL,
+  painel.html, NÃO `FB+`), filtrado client-side pra só quem tem `init`
+  preenchido E este squad marcado em `squads`. `allIdentities()`/
+  `populatePartSelect()`/`populateOwnerSelect()` mesclam os dois, em
+  optgroups SEPARADOS ("🤖 Agentes" vs. "🔌 Agentes Externos") — a
+  diferença real: quando o orquestrador muda algo num card responsável
+  de um Agente Externo, ALÉM do "📎 cc" de sempre, ele manda um POST de
+  verdade pro webhook cadastrado (ver `agenteMarcador.js`,
+  `functions/agente-agil-orquestrador/`). Colisão de iniciais
+  (`renderAgentesList()`/`salvarAgente()`) também checa contra
+  `agentesExternos` agora, nos dois sentidos.
 
 O Agente Ágil de VERDADE (não um cadastro decorativo) também pode ser
 Responsável/Participante desde 2026-08-31, nos squads `dev`+`dados`
@@ -616,6 +630,21 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   valida esquema `http(s)://` antes de escrever; campo vazio é aceito
   (webhook é opcional). Promovido pra `painel.html` (prod) no mesmo dia
   (v3.03), depois de validado ponta a ponta com `notificar_especialista_externo`.
+- **`nome`/`init`/`cor`/`avatarEmoji`** (2026-09-01, pedido direto do
+  usuário: "o agente de VM da Vtex tem q ter um ID e ser responsável pelo
+  card") — 4 campos novos, todos opcionais. `init` é o que importa de
+  verdade: preenchido, o agente externo vira selecionável como
+  Responsável/Participante de card em `kanban-dev.html` (ver
+  `agentesExternos`/`allIdentities()` na seção "Board & render" abaixo),
+  igual um Agente de IA decorativo — sem `init`, comportamento idêntico a
+  antes desta mudança (só contexto pro LLM). `nome`/`cor`/`avatarEmoji`
+  são só estética, mesmo shape de `dados/agentes`. Sem checagem de
+  colisão de iniciais no painel (cruzaria vários squads de uma vez) —
+  colisão é detectada do lado do board (`renderAgentesList()`/
+  `salvarAgente()` em `kanban-dev.html`). O envio de verdade pro webhook
+  quando o agente é responsável por um card é do lado do orquestrador —
+  ver `agenteMarcador.js` na seção `functions/` abaixo, NÃO depende de
+  nada configurado aqui além de `init`+`webhookUrl`.
 
 ### Dashboard consolidado
 - `loadAll()` — L8518 / `renderAll()` — L8539
@@ -706,6 +735,21 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   @menção/Automação/scan diário) e `processarIntake()`
   (`intakeTrigger.js`, quando resolve um card real) — os 2 mesmos pontos
   que já chamam `registrarLogAgente()`.
+  **2026-09-01** (pedido direto: unificar o board com Agentes Externos —
+  "o agente de VM da Vtex tem q ter um ID e ser responsável pelo card...
+  tudo de importante q acontecer ali, o agente agil vai pegar essas
+  informações e levar pro agente de vm externo"): também resolve agentes
+  de `kanban/config/agentesExternos` (registro GLOBAL, painel.html)
+  habilitados neste squad e com `init` preenchido
+  (`agentesExternosDoSquad()`), incluídos no MESMO comentário "📎 cc".
+  Pros que têm `webhookUrl`, `notificarAgentesExternosResponsaveis()`
+  chama o handler real de `tools/notificarEspecialistaExterno.js`
+  (reaproveitado direto, não como tool) — só nos squads em
+  `NOTIFICAR_ESPECIALISTA_SQUADS` (squadScope.js). Gatilho
+  DETERMINÍSTICO por decisão explícita do usuário (não uma tool que o
+  LLM escolhe chamar) — garante disparo em toda mutação real. Falha no
+  webhook não invalida o "📎 cc" já postado (passo isolado, try/catch
+  próprio).
   `risco` (2026-08-28, pedido direto — "pensando em grandes projetos, pode
   ser legal") — só adiciona (`card.riscos` é array de strings puras,
   sem id/estado, sem "resolver"); reusa o mesmo par schema Zod

@@ -3,7 +3,24 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
-const { resolveAgentesResponsaveis, montarComentarioMarcador, marcarAgenteResponsavel } = require('../agenteMarcador');
+const {
+  resolveAgentesResponsaveis,
+  agentesExternosDoSquad,
+  montarComentarioMarcador,
+  marcarAgenteResponsavel,
+} = require('../agenteMarcador');
+
+function withMockFetch(impl, fn) {
+  return async () => {
+    const original = global.fetch;
+    global.fetch = impl;
+    try {
+      await fn();
+    } finally {
+      global.fetch = original;
+    }
+  };
+}
 
 const AGENTES = [
   { id: 'ag1', nome: 'Claude Code', init: 'CC', avatarEmoji: '✨' },
@@ -96,4 +113,126 @@ test('marcarAgenteResponsavel: falha ao ler o Firebase não derruba o fluxo (mel
   const resultado = await marcarAgenteResponsavel(db, { squadId: 'dev', cardId: 'c1', card: { owner: 'CC' }, acoes: ['moveu para Concluído'], comentarioTool: { handler: async () => {} }, dryRun: false });
   assert.equal(resultado.posted, false);
   assert.equal(resultado.reason, 'error');
+});
+
+// ── Agentes externos (2026-09-01) ────────────────────────────────────────
+const AGENTE_EXTERNO_VTEX = { nome: 'Agente VM Vtex', init: 'AVV', avatarEmoji: '🔌', webhookUrl: 'https://vtex.example.com/hook', squads: { dev: true } };
+
+test('agentesExternosDoSquad: só entra quem tem squads[squadId]===true E init preenchido', () => {
+  const raw = {
+    vtex: AGENTE_EXTERNO_VTEX,
+    databricks: { nome: 'Databricks', descricao: 'manda dados', squads: { dev: true } }, // sem init -> só contexto, não vira responsável
+    outroSquad: { nome: 'Outro', init: 'OUT', squads: { dados: true } }, // não habilitado em dev
+  };
+  const lista = agentesExternosDoSquad(raw, 'dev');
+  assert.equal(lista.length, 1);
+  assert.equal(lista[0].id, 'vtex');
+  assert.equal(lista[0].init, 'AVV');
+  assert.equal(lista[0].webhookUrl, 'https://vtex.example.com/hook');
+});
+
+test('agentesExternosDoSquad: sem registro nenhum -> lista vazia, não quebra', () => {
+  assert.deepEqual(agentesExternosDoSquad(null, 'dev'), []);
+  assert.deepEqual(agentesExternosDoSquad({}, 'dev'), []);
+});
+
+function seedDbComExterno({ squadId = 'dev', agentesDecorativos = {}, agentesExternos = {} } = {}) {
+  return makeFakeDb({
+    kanban: {
+      squads: { [squadId]: { dados: { agentes: agentesDecorativos } } },
+      config: { agentesExternos },
+    },
+  });
+}
+
+test(
+  'marcarAgenteResponsavel: agente externo responsável, squad habilitado e com webhook -> posta cc E chama o webhook',
+  withMockFetch(
+    async (url, opts) => {
+      assert.equal(url, 'https://vtex.example.com/hook');
+      const body = JSON.parse(opts.body);
+      assert.equal(body.especialista, 'vtex');
+      assert.ok(body.mensagem.includes('moveu para Em andamento'));
+      return { ok: true, status: 200 };
+    },
+    async () => {
+      const db = seedDbComExterno({ agentesExternos: { vtex: AGENTE_EXTERNO_VTEX } });
+      let textoComentario = null;
+      const comentarioTool = { handler: async (input) => { textoComentario = input.texto; } };
+      const resultado = await marcarAgenteResponsavel(db, {
+        squadId: 'dev', cardId: 'c1', card: { owner: 'AVV' }, acoes: ['moveu para Em andamento'], comentarioTool, dryRun: false,
+      });
+      assert.equal(resultado.posted, true);
+      assert.ok(textoComentario.includes('🔌 Agente VM Vtex'));
+      assert.equal(resultado.webhooks.length, 1);
+      assert.equal(resultado.webhooks[0].especialista, 'vtex');
+      assert.equal(resultado.webhooks[0].ok, true);
+    }
+  )
+);
+
+test('marcarAgenteResponsavel: agente externo responsável fora de NOTIFICAR_ESPECIALISTA_SQUADS -> cc postado, webhook NÃO chamado', async () => {
+  const db = seedDbComExterno({
+    squadId: 'dados',
+    agentesExternos: { vtex: { ...AGENTE_EXTERNO_VTEX, squads: { dados: true } } },
+  });
+  let fetchChamado = false;
+  const original = global.fetch;
+  global.fetch = async () => { fetchChamado = true; return { ok: true, status: 200 }; };
+  try {
+    const comentarioTool = { handler: async () => {} };
+    const resultado = await marcarAgenteResponsavel(db, {
+      squadId: 'dados', cardId: 'c1', card: { owner: 'AVV' }, acoes: ['moveu para Em andamento'], comentarioTool, dryRun: false,
+    });
+    assert.equal(resultado.posted, true);
+    assert.deepEqual(resultado.webhooks, []);
+    assert.equal(fetchChamado, false);
+  } finally {
+    global.fetch = original;
+  }
+});
+
+test('marcarAgenteResponsavel: agente externo responsável sem webhookUrl cadastrado -> cc postado, webhook pulado (sem erro)', async () => {
+  const db = seedDbComExterno({
+    agentesExternos: { vtex: { ...AGENTE_EXTERNO_VTEX, webhookUrl: '' } },
+  });
+  const comentarioTool = { handler: async () => {} };
+  const resultado = await marcarAgenteResponsavel(db, {
+    squadId: 'dev', cardId: 'c1', card: { owner: 'AVV' }, acoes: ['moveu para Em andamento'], comentarioTool, dryRun: false,
+  });
+  assert.equal(resultado.posted, true);
+  assert.deepEqual(resultado.webhooks, []);
+});
+
+test('marcarAgenteResponsavel: mistura agente decorativo + agente externo responsáveis no mesmo card -> um comentário só, com os dois', async () => {
+  const db = seedDbComExterno({
+    agentesDecorativos: { ag1: { id: 'ag1', nome: 'Claude Code', init: 'CC', avatarEmoji: '✨' } },
+    agentesExternos: { vtex: { ...AGENTE_EXTERNO_VTEX, webhookUrl: '' } },
+  });
+  let textoComentario = null;
+  const comentarioTool = { handler: async (input) => { textoComentario = input.texto; } };
+  const resultado = await marcarAgenteResponsavel(db, {
+    squadId: 'dev', cardId: 'c1', card: { owner: 'CC', participants: ['AVV'] }, acoes: ['moveu para Em andamento'], comentarioTool, dryRun: false,
+  });
+  assert.equal(resultado.posted, true);
+  assert.ok(textoComentario.includes('✨ Claude Code'));
+  assert.ok(textoComentario.includes('🔌 Agente VM Vtex'));
+});
+
+test('marcarAgenteResponsavel: dryRun -> não chama nem o comentário nem o webhook do agente externo', async () => {
+  const db = seedDbComExterno({ agentesExternos: { vtex: AGENTE_EXTERNO_VTEX } });
+  let fetchChamado = false;
+  const original = global.fetch;
+  global.fetch = async () => { fetchChamado = true; return { ok: true, status: 200 }; };
+  try {
+    const comentarioTool = { handler: async () => {} };
+    const resultado = await marcarAgenteResponsavel(db, {
+      squadId: 'dev', cardId: 'c1', card: { owner: 'AVV' }, acoes: ['moveu para Em andamento'], comentarioTool, dryRun: true,
+    });
+    assert.equal(resultado.posted, false);
+    assert.equal(resultado.reason, 'dry_run');
+    assert.equal(fetchChamado, false);
+  } finally {
+    global.fetch = original;
+  }
 });

@@ -2232,7 +2232,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.03 · painel-dev</div>
+<div class="version">v3.04 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6708,6 +6708,23 @@ function saveAdmEmails(){
 // lido por lerDescricaoEspecialista() (intakeTrigger.js) pra injetar
 // contexto na tarefa do LLM. `squads` decide em quais squads a descrição
 // vale; sem squad marcado, o backend não injeta nada pra ninguém.
+//
+// 2026-09-01 — pedido direto do usuário: "o agente de VM da Vtex tem q
+// ter um ID e ser responsável pelo card... tudo de importante q acontecer
+// ali, o agente agil vai pegar essas informações e levar pro agente de vm
+// externo". Ganhou 4 campos NOVOS, todos opcionais, mesmo shape de
+// dados/agentes (kanban-dev.html): `nome` (exibição, separado do
+// identificador técnico — cai pro próprio `id` se em branco), `init`
+// (iniciais — É o que faz o agente externo virar selecionável como
+// Responsável/Participante de card em QUALQUER squad marcado abaixo, ver
+// allIdentities() em kanban-dev.html), `cor` e `avatarEmoji` (só
+// estética, mesmo padrão visual dos agentes de IA decorativos). Sem
+// `init`, o cadastro continua se comportando exatamente como antes desta
+// mudança (só contexto pro LLM, nunca aparece no board). O ENVIO de
+// verdade pro webhook quando o agente é responsável por um card é
+// determinístico, do lado do orquestrador — ver agenteMarcador.js — não
+// depende de nada configurado aqui além do `init` + `webhookUrl` já
+// existente.
 let agentesExternosCfg = {};
 let _agentesExtPainelAberto = null;
 
@@ -6737,7 +6754,7 @@ function renderAgentesExternosPainel(){
     }).join('');
     return `<div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;" onclick="_agentesExtPainelAberto=_agentesExtPainelAberto==='${id}'?null:'${id}';renderAgentesExternosPainel();">
-        <span style="flex:1;font-size:12px;font-weight:600;">🔌 ${esc(id)}${a.descricao?'':' <span style="font-size:9px;color:var(--warn);font-weight:700;">SEM DESCRIÇÃO</span>'}</span>
+        <span style="flex:1;font-size:12px;font-weight:600;">${esc(a.avatarEmoji||'🔌')} ${esc(a.nome||id)} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${esc(id)})</span>${a.init?` <span title="Selecionável como Responsável/Participante de card nos squads marcados" style="display:inline-flex;font-size:9.5px;font-weight:700;color:var(--accent);background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);padding:1px 7px;border-radius:999px;margin-left:2px;">${esc(a.init)}</span>`:''}${a.descricao?'':' <span style="font-size:9px;color:var(--warn);font-weight:700;">SEM DESCRIÇÃO</span>'}</span>
         <button onclick="event.stopPropagation();excluirAgenteExternoPainel('${id}')" title="Excluir" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">🗑</button>
         <span style="font-size:10px;color:var(--txt3);">${aberto?'▾':'▸'}</span>
       </div>
@@ -6745,10 +6762,17 @@ function renderAgentesExternosPainel(){
         <textarea class="cfg-input" id="agentext-p-desc-${id}" rows="3" style="width:100%;box-sizing:border-box;margin-top:8px;resize:vertical;" placeholder="O que esse agente faz, que tipo de dado ele manda...">${esc(a.descricao||'')}</textarea>
         <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">🔗 Webhook de retorno (opcional) — URL que recebe um POST quando o Agente Ágil decide mandar uma informação de volta pra este especialista (ex.: card concluído, usuário validou, usuário pediu uma alteração):</div>
         <input class="cfg-input" id="agentext-p-webhook-${id}" type="url" style="width:100%;box-sizing:border-box;margin-bottom:10px;" placeholder="https://..." value="${esc(a.webhookUrl||'')}">
+        <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">🪪 Representar no board (opcional) — preenchendo as iniciais, esse agente vira selecionável como Responsável/Participante de card nos squads marcados abaixo, igual um Agente de IA cadastrado dentro do próprio board. Deixando em branco, ele continua só como contexto pro Agente Ágil, sem aparecer pra escolher em card nenhum:</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+          <input class="cfg-input" id="agentext-p-nome-${id}" type="text" style="flex:1;min-width:140px;" placeholder="Nome de exibição (opcional, ex.: Agente VM Vtex)" value="${esc(a.nome||'')}">
+          <input class="cfg-input" id="agentext-p-init-${id}" type="text" maxlength="4" style="width:80px;text-transform:uppercase;" placeholder="Iniciais (ex.: AVV)" value="${esc(a.init||'')}">
+          <input type="color" id="agentext-p-cor-${id}" value="${esc(a.cor||'#38b6ff')}" style="width:34px;height:30px;border:none;background:none;cursor:pointer;">
+          <input class="cfg-input" id="agentext-p-emoji-${id}" type="text" maxlength="4" style="width:48px;text-align:center;" placeholder="🔌" value="${esc(a.avatarEmoji||'')}">
+        </div>
         <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">Vale nos squads:</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">${squadsChips}</div>
         <div style="display:flex;justify-content:flex-end;">
-          <button class="save-btn" onclick="salvarAgenteExternoPainel('${id}')" style="font-size:11px;padding:5px 12px;">💾 Salvar descrição</button>
+          <button class="save-btn" onclick="salvarAgenteExternoPainel('${id}')" style="font-size:11px;padding:5px 12px;">💾 Salvar</button>
         </div>
       </div>`:''}
     </div>`;
@@ -6764,7 +6788,7 @@ function criarAgenteExternoPainel(){
   const id=chave.trim();
   if(!id) return;
   if(agentesExternosCfg[id]){ showToast('⚠ Já existe um agente com esse identificador.'); _agentesExtPainelAberto=id; renderAgentesExternosPainel(); return; }
-  const entry={descricao:'', webhookUrl:'', squads:{}, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+  const entry={descricao:'', webhookUrl:'', nome:'', init:'', cor:'#38b6ff', avatarEmoji:'🔌', squads:{}, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
   agentesExternosCfg={...agentesExternosCfg, [id]:entry};
   _agentesExtPainelAberto=id;
   renderAgentesExternosPainel();
@@ -6786,13 +6810,18 @@ async function salvarAgenteExternoPainel(id){
   const wh=document.getElementById('agentext-p-webhook-'+id);
   const webhookUrl=(wh?.value||'').trim();
   if(webhookUrl && !/^https?:\/\//i.test(webhookUrl)){ showToast('⚠ Webhook precisa começar com http:// ou https://'); return; }
+  const nome=(document.getElementById('agentext-p-nome-'+id)?.value||'').trim();
+  const init=(document.getElementById('agentext-p-init-'+id)?.value||'').trim().toUpperCase();
+  if(init && init.length<2){ showToast('⚠ Iniciais precisam ter pelo menos 2 letras (ou deixe em branco).'); return; }
+  const cor=document.getElementById('agentext-p-cor-'+id)?.value||'#38b6ff';
+  const avatarEmoji=(document.getElementById('agentext-p-emoji-'+id)?.value||'').trim()||'🔌';
   const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
   try{
     const snap=await window._get(ref);
     const a=snap.val(); if(!a) return;
-    const entry={...a, descricao:ta.value.trim(), webhookUrl, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
+    const entry={...a, descricao:ta.value.trim(), webhookUrl, nome, init, cor, avatarEmoji, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
     await window._set(ref, entry);
-    showToast('✅ Descrição salva.');
+    showToast('✅ Agente externo salvo.');
   }catch(e){ showToast('❌ '+e.message); }
 }
 
