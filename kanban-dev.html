@@ -5637,7 +5637,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.524-dev</div>
+<div class="version">v8.30.526-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17965,6 +17965,33 @@ function _intakeCriarCard(id){
   if(item.prazo){
     document.getElementById('m-due').value = item.prazo;
     _mNoDue=false; _renderNoDueBtn();
+  }
+  // Checklist sugerido pelo Agente Ágil (criar_card, ver tools/criarCard.js
+  // nas functions) — array de textos simples, itens sempre desmarcados.
+  // openNewCard() já rodou renderCL([]) acima; sobrescreve com a lista
+  // vinda do intake, mesmo padrão de tag/submarca logo abaixo (populado
+  // DEPOIS de openNewCard() de propósito, pra não ser zerado por ela).
+  if(Array.isArray(item.checklist) && item.checklist.length){
+    renderCL(item.checklist.filter(Boolean).map(t=>({t, done:false, grp:'default'})));
+  }
+  // Riscos sugeridos pelo Agente Ágil (criar_card) — card.riscos já é um
+  // array de strings puras no board (ver getRiscos()/outputs/risco.js),
+  // então não precisa de nenhum casamento/transformação, diferente de
+  // tags/submarca logo abaixo.
+  if(Array.isArray(item.riscos) && item.riscos.length){
+    renderRiscos(item.riscos.filter(Boolean));
+  }
+  // Tags sugeridas pelo Agente Ágil (criar_card) — mesmo casamento por
+  // label (case/acento-insensitive) que squadDemandante/submarca abaixo já
+  // fazem; o modelo manda NOMES (nunca sabe o esquema de ids do squad).
+  // Silencioso pro que não achar correspondência — não trava a criação do
+  // card por causa de uma tag que não existe (ou já mudou de nome).
+  if(Array.isArray(item.tags) && item.tags.length){
+    item.tags.filter(Boolean).forEach(nome=>{
+      const alvoTag=_norm(nome);
+      const tMatch=(tags||[]).find(t=>_norm(t.label)===alvoTag);
+      if(tMatch) addCardTag(tMatch.id);
+    });
   }
   // Vínculo automático de tag pelo squad solicitante (pedido direto) — casa
   // por nome (ignorando maiúscula/acento), já que o texto vem digitado

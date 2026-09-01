@@ -2308,6 +2308,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.526-dev — 2026-09-01 — Feat: `criar_card` do Agente Ágil ganha tags e riscos
+
+Continuação direta da v8.30.525-dev (checklist) — pedido direto do
+usuário assim que viu o resultado do checklist: "outra coisa q faz
+falta são as tags e risco!".
+
+`_intakeCriarCard()` agora também aplica, ao confirmar o rascunho:
+- **riscos**: `card.riscos` já é array de strings puras no board — só
+  passa direto pro `renderRiscos()`, sem transformação nenhuma.
+- **tags**: o modelo manda NOMES de tag (nunca sabe o esquema de ids do
+  squad) — casamento por label (case/acento-insensitive), mesmo padrão
+  que `squadDemandante`/`submarca` já usam logo abaixo; nome sem
+  correspondência é ignorado em silêncio, não trava a criação do card.
+
+Metade backend (schema `tags`/`riscos`, até 10 itens cada, e o handler
+gravando os arrays no rascunho) na entrada correspondente em "Agente
+Ágil Orquestrador" abaixo — precisa do MESMO redeploy manual já pendente
+da v8.30.525-dev (uma função só cobre as duas mudanças).
+
+Checks de rotina: `node --check` OK, diff balanceado.
+
+### v8.30.525-dev — 2026-09-01 — Feat: `criar_card` do Agente Ágil ganha checklist
+
+Achado testando na prática (mesma sessão): pedimos pro Agente Ágil criar
+um card documentando um processo em 8 etapas — ele criou certinho, mas
+o checklist nasceu vazio, porque a ferramenta `criar_card` (backend)
+nunca teve campo pra isso, só `titulo`/`descricao`/`prazo`/`submarca`/
+`squad_solicitante`. Etapas viravam só texto corrido dentro da
+descrição.
+
+Fix (client): `_intakeCriarCard()` agora aplica `item.checklist` (se
+vier preenchido no rascunho) ao confirmar o pedido de Pedidos de Intake
+— mesmo padrão de tag/submarca, populado DEPOIS de `openNewCard()` de
+propósito (que zera o checklist no início). Itens nascem sempre
+desmarcados.
+
+A outra metade do fix (schema novo `checklist` em `criarCardSchema`,
+até 20 itens, e o handler gravando o array no rascunho) é no backend —
+ver entrada correspondente em "Agente Ágil Orquestrador" abaixo
+(`functions/agente-agil-orquestrador/`), que precisa de deploy manual
+separado.
+
+Checks de rotina: `node --check` OK, diff balanceado.
+
 ### v8.30.524-dev — 2026-09-01 — Feat: automação "Notificar todos" + indicador "🤖 pensando..." do Agente Ágil
 
 Duas ideias sugeridas e escolhidas pelo usuário, emendando em features
@@ -10257,6 +10301,57 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-09-01 · Novo: `criar_card` ganha campos `tags` e `riscos`
+
+Continuação direta do fix de `checklist` logo abaixo — pedido direto do
+usuário assim que viu o resultado na prática: "outra coisa q faz falta
+são as tags e risco!".
+
+`criarCardSchema` ganhou `tags` (até 10 NOMES de tag — nunca ids, o
+modelo não conhece o esquema do squad) e `riscos` (até 10 textos
+curtos, mesmo formato solto que `card.riscos` já usa no board — sem
+metadado, só strings). Handler grava os dois arrays no rascunho, sempre
+presentes (`[]` quando ausentes). Client-side: `_intakeCriarCard()`
+aplica `riscos` direto (`renderRiscos()`, sem transformação) e casa
+`tags` por label (case/acento-insensitive, mesmo padrão que
+`squad_solicitante`/`submarca` já usavam) — nome sem correspondência no
+squad é ignorado, não trava a criação do rascunho.
+
+7 testes novos (3 do checklist + 4 destes), suíte `functions/` inteira:
+376/376 passando.
+
+**Requer o MESMO redeploy manual já pendente da entrada de `checklist`
+abaixo** — as duas mudanças ficam na mesma função, um único
+`firebase deploy` cobre as duas:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+### 2026-09-01 · Novo: `criar_card` ganha campo `checklist`
+
+Achado testando o `criar_card` na prática pela 1ª vez de ponta a ponta
+(mensagem sem card associado → rascunho em Pedidos de Intake →
+confirmado num card real): o agente recebeu um processo descrito em 8
+etapas e documentou tudo certinho na descrição, mas o card nasceu com
+checklist vazio — a ferramenta simplesmente não tinha esse campo no
+schema (`titulo`/`descricao`/`prazo`/`submarca`/`squad_solicitante`
+só).
+
+`criarCardSchema` (`tools/criarCard.js`) ganhou `checklist` opcional —
+array de até 20 strings (mesmo espírito de limite que outras
+ferramentas já aplicam, ex. `checklist_item`). `makeRealCriarCardHandler`
+grava o array no rascunho (`intake_pending/{id}.checklist`, sempre
+presente — `[]` quando não informado, nunca `undefined`). Descrição da
+ferramenta em `tools/index.js` atualizada pra avisar o modelo sobre o
+campo novo. Client-side: `_intakeCriarCard()` aplica os itens
+(desmarcados) ao confirmar o rascunho — ver entrada correspondente em
+"kanban-dev.html" (v8.30.525-dev).
+
+5 testes novos em `criarCard.test.js` (schema aceita 20/rejeita 21,
+grava quando informado, vira `[]` quando ausente), suíte `functions/`
+inteira: 373/373 passando.
+
+**Requer redeploy manual das 3 functions que usam `tools/index.js`**:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
 
 ### 2026-08-31 · Novo: notificar_especialista_externo — encaminha de volta pro especialista via webhook
 
