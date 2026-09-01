@@ -567,6 +567,35 @@ Mesma disciplina de sempre neste repo:
   Fix: `parseMentions()` ganhou `opts.includeSelf`, só `notify_all` usa
   (dev v8.30.527-dev).
 
+- **2026-09-01, pedido genérico — área escolhida por prioridade 1, mas
+  estendida pra `painel-dev.html`**: o código mais fresco da sessão não
+  estava em `kanban-dev.html` (última mudança lá foi só o fix cosmético
+  do Milanote) e sim a aba "🤖 Agentes" recém-criada no painel
+  (`loadAgentesTabData()`/`renderAgentesAtivosGrid()`/
+  `renderAgentesLogCross()`/`renderAgentesExternosPainel()` movida pra
+  lá) — nunca tinha passado por essa revisão. 1 achado real, técnica 1
+  (comparar caminhos paralelos) aplicada ao consumidor do link que eu
+  mesmo tinha acabado de adicionar: o novo "abrir card ↗" do Histórico
+  cross-squad (`renderAgentesLogCross()`) aponta pra `kanban.html?
+  squad=X&card=Y`; se o card já foi arquivado/excluído (cenário que
+  `renderAgenteLog()`, dentro do próprio board, já trata mostrando texto
+  de fallback), `_openCardFromUrl()` (kanban-dev.html) tentava achar o
+  card por ~6s e **desistia em silêncio** — clique não fazia nada,
+  zero explicação. `openNotif()` (clique em notificação) tinha o MESMO
+  gap, apesar de já tratar o caso irmão "comentário referenciado foi
+  excluído" com toast + limpeza da notificação. Não era um bug
+  introduzido pela aba Agentes — é uma lacuna pré-existente que outros
+  3 lugares do painel (`squadBoardUrl()`: modal de push, calendário ×2)
+  também já herdavam; meu link novo só foi mais um chamador exposto a
+  ela. Fix: as 2 funções, ao esgotar as tentativas, mostram toast
+  explicando que o card não foi encontrado; `openNotif()` também remove
+  a notificação órfã, mesmo padrão que já usava pro comentário excluído
+  (dev v8.30.536-dev). Lição: ao revisar uma área nova que só
+  *referencia* dado de outro lugar (aqui: card ids num log), vale seguir
+  o link até o destino real em vez de parar na borda da área nomeada —
+  foi isso que expôs o bug de verdade, que não estava no código que
+  acabou de ser escrito, mas no que ele passou a alcançar.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

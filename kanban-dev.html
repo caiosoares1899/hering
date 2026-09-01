@@ -5639,7 +5639,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.534-dev</div>
+<div class="version">v8.30.536-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23327,7 +23327,14 @@ function openNotif(notifId, cardId, squad, commentId, type){
       openCard(cardId);
       return;
     }
-    if(tentativas < 15) setTimeout(tentar, 400);
+    if(tentativas < 15){ setTimeout(tentar, 400); return; }
+    // Card nunca apareceu em `cards` depois de ~6s de tentativas — foi
+    // arquivado/excluído desde que a notificação foi gerada. Antes desistia
+    // em silêncio; agora avisa e limpa a notificação órfã, mesmo padrão já
+    // usado acima pro caso de comentário excluído (achado via
+    // /monitorarbugs, 2026-09-01).
+    showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou arquivado.');
+    window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
   };
   tentar();
 }
@@ -30216,7 +30223,12 @@ renderBoard();
     tentativas++;
     const existe = cards.find(c=>c.id===cardId);
     if(existe){ openCard(cardId); return; }
-    if(tentativas < 15) setTimeout(tentar, 400);
+    if(tentativas < 15){ setTimeout(tentar, 400); return; }
+    // 15 tentativas (~6s) sem achar o card: provavelmente foi arquivado/
+    // excluído depois do link ter sido gerado (ex.: link "abrir card ↗" no
+    // Histórico do Agente Ágil, no painel). Antes desistia em silêncio —
+    // achado via /monitorarbugs, 2026-09-01.
+    showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou arquivado.');
   };
   setTimeout(tentar, 600);
 })();
