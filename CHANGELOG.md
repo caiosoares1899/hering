@@ -2308,6 +2308,49 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.527-dev — 2026-09-01 — Fix: indicador "🤖 pensando..." e automação "Notificar todos" (/monitorarbugs)
+
+Auditoria da própria feature mais fresca da sessão (indicador de @menção
+processando, v8.30.524-dev), aplicando a técnica 1 (caminhos paralelos)
+e 4 (pegadinha de checagem incompleta). 3 achados reais:
+
+1. **Card hotline nunca limpava o indicador sozinho.**
+   `_startAgenteAgilThinking()` evita abrir um listener próprio pro card
+   hotline de propósito (ele já tem um permanente,
+   `_attachAgenteHotlineCommentsListener()`) — mas esse listener
+   permanente nunca checava se a resposta do agente tinha chegado.
+   Resultado: no card mais óbvio pra conversar com o agente, "🤖
+   pensando..." ficava preso até o timeout de 120s, mesmo com a
+   resposta já visível na tela.
+2. **"Já respondeu?" checava qualquer comentário antigo do agente, não
+   uma resposta NOVA.** Tanto o listener temporário quanto o hook do
+   hotline (achado #1) checavam só `existe algum comentário com
+   uid==='agente-agil'?` — verdade em QUALQUER card/conversa que o
+   agente já respondeu antes (o padrão normal de uso, não uma exceção).
+   Reabrir uma conversa já respondida fazia o indicador aparecer e
+   sumir instantaneamente, sem esperar a resposta de verdade pra
+   pergunta nova. Fix: `_agenteAgilRespondeuDesde()` compara o `ts` da
+   resposta contra o momento em que a pergunta foi enviada
+   (`window._agenteAgilThinking[cardId]` virou timestamp, não boolean).
+3. **Automação "Notificar todos" excluía quem por acaso processasse o
+   disparo.** `parseMentions()` sempre pula
+   `window._currentUser?.uid` (correto pra @menção humana — "não
+   notifica quem se auto-mencionou"), mas pra uma automação isso é só
+   quem por acaso está com o board aberto no momento do disparo, não
+   necessariamente quem devia ficar de fora de um "todos" literal —
+   acontecia em 100% dos disparos, não é borda rara. Reportado como
+   pergunta de produto (Passo 3) antes de corrigir; usuário confirmou
+   que "todos" deveria ser literal. Fix: `parseMentions()` ganhou
+   `opts.includeSelf` (só `notify_all` usa; @todos digitado à mão
+   continua excluindo quem escreveu, como sempre).
+
+Checks de rotina: `node --check` OK, diff balanceado (contagem bruta de
+parênteses do arquivo inteiro mudou pela 1ª vez na sessão de "0" pra
+"+1" — investigado e confirmado que é só um parêntese aberto dentro de
+um comentário em prosa que fecha numa linha seguinte do MESMO comentário,
+sem relação com estrutura de código; `node --check` é quem garante
+sintaxe válida de verdade, não a contagem bruta).
+
 ### v8.30.526-dev — 2026-09-01 — Feat: `criar_card` do Agente Ágil ganha tags e riscos
 
 Continuação direta da v8.30.525-dev (checklist) — pedido direto do
