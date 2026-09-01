@@ -271,6 +271,13 @@ detalhe dos 4 call sites.
 - `createNotif()` — L22303
 - `loadNotifs()` — L22564
 - `checkDueNotifs()` — L22956 — due_today/due_overdue, 1x/dia
+- `parseMentions()` — L22977 — @menção em descrição/PO/checklist/comentário;
+  `@todos` (`TODOS_MENTION_ENTRY`, 2026-09-01) notifica todos os membros do
+  squad de uma vez em vez de 1 pessoa.
+- `mentionCandidates()`/`mentionMatchLabel()` — L6533/L6552 — autocomplete
+  de @; entradas sintéticas (`init` sentinela, nunca um membro real):
+  `TODOS_MENTION_ENTRY` (sempre 1ª opção) e `AGENTE_AGIL_MENTION_ENTRY`
+  (só em squads com Cloud Function ouvindo).
 
 ### Notas
 - `toggleNotas()` — L14965, `setNotasScope()` — L14978

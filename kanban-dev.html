@@ -1932,6 +1932,9 @@ input[type="date"]{-moz-appearance:textfield;}
 .mention-user.mention-agent{
   background:rgba(167,139,250,.14);border-color:rgba(167,139,250,.35);color:#c4b5fd;
 }
+.mention-user.mention-todos{
+  background:rgba(56,182,255,.14);border-color:rgba(56,182,255,.35);color:var(--accent);
+}
 .avatar.agent-avatar{
   border-width:1.5px;font-size:10px;
 }
@@ -5630,7 +5633,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.520-dev</div>
+<div class="version">v8.30.521-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6408,6 +6411,19 @@ const AGENTE_AGIL_MENTION_ENTRY = {
   init: AGENTE_AGIL_MENTION_INIT, name: 'Agente Ágil', foto: '', uid: 'agente-agil',
   isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖', isAgenteAgilMention: true,
 };
+// Menção coletiva "@todos" (pedido direto) — notifica TODOS os membros do
+// squad de uma vez, não uma pessoa específica. Mesmo truque sintético do
+// AGENTE_AGIL_MENTION_ENTRY acima: `init` sentinela que nunca colide com
+// nenhum membro real, resolvido especificamente em mentionMatchLabel()
+// (texto literal "todos", não passa por getMemberHandle()) e em
+// parseMentions() (fan-out pra todo mundo em vez de 1 uid). Sempre
+// disponível em qualquer squad — diferente do Agente Ágil, "notificar
+// todo mundo" não depende de nenhuma Cloud Function ouvindo.
+const TODOS_MENTION_INIT = '__todos__';
+const TODOS_MENTION_ENTRY = {
+  init: TODOS_MENTION_INIT, name: 'Todos os membros do squad', foto: '', uid: 'todos',
+  isAgent: true, cor: '#38b6ff', avatarEmoji: '👥', isTodosMention: true,
+};
 // Mesmo escopo do gatilho automático (mentionTrigger.js) — precisa ter
 // uma Cloud Function de verdade escutando o squad, senão a sugestão
 // aparece em squad onde não faz nada. Hoje: 'dev' (SQUAD_ID) e 'dados'
@@ -6519,13 +6535,22 @@ function mentionCandidates(){
   // 'agente-agil') no squad 'dados' — filtra pra não duplicar com
   // AGENTE_AGIL_MENTION_ENTRY logo abaixo, que é a versão certa pro
   // autocomplete (nome literal, handle especial, ver mentionMatchLabel()).
-  const base = allIdentities().filter(m=>m.uid!==AGENTE_AGIL_ASSIGNEE_ENTRY.uid);
+  // TODOS_MENTION_ENTRY vai NA FRENTE (não no final) de propósito —
+  // dropdown filtra e corta em 8 resultados (ver handleMentionInput()); num
+  // squad com mais de ~7 pessoas, "@todos" no final nunca apareceria pra
+  // quem só digita "@" sem saber que a opção existe. Assim ela é sempre a
+  // 1ª sugestão, sem prejudicar quem já sabe o nome de quem quer mencionar
+  // (a busca por texto continua achando qualquer pessoa normalmente).
+  const base = [TODOS_MENTION_ENTRY, ...allIdentities().filter(m=>m.uid!==AGENTE_AGIL_ASSIGNEE_ENTRY.uid)];
   return AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) ? [...base, AGENTE_AGIL_MENTION_ENTRY] : base;
 }
 // Label usado tanto pra filtrar (digitou "@a"/"@age"...) quanto pra exibir
-// no dropdown — pro Agente Ágil é sempre o nome literal, nunca o handle
-// derivado (ver comentário acima do porquê).
+// no dropdown — pro Agente Ágil e pro "@todos" é sempre o nome literal
+// ("Agente Ágil"/"todos"), nunca o handle derivado (ver comentário acima
+// do porquê, mesmo motivo pros dois: nenhum é um membro de verdade com
+// email/nome pra derivar handle de).
 function mentionMatchLabel(m){
+  if(m.isTodosMention) return 'todos';
   return m.isAgenteAgilMention ? m.name : getMemberHandle(m);
 }
 // ── MODO DE VISUALIZAÇÃO HÍBRIDO (humanos / agentes / híbrido-padrão) ──
@@ -20462,6 +20487,10 @@ function renderMd(txt){
   // @USER mentions → teal underlined (agentes de IA → roxo, com 🤖) (done separately to avoid chain complexity)
   const _members = typeof allIdentities === 'function' ? allIdentities() : (typeof members !== 'undefined' ? members : []);
   txt = txt.replace(/@([a-zA-Z][a-zA-Z0-9._-]*)/g,(m,handle)=>{
+    // "@todos" (menção coletiva, ver TODOS_MENTION_ENTRY/parseMentions) —
+    // checado antes do lookup por membro, mesma prioridade de "palavra
+    // reservada" que parseMentions() já aplica.
+    if(handle.toLowerCase()==='todos') return '<span class="mention-user mention-todos" title="Notifica todos os membros do squad" onclick="void(0)">@'+esc(handle)+' 👥</span>';
     // Match by handle (email local) or init
     const mem=_members.find(x=>getMemberHandle(x)===handle.toLowerCase())||_members.find(x=>x.init===handle.toUpperCase());
     if(!mem) return m;
@@ -21467,7 +21496,7 @@ const HELP_CONTENT = {
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
     { icon:'🔗', title:'Dependências entre cards', text:'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente.' },
     { icon:'🔗', title:'Cards vinculados', text:'Vincule cards relacionados entre si. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.' },
-    { icon:'@', title:'Menções', text:'No campo de descrição, comentário ou nas Campanhas, digite @ para mencionar um membro do time (a pessoa recebe notificação no sino 🔔), ou @card: para vincular outro card (abre um seletor de busca). Funciona tanto na edição de card quanto no composer de registro das Campanhas & Coleções.' },
+    { icon:'@', title:'Menções', text:'No campo de descrição, comentário ou nas Campanhas, digite @ para mencionar um membro do time (a pessoa recebe notificação no sino 🔔), ou @card: para vincular outro card (abre um seletor de busca). Funciona tanto na edição de card quanto no composer de registro das Campanhas & Coleções.\n\n@todos menciona TODOS os membros do squad de uma vez (cada um recebe a notificação no sino 🔔) — útil pra um aviso importante que todo mundo precisa ver. Aparece como primeira opção no autocomplete de @.' },
     { icon:'🔤', title:'Texto rico na descrição e nos comentários', text:'Ao editar a descrição (principal ou adicionais) ou escrever um comentário, use a barra de ferramentas para deixar texto em negrito, itálico, sublinhado ou colorido. Selecione um trecho e clique no botão, ou clique sem selecionar para inserir um modelo. Por baixo usa markdown: **negrito**, *itálico*, __sublinhado__ — funciona igual nos dois lugares, incluindo ao editar um comentário já enviado.' },
     { icon:'🔗', title:'Links nas descrições', text:'Cole qualquer URL e ela vira um link clicável automaticamente. Para um link com nome bonito (estilo Word), clique no botão 🔗 da barra de ferramentas, informe a URL e o texto a exibir — ex.: mostrar "Board do Bolão" em vez do endereço completo.' },
     { icon:'📝', title:'Descrições adicionais', text:'Além da descrição principal do PO, cada time ou pessoa pode adicionar a sua própria visão no card (Brief do Design, Specs do Dev, etc.). Clique em "+ Nova descrição", escreva e salve. Depois de salva, ela fica em modo leitura com o rótulo, o autor e a data; o lápis ✏️ reabre para editar.\n\n🎨 Cor do rótulo: enquanto edita, escolha uma cor pro rótulo/badge daquela descrição (ou "✕ sem cor" pra tirar) — ajuda a diferenciar visualmente qual time ou etapa escreveu cada bloco. É separado do seletor de cor de texto rico da barra de formatação (esse continua servindo pra destacar palavras específicas dentro do próprio texto).' },
@@ -22951,6 +22980,23 @@ function parseMentions(text, cardId, commentId){
   const notified=new Set();
   while((m=re.exec(text))!==null){
     const token=m[1];
+    // @todos (menção coletiva, ver TODOS_MENTION_ENTRY) — notifica TODOS os
+    // membros do squad de uma vez, não 1 pessoa específica. Checado ANTES
+    // do lookup normal por handle/init: "todos" é uma palavra reservada,
+    // nunca deve tentar casar com um membro de verdade por coincidência.
+    if(token.toLowerCase()==='todos'){
+      members.forEach(mem=>{
+        if(!mem.uid || notified.has(mem.uid) || mem.uid===window._currentUser?.uid) return;
+        notified.add(mem.uid);
+        createNotif(mem.uid,'mention',
+          '@todos — você foi mencionado',
+          text.substring(0,80)+(text.length>80?'…':''),
+          cardId,
+          'mention_'+cardId+'_'+mem.uid,
+          commentId);
+      });
+      continue;
+    }
     let uid=null, init=null;
     const byHandle=getMemberByHandle(token);
     if(byHandle){ uid=byHandle.uid; init=byHandle.init; }

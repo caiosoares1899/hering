@@ -2308,6 +2308,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.521-dev — 2026-09-01 — Feat: @todos — menção coletiva que notifica todo mundo do squad
+
+Pedido direto do usuário: "faz um @todos" — um jeito de mencionar TODOS
+os membros do squad de uma vez, em vez de precisar marcar pessoa por
+pessoa quando um aviso é pra todo mundo ver.
+
+Como funciona:
+- Digite `@todos` em qualquer lugar onde @menção já funciona (descrição,
+  campo PO, item de checklist, comentário) — cada membro do squad recebe
+  a notificação no sino 🔔, igual uma menção normal.
+- Aparece como **primeira opção** no autocomplete de @ (antes de
+  qualquer pessoa) — sem isso, num squad com mais de ~7 pessoas ela
+  nunca apareceria pra quem só digita "@" sem saber que a opção existe
+  (o dropdown corta em 8 resultados).
+- Destacado com cor própria (azul) no texto renderizado do comentário/
+  descrição, igual as demais menções.
+- "todos" é tratado como palavra reservada — nunca tenta casar com um
+  membro de verdade por coincidência de nome/handle.
+
+Implementação: mesmo padrão sintético já usado pro `AGENTE_AGIL_MENTION_ENTRY`
+(entidade com `init` sentinela que nunca colide com um membro real,
+resolvida especificamente em `mentionMatchLabel()`) — `parseMentions()`
+ganhou um branch que, ao achar `@todos`, itera todos os `members` do
+squad em vez de resolver 1 uid só.
+
+Checks de rotina: `node --check` OK, diff balanceado (+4/+4 chaves,
++34/+34 parênteses).
+
 ### v8.30.520-dev — 2026-09-01 — Ajuste: ícone de pin move pro canto superior DIREITO
 
 Feedback direto do usuário testando a v8.30.519-dev: com o pin no canto
