@@ -18,6 +18,41 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.516 — 2026-09-01 · promove pra prod — Fix: comentário digitado num card novo ia parar no card errado
+
+Promoção cirúrgica, fora do lote normal — bug de integridade de dado
+(comentário sendo salvo silenciosamente no card ERRADO), promovido
+assim que validado, mesma regra de "correções sobem na hora" do
+`CLAUDE.md`. NÃO inclui os outros dois fixes que estavam acumulados em
+`kanban-dev.html` (ícone do PWA monochrome, re-sync periódico não
+recuperando card novo invisível) — esses seguem em dev, ainda sem
+validação, pro próximo lote.
+
+Relato direto de uma usuária, reproduzido também por quem pediu a
+correção: "criei um card do zero e trouxe um comentário de um último
+card aleatório". Causa: o painel de comentários do modal usa uma
+variável própria, `_commentCardId` (separada de `editingId`), só
+atualizada dentro de `loadComments(id)` — chamada ao abrir um card já
+existente, mas nunca ao clicar em "+ Novo card" (`openNewCard()`, já
+que o card ainda não tem id pra buscar comentários). Fechar um card
+existente com comentários e criar um novo em seguida deixava
+`_commentCardId` (e o HTML já renderizado em `#m-comment-list`) com o
+valor do ÚLTIMO card aberto — o card novo mostrava o comentário de um
+card aleatório, e **`submitComment()` escrevia de verdade** em
+`card_comments/{id do card antigo}/...`: um comentário digitado no
+card "novo" era salvo silenciosamente no card ERRADO, sumindo de vista
+assim que o card novo ganhasse seu próprio id.
+
+Fix: `openNewCard()` agora reseta `_commentCardId` e o painel de
+comentários pra "Salve o card para poder comentar."; `submitComment()`
+ganhou uma guarda contra `_commentCardId` vazio como rede de segurança
+adicional. Validado em dev via script de console (simula abrir um card
+com comentário real, depois "+ Novo card", confirma que o painel volta
+limpo e que enviar não escreve em lugar nenhum) — `✅ PASSOU`.
+
+Entrada correspondente em "kanban-dev.html" abaixo: v8.30.518-dev.
+PR: #627.
+
 ### v8.30.515 — 2026-09-01 · promove pra prod — Agentes de IA, Agente Ágil como Responsável/Participante, board não fica mais desatualizado sozinho
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
 promoção (v8.30.510-dev a v8.30.515-dev) — entradas correspondentes em
