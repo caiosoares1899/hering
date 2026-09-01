@@ -375,13 +375,34 @@ detalhe dos 4 call sites.
   pra `'col'` se existe uma coluna com id `blocker`; se não existir,
   bloqueia a troca com aviso em vez de deixar a squad num estado onde
   cards já impedidos ficam invisíveis
-- `ctxMove(colId)`/`ctxBlock()` — L26140/L25883 — `ctxBlock()` é só
-  `ctxMove('blocker')`. Mesmo incidente: `ctxMove()` agora aborta com
-  aviso se `colId` não bater com nenhuma coluna existente, em vez de
-  gravar um `card.col` órfão — `renderNormal()` só mostra um card na
-  coluna cujo id bate exatamente com `card.col`, então um id órfão faz o
-  card sumir do board inteiro, intacto mas invisível (achável só via
-  painel)
+- `ctxMove(colId)`/`ctxBlock()` — L26855/L26882 — `ctxBlock()` é só
+  `ctxMove('blocker')`. Mesmo incidente:
+  `ctxMove()` agora aborta com aviso se `colId` não bater com nenhuma
+  coluna existente, em vez de gravar um `card.col` órfão —
+  `renderNormal()` só mostra um card na coluna cujo id bate exatamente
+  com `card.col`, então um id órfão faz o card sumir do board inteiro,
+  intacto mas invisível (achável só via painel)
+- Menu de contexto do card (`showCtxMenu()` — L26663) — 2026-09-01,
+  pedido direto ("mudar prioridade e mudar coluna... deveria abrir a
+  lista pro lado pra n ficar mt grande", comparando com o submenu do
+  Windows Explorer): "Mover para" e "Prioridade" viraram flyouts em vez
+  de listas soltas ocupando a metade do menu. `toggleCtxSubmenu(ev,key)`
+  — L26788 — abre/fecha `#ctx-submenu-fly`, elemento ÚNICO e
+  INDEPENDENTE (irmão de `#ctx-menu`, não filho — `.ctx-menu` tem
+  `overflow-x:hidden`, que corta um filho `position:absolute` que vaza
+  da caixa do pai, mesmo com z-index maior; achado só ao tirar
+  screenshot de verdade, não bastava checar a classe `.open` via JS),
+  reposicionado via JS a cada clique com flip pra esquerda perto da
+  borda direita. Conteúdo de cada flyout fica em `_ctxSubmenus.mover`/
+  `_ctxSubmenus.prioridade` (preenchido por `showCtxMenu()`). CSS
+  reaproveita `.ctx-sub`/`.ctx-submenu`, que já existiam no arquivo mas
+  nunca tinham sido usadas em HTML/JS nenhum — sobra de uma feature
+  começada e abandonada antes. `hideCtxMenu()` — L26812 — também fecha
+  o flyout agora. `ctxCopyLink(cardId)` — L26924 — item novo "🔗 Copiar
+  link do card", mesma URL de `shareCardLink()` (botão do modal) mas sem
+  precisar abrir o card primeiro — `_cardShareUrl()` ganhou um `cardId`
+  opcional (antes só funcionava com `editingId`, o card do modal
+  aberto).
 - `_doBulkBlockCol()`/`_doBulkUnblockCol(colId)` — L6734/L6756 —
   versões em massa do mesmo par; `_doBulkBlockCol()` ganhou o mesmo
   guard de existência da coluna
