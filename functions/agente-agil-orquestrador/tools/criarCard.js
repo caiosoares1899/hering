@@ -47,6 +47,13 @@ const criarCardSchema = z.object({
   prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'prazo deve estar no formato YYYY-MM-DD').optional(),
   submarca: z.string().min(1).optional(),
   squad_solicitante: z.string().min(1).optional(),
+  // Achado real, testando na prática (2026-09-01): o agente recebeu um
+  // processo em várias etapas e não tinha onde colocar isso a não ser
+  // dentro da descrição como texto corrido — o rascunho confirmado sempre
+  // nascia com checklist vazio. Cap em 20 itens (mesmo espírito de limites
+  // já aplicados em outras ferramentas, ex. checklist_item) — evita um
+  // rascunho gigante que ninguém revisa de verdade.
+  checklist: z.array(z.string().min(1)).max(20).optional(),
 });
 
 // Mesma lista fixa de kanban-dev.html (const SUBMARCA_TAGS, só os labels —
@@ -111,6 +118,12 @@ function makeRealCriarCardHandler({ db, squadId, especialista, dryRun = true }) 
       contato: '',
       prazo: input.prazo || '',
       submarca: input.submarca || '',
+      // Checklist opcional (2026-09-01) — array de textos simples, aplicado
+      // pelo humano ao confirmar (ver _intakeCriarCard() no cliente); os
+      // itens nascem sempre desmarcados, mesma regra que qualquer outro
+      // caminho de criação de checklist já segue (ver _criarCardRecorrente()
+      // etc.) — não faz sentido um card nascer com item já concluído.
+      checklist: Array.isArray(input.checklist) ? input.checklist : [],
       origem: 'agente-agil',
       createdAt: new Date().toISOString(),
       status: 'pending',
