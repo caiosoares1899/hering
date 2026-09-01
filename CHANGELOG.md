@@ -10198,6 +10198,34 @@ reload de quem tem o painel aberto).
 Checks de rotina: `node --check` OK, brace/paren balance -1/-12 (mesmo
 baseline conhecido do arquivo).
 
+### painel.html v3.04 · painel — 2026-09-01 · fix: Agentes Externos não apareciam no board (faltava o campo "iniciais" em prod)
+
+Bug real, achado ao vivo: o usuário cadastrou um agente externo ("Gemini")
+em `painel.html` (prod) marcando o squad certo, mas ele nunca apareceu
+como opção de Responsável/Participante no board. Causa: a promoção do
+v8.30.533 do `kanban.html` (que passou a exigir `agentesExternos[].init`
+preenchido pra listar um agente externo, ver `v.init &&
+v.squads[ACTIVE_SQUAD]===true` em `kanban.html`) foi feita, mas o campo
+"init" (junto com nome/cor/avatarEmoji) só tinha sido adicionado à aba
+"🔌 Agentes Externos" do `painel-dev.html` (v3.04 · painel-dev,
+2026-08-31) — nunca chegou em `painel.html`. Promoção incompleta: o lado
+consumidor (kanban) foi pra prod, o lado produtor (painel) ficou pra
+trás, então não havia NENHUMA forma de definir `init` em produção.
+
+Corrigido copiando a mesma extensão de `renderAgentesExternosPainel()`,
+`criarAgenteExternoPainel()` e `salvarAgenteExternoPainel()` de
+`painel-dev.html` pra `painel.html` — as duas versões dessas 3 funções
+agora são idênticas. Nenhum dado existente é afetado; agentes já
+cadastrados sem `init` continuam funcionando exatamente como antes (só
+contexto pro Agente Ágil).
+
+Correção de bug — subiu direto, sem passar pela fila de lote de
+features (regra do `CLAUDE.md`: bug fix promove imediato, feature
+promove em lote).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/-12 (mesmo
+baseline conhecido do arquivo).
+
 ### painel-dev.html v3.04 · painel-dev — 2026-09-01 · Agentes Externos ganham nome/iniciais/cor/emoji — viram selecionáveis no board
 
 Pedido direto do usuário: "meu ponto com os agentes dentro do board é que
