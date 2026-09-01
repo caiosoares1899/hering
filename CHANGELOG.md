@@ -9548,6 +9548,19 @@ pra descrição principal, PO e comentário).
 
 ## favicon.png / favicon-monochrome.png (assets compartilhados — raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-01 — Peixes pequenos demais no enquadramento — recorte com zoom nos dois arquivos
+
+Achado direto do usuário vendo o resultado das duas entradas anteriores:
+"achei q ficaram pequenos os peixes!". O export original tinha os 2
+peixes brancos ocupando só ~57% da largura do quadro (bounding box real:
+1141px de um canvas fonte de 2000px), com bastante fundo decorativo
+(peixinhos + linhas de onda) ao redor. Recorte quadrado de 1300×1300
+(do canvas fonte 2000×2000) centrado no par de peixes, redimensionado
+pros 512×512 finais — ~30% de zoom, mesmo corte aplicado ao
+`favicon.png` colorido E ao `favicon-monochrome.png` (pra continuarem
+enquadrados igual entre si). Ainda sobra fundo decorativo suficiente nas
+bordas pra não ficar um recorte apertado/cortado.
+
 ### 2026-09-01 — Regenera `favicon-monochrome.png` (ícone temático Android) pra bater com a logo nova
 
 Usuário apagou o `favicon-monochrome.png` antigo (`65ef89a`, direto no

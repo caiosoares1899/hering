@@ -22287,6 +22287,13 @@ function initPWA(){
       // os 2 peixes brancos sólidos (glifo) do resto do fundo (ruído)
       // igual o ícone antigo já ficava (glifo simples, sem elementos
       // decorativos). Regenerar assim de novo se a logo trocar outra vez.
+      // Mesmo dia, achado direto do usuário vendo o resultado ("achei q
+      // ficaram pequenos os peixes"): o export original tinha os 2 peixes
+      // ocupando só ~57% da largura do quadro — recortado um crop
+      // quadrado de 1300×1300 (de um canvas fonte 2000×2000) centrado no
+      // par de peixes antes de redimensionar pros 512×512 finais, ~30% de
+      // zoom. Mesmo recorte aplicado ao favicon.png colorido (acima)
+      // pros dois continuarem enquadrados igual.
       {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
