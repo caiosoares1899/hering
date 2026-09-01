@@ -2401,6 +2401,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.536-dev — 2026-09-01 — Fix (/monitorarbugs): link "abrir card" falhava em silêncio quando o card não existia mais
+
+Achado durante revisão pedida via `/monitorarbugs`, focada na aba "🤖
+Agentes" recém-criada no painel (`painel-dev.html`) — o novo link "abrir
+card ↗" do Histórico do Agente Ágil cross-squad (`renderAgentesLogCross()`)
+podia apontar pra um card já arquivado/excluído (cenário que
+`renderAgenteLog()`, dentro do próprio board, já trata mostrando
+"card não encontrado — arquivado ou excluído" como texto). Investigando o
+destino desse link (`kanban.html?squad=X&card=Y`), a causa raiz não estava
+no link em si, mas em duas funções pré-existentes que ele (e outros 3
+lugares do painel que já usavam `squadBoardUrl()` — modal de push,
+calendário ×2) sempre dependeram:
+
+- `_openCardFromUrl()` — abre um card automaticamente vindo de `?card=`
+  na URL. Tentava achar o card por até ~6s (15 tentativas × 400ms) e,
+  se nunca achasse, **desistia em silêncio** — a pessoa clicava no link,
+  o board abria normal, e nada mais acontecia, sem nenhuma explicação.
+- `openNotif()` — mesmo padrão de retry pro clique numa notificação de
+  menção; já tinha tratamento simétrico pro caso "o *comentário*
+  referenciado foi excluído" (toast + remove a notificação), mas não
+  pro caso "o *card inteiro* sumiu".
+
+Fix: as duas, depois de esgotar as tentativas, mostram
+`showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou
+arquivado.')`; `openNotif()` também remove a notificação órfã (mesmo
+padrão já usado ali pro comentário excluído). Não é um bug introduzido
+pela aba Agentes — é uma lacuna que já existia há tempos, só ficou mais
+visível revisando o link novo que a alcança.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/+1 (mesmo
+baseline conhecido da sessão).
+
 ### v8.30.534-dev — 2026-09-01 — Fix: selo do Milanote no card colidia com o emoji do pin de fixar coluna
 
 Ver entrada completa em `## kanban.html (produção)` v8.30.535 — mesmo
