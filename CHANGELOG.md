@@ -9546,6 +9546,31 @@ pra descrição principal, PO e comentário).
 - Corrige participantes sumindo de cards.
 - Lembrete de acesso ao colar link do Google (Docs/Sheets/Slides/Drive).
 
+## favicon.png (asset compartilhado — raiz do domínio, sem versão própria em `version.json`)
+
+### 2026-09-01 — Logo atualizada + otimização de bytes (403KB → 28KB)
+
+Pedido direto do usuário: "eu atualizei o logo do maré! priorize usar a
+logo com fundo azul". Novo design (2 peixes estilizados sobre ondas,
+mesma identidade "Marine Glass" documentada em `MARINE_GLASS.md`)
+enviado pelo usuário e commitado direto em `main` por ele
+(`ab3248f`, renomeando o arquivo original pra `favicon.png`).
+
+O arquivo recebido era um export bruto de 2000×2000px, 403KB — ~28x o
+peso do `favicon.png` anterior (14KB, 180×180 — ver entrada "Favicon
+duplicado 4x" acima nesta mesma seção pro histórico de cuidado com o
+peso desse arquivo específico: ele é buscado 1x por sessão de browser em
+TODA página do Maré Digital que o referencia, e fica em cache separado
+do HTML). Redimensionado pra 512×512 (mesmo tamanho já usado em
+`marinheiro.png`, generoso o bastante pro ícone do PWA em telas grandes,
+o browser reduz sozinho pros usos menores — favicon de aba, apple-touch-
+icon) e reduzido pra paleta de 64 cores (a arte é praticamente flat —
+fundo sólido + peixes brancos + linhas de onda semi-transparentes — sem
+perda visível de qualidade). Resultado: **403KB → 28KB**, sem mudar
+nenhuma referência (`<link rel="icon">`, `apple-touch-icon`, manifest do
+PWA, `<img>` da tela de login — todos continuam apontando pra
+`favicon.png`, mesmo nome).
+
 ## Service Worker — `firebase-messaging-sw.js` (raiz do domínio, sem versão própria em `version.json`)
 
 ### 2026-08-12 — `/vendor/` também excluído do cache do SW (o bug nunca foi o gstatic.com)
