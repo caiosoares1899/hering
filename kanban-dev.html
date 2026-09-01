@@ -4350,7 +4350,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="cfg-sec-title" style="margin-bottom:0;font-size:11px;">🤖 Agentes de IA</div>
           <button class="btn btn-sm" onclick="abrirAddAgente()" style="font-size:10px;color:#c4b5fd;border-color:rgba(167,139,250,.3);">+ Novo agente</button>
         </div>
-        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Identidades de IA que podem ser escolhidas como Responsável/Participante de um card, lado a lado com pessoas de verdade.</p>
+        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Identidades de IA que podem ser escolhidas como Responsável/Participante de um card, lado a lado com pessoas de verdade. Sem ação real nenhuma — só um marcador. Pra um agente que precisa que o Agente Ágil avise um sistema externo de verdade (webhook) quando algo acontecer no card, cadastre em Painel → Configurações → 🔌 Agentes Externos em vez daqui — aparece no board do mesmo jeito, em optgroup separado.</p>
         <div id="agentes-list" style="display:flex;flex-direction:column;gap:5px;"></div>
         <div id="add-agente-row" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;" class="frow">
           <input class="fi" id="agente-nome-inp" type="text" placeholder="Nome (ex.: Claude Code)" style="flex:1;min-width:120px;font-size:12px;">
@@ -5639,7 +5639,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.531-dev</div>
+<div class="version">v8.30.532-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6385,12 +6385,24 @@ let colSortMode = safeLS.getItem('col_sort_'+ACTIVE_SQUAD) || 'priority';
 let colSortOverrides = JSON.parse(safeLS.getItem('col_sort_ov_'+ACTIVE_SQUAD) || '{}');
 let subteams=[];   // [{id,name,color,members:[init,...]}] — em dados/subtimes
 let agentes=[];     // [{id,nome,init,cor,avatarEmoji,escopo}] — identidades de agente de IA (em dados/agentes)
+// Agentes Externos (painel.html, registro GLOBAL em kanban/config/
+// agentesExternos) que têm `init` preenchido E este squad marcado em
+// `squads` — só esses viram selecionáveis como Responsável/Participante
+// de card, lado a lado com `agentes` acima (ver allIdentities()). Sem
+// `init`, o cadastro continua só como contexto pro Agente Ágil (não entra
+// aqui) — mesmo comportamento de antes de 2026-09-01. `webhookUrl` não é
+// usado no client (só o backend chama, ver agenteMarcador.js) — guardado
+// aqui só pra eventual indicação visual futura.
+let agentesExternos=[];
 // Membros humanos + agentes de IA combinados — usado só pra exibição/seleção (avatar, seletor de responsável,
 // participantes, @menção). NUNCA usar pra checagem de permissão/role — isso continua só em `members`.
 function allIdentities(){
   const base = [...members, ...agentes.map(a=>({
     init:a.init||a.id, name:a.nome||a.id, foto:'', uid:'agent:'+a.id,
     isAgent:true, cor:a.cor||'#a78bfa', avatarEmoji:a.avatarEmoji||'🤖',
+  })), ...agentesExternos.map(a=>({
+    init:a.init, name:a.nome||a.id, foto:'', uid:'agent-externo:'+a.id,
+    isAgent:true, isAgentExterno:true, cor:a.cor||'#38b6ff', avatarEmoji:a.avatarEmoji||'🔌',
   }))];
   // Agente Ágil de verdade (ver AGENTE_AGIL_ASSIGNEE_ENTRY abaixo) — só
   // entra na lista combinada nos squads onde ele é selecionável de
@@ -8144,6 +8156,22 @@ function fbLoadAll(){
     agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesList();
+    scheduleRender();
+  });
+  // Agentes Externos (painel.html, registro GLOBAL — não usa FB+, que é
+  // por squad) — só os que têm `init` preenchido E este squad marcado em
+  // `squads` viram selecionáveis no board (ver allIdentities()/
+  // populatePartSelect()/populateOwnerSelect()). Pedido direto do usuário
+  // (2026-09-01): "o agente de VM da Vtex tem q ter um ID e ser
+  // responsável pelo card... tudo de importante q acontecer ali, o agente
+  // agil vai pegar essas informações e levar pro agente de vm externo" —
+  // o envio de verdade pro webhook é determinístico no backend
+  // (agenteMarcador.js), este listener só cuida de exibir/selecionar.
+  fbListen('kanban/config/agentesExternos',val=>{
+    const raw = val ? Object.entries(val) : [];
+    agentesExternos = raw
+      .filter(([,v])=>v && v.init && v.squads && v.squads[ACTIVE_SQUAD]===true)
+      .map(([id,v])=>({ id, nome:v.nome||id, init:v.init, cor:v.cor||'#38b6ff', avatarEmoji:v.avatarEmoji||'🔌', webhookUrl:v.webhookUrl||'' }));
     scheduleRender();
   });
   fbListen(FB+'/tags',val=>{
@@ -10713,6 +10741,15 @@ function populatePartSelect(excludeInits=[]){
     if(_showAgenteAgil) _agHtml+=`<option value="${esc(AGENTE_AGIL_ASSIGNEE_ENTRY.init)}">🤖 Agente Ágil</option>`;
     sel.innerHTML+=`<optgroup label="🤖 Agentes">`+_agHtml+`</optgroup>`;
   }
+  // Agentes Externos (painel.html, registro global, ver `agentesExternos`
+  // acima) — optgroup separado dos decorativos, pra deixar claro que
+  // esses de fato levam informação real pra fora via webhook quando algo
+  // acontece no card (agenteMarcador.js).
+  const _agExtOptions=agentesExternos.filter(a=>!excludeInits.includes(a.init));
+  if(_agExtOptions.length){
+    const _agExtHtml=_agExtOptions.map(a=>`<option value="${esc(a.init)}">${esc(a.avatarEmoji||'🔌')} ${esc(a.nome||a.id)}</option>`).join('');
+    sel.innerHTML+=`<optgroup label="🔌 Agentes Externos">`+_agExtHtml+`</optgroup>`;
+  }
 }
 
 // Fonte da verdade dos participantes do card sendo editado — mesmo padrão de
@@ -11533,6 +11570,12 @@ function populateOwnerSelect(){
     let _agOwnerHtml=agentes.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('');
     if(_showAgenteAgilOwner) _agOwnerHtml+=`<option value="${esc(AGENTE_AGIL_ASSIGNEE_ENTRY.init)}">🤖 Agente Ágil</option>`;
     document.getElementById('m-owner').innerHTML+=`<optgroup label="🤖 Agentes">`+_agOwnerHtml+`</optgroup>`;
+  }
+  // Agentes Externos (painel.html, registro global) — ver mesmo comentário
+  // em populatePartSelect() acima.
+  if(agentesExternos.length){
+    const _agExtOwnerHtml=agentesExternos.map(a=>`<option value="${esc(a.init)}">${esc(a.avatarEmoji||'🔌')} ${esc(a.nome||a.id)}</option>`).join('');
+    document.getElementById('m-owner').innerHTML+=`<optgroup label="🔌 Agentes Externos">`+_agExtOwnerHtml+`</optgroup>`;
   }
 }
 // Demandante usa a mesma lista de pessoas do Responsável — mas SEM agentes
@@ -19895,10 +19938,14 @@ function renderAgentesList(){
   list.innerHTML = agentes.map(a=>{
     // Mesma checagem de colisão de iniciais já feita pra humanos (ver
     // dupInit em renderUsuarios() acima) — estendida pra cobrir
-    // agente×humano e agente×agente, não só humano×humano.
+    // agente×humano e agente×agente, não só humano×humano. Também checa
+    // contra Agentes Externos habilitados neste squad (2026-09-01) — o
+    // cadastro deles mora no painel, sem visibilidade do que já existe
+    // aqui, então essa colisão só é detectável do lado do board mesmo.
     const initUp=(a.init||a.id||'').toUpperCase();
     const dupInit = members.some(m=>(m.init||'').toUpperCase()===initUp) ||
-      agentes.some(b=>b._fbKey!==a._fbKey && (b.init||b.id||'').toUpperCase()===initUp);
+      agentes.some(b=>b._fbKey!==a._fbKey && (b.init||b.id||'').toUpperCase()===initUp) ||
+      agentesExternos.some(b=>(b.init||'').toUpperCase()===initUp);
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:8px;">
       <div style="width:28px;height:28px;border-radius:50%;background:${_hexA(a.cor||'#a78bfa',.25)};border:1px solid ${_hexA(a.cor||'#a78bfa',.5)};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${esc(a.avatarEmoji||'🤖')}</div>
       <div style="flex:1;min-width:0;"><div style="font-size:12px;color:var(--txt);">${esc(a.nome||a.id)} <span class="init-pill${dupInit?' init-dup':''}" title="${dupInit?'⚠ Iniciais colidem com outra pessoa/agente deste squad':'Iniciais'}">${esc(a.init||a.id)}${dupInit?' ⚠':''}</span></div></div>
@@ -19947,7 +19994,10 @@ function salvarAgente(){
   // declaração) só onde ele é selecionável — mesma disciplina de
   // colisão acima, agora incluindo a identidade real, não só cadastros.
   const colideComAgenteAgil=AGENTE_AGIL_ASSIGNEE_SQUADS.has(ACTIVE_SQUAD) && AGENTE_AGIL_ASSIGNEE_ENTRY.init.toUpperCase()===init;
-  if(colideComMembro||colideComAgente||colideComAgenteAgil){ showToast('❌ Já existe alguém (pessoa ou agente) com as iniciais "'+init+'" neste squad.'); return; }
+  // Colide com um Agente Externo (painel.html) já habilitado neste squad
+  // (2026-09-01) — mesma disciplina de colisão acima.
+  const colideComAgenteExterno=agentesExternos.some(a=>(a.init||'').toUpperCase()===init);
+  if(colideComMembro||colideComAgente||colideComAgenteAgil||colideComAgenteExterno){ showToast('❌ Já existe alguém (pessoa ou agente) com as iniciais "'+init+'" neste squad.'); return; }
   const id=_agenteEditId||('ag'+Date.now()+Math.random().toString(36).slice(2,5));
   fbSet(FB+'/agentes/'+id, {id, nome, init, cor, avatarEmoji:emoji});
   const eraEdicao=!!_agenteEditId;
@@ -21869,7 +21919,7 @@ const HELP_CONTENT = {
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
     { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), notificar o Agente Ágil, ou notificar todo mundo do squad.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.\n\n📣 Notificar todos (qualquer squad): posta um comentário "@todos [Automação]..." no card, avisando cada pessoa do squad no sino 🔔 — útil pra um alerta que todo mundo precisa ver (ex.: "Card crítico criado").' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
-    { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.\n\n🆚 "🤖 Agente Ágil" (o de VERDADE, não um cadastro): nos squads dev e dados, o próprio Agente Ágil aparece nesse mesmo optgroup, separado dos agentes cadastrados. Diferente deles, colocar ele como Responsável ou Participante REAGE de verdade — ele lê o card e responde como se tivesse sido @mencionado, todo vez que esse campo muda pra incluir ele (reatribuir de novo dispara de novo; editar outro campo do card não).' },
+    { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.\n\n🆚 "🤖 Agente Ágil" (o de VERDADE, não um cadastro): nos squads dev e dados, o próprio Agente Ágil aparece nesse mesmo optgroup, separado dos agentes cadastrados. Diferente deles, colocar ele como Responsável ou Participante REAGE de verdade — ele lê o card e responde como se tivesse sido @mencionado, todo vez que esse campo muda pra incluir ele (reatribuir de novo dispara de novo; editar outro campo do card não).\n\n🔌 "Agentes Externos" (optgroup separado, "🔌"): sistemas de verdade fora do Maré Digital (ex.: um agente de automação rodando na Vtex), cadastrados em Painel → Configurações → 🔌 Agentes Externos com iniciais/cor/emoji preenchidos — aí eles também viram selecionáveis aqui, do mesmo jeito que um Agente de IA decorativo. A diferença: quando o Agente Ágil muda algo de verdade num card responsável de um Agente Externo, ALÉM do "📎 cc" de sempre, ele manda um POST de verdade pro webhook cadastrado daquele agente, resumindo o que mudou — sem nenhuma ação do agente externo sobre o board (é só destinatário, tudo passa pelo Agente Ágil). Só chama o webhook de verdade nos squads onde essa capacidade está habilitada (hoje: dev); nos demais, o "📎 cc" acontece igual, só sem o POST.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },

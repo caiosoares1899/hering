@@ -2308,6 +2308,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.532-dev — 2026-09-01 — Novo: Agentes Externos viram selecionáveis como Responsável/Participante de card
+
+Continuação direta do pedido do usuário sobre unificar/simplificar o
+fluxo de cadastro de agentes: "o agente de VM da Vtex tem q ter um ID e
+ser responsável pelo card 'cadastro da coleção de verão'. tudo de
+importante q acontecer ali, o agente agil vai pegar essas informações e
+levar pro agente de vm externo, q ta la na vtex, via https ou endpoint".
+
+Agentes cadastrados em Painel → Configurações → 🔌 Agentes Externos (com
+iniciais preenchidas — ver entrada de `painel-dev.html` acima) agora
+aparecem nos seletores de Responsável/Participante do board, num
+optgroup próprio "🔌 Agentes Externos" — separado do "🤖 Agentes"
+decorativo já existente. `allIdentities()`, `populatePartSelect()` e
+`populateOwnerSelect()` foram estendidos pra ler o registro GLOBAL
+(`kanban/config/agentesExternos`, filtrado pros habilitados neste squad)
+lado a lado com `dados/agentes`. A checagem de colisão de iniciais (aba
+"🤖 Agentes de IA") também passou a considerar os Agentes Externos
+habilitados no squad, nos dois sentidos.
+
+O envio de verdade pro webhook quando algo muda num card responsável de
+um desses agentes é **determinístico**, do lado do orquestrador — ver
+entrada "Agente Ágil Orquestrador" abaixo (`agenteMarcador.js`) — não
+depende do LLM lembrar de notificar. Sem nenhuma ação real do agente
+externo sobre o board: ele é só destinatário, tudo passa pelo Agente
+Ágil (confirmado explicitamente pelo usuário antes de implementar).
+
+HELP_CONTENT ("🤖 Agentes de IA") atualizado com a distinção entre os
+dois tipos.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.531-dev — 2026-09-01 — Fix de verdade: excluir agente de IA (causa raiz — chave do Firebase divergia do campo `.id`)
 
 Continuação direta do fix da v8.30.530-dev — o usuário testou de novo em
@@ -9926,6 +9958,27 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.04 · painel-dev — 2026-09-01 · Agentes Externos ganham nome/iniciais/cor/emoji — viram selecionáveis no board
+
+Pedido direto do usuário: "meu ponto com os agentes dentro do board é que
+seja esses agentes externos!... o agente de VM da Vtex tem q ter um ID e
+ser responsável pelo card... tudo de importante q acontecer ali, o agente
+agil vai pegar essas informações e levar pro agente de vm externo".
+
+A aba "🔌 Agentes Externos" ganha 4 campos novos, todos opcionais: `nome`
+(exibição, separado do identificador técnico), `init` (iniciais — É o que
+faz o agente virar selecionável como Responsável/Participante de card,
+ver `kanban-dev.html` abaixo), `cor` e `avatarEmoji`. Sem `init`, um
+agente externo continua se comportando exatamente como antes (só contexto
+pro Agente Ágil, nunca aparece no board) — zero risco pro cadastro já
+existente do Databricks. Sem checagem de colisão de iniciais aqui no
+painel (cruzaria vários squads de uma vez, mais complexo do que vale a
+pena agora) — colisão é detectada visualmente do lado do board, ver
+entrada de `kanban-dev.html` abaixo.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/-12 (mesmo
+baseline conhecido do arquivo).
+
 ### painel.html v3.03 · painel — 2026-08-31 · promove pra prod — Agentes Externos ganha webhook de retorno
 
 Promove pra produção o campo "🔗 Webhook de retorno" da aba "🔌 Agentes
@@ -10487,6 +10540,44 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-09-01 · `agenteMarcador.js` passa a notificar Agentes Externos de verdade (webhook), não só marcar com "📎 cc"
+
+Pedido direto do usuário, unificando os dois cadastros de "agente" do
+sistema (Agentes de IA decorativos, no board, vs. Agentes Externos
+conectados por webhook, no painel): "meu ponto com os agentes dentro do
+board é que seja esses agentes externos!... o agente de VM da Vtex tem q
+ter um ID e ser responsável pelo card... tudo de importante q acontecer
+ali, o agente agil vai pegar essas informações e levar pro agente de vm
+externo". Confirmado com o usuário antes de implementar: o gatilho é
+**determinístico** (mesmo padrão do "📎 cc" que já existe pros agentes
+decorativos — não uma ferramenta que o LLM decide chamar sozinho), e o
+agente externo nunca tem ação real sobre o board — só recebe.
+
+`agenteMarcador.js` (chamado após QUALQUER mutação real do orquestrador,
+mesmo critério de sempre) agora também resolve agentes de
+`kanban/config/agentesExternos` (registro GLOBAL, painel.html) habilitados
+neste squad e com `init` preenchido (`agentesExternosDoSquad()`) — cruza
+contra owner/participants do card do mesmo jeito que já fazia pros
+agentes decorativos (`resolveAgentesResponsaveis()`, sem mudança). O
+comentário "📎 cc" passa a incluir os dois tipos juntos, na mesma frase.
+Pros agentes externos responsáveis que TÊM `webhookUrl` cadastrado, chama
+o MESMO handler HTTP que a ferramenta `notificar_especialista_externo`
+já usa (`makeRealNotificarEspecialistaExternoHandler`, reaproveitado
+direto — mesma validação de URL, timeout 8s, tratamento de erro) —
+`mensagem` é a lista de ações que o orquestrador tomou nesta rodada,
+truncada em 500 caracteres. Só chama de verdade nos squads em
+`NOTIFICAR_ESPECIALISTA_SQUADS` (hoje só `dev`, mesmo gate já usado pela
+ferramenta) — fora desses squads, o "📎 cc" acontece igual, só sem o POST.
+Falha no webhook nunca desfaz nem invalida o "📎 cc" que já foi postado —
+passo isolado, com seu próprio try/catch (melhor esforço, mesmo espírito
+do resto do arquivo).
+
+11 testes novos em `__tests__/agenteMarcador.test.js` (total do arquivo:
+21), suíte `functions/` inteira: 397/397 passando.
+
+**Requer redeploy manual** das 3 functions que chamam `agenteMarcador.js`:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
 
 ### 2026-09-01 · Novo: `analisePO.js` — "🤖 Análise do board (PO)" em Meu Dia
 
