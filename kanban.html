@@ -4327,6 +4327,24 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
       </div>
 
+      <!-- Agentes de IA (piloto híbrido humano+agente) -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(167,139,250,.15);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="cfg-sec-title" style="margin-bottom:0;font-size:11px;">🤖 Agentes de IA</div>
+          <button class="btn btn-sm" onclick="abrirAddAgente()" style="font-size:10px;color:#c4b5fd;border-color:rgba(167,139,250,.3);">+ Novo agente</button>
+        </div>
+        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Identidades de IA que podem ser escolhidas como Responsável/Participante de um card, lado a lado com pessoas de verdade.</p>
+        <div id="agentes-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+        <div id="add-agente-row" style="display:none;margin-top:8px;gap:6px;flex-wrap:wrap;" class="frow">
+          <input class="fi" id="agente-nome-inp" type="text" placeholder="Nome (ex.: Claude Code)" style="flex:1;min-width:120px;font-size:12px;">
+          <input class="fi" id="agente-init-inp" type="text" placeholder="Iniciais (ex.: CC)" maxlength="4" style="width:80px;font-size:12px;text-transform:uppercase;">
+          <input type="color" id="agente-cor-inp" value="#a78bfa" style="width:34px;height:30px;border:none;background:none;cursor:pointer;">
+          <input class="fi" id="agente-emoji-inp" type="text" placeholder="🤖" maxlength="4" style="width:44px;font-size:14px;text-align:center;">
+          <button class="btn btn-sm btn-teal" onclick="salvarAgente()">Salvar</button>
+          <button class="btn btn-sm" onclick="fecharAddAgente()">✕</button>
+        </div>
+      </div>
+
       <p style="font-size:11px;color:var(--txt3);margin-top:12px;">O PO pode alterar o papel de cada usuário ou convidar alguém pelo email.</p>
     </div>
 
@@ -4894,6 +4912,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <select id="rec-type" class="rec-input" onchange="_recRenderSub()">
           <option value="days">A cada X dias</option>
           <option value="weekly">Toda semana</option>
+          <option value="weekdays">Dias úteis (seg-sex)</option>
           <option value="monthly">Todo mês</option>
         </select>
       </div>
@@ -5601,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.505</div>
+<div class="version">v8.30.515</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -5825,7 +5844,12 @@ const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/
 // no functions/agente-agil-orquestrador/ — agenteAgilMencao/agenteAgilMencaoDados).
 // Só nesses squads o botão "Converse com Agente Ágil" (ver openAgenteHotline())
 // tem serventia — em outros, o @menção não é processado por ninguém.
-const AGENTE_AGIL_HOTLINE_SQUADS = ['dev', 'dados'];
+// Usa AGENTE_AGIL_MENTION_SQUADS (declarada mais abaixo, perto de
+// allIdentities()) — revisão arquitetural 2026-08-31: até aqui existia uma
+// 2ª constante aqui (AGENTE_AGIL_HOTLINE_SQUADS, mesmo valor, tipo
+// diferente — Array em vez de Set), risco real de uma expandir sem a
+// outra acompanhar. As duas descreviam o mesmo fato ("em quais squads a
+// menção é processada de verdade"), então viraram uma só.
 
 // Metadados por squad: adicione novos squads aqui OU carregue do Firebase
 // em squads/{id}/meta após o login (ver initSquadMeta abaixo).
@@ -6345,24 +6369,30 @@ let agentes=[];     // [{id,nome,init,cor,avatarEmoji,escopo}] — identidades d
 // Membros humanos + agentes de IA combinados — usado só pra exibição/seleção (avatar, seletor de responsável,
 // participantes, @menção). NUNCA usar pra checagem de permissão/role — isso continua só em `members`.
 function allIdentities(){
-  return [...members, ...agentes.map(a=>({
+  const base = [...members, ...agentes.map(a=>({
     init:a.init||a.id, name:a.nome||a.id, foto:'', uid:'agent:'+a.id,
     isAgent:true, cor:a.cor||'#a78bfa', avatarEmoji:a.avatarEmoji||'🤖',
   }))];
+  // Agente Ágil de verdade (ver AGENTE_AGIL_ASSIGNEE_ENTRY abaixo) — só
+  // entra na lista combinada nos squads onde ele é selecionável de
+  // verdade, pra qualquer lookup por init (badge de responsável, chip de
+  // participante etc.) resolver o nome/cor certos.
+  return AGENTE_AGIL_ASSIGNEE_SQUADS.has(ACTIVE_SQUAD) ? [...base, AGENTE_AGIL_ASSIGNEE_ENTRY] : base;
 }
 // Entidade sintética pro Agente Ágil Orquestrador aparecer no autocomplete
 // de @menção (achado de UX: sem isso, ninguém descobre que dá pra chamar o
 // agente digitando "@" — dependia de lembrar "@Agente Ágil" de cor, sem
 // erro de digitação). NUNCA vira registro real em dados/agentes — é só
-// pro sistema de menção enxergar, não aparece em seletor de responsável/
-// participantes nem em nenhum outro uso de allIdentities(). `init` é um
-// sentinela que não colide com nenhum init de verdade (humano ou agente
-// cadastrado), resolvido de propósito em insertMention()/handleMentionKey
-// pra inserir "Agente Ágil" literal — NUNCA passar por getMemberHandle()
-// (bug real encontrado: "Agente Ágil" → getMemberHandle → "agente.gil",
-// o "Á" acentuado é removido pela sanitização, não vira "a" — não bate
-// com a convenção de menção que o gatilho automático espera, ver
-// functions/agente-agil-orquestrador/detectaMencao.js).
+// pro sistema de menção enxergar. `init` é um sentinela que não colide com
+// nenhum init de verdade (humano ou agente cadastrado), resolvido de
+// propósito em insertMention()/handleMentionKey pra inserir "Agente Ágil"
+// literal — NUNCA passar por getMemberHandle() (bug real encontrado:
+// "Agente Ágil" → getMemberHandle → "agente.gil", o "Á" acentuado é
+// removido pela sanitização, não vira "a" — não bate com a convenção de
+// menção que o gatilho automático espera, ver
+// functions/agente-agil-orquestrador/detectaMencao.js). Diferente de
+// AGENTE_AGIL_ASSIGNEE_ENTRY logo abaixo (que É selecionável de
+// verdade) — esta aqui nunca aparece em nenhum seletor.
 const AGENTE_AGIL_MENTION_INIT = '__agente_agil__';
 const AGENTE_AGIL_MENTION_ENTRY = {
   init: AGENTE_AGIL_MENTION_INIT, name: 'Agente Ágil', foto: '', uid: 'agente-agil',
@@ -6373,6 +6403,89 @@ const AGENTE_AGIL_MENTION_ENTRY = {
 // aparece em squad onde não faz nada. Hoje: 'dev' (SQUAD_ID) e 'dados'
 // (agenteAgilMencaoDados, ativado em escrita real 2026-08-24).
 const AGENTE_AGIL_MENTION_SQUADS = new Set(['dev', 'dados']);
+// ── Agente Ágil como Responsável/Participante (2026-08-31) ──────────────
+// Pedido direto do usuário: diferente do agente cadastrado em dados/agentes
+// (só decorativo — vira "cc:" em comentário, ver agenteMarcador.js), o
+// Agente Ágil de VERDADE agora pode ser escolhido como Responsável ou
+// Participante de um card (nunca Demandante — um agente não é quem "pede"
+// o card, mesma regra de populateOwnerSelect() abaixo pros agentes
+// cadastrados) e REAGE quando isso acontece — ver
+// _reagirSeAgenteAgilAtribuido() (chamada em scheduleAutoSave()/
+// saveCard()). `init:'🤖'` não é arbitrário: é o MESMO valor que
+// functions/agente-agil-orquestrador/*.js já grava em `init` de todo
+// comentário que o agente posta de verdade (ver detectaMencao.js) — usar
+// o mesmo aqui faz qualquer lookup por init (allIdentities().find) casar
+// direto com a identidade real do agente, sem precisar de um 2º mapeamento.
+// Squads 'dev'+'dados' (AGENTE_AGIL_ASSIGNEE_SQUADS) — os 2 únicos onde
+// mentionTrigger.js tem Cloud Function real ouvindo (dryRun:false, mesmo
+// escopo de AGENTE_AGIL_MENTION_SQUADS). Começou só 'dados' (2026-08-31,
+// decisão inicial do usuário); ampliado pra 'dev' no mesmo dia, pedido
+// direto pra poder testar sem mexer em dado real de squad de trabalho.
+const AGENTE_AGIL_ASSIGNEE_ENTRY = {
+  init: '🤖', name: 'Agente Ágil', foto: '', uid: 'agente-agil',
+  isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖',
+};
+const AGENTE_AGIL_ASSIGNEE_SQUADS = new Set(['dev', 'dados']);
+// ── Dispatcher único: "postar comentário sintético @Agente Ágil" (revisão
+// arquitetural 2026-08-31) ───────────────────────────────────────────────
+// Até aqui esse padrão (escrever um comentário com "@Agente Ágil" em
+// card_comments, deixando mentionTrigger.js processar) tinha sido
+// reimplementado de forma independente em pelo menos 4 lugares deste
+// arquivo — _askAgenteAgilNoCard, a automação "notify_agent", o caminho
+// "WIP excedido" (o próprio código antigo admitia "replica em vez de
+// reusar actionDef.run()") e esta função — cada um com sua própria cópia
+// de montar o comentário, decidir uid/autoria e (só 2 dos 4) checar se o
+// squad atual tem mesmo uma Cloud Function ouvindo. Esta função concentra
+// as 3 coisas num só lugar; os 4 call sites viraram 1 linha cada.
+// opts.squads (Set, obrigatório de fato — sem ele cai no padrão
+// AGENTE_AGIL_MENTION_SQUADS): qual escopo valida ESTE disparo — nem todo
+// caller usa o mesmo (atribuição usa AGENTE_AGIL_ASSIGNEE_SQUADS, mais
+// restrito).
+// opts.asAutomacao: autoria 'automacao'/'⚙ Automação' em vez do usuário
+// logado — mentionTrigger.js trata os dois igual (nunca 'agente-agil',
+// que seria auto-ignorado pra evitar o agente se auto-disparar).
+// opts.warnIfUnavailable: mostra toast se o squad não tiver o gatilho
+// ativo — só faz sentido numa ação DIRETA de clique (_askAgenteAgilNoCard);
+// uma automação rodando em background não deve interromper quem estiver
+// com o board aberto com um toast que não é sobre a ação dele — por isso
+// os outros 3 callers deixam essa opção de fora (fica silencioso, mesmo
+// comportamento de antes da unificação).
+// Retorna true se escreveu, false se não (squad fora de escopo, sem
+// sessão de usuário numa ação não-automação, ou Firebase não pronto).
+function _dispatchAgenteAgilComment(cardId, text, opts){
+  opts = opts || {};
+  if(!window._fbReady) return false;
+  const squads = opts.squads || AGENTE_AGIL_MENTION_SQUADS;
+  if(!squads.has(ACTIVE_SQUAD)){
+    if(opts.warnIfUnavailable) showToast('🤖 O Agente Ágil ainda não está disponível neste squad.');
+    return false;
+  }
+  const user = window._currentUser;
+  if(!opts.asAutomacao && !user) return false;
+  const comment = opts.asAutomacao
+    ? { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'', text, ts:new Date().toISOString() }
+    : { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:user.uid||'', author:user.displayName||user.email||'?', init:window._currentUserInit||'?', foto:user.photoURL||'', text, ts:new Date().toISOString() };
+  _pushCardComment(cardId, comment);
+  return true;
+}
+// Posta um comentário sintético "@Agente Ágil" (autoria de QUEM FEZ a
+// atribuição, nunca do próprio agente) — reusa 100% do pipeline de
+// @menção já testado (kill switch, idempotência, detecção) em vez de um
+// gatilho novo dedicado a mudança de campo. Só dispara quando o campo
+// responsavel/participantes MUDA DE VALOR pra incluir o agente (reatribuir
+// de volta pra ele conta como mudança de novo; editar outro campo do card
+// com ele já atribuído NÃO reaciona) — decisão explícita do usuário.
+function _reagirSeAgenteAgilAtribuido(c, prevOwner, prevParticipants){
+  const init = AGENTE_AGIL_ASSIGNEE_ENTRY.init;
+  if(c.owner===init && c.owner!==(prevOwner||'')){
+    _dispatchAgenteAgilComment(c.id, '@Agente Ágil você foi definido como responsável por este card.', {squads: AGENTE_AGIL_ASSIGNEE_SQUADS});
+  }
+  const wasParticipant=(prevParticipants||[]).includes(init);
+  const isParticipant=(c.participants||[]).includes(init);
+  if(isParticipant && !wasParticipant){
+    _dispatchAgenteAgilComment(c.id, '@Agente Ágil você foi adicionado como participante deste card.', {squads: AGENTE_AGIL_ASSIGNEE_SQUADS});
+  }
+}
 // Atalho pra @menção — reativa os pontos de entrada do Agente Ágil que têm
 // um card real (Insights do card, menu de contexto, automação manual),
 // substituindo o painel de chat antigo (openAgent()/qa()), que dependia de
@@ -6388,20 +6501,15 @@ const AGENTE_AGIL_MENTION_SQUADS = new Set(['dev', 'dados']);
 // propósito — não têm onde postar a @menção.
 function _askAgenteAgilNoCard(card, pergunta){
   if(!card) return;
-  if(!AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)){ showToast('🤖 O Agente Ágil ainda não está disponível neste squad.'); return; }
-  if(!window._fbReady) return;
-  const user=window._currentUser;
-  const comment={
-    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-    uid:user?.uid||'', author:user?.displayName||user?.email||'?', init:window._currentUserInit||'?', foto:user?.photoURL||'',
-    text:'@Agente Ágil '+pergunta,
-    ts:new Date().toISOString(),
-  };
-  window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment).catch(()=>{});
-  showToast('🤖 Pergunta enviada — a resposta chega como comentário no card.');
+  const ok = _dispatchAgenteAgilComment(card.id, '@Agente Ágil '+pergunta, {squads: AGENTE_AGIL_MENTION_SQUADS, warnIfUnavailable:true});
+  if(ok) showToast('🤖 Pergunta enviada — a resposta chega como comentário no card.');
 }
 function mentionCandidates(){
-  const base = allIdentities();
+  // allIdentities() já pode incluir AGENTE_AGIL_ASSIGNEE_ENTRY (mesmo uid
+  // 'agente-agil') no squad 'dados' — filtra pra não duplicar com
+  // AGENTE_AGIL_MENTION_ENTRY logo abaixo, que é a versão certa pro
+  // autocomplete (nome literal, handle especial, ver mentionMatchLabel()).
+  const base = allIdentities().filter(m=>m.uid!==AGENTE_AGIL_ASSIGNEE_ENTRY.uid);
   return AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) ? [...base, AGENTE_AGIL_MENTION_ENTRY] : base;
 }
 // Label usado tanto pra filtrar (digitou "@a"/"@age"...) quanto pra exibir
@@ -7897,6 +8005,7 @@ function fbLoadAll(){
     agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
+    if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesList();
     scheduleRender();
   });
   fbListen(FB+'/tags',val=>{
@@ -8414,6 +8523,51 @@ let _cardsSyncDebounce = null;
       // Promise.all interno resolver) -- nunca mais um timer fixo
       // correndo contra um carregamento de tamanho desconhecido.
       setTimeout(_reconcileCardsIndexOnce, 500);
+      // Re-sync periódico de CONTEÚDO de card (rede de segurança) — achado
+      // real (2026-08-31, reportado ao vivo numa reunião com o board
+      // espelhado): prioridade alterada e salva com o botão "Salvar" não
+      // propagou pro board de outra pessoa por ~20min, sem nenhum sinal de
+      // que algo tinha travado (.info/connected seguia "conectado" o tempo
+      // todo). O listener ao vivo (_onCardsUpdatedAtLive acima) depende de
+      // eventos chegando direitinho — uma aba em segundo plano numa
+      // videochamada por muito tempo, ou uma reconexão de rede que não
+      // reprocessa tudo, pode perder um evento silenciosamente, sem
+      // derrubar `.info/connected`. Sem nenhuma rede de segurança, isso
+      // fica desatualizado pra sempre até alguém pensar em dar F5 — mesma
+      // classe de problema que o poll de columns/tags logo abaixo já
+      // resolve pra colunas, só que cards mudam com MUITO mais frequência.
+      // Confirma periodicamente contra cards_updated_at (índice leve,
+      // id->timestamp — mesmo dado que _reconcileCardsIndexOnce já lê 1x
+      // por sessão) e refaz o fetch completo só dos cards que de fato
+      // divergem, reaproveitando a mesma lógica de _onCardsUpdatedAtLive —
+      // só que disparada por tempo, não por evento. 4min: frequente o
+      // bastante pra não deixar uma reunião inteira desatualizada, barato
+      // o bastante pra não pesar no orçamento de download (ver comentário
+      // grande no topo desta função sobre onValue vs. listeners granulares).
+      window._reconcileCardsUpdatedAtPeriodic = async function _reconcileCardsUpdatedAtPeriodic(){
+        if(!window._fbReady) return;
+        try{
+          const snap = await fbGet(FB+'/cards_updated_at');
+          const remote = snap.val() || {};
+          const staleKeys = [];
+          for(const id in remote){
+            if(_liveArchivedIds.has(id)) continue; // arquivado -- não força rebaixar
+            const key = _liveCardsIndexById[id];
+            if(key==null) continue; // sem posição resolvível -- _reconcileCardsIndexOnce cuida disso
+            if(!_cardsByKey[key] || _cardsByKey[key].updatedAt !== remote[id]) staleKeys.push(key);
+          }
+          if(!staleKeys.length) return { corrigidos:0 };
+          _dbgTrack('/cards_updated_at:periodic_reconcile_stale', staleKeys.length);
+          await Promise.all(staleKeys.map(async key=>{
+            const s = await window._get(fb(FB+'/cards/'+key));
+            if(s.val()) _cardsByKey[key] = s.val();
+          }));
+          _scheduleCardsSync();
+          return { corrigidos:staleKeys.length };
+        }catch(e){ console.warn('[cards] reconciliação periódica falhou:', e); return { erro:String(e) }; }
+      };
+      clearInterval(window._cardsReconcilePoll);
+      window._cardsReconcilePoll = setInterval(window._reconcileCardsUpdatedAtPeriodic, 4*60*1000);
     });
   }
 
@@ -9157,7 +9311,7 @@ function _applyRoleVisibility(){
   // Botão "🤖 Agente Ágil" — pra todo mundo (não é restrito a PO/Organizador
   // como Configurações), só depende do squad ter escrita real do agente.
   const fabHotline=document.getElementById('fab-agente-hotline-btn');
-  if(fabHotline) fabHotline.style.display=AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)?'':'none';
+  if(fabHotline) fabHotline.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
 }
 function autoRegistrar(user){
   if(!window._fbReady) return;
@@ -10330,10 +10484,16 @@ function populatePartSelect(excludeInits=[]){
   const init=window._currentUserInit; const u=window._currentUser;
   if(init&&u&&!excludeInits.includes(init)&&!members.find(m=>m.init===init))
     sel.innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName?.split(' ')[0]||'')}</option>`;
-  // Agentes de IA
-  const _agInits=agentes.map(a=>a.init||a.id).filter(i=>!excludeInits.includes(i));
-  if(_agInits.length)
-    sel.innerHTML+=`<optgroup label="🤖 Agentes">`+agentes.filter(a=>_agInits.includes(a.init||a.id)).map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('')+`</optgroup>`;
+  // Agentes de IA (cadastrados em dados/agentes) + o Agente Ágil de
+  // verdade (AGENTE_AGIL_ASSIGNEE_ENTRY, só no squad onde ele reage —
+  // ver AGENTE_AGIL_ASSIGNEE_SQUADS), no mesmo optgroup.
+  const _agOptions=agentes.filter(a=>!excludeInits.includes(a.init||a.id));
+  const _showAgenteAgil=AGENTE_AGIL_ASSIGNEE_SQUADS.has(ACTIVE_SQUAD) && !excludeInits.includes(AGENTE_AGIL_ASSIGNEE_ENTRY.init);
+  if(_agOptions.length || _showAgenteAgil){
+    let _agHtml=_agOptions.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('');
+    if(_showAgenteAgil) _agHtml+=`<option value="${esc(AGENTE_AGIL_ASSIGNEE_ENTRY.init)}">🤖 Agente Ágil</option>`;
+    sel.innerHTML+=`<optgroup label="🤖 Agentes">`+_agHtml+`</optgroup>`;
+  }
 }
 
 // Fonte da verdade dos participantes do card sendo editado — mesmo padrão de
@@ -10511,7 +10671,7 @@ function scheduleAutoSave(){
     // pelo botão "Salvar", então esses gatilhos precisam existir aqui também).
     const _prevOwner=c.owner||'', _prevBlocker=c.blocker||false,
       _prevRiscosLen=c.riscos?.length||0, _prevChecklist=(c.checklist||[]).slice(),
-      _prevCol=c.col, _prevTags=(c.tags||[]).slice();
+      _prevCol=c.col, _prevTags=(c.tags||[]).slice(), _prevParticipants=(c.participants||[]).slice();
     // Só grava a coluna do <select> se o usuário de fato mexeu nela nesta sessão
     // do modal — senão preserva c.col (que pode ter sido atualizado por outra
     // aba/pessoa via drag-and-drop enquanto este modal ficou aberto).
@@ -10561,6 +10721,7 @@ function scheduleAutoSave(){
     // (achado real, /monitorarbugs 2026-08-30 — mesma classe dos campos acima).
     (c.checklist||[]).forEach(it=>parseMentions(it?.t, c.id));
     if(c.owner && c.owner!==_prevOwner){ notifAssigned(c.owner, c.id, c.title); runAutoRules('assigned', c.id, c.owner); }
+    _reagirSeAgenteAgilAtribuido(c, _prevOwner, _prevParticipants);
     if(_prevBlocker && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
     else if(!_prevBlocker && c.blocker) runAutoRules('blocked', c.id);
     const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
@@ -11146,9 +11307,14 @@ function populateOwnerSelect(){
   const u=window._currentUser; const init=window._currentUserInit;
   if(u&&init&&!members.find(m=>m.init===init))
     document.getElementById('m-owner').innerHTML+=`<option value="${esc(init)}">${esc(init)} · ${esc(u.displayName||u.email||'')}</option>`;
-  // Agentes de IA — optgroup separado, visualmente marcados
-  if(agentes.length)
-    document.getElementById('m-owner').innerHTML+=`<optgroup label="🤖 Agentes">`+agentes.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('')+`</optgroup>`;
+  // Agentes de IA (cadastrados) + o Agente Ágil de verdade — optgroup
+  // separado, visualmente marcados. Ver AGENTE_AGIL_ASSIGNEE_ENTRY.
+  const _showAgenteAgilOwner=AGENTE_AGIL_ASSIGNEE_SQUADS.has(ACTIVE_SQUAD);
+  if(agentes.length || _showAgenteAgilOwner){
+    let _agOwnerHtml=agentes.map(a=>`<option value="${esc(a.init||a.id)}">${esc(a.avatarEmoji||'🤖')} ${esc(a.nome||a.id)}</option>`).join('');
+    if(_showAgenteAgilOwner) _agOwnerHtml+=`<option value="${esc(AGENTE_AGIL_ASSIGNEE_ENTRY.init)}">🤖 Agente Ágil</option>`;
+    document.getElementById('m-owner').innerHTML+=`<optgroup label="🤖 Agentes">`+_agOwnerHtml+`</optgroup>`;
+  }
 }
 // Demandante usa a mesma lista de pessoas do Responsável — mas SEM agentes
 // de IA no optgroup: um agente nunca é quem "pede" o card, só quem executa.
@@ -11248,7 +11414,7 @@ function _findAgenteHotlineCard(){
 // diferente + atalhos (ver _applyAgenteHotlineSkin() acima e
 // _cardSectionVisible(), que esconde todas as seções exceto comentários).
 async function openAgenteHotline(){
-  if(!AGENTE_AGIL_HOTLINE_SQUADS.includes(ACTIVE_SQUAD)){
+  if(!AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)){
     showToast('🤖 O Agente Ágil ainda não tem escrita real nesse squad.');
     return;
   }
@@ -11935,6 +12101,7 @@ function saveCard(){
     const _newCol=(_selCol===_modalOpenCol)?c.col:_selCol;
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
+    const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
@@ -11980,6 +12147,7 @@ function saveCard(){
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
     });
     _prevTagsSave.filter(t=>!(c.tags||[]).includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
+    _reagirSeAgenteAgilAtribuido(c, _prevOwnerSave, _prevParticipantsSave);
   } else {
     const _newCard={id:'c'+Date.now(),col:document.getElementById('m-col').value,tags:editingTags.slice(),tag:(editingTags[0]||''),
       title,desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),owner:document.getElementById('m-owner').value,
@@ -12011,6 +12179,7 @@ function saveCard(){
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
     recordMove(_newCard,_newCard.col); // ← inicia trilha de fluxo do novo card
     cards.push(_newCard);
+    _reagirSeAgenteAgilAtribuido(_newCard, '', []); // card nasce com o agente já atribuído — conta como mudança (de vazio)
     _pendingCoverColor=null; _pendingCoverImageUrl=null; _newCardPadraoId=null;
     if(_newCard.priority) runAutoRules('priority', _newCard.id); // ver comentário equivalente no branch de edição, acima
     // Achado real (/monitorarbugs, 2026-08-29): "Capa de cor definida como"/
@@ -18430,6 +18599,7 @@ function _recurrenceLabel(rec){
   if(!rec||!rec.type) return '';
   if(rec.type==='days') return 'A cada '+(rec.interval||1)+' dia(s)';
   if(rec.type==='weekly') return 'Toda '+(_DIAS_SEMANA[rec.weekday??1]||'semana');
+  if(rec.type==='weekdays') return 'Todo dia útil (seg-sex)';
   if(rec.type==='monthly') return 'Todo dia '+(rec.monthday||1)+' do mês';
   return '';
 }
@@ -18449,6 +18619,11 @@ function _recurrenceDue(item, hoje){
   }
   if(rec.type==='weekly'){
     if(today.getDay()!==(rec.weekday??1)) return false;
+    return !last || last.getTime()!==today.getTime();
+  }
+  if(rec.type==='weekdays'){
+    const dow=today.getDay();
+    if(dow===0||dow===6) return false; // domingo/sábado — só dias úteis
     return !last || last.getTime()!==today.getTime();
   }
   if(rec.type==='monthly'){
@@ -18774,6 +18949,12 @@ function _recRenderSub(){
     sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Dia da semana</label><select id="rec-weekday" class="rec-input">${_DIAS_SEMANA.map((d,idx)=>`<option value="${idx}" ${idx===wd?'selected':''}>${d}</option>`).join('')}</select></div>`;
   } else if(type==='monthly'){
     sub.innerHTML=`<div class="rec-field"><label class="rec-lbl">Dia do mês (1-28)</label><input type="number" id="rec-monthday" class="rec-input" min="1" max="28" value="${rec.monthday||1}"></div>`;
+  } else {
+    // 'weekdays' (dias úteis, seg-sex) não tem campo extra — implícito no
+    // tipo. Limpa o resíduo de um tipo anterior (ex.: trocar de "Toda
+    // semana" pra "Dias úteis" sem isto deixava o <select> de dia da semana
+    // visível, órfão, sem afetar nada de verdade).
+    sub.innerHTML='';
   }
 }
 function salvarRecorrencia(){
@@ -18939,7 +19120,7 @@ function swCfgTab(tab){
   // openAutoOv() abaixo. 'auto' continua em TABS acima só pra manter o
   // índice dos botões alinhado com as outras abas (não remover).
   if(tab==='agil') fillAgilTab();
-  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); setUsuariosView('users'); }
+  if(tab==='usuarios'){ renderUsuarios(); renderExternos(); renderAgentesList(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
   if(tab==='tags'){
     renderTagEditor();
@@ -19250,6 +19431,87 @@ function renderUsuarios(){
       </select>`;
       list.appendChild(row);
     });
+  });
+}
+// ── Agentes de IA (piloto híbrido humano+agente) ────────────────────
+// CRUD de dados/agentes — antes só existia o listener (fbListen em
+// FB+'/agentes', ver declaração de `agentes`) e o código que já sabe LER
+// esse registro (allIdentities()/optgroup "🤖 Agentes" no seletor de
+// Responsável/Participante); pedido direto do usuário: "quero que isso
+// fique mais claro o cadastro" — não dava pra criar um agente novo sem
+// escrever direto no Firebase via console.
+let _agenteEditId = null;
+function renderAgentesList(){
+  const list=document.getElementById('agentes-list'); if(!list) return;
+  if(!agentes.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum agente cadastrado.</div>'; return; }
+  list.innerHTML = agentes.map(a=>{
+    // Mesma checagem de colisão de iniciais já feita pra humanos (ver
+    // dupInit em renderUsuarios() acima) — estendida pra cobrir
+    // agente×humano e agente×agente, não só humano×humano.
+    const initUp=(a.init||a.id||'').toUpperCase();
+    const dupInit = members.some(m=>(m.init||'').toUpperCase()===initUp) ||
+      agentes.some(b=>b.id!==a.id && (b.init||b.id||'').toUpperCase()===initUp);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:8px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${_hexA(a.cor||'#a78bfa',.25)};border:1px solid ${_hexA(a.cor||'#a78bfa',.5)};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${esc(a.avatarEmoji||'🤖')}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:12px;color:var(--txt);">${esc(a.nome||a.id)} <span class="init-pill${dupInit?' init-dup':''}" title="${dupInit?'⚠ Iniciais colidem com outra pessoa/agente deste squad':'Iniciais'}">${esc(a.init||a.id)}${dupInit?' ⚠':''}</span></div></div>
+      <button onclick="editarAgente('${a.id}')" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
+      <button onclick="excluirAgente('${a.id}','${esc((a.nome||a.id).replace(/'/g,''))}')" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+}
+function abrirAddAgente(){
+  _agenteEditId=null;
+  document.getElementById('agente-nome-inp').value='';
+  document.getElementById('agente-init-inp').value='';
+  document.getElementById('agente-cor-inp').value='#a78bfa';
+  document.getElementById('agente-emoji-inp').value='';
+  const row=document.getElementById('add-agente-row');
+  if(row){ row.style.display='flex'; document.getElementById('agente-nome-inp').focus(); }
+}
+function editarAgente(id){
+  const a=agentes.find(x=>x.id===id); if(!a) return;
+  _agenteEditId=id;
+  document.getElementById('agente-nome-inp').value=a.nome||'';
+  document.getElementById('agente-init-inp').value=a.init||'';
+  document.getElementById('agente-cor-inp').value=a.cor||'#a78bfa';
+  document.getElementById('agente-emoji-inp').value=a.avatarEmoji||'';
+  const row=document.getElementById('add-agente-row');
+  if(row){ row.style.display='flex'; document.getElementById('agente-nome-inp').focus(); }
+}
+function fecharAddAgente(){
+  document.getElementById('add-agente-row').style.display='none';
+  _agenteEditId=null;
+}
+function salvarAgente(){
+  const nome=document.getElementById('agente-nome-inp')?.value.trim();
+  const init=document.getElementById('agente-init-inp')?.value.trim().toUpperCase();
+  const cor=document.getElementById('agente-cor-inp')?.value||'#a78bfa';
+  const emoji=document.getElementById('agente-emoji-inp')?.value.trim()||'🤖';
+  if(!nome){ showToast('❌ Dê um nome pro agente.'); return; }
+  if(!init||init.length<2){ showToast('❌ Iniciais precisam ter pelo menos 2 letras.'); return; }
+  // Bloqueia salvar com colisão (mesmo padrão de proteção que editarInicial()
+  // já dá pra humanos — sem isso, dois seletores de Responsável mostrariam a
+  // mesma inicial apontando pra gente/agentes diferentes, ambíguo pra quem
+  // escolhe e pra qualquer automação que resolva por inicial).
+  const colideComMembro=members.some(m=>(m.init||'').toUpperCase()===init);
+  const colideComAgente=agentes.some(a=>a.id!==_agenteEditId && (a.init||a.id||'').toUpperCase()===init);
+  // Colide com o Agente Ágil de verdade (AGENTE_AGIL_ASSIGNEE_ENTRY, ver
+  // declaração) só onde ele é selecionável — mesma disciplina de
+  // colisão acima, agora incluindo a identidade real, não só cadastros.
+  const colideComAgenteAgil=AGENTE_AGIL_ASSIGNEE_SQUADS.has(ACTIVE_SQUAD) && AGENTE_AGIL_ASSIGNEE_ENTRY.init.toUpperCase()===init;
+  if(colideComMembro||colideComAgente||colideComAgenteAgil){ showToast('❌ Já existe alguém (pessoa ou agente) com as iniciais "'+init+'" neste squad.'); return; }
+  const id=_agenteEditId||('ag'+Date.now()+Math.random().toString(36).slice(2,5));
+  fbSet(FB+'/agentes/'+id, {id, nome, init, cor, avatarEmoji:emoji});
+  const eraEdicao=!!_agenteEditId;
+  fecharAddAgente();
+  showToast((eraEdicao?'✅ Agente atualizado: ':'✅ Agente criado: ')+nome);
+}
+function excluirAgente(id, nome){
+  const a=agentes.find(x=>x.id===id);
+  uiConfirm('Excluir o agente "'+nome+'"? Cards que já tinham "'+(a?.init||'')+'" como responsável/participante mantêm a inicial guardada — só some da lista de seleção pra escolher em cards novos.', {title:'Excluir agente', danger:true, okText:'Excluir'}).then(ok=>{
+    if(!ok) return;
+    fbSet(FB+'/agentes/'+id, null);
+    showToast('🗑 Agente removido.');
   });
 }
 // ── Reatribuir cards de uma pessoa/inicial para outra ──
@@ -21074,7 +21336,7 @@ const HELP_CONTENT = {
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
-    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
+    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n📌 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 📌 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
@@ -21129,7 +21391,7 @@ const HELP_CONTENT = {
   ],
   agente: [
     { icon:'🤖', title:'O que é o Agente Ágil', text:'Uma IA que lê e age sobre um card específico quando alguém o menciona. Pra chamar: mencione "@Agente Ágil" (ou selecione ele no autocomplete de @) num comentário do card — só disponível nos squads dev e dados por enquanto. A resposta chega como um novo comentário no mesmo card, geralmente em menos de 1 minuto, com notificação 🔔 pra quem perguntou.\n\nAtalhos que fazem a mesma coisa sem precisar digitar a menção: o botão "🤖 Insights" no rodapé do card, ou "Insights" no menu de contexto (botão direito) de um card no board.\n\nAntes de responder, ele sempre lê o card de verdade (descrição, checklist, comentários, coluna, tags, responsável) — nunca responde só com base no que foi perguntado, sem olhar o estado real.' },
-    { icon:'✏️', title:'Ações que o agente pode executar', text:'Sempre no card que foi mencionado (o agente não exclui cards nem atribui responsável — ver limitações abaixo): comentar, adicionar um link real (nunca inventa URL), marcar/desmarcar item de checklist, mover de coluna, editar descrição/prioridade/tags, adicionar um risco ao card, e gerar um relatório HTML quando pedido claramente. Exemplos: "Move esse card pra Concluído." "Marca o item do checklist sobre testes." "Adiciona um risco sobre atraso do fornecedor." "Por que esse card tá parado?"\n\n📝 Pedido não tem nada a ver com o card mencionado? Ele pode criar um RASCUNHO em 📥 Pedidos de Intake (nunca direto no board) pra um humano revisar e confirmar — não é a mesma coisa que "criar card de verdade" sozinho.\n\n🔍 Antes de agir, ele pode consultar: uma visão agregada do board inteiro (WIP, throughput, gargalo por coluna, bloqueios) pra dar contexto de gestão, e uma base de conceitos ágeis + como as funcionalidades do Maré Digital funcionam (recorrência, ficha técnica, dependências...).\n\n⚠️ Julgamento: age direto em ações de baixo risco (comentar, marcar checklist); em mover coluna/editar campos, só se o pedido for razoavelmente óbvio — senão pausa e pergunta antes de arriscar. Perguntas abertas ("esse card parece pronto?") sempre viram uma recomendação + confirmação, nunca uma ação direta.\n\n🚫 Não faz (diferente do painel de chat antigo): excluir card, atribuir responsável, salvar como modelo/recorrente, editar prazo/Submarca/Ficha Técnica.' },
+    { icon:'✏️', title:'Ações que o agente pode executar', text:'Sempre no card que foi mencionado (o agente não exclui cards nem atribui responsável — ver limitações abaixo): comentar, adicionar um link real (nunca inventa URL), marcar/desmarcar item de checklist, mover de coluna, editar descrição/prioridade/tags, adicionar um risco ao card, e gerar um relatório HTML quando pedido claramente. Exemplos: "Move esse card pra Concluído." "Marca o item do checklist sobre testes." "Adiciona um risco sobre atraso do fornecedor." "Por que esse card tá parado?"\n\n📝 Pedido não tem nada a ver com o card mencionado? Ele pode criar um RASCUNHO em 📥 Pedidos de Intake (nunca direto no board) pra um humano revisar e confirmar — não é a mesma coisa que "criar card de verdade" sozinho.\n\n🔍 Antes de agir, ele pode consultar: uma visão agregada do board inteiro (WIP, throughput, gargalo por coluna, bloqueios) pra dar contexto de gestão, quais cards já são "de" um agente de IA cadastrado (responsável ou participante), e uma base de conceitos ágeis + como as funcionalidades do Maré Digital funcionam (recorrência, ficha técnica, dependências...).\n\n🔌 Card com comentário de um especialista externo (ex.: Databricks)? Nos squads onde essa capacidade está ligada (hoje só dev), ele pode encaminhar uma mensagem de volta pra esse especialista — chama o webhook cadastrado em Painel → Agentes Externos quando algo relevante mudar (card concluído, alguém validou, pediu ajuste). Fora desses squads, essa opção nem aparece pra ele.\n\n⚠️ Julgamento: age direto em ações de baixo risco (comentar, marcar checklist); em mover coluna/editar campos, só se o pedido for razoavelmente óbvio — senão pausa e pergunta antes de arriscar. Perguntas abertas ("esse card parece pronto?") sempre viram uma recomendação + confirmação, nunca uma ação direta.\n\n🚫 Não faz (diferente do painel de chat antigo): excluir card, atribuir responsável, salvar como modelo/recorrente, editar prazo/Submarca/Ficha Técnica.' },
     { icon:'🤖', title:'Card especial "Converse com o Agente Ágil"', text:'Botão 🤖 no canto inferior direito (ao lado de ⚙ Configurações), visível nos squads onde o agente já responde de verdade. Abre um card fixo — que nunca aparece em nenhuma coluna do board — só pra falar com o agente sobre algo que não precisa virar uma tarefa de verdade (dúvida, ideia, pedido solto). Funciona igual a qualquer card: o comentário já abre com a menção pronta, e a resposta aparece sozinha, sem precisar sair e voltar do card.\n\n🔄 Limpar conversa: como esse card é compartilhado entre todo mundo, tem um botão pra apagar o histórico inteiro e começar do zero — irreversível, apaga de todo mundo, não só de quem clicou.\n\n💰 Cada mensagem processada custa tokens de verdade, pagos pela empresa — use com moderação, evite repetir a mesma pergunta ou testar à toa.' },
     { icon:'📜', title:'Histórico do Agente', text:'Aba "🤖 Histórico do Agente" em ⚙ Configurações (só aparece nos squads onde o agente já responde de verdade) — lista, em ordem, tudo que o Agente Ágil mudou em cards desse squad: card, quando, e as ações em português simples (ex.: "moveu para Concluído", "marcou item do checklist"). Cada entrada mostra também a ORIGEM da ação: se veio de alguém mencionando "@Agente Ágil" na mão, de uma Automação disparando sozinha, ou de um sistema externo plugado no board. Chamadas que só leram o card (sem mudar nada) não entram na lista — só o que teve efeito real.' },
     { icon:'💡', title:'Dicas de uso', text:'Seja específico: mencione nomes de cards, pessoas e datas. Você pode perguntar sobre qualquer coisa relacionada ao card, à sprint, às práticas ágeis do time, ou sobre como uma funcionalidade do Maré Digital funciona.\n\nCada @menção é respondida do zero, sempre lendo o estado atual do card na hora — não é uma conversa contínua com memória entre mensagens, então inclua o contexto necessário em cada pedido em vez de assumir que o agente "lembra" de uma pergunta anterior.' },
@@ -21142,6 +21404,7 @@ const HELP_CONTENT = {
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
     { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), ou notificar o Agente Ágil.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
+    { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.\n\n🆚 "🤖 Agente Ágil" (o de VERDADE, não um cadastro): nos squads dev e dados, o próprio Agente Ágil aparece nesse mesmo optgroup, separado dos agentes cadastrados. Diferente deles, colocar ele como Responsável ou Participante REAGE de verdade — ele lê o card e responde como se tivesse sido @mencionado, todo vez que esse campo muda pra incluir ele (reatribuir de novo dispara de novo; editar outro campo do card não).' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
@@ -25161,16 +25424,16 @@ const AUTO_ACTIONS = [
     // mentionTrigger.js filtra qualquer comentário com esse uid como
     // "auto-comentário do próprio agente" ANTES de olhar o texto — usar
     // esse uid faria a automação escrever um comentário que é
-    // silenciosamente ignorado, nunca dispara nada.
+    // silenciosamente ignorado, nunca dispara nada. Escrita em si delegada
+    // a _dispatchAgenteAgilComment() (ver declaração) — antes escrevia
+    // direto sem re-checar squad aqui (só o `visible:` acima impedia
+    // CONFIGURAR a regra fora de escopo; uma regra já configurada antes de
+    // um squad sair do escopo continuava escrevendo um comentário que
+    // nunca seria processado, silenciosamente). Agora reusa o mesmo guard
+    // de escrita que _askAgenteAgilNoCard/_reagirSeAgenteAgilAtribuido já
+    // tinham.
     run:(rule,card)=>{
-      if(!window._fbReady) return false;
-      const comment={
-        id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-        uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
-        text:'@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.',
-        ts:new Date().toISOString(),
-      };
-      window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment).catch(()=>{});
+      _dispatchAgenteAgilComment(card.id, '@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.', {squads: AGENTE_AGIL_MENTION_SQUADS, asAutomacao:true});
       return false; // não altera o card em si, só dispara o agente
     } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
@@ -25579,16 +25842,12 @@ function runAutoRules(eventType, cardId, extraVal){
       if(tab==='auto'){
         // Mesmo modo autônomo do notify_agent normal (ver AUTO_ACTIONS) —
         // esse caso fica de fora do loop por-card acima (WIP é agregado do
-        // board inteiro), por isso replica em vez de reusar actionDef.run().
-        if(window._fbReady){
-          const comment={
-            id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
-            uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
-            text:'@Agente Ágil — [Automação] WIP atual é '+wip+', acima do limite de '+(agilCfg.wip||3)+'. O que fazer?',
-            ts:new Date().toISOString(),
-          };
-          window._set(window._ref(window._db, FB+'/card_comments/'+cardId+'/'+comment.id), comment).catch(()=>{});
-        }
+        // board inteiro), por isso monta a chamada aqui em vez de reusar
+        // actionDef.run() (não tem "o card" que disparou pra passar pra
+        // ele) — mas a escrita em si já é a mesma _dispatchAgenteAgilComment()
+        // que actionDef.run() usa, não mais uma 2ª cópia da montagem do
+        // comentário (ver declaração de _dispatchAgenteAgilComment).
+        _dispatchAgenteAgilComment(cardId, '@Agente Ágil — [Automação] WIP atual é '+wip+', acima do limite de '+(agilCfg.wip||3)+'. O que fazer?', {squads: AGENTE_AGIL_MENTION_SQUADS, asAutomacao:true});
       } else {
         setTimeout(()=>{ openAgent(); swAgTab(tab); qa(tab,`[AutoRule] WIP atual é ${wip}, acima do limite de ${agilCfg.wip||3}. O que fazer?`); },500);
       }

@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.515 — 2026-09-01 · promove pra prod — Agentes de IA, Agente Ágil como Responsável/Participante, board não fica mais desatualizado sozinho
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.510-dev a v8.30.515-dev) — entradas correspondentes em
+"kanban-dev.html" logo abaixo:
+
+- **Cadastro de Agentes de IA.** Em ⚙ Configurações → Usuários → "🤖
+  Agentes de IA", dá pra cadastrar identidades de IA (nome, iniciais,
+  cor, emoji) que aparecem lado a lado com pessoas de verdade nos
+  seletores de Responsável/Participante de qualquer card.
+- **O Agente Ágil de verdade agora pode ser Responsável ou Participante
+  de um card** (squads dev e dados) — e reage de verdade quando isso
+  acontece: lê o card e responde como se tivesse sido @mencionado,
+  sempre que esse campo muda pra incluir ele.
+- **Board não fica mais desatualizado silenciosamente.** Achado numa
+  reunião com o board espelhado: uma alteração salva num card não
+  chegou na tela de outra pessoa por ~20min, sem nenhum aviso de
+  conexão caída. Agora o board reconfirma sozinho a cada 4 minutos que
+  está com os dados mais recentes, e se corrige na hora se algo ficou
+  pra trás — sem precisar recarregar a página manualmente.
+- Por baixo dos panos: reorganização de como o Agente Ágil dispara suas
+  respostas automáticas (unifica 5 lugares que faziam a mesma coisa de
+  formas ligeiramente diferentes) — sem mudança perceptível de
+  comportamento, só torna o sistema mais consistente e fácil de manter.
+
+Checks de rotina: node --check OK, brace/paren balance -1/0.
+
 ### v8.30.505 — 2026-08-30 · promove pra prod — @menção em checklist, trava do "Salvar", novo gatilho de Agendamentos + Central de Ajuda em dia
 Promove pra produção o acumulado de `kanban-dev.html` desde a última
 promoção (v8.30.505-dev a v8.30.508-dev) — entradas correspondentes em
