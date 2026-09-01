@@ -451,6 +451,37 @@ Mesma disciplina de sempre neste repo:
   (operações DERIVADAS/em massa ficam de fora de propósito), não é uma
   inconsistência nova.
 
+- **2026-09-01, pedido genérico — áreas escolhidas por prioridade 1
+  (`git log --oneline -20 -- kanban-dev.html`)**: duas áreas frescas
+  desta mesma sessão, nunca auditadas: cluster "Agente Ágil como
+  Responsável/Participante" (`_dispatchAgenteAgilComment`,
+  `_reagirSeAgenteAgilAtribuido`, `AGENTE_AGIL_ASSIGNEE_ENTRY`/
+  `_SQUADS`) e o re-sync periódico de cards (`_reconcileCardsUpdatedAtPeriodic`,
+  v8.30.515-dev). Cluster do Agente Ágil: técnica 1 aplicada a fundo —
+  mapeados TODOS os call sites que escrevem `c.owner`/`c.participants`
+  no arquivo (`_doBulkAssign`, ação de Automação `assign_owner`,
+  `ctxAssignMe`, `executarReatribuir`/`editarInicial`, o `input.novo_owner`
+  do painel de chat antigo/morto, recorrência/agendamento via
+  `rec-owner`, Padrões de card via `_mergeModeloEmCardObj`, o tool
+  `editar_campos` do orquestrador real) — em TODOS eles, o valor
+  possível de owner/participants vem de `members`/validação de membro
+  real, nunca de `allIdentities()`/do init especial `'🤖'` do agente;
+  **sem achados** (só os dois call sites do modal — autosave e Salvar
+  manual — conseguem atribuir o agente de verdade, e os dois já chamam
+  `_reagirSeAgenteAgilAtribuido` corretamente). Re-sync periódico: 1
+  achado real, severo — técnica 3 (confrontar comentário vs. código):
+  o polling (`if(key==null) continue`, linha do `_reconcileCardsUpdatedAtPeriodic`)
+  pulava qualquer card sem posição resolvida em `_liveCardsIndexById`,
+  contando com o comentário "`_reconcileCardsIndexOnce` cuida disso" —
+  só que essa reconciliação roda 1x só (500ms após a carga inicial,
+  `_cardsIndexReconciled` trava reruns). Se o `child_added` de
+  `/cards_index` de um card NOVO se perde (mesma classe de evento
+  perdido que motivou o fix v8.30.515-dev), o card fica invisível pro
+  RESTO da sessão da pessoa, sem aviso — pior que o bug original que
+  motivou o polling. Fix: busca `/cards_index` em paralelo e faz
+  backfill de `_liveCardsIndexById` na hora, em vez de pular (dev
+  v8.30.517-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

@@ -2242,6 +2242,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.517-dev — 2026-09-01 — Fix: re-sync periódico de cards não recuperava um card NOVO invisível (/monitorarbugs)
+
+Achado ao auditar o próprio fix anterior (v8.30.515-dev, o polling de
+re-sync criado pro incidente ao vivo de "prioridade não propagou por
+~20min"): a rede de segurança cobria um card já conhecido ficar com
+CONTEÚDO desatualizado, mas não cobria um card totalmente NOVO ficar
+invisível pra sempre. `_liveCardsIndexById` (que resolve "onde no
+array esse id de card está") só é preenchido pela carga inicial ou
+pelos listeners ao vivo de `/cards_index`. Se o evento `child_added`
+desses listeners se perder pra um card novo — a MESMA classe de falha
+que motivou o fix anterior (evento de Realtime Database perdido
+silenciosamente, sem `.info/connected` cair) — o polling periódico
+simplesmente pulava esse id (`if(key==null) continue`), contando com um
+comentário que dizia "`_reconcileCardsIndexOnce` cuida disso". Só que
+essa reconciliação roda UMA ÚNICA VEZ, 500ms depois da carga inicial —
+nunca mais reprocessa pelo resto da sessão. Cenário concreto: colega A
+cria um card novo enquanto o board de colega B está numa aba em
+segundo plano/videochamada; se o evento se perder nessa janela, o card
+de A nunca aparece no board de B pelo resto da sessão dele — sem
+nenhum aviso, F5 é o único jeito de recuperar. Pior que o bug original
+(card inteiro sumido, não só um campo), e contradizia o próprio
+propósito do fix que o introduziu.
+
+Fix: o polling periódico (`_reconcileCardsUpdatedAtPeriodic`) agora
+busca `/cards_index` em paralelo com `/cards_updated_at` (mesmo dado
+que `_reconcileCardsIndexOnce` já lê 1x) e faz o backfill de
+`_liveCardsIndexById` na hora, em vez de pular o id — os listeners ao
+vivo seguem normalmente dali em diante.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(delta do diff: +2/+2 chaves, +13/+13 parênteses — balanceado).
+
 ### v8.30.516-dev — 2026-09-01 — Fix: ícone do PWA agora suporta "ícones temáticos" do Android (Material You)
 
 Achado direto de uma usuária: no Android 13+, quando a pessoa ativa

@@ -5620,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.516-dev</div>
+<div class="version">v8.30.517-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8547,13 +8547,35 @@ let _cardsSyncDebounce = null;
       window._reconcileCardsUpdatedAtPeriodic = async function _reconcileCardsUpdatedAtPeriodic(){
         if(!window._fbReady) return;
         try{
-          const snap = await fbGet(FB+'/cards_updated_at');
+          // cards_index vem junto (não só cards_updated_at) -- achado real
+          // (/monitorarbugs 2026-09-01): antes, um id sem posição resolvida
+          // localmente (_liveCardsIndexById[id]==null) era simplesmente
+          // pulado, contando com "_reconcileCardsIndexOnce cuida disso" --
+          // só que essa reconciliação roda 1x só, 500ms após a carga
+          // inicial (_cardsIndexReconciled trava reruns pro resto da
+          // sessão). Se o child_added de /cards_index de um card NOVO se
+          // perder (mesma classe de evento perdido que esta função inteira
+          // existe pra cobrir), o card ficava invisível pro resto da sessão
+          // dessa pessoa -- pior que o bug original (card inteiro sumido,
+          // não só um campo desatualizado), sem nenhum aviso. Buscar
+          // cards_index aqui também (mesmo dado que _reconcileCardsIndexOnce
+          // já lê 1x) permite resolver a posição na hora, na própria
+          // reconciliação periódica.
+          const [snap, idxSnap] = await Promise.all([
+            fbGet(FB+'/cards_updated_at'),
+            fbGet(FB+'/cards_index'),
+          ]);
           const remote = snap.val() || {};
+          const remoteIndex = idxSnap.val() || {};
           const staleKeys = [];
           for(const id in remote){
             if(_liveArchivedIds.has(id)) continue; // arquivado -- não força rebaixar
-            const key = _liveCardsIndexById[id];
-            if(key==null) continue; // sem posição resolvível -- _reconcileCardsIndexOnce cuida disso
+            let key = _liveCardsIndexById[id];
+            if(key==null){
+              key = remoteIndex[id];
+              if(key==null) continue; // nem no índice remoto -- nada a fazer ainda
+              _liveCardsIndexById[id] = key; // backfill -- listeners live seguem daqui em diante
+            }
             if(!_cardsByKey[key] || _cardsByKey[key].updatedAt !== remote[id]) staleKeys.push(key);
           }
           if(!staleKeys.length) return { corrigidos:0 };
