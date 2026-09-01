@@ -9548,6 +9548,27 @@ pra descrição principal, PO e comentário).
 
 ## favicon.png / favicon-monochrome.png (assets compartilhados — raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-01 — Usuário reexportou a logo com peixes já maiores — recorte recalculado em cima da nova fonte
+
+Continuação da entrada anterior — usuário apagou o `favicon.png`
+(e o `favicon-monochrome.png` gerado a partir dele) direto no GitHub e
+subiu um novo export ("Logotipo Moderno Tecnologia e Gaming Roxo
+(3).png"). Diferente do 1º export (peixes ocupando ~57% da largura do
+quadro fonte), este novo já veio com os peixes bem maiores nativamente
+(~78% da largura) — bounding box real medida: 1555×846px de um canvas
+fonte 2000×2000, contra 1141×576px do export anterior. Recorte
+recalculado em cima dessa nova bounding box (mesma lógica de sempre:
+crop quadrado centrado no par de peixes + ~10-15% de padding, antes de
+reduzir pros 512×512 finais) — dessa vez um crop bem mais frouxo
+(1800×1800, quase o canvas inteiro) já que a arte fonte não precisava
+de tanto zoom. `favicon-monochrome.png` regenerado do zero de novo
+(também tinha sido apagado junto).
+
+Nota pra quem for mexer nisso de novo: o valor do crop NÃO é fixo no
+código — é recalculado a partir da bounding box real dos pixels quase-
+brancos do arquivo fonte a cada vez, exatamente pra não precisar
+adivinhar um número toda vez que a arte original mudar de proporção.
+
 ### 2026-09-01 — Peixes pequenos demais no enquadramento — recorte com zoom nos dois arquivos
 
 Achado direto do usuário vendo o resultado das duas entradas anteriores:
