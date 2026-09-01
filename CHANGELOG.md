@@ -2277,6 +2277,44 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.519-dev — 2026-09-01 — Feat: pin — fixar 1 card no topo da coluna, em qualquer modo de visualização
+
+Pedido direto do usuário ("me pediram uma feature aqui que achei bacana"):
+um jeito de fixar um card no topo da coluna, útil pra um card-aviso/guia
+que a squad sempre quer ver primeiro, independente de como o board está
+ordenado ou visualizado no momento.
+
+Como funciona:
+- Ícone 📌 no canto superior esquerdo de cada card — só aparece no hover
+  quando o card NÃO está fixado (convite discreto, não polui o board);
+  fica sempre visível, destacado em dourado, quando o card JÁ está
+  fixado (fácil de achar pra desafixar).
+- Clique fixa/desafixa (`togglePinCard()`) — persiste `card.pinned`
+  (+`card.pinnedAt`, timestamp) e registra no histórico do card.
+- Só 1 card fixado por coluna: fixar um novo desafixa automaticamente
+  o anterior (mesma coluna).
+- O card fixado vai pro topo da coluna **acima de qualquer ordenação**
+  — prioridade (inclusive semiprioridade/subPrio), criação, alfabética,
+  manual, tamanho, etc. — e funciona em TODAS as visões (quadro normal
+  e as raias por responsável/tag/subtime), porque a resolução do pin
+  acontece dentro de `_sortCards()`, o único ponto que todas essas
+  visões já usam pra ordenar os cards de uma coluna — sem precisar
+  duplicar a lógica em cada view.
+- Duplicar um card (`_duplicarCardObj()`) nunca copia o pin pra cópia
+  — senão ficariam 2 cards fixados na mesma coluna.
+
+Limitação conhecida (aceita de propósito, não é bug): mover um card já
+fixado pra outra coluna que já tem outro card fixado não desafixa
+nenhum dos dois automaticamente — não há um ponto único de "a coluna do
+card mudou" do jeito que há pra ordenação (são vários caminhos: arrastar,
+dropdown do modal, ação em massa, Automação, orquestrador). Nesse caso
+raro, os dois aparecem fixados até alguém desafixar um manualmente —
+comportamento defensivo em `_sortCards()`, não um crash nem perda de
+dado.
+
+Checks de rotina: `node --check` OK, diff balanceado (+31/+31 chaves,
++69/+69 parênteses).
+
 ### v8.30.518-dev — 2026-09-01 — Fix: comentário digitado num card novo ia parar no card errado
 
 Relato direto de usuária (e reproduzido também pelo usuário): "criei um

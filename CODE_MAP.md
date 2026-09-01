@@ -203,6 +203,15 @@ detalhe dos 4 call sites.
 - `passesFilter()` — L10219
 - `handleDragStart/End/Over/Leave()` — L24360/L24371/L24382/L24410
 - `addTouchDnD()` — L24800 — drag-and-drop por toque (mobile)
+- `makeCardEl()` — L9612 — monta o HTML de um card no board (tags, badges,
+  avatar, capa, ícone de pin...).
+- `_sortCards()` / `_sortCardsByMode()` — L9791/L9825 — ordena os cards de
+  uma coluna; `_sortCards()` resolve o pin (card fixado sempre no topo,
+  ver `togglePinCard()`) por cima do resultado de `_sortCardsByMode()`
+  (a lógica de ordenação de verdade — prioridade/criação/manual/etc.),
+  num único ponto usado por `renderNormal()` E todas as raias.
+- `togglePinCard()` — L9801 — fixa/desafixa 1 card no topo da coluna
+  (2026-09-01); só 1 fixado por coluna.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
