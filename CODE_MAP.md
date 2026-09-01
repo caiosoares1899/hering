@@ -48,8 +48,18 @@ completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
   gravar; `excluirAgente(id, nome)` — L19356 — usa `window._set()` direto
   (não `fbSet()`, que é fire-and-forget e engole erro em silêncio) pra
   aguardar a escrita e só avisar sucesso depois de confirmada — fix
-  2026-09-01, reporte direto do usuário (linha nunca sumia quando a
-  escrita falhava, sem nenhum aviso)
+  2026-09-01, reporte direto do usuário
+- **`_fbKey`** (2026-09-01, fix de causa raiz do achado acima): o
+  listener de `dados/agentes` guarda a CHAVE real do Firebase de cada
+  entrada em `a._fbKey` (via `Object.entries(val)`, não mais
+  `Object.values(val)`, que descartava a chave) — `editarAgente()`/
+  `excluirAgente()`/a checagem de colisão em `salvarAgente()` usam
+  `_fbKey`, não mais o campo `.id` gravado dentro do objeto. Motivo: dado
+  cadastrado antes do CRUD existir (2026-08-31) podia ter uma chave real
+  diferente do `.id` interno — excluir usando `.id` escrevia `null` num
+  caminho que nunca existiu, "sucesso" sem nunca remover a entrada de
+  verdade. Reeditar+salvar uma entrada legada agora também corrige seu
+  `.id` pra bater com a chave (self-heal automático)
 - Ligado ao Agente Ágil de verdade: ver `agenteMarcador.js` e
   `cards_por_agente` na seção `functions/` abaixo — quando o
   orquestrador muda algo num card cujo responsável/participante é um

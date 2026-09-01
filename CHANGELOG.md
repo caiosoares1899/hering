@@ -2308,6 +2308,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.531-dev — 2026-09-01 — Fix de verdade: excluir agente de IA (causa raiz — chave do Firebase divergia do campo `.id`)
+
+Continuação direta do fix da v8.30.530-dev — o usuário testou de novo em
+dev e o mesmo agente ("Agente Fictício (exemplo)") continuou aparecendo
+depois de excluir, com o mesmo toast "🗑 Agente removido." O fix anterior
+(aguardar a escrita e mostrar erro real) não mudou nada porque a escrita
+não estava falhando — estava tendo sucesso num caminho que nunca existiu.
+
+**Causa raiz de verdade**: o listener de `dados/agentes` fazia
+`Object.values(val)` pra ler os agentes cadastrados — isso descarta a
+CHAVE de verdade de cada entrada no Firebase, guardando só o valor. Todo
+código de edição/exclusão usava o campo `.id` GRAVADO DENTRO do objeto
+como se fosse essa chave (`fbSet(FB+'/agentes/'+a.id, ...)`). Isso é
+verdade pra qualquer agente criado pela UI (`salvarAgente()` sempre grava
+`id` igual à chave usada), mas "Agente Fictício (exemplo)" é dado mais
+antigo que o CRUD (que só existe desde 2026-08-31) — cadastrado por fora,
+com uma chave de Firebase que não bate com o `.id` guardado dentro do
+objeto. Resultado: excluir esse agente escrevia `null` num caminho que
+nunca existiu (`dados/agentes/{id do campo}` em vez de
+`dados/agentes/{chave real}`) — a escrita "tinha sucesso" (não existe erro
+em apagar algo que já não existe), o toast de sucesso aparecia, e a
+entrada de verdade (na chave real) nunca era tocada.
+
+Fix: o listener agora usa `Object.entries(val)` e guarda a chave real em
+`_fbKey` em cada item de `agentes`. `renderAgentesList()`/`editarAgente()`/
+`excluirAgente()`/a checagem de colisão de iniciais em `salvarAgente()`
+passam a usar `_fbKey` em vez de `.id` pra tudo que precisa apontar pro
+Firebase de verdade. Bônus: reeditar e salvar uma entrada legada agora
+também corrige o campo `.id` dela pra sempre bater com a chave (self-heal
+automático, sem precisar de migração separada).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.530-dev — 2026-09-01 — Fix: excluir agente de IA não avisava quando a escrita falhava de verdade
 
 Reporte direto do usuário testando o painel "🤖 Agentes de IA" (Config →
