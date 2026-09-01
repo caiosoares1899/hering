@@ -596,6 +596,46 @@ Mesma disciplina de sempre neste repo:
   foi isso que expôs o bug de verdade, que não estava no código que
   acabou de ser escrito, mas no que ele passou a alcançar.
 
+- **2026-09-01, área nomeada explicitamente — "nessa parte de agentes"
+  (2ª rodada seguida na mesma área)**: usuário pediu revisão dedicada do
+  CRUD de Agentes Externos (`criarAgenteExternoPainel()`/
+  `salvarAgenteExternoPainel()`/`toggleAgenteExternoSquad()`/
+  `renderAgentesExternosPainel()`, `painel-dev.html`) — funções que a
+  rodada anterior só tinha MOVIDO de lugar (do modal "Configurar" pra
+  aba própria), sem auditar a lógica de verdade. 2 achados reais:
+  1. Técnica 4 (checagem incompleta) — `salvarAgenteExternoPainel()`/
+     `toggleAgenteExternoSquad()` já liam fresco do Firebase antes de
+     escrever (padrão correto, evita reverter mudança concorrente), mas
+     o `if(!a) return;` pro caso "registro já não existe mais" era mudo
+     — sem toast, clique não fazia nada visível. Encadeado com um 2º
+     problema: `criarAgenteExternoPainel()` faz update otimista do cache
+     local ANTES da escrita confirmar; um identificador com caractere
+     inválido pra chave do Firebase (ex.: um ponto) fazia a escrita
+     falhar mas deixava uma entrada "fantasma" só local, pra sempre —
+     qualquer ação nela caía no mesmo retorno silencioso. Fix: toast nas
+     2 funções + reversão do cache local quando a criação falha de
+     verdade.
+  2. Achado reportado primeiro como recomendação arquitetural (Passo 3/4
+     — "não é fix pequeno"), IMPLEMENTADO depois que o usuário pediu
+     explicitamente ("implementa os dois"): o listener de
+     `kanban/config/agentesExternos` reconstrói a lista INTEIRA a cada
+     mudança no nó — editar o Agente Y destruía o formulário aberto do
+     Agente X (texto ainda não salvo), sem aviso. Mesmo padrão já
+     existia em `renderAgentesList()` (Agentes de IA, kanban.html),
+     pré-existente — não introduzido pela aba nova, só mais exposto por
+     ela ser mais visível/persistente. Fix aplicado (escopo maior que o
+     normal, mas pedido explicitamente): `renderAgentesExternosPainel()`
+     captura os valores da linha aberta antes de reconstruir o HTML e
+     restaura depois — não tentou resolver o padrão geral (patch
+     incremental de DOM), só esse caso específico. `renderAgentesList()`
+     não foi tocado (fora do escopo "aba agentes").
+  Testado via Playwright headless com Firebase mockado — 4 cenários, os
+  2 achados confirmados corrigidos (dev v3.07 · painel-dev). Lição: um
+  "achado B" classificado como "só recomendação" na hora do relatório
+  pode virar implementação na mesma rodada se o usuário pedir
+  explicitamente — a regra "não é licença pra refatorar" é sobre NÃO
+  tomar essa decisão sozinho, não sobre recusar quando pedido.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
